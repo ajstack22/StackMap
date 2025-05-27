@@ -1,0 +1,108 @@
+/* ===== ANIMATIONS ===== */
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+.confetti {
+    position: fixed;
+    width: 13px;
+    height: 13px;
+    background: #f0f;
+    top: -20px;
+    border-radius: 50%;
+    animation: confetti-fall 2s linear forwards;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+    100% {
+        transform: translateY(100vh) rotate(720deg);
+        opacity: 0;
+    }
+}
+
+.firework-burst {
+    position: fixed;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+.firework-particle {
+    position: fixed;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+    animation: particle-fade 1.5s ease-out forwards;
+}
+
+@keyframes particle-fade {
+    0% {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+    100% {
+        opacity: 0;
+    }
+}
+
+@keyframes welcomeFadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+}
+
+@keyframes welcomeFadeOut {
+    from {
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+    to {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+}
+
+@keyframes welcomeSlideIn {
+    from {
+        transform: translateY(30px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes welcomeLogoPulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes grownupButtonGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.6);
+    }
+}
+
+/* Animation-related utility classes */
+body.showing-welcome .btn--grownup-mode {
+    animation: grownupButtonGlow 2s ease-in-out infinite;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+}

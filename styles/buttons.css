@@ -1,0 +1,312 @@
+/* ===== BUTTON COMPONENTS ===== */
+.btn {
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-weight: 500;
+    font-family: inherit;
+    box-sizing: border-box;
+}
+
+.btn--primary {
+    background: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+.btn--primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn--secondary {
+    background: #888;
+    color: white;
+    padding: 10px 20px;
+    font-size: 1rem;
+}
+
+.btn--secondary:hover {
+    background: #666;
+}
+
+.btn--large {
+    padding: 14px 32px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.btn--small {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.btn--link {
+    background: none;
+    color: var(--primary-color);
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.btn--link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary-dark);
+}
+
+.btn--link .material-icons {
+    font-size: 1.1rem;
+}
+
+.btn--round {
+    border-radius: 50%;
+    width: 34px;
+    height: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    padding: 0;
+}
+
+.btn--edit {
+    top: 10px;
+    left: 15px;
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn--edit:hover {
+    background: var(--primary-dark);
+}
+
+.btn--visibility {
+    top: 10px;
+    right: 15px;
+    background: #4CAF50;
+    color: white;
+}
+
+.btn--visibility:hover {
+    background: #45a049;
+}
+
+.btn--visibility--hidden {
+    background: #f44336;
+    color: white;
+}
+
+.btn--visibility--hidden:hover {
+    background: #da190b;
+}
+
+.btn--duplicate {
+    bottom: 10px;
+    right: 15px;
+    background: #ff9500;
+    color: white;
+}
+
+.btn--duplicate:hover {
+    background: #e8860c;
+}
+
+.btn--delete {
+    bottom: 10px;
+    left: 15px;
+    background: #e74c3c;
+    color: white;
+}
+
+.btn--delete:hover {
+    background: #c0392b;
+}
+
+/* Floating Buttons - Maximum specificity to override browser defaults */
+button.btn.btn--floating,
+.btn.btn--floating {
+    position: fixed !important;
+    width: 56px !important;
+    height: 56px !important;
+    border-radius: 50% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: var(--card-shadow) !important;
+    z-index: 1000 !important;
+    background: white !important;
+    color: var(--primary-color) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    outline: none !important;
+    box-sizing: border-box !important;
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transition: all var(--transition-fast) !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    -moz-user-select: none !important;
+    -ms-user-select: none !important;
+}
+
+button.btn.btn--floating:hover,
+.btn.btn--floating:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+    color: var(--primary-dark) !important;
+    transform: scale(1.1) translateZ(0) !important;
+    box-shadow: var(--card-shadow-hover) !important;
+}
+
+button.btn.btn--floating:active,
+button.btn.btn--floating:focus,
+.btn.btn--floating:active,
+.btn.btn--floating:focus {
+    background: white !important;
+    color: var(--primary-color) !important;
+    outline: none !important;
+    border: none !important;
+}
+
+button.btn.btn--floating:focus-visible,
+.btn.btn--floating:focus-visible {
+    outline: 2px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+}
+
+/* Specific positioning for floating buttons */
+button.btn.btn--preferences,
+.btn.btn--preferences {
+    top: 25px !important;
+    left: 20px !important;
+}
+
+button.btn.btn--grownup-mode,
+.btn.btn--grownup-mode {
+    top: 25px !important;
+    right: 20px !important;
+}
+
+/* Material Icons in floating buttons */
+button.btn.btn--floating .material-icons,
+.btn.btn--floating .material-icons {
+    margin: 0 !important;
+    padding: 0 !important;
+    font-size: 28px !important;
+    font-weight: 400 !important;
+    line-height: 1 !important;
+    vertical-align: middle !important;
+    display: inline-block !important;
+}
+
+/* General material icons */
+.material-icons {
+    vertical-align: middle;
+    margin-right: 4px;
+}
+
+.btn--round .material-icons {
+    font-size: 20px;
+    margin: 0;
+}
+
+.spinning {
+    animation: spin 1s linear infinite;
+}
+
+/* Responsive styles for floating buttons */
+@media (max-width: 768px) {
+    button.btn.btn--floating,
+    .btn.btn--floating {
+        width: 48px !important;
+        height: 48px !important;
+        top: 20px !important;
+    }
+    
+    button.btn.btn--floating .material-icons,
+    .btn.btn--floating .material-icons {
+        font-size: 24px !important;
+    }
+    
+    button.btn.btn--preferences,
+    .btn.btn--preferences {
+        left: 15px !important;
+    }
+    
+    button.btn.btn--grownup-mode,
+    .btn.btn--grownup-mode {
+        right: 15px !important;
+    }
+    
+    body.fixed-header-visible button.btn.btn--floating,
+    body.fixed-header-visible .btn.btn--floating {
+        top: 15px !important;
+    }
+    
+    body.has-subtitle button.btn.btn--floating,
+    body.has-subtitle .btn.btn--floating {
+        top: 35px !important;
+    }
+
+    body.fixed-header-visible.has-subtitle button.btn.btn--floating,
+    body.fixed-header-visible.has-subtitle .btn.btn--floating {
+        top: 25px !important;
+    }
+    
+    .btn--large {
+        padding: 12px 24px;
+        font-size: 1rem;
+        width: 100%;
+    }
+}
+
+@media (max-width: 480px) {
+    button.btn.btn--floating,
+    .btn.btn--floating {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    button.btn.btn--floating .material-icons,
+    .btn.btn--floating .material-icons {
+        font-size: 22px !important;
+    }
+}
+
+/* Special button animations */
+body.showing-welcome button.btn.btn--grownup-mode,
+body.showing-welcome .btn.btn--grownup-mode {
+    animation: grownupButtonGlow 2s ease-in-out infinite;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4) !important;
+}
+
+@keyframes grownupButtonGlow {
+    0%, 100% {
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.4);
+    }
+    50% {
+        box-shadow: 0 0 0 6px rgba(102, 126, 234, 0.6);
+    }
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
