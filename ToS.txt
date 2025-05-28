@@ -1,0 +1,253 @@
+# Terms of Service for StackMap
+
+**Effective Date:** [Insert Date]  
+**Last Updated:** [Insert Date]
+
+## Agreement to Terms
+
+By accessing and using StackMap ("the App," "Service," or "Platform"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use StackMap.
+
+### Important Notice for Parents and Caregivers
+StackMap is designed for special needs children and families. These Terms apply to parents, caregivers, educators, and any adults who supervise children using the App. Children should only use StackMap under appropriate adult supervision.
+
+## Description of Service
+
+### What StackMap Provides
+- **Visual Routine Management:** Tools to create, customize, and manage visual schedules and routine cards
+- **Cross-Device Synchronization:** Optional Google Drive integration to sync routines across family devices
+- **Accessibility Features:** Child-friendly interface designed for special needs users
+- **Offline Functionality:** Core features work without internet connection
+- **Family-Centered Design:** Tools specifically created for special needs families and caregivers
+
+### What StackMap Is Not
+- Not a medical device or therapeutic treatment
+- Not a substitute for professional medical, educational, or therapeutic advice
+- Not a social platform or communication service
+- Not intended for commercial or business use beyond individual families and educational settings
+
+## Eligibility and Account Requirements
+
+### Age Requirements
+- **Direct Use:** Users must be 18 years or older to agree to these Terms
+- **Supervised Use:** Children may use StackMap under direct adult supervision
+- **Parental Consent:** Parents and guardians are responsible for their children's use of the App
+
+### Account Responsibilities
+- **Google Drive Integration:** Optional and requires your own Google account
+- **Data Security:** You are responsible for maintaining the security of your Google account
+- **Family Sharing:** You may share access with immediate family members and caregivers
+- **Educational Use:** Teachers and therapists may use StackMap with appropriate permissions
+
+## Acceptable Use
+
+### Permitted Uses
+- Creating visual routines and schedules for personal, family, or educational use
+- Sharing routines among family members, caregivers, and authorized educational professionals
+- Using accessibility features to support special needs individuals
+- Syncing data across devices you own or control
+
+### Prohibited Uses
+- **Commercial Distribution:** Selling or redistributing StackMap routines commercially
+- **Harmful Content:** Creating content that could be harmful, inappropriate, or distressing to children
+- **System Interference:** Attempting to hack, reverse engineer, or disrupt the App
+- **Unauthorized Access:** Accessing other users' data or accounts
+- **False Information:** Providing false information during setup or support requests
+- **Bulk Data Collection:** Using automated tools to extract large amounts of data
+
+## Privacy and Data Protection
+
+### Your Data Rights
+- **Ownership:** You own all routine content you create
+- **Control:** You can export, modify, or delete your data at any time
+- **Privacy:** We follow our Privacy Policy for all data handling
+- **Children's Privacy:** Special protections apply to any data involving children
+
+### Google Drive Integration
+- **Optional Service:** Google Drive sync is entirely optional
+- **Your Responsibility:** You control your Google Drive account and permissions
+- **Data Location:** Synced data is stored in your personal Google Drive
+- **Disconnection:** You can disconnect Google Drive access at any time
+
+## Intellectual Property
+
+### Your Content
+- **Ownership:** You retain ownership of all routine content you create
+- **License to Us:** You grant us a limited license to process your content for App functionality only
+- **No Commercial Use:** We will not use your content for commercial purposes
+- **Backup Rights:** You may create backups and copies for personal use
+
+### Our Content
+- **App Ownership:** StackMap software, design, and features are our intellectual property
+- **Limited License:** We grant you a personal, non-transferable license to use the App
+- **Restrictions:** You may not copy, modify, or redistribute the App software
+- **Feedback:** Any suggestions or feedback you provide may be used to improve the App
+
+### Third-Party Content
+- **Emoji and Icons:** May be subject to third-party licenses
+- **Google Services:** Google Drive integration subject to Google's terms
+- **Open Source:** Some components may use open-source licenses
+
+## Disclaimers and Limitations
+
+### Medical and Educational Disclaimers
+- **Not Medical Advice:** StackMap is not intended as medical, therapeutic, or educational advice
+- **Professional Consultation:** Always consult qualified professionals for medical or educational decisions
+- **Individual Needs:** Every child's needs are unique; the App may not be suitable for all users
+- **Emergency Situations:** Do not rely on StackMap for emergency or crisis situations
+
+### Technical Disclaimers
+- **"As Is" Basis:** The App is provided "as is" without warranties of any kind
+- **Availability:** We do not guarantee uninterrupted access or operation
+- **Compatibility:** The App may not work on all devices or browsers
+- **Data Loss:** While we take precautions, we cannot guarantee against data loss
+
+### Limitation of Liability
+- **Maximum Liability:** Our liability is limited to the amount you paid for the App (currently free)
+- **Consequential Damages:** We are not liable for indirect, incidental, or consequential damages
+- **Time Limitation:** Claims must be brought within one year of the issue arising
+- **Local Laws:** Some jurisdictions may not allow these limitations
+
+## User Responsibilities
+
+### Content Standards
+- **Child-Appropriate:** All content must be appropriate for children
+- **Accurate Information:** Provide accurate information for support requests
+- **Regular Backups:** Create backups of important routine data
+- **Secure Access:** Protect your Google account and device access
+
+### Compliance
+- **Local Laws:** Comply with all applicable local, state, and federal laws
+- **School Policies:** Follow your school district's technology policies if applicable
+- **Privacy Laws:** Respect privacy laws, especially regarding children
+- **Accessibility Rights:** Use the App in accordance with disability rights laws
+
+### Supervision Requirements
+- **Adult Supervision:** Children should use StackMap under appropriate adult supervision
+- **Age-Appropriate Use:** Ensure the App is suitable for the individual child's needs and abilities
+- **Safety Monitoring:** Monitor for any adverse effects or inappropriate use
+- **Technical Support:** Adults are responsible for managing technical issues
+
+## Service Availability and Modifications
+
+### Service Changes
+- **Feature Updates:** We may add, modify, or remove features with notice
+- **Interface Changes:** The user interface may be updated to improve accessibility
+- **System Requirements:** Technical requirements may change over time
+- **Notice Period:** We will provide reasonable notice of significant changes
+
+### Service Interruptions
+- **Planned Maintenance:** We may perform scheduled maintenance with advance notice
+- **Emergency Maintenance:** Emergency fixes may occur without notice
+- **Third-Party Dependencies:** Some features depend on Google and other third-party services
+- **Force Majeure:** We are not liable for interruptions due to events beyond our control
+
+## Termination
+
+### Your Right to Terminate
+- **At Any Time:** You may stop using StackMap at any time
+- **Data Export:** Export your data before termination
+- **Account Closure:** Disconnect Google Drive integration if desired
+- **No Penalties:** No fees or penalties for stopping use
+
+### Our Right to Terminate
+- **Terms Violation:** We may terminate access for violations of these Terms
+- **Harmful Use:** Immediate termination for harmful or dangerous use
+- **Technical Issues:** Temporary suspension for technical problems
+- **Notice:** We will provide notice when reasonably possible
+
+### Effect of Termination
+- **Access Cessation:** Your right to use the App ends immediately
+- **Data Retention:** Your Google Drive data remains in your control
+- **Local Data:** Local device data remains on your devices
+- **Survival:** These Terms survive termination as necessary
+
+## Children's Terms
+
+### Special Protections for Minors
+- **Parental Authority:** Parents and guardians have ultimate authority over children's use
+- **Educational Support:** Teachers and therapists may use the App with proper authorization
+- **Safety First:** Any safety concerns take precedence over these Terms
+- **Individual Needs:** Accommodations will be made for individual accessibility needs
+
+### COPPA Compliance
+- **No Personal Data Collection:** We do not knowingly collect personal information from children under 13
+- **Parental Controls:** Parents control all account and sync features
+- **Data Minimization:** We collect only data necessary for App functionality
+- **Educational Records:** School use may be subject to FERPA and other educational privacy laws
+
+## Dispute Resolution
+
+### Informal Resolution
+- **Contact First:** Contact us directly to resolve any issues
+- **Good Faith Effort:** We will make a good faith effort to resolve disputes
+- **Documentation:** Keep records of any issues or communications
+- **Reasonable Time:** Allow reasonable time for resolution
+
+### Formal Dispute Resolution
+- **Governing Law:** These Terms are governed by [Your State/Country] law
+- **Jurisdiction:** Courts of [Your Jurisdiction] have exclusive jurisdiction
+- **Class Action Waiver:** Disputes must be resolved individually, not as class actions
+- **Arbitration:** [Optional: Include arbitration clause if desired]
+
+### Special Considerations
+- **Accessibility Accommodations:** Dispute resolution process will accommodate disabilities
+- **Language Support:** Translation services available for non-English speakers
+- **Family-Friendly Process:** Procedures will be family-friendly and efficient
+
+## Updates to Terms
+
+### Modification Process
+- **Notice:** We will provide at least 30 days' notice of material changes
+- **Effective Date:** Changes take effect on the stated effective date
+- **Continued Use:** Continued use after changes constitutes acceptance
+- **Previous Versions:** Previous versions available upon request
+
+### Types of Changes
+- **Legal Updates:** Changes to comply with new laws or regulations
+- **Feature Changes:** Updates to reflect new App features or capabilities
+- **Clarifications:** Improvements to clarity and readability
+- **Security Enhancements:** Updates to improve safety and security
+
+## Contact Information
+
+### General Inquiries
+- **Email:** [your-email@domain.com]
+- **Website:** [your-website.com]
+- **Response Time:** We aim to respond within 48 hours
+- **Business Hours:** [Your business hours and time zone]
+
+### Legal Notices
+- **Address:** [Your Legal Address]
+- **Legal Email:** [legal-email@domain.com]
+- **Process Service:** [Address for legal service]
+
+### Accessibility Support
+- **Support Email:** [support-email@domain.com]
+- **Phone:** [Your phone number] (if available)
+- **Alternative Formats:** Documents available in alternative formats upon request
+- **Language Support:** [Available languages]
+
+## Miscellaneous
+
+### Entire Agreement
+These Terms, along with our Privacy Policy, constitute the entire agreement between you and StackMap regarding use of the Service.
+
+### Severability
+If any provision of these Terms is found to be unenforceable, the remaining provisions will remain in full force and effect.
+
+### No Waiver
+Our failure to enforce any provision of these Terms does not constitute a waiver of that provision.
+
+### Assignment
+You may not assign your rights under these Terms. We may assign our rights with reasonable notice.
+
+### Force Majeure
+We are not liable for delays or failures due to circumstances beyond our reasonable control.
+
+---
+
+**Acknowledgment:** By using StackMap, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+
+**Last Updated:** [Insert Date]
+
+For questions about these Terms, please contact us at [your-email@domain.com].

@@ -1,0 +1,175 @@
+# Privacy Policy for StackMap
+
+**Effective Date:** 05/26/25  
+**Last Updated:** 05/26/25
+
+## Introduction
+
+StackMap is a visual routine app designed specifically for special needs children and families. We are committed to protecting your privacy and the privacy of your children. This Privacy Policy explains how we collect, use, and protect your information when you use our app.
+
+## Information We Collect
+
+### Personal Information
+- **Account Information:** When you connect Google Drive, we access your Google account email for sync purposes only
+- **App Content:** Visual routine cards, titles, descriptions, and customizations you create
+- **Device Information:** Basic device type information for sync coordination across devices
+
+### Children's Information
+- **Routine Data:** Visual schedules and routine cards created for children
+- **Usage Patterns:** Which activities are completed (stored locally on your device)
+- **No Personal Identifiers:** We do not collect names, photos, or personally identifiable information about children
+
+### Automatically Collected Information
+- **Technical Data:** App version, browser type, and basic error logs for app improvement
+- **Local Storage:** App preferences and routine data stored on your device
+
+## How We Use Your Information
+
+### Primary Uses
+- **App Functionality:** Displaying and managing visual routine cards
+- **Cross-Device Sync:** Synchronizing your routines across family devices via Google Drive
+- **App Improvement:** Understanding usage patterns to improve accessibility features
+- **Technical Support:** Diagnosing and fixing technical issues
+
+### We Do NOT Use Your Information For
+- Advertising or marketing
+- Selling to third parties
+- Profiling or behavioral analysis
+- Any purpose beyond core app functionality
+
+## Google Drive Integration
+
+### What We Access
+- **Limited Scope:** Only files created by StackMap in a dedicated folder
+- **File Permissions:** Read and write access to StackMap data files only
+- **No Browsing:** We cannot access your other Google Drive files or personal documents
+
+### How Sync Works
+- Data is encrypted in transit to Google Drive
+- Files are stored in a dedicated "StackMap Data" folder
+- You maintain full control and can delete data anytime
+- Sync only occurs when you're signed in and using grown-up mode
+
+## Data Storage and Security
+
+### Local Storage
+- **Primary Storage:** All data is primarily stored on your device
+- **Offline Functionality:** App works fully offline without internet connection
+- **User Control:** You can clear all local data through your browser settings
+
+### Cloud Storage (Optional)
+- **Google Drive Only:** When sync is enabled, encrypted backup copies are stored in your Google Drive
+- **Your Control:** You own and control all data in your Google Drive
+- **Encryption:** Data is encrypted during transmission to Google's servers
+
+### Security Measures
+- Industry-standard encryption for data transmission
+- No server-side storage of personal information
+- Regular security updates and monitoring
+- Child-safe design with parental controls
+
+## Children's Privacy
+
+### COPPA Compliance
+- We do not knowingly collect personal information from children under 13
+- Parents and caregivers maintain full control over all app content
+- No social features or communication with other users
+- No advertising or third-party content
+
+### Parental Controls
+- "Grown-up Mode" protects sensitive settings
+- Parents control all sync and data management features
+- Simple validation questions prevent accidental changes
+- Full data export and deletion capabilities
+
+## Your Rights and Choices
+
+### Data Access
+- **View Data:** Access all your routine data within the app
+- **Export Data:** Download complete data backup in JSON format
+- **Delete Data:** Remove all data from the app and Google Drive
+
+### Account Controls
+- **Disconnect Sync:** Unlink Google Drive access anytime
+- **Delete Account:** Remove all cloud-stored data
+- **Local Data:** Clear browser data to remove local information
+
+### Opt-Out Options
+- **Sync Disabled:** Use app fully offline without Google Drive
+- **Analytics:** Disable usage analytics in app settings
+- **Updates:** Control automatic updates through device settings
+
+## Data Sharing and Third Parties
+
+### We Do Not Share Data With
+- Advertisers or marketing companies
+- Social media platforms
+- Analytics companies (beyond basic app functionality)
+- Any third parties for commercial purposes
+
+### Limited Sharing Only For
+- **Google Drive:** When you enable sync features
+- **Technical Support:** Only when you specifically request help
+- **Legal Requirements:** Only if required by law to protect children's safety
+
+## International Users
+
+### Data Location
+- **Local Storage:** Data stays on your device in your location
+- **Google Drive:** Stored according to your Google account's data residency settings
+- **No International Transfers:** We do not transfer data internationally
+
+## Data Retention
+
+### How Long We Keep Data
+- **Local Data:** Until you delete the app or clear browser data
+- **Google Drive:** Until you delete files from your Google Drive
+- **Technical Logs:** Automatically deleted after 30 days
+
+### Deletion Process
+- **Immediate:** Local data deletion is immediate
+- **Google Drive:** You control deletion through your Google Drive
+- **Account Closure:** All associated data deleted within 30 days
+
+## Changes to This Policy
+
+### Updates
+- We may update this policy to reflect app improvements
+- Major changes will be highlighted prominently
+- Continued use implies acceptance of updates
+- Previous versions available upon request
+
+### Notification
+- Email notification if you've provided contact information
+- In-app notification for all users
+- 30-day notice period for significant changes
+
+## Contact Information
+
+### Questions or Concerns
+- **Email:** [adam@otto-home.com]
+- **Website:** [stackmap.com]
+- **Response Time:** We aim to respond within 48 hours
+
+## Special Considerations for Families
+
+### Multiple Caregivers
+- Shared Google accounts allow multiple family members to access routines
+- Each caregiver can manage settings independently
+- Consistent routines across all family devices and locations
+
+### Accessibility Features
+- Privacy settings designed for users with varying technical abilities
+- Simple language and clear visual indicators
+- Support for assistive technologies and screen readers
+
+### Educational Use
+- Teachers and therapists may use StackMap with parental permission
+- School districts should review data handling policies
+- Educational records may be subject to FERPA regulations
+
+---
+
+**Last Updated:** 05/26/25
+
+This Privacy Policy is designed to be transparent and family-friendly. If you have any questions about how we protect your family's privacy, please don't hesitate to contact us.
