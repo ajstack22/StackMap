@@ -382,14 +382,7 @@
     
     .btn--card-type .material-icons {
         margin-bottom: 0;
-        margin-right: 8px;
-        font-size: 20px;
-    }
-    
-    .btn--card-type span:last-child {
-        font-size: 0.95rem;
-        flex: 1;
-        text-align: left;
+        margin-right: 4px;
     }
 }
 

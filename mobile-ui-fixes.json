@@ -1,0 +1,9 @@
+{
+  "updates": [
+    {
+      "description": "Add mobile styles for management card to prevent filter overlap",
+      "file": "styles/cards.css",
+      "append": "\n/* Mobile management card fixes */\n@media (max-width: 768px) {\n    /* Fix filter input overlap in management cards */\n    .management-card {\n        margin-bottom: 20px !important;\n        padding-bottom: 20px !important;\n    }\n    \n    .management-card__filter {\n        margin-bottom: 12px !important;\n    }\n    \n    .filter-input-group {\n        margin-bottom: 8px !important;\n    }\n    \n    /* Ensure proper spacing for management card elements */\n    .management-card__actions {\n        display: flex;\n        flex-direction: column;\n        gap: 12px;\n    }\n}"
+    }
+  ]
+}

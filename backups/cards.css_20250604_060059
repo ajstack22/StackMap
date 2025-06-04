@@ -1063,27 +1063,3 @@ body.display-mode-times .card__number {
 .card .btn--round {
     z-index: 20 !important;
 }
-
-/* Mobile management card fixes */
-@media (max-width: 768px) {
-    /* Fix filter input overlap in management cards */
-    .management-card {
-        margin-bottom: 20px !important;
-        padding-bottom: 20px !important;
-    }
-    
-    .management-card__filter {
-        margin-bottom: 12px !important;
-    }
-    
-    .filter-input-group {
-        margin-bottom: 8px !important;
-    }
-    
-    /* Ensure proper spacing for management card elements */
-    .management-card__actions {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-    }
-}
