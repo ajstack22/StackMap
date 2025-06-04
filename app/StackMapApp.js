@@ -1,11 +1,9 @@
-// app/StackMapApp.js - Fixed Icons and Toggle Logic
-// === MAIN APP ===
-import { WelcomeManager } from './WelcomeManager.js';
-import { PreferencesManager } from './PreferencesManager.js';
-import { ValidationManager } from './ValidationManager.js';
+// app/StackMapApp.js - Main application controller with card type and management card support
+// === MAIN STACKMAP APPLICATION ===
 
-export class StackMapApp {
+class StackMapApp {
     constructor() {
+        // Initialize core state and renderer
         this.appState = new AppState();
         this.renderer = new AppRenderer(this.appState, this);
         
@@ -13,9 +11,17 @@ export class StackMapApp {
         this.driveSync = new GoogleDriveSync(this);
         
         // Initialize managers
-        this.welcomeManager = new WelcomeManager(this);
         this.preferencesManager = new PreferencesManager(this);
         this.validationManager = new ValidationManager(this);
+        
+        // App state
+        this.grownupMode = false;
+        
+        // Card type selection for new cards (Story 1)
+        this.selectedCardType = 'recurring';
+        
+        // Auto-sync debouncing
+        this.autoSyncTimeout = null;
         
         // SET UP AUTO-SAVE
         this.appState.onStateChange = () => {
@@ -26,23 +32,27 @@ export class StackMapApp {
             }
         };
         
-        this.grownupMode = false;
-        
-        // Auto-sync debouncing
-        this.autoSyncTimeout = null;
-        
         this.init();
     }
 
     init() {
-        this.loadFromLocalStorage();
+        // Load data FIRST
+        const hasData = this.loadFromLocalStorage();
+        
+        // If no saved data, create default activities
+        if (!hasData || this.appState.activities.length === 0) {
+            this.createDefaultActivities();
+        }
+        
+        // ALWAYS apply theme to ensure CSS variables are set
         this.appState.applyTheme();
+        
         this.setupEventListeners();
         this.setupInlineEditing();
         this.render();
         
         // Check for first-time visit and show welcome splash
-        this.welcomeManager.checkFirstTimeVisit();
+        this.checkFirstTimeVisit();
         
         // Setup scroll header after everything is loaded
         setTimeout(() => {
@@ -51,7 +61,11 @@ export class StackMapApp {
         
         // Ensure proper icon state on load
         this.updateGrownupModeButton();
-        this.updatePreferencesButton();
+        
+        // Force correct icons immediately
+        setTimeout(() => {
+            this.updateGrownupModeButton();
+        }, 100);
         
         // Set initial tab title
         this.updateTabTitle();
@@ -67,6 +81,53 @@ export class StackMapApp {
         }
     }
 
+    createDefaultActivities() {
+        // Check if DEFAULT_ACTIVITIES is available
+        if (typeof DEFAULT_ACTIVITIES === 'undefined') {
+            console.error('DEFAULT_ACTIVITIES not found. Make sure default-activities.js is loaded.');
+            // Fallback to basic activities with card types
+            this.appState.addActivity({
+                title: 'Morning Stretch',
+                description: 'Wake up your body!',
+                icon: '🌞',
+                visible: true,
+                cardType: 'recurring'
+            });
+            this.appState.addActivity({
+                title: 'Brush Teeth',
+                description: 'Keep them clean and shiny!',
+                icon: '🦷',
+                visible: true,
+                cardType: 'recurring'
+            });
+            this.appState.addActivity({
+                title: 'Get Dressed',
+                description: 'Pick your favorite outfit!',
+                icon: '👕',
+                visible: true,
+                cardType: 'recurring'
+            });
+            return;
+        }
+        
+        console.log('DEFAULT_ACTIVITIES found, loading', DEFAULT_ACTIVITIES.length, 'activities');
+        
+        // Load all default activities from the external data file
+        DEFAULT_ACTIVITIES.forEach((activity, index) => {
+            console.log(`Adding activity ${index + 1}:`, activity.title, 'visible:', activity.visible);
+            // Ensure all default activities have a card type
+            const activityWithType = {
+                ...activity,
+                cardType: activity.cardType || 'recurring'
+            };
+            this.appState.addActivity(activityWithType);
+        });
+        
+        console.log('Total activities after loading defaults:', this.appState.activities.length);
+        console.log('Visible activities:', this.appState.activities.filter(a => a.visible).length);
+        console.log('Hidden activities:', this.appState.activities.filter(a => !a.visible).length);
+    }
+    
     setupAutoSyncInterval() {
         setInterval(() => {
             if (this.driveSync.isSignedIn && this.grownupMode) {
@@ -144,6 +205,11 @@ export class StackMapApp {
                     <rect x='7' y='19' width='18' height='5' fill='#2c5aa0' rx='2.5'/>
                 </svg>StackMap
             `;
+            // Update logo colors for fixed header too
+            if (this.preferencesManager) {
+                const color = this.appState.settings.backgroundColor || '#667eea';
+                this.preferencesManager.updateLogoColors(color);
+            }
         } else {
             fixedTitle.textContent = title;
         }
@@ -167,16 +233,35 @@ export class StackMapApp {
 
     updateGrownupModeButton() {
         const btn = document.getElementById('grownupBtn');
-        const icon = btn.querySelector('.material-icons');
+        const icon = btn?.querySelector('.material-icons');
         
-        if (this.grownupMode) {
-            icon.textContent = 'face';
-            btn.title = 'Switch to Kid Mode';
-            btn.setAttribute('aria-label', 'Switch to Kid Mode');
-        } else {
-            icon.textContent = 'support_agent';
-            btn.title = 'Grown-up Mode';
-            btn.setAttribute('aria-label', 'Grown-up Mode');
+        if (btn && icon) {
+            if (this.grownupMode) {
+                icon.textContent = 'face';
+                btn.title = 'User Mode';
+                btn.setAttribute('aria-label', 'Switch to user mode');
+            } else {
+                icon.textContent = 'edit';
+                btn.title = 'Edit Mode';
+                btn.setAttribute('aria-label', 'Switch to edit mode');
+            }
+        }
+        
+        // Update preferences button icon based on mode
+        const prefBtn = document.getElementById('preferencesBtn');
+        const prefIcon = prefBtn?.querySelector('.material-icons');
+        if (prefBtn && prefIcon) {
+            if (this.grownupMode) {
+                // Edit mode: show settings cog
+                prefIcon.textContent = 'settings';
+                prefBtn.title = 'Settings';
+                prefBtn.setAttribute('aria-label', 'Open settings');
+            } else {
+                // User mode: show palette for colors
+                prefIcon.textContent = 'palette';
+                prefBtn.title = 'Preferences';
+                prefBtn.setAttribute('aria-label', 'Open preferences and color settings');
+            }
         }
     }
 
@@ -186,88 +271,88 @@ export class StackMapApp {
     }
 
     setupEventListeners() {
-        // Preferences toggle
-        document.getElementById('preferencesBtn').addEventListener('click', () => this.preferencesManager.togglePreferences());
-        
         // Grown-up mode toggle
-        document.getElementById('grownupBtn').addEventListener('click', () => this.requestGrownupMode());
-        
-        // File input for import
-        document.getElementById('fileInput').addEventListener('change', (e) => this.importFromFile(e));
-        
-        // Preferences panel interactions
-        document.addEventListener('change', (e) => {
-            if (e.target.id === 'preferencesNumberToggle') {
-                this.appState.settings.showNumbers = e.target.checked;
-                this.appState._triggerSave();
-                this.render();
-            }
-        });
-        
-        // Close panels when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!e.target.closest('.preferences-panel') && !e.target.closest('#preferencesBtn')) {
-                this.preferencesManager.closePreferences();
-            }
-        });
-    }
-
-    quickSync() {
-        if (!this.driveSync.isSignedIn) {
-            this.preferencesManager.showPreferences(); // Open preferences to show sync options
-            return;
+        const grownupBtn = document.getElementById('grownupBtn');
+        if (grownupBtn) {
+            grownupBtn.addEventListener('click', () => this.requestGrownupMode());
         }
         
-        // Quick upload to Drive
-        this.driveSync.uploadData();
+        // Import/Export file handling
+        const fileInput = document.getElementById('fileInput');
+        if (fileInput) {
+            fileInput.addEventListener('change', (e) => this.importFromFile(e));
+        }
+    }
+    
+    // Helper method to clear all filters
+    clearAllFilters() {
+        this.filterCards('');
+        this.appState.ui.filterSourcePosition = null;
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.value = '';
+            const clearButton = input.parentElement.querySelector('.btn--clear-filter');
+            if (clearButton) {
+                clearButton.style.display = 'none';
+            }
+        });
     }
 
     setupInlineEditing() {
         const title = document.getElementById('mainTitle');
         const subtitle = document.getElementById('subtitle');
+        const fixedTitle = document.getElementById('fixedTitle');
+        const fixedSubtitle = document.getElementById('fixedSubtitle');
         
-        // Title editing
-        title.addEventListener('click', () => {
-            if (!this.grownupMode) return;
-            title.contentEditable = "true";
-            title.textContent = this.appState.settings.title === 'My StackMap' ? 'My StackMap' : this.appState.settings.title;
-            title.focus();
-            this.selectText(title);
+        // Setup editing for both static and fixed headers
+        [title, fixedTitle].forEach(titleElement => {
+            if (!titleElement) return;
+            
+            titleElement.addEventListener('click', () => {
+                if (!this.grownupMode) return;
+                titleElement.contentEditable = "true";
+                titleElement.textContent = this.appState.settings.title === 'My StackMap' ? 'My StackMap' : this.appState.settings.title;
+                titleElement.focus();
+                this.selectText(titleElement);
+            });
+            
+            titleElement.addEventListener('blur', () => {
+                titleElement.contentEditable = "false";
+                this.saveInlineEdit('title', titleElement);
+                this.renderer.updateHeader();
+                this.syncFixedHeader();
+            });
+            
+            titleElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    titleElement.blur();
+                }
+            });
         });
         
-        title.addEventListener('blur', () => {
-            title.contentEditable = "false";
-            this.saveInlineEdit('title', title);
-            this.renderer.updateHeader();
-            this.syncFixedHeader();
-        });
-        
-        title.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                title.blur();
-            }
-        });
-        
-        // Subtitle editing
-        subtitle.addEventListener('click', () => {
-            if (!this.grownupMode) return;
-            subtitle.contentEditable = "true";
-            subtitle.focus();
-            this.selectText(subtitle);
-        });
-        
-        subtitle.addEventListener('blur', () => {
-            subtitle.contentEditable = "false";
-            this.saveInlineEdit('subtitle', subtitle);
-            this.syncFixedHeader();
-        });
-        
-        subtitle.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                subtitle.blur();
-            }
+        // Setup editing for both static and fixed subtitles
+        [subtitle, fixedSubtitle].forEach(subtitleElement => {
+            if (!subtitleElement) return;
+            
+            subtitleElement.addEventListener('click', () => {
+                if (!this.grownupMode) return;
+                subtitleElement.contentEditable = "true";
+                subtitleElement.focus();
+                this.selectText(subtitleElement);
+            });
+            
+            subtitleElement.addEventListener('blur', () => {
+                subtitleElement.contentEditable = "false";
+                this.saveInlineEdit('subtitle', subtitleElement);
+                this.syncFixedHeader();
+            });
+            
+            subtitleElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    subtitleElement.blur();
+                }
+            });
         });
     }
 
@@ -297,34 +382,86 @@ export class StackMapApp {
         this.renderer.updateButtonPositioning();
     }
 
-    selectColor(color) {
-        this.appState.updateTheme(color);
-        
-        // Update only the color picker selection state without regenerating HTML
-        const colorPicker = document.getElementById('preferencesColorPicker');
-        if (colorPicker) {
-            // Remove selected class from all options
-            colorPicker.querySelectorAll('.color-picker__option').forEach(option => {
-                option.classList.remove('color-picker__option--selected');
-            });
-            
-            // Add selected class to clicked option
-            const selectedOption = Array.from(colorPicker.querySelectorAll('.color-picker__option'))
-                .find(option => option.style.backgroundColor === color);
-            if (selectedOption) {
-                selectedOption.classList.add('color-picker__option--selected');
-            }
+    // WELCOME SPLASH MANAGEMENT
+    checkFirstTimeVisit() {
+        const hasSeenWelcome = localStorage.getItem('stackmap-welcome-seen');
+        if (!hasSeenWelcome) {
+            this.showWelcomeSplash();
         }
-        
-        // Update card numbers with new theme color
-        document.querySelectorAll('.card__number').forEach(numberElement => {
-            numberElement.style.background = color;
-        });
-        
-        this.syncFixedHeader();
     }
 
-    // GROWN-UP MODE MANAGEMENT
+    showWelcomeSplash() {
+        const welcomeSplash = document.getElementById('welcomeSplash');
+        if (welcomeSplash) {
+            // Add body class for button glow effect
+            document.body.classList.add('showing-welcome');
+            
+            // Show the splash with a slight delay for better UX
+            setTimeout(() => {
+                welcomeSplash.classList.remove('hidden');
+                
+                // Set up event listeners for dismissal
+                welcomeSplash.addEventListener('click', (e) => {
+                    // Only dismiss if clicking outside the content
+                    if (e.target === welcomeSplash) {
+                        this.dismissWelcome();
+                    }
+                });
+                
+                // Escape key dismissal
+                const handleEscape = (e) => {
+                    if (e.key === 'Escape') {
+                        this.dismissWelcome();
+                        document.removeEventListener('keydown', handleEscape);
+                    }
+                };
+                document.addEventListener('keydown', handleEscape);
+            }, 500);
+        }
+    }
+
+    dismissWelcome() {
+        const welcomeSplash = document.getElementById('welcomeSplash');
+        if (welcomeSplash) {
+            // Fade out the welcome splash
+            welcomeSplash.style.animation = 'welcomeFadeOut 0.3s ease-out forwards';
+            
+            // Remove from DOM and body class after animation
+            setTimeout(() => {
+                welcomeSplash.classList.add('hidden');
+                document.body.classList.remove('showing-welcome');
+                
+                // Mark as seen in localStorage
+                localStorage.setItem('stackmap-welcome-seen', 'true');
+            }, 300);
+        }
+    }
+
+    showWelcomeAgain() {
+        // Close preferences panel first
+        this.preferencesManager.closePreferences();
+        
+        // Show welcome splash again (temporarily reset the localStorage flag)
+        const originalFlag = localStorage.getItem('stackmap-welcome-seen');
+        localStorage.removeItem('stackmap-welcome-seen');
+        
+        setTimeout(() => {
+            this.showWelcomeSplash();
+            
+            // Override the dismissWelcome method temporarily to restore the flag
+            const originalDismiss = this.dismissWelcome.bind(this);
+            this.dismissWelcome = () => {
+                originalDismiss();
+                if (originalFlag) {
+                    localStorage.setItem('stackmap-welcome-seen', originalFlag);
+                }
+                // Restore original method
+                this.dismissWelcome = originalDismiss;
+            };
+        }, 100);
+    }
+
+    // EDIT MODE MANAGEMENT
     requestGrownupMode() {
         if (this.grownupMode) {
             this.exitGrownupMode();
@@ -341,11 +478,10 @@ export class StackMapApp {
         document.body.classList.add('grownup-mode');
         
         this.updateGrownupModeButton();
-        this.updatePreferencesButton();
-        
         this.updateInlineEditability();
         
-        if (!document.getElementById('preferencesPanel').classList.contains('hidden')) {
+        // Update preferences panel if it's open
+        if (!document.getElementById('preferencesPanel')?.classList.contains('hidden')) {
             this.preferencesManager.updatePreferencesPanel();
         }
         
@@ -359,91 +495,118 @@ export class StackMapApp {
         this.appState.ui.editingCardIndex = -1;
         this.appState.ui.showingNewCardForm = false;
         
+        // Close any open modal
+        ComponentBuilder.closeModalCard();
+        
         // Remove body class
         document.body.classList.remove('grownup-mode');
         
         this.updateGrownupModeButton();
-        this.updatePreferencesButton();
-        
         this.updateInlineEditability();
         
-        if (!document.getElementById('preferencesPanel').classList.contains('hidden')) {
+        // Update preferences panel if it's open
+        if (!document.getElementById('preferencesPanel')?.classList.contains('hidden')) {
             this.preferencesManager.updatePreferencesPanel();
         }
+        
+        // === STORY 2: Clear any active filters when exiting edit mode ===
+        this.filterCards('');
+        this.appState.ui.filterSourcePosition = null;
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.value = '';
+        });
         
         this.render();
         this.syncFixedHeader();
     }
 
-    updatePreferencesButton() {
-        const btn = document.getElementById('preferencesBtn');
-        const icon = btn.querySelector('.material-icons');
-        
-        if (this.grownupMode) {
-            icon.textContent = 'settings';
-            btn.title = 'Settings & Preferences';
-            btn.setAttribute('aria-label', 'Settings & Preferences');
-        } else {
-            icon.textContent = 'palette';
-            btn.title = 'Preferences';
-            btn.setAttribute('aria-label', 'Preferences');
-        }
-    }
-
     updateInlineEditability() {
         const title = document.getElementById('mainTitle');
         const subtitle = document.getElementById('subtitle');
+        const fixedTitle = document.getElementById('fixedTitle');
+        const fixedSubtitle = document.getElementById('fixedSubtitle');
         
-        if (this.grownupMode) {
-            title.title = 'Click to edit title';
-            subtitle.title = 'Click to edit subtitle';
-        } else {
-            title.removeAttribute('title');
-            subtitle.removeAttribute('title');
-            title.contentEditable = "false";
-            subtitle.contentEditable = "false";
-        }
+        [title, fixedTitle].forEach(titleElement => {
+            if (titleElement) {
+                if (this.grownupMode) {
+                    titleElement.title = 'Click to edit title';
+                    titleElement.style.cursor = 'pointer';
+                } else {
+                    titleElement.removeAttribute('title');
+                    titleElement.contentEditable = "false";
+                    titleElement.style.cursor = 'default';
+                }
+            }
+        });
+        
+        [subtitle, fixedSubtitle].forEach(subtitleElement => {
+            if (subtitleElement) {
+                if (this.grownupMode) {
+                    subtitleElement.title = 'Click to edit subtitle';
+                    subtitleElement.style.cursor = 'pointer';
+                } else {
+                    subtitleElement.removeAttribute('title');
+                    subtitleElement.contentEditable = "false";
+                    subtitleElement.style.cursor = 'default';
+                }
+            }
+        });
     }
 
     render() {
         this.renderer.render();
         setTimeout(() => {
             this.syncFixedHeader();
+            // Reapply filter if one exists
+            this.reapplyFilter();
         }, 0);
     }
 
+    // NEW CARD FUNCTIONALITY - Now uses modal
     openNewCardForm(position = 'top') {
         this.appState.ui.showingNewCardForm = position;
-        this.render();
+        
+        // Show modal for new card with current selected card type
+        ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
     }
 
     closeNewCardForm() {
         this.appState.ui.showingNewCardForm = false;
-        this.render();
+        ComponentBuilder.closeModalCard();
     }
 
     addActivity(position = 'top') {
         const titleInput = document.getElementById('newActivityTitle');
         const descInput = document.getElementById('newActivityDescription');
+        const timeInput = document.getElementById('newActivityTime');
+        
+        if (!titleInput || !descInput) return;
         
         const title = titleInput.value.trim();
         const description = descInput.value.trim();
+        const time = timeInput ? timeInput.value : '';
         
         if (!title) {
             alert('Please enter a title');
+            titleInput.focus();
             return;
         }
         
         try {
+            // Use the current form position or default
+            const currentPosition = this.appState.ui.showingNewCardForm || position;
+            
+            // Use the AppState method which handles position properly
             this.appState.addActivity({
                 title,
                 description,
-                icon: this.appState.ui.selectedEmoji
-            }, position);
+                icon: this.appState.ui.selectedEmoji,
+                time,
+                cardType: this.selectedCardType // Story 1: Include selected card type
+            }, currentPosition);
             
             this.clearNewActivity();
             this.closeNewCardForm();
-            this.saveToLocalStorage();
             this.render();
         } catch (error) {
             alert(error.message);
@@ -451,11 +614,8 @@ export class StackMapApp {
     }
 
     clearNewActivity() {
-        const titleInput = document.getElementById('newActivityTitle');
-        const descInput = document.getElementById('newActivityDescription');
-        if (titleInput) titleInput.value = '';
-        if (descInput) descInput.value = '';
         this.appState.ui.selectedEmoji = CONFIG.DEFAULT_EMOJI;
+        this.selectedCardType = 'recurring'; // Story 1: Reset card type
         this.closeNewCardForm();
     }
 
@@ -465,73 +625,384 @@ export class StackMapApp {
         if (iconElement) iconElement.textContent = emoji;
     }
 
+    // STORY 1: Card Type Management
+    cycleCardType(index) {
+        if (index >= 0 && index < this.appState.activities.length) {
+            this.appState.cycleCardType(index);
+            this.render();
+        }
+    }
+
+    // COLOR SELECTION - Delegate to PreferencesManager
+    selectColor(color) {
+        this.preferencesManager.selectColor(color);
+    }
+
+    // ACTIVITY MANAGEMENT
     duplicateActivity(index) {
-        const activity = this.appState.activities[index];
-        if (!activity) return;
-        
-        const duplicatedActivity = {
-            ...activity,
-            title: activity.title + ' (Copy)',
-            completed: false
-        };
-        
-        // Add the duplicate right after the original
-        this.appState.activities.splice(index + 1, 0, duplicatedActivity);
-        this.appState._triggerSave();
-        this.render();
+        if (index >= 0 && index < this.appState.activities.length) {
+            const originalActivity = this.appState.activities[index];
+            const duplicatedActivity = {
+                ...originalActivity,
+                title: originalActivity.title + ' (Copy)',
+                completed: false // Reset completion state
+            };
+            
+            // Insert after the original
+            this.appState.activities.splice(index + 1, 0, duplicatedActivity);
+            this.appState._triggerSave();
+            this.render();
+        }
     }
 
     toggleVisibility(index) {
         this.appState.toggleActivityVisibility(index);
-        this.saveToLocalStorage();
         this.render();
     }
 
     deleteActivity(index) {
         if (confirm('Are you sure you want to delete this activity?')) {
             this.appState.removeActivity(index);
-            this.saveToLocalStorage();
             this.render();
         }
     }
 
-    startCardEdit(index) {
-        if (this.appState.ui.editMode) {
-            // If already editing this card, close edit mode
-            if (this.appState.ui.editingCardIndex === index) {
-                this.cancelCardEdit();
+    // EDIT MODE: Toggle completion without celebration
+    toggleGrownupCompletion(index) {
+        this.appState.toggleActivityCompletion(index);
+        this.render(); // Re-render to update the checkbox
+    }
+
+    // STORY 2: Filter Functionality
+    filterCards(searchTerm, sourcePosition = null) {
+        const normalizedTerm = searchTerm.toLowerCase().trim();
+        
+        // Store current filter in app state
+        this.appState.ui.cardFilter = normalizedTerm;
+        this.appState.ui.filterSourcePosition = sourcePosition; // Track which management card is filtering
+        
+        // Debug log
+        console.log('Filtering:', normalizedTerm, 'from position:', sourcePosition);
+        
+        // Hide/show management cards based on filter state
+        if (normalizedTerm && sourcePosition) {
+            // When filtering, hide the OTHER management card
+            this.hideOtherManagementCards(sourcePosition);
+        } else if (!normalizedTerm) {
+            // When clearing filter, show all management cards
+            this.showAllManagementCards();
+        }
+        
+        // Apply filter to all activity cards
+        document.querySelectorAll('.card:not(.management-card)').forEach((card, index) => {
+            const activity = this.appState.activities[index];
+            if (!activity) return;
+            
+            const matches = !normalizedTerm || 
+                           activity.title.toLowerCase().includes(normalizedTerm) ||
+                           activity.description.toLowerCase().includes(normalizedTerm);
+            
+            if (matches) {
+                card.style.display = '';
+                card.classList.remove('card--filtered');
             } else {
-                this.appState.ui.editingCardIndex = index;
+                card.style.display = 'none';
+                card.classList.add('card--filtered');
+            }
+        });
+        
+        // Update filter count indicator
+        this.updateFilterIndicator(normalizedTerm);
+    }
+    
+    // Reapply existing filter (used after render)
+    reapplyFilter() {
+        if (this.appState.ui.cardFilter) {
+            this.filterCards(this.appState.ui.cardFilter, this.appState.ui.filterSourcePosition);
+            
+            // Restore filter input values
+            document.querySelectorAll('.filter-input').forEach(input => {
+                if (input.id === `cardFilter${this.appState.ui.filterSourcePosition}`) {
+                    input.value = this.appState.ui.cardFilter;
+                    const clearButton = input.parentElement.querySelector('.btn--clear-filter');
+                    if (clearButton) {
+                        clearButton.style.display = 'flex';
+                    }
+                }
+            });
+        }
+    }
+
+    updateFilterIndicator(searchTerm) {
+        const totalCards = this.appState.activities.length;
+        const visibleCards = document.querySelectorAll('.card:not(.management-card):not([style*="display: none"])').length;
+        
+        // Update filter inputs with result count
+        document.querySelectorAll('.filter-input').forEach(input => {
+            if (searchTerm) {
+                input.setAttribute('data-results', `${visibleCards}/${totalCards}`);
+                input.classList.add('filter-input--active');
+            } else {
+                input.removeAttribute('data-results');
+                input.classList.remove('filter-input--active');
+            }
+        });
+    }
+
+    // Management card filtering methods
+    hideOtherManagementCards(activePosition) {
+        console.log('Hiding other management cards, active position:', activePosition);
+        document.querySelectorAll('.management-card').forEach(card => {
+            const isActiveCard = card.classList.contains(`management-card--${activePosition}`);
+            console.log('Card classes:', card.className, 'Is active?', isActiveCard);
+            if (!isActiveCard) {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    showAllManagementCards() {
+        console.log('Showing all management cards');
+        document.querySelectorAll('.management-card').forEach(card => {
+            card.style.display = '';
+        });
+    }
+
+    // ENHANCED CLEAR PROGRESS FUNCTIONALITY
+    showClearProgressConfirmation() {
+        if (confirm('Clear all progress? This will:\n• Mark Recurring cards as incomplete\n• Hide Frequent cards and move to bottom\n• Delete Single Use cards')) {
+            
+            // 0.25 second delay before processing
+            setTimeout(() => {
+                const counts = this.processCardsForNewDay();
+                
+                // Re-render to show changes
                 this.render();
+                
+                // Show sorting wave animation
+                this.showSortingWaveAnimation(counts);
+                
+            }, 250); // 0.25 second delay as requested
+        }
+    }
+
+    // New method to handle the card processing and reorganization
+    processCardsForNewDay() {
+        const activeCards = [];      // recurring + single-use (stay visible and on top)
+        const frequentCards = [];    // move to bottom and hide
+        let deletedCount = 0;
+        let hiddenCount = 0;
+        
+        this.appState.activities.forEach((activity) => {
+            const cardType = activity.cardType || 'recurring';
+            
+            switch (cardType) {
+                case 'recurring':
+                    // Mark as incomplete and keep at top
+                    activeCards.push({
+                        ...activity,
+                        completed: false
+                    });
+                    break;
+                    
+                case 'frequent':
+                    // Mark as incomplete, hide, and move to bottom
+                    frequentCards.push({
+                        ...activity,
+                        completed: false,
+                        visible: false
+                    });
+                    hiddenCount++;
+                    break;
+                    
+                case 'single-use':
+                    // Delete by not adding to any array
+                    deletedCount++;
+                    break;
+                    
+                default:
+                    // Fallback to recurring behavior
+                    activeCards.push({
+                        ...activity,
+                        completed: false
+                    });
+            }
+        });
+        
+        // Rebuild array: active cards first (maintaining their order), then hidden frequent cards
+        this.appState.activities = [...activeCards, ...frequentCards];
+        
+        // Trigger save
+        this.appState._triggerSave();
+        
+        return { frequentCount: hiddenCount, deletedCount };
+    }
+
+    // New method for the sorting wave animation
+    showSortingWaveAnimation(counts) {
+        const { frequentCount, deletedCount } = counts;
+        
+        // Get all visible activity cards (not management cards)
+        const cards = document.querySelectorAll('.card:not(.management-card):not(.card--hidden)');
+        
+        // Apply sorting wave animation with 0.25s delay after confirmation
+        cards.forEach((card, index) => {
+            setTimeout(() => {
+                // Add highlight effect
+                card.style.transform = 'scale(1.02)';
+                card.style.boxShadow = '0 8px 24px rgba(102, 126, 234, 0.3)';
+                card.style.transition = 'all 0.15s ease-out';
+                
+                // Remove highlight after brief moment
+                setTimeout(() => {
+                    card.style.transform = '';
+                    card.style.boxShadow = '';
+                    card.style.transition = '';
+                }, 150);
+            }, index * 50); // Stagger each card by 50ms for wave effect
+        });
+        
+        // Show success message after animation completes
+        const totalAnimationTime = cards.length * 50 + 150;
+        setTimeout(() => {
+            this.showDayResetSuccess(frequentCount, deletedCount);
+        }, totalAnimationTime);
+    }
+
+    // New method for the success feedback
+    showDayResetSuccess(frequentCount, deletedCount) {
+        let message = '✨ Day reset! Ready for new routine.';
+        let details = [];
+        
+        if (frequentCount > 0) {
+            details.push(`${frequentCount} frequent card${frequentCount > 1 ? 's' : ''} moved to bottom`);
+        }
+        if (deletedCount > 0) {
+            details.push(`${deletedCount} single-use card${deletedCount > 1 ? 's' : ''} deleted`);
+        }
+        
+        if (details.length > 0) {
+            message += '\n' + details.join(' • ');
+        }
+        
+        // Use a simple toast-like notification
+        this.showSuccessToast(message);
+    }
+
+    // New method for the success toast
+    showSuccessToast(message) {
+        // Create toast element
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: #28a745;
+            color: white;
+            padding: 16px 24px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            font-size: 0.9rem;
+            font-weight: 500;
+            z-index: 10001;
+            max-width: 90vw;
+            text-align: center;
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+            white-space: pre-line;
+        `;
+        
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+            toast.style.opacity = '1';
+        });
+        
+        // Auto-remove after 4 seconds
+        setTimeout(() => {
+            toast.style.transform = 'translateX(-50%) translateY(100px)';
+            toast.style.opacity = '0';
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.parentNode.removeChild(toast);
+                }
+            }, 300);
+        }, 4000);
+    }
+
+    // Card editing is now handled via modal - these methods are simplified
+    startCardEdit(index, focusField = null) {
+        if (this.appState.ui.editMode) {
+            const activity = this.appState.activities[index];
+            if (activity) {
+                const modal = ComponentBuilder.showModalCard(false, activity, index);
+                
+                // Focus on specific field if requested
+                if (focusField) {
+                    setTimeout(() => {
+                        let targetInput = null;
+                        switch (focusField) {
+                            case 'title':
+                                targetInput = document.getElementById(`editTitle${index}`);
+                                break;
+                            case 'description':
+                                targetInput = document.getElementById(`editDescription${index}`);
+                                break;
+                            case 'time':
+                                targetInput = document.getElementById(`editTime${index}`);
+                                break;
+                            case 'emoji':
+                                targetInput = document.getElementById(`cardEmoji${index}`);
+                                break;
+                        }
+                        
+                        if (targetInput) {
+                            targetInput.focus();
+                            // Select text for text inputs (but not time inputs)
+                            if (focusField === 'title' || focusField === 'description') {
+                                targetInput.select();
+                            }
+                        }
+                    }, 100); // Wait for modal to be fully rendered
+                }
             }
         }
     }
 
     cancelCardEdit() {
         this.appState.ui.editingCardIndex = -1;
-        this.render();
+        ComponentBuilder.closeModalCard();
     }
 
     saveCardEdit(index) {
         const titleInput = document.getElementById(`editTitle${index}`);
         const descInput = document.getElementById(`editDescription${index}`);
+        const timeInput = document.getElementById(`editTime${index}`);
         
         if (!titleInput || !descInput) return;
         
         const title = titleInput.value.trim();
         const description = descInput.value.trim();
+        const time = timeInput ? timeInput.value : '';
         
         if (!title) {
             alert('Please enter a title');
             return;
         }
         
-        this.appState.updateActivity(index, { title, description });
+        // Story 1: Card type is handled in the modal component
+        this.appState.updateActivity(index, { title, description, time });
         this.appState.ui.editingCardIndex = -1;
-        this.saveToLocalStorage();
+        ComponentBuilder.closeModalCard();
         this.render();
     }
 
+    // DATA MANAGEMENT
     exportToFile() {
         const data = this.appState.exportData();
         const jsonStr = JSON.stringify(data, null, 2);
@@ -556,7 +1027,6 @@ export class StackMapApp {
             try {
                 const data = JSON.parse(e.target.result);
                 this.appState.importData(data);
-                this.saveToLocalStorage();
                 this.updateTabTitle();
                 this.render();
                 alert('StackMap imported successfully!');
@@ -569,6 +1039,7 @@ export class StackMapApp {
         event.target.value = '';
     }
 
+    // LOCAL STORAGE
     saveToLocalStorage() {
         const data = this.appState.exportData();
         try {
@@ -593,3 +1064,6 @@ export class StackMapApp {
         return false;
     }
 }
+
+// Make available globally
+window.StackMapApp = StackMapApp;

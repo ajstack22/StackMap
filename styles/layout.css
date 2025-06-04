@@ -12,17 +12,7 @@
 
 /* ===== HEADER LAYOUT ===== */
 .static-header {
-    width: 100%;
-    text-align: center !important;
-    padding: 5px 0 30px 0 !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    box-sizing: border-box !important;
-    position: relative;
-    z-index: 1;
+    display: none !important;
 }
 
 .fixed-header {
@@ -31,35 +21,57 @@
     left: 0 !important;
     right: 0 !important;
     width: 100vw !important;
-    background: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%) !important;
-    background-size: 100% 100vh !important;
-    background-position: 0 0 !important;
+    background: var(--background-gradient-start) !important; /* Solid color, no gradient */
     text-align: center !important;
-    padding: 20px 0 !important;
+    padding: 10px 0 20px 0 !important; /* Reduced top and bottom padding by 10px */
     z-index: 999 !important;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.2) !important;
-    border-bottom: 1px solid rgba(255,255,255,0.2) !important;
+    box-shadow: none !important;
+    border-bottom: none !important;
     margin: 0 !important;
-    display: none !important;
+    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
-    opacity: 0 !important;
-    transition: opacity 0.4s ease !important;
-    pointer-events: none !important;
-    visibility: hidden !important;
 }
 
-.fixed-header.visible {
-    display: flex !important;
-    opacity: 1 !important;
-    pointer-events: all !important;
-    visibility: visible !important;
+/* Inner shadow creating the slot effect */
+.fixed-header::before {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: calc(var(--container-max-width) + 20%); /* Extended 20% wider */
+    max-width: calc(100% - 20px);
+    height: 10px; /* Narrower shadow */
+    background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 100%); /* Darker shadow */
+    pointer-events: none;
+    z-index: 1;
+    -webkit-mask-image: linear-gradient(to right, 
+        transparent 0%, 
+        black 25%, 
+        black 75%, 
+        transparent 100%);
+    mask-image: linear-gradient(to right, 
+        transparent 0%, 
+        black 25%, 
+        black 75%, 
+        transparent 100%);
+}
+
+/* Container for title and subtitle to handle button alignment */
+.header-text-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
 }
 
 /* ===== HEADER TITLES ===== */
-.fixed-header .title {
+.fixed-header .title,
+.static-header .title {
     color: white !important;
     font-size: var(--title-size) !important;
     margin: 0 !important;
@@ -74,10 +86,11 @@
     font-weight: 700 !important;
 }
 
-.fixed-header .subtitle {
+.fixed-header .subtitle,
+.static-header .subtitle {
     color: #f0f0f0 !important;
     font-size: var(--subtitle-size) !important;
-    margin: 2px 0 0 0 !important;
+    margin: -2px 0 0 0 !important; /* Reduced gap between title and subtitle */
     transition: all var(--transition-fast);
     padding: 3px 8px !important;
     border-radius: 8px;
@@ -88,20 +101,6 @@
     max-width: calc(100vw - 140px) !important;
     font-weight: 500 !important;
     text-shadow: none !important;
-}
-
-.title {
-    color: white !important;
-    font-size: var(--title-size) !important;
-    margin: 0 !important;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
-    transition: all var(--transition-fast);
-    padding: 3px 8px !important;
-    border-radius: 8px;
-    display: block !important;
-    text-align: center !important;
-    width: auto !important;
-    max-width: calc(100vw - 140px) !important;
 }
 
 .title[contenteditable="true"] {
@@ -116,20 +115,6 @@ body.grownup-mode .title {
 
 body.grownup-mode .title:hover {
     background: rgba(255,255,255,0.1);
-}
-
-.subtitle {
-    color: #f0f0f0 !important;
-    font-size: var(--subtitle-size) !important;
-    margin: 2px 0 0 0 !important;
-    transition: all var(--transition-fast);
-    padding: 3px 8px !important;
-    border-radius: 8px;
-    min-height: 1.2rem;
-    display: block !important;
-    text-align: center !important;
-    width: auto !important;
-    max-width: calc(100vw - 140px) !important;
 }
 
 .subtitle[contenteditable="true"] {
@@ -159,8 +144,202 @@ body.grownup-mode .subtitle:hover {
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
     position: fixed;
-    width: 50px;
-    height: 50px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    box-shadow: var(--card-shadow);
+    z-index: 1000;
+    background: white;
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border: none;
+    outline: none;
+}
+
+.btn--floating:hover {
+    background: rgba(255, 255, 255, 0.95);
+    color: var(--primary-dark);
+    transform: scale(1.1);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.btn--floating:active,
+.btn--floating:focus {
+    background: white;
+    color: var(--primary-color);
+    outline: none;
+    border: none;
+}
+
+/* Dynamic button positioning based on subtitle */
+.btn--preferences {
+    left: 20px;
+    position: fixed !important;
+    transition: top 0.3s ease;
+}
+
+.btn--grownup-mode {
+    right: 20px;
+    position: fixed !important;
+    transition: top 0.3s ease;
+}
+
+/* Default: center on title only */
+.btn--preferences,
+.btn--grownup-mode {
+    top: 32px; /* Centered on title height */
+}
+
+/* When subtitle is present, center on both */
+body.has-subtitle .btn--preferences,
+body.has-subtitle .btn--grownup-mode {
+    top: 40px; /* Centered on title + subtitle height */
+}
+
+/* ===== PANEL POSITIONING ===== */
+.preferences-panel {
+    position: fixed !important;
+    top: 120px !important;
+    left: 20px !important;
+    right: 20px !important;
+    background: white !important;
+    border-radius: var(--card-border-radius);
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    z-index: 999 !important;
+    min-width: 280px;
+    max-width: 320px;
+    max-height: calc(100vh - 140px) !important;
+    overflow-y: auto !important;
+    transition: top 0.3s ease;
+    width: auto !important;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    .btn--floating {
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    .btn--preferences {
+        left: 15px !important;
+    }
+    
+    .btn--grownup-mode {
+        right: 15px !important;
+    }
+    
+    /* Adjust button positions for mobile */
+    .btn--preferences,
+    .btn--grownup-mode {
+        top: 28px;
+    }
+    
+    body.has-subtitle .btn--preferences,
+    body.has-subtitle .btn--grownup-mode {
+        top: 36px;
+    }
+    
+    .preferences-panel {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: none !important;
+        min-width: auto !important;
+        width: auto !important;
+        top: 100px !important;
+        max-height: calc(100vh - 120px) !important;
+        margin: 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Very small screens */
+}
+
+/* ===== HEADER TITLES ===== */
+.fixed-header .title,
+.static-header .title {
+    color: white !important;
+    font-size: var(--title-size) !important;
+    margin: 0 !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
+    transition: all var(--transition-fast);
+    padding: 3px 8px !important;
+    border-radius: 8px;
+    display: block !important;
+    text-align: center !important;
+    width: auto !important;
+    max-width: calc(100vw - 140px) !important;
+    font-weight: 700 !important;
+}
+
+.fixed-header .subtitle,
+.static-header .subtitle {
+    color: #f0f0f0 !important;
+    font-size: var(--subtitle-size) !important;
+    margin: 2px 0 0 0 !important;
+    transition: all var(--transition-fast);
+    padding: 3px 8px !important;
+    border-radius: 8px;
+    min-height: 1.2rem;
+    display: block !important;
+    text-align: center !important;
+    width: auto !important;
+    max-width: calc(100vw - 140px) !important;
+    font-weight: 500 !important;
+    text-shadow: none !important;
+}
+
+.title[contenteditable="true"] {
+    background: rgba(255,255,255,0.2);
+    outline: 2px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+}
+
+body.grownup-mode .title {
+    cursor: pointer;
+}
+
+body.grownup-mode .title:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.subtitle[contenteditable="true"] {
+    background: rgba(255,255,255,0.2);
+    outline: 2px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+}
+
+body.grownup-mode .subtitle {
+    cursor: pointer;
+}
+
+body.grownup-mode .subtitle:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+.subtitle:empty::before {
+    content: attr(data-placeholder);
+    color: rgba(255,255,255,0.6);
+    font-style: italic;
+}
+
+.subtitle:focus:empty::before {
+    content: "";
+}
+
+/* ===== FLOATING BUTTON POSITIONING ===== */
+.btn--floating {
+    position: fixed;
+    width: 56px;
+    height: 56px;
     border-radius: 50%;
     box-shadow: var(--card-shadow);
     z-index: 1000;
@@ -204,47 +383,6 @@ body.grownup-mode .subtitle:hover {
     position: fixed !important;
 }
 
-.btn--sync-status {
-    top: 25px;
-    left: 80px;
-    position: fixed !important;
-    background: white;
-    color: #27ae60;
-}
-
-.btn--sync-status--warning {
-    color: #f39c12 !important;
-}
-
-.btn--sync-status--error {
-    color: #e74c3c !important;
-}
-
-.btn--sync-status--syncing {
-    color: #3498db !important;
-}
-
-.btn--sync-status:hover {
-    background: rgba(255, 255, 255, 0.95);
-    color: #229954;
-    transform: scale(1.1);
-}
-
-.btn--sync-status--warning:hover {
-    color: #e67e22 !important;
-    transform: scale(1.1);
-}
-
-.btn--sync-status--error:hover {
-    color: #c0392b !important;
-    transform: scale(1.1);
-}
-
-.btn--sync-status--syncing:hover {
-    color: #2980b9 !important;
-    transform: scale(1.1);
-}
-
 /* ===== PANEL POSITIONING ===== */
 .preferences-panel {
     position: fixed !important;
@@ -266,4 +404,40 @@ body.grownup-mode .subtitle:hover {
 
 body.fixed-header-visible .preferences-panel {
     top: 80px !important;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    .btn--floating {
+        width: 48px !important;
+        height: 48px !important;
+        top: 20px !important;
+    }
+    
+    .btn--preferences {
+        left: 15px !important;
+    }
+    
+    .btn--grownup-mode {
+        right: 15px !important;
+    }
+    
+    .preferences-panel {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: none !important;
+        min-width: auto !important;
+        width: auto !important;
+        top: 100px !important;
+        max-height: calc(100vh - 120px) !important;
+        margin: 0 !important;
+    }
+    
+    body.fixed-header-visible .preferences-panel {
+        top: 70px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Very small screens */
 }

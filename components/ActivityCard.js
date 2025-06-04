@@ -1,9 +1,5 @@
-// components/ActivityCard.js - All activity card rendering and interaction logic
-// === ACTIVITY CARD COMPONENT ===
-import { ComponentBuilder } from './ComponentBuilder.js';
-import { EmojiPicker } from './EmojiPicker.js';
-
-export class ActivityCard {
+// components/ActivityCard.js - Activity card rendering and interaction logic
+class ActivityCard {
     constructor(activity, index, appState, renderer, app) {
         this.activity = activity;
         this.index = index;
@@ -22,8 +18,17 @@ export class ActivityCard {
             { 'data-index': this.index }
         );
 
+        // CARD CLICK BEHAVIOR
         if (!editMode) {
+            // Child mode: click to complete
             card.onclick = (e) => this.handleClick(e);
+        } else {
+            // Grown-up mode: click to edit (but not if already editing)
+            if (!isEditing) {
+                card.onclick = (e) => this.handleEditClick(e);
+                card.style.cursor = 'pointer';
+                card.title = 'Click to edit this card';
+            }
         }
 
         this.setupDragAndDrop(card);
@@ -34,7 +39,7 @@ export class ActivityCard {
             // Insert emoji picker directly
             const slot = card.querySelector('.emoji-picker-slot');
             if (slot) {
-                const picker = EmojiPicker.createEmojiPicker(
+                const picker = ComponentBuilder.createEmojiPicker(
                     this.activity.icon,
                     (emoji) => {
                         this.activity.icon = emoji;
@@ -45,41 +50,21 @@ export class ActivityCard {
                 );
                 slot.replaceWith(picker);
             }
+            
+            // Focus on title input after render on mobile
+            if (window.innerWidth <= 768) {
+                setTimeout(() => {
+                    const titleInput = document.getElementById(`editTitle${this.index}`);
+                    if (titleInput) {
+                        titleInput.focus();
+                    }
+                }, 100);
+            }
         } else {
             card.innerHTML = this.renderViewMode(backgroundColor, showNumbers);
-            
-            // Add direct emoji editing in edit mode
-            if (editMode) {
-                const iconElement = card.querySelector('.card__icon');
-                if (iconElement) {
-                    iconElement.classList.add('card__icon--editable');
-                    iconElement.title = 'Click to change emoji';
-                    iconElement.style.cursor = 'pointer';
-                    
-                    iconElement.addEventListener('click', (e) => {
-                        e.stopPropagation();
-                        this.promptEmojiChange();
-                    });
-                }
-            }
         }
 
         return card;
-    }
-    
-    promptEmojiChange() {
-        const newEmoji = prompt('Enter a new emoji:', this.activity.icon);
-        if (newEmoji && newEmoji.trim()) {
-            // Extract first emoji from input
-            const emojiMatch = newEmoji.match(/(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u);
-            if (emojiMatch) {
-                this.activity.icon = emojiMatch[0];
-                this.appState._triggerSave();
-                this.renderer.render();
-            } else {
-                alert('Please enter a valid emoji');
-            }
-        }
     }
 
     renderViewMode(backgroundColor, showNumbers) {
@@ -112,27 +97,30 @@ export class ActivityCard {
     }
 
     renderEditButtons() {
-        const isEditing = this.appState.ui.editingCardIndex === this.index;
-        
-        // If this card is being edited, show cancel button instead of edit
-        const editButton = isEditing 
-            ? `<button class="btn btn--round btn--edit" onclick="appInstance.cancelCardEdit()" aria-label="Cancel edit" title="Cancel edit">
-                <span class="material-icons">close</span>
-              </button>`
-            : `<button class="btn btn--round btn--edit" onclick="appInstance.startCardEdit(${this.index})" aria-label="Edit card" title="Edit card">
-                <span class="material-icons">edit</span>
-              </button>`;
+        // FIXED: Top-left button should be completion checkbox in grown-up mode
+        const checkboxIcon = '✓';
+        const checkboxBg = this.activity.completed ? 'var(--primary-color)' : '#e8e8e8';
+        const checkboxColor = this.activity.completed ? 'white' : '#999';
         
         return `
-            ${editButton}
+            <button class="btn btn--round btn--checkbox" 
+                    style="top: 10px; left: 15px; background: ${checkboxBg}; color: ${checkboxColor}; font-size: 1.35rem; font-weight: 900; font-family: inherit; line-height: 1; padding: 0;" 
+                    onclick="event.stopPropagation(); appInstance.toggleGrownupCompletion(${this.index})" 
+                    aria-label="Toggle completion" title="${this.activity.completed ? 'Mark incomplete' : 'Mark complete'}">✓</button>
+            
             <button class="btn btn--round btn--visibility ${!this.activity.visible ? 'btn--visibility--hidden' : ''}" 
-                    onclick="appInstance.toggleVisibility(${this.index})" aria-label="Toggle visibility" title="${this.activity.visible ? 'Hide from routine' : 'Show in routine'}">
+                    style="top: 10px; right: 15px;"
+                    onclick="event.stopPropagation(); appInstance.toggleVisibility(${this.index})" aria-label="Toggle visibility" title="${this.activity.visible ? 'Hide from routine' : 'Show in routine'}">
                 <span class="material-icons">${this.activity.visible ? 'visibility' : 'visibility_off'}</span>
             </button>
-            <button class="btn btn--round btn--duplicate" onclick="appInstance.duplicateActivity(${this.index})" aria-label="Duplicate card" title="Make a copy">
+            <button class="btn btn--round btn--duplicate" 
+                    style="bottom: 10px; right: 15px;"
+                    onclick="event.stopPropagation(); appInstance.duplicateActivity(${this.index})" aria-label="Duplicate card" title="Make a copy">
                 <span class="material-icons">content_copy</span>
             </button>
-            <button class="btn btn--round btn--delete" onclick="appInstance.deleteActivity(${this.index})" aria-label="Delete card" title="Delete card">
+            <button class="btn btn--round btn--delete" 
+                    style="bottom: 10px; left: 15px;"
+                    onclick="event.stopPropagation(); appInstance.deleteActivity(${this.index})" aria-label="Delete card" title="Delete card">
                 <span class="material-icons">delete</span>
             </button>
         `;
@@ -143,9 +131,31 @@ export class ActivityCard {
         return visibleActivities.indexOf(this.activity);
     }
 
+    // CHILD MODE: Click to complete
     handleClick(e) {
         if (!e.target.closest('.card').classList.contains('card--dragging')) {
             this.toggleComplete();
+        }
+    }
+
+    // GROWN-UP MODE: Click to edit
+    handleEditClick(e) {
+        // Don't trigger edit if clicking on buttons
+        if (e.target.closest('button')) {
+            return;
+        }
+        
+        // Prevent default to avoid any mobile browser behaviors
+        e.preventDefault();
+        e.stopPropagation();
+        
+        // Add a small delay on mobile to ensure smooth transition
+        if (window.innerWidth <= 768) {
+            setTimeout(() => {
+                this.app.startCardEdit(this.index);
+            }, 50);
+        } else {
+            this.app.startCardEdit(this.index);
         }
     }
 
@@ -160,6 +170,9 @@ export class ActivityCard {
         card.classList.toggle('card--completed');
 
         if (!wasCompleted) {
+            // Apply theme to newly completed card
+            this.renderer.applyThemeToCompletedCard(card);
+            
             // Check if all visible cards are now completed
             const visibleActivities = this.appState.activities.filter(a => a.visible);
             const allCards = document.querySelectorAll('.card:not(.card--hidden)');
@@ -183,8 +196,23 @@ export class ActivityCard {
     setupDragAndDrop(card) {
         if (!card) return;
         
-        card.draggable = true;
+        // Disable drag on mobile devices
+        const isMobile = window.innerWidth <= 768;
         
+        card.draggable = !isMobile;
+        
+        if (isMobile) {
+            // On mobile, prevent any drag behavior
+            card.addEventListener('touchstart', (e) => {
+                if (this.appState.ui.editMode) {
+                    // Allow touch but prevent drag
+                    card.draggable = false;
+                }
+            }, { passive: true });
+            return;
+        }
+        
+        // Desktop drag and drop implementation
         card.addEventListener('dragstart', (e) => {
             if (!this.appState.ui.editMode) {
                 e.preventDefault();

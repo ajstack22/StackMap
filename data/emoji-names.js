@@ -1,5 +1,5 @@
 // data/emoji-names.js - Emoji Keyword Mapping for Search Functionality
-export const EMOJI_NAMES = {
+const EMOJI_NAMES = {
     // Faces & Emotions
     '😀': 'happy grinning smile face joy cheerful grin',
     '😃': 'happy big smile face joy cheerful grin open mouth',

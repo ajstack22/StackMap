@@ -78,6 +78,29 @@
     justify-content: center;
     position: absolute;
     padding: 0;
+    z-index: 10; /* Ensure buttons are above card */
+    touch-action: manipulation; /* Improve touch handling */
+    -webkit-tap-highlight-color: transparent; /* Remove tap highlight on mobile */
+}
+
+/* Increase touch target size on mobile */
+@media (max-width: 768px) {
+    .btn--round {
+        width: 44px;
+        height: 44px;
+        /* Add invisible touch area */
+        position: absolute;
+    }
+    
+    .btn--round::before {
+        content: '';
+        position: absolute;
+        top: -5px;
+        left: -5px;
+        right: -5px;
+        bottom: -5px;
+        z-index: -1;
+    }
 }
 
 .btn--edit {
@@ -131,6 +154,14 @@
 
 .btn--delete:hover {
     background: #c0392b;
+}
+
+/* Ensure Material Icons don't interfere with button clicks */
+.btn--round .material-icons {
+    font-size: 20px;
+    margin: 0;
+    pointer-events: none; /* Prevent icon from capturing clicks */
+    user-select: none;
 }
 
 /* Floating Buttons - Maximum specificity to override browser defaults */
@@ -214,17 +245,13 @@ button.btn.btn--floating .material-icons,
     line-height: 1 !important;
     vertical-align: middle !important;
     display: inline-block !important;
+    pointer-events: none !important;
 }
 
 /* General material icons */
 .material-icons {
     vertical-align: middle;
     margin-right: 4px;
-}
-
-.btn--round .material-icons {
-    font-size: 20px;
-    margin: 0;
 }
 
 .spinning {

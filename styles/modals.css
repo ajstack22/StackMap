@@ -204,76 +204,88 @@
     color: var(--primary-dark);
 }
 
-/* ===== MODAL ANIMATIONS ===== */
-@keyframes welcomeFadeIn {
-    from {
-        opacity: 0;
-        backdrop-filter: blur(0px);
-    }
-    to {
-        opacity: 1;
-        backdrop-filter: blur(4px);
-    }
+/* ===== STORY 1: MODAL CARD TYPE FIELD STYLES ===== */
+/* These styles are specifically for the card type selection in modal cards */
+
+.modal-card-type-field {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e8e8e8;
 }
 
-@keyframes welcomeFadeOut {
-    from {
-        opacity: 1;
-        backdrop-filter: blur(4px);
-    }
-    to {
-        opacity: 0;
-        backdrop-filter: blur(0px);
-    }
+.modal-card-type-field__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-color, #333);
+    font-size: 0.95rem;
 }
 
-@keyframes welcomeSlideIn {
-    from {
-        transform: translateY(30px) scale(0.95);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0) scale(1);
-        opacity: 1;
-    }
+.modal-card-type-field__label .material-icons {
+    font-size: 18px;
+    color: var(--primary-color, #667eea);
 }
 
-@keyframes welcomeLogoPulse {
-    0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.05); }
+.modal-card-type-field__options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
 }
 
-/* ===== MODAL RESPONSIVE STYLES ===== */
-@media (max-width: 768px) {
-    .validation-content {
-        padding: 20px;
-    }
+.btn--card-type {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    border: 2px solid #e8e8e8;
+    background: white;
+    border-radius: 12px;
+    min-height: 44px;
+    min-width: 80px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    flex: 1;
+    max-width: 120px;
+}
 
-    .welcome-content {
-        padding: 24px;
-        border-radius: 20px;
-        max-width: calc(100vw - 20px);
-    }
-    
-    .welcome-content h2 {
-        font-size: 1.7rem;
-    }
-    
-    .welcome-message p {
-        font-size: 1rem;
-    }
-    
-    .welcome-step {
-        padding: 12px;
-        margin-bottom: 12px;
-    }
-    
-    .welcome-step p {
-        font-size: 0.9rem;
-    }
-    
-    .toast {
-        max-width: calc(100vw - 40px);
-        font-size: 0.9rem;
-    }
+.btn--card-type:hover {
+    border-color: var(--primary-color, #667eea);
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.btn--card-type--selected {
+    border-color: var(--primary-color, #667eea);
+    background: var(--primary-color, #667eea);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn--card-type--selected:hover {
+    background: var(--primary-dark, #5a6fd8);
+    border-color: var(--primary-dark, #5a6fd8);
+}
+
+.btn--card-type .material-icons {
+    font-size: 18px;
+    margin-bottom: 2px;
+    opacity: 0.8;
+}
+
+.btn--card-type--selected .material-icons {
+    opacity: 1;
+}
+
+.btn--card-type span:last-child {
+    font-weight: 600;
+    text-transform: capitalize;
+    line-height: 1.2;
 }

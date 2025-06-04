@@ -1,8 +1,7 @@
 // components/EmojiPicker.js - Enhanced Emoji Picker with Unified Search
 // === EMOJI PICKER COMPONENT ===
-import { ComponentBuilder } from './ComponentBuilder.js';
 
-export class EmojiPicker {
+class EmojiPicker {
     static createEmojiPicker(selectedEmoji, onEmojiSelect, filterId) {
         const picker = ComponentBuilder.createElement('div', 'emoji-picker');
         

@@ -4,29 +4,32 @@
 @media (max-width: 768px) {
     :root {
         --title-size: 1.8rem;
-        --card-padding: 15px;
+        --card-padding: 20px;
     }
     
     body {
-        padding: 15px 10px 100px 10px !important;
+        padding: 15px 5px 100px 5px !important; /* Reduced side padding */
     }
     
-    .static-header {
-        padding: 15px 0 15px 0 !important;
-    }
-    
+    /* Fixed header is now always visible - removed hiding rules */
     .fixed-header {
         padding: 15px 0 !important;
-        opacity: 0 !important;
-        transition: opacity 0.4s ease !important;
-        pointer-events: none !important;
-        visibility: hidden !important;
     }
     
-    .fixed-header.visible {
-        opacity: 1 !important;
-        pointer-events: all !important;
-        visibility: visible !important;
+    /* Mobile shadow - taper starts closer to edges */
+    .fixed-header::before {
+        width: 100vw !important;
+        max-width: 100vw !important;
+        -webkit-mask-image: linear-gradient(to right, 
+            transparent 0%, 
+            black 5%, 
+            black 95%, 
+            transparent 100%) !important;
+        mask-image: linear-gradient(to right, 
+            transparent 0%, 
+            black 5%, 
+            black 95%, 
+            transparent 100%) !important;
     }
     
     .fixed-header .title {
@@ -57,18 +60,48 @@
         max-width: calc(100vw - 120px);
     }
     
+    /* AGGRESSIVE MOBILE GRID OVERRIDE - WITH PROPER SPACING */
     .main-container {
-        grid-template-columns: 1fr;
-        gap: 15px;
-        padding: 0 5px;
-        width: 100%;
-        max-width: 100%;
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: stretch !important;
+        gap: 16px !important; /* Proper spacing between cards */
+        padding: 0 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        box-sizing: border-box !important;
+        /* Completely kill any grid properties */
+        grid-template-columns: none !important;
+        grid-template-rows: none !important;
+        grid-gap: 0 !important;
+        grid-auto-columns: none !important;
+        grid-auto-rows: none !important;
+    }
+    
+    /* FORCE CARDS TO FULL WIDTH - REFINED */
+    .main-container > .card,
+    .main-container > .new-card, 
+    .main-container > .edit-info-card,
+    .main-container > .panel {
+        flex: none !important;
+        width: calc(100vw - 30px) !important; /* Bit more breathing room */
+        max-width: calc(100vw - 30px) !important;
+        min-width: 0 !important;
+        margin: 0 15px !important; /* More balanced margins */
+        box-sizing: border-box !important;
+        /* Kill any flex/grid child properties */
+        grid-column: none !important;
+        grid-row: none !important;
+        justify-self: stretch !important;
+        align-self: stretch !important;
     }
     
     .panel {
         max-width: calc(100vw - 20px);
         margin: 15px 10px;
         padding: 15px;
+        width: calc(100% - 20px); /* Make panels wider too */
     }
     
     .emoji-picker {
@@ -115,50 +148,21 @@
         font-size: 28px !important;
     }
     
+    /* Adjusted button positions for permanent fixed header */
     .btn--preferences {
-        top: 25px !important;
+        top: 20px !important;
         left: 15px !important;
     }
     
     .btn--grownup-mode {
-        top: 25px !important;
+        top: 20px !important;
         right: 15px !important;
     }
     
-    body.fixed-header-visible .btn--preferences {
-        top: 15px !important;
-    }
-    
-    body.fixed-header-visible .btn--sync-status {
-        top: 15px !important;
-    }
-
-    body.fixed-header-visible .btn--grownup-mode {
-        top: 15px !important;
-    }
-    
-    body.has-subtitle .btn--preferences {
-        top: 40px !important;
-    }
-    
-    body.has-subtitle .btn--sync-status {
-        top: 40px !important;
-    }
-
+    /* Dynamic positioning based on subtitle */
+    body.has-subtitle .btn--preferences,
     body.has-subtitle .btn--grownup-mode {
-        top: 40px !important;
-    }
-
-    body.fixed-header-visible.has-subtitle .btn--preferences {
-        top: 30px !important;
-    }
-    
-    body.fixed-header-visible.has-subtitle .btn--sync-status {
-        top: 30px !important;
-    }
-
-    body.fixed-header-visible.has-subtitle .btn--grownup-mode {
-        top: 30px !important;
+        top: 36px !important;
     }
     
     .preferences-panel {
@@ -170,10 +174,6 @@
         top: 100px !important;
         max-height: calc(100vh - 120px) !important;
         margin: 0 !important;
-    }
-    
-    body.fixed-header-visible .preferences-panel {
-        top: 70px !important;
     }
     
     .validation-content {
@@ -264,6 +264,89 @@
         max-width: calc(100vw - 40px);
         font-size: 0.9rem;
     }
+    
+    /* Card-specific mobile styles - MUCH more compact and proportional */
+    .card {
+        padding: 16px !important; /* Back to reasonable padding */
+    }
+    
+    /* Maintain consistent sizing on mobile - both indicators stay 45px */
+    .card::before {
+        width: 45px;
+        height: 45px;
+        top: 12px;
+        left: 12px;
+    }
+    
+    .card--completed::before {
+        font-size: 18px;
+    }
+    
+    .card__number {
+        width: 45px;
+        height: 45px;
+        top: 12px;
+        right: 12px;
+        font-size: 1.6rem;
+    }
+    
+    .card__icon {
+        font-size: 3rem !important; /* Normal size icon */
+        height: 60px !important; /* Normal height */
+        margin-bottom: 10px !important; /* Normal spacing */
+        margin-top: 10px !important;
+    }
+    
+    .card__title {
+        font-size: 1.4rem !important; /* Normal title size */
+        margin-bottom: 6px !important;
+    }
+    
+    .card__description {
+        font-size: 1rem !important; /* Normal description */
+        line-height: 1.3 !important;
+        margin-bottom: 0 !important;
+    }
+    
+    /* FIXED: Mobile button positioning */
+    .btn--edit {
+        left: 12px; /* Always left in grown-up mode */
+        top: 10px;
+    }
+    
+    /* Child mode mobile positioning */
+    body:not(.grownup-mode) .btn--edit {
+        left: 65px; /* Offset in child mode when completion indicators might be visible */
+    }
+    
+    /* When completion indicators are hidden in child mode on mobile */
+    body:not(.grownup-mode).hide-completion-indicators .btn--edit {
+        left: 12px !important;
+    }
+    
+    .btn--visibility {
+        right: 12px;
+        top: 10px;
+    }
+    
+    .btn--duplicate {
+        right: 12px;
+        bottom: 10px;
+    }
+    
+    .btn--delete {
+        left: 12px;
+        bottom: 10px;
+    }
+    
+    .btn--round {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .btn--round .material-icons {
+        font-size: 16px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -272,25 +355,12 @@
     }
     
     body {
-        padding: 10px 5px 80px 5px;
+        padding: 10px 2px 80px 2px !important; /* Even less side padding on very small screens */
     }
     
-    .static-header {
-        padding: 10px 0 20px 0;
-    }
-    
+    /* Fixed header is always visible on very small screens too */
     .fixed-header {
         padding: 8px 0;
-        opacity: 0 !important;
-        transition: opacity 0.4s ease !important;
-        pointer-events: none !important;
-        visibility: hidden !important;
-    }
-    
-    .fixed-header.visible {
-        opacity: 1 !important;
-        pointer-events: all !important;
-        visibility: visible !important;
     }
     
     .title {
@@ -305,6 +375,41 @@
         max-width: calc(100vw - 100px);
     }
     
+    /* EVEN MORE REFINED FOR VERY SMALL SCREENS */
+    .main-container {
+        gap: 14px !important; /* Slightly tighter spacing on very small screens */
+    }
+    
+    .main-container > .card,
+    .main-container > .new-card, 
+    .main-container > .edit-info-card,
+    .main-container > .panel {
+        width: calc(100vw - 20px) !important; /* Slightly wider on very small screens */
+        max-width: calc(100vw - 20px) !important;
+        margin: 0 10px !important;
+    }
+    
+    .card {
+        padding: 14px !important; /* Reasonable padding on tiny screens */
+    }
+    
+    .card__icon {
+        font-size: 2.6rem !important; /* Reasonable size on tiny screens */
+        height: 55px !important;
+        margin-bottom: 8px !important;
+        margin-top: 8px !important;
+    }
+    
+    .card__title {
+        font-size: 1.3rem !important;
+        margin-bottom: 5px !important;
+    }
+    
+    .card__description {
+        font-size: 0.95rem !important;
+        line-height: 1.25 !important;
+    }
+    
     .panel {
         max-width: calc(100vw - 10px);
         margin: 15px 5px;
@@ -312,5 +417,65 @@
     
     .preferences-panel {
         max-height: calc(100vh - 100px) !important;
+    }
+    
+    /* Maintain consistent indicator sizing even on very small screens */
+    .card::before {
+        width: 40px;
+        height: 40px;
+        top: 10px;
+        left: 10px;
+    }
+    
+    .card--completed::before {
+        font-size: 16px;
+    }
+    
+    .card__number {
+        width: 40px;
+        height: 40px;
+        top: 10px;
+        right: 10px;
+        font-size: 1.3rem; /* Slightly smaller for proportion */
+    }
+    
+    /* FIXED: Very small screen button positioning */
+    .btn--edit {
+        left: 10px; /* Always left in grown-up mode */
+        top: 8px;
+    }
+    
+    /* Child mode very small screen positioning */
+    body:not(.grownup-mode) .btn--edit {
+        left: 58px; /* Offset in child mode when completion indicators might be visible */
+    }
+    
+    /* When completion indicators are hidden in child mode on very small screens */
+    body:not(.grownup-mode).hide-completion-indicators .btn--edit {
+        left: 10px !important;
+    }
+    
+    .btn--visibility {
+        right: 10px;
+        top: 8px;
+    }
+    
+    .btn--duplicate {
+        right: 10px;
+        bottom: 8px;
+    }
+    
+    .btn--delete {
+        left: 10px;
+        bottom: 8px;
+    }
+    
+    .btn--round {
+        width: 28px;
+        height: 28px;
+    }
+    
+    .btn--round .material-icons {
+        font-size: 14px;
     }
 }

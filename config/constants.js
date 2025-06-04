@@ -1,11 +1,23 @@
 // config/constants.js - Core Configuration Constants
-export const CONFIG = {
+const CONFIG = {
     MAX_TITLE_LENGTH: 30,
     MAX_DESCRIPTION_LENGTH: 50,
-    MAX_ACTIVITIES: 50,
+    MAX_ACTIVITIES: 75,
     ANIMATION_DURATION: 300,
     CONFETTI_COUNT: 75,
     DEFAULT_EMOJI: '⭐',
+    DEFAULT_COLOR: '#667eea',
+    DATA_VERSION: '1.0',
+    
+    // Display mode options for card badges
+    DISPLAY_MODES: {
+        NONE: 'none',           // No badge shown
+        NUMBERS: 'numbers',     // Sequential numbers (1, 2, 3...)
+        TIMES: 'times'          // Time badges (8:00 AM, etc.)
+    },
+    
+    // Default settings
+    SHOW_COMPLETION_DEFAULT: true,
     
     // Google Drive API Configuration
     // IMPORTANT: Replace these with your actual Google Cloud Console credentials

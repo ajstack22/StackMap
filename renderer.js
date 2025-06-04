@@ -1,6 +1,5 @@
+// renderer.js - Application rendering logic with management cards and edit mode info card removed
 // === MAIN RENDERER ===
-// Components are loaded globally via module imports in index.html
-
 class AppRenderer {
     constructor(appState, app) {
         this.appState = appState;
@@ -17,8 +16,8 @@ class AppRenderer {
 
     updateHeader() {
         const { title, subtitle, isDefaultTitle } = this.appState.settings;
-        const titleElement = document.getElementById('mainTitle');
-        const subtitleElement = document.getElementById('subtitle');
+        const titleElement = document.getElementById('fixedTitle');
+        const subtitleElement = document.getElementById('fixedSubtitle');
         
         // Only update text content if not currently being edited
         if (titleElement && titleElement.contentEditable !== "true") {
@@ -68,7 +67,7 @@ class AppRenderer {
     updateButtonPositioning() {
         const { subtitle } = this.appState.settings;
         const { grownupMode } = this.app;
-        const hasSubtitle = subtitle.trim() || grownupMode; // Show positioning for subtitle area if in grown-up mode or has subtitle content
+        const hasSubtitle = (subtitle && subtitle.trim()) || grownupMode;
         
         if (hasSubtitle) {
             document.body.classList.add('has-subtitle');
@@ -80,49 +79,45 @@ class AppRenderer {
     renderActivities() {
         if (!this.container) return;
         
+        // Clear container
         this.container.innerHTML = '';
         
+        // Add a spacer div at the very beginning to push cards down
+        const spacer = document.createElement('div');
+        const isMobile = window.innerWidth <= 768;
+        spacer.style.height = isMobile ? '75px' : '120px';
+        spacer.style.width = '100%';
+        spacer.style.gridColumn = '1 / -1';
+        this.container.appendChild(spacer);
+        
+        // Create a document fragment for better performance
+        const fragment = document.createDocumentFragment();
+        
         if (this.appState.ui.editMode) {
-            // Render edit mode components first
-            this.renderEditModeComponents();
+            // REMOVED: Edit mode info card completely eliminated
+            
+            // Show top management card instead of old new card button
+            if (this.appState.ui.showingNewCardForm === 'top') {
+                fragment.appendChild(this.createActivityGenerator('top'));
+            } else {
+                fragment.appendChild(ComponentBuilder.createManagementCard('top'));
+            }
         }
 
-        // Then render all activity cards
-        this.renderActivityCards();
+        // Render activity cards
+        this.renderActivityCards(fragment);
         
-        // Add bottom new card button/form if in edit mode
-        if (this.appState.ui.editMode && this.appState.ui.showingNewCardForm !== 'bottom') {
-            this.container.appendChild(this.createNewCardButton('bottom'));
-        } else if (this.appState.ui.editMode && this.appState.ui.showingNewCardForm === 'bottom') {
-            this.container.appendChild(this.createActivityGenerator('bottom'));
-        }
-    }
-
-    renderEditModeComponents() {
-        // Show info card when NOT creating a new card
-        if (!this.appState.ui.showingNewCardForm) {
-            const infoCard = this.createEditModeInfoCard();
-            this.container.appendChild(infoCard);
+        // Show bottom management card instead of old new card button in edit mode
+        if (this.appState.ui.editMode) {
+            if (this.appState.ui.showingNewCardForm === 'bottom') {
+                fragment.appendChild(this.createActivityGenerator('bottom'));
+            } else {
+                fragment.appendChild(ComponentBuilder.createManagementCard('bottom'));
+            }
         }
         
-        // Show top new card button or form
-        if (this.appState.ui.showingNewCardForm === 'top') {
-            this.container.appendChild(this.createActivityGenerator('top'));
-        } else {
-            this.container.appendChild(this.createNewCardButton('top'));
-        }
-    }
-
-    createEditModeInfoCard() {
-        const infoCard = ComponentBuilder.createElement('div', 'card edit-info-card');
-        
-        infoCard.innerHTML = `
-            <div class="card__icon">⚙️</div>
-            <div class="card__title">Grown-up Mode</div>
-            <div class="card__description">Rename the title and subtitle of the page above. Create, edit, rearrange, and delete cards below.</div>
-        `;
-        
-        return infoCard;
+        // Append all at once
+        this.container.appendChild(fragment);
     }
 
     createNewCardButton(position) {
@@ -145,7 +140,7 @@ class AppRenderer {
         const { selectedEmoji } = this.appState.ui;
 
         panel.innerHTML = `
-            <div class="card__icon card__icon--editable" id="newActivityIcon" style="font-size: 3rem; height: 60px; margin-bottom: 10px; margin-top: 5px;" title="Click to change emoji">${selectedEmoji}</div>
+            <div class="card__icon" id="newActivityIcon" style="font-size: 3rem; height: 60px; margin-bottom: 10px; margin-top: 5px;">${selectedEmoji}</div>
             <div class="emoji-picker-slot" id="newEmojiSlot"></div>
             <div style="margin-top: 12px;">
                 <input type="text" class="form-field form-field--title" 
@@ -164,32 +159,13 @@ class AppRenderer {
         // Insert emoji picker directly
         const slot = panel.querySelector('#newEmojiSlot');
         if (slot) {
-            const picker = EmojiPicker.createEmojiPicker(
+            const picker = ComponentBuilder.createEmojiPicker(
                 selectedEmoji,
                 (emoji) => this.app.selectNewEmoji(emoji),
                 'newActivityEmoji'
             );
             slot.replaceWith(picker);
         }
-        
-        // Add direct emoji editing
-        setTimeout(() => {
-            const iconElement = document.getElementById('newActivityIcon');
-            if (iconElement) {
-                iconElement.addEventListener('click', () => {
-                    const newEmoji = prompt('Enter a new emoji:', this.appState.ui.selectedEmoji);
-                    if (newEmoji && newEmoji.trim()) {
-                        // Extract first emoji from input
-                        const emojiMatch = newEmoji.match(/(\p{Emoji_Presentation}|\p{Emoji}\uFE0F)/u);
-                        if (emojiMatch) {
-                            this.app.selectNewEmoji(emojiMatch[0]);
-                        } else {
-                            alert('Please enter a valid emoji');
-                        }
-                    }
-                });
-            }
-        }, 0);
         
         // Add focus/blur handlers to clear placeholders
         setTimeout(() => {
@@ -218,7 +194,7 @@ class AppRenderer {
         return panel;
     }
 
-    renderActivityCards() {
+    renderActivityCards(fragment) {
         const activitiesToShow = this.appState.ui.editMode 
             ? this.appState.activities 
             : this.appState.activities.filter(activity => activity.visible);
@@ -228,26 +204,13 @@ class AppRenderer {
             const card = new ActivityCard(activity, originalIndex, this.appState, this, this.app);
             const cardElement = card.render();
             
-            // RESTORE COMPLETION STATE
+            // Apply completed state if needed
             if (activity.completed) {
                 cardElement.classList.add('card--completed');
             }
             
-            // Ensure clean state for drag and drop
-            cardElement.style.transform = '';
-            cardElement.style.transition = '';
-            cardElement.classList.remove('card--dragging', 'card--drop-target', 'card--droppable', 'card--shifting');
-            
-            this.container.appendChild(cardElement);
+            fragment.appendChild(cardElement);
         });
-    }
-
-    // HELPER METHOD FOR COLOR CONVERSION
-    hexToRgba(hex, alpha) {
-        const r = parseInt(hex.slice(1, 3), 16);
-        const g = parseInt(hex.slice(3, 5), 16);
-        const b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
     }
 
     updateUIState() {
@@ -378,3 +341,6 @@ class AppRenderer {
         }
     }
 }
+
+// Make available globally
+window.AppRenderer = AppRenderer;

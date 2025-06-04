@@ -1,0 +1,480 @@
+/* ===== MODAL CARD STYLES - FIXED BUTTON LAYOUT ===== */
+
+.modal-card-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(4px);
+    animation: modalFadeIn 0.3s ease-out;
+}
+
+.modal-card-overlay--closing {
+    animation: modalFadeOut 0.3s ease-out forwards;
+}
+
+/* FIXED: Modal card container with proper padding */
+.modal-card {
+    background: white;
+    border-radius: 24px;
+    padding: 24px;
+    max-width: 450px;
+    width: 90%;
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    animation: modalSlideIn 0.4s ease-out;
+    box-sizing: border-box;
+    margin: 20px;
+}
+
+.modal-card__header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.modal-card__title {
+    color: var(--primary-color);
+    font-size: 1.6rem;
+    margin: 0;
+    font-weight: 700;
+}
+
+.modal-card__icon {
+    font-size: 4rem;
+    text-align: center;
+    margin: 16px 0;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-card__icon:hover {
+    transform: scale(1.1);
+}
+
+/* Modal form fields */
+.modal-form-field {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-family: inherit;
+    margin-bottom: 12px;
+    transition: all 0.2s ease;
+    box-sizing: border-box;
+}
+
+.modal-form-field:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
+.modal-form-field--title {
+    font-size: 1.3rem;
+    font-weight: 600;
+    text-align: center;
+}
+
+.modal-form-field--description {
+    font-size: 1rem;
+    text-align: center;
+}
+
+.modal-form-field--time {
+    font-size: 1rem;
+}
+
+/* Time field */
+.modal-time-field {
+    margin-bottom: 16px;
+}
+
+.modal-time-field__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #333;
+}
+
+.modal-time-field__label .material-icons {
+    font-size: 18px;
+}
+
+.modal-time-field__input-group {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.modal-time-field__clear {
+    background: #f0f0f0;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    color: #666;
+    transition: all 0.2s ease;
+}
+
+.modal-time-field__clear:hover {
+    background: #dc3545;
+    color: white;
+}
+
+/* Emoji picker in modal */
+.modal-emoji-picker {
+    margin: 12px 0;
+    background: #f8f9fa;
+    border: 2px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 12px;
+}
+
+.modal-emoji-picker__filter {
+    width: 100%;
+    padding: 10px 14px;
+    border: 2px solid #e8e8e8;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    margin-bottom: 8px;
+    box-sizing: border-box;
+}
+
+.modal-emoji-picker__filter:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+
+.modal-emoji-picker__hint {
+    font-size: 0.75rem;
+    color: #666;
+    text-align: center;
+    margin-bottom: 10px;
+    font-style: italic;
+}
+
+.modal-emoji-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 4px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.modal-emoji-picker__option {
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    padding: 6px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 32px;
+}
+
+.modal-emoji-picker__option:hover {
+    background: white;
+    border-color: var(--primary-color);
+    transform: scale(1.1);
+}
+
+.modal-emoji-picker__option--selected {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+/* Card type field */
+.modal-card-type-field {
+    margin-top: 16px;
+    padding: 16px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    border: 1px solid #e8e8e8;
+}
+
+.modal-card-type-field__label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-weight: 600;
+    color: var(--text-color, #333);
+    font-size: 0.95rem;
+}
+
+.modal-card-type-field__label .material-icons {
+    font-size: 18px;
+    color: var(--primary-color, #667eea);
+}
+
+.modal-card-type-field__options {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.btn--card-type {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 12px 16px;
+    border: 2px solid #e8e8e8;
+    background: white;
+    border-radius: 12px;
+    min-height: 44px;
+    min-width: 80px;
+    font-size: 0.85rem;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    flex: 1;
+    max-width: 120px;
+}
+
+.btn--card-type:hover {
+    border-color: var(--primary-color, #667eea);
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
+}
+
+.btn--card-type--selected {
+    border-color: var(--primary-color, #667eea);
+    background: var(--primary-color, #667eea);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn--card-type--selected:hover {
+    background: var(--primary-dark, #5a6fd8);
+    border-color: var(--primary-dark, #5a6fd8);
+}
+
+.btn--card-type .material-icons {
+    font-size: 18px;
+    margin-bottom: 2px;
+    opacity: 0.8;
+}
+
+.btn--card-type--selected .material-icons {
+    opacity: 1;
+}
+
+.btn--card-type span:last-child {
+    font-weight: 600;
+    text-transform: capitalize;
+    line-height: 1.2;
+}
+
+/* FIXED: Modal button layout - prevent overflow */
+.modal-card__actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    margin-top: 20px;
+    padding: 0 16px; /* Add padding to prevent edge overflow */
+    flex-wrap: wrap; /* Allow wrapping on very small screens */
+}
+
+.modal-card__actions .btn {
+    flex: 1;
+    min-width: 120px; /* Ensure minimum button size */
+    max-width: 150px; /* Prevent buttons from getting too wide */
+    padding: 12px 16px;
+    box-sizing: border-box;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-card__actions .btn--primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.modal-card__actions .btn--primary:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.modal-card__actions .btn--secondary {
+    background: #f0f0f0;
+    color: #666;
+}
+
+.modal-card__actions .btn--secondary:hover {
+    background: #e0e0e0;
+    color: #333;
+    transform: translateY(-1px);
+}
+
+/* FIXED: Mobile responsiveness for modal buttons */
+@media (max-width: 480px) {
+    .modal-card {
+        padding: 20px 16px;
+        width: 95%;
+        margin: 10px;
+    }
+    
+    .modal-card__actions {
+        flex-direction: column;
+        padding: 0 12px;
+        gap: 8px;
+    }
+    
+    .modal-card__actions .btn {
+        width: 100%;
+        max-width: none;
+        min-width: auto;
+    }
+    
+    .modal-card-type-field {
+        margin: 12px -4px 0;
+        padding: 12px;
+    }
+    
+    .modal-card-type-field__options {
+        flex-direction: column;
+    }
+    
+    .btn--card-type {
+        flex-direction: row;
+        justify-content: flex-start;
+        min-width: 100%;
+        max-width: none;
+        gap: 8px;
+    }
+    
+    .btn--card-type .material-icons {
+        margin-bottom: 0;
+        margin-right: 4px;
+    }
+}
+
+@media (max-width: 768px) {
+    .modal-card {
+        width: 92%;
+        margin: 15px;
+    }
+    
+    .modal-card__title {
+        font-size: 1.4rem;
+    }
+    
+    .modal-card__icon {
+        font-size: 3.5rem;
+        height: 70px;
+    }
+}
+
+/* Animations */
+@keyframes modalFadeIn {
+    from {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+    to {
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+}
+
+@keyframes modalFadeOut {
+    from {
+        opacity: 1;
+        backdrop-filter: blur(4px);
+    }
+    to {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+    }
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(30px) scale(0.95);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
+}
+
+/* Ensure accessibility focus indicators */
+.btn--card-type:focus {
+    outline: 2px solid var(--primary-color, #667eea);
+    outline-offset: 2px;
+}
+
+.btn--card-type:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .btn--card-type {
+        border-width: 3px;
+    }
+    
+    .btn--card-type--selected {
+        border-color: var(--primary-color, #667eea);
+        background: var(--primary-color, #667eea);
+        color: white;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .btn--card-type {
+        transition: none;
+    }
+    
+    .btn--card-type:hover {
+        transform: none;
+    }
+    
+    .btn--card-type--selected {
+        transform: none;
+    }
+    
+    .modal-card-overlay {
+        animation: none;
+    }
+    
+    .modal-card {
+        animation: none;
+    }
+}

@@ -1,0 +1,417 @@
+/* styles/photos.css - Photo-specific styles for PhotoMap */
+/* Maintains StackMap's gentle, child-friendly aesthetic */
+
+/* ===== PHOTO CARD STYLES ===== */
+.photo-card {
+    background: white;
+    border-radius: var(--card-border-radius);
+    overflow: hidden;
+    box-shadow: var(--card-shadow);
+    transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+    border: 4px solid transparent;
+    position: relative;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+}
+
+.photo-card:hover {
+    transform: translateY(-5px);
+    box-shadow: var(--card-shadow-hover);
+}
+
+.photo-card--hidden {
+    opacity: 0.4;
+    filter: grayscale(0.5);
+}
+
+.photo-card--favorite {
+    border-color: #FFD700;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+}
+
+.photo-card--selected {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.4);
+}
+
+.photo-card--dragging {
+    opacity: 0.5;
+    transform: rotate(5deg);
+    cursor: grabbing;
+    z-index: 1000;
+}
+
+.photo-card--droppable {
+    border: 4px dashed var(--primary-color);
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.photo-card--drop-target {
+    border: 4px solid var(--primary-color);
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-3px);
+}
+
+/* Photo image container */
+.photo-card__image-container {
+    width: 100%;
+    padding-top: 75%; /* 4:3 aspect ratio */
+    position: relative;
+    background: #f5f5f5;
+    overflow: hidden;
+}
+
+/* Photo info section */
+.photo-card__info {
+    padding: 15px;
+    text-align: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.photo-card__title {
+    color: #333;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 5px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.photo-card__date {
+    color: #999;
+    font-size: 0.85rem;
+    margin-bottom: 3px;
+}
+
+.photo-card__album {
+    color: #666;
+    font-size: 0.9rem;
+    font-style: italic;
+}
+
+/* Favorite indicator */
+.photo-card__favorite {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    font-size: 1.5rem;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    z-index: 10;
+    animation: favorite-pulse 2s ease-in-out infinite;
+}
+
+@keyframes favorite-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* ===== PROGRESSIVE IMAGE STYLES ===== */
+.progressive-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+}
+
+.progressive-image__thumbnail,
+.progressive-image__full {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.progressive-image__thumbnail {
+    filter: blur(10px);
+    transform: scale(1.1); /* Prevent blur edges from showing */
+}
+
+.progressive-image__full {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out;
+}
+
+.progressive-image__full--loaded {
+    opacity: 1;
+}
+
+.progressive-image--loaded .progressive-image__thumbnail {
+    opacity: 0;
+    transition: opacity 0.5s ease-in-out 0.2s;
+}
+
+/* Loading spinner */
+.progressive-image__spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    opacity: 0.8;
+}
+
+.spinner-ring {
+    display: inline-block;
+    width: 40px;
+    height: 40px;
+}
+
+.spinner-ring div {
+    box-sizing: border-box;
+    display: block;
+    position: absolute;
+    width: 32px;
+    height: 32px;
+    margin: 4px;
+    border: 3px solid var(--primary-color);
+    border-radius: 50%;
+    animation: spinner-ring 1.2s cubic-bezier(0.5, 0, 0.5, 1) infinite;
+    border-color: var(--primary-color) transparent transparent transparent;
+}
+
+.spinner-ring div:nth-child(1) { animation-delay: -0.45s; }
+.spinner-ring div:nth-child(2) { animation-delay: -0.3s; }
+.spinner-ring div:nth-child(3) { animation-delay: -0.15s; }
+
+@keyframes spinner-ring {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error state */
+.progressive-image--error .progressive-image__thumbnail {
+    filter: grayscale(1) brightness(0.5);
+}
+
+.progressive-image__error {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    color: #999;
+    font-size: 0.9rem;
+}
+
+.progressive-image__error .material-icons {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 5px;
+}
+
+/* ===== PHOTO GRID STYLES ===== */
+.photo-grid-container {
+    width: 100%;
+}
+
+.photo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 20px 0;
+}
+
+/* Grid controls */
+.photo-grid-controls {
+    background: white;
+    border-radius: var(--card-border-radius);
+    padding: 15px;
+    margin-bottom: 20px;
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    align-items: center;
+}
+
+.photo-grid-controls__group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.photo-grid-controls__group label {
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+}
+
+.form-field--small {
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    min-width: 150px;
+}
+
+/* Empty state */
+.photo-grid-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: #666;
+}
+
+.photo-grid-empty__icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.photo-grid-empty__icon .material-icons {
+    font-size: inherit;
+}
+
+.photo-grid-empty h2,
+.photo-grid-empty h3 {
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.photo-grid-empty p {
+    font-size: 1.1rem;
+    margin-bottom: 20px;
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.photo-grid-empty__hint {
+    font-style: italic;
+    color: #999;
+}
+
+/* Load more trigger for infinite scroll */
+.photo-grid-load-trigger {
+    grid-column: 1 / -1;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ===== UPLOAD PROGRESS OVERLAY ===== */
+.upload-progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.upload-progress-overlay--closing {
+    animation: fadeOut 0.3s ease-out forwards;
+}
+
+.upload-progress-content {
+    background: white;
+    border-radius: var(--card-border-radius);
+    padding: 30px;
+    text-align: center;
+    box-shadow: var(--card-shadow-hover);
+}
+
+.upload-progress-spinner {
+    margin-bottom: 20px;
+}
+
+/* ===== PHOTO CELEBRATION PARTICLES ===== */
+.photo-particle {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 1000;
+}
+
+/* ===== RESPONSIVE STYLES ===== */
+@media (max-width: 768px) {
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 15px;
+    }
+    
+    .photo-card__title {
+        font-size: 1rem;
+    }
+    
+    .photo-card__date,
+    .photo-card__album {
+        font-size: 0.8rem;
+    }
+    
+    .photo-grid-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .photo-grid-controls__group {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    .form-field--small {
+        flex: 1;
+    }
+}
+
+@media (max-width: 480px) {
+    .photo-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 10px;
+    }
+    
+    .photo-card__info {
+        padding: 10px;
+    }
+    
+    .photo-card__title {
+        font-size: 0.9rem;
+    }
+    
+    .photo-card__date,
+    .photo-card__album {
+        font-size: 0.75rem;
+    }
+}
+
+/* ===== BUTTON STYLES FOR PHOTO CARDS ===== */
+.btn--favorite {
+    top: 10px;
+    right: 50px;
+    background: #FFD700;
+    color: white;
+}
+
+.btn--favorite:hover {
+    background: #FFC700;
+    transform: scale(1.1);
+}
+
+.btn--favorite--active {
+    background: #FFD700;
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

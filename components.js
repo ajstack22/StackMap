@@ -1,9 +1,23 @@
-// components.js - Component builder and UI components with modal card support
+// components.js - Component builder and UI components with card type icons integration
 // === COMPONENT BUILDER ===
 // NO ES6 IMPORTS - This file is loaded via script tag
 
 // The emoji data is loaded from emoji-list.js and emoji-names.js
 // They should be available as global constants EMOJIS and EMOJI_NAMES
+
+// Card Type Icons Mapping - Centralized configuration
+const CARD_TYPE_ICONS = {
+    'recurring': 'refresh',
+    'frequent': 'star',
+    'single-use': 'event'
+};
+
+// Card Type Labels - For accessibility and display
+const CARD_TYPE_LABELS = {
+    'recurring': 'Recurring',
+    'frequent': 'Frequent', 
+    'single-use': 'Single Use'
+};
 
 class ComponentBuilder {
     static createElement(tag, className, attributes = {}) {
@@ -56,7 +70,79 @@ class ComponentBuilder {
         return card;
     }
 
-    // Create modal card overlay for new/edit activity
+    // STORY 2: Management Card Component - FIXED AESTHETICS
+    static createManagementCard(position = 'top') {
+        const card = this.createElement('div', `card management-card management-card--${position}`);
+        
+        card.innerHTML = `
+            <div class="management-card__header">
+                <div class="management-card__icon">📝</div>
+                <div class="management-card__title">Edit Mode</div>
+            </div>
+            
+            <div class="management-card__actions">
+                <button class="btn btn--management btn--add-card" 
+                        onclick="appInstance.openNewCardForm('${position}')"
+                        title="Add new activity card">
+                    <span class="material-icons">add</span>
+                    <span>Add Card</span>
+                </button>
+                
+                <button class="btn btn--management btn--clear-progress" 
+                        onclick="appInstance.showClearProgressConfirmation()"
+                        title="Mark all cards as incomplete">
+                    <span class="material-icons">restart_alt</span>
+                    <span>Clear Progress</span>
+                </button>
+                
+                <div class="management-card__filter">
+                    <div class="filter-input-group">
+                        <span class="material-icons filter-icon">search</span>
+                        <input type="text" 
+                               class="filter-input" 
+                               id="cardFilter${position}" 
+                               placeholder="Type to find cards..."
+                               maxlength="50">
+                        <button class="btn btn--icon btn--clear-filter" 
+                                id="clearFilter${position}"
+                                style="display: none;"
+                                title="Clear filter">
+                            <span class="material-icons">close</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        // Set up filter functionality
+        setTimeout(() => {
+            const filterInput = card.querySelector(`#cardFilter${position}`);
+            const clearButton = card.querySelector(`#clearFilter${position}`);
+            
+            if (filterInput && clearButton) {
+                filterInput.addEventListener('input', (e) => {
+                    const value = e.target.value.trim();
+                    appInstance.filterCards(value, position);
+                    
+                    if (value) {
+                        clearButton.style.display = 'flex';
+                    } else {
+                        clearButton.style.display = 'none';
+                    }
+                });
+                
+                clearButton.addEventListener('click', () => {
+                    filterInput.value = '';
+                    appInstance.filterCards('', position);
+                    filterInput.focus();
+                });
+            }
+        }, 0);
+        
+        return card;
+    }
+
+    // Create modal card overlay for new/edit activity with card type support - FIXED BUTTON LAYOUT
     static createModalCard(isNewCard = true, activity = null, index = -1, selectedEmoji = CONFIG.DEFAULT_EMOJI) {
         const overlay = this.createElement('div', 'modal-card-overlay');
         overlay.id = 'modalCardOverlay';
@@ -83,11 +169,27 @@ class ComponentBuilder {
         const titleValue = isNewCard ? '' : activity.title;
         const descValue = isNewCard ? '' : activity.description;
         const timeValue = isNewCard ? '' : (activity.time || '');
+        const cardType = isNewCard ? 'recurring' : (activity.cardType || 'recurring'); // Story 1
         const titleId = isNewCard ? 'newActivityTitle' : `editTitle${index}`;
         const descId = isNewCard ? 'newActivityDescription' : `editDescription${index}`;
         const timeId = isNewCard ? 'newActivityTime' : `editTime${index}`;
         const iconId = isNewCard ? 'newActivityIcon' : `editIcon${index}`;
         const filterId = isNewCard ? 'newCardEmoji' : `cardEmoji${index}`;
+        
+        // INTEGRATED: Generate card type buttons using the centralized icons
+        const cardTypeButtons = Object.keys(CARD_TYPE_ICONS).map(type => {
+            const icon = CARD_TYPE_ICONS[type];
+            const label = CARD_TYPE_LABELS[type];
+            const selectedClass = cardType === type ? 'btn--card-type--selected' : '';
+            
+            return `
+                <button type="button" class="btn btn--card-type ${selectedClass}" 
+                        data-card-type="${type}">
+                    <span class="material-icons">${icon}</span>
+                    <span>${label}</span>
+                </button>
+            `;
+        }).join('');
         
         modalCard.innerHTML = `
             <div class="modal-card__header">
@@ -117,6 +219,16 @@ class ComponentBuilder {
                     ${timeValue ? `<button type="button" class="modal-time-field__clear" 
                                           onclick="document.getElementById('${timeId}').value = ''; document.getElementById('${timeId}').focus();"
                                           title="Clear time">Clear</button>` : ''}
+                </div>
+            </div>
+            
+            <div class="modal-card-type-field">
+                <div class="modal-card-type-field__label">
+                    <span class="material-icons">category</span>
+                    <span>Card Type</span>
+                </div>
+                <div class="modal-card-type-field__options">
+                    ${cardTypeButtons}
                 </div>
             </div>
             
@@ -156,6 +268,40 @@ class ComponentBuilder {
                 );
                 slot.replaceWith(picker);
             }
+            
+            // FIXED: Set up card type selection with proper state management
+            const cardTypeButtons = modalCard.querySelectorAll('.btn--card-type');
+            cardTypeButtons.forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // FIXED: Clear previous selection and update visual state
+                    cardTypeButtons.forEach(btn => btn.classList.remove('btn--card-type--selected'));
+                    button.classList.add('btn--card-type--selected');
+                    
+                    // Store selected card type
+                    const selectedType = button.getAttribute('data-card-type');
+                    if (isNewCard) {
+                        // Store in UI state for new cards
+                        if (window.appInstance) {
+                            window.appInstance.selectedCardType = selectedType;
+                        }
+                    } else {
+                        // Update activity directly for edit mode
+                        if (appInstance.appState.activities[index]) {
+                            appInstance.appState.activities[index].cardType = selectedType;
+                            // FIXED: Trigger save to persist changes
+                            appInstance.appState._triggerSave();
+                        }
+                    }
+                    
+                    // FIXED: Provide visual feedback
+                    button.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        button.style.transform = '';
+                    }, 150);
+                });
+            });
             
             // Focus on title input
             const titleInput = document.getElementById(titleId);
@@ -359,6 +505,25 @@ class ComponentBuilder {
         const displayMinutes = minutes.toString().padStart(2, '0');
         
         return `${displayHours}:${displayMinutes} ${period}`;
+    }
+
+    // INTEGRATED: Get card type icon - centralized method
+    static getCardTypeIcon(cardType) {
+        return CARD_TYPE_ICONS[cardType] || CARD_TYPE_ICONS['recurring'];
+    }
+
+    // INTEGRATED: Get card type label - centralized method
+    static getCardTypeLabel(cardType) {
+        return CARD_TYPE_LABELS[cardType] || CARD_TYPE_LABELS['recurring'];
+    }
+
+    // INTEGRATED: Get all card type options for UI generation
+    static getCardTypeOptions() {
+        return Object.keys(CARD_TYPE_ICONS).map(type => ({
+            type,
+            icon: CARD_TYPE_ICONS[type],
+            label: CARD_TYPE_LABELS[type]
+        }));
     }
 }
 
@@ -648,7 +813,10 @@ class ActivityCard {
         
         const card = ComponentBuilder.createElement('div', 
             `card ${completedClass} ${hiddenClass}`, 
-            { 'data-index': this.index }
+            { 
+                'data-index': this.index,
+                'data-card-type': this.activity.cardType || 'recurring' // FIXED: Add card type for CSS styling
+            }
         );
 
         // CARD CLICK BEHAVIOR - Updated to respect completion indicators setting
@@ -677,6 +845,7 @@ class ActivityCard {
 
     renderViewMode(backgroundColor, displayMode) {
         const { editMode } = this.appState.ui;
+        const { showCompletionIndicators } = this.appState.settings;
         const displayIndex = this.getDisplayIndex();
         
         // Generate badge content based on display mode
@@ -705,18 +874,14 @@ class ActivityCard {
             }
         }
         
-        // Make fields clickable in edit mode
-        const iconClickHandler = editMode ? `onclick="event.stopPropagation(); appInstance.startCardEdit(${this.index}, 'emoji')" style="cursor: pointer;" title="Click to edit emoji"` : '';
-        const titleClickHandler = editMode ? `onclick="event.stopPropagation(); appInstance.startCardEdit(${this.index}, 'title')" style="cursor: pointer;" title="Click to edit title"` : '';
-        const descClickHandler = editMode ? `onclick="event.stopPropagation(); appInstance.startCardEdit(${this.index}, 'description')" style="cursor: pointer;" title="Click to edit description"` : '';
-        
         return `
             ${badgeContent}
             ${editMode ? this.renderEditButtons() : ''}
             ${editMode && this.activity.time && this.activity.time.trim() ? this.renderEditTimePill(backgroundColor) : ''}
-            <div class="card__icon" ${iconClickHandler}>${this.activity.icon}</div>
-            <div class="card__title" ${titleClickHandler}>${this.activity.title}</div>
-            <div class="card__description" ${descClickHandler}>${this.activity.description}</div>
+            ${editMode ? this.renderCardTypeIndicator() : ''}
+            <div class="card__icon">${this.activity.icon}</div>
+            <div class="card__title">${this.activity.title}</div>
+            <div class="card__description">${this.activity.description}</div>
         `;
     }
 
@@ -728,24 +893,24 @@ class ActivityCard {
         
         return `
             <button class="btn btn--round btn--checkbox" 
-                    style="top: 10px; left: 15px; background: ${checkboxBg}; color: ${checkboxColor}; font-size: 1.35rem; font-weight: 900; font-family: inherit; line-height: 1; padding: 0;" 
+                    style="top: 15px; left: 15px; background: ${checkboxBg}; color: ${checkboxColor}; font-size: 1.35rem; font-weight: 900; font-family: inherit; line-height: 1; padding: 0;" 
                     onclick="event.stopPropagation(); appInstance.toggleGrownupCompletion(${this.index})" 
                     aria-label="Toggle completion" title="${this.activity.completed ? 'Mark incomplete' : 'Mark complete'}">✓</button>
             
             <button class="btn btn--round btn--visibility ${!this.activity.visible ? 'btn--visibility--hidden' : ''}" 
-                    style="top: 10px; right: 15px;"
+                    style="top: 15px; right: 15px;"
                     onclick="event.stopPropagation(); appInstance.toggleVisibility(${this.index})" 
                     aria-label="Toggle visibility" title="${this.activity.visible ? 'Hide from routine' : 'Show in routine'}">
                 <span class="material-icons">${this.activity.visible ? 'visibility' : 'visibility_off'}</span>
             </button>
             <button class="btn btn--round btn--duplicate" 
-                    style="bottom: 10px; right: 15px;"
+                    style="bottom: 15px; right: 15px;"
                     onclick="event.stopPropagation(); appInstance.duplicateActivity(${this.index})" 
                     aria-label="Duplicate card" title="Make a copy">
                 <span class="material-icons">content_copy</span>
             </button>
             <button class="btn btn--round btn--delete" 
-                    style="bottom: 10px; left: 15px;"
+                    style="bottom: 15px; left: 15px;"
                     onclick="event.stopPropagation(); appInstance.deleteActivity(${this.index})" 
                     aria-label="Delete card" title="Delete card">
                 <span class="material-icons">delete</span>
@@ -753,11 +918,24 @@ class ActivityCard {
         `;
     }
 
+    // INTEGRATED: Use centralized card type configuration
+    renderCardTypeIndicator() {
+        const cardType = this.activity.cardType || 'recurring';
+        const icon = ComponentBuilder.getCardTypeIcon(cardType);
+        const label = ComponentBuilder.getCardTypeLabel(cardType);
+        
+        return `
+            <div class="card__type-indicator" 
+                 onclick="event.stopPropagation(); appInstance.cycleCardType(${this.index})"
+                 title="Card Type: ${label} (Click to cycle)">
+                <span class="material-icons">${icon}</span>
+            </div>
+        `;
+    }
+
     renderEditTimePill(backgroundColor) {
         const formattedTime = ComponentBuilder.formatTime(this.activity.time);
-        return `<div class="card__time-pill--edit" style="background: ${backgroundColor};" 
-                     onclick="event.stopPropagation(); appInstance.startCardEdit(${this.index}, 'time')" 
-                     title="Click to edit time">${formattedTime}</div>`;
+        return `<div class="card__time-pill--edit" style="background: ${backgroundColor};">${formattedTime}</div>`;
     }
 
     getDisplayIndex() {
@@ -975,3 +1153,7 @@ class ActivityCard {
 window.ComponentBuilder = ComponentBuilder;
 window.ActivityCard = ActivityCard;
 window.EmojiPicker = EmojiPicker;
+
+// INTEGRATED: Make card type configuration globally available
+window.CARD_TYPE_ICONS = CARD_TYPE_ICONS;
+window.CARD_TYPE_LABELS = CARD_TYPE_LABELS;

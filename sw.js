@@ -1,29 +1,18 @@
 // StackMap Service Worker - Offline Support for Special Needs Families
-const CACHE_NAME = 'stackmap-v1.0.4';
+const CACHE_NAME = 'stackmap-v1.0.1';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache for offline use - essential for routine continuity
 const urlsToCache = [
   '/',
   '/index.html',
-  '/styles/index.css',
-  '/config/index.js',
-  '/config/constants.js',
-  '/config/themes.js',
-  '/data/emoji-list.js',
-  '/data/emoji-names.js',
-  '/components/index.js',
-  '/components/ComponentBuilder.js',
-  '/components/EmojiPicker.js',
-  '/components/ActivityCard.js',
-  '/components/ColorPicker.js',
-  '/app/StackMapApp.js',
-  '/app/WelcomeManager.js',
-  '/app/PreferencesManager.js',
-  '/app/ValidationManager.js',
+  '/styles.css',
+  '/config.js',
   '/state.js',
+  '/components.js',
   '/renderer.js',
   '/drive-sync.js',
+  '/app.js',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
