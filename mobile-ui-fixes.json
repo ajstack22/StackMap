@@ -1,9 +1,37 @@
 {
   "updates": [
     {
-      "description": "Add mobile styles for management card to prevent filter overlap",
+      "description": "Increase management card bottom spacing to prevent overlap",
       "file": "styles/cards.css",
-      "append": "\n/* Mobile management card fixes */\n@media (max-width: 768px) {\n    /* Fix filter input overlap in management cards */\n    .management-card {\n        margin-bottom: 20px !important;\n        padding-bottom: 20px !important;\n    }\n    \n    .management-card__filter {\n        margin-bottom: 12px !important;\n    }\n    \n    .filter-input-group {\n        margin-bottom: 8px !important;\n    }\n    \n    /* Ensure proper spacing for management card elements */\n    .management-card__actions {\n        display: flex;\n        flex-direction: column;\n        gap: 12px;\n    }\n}"
+      "find": "/* Mobile management card fixes */\n@media (max-width: 768px) {\n    /* Fix filter input overlap in management cards */\n    .management-card {\n        margin-bottom: 20px !important;\n        padding-bottom: 20px !important;\n    }",
+      "replace": "/* Mobile management card fixes */\n@media (max-width: 768px) {\n    /* Fix filter input overlap in management cards */\n    .management-card {\n        margin-bottom: 30px !important; /* Increased spacing */\n        padding-bottom: 20px !important;\n    }",
+      "flexible": true
+    },
+    {
+      "description": "Fix card type buttons padding on mobile",
+      "file": "styles/modal-card.css",
+      "find": "    .btn--card-type {\n        flex-direction: row;\n        justify-content: flex-start;\n        min-width: 100%;\n        max-width: none;\n        gap: 8px;\n    }",
+      "replace": "    .btn--card-type {\n        flex-direction: row;\n        justify-content: flex-start;\n        min-width: 100%;\n        max-width: none;\n        gap: 8px;\n        padding: 14px 16px;\n        min-height: 48px;\n        align-items: center;\n    }",
+      "flexible": true
+    },
+    {
+      "description": "Fix card type field margins on mobile",
+      "file": "styles/modal-card.css",
+      "find": "    .modal-card-type-field {\n        margin: 12px -4px 0;\n        padding: 12px;\n    }",
+      "replace": "    .modal-card-type-field {\n        margin: 16px 0 12px;\n        padding: 12px;\n    }",
+      "flexible": true
+    },
+    {
+      "description": "Improve card type button icons and text on mobile",
+      "file": "styles/modal-card.css",
+      "find": "    .btn--card-type .material-icons {\n        margin-bottom: 0;\n        margin-right: 4px;\n    }",
+      "replace": "    .btn--card-type .material-icons {\n        margin-bottom: 0;\n        margin-right: 8px;\n        font-size: 20px;\n    }\n    \n    .btn--card-type span:last-child {\n        font-size: 0.95rem;\n        flex: 1;\n        text-align: left;\n    }",
+      "flexible": true
+    },
+    {
+      "description": "Add extra spacing rule for cards after management cards",
+      "file": "styles/cards.css",
+      "append": "\n/* Additional mobile spacing fix */\n@media (max-width: 768px) {\n    /* Ensure cards after management cards have proper spacing */\n    .management-card + .card,\n    .management-card + .new-card {\n        margin-top: 15px;\n    }\n    \n    /* Extra bottom padding for filter input group */\n    .management-card .filter-input-group {\n        margin-bottom: 15px !important;\n    }\n}"
     }
   ]
 }

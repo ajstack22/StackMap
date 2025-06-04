@@ -361,7 +361,7 @@
     }
     
     .modal-card-type-field {
-        margin: 16px 0 12px;
+        margin: 12px -4px 0;
         padding: 12px;
     }
     
@@ -375,21 +375,11 @@
         min-width: 100%;
         max-width: none;
         gap: 8px;
-        padding: 14px 16px;
-        min-height: 48px;
-        align-items: center;
     }
     
     .btn--card-type .material-icons {
         margin-bottom: 0;
-        margin-right: 8px;
-        font-size: 20px;
-    }
-    
-    .btn--card-type span:last-child {
-        font-size: 0.95rem;
-        flex: 1;
-        text-align: left;
+        margin-right: 4px;
     }
 }
 
