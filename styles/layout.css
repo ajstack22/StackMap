@@ -69,6 +69,16 @@
     justify-content: center;
 }
 
+/* ===== USER SELECTOR CONTAINER ===== */
+.user-selector-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 4px;
+    min-height: 44px; /* Ensure touch target */
+}
+
 /* ===== HEADER TITLES ===== */
 .fixed-header .title,
 .static-header .title {
@@ -381,6 +391,40 @@ body.grownup-mode .subtitle:hover {
     top: 25px;
     right: 20px;
     position: fixed !important;
+}
+
+/* ===== ADD USER BUTTON ===== */
+.btn--add-user {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: white;
+    color: var(--primary-color);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-width: 44px; /* Touch target */
+    min-height: 44px; /* Touch target */
+    padding: 0;
+}
+
+.btn--add-user:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(1.05);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.btn--add-user .material-icons {
+    font-size: 20px;
+}
+
+/* Hide add user button in child mode */
+body:not(.grownup-mode) .btn--add-user {
+    display: none !important;
 }
 
 /* ===== PANEL POSITIONING ===== */

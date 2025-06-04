@@ -246,12 +246,14 @@
     background: white;
     border-radius: 12px;
     min-height: 44px;
-    min-width: 80px;
-    font-size: 0.85rem;
+    min-width: 120px;
+    max-width: 150px;
+    font-size: 1rem;
+    font-weight: 600;
     transition: all 0.2s ease;
     cursor: pointer;
     flex: 1;
-    max-width: 120px;
+    box-sizing: border-box;
 }
 
 .btn--card-type:hover {
@@ -288,6 +290,7 @@
     font-weight: 600;
     text-transform: capitalize;
     line-height: 1.2;
+    font-size: 1rem;
 }
 
 /* FIXED: Modal button layout - prevent overflow */

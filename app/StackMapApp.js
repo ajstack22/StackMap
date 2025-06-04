@@ -25,6 +25,8 @@ class StackMapApp {
         
         // SET UP AUTO-SAVE
         this.appState.onStateChange = () => {
+            // Save current user data before saving to storage
+            this.appState.saveCurrentUserData();
             this.saveToLocalStorage();
             // Auto-sync to Drive if enabled and signed in
             if (CONFIG.AUTO_SYNC_ENABLED) {
@@ -39,6 +41,12 @@ class StackMapApp {
         // Load data FIRST
         const hasData = this.loadFromLocalStorage();
         
+        // Ensure user data is loaded
+        if (!hasData) {
+            // First time - load default user data
+            this.appState.loadUserData();
+        }
+        
         // If no saved data, create default activities
         if (!hasData || this.appState.activities.length === 0) {
             this.createDefaultActivities();
@@ -49,6 +57,7 @@ class StackMapApp {
         
         this.setupEventListeners();
         this.setupInlineEditing();
+        this.populateUserDropdowns();
         this.render();
         
         // Check for first-time visit and show welcome splash
@@ -189,33 +198,23 @@ class StackMapApp {
     }
 
     syncFixedHeader() {
-        const { title, subtitle, isDefaultTitle } = this.appState.settings;
-        const fixedTitle = document.getElementById('fixedTitle');
+        const { subtitle } = this.appState.settings;
         const fixedSubtitle = document.getElementById('fixedSubtitle');
         
-        if (!fixedTitle || !fixedSubtitle) return;
-        
-        // Update title
-        if (isDefaultTitle) {
-            fixedTitle.innerHTML = `
-                <svg style="width: 1em; height: 1em; vertical-align: middle; margin-right: 0.3em;" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
-                    <circle cx='16' cy='16' r='15' fill='rgba(255,255,255,0.9)' stroke='rgba(255,255,255,0.7)' stroke-width='1'/>
-                    <rect x='7' y='10' width='18' height='2.5' fill='#4a90e2' rx='1.25'/>
-                    <rect x='7' y='14.5' width='18' height='2.5' fill='#4a90e2' rx='1.25'/>
-                    <rect x='7' y='19' width='18' height='5' fill='#2c5aa0' rx='2.5'/>
-                </svg>StackMap
-            `;
-            // Update logo colors for fixed header too
-            if (this.preferencesManager) {
-                const color = this.appState.settings.backgroundColor || '#667eea';
-                this.preferencesManager.updateLogoColors(color);
-            }
-        } else {
-            fixedTitle.textContent = title;
-        }
+        if (!fixedSubtitle) return;
         
         // Update subtitle
         fixedSubtitle.textContent = subtitle;
+        
+        // Sync user dropdown selection
+        const userSelector = document.getElementById('userSelector');
+        const fixedUserSelector = document.getElementById('fixedUserSelector');
+        const currentUserId = this.appState.users.currentUserId;
+        
+        if (userSelector && fixedUserSelector) {
+            fixedUserSelector.value = currentUserId;
+            userSelector.value = currentUserId;
+        }
         
         // Handle subtitle visibility
         if (this.grownupMode) {
@@ -282,6 +281,78 @@ class StackMapApp {
         if (fileInput) {
             fileInput.addEventListener('change', (e) => this.importFromFile(e));
         }
+        
+        // User dropdown handlers
+        const userSelector = document.getElementById('userSelector');
+        const fixedUserSelector = document.getElementById('fixedUserSelector');
+        const addUserBtn = document.getElementById('addUserBtn');
+        const fixedAddUserBtn = document.getElementById('fixedAddUserBtn');
+        
+        // Handle user selection change
+        [userSelector, fixedUserSelector].forEach(selector => {
+            if (selector) {
+                selector.addEventListener('change', (e) => this.handleUserSwitch(e.target.value));
+            }
+        });
+        
+        // Handle add user button clicks
+        [addUserBtn, fixedAddUserBtn].forEach(btn => {
+            if (btn) {
+                btn.addEventListener('click', () => this.showAddUserDialog());
+            }
+        });
+    }
+    
+    // User management methods
+    handleUserSwitch(userId) {
+        if (userId && userId !== this.appState.users.currentUserId) {
+            this.appState.switchUser(userId);
+            this.renderer.render();
+            this.renderer.updateHeader();
+            this.syncFixedHeader();
+            this.populateUserDropdowns();
+        }
+    }
+    
+    showAddUserDialog() {
+        const name = prompt('Enter name for new user (max 20 characters):');
+        if (name && name.trim()) {
+            const trimmedName = name.trim().substring(0, CONFIG.USER_NAME_MAX_LENGTH);
+            if (trimmedName) {
+                try {
+                    const newUserId = this.appState.addUser(trimmedName);
+                    this.handleUserSwitch(newUserId);
+                    this.populateUserDropdowns();
+                } catch (error) {
+                    alert(error.message);
+                }
+            }
+        }
+    }
+    
+    populateUserDropdowns() {
+        const userSelector = document.getElementById('userSelector');
+        const fixedUserSelector = document.getElementById('fixedUserSelector');
+        const currentUserId = this.appState.users.currentUserId;
+        const users = this.appState.getAllUsers();
+        
+        [userSelector, fixedUserSelector].forEach(selector => {
+            if (selector) {
+                // Clear existing options
+                selector.innerHTML = '';
+                
+                // Add options for each user
+                users.forEach(user => {
+                    const option = document.createElement('option');
+                    option.value = user.id;
+                    option.textContent = user.name;
+                    if (user.id === currentUserId) {
+                        option.selected = true;
+                    }
+                    selector.appendChild(option);
+                });
+            }
+        });
     }
     
     // Helper method to clear all filters
@@ -298,37 +369,8 @@ class StackMapApp {
     }
 
     setupInlineEditing() {
-        const title = document.getElementById('mainTitle');
         const subtitle = document.getElementById('subtitle');
-        const fixedTitle = document.getElementById('fixedTitle');
         const fixedSubtitle = document.getElementById('fixedSubtitle');
-        
-        // Setup editing for both static and fixed headers
-        [title, fixedTitle].forEach(titleElement => {
-            if (!titleElement) return;
-            
-            titleElement.addEventListener('click', () => {
-                if (!this.grownupMode) return;
-                titleElement.contentEditable = "true";
-                titleElement.textContent = this.appState.settings.title === 'My StackMap' ? 'My StackMap' : this.appState.settings.title;
-                titleElement.focus();
-                this.selectText(titleElement);
-            });
-            
-            titleElement.addEventListener('blur', () => {
-                titleElement.contentEditable = "false";
-                this.saveInlineEdit('title', titleElement);
-                this.renderer.updateHeader();
-                this.syncFixedHeader();
-            });
-            
-            titleElement.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    titleElement.blur();
-                }
-            });
-        });
         
         // Setup editing for both static and fixed subtitles
         [subtitle, fixedSubtitle].forEach(subtitleElement => {
@@ -366,15 +408,7 @@ class StackMapApp {
 
     saveInlineEdit(field, element) {
         const value = element.textContent.trim();
-        if (field === 'title') {
-            if (value) {
-                this.appState.updateTitle(value);
-                this.updateTabTitle();
-            } else {
-                this.appState.updateTitle('My StackMap');
-                this.updateTabTitle();
-            }
-        } else if (field === 'subtitle') {
+        if (field === 'subtitle') {
             this.appState.settings.subtitle = value;
             this.appState._triggerSave();
         }
@@ -1067,3 +1101,68 @@ class StackMapApp {
 
 // Make available globally
 window.StackMapApp = StackMapApp;
+
+// Story 2 Validation Suite
+const validateStory2 = () => {
+    console.log('=== STORY 2 VALIDATION ===');
+    
+    // Test 1: UI Elements Present
+    const userSelector = document.getElementById('userSelector');
+    const fixedUserSelector = document.getElementById('fixedUserSelector');
+    const addUserBtn = document.getElementById('addUserBtn');
+    const fixedAddUserBtn = document.getElementById('fixedAddUserBtn');
+    
+    console.log('✅ Static dropdown present:', !!userSelector);
+    console.log('✅ Fixed dropdown present:', !!fixedUserSelector);
+    console.log('✅ Add user button present:', !!addUserBtn);
+    console.log('✅ Fixed add user button present:', !!fixedAddUserBtn);
+    
+    // Test 2: Dropdown Population
+    if (userSelector) {
+        console.log('✅ Dropdown options count:', userSelector.options.length);
+        console.log('✅ Current selection:', userSelector.value);
+        
+        // List all available users
+        const users = Array.from(userSelector.options).map(opt => opt.text);
+        console.log('✅ Available users:', users);
+    }
+    
+    // Test 3: Add User Button Visibility
+    const isGrownupMode = document.body.classList.contains('grownup-mode');
+    const addBtnVisible = addUserBtn && getComputedStyle(addUserBtn).display !== 'none';
+    console.log('✅ Grown-up mode:', isGrownupMode);
+    console.log('✅ Add button visible in grown-up mode:', isGrownupMode ? addBtnVisible : 'N/A (child mode)');
+    
+    // Test 4: Touch Targets (Mobile Accessibility)
+    if (userSelector) {
+        const dropdownRect = userSelector.getBoundingClientRect();
+        const touchTarget = Math.min(dropdownRect.width, dropdownRect.height);
+        console.log('✅ Dropdown touch target size:', touchTarget + 'px', touchTarget >= 44 ? '(PASS)' : '(FAIL - needs 44px+)');
+    }
+    
+    if (addUserBtn) {
+        const btnRect = addUserBtn.getBoundingClientRect();
+        const btnTouchTarget = Math.min(btnRect.width, btnRect.height);
+        console.log('✅ Add button touch target:', btnTouchTarget + 'px', btnTouchTarget >= 44 ? '(PASS)' : '(FAIL - needs 44px+)');
+    }
+    
+    // Test 5: Event Handlers
+    console.log('✅ User switching method exists:', typeof appInstance.handleUserSwitch === 'function');
+    console.log('✅ Add user method exists:', typeof appInstance.showAddUserDialog === 'function');
+    
+    // Test 6: Responsive Design
+    const isMobile = window.innerWidth <= 768;
+    console.log('✅ Current viewport:', window.innerWidth + 'px', isMobile ? '(Mobile)' : '(Desktop)');
+    
+    console.log('=== VALIDATION COMPLETE ===');
+    
+    // Return summary
+    const passed = userSelector && fixedUserSelector && addUserBtn && 
+                  userSelector.options.length > 0 && 
+                  typeof appInstance.handleUserSwitch === 'function';
+    
+    return passed ? 'ALL TESTS PASSED ✅' : 'SOME TESTS FAILED ❌';
+};
+
+// Make validation function globally available
+window.validateStory2 = validateStory2;

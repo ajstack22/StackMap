@@ -20,6 +20,26 @@ class AppState {
             cardFilter: '' // Story 2: Filter state
         };
         
+        // Multi-user support
+        this.users = {
+            currentUserId: CONFIG.DEFAULT_USER_ID,
+            profiles: {
+                [CONFIG.DEFAULT_USER_ID]: {
+                    id: CONFIG.DEFAULT_USER_ID,
+                    name: 'My StackMap',
+                    activities: [],
+                    settings: {
+                        title: 'My StackMap',
+                        subtitle: 'Routine Ready',
+                        isDefaultTitle: true,
+                        backgroundColor: CONFIG.DEFAULT_COLOR,
+                        showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
+                        showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
+                    }
+                }
+            }
+        };
+        
         // External save handler
         this.onStateChange = null;
     }
@@ -96,6 +116,81 @@ class AppState {
     _validateCardType(cardType) {
         const validTypes = ['recurring', 'frequent', 'single-use'];
         return validTypes.includes(cardType) ? cardType : 'recurring';
+    }
+
+    // === USER MANAGEMENT ===
+    addUser(name) {
+        if (Object.keys(this.users.profiles).length >= CONFIG.MAX_USERS) {
+            throw new Error(`Maximum of ${CONFIG.MAX_USERS} users allowed.`);
+        }
+        
+        const userId = 'user_' + Date.now();
+        this.users.profiles[userId] = {
+            id: userId,
+            name: name.substring(0, CONFIG.USER_NAME_MAX_LENGTH),
+            activities: [],
+            settings: {
+                title: name + "'s StackMap",
+                subtitle: 'Routine Ready',
+                isDefaultTitle: false,
+                backgroundColor: CONFIG.DEFAULT_COLOR,
+                showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
+                showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
+            }
+        };
+        this._triggerSave();
+        return userId;
+    }
+
+    getCurrentUser() {
+        return this.users.profiles[this.users.currentUserId];
+    }
+
+    switchUser(userId) {
+        if (this.users.profiles[userId]) {
+            // Save current user data before switching
+            this.saveCurrentUserData();
+            
+            // Switch to new user
+            this.users.currentUserId = userId;
+            this.loadUserData();
+            this._triggerSave();
+        }
+    }
+
+    loadUserData() {
+        const user = this.getCurrentUser();
+        if (user) {
+            this.activities = [...user.activities];
+            this.settings = {...user.settings};
+            this.applyTheme();
+        }
+    }
+
+    saveCurrentUserData() {
+        const user = this.getCurrentUser();
+        if (user) {
+            user.activities = [...this.activities];
+            user.settings = {...this.settings};
+        }
+    }
+
+    deleteUser(userId) {
+        // Can't delete the default user or the current user
+        if (userId === CONFIG.DEFAULT_USER_ID || userId === this.users.currentUserId) {
+            return false;
+        }
+        
+        if (this.users.profiles[userId]) {
+            delete this.users.profiles[userId];
+            this._triggerSave();
+            return true;
+        }
+        return false;
+    }
+
+    getAllUsers() {
+        return Object.values(this.users.profiles);
     }
 
     cycleCardType(index) {
@@ -186,35 +281,64 @@ class AppState {
 
     // === DATA EXPORT/IMPORT ===
     exportData() {
+        this.saveCurrentUserData(); // Save current state to user profile
         return {
             version: CONFIG.DATA_VERSION,
-            activities: this.activities,
-            settings: this.settings
+            users: this.users
         };
     }
 
     importData(data) {
-        if (data.activities && Array.isArray(data.activities)) {
-            // Story 1: Ensure backward compatibility - add cardType to existing activities
-            this.activities = data.activities.slice(0, CONFIG.MAX_ACTIVITIES).map(activity => ({
+        if (data.users) {
+            // New multi-user format
+            this.users = data.users;
+            
+            // Ensure current user exists
+            if (!this.users.profiles[this.users.currentUserId]) {
+                this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+            }
+            
+            this.loadUserData();
+        } else if (data.activities) {
+            // Legacy single-user format - migrate to default user
+            const activities = data.activities.slice(0, CONFIG.MAX_ACTIVITIES).map(activity => ({
                 ...activity,
                 cardType: this._validateCardType(activity.cardType || 'recurring'),
                 createdDate: activity.createdDate || new Date().toISOString().split('T')[0],
                 time: activity.time || ''
             }));
-        }
-        
-        if (data.settings) {
-            // Ensure backgroundColor exists before assigning
-            if (!data.settings.backgroundColor) {
-                data.settings.backgroundColor = CONFIG.DEFAULT_COLOR;
+            
+            let settings = {
+                title: 'My StackMap',
+                subtitle: 'Routine Ready',
+                isDefaultTitle: true,
+                backgroundColor: CONFIG.DEFAULT_COLOR,
+                showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
+                showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
+            };
+            
+            if (data.settings) {
+                // Ensure backgroundColor exists before assigning
+                if (!data.settings.backgroundColor) {
+                    data.settings.backgroundColor = CONFIG.DEFAULT_COLOR;
+                }
+                settings = {...settings, ...data.settings};
+                // Ensure we have the new subtitle field
+                if (!settings.subtitle) {
+                    settings.subtitle = 'Routine Ready';
+                }
             }
-            Object.assign(this.settings, data.settings);
-            // Ensure we have the new subtitle field
-            if (!this.settings.subtitle) {
-                this.settings.subtitle = 'Routine Ready';
-            }
-            this.applyTheme();
+            
+            // Migrate to default user
+            this.users.profiles[CONFIG.DEFAULT_USER_ID] = {
+                id: CONFIG.DEFAULT_USER_ID,
+                name: settings.title || 'My StackMap',
+                activities: activities,
+                settings: settings
+            };
+            
+            this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+            this.loadUserData();
         }
         
         this._triggerSave();

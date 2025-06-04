@@ -19,6 +19,11 @@ const CONFIG = {
     // Default settings
     SHOW_COMPLETION_DEFAULT: true,
     
+    // User management constants
+    MAX_USERS: 6,
+    DEFAULT_USER_ID: 'default',
+    USER_NAME_MAX_LENGTH: 20,
+    
     // Google Drive API Configuration
     // IMPORTANT: Replace these with your actual Google Cloud Console credentials
     GOOGLE_CLIENT_ID: '801001508845-59jevf4piac2cg3g9q6srjb297sd4hbr.apps.googleusercontent.com',

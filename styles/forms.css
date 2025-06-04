@@ -55,6 +55,46 @@ input[type="file"] {
     color: #333;
 }
 
+/* ===== USER DROPDOWN ===== */
+.user-dropdown {
+    background: white;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: var(--title-size);
+    font-family: inherit;
+    font-weight: 700;
+    color: #333;
+    min-height: 44px; /* Touch target */
+    min-width: 150px;
+    cursor: pointer;
+    outline: none;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    text-align: center;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23333' d='M6 9L1 4h10z'/%3E%3C/svg%");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 36px;
+}
+
+.user-dropdown:hover {
+    background-color: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.user-dropdown:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+.user-dropdown option {
+    font-weight: 600;
+    padding: 8px;
+}
+
 .panel {
     background: white;
     border-radius: var(--card-border-radius);
@@ -478,6 +518,13 @@ body.fixed-header-visible .preferences-panel {
 
 /* ===== FORM RESPONSIVE STYLES ===== */
 @media (max-width: 768px) {
+    .user-dropdown {
+        font-size: 1.2rem;
+        min-width: 120px;
+        padding: 6px 12px;
+        padding-right: 30px;
+    }
+    
     .panel {
         max-width: calc(100vw - 20px);
         margin: 15px 10px;

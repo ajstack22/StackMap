@@ -493,8 +493,7 @@ body.display-mode-times .card__number {
 .management-card {
     /* Same dimensions as other cards */
     width: 100% !important;
-    min-height: 320px !important;
-    max-height: 320px !important;
+    min-height: 320px;
     box-sizing: border-box;
     
     /* StackMap-style background */
@@ -526,6 +525,9 @@ body.display-mode-times .card__number {
     /* Ensure it's in the normal flow for scrolling */
     position: relative;
     margin-bottom: 20px; /* Add margin for better spacing */
+    
+    /* Prevent text overflow */
+    overflow: visible;
 }
 
 .management-card:hover {
@@ -541,8 +543,9 @@ body.display-mode-times .card__number {
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin-bottom: 24px;
+    margin-bottom: 20px; /* Reduced for better spacing */
     text-align: center;
+    flex-wrap: wrap; /* Allow wrapping on small screens */
 }
 
 .management-card__icon {
@@ -789,10 +792,15 @@ body.display-mode-times .card__number {
         padding-bottom: 80px !important;
     }
     
-    .card, .management-card, .edit-info-card, .new-card {
+    .card, .edit-info-card, .new-card {
         min-height: 280px !important;
         max-height: 280px !important;
         padding: 28px 20px;
+    }
+    
+    /* Management card needs flexible height */
+    .management-card {
+        padding: 20px 16px;
     }
     
     /* CHILD MODE: Reduce height by 25% on tablets */
@@ -803,14 +811,16 @@ body.display-mode-times .card__number {
     }
     
     .management-card {
-        padding: 18px 14px;
-        min-height: 200px !important; /* Even more compact for small screens */
-        max-height: 200px !important;
+        padding: 30px 16px 20px 16px; /* More top padding to prevent title overlap */
+        min-height: 280px !important; /* Slightly taller minimum to accommodate padding */
+        max-height: none !important; /* Remove height constraint */
+        height: auto !important; /* Allow expansion if needed */
     }
     
     .management-card__header {
-        margin-bottom: 10px;
-        gap: 8px;
+        margin-bottom: 8px;
+        gap: 6px;
+        flex-wrap: wrap; /* Allow wrapping if needed */
     }
     
     .management-card__title {
@@ -952,7 +962,7 @@ body.display-mode-times .card__number {
         padding-bottom: 20px;
     }
     
-    .card, .management-card, .edit-info-card, .new-card {
+    .card, .edit-info-card, .new-card {
         min-height: 240px !important;
         max-height: 240px !important;
         padding: 24px 16px;
@@ -966,17 +976,20 @@ body.display-mode-times .card__number {
     }
     
     .management-card {
-        padding: 20px 16px;
-        min-height: 220px !important; /* Reduced height for mobile */
-        max-height: 220px !important;
+        padding: 30px 16px 20px 16px; /* More top padding to prevent title overlap */
+        min-height: 280px !important; /* Slightly taller minimum to accommodate padding */
+        max-height: none !important; /* Remove height constraint */
+        height: auto !important; /* Allow expansion if needed */
     }
     
     .management-card__header {
-        margin-bottom: 12px; /* Less margin on mobile */
+        margin-bottom: 8px; /* Less margin on mobile */
+        flex-wrap: wrap; /* Allow wrapping if needed */
     }
     
     .management-card__title {
-        font-size: 1.5rem; /* Slightly smaller title */
+        font-size: 1.3rem; /* Smaller title to prevent overlap */
+        line-height: 1.2; /* Tighter line height */
     }
     
     .management-card__icon {

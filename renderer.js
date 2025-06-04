@@ -15,33 +15,20 @@ class AppRenderer {
     }
 
     updateHeader() {
-        const { title, subtitle, isDefaultTitle } = this.appState.settings;
-        const titleElement = document.getElementById('fixedTitle');
-        const subtitleElement = document.getElementById('fixedSubtitle');
+        const { subtitle } = this.appState.settings;
+        const subtitleElement = document.getElementById('subtitle');
+        const fixedSubtitleElement = document.getElementById('fixedSubtitle');
         
-        // Only update text content if not currently being edited
-        if (titleElement && titleElement.contentEditable !== "true") {
-            if (isDefaultTitle) {
-                // Show logo + "StackMap" for default title
-                titleElement.innerHTML = `
-                    <svg style="width: 1em; height: 1em; vertical-align: middle; margin-right: 0.3em;" xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'>
-                        <circle cx='16' cy='16' r='15' fill='rgba(255,255,255,0.9)' stroke='rgba(255,255,255,0.7)' stroke-width='1'/>
-                        <rect x='7' y='10' width='18' height='2.5' fill='#4a90e2' rx='1.25'/>
-                        <rect x='7' y='14.5' width='18' height='2.5' fill='#4a90e2' rx='1.25'/>
-                        <rect x='7' y='19' width='18' height='5' fill='#2c5aa0' rx='2.5'/>
-                    </svg>StackMap
-                `;
-            } else {
-                // Show custom title without logo
-                titleElement.textContent = title;
+        // Update both static and fixed subtitles
+        [subtitleElement, fixedSubtitleElement].forEach(element => {
+            if (element && element.contentEditable !== "true") {
+                element.textContent = subtitle;
             }
-        }
-        if (subtitleElement && subtitleElement.contentEditable !== "true") {
-            subtitleElement.textContent = subtitle;
-        }
+        });
         
         // Handle subtitle placeholder visibility based on grown-up mode
         this.updateSubtitleVisibility(subtitleElement);
+        this.updateSubtitleVisibility(fixedSubtitleElement);
     }
 
     updateSubtitleVisibility(subtitleElement) {

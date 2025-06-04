@@ -66,10 +66,11 @@
         flex-direction: column !important;
         align-items: stretch !important;
         gap: 16px !important; /* Proper spacing between cards */
-        padding: 0 !important;
+        padding: 15px 0 100px 0 !important; /* Minimal top padding */
         width: 100% !important;
         max-width: 100% !important;
         margin: 0 !important;
+        margin-top: 0 !important;
         box-sizing: border-box !important;
         /* Completely kill any grid properties */
         grid-template-columns: none !important;
@@ -83,6 +84,7 @@
     .main-container > .card,
     .main-container > .new-card, 
     .main-container > .edit-info-card,
+    .main-container > .management-card,
     .main-container > .panel {
         flex: none !important;
         width: calc(100vw - 30px) !important; /* Bit more breathing room */
@@ -378,11 +380,14 @@
     /* EVEN MORE REFINED FOR VERY SMALL SCREENS */
     .main-container {
         gap: 14px !important; /* Slightly tighter spacing on very small screens */
+        padding: 15px 0 100px 0 !important; /* Minimal top padding */
+        margin-top: 0 !important;
     }
     
     .main-container > .card,
     .main-container > .new-card, 
     .main-container > .edit-info-card,
+    .main-container > .management-card,
     .main-container > .panel {
         width: calc(100vw - 20px) !important; /* Slightly wider on very small screens */
         max-width: calc(100vw - 20px) !important;

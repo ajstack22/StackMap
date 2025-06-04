@@ -35,13 +35,27 @@
 <body>
     <!-- Application Header -->
     <header class="static-header" role="banner">
-        <h1 class="title" id="mainTitle" tabindex="0">My StackMap</h1>
+        <div class="user-selector-container">
+            <select id="userSelector" class="user-dropdown" aria-label="Select user">
+                <!-- Options populated by JavaScript -->
+            </select>
+            <button id="addUserBtn" class="btn btn--add-user" aria-label="Add new user" title="Add new user">
+                <span class="material-icons" aria-hidden="true">person_add</span>
+            </button>
+        </div>
         <p class="subtitle" id="subtitle" tabindex="0">Routine Ready</p>
     </header>
     
     <!-- Fixed Header for Scrolling - REMOVED aria-hidden -->
     <header class="fixed-header" role="banner">
-        <h1 class="title" id="fixedTitle" tabindex="-1">My StackMap</h1>
+        <div class="user-selector-container">
+            <select id="fixedUserSelector" class="user-dropdown" aria-label="Select user" tabindex="-1">
+                <!-- Options populated by JavaScript -->
+            </select>
+            <button id="fixedAddUserBtn" class="btn btn--add-user" aria-label="Add new user" title="Add new user" tabindex="-1">
+                <span class="material-icons" aria-hidden="true">person_add</span>
+            </button>
+        </div>
         <p class="subtitle" id="fixedSubtitle" tabindex="-1">Routine Ready</p>
     </header>
     
