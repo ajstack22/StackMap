@@ -1,0 +1,22 @@
+---
+deployment:
+  tasks:
+    - export DEPLOYPATH=/home/username/public_html/
+    - /bin/cp -R . $DEPLOYPATH
+    # Exclude files that shouldn't be in production
+    - /bin/rm -f $DEPLOYPATH/.cpanel.yml
+    - /bin/rm -rf $DEPLOYPATH/.git
+    - /bin/rm -rf $DEPLOYPATH/context
+    - /bin/rm -rf $DEPLOYPATH/backups
+    - /bin/rm -rf $DEPLOYPATH/Screenshots
+    - /bin/rm -f $DEPLOYPATH/README.md
+    - /bin/rm -f $DEPLOYPATH/.gitignore
+    - /bin/rm -f $DEPLOYPATH/update.py
+    # Set proper permissions for web files
+    - /bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
+    - /bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;
+    # Ensure service worker and manifest have correct permissions
+    - /bin/chmod 644 $DEPLOYPATH/sw.js
+    - /bin/chmod 644 $DEPLOYPATH/manifest.json
+    # Clear any server-side cache if needed
+    # - /usr/bin/touch $DEPLOYPATH/.htaccess
