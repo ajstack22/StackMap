@@ -1,7 +1,7 @@
 ---
 deployment:
   tasks:
-    - export DEPLOYPATH=/home/username/public_html/
+    - export DEPLOYPATH=/home/stachblx/public_html/mu/
     - /bin/cp -R . $DEPLOYPATH
     # Exclude files that shouldn't be in production
     - /bin/rm -f $DEPLOYPATH/.cpanel.yml
