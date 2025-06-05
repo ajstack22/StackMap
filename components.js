@@ -657,11 +657,16 @@ class ComponentBuilder {
 
     // NEW: Add user functionality with emoji support
     static addUser() {
+        console.log('addUser called');
         const nameInput = document.getElementById('userName');
-        if (!nameInput) return;
+        if (!nameInput) {
+            console.error('Name input not found');
+            return;
+        }
         
         const name = nameInput.value.trim();
         const icon = this.selectedUserEmoji || '👤';
+        console.log('Creating user:', name, 'with icon:', icon);
         
         if (!name) {
             // Show error feedback
@@ -680,18 +685,26 @@ class ComponentBuilder {
         try {
             // Add the user through AppState with emoji
             if (window.appInstance && window.appInstance.appState) {
+                console.log('Adding user through appState');
                 const userId = window.appInstance.appState.addUser(name, icon);
+                console.log('New user ID:', userId);
                 
                 // Switch to the new user
-                window.appInstance.switchUser(userId);
+                window.appInstance.handleUserSwitch(userId);
                 
                 // Close modal
                 this.closeAddUserModal();
                 
                 // Show success feedback
                 this.showUserSuccess(name, icon);
+                
+                // Refresh the dropdown
+                window.appInstance.populateUserDropdowns();
+            } else {
+                console.error('App instance not found');
             }
         } catch (error) {
+            console.error('Error adding user:', error);
             // Show error (probably max users reached)
             nameInput.classList.add('error');
             nameInput.placeholder = error.message || 'Maximum users reached';
