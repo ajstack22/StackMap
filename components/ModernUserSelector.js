@@ -97,8 +97,8 @@ class ModernUserSelector {
         const currentUser = this.app.appState.getCurrentUser();
         if (currentUser) {
             this.userName.textContent = currentUser.name;
-            const activityCount = currentUser.activities.length;
-            this.userContext.textContent = `${activityCount} routine${activityCount !== 1 ? 's' : ''} today`;
+            // Remove activity count - just show the user's icon
+            this.userContext.style.display = 'none';
             
             // Update avatar if user has custom emoji
             if (currentUser.avatar) {
@@ -107,7 +107,7 @@ class ModernUserSelector {
             
             // Update aria label
             this.selector.setAttribute('aria-label', 
-                `Select family member. Currently ${currentUser.name} with ${activityCount} routines today`);
+                `Select family member. Currently ${currentUser.name}`);
         }
     }
     
@@ -150,12 +150,8 @@ class ModernUserSelector {
         const primary = ComponentBuilder.createElement('div', 'dropdown-option-primary');
         primary.textContent = user.name;
         
-        const secondary = ComponentBuilder.createElement('div', 'dropdown-option-secondary');
-        const activityCount = user.activities.length;
-        secondary.textContent = `${activityCount} routine${activityCount !== 1 ? 's' : ''} today`;
-        
         text.appendChild(primary);
-        text.appendChild(secondary);
+        // Remove secondary text showing routine count
         
         content.appendChild(icon);
         content.appendChild(text);

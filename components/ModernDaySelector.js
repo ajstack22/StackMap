@@ -163,11 +163,11 @@ class ModernDaySelector {
         if (currentDay === 'today') {
             this.dayIcon.textContent = '📅';
             this.dayName.textContent = 'Today';
-            this.daySecondary.textContent = `${counts.today} activities`;
+            this.daySecondary.style.display = 'none'; // Hide activity count
         } else {
             this.dayIcon.textContent = '⏰';
             this.dayName.textContent = 'Tomorrow';
-            this.daySecondary.textContent = `${counts.tomorrow} activities`;
+            this.daySecondary.style.display = 'none'; // Hide activity count
         }
         
         // Update aria label
@@ -185,7 +185,7 @@ class ModernDaySelector {
         // Update today
         const todayCount = document.getElementById('todayModalCount');
         if (todayCount) {
-            todayCount.textContent = `${counts.today} activities`;
+            todayCount.style.display = 'none'; // Hide activity count
         }
         
         const todayActivities = document.getElementById('todayActivities');
@@ -201,7 +201,7 @@ class ModernDaySelector {
         // Update tomorrow
         const tomorrowCount = document.getElementById('tomorrowModalCount');
         if (tomorrowCount) {
-            tomorrowCount.textContent = `${counts.tomorrow} activities`;
+            tomorrowCount.style.display = 'none'; // Hide activity count
         }
         
         const tomorrowActivities = document.getElementById('tomorrowActivities');

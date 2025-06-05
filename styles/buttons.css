@@ -175,7 +175,7 @@ button.btn.btn--floating,
 .btn.btn--floating {
     position: fixed !important;
     width: 56px !important;
-    height: 44px !important; /* Rectangle proportions */
+    height: 48px !important; /* Increased to meet 44px minimum touch target */
     border-radius: 12px !important; /* Standardized rounded rectangles */
     padding: 0 !important;
     margin: 0 !important;
