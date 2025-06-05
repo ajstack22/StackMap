@@ -150,6 +150,14 @@ class ModernDaySelector {
             this.selectDay(day);
         };
         
+        // Keyboard handler for accessibility
+        option.onkeydown = (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.selectDay(day);
+            }
+        };
+        
         return option;
     }
     
@@ -168,6 +176,11 @@ class ModernDaySelector {
         // Update aria label
         this.selector.setAttribute('aria-label', 
             `Select day. Currently viewing ${currentDay}. ${currentDay === 'today' ? counts.today : counts.tomorrow} activities`);
+        
+        // Ensure selector is focusable
+        if (!this.selector.hasAttribute('tabindex')) {
+            this.selector.tabIndex = 0;
+        }
         
         // Update modal counts
         this.updateModalCounts();
@@ -235,6 +248,14 @@ class ModernDaySelector {
         // Focus management
         this.previousFocus = document.activeElement;
         
+        // Focus first option in modal for better accessibility
+        setTimeout(() => {
+            const firstOption = this.modal.querySelector('.day-modal-option');
+            if (firstOption) {
+                firstOption.focus();
+            }
+        }, 100);
+        
         // Announce to screen readers
         this.announceToScreenReader('Day selector opened');
     }
@@ -275,9 +296,11 @@ class ModernDaySelector {
             this.handleSelectorKeydown(e);
         });
         
-        // Backdrop click
-        this.backdrop.addEventListener('click', () => {
-            this.close();
+        // Backdrop click - Fix for test
+        this.backdrop.addEventListener('click', (e) => {
+            if (e.target === this.backdrop) {
+                this.close();
+            }
         });
         
         // Escape key handling for modal
