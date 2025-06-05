@@ -1051,19 +1051,94 @@ class StackMapApp {
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
+    
+    // Story 3: Export individual user
+    exportUser(userId) {
+        const user = this.appState.users.profiles[userId];
+        if (!user) {
+            alert('User not found');
+            return;
+        }
+        
+        const exportData = {
+            version: CONFIG.DATA_VERSION,
+            exportType: 'single-user',
+            exportDate: new Date().toISOString(),
+            user: {
+                id: userId,
+                name: user.name,
+                activities: user.activities,
+                settings: user.settings,
+                metadata: {
+                    activityCount: user.activities.length,
+                    lastModified: new Date().toISOString()
+                }
+            }
+        };
+        
+        const filename = `stackmap-${user.name.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.json`;
+        this.downloadFile(exportData, filename);
+    }
+    
+    // Story 3: Export all users with manifest
+    exportAllUsers() {
+        const users = this.appState.getAllUsers();
+        const exportData = {
+            version: CONFIG.DATA_VERSION,
+            exportType: 'multi-user',
+            exportDate: new Date().toISOString(),
+            manifest: {
+                userCount: users.length,
+                totalActivities: users.reduce((sum, user) => sum + user.activities.length, 0),
+                users: users.map(user => ({
+                    id: user.id,
+                    name: user.name,
+                    activityCount: user.activities.length
+                }))
+            },
+            users: this.appState.users
+        };
+        
+        const filename = `stackmap-family-${users.length}users-${new Date().toISOString().split('T')[0]}.json`;
+        this.downloadFile(exportData, filename);
+    }
+    
+    // Story 3: Helper method for exporting selected user from dropdown
+    exportSelectedUser() {
+        const userExportSelect = document.getElementById('userExportSelect');
+        if (userExportSelect && userExportSelect.value) {
+            this.exportUser(userExportSelect.value);
+        } else {
+            alert('Please select a user to export');
+        }
+    }
+    
+    // Story 3: Helper method for downloading files
+    downloadFile(data, filename) {
+        const jsonStr = JSON.stringify(data, null, 2);
+        const blob = new Blob([jsonStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
 
     importFromFile(event) {
         const file = event.target.files[0];
         if (!file) return;
         
+        this.currentImportFileName = file.name;
+        
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                this.appState.importData(data);
-                this.updateTabTitle();
-                this.render();
-                alert('StackMap imported successfully!');
+                this.showImportPreview(data);
             } catch (error) {
                 alert('Error importing file. Please ensure it\'s a valid StackMap file.');
             }
@@ -1071,6 +1146,215 @@ class StackMapApp {
         reader.readAsText(file);
         
         event.target.value = '';
+    }
+    
+    // Story 3: Show import preview before applying
+    showImportPreview(fileData) {
+        const modal = document.getElementById('importPreviewModal');
+        const fileNameSpan = document.getElementById('importFileName');
+        const fileTypeSpan = document.getElementById('importFileType');
+        const userCountSpan = document.getElementById('importUserCount');
+        const userListDiv = document.getElementById('importUserList');
+        const conflictsDiv = document.getElementById('importConflicts');
+        
+        // Analyze import file
+        const analysis = this.analyzeImportFile(fileData);
+        this.pendingImportData = { analysis, fileData };
+        
+        // Populate preview information
+        fileNameSpan.textContent = analysis.fileName;
+        fileTypeSpan.textContent = analysis.type;
+        userCountSpan.textContent = analysis.userCount;
+        
+        // Show user selection checkboxes
+        userListDiv.innerHTML = analysis.users.map(user => `
+            <label class="import-user-option">
+                <input type="checkbox" value="${user.id}" checked>
+                <span class="user-info">
+                    <strong>${user.name}</strong>
+                    <small>${user.activityCount} activities</small>
+                </span>
+            </label>
+        `).join('');
+        
+        // Show conflicts if any
+        if (analysis.conflicts.length > 0) {
+            conflictsDiv.innerHTML = `
+                <div class="conflict-warning">
+                    <h4>⚠️ Name Conflicts</h4>
+                    <ul>${analysis.conflicts.map(conflict => `<li>${conflict}</li>`).join('')}</ul>
+                    <p>Existing users with same names will be renamed with "-imported" suffix.</p>
+                </div>
+            `;
+        } else {
+            conflictsDiv.innerHTML = '';
+        }
+        
+        // Set up event handlers
+        document.getElementById('confirmImport').onclick = () => this.confirmImport();
+        document.getElementById('cancelImport').onclick = () => this.cancelImport();
+        
+        modal.classList.remove('hidden');
+    }
+    
+    // Story 3: Analyze import file and detect conflicts
+    analyzeImportFile(data) {
+        const existingUsers = this.appState.getAllUsers();
+        const existingNames = existingUsers.map(u => u.name.toLowerCase());
+        
+        let users = [];
+        let type = 'unknown';
+        
+        if (data.exportType === 'single-user' && data.user) {
+            users = [data.user];
+            type = 'Single User';
+        } else if (data.exportType === 'multi-user' && data.users) {
+            users = Object.values(data.users.profiles);
+            type = 'Multi-User Family';
+        } else if (data.users && data.users.profiles) {
+            // Legacy multi-user format
+            users = Object.values(data.users.profiles);
+            type = 'Multi-User (Legacy)';
+        } else if (data.activities) {
+            // Legacy single-user format
+            users = [{
+                id: 'imported-' + Date.now(),
+                name: data.settings?.title || 'Imported User',
+                activities: data.activities,
+                settings: data.settings || {}
+            }];
+            type = 'Single User (Legacy)';
+        }
+        
+        // Detect name conflicts
+        const conflicts = users
+            .filter(user => existingNames.includes(user.name.toLowerCase()))
+            .map(user => `"${user.name}" already exists`);
+        
+        return {
+            fileName: this.currentImportFileName || 'uploaded-file.json',
+            type,
+            userCount: users.length,
+            users: users.map(user => ({
+                id: user.id || 'new-' + Date.now() + Math.random(),
+                name: user.name,
+                activityCount: user.activities?.length || 0
+            })),
+            conflicts,
+            rawData: data
+        };
+    }
+    
+    // Story 3: Confirm import with selected users
+    confirmImport() {
+        if (!this.pendingImportData) return;
+        
+        const { analysis, fileData } = this.pendingImportData;
+        const selectedCheckboxes = document.querySelectorAll('#importUserList input[type="checkbox"]:checked');
+        const selectedUserIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+        
+        if (selectedUserIds.length === 0) {
+            alert('Please select at least one user to import');
+            return;
+        }
+        
+        // Process the import
+        try {
+            this.processSelectiveImport(fileData, selectedUserIds, analysis);
+            this.updateTabTitle();
+            this.populateUserDropdowns();
+            this.render();
+            
+            // Show success message
+            const importedCount = selectedUserIds.length;
+            const message = importedCount === 1 
+                ? '1 user imported successfully!' 
+                : `${importedCount} users imported successfully!`;
+            alert(message);
+            
+            this.cancelImport();
+        } catch (error) {
+            alert('Error during import: ' + error.message);
+        }
+    }
+    
+    // Story 3: Process selective import
+    processSelectiveImport(fileData, selectedUserIds, analysis) {
+        const existingUsers = this.appState.getAllUsers();
+        const existingNames = existingUsers.map(u => u.name.toLowerCase());
+        
+        if (fileData.exportType === 'single-user' && fileData.user) {
+            if (selectedUserIds.includes(fileData.user.id)) {
+                this.importSingleUser(fileData.user, existingNames);
+            }
+        } else if (fileData.exportType === 'multi-user' && fileData.users) {
+            // Import selected users from multi-user export
+            selectedUserIds.forEach(userId => {
+                const user = fileData.users.profiles[userId];
+                if (user) {
+                    this.importSingleUser(user, existingNames);
+                }
+            });
+        } else if (fileData.users && fileData.users.profiles) {
+            // Legacy multi-user format
+            selectedUserIds.forEach(userId => {
+                const user = fileData.users.profiles[userId];
+                if (user) {
+                    this.importSingleUser(user, existingNames);
+                }
+            });
+        } else if (fileData.activities && selectedUserIds.length > 0) {
+            // Legacy single-user format
+            const user = {
+                name: fileData.settings?.title || 'Imported User',
+                activities: fileData.activities,
+                settings: fileData.settings || {}
+            };
+            this.importSingleUser(user, existingNames);
+        }
+    }
+    
+    // Story 3: Import a single user with conflict resolution
+    importSingleUser(userData, existingNames) {
+        let userName = userData.name;
+        
+        // Handle name conflicts
+        if (existingNames.includes(userName.toLowerCase())) {
+            userName = userName + '-imported';
+            // Keep adding numbers if still conflicts
+            let counter = 1;
+            while (existingNames.includes(userName.toLowerCase())) {
+                userName = userData.name + '-imported' + counter;
+                counter++;
+            }
+        }
+        
+        // Add user to state
+        const newUserId = this.appState.addUser(userName);
+        
+        // Update the user's data
+        this.appState.users.profiles[newUserId] = {
+            id: newUserId,
+            name: userName,
+            activities: userData.activities || [],
+            settings: userData.settings || {
+                ...this.appState.settings,
+                title: userName
+            }
+        };
+        
+        // Add the new name to existing names to prevent duplicates within this import
+        existingNames.push(userName.toLowerCase());
+        
+        this.appState._triggerSave();
+    }
+    
+    // Story 3: Cancel import
+    cancelImport() {
+        const modal = document.getElementById('importPreviewModal');
+        modal.classList.add('hidden');
+        this.pendingImportData = null;
+        this.currentImportFileName = null;
     }
 
     // LOCAL STORAGE
@@ -1166,3 +1450,66 @@ const validateStory2 = () => {
 
 // Make validation function globally available
 window.validateStory2 = validateStory2;
+
+// Story 3 Validation Suite
+const validateStory3 = () => {
+    console.log('=== STORY 3 VALIDATION ===');
+    
+    // Test 1: Export Interface Present
+    const exportAllBtn = document.querySelector('.export-all-btn');
+    const exportUserBtn = document.querySelector('.export-user-btn');
+    const userExportSelect = document.querySelector('.user-export-select');
+    
+    console.log('✅ Export all button present:', !!exportAllBtn);
+    console.log('✅ Export user button present:', !!exportUserBtn);
+    console.log('✅ User export dropdown present:', !!userExportSelect);
+    
+    // Test 2: Export Methods Exist
+    console.log('✅ Export user method exists:', typeof appInstance.exportUser === 'function');
+    console.log('✅ Export all users method exists:', typeof appInstance.exportAllUsers === 'function');
+    
+    // Test 3: Import Preview Modal
+    const importModal = document.getElementById('importPreviewModal');
+    console.log('✅ Import preview modal present:', !!importModal);
+    
+    // Test 4: Import Analysis Methods
+    console.log('✅ Import preview method exists:', typeof appInstance.showImportPreview === 'function');
+    console.log('✅ Import analysis method exists:', typeof appInstance.analyzeImportFile === 'function');
+    
+    // Test 5: File Naming Functions
+    console.log('✅ Download file method exists:', typeof appInstance.downloadFile === 'function');
+    
+    // Test 6: User Export Dropdown Population
+    if (userExportSelect) {
+        const optionCount = userExportSelect.options.length;
+        console.log('✅ Export dropdown populated:', optionCount > 1);
+        console.log('✅ Export dropdown user count:', optionCount - 1, '(excluding placeholder)');
+    }
+    
+    console.log('=== VALIDATION COMPLETE ===');
+    
+    const passed = exportAllBtn && exportUserBtn && importModal && 
+                  typeof appInstance.exportUser === 'function' &&
+                  typeof appInstance.showImportPreview === 'function';
+    
+    return passed ? 'ALL TESTS PASSED ✅' : 'SOME TESTS FAILED ❌';
+};
+
+// Test export functionality
+const testExport = () => {
+    console.log('=== EXPORT FUNCTIONALITY TEST ===');
+    
+    const users = appInstance.appState.getAllUsers();
+    console.log('Available users for export:', users.map(u => u.name));
+    
+    if (users.length > 0) {
+        console.log('✅ Ready to test individual user export');
+        console.log('✅ Ready to test all users export');
+    } else {
+        console.log('❌ No users available for export testing');
+    }
+};
+
+// Make validation functions globally available
+window.validateStory3 = validateStory3;
+window.testExport = testExport;

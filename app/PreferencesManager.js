@@ -97,10 +97,25 @@ class PreferencesManager {
                             <span class="material-icons">inbox</span>
                             Import StackMap
                         </button>
-                        <button class="btn btn--primary" onclick="appInstance.exportToFile()" style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-                            <span class="material-icons">outbox</span>
-                            Export StackMap
-                        </button>
+                        
+                        <div class="export-section">
+                            <h4 style="margin: 12px 0 8px 0; font-size: 0.9rem; color: #666;">Export Options</h4>
+                            
+                            <button class="btn btn--primary export-all-btn" onclick="appInstance.exportAllUsers()" style="display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px;">
+                                <span class="material-icons">download</span>
+                                Export All Users
+                            </button>
+                            
+                            <div class="export-individual" style="display: flex; gap: 8px;">
+                                <select class="user-export-select" id="userExportSelect" style="flex: 1; padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                                    <option value="">Select user to export...</option>
+                                </select>
+                                <button class="btn btn--secondary export-user-btn" onclick="appInstance.exportSelectedUser()" style="display: flex; align-items: center; justify-content: center; gap: 4px;">
+                                    <span class="material-icons">person_pin</span>
+                                    Export User
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
                 <div class="preferences-section">
@@ -206,7 +221,26 @@ class PreferencesManager {
         if (this.app.grownupMode) {
             setTimeout(() => {
                 this.updateSyncControls();
+                this.populateExportUserDropdown();
             }, 0);
+        }
+    }
+    
+    populateExportUserDropdown() {
+        const userExportSelect = document.getElementById('userExportSelect');
+        if (userExportSelect) {
+            const users = this.app.appState.getAllUsers();
+            
+            // Clear existing options except the placeholder
+            userExportSelect.innerHTML = '<option value="">Select user to export...</option>';
+            
+            // Add options for each user
+            users.forEach(user => {
+                const option = document.createElement('option');
+                option.value = user.id;
+                option.textContent = user.name;
+                userExportSelect.appendChild(option);
+            });
         }
     }
 

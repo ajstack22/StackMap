@@ -158,6 +158,33 @@
     <!-- Hidden File Input for Import -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
     
+    <!-- Import Preview Modal -->
+    <div id="importPreviewModal" class="modal-overlay hidden" role="dialog" 
+         aria-modal="true" aria-labelledby="import-preview-title">
+        <div class="modal-content import-preview-content">
+            <h3 id="import-preview-title">Import Preview</h3>
+            
+            <div class="import-file-info">
+                <p><strong>File:</strong> <span id="importFileName"></span></p>
+                <p><strong>Type:</strong> <span id="importFileType"></span></p>
+                <p><strong>Users Found:</strong> <span id="importUserCount"></span></p>
+            </div>
+            
+            <div class="import-user-list" id="importUserList">
+                <!-- User checkboxes populated by JavaScript -->
+            </div>
+            
+            <div class="import-conflict-warnings" id="importConflicts">
+                <!-- Conflict warnings if any -->
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn--primary" id="confirmImport">Import Selected</button>
+                <button class="btn btn--secondary" id="cancelImport">Cancel</button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Load JavaScript files in dependency order -->
     <script src="config/constants.js"></script>
     <script src="config/themes.js"></script>
