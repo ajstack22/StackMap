@@ -90,7 +90,8 @@ class ModernUserSelector {
         this.dropdownOptions = ComponentBuilder.createElement('div', 'dropdown-options');
         this.dropdown.appendChild(this.dropdownOptions);
         
-        this.selector.appendChild(this.dropdown);
+        // Append to body instead of selector so it's above backdrop
+        document.body.appendChild(this.dropdown);
     }
     
     updateDisplay() {
@@ -198,6 +199,9 @@ class ModernUserSelector {
         this.isOpen = true;
         this.populateDropdown();
         
+        // Position dropdown relative to selector
+        this.positionDropdown();
+        
         // Update states
         this.selector.classList.add('modern-selector--open');
         this.selector.setAttribute('aria-expanded', 'true');
@@ -280,9 +284,12 @@ class ModernUserSelector {
             }
         });
         
-        // Backdrop click
-        this.backdrop.addEventListener('click', () => {
-            this.close();
+        // Backdrop click - only close if clicking the backdrop itself
+        this.backdrop.addEventListener('click', (e) => {
+            // Only close if the click is directly on the backdrop
+            if (e.target === this.backdrop) {
+                this.close();
+            }
         });
         
         // Window resize
@@ -376,17 +383,24 @@ class ModernUserSelector {
     }
     
     positionDropdown() {
-        // Ensure dropdown doesn't go off-screen
+        // Position dropdown relative to selector since it's now in body
         const rect = this.selector.getBoundingClientRect();
         const dropdownHeight = this.dropdown.offsetHeight;
         const viewportHeight = window.innerHeight;
         
-        if (rect.bottom + dropdownHeight > viewportHeight) {
+        // Set horizontal position
+        this.dropdown.style.position = 'fixed';
+        this.dropdown.style.left = rect.left + 'px';
+        this.dropdown.style.width = rect.width + 'px';
+        
+        // Set vertical position
+        if (rect.bottom + dropdownHeight + 4 > viewportHeight) {
             // Position above if not enough space below
-            this.dropdown.style.bottom = '100%';
+            this.dropdown.style.bottom = (viewportHeight - rect.top + 4) + 'px';
             this.dropdown.style.top = 'auto';
         } else {
-            this.dropdown.style.top = '100%';
+            // Position below
+            this.dropdown.style.top = (rect.bottom + 4) + 'px';
             this.dropdown.style.bottom = 'auto';
         }
     }
@@ -405,6 +419,7 @@ class ModernUserSelector {
         // Clean up event listeners
         this.selector.remove();
         this.backdrop.remove();
+        this.dropdown.remove();
         
         // Show fallback
         this.fallback.style.position = '';
