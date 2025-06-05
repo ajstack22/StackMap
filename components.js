@@ -71,17 +71,16 @@ class ComponentBuilder {
     }
     
     // Story 4: Create Day Selector Component
-    static createDaySelector(currentDay = 'today', todayCount = 0, tomorrowCount = 0) {
+    // Updated Day Selector Component - NO COUNT TEXT
+    static createDaySelector(currentDay = 'today') {
         const selector = this.createElement('div', 'day-selector');
         
         selector.innerHTML = `
             <div class="day-option day-option--today ${currentDay === 'today' ? 'active' : ''}" data-day="today">
                 <span class="day-label">Today</span>
-                <span class="day-count" id="todayCount">${todayCount}</span>
             </div>
             <div class="day-option day-option--tomorrow ${currentDay === 'tomorrow' ? 'active' : ''}" data-day="tomorrow">
                 <span class="day-label">Tomorrow</span>
-                <span class="day-count" id="tomorrowCount">${tomorrowCount}</span>
             </div>
         `;
         
@@ -552,6 +551,191 @@ class ComponentBuilder {
             icon: CARD_TYPE_ICONS[type],
             label: CARD_TYPE_LABELS[type]
         }));
+    }
+
+    // NEW: Show Add Family Member Modal with Emoji Picker (similar to activity flow)
+    static showAddFamilyMemberModal() {
+        const overlay = this.createElement('div', 'modal-overlay');
+        overlay.id = 'addFamilyMemberModal';
+        
+        // Store selected emoji (default to person emoji)
+        this.selectedUserEmoji = '👤';
+        
+        // Close modal when clicking overlay
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) {
+                this.closeAddFamilyMemberModal();
+            }
+        });
+        
+        // Escape key handler
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.closeAddFamilyMemberModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        const modal = this.createElement('div', 'modal-content family-member-modal');
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h2>Add Family Member</h2>
+            </div>
+            
+            <div class="modal-body">
+                <div class="user-icon-section">
+                    <div class="user-icon-display" id="familyMemberIcon" onclick="document.getElementById('familyMemberEmojiFilter').focus()">${this.selectedUserEmoji}</div>
+                    <label class="user-icon-label">Choose an icon:</label>
+                </div>
+                
+                <div class="emoji-picker-slot" id="familyMemberEmojiPicker"></div>
+                
+                <div class="form-field">
+                    <label for="familyMemberName">Family Member Name:</label>
+                    <input type="text" 
+                           id="familyMemberName" 
+                           class="form-input" 
+                           placeholder="Enter name..." 
+                           maxlength="20"
+                           autocomplete="off">
+                </div>
+                
+                <div class="modal-info">
+                    <p>Each family member gets their own personalized StackMap with separate activities and settings.</p>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn--primary" onclick="ComponentBuilder.addFamilyMember()">
+                    Add Family Member
+                </button>
+                <button class="btn btn--secondary" onclick="ComponentBuilder.closeAddFamilyMemberModal()">
+                    Cancel
+                </button>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Add emoji picker after modal is in DOM
+        setTimeout(() => {
+            const emojiSlot = document.getElementById('familyMemberEmojiPicker');
+            if (emojiSlot) {
+                const emojiPicker = this.createModalEmojiPicker(
+                    this.selectedUserEmoji,
+                    (emoji) => {
+                        this.selectedUserEmoji = emoji;
+                        const iconDisplay = document.getElementById('familyMemberIcon');
+                        if (iconDisplay) {
+                            iconDisplay.textContent = emoji;
+                        }
+                    },
+                    'familyMemberEmojiFilter'
+                );
+                emojiSlot.appendChild(emojiPicker);
+            }
+            
+            // Focus on name input
+            const nameInput = document.getElementById('familyMemberName');
+            if (nameInput) {
+                nameInput.focus();
+                
+                // Allow Enter key to submit
+                nameInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.addFamilyMember();
+                    }
+                });
+            }
+        }, 100);
+    }
+
+    // NEW: Add family member functionality with emoji support
+    static addFamilyMember() {
+        const nameInput = document.getElementById('familyMemberName');
+        if (!nameInput) return;
+        
+        const name = nameInput.value.trim();
+        const icon = this.selectedUserEmoji || '👤';
+        
+        if (!name) {
+            // Show error feedback
+            nameInput.classList.add('error');
+            nameInput.placeholder = 'Name is required';
+            nameInput.focus();
+            return;
+        }
+        
+        if (name.length > 20) {
+            nameInput.classList.add('error');
+            nameInput.value = name.substring(0, 20);
+            return;
+        }
+        
+        try {
+            // Add the user through AppState with emoji
+            if (window.appInstance && window.appInstance.appState) {
+                const userId = window.appInstance.appState.addUser(name, icon);
+                
+                // Switch to the new user
+                window.appInstance.switchUser(userId);
+                
+                // Close modal
+                this.closeAddFamilyMemberModal();
+                
+                // Show success feedback
+                this.showFamilyMemberSuccess(name, icon);
+            }
+        } catch (error) {
+            // Show error (probably max users reached)
+            nameInput.classList.add('error');
+            nameInput.placeholder = error.message || 'Maximum users reached';
+            console.error('Error adding family member:', error);
+        }
+    }
+
+    // NEW: Close add family member modal
+    static closeAddFamilyMemberModal() {
+        const modal = document.getElementById('addFamilyMemberModal');
+        if (modal) {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.remove();
+                // Clean up stored emoji
+                this.selectedUserEmoji = null;
+            }, 200);
+        }
+    }
+
+    // NEW: Show success feedback with emoji
+    static showFamilyMemberSuccess(name, icon) {
+        const toast = this.createElement('div', 'success-toast welcome-toast');
+        toast.innerHTML = `
+            <div class="success-toast__content">
+                <span class="success-icon">✓</span>
+                <span>Welcome, ${name}!</span>
+                <span class="user-success-icon">${icon}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(-20px)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
     }
 }
 

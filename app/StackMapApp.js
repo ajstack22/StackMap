@@ -300,19 +300,8 @@ class StackMapApp {
     }
     
     showAddUserDialog() {
-        const name = prompt('Enter name for new user (max 20 characters):');
-        if (name && name.trim()) {
-            const trimmedName = name.trim().substring(0, CONFIG.USER_NAME_MAX_LENGTH);
-            if (trimmedName) {
-                try {
-                    const newUserId = this.appState.addUser(trimmedName);
-                    this.handleUserSwitch(newUserId);
-                    this.populateUserDropdowns();
-                } catch (error) {
-                    alert(error.message);
-                }
-            }
-        }
+        // Use the new Add Family Member modal instead of prompt
+        ComponentBuilder.showAddFamilyMemberModal();
     }
     
     populateUserDropdowns() {

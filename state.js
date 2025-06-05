@@ -186,19 +186,50 @@ class AppState {
     }
 
     // === USER MANAGEMENT ===
-    addUser(name) {
-        if (Object.keys(this.users.profiles).length >= CONFIG.MAX_USERS) {
-            throw new Error(`Maximum of ${CONFIG.MAX_USERS} users allowed.`);
+    // Enhanced addUser method with emoji support
+    addUser(name, icon = '👤') {
+        // Validate input
+        if (!name || typeof name !== 'string') {
+            throw new Error('Name is required');
         }
         
-        const userId = 'user_' + Date.now();
+        const trimmedName = name.trim();
+        if (trimmedName.length === 0) {
+            throw new Error('Name cannot be empty');
+        }
+        
+        if (trimmedName.length > CONFIG.USER_NAME_MAX_LENGTH) {
+            throw new Error(`Name cannot exceed ${CONFIG.USER_NAME_MAX_LENGTH} characters`);
+        }
+        
+        // Validate icon (should be a single emoji character)
+        if (!icon || typeof icon !== 'string') {
+            icon = '👤'; // Default fallback
+        }
+        
+        // Check for duplicate names
+        const existingNames = Object.values(this.users.profiles).map(user => user.name.toLowerCase());
+        if (existingNames.includes(trimmedName.toLowerCase())) {
+            throw new Error('A family member with this name already exists');
+        }
+        
+        // Check user limit
+        if (Object.keys(this.users.profiles).length >= CONFIG.MAX_USERS) {
+            throw new Error(`Maximum of ${CONFIG.MAX_USERS} family members allowed`);
+        }
+        
+        // Create new user ID
+        const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        
+        // Create user profile with icon
         this.users.profiles[userId] = {
             id: userId,
-            name: name.substring(0, CONFIG.USER_NAME_MAX_LENGTH),
+            name: trimmedName,
+            icon: icon, // NEW: Store user's chosen emoji icon
             activities: [],
             tomorrowActivities: [], // Story 4: Tomorrow's activities
             settings: {
-                title: name + "'s StackMap",
+                title: trimmedName + "'s StackMap",
                 subtitle: 'Routine Ready',
                 isDefaultTitle: false,
                 backgroundColor: CONFIG.DEFAULT_COLOR,
@@ -206,6 +237,7 @@ class AppState {
                 showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
             }
         };
+        
         this._triggerSave();
         return userId;
     }
@@ -245,12 +277,41 @@ class AppState {
         }
     }
 
+    // Enhanced loadUserData to handle missing icons
     loadUserData() {
         const user = this.getCurrentUser();
-        if (user) {
-            this.activities = [...user.activities];
-            this.settings = {...user.settings};
+        if (!user) {
+            console.error('No current user found, falling back to default');
+            this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+            return this.loadUserData(); // Recursive call with default user
+        }
+        
+        try {
+            // Ensure user has an icon (migration for existing users)
+            if (!user.icon) {
+                user.icon = '👤'; // Default icon for existing users without icons
+            }
+            
+            // Load activities
+            this.activities = [...(user.activities || [])];
+            
+            // Load settings with fallback defaults
+            this.settings = {
+                title: user.settings?.title || user.name + "'s StackMap",
+                subtitle: user.settings?.subtitle || 'Routine Ready',
+                isDefaultTitle: user.settings?.isDefaultTitle ?? false,
+                backgroundColor: user.settings?.backgroundColor || CONFIG.DEFAULT_COLOR,
+                showNumbers: user.settings?.showNumbers ?? CONFIG.SHOW_NUMBERS_DEFAULT,
+                showCompletionIndicators: user.settings?.showCompletionIndicators ?? CONFIG.SHOW_COMPLETION_DEFAULT
+            };
+            
+            // Apply theme
             this.applyTheme();
+            
+            return true;
+        } catch (error) {
+            console.error('Error loading user data:', error);
+            return false;
         }
     }
 
@@ -278,6 +339,43 @@ class AppState {
 
     getAllUsers() {
         return Object.values(this.users.profiles);
+    }
+    
+    // Enhanced getUserDropdownData to include icons
+    getUserDropdownData() {
+        const users = this.getAllUsers();
+        return {
+            users: users.map(user => ({
+                id: user.id,
+                name: user.name,
+                icon: user.icon || '👤', // NEW: Include user icon with fallback
+                isDefault: user.id === CONFIG.DEFAULT_USER_ID,
+                isCurrent: user.id === this.users.currentUserId
+            })),
+            currentUserId: this.users.currentUserId,
+            canAddMore: Object.keys(this.users.profiles).length < CONFIG.MAX_USERS
+        };
+    }
+    
+    // NEW: Update user icon method
+    updateUserIcon(userId, icon) {
+        if (this.users.profiles[userId]) {
+            this.users.profiles[userId].icon = icon || '👤';
+            
+            // If updating current user, reload data
+            if (userId === this.users.currentUserId) {
+                this.loadUserData();
+            }
+            
+            this._triggerSave();
+            return true;
+        }
+        return false;
+    }
+    
+    // Validate user limit before operations
+    canAddUser() {
+        return Object.keys(this.users.profiles).length < CONFIG.MAX_USERS;
     }
 
     cycleCardType(index) {
@@ -380,15 +478,20 @@ class AppState {
         };
     }
 
+    // Enhanced importData to handle user icons
     importData(data) {
         if (data.users) {
             // New multi-user format
             this.users = data.users;
             
-            // Story 4: Ensure all users have tomorrow activities array
+            // Story 4: Ensure all users have tomorrow activities array and icons
             Object.values(this.users.profiles).forEach(user => {
                 if (!user.tomorrowActivities) {
                     user.tomorrowActivities = [];
+                }
+                // NEW: Ensure all users have icons (migration)
+                if (!user.icon) {
+                    user.icon = '👤'; // Default icon for imported users without icons
                 }
             });
             
@@ -428,10 +531,11 @@ class AppState {
                 }
             }
             
-            // Migrate to default user
+            // Migrate to default user with icon
             this.users.profiles[CONFIG.DEFAULT_USER_ID] = {
                 id: CONFIG.DEFAULT_USER_ID,
                 name: settings.title || 'My StackMap',
+                icon: '👤', // NEW: Default icon for legacy imports
                 activities: activities,
                 tomorrowActivities: [], // Story 4: Initialize empty tomorrow
                 settings: settings

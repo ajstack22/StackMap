@@ -1,7 +1,7 @@
 /* ===== BUTTON COMPONENTS ===== */
 .btn {
     border: none;
-    border-radius: 8px;
+    border-radius: 12px; /* Standardized rounded rectangles */
     cursor: pointer;
     transition: all var(--transition-fast);
     font-weight: 500;
@@ -75,9 +75,9 @@
 }
 
 .btn--round {
-    border-radius: 50%;
-    width: 34px;
-    height: 34px;
+    border-radius: 8px; /* Smaller radius for action buttons */
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -93,6 +93,7 @@
     .btn--round {
         width: 44px;
         height: 44px;
+        border-radius: 10px; /* Slightly larger radius on mobile */
         /* Add invisible touch area */
         position: absolute;
     }
@@ -174,8 +175,8 @@ button.btn.btn--floating,
 .btn.btn--floating {
     position: fixed !important;
     width: 56px !important;
-    height: 56px !important;
-    border-radius: 50% !important;
+    height: 44px !important; /* Rectangle proportions */
+    border-radius: 12px !important; /* Standardized rounded rectangles */
     padding: 0 !important;
     margin: 0 !important;
     box-shadow: var(--card-shadow) !important;
@@ -268,7 +269,7 @@ button.btn.btn--floating .material-icons,
     button.btn.btn--floating,
     .btn.btn--floating {
         width: 48px !important;
-        height: 48px !important;
+        height: 40px !important; /* Maintain rectangle proportions */
         top: 20px !important;
     }
     
@@ -313,7 +314,7 @@ button.btn.btn--floating .material-icons,
     button.btn.btn--floating,
     .btn.btn--floating {
         width: 44px !important;
-        height: 44px !important;
+        height: 36px !important; /* Maintain rectangle proportions */
     }
     
     button.btn.btn--floating .material-icons,
@@ -350,7 +351,7 @@ body.showing-welcome .btn.btn--grownup-mode {
     padding: 10px 16px;
     font-size: 0.9rem;
     font-weight: 600;
-    border-radius: 8px;
+    border-radius: 12px; /* Standardized rounded rectangles */
     display: inline-flex;
     align-items: center;
     justify-content: center;
