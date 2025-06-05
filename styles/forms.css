@@ -740,3 +740,11 @@ html body.grownup-mode .card--completed[style] .card__icon {
     text-shadow: none !important;
     transform: none !important;
 }
+/* CRITICAL FIX: Force add user button sizing */
+.btn--add-user {
+    width: 44px !important;
+    height: 44px !important;
+    min-width: 44px !important;
+    min-height: 44px !important;
+    flex-shrink: 0 !important;
+}
