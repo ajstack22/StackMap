@@ -70,6 +70,12 @@ AddType text/cache-manifest .appcache
 # Prevent directory browsing
 Options -Indexes
 
+# Enable rewrite engine for routing
+RewriteEngine On
+
+# Route /blog to /blog.html
+RewriteRule ^blog/?$ /blog.html [L]
+
 # Redirect to HTTPS (uncomment if you have SSL)
 # RewriteEngine On
 # RewriteCond %{HTTPS} off
