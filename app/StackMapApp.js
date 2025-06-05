@@ -1477,7 +1477,7 @@ class StackMapApp {
 // Make available globally
 window.StackMapApp = StackMapApp;
 
-// Add debugging helper
+// Add debugging helpers
 window.testAddUser = function() {
     console.log('Testing Add User functionality...');
     if (window.appInstance) {
@@ -1491,6 +1491,32 @@ window.testAddUser = function() {
         window.appInstance.showAddUserDialog();
     } else {
         console.log('App instance not found!');
+    }
+};
+
+window.debugUsers = function() {
+    if (window.appInstance && window.appInstance.appState) {
+        console.log('=== USER DATA DEBUG ===');
+        console.log('All users:', window.appInstance.appState.users);
+        console.log('User profiles:', window.appInstance.appState.users.profiles);
+        console.log('Current user ID:', window.appInstance.appState.users.currentUserId);
+        console.log('Current user object:', window.appInstance.appState.getCurrentUser());
+        
+        // Log each user's details
+        const users = window.appInstance.appState.getAllUsers();
+        console.log('All users array:', users);
+        users.forEach((user, index) => {
+            console.log(`User ${index + 1}:`, {
+                id: user.id,
+                name: user.name,
+                icon: user.icon,
+                avatar: user.avatar,
+                hasIcon: !!user.icon,
+                hasAvatar: !!user.avatar
+            });
+        });
+    } else {
+        console.log('App instance or appState not found!');
     }
 };
 

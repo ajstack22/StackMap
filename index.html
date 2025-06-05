@@ -294,6 +294,12 @@
             try {
                 window.appInstance = new StackMapApp();
                 console.log('StackMap initialized successfully');
+                
+                // Add debug function for inspecting user data
+                window.debugUsers = function() {
+                    console.log('Current users:', window.appInstance.appState.users);
+                    console.log('Current user:', window.appInstance.appState.getCurrentUser());
+                };
             } catch (error) {
                 console.error('Failed to initialize StackMap:', error);
                 
