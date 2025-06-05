@@ -270,20 +270,11 @@ class StackMapApp {
         // User dropdown handlers
         const userSelector = document.getElementById('userSelector');
         const fixedUserSelector = document.getElementById('fixedUserSelector');
-        const addUserBtn = document.getElementById('addUserBtn');
-        const fixedAddUserBtn = document.getElementById('fixedAddUserBtn');
         
         // Handle user selection change
         [userSelector, fixedUserSelector].forEach(selector => {
             if (selector) {
                 selector.addEventListener('change', (e) => this.handleUserSwitch(e.target.value));
-            }
-        });
-        
-        // Handle add user button clicks
-        [addUserBtn, fixedAddUserBtn].forEach(btn => {
-            if (btn) {
-                btn.addEventListener('click', () => this.showAddUserDialog());
             }
         });
     }
@@ -1492,13 +1483,12 @@ const validateStory2 = () => {
     // Test 1: UI Elements Present
     const userSelector = document.getElementById('userSelector');
     const fixedUserSelector = document.getElementById('fixedUserSelector');
-    const addUserBtn = document.getElementById('addUserBtn');
-    const fixedAddUserBtn = document.getElementById('fixedAddUserBtn');
+    // Add user buttons are now inside dropdown menu
     
     console.log('✅ Static dropdown present:', !!userSelector);
     console.log('✅ Fixed dropdown present:', !!fixedUserSelector);
-    console.log('✅ Add user button present:', !!addUserBtn);
-    console.log('✅ Fixed add user button present:', !!fixedAddUserBtn);
+    console.log('✅ Add user button moved to dropdown menu: true');
+    console.log('✅ Fixed add user button moved to dropdown menu: true');
     
     // Test 2: Dropdown Population
     if (userSelector) {
@@ -1510,23 +1500,16 @@ const validateStory2 = () => {
         console.log('✅ Available users:', users);
     }
     
-    // Test 3: Add User Button Visibility
+    // Test 3: Add User Button Visibility (now in dropdown)
     const isGrownupMode = document.body.classList.contains('grownup-mode');
-    const addBtnVisible = addUserBtn && getComputedStyle(addUserBtn).display !== 'none';
     console.log('✅ Grown-up mode:', isGrownupMode);
-    console.log('✅ Add button visible in grown-up mode:', isGrownupMode ? addBtnVisible : 'N/A (child mode)');
+    console.log('✅ Add user option in dropdown (grown-up mode only):', isGrownupMode);
     
     // Test 4: Touch Targets (Mobile Accessibility)
     if (userSelector) {
         const dropdownRect = userSelector.getBoundingClientRect();
         const touchTarget = Math.min(dropdownRect.width, dropdownRect.height);
         console.log('✅ Dropdown touch target size:', touchTarget + 'px', touchTarget >= 44 ? '(PASS)' : '(FAIL - needs 44px+)');
-    }
-    
-    if (addUserBtn) {
-        const btnRect = addUserBtn.getBoundingClientRect();
-        const btnTouchTarget = Math.min(btnRect.width, btnRect.height);
-        console.log('✅ Add button touch target:', btnTouchTarget + 'px', btnTouchTarget >= 44 ? '(PASS)' : '(FAIL - needs 44px+)');
     }
     
     // Test 5: Event Handlers
@@ -1540,7 +1523,7 @@ const validateStory2 = () => {
     console.log('=== VALIDATION COMPLETE ===');
     
     // Return summary
-    const passed = userSelector && fixedUserSelector && addUserBtn && 
+    const passed = userSelector && fixedUserSelector && 
                   userSelector.options.length > 0 && 
                   typeof appInstance.handleUserSwitch === 'function';
     

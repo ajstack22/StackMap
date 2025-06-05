@@ -122,7 +122,9 @@
 
 /* ===== DAY SELECTOR SPECIFIC ===== */
 .day-selector-modern {
-    margin-bottom: 20px;
+    margin-bottom: 8px;
+    max-width: 200px; /* Match user selector width */
+    width: 100%;
 }
 
 .day-selector-content {
@@ -411,15 +413,15 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.9);
-    background: var(--selector-bg);
-    border-radius: 20px;
-    box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-    z-index: 1001;
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow-hover);
+    z-index: 2001;
     opacity: 0;
     pointer-events: none;
     transition: opacity 300ms ease, transform 300ms cubic-bezier(0.4, 0, 0.2, 1);
-    max-width: 480px;
-    width: calc(100vw - 40px);
+    max-width: 400px;
+    width: 90%;
     max-height: 80vh;
     overflow: hidden;
 }
@@ -431,20 +433,22 @@
 }
 
 .day-modal-content {
-    padding: 32px;
+    padding: 24px;
     overflow-y: auto;
     max-height: 80vh;
 }
 
 .day-modal-header {
     text-align: center;
-    margin-bottom: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #f0f0f0;
 }
 
 .day-modal-title {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--selector-text-primary);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #333;
     margin: 0;
 }
 

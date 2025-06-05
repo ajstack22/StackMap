@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Story 5 Test Runner</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .panel {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .full-width {
+            grid-column: 1 / -1;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        h2 {
+            color: #555;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .status {
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .status.warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+        }
+        .test-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+        }
+        .test-item {
+            margin: 5px 0;
+            padding: 5px;
+        }
+        .test-item.pass {
+            color: #28a745;
+        }
+        .test-item.fail {
+            color: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="panel full-width">
+        <h1>Story 5: Modern UI Selectors - Test Runner</h1>
+        <div class="controls">
+            <button onclick="runTests()">Run All Tests</button>
+            <button onclick="testUserSelector()">Test User Selector</button>
+            <button onclick="testDaySelector()">Test Day Selector</button>
+            <button onclick="testKeyboard()">Test Keyboard Nav</button>
+            <button onclick="location.reload()">Reload Page</button>
+        </div>
+        
+        <div id="status" class="status warning">
+            Click "Run All Tests" to start the automated test suite
+        </div>
+    </div>
+    
+    <div class="container">
+        <div class="panel">
+            <h2>Test Results</h2>
+            <div id="testResults" class="test-results">
+                Test results will appear here...
+            </div>
+        </div>
+        
+        <div class="panel">
+            <h2>StackMap App</h2>
+            <iframe id="appFrame" src="index.html"></iframe>
+        </div>
+    </div>
+    
+    <div class="panel full-width">
+        <h2>Test Summary</h2>
+        <div id="summary">
+            <p>No tests run yet.</p>
+        </div>
+    </div>
+
+    <script>
+        const appFrame = document.getElementById('appFrame');
+        const statusEl = document.getElementById('status');
+        const resultsEl = document.getElementById('testResults');
+        const summaryEl = document.getElementById('summary');
+        
+        let testResults = [];
+        
+        function updateStatus(message, type = 'warning') {
+            statusEl.className = `status ${type}`;
+            statusEl.textContent = message;
+        }
+        
+        function log(message, type = 'info') {
+            const item = document.createElement('div');
+            item.className = `test-item ${type}`;
+            item.textContent = message;
+            resultsEl.appendChild(item);
+            resultsEl.scrollTop = resultsEl.scrollHeight;
+        }
+        
+        function clearResults() {
+            resultsEl.innerHTML = '';
+            testResults = [];
+        }
+        
+        async function waitForApp() {
+            return new Promise((resolve) => {
+                const checkApp = () => {
+                    const win = appFrame.contentWindow;
+                    if (win.appInstance && win.story5Tests) {
+                        resolve(win);
+                    } else {
+                        setTimeout(checkApp, 100);
+                    }
+                };
+                
+                if (appFrame.contentDocument.readyState === 'complete') {
+                    checkApp();
+                } else {
+                    appFrame.onload = checkApp;
+                }
+            });
+        }
+        
+        async function runTests() {
+            updateStatus('Running tests...', 'warning');
+            clearResults();
+            
+            try {
+                const win = await waitForApp();
+                log('✅ App loaded successfully', 'pass');
+                
+                // Check components
+                log('\n📦 Checking Components:', 'info');
+                const hasUserSelector = typeof win.ModernUserSelector === 'function';
+                const hasDaySelector = typeof win.ModernDaySelector === 'function';
+                const hasTests = typeof win.testStory5 === 'function';
+                
+                log(`  ModernUserSelector: ${hasUserSelector ? '✅' : '❌'}`, hasUserSelector ? 'pass' : 'fail');
+                log(`  ModernDaySelector: ${hasDaySelector ? '✅' : '❌'}`, hasDaySelector ? 'pass' : 'fail');
+                log(`  Test Suite: ${hasTests ? '✅' : '❌'}`, hasTests ? 'pass' : 'fail');
+                
+                // Check rendering
+                log('\n🎨 Checking Rendering:', 'info');
+                const userSelector = win.document.querySelector('.user-selector-modern');
+                const daySelector = win.document.querySelector('.day-selector-modern');
+                
+                log(`  User Selector Rendered: ${userSelector ? '✅' : '❌'}`, userSelector ? 'pass' : 'fail');
+                log(`  Day Selector Rendered: ${daySelector ? '✅' : '❌'}`, daySelector ? 'pass' : 'fail');
+                
+                if (hasTests) {
+                    log('\n🧪 Running Full Test Suite...', 'info');
+                    
+                    // Capture console output
+                    const originalLog = win.console.log;
+                    const logs = [];
+                    win.console.log = (...args) => {
+                        logs.push(args.join(' '));
+                        originalLog.apply(win.console, args);
+                    };
+                    
+                    await win.testStory5();
+                    
+                    // Restore console
+                    win.console.log = originalLog;
+                    
+                    // Display captured logs
+                    logs.forEach(logMsg => {
+                        if (logMsg.includes('✅')) {
+                            log(logMsg, 'pass');
+                        } else if (logMsg.includes('❌')) {
+                            log(logMsg, 'fail');
+                        } else {
+                            log(logMsg, 'info');
+                        }
+                    });
+                    
+                    // Update summary
+                    const passed = logs.filter(l => l.includes('✅')).length;
+                    const failed = logs.filter(l => l.includes('❌')).length;
+                    const total = passed + failed;
+                    
+                    if (failed === 0) {
+                        updateStatus('All tests passed! 🎉', 'success');
+                    } else {
+                        updateStatus(`${failed} tests failed`, 'error');
+                    }
+                    
+                    summaryEl.innerHTML = `
+                        <div class="status ${failed === 0 ? 'success' : 'error'}">
+                            <h3>Test Summary</h3>
+                            <p>Total Tests: ${total}</p>
+                            <p>Passed: ${passed} ✅</p>
+                            <p>Failed: ${failed} ❌</p>
+                            <p>Success Rate: ${total > 0 ? ((passed/total)*100).toFixed(1) : 0}%</p>
+                        </div>
+                    `;
+                } else {
+                    updateStatus('Test suite not available', 'error');
+                }
+                
+            } catch (error) {
+                updateStatus('Error running tests: ' + error.message, 'error');
+                log('❌ ' + error.message, 'fail');
+            }
+        }
+        
+        async function testUserSelector() {
+            updateStatus('Testing user selector...', 'warning');
+            clearResults();
+            
+            try {
+                const win = await waitForApp();
+                const selector = win.document.querySelector('.user-selector-modern');
+                
+                if (!selector) {
+                    log('❌ User selector not found', 'fail');
+                    updateStatus('User selector not found', 'error');
+                    return;
+                }
+                
+                log('✅ User selector found', 'pass');
+                
+                // Test click
+                selector.click();
+                await new Promise(r => setTimeout(r, 300));
+                
+                const isOpen = selector.classList.contains('modern-selector--open');
+                log(`  Click opens dropdown: ${isOpen ? '✅' : '❌'}`, isOpen ? 'pass' : 'fail');
+                
+                if (isOpen) {
+                    const options = win.document.querySelectorAll('.dropdown-option');
+                    log(`  Found ${options.length} user options`, 'info');
+                    
+                    selector.click();
+                    await new Promise(r => setTimeout(r, 300));
+                    
+                    const isClosed = !selector.classList.contains('modern-selector--open');
+                    log(`  Click closes dropdown: ${isClosed ? '✅' : '❌'}`, isClosed ? 'pass' : 'fail');
+                }
+                
+                updateStatus('User selector test complete', 'success');
+                
+            } catch (error) {
+                updateStatus('Error: ' + error.message, 'error');
+                log('❌ ' + error.message, 'fail');
+            }
+        }
+        
+        async function testDaySelector() {
+            updateStatus('Testing day selector...', 'warning');
+            clearResults();
+            
+            try {
+                const win = await waitForApp();
+                const selector = win.document.querySelector('.day-selector-modern');
+                
+                if (!selector) {
+                    log('❌ Day selector not found', 'fail');
+                    updateStatus('Day selector not found', 'error');
+                    return;
+                }
+                
+                log('✅ Day selector found', 'pass');
+                
+                // Test click
+                selector.click();
+                await new Promise(r => setTimeout(r, 300));
+                
+                const modal = win.document.querySelector('.day-modal');
+                const isOpen = modal && modal.classList.contains('day-modal--open');
+                log(`  Click opens modal: ${isOpen ? '✅' : '❌'}`, isOpen ? 'pass' : 'fail');
+                
+                if (isOpen) {
+                    const options = win.document.querySelectorAll('.day-modal-option');
+                    log(`  Found ${options.length} day options`, 'info');
+                    
+                    const completeBtn = win.document.querySelector('.btn--complete-day');
+                    log(`  Complete Day button: ${completeBtn ? '✅' : '❌'}`, completeBtn ? 'pass' : 'fail');
+                    
+                    const backdrop = win.document.querySelector('.selector-backdrop');
+                    if (backdrop) {
+                        backdrop.click();
+                        await new Promise(r => setTimeout(r, 300));
+                        
+                        const isClosed = !modal.classList.contains('day-modal--open');
+                        log(`  Backdrop closes modal: ${isClosed ? '✅' : '❌'}`, isClosed ? 'pass' : 'fail');
+                    }
+                }
+                
+                updateStatus('Day selector test complete', 'success');
+                
+            } catch (error) {
+                updateStatus('Error: ' + error.message, 'error');
+                log('❌ ' + error.message, 'fail');
+            }
+        }
+        
+        async function testKeyboard() {
+            updateStatus('Testing keyboard navigation...', 'warning');
+            clearResults();
+            
+            try {
+                const win = await waitForApp();
+                const userSelector = win.document.querySelector('.user-selector-modern');
+                
+                if (!userSelector) {
+                    log('❌ User selector not found', 'fail');
+                    updateStatus('User selector not found', 'error');
+                    return;
+                }
+                
+                log('✅ Testing keyboard navigation', 'pass');
+                
+                // Focus and test Enter key
+                userSelector.focus();
+                log(`  Selector focused: ${win.document.activeElement === userSelector ? '✅' : '❌'}`, 
+                    win.document.activeElement === userSelector ? 'pass' : 'fail');
+                
+                // Simulate Enter key
+                const enterEvent = new win.KeyboardEvent('keydown', { key: 'Enter' });
+                userSelector.dispatchEvent(enterEvent);
+                await new Promise(r => setTimeout(r, 300));
+                
+                const isOpen = userSelector.classList.contains('modern-selector--open');
+                log(`  Enter key opens: ${isOpen ? '✅' : '❌'}`, isOpen ? 'pass' : 'fail');
+                
+                if (isOpen) {
+                    // Test Escape
+                    const escEvent = new win.KeyboardEvent('keydown', { key: 'Escape' });
+                    userSelector.dispatchEvent(escEvent);
+                    await new Promise(r => setTimeout(r, 300));
+                    
+                    const isClosed = !userSelector.classList.contains('modern-selector--open');
+                    log(`  Escape key closes: ${isClosed ? '✅' : '❌'}`, isClosed ? 'pass' : 'fail');
+                }
+                
+                updateStatus('Keyboard test complete', 'success');
+                
+            } catch (error) {
+                updateStatus('Error: ' + error.message, 'error');
+                log('❌ ' + error.message, 'fail');
+            }
+        }
+        
+        // Auto-run tests when page loads
+        window.addEventListener('load', () => {
+            setTimeout(runTests, 1000);
+        });
+    </script>
+</body>
+</html>
