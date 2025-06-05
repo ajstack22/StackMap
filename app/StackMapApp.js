@@ -300,8 +300,8 @@ class StackMapApp {
     }
     
     showAddUserDialog() {
-        // Use the new Add Family Member modal instead of prompt
-        ComponentBuilder.showAddFamilyMemberModal();
+        // Use the new Add User modal instead of prompt
+        ComponentBuilder.showAddUserModal();
     }
     
     populateUserDropdowns() {

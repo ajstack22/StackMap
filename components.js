@@ -553,10 +553,10 @@ class ComponentBuilder {
         }));
     }
 
-    // NEW: Show Add Family Member Modal with Emoji Picker (similar to activity flow)
-    static showAddFamilyMemberModal() {
+    // NEW: Show Add User Modal with Emoji Picker (similar to activity flow)
+    static showAddUserModal() {
         const overlay = this.createElement('div', 'modal-overlay');
-        overlay.id = 'addFamilyMemberModal';
+        overlay.id = 'addUserModal';
         
         // Store selected emoji (default to person emoji)
         this.selectedUserEmoji = '👤';
@@ -564,37 +564,37 @@ class ComponentBuilder {
         // Close modal when clicking overlay
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                this.closeAddFamilyMemberModal();
+                this.closeAddUserModal();
             }
         });
         
         // Escape key handler
         const handleEscape = (e) => {
             if (e.key === 'Escape') {
-                this.closeAddFamilyMemberModal();
+                this.closeAddUserModal();
                 document.removeEventListener('keydown', handleEscape);
             }
         };
         document.addEventListener('keydown', handleEscape);
         
-        const modal = this.createElement('div', 'modal-content family-member-modal');
+        const modal = this.createElement('div', 'modal-content user-modal');
         modal.innerHTML = `
             <div class="modal-header">
-                <h2>Add Family Member</h2>
+                <h2>Add User</h2>
             </div>
             
             <div class="modal-body">
                 <div class="user-icon-section">
-                    <div class="user-icon-display" id="familyMemberIcon" onclick="document.getElementById('familyMemberEmojiFilter').focus()">${this.selectedUserEmoji}</div>
+                    <div class="user-icon-display" id="userIcon" onclick="document.getElementById('userEmojiFilter').focus()">${this.selectedUserEmoji}</div>
                     <label class="user-icon-label">Choose an icon:</label>
                 </div>
                 
-                <div class="emoji-picker-slot" id="familyMemberEmojiPicker"></div>
+                <div class="emoji-picker-slot" id="userEmojiPicker"></div>
                 
                 <div class="form-field">
-                    <label for="familyMemberName">Family Member Name:</label>
+                    <label for="userName">User Name:</label>
                     <input type="text" 
-                           id="familyMemberName" 
+                           id="userName" 
                            class="form-input" 
                            placeholder="Enter name..." 
                            maxlength="20"
@@ -602,15 +602,15 @@ class ComponentBuilder {
                 </div>
                 
                 <div class="modal-info">
-                    <p>Each family member gets their own personalized StackMap with separate activities and settings.</p>
+                    <p>Each user gets their own personalized StackMap with separate activities and settings.</p>
                 </div>
             </div>
             
             <div class="modal-actions">
-                <button class="btn btn--primary" onclick="ComponentBuilder.addFamilyMember()">
-                    Add Family Member
+                <button class="btn btn--primary" onclick="ComponentBuilder.addUser()">
+                    Add User
                 </button>
-                <button class="btn btn--secondary" onclick="ComponentBuilder.closeAddFamilyMemberModal()">
+                <button class="btn btn--secondary" onclick="ComponentBuilder.closeAddUserModal()">
                     Cancel
                 </button>
             </div>
@@ -621,40 +621,40 @@ class ComponentBuilder {
         
         // Add emoji picker after modal is in DOM
         setTimeout(() => {
-            const emojiSlot = document.getElementById('familyMemberEmojiPicker');
+            const emojiSlot = document.getElementById('userEmojiPicker');
             if (emojiSlot) {
                 const emojiPicker = this.createModalEmojiPicker(
                     this.selectedUserEmoji,
                     (emoji) => {
                         this.selectedUserEmoji = emoji;
-                        const iconDisplay = document.getElementById('familyMemberIcon');
+                        const iconDisplay = document.getElementById('userIcon');
                         if (iconDisplay) {
                             iconDisplay.textContent = emoji;
                         }
                     },
-                    'familyMemberEmojiFilter'
+                    'userEmojiFilter'
                 );
                 emojiSlot.appendChild(emojiPicker);
             }
             
             // Focus on name input
-            const nameInput = document.getElementById('familyMemberName');
+            const nameInput = document.getElementById('userName');
             if (nameInput) {
                 nameInput.focus();
                 
                 // Allow Enter key to submit
                 nameInput.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter') {
-                        this.addFamilyMember();
+                        this.addUser();
                     }
                 });
             }
         }, 100);
     }
 
-    // NEW: Add family member functionality with emoji support
-    static addFamilyMember() {
-        const nameInput = document.getElementById('familyMemberName');
+    // NEW: Add user functionality with emoji support
+    static addUser() {
+        const nameInput = document.getElementById('userName');
         if (!nameInput) return;
         
         const name = nameInput.value.trim();
@@ -683,22 +683,22 @@ class ComponentBuilder {
                 window.appInstance.switchUser(userId);
                 
                 // Close modal
-                this.closeAddFamilyMemberModal();
+                this.closeAddUserModal();
                 
                 // Show success feedback
-                this.showFamilyMemberSuccess(name, icon);
+                this.showUserSuccess(name, icon);
             }
         } catch (error) {
             // Show error (probably max users reached)
             nameInput.classList.add('error');
             nameInput.placeholder = error.message || 'Maximum users reached';
-            console.error('Error adding family member:', error);
+            console.error('Error adding user:', error);
         }
     }
 
-    // NEW: Close add family member modal
-    static closeAddFamilyMemberModal() {
-        const modal = document.getElementById('addFamilyMemberModal');
+    // NEW: Close add user modal
+    static closeAddUserModal() {
+        const modal = document.getElementById('addUserModal');
         if (modal) {
             modal.style.opacity = '0';
             setTimeout(() => {
@@ -710,7 +710,7 @@ class ComponentBuilder {
     }
 
     // NEW: Show success feedback with emoji
-    static showFamilyMemberSuccess(name, icon) {
+    static showUserSuccess(name, icon) {
         const toast = this.createElement('div', 'success-toast welcome-toast');
         toast.innerHTML = `
             <div class="success-toast__content">

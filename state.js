@@ -210,12 +210,12 @@ class AppState {
         // Check for duplicate names
         const existingNames = Object.values(this.users.profiles).map(user => user.name.toLowerCase());
         if (existingNames.includes(trimmedName.toLowerCase())) {
-            throw new Error('A family member with this name already exists');
+            throw new Error('A user with this name already exists');
         }
         
         // Check user limit
         if (Object.keys(this.users.profiles).length >= CONFIG.MAX_USERS) {
-            throw new Error(`Maximum of ${CONFIG.MAX_USERS} family members allowed`);
+            throw new Error(`Maximum of ${CONFIG.MAX_USERS} users allowed`);
         }
         
         // Create new user ID

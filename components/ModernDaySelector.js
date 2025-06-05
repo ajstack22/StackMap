@@ -20,7 +20,7 @@ class ModernDaySelector {
     }
     
     render() {
-        // Create modern selector structure
+        // Create modern selector structure matching user selector
         this.selector = ComponentBuilder.createElement('div', 'modern-selector day-selector-modern');
         this.selector.setAttribute('role', 'button');
         this.selector.setAttribute('aria-haspopup', 'dialog');
@@ -30,23 +30,20 @@ class ModernDaySelector {
         // Create content container
         const content = ComponentBuilder.createElement('div', 'day-selector-content');
         
-        // Day info section
+        // Day info section - similar to user-info
         this.dayInfo = ComponentBuilder.createElement('div', 'day-info');
         
-        // Primary info (icon + name)
-        this.dayPrimary = ComponentBuilder.createElement('div', 'day-primary');
-        
+        // Day icon - similar to user avatar
         this.dayIcon = ComponentBuilder.createElement('div', 'day-icon');
+        
+        // Day details - similar to user details
+        this.dayDetails = ComponentBuilder.createElement('div', 'day-details');
         this.dayName = ComponentBuilder.createElement('div', 'day-name');
         
-        this.dayPrimary.appendChild(this.dayIcon);
-        this.dayPrimary.appendChild(this.dayName);
+        this.dayDetails.appendChild(this.dayName);
         
-        // Secondary info (count)
-        this.daySecondary = ComponentBuilder.createElement('div', 'day-secondary');
-        
-        this.dayInfo.appendChild(this.dayPrimary);
-        this.dayInfo.appendChild(this.daySecondary);
+        this.dayInfo.appendChild(this.dayIcon);
+        this.dayInfo.appendChild(this.dayDetails);
         
         // Selector icon
         this.icon = ComponentBuilder.createElement('div', 'selector-icon');
@@ -163,16 +160,14 @@ class ModernDaySelector {
         if (currentDay === 'today') {
             this.dayIcon.textContent = '📅';
             this.dayName.textContent = 'Today';
-            this.daySecondary.style.display = 'none'; // Hide activity count
         } else {
             this.dayIcon.textContent = '⏰';
             this.dayName.textContent = 'Tomorrow';
-            this.daySecondary.style.display = 'none'; // Hide activity count
         }
         
         // Update aria label
         this.selector.setAttribute('aria-label', 
-            `Currently viewing ${currentDay}. ${currentDay === 'today' ? counts.today : counts.tomorrow} activities`);
+            `Select day. Currently viewing ${currentDay}. ${currentDay === 'today' ? counts.today : counts.tomorrow} activities`);
         
         // Update modal counts
         this.updateModalCounts();
@@ -185,7 +180,7 @@ class ModernDaySelector {
         // Update today
         const todayCount = document.getElementById('todayModalCount');
         if (todayCount) {
-            todayCount.style.display = 'none'; // Hide activity count
+            todayCount.textContent = `${counts.today} activities`;
         }
         
         const todayActivities = document.getElementById('todayActivities');
@@ -201,7 +196,7 @@ class ModernDaySelector {
         // Update tomorrow
         const tomorrowCount = document.getElementById('tomorrowModalCount');
         if (tomorrowCount) {
-            tomorrowCount.style.display = 'none'; // Hide activity count
+            tomorrowCount.textContent = `${counts.tomorrow} activities`;
         }
         
         const tomorrowActivities = document.getElementById('tomorrowActivities');

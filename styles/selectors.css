@@ -135,31 +135,24 @@
 .day-info {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 12px;
     flex: 1;
 }
 
-.day-primary {
-    display: flex;
-    align-items: center;
-    gap: 8px;
+.day-icon {
+    font-size: 1.5rem;
+    line-height: 1;
 }
 
-.day-icon {
-    font-size: 1.25rem;
+.day-details {
+    flex: 1;
 }
 
 .day-name {
     font-size: 1rem;
-    font-weight: 600;
+    font-weight: 500;
     color: var(--selector-text-primary);
-}
-
-.day-secondary {
-    font-size: 0.875rem;
-    color: var(--selector-text-secondary);
-    margin-left: auto;
-    margin-right: 12px;
+    line-height: 1.2;
 }
 
 .day-switch-hint {

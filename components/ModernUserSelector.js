@@ -107,7 +107,7 @@ class ModernUserSelector {
             
             // Update aria label
             this.selector.setAttribute('aria-label', 
-                `Select family member. Currently ${currentUser.name}`);
+                `Select user. Currently ${currentUser.name}`);
         }
     }
     
@@ -177,7 +177,7 @@ class ModernUserSelector {
         
         const text = ComponentBuilder.createElement('div', 'dropdown-option-text');
         const primary = ComponentBuilder.createElement('div', 'dropdown-option-primary');
-        primary.textContent = 'Add Family Member';
+        primary.textContent = 'Add User';
         
         text.appendChild(primary);
         content.appendChild(icon);
