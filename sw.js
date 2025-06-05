@@ -1,5 +1,5 @@
 // StackMap Service Worker - Offline Support for Special Needs Families
-const CACHE_NAME = 'stackmap-v1.0.1';
+const CACHE_NAME = 'stackmap-v1.0.2';
 const OFFLINE_URL = '/offline.html';
 
 // Files to cache for offline use - essential for routine continuity
@@ -16,6 +16,11 @@ const urlsToCache = [
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png',
+  // Blog files
+  '/blog.html',
+  '/blog/blog-data.js',
+  '/blog/blog-renderer.js',
+  '/blog/blog-styles.css',
   // Google Fonts (cache these if using web fonts)
   'https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap',
   'https://fonts.googleapis.com/icon?family=Material+Icons'
@@ -71,6 +76,17 @@ self.addEventListener('fetch', event => {
 
   // Handle navigation requests (page loads)
   if (event.request.mode === 'navigate') {
+    // Special handling for blog route
+    if (event.request.url.includes('/blog')) {
+      event.respondWith(
+        fetch('/blog.html')
+          .catch(() => {
+            return caches.match('/blog.html');
+          })
+      );
+      return;
+    }
+    
     event.respondWith(
       fetch(event.request)
         .catch(() => {

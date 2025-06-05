@@ -155,6 +155,8 @@ class PreferencesManager {
                     </button>
                 </div>
                 <div class="preferences-legal" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #e0e0e0; text-align: center;">
+                    <a href="/blog.html" target="_blank" style="color: #666; font-size: 0.85rem; text-decoration: none; margin: 0 8px; padding: 8px;">Blog</a>
+                    <span style="color: #ccc;">•</span>
                     <a href="/privacy-policy.html" target="_blank" style="color: #666; font-size: 0.85rem; text-decoration: none; margin: 0 8px; padding: 8px;">Privacy Policy</a>
                     <span style="color: #ccc;">•</span>
                     <a href="/terms-of-service.html" target="_blank" style="color: #666; font-size: 0.85rem; text-decoration: none; margin: 0 8px; padding: 8px;">Terms of Service</a>
@@ -205,6 +207,8 @@ class PreferencesManager {
                 </div>
                 
                 <div class="preferences-legal" style="margin-top: ${isMobile ? '16px' : '24px'}; padding-top: ${isMobile ? '16px' : '24px'}; border-top: 1px solid #e0e0e0; text-align: center;">
+                    <a href="/blog.html" target="_blank" style="color: #666; font-size: ${isMobile ? '0.75rem' : '0.85rem'}; text-decoration: none; margin: 0 8px; padding: ${isMobile ? '12px 8px' : '8px'}; display: inline-block;">Blog</a>
+                    <span style="color: #ccc;">•</span>
                     <a href="/privacy-policy.html" target="_blank" style="color: #666; font-size: ${isMobile ? '0.75rem' : '0.85rem'}; text-decoration: none; margin: 0 8px; padding: ${isMobile ? '12px 8px' : '8px'}; display: inline-block;">Privacy Policy</a>
                     <span style="color: #ccc;">•</span>
                     <a href="/terms-of-service.html" target="_blank" style="color: #666; font-size: ${isMobile ? '0.75rem' : '0.85rem'}; text-decoration: none; margin: 0 8px; padding: ${isMobile ? '12px 8px' : '8px'}; display: inline-block;">Terms of Service</a>
