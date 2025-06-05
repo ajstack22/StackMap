@@ -177,7 +177,7 @@ body.viewing-tomorrow .card {
         transparent 100%);
 }
 
-/* Container for title and subtitle to handle button alignment */
+/* Container for title and day selector to handle button alignment */
 .header-text-container {
     position: relative;
     display: flex;
@@ -213,22 +213,6 @@ body.viewing-tomorrow .card {
     font-weight: 700 !important;
 }
 
-.fixed-header .subtitle,
-.static-header .subtitle {
-    color: #f0f0f0 !important;
-    font-size: var(--subtitle-size) !important;
-    margin: -2px 0 0 0 !important; /* Reduced gap between title and subtitle */
-    transition: all var(--transition-fast);
-    padding: 3px 8px !important;
-    border-radius: 8px;
-    min-height: 1.2rem;
-    display: block !important;
-    text-align: center !important;
-    width: auto !important;
-    max-width: calc(100vw - 140px) !important;
-    font-weight: 500 !important;
-    text-shadow: none !important;
-}
 
 .title[contenteditable="true"] {
     background: rgba(255,255,255,0.2);
@@ -244,29 +228,6 @@ body.grownup-mode .title:hover {
     background: rgba(255,255,255,0.1);
 }
 
-.subtitle[contenteditable="true"] {
-    background: rgba(255,255,255,0.2);
-    outline: 2px solid rgba(255,255,255,0.5);
-    cursor: pointer;
-}
-
-body.grownup-mode .subtitle {
-    cursor: pointer;
-}
-
-body.grownup-mode .subtitle:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-.subtitle:empty::before {
-    content: attr(data-placeholder);
-    color: rgba(255,255,255,0.6);
-    font-style: italic;
-}
-
-.subtitle:focus:empty::before {
-    content: "";
-}
 
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
@@ -304,29 +265,17 @@ body.grownup-mode .subtitle:hover {
     border: none;
 }
 
-/* Dynamic button positioning based on subtitle */
+/* Floating button positioning */
 .btn--preferences {
     left: 20px;
     position: fixed !important;
-    transition: top 0.3s ease;
+    top: 36px; /* Centered with header elements */
 }
 
 .btn--grownup-mode {
     right: 20px;
     position: fixed !important;
-    transition: top 0.3s ease;
-}
-
-/* Default: center on title only */
-.btn--preferences,
-.btn--grownup-mode {
-    top: 32px; /* Centered on title height */
-}
-
-/* When subtitle is present, center on both */
-body.has-subtitle .btn--preferences,
-body.has-subtitle .btn--grownup-mode {
-    top: 40px; /* Centered on title + subtitle height */
+    top: 36px; /* Centered with header elements */
 }
 
 /* ===== PANEL POSITIONING ===== */
@@ -366,12 +315,7 @@ body.has-subtitle .btn--grownup-mode {
     /* Adjust button positions for mobile */
     .btn--preferences,
     .btn--grownup-mode {
-        top: 28px;
-    }
-    
-    body.has-subtitle .btn--preferences,
-    body.has-subtitle .btn--grownup-mode {
-        top: 36px;
+        top: 32px;
     }
     
     .preferences-panel {
@@ -407,22 +351,6 @@ body.has-subtitle .btn--grownup-mode {
     font-weight: 700 !important;
 }
 
-.fixed-header .subtitle,
-.static-header .subtitle {
-    color: #f0f0f0 !important;
-    font-size: var(--subtitle-size) !important;
-    margin: 2px 0 0 0 !important;
-    transition: all var(--transition-fast);
-    padding: 3px 8px !important;
-    border-radius: 8px;
-    min-height: 1.2rem;
-    display: block !important;
-    text-align: center !important;
-    width: auto !important;
-    max-width: calc(100vw - 140px) !important;
-    font-weight: 500 !important;
-    text-shadow: none !important;
-}
 
 .title[contenteditable="true"] {
     background: rgba(255,255,255,0.2);
@@ -438,29 +366,6 @@ body.grownup-mode .title:hover {
     background: rgba(255,255,255,0.1);
 }
 
-.subtitle[contenteditable="true"] {
-    background: rgba(255,255,255,0.2);
-    outline: 2px solid rgba(255,255,255,0.5);
-    cursor: pointer;
-}
-
-body.grownup-mode .subtitle {
-    cursor: pointer;
-}
-
-body.grownup-mode .subtitle:hover {
-    background: rgba(255,255,255,0.1);
-}
-
-.subtitle:empty::before {
-    content: attr(data-placeholder);
-    color: rgba(255,255,255,0.6);
-    font-style: italic;
-}
-
-.subtitle:focus:empty::before {
-    content: "";
-}
 
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
