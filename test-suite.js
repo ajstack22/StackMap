@@ -129,8 +129,10 @@ class StackMapTestSuite {
         const currentDay = appInstance.appState.getCurrentDay();
         this.logResult('Current Day', true, `Currently viewing: ${currentDay}`);
         
-        // Test if day selector exists
-        const daySelector = document.querySelector('.day-selector');
+        // Test if day selector exists (checking for both old and modern selectors)
+        const daySelector = document.querySelector('.day-selector') || 
+                          document.querySelector('.day-selector-modern') ||
+                          document.querySelector('.modern-selector.day-selector-modern');
         if (daySelector) {
             this.logResult('Day Selector', true, 'Day selector component found');
         } else {
