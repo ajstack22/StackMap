@@ -338,6 +338,23 @@ class StackMapApp {
                 });
             }
         });
+        
+        // Initialize modern selectors if available
+        if (window.ModernUserSelector && !this.modernUserSelector) {
+            // Get containers
+            const staticContainer = document.querySelector('.static-header .user-selector-container');
+            const fixedContainer = document.querySelector('.fixed-header .user-selector-container');
+            
+            // Initialize static header selector
+            if (staticContainer && userSelector) {
+                this.modernUserSelector = new ModernUserSelector(staticContainer, userSelector, this);
+            }
+            
+            // Initialize fixed header selector
+            if (fixedContainer && fixedUserSelector) {
+                this.modernFixedUserSelector = new ModernUserSelector(fixedContainer, fixedUserSelector, this);
+            }
+        }
     }
     
     // Story 4: Day Selector Methods
@@ -345,26 +362,45 @@ class StackMapApp {
         const staticContainer = document.getElementById('daySelectorContainer');
         const fixedContainer = document.getElementById('fixedDaySelectorContainer');
         
-        if (staticContainer) {
-            staticContainer.innerHTML = '';
-            const counts = this.getDayCounts();
-            const selector = ComponentBuilder.createDaySelector(
-                this.appState.getCurrentDay(),
-                counts.today,
-                counts.tomorrow
-            );
-            staticContainer.appendChild(selector);
-        }
-        
-        if (fixedContainer) {
-            fixedContainer.innerHTML = '';
-            const counts = this.getDayCounts();
-            const fixedSelector = ComponentBuilder.createDaySelector(
-                this.appState.getCurrentDay(),
-                counts.today,
-                counts.tomorrow
-            );
-            fixedContainer.appendChild(fixedSelector);
+        // Initialize modern day selectors if available
+        if (window.ModernDaySelector) {
+            if (staticContainer && !this.modernDaySelector) {
+                this.modernDaySelector = new ModernDaySelector(staticContainer, this);
+            }
+            if (fixedContainer && !this.modernFixedDaySelector) {
+                this.modernFixedDaySelector = new ModernDaySelector(fixedContainer, this);
+            }
+            
+            // Update displays if already initialized
+            if (this.modernDaySelector) {
+                this.modernDaySelector.updateDisplay();
+            }
+            if (this.modernFixedDaySelector) {
+                this.modernFixedDaySelector.updateDisplay();
+            }
+        } else {
+            // Fallback to old selector
+            if (staticContainer) {
+                staticContainer.innerHTML = '';
+                const counts = this.getDayCounts();
+                const selector = ComponentBuilder.createDaySelector(
+                    this.appState.getCurrentDay(),
+                    counts.today,
+                    counts.tomorrow
+                );
+                staticContainer.appendChild(selector);
+            }
+            
+            if (fixedContainer) {
+                fixedContainer.innerHTML = '';
+                const counts = this.getDayCounts();
+                const fixedSelector = ComponentBuilder.createDaySelector(
+                    this.appState.getCurrentDay(),
+                    counts.today,
+                    counts.tomorrow
+                );
+                fixedContainer.appendChild(fixedSelector);
+            }
         }
     }
     
