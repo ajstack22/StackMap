@@ -14,8 +14,8 @@
 .day-selector-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 20px;
-    min-height: 48px; /* Ensure container has height */
+    margin-bottom: 12px;
+    min-height: 44px; /* Reduced container height */
     width: 100%; /* Ensure full width */
 }
 
@@ -150,7 +150,7 @@ body.viewing-tomorrow .card {
     width: 100vw !important;
     background: var(--background-gradient-start) !important; /* Solid color, no gradient */
     text-align: center !important;
-    padding: 8px 0 16px 0 !important; /* Further reduced header space */
+    padding: 6px 0 12px 0 !important; /* Tighter header spacing */
     z-index: 999 !important;
     box-shadow: none !important;
     border-bottom: none !important;

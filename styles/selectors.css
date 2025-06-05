@@ -4,10 +4,10 @@
 /* ===== SELECTOR VARIABLES ===== */
 :root {
     /* Dimensions */
-    --selector-height: 52px;
-    --selector-mobile-height: 56px;
+    --selector-height: 48px;
+    --selector-mobile-height: 52px;
     --selector-radius: 12px;
-    --selector-padding: 16px 20px;
+    --selector-padding: 12px 20px;
     
     /* Colors */
     --selector-bg: #ffffff;
@@ -70,7 +70,7 @@
 
 /* ===== USER SELECTOR SPECIFIC ===== */
 .user-selector-modern {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
 }
 
 .user-selector-content {
@@ -128,7 +128,7 @@
 
 /* ===== DAY SELECTOR SPECIFIC ===== */
 .day-selector-modern {
-    margin-bottom: 8px;
+    margin-bottom: 4px;
     max-width: 200px; /* Match user selector width */
     width: 100%;
 }
