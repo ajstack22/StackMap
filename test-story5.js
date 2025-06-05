@@ -166,15 +166,42 @@ class Story5TestSuite {
                 this.log('Activity Previews', activityPreviews.length === 2, 
                     `Found ${activityPreviews.length} activity preview areas`);
                 
-                // Close modal
-                const backdrop = document.querySelector('.selector-backdrop');
+                // Close modal - wait for backdrop to be clickable
+                await new Promise(resolve => setTimeout(resolve, 100)); // Wait for backdrop to be ready
+                
+                const backdrop = document.querySelector('.selector-backdrop--open');
+                console.log('Looking for open backdrop with class .selector-backdrop--open');
+                console.log('Backdrop element:', backdrop);
+                
+                if (!backdrop) {
+                    // Try without --open class
+                    const anyBackdrop = document.querySelector('.selector-backdrop');
+                    console.log('Any backdrop found:', anyBackdrop);
+                    console.log('Backdrop classes:', anyBackdrop?.className);
+                }
+                
                 if (backdrop) {
-                    backdrop.click();
-                    await new Promise(resolve => setTimeout(resolve, 100));
+                    console.log('Backdrop pointer-events:', window.getComputedStyle(backdrop).pointerEvents);
+                    console.log('Backdrop z-index:', window.getComputedStyle(backdrop).zIndex);
+                    
+                    // Dispatch click event
+                    const clickEvent = new MouseEvent('click', {
+                        view: window,
+                        bubbles: true,
+                        cancelable: true
+                    });
+                    backdrop.dispatchEvent(clickEvent);
+                    
+                    await new Promise(resolve => setTimeout(resolve, 300));
                     
                     const isClosed = !modernDaySelector.classList.contains('modern-selector--open');
-                    this.log('Modal Closes on Backdrop', isClosed, 
-                        isClosed ? 'Modal closes on backdrop click' : 'Modal failed to close');
+                    const modalClosed = !dayModal.classList.contains('day-modal--open');
+                    console.log('After click - Selector closed:', isClosed, 'Modal closed:', modalClosed);
+                    
+                    this.log('Modal Closes on Backdrop', isClosed && modalClosed, 
+                        isClosed && modalClosed ? 'Modal closes on backdrop click' : 'Modal failed to close');
+                } else {
+                    this.log('Modal Closes on Backdrop', false, 'No backdrop element with --open class found');
                 }
             }
         } catch (error) {
