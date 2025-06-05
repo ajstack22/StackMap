@@ -56,8 +56,8 @@ class StackMapApp {
         this.appState.applyTheme();
         
         this.setupEventListeners();
-        this.setupInlineEditing();
         this.populateUserDropdowns();
+        this.renderDaySelectors(); // Story 4: Initialize day selectors
         this.render();
         
         // Check for first-time visit and show welcome splash
@@ -78,6 +78,9 @@ class StackMapApp {
         
         // Set initial tab title
         this.updateTabTitle();
+        
+        // Story 4: Set initial day context
+        document.body.classList.add(`viewing-${this.appState.getCurrentDay()}`);
         
         // Fade in body after theme is applied
         requestAnimationFrame(() => {
@@ -198,13 +201,8 @@ class StackMapApp {
     }
 
     syncFixedHeader() {
-        const { subtitle } = this.appState.settings;
-        const fixedSubtitle = document.getElementById('fixedSubtitle');
-        
-        if (!fixedSubtitle) return;
-        
-        // Update subtitle
-        fixedSubtitle.textContent = subtitle;
+        // Story 4: Sync day selectors and user dropdown
+        this.renderDaySelectors();
         
         // Sync user dropdown selection
         const userSelector = document.getElementById('userSelector');
@@ -214,19 +212,6 @@ class StackMapApp {
         if (userSelector && fixedUserSelector) {
             fixedUserSelector.value = currentUserId;
             userSelector.value = currentUserId;
-        }
-        
-        // Handle subtitle visibility
-        if (this.grownupMode) {
-            fixedSubtitle.style.display = 'inline-block';
-            fixedSubtitle.setAttribute('data-placeholder', 'Tap to add subtitle');
-        } else {
-            if (!subtitle.trim()) {
-                fixedSubtitle.style.display = 'none';
-            } else {
-                fixedSubtitle.style.display = 'inline-block';
-            }
-            fixedSubtitle.removeAttribute('data-placeholder');
         }
     }
 
@@ -355,6 +340,81 @@ class StackMapApp {
         });
     }
     
+    // Story 4: Day Selector Methods
+    renderDaySelectors() {
+        const staticContainer = document.getElementById('daySelectorContainer');
+        const fixedContainer = document.getElementById('fixedDaySelectorContainer');
+        
+        if (staticContainer) {
+            staticContainer.innerHTML = '';
+            const counts = this.getDayCounts();
+            const selector = ComponentBuilder.createDaySelector(
+                this.appState.getCurrentDay(),
+                counts.today,
+                counts.tomorrow
+            );
+            staticContainer.appendChild(selector);
+        }
+        
+        if (fixedContainer) {
+            fixedContainer.innerHTML = '';
+            const counts = this.getDayCounts();
+            const fixedSelector = ComponentBuilder.createDaySelector(
+                this.appState.getCurrentDay(),
+                counts.today,
+                counts.tomorrow
+            );
+            fixedContainer.appendChild(fixedSelector);
+        }
+    }
+    
+    // Story 4: Get activity counts for each day
+    getDayCounts() {
+        const user = this.appState.getCurrentUser();
+        return {
+            today: user.activities.filter(a => a.visible).length,
+            tomorrow: user.tomorrowActivities.filter(a => a.visible).length
+        };
+    }
+    
+    // Story 4: Update day count displays
+    updateDayCounts() {
+        const counts = this.getDayCounts();
+        
+        // Update all count displays
+        document.querySelectorAll('#todayCount').forEach(el => {
+            el.textContent = counts.today;
+        });
+        document.querySelectorAll('#tomorrowCount').forEach(el => {
+            el.textContent = counts.tomorrow;
+        });
+    }
+    
+    // Story 4: Switch between today and tomorrow
+    switchDay(day) {
+        if (this.appState.getCurrentDay() !== day) {
+            this.appState.setCurrentDay(day);
+            
+            // Update body class for visual distinction
+            document.body.classList.remove('viewing-today', 'viewing-tomorrow');
+            document.body.classList.add(`viewing-${day}`);
+            
+            // Update day selector visuals
+            document.querySelectorAll('.day-option').forEach(option => {
+                option.classList.remove('active');
+                if (option.getAttribute('data-day') === day) {
+                    option.classList.add('active');
+                }
+            });
+            
+            // Clear any filters when switching days
+            this.clearAllFilters();
+            
+            this.render();
+            this.updateDayCounts();
+        }
+    }
+    
     // Helper method to clear all filters
     clearAllFilters() {
         this.filterCards('');
@@ -368,34 +428,9 @@ class StackMapApp {
         });
     }
 
+    // Story 4: Inline editing removed - subtitle replaced with day selector
     setupInlineEditing() {
-        const subtitle = document.getElementById('subtitle');
-        const fixedSubtitle = document.getElementById('fixedSubtitle');
-        
-        // Setup editing for both static and fixed subtitles
-        [subtitle, fixedSubtitle].forEach(subtitleElement => {
-            if (!subtitleElement) return;
-            
-            subtitleElement.addEventListener('click', () => {
-                if (!this.grownupMode) return;
-                subtitleElement.contentEditable = "true";
-                subtitleElement.focus();
-                this.selectText(subtitleElement);
-            });
-            
-            subtitleElement.addEventListener('blur', () => {
-                subtitleElement.contentEditable = "false";
-                this.saveInlineEdit('subtitle', subtitleElement);
-                this.syncFixedHeader();
-            });
-            
-            subtitleElement.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    subtitleElement.blur();
-                }
-            });
-        });
+        // No longer needed - day selector is not editable
     }
 
     selectText(element) {
@@ -406,15 +441,7 @@ class StackMapApp {
         selection.addRange(range);
     }
 
-    saveInlineEdit(field, element) {
-        const value = element.textContent.trim();
-        if (field === 'subtitle') {
-            this.appState.settings.subtitle = value;
-            this.appState._triggerSave();
-        }
-        
-        this.renderer.updateButtonPositioning();
-    }
+    // Story 4: saveInlineEdit removed - no longer needed without subtitle
 
     // WELCOME SPLASH MANAGEMENT
     checkFirstTimeVisit() {
@@ -802,25 +829,72 @@ class StackMapApp {
         });
     }
 
-    // ENHANCED CLEAR PROGRESS FUNCTIONALITY
-    showClearProgressConfirmation() {
-        if (confirm('Clear all progress? This will:\n• Mark Recurring cards as incomplete\n• Hide Frequent cards and move to bottom\n• Delete Single Use cards')) {
+    // Story 4: COMPLETE DAY FUNCTIONALITY
+    showCompleteDayConfirmation() {
+        if (confirm('Complete today and plan tomorrow?\n\nThis will:\n• Move tomorrow\'s activities to today\n• Create new tomorrow from today\'s recurring/frequent cards\n• Remove completed single-use cards')) {
             
             // 0.25 second delay before processing
             setTimeout(() => {
-                const counts = this.processCardsForNewDay();
+                this.completeDayTransition();
                 
-                // Re-render to show changes
-                this.render();
-                
-                // Show sorting wave animation
-                this.showSortingWaveAnimation(counts);
+                // Show success message
+                this.showSuccessToast('✨ Day completed! Ready for tomorrow.');
                 
             }, 250); // 0.25 second delay as requested
         }
     }
 
-    // New method to handle the card processing and reorganization
+    // Story 4: Complete day transition - move tomorrow to today, process today to new tomorrow
+    completeDayTransition() {
+        const user = this.appState.getCurrentUser();
+        
+        // Save current today activities for processing
+        const todayActivities = [...user.activities];
+        
+        // Move tomorrow to today
+        user.activities = [...user.tomorrowActivities];
+        
+        // Process today's activities for new tomorrow
+        const newTomorrow = [];
+        todayActivities.forEach(activity => {
+            const cardType = activity.cardType || 'recurring';
+            
+            if (cardType === 'recurring') {
+                // Recurring cards go to tomorrow, reset to incomplete
+                newTomorrow.push({
+                    ...activity,
+                    completed: false,
+                    visible: true
+                });
+            } else if (cardType === 'frequent') {
+                // Frequent cards go to tomorrow, hidden and incomplete
+                newTomorrow.push({
+                    ...activity,
+                    completed: false,
+                    visible: false
+                });
+            }
+            // Single-use cards are not carried forward
+        });
+        
+        // Set new tomorrow
+        user.tomorrowActivities = newTomorrow;
+        
+        // Switch to today view
+        this.appState.setCurrentDay('today');
+        document.body.classList.remove('viewing-today', 'viewing-tomorrow');
+        document.body.classList.add('viewing-today');
+        
+        // Update UI
+        this.renderDaySelectors();
+        this.render();
+        this.updateDayCounts();
+        
+        // Trigger save
+        this.appState._triggerSave();
+    }
+    
+    // Legacy method for backward compatibility (still used in some places)
     processCardsForNewDay() {
         const activeCards = [];      // recurring + single-use (stay visible and on top)
         const frequentCards = [];    // move to bottom and hide
@@ -1513,3 +1587,91 @@ const testExport = () => {
 // Make validation functions globally available
 window.validateStory3 = validateStory3;
 window.testExport = testExport;
+
+// Story 4 Validation Suite
+const validateStory4 = () => {
+    console.log('=== STORY 4 VALIDATION ===');
+    
+    // Test 1: Day Selector Present
+    const daySelector = document.getElementById('daySelectorContainer');
+    const todayOption = document.querySelector('.day-option--today');
+    const tomorrowOption = document.querySelector('.day-option--tomorrow');
+    
+    console.log('✅ Day selector container present:', !!daySelector);
+    console.log('✅ Today option present:', !!todayOption);
+    console.log('✅ Tomorrow option present:', !!tomorrowOption);
+    
+    // Test 2: Day Switching Methods
+    console.log('✅ Switch day method exists:', typeof appInstance.switchDay === 'function');
+    console.log('✅ Complete day method exists:', typeof appInstance.completeDayTransition === 'function');
+    
+    // Test 3: Data Structure
+    const user = appInstance.appState.getCurrentUser();
+    console.log('✅ Tomorrow activities array exists:', Array.isArray(user.tomorrowActivities));
+    console.log('✅ Current day tracking:', appInstance.appState.getCurrentDay());
+    
+    // Test 4: Day Counts
+    const todayCount = document.getElementById('todayCount');
+    const tomorrowCount = document.getElementById('tomorrowCount');
+    console.log('✅ Today count element:', !!todayCount);
+    console.log('✅ Tomorrow count element:', !!tomorrowCount);
+    
+    // Test 5: Complete Day Button
+    const completeDayBtn = document.querySelector('.btn--complete-day');
+    console.log('✅ Complete day button present:', !!completeDayBtn);
+    
+    // Test 6: Visual Context
+    const bodyClasses = document.body.className;
+    console.log('✅ Body has day context class:', bodyClasses.includes('viewing-'));
+    
+    // Test 7: Touch Targets (Mobile Accessibility)
+    if (todayOption) {
+        const optionRect = todayOption.getBoundingClientRect();
+        const touchTarget = Math.min(optionRect.width, optionRect.height);
+        console.log('✅ Day option touch target:', touchTarget + 'px', touchTarget >= 44 ? '(PASS)' : '(FAIL)');
+    }
+    
+    console.log('=== VALIDATION COMPLETE ===');
+    
+    const passed = daySelector && todayOption && tomorrowOption &&
+                  typeof appInstance.switchDay === 'function' &&
+                  Array.isArray(user.tomorrowActivities) &&
+                  completeDayBtn;
+    
+    return passed ? 'ALL TESTS PASSED ✅' : 'SOME TESTS FAILED ❌';
+};
+
+// Test day transition functionality
+const testDayTransition = () => {
+    console.log('=== DAY TRANSITION TEST ===');
+    
+    const user = appInstance.appState.getCurrentUser();
+    
+    console.log('Current day:', appInstance.appState.getCurrentDay());
+    console.log('Today activities:', user.activities.length);
+    console.log('Tomorrow activities:', user.tomorrowActivities.length);
+    
+    // Test card type distribution
+    const todayTypes = user.activities.reduce((acc, activity) => {
+        acc[activity.cardType || 'recurring'] = (acc[activity.cardType || 'recurring'] || 0) + 1;
+        return acc;
+    }, {});
+    
+    console.log('Today card types:', todayTypes);
+    
+    if (user.tomorrowActivities.length > 0) {
+        const tomorrowTypes = user.tomorrowActivities.reduce((acc, activity) => {
+            acc[activity.cardType || 'recurring'] = (acc[activity.cardType || 'recurring'] || 0) + 1;
+            return acc;
+        }, {});
+        
+        console.log('Tomorrow card types:', tomorrowTypes);
+    }
+    
+    console.log('✅ Ready for day transition testing');
+    console.log('=== TEST COMPLETE ===');
+};
+
+// Make validation functions globally available
+window.validateStory4 = validateStory4;
+window.testDayTransition = testDayTransition;

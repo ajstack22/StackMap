@@ -69,6 +69,34 @@ class ComponentBuilder {
         
         return card;
     }
+    
+    // Story 4: Create Day Selector Component
+    static createDaySelector(currentDay = 'today', todayCount = 0, tomorrowCount = 0) {
+        const selector = this.createElement('div', 'day-selector');
+        
+        selector.innerHTML = `
+            <div class="day-option day-option--today ${currentDay === 'today' ? 'active' : ''}" data-day="today">
+                <span class="day-label">Today</span>
+                <span class="day-count" id="todayCount">${todayCount}</span>
+            </div>
+            <div class="day-option day-option--tomorrow ${currentDay === 'tomorrow' ? 'active' : ''}" data-day="tomorrow">
+                <span class="day-label">Tomorrow</span>
+                <span class="day-count" id="tomorrowCount">${tomorrowCount}</span>
+            </div>
+        `;
+        
+        // Add click handlers
+        selector.querySelectorAll('.day-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const day = option.getAttribute('data-day');
+                if (window.appInstance) {
+                    window.appInstance.switchDay(day);
+                }
+            });
+        });
+        
+        return selector;
+    }
 
     // STORY 2: Management Card Component - FIXED AESTHETICS
     static createManagementCard(position = 'top') {
@@ -88,11 +116,11 @@ class ComponentBuilder {
                     <span>Add Card</span>
                 </button>
                 
-                <button class="btn btn--management btn--clear-progress" 
-                        onclick="appInstance.showClearProgressConfirmation()"
-                        title="Mark all cards as incomplete">
-                    <span class="material-icons">restart_alt</span>
-                    <span>Clear Progress</span>
+                <button class="btn btn--management btn--complete-day" 
+                        onclick="appInstance.showCompleteDayConfirmation()"
+                        title="Complete day and move to tomorrow">
+                    <span class="material-icons">today</span>
+                    <span>Complete Day</span>
                 </button>
                 
                 <div class="management-card__filter">

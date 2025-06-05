@@ -10,6 +10,74 @@
     width: 100%;
 }
 
+/* ===== STORY 4: DAY SELECTOR LAYOUT ===== */
+.day-selector-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.day-selector {
+    display: flex;
+    background: white;
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    border: 2px solid #f0f0f0;
+}
+
+.day-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 20px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    min-width: 80px;
+    position: relative;
+}
+
+.day-option:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.day-option.active {
+    background: var(--primary-color);
+    color: white;
+}
+
+.day-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 2px;
+}
+
+.day-count {
+    font-size: 0.8rem;
+    opacity: 0.8;
+    background: rgba(255, 255, 255, 0.2);
+    padding: 2px 6px;
+    border-radius: 8px;
+    min-width: 16px;
+    text-align: center;
+}
+
+.day-option.active .day-count {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Visual distinction for tomorrow view */
+body.viewing-tomorrow .main-container {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(255, 193, 7, 0.02));
+    border-radius: 16px;
+    padding: 10px;
+}
+
+body.viewing-tomorrow .card {
+    border-left: 3px solid rgba(255, 193, 7, 0.3);
+}
+
 /* ===== HEADER LAYOUT ===== */
 .static-header {
     display: none !important;

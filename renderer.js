@@ -15,52 +15,14 @@ class AppRenderer {
     }
 
     updateHeader() {
-        const { subtitle } = this.appState.settings;
-        const subtitleElement = document.getElementById('subtitle');
-        const fixedSubtitleElement = document.getElementById('fixedSubtitle');
-        
-        // Update both static and fixed subtitles
-        [subtitleElement, fixedSubtitleElement].forEach(element => {
-            if (element && element.contentEditable !== "true") {
-                element.textContent = subtitle;
-            }
-        });
-        
-        // Handle subtitle placeholder visibility based on grown-up mode
-        this.updateSubtitleVisibility(subtitleElement);
-        this.updateSubtitleVisibility(fixedSubtitleElement);
-    }
-
-    updateSubtitleVisibility(subtitleElement) {
-        if (!subtitleElement) return;
-        
-        const { grownupMode } = this.app;
-        
-        if (grownupMode) {
-            // Show subtitle and placeholder in grown-up mode
-            subtitleElement.style.display = 'inline-block';
-            subtitleElement.setAttribute('data-placeholder', 'Tap to add subtitle');
-        } else {
-            // Hide subtitle in child mode (unless it has content)
-            if (!this.appState.settings.subtitle.trim()) {
-                subtitleElement.style.display = 'none';
-            } else {
-                subtitleElement.style.display = 'inline-block';
-            }
-            subtitleElement.removeAttribute('data-placeholder');
-        }
+        // Story 4: Header updates are now handled by day selector
+        // No subtitle to update anymore
+        this.app.updateDayCounts();
     }
 
     updateButtonPositioning() {
-        const { subtitle } = this.appState.settings;
-        const { grownupMode } = this.app;
-        const hasSubtitle = (subtitle && subtitle.trim()) || grownupMode;
-        
-        if (hasSubtitle) {
-            document.body.classList.add('has-subtitle');
-        } else {
-            document.body.classList.remove('has-subtitle');
-        }
+        // Story 4: Button positioning is now simpler with day selector always present
+        // No need for has-subtitle class anymore
     }
 
     renderActivities() {
@@ -182,12 +144,14 @@ class AppRenderer {
     }
 
     renderActivityCards(fragment) {
+        // Story 4: Use context-aware activities
+        const currentActivities = this.appState.getCurrentActivities();
         const activitiesToShow = this.appState.ui.editMode 
-            ? this.appState.activities 
-            : this.appState.activities.filter(activity => activity.visible);
+            ? currentActivities 
+            : currentActivities.filter(activity => activity.visible);
 
         activitiesToShow.forEach((activity, displayIndex) => {
-            const originalIndex = this.appState.activities.indexOf(activity);
+            const originalIndex = currentActivities.indexOf(activity);
             const card = new ActivityCard(activity, originalIndex, this.appState, this, this.app);
             const cardElement = card.render();
             

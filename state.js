@@ -17,7 +17,8 @@ class AppState {
             showingNewCardForm: false,
             selectedEmoji: CONFIG.DEFAULT_EMOJI,
             draggedElement: null,
-            cardFilter: '' // Story 2: Filter state
+            cardFilter: '', // Story 2: Filter state
+            currentDay: 'today' // Story 4: Current day context
         };
         
         // Multi-user support
@@ -28,6 +29,7 @@ class AppState {
                     id: CONFIG.DEFAULT_USER_ID,
                     name: 'My StackMap',
                     activities: [],
+                    tomorrowActivities: [], // Story 4: Tomorrow's activities
                     settings: {
                         title: 'My StackMap',
                         subtitle: 'Routine Ready',
@@ -46,7 +48,10 @@ class AppState {
 
     // === ACTIVITY MANAGEMENT ===
     addActivity(activity, position = 'bottom') {
-        if (this.activities.length >= CONFIG.MAX_ACTIVITIES) {
+        // Story 4: Get the current context activities
+        const targetActivities = this.getCurrentActivities();
+        
+        if (targetActivities.length >= CONFIG.MAX_ACTIVITIES) {
             throw new Error(`Maximum of ${CONFIG.MAX_ACTIVITIES} activities allowed.`);
         }
 
@@ -62,52 +67,67 @@ class AppState {
         };
 
         if (position === 'top') {
-            this.activities.unshift(newActivity);
+            targetActivities.unshift(newActivity);
         } else {
-            this.activities.push(newActivity);
+            targetActivities.push(newActivity);
         }
         
         this._triggerSave();
     }
 
     updateActivity(index, updates) {
-        if (index >= 0 && index < this.activities.length) {
+        // Story 4: Get the current context activities
+        const targetActivities = this.getCurrentActivities();
+        
+        if (index >= 0 && index < targetActivities.length) {
             // Story 1: Validate card type if being updated
             if (updates.cardType) {
                 updates.cardType = this._validateCardType(updates.cardType);
             }
             
-            Object.assign(this.activities[index], updates);
+            Object.assign(targetActivities[index], updates);
             this._triggerSave();
         }
     }
 
     removeActivity(index) {
-        if (index >= 0 && index < this.activities.length) {
-            this.activities.splice(index, 1);
+        // Story 4: Get the current context activities
+        const targetActivities = this.getCurrentActivities();
+        
+        if (index >= 0 && index < targetActivities.length) {
+            targetActivities.splice(index, 1);
             this._triggerSave();
         }
     }
 
     moveActivity(fromIndex, toIndex) {
-        if (fromIndex >= 0 && fromIndex < this.activities.length &&
-            toIndex >= 0 && toIndex < this.activities.length) {
-            const [removed] = this.activities.splice(fromIndex, 1);
-            this.activities.splice(toIndex, 0, removed);
+        // Story 4: Get the current context activities
+        const targetActivities = this.getCurrentActivities();
+        
+        if (fromIndex >= 0 && fromIndex < targetActivities.length &&
+            toIndex >= 0 && toIndex < targetActivities.length) {
+            const [removed] = targetActivities.splice(fromIndex, 1);
+            targetActivities.splice(toIndex, 0, removed);
             this._triggerSave();
         }
     }
 
     toggleActivityVisibility(index) {
-        if (index >= 0 && index < this.activities.length) {
-            this.activities[index].visible = !this.activities[index].visible;
+        // Story 4: Get the current context activities
+        const targetActivities = this.getCurrentActivities();
+        
+        if (index >= 0 && index < targetActivities.length) {
+            targetActivities[index].visible = !targetActivities[index].visible;
             this._triggerSave();
         }
     }
 
     toggleActivityCompletion(index) {
-        if (index >= 0 && index < this.activities.length) {
-            this.activities[index].completed = !this.activities[index].completed;
+        // Story 4: Get the current context activities
+        const targetActivities = this.getCurrentActivities();
+        
+        if (index >= 0 && index < targetActivities.length) {
+            targetActivities[index].completed = !targetActivities[index].completed;
             this._triggerSave();
         }
     }
@@ -129,6 +149,7 @@ class AppState {
             id: userId,
             name: name.substring(0, CONFIG.USER_NAME_MAX_LENGTH),
             activities: [],
+            tomorrowActivities: [], // Story 4: Tomorrow's activities
             settings: {
                 title: name + "'s StackMap",
                 subtitle: 'Routine Ready',
@@ -144,6 +165,25 @@ class AppState {
 
     getCurrentUser() {
         return this.users.profiles[this.users.currentUserId];
+    }
+    
+    // Story 4: Get activities for current day context
+    getCurrentActivities() {
+        const user = this.getCurrentUser();
+        return this.ui.currentDay === 'today' ? user.activities : user.tomorrowActivities;
+    }
+    
+    // Story 4: Get the current day ('today' or 'tomorrow')
+    getCurrentDay() {
+        return this.ui.currentDay;
+    }
+    
+    // Story 4: Switch between today and tomorrow
+    setCurrentDay(day) {
+        if (day === 'today' || day === 'tomorrow') {
+            this.ui.currentDay = day;
+            this._triggerSave();
+        }
     }
 
     switchUser(userId) {
@@ -293,6 +333,13 @@ class AppState {
             // New multi-user format
             this.users = data.users;
             
+            // Story 4: Ensure all users have tomorrow activities array
+            Object.values(this.users.profiles).forEach(user => {
+                if (!user.tomorrowActivities) {
+                    user.tomorrowActivities = [];
+                }
+            });
+            
             // Ensure current user exists
             if (!this.users.profiles[this.users.currentUserId]) {
                 this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
@@ -334,6 +381,7 @@ class AppState {
                 id: CONFIG.DEFAULT_USER_ID,
                 name: settings.title || 'My StackMap',
                 activities: activities,
+                tomorrowActivities: [], // Story 4: Initialize empty tomorrow
                 settings: settings
             };
             
