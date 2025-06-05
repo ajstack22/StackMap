@@ -291,6 +291,7 @@ class StackMapApp {
     }
     
     showAddUserDialog() {
+        console.log('showAddUserDialog called in StackMapApp');
         // Use the new Add User modal instead of prompt
         ComponentBuilder.showAddUserModal();
     }

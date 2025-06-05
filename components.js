@@ -555,7 +555,8 @@ class ComponentBuilder {
 
     // NEW: Show Add User Modal with Emoji Picker (similar to activity flow)
     static showAddUserModal() {
-        const overlay = this.createElement('div', 'modal-overlay');
+        console.log('showAddUserModal called');
+        const overlay = this.createElement('div', 'add-user-modal');
         overlay.id = 'addUserModal';
         
         // Store selected emoji (default to person emoji)
@@ -563,7 +564,9 @@ class ComponentBuilder {
         
         // Close modal when clicking overlay
         overlay.addEventListener('click', (e) => {
+            console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
             if (e.target === overlay) {
+                console.log('Closing modal via overlay click');
                 this.closeAddUserModal();
             }
         });
@@ -577,7 +580,7 @@ class ComponentBuilder {
         };
         document.addEventListener('keydown', handleEscape);
         
-        const modal = this.createElement('div', 'modal-content user-modal');
+        const modal = this.createElement('div', 'add-user-content');
         modal.innerHTML = `
             <div class="modal-header">
                 <h2>Add User</h2>

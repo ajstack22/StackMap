@@ -166,6 +166,7 @@ class ModernUserSelector {
     }
     
     createAddUserOption() {
+        console.log('Creating Add User option');
         const option = ComponentBuilder.createElement('div', 'dropdown-option dropdown-option--add');
         option.setAttribute('role', 'option');
         option.setAttribute('data-action', 'add-user');
@@ -184,6 +185,7 @@ class ModernUserSelector {
         content.appendChild(text);
         option.appendChild(content);
         
+        console.log('Add User option created with data-action:', option.getAttribute('data-action'));
         return option;
     }
     
@@ -246,14 +248,18 @@ class ModernUserSelector {
         
         // Dropdown clicks
         this.dropdown.addEventListener('click', (e) => {
+            console.log('Dropdown clicked, target:', e.target);
             const option = e.target.closest('.dropdown-option');
             if (option) {
+                console.log('Option found:', option);
                 const userId = option.getAttribute('data-user-id');
                 const action = option.getAttribute('data-action');
+                console.log('userId:', userId, 'action:', action);
                 
                 if (userId) {
                     this.selectUser(userId);
                 } else if (action === 'add-user') {
+                    console.log('Add user action triggered');
                     this.close();
                     this.app.showAddUserDialog();
                 }
