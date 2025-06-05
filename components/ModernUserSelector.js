@@ -124,9 +124,12 @@ class ModernUserSelector {
         });
         
         // Add "Add User" option if in grownup mode
+        console.log('Checking grownup mode:', this.app.grownupMode, 'Body class:', document.body.classList.contains('grownup-mode'));
         if (this.app.grownupMode) {
             const addOption = this.createAddUserOption();
             this.dropdownOptions.appendChild(addOption);
+        } else {
+            console.log('Not in grownup mode - Add User option not shown');
         }
     }
     

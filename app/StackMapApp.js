@@ -1477,6 +1477,23 @@ class StackMapApp {
 // Make available globally
 window.StackMapApp = StackMapApp;
 
+// Add debugging helper
+window.testAddUser = function() {
+    console.log('Testing Add User functionality...');
+    if (window.appInstance) {
+        console.log('App instance found');
+        console.log('Grownup mode:', window.appInstance.grownupMode);
+        if (!window.appInstance.grownupMode) {
+            console.log('Entering grownup mode first...');
+            window.appInstance.enterGrownupMode();
+        }
+        console.log('Showing Add User dialog...');
+        window.appInstance.showAddUserDialog();
+    } else {
+        console.log('App instance not found!');
+    }
+};
+
 // Story 2 Validation Suite
 const validateStory2 = () => {
     console.log('=== STORY 2 VALIDATION ===');
