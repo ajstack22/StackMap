@@ -26,6 +26,7 @@
     overflow: hidden;
     border: 2px solid #f0f0f0;
     min-height: 44px; /* Ensure minimum height for accessibility */
+    min-width: 160px; /* Minimum width to prevent collapse */
 }
 
 .day-option {
@@ -40,6 +41,7 @@
     min-height: 44px; /* Explicit minimum height for touch target */
     position: relative;
     box-sizing: border-box; /* Include padding in height calculation */
+    flex: 1; /* Equal distribution of space */
 }
 
 .day-option:hover {
@@ -57,6 +59,7 @@
     margin-bottom: 2px;
     line-height: 1.2; /* Ensure text has height */
     display: block; /* Ensure block display */
+    white-space: nowrap; /* Prevent text wrapping */
 }
 
 .day-count {
@@ -93,9 +96,13 @@ body.viewing-tomorrow .card {
         margin-bottom: 15px;
     }
     
+    .day-selector {
+        min-width: 140px; /* Slightly smaller on mobile */
+    }
+    
     .day-option {
         min-width: 70px; /* Slightly smaller on mobile but still accessible */
-        padding: 10px 15px; /* Adjusted padding */
+        padding: 10px 12px; /* Adjusted padding */
         min-height: 48px; /* Larger touch target on mobile */
     }
     
@@ -105,6 +112,18 @@ body.viewing-tomorrow .card {
     
     .day-count {
         font-size: 0.75rem;
+        padding: 2px 4px; /* Tighter padding on mobile */
+    }
+}
+
+@media (max-width: 480px) {
+    .day-selector {
+        min-width: 120px; /* Even smaller on very small screens */
+    }
+    
+    .day-option {
+        min-width: 60px;
+        padding: 10px;
     }
 }
 
