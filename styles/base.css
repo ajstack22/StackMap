@@ -34,6 +34,26 @@ main {
     gap: var(--card-gap);
     max-width: var(--container-max-width);
     width: 100%;
-    padding: 90px 10px 100px 10px !important;
+    padding: 10px 10px 100px 10px !important; /* Minimal top padding so cards come up higher */
     margin-top: 0 !important;
+    position: relative; /* Ensure proper stacking */
+    z-index: 1; /* Below header */
+    transition: padding-top 0.2s ease; /* Smooth transition */
+}
+
+/* When fixed header is visible, add space */
+body.fixed-header-visible .main-container {
+    padding-top: 100px !important;
+}
+
+/* Mobile adjustments for single fixed header */
+@media (max-width: 768px) {
+    .main-container {
+        padding-top: 20px !important; /* Content starts right after fixed header */
+    }
+    
+    /* No need for transition on mobile since header is always fixed */
+    body.fixed-header-visible .main-container {
+        padding-top: 20px !important;
+    }
 }

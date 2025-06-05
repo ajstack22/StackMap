@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Unified Header Test</title>
+    <script>
+        function runHeaderTest() {
+            console.log('🧪 Testing Unified Header Implementation...\n');
+            
+            let passed = 0;
+            let failed = 0;
+            const results = [];
+            
+            // Test 1: Check for single app header
+            const appHeader = document.querySelector('.app-header');
+            const oldStaticHeader = document.querySelector('.static-header');
+            const oldFixedHeader = document.querySelector('.fixed-header');
+            
+            if (appHeader && !oldStaticHeader && !oldFixedHeader) {
+                results.push('✅ Single unified header exists');
+                passed++;
+            } else {
+                results.push('❌ Header structure incorrect');
+                results.push(`  - app-header: ${!!appHeader}`);
+                results.push(`  - static-header (should be false): ${!!oldStaticHeader}`);
+                results.push(`  - fixed-header (should be false): ${!!oldFixedHeader}`);
+                failed++;
+            }
+            
+            // Test 2: Check if header is fixed
+            if (appHeader) {
+                const styles = window.getComputedStyle(appHeader);
+                if (styles.position === 'fixed') {
+                    results.push('✅ Header is fixed positioned');
+                    passed++;
+                } else {
+                    results.push(`❌ Header is not fixed positioned: ${styles.position}`);
+                    failed++;
+                }
+            }
+            
+            // Test 3: Check drawer functionality
+            const drawerHandle = document.getElementById('drawerHandle');
+            const drawerExtension = document.getElementById('drawerExtension');
+            
+            if (drawerHandle && drawerExtension) {
+                results.push('✅ Drawer elements present');
+                passed++;
+            } else {
+                results.push('❌ Drawer elements missing');
+                failed++;
+            }
+            
+            // Test 4: Check body padding
+            const bodyStyles = window.getComputedStyle(document.body);
+            const bodyPaddingTop = parseInt(bodyStyles.paddingTop);
+            
+            if (bodyPaddingTop > 80) {
+                results.push(`✅ Body has appropriate top padding: ${bodyPaddingTop}px`);
+                passed++;
+            } else {
+                results.push(`❌ Body padding too small: ${bodyPaddingTop}px`);
+                failed++;
+            }
+            
+            // Display results
+            const output = document.getElementById('output');
+            output.innerHTML = results.join('<br>') + 
+                '<br><br><strong>Summary:</strong>' +
+                `<br>Passed: ${passed}` +
+                `<br>Failed: ${failed}` +
+                `<br>Success Rate: ${Math.round((passed / (passed + failed)) * 100)}%`;
+            
+            if (failed === 0) {
+                output.innerHTML += '<br><br>🎉 All tests passed!';
+            } else {
+                output.innerHTML += '<br><br>⚠️ Some tests failed.';
+            }
+        }
+    </script>
+</head>
+<body>
+    <h1>Unified Header Test</h1>
+    <button onclick="runHeaderTest()">Run Tests</button>
+    <button onclick="window.open('index.html', '_blank')">Open StackMap</button>
+    <div id="output" style="margin-top: 20px; padding: 20px; background: #f5f5f5; border-radius: 8px; font-family: monospace; white-space: pre-wrap;"></div>
+</body>
+</html>

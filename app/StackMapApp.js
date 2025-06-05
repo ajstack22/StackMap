@@ -92,6 +92,431 @@ class StackMapApp {
         if (CONFIG.AUTO_SYNC_ENABLED && CONFIG.AUTO_SYNC_INTERVAL) {
             this.setupAutoSyncInterval();
         }
+        
+        // Initialize after DOM is ready
+        setTimeout(() => {
+            this.initializeTitleSubtitle();
+            this.initializeDrawer();
+            this.initializeScrollHeader();
+        }, 100);
+    }
+    
+    initializeScrollHeader() {
+        // No longer needed - header is always fixed
+        this.updateBodyPadding();
+    }
+
+    updateBodyPadding() {
+        // Calculate proper body padding based on header height
+        const appHeader = document.querySelector('.app-header');
+        if (appHeader) {
+            const headerHeight = appHeader.offsetHeight;
+            // Add inline style to body for padding
+            document.body.style.paddingTop = `${headerHeight + 15}px`;
+        }
+    }
+
+    initializeTitleSubtitle() {
+        // Get current user's custom title and subtitle
+        const currentUser = this.appState.getCurrentUser();
+        const userTitle = currentUser.customTitle || 'StackMap';
+        const userSubtitle = currentUser.customSubtitle || 'Routine Ready';
+        
+        // Update all title elements
+        const mainTitle = document.getElementById('mainTitle');
+        const subtitle = document.getElementById('subtitle');
+        
+        if (mainTitle) mainTitle.textContent = userTitle;
+        if (subtitle) subtitle.textContent = userSubtitle;
+        
+        // Setup edit listeners
+        this.setupTitleEditListeners();
+    }
+    
+    setupTitleEditListeners() {
+        const mainTitle = document.getElementById('mainTitle');
+        const subtitle = document.getElementById('subtitle');
+        
+        if (mainTitle) {
+            mainTitle.addEventListener('focus', () => {
+                if (this.grownupMode) {
+                    mainTitle.contentEditable = true;
+                }
+            });
+            
+            mainTitle.addEventListener('blur', () => {
+                mainTitle.contentEditable = false;
+                this.saveTitleChanges();
+            });
+            
+            mainTitle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    mainTitle.blur();
+                }
+            });
+        }
+        
+        if (subtitle) {
+            subtitle.addEventListener('focus', () => {
+                if (this.grownupMode) {
+                    subtitle.contentEditable = true;
+                }
+            });
+            
+            subtitle.addEventListener('blur', () => {
+                subtitle.contentEditable = false;
+                this.saveTitleChanges();
+            });
+            
+            subtitle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    subtitle.blur();
+                }
+            });
+        }
+    }
+    
+    saveTitleChanges() {
+        const mainTitle = document.getElementById('mainTitle');
+        const subtitle = document.getElementById('subtitle');
+        
+        if (mainTitle && subtitle) {
+            const newTitle = mainTitle.textContent.trim() || 'StackMap';
+            const newSubtitle = subtitle.textContent.trim() || 'Routine Ready';
+            
+            // Save to current user
+            const currentUser = this.appState.getCurrentUser();
+            currentUser.customTitle = newTitle;
+            currentUser.customSubtitle = newSubtitle;
+            
+            
+            // Save to storage
+            this.appState.saveUserData();
+            this.appState.onStateChange();
+        }
+    }
+    
+    initializeDrawer() {
+        const drawerHandle = document.getElementById('drawerHandle');
+        const drawerExtension = document.getElementById('drawerExtension');
+        const drawerDone = document.getElementById('drawerDone');
+        const appHeader = document.getElementById('appHeader');
+        const backdrop = this.createBackdrop();
+        
+        if (!drawerHandle || !drawerExtension) return;
+        
+        let isOpen = false;
+        let isDragging = false;
+        let startY = 0;
+        let currentY = 0;
+        
+        const openDrawer = () => {
+            console.log('Opening drawer...');
+            isOpen = true;
+            drawerHandle.setAttribute('aria-expanded', 'true');
+            drawerExtension.setAttribute('aria-hidden', 'false');
+            drawerExtension.classList.add('open');
+            appHeader.classList.add('drawer-open');
+            document.getElementById('headerWrapper')?.classList.add('drawer-open');
+            backdrop.classList.add('visible');
+            document.body.classList.add('drawer-active');
+            this.populateDrawerSelects();
+            console.log('Drawer opened');
+        };
+        
+        const closeDrawer = () => {
+            console.log('closeDrawer called');
+            isOpen = false;
+            drawerHandle.setAttribute('aria-expanded', 'false');
+            drawerExtension.setAttribute('aria-hidden', 'true');
+            drawerExtension.classList.remove('open');
+            appHeader.classList.remove('drawer-open');
+            document.getElementById('headerWrapper')?.classList.remove('drawer-open');
+            backdrop.classList.remove('visible');
+            document.body.classList.remove('drawer-active');
+            console.log('Drawer closed');
+        };
+        
+        // Touch/drag support
+        const handleStart = (e) => {
+            isDragging = true;
+            startY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            drawerHandle.style.transition = 'none';
+        };
+        
+        const handleMove = (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+            currentY = e.type.includes('mouse') ? e.clientY : e.touches[0].clientY;
+            const deltaY = currentY - startY;
+            
+            // Open drawer if dragged down more than 30px
+            if (deltaY > 30 && !isOpen) {
+                openDrawer();
+                isDragging = false;
+            }
+            // Close drawer if dragged up more than 30px
+            else if (deltaY < -30 && isOpen) {
+                closeDrawer();
+                isDragging = false;
+            }
+        };
+        
+        const handleEnd = () => {
+            isDragging = false;
+            drawerHandle.style.transition = '';
+        };
+        
+        // Click handlers
+        drawerHandle.addEventListener('click', (e) => {
+            e.stopPropagation(); // Prevent event bubbling
+            console.log('Drawer handle clicked, isOpen:', isOpen);
+            if (!isDragging) {
+                if (isOpen) {
+                    console.log('Closing drawer...');
+                    closeDrawer();
+                } else {
+                    console.log('Opening drawer...');
+                    openDrawer();
+                }
+            }
+        });
+        
+        // Touch events
+        drawerHandle.addEventListener('touchstart', handleStart, { passive: true });
+        drawerHandle.addEventListener('touchmove', handleMove, { passive: false });
+        drawerHandle.addEventListener('touchend', handleEnd);
+        
+        // Mouse events (for testing on desktop)
+        drawerHandle.addEventListener('mousedown', handleStart);
+        document.addEventListener('mousemove', handleMove);
+        document.addEventListener('mouseup', handleEnd);
+        
+        // Remove Done button listener (button removed from HTML)
+        backdrop.addEventListener('click', closeDrawer);
+        
+        // Keyboard support
+        drawerHandle.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                if (isOpen) closeDrawer();
+                else openDrawer();
+            }
+        });
+        
+        // Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && isOpen) {
+                closeDrawer();
+            }
+        });
+        
+        // Setup select change handlers
+        this.setupDrawerSelects();
+    }
+    
+    createBackdrop() {
+        const backdrop = document.createElement('div');
+        backdrop.className = 'drawer-backdrop';
+        backdrop.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(backdrop);
+        return backdrop;
+    }
+    
+    populateDrawerSelects() {
+        const userSection = document.getElementById('userSection');
+        const daySelect = document.getElementById('drawerDaySelect');
+        
+        if (userSection) {
+            const allUsers = this.appState.getAllUsers();
+            userSection.style.display = 'flex'; // Always show section
+            
+            console.log('populateDrawerSelects - Users:', allUsers.length, 'GrownupMode:', this.grownupMode);
+            
+            if (allUsers.length > 1) {
+                // Multiple users - show custom dropdown
+                const currentUser = this.appState.getCurrentUser();
+                userSection.innerHTML = `
+                    <label class="dropdown-label">User</label>
+                    <button class="drawer-select" id="drawerUserSelect" data-value="${currentUser.id}">
+                        <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
+                    </button>
+                `;
+                
+                const userSelect = document.getElementById('drawerUserSelect');
+                userSelect?.addEventListener('click', () => {
+                    let dropdownOptions = allUsers.map(user => ({
+                        id: user.id,
+                        text: user.name,
+                        icon: user.icon || '👤',
+                        selected: user.id === currentUser.id
+                    }));
+                    
+                    // Add "Add User" option at the end if in edit mode
+                    if (this.grownupMode) {
+                        dropdownOptions.push({
+                            id: 'add-new-user',
+                            text: 'Add User',
+                            icon: '+',
+                            selected: false
+                        });
+                    }
+                    
+                    this.showCustomDropdown('User', dropdownOptions, (selectedId) => {
+                        if (selectedId === 'add-new-user') {
+                            this.showAddUserDialog();
+                        } else {
+                            this.handleUserSwitch(selectedId);
+                            const selectedUser = allUsers.find(u => u.id === selectedId);
+                            if (selectedUser && userSelect) {
+                                userSelect.innerHTML = `<span>${selectedUser.icon || '👤'} ${selectedUser.name}</span>`;
+                                userSelect.setAttribute('data-value', selectedId);
+                            }
+                        }
+                    });
+                });
+            } else if (this.grownupMode) {
+                // Single user in edit mode - show add user button
+                console.log('Rendering Add User button for single user in edit mode');
+                userSection.innerHTML = `
+                    <label class="dropdown-label">User</label>
+                    <button class="drawer-add-user" id="drawerAddUser">
+                        <span class="add-icon">+</span>
+                        Add User
+                    </button>
+                `;
+                
+                const addUserBtn = document.getElementById('drawerAddUser');
+                console.log('Add User button element:', addUserBtn);
+                addUserBtn?.addEventListener('click', () => {
+                    console.log('Add User button clicked');
+                    this.showAddUserDialog();
+                });
+            } else {
+                // Single user, not in edit mode - still show user for consistency
+                const currentUser = this.appState.getCurrentUser();
+                userSection.innerHTML = `
+                    <label class="dropdown-label">User</label>
+                    <div class="drawer-select disabled">
+                        <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
+                    </div>
+                `;
+            }
+        }
+        
+        if (daySelect) {
+            // Convert to custom dropdown
+            const currentDay = this.appState.getCurrentDay();
+            const today = new Date();
+            const tomorrow = new Date(today);
+            tomorrow.setDate(tomorrow.getDate() + 1);
+            
+            const dayOptions = [
+                { 
+                    id: 'today', 
+                    text: 'Today',
+                    icon: this.createDateIcon(today)
+                },
+                { 
+                    id: 'tomorrow', 
+                    text: 'Tomorrow',
+                    icon: this.createDateIcon(tomorrow)
+                }
+            ];
+            
+            const selectedDay = dayOptions.find(d => d.id === currentDay);
+            daySelect.outerHTML = `
+                <button class="drawer-select" id="drawerDaySelect" data-value="${currentDay}">
+                    <span>${selectedDay?.icon} ${selectedDay?.text}</span>
+                </button>
+            `;
+            
+            const newDaySelect = document.getElementById('drawerDaySelect');
+            newDaySelect?.addEventListener('click', () => {
+                this.showCustomDropdown('Day', dayOptions.map(day => ({
+                    id: day.id,
+                    text: day.text,
+                    icon: day.icon,
+                    selected: day.id === currentDay
+                })), (selectedId) => {
+                    console.log('Day selected:', selectedId);
+                    this.switchDay(selectedId);
+                    const selected = dayOptions.find(d => d.id === selectedId);
+                    if (selected && newDaySelect) {
+                        newDaySelect.innerHTML = `<span>${selected.icon} ${selected.text}</span>`;
+                        newDaySelect.setAttribute('data-value', selectedId);
+                    }
+                });
+            });
+        }
+    }
+    
+    showCustomDropdown(title, options, onSelect) {
+        const modal = document.getElementById('dropdownModal');
+        const modalTitle = document.getElementById('dropdownModalTitle');
+        const modalOptions = document.getElementById('dropdownModalOptions');
+        const closeBtn = modal?.querySelector('.dropdown-modal-close');
+        const backdrop = modal?.querySelector('.dropdown-modal-backdrop');
+        
+        if (!modal || !modalTitle || !modalOptions) return;
+        
+        modalTitle.textContent = `Select ${title}`;
+        modalOptions.innerHTML = options.map(option => `
+            <button class="dropdown-option ${option.selected ? 'selected' : ''}" 
+                    data-value="${option.id}">
+                <span class="dropdown-option-icon">${option.icon}</span>
+                <span class="dropdown-option-text">${option.text}</span>
+            </button>
+        `).join('');
+        
+        modal.classList.remove('hidden');
+        
+        const handleClose = () => {
+            modal.classList.add('hidden');
+            closeBtn?.removeEventListener('click', handleClose);
+            backdrop?.removeEventListener('click', handleClose);
+        };
+        
+        closeBtn?.addEventListener('click', handleClose);
+        backdrop?.addEventListener('click', handleClose);
+        
+        modalOptions.querySelectorAll('.dropdown-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.getAttribute('data-value');
+                if (value) {
+                    onSelect(value);
+                    handleClose();
+                }
+            });
+        });
+    }
+    
+    setupDrawerSelects() {
+        const daySelect = document.getElementById('drawerDaySelect');
+        
+        if (daySelect) {
+            daySelect.addEventListener('change', (e) => {
+                const day = e.target.value;
+                if (day) {
+                    this.switchDay(day);
+                }
+            });
+        }
+    }
+    
+    createDateIcon(date) {
+        const day = date.getDate();
+        const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const month = monthNames[date.getMonth()];
+        
+        return `<svg viewBox="0 0 32 32" style="width: 24px; height: 24px;">
+            <rect x="2" y="2" width="28" height="28" rx="4" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
+            <rect x="2" y="2" width="28" height="8" rx="4" fill="#4285F4"/>
+            <text x="16" y="24" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">${day}</text>
+            <text x="16" y="7" text-anchor="middle" font-size="6" font-weight="bold" fill="white">${month}</text>
+        </svg>`;
     }
 
     createDefaultActivities() {
@@ -120,6 +545,22 @@ class StackMapApp {
                 visible: true,
                 cardType: 'recurring'
             });
+            
+            // Also create tomorrow activities
+            const currentDay = this.appState.getCurrentDay();
+            this.appState.switchDay('tomorrow');
+            
+            // Add some tomorrow-specific activities
+            this.appState.addActivity({
+                title: 'Plan the Day',
+                description: 'What will you do tomorrow?',
+                icon: '📅',
+                visible: true,
+                cardType: 'one-time'
+            });
+            
+            // Switch back to today
+            this.appState.switchDay(currentDay);
             return;
         }
         
@@ -135,6 +576,33 @@ class StackMapApp {
             };
             this.appState.addActivity(activityWithType);
         });
+        
+        // Create tomorrow activities (recurring activities should appear both days)
+        const currentDay = this.appState.getCurrentDay();
+        this.appState.setCurrentDay('tomorrow');
+        
+        // Add recurring activities to tomorrow as well
+        DEFAULT_ACTIVITIES.forEach((activity) => {
+            if (activity.cardType === 'recurring' || !activity.cardType) {
+                const activityWithType = {
+                    ...activity,
+                    cardType: activity.cardType || 'recurring'
+                };
+                this.appState.addActivity(activityWithType);
+            }
+        });
+        
+        // Add one tomorrow-specific activity
+        this.appState.addActivity({
+            title: 'Tomorrow\'s Special Task',
+            description: 'Something to look forward to!',
+            icon: '⭐',
+            visible: true,
+            cardType: 'single-use'
+        });
+        
+        // Switch back to original day
+        this.appState.setCurrentDay(currentDay);
         
         console.log('Total activities after loading defaults:', this.appState.activities.length);
         console.log('Visible activities:', this.appState.activities.filter(a => a.visible).length);
@@ -161,62 +629,17 @@ class StackMapApp {
     }
 
     setupScrollHeader() {
-        const staticHeader = document.querySelector('.static-header');
-        const fixedHeader = document.querySelector('.fixed-header');
-        
-        if (!staticHeader || !fixedHeader) return;
-        
-        let ticking = false;
-
-        const updateHeader = () => {
-            const staticHeaderRect = staticHeader.getBoundingClientRect();
-            const shouldShowFixed = staticHeaderRect.bottom <= 0;
-
-            if (shouldShowFixed !== fixedHeader.classList.contains('visible')) {
-                if (shouldShowFixed) {
-                    fixedHeader.classList.add('visible');
-                    document.body.classList.add('fixed-header-visible');
-                } else {
-                    fixedHeader.classList.remove('visible');
-                    document.body.classList.remove('fixed-header-visible');
-                }
-                // Sync content when visibility changes
-                this.syncFixedHeader();
-            }
-            
-            ticking = false;
-        };
-
-        const requestTick = () => {
-            if (!ticking) {
-                requestAnimationFrame(updateHeader);
-                ticking = true;
-            }
-        };
-
-        window.addEventListener('scroll', requestTick, { passive: true });
-        window.addEventListener('resize', requestTick, { passive: true });
-        
-        // Initial sync
-        this.syncFixedHeader();
+        // No longer needed - header is always fixed
+        // Just handle resize events for padding
+        window.addEventListener('resize', () => {
+            this.updateBodyPadding();
+        }, { passive: true });
     }
 
     syncFixedHeader() {
-        // Story 4: Sync day selectors and user dropdown
+        // No longer needed - single header
         this.renderDaySelectors();
-        
-        // Sync logos
         this.renderLogos();
-        
-        // Sync user dropdown selection
-        const userSelector = document.getElementById('userSelector');
-        const fixedUserSelector = document.getElementById('fixedUserSelector');
-        const currentUserId = this.appState.users.currentUserId;
-        
-        if (userSelector && fixedUserSelector) {
-            fixedUserSelector.value = currentUserId;
-            userSelector.value = currentUserId;
-        }
     }
 
     updateGrownupModeButton() {
@@ -271,16 +694,7 @@ class StackMapApp {
             fileInput.addEventListener('change', (e) => this.importFromFile(e));
         }
         
-        // User dropdown handlers
-        const userSelector = document.getElementById('userSelector');
-        const fixedUserSelector = document.getElementById('fixedUserSelector');
-        
-        // Handle user selection change
-        [userSelector, fixedUserSelector].forEach(selector => {
-            if (selector) {
-                selector.addEventListener('change', (e) => this.handleUserSwitch(e.target.value));
-            }
-        });
+        // User selection is handled by the drawer
     }
     
     // User management methods
@@ -291,118 +705,34 @@ class StackMapApp {
             this.renderer.updateHeader();
             this.syncFixedHeader();
             this.populateUserDropdowns();
+            
+            // Update title/subtitle for new user
+            this.initializeTitleSubtitle();
         }
     }
     
     showAddUserDialog() {
         console.log('showAddUserDialog called in StackMapApp');
         // Use the new Add User modal instead of prompt
-        ComponentBuilder.showAddUserModal();
+        if (typeof ComponentBuilder !== 'undefined' && ComponentBuilder.showAddUserModal) {
+            ComponentBuilder.showAddUserModal();
+        } else {
+            console.error('ComponentBuilder.showAddUserModal not available');
+        }
     }
     
     populateUserDropdowns() {
-        const userSelector = document.getElementById('userSelector');
-        const fixedUserSelector = document.getElementById('fixedUserSelector');
-        const currentUserId = this.appState.users.currentUserId;
-        const users = this.appState.getAllUsers();
-        
-        [userSelector, fixedUserSelector].forEach(selector => {
-            if (selector) {
-                // Clear existing options
-                selector.innerHTML = '';
-                
-                // Add options for each user
-                users.forEach(user => {
-                    const option = document.createElement('option');
-                    option.value = user.id;
-                    option.textContent = user.name;
-                    if (user.id === currentUserId) {
-                        option.selected = true;
-                    }
-                    selector.appendChild(option);
-                });
-            }
-        });
-        
-        // Initialize modern selectors if available
-        if (window.ModernUserSelector && !this.modernUserSelector) {
-            // Get containers
-            const staticContainer = document.querySelector('.static-header .user-selector-container');
-            const fixedContainer = document.querySelector('.fixed-header .user-selector-container');
-            
-            // Initialize static header selector
-            if (staticContainer && userSelector) {
-                this.modernUserSelector = new ModernUserSelector(staticContainer, userSelector, this);
-            }
-            
-            // Initialize fixed header selector
-            if (fixedContainer && fixedUserSelector) {
-                this.modernFixedUserSelector = new ModernUserSelector(fixedContainer, fixedUserSelector, this);
-            }
-        }
+        // Not needed with unified header - drawer handles user selection
     }
     
     // Story 4: Day Selector Methods
     renderDaySelectors() {
-        const staticContainer = document.getElementById('daySelectorContainer');
-        const fixedContainer = document.getElementById('fixedDaySelectorContainer');
-        
-        // Initialize modern day selectors if available
-        if (window.ModernDaySelector) {
-            if (staticContainer && !this.modernDaySelector) {
-                this.modernDaySelector = new ModernDaySelector(staticContainer, this);
-            }
-            if (fixedContainer && !this.modernFixedDaySelector) {
-                this.modernFixedDaySelector = new ModernDaySelector(fixedContainer, this);
-            }
-            
-            // Update displays if already initialized
-            if (this.modernDaySelector) {
-                this.modernDaySelector.updateDisplay();
-            }
-            if (this.modernFixedDaySelector) {
-                this.modernFixedDaySelector.updateDisplay();
-            }
-        } else {
-            // Fallback to old selector
-            if (staticContainer) {
-                staticContainer.innerHTML = '';
-                const counts = this.getDayCounts();
-                const selector = ComponentBuilder.createDaySelector(
-                    this.appState.getCurrentDay(),
-                    counts.today,
-                    counts.tomorrow
-                );
-                staticContainer.appendChild(selector);
-            }
-            
-            if (fixedContainer) {
-                fixedContainer.innerHTML = '';
-                const counts = this.getDayCounts();
-                const fixedSelector = ComponentBuilder.createDaySelector(
-                    this.appState.getCurrentDay(),
-                    counts.today,
-                    counts.tomorrow
-                );
-                fixedContainer.appendChild(fixedSelector);
-            }
-        }
+        // Day selection is now handled by the drawer
     }
     
     // Render StackMap logos in headers
     renderLogos() {
-        const staticContainer = document.getElementById('staticLogoContainer');
-        const fixedContainer = document.getElementById('fixedLogoContainer');
-        
-        if (staticContainer && !staticContainer.querySelector('.stackmap-logo')) {
-            const staticLogo = ComponentBuilder.createStackMapLogo();
-            staticContainer.appendChild(staticLogo);
-        }
-        
-        if (fixedContainer && !fixedContainer.querySelector('.stackmap-logo')) {
-            const fixedLogo = ComponentBuilder.createStackMapLogo();
-            fixedContainer.appendChild(fixedLogo);
-        }
+        // Logo is now in the unified header HTML
     }
     
     // Story 4: Get activity counts for each day
@@ -429,6 +759,7 @@ class StackMapApp {
     
     // Story 4: Switch between today and tomorrow
     switchDay(day) {
+        console.log('switchDay called with:', day, 'current:', this.appState.getCurrentDay());
         if (this.appState.getCurrentDay() !== day) {
             this.appState.setCurrentDay(day);
             
@@ -446,6 +777,14 @@ class StackMapApp {
             
             // Clear any filters when switching days
             this.clearAllFilters();
+            
+            // Update draggable drawers
+            if (this.staticDrawer) {
+                this.staticDrawer.updateDayDisplay();
+            }
+            if (this.fixedDrawer) {
+                this.fixedDrawer.updateDayDisplay();
+            }
             
             this.render();
             this.updateDayCounts();
@@ -583,6 +922,12 @@ class StackMapApp {
             this.preferencesManager.updatePreferencesPanel();
         }
         
+        // Update drawer if it's open to show Add User button
+        const drawerExtension = document.getElementById('drawerExtension');
+        if (drawerExtension && drawerExtension.classList.contains('open')) {
+            this.populateDrawerSelects();
+        }
+        
         this.render();
         this.syncFixedHeader();
     }
@@ -605,6 +950,12 @@ class StackMapApp {
         // Update preferences panel if it's open
         if (!document.getElementById('preferencesPanel')?.classList.contains('hidden')) {
             this.preferencesManager.updatePreferencesPanel();
+        }
+        
+        // Update drawer if it's open to hide Add User button
+        const drawerExtension = document.getElementById('drawerExtension');
+        if (drawerExtension && drawerExtension.classList.contains('open')) {
+            this.populateDrawerSelects();
         }
         
         // === STORY 2: Clear any active filters when exiting edit mode ===

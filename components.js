@@ -796,6 +796,269 @@ class ComponentBuilder {
     }
 }
 
+// === EXPANDABLE HEADER COMPONENT ===
+class ExpandableHeader {
+    constructor(containerId, isFixed = false) {
+        this.containerId = containerId;
+        this.isFixed = isFixed;
+        this.prefix = isFixed ? 'fixed' : 'static';
+        this.isExpanded = false;
+        
+        // Get DOM elements
+        this.indicator = document.getElementById(`${this.prefix}ExpansionIndicator`);
+        this.submenu = document.getElementById(`${this.prefix}SubmenuContainer`);
+        this.closeBtn = document.getElementById(`${this.prefix}SubmenuClose`);
+        this.arrow = this.indicator?.querySelector('.expansion-arrow');
+        
+        this.init();
+    }
+    
+    init() {
+        if (!this.indicator || !this.submenu) return;
+        
+        this.setupEventListeners();
+        this.renderUserSelector();
+        this.renderDaySelector();
+    }
+    
+    setupEventListeners() {
+        // Expansion indicator click/tap
+        this.indicator.addEventListener('click', () => this.toggle());
+        
+        // Keyboard support for expansion indicator
+        this.indicator.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                this.toggle();
+            }
+        });
+        
+        // Close button
+        this.closeBtn?.addEventListener('click', () => this.collapse());
+        
+        // Outside click to close
+        document.addEventListener('click', (e) => {
+            if (this.isExpanded && !this.indicator.contains(e.target) && !this.submenu.contains(e.target)) {
+                this.collapse();
+            }
+        });
+        
+        // Escape key to close
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isExpanded) {
+                this.collapse();
+            }
+        });
+    }
+    
+    toggle() {
+        if (this.isExpanded) {
+            this.collapse();
+        } else {
+            this.expand();
+        }
+    }
+    
+    expand() {
+        if (this.isExpanded) return;
+        
+        this.isExpanded = true;
+        
+        // Update ARIA states
+        this.indicator.setAttribute('aria-expanded', 'true');
+        this.submenu.setAttribute('aria-hidden', 'false');
+        
+        // Add CSS classes for animation
+        this.indicator.classList.add('expanded');
+        this.submenu.classList.add('expanded');
+        
+        // Rotate arrow
+        if (this.arrow) {
+            this.arrow.style.transform = 'rotate(180deg)';
+        }
+        
+        // Update current selections before showing
+        this.updateSelections();
+    }
+    
+    collapse() {
+        if (!this.isExpanded) return;
+        
+        this.isExpanded = false;
+        
+        // Update ARIA states
+        this.indicator.setAttribute('aria-expanded', 'false');
+        this.submenu.setAttribute('aria-hidden', 'true');
+        
+        // Remove CSS classes
+        this.indicator.classList.remove('expanded');
+        this.submenu.classList.remove('expanded');
+        
+        // Reset arrow
+        if (this.arrow) {
+            this.arrow.style.transform = 'rotate(0deg)';
+        }
+    }
+    
+    renderUserSelector() {
+        const container = document.getElementById(`${this.prefix}SubmenuUserSelector`);
+        if (!container || !window.appInstance) return;
+        
+        const currentUser = window.appInstance.appState.getCurrentUser();
+        const allUsers = window.appInstance.appState.getAllUsers();
+        
+        container.innerHTML = `
+            <div class="submenu-user-dropdown" role="listbox" aria-label="Select user">
+                <div class="submenu-user-current" role="option" aria-selected="true">
+                    <span class="user-icon">${currentUser.icon || '👤'}</span>
+                    <span class="user-name">${currentUser.name}</span>
+                    <span class="dropdown-arrow" aria-hidden="true">▼</span>
+                </div>
+                <div class="submenu-user-list" role="listbox">
+                    ${allUsers.map(user => `
+                        <div class="submenu-user-option ${user.id === currentUser.id ? 'selected' : ''}" 
+                             role="option" 
+                             data-user-id="${user.id}"
+                             aria-selected="${user.id === currentUser.id}">
+                            <span class="user-icon">${user.icon || '👤'}</span>
+                            <span class="user-name">${user.name}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        // Add click handlers
+        container.querySelectorAll('.submenu-user-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const userId = option.getAttribute('data-user-id');
+                if (userId && window.appInstance) {
+                    window.appInstance.handleUserSwitch(userId);
+                    this.updateUserDisplay();
+                }
+            });
+        });
+    }
+    
+    renderDaySelector() {
+        const container = document.getElementById(`${this.prefix}SubmenuDaySelector`);
+        if (!container || !window.appInstance) return;
+        
+        const currentDay = window.appInstance.appState.getCurrentDay();
+        const todayIcon = this.getTodayCalendarIcon();
+        const tomorrowIcon = this.getTomorrowCalendarIcon();
+        
+        container.innerHTML = `
+            <div class="submenu-day-options" role="radiogroup" aria-label="Select day">
+                <div class="submenu-day-option ${currentDay === 'today' ? 'selected' : ''}" 
+                     role="radio" 
+                     data-day="today"
+                     aria-checked="${currentDay === 'today'}"
+                     tabindex="${currentDay === 'today' ? '0' : '-1'}">
+                    <div class="day-icon">${todayIcon}</div>
+                    <span class="day-label">Today</span>
+                </div>
+                <div class="submenu-day-option ${currentDay === 'tomorrow' ? 'selected' : ''}" 
+                     role="radio" 
+                     data-day="tomorrow"
+                     aria-checked="${currentDay === 'tomorrow'}"
+                     tabindex="${currentDay === 'tomorrow' ? '0' : '-1'}">
+                    <div class="day-icon">${tomorrowIcon}</div>
+                    <span class="day-label">Tomorrow</span>
+                </div>
+            </div>
+        `;
+        
+        // Add click handlers
+        container.querySelectorAll('.submenu-day-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const day = option.getAttribute('data-day');
+                if (day && window.appInstance) {
+                    window.appInstance.switchDay(day);
+                    this.updateDayDisplay();
+                }
+            });
+        });
+    }
+    
+    getTodayCalendarIcon() {
+        const today = new Date();
+        const dayNum = today.getDate();
+        const themeColor = getComputedStyle(document.documentElement)
+            .getPropertyValue('--primary-color').trim() || '#667eea';
+        return this.generateCalendarIcon(dayNum, themeColor);
+    }
+    
+    getTomorrowCalendarIcon() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const dayNum = tomorrow.getDate();
+        const themeColor = getComputedStyle(document.documentElement)
+            .getPropertyValue('--primary-color').trim() || '#667eea';
+        return this.generateCalendarIcon(dayNum, themeColor);
+    }
+    
+    generateCalendarIcon(dayNumber, themeColor = '#667eea') {
+        // Determine font size based on number of digits
+        const fontSize = dayNumber < 10 ? '9' : '8';
+        
+        return `
+            <svg class="calendar-day-icon" width="28" height="28" viewBox="0 0 28 28" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="calGrad${dayNumber}" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" style="stop-color:${themeColor};stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:${themeColor};stop-opacity:0.8" />
+                    </linearGradient>
+                    <filter id="calShadow${dayNumber}">
+                        <feDropShadow dx="0" dy="1" stdDeviation="1" flood-opacity="0.15"/>
+                    </filter>
+                </defs>
+                
+                <!-- Calendar base -->
+                <rect x="3" y="5" width="22" height="20" rx="3" fill="white" stroke="#e0e0e0" stroke-width="1"/>
+                
+                <!-- Calendar header with theme color -->
+                <rect x="3" y="5" width="22" height="6" rx="3" fill="url(#calGrad${dayNumber})"/>
+                <rect x="3" y="8" width="22" height="3" fill="${themeColor}"/>
+                
+                <!-- Binding holes -->
+                <circle cx="8" cy="3" r="1.5" fill="#666" opacity="0.4"/>
+                <circle cx="20" cy="3" r="1.5" fill="#666" opacity="0.4"/>
+                
+                <!-- Day number -->
+                <text x="14" y="19" text-anchor="middle" 
+                      font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" 
+                      font-size="${fontSize}" font-weight="700" fill="#333"
+                      filter="url(#calShadow${dayNumber})">
+                    ${dayNumber}
+                </text>
+            </svg>
+        `;
+    }
+    
+    updateSelections() {
+        this.updateUserDisplay();
+        this.updateDayDisplay();
+    }
+    
+    updateUserDisplay() {
+        // Update user selection when state changes
+        if (window.appInstance) {
+            this.renderUserSelector();
+        }
+    }
+    
+    updateDayDisplay() {
+        // Update day selection when state changes  
+        if (window.appInstance) {
+            this.renderDaySelector();
+        }
+    }
+}
+
+// Make available globally
+window.ExpandableHeader = ExpandableHeader;
+
 // === ENHANCED EMOJI PICKER COMPONENT ===
 class EmojiPicker {
     static createEmojiPicker(selectedEmoji, onEmojiSelect, filterId) {

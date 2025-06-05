@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add User Button Test</title>
+    
+    <!-- Import necessary styles -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="styles/base.css">
+    <link rel="stylesheet" href="styles/buttons.css">
+    <link rel="stylesheet" href="styles/draggable-drawer.css">
+    
+    <style>
+        body {
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        .test-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f8f8;
+            border-radius: 8px;
+        }
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .test-pass {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .test-fail {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        .drawer-section {
+            background: white;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        .dropdown-group {
+            margin: 10px 0;
+        }
+        .dropdown-label {
+            display: block;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        .drawer-add-user {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            width: 100%;
+            padding: 12px 16px;
+            background: #f0f0f0;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .drawer-add-user:hover {
+            background: #e0e0e0;
+            transform: translateY(-1px);
+        }
+        .add-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--primary-color, #667eea);
+            color: white;
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Add User Button Test</h1>
+        
+        <div class="test-section">
+            <h2>Test Configuration</h2>
+            <p>This test verifies that the Add User button appears correctly in the drawer when:</p>
+            <ul>
+                <li>There is only one user in the system</li>
+                <li>The app is in edit mode (grownupMode = true)</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>Simulated Drawer Section</h2>
+            <div class="drawer-section">
+                <div id="userSection" class="dropdown-group">
+                    <!-- This will be populated by our test -->
+                </div>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Results</h2>
+            <div id="testResults"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Interactive Test</h2>
+            <button class="btn btn--primary" onclick="runInteractiveTest()">Run Interactive Test</button>
+            <div id="interactiveResults" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+    
+    <script>
+        // Simulate the drawer population logic from StackMapApp.js
+        function populateDrawerUserSection(userCount, isEditMode) {
+            const userSection = document.getElementById('userSection');
+            
+            if (userCount > 1) {
+                // Multiple users - show user selector
+                userSection.innerHTML = `
+                    <label class="dropdown-label">User</label>
+                    <select class="drawer-select">
+                        <option>User 1</option>
+                        <option>User 2</option>
+                    </select>
+                `;
+            } else if (isEditMode) {
+                // Single user in edit mode - show add user button
+                userSection.innerHTML = `
+                    <label class="dropdown-label">User</label>
+                    <button class="drawer-add-user" id="drawerAddUser">
+                        <span class="add-icon">+</span>
+                        Add User
+                    </button>
+                `;
+            } else {
+                // Single user, not in edit mode
+                userSection.innerHTML = `
+                    <label class="dropdown-label">User</label>
+                    <div class="drawer-select disabled">
+                        <span>👤 Default User</span>
+                    </div>
+                `;
+            }
+        }
+        
+        // Run automated tests
+        function runTests() {
+            const results = document.getElementById('testResults');
+            results.innerHTML = '';
+            
+            // Test 1: Single user, edit mode ON
+            populateDrawerUserSection(1, true);
+            const addUserBtn = document.getElementById('drawerAddUser');
+            const test1Pass = addUserBtn !== null && addUserBtn.classList.contains('drawer-add-user');
+            
+            results.innerHTML += `
+                <div class="test-result ${test1Pass ? 'test-pass' : 'test-fail'}">
+                    <strong>Test 1:</strong> Single user + Edit mode ON<br>
+                    Result: ${test1Pass ? '✅ PASS - Add User button is present' : '❌ FAIL - Add User button not found'}
+                </div>
+            `;
+            
+            // Test 2: Single user, edit mode OFF
+            populateDrawerUserSection(1, false);
+            const addUserBtn2 = document.getElementById('drawerAddUser');
+            const test2Pass = addUserBtn2 === null;
+            
+            results.innerHTML += `
+                <div class="test-result ${test2Pass ? 'test-pass' : 'test-fail'}">
+                    <strong>Test 2:</strong> Single user + Edit mode OFF<br>
+                    Result: ${test2Pass ? '✅ PASS - Add User button is correctly hidden' : '❌ FAIL - Add User button should not be visible'}
+                </div>
+            `;
+            
+            // Test 3: Multiple users, edit mode ON
+            populateDrawerUserSection(2, true);
+            const addUserBtn3 = document.getElementById('drawerAddUser');
+            const test3Pass = addUserBtn3 === null;
+            
+            results.innerHTML += `
+                <div class="test-result ${test3Pass ? 'test-pass' : 'test-fail'}">
+                    <strong>Test 3:</strong> Multiple users + Edit mode ON<br>
+                    Result: ${test3Pass ? '✅ PASS - Shows user selector instead of Add User button' : '❌ FAIL - Should show user selector'}
+                </div>
+            `;
+            
+            // Test 4: Button click functionality
+            populateDrawerUserSection(1, true);
+            const addUserBtn4 = document.getElementById('drawerAddUser');
+            let clickWorked = false;
+            
+            if (addUserBtn4) {
+                addUserBtn4.addEventListener('click', () => {
+                    clickWorked = true;
+                });
+                addUserBtn4.click();
+            }
+            
+            results.innerHTML += `
+                <div class="test-result ${clickWorked ? 'test-pass' : 'test-fail'}">
+                    <strong>Test 4:</strong> Button click functionality<br>
+                    Result: ${clickWorked ? '✅ PASS - Button is clickable' : '❌ FAIL - Button click not working'}
+                </div>
+            `;
+            
+            // Summary
+            const totalTests = 4;
+            const passedTests = [test1Pass, test2Pass, test3Pass, clickWorked].filter(t => t).length;
+            
+            results.innerHTML += `
+                <div class="test-result" style="margin-top: 20px; font-weight: bold;">
+                    Test Summary: ${passedTests}/${totalTests} tests passed
+                    ${passedTests === totalTests ? '🎉 All tests passed!' : '⚠️ Some tests failed'}
+                </div>
+            `;
+        }
+        
+        // Interactive test
+        function runInteractiveTest() {
+            const results = document.getElementById('interactiveResults');
+            results.innerHTML = '<h3>Interactive Test Steps:</h3>';
+            
+            // Step 1: Show single user, no edit mode
+            populateDrawerUserSection(1, false);
+            results.innerHTML += `
+                <div style="margin: 10px 0;">
+                    <strong>Step 1:</strong> Single user, Edit mode OFF<br>
+                    <em>Expected: Disabled user display (no Add User button)</em>
+                </div>
+            `;
+            
+            setTimeout(() => {
+                // Step 2: Enable edit mode
+                populateDrawerUserSection(1, true);
+                const btn = document.getElementById('drawerAddUser');
+                results.innerHTML += `
+                    <div style="margin: 10px 0;">
+                        <strong>Step 2:</strong> Single user, Edit mode ON<br>
+                        <em>Expected: Add User button appears</em><br>
+                        <strong>Result: ${btn ? '✅ Button is visible' : '❌ Button not found'}</strong>
+                    </div>
+                `;
+                
+                if (btn) {
+                    btn.addEventListener('click', () => {
+                        results.innerHTML += `
+                            <div style="margin: 10px 0; color: green;">
+                                <strong>✅ Button clicked successfully!</strong><br>
+                                In the real app, this would open the Add User modal.
+                            </div>
+                        `;
+                    });
+                }
+            }, 2000);
+        }
+        
+        // Run tests on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            runTests();
+        });
+    </script>
+</body>
+</html>

@@ -261,6 +261,11 @@ class AppState {
     setCurrentDay(day) {
         if (day === 'today' || day === 'tomorrow') {
             this.ui.currentDay = day;
+            
+            // Sync the legacy activities array with the current day's activities
+            const user = this.getCurrentUser();
+            this.activities = day === 'today' ? [...user.activities] : [...user.tomorrowActivities];
+            
             this._triggerSave();
         }
     }
@@ -292,8 +297,10 @@ class AppState {
                 user.icon = '👤'; // Default icon for existing users without icons
             }
             
-            // Load activities
-            this.activities = [...(user.activities || [])];
+            // Load activities based on current day
+            this.activities = this.ui.currentDay === 'today' 
+                ? [...(user.activities || [])]
+                : [...(user.tomorrowActivities || [])];
             
             // Load settings with fallback defaults
             this.settings = {
@@ -318,7 +325,12 @@ class AppState {
     saveCurrentUserData() {
         const user = this.getCurrentUser();
         if (user) {
-            user.activities = [...this.activities];
+            // Save activities to the correct day
+            if (this.ui.currentDay === 'today') {
+                user.activities = [...this.activities];
+            } else {
+                user.tomorrowActivities = [...this.activities];
+            }
             user.settings = {...this.settings};
         }
     }
@@ -474,12 +486,22 @@ class AppState {
         this.saveCurrentUserData(); // Save current state to user profile
         return {
             version: CONFIG.DATA_VERSION,
-            users: this.users
+            users: this.users,
+            ui: {
+                currentDay: this.ui.currentDay // Persist day selection
+            }
         };
     }
 
     // Enhanced importData to handle user icons
     importData(data) {
+        // Restore UI state if present
+        if (data.ui) {
+            if (data.ui.currentDay) {
+                this.ui.currentDay = data.ui.currentDay;
+            }
+        }
+        
         if (data.users) {
             // New multi-user format
             this.users = data.users;

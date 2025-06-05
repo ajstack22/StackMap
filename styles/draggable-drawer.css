@@ -1,0 +1,581 @@
+/* ===== HEADER DRAWER STYLES ===== */
+
+/* Header Logo and Title Layout */
+.header-logo-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.stackmap-logo {
+    width: 42px; /* Match title height */
+    height: 42px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.stackmap-logo svg {
+    width: 100%;
+    height: 100%;
+}
+
+.header-text {
+    display: flex;
+    flex-direction: column;
+    align-items: center; /* Center both title and subtitle */
+}
+
+/* Title and Subtitle */
+.title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: white;
+    margin: 0;
+    padding: 0;
+    line-height: 1;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+    outline: none;
+    transition: all 0.2s ease;
+    height: 32px; /* Fixed height to match logo */
+    display: flex;
+    align-items: center;
+}
+
+.subtitle {
+    font-size: 0.85rem;
+    color: rgba(255, 255, 255, 0.8);
+    margin: 8px 0 0 0; /* More space above subtitle */
+    padding: 0;
+    line-height: 1.2;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+/* Edit mode styles for title/subtitle */
+.grownup-mode .app-header .title[contenteditable="true"],
+.grownup-mode .app-header .subtitle[contenteditable="true"] {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 4px 12px;
+    cursor: text;
+}
+
+.grownup-mode .app-header .title:focus,
+.grownup-mode .app-header .subtitle:focus {
+    background: rgba(255, 255, 255, 0.2);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+}
+
+/* Additional header styles for drawer */
+.app-header {
+    position: relative;
+    overflow: visible !important;
+}
+
+/* Header content container */
+.header-content {
+    padding: 16px 10px 8px;
+}
+
+/* App header content already styled in layout.css */
+
+/* Drawer now uses fixed positioning, CSS variables removed */
+
+/* Drawer Handle - At bottom of header when closed */
+.drawer-handle {
+    position: absolute;
+    bottom: 3px; /* Moved up 3px from bottom edge */
+    left: 0;
+    right: 0;
+    height: 40px; /* Click area height */
+    cursor: pointer;
+    z-index: 1002; /* Above drawer but below floating buttons */
+    background: transparent; /* Invisible click area */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Full width click area for easy touch */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* When drawer is open, handle moves to bottom of drawer extension */
+.drawer-extension.open ~ .drawer-handle,
+.app-header.drawer-open .drawer-handle {
+    transform: translateY(145px); /* 190px drawer height - 40px handle height - 5px from bottom */
+}
+
+.drawer-handle:hover {
+    background: transparent;
+}
+
+.drawer-handle:focus {
+    outline: none; /* Remove focus outline for cleaner look */
+}
+
+/* Drawer Handle Bar - Purely decorative */
+.drawer-handle-bar {
+    position: relative;
+    width: 50px;
+    height: 5px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 3px;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    /* Decorative visual indicator */
+    pointer-events: none; /* Clicks pass through to parent */
+}
+
+/* Keep handle bar straight - no rotation */
+.drawer-open .drawer-handle-bar {
+    background: white;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+/* Remove the dots - just keep the single bar */
+
+.drawer-handle:hover .drawer-handle-bar {
+    background: rgba(255, 255, 255, 1);
+    height: 6px;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
+    transform: scale(1.1);
+}
+
+/* Drawer Extension - Starts below header */
+.drawer-extension {
+    position: absolute;
+    top: 100%; /* Start at bottom of header */
+    left: 0;
+    right: 0;
+    max-height: 0; /* Hidden when closed */
+    overflow: hidden; /* Hide content when closed */
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--background-gradient-start);
+    background-image: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+    border-radius: 0 0 32px 32px; /* Curved bottom edge */
+    /* No shadow when closed */
+    box-shadow: none;
+    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1;
+    position: relative; /* For handle positioning */
+}
+
+.drawer-extension.open {
+    max-height: 190px; /* More breathing room */
+    border-radius: 0 0 32px 32px !important; /* Ensure curved bottom */
+    /* Same shadow style as closed header */
+    box-shadow: 
+        0 0 40px rgba(0, 0, 0, 0.12), /* Soft outer glow */
+        0 8px 32px rgba(0, 0, 0, 0.08), /* Main shadow */
+        0 2px 8px rgba(0, 0, 0, 0.04); /* Close shadow */
+    overflow: visible; /* Show content when open */
+}
+
+/* Apply shadow to wrapper when drawer is open */
+.header-wrapper.drawer-open {
+    box-shadow: 
+        0 0 50px rgba(0, 0, 0, 0.15), /* Soft outer glow */
+        0 12px 40px rgba(0, 0, 0, 0.10), /* Main shadow */
+        0 4px 12px rgba(0, 0, 0, 0.05); /* Close shadow */
+    border-radius: 0 0 32px 32px; /* Maintain smooth arc */
+    /* Allow wrapper to expand with drawer */
+    height: auto;
+    min-height: calc(100% + 180px); /* Accommodate drawer extension */
+}
+
+/* Removed - no longer needed since handle is sibling not child */
+
+/* Drawer Dropdowns Container */
+.drawer-dropdowns {
+    display: flex;
+    gap: 20px; /* More gap between fields */
+    padding: 30px 24px 30px; /* Good padding all around */
+    justify-content: center;
+    max-width: 400px;
+    margin-left: auto;
+    margin-right: auto;
+    flex-wrap: wrap; /* Allow wrapping on very small screens */
+}
+
+/* Dropdown Group - Standardized dimensions */
+.dropdown-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0; /* Allow flex items to shrink */
+    width: 150px; /* Fixed width for consistency */
+    max-width: 150px; /* Enforce same size */
+}
+
+.dropdown-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: block;
+}
+
+/* Drawer Select Dropdowns - Material White Design */
+.drawer-select {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background: white;
+    color: #333;
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 20px;
+    padding-right: 40px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-weight: 500;
+    text-align: center;
+    text-align-last: center;
+    min-height: 44px; /* Match button height */
+    box-sizing: border-box;
+}
+
+.drawer-select:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.drawer-select:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* Custom dropdown button style */
+.drawer-select.disabled {
+    opacity: 0.6;
+    cursor: default;
+}
+
+.drawer-select span {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+/* Add User Button - Matches dropdown style exactly */
+.drawer-add-user {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 1rem;
+    border: none;
+    border-radius: 8px;
+    background: white;
+    color: var(--primary-color);
+    outline: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-align: center;
+    min-height: 44px; /* Match select height */
+    box-sizing: border-box;
+}
+
+.drawer-add-user:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transform: translateY(-1px);
+}
+
+.drawer-add-user:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+.add-icon {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* Done Button - REMOVED */
+/* Users now close drawer by clicking handle again or backdrop */
+
+/* Backdrop for drawer */
+.drawer-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 998;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.drawer-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* Ensure drawer doesn't push content */
+.drawer-extension {
+    z-index: 1002; /* Above header z-index */
+    position: relative; /* Ensure stacking context */
+}
+
+/* Body state when drawer is active */
+body.drawer-active {
+    overflow: hidden;
+}
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+    /* Header already fixed - see layout.css */
+    
+    .header-logo-title {
+        gap: 10px;
+        margin-bottom: 6px;
+    }
+    
+    .stackmap-logo {
+        width: 36px;
+        height: 36px;
+    }
+    
+    .title {
+        font-size: 1.5rem;
+        height: 28px; /* Match logo height */
+    }
+    
+    .subtitle {
+        font-size: 0.8rem;
+    }
+    
+    .drawer-dropdowns {
+        flex-direction: column;
+        gap: 16px;
+        padding: 0 20px;
+    }
+    
+    .drawer-select,
+    .drawer-add-user {
+        font-size: 1rem;
+        padding: 14px 16px;
+    }
+    
+    .drawer-select {
+        padding-right: 42px;
+    }
+}
+
+@media (max-width: 480px) {
+    .header-content {
+        padding: 12px 10px 0;
+    }
+    
+    .header-logo-title {
+        gap: 8px;
+    }
+    
+    .stackmap-logo {
+        width: 30px;
+        height: 30px;
+    }
+    
+    .title {
+        font-size: 1.3rem;
+        height: 24px; /* Match logo height */
+    }
+    
+    .subtitle {
+        font-size: 0.75rem;
+    }
+    
+    .drawer-handle {
+        bottom: -12px; /* 20px lower on mobile */
+    }
+    
+    .drawer-dropdowns {
+        padding: 0 16px;
+        gap: 14px;
+    }
+    
+    .dropdown-label {
+        font-size: 0.7rem;
+    }
+    
+    .drawer-done {
+        padding: 12px 24px;
+        font-size: 0.9rem;
+        min-height: 44px;
+    }
+    
+    /* Remove body padding since header is fixed */
+}
+
+/* ===== CUSTOM DROPDOWN MODAL ===== */
+.dropdown-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.dropdown-modal.hidden {
+    display: none;
+}
+
+.dropdown-modal-backdrop {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.dropdown-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    max-width: 400px;
+    width: 100%;
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.dropdown-modal-header {
+    padding: 20px;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdown-modal-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.dropdown-modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #666;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.dropdown-modal-close:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+.dropdown-modal-options {
+    overflow-y: auto;
+    max-height: calc(70vh - 80px);
+}
+
+.dropdown-option {
+    padding: 16px 20px;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border: none;
+    background: none;
+    width: 100%;
+    text-align: left;
+    font-size: 1rem;
+    color: #333;
+}
+
+.dropdown-option:hover {
+    background: #f5f5f5;
+}
+
+.dropdown-option.selected {
+    background: var(--primary-color);
+    color: white;
+}
+
+.dropdown-option-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+.dropdown-option-text {
+    flex: 1;
+    font-weight: 500;
+}
+
+@media (max-width: 480px) {
+    .dropdown-modal {
+        padding: 0;
+    }
+    
+    .dropdown-modal-content {
+        max-width: 100%;
+        width: 100%;
+        height: 100%;
+        max-height: 100%;
+        border-radius: 0;
+    }
+    
+    .dropdown-modal-options {
+        max-height: calc(100vh - 80px);
+    }
+    
+    /* Stack drawer dropdowns vertically on small screens */
+    .drawer-dropdowns {
+        flex-direction: column;
+        gap: 16px;
+        padding: 20px 16px;
+    }
+    
+    .dropdown-group {
+        max-width: 100%;
+        width: 100%;
+    }
+    
+    /* Handle moves down same amount on mobile */
+    .drawer-extension.open ~ .drawer-handle,
+    .app-header.drawer-open .drawer-handle {
+        transform: translateY(195px); /* 240px drawer height - 40px handle height - 5px from bottom */
+    }
+    
+    .drawer-extension.open {
+        max-height: 240px; /* More height for stacked layout */
+    }
+}

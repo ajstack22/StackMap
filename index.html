@@ -27,45 +27,62 @@
     <link rel="stylesheet" href="styles/modal-card.css">
     <link rel="stylesheet" href="styles/base.css">
     <link rel="stylesheet" href="styles/layout.css">
+    <link rel="stylesheet" href="styles/draggable-drawer.css">
     
     <!-- Google APIs -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
-    <!-- Application Header -->
-    <header class="static-header" role="banner">
-        <div class="user-selector-container">
-            <select id="userSelector" class="user-dropdown" aria-label="Select user">
-                <!-- Options populated by JavaScript -->
-            </select>
-        </div>
-        <!-- StackMap Logo -->
-        <div class="stackmap-logo-container" id="staticLogoContainer">
-            <!-- Logo will be rendered here by JavaScript -->
-        </div>
-        <!-- Story 4: Day selector replacing subtitle -->
-        <div class="day-selector-container" id="daySelectorContainer">
-            <!-- Day selector will be rendered here by JavaScript -->
-        </div>
-    </header>
-    
-    <!-- Fixed Header for Scrolling - REMOVED aria-hidden -->
-    <header class="fixed-header" role="banner">
-        <div class="user-selector-container">
-            <select id="fixedUserSelector" class="user-dropdown" aria-label="Select user" tabindex="-1">
-                <!-- Options populated by JavaScript -->
-            </select>
-        </div>
-        <!-- StackMap Logo -->
-        <div class="stackmap-logo-container" id="fixedLogoContainer">
-            <!-- Logo will be rendered here by JavaScript -->
-        </div>
-        <!-- Story 4: Day selector for fixed header -->
-        <div class="day-selector-container" id="fixedDaySelectorContainer">
-            <!-- Day selector will be rendered here by JavaScript -->
-        </div>
-    </header>
+    <!-- Header Wrapper for unified shadow -->
+    <div class="header-wrapper" id="headerWrapper">
+        <!-- Unified Application Header -->
+        <header class="app-header" role="banner" id="appHeader">
+            <div class="header-content">
+                <div class="header-logo-title">
+                    <div class="stackmap-logo" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                            <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                            <rect x="7" y="10" width="18" height="2.5" fill="#4a90e2" rx="1.25"/>
+                            <rect x="7" y="14.5" width="18" height="2.5" fill="#4a90e2" rx="1.25"/>
+                            <rect x="7" y="19" width="18" height="5" fill="#2c5aa0" rx="2.5"/>
+                        </svg>
+                    </div>
+                    <div class="header-text">
+                        <h1 class="title" id="mainTitle" tabindex="0">StackMap</h1>
+                        <p class="subtitle" id="subtitle" tabindex="0">Routine Ready</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Drawer Handle at bottom of header -->
+            <div class="drawer-handle" id="drawerHandle" 
+                 role="button" tabindex="0" 
+                 aria-label="Select user and day"
+                 aria-expanded="false">
+                <span class="drawer-handle-bar"></span>
+            </div>
+            
+            <!-- Drawer Extension -->
+            <div class="drawer-extension" id="drawerExtension" aria-hidden="true">
+                <div class="drawer-dropdowns">
+                    <!-- User Section - Dynamic content -->
+                    <div class="dropdown-group" id="userSection">
+                        <!-- Will be populated based on user count -->
+                    </div>
+                    
+                    <!-- Day Dropdown -->
+                    <div class="dropdown-group">
+                        <label class="dropdown-label" for="drawerDaySelect">Day</label>
+                        <select class="drawer-select" id="drawerDaySelect">
+                            <option value="today">Today</option>
+                            <option value="tomorrow">Tomorrow</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </header>
+    </div>
     
     <!-- Main Navigation (Floating Buttons) -->
     <nav id="main-navigation" role="navigation" aria-label="Main navigation">
@@ -166,6 +183,20 @@
     <!-- Hidden File Input for Import -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
     
+    <!-- Custom Dropdown Modal -->
+    <div id="dropdownModal" class="dropdown-modal hidden" role="dialog" aria-modal="true">
+        <div class="dropdown-modal-backdrop"></div>
+        <div class="dropdown-modal-content">
+            <div class="dropdown-modal-header">
+                <h3 class="dropdown-modal-title" id="dropdownModalTitle">Select</h3>
+                <button class="dropdown-modal-close" aria-label="Close">&times;</button>
+            </div>
+            <div class="dropdown-modal-options" id="dropdownModalOptions">
+                <!-- Options will be populated dynamically -->
+            </div>
+        </div>
+    </div>
+    
     <!-- Import Preview Modal -->
     <div id="importPreviewModal" class="modal-overlay hidden" role="dialog" 
          aria-modal="true" aria-labelledby="import-preview-title">
@@ -210,11 +241,16 @@
     <!-- Load modern components -->
     <script src="components/ModernUserSelector.js"></script>
     <script src="components/ModernDaySelector.js"></script>
+    <script src="components/DraggableDrawer.js"></script>
     
     <!-- Load test suite -->
     <script src="test-suite.js"></script>
     <script src="test-story5.js"></script>
     <script src="test-transparency.js"></script>
+    <script src="test-expandable-header.js"></script>
+    <script src="test-fixes.js"></script>
+    <script src="test-uat-suite.js"></script>
+    <script src="test-drawer-position.js"></script>
     
     <script>
         // Simple ValidationManager
@@ -308,6 +344,26 @@
                 window.debugUsers = function() {
                     console.log('Current users:', window.appInstance.appState.users);
                     console.log('Current user:', window.appInstance.appState.getCurrentUser());
+                };
+                
+                // Add helper to fix stuck drawer
+                window.fixDrawer = function() {
+                    const drawerHandle = document.getElementById('drawerHandle');
+                    const drawerExtension = document.getElementById('drawerExtension');
+                    const appHeader = document.getElementById('appHeader');
+                    const headerWrapper = document.getElementById('headerWrapper');
+                    const backdrop = document.querySelector('.drawer-backdrop');
+                    
+                    // Force close all drawer elements
+                    drawerHandle?.setAttribute('aria-expanded', 'false');
+                    drawerExtension?.setAttribute('aria-hidden', 'true');
+                    drawerExtension?.classList.remove('open');
+                    appHeader?.classList.remove('drawer-open');
+                    headerWrapper?.classList.remove('drawer-open');
+                    backdrop?.classList.remove('visible');
+                    document.body.classList.remove('drawer-active');
+                    
+                    console.log('Drawer state reset. Click handle to open again.');
                 };
             } catch (error) {
                 console.error('Failed to initialize StackMap:', error);

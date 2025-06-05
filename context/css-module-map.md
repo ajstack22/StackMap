@@ -25,6 +25,8 @@ styles/index.css (MAIN - imports all others)
 - **`styles/forms.css`** - Input fields, checkboxes, emoji picker, color picker
 - **`styles/modals.css`** - General modal overlays, welcome screen, toasts
 - **`styles/modal-card.css`** - Editing modal interface, time fields
+- **`styles/draggable-drawer.css`** - Drawer system, handle positioning (⚠️ CRITICAL: See drawer-architecture.md)
+- **`styles/selectors.css`** - User and day selector components
 
 #### **Feature Modules:**
 - **`styles/animations.css`** - Confetti, fireworks, transitions, keyframes

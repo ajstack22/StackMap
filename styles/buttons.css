@@ -170,8 +170,8 @@
     user-select: none;
 }
 
-/* === CIRCULAR CORNER BUTTONS === */
-/* Perfect Circles with Transparency */
+/* === MATERIAL WHITE CIRCLE BUTTONS === */
+/* Material White with Themed Icons */
 button.btn.btn--floating,
 .btn.btn--floating {
     position: fixed !important;
@@ -182,15 +182,15 @@ button.btn.btn--floating,
     margin: 0 !important;
     z-index: 1000 !important;
     
-    /* Transparent base */
-    background: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.8) !important;
-    border: 1px solid rgba(255, 255, 255, 0.15) !important;
-    backdrop-filter: blur(10px) !important;
-    -webkit-backdrop-filter: blur(10px) !important;
+    /* Material white base */
+    background: white !important;
+    color: var(--primary-color) !important;
+    border: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
     
-    /* Subtle shadow */
-    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1) !important;
+    /* Material shadow */
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     
     /* Layout */
     display: flex !important;
@@ -207,7 +207,7 @@ button.btn.btn--floating,
     backface-visibility: hidden;
     
     /* Smooth transitions */
-    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     cursor: pointer !important;
     text-decoration: none !important;
     user-select: none !important;
@@ -219,11 +219,9 @@ button.btn.btn--floating,
 
 button.btn.btn--floating:hover,
 .btn.btn--floating:hover {
-    background: rgba(255, 255, 255, 0.25) !important;
-    color: white !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    background: white !important;
     transform: translateY(-2px) scale(1.05) !important;
-    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
 }
 
 button.btn.btn--floating:active,
@@ -234,10 +232,8 @@ button.btn.btn--floating:active,
 
 button.btn.btn--floating:focus,
 .btn.btn--floating:focus {
-    background: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+    background: white !important;
     outline: none !important;
-    border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 button.btn.btn--floating:focus-visible,
@@ -251,25 +247,37 @@ button.btn.btn--preferences,
 .btn.btn--preferences {
     top: 25px !important;
     left: 20px !important;
+    z-index: 1005 !important; /* Above header */
 }
 
 button.btn.btn--grownup-mode,
 .btn.btn--grownup-mode {
     top: 25px !important;
     right: 20px !important;
+    z-index: 1005 !important; /* Above header */
 }
 
-/* Material Icons in floating buttons */
+/* Material Icons in floating buttons - Themed and Bold */
 button.btn.btn--floating .material-icons,
 .btn.btn--floating .material-icons {
     margin: 0 !important;
     padding: 0 !important;
-    font-size: 28px !important;
-    font-weight: 400 !important;
+    font-size: 24px !important;
+    font-weight: 700 !important; /* Bold icons */
     line-height: 1 !important;
     vertical-align: middle !important;
-    display: inline-block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     pointer-events: none !important;
+    color: var(--primary-color) !important; /* Themed color */
+    width: 100% !important;
+    height: 100% !important;
+}
+
+button.btn.btn--floating:hover .material-icons,
+.btn.btn--floating:hover .material-icons {
+    color: var(--primary-dark) !important; /* Darker on hover */
 }
 
 /* General material icons */
@@ -282,7 +290,7 @@ button.btn.btn--floating .material-icons,
     animation: spin 1s linear infinite;
 }
 
-/* Mobile adjustments for circles */
+/* Mobile adjustments for floating buttons */
 @media (max-width: 768px) {
     button.btn.btn--floating,
     .btn.btn--floating {
@@ -293,7 +301,7 @@ button.btn.btn--floating .material-icons,
     
     button.btn.btn--floating .material-icons,
     .btn.btn--floating .material-icons {
-        font-size: 24px !important;
+        font-size: 22px !important;
     }
     
     button.btn.btn--preferences,
@@ -337,7 +345,7 @@ button.btn.btn--floating .material-icons,
     
     button.btn.btn--floating .material-icons,
     .btn.btn--floating .material-icons {
-        font-size: 22px !important;
+        font-size: 20px !important;
     }
 }
 
