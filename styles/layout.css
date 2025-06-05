@@ -15,26 +15,31 @@
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
+    min-height: 48px; /* Ensure container has height */
 }
 
 .day-selector {
-    display: flex;
+    display: inline-flex; /* Changed from flex to inline-flex */
     background: white;
     border-radius: 16px;
     box-shadow: var(--card-shadow);
     overflow: hidden;
     border: 2px solid #f0f0f0;
+    min-height: 44px; /* Ensure minimum height for accessibility */
 }
 
 .day-option {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center; /* Added to center content vertically */
     padding: 12px 20px;
     cursor: pointer;
     transition: all var(--transition-fast);
     min-width: 80px;
+    min-height: 44px; /* Explicit minimum height for touch target */
     position: relative;
+    box-sizing: border-box; /* Include padding in height calculation */
 }
 
 .day-option:hover {
@@ -50,6 +55,8 @@
     font-size: 0.9rem;
     font-weight: 600;
     margin-bottom: 2px;
+    line-height: 1.2; /* Ensure text has height */
+    display: block; /* Ensure block display */
 }
 
 .day-count {
@@ -60,6 +67,8 @@
     border-radius: 8px;
     min-width: 16px;
     text-align: center;
+    line-height: 1.2; /* Ensure text has height */
+    display: inline-block; /* Ensure proper display */
 }
 
 .day-option.active .day-count {
@@ -76,6 +85,27 @@ body.viewing-tomorrow .main-container {
 
 body.viewing-tomorrow .card {
     border-left: 3px solid rgba(255, 193, 7, 0.3);
+}
+
+/* Mobile responsive adjustments for day selector */
+@media (max-width: 768px) {
+    .day-selector-container {
+        margin-bottom: 15px;
+    }
+    
+    .day-option {
+        min-width: 70px; /* Slightly smaller on mobile but still accessible */
+        padding: 10px 15px; /* Adjusted padding */
+        min-height: 48px; /* Larger touch target on mobile */
+    }
+    
+    .day-label {
+        font-size: 0.85rem;
+    }
+    
+    .day-count {
+        font-size: 0.75rem;
+    }
 }
 
 /* ===== HEADER LAYOUT ===== */
