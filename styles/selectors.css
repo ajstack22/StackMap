@@ -335,7 +335,7 @@
     right: 0;
     bottom: 0;
     background: rgba(0, 0, 0, 0.1);
-    z-index: 999;
+    z-index: 2000;
     opacity: 0;
     pointer-events: none;
     transition: opacity 200ms ease;
@@ -592,7 +592,7 @@
 }
 
 /* Mobile modal adjustments */
-@media (max-width: 480px) {
+@media (max-width: 768px) {
     .day-modal {
         width: 100vw;
         height: 100vh;
