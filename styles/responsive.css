@@ -1,6 +1,8 @@
 /* ===== RESPONSIVE DESIGN ===== */
 /* All media queries and mobile adaptations */
 
+/* === MOBILE TRANSPARENCY ADAPTATIONS === */
+
 @media (max-width: 768px) {
     :root {
         --title-size: 1.8rem;
@@ -9,6 +11,48 @@
     
     body {
         padding: 15px 5px 100px 5px !important; /* Reduced side padding */
+    }
+    
+    /* === TRANSPARENT HEADER ELEMENTS === */
+    /* Maintain transparency on mobile */
+    .user-dropdown {
+        min-width: 120px;
+        font-size: 0.8rem;
+        background: rgba(255, 255, 255, 0.08); /* Slightly more visible on mobile */
+        padding: 8px 28px 8px 10px; /* Adjust padding for smaller size */
+    }
+    
+    .user-dropdown:hover,
+    .user-dropdown:focus {
+        background: rgba(255, 255, 255, 0.2);
+    }
+    
+    .day-selector {
+        background: rgba(255, 255, 255, 0.08);
+        min-width: 140px;
+    }
+    
+    .day-selector:hover {
+        background: rgba(255, 255, 255, 0.15);
+    }
+    
+    .day-option {
+        font-size: 0.8rem;
+        padding: 10px 12px;
+    }
+    
+    /* StackMap logo scaling */
+    .stackmap-logo-text {
+        font-size: 1.2rem;
+    }
+    
+    .stackmap-logo-icon {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .stackmap-logo {
+        padding: 3px 8px;
     }
     
     /* Fixed header is now always visible - removed hiding rules */
@@ -358,6 +402,25 @@
     
     body {
         padding: 10px 2px 80px 2px !important; /* Even less side padding on very small screens */
+    }
+    
+    /* === VERY SMALL SCREEN TRANSPARENCY === */
+    .user-dropdown {
+        min-width: 100px;
+        font-size: 0.75rem;
+    }
+    
+    .day-selector {
+        min-width: 120px;
+    }
+    
+    .stackmap-logo-text {
+        font-size: 1.1rem;
+    }
+    
+    .stackmap-logo-icon {
+        width: 22px;
+        height: 22px;
     }
     
     /* Fixed header is always visible on very small screens too */

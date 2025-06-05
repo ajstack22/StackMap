@@ -26,48 +26,63 @@
     min-height: 48px;
 }
 
+/* === TRANSPARENT DAY SELECTOR === */
 .day-selector {
-    display: inline-flex; /* Changed from flex to inline-flex */
-    background: white;
-    border-radius: 12px; /* Standardized to rounded rectangles */
-    box-shadow: var(--card-shadow);
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.05); /* Nearly transparent */
+    border-radius: 20px; /* Softer curves */
+    box-shadow: 0 2px 20px rgba(255, 255, 255, 0.05); /* Subtle shadow */
     overflow: hidden;
-    border: 2px solid #f0f0f0;
-    min-height: 44px; /* Ensure minimum height for accessibility */
-    min-width: 160px; /* Minimum width to prevent collapse */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 44px;
+    min-width: 160px;
+}
+
+.day-selector:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.1);
 }
 
 .day-option {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center; /* Added to center content vertically */
+    justify-content: center;
     padding: 12px 20px;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    color: rgba(255, 255, 255, 0.7); /* Subtle text */
+    font-weight: 500; /* Lighter weight */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     min-width: 80px;
-    min-height: 44px; /* Explicit minimum height for touch target */
+    min-height: 44px;
     position: relative;
-    box-sizing: border-box; /* Include padding in height calculation */
-    flex: 1; /* Equal distribution of space */
+    box-sizing: border-box;
+    flex: 1;
 }
 
 .day-option:hover {
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .day-option.active {
-    background: var(--primary-color);
+    background: rgba(255, 255, 255, 0.2);
     color: white;
+    font-weight: 600;
 }
 
 .day-label {
     font-size: 0.9rem;
-    font-weight: 600;
+    font-weight: inherit; /* Inherit from parent */
     margin-bottom: 2px;
-    line-height: 1.2; /* Ensure text has height */
-    display: block; /* Ensure block display */
-    white-space: nowrap; /* Prevent text wrapping */
+    line-height: 1.2;
+    display: block;
+    white-space: nowrap;
 }
 
 .day-count {
@@ -206,42 +221,82 @@ body.viewing-tomorrow .card {
     min-height: 44px; /* Ensure touch target */
 }
 
-/* Ensure user dropdown has proper dimensions */
+/* === TRANSPARENT USER DROPDOWN === */
 .user-dropdown {
     min-height: 44px;
     min-width: 140px;
-    padding: 8px 36px 8px 12px; /* Add space for dropdown arrow */
-    border-radius: 12px; /* Standardized rounded rectangles */
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    background: rgba(255, 255, 255, 0.2);
-    color: white;
-    font-size: 0.9rem;
-    font-weight: 600;
+    padding: 8px 36px 8px 12px;
+    border-radius: 22px; /* More rounded for softer look */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Barely visible border */
+    background: rgba(255, 255, 255, 0.05); /* Nearly transparent */
+    color: rgba(255, 255, 255, 0.7); /* Subtle text */
+    font-size: 0.85rem; /* Slightly smaller */
+    font-weight: 500; /* Lighter weight */
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transitions */
+    backdrop-filter: blur(10px); /* Subtle blur effect */
+    -webkit-backdrop-filter: blur(10px);
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cpath%20d%3D%27M7%209L3.5%205.5h7L7%209z%27%20fill%3D%27white%27/%3E%3C/svg%3E');
+    
+    /* Nearly invisible dropdown arrow */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cpath%20d%3D%27M7%209L3.5%205.5h7L7%209z%27%20fill%3D%27rgba(255,255,255,0.4)%27/%3E%3C/svg%3E');
     background-repeat: no-repeat;
     background-position: right 12px center;
     background-size: 14px;
 }
 
 .user-dropdown:hover {
-    background: rgba(255, 255, 255, 0.3);
-    border-color: rgba(255, 255, 255, 0.4);
+    background: rgba(255, 255, 255, 0.15); /* Gentle reveal */
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px); /* Subtle lift */
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1); /* Soft glow */
 }
 
 .user-dropdown:focus {
-    outline: 2px solid white;
+    outline: 2px solid rgba(255, 255, 255, 0.3);
     outline-offset: 2px;
+    background: rgba(255, 255, 255, 0.2);
 }
 
 /* Ensure dropdown options are visible */
 .user-dropdown option {
     background: var(--primary-color);
     color: white;
+}
+
+/* === STACKMAP LOGO === */
+.stackmap-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.stackmap-logo:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.stackmap-logo-icon {
+    width: 28px;
+    height: 28px;
+    opacity: 0.9;
+}
+
+.stackmap-logo-text {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    letter-spacing: -0.5px;
 }
 
 /* ===== HEADER TITLES ===== */

@@ -97,6 +97,47 @@ class ComponentBuilder {
         return selector;
     }
 
+    // NEW: Create StackMap Logo Component
+    static createStackMapLogo() {
+        const logoContainer = this.createElement('div', 'stackmap-logo');
+        
+        // Create SVG logo that matches theme
+        const logoSvg = `
+            <svg class="stackmap-logo-icon" viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" style="stop-color:rgba(255,255,255,0.9);stop-opacity:1" />
+                        <stop offset="100%" style="stop-color:rgba(255,255,255,0.6);stop-opacity:1" />
+                    </linearGradient>
+                </defs>
+                
+                <!-- Background circle with theme integration -->
+                <circle cx="16" cy="16" r="15" 
+                        fill="rgba(255,255,255,0.1)" 
+                        stroke="rgba(255,255,255,0.2)" 
+                        stroke-width="1"/>
+                
+                <!-- StackMap layers with theme color hints -->
+                <rect x="7" y="10" width="18" height="2.5" 
+                      fill="url(#logoGradient)" 
+                      rx="1.25"/>
+                <rect x="7" y="14.5" width="18" height="2.5" 
+                      fill="url(#logoGradient)" 
+                      rx="1.25"/>
+                <rect x="7" y="19" width="18" height="5" 
+                      fill="url(#logoGradient)" 
+                      rx="2.5"/>
+            </svg>
+        `;
+        
+        logoContainer.innerHTML = `
+            ${logoSvg}
+            <span class="stackmap-logo-text">StackMap</span>
+        `;
+        
+        return logoContainer;
+    }
+
     // STORY 2: Management Card Component - FIXED AESTHETICS
     static createManagementCard(position = 'top') {
         const card = this.createElement('div', `card management-card management-card--${position}`);

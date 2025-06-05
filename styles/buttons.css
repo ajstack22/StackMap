@@ -170,56 +170,74 @@
     user-select: none;
 }
 
-/* Floating Buttons - Maximum specificity to override browser defaults */
+/* === CIRCULAR CORNER BUTTONS === */
+/* Perfect Circles with Transparency */
 button.btn.btn--floating,
 .btn.btn--floating {
     position: fixed !important;
     width: 56px !important;
-    height: 56px !important; /* Matched width for perfect square */
-    border-radius: 12px !important; /* Standardized rounded rectangles */
+    height: 56px !important; /* Perfect circle */
+    border-radius: 50% !important; /* Perfect circle */
     padding: 0 !important;
     margin: 0 !important;
-    box-shadow: var(--card-shadow) !important;
     z-index: 1000 !important;
-    background: white !important;
-    color: var(--primary-color) !important;
+    
+    /* Transparent base */
+    background: rgba(255, 255, 255, 0.1) !important;
+    color: rgba(255, 255, 255, 0.8) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    
+    /* Subtle shadow */
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1) !important;
+    
+    /* Layout */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    border: none !important;
-    outline: none !important;
     box-sizing: border-box !important;
     -webkit-appearance: none !important;
     -moz-appearance: none !important;
     appearance: none !important;
+    
+    /* Performance */
     transform: translateZ(0);
     -webkit-backface-visibility: hidden;
     backface-visibility: hidden;
-    transition: all var(--transition-fast) !important;
+    
+    /* Smooth transitions */
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1) !important;
     cursor: pointer !important;
     text-decoration: none !important;
     user-select: none !important;
     -webkit-user-select: none !important;
     -moz-user-select: none !important;
     -ms-user-select: none !important;
+    outline: none !important;
 }
 
 button.btn.btn--floating:hover,
 .btn.btn--floating:hover {
-    background: rgba(255, 255, 255, 0.95) !important;
-    color: var(--primary-dark) !important;
-    transform: scale(1.1) translateZ(0) !important;
-    box-shadow: var(--card-shadow-hover) !important;
+    background: rgba(255, 255, 255, 0.25) !important;
+    color: white !important;
+    border-color: rgba(255, 255, 255, 0.3) !important;
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 8px 30px rgba(255, 255, 255, 0.2) !important;
 }
 
 button.btn.btn--floating:active,
+.btn.btn--floating:active {
+    transform: translateY(0) scale(0.98) !important;
+    transition: all 0.1s ease !important;
+}
+
 button.btn.btn--floating:focus,
-.btn.btn--floating:active,
 .btn.btn--floating:focus {
-    background: white !important;
-    color: var(--primary-color) !important;
+    background: rgba(255, 255, 255, 0.2) !important;
+    color: white !important;
     outline: none !important;
-    border: none !important;
+    border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 button.btn.btn--floating:focus-visible,
@@ -264,12 +282,12 @@ button.btn.btn--floating .material-icons,
     animation: spin 1s linear infinite;
 }
 
-/* Responsive styles for floating buttons */
+/* Mobile adjustments for circles */
 @media (max-width: 768px) {
     button.btn.btn--floating,
     .btn.btn--floating {
         width: 48px !important;
-        height: 40px !important; /* Maintain rectangle proportions */
+        height: 48px !important; /* Perfect circle */
         top: 20px !important;
     }
     
@@ -314,7 +332,7 @@ button.btn.btn--floating .material-icons,
     button.btn.btn--floating,
     .btn.btn--floating {
         width: 44px !important;
-        height: 36px !important; /* Maintain rectangle proportions */
+        height: 44px !important; /* Perfect circle */
     }
     
     button.btn.btn--floating .material-icons,

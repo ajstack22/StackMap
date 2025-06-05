@@ -58,6 +58,7 @@ class StackMapApp {
         this.setupEventListeners();
         this.populateUserDropdowns();
         this.renderDaySelectors(); // Story 4: Initialize day selectors
+        this.renderLogos(); // Render StackMap logos
         this.render();
         
         // Check for first-time visit and show welcome splash
@@ -203,6 +204,9 @@ class StackMapApp {
     syncFixedHeader() {
         // Story 4: Sync day selectors and user dropdown
         this.renderDaySelectors();
+        
+        // Sync logos
+        this.renderLogos();
         
         // Sync user dropdown selection
         const userSelector = document.getElementById('userSelector');
@@ -382,6 +386,22 @@ class StackMapApp {
                 );
                 fixedContainer.appendChild(fixedSelector);
             }
+        }
+    }
+    
+    // Render StackMap logos in headers
+    renderLogos() {
+        const staticContainer = document.getElementById('staticLogoContainer');
+        const fixedContainer = document.getElementById('fixedLogoContainer');
+        
+        if (staticContainer && !staticContainer.querySelector('.stackmap-logo')) {
+            const staticLogo = ComponentBuilder.createStackMapLogo();
+            staticContainer.appendChild(staticLogo);
+        }
+        
+        if (fixedContainer && !fixedContainer.querySelector('.stackmap-logo')) {
+            const fixedLogo = ComponentBuilder.createStackMapLogo();
+            fixedContainer.appendChild(fixedLogo);
         }
     }
     
