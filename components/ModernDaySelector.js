@@ -303,6 +303,13 @@ class ModernDaySelector {
             }
         });
         
+        // Also handle clicks on the modal backdrop area
+        this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) {
+                this.close();
+            }
+        });
+        
         // Escape key handling for modal
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape' && this.isOpen) {
