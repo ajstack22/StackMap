@@ -48,8 +48,10 @@ class AppState {
 
     // === ACTIVITY MANAGEMENT ===
     addActivity(activity, position = 'bottom') {
-        // Story 4: Get the current context activities
-        const targetActivities = this.getCurrentActivities();
+        // Story 4: Get the current user and determine which activities to modify
+        const user = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (targetActivities.length >= CONFIG.MAX_ACTIVITIES) {
             throw new Error(`Maximum of ${CONFIG.MAX_ACTIVITIES} activities allowed.`);
@@ -72,12 +74,19 @@ class AppState {
             targetActivities.push(newActivity);
         }
         
+        // CRITICAL FIX: Sync the legacy activities array if we're on today view
+        if (isToday) {
+            this.activities = [...user.activities];
+        }
+        
         this._triggerSave();
     }
 
     updateActivity(index, updates) {
-        // Story 4: Get the current context activities
-        const targetActivities = this.getCurrentActivities();
+        // Story 4: Get the current user and determine which activities to modify
+        const user = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (index >= 0 && index < targetActivities.length) {
             // Story 1: Validate card type if being updated
@@ -86,48 +95,86 @@ class AppState {
             }
             
             Object.assign(targetActivities[index], updates);
+            
+            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            if (isToday) {
+                this.activities = [...user.activities];
+            }
+            
             this._triggerSave();
         }
     }
 
     removeActivity(index) {
-        // Story 4: Get the current context activities
-        const targetActivities = this.getCurrentActivities();
+        // Story 4: Get the current user and determine which activities to modify
+        const user = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (index >= 0 && index < targetActivities.length) {
             targetActivities.splice(index, 1);
+            
+            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            if (isToday) {
+                this.activities = [...user.activities];
+            }
+            
             this._triggerSave();
         }
     }
 
     moveActivity(fromIndex, toIndex) {
-        // Story 4: Get the current context activities
-        const targetActivities = this.getCurrentActivities();
+        // Story 4: Get the current user and determine which activities to modify
+        const user = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (fromIndex >= 0 && fromIndex < targetActivities.length &&
             toIndex >= 0 && toIndex < targetActivities.length) {
             const [removed] = targetActivities.splice(fromIndex, 1);
             targetActivities.splice(toIndex, 0, removed);
+            
+            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            if (isToday) {
+                this.activities = [...user.activities];
+            }
+            
             this._triggerSave();
         }
     }
 
     toggleActivityVisibility(index) {
-        // Story 4: Get the current context activities
-        const targetActivities = this.getCurrentActivities();
+        // Story 4: Get the current user and determine which activities to modify
+        const user = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (index >= 0 && index < targetActivities.length) {
             targetActivities[index].visible = !targetActivities[index].visible;
+            
+            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            if (isToday) {
+                this.activities = [...user.activities];
+            }
+            
             this._triggerSave();
         }
     }
 
     toggleActivityCompletion(index) {
-        // Story 4: Get the current context activities
-        const targetActivities = this.getCurrentActivities();
+        // Story 4: Get the current user and determine which activities to modify
+        const user = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (index >= 0 && index < targetActivities.length) {
             targetActivities[index].completed = !targetActivities[index].completed;
+            
+            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            if (isToday) {
+                this.activities = [...user.activities];
+            }
+            
             this._triggerSave();
         }
     }
@@ -234,8 +281,11 @@ class AppState {
     }
 
     cycleCardType(index) {
-        if (index >= 0 && index < this.activities.length) {
-            const currentType = this.activities[index].cardType || 'recurring';
+        // Get the current activities based on context
+        const targetActivities = this.getCurrentActivities();
+        
+        if (index >= 0 && index < targetActivities.length) {
+            const currentType = targetActivities[index].cardType || 'recurring';
             const typeOrder = ['recurring', 'frequent', 'single-use'];
             const currentIndex = typeOrder.indexOf(currentType);
             const nextIndex = (currentIndex + 1) % typeOrder.length;
@@ -251,7 +301,9 @@ class AppState {
             'single-use': 0
         };
         
-        this.activities.forEach(activity => {
+        // Use current context activities
+        const targetActivities = this.getCurrentActivities();
+        targetActivities.forEach(activity => {
             const type = activity.cardType || 'recurring';
             stats[type]++;
         });
