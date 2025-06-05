@@ -102,8 +102,10 @@ class ModernUserSelector {
             this.userContext.style.display = 'none';
             
             // Update avatar if user has custom emoji
-            if (currentUser.avatar) {
-                this.avatar.textContent = currentUser.avatar;
+            if (currentUser.icon) {
+                this.avatar.textContent = currentUser.icon;
+            } else {
+                this.avatar.textContent = '👤'; // Default fallback
             }
             
             // Update aria label
@@ -147,7 +149,7 @@ class ModernUserSelector {
         
         // Icon
         const icon = ComponentBuilder.createElement('div', 'dropdown-option-icon');
-        icon.textContent = user.avatar || '👤';
+        icon.textContent = user.icon || '👤';
         
         // Text
         const text = ComponentBuilder.createElement('div', 'dropdown-option-text');
