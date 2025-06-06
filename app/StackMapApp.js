@@ -723,7 +723,16 @@ class StackMapApp {
             existingDropdown.remove();
         }
         
-        // Create the native dropdown container
+        // Mobile-specific detection
+        const isMobile = window.innerWidth <= 768 || /Mobi|Android/i.test(navigator.userAgent);
+        console.log('Screen width:', window.innerWidth, 'Detected as mobile:', isMobile);
+        
+        if (isMobile) {
+            // Use full-screen modal picker for mobile
+            return this.showMobileModalPicker(title, options, onSelect);
+        }
+        
+        // Create the native dropdown container for desktop
         const dropdown = document.createElement('div');
         dropdown.className = 'native-dropdown';
         dropdown.setAttribute('role', 'listbox');
@@ -911,6 +920,88 @@ class StackMapApp {
         document.addEventListener('keydown', handleEscape);
         
         return dropdown;
+    }
+    
+    showMobileModalPicker(title, options, onSelect) {
+        // Create full-screen modal overlay
+        const modal = document.createElement('div');
+        modal.className = 'mobile-picker-modal';
+        modal.setAttribute('role', 'dialog');
+        modal.setAttribute('aria-modal', 'true');
+        modal.setAttribute('aria-label', `Select ${title}`);
+        
+        // Create modal content
+        modal.innerHTML = `
+            <div class="mobile-picker-backdrop"></div>
+            <div class="mobile-picker-content">
+                <div class="mobile-picker-header">
+                    <h3 class="mobile-picker-title">Select ${title}</h3>
+                    <button class="mobile-picker-close" aria-label="Close">×</button>
+                </div>
+                <div class="mobile-picker-options">
+                    ${options.map(option => `
+                        <button class="mobile-picker-option ${option.selected ? 'selected' : ''}" 
+                                data-value="${option.id}"
+                                role="option"
+                                aria-selected="${option.selected}">
+                            <span class="mobile-picker-option-icon">${option.icon}</span>
+                            <span class="mobile-picker-option-text">${option.text}</span>
+                            ${option.selected ? '<span class="mobile-picker-check">✓</span>' : ''}
+                        </button>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+        
+        // Add to document
+        document.body.appendChild(modal);
+        
+        // Animate in
+        requestAnimationFrame(() => {
+            modal.classList.add('mobile-picker-modal--visible');
+        });
+        
+        // Event handlers
+        const handleClose = () => {
+            modal.classList.remove('mobile-picker-modal--visible');
+            setTimeout(() => {
+                if (modal.parentNode) {
+                    modal.remove();
+                }
+            }, 300);
+        };
+        
+        // Close button
+        const closeBtn = modal.querySelector('.mobile-picker-close');
+        closeBtn?.addEventListener('click', handleClose);
+        
+        // Backdrop click
+        const backdrop = modal.querySelector('.mobile-picker-backdrop');
+        backdrop?.addEventListener('click', handleClose);
+        
+        // Option clicks
+        modal.querySelectorAll('.mobile-picker-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const value = option.getAttribute('data-value');
+                if (value && onSelect) {
+                    onSelect(value);
+                }
+                handleClose();
+            });
+        });
+        
+        // Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                handleClose();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        return modal;
     }
     
     setupDrawerSelects() {
