@@ -770,9 +770,8 @@ class StackMapApp {
         
         let top, left;
         
-        // Mobile-specific positioning - check both width and user agent for mobile detection
-        const isMobile = window.innerWidth <= 768 || /Mobi|Android/i.test(navigator.userAgent);
-        console.log('Screen width:', window.innerWidth, 'Detected as mobile:', isMobile);
+        // Use existing isMobile detection from above
+        // (isMobile already declared at top of function)
         
         // Universal positioning logic for both mobile and desktop
         if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
