@@ -799,6 +799,14 @@ body.drawer-active {
     font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important;
 }
 
+/* CRITICAL FIX: Preserve Material Icons font family */
+.drawer-extension .material-icons,
+.native-dropdown .material-icons,
+.dropdown-modal .material-icons,
+.dropdown-option .material-icons {
+    font-family: 'Material Icons' !important;
+}
+
 /* Ensure dropdown options specifically use Comic Relief */
 .drawer-select option,
 select.drawer-select option,
