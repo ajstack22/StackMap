@@ -28,7 +28,7 @@
     width: 90%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* ULTRA-MINIMAL: Professional modal shadow */
     position: relative;
     animation: modalSlideIn 0.4s ease-out;
     box-sizing: border-box;

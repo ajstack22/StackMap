@@ -547,6 +547,18 @@ class AppState {
             fixedHeader.style.background = `${color} !important`;
         }
         
+        // CRITICAL FIX: Update header wrapper with gentle gradient using new color
+        const headerWrapper = document.querySelector('.header-wrapper');
+        if (headerWrapper) {
+            // Extract RGB for gentle gradient (inspired by completed cards)
+            const rgbaStart = `rgba(${r}, ${g}, ${b}, 0.85)`;
+            const rgbaMiddle = `rgba(${r}, ${g}, ${b}, 0.92)`;
+            const rgbaEnd = `rgba(${r}, ${g}, ${b}, 0.95)`;
+            
+            headerWrapper.style.background = color;
+            headerWrapper.style.backgroundImage = `linear-gradient(to bottom, ${rgbaStart} 0%, ${rgbaMiddle} 50%, ${rgbaEnd} 100%)`;
+        }
+        
         // Update body background
         document.body.style.background = color;
         

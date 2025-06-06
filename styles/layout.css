@@ -192,7 +192,7 @@ body.viewing-tomorrow .card {
     left: 0;
     right: 0;
     height: 150px; /* 50% larger (100px * 1.5) */
-    z-index: 1001;
+    z-index: 1001 !important; /* SAFARI FIX: Force z-index */
     border-radius: 0 0 32px 32px; /* Smoother arc */
     /* ENHANCED: Smooth shadow transitions with Material Design easing */
     transition: 
@@ -204,6 +204,10 @@ body.viewing-tomorrow .card {
     /* Note: Gradient will be dynamically set by applyTheme() in state.js for any color */
     /* No shadow - let drawer extension handle shadows */
     box-shadow: none;
+    /* SAFARI FIX: Force new stacking context */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    contain: layout style paint;
 }
 
 /* Header wrapper when drawer is open */
@@ -224,7 +228,7 @@ body.viewing-tomorrow .card {
     background: var(--background-gradient-start) !important; /* Use theme background */
     text-align: center !important;
     padding: 20px 10px 40px !important; /* Extra bottom padding for click area */
-    z-index: 1 !important;
+    z-index: 1002 !important; /* SAFARI FIX: Higher z-index to appear above drawer extension */
     /* Simple straight shadow */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
     border: none !important;

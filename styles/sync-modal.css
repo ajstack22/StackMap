@@ -24,7 +24,7 @@
     width: 100%;
     max-height: 85vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* ULTRA-MINIMAL: Professional sync shadow */
     animation: modalSlideIn 0.4s ease-out;
 }
 

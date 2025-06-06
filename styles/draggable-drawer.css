@@ -111,7 +111,7 @@
     width: 300px !important; /* Centered touch area matching content width */
     height: 32px !important; /* Larger touch target height */
     cursor: pointer;
-    z-index: 1005; /* Above drawer extension */
+    z-index: 1005 !important; /* SAFARI FIX: Force z-index above everything */
     background: transparent !important; /* Completely invisible touch area */
     border: none !important; /* No borders */
     outline: none !important; /* No outline */
@@ -120,6 +120,10 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    /* SAFARI FIX: Force new stacking context */
+    -webkit-transform: translateX(-50%) translateZ(0) !important;
+    transform: translateX(-50%) translateZ(0) !important;
+    will-change: transform;
 }
 
 /* Visual drag bar inside the touch area */

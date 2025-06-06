@@ -47,6 +47,9 @@ class StackMapApp {
             this.appState.loadUserData();
         }
         
+        // Initialize universal modal outside-click behavior
+        this.initializeModalBehavior();
+        
         // If no saved data, create default activities
         if (!hasData || this.appState.activities.length === 0) {
             this.createDefaultActivities();
@@ -141,6 +144,20 @@ class StackMapApp {
         const subtitle = document.getElementById('subtitle');
         
         if (mainTitle) {
+            // CRITICAL UX FIX: Add click handler for better discoverability
+            mainTitle.addEventListener('click', () => {
+                if (this.grownupMode) {
+                    mainTitle.contentEditable = true;
+                    mainTitle.focus();
+                    // Select all text for easier editing
+                    const range = document.createRange();
+                    range.selectNodeContents(mainTitle);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            });
+            
             mainTitle.addEventListener('focus', () => {
                 if (this.grownupMode) {
                     mainTitle.contentEditable = true;
@@ -156,11 +173,30 @@ class StackMapApp {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     mainTitle.blur();
+                } else if (e.key === 'Escape') {
+                    // Cancel editing and restore original text
+                    mainTitle.blur();
+                    const currentUser = this.appState.getCurrentUser();
+                    mainTitle.textContent = currentUser.customTitle || 'StackMap';
                 }
             });
         }
         
         if (subtitle) {
+            // CRITICAL UX FIX: Add click handler for better discoverability
+            subtitle.addEventListener('click', () => {
+                if (this.grownupMode) {
+                    subtitle.contentEditable = true;
+                    subtitle.focus();
+                    // Select all text for easier editing
+                    const range = document.createRange();
+                    range.selectNodeContents(subtitle);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            });
+            
             subtitle.addEventListener('focus', () => {
                 if (this.grownupMode) {
                     subtitle.contentEditable = true;
@@ -176,6 +212,11 @@ class StackMapApp {
                 if (e.key === 'Enter') {
                     e.preventDefault();
                     subtitle.blur();
+                } else if (e.key === 'Escape') {
+                    // Cancel editing and restore original text
+                    subtitle.blur();
+                    const currentUser = this.appState.getCurrentUser();
+                    subtitle.textContent = currentUser.customSubtitle || 'Routine Ready';
                 }
             });
         }
@@ -210,6 +251,7 @@ class StackMapApp {
         const drawerDone = document.getElementById('drawerDone');
         const appHeader = document.getElementById('appHeader');
         const backdrop = this.createBackdrop();
+        const headerShadow = this.createHeaderShadow();
         
         if (!drawerHandle || !drawerExtension) return;
         
@@ -227,8 +269,15 @@ class StackMapApp {
             drawerExtension.classList.add('open');
             appHeader.classList.add('drawer-open');
             document.getElementById('headerWrapper')?.classList.add('drawer-open');
+            
+            // ENHANCED: Brief backdrop during transition, then hide
             backdrop.classList.add('visible');
             document.body.classList.add('drawer-active');
+            
+            // Hide backdrop after transition completes (drawer fully open)
+            setTimeout(() => {
+                backdrop.classList.remove('visible');
+            }, 400); // Match CSS transition timing
             
             // Save preference unless specified otherwise (e.g., during initialization)
             if (savePreference) {
@@ -260,7 +309,10 @@ class StackMapApp {
             drawerExtension.classList.remove('open');
             appHeader.classList.remove('drawer-open');
             document.getElementById('headerWrapper')?.classList.remove('drawer-open');
+            
+            // NO BACKDROP: Remove any backdrop during close
             backdrop.classList.remove('visible');
+            
             document.body.classList.remove('drawer-active');
             
             // Save preference unless specified otherwise
@@ -386,6 +438,14 @@ class StackMapApp {
         return backdrop;
     }
     
+    createHeaderShadow() {
+        const shadow = document.createElement('div');
+        shadow.className = 'header-shadow';
+        shadow.setAttribute('aria-hidden', 'true');
+        document.body.appendChild(shadow);
+        return shadow;
+    }
+    
     populateDrawerSelects() {
         console.log('populateDrawerSelects called');
         const userSection = document.getElementById('userSection');
@@ -398,13 +458,25 @@ class StackMapApp {
             const allUsers = this.appState.getAllUsers();
             userSection.style.display = 'flex'; // Always show section
             
+            // Hide Day label when there's only one user to reduce clutter
+            const dayLabel = document.querySelector('label[for="drawerDaySelect"]');
+            const dayDropdown = document.getElementById('drawerDaySelect');
+            if (dayLabel && dayDropdown) {
+                if (allUsers.length > 1) {
+                    dayLabel.style.display = 'block';
+                    dayDropdown.style.marginTop = '0';
+                } else {
+                    dayLabel.style.display = 'none';
+                    dayDropdown.style.marginTop = '30px'; // Add spacing to maintain position
+                }
+            }
+            
             console.log('populateDrawerSelects - Users:', allUsers.length, 'GrownupMode:', this.grownupMode);
             
             if (allUsers.length > 1) {
-                // Multiple users - show custom dropdown
+                // Multiple users - show custom dropdown (no label for cleaner look)
                 const currentUser = this.appState.getCurrentUser();
                 userSection.innerHTML = `
-                    <label class="dropdown-label">User</label>
                     <button class="drawer-select" id="drawerUserSelect" data-value="${currentUser.id}">
                         <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
                     </button>
@@ -511,7 +583,6 @@ class StackMapApp {
                 console.log('Rendering user dropdown for single user in edit mode');
                 const currentUser = this.appState.getCurrentUser();
                 userSection.innerHTML = `
-                    <label class="dropdown-label">User</label>
                     <button class="drawer-select" id="drawerUserSelect" data-value="${currentUser.id}">
                         <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
                     </button>
@@ -576,14 +647,9 @@ class StackMapApp {
                     }, userSelect);
                 });
             } else {
-                // Single user, not in edit mode - still show user for consistency
-                const currentUser = this.appState.getCurrentUser();
-                userSection.innerHTML = `
-                    <label class="dropdown-label">User</label>
-                    <div class="drawer-select disabled">
-                        <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
-                    </div>
-                `;
+                // CRITICAL FIX: Single user, not in edit mode - HIDE completely to save space
+                userSection.style.display = 'none';
+                userSection.innerHTML = '';
             }
         }
         
@@ -2682,6 +2748,142 @@ class StackMapApp {
         drawerExtension?.classList.remove('edit-mode-locked');
         drawerHandle?.classList.remove('edit-mode-locked');
         console.log('Drawer unlocked from edit mode');
+    }
+    
+    // CRITICAL UX FIX: Universal modal outside-click behavior
+    initializeModalBehavior() {
+        // Set up outside-click handlers for all modals
+        this.setupModalOutsideClickHandlers();
+        
+        // Set up escape key handler for all modals
+        this.setupModalEscapeKeyHandler();
+        
+        console.log('✅ Universal modal behavior initialized');
+    }
+    
+    setupModalOutsideClickHandlers() {
+        // Define all modal selectors and their close methods
+        const modalConfigs = [
+            {
+                selector: '#validationModal',
+                closeMethod: () => this.validationManager?.cancelValidation?.(),
+                contentSelector: '.validation-content'
+            },
+            {
+                selector: '#preferencesPanel',
+                closeMethod: () => this.preferencesManager?.closePreferences?.(),
+                contentSelector: '.preferences-content'
+            },
+            {
+                selector: '#welcomeSplash',
+                closeMethod: () => this.hideWelcome?.(),
+                contentSelector: '.welcome-content'
+            },
+            {
+                selector: '#importPreviewModal',
+                closeMethod: () => {
+                    const modal = document.getElementById('importPreviewModal');
+                    modal?.classList?.add('hidden');
+                },
+                contentSelector: '.modal-content'
+            },
+            {
+                selector: '.mobile-picker-modal',
+                closeMethod: () => {
+                    const modal = document.querySelector('.mobile-picker-modal');
+                    if (modal) {
+                        modal.classList.remove('mobile-picker-modal--visible');
+                        setTimeout(() => modal.remove(), 300);
+                    }
+                },
+                contentSelector: '.mobile-picker-content'
+            },
+            {
+                selector: '.dropdown-modal',
+                closeMethod: () => {
+                    const modal = document.querySelector('.dropdown-modal');
+                    modal?.classList?.add('hidden');
+                },
+                contentSelector: '.dropdown-modal-content'
+            }
+        ];
+        
+        // Add click handlers for each modal
+        modalConfigs.forEach(config => {
+            // Use event delegation to handle dynamically created modals
+            document.addEventListener('click', (e) => {
+                const modal = e.target.closest(config.selector);
+                if (!modal) return;
+                
+                // Check if modal is currently visible
+                const isVisible = !modal.classList.contains('hidden') && 
+                                modal.style.display !== 'none' &&
+                                getComputedStyle(modal).display !== 'none';
+                
+                if (!isVisible) return;
+                
+                // Check if click was outside the modal content
+                const content = modal.querySelector(config.contentSelector);
+                if (content && !content.contains(e.target)) {
+                    // Click was on backdrop/overlay area - close modal
+                    if (config.closeMethod) {
+                        config.closeMethod();
+                    }
+                }
+            });
+        });
+        
+        console.log('✅ Modal outside-click handlers configured for', modalConfigs.length, 'modal types');
+    }
+    
+    setupModalEscapeKeyHandler() {
+        document.addEventListener('keydown', (e) => {
+            if (e.key !== 'Escape') return;
+            
+            // Find currently visible modal and close it
+            const modalSelectors = [
+                '#validationModal',
+                '#preferencesPanel', 
+                '#welcomeSplash',
+                '#importPreviewModal',
+                '.mobile-picker-modal',
+                '.dropdown-modal'
+            ];
+            
+            for (const selector of modalSelectors) {
+                const modal = document.querySelector(selector);
+                if (!modal) continue;
+                
+                const isVisible = !modal.classList.contains('hidden') && 
+                                modal.style.display !== 'none' &&
+                                getComputedStyle(modal).display !== 'none';
+                
+                if (isVisible) {
+                    // Close the first visible modal found
+                    if (selector === '#validationModal') {
+                        this.validationManager?.cancelValidation?.();
+                    } else if (selector === '#preferencesPanel') {
+                        this.preferencesManager?.closePreferences?.();
+                    } else if (selector === '#welcomeSplash') {
+                        this.hideWelcome?.();
+                    } else if (selector === '#importPreviewModal') {
+                        modal.classList.add('hidden');
+                    } else if (selector === '.mobile-picker-modal') {
+                        modal.classList.remove('mobile-picker-modal--visible');
+                        setTimeout(() => modal.remove(), 300);
+                    } else if (selector === '.dropdown-modal') {
+                        modal.classList.add('hidden');
+                    }
+                    
+                    // Prevent default and stop propagation
+                    e.preventDefault();
+                    e.stopPropagation();
+                    break; // Only close one modal at a time
+                }
+            }
+        });
+        
+        console.log('✅ Modal escape key handlers configured');
     }
 }
 

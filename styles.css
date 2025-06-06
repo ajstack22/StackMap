@@ -248,7 +248,7 @@ body.grownup-mode .subtitle:hover {
     transform: rotate(3deg) scale(0.95);
     cursor: grabbing;
     z-index: 1000;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08); /* ULTRA-MINIMAL: Professional desktop shadow */
 }
 
 .card--droppable {
@@ -260,7 +260,7 @@ body.grownup-mode .subtitle:hover {
     border-color: var(--primary-color) !important;
     background: rgba(102, 126, 234, 0.1) !important;
     transform: scale(1.02);
-    box-shadow: 0 0 0 2px var(--primary-color), 0 8px 25px rgba(102, 126, 234, 0.3);
+    box-shadow: 0 0 0 2px var(--primary-color), 0 2px 8px rgba(102, 126, 234, 0.15); /* ULTRA-MINIMAL: Professional border focus */
     position: relative;
 }
 
@@ -394,8 +394,8 @@ body.grownup-mode .card:active {
 
 .card--completed {
     box-shadow: 
-        0 0 15px var(--primary-dark),
-        0 12px 35px rgba(0,0,0,0.2) !important;
+        0 1px 4px rgba(102, 126, 234, 0.1),
+        0 2px 6px rgba(0,0,0,0.06) !important; /* ULTRA-MINIMAL: Professional completed card shadow */
 }
 
 /* Override completed styling in edit mode */
@@ -880,7 +880,7 @@ body.fixed-header-visible .preferences-panel {
     max-height: 90vh;
     overflow-y: auto;
     text-align: center;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08); /* ULTRA-MINIMAL: Professional welcome shadow */
     position: relative;
     animation: welcomeSlideIn 0.6s ease-out 0.2s both;
 }
@@ -1107,8 +1107,8 @@ input[type="file"] {
     background: rgba(255, 255, 255, 0.95) !important;
     position: relative;
     box-shadow: 
-        0 8px 25px rgba(0,0,0,0.15),
-        0 0 0 1px rgba(102, 126, 234, 0.1) inset !important;
+        0 4px 12px rgba(0,0,0,0.08),
+        0 0 0 1px rgba(102, 126, 234, 0.1) inset !important; /* CRITICAL FIX: Reduced edit mode shadow */
 }
 
 .edit-info-card .card__title {

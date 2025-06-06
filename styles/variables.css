@@ -18,9 +18,9 @@
     --card-title-size: 1.8rem;
     --card-desc-size: 1.2rem;
     
-    /* Shadows */
-    --card-shadow: 0 8px 25px rgba(0,0,0,0.15);
-    --card-shadow-hover: 0 12px 35px rgba(0,0,0,0.2);
+    /* Shadows - ULTRA-MINIMAL: Professional desktop shadows */
+    --card-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    --card-shadow-hover: 0 3px 8px rgba(0,0,0,0.08);
     
     /* Transitions */
     --transition-fast: 0.3s ease;
