@@ -7,7 +7,18 @@
 #### StackMapApp.js
 **Location**: `/app/StackMapApp.js`
 **Purpose**: Main application controller
+
 **Key Methods**:
+
+##### Native Dropdown System (NEW - CRITICAL FEATURE)
+- **`showNativeDropdown(triggerElement, options, onSelect)`** (lines 717-875)
+  - Platform-aware dropdown positioning system
+  - Mobile: 2px right, width-6px | Desktop: 2px right, 95%+8px width  
+  - Z-index 1003 for proper layering above drawer
+  - Seamless visual connections between trigger and dropdown
+  - **Documentation**: See `/context/native-dropdown-system.md` for complete specs
+
+##### Core Methods
 - `initializeDrawer()` - Sets up drawer click handlers and state
 - `createBackdrop()` - Creates backdrop element for drawer
 - `openDrawer()` - Opens drawer, updates classes and ARIA

@@ -126,7 +126,10 @@ class StackMapApp {
         const mainTitle = document.getElementById('mainTitle');
         const subtitle = document.getElementById('subtitle');
         
-        if (mainTitle) mainTitle.textContent = userTitle;
+        if (mainTitle) {
+            mainTitle.textContent = userTitle;
+            this.updateLogoVisibility(userTitle);
+        }
         if (subtitle) subtitle.textContent = userSubtitle;
         
         // Setup edit listeners
@@ -186,6 +189,9 @@ class StackMapApp {
             const newTitle = mainTitle.textContent.trim() || 'StackMap';
             const newSubtitle = subtitle.textContent.trim() || 'Routine Ready';
             
+            // Update logo visibility when title changes
+            this.updateLogoVisibility(newTitle);
+            
             // Save to current user
             const currentUser = this.appState.getCurrentUser();
             currentUser.customTitle = newTitle;
@@ -193,7 +199,7 @@ class StackMapApp {
             
             
             // Save to storage
-            this.appState.saveUserData();
+            this.appState.saveCurrentUserData();
             this.appState.onStateChange();
         }
     }
@@ -326,8 +332,12 @@ class StackMapApp {
     }
     
     populateDrawerSelects() {
+        console.log('populateDrawerSelects called');
         const userSection = document.getElementById('userSection');
         const daySelect = document.getElementById('drawerDaySelect');
+        
+        console.log('User section element:', userSection);
+        console.log('Day select element:', daySelect);
         
         if (userSection) {
             const allUsers = this.appState.getAllUsers();
@@ -346,28 +356,88 @@ class StackMapApp {
                 `;
                 
                 const userSelect = document.getElementById('drawerUserSelect');
-                userSelect?.addEventListener('click', () => {
-                    let dropdownOptions = allUsers.map(user => ({
-                        id: user.id,
-                        text: user.name,
-                        icon: user.icon || '👤',
-                        selected: user.id === currentUser.id
-                    }));
+                console.log('User select element after creation:', userSelect);
+                
+                if (!userSelect) {
+                    console.error('Failed to find user select element after creation');
+                    return;
+                }
+                
+                userSelect.addEventListener('click', (e) => {
+                    console.log('User select clicked!', e);
+                    e.preventDefault();
+                    e.stopPropagation();
                     
-                    // Add "Add User" option at the end if in edit mode
+                    let dropdownOptions = [];
+                    
+                    // Add all users as selectable options
+                    allUsers.forEach(user => {
+                        dropdownOptions.push({
+                            id: user.id,
+                            text: user.name,
+                            icon: user.icon || '👤',
+                            selected: user.id === currentUser.id
+                        });
+                        
+                        // Add edit/delete options for each user if in grownup mode
+                        if (this.grownupMode) {
+                            dropdownOptions.push({
+                                id: `edit-${user.id}`,
+                                text: `✏️ Edit ${user.name}`,
+                                icon: '✏️',
+                                selected: false
+                            });
+                            if (allUsers.length > 1) { // Don't allow deleting the last user
+                                dropdownOptions.push({
+                                    id: `delete-${user.id}`,
+                                    text: `🗑️ Delete ${user.name}`,
+                                    icon: '🗑️',
+                                    selected: false
+                                });
+                            }
+                        }
+                    });
+                    
+                    // Add create new user option if in edit mode
                     if (this.grownupMode) {
                         dropdownOptions.push({
                             id: 'add-new-user',
-                            text: 'Add User',
-                            icon: '+',
+                            text: 'Add New User',
+                            icon: '➕',
                             selected: false
                         });
                     }
                     
-                    this.showCustomDropdown('User', dropdownOptions, (selectedId) => {
+                    this.showNativeDropdown('User', dropdownOptions, (selectedId) => {
+                        console.log('User dropdown selection:', selectedId);
+                        
                         if (selectedId === 'add-new-user') {
                             this.showAddUserDialog();
+                        } else if (selectedId.startsWith('edit-')) {
+                            const userId = selectedId.replace('edit-', '');
+                            const userToEdit = allUsers.find(u => u.id === userId);
+                            if (userToEdit) {
+                                this.showEditUserDialog(userToEdit);
+                            }
+                        } else if (selectedId.startsWith('delete-')) {
+                            const userId = selectedId.replace('delete-', '');
+                            const userToDelete = allUsers.find(u => u.id === userId);
+                            if (userToDelete && confirm(`Delete user "${userToDelete.name}"? Their activities will be permanently removed.`)) {
+                                // If deleting current user, switch to another user first
+                                if (userId === currentUser.id && allUsers.length > 1) {
+                                    const otherUser = allUsers.find(u => u.id !== userId);
+                                    if (otherUser) {
+                                        this.handleUserSwitch(otherUser.id);
+                                        setTimeout(() => {
+                                            this.deleteUser(userId);
+                                        }, 100);
+                                    }
+                                } else {
+                                    this.deleteUser(userId);
+                                }
+                            }
                         } else {
+                            // Regular user selection
                             this.handleUserSwitch(selectedId);
                             const selectedUser = allUsers.find(u => u.id === selectedId);
                             if (selectedUser && userSelect) {
@@ -375,24 +445,73 @@ class StackMapApp {
                                 userSelect.setAttribute('data-value', selectedId);
                             }
                         }
-                    });
+                    }, userSelect);
                 });
             } else if (this.grownupMode) {
-                // Single user in edit mode - show add user button
-                console.log('Rendering Add User button for single user in edit mode');
+                // Single user in edit mode - show current user with edit option AND add user option
+                console.log('Rendering user dropdown for single user in edit mode');
+                const currentUser = this.appState.getCurrentUser();
                 userSection.innerHTML = `
                     <label class="dropdown-label">User</label>
-                    <button class="drawer-add-user" id="drawerAddUser">
-                        <span class="add-icon">+</span>
-                        Add User
+                    <button class="drawer-select" id="drawerUserSelect" data-value="${currentUser.id}">
+                        <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
                     </button>
                 `;
                 
-                const addUserBtn = document.getElementById('drawerAddUser');
-                console.log('Add User button element:', addUserBtn);
-                addUserBtn?.addEventListener('click', () => {
-                    console.log('Add User button clicked');
-                    this.showAddUserDialog();
+                const userSelect = document.getElementById('drawerUserSelect');
+                console.log('User select element after creation:', userSelect);
+                
+                if (!userSelect) {
+                    console.error('Failed to find user select element after creation');
+                    return;
+                }
+                
+                userSelect.addEventListener('click', (e) => {
+                    console.log('Single user select clicked!', e);
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    let dropdownOptions = [];
+                    
+                    // Add current user as selectable option
+                    dropdownOptions.push({
+                        id: currentUser.id,
+                        text: currentUser.name,
+                        icon: currentUser.icon || '👤',
+                        selected: true
+                    });
+                    
+                    // Add edit option for current user
+                    dropdownOptions.push({
+                        id: `edit-${currentUser.id}`,
+                        text: `✏️ Edit ${currentUser.name}`,
+                        icon: '✏️',
+                        selected: false
+                    });
+                    
+                    // Add create new user option
+                    dropdownOptions.push({
+                        id: 'add-new-user',
+                        text: 'Add New User',
+                        icon: '➕',
+                        selected: false
+                    });
+                    
+                    this.showNativeDropdown('User', dropdownOptions, (selectedId) => {
+                        console.log('Single user dropdown selection:', selectedId);
+                        
+                        if (selectedId === 'add-new-user') {
+                            this.showAddUserDialog();
+                        } else if (selectedId.startsWith('edit-')) {
+                            const userId = selectedId.replace('edit-', '');
+                            if (userId === currentUser.id) {
+                                this.showEditUserDialog(currentUser);
+                            }
+                        } else if (selectedId === currentUser.id) {
+                            // User selected themselves, no action needed
+                            console.log('User selected themselves, no action needed');
+                        }
+                    }, userSelect);
                 });
             } else {
                 // Single user, not in edit mode - still show user for consistency
@@ -434,33 +553,70 @@ class StackMapApp {
             `;
             
             const newDaySelect = document.getElementById('drawerDaySelect');
-            newDaySelect?.addEventListener('click', () => {
-                this.showCustomDropdown('Day', dayOptions.map(day => ({
+            console.log('Day select element after creation:', newDaySelect);
+            
+            if (!newDaySelect) {
+                console.error('Failed to find day select element after creation');
+                return;
+            }
+            
+            newDaySelect.addEventListener('click', (e) => {
+                console.log('Day select clicked!', e);
+                e.preventDefault();
+                e.stopPropagation();
+                
+                // Get fresh current day when dropdown opens
+                const freshCurrentDay = this.appState.getCurrentDay();
+                
+                this.showNativeDropdown('Day', dayOptions.map(day => ({
                     id: day.id,
                     text: day.text,
                     icon: day.icon,
-                    selected: day.id === currentDay
+                    selected: day.id === freshCurrentDay
                 })), (selectedId) => {
                     console.log('Day selected:', selectedId);
+                    console.log('Current day before switch:', this.appState.getCurrentDay());
                     this.switchDay(selectedId);
+                    console.log('Current day after switch:', this.appState.getCurrentDay());
                     const selected = dayOptions.find(d => d.id === selectedId);
                     if (selected && newDaySelect) {
                         newDaySelect.innerHTML = `<span>${selected.icon} ${selected.text}</span>`;
                         newDaySelect.setAttribute('data-value', selectedId);
                     }
-                });
+                    // Refresh the view
+                    this.render();
+                }, newDaySelect);
             });
         }
     }
     
-    showCustomDropdown(title, options, onSelect) {
+    showCustomDropdown(title, options, onSelect, triggerElement = null) {
+        console.log('showCustomDropdown called with:', title, options);
+        
+        // Use native-style dropdown if trigger element is provided
+        if (triggerElement) {
+            return this.showNativeDropdown(title, options, onSelect, triggerElement);
+        }
+        
+        // Fallback to modal-style dropdown
         const modal = document.getElementById('dropdownModal');
         const modalTitle = document.getElementById('dropdownModalTitle');
         const modalOptions = document.getElementById('dropdownModalOptions');
         const closeBtn = modal?.querySelector('.dropdown-modal-close');
         const backdrop = modal?.querySelector('.dropdown-modal-backdrop');
         
-        if (!modal || !modalTitle || !modalOptions) return;
+        console.log('Modal elements found:', {
+            modal: !!modal,
+            modalTitle: !!modalTitle,
+            modalOptions: !!modalOptions,
+            closeBtn: !!closeBtn,
+            backdrop: !!backdrop
+        });
+        
+        if (!modal || !modalTitle || !modalOptions) {
+            console.error('Missing modal elements for dropdown');
+            return;
+        }
         
         modalTitle.textContent = `Select ${title}`;
         modalOptions.innerHTML = options.map(option => `
@@ -471,10 +627,61 @@ class StackMapApp {
             </button>
         `).join('');
         
+        console.log('Modal content populated, showing modal');
         modal.classList.remove('hidden');
         
+        // Force modal to be extremely visible using inline styles
+        modal.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(0, 0, 0, 0.7) !important;
+            z-index: 99999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        `;
+        
+        const content = modal.querySelector('.dropdown-modal-content');
+        if (content) {
+            content.style.cssText = `
+                background: white !important;
+                padding: 20px !important;
+                border: 3px solid #667eea !important;
+                border-radius: 12px !important;
+                min-width: 300px !important;
+                min-height: 200px !important;
+                max-width: 90vw !important;
+                max-height: 90vh !important;
+                display: flex !important;
+                flex-direction: column !important;
+                z-index: 100000 !important;
+                position: relative !important;
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3) !important;
+            `;
+        }
+        
+        // Debug modal visibility
+        setTimeout(() => {
+            console.log('Modal classes after show:', modal.className);
+            console.log('Modal display style:', getComputedStyle(modal).display);
+            console.log('Modal z-index:', getComputedStyle(modal).zIndex);
+            console.log('Modal visibility:', getComputedStyle(modal).visibility);
+            console.log('Modal position:', getComputedStyle(modal).position);
+        }, 100);
+        
         const handleClose = () => {
+            console.log('Closing dropdown modal');
             modal.classList.add('hidden');
+            modal.style.cssText = ''; // Clear forced styles
+            modal.style.display = 'none'; // Ensure it's hidden
             closeBtn?.removeEventListener('click', handleClose);
             backdrop?.removeEventListener('click', handleClose);
         };
@@ -483,14 +690,227 @@ class StackMapApp {
         backdrop?.addEventListener('click', handleClose);
         
         modalOptions.querySelectorAll('.dropdown-option').forEach(option => {
-            option.addEventListener('click', () => {
+            option.addEventListener('click', (e) => {
+                console.log('Dropdown option click event fired:', e);
+                e.preventDefault();
+                e.stopPropagation();
                 const value = option.getAttribute('data-value');
+                console.log('Dropdown option clicked:', value, 'Element:', option);
                 if (value) {
-                    onSelect(value);
+                    console.log('Calling onSelect with:', value);
+                    try {
+                        onSelect(value);
+                        console.log('onSelect called successfully, now closing modal');
+                    } catch (error) {
+                        console.error('Error in onSelect callback:', error);
+                    }
                     handleClose();
+                } else {
+                    console.error('No data-value found on option:', option);
                 }
             });
         });
+        
+        console.log('Event listeners attached to dropdown options');
+    }
+    
+    showNativeDropdown(title, options, onSelect, triggerElement) {
+        console.log('showNativeDropdown called with:', title, options, triggerElement);
+        
+        // Remove any existing native dropdown
+        const existingDropdown = document.querySelector('.native-dropdown');
+        if (existingDropdown) {
+            existingDropdown.remove();
+        }
+        
+        // Create the native dropdown container
+        const dropdown = document.createElement('div');
+        dropdown.className = 'native-dropdown';
+        dropdown.setAttribute('role', 'listbox');
+        dropdown.setAttribute('aria-label', `Select ${title}`);
+        
+        // Create the dropdown content (no header needed - user can see trigger above)
+        dropdown.innerHTML = `
+            <div class="native-dropdown-options">
+                ${options.map(option => `
+                    <button class="native-dropdown-option ${option.selected ? 'selected' : ''}" 
+                            data-value="${option.id}"
+                            role="option"
+                            aria-selected="${option.selected}">
+                        <span class="native-dropdown-option-icon">${option.icon}</span>
+                        <span class="native-dropdown-option-text">${option.text}</span>
+                        ${option.selected ? '<span class="native-dropdown-check">✓</span>' : ''}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+        
+        // Add to document
+        document.body.appendChild(dropdown);
+        
+        // Calculate position relative to trigger
+        const triggerRect = triggerElement.getBoundingClientRect();
+        const dropdownRect = dropdown.getBoundingClientRect();
+        const viewportHeight = window.innerHeight;
+        const viewportWidth = window.innerWidth;
+        
+        // Determine if we should show above or below
+        const spaceBelow = viewportHeight - triggerRect.bottom;
+        const spaceAbove = triggerRect.top;
+        const dropdownHeight = Math.min(300, options.length * 50 + 60); // Estimate height
+        
+        let top, left;
+        
+        // Mobile-specific positioning - check both width and user agent for mobile detection
+        const isMobile = window.innerWidth <= 768 || /Mobi|Android/i.test(navigator.userAgent);
+        console.log('Screen width:', window.innerWidth, 'Detected as mobile:', isMobile);
+        
+        // Universal positioning logic for both mobile and desktop
+        if (spaceBelow < dropdownHeight && spaceAbove > spaceBelow) {
+            // Show above trigger - connect seamlessly
+            top = isMobile ? triggerRect.top - dropdownHeight : triggerRect.top - dropdownHeight - 6;
+            dropdown.classList.add('native-dropdown--above');
+        } else {
+            // Show below trigger - connect seamlessly
+            if (isMobile) {
+                // Mobile: Move dropdown down but behind the button (lower z-index)
+                top = triggerRect.bottom - 13; // Move down 2px from -15px to -13px
+            } else {
+                // Desktop: Position below button, moved up 1 more px
+                top = triggerRect.bottom - 7; // Was -6px, now -7px (moved up 1 more px)
+            }
+            dropdown.classList.add('native-dropdown--below');
+        }
+        
+        // Set dropdown width and position
+        left = isMobile ? triggerRect.left + 2 : triggerRect.left + 2; // Mobile: move 2px right, Desktop: move 2px right
+        const triggerWidth = triggerRect.width;
+        
+        if (isMobile) {
+            // Mobile: Make it 6px narrower (2px off left + 4px off right)
+            const mobileWidth = triggerWidth - 6;
+            dropdown.style.width = `${mobileWidth}px`;
+            dropdown.style.minWidth = `${mobileWidth}px`;
+            dropdown.style.maxWidth = `${mobileWidth}px`;
+        } else {
+            // Desktop: Make it 5% narrower but extend 8px to the right (1px more)
+            const dropdownWidth = (triggerRect.width * 0.95) + 8;
+            dropdown.style.width = `${dropdownWidth}px`;
+            dropdown.style.minWidth = `${dropdownWidth}px`;
+            dropdown.style.maxWidth = `${dropdownWidth}px`;
+        }
+        
+        // Make the trigger arrow point up to indicate it can close the dropdown (both mobile & desktop)
+        const triggerArrow = triggerElement.querySelector('.selector-icon');
+        if (triggerArrow) {
+            triggerArrow.style.transform = 'rotate(180deg)';
+            triggerArrow.setAttribute('data-dropdown-open', 'true');
+        }
+        
+        // Ensure dropdown doesn't go off screen
+        const currentDropdownWidth = isMobile ? triggerWidth : (triggerRect.width * 0.95) + 8;
+        if (left + currentDropdownWidth > viewportWidth - 16) {
+            left = viewportWidth - currentDropdownWidth - 16;
+        }
+        if (left < 16) {
+            left = 16;
+            // If dropdown is too wide for screen, constrain it
+            const maxWidth = viewportWidth - 32;
+            if (currentDropdownWidth > maxWidth) {
+                dropdown.style.width = `${maxWidth}px`;
+                dropdown.style.maxWidth = `${maxWidth}px`;
+            }
+        }
+        
+        // Apply positioning while preserving width settings
+        dropdown.style.position = 'fixed';
+        dropdown.style.top = `${Math.max(8, top)}px`;
+        dropdown.style.left = `${left}px`;
+        // Set z-index based on platform needs
+        if (isMobile) {
+            dropdown.style.zIndex = '1003'; // Above drawer (1002) but below button/handle (1005+)
+        } else {
+            dropdown.style.zIndex = '1003'; // Above drawer (1002) but below button/handle (1005+)
+        }
+        dropdown.style.opacity = '0';
+        dropdown.style.transform = 'translateY(-10px)';
+        dropdown.style.transition = 'all 0.2s ease';
+        
+        // Force reflow and animate in
+        requestAnimationFrame(() => {
+            dropdown.style.opacity = '1';
+            dropdown.style.transform = 'translateY(0)';
+        });
+        
+        // Event handlers
+        const handleClose = () => {
+            // Reset the trigger arrow when closing
+            const triggerArrow = triggerElement.querySelector('.selector-icon');
+            if (triggerArrow && triggerArrow.getAttribute('data-dropdown-open')) {
+                triggerArrow.style.transform = '';
+                triggerArrow.removeAttribute('data-dropdown-open');
+            }
+            
+            dropdown.style.opacity = '0';
+            dropdown.style.transform = 'translateY(-10px)';
+            setTimeout(() => {
+                if (dropdown.parentNode) {
+                    dropdown.remove();
+                }
+            }, 200);
+        };
+        
+        // Allow clicking the trigger again to close the dropdown
+        const handleTriggerClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleClose();
+            triggerElement.removeEventListener('click', handleTriggerClick);
+        };
+        
+        // Add click handler to trigger for closing
+        setTimeout(() => {
+            triggerElement.addEventListener('click', handleTriggerClick);
+        }, 100); // Delay to prevent immediate closure
+        
+        // Option clicks
+        dropdown.querySelectorAll('.native-dropdown-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const value = option.getAttribute('data-value');
+                if (value && onSelect) {
+                    onSelect(value);
+                }
+                handleClose();
+            });
+        });
+        
+        // Click outside to close
+        const handleOutsideClick = (e) => {
+            if (!dropdown.contains(e.target) && !triggerElement.contains(e.target)) {
+                handleClose();
+                document.removeEventListener('click', handleOutsideClick);
+                triggerElement.removeEventListener('click', handleTriggerClick);
+            }
+        };
+        
+        // Add outside click handler after a brief delay to prevent immediate closure
+        setTimeout(() => {
+            document.addEventListener('click', handleOutsideClick);
+        }, 100);
+        
+        // Escape key to close
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                handleClose();
+                document.removeEventListener('keydown', handleEscape);
+                triggerElement.removeEventListener('click', handleTriggerClick);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        return dropdown;
     }
     
     setupDrawerSelects() {
@@ -511,9 +931,14 @@ class StackMapApp {
         const monthNames = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN', 'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
         const month = monthNames[date.getMonth()];
         
+        // Get current theme colors from CSS variables
+        const style = getComputedStyle(document.documentElement);
+        const primaryColor = style.getPropertyValue('--primary-color').trim() || '#667eea';
+        const primaryLight = style.getPropertyValue('--primary-light').trim() || '#f0f4ff';
+        
         return `<svg viewBox="0 0 32 32" style="width: 24px; height: 24px;">
-            <rect x="2" y="2" width="28" height="28" rx="4" fill="#E8F0FE" stroke="#4285F4" stroke-width="2"/>
-            <rect x="2" y="2" width="28" height="8" rx="4" fill="#4285F4"/>
+            <rect x="2" y="2" width="28" height="28" rx="4" fill="${primaryLight}" stroke="${primaryColor}" stroke-width="2"/>
+            <rect x="2" y="2" width="28" height="8" rx="4" fill="${primaryColor}"/>
             <text x="16" y="24" text-anchor="middle" font-size="14" font-weight="bold" fill="#333">${day}</text>
             <text x="16" y="7" text-anchor="middle" font-size="6" font-weight="bold" fill="white">${month}</text>
         </svg>`;
@@ -721,6 +1146,57 @@ class StackMapApp {
         }
     }
     
+    showEditUserDialog(user) {
+        console.log('showEditUserDialog called for user:', user);
+        // Use the ComponentBuilder to show edit user modal
+        if (typeof ComponentBuilder !== 'undefined' && ComponentBuilder.showEditUserModal) {
+            ComponentBuilder.showEditUserModal(user);
+        } else {
+            console.error('ComponentBuilder.showEditUserModal not available');
+            // Fallback to prompt
+            const newName = prompt('Edit user name:', user.name);
+            if (newName && newName.trim()) {
+                this.appState.updateUser(user.id, { name: newName.trim() });
+                this.populateDrawerSelects();
+                this.render();
+            }
+        }
+    }
+    
+    deleteUser(userId) {
+        console.log('deleteUser called for userId:', userId);
+        try {
+            // Use AppState's deleteUser method if it exists
+            if (typeof this.appState.deleteUser === 'function') {
+                const success = this.appState.deleteUser(userId);
+                if (success) {
+                    this.populateDrawerSelects();
+                    this.render();
+                    console.log('User deleted successfully');
+                }
+            } else {
+                console.error('AppState.deleteUser method not available');
+                alert('Delete user functionality not yet implemented');
+            }
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            alert('Error deleting user: ' + error.message);
+        }
+    }
+    
+    updateLogoVisibility(currentTitle) {
+        const logo = document.querySelector('.stackmap-logo');
+        if (logo) {
+            if (currentTitle === 'StackMap') {
+                logo.style.display = 'flex';
+                logo.style.opacity = '1';
+            } else {
+                logo.style.display = 'none';
+                logo.style.opacity = '0';
+            }
+        }
+    }
+    
     populateUserDropdowns() {
         // Not needed with unified header - drawer handles user selection
     }
@@ -763,6 +1239,39 @@ class StackMapApp {
         if (this.appState.getCurrentDay() !== day) {
             this.appState.setCurrentDay(day);
             
+            // Ensure tomorrow has activities if empty and user has today activities
+            if (day === 'tomorrow') {
+                const user = this.appState.getCurrentUser();
+                if (user.tomorrowActivities.length === 0 && user.activities.length > 0) {
+                    console.log('Tomorrow is empty, copying recurring activities from today');
+                    // Copy recurring activities from today to tomorrow
+                    user.activities.forEach(activity => {
+                        if (activity.cardType === 'recurring' || !activity.cardType) {
+                            const tomorrowActivity = {
+                                ...activity,
+                                completed: false // Reset completion for tomorrow
+                            };
+                            user.tomorrowActivities.push(tomorrowActivity);
+                        }
+                    });
+                    
+                    // Add a special tomorrow activity if none exist
+                    if (user.tomorrowActivities.length === 0) {
+                        user.tomorrowActivities.push({
+                            title: 'Plan Tomorrow',
+                            description: 'What will you do tomorrow?',
+                            icon: '📅',
+                            visible: true,
+                            completed: false,
+                            cardType: 'single-use',
+                            time: ''
+                        });
+                    }
+                    
+                    this.appState._triggerSave();
+                }
+            }
+            
             // Update body class for visual distinction
             document.body.classList.remove('viewing-today', 'viewing-tomorrow');
             document.body.classList.add(`viewing-${day}`);
@@ -788,6 +1297,19 @@ class StackMapApp {
             
             this.render();
             this.updateDayCounts();
+            
+            console.log('After switchDay - Current activities:', this.appState.getCurrentActivities().length);
+            console.log('Edit mode:', this.appState.ui.editMode);
+            console.log('Grownup mode:', this.grownupMode);
+            
+            // Debug management cards after render
+            setTimeout(() => {
+                const managementCards = document.querySelectorAll('.management-card');
+                console.log('Management cards in DOM after render:', managementCards.length);
+                if (managementCards.length === 0) {
+                    console.warn('No management cards found! Edit mode:', this.appState.ui.editMode);
+                }
+            }, 100);
         }
     }
     
@@ -1013,10 +1535,44 @@ class StackMapApp {
 
     // NEW CARD FUNCTIONALITY - Now uses modal
     openNewCardForm(position = 'top') {
+        console.log('openNewCardForm called with position:', position);
+        console.log('Current day:', this.appState.getCurrentDay());
+        console.log('Current user:', this.appState.getCurrentUser()?.name);
+        console.log('Current activities:', this.appState.getCurrentActivities().length);
+        console.log('Edit mode:', this.appState.ui.editMode);
+        console.log('Grownup mode:', this.grownupMode);
+        
+        // Enhanced debugging for tomorrow view
+        if (this.appState.getCurrentDay() === 'tomorrow') {
+            const user = this.appState.getCurrentUser();
+            console.log('Tomorrow view debugging:');
+            console.log('- Tomorrow activities:', user.tomorrowActivities.length);
+            console.log('- Today activities:', user.activities.length);
+            console.log('- All tomorrow activities:', user.tomorrowActivities.map(a => a.title));
+        }
+        
         this.appState.ui.showingNewCardForm = position;
         
-        // Show modal for new card with current selected card type
-        ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
+        // Add try-catch to detect any errors in modal creation
+        try {
+            console.log('Attempting to show modal card...');
+            // Show modal for new card with current selected card type
+            const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
+            console.log('Modal card created successfully:', !!modal);
+            
+            // Double-check the modal exists in DOM
+            setTimeout(() => {
+                const modalInDOM = document.getElementById('modalCardOverlay');
+                console.log('Modal found in DOM after creation:', !!modalInDOM);
+                if (!modalInDOM) {
+                    console.error('MODAL NOT FOUND IN DOM! This might be why the user is seeing something else.');
+                }
+            }, 100);
+            
+        } catch (error) {
+            console.error('Error creating modal card:', error);
+            console.error('This might be why the user sees a different dialog');
+        }
     }
 
     closeNewCardForm() {
@@ -1025,15 +1581,23 @@ class StackMapApp {
     }
 
     addActivity(position = 'top') {
+        console.log('addActivity called with position:', position);
+        console.log('Current day before add:', this.appState.getCurrentDay());
+        
         const titleInput = document.getElementById('newActivityTitle');
         const descInput = document.getElementById('newActivityDescription');
         const timeInput = document.getElementById('newActivityTime');
         
-        if (!titleInput || !descInput) return;
+        if (!titleInput || !descInput) {
+            console.log('Required inputs not found');
+            return;
+        }
         
         const title = titleInput.value.trim();
         const description = descInput.value.trim();
         const time = timeInput ? timeInput.value : '';
+        
+        console.log('Adding activity:', title, 'to day:', this.appState.getCurrentDay());
         
         if (!title) {
             alert('Please enter a title');
@@ -1045,6 +1609,9 @@ class StackMapApp {
             // Use the current form position or default
             const currentPosition = this.appState.ui.showingNewCardForm || position;
             
+            console.log('Using position:', currentPosition);
+            console.log('Activities before add:', this.appState.getCurrentActivities().length);
+            
             // Use the AppState method which handles position properly
             this.appState.addActivity({
                 title,
@@ -1054,10 +1621,29 @@ class StackMapApp {
                 cardType: this.selectedCardType // Story 1: Include selected card type
             }, currentPosition);
             
+            console.log('Activities after add:', this.appState.getCurrentActivities().length);
+            
+            // Enhanced debugging for tomorrow activities
+            if (this.appState.getCurrentDay() === 'tomorrow') {
+                const user = this.appState.getCurrentUser();
+                console.log('After adding to tomorrow:');
+                console.log('- Tomorrow activities count:', user.tomorrowActivities.length);
+                console.log('- Latest tomorrow activity:', user.tomorrowActivities[user.tomorrowActivities.length - 1]?.title);
+                console.log('- getCurrentActivities() count:', this.appState.getCurrentActivities().length);
+            }
+            
             this.clearNewActivity();
             this.closeNewCardForm();
             this.render();
+            
+            // Verify the activity appears after render
+            setTimeout(() => {
+                console.log('After render - Activities in DOM:', document.querySelectorAll('.card:not(.management-card)').length);
+                const managementCards = document.querySelectorAll('.management-card');
+                console.log('Management cards in DOM after add:', managementCards.length);
+            }, 100);
         } catch (error) {
+            console.error('Error adding activity:', error);
             alert(error.message);
         }
     }
@@ -1845,6 +2431,187 @@ class StackMapApp {
     }
 }
 
+// Debugging helper function
+window.testDropdowns = function() {
+    console.log('=== DROPDOWN TEST ===');
+    const userSelect = document.getElementById('drawerUserSelect');
+    const daySelect = document.getElementById('drawerDaySelect');
+    
+    console.log('User select element:', userSelect);
+    console.log('Day select element:', daySelect);
+    
+    if (userSelect) {
+        console.log('Testing user select click...');
+        userSelect.click();
+    }
+    
+    setTimeout(() => {
+        if (daySelect) {
+            console.log('Testing day select click...');
+            daySelect.click();
+        }
+    }, 1000);
+};
+
+// Debug switchDay functionality specifically
+window.testSwitchDay = function() {
+    console.log('=== TESTING SWITCHDAY FUNCTIONALITY ===');
+    console.log('Current day:', window.appInstance?.appState?.getCurrentDay?.());
+    console.log('switchDay method exists:', typeof window.appInstance?.switchDay === 'function');
+    console.log('setCurrentDay method exists:', typeof window.appInstance?.appState?.setCurrentDay === 'function');
+    
+    // Test direct state change
+    console.log('Testing direct setCurrentDay call...');
+    console.log('Before:', window.appInstance.appState.getCurrentDay());
+    window.appInstance.appState.setCurrentDay('tomorrow');
+    console.log('After setCurrentDay(tomorrow):', window.appInstance.appState.getCurrentDay());
+    
+    // Test full switchDay method
+    setTimeout(() => {
+        console.log('Testing full switchDay method...');
+        console.log('Before:', window.appInstance.appState.getCurrentDay());
+        window.appInstance.switchDay('today');
+        console.log('After switchDay(today):', window.appInstance.appState.getCurrentDay());
+    }, 500);
+    
+    // Test the dropdown modal directly
+    setTimeout(() => {
+        console.log('Testing dropdown modal for day selection...');
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        const dayOptions = [
+            { 
+                id: 'today', 
+                text: 'Today',
+                icon: window.appInstance.createDateIcon(today)
+            },
+            { 
+                id: 'tomorrow', 
+                text: 'Tomorrow',
+                icon: window.appInstance.createDateIcon(tomorrow)
+            }
+        ];
+        
+        window.appInstance.showNativeDropdown('Test Day', dayOptions, (selectedId) => {
+            console.log('Test dropdown selected:', selectedId);
+            console.log('Before dropdown switchDay:', window.appInstance.appState.getCurrentDay());
+            window.appInstance.switchDay(selectedId);
+            console.log('After dropdown switchDay:', window.appInstance.appState.getCurrentDay());
+        }, document.body);
+    }, 1500);
+};
+
+// Test modal visibility directly and restore original content
+window.testModal = function() {
+    console.log('=== TESTING MODAL VISIBILITY ===');
+    const modal = document.getElementById('dropdownModal');
+    console.log('Modal element found:', !!modal);
+    
+    if (modal) {
+        console.log('Current modal classes:', modal.className);
+        console.log('Current display:', getComputedStyle(modal).display);
+        
+        // Restore original modal content
+        modal.innerHTML = `
+            <div class="dropdown-modal-backdrop"></div>
+            <div class="dropdown-modal-content">
+                <div class="dropdown-modal-header">
+                    <h3 class="dropdown-modal-title" id="dropdownModalTitle">Select</h3>
+                    <button class="dropdown-modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="dropdown-modal-options" id="dropdownModalOptions">
+                    <!-- Options will be populated dynamically -->
+                </div>
+            </div>
+        `;
+        
+        modal.classList.add('hidden');
+        console.log('Modal content restored to original state');
+    }
+};
+
+// Fix the modal content immediately
+window.fixModal = function() {
+    console.log('=== FIXING MODAL CONTENT ===');
+    const modal = document.getElementById('dropdownModal');
+    if (modal) {
+        modal.innerHTML = `
+            <div class="dropdown-modal-backdrop"></div>
+            <div class="dropdown-modal-content">
+                <div class="dropdown-modal-header">
+                    <h3 class="dropdown-modal-title" id="dropdownModalTitle">Select</h3>
+                    <button class="dropdown-modal-close" aria-label="Close">&times;</button>
+                </div>
+                <div class="dropdown-modal-options" id="dropdownModalOptions">
+                    <!-- Options will be populated dynamically -->
+                </div>
+            </div>
+        `;
+        modal.classList.add('hidden');
+        console.log('Modal content fixed');
+    }
+};
+
+// Force show modal with extreme visibility
+window.forceShowModal = function() {
+    console.log('=== FORCING MODAL TO BE VISIBLE ===');
+    const modal = document.getElementById('dropdownModal');
+    if (modal) {
+        // Remove all classes and reset completely
+        modal.className = '';
+        modal.style.cssText = `
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            right: 0 !important;
+            bottom: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            background: rgba(255, 0, 0, 0.8) !important;
+            z-index: 99999 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+        `;
+        
+        modal.innerHTML = `
+            <div style="
+                background: white !important;
+                padding: 40px !important;
+                border: 5px solid blue !important;
+                border-radius: 10px !important;
+                font-size: 24px !important;
+                color: black !important;
+                text-align: center !important;
+                max-width: 90vw !important;
+                max-height: 90vh !important;
+                overflow: auto !important;
+            ">
+                <h2>MODAL TEST</h2>
+                <p>Can you see this?</p>
+                <button onclick="document.getElementById('dropdownModal').style.display='none'" 
+                        style="padding: 10px 20px; font-size: 18px; margin: 10px;">
+                    CLOSE
+                </button>
+            </div>
+        `;
+        
+        console.log('Modal forced to maximum visibility');
+        console.log('Modal computed styles:', {
+            display: getComputedStyle(modal).display,
+            zIndex: getComputedStyle(modal).zIndex,
+            opacity: getComputedStyle(modal).opacity,
+            visibility: getComputedStyle(modal).visibility,
+            position: getComputedStyle(modal).position
+        });
+    }
+};
+
 // Make available globally
 window.StackMapApp = StackMapApp;
 
@@ -2098,3 +2865,123 @@ const testDayTransition = () => {
 // Make validation functions globally available
 window.validateStory4 = validateStory4;
 window.testDayTransition = testDayTransition;
+
+// Debug function for day switching issues
+window.debugDaySwitch = function() {
+    console.log('=== DAY SWITCH DEBUG ===');
+    const user = window.appInstance.appState.getCurrentUser();
+    console.log('Current user:', user.name);
+    console.log('Current day:', window.appInstance.appState.getCurrentDay());
+    console.log('Today activities:', user.activities.length);
+    console.log('Tomorrow activities:', user.tomorrowActivities.length);
+    console.log('getCurrentActivities():', window.appInstance.appState.getCurrentActivities().length);
+    console.log('Legacy activities array:', window.appInstance.appState.activities.length);
+    
+    // Show activity details
+    console.log('Today activities:', user.activities.map(a => a.title));
+    console.log('Tomorrow activities:', user.tomorrowActivities.map(a => a.title));
+    console.log('=== END DEBUG ===');
+};
+
+// Debug function specifically for management cards
+window.debugManagementCards = function() {
+    console.log('=== MANAGEMENT CARDS DEBUG ===');
+    console.log('Edit mode:', window.appInstance.appState.ui.editMode);
+    console.log('Grownup mode:', window.appInstance.grownupMode);
+    console.log('Current day:', window.appInstance.appState.getCurrentDay());
+    
+    // Check DOM
+    const managementCards = document.querySelectorAll('.management-card');
+    console.log('Management cards in DOM:', managementCards.length);
+    
+    if (managementCards.length > 0) {
+        managementCards.forEach((card, index) => {
+            console.log(`Card ${index + 1}:`, {
+                classes: card.className,
+                display: getComputedStyle(card).display,
+                visibility: getComputedStyle(card).visibility,
+                position: getComputedStyle(card).position,
+                zIndex: getComputedStyle(card).zIndex
+            });
+        });
+    }
+    
+    // Check container
+    const container = document.getElementById('mainContainer');
+    if (container) {
+        console.log('Main container children:', container.children.length);
+        Array.from(container.children).forEach((child, index) => {
+            if (child.classList.contains('management-card')) {
+                console.log(`Management card found at index ${index}:`, child.className);
+            }
+        });
+    }
+    
+    // Test card creation
+    if (window.ComponentBuilder) {
+        try {
+            const testCard = window.ComponentBuilder.createManagementCard('test');
+            console.log('Test management card created successfully:', !!testCard);
+        } catch (error) {
+            console.error('Error creating test management card:', error);
+        }
+    }
+    
+    console.log('=== END MANAGEMENT CARDS DEBUG ===');
+};
+
+// Debug function for investigating the "new user prompt" issue
+window.debugNewCardIssue = function() {
+    console.log('=== NEW CARD ISSUE DEBUG ===');
+    
+    // Check current state
+    console.log('Current day:', window.appInstance.appState.getCurrentDay());
+    console.log('Edit mode:', window.appInstance.appState.ui.editMode);
+    console.log('Grownup mode:', window.appInstance.grownupMode);
+    
+    // Check modals in DOM
+    const activityModal = document.getElementById('modalCardOverlay');
+    const addUserModal = document.getElementById('addUserModal');
+    const editUserModal = document.getElementById('editUserModal');
+    const dropdownModal = document.getElementById('dropdownModal');
+    
+    console.log('Modals in DOM:');
+    console.log('- Activity modal (modalCardOverlay):', !!activityModal);
+    console.log('- Add user modal:', !!addUserModal);
+    console.log('- Edit user modal:', !!editUserModal);
+    console.log('- Dropdown modal:', !!dropdownModal);
+    
+    if (addUserModal) {
+        console.log('Add user modal is visible! This might be the "new user prompt"');
+        console.log('Add user modal display:', getComputedStyle(addUserModal).display);
+        console.log('Add user modal z-index:', getComputedStyle(addUserModal).zIndex);
+    }
+    
+    // Check management cards
+    const managementCards = document.querySelectorAll('.management-card');
+    console.log('Management cards:', managementCards.length);
+    
+    if (managementCards.length > 0) {
+        managementCards.forEach((card, index) => {
+            const addButton = card.querySelector('.btn--add-card');
+            console.log(`Management card ${index + 1} add button:`, !!addButton);
+            if (addButton) {
+                console.log(`- onclick handler:`, addButton.onclick?.toString?.());
+            }
+        });
+    }
+    
+    // Test manual card creation
+    console.log('Testing manual openNewCardForm...');
+    try {
+        window.appInstance.openNewCardForm('top');
+        setTimeout(() => {
+            const modalAfterTest = document.getElementById('modalCardOverlay');
+            console.log('Modal created after manual test:', !!modalAfterTest);
+        }, 200);
+    } catch (error) {
+        console.error('Error in manual test:', error);
+    }
+    
+    console.log('=== END NEW CARD ISSUE DEBUG ===');
+};

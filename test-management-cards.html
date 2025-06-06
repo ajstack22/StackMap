@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Management Cards Debug Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .debug-output {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            border-left: 4px solid #007bff;
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <h1>Management Cards Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Day Switching Debug</h2>
+        <button class="btn" onclick="debugTomorrowSwitch()">Debug Tomorrow Switch</button>
+        <button class="btn" onclick="debugTodaySwitch()">Debug Today Switch</button>
+        <button class="btn" onclick="debugManagementCards()">Debug Management Cards</button>
+        <div id="debugOutput" class="debug-output">Click buttons above to run debug tests...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>State Information</h2>
+        <button class="btn" onclick="showCurrentState()">Show Current State</button>
+        <div id="stateOutput" class="debug-output">No state shown yet...</div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Management Card Creation Test</h2>
+        <button class="btn" onclick="testManagementCardCreation()">Test Card Creation</button>
+        <div id="cardTest" class="debug-output">No test run yet...</div>
+        <div id="cardContainer" style="margin-top: 20px;"></div>
+    </div>
+
+    <script>
+        function debugTomorrowSwitch() {
+            const output = document.getElementById('debugOutput');
+            let debug = 'DEBUGGING TOMORROW SWITCH:\n';
+            
+            if (!window.appInstance) {
+                debug += 'ERROR: No app instance found!\n';
+                output.textContent = debug;
+                return;
+            }
+            
+            debug += `Before switch:\n`;
+            debug += `- Current day: ${window.appInstance.appState.getCurrentDay()}\n`;
+            debug += `- Edit mode: ${window.appInstance.appState.ui.editMode}\n`;
+            debug += `- Grownup mode: ${window.appInstance.grownupMode}\n`;
+            debug += `- Current activities: ${window.appInstance.appState.getCurrentActivities().length}\n`;
+            
+            // Switch to tomorrow
+            debug += `\nSwitching to tomorrow...\n`;
+            window.appInstance.switchDay('tomorrow');
+            
+            debug += `After switch:\n`;
+            debug += `- Current day: ${window.appInstance.appState.getCurrentDay()}\n`;
+            debug += `- Edit mode: ${window.appInstance.appState.ui.editMode}\n`;
+            debug += `- Grownup mode: ${window.appInstance.grownupMode}\n`;
+            debug += `- Current activities: ${window.appInstance.appState.getCurrentActivities().length}\n`;
+            debug += `- Tomorrow activities: ${window.appInstance.appState.getCurrentUser().tomorrowActivities.length}\n`;
+            
+            // Check for management cards in DOM
+            const managementCards = document.querySelectorAll('.management-card');
+            debug += `- Management cards in DOM: ${managementCards.length}\n`;
+            
+            if (managementCards.length > 0) {
+                managementCards.forEach((card, index) => {
+                    debug += `  Card ${index + 1}: ${card.className}\n`;
+                });
+            }
+            
+            output.textContent = debug;
+        }
+        
+        function debugTodaySwitch() {
+            const output = document.getElementById('debugOutput');
+            let debug = 'DEBUGGING TODAY SWITCH:\n';
+            
+            if (!window.appInstance) {
+                debug += 'ERROR: No app instance found!\n';
+                output.textContent = debug;
+                return;
+            }
+            
+            debug += `Before switch:\n`;
+            debug += `- Current day: ${window.appInstance.appState.getCurrentDay()}\n`;
+            debug += `- Edit mode: ${window.appInstance.appState.ui.editMode}\n`;
+            debug += `- Current activities: ${window.appInstance.appState.getCurrentActivities().length}\n`;
+            
+            // Switch to today
+            debug += `\nSwitching to today...\n`;
+            window.appInstance.switchDay('today');
+            
+            debug += `After switch:\n`;
+            debug += `- Current day: ${window.appInstance.appState.getCurrentDay()}\n`;
+            debug += `- Edit mode: ${window.appInstance.appState.ui.editMode}\n`;
+            debug += `- Current activities: ${window.appInstance.appState.getCurrentActivities().length}\n`;
+            
+            // Check for management cards in DOM
+            const managementCards = document.querySelectorAll('.management-card');
+            debug += `- Management cards in DOM: ${managementCards.length}\n`;
+            
+            output.textContent = debug;
+        }
+        
+        function debugManagementCards() {
+            const output = document.getElementById('debugOutput');
+            let debug = 'DEBUGGING MANAGEMENT CARDS:\n';
+            
+            if (!window.appInstance) {
+                debug += 'ERROR: No app instance found!\n';
+                output.textContent = debug;
+                return;
+            }
+            
+            debug += `Edit mode: ${window.appInstance.appState.ui.editMode}\n`;
+            debug += `Grownup mode: ${window.appInstance.grownupMode}\n`;
+            debug += `Current day: ${window.appInstance.appState.getCurrentDay()}\n`;
+            
+            // Check rendering conditions
+            const editMode = window.appInstance.appState.ui.editMode;
+            debug += `\nManagement cards should render: ${editMode}\n`;
+            
+            if (editMode) {
+                debug += `Checking renderer.renderActivities() logic...\n`;
+                
+                // Check the main container
+                const container = document.getElementById('mainContainer');
+                debug += `Main container exists: ${!!container}\n`;
+                
+                if (container) {
+                    const children = container.children;
+                    debug += `Container children: ${children.length}\n`;
+                    
+                    for (let i = 0; i < children.length; i++) {
+                        const child = children[i];
+                        debug += `  Child ${i}: ${child.tagName} (classes: ${child.className})\n`;
+                    }
+                }
+                
+                // Check if management cards exist but are hidden
+                const allCards = document.querySelectorAll('[class*="management"]');
+                debug += `All management-related elements: ${allCards.length}\n`;
+                allCards.forEach((card, index) => {
+                    debug += `  Element ${index + 1}: ${card.tagName} (classes: ${card.className}, display: ${getComputedStyle(card).display})\n`;
+                });
+            }
+            
+            output.textContent = debug;
+        }
+        
+        function showCurrentState() {
+            const output = document.getElementById('stateOutput');
+            let state = 'CURRENT APP STATE:\n';
+            
+            if (!window.appInstance) {
+                state += 'ERROR: No app instance found!\n';
+                output.textContent = state;
+                return;
+            }
+            
+            const app = window.appInstance;
+            const appState = app.appState;
+            const user = appState.getCurrentUser();
+            
+            state += `App Instance: ${!!app}\n`;
+            state += `App State: ${!!appState}\n`;
+            state += `Current User: ${user ? user.name : 'None'}\n`;
+            state += `Grownup Mode: ${app.grownupMode}\n`;
+            state += `Edit Mode: ${appState.ui.editMode}\n`;
+            state += `Current Day: ${appState.getCurrentDay()}\n`;
+            state += `Today Activities: ${user ? user.activities.length : 0}\n`;
+            state += `Tomorrow Activities: ${user ? user.tomorrowActivities.length : 0}\n`;
+            state += `Current Activities (Context): ${appState.getCurrentActivities().length}\n`;
+            state += `Showing New Card Form: ${appState.ui.showingNewCardForm}\n`;
+            state += `Editing Card Index: ${appState.ui.editingCardIndex}\n`;
+            
+            // Check body classes
+            const bodyClasses = document.body.className;
+            state += `Body Classes: ${bodyClasses}\n`;
+            
+            // Check main container
+            const container = document.getElementById('mainContainer');
+            state += `Main Container Exists: ${!!container}\n`;
+            if (container) {
+                state += `Container Children: ${container.children.length}\n`;
+            }
+            
+            output.textContent = state;
+        }
+        
+        function testManagementCardCreation() {
+            const output = document.getElementById('cardTest');
+            const container = document.getElementById('cardContainer');
+            let test = 'TESTING MANAGEMENT CARD CREATION:\n';
+            
+            if (!window.ComponentBuilder) {
+                test += 'ERROR: ComponentBuilder not found!\n';
+                output.textContent = test;
+                return;
+            }
+            
+            try {
+                test += 'Creating top management card...\n';
+                const topCard = window.ComponentBuilder.createManagementCard('top');
+                test += `Top card created: ${!!topCard}\n`;
+                test += `Top card classes: ${topCard.className}\n`;
+                
+                test += 'Creating bottom management card...\n';
+                const bottomCard = window.ComponentBuilder.createManagementCard('bottom');
+                test += `Bottom card created: ${!!bottomCard}\n`;
+                test += `Bottom card classes: ${bottomCard.className}\n`;
+                
+                // Clear container and add cards
+                container.innerHTML = '';
+                container.appendChild(topCard);
+                container.appendChild(bottomCard);
+                
+                test += 'Cards added to test container successfully!\n';
+                
+            } catch (error) {
+                test += `ERROR: ${error.message}\n`;
+                test += `Stack: ${error.stack}\n`;
+            }
+            
+            output.textContent = test;
+        }
+        
+        // Auto-run initial state check when page loads
+        window.addEventListener('load', () => {
+            setTimeout(showCurrentState, 1000);
+        });
+    </script>
+</body>
+</html>

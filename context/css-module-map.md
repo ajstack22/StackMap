@@ -26,7 +26,7 @@ styles/index.css (MAIN - imports all others)
 - **`styles/modals.css`** - General modal overlays, welcome screen, toasts
 - **`styles/modal-card.css`** - Editing modal interface, time fields
 - **`styles/draggable-drawer.css`** - Drawer system, handle positioning (⚠️ CRITICAL: See drawer-architecture.md)
-- **`styles/selectors.css`** - User and day selector components
+- **`styles/selectors.css`** - User and day selector components, **NATIVE DROPDOWN SYSTEM** (lines 680-873)
 
 #### **Feature Modules:**
 - **`styles/animations.css`** - Confetti, fireworks, transitions, keyframes

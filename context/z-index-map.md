@@ -39,10 +39,11 @@
 - **Location**: `styles/layout.css`
 - **Why**: Modal-like overlay that appears above content but below buttons
 
-### 1003 - Floating Buttons (Alternate)
-- **Elements**: Generic `.btn--floating`
-- **Location**: `styles/layout.css`
-- **Why**: Base level for floating buttons
+### 1003 - Native Dropdowns & Floating Buttons
+- **Elements**: `.native-dropdown`, Generic `.btn--floating`
+- **Location**: `styles/selectors.css`, `styles/layout.css`
+- **Why**: Above drawer content but below buttons/handle
+- **Critical**: Native dropdowns use this level for both mobile and desktop
 
 ### 1002 - Drawer Extension Content
 - **Element**: `#drawerExtension`

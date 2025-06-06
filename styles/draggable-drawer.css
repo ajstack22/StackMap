@@ -6,7 +6,7 @@
     align-items: center;
     justify-content: center;
     gap: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 5px; /* Move logo and title up 3px (8px - 3px) */
 }
 
 .stackmap-logo {
@@ -16,6 +16,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transform: translate(10px, -10px); /* 10px right, 10px up */
 }
 
 .stackmap-logo svg {
@@ -34,7 +35,7 @@
     font-size: 1.8rem;
     font-weight: 700;
     color: white;
-    margin: 0;
+    margin: -3px 0 0 0; /* Move up 3px */
     padding: 0;
     line-height: 1;
     text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
@@ -48,11 +49,12 @@
 .subtitle {
     font-size: 0.85rem;
     color: rgba(255, 255, 255, 0.8);
-    margin: 8px 0 0 0; /* More space above subtitle */
+    margin: 16px 0 0 0; /* Move down 5 more px (11px + 5px) */
     padding: 0;
     line-height: 1.2;
     outline: none;
     transition: all 0.2s ease;
+    transform: translateX(-8px); /* Move 8px left to center properly */
 }
 
 /* Edit mode styles for title/subtitle */
@@ -85,66 +87,90 @@
 
 /* Drawer now uses fixed positioning, CSS variables removed */
 
-/* Drawer Handle - At bottom of header when closed */
+/* Simple Grab Handle - Always at bottom of header */
 .drawer-handle {
-    position: absolute;
-    bottom: 3px; /* Moved up 3px from bottom edge */
-    left: 0;
-    right: 0;
-    height: 40px; /* Click area height */
+    position: absolute !important;
+    bottom: 15px !important; /* Down 5px on desktop closed */
+    left: 0 !important; /* Full width touch target */
+    right: 0 !important;
+    width: 100% !important; /* Full width for easy touching */
+    height: 32px !important; /* Larger touch target height */
     cursor: pointer;
-    z-index: 1002; /* Above drawer but below floating buttons */
-    background: transparent; /* Invisible click area */
+    z-index: 1005; /* Above drawer extension */
+    background: transparent !important; /* Completely invisible touch area */
+    border: none !important; /* No borders */
+    outline: none !important; /* No outline */
+    box-shadow: none !important; /* No shadows on container */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     display: flex;
     align-items: center;
     justify-content: center;
-    /* Full width click area for easy touch */
+}
+
+/* Visual drag bar inside the touch area */
+.drawer-handle::after {
+    content: '';
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.6); /* Lighter, more subtle */
+    border-radius: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* Softer shadow */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    animation: drawerHint 3s ease-in-out 1s; /* Hint animation after 1s delay */
 }
 
-/* When drawer is open, handle moves to bottom of drawer extension */
-.drawer-extension.open ~ .drawer-handle,
+/* Helper animation on page load */
+@keyframes drawerHint {
+    0%, 100% {
+        transform: translateY(0);
+        background: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    15% {
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    30% {
+        transform: translateY(0);
+        background: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    45% {
+        transform: translateY(-3px);
+        background: rgba(255, 255, 255, 0.8);
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    60% {
+        transform: translateY(0);
+        background: rgba(255, 255, 255, 0.6);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Desktop open state - move handle up 15px from new closed position */
 .app-header.drawer-open .drawer-handle {
-    transform: translateY(145px); /* 190px drawer height - 40px handle height - 5px from bottom */
+    bottom: 30px !important; /* 15px higher than closed (15px + 15px = 30px) */
 }
 
-.drawer-handle:hover {
-    background: transparent;
+.drawer-handle:hover::after {
+    background: rgba(255, 255, 255, 0.8); /* Still subtle on hover */
+    width: 44px;
+    height: 5px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); /* Softer hover shadow */
 }
 
 .drawer-handle:focus {
-    outline: none; /* Remove focus outline for cleaner look */
+    outline: none !important; /* No visual focus on the zone */
 }
 
-/* Drawer Handle Bar - Purely decorative */
-.drawer-handle-bar {
-    position: relative;
-    width: 50px;
-    height: 5px;
-    background: rgba(255, 255, 255, 0.8);
-    border-radius: 3px;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-    /* Decorative visual indicator */
-    pointer-events: none; /* Clicks pass through to parent */
+.drawer-handle:active {
+    background: transparent !important; /* No visual feedback on click */
 }
 
-/* Keep handle bar straight - no rotation */
-.drawer-open .drawer-handle-bar {
-    background: white;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
-}
+/* Handle bar styling removed - handle IS the bar now */
 
-/* Remove the dots - just keep the single bar */
-
-.drawer-handle:hover .drawer-handle-bar {
-    background: rgba(255, 255, 255, 1);
-    height: 6px;
-    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.4);
-    transform: scale(1.1);
-}
-
-/* Drawer Extension - Starts below header */
+/* Drawer Extension - NO background, just content positioning */
 .drawer-extension {
     position: absolute;
     top: 100%; /* Start at bottom of header */
@@ -153,49 +179,28 @@
     max-height: 0; /* Hidden when closed */
     overflow: hidden; /* Hide content when closed */
     transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    background: var(--background-gradient-start);
-    background-image: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
-    border-radius: 0 0 32px 32px; /* Curved bottom edge */
-    /* No shadow when closed */
-    box-shadow: none;
-    transition: max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1),
-                box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    z-index: 1;
-    position: relative; /* For handle positioning */
+    background: transparent; /* NO background - let header gradient show through */
+    /* No border, no shadow, no styling - invisible container */
+    z-index: 1; /* Below handle */
 }
 
 .drawer-extension.open {
-    max-height: 190px; /* More breathing room */
-    border-radius: 0 0 32px 32px !important; /* Ensure curved bottom */
-    /* Same shadow style as closed header */
-    box-shadow: 
-        0 0 40px rgba(0, 0, 0, 0.12), /* Soft outer glow */
-        0 8px 32px rgba(0, 0, 0, 0.08), /* Main shadow */
-        0 2px 8px rgba(0, 0, 0, 0.04); /* Close shadow */
+    max-height: 285px; /* Match expanded header height */
+    /* No styling - just a content container */
     overflow: visible; /* Show content when open */
 }
 
-/* Apply shadow to wrapper when drawer is open */
-.header-wrapper.drawer-open {
-    box-shadow: 
-        0 0 50px rgba(0, 0, 0, 0.15), /* Soft outer glow */
-        0 12px 40px rgba(0, 0, 0, 0.10), /* Main shadow */
-        0 4px 12px rgba(0, 0, 0, 0.05); /* Close shadow */
-    border-radius: 0 0 32px 32px; /* Maintain smooth arc */
-    /* Allow wrapper to expand with drawer */
-    height: auto;
-    min-height: calc(100% + 180px); /* Accommodate drawer extension */
-}
+/* Header wrapper styling handled in layout.css */
 
 /* Removed - no longer needed since handle is sibling not child */
 
 /* Drawer Dropdowns Container */
 .drawer-dropdowns {
     display: flex;
-    gap: 20px; /* More gap between fields */
-    padding: 30px 24px 30px; /* Good padding all around */
+    gap: 24px; /* More space between fields */
+    padding: 32px 28px 36px; /* Generous padding with extra bottom space */
     justify-content: center;
-    max-width: 400px;
+    max-width: 620px; /* Wider to accommodate 75% larger dropdowns */
     margin-left: auto;
     margin-right: auto;
     flex-wrap: wrap; /* Allow wrapping on very small screens */
@@ -206,53 +211,57 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px; /* More space between label and dropdown */
     min-width: 0; /* Allow flex items to shrink */
-    width: 150px; /* Fixed width for consistency */
-    max-width: 150px; /* Enforce same size */
+    width: 280px; /* 75% wider (160px * 1.75) */
+    max-width: 280px; /* Enforce same size */
 }
 
 .dropdown-label {
-    font-size: 0.75rem;
+    font-size: 0.8rem;
     font-weight: 600;
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.8); /* White text for purple background */
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 0.8px;
     display: block;
+    text-align: center; /* Center the labels */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Subtle shadow for readability */
 }
 
 /* Drawer Select Dropdowns - Material White Design */
 .drawer-select {
     width: 100%;
-    padding: 12px 14px;
+    padding: 14px 16px; /* More generous padding */
     font-size: 1rem;
-    border: none;
-    border-radius: 8px;
+    border: 2px solid #e2e8f0; /* Visible border for definition */
+    border-radius: 12px; /* More rounded for modern look */
     background: white;
     color: #333;
     outline: none;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.3s ease;
     appearance: none;
     background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
     background-repeat: no-repeat;
-    background-position: right 10px center;
-    background-size: 20px;
-    padding-right: 40px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    background-position: right 12px center;
+    background-size: 18px;
+    padding-right: 44px; /* More space for arrow */
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08); /* Softer shadow */
     font-weight: 500;
     text-align: center;
     text-align-last: center;
-    min-height: 44px; /* Match button height */
+    min-height: 48px; /* Larger touch target */
     box-sizing: border-box;
 }
 
 .drawer-select:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
     transform: translateY(-1px);
 }
 
 .drawer-select:focus {
+    border-color: var(--primary-color);
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
@@ -273,28 +282,30 @@
 /* Add User Button - Matches dropdown style exactly */
 .drawer-add-user {
     width: 100%;
-    padding: 12px 14px;
+    padding: 14px 16px; /* Match dropdown padding */
     font-size: 1rem;
-    border: none;
-    border-radius: 8px;
+    border: 2px solid var(--primary-color); /* Themed border */
+    border-radius: 12px; /* Match dropdown radius */
     background: white;
     color: var(--primary-color);
     outline: none;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 12px rgba(102, 126, 234, 0.12); /* Themed shadow */
     font-weight: 600;
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 8px;
     text-align: center;
-    min-height: 44px; /* Match select height */
+    min-height: 48px; /* Match select height */
     box-sizing: border-box;
 }
 
 .drawer-add-user:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    background: var(--primary-color);
+    color: white;
+    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25);
     transform: translateY(-1px);
 }
 
@@ -403,9 +414,7 @@ body.drawer-active {
         font-size: 0.75rem;
     }
     
-    .drawer-handle {
-        bottom: -12px; /* 20px lower on mobile */
-    }
+    /* Handle stays at bottom of header on mobile too */
     
     .drawer-dropdowns {
         padding: 0 16px;
@@ -432,7 +441,7 @@ body.drawer-active {
     left: 0;
     right: 0;
     bottom: 0;
-    z-index: 9999;
+    z-index: 10000; /* Above everything else including floating buttons */
     display: flex;
     align-items: center;
     justify-content: center;
@@ -449,20 +458,26 @@ body.drawer-active {
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    background: rgba(0, 0, 0, 0.7) !important;
+    z-index: 1 !important;
 }
 
 .dropdown-modal-content {
     position: relative;
-    background: white;
+    background: white !important;
     border-radius: 16px;
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
     max-width: 400px;
     width: 100%;
     max-height: 70vh;
-    display: flex;
+    display: flex !important;
     flex-direction: column;
     overflow: hidden;
+    z-index: 10001 !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    min-height: 200px !important;
+    border: 2px solid #667eea !important; /* Debug border */
 }
 
 .dropdown-modal-header {
@@ -562,20 +577,25 @@ body.drawer-active {
         flex-direction: column;
         gap: 16px;
         padding: 20px 16px;
+        max-width: 400px; /* Wider container for mobile */
     }
     
     .dropdown-group {
         max-width: 100%;
-        width: 100%;
+        width: 350px; /* 25% wider than desktop (280px * 1.25) */
     }
     
-    /* Handle moves down same amount on mobile */
-    .drawer-extension.open ~ .drawer-handle,
+    /* Handle moves up more on mobile */
+    .drawer-handle {
+        bottom: 20px !important; /* Down 5px from 25px */
+    }
+    
+    /* When drawer is open on mobile, move handle down 10px */
     .app-header.drawer-open .drawer-handle {
-        transform: translateY(195px); /* 240px drawer height - 40px handle height - 5px from bottom */
+        bottom: 10px !important; /* Down 5 more px from 15px */
     }
     
     .drawer-extension.open {
-        max-height: 240px; /* More height for stacked layout */
+        max-height: 360px; /* Match mobile expanded header height */
     }
 }

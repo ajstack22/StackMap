@@ -74,9 +74,19 @@ class AppState {
             targetActivities.push(newActivity);
         }
         
-        // CRITICAL FIX: Sync the legacy activities array if we're on today view
+        // CRITICAL FIX: Sync the legacy activities array with current context
         if (isToday) {
             this.activities = [...user.activities];
+        } else {
+            this.activities = [...user.tomorrowActivities];
+        }
+        
+        // Debug logging for tomorrow activities
+        if (!isToday) {
+            console.log('TOMORROW: Activity added successfully to tomorrow activities');
+            console.log('TOMORROW: New activity:', newActivity.title);
+            console.log('TOMORROW: Total tomorrow activities:', user.tomorrowActivities.length);
+            console.log('TOMORROW: Legacy activities array synced:', this.activities.length);
         }
         
         this._triggerSave();
@@ -96,9 +106,11 @@ class AppState {
             
             Object.assign(targetActivities[index], updates);
             
-            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
                 this.activities = [...user.activities];
+            } else {
+                this.activities = [...user.tomorrowActivities];
             }
             
             this._triggerSave();
@@ -114,9 +126,11 @@ class AppState {
         if (index >= 0 && index < targetActivities.length) {
             targetActivities.splice(index, 1);
             
-            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
                 this.activities = [...user.activities];
+            } else {
+                this.activities = [...user.tomorrowActivities];
             }
             
             this._triggerSave();
@@ -134,9 +148,11 @@ class AppState {
             const [removed] = targetActivities.splice(fromIndex, 1);
             targetActivities.splice(toIndex, 0, removed);
             
-            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
                 this.activities = [...user.activities];
+            } else {
+                this.activities = [...user.tomorrowActivities];
             }
             
             this._triggerSave();
@@ -152,9 +168,11 @@ class AppState {
         if (index >= 0 && index < targetActivities.length) {
             targetActivities[index].visible = !targetActivities[index].visible;
             
-            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
                 this.activities = [...user.activities];
+            } else {
+                this.activities = [...user.tomorrowActivities];
             }
             
             this._triggerSave();
@@ -170,9 +188,11 @@ class AppState {
         if (index >= 0 && index < targetActivities.length) {
             targetActivities[index].completed = !targetActivities[index].completed;
             
-            // CRITICAL FIX: Sync the legacy activities array if we're on today view
+            // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
                 this.activities = [...user.activities];
+            } else {
+                this.activities = [...user.tomorrowActivities];
             }
             
             this._triggerSave();
@@ -383,6 +403,66 @@ class AppState {
             return true;
         }
         return false;
+    }
+
+    // NEW: General update user method
+    updateUser(userId, updates) {
+        if (!this.users.profiles[userId]) {
+            throw new Error('User not found');
+        }
+        
+        const user = this.users.profiles[userId];
+        
+        // Validate name if being updated
+        if (updates.name !== undefined) {
+            if (!updates.name || typeof updates.name !== 'string') {
+                throw new Error('Name is required');
+            }
+            
+            const trimmedName = updates.name.trim();
+            if (trimmedName.length === 0) {
+                throw new Error('Name cannot be empty');
+            }
+            
+            if (trimmedName.length > CONFIG.USER_NAME_MAX_LENGTH) {
+                throw new Error(`Name cannot exceed ${CONFIG.USER_NAME_MAX_LENGTH} characters`);
+            }
+            
+            // Check for duplicate names (excluding current user)
+            const existingNames = Object.values(this.users.profiles)
+                .filter(u => u.id !== userId)
+                .map(u => u.name.toLowerCase());
+            if (existingNames.includes(trimmedName.toLowerCase())) {
+                throw new Error('A user with this name already exists');
+            }
+            
+            user.name = trimmedName;
+            
+            // Update title if it matches the old name
+            if (user.settings && user.settings.title === user.name + "'s StackMap") {
+                user.settings.title = trimmedName + "'s StackMap";
+            }
+        }
+        
+        // Validate and update icon if provided
+        if (updates.icon !== undefined) {
+            user.icon = updates.icon || '👤';
+        }
+        
+        // Update any other properties
+        Object.keys(updates).forEach(key => {
+            if (key !== 'name' && key !== 'icon' && updates[key] !== undefined) {
+                user[key] = updates[key];
+            }
+        });
+        
+        // If updating current user, reload data to sync with UI
+        if (userId === this.users.currentUserId) {
+            this.loadUserData();
+        }
+        
+        this._triggerSave();
+        return true;
     }
     
     // Validate user limit before operations

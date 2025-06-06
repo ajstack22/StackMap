@@ -327,8 +327,9 @@ class ComponentBuilder {
                             appInstance.selectNewEmoji(emoji);
                         } else {
                             // For edit mode, update the activity directly
-                            if (appInstance.appState.activities[index]) {
-                                appInstance.appState.activities[index].icon = emoji;
+                            const currentActivities = appInstance.appState.getCurrentActivities();
+                            if (currentActivities[index]) {
+                                currentActivities[index].icon = emoji;
                             }
                         }
                     },
@@ -356,8 +357,9 @@ class ComponentBuilder {
                         }
                     } else {
                         // Update activity directly for edit mode
-                        if (appInstance.appState.activities[index]) {
-                            appInstance.appState.activities[index].cardType = selectedType;
+                        const currentActivities = appInstance.appState.getCurrentActivities();
+                        if (currentActivities[index]) {
+                            currentActivities[index].cardType = selectedType;
                             // FIXED: Trigger save to persist changes
                             appInstance.appState._triggerSave();
                         }
@@ -773,6 +775,218 @@ class ComponentBuilder {
             <div class="success-toast__content">
                 <span class="success-icon">✓</span>
                 <span>Welcome, ${name}!</span>
+                <span class="user-success-icon">${icon}</span>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        // Animate in
+        setTimeout(() => {
+            toast.style.opacity = '1';
+            toast.style.transform = 'translateX(-50%) translateY(0)';
+        }, 100);
+        
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            toast.style.transform = 'translateX(-50%) translateY(-20px)';
+            setTimeout(() => {
+                toast.remove();
+            }, 300);
+        }, 3000);
+    }
+
+    // NEW: Show Edit User Modal with current user data and emoji picker
+    static showEditUserModal(user) {
+        console.log('showEditUserModal called with user:', user);
+        const overlay = this.createElement('div', 'edit-user-modal');
+        overlay.id = 'editUserModal';
+        
+        // Store current user data and selected emoji
+        this.editingUser = user;
+        this.selectedUserEmoji = user.icon || '👤';
+        
+        // Close modal when clicking overlay
+        overlay.addEventListener('click', (e) => {
+            console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
+            if (e.target === overlay) {
+                console.log('Closing modal via overlay click');
+                this.closeEditUserModal();
+            }
+        });
+        
+        // Escape key handler
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                this.closeEditUserModal();
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+        
+        const modal = this.createElement('div', 'edit-user-content');
+        modal.innerHTML = `
+            <div class="modal-header">
+                <h2>Edit User</h2>
+            </div>
+            
+            <div class="modal-body">
+                <div class="user-icon-section">
+                    <div class="user-icon-display" id="editUserIcon" onclick="document.getElementById('editUserEmojiFilter').focus()">${this.selectedUserEmoji}</div>
+                    <label class="user-icon-label">Choose an icon:</label>
+                </div>
+                
+                <div class="emoji-picker-slot" id="editUserEmojiPicker"></div>
+                
+                <div class="form-field">
+                    <label for="editUserName">User Name:</label>
+                    <input type="text" 
+                           id="editUserName" 
+                           class="form-input" 
+                           placeholder="Enter name..." 
+                           value="${user.name}"
+                           maxlength="20"
+                           autocomplete="off">
+                </div>
+                
+                <div class="modal-info">
+                    <p>Update this user's name and icon. Changes will be saved immediately.</p>
+                </div>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn--primary" onclick="ComponentBuilder.saveEditUser()">
+                    Save Changes
+                </button>
+                <button class="btn btn--secondary" onclick="ComponentBuilder.closeEditUserModal()">
+                    Cancel
+                </button>
+            </div>
+        `;
+        
+        overlay.appendChild(modal);
+        document.body.appendChild(overlay);
+        
+        // Add emoji picker after modal is in DOM
+        setTimeout(() => {
+            const emojiSlot = document.getElementById('editUserEmojiPicker');
+            if (emojiSlot) {
+                const emojiPicker = this.createModalEmojiPicker(
+                    this.selectedUserEmoji,
+                    (emoji) => {
+                        this.selectedUserEmoji = emoji;
+                        const iconDisplay = document.getElementById('editUserIcon');
+                        if (iconDisplay) {
+                            iconDisplay.textContent = emoji;
+                        }
+                    },
+                    'editUserEmojiFilter'
+                );
+                emojiSlot.appendChild(emojiPicker);
+            }
+            
+            // Focus on name input and select text for easy editing
+            const nameInput = document.getElementById('editUserName');
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.select();
+                
+                // Allow Enter key to submit
+                nameInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        this.saveEditUser();
+                    }
+                });
+            }
+        }, 100);
+    }
+
+    // NEW: Save edited user data
+    static saveEditUser() {
+        console.log('saveEditUser called');
+        const nameInput = document.getElementById('editUserName');
+        if (!nameInput || !this.editingUser) {
+            console.error('Name input or editing user not found');
+            return;
+        }
+        
+        const newName = nameInput.value.trim();
+        const newIcon = this.selectedUserEmoji || '👤';
+        console.log('Updating user:', this.editingUser.id, 'with name:', newName, 'and icon:', newIcon);
+        
+        if (!newName) {
+            // Show error feedback
+            nameInput.classList.add('error');
+            nameInput.placeholder = 'Name is required';
+            nameInput.focus();
+            return;
+        }
+        
+        if (newName.length > 20) {
+            nameInput.classList.add('error');
+            nameInput.value = newName.substring(0, 20);
+            return;
+        }
+        
+        try {
+            // Update the user through AppState
+            if (window.appInstance && window.appInstance.appState) {
+                console.log('Updating user through appState');
+                
+                // Update user data
+                window.appInstance.appState.updateUser(this.editingUser.id, {
+                    name: newName,
+                    icon: newIcon
+                });
+                
+                // Close modal
+                this.closeEditUserModal();
+                
+                // Show success feedback
+                this.showEditUserSuccess(newName, newIcon);
+                
+                // Refresh the drawer and UI
+                window.appInstance.populateDrawerSelects();
+                window.appInstance.render();
+                
+                // Update title if we edited the current user
+                const currentUser = window.appInstance.appState.getCurrentUser();
+                if (currentUser.id === this.editingUser.id) {
+                    window.appInstance.initializeTitleSubtitle();
+                }
+            } else {
+                console.error('App instance not found');
+            }
+        } catch (error) {
+            console.error('Error updating user:', error);
+            // Show error
+            nameInput.classList.add('error');
+            nameInput.placeholder = error.message || 'Error updating user';
+        }
+    }
+
+    // NEW: Close edit user modal
+    static closeEditUserModal() {
+        const modal = document.getElementById('editUserModal');
+        if (modal) {
+            modal.style.opacity = '0';
+            setTimeout(() => {
+                modal.remove();
+                // Clean up stored data
+                this.editingUser = null;
+                this.selectedUserEmoji = null;
+            }, 200);
+        }
+    }
+
+    // NEW: Show success feedback for edit user
+    static showEditUserSuccess(name, icon) {
+        const toast = this.createElement('div', 'success-toast edit-user-toast');
+        toast.innerHTML = `
+            <div class="success-toast__content">
+                <span class="success-icon">✓</span>
+                <span>Updated ${name}!</span>
                 <span class="user-success-icon">${icon}</span>
             </div>
         `;
@@ -1471,7 +1685,7 @@ class ActivityCard {
     }
 
     getDisplayIndex() {
-        const visibleActivities = this.appState.activities.filter(a => a.visible);
+        const visibleActivities = this.appState.getCurrentActivities().filter(a => a.visible);
         return visibleActivities.indexOf(this.activity);
     }
 
@@ -1507,7 +1721,7 @@ class ActivityCard {
 
         if (!wasCompleted) {
             // Check if all visible cards are now completed
-            const visibleActivities = this.appState.activities.filter(a => a.visible);
+            const visibleActivities = this.appState.getCurrentActivities().filter(a => a.visible);
             const allCards = document.querySelectorAll('.card:not(.card--hidden)');
             const completedCards = document.querySelectorAll('.card--completed:not(.card--hidden)');
             
