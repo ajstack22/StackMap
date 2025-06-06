@@ -748,16 +748,30 @@ class StackMapApp {
         // Create the dropdown content (no header needed - user can see trigger above)
         dropdown.innerHTML = `
             <div class="native-dropdown-options">
-                ${options.map(option => `
-                    <button class="native-dropdown-option ${option.selected ? 'selected' : ''}" 
-                            data-value="${option.id}"
-                            role="option"
-                            aria-selected="${option.selected}">
-                        <span class="native-dropdown-option-icon">${option.icon}</span>
-                        <span class="native-dropdown-option-text">${option.text}</span>
-                        ${option.selected ? '<span class="native-dropdown-check">✓</span>' : ''}
-                    </button>
-                `).join('')}
+                ${options.map(option => {
+                    const optionClass = `native-dropdown-option ${option.selected ? 'selected' : ''} ${option.type ? `native-dropdown-option--${option.type}` : ''}`;
+                    
+                    // Handle different icon types
+                    let iconContent = '';
+                    if (option.type === 'action') {
+                        // Use Material Icons for actions
+                        iconContent = `<span class="material-icons">${option.icon}</span>`;
+                    } else {
+                        // Use emoji/text for users and day options
+                        iconContent = option.icon;
+                    }
+                    
+                    return `
+                        <button class="${optionClass}" 
+                                data-value="${option.id}"
+                                role="option"
+                                aria-selected="${option.selected}">
+                            <span class="native-dropdown-option-icon">${iconContent}</span>
+                            <span class="native-dropdown-option-text">${option.text}</span>
+                            ${option.selected ? '<span class="native-dropdown-check">✓</span>' : ''}
+                        </button>
+                    `;
+                }).join('')}
             </div>
         `;
         

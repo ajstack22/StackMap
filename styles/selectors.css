@@ -855,6 +855,62 @@
     }
 }
 
+/* ===== DESKTOP DROPDOWN HIERARCHY STYLES ===== */
+
+/* User options - prominent styling for desktop */
+.native-dropdown-option--user {
+    font-weight: 600;
+    font-size: 0.95rem;
+    background: white;
+    border-bottom: 1px solid #f0f0f0;
+    min-height: 48px;
+}
+
+.native-dropdown-option--user:hover {
+    background: #f8f9fa;
+}
+
+.native-dropdown-option--user.selected {
+    background: rgba(102, 126, 234, 0.15);
+    color: var(--primary-color);
+    font-weight: 700;
+}
+
+.native-dropdown-option--user .native-dropdown-option-icon {
+    font-size: 20px;
+    min-width: 20px;
+}
+
+/* Action options - sub-option styling for desktop */
+.native-dropdown-option--action {
+    font-size: 0.85rem;
+    color: #666;
+    background: #fafafa;
+    margin-left: 8px;
+    margin-right: 8px;
+    border-radius: 6px;
+    margin-bottom: 1px;
+    font-weight: 500;
+    min-height: 40px;
+    padding: 8px 12px;
+    gap: 10px;
+}
+
+.native-dropdown-option--action:hover {
+    background: #f0f0f0;
+    color: #333;
+}
+
+.native-dropdown-option--action .native-dropdown-option-icon {
+    font-size: 16px;
+    color: #888;
+    min-width: 16px;
+}
+
+.native-dropdown-option--action .native-dropdown-option-icon .material-icons {
+    font-size: 16px;
+}
+
 @media (prefers-contrast: high) {
     .native-dropdown {
         border-width: 2px;
