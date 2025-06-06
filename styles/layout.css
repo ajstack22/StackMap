@@ -150,10 +150,14 @@ body.viewing-tomorrow .card {
     top: 0;
     left: 0;
     right: 0;
+    height: 150px; /* 50% larger (100px * 1.5) */
     z-index: 1001;
     border-radius: 0 0 32px 32px; /* Smoother arc */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: visible; /* Ensure handle isn't clipped */
+    /* Add gradient background */
+    background: var(--background-gradient-start);
+    background-image: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
     /* Shadow when drawer is closed */
     box-shadow: 
         0 0 40px rgba(0, 0, 0, 0.12), /* Soft outer glow */
@@ -161,9 +165,13 @@ body.viewing-tomorrow .card {
         0 2px 8px rgba(0, 0, 0, 0.04); /* Close shadow */
 }
 
-/* Remove shadow when drawer opens - will be added back in draggable-drawer.css */
+/* Header wrapper when drawer is open */
 .header-wrapper.drawer-open {
-    box-shadow: none;
+    height: 285px; /* 50% larger (190px * 1.5) */
+    box-shadow: 
+        0 0 50px rgba(0, 0, 0, 0.15), /* Soft outer glow */
+        0 12px 40px rgba(0, 0, 0, 0.10), /* Main shadow */
+        0 4px 12px rgba(0, 0, 0, 0.05); /* Close shadow */
 }
 
 /* ===== UNIFIED APP HEADER ===== */
@@ -174,8 +182,7 @@ body.viewing-tomorrow .card {
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
-    background: var(--background-gradient-start) !important;
-    background-image: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+    background: transparent !important; /* Let wrapper handle gradient */
     text-align: center !important;
     padding: 20px 10px 40px !important; /* Extra bottom padding for click area */
     z-index: 1 !important;
@@ -198,39 +205,39 @@ body.viewing-tomorrow .card {
     border-radius: 0 !important; /* Square bottom when drawer is open */
 }
 
-/* Header slot effect for cards - inverted shadow */
-.app-header:not(.drawer-open)::before {
-    content: '';
-    position: absolute;
-    bottom: -12px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 95%; /* 5% fade on each side */
-    height: 24px;
-    background: linear-gradient(
-        to top,
-        rgba(0, 0, 0, 0.12) 0%,
-        rgba(0, 0, 0, 0.06) 50%,
-        transparent 100%
-    );
-    border-radius: 50% / 100%;
-    pointer-events: none;
-    z-index: -1;
+/* Header slot effect removed for clean drawer transition */
+
+/* Body padding for fixed header */
+body {
+    padding-top: 70px !important; /* Moved up 30px closer to header */
+    transition: padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Body padding for fixed header - reduced so cards come up higher */
-body {
-    padding-top: 85px !important; /* Adequate padding for fixed header */
+/* Increase padding when drawer is open */
+body.drawer-active {
+    padding-top: 170px !important; /* Moved up 30px closer to header when open */
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
+    .header-wrapper {
+        height: 120px; /* 50% larger (80px * 1.5) */
+    }
+    
+    .header-wrapper.drawer-open {
+        height: 360px; /* 50% larger (240px * 1.5) */
+    }
+    
     .app-header {
         padding: 16px 10px 45px !important; /* More bottom padding for handle */
     }
     
     body {
-        padding-top: 50px !important; /* Reduced by 30px for mobile */
+        padding-top: 35px !important; /* Moved up another 20px on mobile */
+    }
+    
+    body.drawer-active {
+        padding-top: 130px !important; /* Moved up another 20px when open on mobile */
     }
 }
 
@@ -318,7 +325,7 @@ body {
     background: transparent; /* No background */
     backdrop-filter: none;
     -webkit-backdrop-filter: none;
-    transition: all 0.3s ease;
+    transition: all 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
 }
 
 .stackmap-logo:hover {
@@ -361,6 +368,7 @@ body {
     background-clip: text;
     text-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
     letter-spacing: -0.5px;
+    margin-top: -15px; /* Move title up by 15px */
 }
 
 /* StackMap Subtitle */
@@ -375,6 +383,7 @@ body {
     text-align: center;
     min-width: 200px;
     outline: none;
+    margin-top: -15px; /* Move subtitle up by 15px */
 }
 
 .stackmap-subtitle:hover {
@@ -727,8 +736,8 @@ body.grownup-mode .title:hover {
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
     position: fixed;
-    width: 56px;
-    height: 56px; /* Perfect circle */
+    width: 92px; /* 20% bigger: 77px * 1.2 = 92px */
+    height: 92px; /* 20% bigger: 77px * 1.2 = 92px */
     border-radius: 50%; /* Perfect circle */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1003; /* Above header */
@@ -749,8 +758,8 @@ body.grownup-mode .title:hover {
 
 .btn--floating .material-icons {
     color: var(--primary-color) !important; /* Themed icons */
-    font-weight: 700 !important; /* Bold icons */
-    font-size: 24px !important;
+    font-weight: 900 !important; /* Bolder icons */
+    font-size: 29px !important; /* 20% bigger: 24px * 1.2 = 29px */
 }
 
 .btn--floating:hover {
@@ -780,14 +789,14 @@ body.grownup-mode .title:hover {
 .btn--preferences {
     left: 20px;
     position: fixed !important;
-    top: 20px; /* Positioned in header */
+    top: 45px; /* Aligned with title/subtitle area */
     z-index: 1010 !important; /* Above header and drawer */
 }
 
 .btn--grownup-mode {
     right: 20px;
     position: fixed !important;
-    top: 20px; /* Positioned in header */
+    top: 45px; /* Aligned with title/subtitle area */
     z-index: 1010 !important; /* Above header and drawer */
 }
 
@@ -813,18 +822,18 @@ body.grownup-mode .title:hover {
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
 @media (max-width: 768px) {
     .btn--floating {
-        width: 48px !important;
-        height: 48px !important; /* Perfect circle */
+        width: 79px !important; /* 20% bigger: 66px * 1.2 = 79px */
+        height: 79px !important; /* 20% bigger: 66px * 1.2 = 79px */
     }
     
     .btn--preferences {
         left: 15px !important;
-        top: 25px !important; /* Adjust for fixed header */
+        top: 35px !important; /* Aligned with title/subtitle area on mobile */
     }
     
     .btn--grownup-mode {
         right: 15px !important;
-        top: 25px !important; /* Adjust for fixed header */
+        top: 35px !important; /* Aligned with title/subtitle area on mobile */
     }
     
     .preferences-panel {
@@ -878,8 +887,8 @@ body.grownup-mode .title:hover {
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
     position: fixed;
-    width: 56px;
-    height: 56px; /* Perfect circle */
+    width: 92px; /* 20% bigger: 77px * 1.2 = 92px */
+    height: 92px; /* 20% bigger: 77px * 1.2 = 92px */
     border-radius: 50%; /* Perfect circle */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1003; /* Above header */
@@ -900,8 +909,8 @@ body.grownup-mode .title:hover {
 
 .btn--floating .material-icons {
     color: var(--primary-color) !important; /* Themed icons */
-    font-weight: 700 !important; /* Bold icons */
-    font-size: 24px !important;
+    font-weight: 900 !important; /* Bolder icons */
+    font-size: 29px !important; /* 20% bigger: 24px * 1.2 = 29px */
 }
 
 .btn--floating:hover {
@@ -928,13 +937,13 @@ body.grownup-mode .title:hover {
 }
 
 .btn--preferences {
-    top: 25px;
+    top: 45px; /* Aligned with title/subtitle area */
     left: 20px;
     position: fixed !important;
 }
 
 .btn--grownup-mode {
-    top: 25px;
+    top: 45px; /* Aligned with title/subtitle area */
     right: 20px;
     position: fixed !important;
 }
