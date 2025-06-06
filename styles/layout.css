@@ -193,7 +193,7 @@ body.viewing-tomorrow .card {
     right: 0;
     height: 150px; /* 50% larger (100px * 1.5) */
     z-index: 1001 !important; /* SAFARI FIX: Force z-index */
-    border-radius: 0 0 32px 32px; /* Smoother arc */
+    border-radius: 0; /* STRAIGHT: Clean straight line across all devices */
     /* ENHANCED: Smooth shadow transitions with Material Design easing */
     transition: 
         all 0.3s cubic-bezier(0.4, 0, 0.2, 1),
@@ -246,7 +246,7 @@ body.viewing-tomorrow .card {
 /* Dedicated shadow layer - sits between header (1001) and cards (1) */
 .header-shadow {
     position: fixed;
-    top: 148px; /* Start 2px higher to align with rounded corners */
+    top: 148px; /* Position at bottom edge of header wrapper */
     left: 20px; /* Inset from edges to avoid screen-edge artifacts */
     right: 20px; /* Inset from edges to avoid screen-edge artifacts */
     height: 12px;
@@ -276,7 +276,7 @@ body.drawer-active .header-shadow {
 /* Mobile shadow positioning */
 @media (max-width: 768px) {
     .header-shadow {
-        top: 118px; /* Start 2px higher to align with rounded corners */
+        top: 118px; /* Position at bottom edge of mobile header wrapper */
     }
     
     body.drawer-active .header-shadow {
