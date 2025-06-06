@@ -4,7 +4,7 @@ class AppState {
     constructor() {
         this.activities = [];
         this.settings = {
-            title: 'My StackMap',
+            title: 'StackMap User',
             subtitle: 'Routine Ready',
             isDefaultTitle: true,
             backgroundColor: CONFIG.DEFAULT_COLOR,
@@ -27,11 +27,11 @@ class AppState {
             profiles: {
                 [CONFIG.DEFAULT_USER_ID]: {
                     id: CONFIG.DEFAULT_USER_ID,
-                    name: 'My StackMap',
+                    name: 'StackMap User',
                     activities: [],
                     tomorrowActivities: [], // Story 4: Tomorrow's activities
                     settings: {
-                        title: 'My StackMap',
+                        title: 'StackMap User',
                         subtitle: 'Routine Ready',
                         isDefaultTitle: true,
                         backgroundColor: CONFIG.DEFAULT_COLOR,
@@ -504,7 +504,7 @@ class AppState {
     // === SETTINGS MANAGEMENT ===
     updateTitle(title) {
         this.settings.title = title;
-        this.settings.isDefaultTitle = (title === 'My StackMap');
+        this.settings.isDefaultTitle = (title === 'StackMap User');
         this._triggerSave();
     }
 
@@ -613,7 +613,7 @@ class AppState {
             }));
             
             let settings = {
-                title: 'My StackMap',
+                title: 'StackMap User',
                 subtitle: 'Routine Ready',
                 isDefaultTitle: true,
                 backgroundColor: CONFIG.DEFAULT_COLOR,
@@ -636,7 +636,7 @@ class AppState {
             // Migrate to default user with icon
             this.users.profiles[CONFIG.DEFAULT_USER_ID] = {
                 id: CONFIG.DEFAULT_USER_ID,
-                name: settings.title || 'My StackMap',
+                name: settings.title || 'StackMap User',
                 icon: '👤', // NEW: Default icon for legacy imports
                 activities: activities,
                 tomorrowActivities: [], // Story 4: Initialize empty tomorrow

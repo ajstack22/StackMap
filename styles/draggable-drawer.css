@@ -185,7 +185,7 @@
 }
 
 .drawer-extension.open {
-    max-height: 285px; /* Match expanded header height */
+    max-height: 220px; /* Match reduced header height */
     /* No styling - just a content container */
     overflow: visible; /* Show content when open */
 }
@@ -624,7 +624,7 @@ body.drawer-active {
     }
     
     .drawer-extension.open {
-        max-height: 360px; /* Match mobile expanded header height */
+        max-height: 260px; /* Match reduced mobile header height */
     }
 }
 
@@ -633,7 +633,7 @@ body.drawer-active {
 /* Show drawer is locked open in edit mode */
 .drawer-extension.edit-mode-locked {
     border-left: 3px solid var(--primary-color);
-    background: rgba(255, 255, 255, 0.98); /* Slightly more opaque */
+    /* Removed white background - use transparent/gradient background */
 }
 
 /* Edit mode locked handle styling */

@@ -155,9 +155,9 @@ body.viewing-tomorrow .card {
     border-radius: 0 0 32px 32px; /* Smoother arc */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: visible; /* Ensure handle isn't clipped */
-    /* Add gradient background */
+    /* Add down gradient background */
     background: var(--background-gradient-start);
-    background-image: linear-gradient(135deg, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
+    background-image: linear-gradient(to bottom, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
     /* Shadow when drawer is closed */
     box-shadow: 
         0 0 40px rgba(0, 0, 0, 0.12), /* Soft outer glow */
@@ -167,7 +167,7 @@ body.viewing-tomorrow .card {
 
 /* Header wrapper when drawer is open */
 .header-wrapper.drawer-open {
-    height: 285px; /* 50% larger (190px * 1.5) */
+    height: 220px; /* Reduced from 285px for better card interaction */
     box-shadow: 
         0 0 50px rgba(0, 0, 0, 0.15), /* Soft outer glow */
         0 12px 40px rgba(0, 0, 0, 0.10), /* Main shadow */
@@ -215,7 +215,7 @@ body {
 
 /* Increase padding when drawer is open */
 body.drawer-active {
-    padding-top: 170px !important; /* Moved up 30px closer to header when open */
+    padding-top: 140px !important; /* Reduced for shorter drawer */
 }
 
 /* Mobile adjustments */
@@ -225,7 +225,7 @@ body.drawer-active {
     }
     
     .header-wrapper.drawer-open {
-        height: 360px; /* 50% larger (240px * 1.5) */
+        height: 260px; /* Reduced from 360px for better mobile interaction */
     }
     
     .app-header {
@@ -237,7 +237,7 @@ body.drawer-active {
     }
     
     body.drawer-active {
-        padding-top: 130px !important; /* Moved up another 20px when open on mobile */
+        padding-top: 110px !important; /* Reduced for shorter mobile drawer */
     }
 }
 
