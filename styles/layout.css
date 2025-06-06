@@ -4,19 +4,60 @@
 /* ===== MAIN CONTAINER LAYOUT ===== */
 .main-container {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: var(--card-gap);
-    max-width: var(--container-max-width);
-    width: 100%;
     margin: 0 auto; /* Center the container */
     padding: 20px;
+    
+    /* CRITICAL FIX: Responsive grid that actually works */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    max-width: 1600px; /* Wider to truly accommodate 3 columns */
+    width: calc(100% - 40px);
+}
+
+/* Force exactly 3 columns on large screens */
+@media (min-width: 1200px) {
+    .main-container {
+        grid-template-columns: repeat(3, 1fr) !important;
+        max-width: 1600px !important;
+        gap: 24px !important; /* Slightly larger gap for 3 columns */
+    }
+}
+
+/* ENHANCED: Card sizing for 3-column layout */
+.card {
+    min-width: 280px; /* Minimum width for readability */
+    max-width: 400px; /* Maximum to prevent too wide */
+}
+
+/* ENHANCED: Management cards span full width in 3-column mode */
+.management-card, .edit-info-card {
+    grid-column: 1 / -1; /* Span all columns */
+    max-width: none;
+}
+
+/* ENHANCED: Responsive breakpoints for 3-column layout */
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+        max-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr; /* Single column on mobile */
+        max-width: 100%;
+        width: calc(100% - 20px); /* Smaller margins on mobile */
+        padding: 10px;
+    }
 }
 
 /* ===== STORY 4: DAY SELECTOR LAYOUT ===== */
 .day-selector-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 12px;
+    margin-bottom: 20px; /* INCREASED from 12px for better spacing */
+    margin-top: 18px; /* NEW: Add space from subtitle */
     min-height: 44px; /* Reduced container height */
     width: 100%; /* Ensure full width */
 }
@@ -153,25 +194,23 @@ body.viewing-tomorrow .card {
     height: 150px; /* 50% larger (100px * 1.5) */
     z-index: 1001;
     border-radius: 0 0 32px 32px; /* Smoother arc */
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* ENHANCED: Smooth shadow transitions with Material Design easing */
+    transition: 
+        all 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     overflow: visible; /* Ensure handle isn't clipped */
-    /* Add down gradient background */
+    /* GENTLE GRADIENT: Dynamically updated by theme system - much more subtle than before */
     background: var(--background-gradient-start);
-    background-image: linear-gradient(to bottom, var(--background-gradient-start) 0%, var(--background-gradient-end) 100%);
-    /* Shadow when drawer is closed */
-    box-shadow: 
-        0 0 40px rgba(0, 0, 0, 0.12), /* Soft outer glow */
-        0 8px 32px rgba(0, 0, 0, 0.08), /* Main shadow */
-        0 2px 8px rgba(0, 0, 0, 0.04); /* Close shadow */
+    /* Note: Gradient will be dynamically set by applyTheme() in state.js for any color */
+    /* No shadow - let drawer extension handle shadows */
+    box-shadow: none;
 }
 
 /* Header wrapper when drawer is open */
 .header-wrapper.drawer-open {
-    height: 220px; /* Reduced from 285px for better card interaction */
-    box-shadow: 
-        0 0 50px rgba(0, 0, 0, 0.15), /* Soft outer glow */
-        0 12px 40px rgba(0, 0, 0, 0.10), /* Main shadow */
-        0 4px 12px rgba(0, 0, 0, 0.05); /* Close shadow */
+    height: 200px; /* FURTHER REDUCED: Tighter spacing to header edge */
+    /* No shadow - let drawer extension handle shadows */
+    box-shadow: none;
 }
 
 /* ===== UNIFIED APP HEADER ===== */
@@ -182,11 +221,12 @@ body.viewing-tomorrow .card {
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
-    background: transparent !important; /* Let wrapper handle gradient */
+    background: var(--background-gradient-start) !important; /* Use theme background */
     text-align: center !important;
     padding: 20px 10px 40px !important; /* Extra bottom padding for click area */
     z-index: 1 !important;
-    box-shadow: none !important; /* Shadow handled by wrapper */
+    /* Simple straight shadow */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
     border: none !important;
     margin: 0 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
@@ -196,36 +236,83 @@ body.viewing-tomorrow .card {
     box-sizing: border-box !important;
     display: flex !important;
     overflow: visible !important; /* Allow drawer to extend */
-    border-radius: 0 !important; /* No bottom radius on header */
+    border-radius: 0 !important; /* Straight across shelf */
 }
 
-/* Remove shadow from header when drawer opens - drawer will handle it */
+/* Dedicated shadow layer - sits between header (1001) and cards (1) */
+.header-shadow {
+    position: fixed;
+    top: 148px; /* Start 2px higher to align with rounded corners */
+    left: 20px; /* Inset from edges to avoid screen-edge artifacts */
+    right: 20px; /* Inset from edges to avoid screen-edge artifacts */
+    height: 12px;
+    z-index: 500; /* Between header (1001) and cards (1) */
+    background: linear-gradient(
+        to bottom, 
+        rgba(0, 0, 0, 0.3) 0%, 
+        rgba(0, 0, 0, 0.15) 50%, 
+        rgba(0, 0, 0, 0) 100%
+    );
+    border-radius: 0; /* Straight shadow - no curves */
+    pointer-events: none; /* Don't block interactions */
+    transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Match drawer timing */
+}
+
+/* Keep shadow always visible at fixed position */
+.header-shadow {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Desktop shadow positioning when drawer opens */
+body.drawer-active .header-shadow {
+    top: 198px; /* ADJUSTED: Match new drawer height (200px - 2px) */
+}
+
+/* Mobile shadow positioning */
+@media (max-width: 768px) {
+    .header-shadow {
+        top: 118px; /* Start 2px higher to align with rounded corners */
+    }
+    
+    body.drawer-active .header-shadow {
+        top: 178px; /* ADJUSTED: Match new mobile drawer height (180px - 2px) */
+    }
+}
+
+/* Same shadow when drawer is extended */
 .app-header.drawer-open {
-    box-shadow: none !important;
-    border-radius: 0 !important; /* Square bottom when drawer is open */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 0 !important; /* Keep straight when extended */
 }
 
 /* Header slot effect removed for clean drawer transition */
 
-/* Body padding for fixed header */
+/* Body padding - cards stay in fixed position */
 body {
-    padding-top: 70px !important; /* Moved up 30px closer to header */
-    transition: padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding-top: 35px !important; /* Fixed position - cards don't move */
+    padding-bottom: 0 !important; /* Default: no bottom padding when closed */
+    transition: padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Increase padding when drawer is open */
+/* Cards stay in same position when drawer opens */
 body.drawer-active {
-    padding-top: 140px !important; /* Reduced for shorter drawer */
+    padding-top: 85px !important; /* MINIMAL: Just enough to clear the drawer (35px + 50px clearance) */
+    padding-bottom: 0 !important; /* Normal bottom padding */
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .header-wrapper {
         height: 120px; /* 50% larger (80px * 1.5) */
+        /* No shadow - let drawer extension handle shadows */
+        box-shadow: none;
     }
     
     .header-wrapper.drawer-open {
-        height: 260px; /* Reduced from 360px for better mobile interaction */
+        height: 180px; /* FURTHER REDUCED: Tighter mobile spacing */
+        /* No shadow - let drawer extension handle shadows */
+        box-shadow: none;
     }
     
     .app-header {
@@ -233,11 +320,13 @@ body.drawer-active {
     }
     
     body {
-        padding-top: 35px !important; /* Moved up another 20px on mobile */
+        padding-top: 25px !important; /* Fixed position - mobile cards don't move */
+        padding-bottom: 0 !important; /* Default: no bottom padding when closed */
     }
     
     body.drawer-active {
-        padding-top: 110px !important; /* Reduced for shorter mobile drawer */
+        padding-top: 75px !important; /* MINIMAL: Just enough to clear mobile drawer (25px + 50px clearance) */
+        padding-bottom: 0 !important; /* Normal bottom padding */
     }
 }
 
@@ -384,6 +473,10 @@ body.drawer-active {
     min-width: 200px;
     outline: none;
     margin-top: -15px; /* Move subtitle up by 15px */
+    margin-bottom: 8px; /* NEW: Add space before day selector */
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
 }
 
 .stackmap-subtitle:hover {
@@ -736,8 +829,8 @@ body.grownup-mode .title:hover {
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
     position: fixed;
-    width: 92px; /* 20% bigger: 77px * 1.2 = 92px */
-    height: 92px; /* 20% bigger: 77px * 1.2 = 92px */
+    width: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
+    height: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
     border-radius: 50%; /* Perfect circle */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1003; /* Above header */
@@ -759,7 +852,7 @@ body.grownup-mode .title:hover {
 .btn--floating .material-icons {
     color: var(--primary-color) !important; /* Themed icons */
     font-weight: 900 !important; /* Bolder icons */
-    font-size: 29px !important; /* 20% bigger: 24px * 1.2 = 29px */
+    font-size: 43px !important; /* CRITICAL FIX: 20% larger (36px × 1.2 = 43px) */
 }
 
 .btn--floating:hover {
@@ -822,8 +915,12 @@ body.grownup-mode .title:hover {
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
 @media (max-width: 768px) {
     .btn--floating {
-        width: 79px !important; /* 20% bigger: 66px * 1.2 = 79px */
-        height: 79px !important; /* 20% bigger: 66px * 1.2 = 79px */
+        width: 84px !important; /* ENHANCED: Slightly larger for mobile accessibility */
+        height: 84px !important; /* ENHANCED: Slightly larger for mobile accessibility */
+    }
+    
+    .btn--floating .material-icons {
+        font-size: 32px !important; /* ENHANCED: Proportionally larger on mobile */
     }
     
     .btn--preferences {
@@ -887,8 +984,8 @@ body.grownup-mode .title:hover {
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
     position: fixed;
-    width: 92px; /* 20% bigger: 77px * 1.2 = 92px */
-    height: 92px; /* 20% bigger: 77px * 1.2 = 92px */
+    width: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
+    height: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
     border-radius: 50%; /* Perfect circle */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1003; /* Above header */
@@ -910,7 +1007,7 @@ body.grownup-mode .title:hover {
 .btn--floating .material-icons {
     color: var(--primary-color) !important; /* Themed icons */
     font-weight: 900 !important; /* Bolder icons */
-    font-size: 29px !important; /* 20% bigger: 24px * 1.2 = 29px */
+    font-size: 43px !important; /* CRITICAL FIX: 20% larger (36px × 1.2 = 43px) */
 }
 
 .btn--floating:hover {
@@ -937,15 +1034,17 @@ body.grownup-mode .title:hover {
 }
 
 .btn--preferences {
-    top: 45px; /* Aligned with title/subtitle area */
+    top: 60px !important; /* CRITICAL FIX: Centered on drawer area */
     left: 20px;
     position: fixed !important;
+    z-index: 1010 !important;
 }
 
 .btn--grownup-mode {
-    top: 45px; /* Aligned with title/subtitle area */
+    top: 60px !important; /* CRITICAL FIX: Centered on drawer area */
     right: 20px;
     position: fixed !important;
+    z-index: 1010 !important;
 }
 
 /* ===== ADD USER BUTTON ===== */

@@ -7,6 +7,7 @@
     justify-content: center;
     gap: 12px;
     margin-bottom: 5px; /* Move logo and title up 3px (8px - 3px) */
+    position: relative; /* Enable positioning context for centering */
 }
 
 .stackmap-logo {
@@ -47,29 +48,43 @@
 }
 
 .subtitle {
-    font-size: 0.85rem;
+    font-size: 1rem; /* Increased from 0.85rem to make bigger */
     color: rgba(255, 255, 255, 0.8);
-    margin: 16px 0 0 0; /* Move down 5 more px (11px + 5px) */
+    margin: 24px 0 0 0; /* INCREASED: More breathing room from title (16px → 24px) */
     padding: 0;
     line-height: 1.2;
     outline: none;
     transition: all 0.2s ease;
-    transform: translateX(-8px); /* Move 8px left to center properly */
+    transform: translateX(-27px); /* Move 27px left to perfectly center (-8px + -19px offset fix) */
 }
 
-/* Edit mode styles for title/subtitle */
+/* CRITICAL UX FIX: Enhanced edit mode styles for title/subtitle */
+.grownup-mode .app-header .title,
+.grownup-mode .app-header .subtitle {
+    transition: all 0.2s ease;
+    border-radius: 6px;
+    padding: 2px 8px;
+}
+
+.grownup-mode .app-header .title:hover,
+.grownup-mode .app-header .subtitle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+}
+
 .grownup-mode .app-header .title[contenteditable="true"],
 .grownup-mode .app-header .subtitle[contenteditable="true"] {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.15);
     border-radius: 8px;
     padding: 4px 12px;
     cursor: text;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
 }
 
 .grownup-mode .app-header .title:focus,
 .grownup-mode .app-header .subtitle:focus {
     background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
 
 /* Additional header styles for drawer */
@@ -91,9 +106,9 @@
 .drawer-handle {
     position: absolute !important;
     bottom: 15px !important; /* Down 5px on desktop closed */
-    left: 0 !important; /* Full width touch target */
-    right: 0 !important;
-    width: 100% !important; /* Full width for easy touching */
+    left: 50% !important; /* Center horizontally */
+    transform: translateX(-50%) !important; /* Perfect center alignment */
+    width: 300px !important; /* Centered touch area matching content width */
     height: 32px !important; /* Larger touch target height */
     cursor: pointer;
     z-index: 1005; /* Above drawer extension */
@@ -148,9 +163,11 @@
     }
 }
 
-/* Desktop open state - move handle up 15px from new closed position */
+/* Desktop open state - maintain same distance from shadow bottom */
 .app-header.drawer-open .drawer-handle {
-    bottom: 30px !important; /* 15px higher than closed (15px + 15px = 30px) */
+    bottom: 15px !important; /* Same distance from shadow as closed state */
+    left: 50% !important; /* Maintain center alignment when open */
+    transform: translateX(-50%) !important; /* Maintain perfect center alignment */
 }
 
 .drawer-handle:hover::after {
@@ -182,12 +199,22 @@
     background: transparent; /* NO background - let header gradient show through */
     /* No border, no shadow, no styling - invisible container */
     z-index: 1; /* Below handle */
+    /* CRITICAL FIX: Remove backdrop filters that cause artifacts */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    /* Ensure clean borders */
+    border: none !important;
+    border-radius: 0 !important;
 }
 
 .drawer-extension.open {
-    max-height: 220px; /* Match reduced header height */
+    max-height: 245px; /* Extended by 25px to contain drag bar */
     /* No styling - just a content container */
     overflow: visible; /* Show content when open */
+    /* CRITICAL FIX: Ensure clean rendering when open */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
 }
 
 /* Header wrapper styling handled in layout.css */
@@ -198,13 +225,14 @@
 .drawer-dropdowns {
     display: flex;
     gap: 24px; /* More space between fields */
-    padding: 20px 28px 30px; /* Tighter spacing - reduced from 32px to 20px top */
+    padding: 8px 28px 15px; /* MATCHED: Same buffer as desktop handle (15px) */
     justify-content: center;
     max-width: 620px; /* Wider to accommodate 75% larger dropdowns */
     margin-left: auto;
     margin-right: auto;
     flex-wrap: wrap; /* Allow wrapping on very small screens */
-    margin-top: -10px; /* Pull closer to header content */
+    margin-top: -5px; /* MINIMAL: Very close to header edge */
+    align-items: flex-start; /* ENSURE: Top alignment for dropdowns */
 }
 
 /* Dropdown Group - Standardized dimensions with animations */
@@ -212,7 +240,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* More space between label and dropdown */
+    gap: 6px; /* REDUCED: Smaller gap since first group has no label */
     min-width: 0; /* Allow flex items to shrink */
     width: 280px; /* 75% wider (160px * 1.75) */
     max-width: 280px; /* Enforce same size */
@@ -223,13 +251,13 @@
     will-change: transform, opacity; /* Performance optimization */
 }
 
-/* Staggered animation delays for opening */
+/* Synchronized animation - no delays to match shade timing */
 .drawer-extension.open .dropdown-group:nth-child(1) {
-    transition-delay: 0.1s; /* User dropdown first */
+    transition-delay: 0s; /* User dropdown synced with shade */
 }
 
 .drawer-extension.open .dropdown-group:nth-child(2) {
-    transition-delay: 0.2s; /* Day dropdown second */
+    transition-delay: 0s; /* Day dropdown synced with shade */
 }
 
 /* When drawer is open, dropdowns animate in */
@@ -237,6 +265,12 @@
     opacity: 1;
     transform: translateY(0);
     will-change: auto; /* Remove performance hint after animation */
+    /* CRITICAL FIX: Use GPU acceleration properly to prevent artifacts */
+    transform: translateZ(0) translateY(0);
+    -webkit-transform: translateZ(0) translateY(0);
+    /* Ensure proper rendering */
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 
 /* Faster exit animation when closing */
@@ -249,11 +283,12 @@
     font-size: 0.8rem;
     font-weight: 600;
     color: rgba(255, 255, 255, 0.8); /* White text for purple background */
-    text-transform: uppercase;
+    text-transform: none; /* CRITICAL FIX: Remove uppercase to match app typography */
     letter-spacing: 0.8px;
     display: block;
     text-align: center; /* Center the labels */
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Subtle shadow for readability */
+    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important; /* CRITICAL FIX: Font consistency */
 }
 
 /* Drawer Select Dropdowns - Material White Design */
@@ -279,7 +314,12 @@
     text-align: center;
     text-align-last: center;
     min-height: 48px; /* Larger touch target */
+    height: 48px; /* ENFORCE: Consistent height with add-user button */
     box-sizing: border-box;
+    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important; /* CRITICAL FIX: Font consistency */
+    display: flex !important; /* ENSURE: Flexbox for alignment */
+    align-items: center !important; /* ENSURE: Vertical centering */
+    justify-content: center !important; /* ENSURE: Horizontal centering */
 }
 
 .drawer-select:hover {
@@ -327,7 +367,12 @@
     gap: 8px;
     text-align: center;
     min-height: 48px; /* Match select height */
+    height: 48px; /* ENFORCE: Consistent height with select button */
     box-sizing: border-box;
+    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important; /* CRITICAL FIX: Font consistency */
+    display: flex !important; /* ENSURE: Flexbox for alignment */
+    align-items: center !important; /* ENSURE: Vertical centering */
+    justify-content: center !important; /* ENSURE: Horizontal centering */
 }
 
 .drawer-add-user:hover {
@@ -349,23 +394,68 @@
 /* Done Button - REMOVED */
 /* Users now close drawer by clicking handle again or backdrop */
 
-/* Backdrop for drawer */
+/* ENHANCED: Backdrop only during transitions, hidden when fully open */
 .drawer-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    z-index: 998;
-    opacity: 0;
-    pointer-events: none;
+    height: 300px; /* Only cover header area, not full screen */
+    bottom: auto !important; /* Don't extend to bottom */
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    opacity: 0; /* Start hidden */
+    pointer-events: none; /* No interaction when hidden */
+    visibility: hidden; /* Completely hidden */
     transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Visible state - only during transitions */
 .drawer-backdrop.visible {
     opacity: 1;
-    pointer-events: auto;
+    pointer-events: auto; /* Enable clicks when visible */
+    visibility: visible;
+}
+
+/* CRITICAL FIX: Remove backdrop when drawer is fully open */
+body.drawer-active .drawer-backdrop {
+    opacity: 0 !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    transition: opacity 0.2s ease; /* Fast hide when fully open */
+}
+
+/* CRITICAL FIX: Remove backdrop in edit mode */
+body.grownup-mode .drawer-backdrop {
+    display: none !important; /* No backdrop in edit mode */
+}
+
+/* CRITICAL FIX: Ensure main content is always interactable */
+.main-container {
+    pointer-events: auto !important;
+    z-index: 1 !important; /* Ensure it's above backdrop in main area */
+    position: relative;
+}
+
+/* Activity cards must be interactable */
+.card {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 2; /* Above main container */
+}
+
+/* When drawer is open, ensure content below header is still clickable */
+body.drawer-active .main-container {
+    pointer-events: auto !important;
+    overflow: visible !important; /* CRITICAL FIX: Enable scrolling */
+    height: auto !important;
+    max-height: none !important;
+}
+
+body.drawer-active .card {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 2;
 }
 
 /* Ensure drawer doesn't push content */
@@ -374,9 +464,10 @@
     position: relative; /* Ensure stacking context */
 }
 
-/* Body state when drawer is active */
+/* Body state when drawer is active - FIXED: Enable scrolling */
 body.drawer-active {
-    overflow: hidden;
+    overflow: auto !important; /* CRITICAL FIX: Allow scrolling */
+    /* No padding-top change - cards stay in place */
 }
 
 /* Mobile responsive styles */
@@ -400,12 +491,13 @@ body.drawer-active {
     
     .subtitle {
         font-size: 0.8rem;
+        margin-top: 27px; /* INCREASED: Even more space between title and subtitle on mobile */
     }
     
     .drawer-dropdowns {
         flex-direction: column;
         gap: 16px;
-        padding: 0 20px;
+        padding: 8px 20px 20px; /* MATCHED: Same buffer as mobile handle (20px) */
     }
     
     .drawer-select,
@@ -445,7 +537,7 @@ body.drawer-active {
     /* Handle stays at bottom of header on mobile too */
     
     .drawer-dropdowns {
-        padding: 0 16px;
+        padding: 8px 16px 20px; /* MATCHED: Same buffer as mobile handle (20px) */
         gap: 14px;
     }
     
@@ -494,7 +586,7 @@ body.drawer-active {
     position: relative;
     background: white !important;
     border-radius: 16px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* ULTRA-MINIMAL: Professional dropdown shadow */
     max-width: 400px;
     width: 100%;
     max-height: 70vh;
@@ -616,15 +708,33 @@ body.drawer-active {
     /* Handle moves up more on mobile */
     .drawer-handle {
         bottom: 20px !important; /* Down 5px from 25px */
+        width: 280px !important; /* Narrower on mobile but still centered */
+        left: 50% !important; /* Maintain center alignment on mobile */
+        transform: translateX(-50%) !important; /* Perfect center alignment on mobile */
     }
     
-    /* When drawer is open on mobile, move handle down 10px */
+    /* Mobile open state - maintain same distance from shadow bottom */
     .app-header.drawer-open .drawer-handle {
-        bottom: 10px !important; /* Down 5 more px from 15px */
+        bottom: 20px !important; /* Same distance from shadow as mobile closed state */
+        left: 50% !important; /* Maintain center alignment when open on mobile */
+        transform: translateX(-50%) !important; /* Maintain perfect center alignment */
     }
     
     .drawer-extension.open {
-        max-height: 260px; /* Match reduced mobile header height */
+        max-height: 285px; /* Extended by 25px to contain drag bar */
+    }
+    
+    /* CRITICAL FIX: Improve touch scrolling on mobile when drawer is open */
+    body.drawer-active {
+        -webkit-overflow-scrolling: touch; /* Smooth iOS scrolling */
+        overflow-y: auto !important;
+        height: 100vh;
+        /* No padding-top change - mobile cards stay in place */
+    }
+    
+    .main-container {
+        -webkit-overflow-scrolling: touch;
+        overflow: visible !important;
     }
 }
 
@@ -634,34 +744,25 @@ body.drawer-active {
 .drawer-extension.edit-mode-locked {
     border-left: 3px solid var(--primary-color);
     /* Removed white background - use transparent/gradient background */
+    /* CRITICAL FIX: Ensure no background artifacts in edit mode */
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
 }
 
-/* Edit mode locked handle styling */
+/* CRITICAL UX FIX: Completely hide handle in edit mode */
 .drawer-handle.edit-mode-locked {
-    opacity: 0.6;
-    cursor: not-allowed;
-    pointer-events: none; /* Disable interaction */
-    filter: grayscale(0.3); /* Slight gray tint */
+    display: none !important; /* Completely hidden - cleaner UX */
+    visibility: hidden !important;
+    opacity: 0 !important;
+    pointer-events: none !important;
 }
 
 .drawer-handle.edit-mode-locked::after {
-    content: "🔒";
-    position: absolute;
-    right: -20px;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 12px;
-    opacity: 0.7;
-    pointer-events: none;
+    display: none !important; /* Remove lock icon since handle is hidden */
 }
 
-/* Mobile adjustments for lock indicator */
-@media (max-width: 768px) {
-    .drawer-handle.edit-mode-locked::after {
-        right: -18px;
-        font-size: 11px;
-    }
-}
+/* Mobile adjustments for lock indicator - REMOVED: Handle is completely hidden in edit mode */
 
 /* Accessibility: Respect reduced motion preference */
 @media (prefers-reduced-motion: reduce) {
@@ -677,4 +778,28 @@ body.drawer-active {
     .drawer-extension:not(.open) .dropdown-group {
         transition-delay: 0s !important;
     }
+}
+
+/* CRITICAL FIX: Comprehensive font family consistency for all drawer elements */
+.drawer-extension,
+.drawer-extension *,
+.drawer-extension select,
+.drawer-extension option,
+.native-dropdown,
+.native-dropdown *,
+.native-dropdown-option,
+.dropdown-modal,
+.dropdown-modal *,
+.dropdown-option,
+.dropdown-option-text {
+    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important;
+}
+
+/* Ensure dropdown options specifically use Comic Relief */
+.drawer-select option,
+select.drawer-select option,
+.native-dropdown-option,
+.dropdown-option {
+    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important;
+    font-weight: 500; /* Match app font weight */
 }
