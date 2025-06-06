@@ -198,15 +198,16 @@
 .drawer-dropdowns {
     display: flex;
     gap: 24px; /* More space between fields */
-    padding: 32px 28px 36px; /* Generous padding with extra bottom space */
+    padding: 20px 28px 30px; /* Tighter spacing - reduced from 32px to 20px top */
     justify-content: center;
     max-width: 620px; /* Wider to accommodate 75% larger dropdowns */
     margin-left: auto;
     margin-right: auto;
     flex-wrap: wrap; /* Allow wrapping on very small screens */
+    margin-top: -10px; /* Pull closer to header content */
 }
 
-/* Dropdown Group - Standardized dimensions */
+/* Dropdown Group - Standardized dimensions with animations */
 .dropdown-group {
     flex: 1;
     display: flex;
@@ -215,6 +216,33 @@
     min-width: 0; /* Allow flex items to shrink */
     width: 280px; /* 75% wider (160px * 1.75) */
     max-width: 280px; /* Enforce same size */
+    /* Animation setup - start hidden and animate in */
+    opacity: 0;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    will-change: transform, opacity; /* Performance optimization */
+}
+
+/* Staggered animation delays for opening */
+.drawer-extension.open .dropdown-group:nth-child(1) {
+    transition-delay: 0.1s; /* User dropdown first */
+}
+
+.drawer-extension.open .dropdown-group:nth-child(2) {
+    transition-delay: 0.2s; /* Day dropdown second */
+}
+
+/* When drawer is open, dropdowns animate in */
+.drawer-extension.open .dropdown-group {
+    opacity: 1;
+    transform: translateY(0);
+    will-change: auto; /* Remove performance hint after animation */
+}
+
+/* Faster exit animation when closing */
+.drawer-extension:not(.open) .dropdown-group {
+    transition-delay: 0s !important; /* Remove delay on close */
+    transition-duration: 0.2s; /* Faster out */
 }
 
 .dropdown-label {
@@ -597,5 +625,56 @@ body.drawer-active {
     
     .drawer-extension.open {
         max-height: 360px; /* Match mobile expanded header height */
+    }
+}
+
+/* ===== EDIT MODE VISUAL INDICATORS ===== */
+
+/* Show drawer is locked open in edit mode */
+.drawer-extension.edit-mode-locked {
+    border-left: 3px solid var(--primary-color);
+    background: rgba(255, 255, 255, 0.98); /* Slightly more opaque */
+}
+
+/* Edit mode locked handle styling */
+.drawer-handle.edit-mode-locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none; /* Disable interaction */
+    filter: grayscale(0.3); /* Slight gray tint */
+}
+
+.drawer-handle.edit-mode-locked::after {
+    content: "🔒";
+    position: absolute;
+    right: -20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 12px;
+    opacity: 0.7;
+    pointer-events: none;
+}
+
+/* Mobile adjustments for lock indicator */
+@media (max-width: 768px) {
+    .drawer-handle.edit-mode-locked::after {
+        right: -18px;
+        font-size: 11px;
+    }
+}
+
+/* Accessibility: Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .dropdown-group {
+        transition: opacity 0.2s ease !important;
+        transform: none !important;
+    }
+    
+    .drawer-extension.open .dropdown-group {
+        transition-delay: 0s !important;
+    }
+    
+    .drawer-extension:not(.open) .dropdown-group {
+        transition-delay: 0s !important;
     }
 }

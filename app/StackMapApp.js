@@ -213,12 +213,13 @@ class StackMapApp {
         
         if (!drawerHandle || !drawerExtension) return;
         
-        let isOpen = false;
+        // Check initial state based on preferences and edit mode
+        let isOpen = this.shouldDrawerBeOpen();
         let isDragging = false;
         let startY = 0;
         let currentY = 0;
         
-        const openDrawer = () => {
+        const openDrawer = (savePreference = true) => {
             console.log('Opening drawer...');
             isOpen = true;
             drawerHandle.setAttribute('aria-expanded', 'true');
@@ -228,12 +229,31 @@ class StackMapApp {
             document.getElementById('headerWrapper')?.classList.add('drawer-open');
             backdrop.classList.add('visible');
             document.body.classList.add('drawer-active');
+            
+            // Save preference unless specified otherwise (e.g., during initialization)
+            if (savePreference) {
+                this.setDrawerPreference(true);
+            }
+            
+            // Setup staggered animations for dropdowns
+            const dropdownGroups = drawerExtension.querySelectorAll('.dropdown-group');
+            dropdownGroups.forEach((group, index) => {
+                group.style.transitionDelay = `${(index + 1) * 0.1}s`;
+            });
+            
             this.populateDrawerSelects();
             console.log('Drawer opened');
         };
         
-        const closeDrawer = () => {
+        const closeDrawer = (savePreference = true) => {
             console.log('closeDrawer called');
+            
+            // Check if drawer is locked in edit mode
+            if (this.grownupMode && drawerExtension.classList.contains('edit-mode-locked')) {
+                console.log('Drawer close prevented - locked in edit mode');
+                return;
+            }
+            
             isOpen = false;
             drawerHandle.setAttribute('aria-expanded', 'false');
             drawerExtension.setAttribute('aria-hidden', 'true');
@@ -242,6 +262,19 @@ class StackMapApp {
             document.getElementById('headerWrapper')?.classList.remove('drawer-open');
             backdrop.classList.remove('visible');
             document.body.classList.remove('drawer-active');
+            
+            // Save preference unless specified otherwise
+            if (savePreference) {
+                this.setDrawerPreference(false);
+            }
+            
+            // Fast exit animations for dropdowns
+            const dropdownGroups = drawerExtension.querySelectorAll('.dropdown-group');
+            dropdownGroups.forEach(group => {
+                group.style.transitionDelay = '0s';
+                group.style.transitionDuration = '0.2s';
+            });
+            
             console.log('Drawer closed');
         };
         
@@ -319,8 +352,30 @@ class StackMapApp {
             }
         });
         
+        // Force drawer open event (for edit mode)
+        drawerHandle.addEventListener('forceDrawerOpen', () => {
+            if (!isOpen) {
+                openDrawer(false); // Don't save preference when forced
+            }
+        });
+        
+        // Force drawer close event (for exiting edit mode)
+        drawerHandle.addEventListener('closeDrawer', () => {
+            if (isOpen) {
+                closeDrawer(false); // Don't save preference when forced
+            }
+        });
+        
         // Setup select change handlers
         this.setupDrawerSelects();
+        
+        // Set initial state based on preferences (after all event listeners are set up)
+        if (isOpen) {
+            openDrawer(false); // Don't save preference on initialization
+            console.log('Drawer initialized in open state');
+        } else {
+            console.log('Drawer initialized in closed state');
+        }
     }
     
     createBackdrop() {
@@ -1561,6 +1616,9 @@ class StackMapApp {
         // Add body class for CSS targeting
         document.body.classList.add('grownup-mode');
         
+        // Force drawer open and lock it for edit mode
+        this.forceDrawerOpen();
+        
         this.updateGrownupModeButton();
         this.updateInlineEditability();
         
@@ -1569,11 +1627,8 @@ class StackMapApp {
             this.preferencesManager.updatePreferencesPanel();
         }
         
-        // Update drawer if it's open to show Add User button
-        const drawerExtension = document.getElementById('drawerExtension');
-        if (drawerExtension && drawerExtension.classList.contains('open')) {
-            this.populateDrawerSelects();
-        }
+        // Update drawer to show Add User button and edit options
+        this.populateDrawerSelects();
         
         this.render();
         this.syncFixedHeader();
@@ -1591,6 +1646,23 @@ class StackMapApp {
         // Remove body class
         document.body.classList.remove('grownup-mode');
         
+        // Unlock drawer and return to user preference
+        this.unlockDrawer();
+        
+        const userPref = this.getDrawerPreference();
+        if (!userPref.drawerOpen) {
+            // User prefers drawer closed, close it without saving preference
+            const drawerExtension = document.getElementById('drawerExtension');
+            if (drawerExtension && drawerExtension.classList.contains('open')) {
+                // Trigger close via click event to use existing logic
+                const drawerHandle = document.getElementById('drawerHandle');
+                if (drawerHandle) {
+                    const closeEvent = new CustomEvent('closeDrawer');
+                    drawerHandle.dispatchEvent(closeEvent);
+                }
+            }
+        }
+        
         this.updateGrownupModeButton();
         this.updateInlineEditability();
         
@@ -1599,7 +1671,7 @@ class StackMapApp {
             this.preferencesManager.updatePreferencesPanel();
         }
         
-        // Update drawer if it's open to hide Add User button
+        // Update drawer to hide Add User button and edit options
         const drawerExtension = document.getElementById('drawerExtension');
         if (drawerExtension && drawerExtension.classList.contains('open')) {
             this.populateDrawerSelects();
@@ -2554,6 +2626,63 @@ class StackMapApp {
         }
         return false;
     }
+    
+    // ===== DRAWER PREFERENCE MANAGEMENT =====
+    
+    getDrawerPreference() {
+        try {
+            const pref = localStorage.getItem('stackmap-drawer-preference');
+            return pref ? JSON.parse(pref) : { drawerOpen: true }; // Default open for discoverability
+        } catch (error) {
+            console.error('Error reading drawer preference:', error);
+            return { drawerOpen: true }; // Default to open
+        }
+    }
+    
+    setDrawerPreference(isOpen) {
+        try {
+            localStorage.setItem('stackmap-drawer-preference', JSON.stringify({
+                drawerOpen: isOpen
+            }));
+            console.log('Drawer preference saved:', isOpen);
+        } catch (error) {
+            console.error('Error saving drawer preference:', error);
+        }
+    }
+    
+    shouldDrawerBeOpen() {
+        const isEditMode = this.grownupMode;
+        const userPref = this.getDrawerPreference();
+        console.log('Determining drawer state - Edit mode:', isEditMode, 'User preference:', userPref.drawerOpen);
+        return isEditMode || userPref.drawerOpen;
+    }
+    
+    forceDrawerOpen() {
+        // Find drawer elements
+        const drawerExtension = document.getElementById('drawerExtension');
+        const drawerHandle = document.getElementById('drawerHandle');
+        
+        // Check if already open
+        if (!drawerExtension?.classList.contains('open')) {
+            // Trigger drawer open without saving preference
+            const openEvent = new CustomEvent('forceDrawerOpen');
+            drawerHandle?.dispatchEvent(openEvent);
+        }
+        
+        // Add visual locked state
+        drawerExtension?.classList.add('edit-mode-locked');
+        drawerHandle?.classList.add('edit-mode-locked');
+        console.log('Drawer forced open and locked for edit mode');
+    }
+    
+    unlockDrawer() {
+        const drawerExtension = document.getElementById('drawerExtension');
+        const drawerHandle = document.getElementById('drawerHandle');
+        
+        drawerExtension?.classList.remove('edit-mode-locked');
+        drawerHandle?.classList.remove('edit-mode-locked');
+        console.log('Drawer unlocked from edit mode');
+    }
 }
 
 // Debugging helper function
@@ -3110,3 +3239,90 @@ window.debugNewCardIssue = function() {
     
     console.log('=== END NEW CARD ISSUE DEBUG ===');
 };
+
+// ===== DRAWER STORY TESTING FUNCTIONS =====
+
+// Add testing functions to global scope for drawer functionality
+window.testDrawer = {
+    // Clear preferences to test default behavior
+    clearPrefs: () => {
+        localStorage.removeItem('stackmap-drawer-preference');
+        console.log('Drawer preferences cleared');
+        window.location.reload();
+    },
+    
+    // Check current state
+    checkState: () => {
+        const drawerExtension = document.getElementById('drawerExtension');
+        const result = {
+            isOpen: drawerExtension?.classList.contains('open') || false,
+            preference: JSON.parse(localStorage.getItem('stackmap-drawer-preference') || '{}'),
+            editMode: window.appInstance?.grownupMode || false,
+            isLocked: drawerExtension?.classList.contains('edit-mode-locked') || false
+        };
+        console.log('Drawer State:', result);
+        return result;
+    },
+    
+    // Toggle edit mode for testing
+    toggleEdit: () => {
+        if (window.appInstance?.grownupMode) {
+            window.appInstance.exitGrownupMode();
+            console.log('Exited edit mode');
+        } else {
+            window.appInstance?.validationManager?.showValidation();
+            console.log('Attempting to enter edit mode');
+        }
+    },
+    
+    // Test animation timing by slowing down
+    slowMotion: () => {
+        const style = document.createElement('style');
+        style.textContent = `
+            .dropdown-group {
+                transition-duration: 2s !important;
+            }
+            .drawer-extension {
+                transition-duration: 1s !important;
+            }
+        `;
+        document.head.appendChild(style);
+        console.log('Slow motion animations enabled');
+    },
+    
+    // Reset animations to normal speed
+    normalSpeed: () => {
+        const styles = document.querySelectorAll('style');
+        styles.forEach(style => {
+            if (style.textContent.includes('transition-duration: 2s')) {
+                style.remove();
+            }
+        });
+        console.log('Normal animation speed restored');
+    },
+    
+    // Force drawer open (for testing)
+    forceOpen: () => {
+        window.appInstance?.forceDrawerOpen();
+        console.log('Drawer forced open');
+    },
+    
+    // Force drawer closed (for testing)
+    forceClose: () => {
+        const drawerHandle = document.getElementById('drawerHandle');
+        if (drawerHandle) {
+            const closeEvent = new CustomEvent('closeDrawer');
+            drawerHandle.dispatchEvent(closeEvent);
+            console.log('Drawer forced closed');
+        }
+    }
+};
+
+console.log('🧪 Drawer testing functions available:');
+console.log('testDrawer.clearPrefs() - Clear preferences and reload');
+console.log('testDrawer.checkState() - Check current drawer state');
+console.log('testDrawer.toggleEdit() - Toggle edit mode');
+console.log('testDrawer.slowMotion() - Enable slow animations for testing');
+console.log('testDrawer.normalSpeed() - Restore normal animation speed');
+console.log('testDrawer.forceOpen() - Force drawer open');
+console.log('testDrawer.forceClose() - Force drawer closed');
