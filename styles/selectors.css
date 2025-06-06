@@ -713,14 +713,14 @@
 .native-dropdown-option {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 12px;
     width: 100%;
     padding: 12px 20px;
+    text-align: left;
     border: none;
     background: transparent;
     cursor: pointer;
-    text-align: center;
     transition: all 150ms ease;
     position: relative;
     overflow: hidden;
@@ -783,7 +783,8 @@
     font-weight: 500;
     color: inherit;
     line-height: 1.2;
-    flex-shrink: 0;
+    flex: 1;
+    text-align: left;
 }
 
 /* Remove checkmark styling - using darker highlight instead */
