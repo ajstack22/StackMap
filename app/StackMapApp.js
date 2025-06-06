@@ -376,23 +376,26 @@ class StackMapApp {
                             id: user.id,
                             text: user.name,
                             icon: user.icon || '👤',
-                            selected: user.id === currentUser.id
+                            selected: user.id === currentUser.id,
+                            type: 'user'
                         });
                         
                         // Add edit/delete options for each user if in grownup mode
                         if (this.grownupMode) {
                             dropdownOptions.push({
                                 id: `edit-${user.id}`,
-                                text: `✏️ Edit ${user.name}`,
-                                icon: '✏️',
-                                selected: false
+                                text: `Edit ${user.name}`,
+                                icon: 'edit',
+                                selected: false,
+                                type: 'action'
                             });
                             if (allUsers.length > 1) { // Don't allow deleting the last user
                                 dropdownOptions.push({
                                     id: `delete-${user.id}`,
-                                    text: `🗑️ Delete ${user.name}`,
-                                    icon: '🗑️',
-                                    selected: false
+                                    text: `Delete ${user.name}`,
+                                    icon: 'delete',
+                                    selected: false,
+                                    type: 'action'
                                 });
                             }
                         }
@@ -403,8 +406,9 @@ class StackMapApp {
                         dropdownOptions.push({
                             id: 'add-new-user',
                             text: 'Add New User',
-                            icon: '➕',
-                            selected: false
+                            icon: 'add_circle',
+                            selected: false,
+                            type: 'action'
                         });
                     }
                     
@@ -478,23 +482,26 @@ class StackMapApp {
                         id: currentUser.id,
                         text: currentUser.name,
                         icon: currentUser.icon || '👤',
-                        selected: true
+                        selected: true,
+                        type: 'user'
                     });
                     
                     // Add edit option for current user
                     dropdownOptions.push({
                         id: `edit-${currentUser.id}`,
-                        text: `✏️ Edit ${currentUser.name}`,
-                        icon: '✏️',
-                        selected: false
+                        text: `Edit ${currentUser.name}`,
+                        icon: 'edit',
+                        selected: false,
+                        type: 'action'
                     });
                     
                     // Add create new user option
                     dropdownOptions.push({
                         id: 'add-new-user',
                         text: 'Add New User',
-                        icon: '➕',
-                        selected: false
+                        icon: 'add_circle',
+                        selected: false,
+                        type: 'action'
                     });
                     
                     this.showNativeDropdown('User', dropdownOptions, (selectedId) => {
@@ -938,16 +945,30 @@ class StackMapApp {
                     <button class="mobile-picker-close" aria-label="Close">×</button>
                 </div>
                 <div class="mobile-picker-options">
-                    ${options.map(option => `
-                        <button class="mobile-picker-option ${option.selected ? 'selected' : ''}" 
-                                data-value="${option.id}"
-                                role="option"
-                                aria-selected="${option.selected}">
-                            <span class="mobile-picker-option-icon">${option.icon}</span>
-                            <span class="mobile-picker-option-text">${option.text}</span>
-                            ${option.selected ? '<span class="mobile-picker-check">✓</span>' : ''}
-                        </button>
-                    `).join('')}
+                    ${options.map(option => {
+                        const optionClass = `mobile-picker-option ${option.selected ? 'selected' : ''} ${option.type ? `mobile-picker-option--${option.type}` : ''}`;
+                        
+                        // Handle different icon types
+                        let iconContent = '';
+                        if (option.type === 'action') {
+                            // Use Material Icons for actions
+                            iconContent = `<span class="material-icons">${option.icon}</span>`;
+                        } else {
+                            // Use emoji/text for users and day options
+                            iconContent = option.icon;
+                        }
+                        
+                        return `
+                            <button class="${optionClass}" 
+                                    data-value="${option.id}"
+                                    role="option"
+                                    aria-selected="${option.selected}">
+                                <span class="mobile-picker-option-icon">${iconContent}</span>
+                                <span class="mobile-picker-option-text">${option.text}</span>
+                                ${option.selected ? '<span class="mobile-picker-check">✓</span>' : ''}
+                            </button>
+                        `;
+                    }).join('')}
                 </div>
             </div>
         `;
