@@ -23,6 +23,9 @@ class HybridPanelManager {
         
         // Create backdrop
         this.createBackdrop();
+        
+        // Initialize footer color picker
+        this.initializeFooterColorPicker();
     }
 
     createFloatingButtons() {
@@ -239,18 +242,72 @@ class HybridPanelManager {
 
     renderColorPicker() {
         const currentColor = this.app.appState.settings.backgroundColor;
-        const colors = window.THEMES?.COLORS || [];
+        const isMobile = window.innerWidth <= 768;
+        
+        // Rainbow-organized color palette (4 full rows) with colors dark enough for white text
+        const rainbowColors = [
+            // ROW 1: Reds to Oranges to Yellows
+            '#DC143C', // Crimson Red
+            '#E91E63', // Pink/Magenta
+            '#FF5722', // Deep Orange
+            '#FF8F00', // Dark Orange
+            '#F57C00', // Amber
+            '#FBC02D', // Dark Yellow
+            
+            // ROW 2: Greens to Blues to Teals
+            '#689F38', // Light Green (dark enough)
+            '#388E3C', // Green
+            '#00695C', // Dark Teal
+            '#0097A7', // Cyan (darker)
+            '#1976D2', // Blue
+            '#303F9F', // Indigo
+            
+            // ROW 3: Purples to Browns to Greys
+            '#512DA8', // Deep Purple
+            '#7B1FA2', // Purple
+            '#C2185B', // Deep Pink
+            '#5D4037', // Brown
+            '#455A64', // Blue Grey (darker)
+            '#424242', // Dark Grey
+            
+            // ROW 4: Additional colors + Custom picker
+            '#B71C1C', // Dark Red
+            '#4A148C', // Deep Purple
+            '#1A237E', // Deep Blue
+            '#0D5302', // Dark Green
+            '#3E2723', // Dark Brown
+            '#000000'  // Custom color picker (palette icon) - last position
+        ];
+        
+        const isCustomColor = !rainbowColors.slice(0, -1).includes(currentColor);
         
         return `
-            <div class="color-grid">
-                ${colors.map(color => `
-                    <button class="color-option ${color === currentColor ? 'color-option--selected' : ''}"
-                            style="background: ${color};"
-                            onclick="hybridPanelManager.selectColor('${color}')"
-                            aria-label="Select ${color} theme">
-                        ${color === currentColor ? '<span class="color-checkmark">✓</span>' : ''}
-                    </button>
-                `).join('')}
+            <div class="color-grid" style="grid-template-columns: repeat(6, 1fr); gap: ${isMobile ? '6px' : '8px'};">
+                ${rainbowColors.map(color => {
+                    if (color === '#000000') {
+                        // Custom color picker
+                        const displayColor = isCustomColor ? currentColor : '#000000';
+                        return `
+                            <button class="color-option color-option--custom ${isCustomColor ? 'color-option--selected' : ''}"
+                                    style="background: ${displayColor}; position: relative;"
+                                    onclick="hybridPanelManager.openCustomColorPicker()"
+                                    aria-label="Custom color picker">
+                                <span class="material-icons" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: ${isMobile ? '14px' : '18px'}; text-shadow: 0 0 3px rgba(0,0,0,0.8);">palette</span>
+                            </button>
+                        `;
+                    } else {
+                        // Regular color swatches
+                        const isSelected = color === currentColor && !isCustomColor;
+                        return `
+                            <button class="color-option ${isSelected ? 'color-option--selected' : ''}"
+                                    style="background: ${color};"
+                                    onclick="hybridPanelManager.selectColor('${color}')"
+                                    aria-label="Select ${color} theme">
+                                ${isSelected ? '<span class="color-checkmark">✓</span>' : ''}
+                            </button>
+                        `;
+                    }
+                }).join('')}
             </div>
         `;
     }
@@ -315,7 +372,7 @@ class HybridPanelManager {
                 <button class="segment ${currentDay === 'Tomorrow' ? 'segment--active' : ''}" 
                         onclick="hybridPanelManager.switchDay('tomorrow')"
                         aria-pressed="${currentDay === 'Tomorrow'}">
-                    <span class="material-icons">tomorrow</span>
+                    <span class="material-icons">event</span>
                     <span>Tomorrow</span>
                 </button>
             </div>
@@ -376,15 +433,154 @@ class HybridPanelManager {
         // Apply theme
         this.app.appState.applyTheme();
         
-        // Re-render color picker to update selection
-        this.renderPanelContent('left');
+        // Update color picker selection state
+        this.updateColorPickerState(color);
         
-        // Update cards
-        if (this.app.renderer) {
-            this.app.renderer.renderCards();
-        }
+        // Update footer color picker
+        this.updateFooterColorPicker(color);
+        
+        // Update card elements immediately
+        this.updateCardColors(color);
+        
+        // Update logo colors
+        this.updateLogoColors(color);
         
         console.log('Color changed to:', color);
+    }
+    
+    openCustomColorPicker() {
+        // Create a temporary color input
+        const colorInput = document.createElement('input');
+        colorInput.type = 'color';
+        colorInput.value = this.app.appState.settings.backgroundColor;
+        colorInput.style.display = 'none';
+        
+        colorInput.addEventListener('change', (e) => {
+            const selectedColor = e.target.value;
+            
+            // Update the custom picker appearance immediately
+            this.updateCustomPickerCell(selectedColor);
+            
+            // Apply the color to the theme
+            this.selectColor(selectedColor);
+            
+            // Clean up
+            document.body.removeChild(colorInput);
+        });
+        
+        // Handle blur event for better browser compatibility
+        colorInput.addEventListener('blur', () => {
+            setTimeout(() => {
+                if (colorInput.parentNode) {
+                    document.body.removeChild(colorInput);
+                }
+            }, 100);
+        });
+        
+        document.body.appendChild(colorInput);
+        colorInput.click();
+    }
+    
+    updateCustomPickerCell(color) {
+        const customPicker = document.querySelector('.color-option--custom');
+        if (customPicker) {
+            const isMobile = window.innerWidth <= 768;
+            customPicker.style.backgroundColor = color;
+            customPicker.classList.add('color-option--selected');
+            
+            // Update the palette icon
+            customPicker.innerHTML = `<span class="material-icons" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: ${isMobile ? '14px' : '18px'}; text-shadow: 0 0 3px rgba(0,0,0,0.8);">palette</span>`;
+        }
+    }
+    
+    updateColorPickerState(color) {
+        const colorGrid = document.querySelector('.color-grid');
+        if (!colorGrid) return;
+        
+        const rainbowColors = [
+            '#DC143C', '#E91E63', '#FF5722', '#FF8F00', '#F57C00', '#FBC02D',
+            '#689F38', '#388E3C', '#00695C', '#0097A7', '#1976D2', '#303F9F',
+            '#512DA8', '#7B1FA2', '#C2185B', '#5D4037', '#455A64', '#424242',
+            '#B71C1C', '#4A148C', '#1A237E', '#0D5302', '#3E2723'
+        ];
+        
+        const isCustomColor = !rainbowColors.includes(color);
+        
+        // Clear all selections
+        colorGrid.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('color-option--selected');
+            const checkmark = option.querySelector('.color-checkmark');
+            if (checkmark) checkmark.remove();
+        });
+        
+        // Handle custom color picker
+        const customPicker = colorGrid.querySelector('.color-option--custom');
+        if (customPicker) {
+            if (isCustomColor) {
+                customPicker.style.backgroundColor = color;
+                customPicker.classList.add('color-option--selected');
+            } else {
+                customPicker.style.backgroundColor = '#000000';
+                customPicker.classList.remove('color-option--selected');
+            }
+        }
+        
+        // Handle regular color options
+        if (!isCustomColor) {
+            const selectedOption = Array.from(colorGrid.querySelectorAll('.color-option'))
+                .find(option => {
+                    const style = option.getAttribute('style');
+                    return style && style.includes(color) && !option.classList.contains('color-option--custom');
+                });
+                
+            if (selectedOption) {
+                selectedOption.classList.add('color-option--selected');
+                selectedOption.innerHTML += '<span class="color-checkmark">✓</span>';
+            }
+        }
+    }
+    
+    updateCardColors(color) {
+        // Update card numbers with new theme color
+        document.querySelectorAll('.card__number').forEach(numberElement => {
+            numberElement.style.background = color;
+        });
+        
+        // Update time pills with new theme color
+        document.querySelectorAll('.card__time-pill').forEach(timePill => {
+            timePill.style.background = color;
+        });
+        
+        // Update edit mode time pills
+        document.querySelectorAll('.card__time-pill--edit').forEach(editTimePill => {
+            editTimePill.style.background = color;
+        });
+    }
+    
+    updateLogoColors(primaryColor) {
+        // Create darker variant for bottom rect
+        const hex = primaryColor.replace('#', '');
+        const r = parseInt(hex.substr(0, 2), 16);
+        const g = parseInt(hex.substr(2, 2), 16);
+        const b = parseInt(hex.substr(4, 2), 16);
+        
+        // Create darker color for gradient effect
+        const darkerR = Math.max(0, r - 60);
+        const darkerG = Math.max(0, g - 60);
+        const darkerB = Math.max(0, b - 60);
+        const darkerColor = `rgb(${darkerR}, ${darkerG}, ${darkerB})`;
+        
+        // Update all logo instances
+        document.querySelectorAll('svg').forEach(svg => {
+            const rects = svg.querySelectorAll('rect');
+            if (rects.length >= 3) {
+                // Top two rects use primary color
+                rects[0].setAttribute('fill', primaryColor);
+                rects[1].setAttribute('fill', primaryColor);
+                // Bottom rect uses darker color
+                rects[2].setAttribute('fill', darkerColor);
+            }
+        });
     }
 
     selectDisplayMode(mode) {
@@ -500,6 +696,63 @@ class HybridPanelManager {
             const isActive = segment.onclick.toString().includes(`'${activeValue}'`);
             segment.classList.toggle('segment--active', isActive);
             segment.setAttribute('aria-pressed', isActive);
+        });
+    }
+
+    initializeFooterColorPicker() {
+        const footerColorPicker = document.getElementById('footerColorPicker');
+        const colorPickerFooter = document.getElementById('colorPickerFooter');
+        
+        if (footerColorPicker && colorPickerFooter) {
+            // Popular colors subset for footer (most used colors)
+            const footerColors = [
+                '#1976D2', // Blue
+                '#388E3C', // Green  
+                '#F57C00', // Orange
+                '#7B1FA2', // Purple
+                '#DC143C', // Red
+                '#00695C', // Teal
+                '#5D4037', // Brown
+                '#455A64'  // Blue Grey
+            ];
+            
+            const currentColor = this.app.appState.settings.backgroundColor;
+            
+            footerColorPicker.innerHTML = footerColors.map(color => {
+                const isSelected = color === currentColor;
+                return `
+                    <button class="color-option ${isSelected ? 'color-option--selected' : ''}"
+                            style="background: ${color};"
+                            onclick="hybridPanelManager.selectColor('${color}')"
+                            aria-label="Select ${color} theme">
+                        ${isSelected ? '<span class="color-checkmark">✓</span>' : ''}
+                    </button>
+                `;
+            }).join('');
+            
+            // Show footer after a brief delay
+            setTimeout(() => {
+                colorPickerFooter.classList.add('visible');
+            }, 500);
+        }
+    }
+
+    updateFooterColorPicker(selectedColor) {
+        const footerColorPicker = document.getElementById('footerColorPicker');
+        if (!footerColorPicker) return;
+        
+        // Update footer color picker states
+        footerColorPicker.querySelectorAll('.color-option').forEach(option => {
+            option.classList.remove('color-option--selected');
+            const checkmark = option.querySelector('.color-checkmark');
+            if (checkmark) checkmark.remove();
+            
+            // Check if this option matches the selected color
+            const style = option.getAttribute('style');
+            if (style && style.includes(selectedColor)) {
+                option.classList.add('color-option--selected');
+                option.innerHTML += '<span class="color-checkmark">✓</span>';
+            }
         });
     }
 
