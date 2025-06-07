@@ -18,9 +18,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    position: relative;
-    z-index: 1011; /* Above floating buttons (1010) to ensure logo is visible */
-    /* Removed transform to fix alignment */
+    /* Logo is part of normal header flow, no special z-index needed */
 }
 
 .stackmap-logo svg {
@@ -41,10 +39,9 @@
     margin: 0 auto; /* Center the text container */
 }
 
-/* Ensure header content has proper z-index layering */
+/* Header content - normal document flow */
 .header-content {
     position: relative;
-    z-index: 1003; /* Above header wrapper (1001) but below floating buttons (1010) */
 }
 
 /* Apply negative margin when logo is visible to compensate */
