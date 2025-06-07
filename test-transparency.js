@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Transparency tests complete
 // test-transparency.js - Test transparent header implementation
 
 // Test transparency levels

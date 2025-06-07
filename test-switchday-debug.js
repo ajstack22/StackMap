@@ -1,4 +1,6 @@
 
+// DORMANT-2025-01-06: Day switching in main app
+
 // Test switchDay functionality
 console.log('=== TESTING SWITCHDAY ===');
 console.log('Current day:', window.appInstance?.appState?.getCurrentDay?.());

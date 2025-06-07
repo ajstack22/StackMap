@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Blog system not used, no links to blog.html
 // blog/blog-data.js - Development journey data
 // This file is updated ambiently as development progresses
 

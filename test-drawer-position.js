@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Old drawer positioning test
 // Drawer Handle Position Debugger
 // Run this in the console to adjust handle position in real-time
 

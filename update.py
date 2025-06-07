@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 """
+DORMANT-2025-01-06: Old deployment script, no documentation or usage
 StackMap Improved Updater - More reliable partial file updates
 Features improved error handling, flexible matching, and better feedback
 """

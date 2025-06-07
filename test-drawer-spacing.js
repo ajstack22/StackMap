@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Spacing tests integrated elsewhere
 // Console verification commands for drawer spacing and alignment fixes
 
 // Test user mode day dropdown spacing

@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Blog system not used, no links to blog.html
 // blog/blog-renderer.js - Blog rendering engine
 // Follows StackMap patterns: vanilla JS, window globals
 

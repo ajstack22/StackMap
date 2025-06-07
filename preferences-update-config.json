@@ -1,4 +1,5 @@
 {
+  "_comment": "DORMANT-2025-01-06: Not loaded or used anywhere",
   "_instructions": [
     "=== HOW TO RUN THIS UPDATE ===",
     "1. Save this file as 'preferences-update.json' in c:\\StackMap_mu",

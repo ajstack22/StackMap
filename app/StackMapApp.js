@@ -1386,12 +1386,8 @@ class StackMapApp {
     
     setupSplashScreen() {
         const nameInput = document.getElementById('splashUserName');
-        const emojiButton = document.getElementById('splashEmojiButton');
-        const emojiGrid = document.getElementById('splashEmojiGrid');
+        const emojiInput = document.getElementById('splashUserEmoji');
         const startButton = document.getElementById('splashStartButton');
-        const emojiDisplay = document.querySelector('.splash-emoji-display');
-        
-        let selectedEmoji = '👤';
         
         // Enable/disable start button based on name input
         const checkCanStart = () => {
@@ -1407,30 +1403,23 @@ class StackMapApp {
             }
         });
         
-        // Emoji button handler
-        emojiButton.addEventListener('click', (e) => {
-            e.stopPropagation();
-            emojiGrid.classList.toggle('hidden');
-            emojiButton.classList.toggle('active');
-        });
-        
-        // Emoji selection handler
-        document.querySelectorAll('.splash-emoji-option').forEach(option => {
-            option.addEventListener('click', (e) => {
-                e.stopPropagation();
-                selectedEmoji = option.getAttribute('data-emoji');
-                emojiDisplay.textContent = selectedEmoji;
-                emojiGrid.classList.add('hidden');
-                emojiButton.classList.remove('active');
-            });
-        });
-        
-        // Close emoji grid when clicking outside
-        document.addEventListener('click', (e) => {
-            if (!emojiButton.contains(e.target) && !emojiGrid.contains(e.target)) {
-                emojiGrid.classList.add('hidden');
-                emojiButton.classList.remove('active');
+        // Emoji input handler - filter to only allow emojis
+        emojiInput.addEventListener('input', (e) => {
+            const value = e.target.value;
+            // Keep only the first emoji character
+            const emojiMatch = value.match(/\p{Emoji}/u);
+            if (emojiMatch) {
+                e.target.value = emojiMatch[0];
+            } else if (value.length === 0) {
+                // If empty, reset to default
+                e.target.value = '👤';
             }
+        });
+        
+        // Focus on emoji input to trigger keyboard
+        emojiInput.addEventListener('focus', (e) => {
+            // Select all text for easy replacement
+            e.target.select();
         });
         
         // Start button handler
@@ -1441,11 +1430,11 @@ class StackMapApp {
     
     completeSplashScreen() {
         const nameInput = document.getElementById('splashUserName');
-        const emojiDisplay = document.querySelector('.splash-emoji-display');
+        const emojiInput = document.getElementById('splashUserEmoji');
         const splashScreen = document.getElementById('splashScreen');
         
         const userName = nameInput.value.trim();
-        const userEmoji = emojiDisplay.textContent || '👤';
+        const userEmoji = emojiInput.value || '👤';
         
         if (!userName) return;
         
@@ -1454,12 +1443,9 @@ class StackMapApp {
         currentUser.name = userName;
         currentUser.icon = userEmoji;
         
-        // Update the title to match the user's name
-        currentUser.customTitle = userName;
-        currentUser.customSubtitle = 'Routine Ready';
-        this.appState.settings.title = userName;
-        this.appState.settings.subtitle = 'Routine Ready';
-        this.appState.settings.isDefaultTitle = false;
+        // Keep title as StackMap, don't change it
+        // Title should only change if user manually edits it
+        // The subtitle will show the user's name and day
         
         // Save the changes
         this.appState._triggerSave();

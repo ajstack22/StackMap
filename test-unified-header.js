@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Old header implementation
 /**
  * Test for unified header implementation
  */

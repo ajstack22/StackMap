@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Header no longer expandable
 // test-expandable-header.js
 // Test suite for expandable header functionality (Story: Phase 6)
 

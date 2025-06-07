@@ -123,7 +123,13 @@ class HybridPanelManager {
         const backdrop = document.createElement('div');
         backdrop.id = 'hybridBackdrop';
         backdrop.className = 'panel-backdrop';
-        backdrop.addEventListener('click', () => this.closeAllPanels());
+        backdrop.addEventListener('click', (e) => {
+            console.log('Backdrop clicked');
+            // Only close if clicking the backdrop itself, not a child element
+            if (e.target === backdrop) {
+                this.closeAllPanels();
+            }
+        });
         document.body.appendChild(backdrop);
     }
 

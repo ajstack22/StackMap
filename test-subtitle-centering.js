@@ -1,3 +1,4 @@
+// DORMANT-2025-01-06: Subtitle feature removed
 // Console verification commands for subtitle centering fix
 
 // AFTER FIX - Verify centering

@@ -11,7 +11,7 @@ jobs:
         uses: pinkasey/cpanel-deploy-action@v1.2.1
         with:
           hostname: 'https://stackmap.app'  # Your CPanel URL
-          repository_root: 'x /ajstack22/StackMap'  # Your repo path in CPanel
+          repository_root: '/ajstack22/StackMap'  # Your repo path in CPanel
           branch: main
           cpanel_token: '${{ secrets.CPANEL_TOKEN }}'
           cpanel_username: 'stachblx'  # Your CPanel username

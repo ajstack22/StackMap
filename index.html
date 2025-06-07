@@ -232,7 +232,7 @@
     <script src="components/ModernDaySelector.js"></script>
     <script src="components/DraggableDrawer.js"></script>
     
-    <!-- Load test suite -->
+    <!-- DORMANT-2025-01-06: Test files not needed in production
     <script src="test-suite.js"></script>
     <script src="test-mobile-navigation.js"></script>
     <script src="test-story5.js"></script>
@@ -244,6 +244,7 @@
     <script src="test-admin-tools.js"></script>
     <script src="test-admin-manual.js"></script>
     <script src="test-drive-sync.js"></script>
+    -->
     
     <!-- ValidationManager removed - validation now handled by HybridPanelManager
     <script>
@@ -418,13 +419,36 @@
         <div class="splash-content">
             <!-- Logo -->
             <div class="splash-logo">
-                <div class="splash-logo-text">StackMap</div>
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                    <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(102,126,234,0.3)" stroke-width="1"/>
+                    <rect x="7" y="10" width="18" height="2.5" fill="#667eea" rx="1.25"/>
+                    <rect x="7" y="14.5" width="18" height="2.5" fill="#667eea" rx="1.25"/>
+                    <rect x="7" y="19" width="18" height="5" fill="#5563d1" rx="2.5"/>
+                </svg>
             </div>
             
             <!-- Welcome message -->
             <div class="splash-welcome">
-                <h1>Welcome to StackMap</h1>
-                <p>Your visual routine organizer</p>
+                <h1>Welcome to StackMap!</h1>
+                <p><strong>StackMap helps families create visual routines</strong> that make daily tasks easier and more fun for everyone, especially children with special needs.</p>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="splash-instructions">
+                <div class="splash-step">
+                    <div class="splash-step-number">1</div>
+                    <p><strong>Complete tasks:</strong> Tap cards to mark them done. Watch for celebrations!</p>
+                </div>
+                
+                <div class="splash-step">
+                    <div class="splash-step-number">2</div>
+                    <p><strong>Customize colors:</strong> Use the <span class="btn--floating-demo"><span class="material-icons">palette</span></span> button to change colors.</p>
+                </div>
+                
+                <div class="splash-step">
+                    <div class="splash-step-number">3</div>
+                    <p><strong>Edit tasks:</strong> Adults can tap <span class="btn--floating-demo"><span class="material-icons">settings</span></span> to manage activities.</p>
+                </div>
             </div>
             
             <!-- Name and emoji input -->
@@ -435,39 +459,21 @@
                 </div>
                 
                 <div class="splash-emoji-group">
-                    <label>Choose your emoji</label>
-                    <div class="splash-emoji-selector">
-                        <button type="button" class="splash-emoji-button" id="splashEmojiButton">
-                            <span class="splash-emoji-display">👤</span>
-                        </button>
-                        <div class="splash-emoji-grid hidden" id="splashEmojiGrid">
-                            <!-- Popular user emojis -->
-                            <button type="button" class="splash-emoji-option" data-emoji="👤">👤</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="😊">😊</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🙂">🙂</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="😎">😎</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🤓">🤓</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="👨">👨</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="👩">👩</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="👦">👦</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="👧">👧</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🧑">🧑</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="👶">👶</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🧒">🧒</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🦸">🦸</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🦹">🦹</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🧙">🧙</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🎅">🎅</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🐶">🐶</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🐱">🐱</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🐻">🐻</button>
-                            <button type="button" class="splash-emoji-option" data-emoji="🦊">🦊</button>
-                        </div>
+                    <label for="splashUserEmoji">Choose your emoji</label>
+                    <div class="splash-emoji-input-wrapper">
+                        <input type="text" 
+                               id="splashUserEmoji" 
+                               class="splash-emoji-input" 
+                               placeholder="👤" 
+                               value="👤"
+                               maxlength="2"
+                               autocomplete="off">
+                        <div class="splash-emoji-helper">Tap to open emoji keyboard</div>
                     </div>
                 </div>
                 
                 <button type="button" class="splash-start-button" id="splashStartButton" disabled>
-                    Get Started
+                    Let's Get Started!
                 </button>
             </div>
         </div>
