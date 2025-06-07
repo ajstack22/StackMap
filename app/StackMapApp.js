@@ -12,7 +12,7 @@ class StackMapApp {
         
         // Initialize managers
         this.preferencesManager = new PreferencesManager(this);
-        this.validationManager = new ValidationManager(this);
+        // ValidationManager removed - validation now handled by HybridPanelManager
         
         // App state
         this.grownupMode = false;
@@ -73,11 +73,11 @@ class StackMapApp {
         }, 100);
         
         // Ensure proper icon state on load
-        this.updateGrownupModeButton();
+        // Old grownup button update removed - using hybrid panels
         
         // Force correct icons immediately
         setTimeout(() => {
-            this.updateGrownupModeButton();
+            // Old grownup button update removed - using hybrid panels
         }, 100);
         
         // Set initial tab title
@@ -1499,8 +1499,10 @@ class StackMapApp {
     }
 
     showWelcomeAgain() {
-        // Close preferences panel first
-        this.preferencesManager.closePreferences();
+        // Close preferences panel first (now handled by HybridPanelManager)
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.closeAllPanels();
+        }
         
         // Show welcome splash again (temporarily reset the localStorage flag)
         const originalFlag = localStorage.getItem('stackmap-welcome-seen');
@@ -1527,7 +1529,10 @@ class StackMapApp {
         if (this.grownupMode) {
             this.exitGrownupMode();
         } else {
-            this.validationManager.showValidation();
+            // Open management panel for validation (handled by HybridPanelManager)
+            if (window.hybridPanelManager) {
+                window.hybridPanelManager.openPanel('right');
+            }
         }
     }
 
@@ -1541,13 +1546,11 @@ class StackMapApp {
         // Force drawer open and lock it for edit mode
         this.forceDrawerOpen();
         
-        this.updateGrownupModeButton();
+        // Old grownup button update removed - using hybrid panels
         this.updateInlineEditability();
         
-        // Update preferences panel if it's open
-        if (!document.getElementById('preferencesPanel')?.classList.contains('hidden')) {
-            this.preferencesManager.updatePreferencesPanel();
-        }
+        // Update preferences panel if it's open (now handled by HybridPanelManager)
+        // Old system disabled - HybridPanelManager handles panel updates automatically
         
         // Update drawer to show Add User button and edit options
         this.populateDrawerSelects();
@@ -1585,13 +1588,11 @@ class StackMapApp {
             }
         }
         
-        this.updateGrownupModeButton();
+        // Old grownup button update removed - using hybrid panels
         this.updateInlineEditability();
         
-        // Update preferences panel if it's open
-        if (!document.getElementById('preferencesPanel')?.classList.contains('hidden')) {
-            this.preferencesManager.updatePreferencesPanel();
-        }
+        // Update preferences panel if it's open (now handled by HybridPanelManager)
+        // Old system disabled - HybridPanelManager handles panel updates automatically
         
         // Update drawer to hide Add User button and edit options
         const drawerExtension = document.getElementById('drawerExtension');
@@ -1787,9 +1788,11 @@ class StackMapApp {
         }
     }
 
-    // COLOR SELECTION - Delegate to PreferencesManager
+    // COLOR SELECTION - Delegate to HybridPanelManager
     selectColor(color) {
-        this.preferencesManager.selectColor(color);
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.selectColor(color);
+        }
     }
 
     // ACTIVITY MANAGEMENT
@@ -2620,16 +2623,13 @@ class StackMapApp {
     setupModalOutsideClickHandlers() {
         // Define all modal selectors and their close methods
         const modalConfigs = [
-            {
-                selector: '#validationModal',
-                closeMethod: () => this.validationManager?.cancelValidation?.(),
-                contentSelector: '.validation-content'
-            },
-            {
-                selector: '#preferencesPanel',
-                closeMethod: () => this.preferencesManager?.closePreferences?.(),
-                contentSelector: '.preferences-content'
-            },
+            // ValidationModal removed - validation now handled by HybridPanelManager
+            // PreferencesPanel disabled - preferences now handled by HybridPanelManager
+            // {
+            //     selector: '#preferencesPanel',
+            //     closeMethod: () => this.preferencesManager?.closePreferences?.(),
+            //     contentSelector: '.preferences-content'
+            // },
             {
                 selector: '#welcomeSplash',
                 closeMethod: () => this.hideWelcome?.(),
@@ -2716,11 +2716,8 @@ class StackMapApp {
                 
                 if (isVisible) {
                     // Close the first visible modal found
-                    if (selector === '#validationModal') {
-                        this.validationManager?.cancelValidation?.();
-                    } else if (selector === '#preferencesPanel') {
-                        this.preferencesManager?.closePreferences?.();
-                    } else if (selector === '#welcomeSplash') {
+                    // ValidationModal and PreferencesPanel removed - now handled by HybridPanelManager
+                    if (selector === '#welcomeSplash') {
                         this.hideWelcome?.();
                     } else if (selector === '#importPreviewModal') {
                         modal.classList.add('hidden');
@@ -3328,7 +3325,10 @@ window.testDrawer = {
             window.appInstance.exitGrownupMode();
             console.log('Exited edit mode');
         } else {
-            window.appInstance?.validationManager?.showValidation();
+            // Open management panel for validation (handled by HybridPanelManager)
+            if (window.hybridPanelManager) {
+                window.hybridPanelManager.openPanel('right');
+            }
             console.log('Attempting to enter edit mode');
         }
     },

@@ -12,6 +12,11 @@ deployment:
     - /bin/rm -f $DEPLOYPATH/README.md
     - /bin/rm -f $DEPLOYPATH/.gitignore
     - /bin/rm -f $DEPLOYPATH/update.py
+    - /bin/rm -f $DEPLOYPATH/cache-bust.js
+    - /bin/rm -f $DEPLOYPATH/dev-tools.js
+    - /bin/rm -f $DEPLOYPATH/test-*.html
+    - /bin/rm -f $DEPLOYPATH/test-*.js
+    - /bin/rm -f $DEPLOYPATH/run-story5-tests.js
     # Set proper permissions for web files
     - /bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
     - /bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;

@@ -15,14 +15,7 @@
 //
 // Active Managers:
 // ---------------
-// 1. PreferencesManager.js - Handles all preferences panel functionality
-//    - Color theme selection and application
-//    - Toggle card numbers on/off
-//    - Toggle completion indicators on/off
-//    - Google Drive sync controls
-//    - Import/Export data management
-//
-// 2. StackMapApp.js - Main application controller
+// 1. StackMapApp.js - Main application controller
 //    - Initializes all components and managers
 //    - Coordinates state management
 //    - Handles mode switching (edit/user)
@@ -30,11 +23,18 @@
 //    - Controls welcome splash screen
 //    - Handles inline editing of title/subtitle
 //
-// 3. ValidationManager.js - Edit mode protection
-//    - Simple questions for adult verification
-//    - Prevents children from accessing edit mode
-//    - Modal-based validation interface
-//    - Developer shortcut for testing
+// 2. HybridPanelManager.js - Modern panel system with JavaScript state management
+//    - Replaces old modal system with side panels
+//    - Color theme selection and application
+//    - Toggle card numbers and completion indicators
+//    - Edit mode validation with simple questions
+//    - Admin tools (add cards, import/export, user management)
+//    - Platform-specific behavior (mobile/desktop)
+//
+// Deprecated/Disabled:
+// -------------------
+// - PreferencesManager.js: Disabled - replaced by HybridPanelManager
+// - ValidationManager.js: Removed - validation now in HybridPanelManager
 //
 // Removed/Unused:
 // --------------

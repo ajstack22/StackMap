@@ -1,86 +1,101 @@
-# StackMap .htaccess Configuration
+# StackMap Cache Control and Development Settings
 
-# Enable service worker
-<IfModule mod_headers.c>
-    Header set Service-Worker-Allowed "/"
-</IfModule>
-
-# Security headers
-Header set X-Content-Type-Options "nosniff"
-Header set X-Frame-Options "SAMEORIGIN"
-Header set X-XSS-Protection "1; mode=block"
-Header set Referrer-Policy "same-origin"
-
-# MIME types for PWA
-AddType application/manifest+json .webmanifest
-AddType application/manifest+json .json
-AddType text/cache-manifest .appcache
-
-# Cache control for static assets
-<IfModule mod_expires.c>
-    ExpiresActive On
-    
-    # Images
-    ExpiresByType image/png "access plus 1 month"
-    ExpiresByType image/jpg "access plus 1 month"
-    ExpiresByType image/jpeg "access plus 1 month"
-    ExpiresByType image/gif "access plus 1 month"
-    ExpiresByType image/svg+xml "access plus 1 month"
-    ExpiresByType image/x-icon "access plus 1 month"
-    ExpiresByType image/webp "access plus 1 month"
-    
-    # CSS and JavaScript
-    ExpiresByType text/css "access plus 1 week"
-    ExpiresByType application/javascript "access plus 1 week"
-    ExpiresByType application/x-javascript "access plus 1 week"
-    ExpiresByType text/javascript "access plus 1 week"
-    
-    # Fonts
-    ExpiresByType font/ttf "access plus 1 month"
-    ExpiresByType font/otf "access plus 1 month"
-    ExpiresByType font/woff "access plus 1 month"
-    ExpiresByType font/woff2 "access plus 1 month"
-    ExpiresByType application/font-woff "access plus 1 month"
-    ExpiresByType application/font-woff2 "access plus 1 month"
-    
-    # HTML and manifest
-    ExpiresByType text/html "access plus 0 seconds"
-    ExpiresByType application/manifest+json "access plus 0 seconds"
-</IfModule>
-
-# Compress text files
+# Enable compression
 <IfModule mod_deflate.c>
-    # Compress HTML, CSS, JavaScript, Text, XML and fonts
+    AddOutputFilterByType DEFLATE text/plain
     AddOutputFilterByType DEFLATE text/html
+    AddOutputFilterByType DEFLATE text/xml
     AddOutputFilterByType DEFLATE text/css
     AddOutputFilterByType DEFLATE text/javascript
+    AddOutputFilterByType DEFLATE application/xml
+    AddOutputFilterByType DEFLATE application/xhtml+xml
+    AddOutputFilterByType DEFLATE application/rss+xml
     AddOutputFilterByType DEFLATE application/javascript
     AddOutputFilterByType DEFLATE application/x-javascript
     AddOutputFilterByType DEFLATE application/json
-    AddOutputFilterByType DEFLATE application/manifest+json
-    AddOutputFilterByType DEFLATE text/xml
-    AddOutputFilterByType DEFLATE application/xml
-    AddOutputFilterByType DEFLATE application/xml+rss
-    AddOutputFilterByType DEFLATE image/svg+xml
-    AddOutputFilterByType DEFLATE application/vnd.ms-fontobject
-    AddOutputFilterByType DEFLATE application/x-font-ttf
-    AddOutputFilterByType DEFLATE font/opentype
 </IfModule>
 
-# Prevent directory browsing
-Options -Indexes
+# Cache control for different file types
+<IfModule mod_expires.c>
+    ExpiresActive On
+    
+    # No cache for development and dynamic files
+    <FilesMatch "\.(html|htm|php)$">
+        ExpiresDefault "access plus 0 seconds"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
+    
+    # Short cache for CSS and JS in development (1 hour)
+    <FilesMatch "\.(css|js)$">
+        ExpiresDefault "access plus 1 hour"
+        Header set Cache-Control "public, max-age=3600"
+    </FilesMatch>
+    
+    # Longer cache for images and fonts (1 week)
+    <FilesMatch "\.(jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$">
+        ExpiresDefault "access plus 1 week"
+        Header set Cache-Control "public, max-age=604800"
+    </FilesMatch>
+    
+    # No cache for service worker and manifest
+    <FilesMatch "\.(json|manifest)$">
+        ExpiresDefault "access plus 0 seconds"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+    </FilesMatch>
+    
+    <Files "sw.js">
+        ExpiresDefault "access plus 0 seconds"
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </Files>
+</IfModule>
 
-# Enable rewrite engine for routing
-RewriteEngine On
+# Development mode overrides
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Force no-cache when nocache parameter is present
+    RewriteCond %{QUERY_STRING} nocache=1 [NC]
+    RewriteRule ^(.*)$ - [E=NOCACHE:1]
+    
+    # Force no-cache when qual environment is detected
+    RewriteCond %{HTTP_HOST} qual [NC]
+    RewriteRule ^(.*)$ - [E=NOCACHE:1]
+    
+    # Set no-cache headers when NOCACHE environment variable is set
+    Header always set Cache-Control "no-cache, no-store, must-revalidate" env=NOCACHE
+    Header always set Pragma "no-cache" env=NOCACHE
+    Header always set Expires "0" env=NOCACHE
+</IfModule>
 
-# Route /blog to /blog.html
-RewriteRule ^blog/?$ /blog.html [L]
+# Security headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always append X-Frame-Options SAMEORIGIN
+    
+    # XSS protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Content type sniffing protection
+    Header always set X-Content-Type-Options nosniff
+    
+    # Referrer policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    
+    # Content Security Policy (adjust as needed)
+    Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com https://apis.google.com https://accounts.google.com; img-src 'self' data: https:; connect-src 'self' https://www.googleapis.com;"
+</IfModule>
 
-# Redirect to HTTPS (uncomment if you have SSL)
+# Disable server signature
+ServerSignature Off
+
+# Custom error pages
+ErrorDocument 404 /index.html
+
+# Enable HTTPS redirect (uncomment for production)
 # RewriteEngine On
 # RewriteCond %{HTTPS} off
-# RewriteRule ^(.*)$ https://%{HTTP_HOST}/$1 [R=301,L]
-
-# Error pages (optional)
-# ErrorDocument 404 /404.html
-# ErrorDocument 500 /500.html
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]

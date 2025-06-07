@@ -567,9 +567,9 @@ class AppState {
             el.style.background = color;
         });
         
-        // Update logo colors if PreferencesManager exists
-        if (window.appInstance && window.appInstance.preferencesManager) {
-            window.appInstance.preferencesManager.updateLogoColors(color);
+        // Update logo colors if HybridPanelManager exists
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.updateLogoColors(color);
         }
     }
 

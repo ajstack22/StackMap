@@ -1,0 +1,153 @@
+<!-- 
+  CURRENT HTML STRUCTURE
+  Extracted from index.html - Header section
+  Shows current location of title/subtitle elements
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta tags, icons, fonts, etc. -->
+</head>
+<body>
+    <!-- Header Wrapper for unified shadow -->
+    <div class="header-wrapper" id="headerWrapper">
+        <!-- Unified Application Header -->
+        <header class="app-header" role="banner" id="appHeader">
+            <div class="header-content">
+                <div class="header-logo-title">
+                    <!-- App Logo -->
+                    <div class="stackmap-logo" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                            <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                            <rect x="7" y="10" width="18" height="2.5" fill="var(--primary-color)" rx="1.25"/>
+                            <rect x="7" y="14.5" width="18" height="2.5" fill="var(--primary-color)" rx="1.25"/>
+                            <rect x="7" y="19" width="18" height="5" fill="var(--primary-dark)" rx="2.5"/>
+                        </svg>
+                    </div>
+                    
+                    <!-- CURRENT LOCATION: Title and Subtitle -->
+                    <div class="header-text">
+                        <!-- 
+                          TITLE ELEMENT - Currently editable in-place during edit mode
+                          Could be moved to management panel or edit cards
+                        -->
+                        <h1 class="title" id="mainTitle" tabindex="0">StackMap</h1>
+                        
+                        <!-- 
+                          SUBTITLE ELEMENT - Currently editable in-place during edit mode  
+                          Could be moved to management panel or edit cards
+                        -->
+                        <p class="subtitle" id="subtitle" tabindex="0">Routine Ready</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Drawer Handle at bottom of header -->
+            <div class="drawer-handle" id="drawerHandle" 
+                 role="button" tabindex="0" 
+                 aria-label="Select user and day"
+                 aria-expanded="false">
+            </div>
+            
+            <!-- Drawer Extension - User/Day Selectors -->
+            <div class="drawer-extension" id="drawerExtension" aria-hidden="true">
+                <div class="drawer-dropdowns">
+                    <!-- User Section - Dynamic content -->
+                    <div class="dropdown-group" id="userSection">
+                        <!-- Will be populated based on user count -->
+                    </div>
+                    
+                    <!-- Day Dropdown -->
+                    <div class="dropdown-group">
+                        <label class="dropdown-label" for="drawerDaySelect">Day</label>
+                        <select class="drawer-select" id="drawerDaySelect">
+                            <option value="today">Today</option>
+                            <option value="tomorrow">Tomorrow</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+        </header>
+    </div>
+    
+    <!-- Main Content Area -->
+    <main id="main-content" role="main" aria-label="Task routine">
+        <div class="main-container" id="mainContainer" role="region" aria-label="Task cards">
+            <!-- 
+              ALTERNATIVE LOCATION: Edit Mode Cards
+              Title/subtitle editing could be added here as dedicated cards
+              during edit mode instead of in-place header editing
+            -->
+            <!-- Activity cards will be rendered here -->
+        </div>
+    </main>
+    
+    <!-- 
+      MANAGEMENT PANEL STRUCTURE
+      This is created dynamically by HybridPanelManager
+      Title/subtitle editing could be integrated here
+    -->
+    <!-- 
+    <div id="hybridRightPanel" class="side-panel side-panel--right">
+        <div class="side-panel__content">
+            <h3>Manage</h3>
+            <div id="hybridRightContent">
+                In edit mode, this contains:
+                - View mode button
+                - Admin tools (Add User, Export Data, etc.)
+                - COULD CONTAIN: Title/subtitle editor
+            </div>
+            <button class="panel-close">Done</button>
+        </div>
+    </div>
+    -->
+    
+    <!-- Floating Action Buttons -->
+    <!-- These are created dynamically by HybridPanelManager -->
+    <!-- 
+    <nav class="floating-nav floating-nav--right">
+        <button id="hybridManageBtn" class="fab">
+            <span class="material-icons">settings</span>
+        </button>
+    </nav>
+    -->
+
+    <!-- Scripts -->
+    <script src="app/StackMapApp.js"></script>
+    <script src="js/HybridPanelManager.js"></script>
+    <!-- Other scripts -->
+</body>
+</html>
+
+<!-- 
+  ARCHITECTURAL NOTES:
+  
+  Current Structure:
+  - Title/subtitle are direct children of header
+  - In edit mode, they become contenteditable in-place
+  - No dedicated editing UI - just click to edit
+  
+  Alternative Locations:
+  
+  1. Management Panel Integration:
+     - Move editing to side panel alongside admin tools
+     - Form-based editing instead of contenteditable
+     - More structured and discoverable
+  
+  2. Edit Mode Cards:
+     - Create dedicated cards in main content area
+     - Visible alongside activity cards during edit mode
+     - Clear, dedicated editing interface
+  
+  Visual Hierarchy:
+  - Header: Logo + Title/Subtitle + Drawer (User/Day selection)
+  - Main: Activity cards + potential edit cards
+  - Panels: Settings/preferences + management/admin tools
+  
+  Current Issues with In-Place Editing:
+  - Not obvious that title/subtitle are editable
+  - Easy to click accidentally
+  - Inconsistent with other editing patterns
+  - May be confusing for users expecting read-only header
+-->

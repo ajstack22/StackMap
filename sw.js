@@ -1,6 +1,11 @@
 // StackMap Service Worker - Offline Support for Special Needs Families
-const CACHE_NAME = 'stackmap-v1.0.2';
+const CACHE_NAME = 'stackmap-v1.0.3-' + Date.now(); // Dynamic versioning for development
 const OFFLINE_URL = '/offline.html';
+
+// Development mode detection
+const isDevelopment = self.location.hostname === 'localhost' || 
+                     self.location.hostname.includes('qual') ||
+                     self.location.search.includes('dev=1');
 
 // Files to cache for offline use - essential for routine continuity
 const urlsToCache = [
@@ -71,6 +76,18 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   // Skip cross-origin requests
   if (!event.request.url.startsWith(self.location.origin)) {
+    return;
+  }
+
+  // In development mode, bypass cache for CSS and JS files for easier development
+  if (isDevelopment && (event.request.url.includes('.css') || event.request.url.includes('.js') || event.request.url.includes('cache-bust'))) {
+    event.respondWith(
+      fetch(event.request)
+        .catch(() => {
+          // Fallback to cache only if network fails
+          return caches.match(event.request);
+        })
+    );
     return;
   }
 

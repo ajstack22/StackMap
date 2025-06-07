@@ -136,10 +136,10 @@
                    placeholder="Type your answer" autocomplete="off" spellcheck="false"
                    style="margin-bottom: 8px;">
             <div class="validation-actions" style="margin-top: 32px; display: flex; gap: 12px; justify-content: center;">
-                <button class="btn btn--primary" onclick="appInstance.validationManager.checkValidation()">
+                <button class="btn btn--primary" onclick="console.log('ValidationManager removed - use HybridPanelManager')">
                     Submit Answer
                 </button>
-                <button class="btn btn--secondary" onclick="appInstance.validationManager.cancelValidation()">
+                <button class="btn btn--secondary" onclick="console.log('ValidationManager removed - use HybridPanelManager')">
                     Cancel
                 </button>
             </div>
@@ -265,6 +265,7 @@
     <script src="test-uat-suite.js"></script>
     <script src="test-drawer-position.js"></script>
     
+    <!-- ValidationManager removed - validation now handled by HybridPanelManager
     <script>
         // Simple ValidationManager
         class ValidationManager {
@@ -340,6 +341,7 @@
         // Make managers globally available
         window.ValidationManager = ValidationManager;
     </script>
+    -->
     
     <!-- Main App -->
     <script src="app/StackMapApp.js"></script>
