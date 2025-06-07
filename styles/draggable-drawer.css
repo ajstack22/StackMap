@@ -18,7 +18,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transform: translate(10px, -10px); /* 10px right, 10px up */
+    position: relative;
+    z-index: 1002; /* Above header but below floating buttons */
+    /* Removed transform to fix alignment */
 }
 
 .stackmap-logo svg {
@@ -37,6 +39,17 @@
 /* When logo is hidden, ensure proper centering */
 .stackmap-logo[style*="display: none"] + .header-text {
     margin: 0 auto; /* Center the text container */
+}
+
+/* Ensure header content has proper z-index layering */
+.header-content {
+    position: relative;
+    z-index: 1003; /* Above header wrapper (1001) but below floating buttons (1010) */
+}
+
+/* Apply negative margin when logo is visible to compensate */
+.stackmap-logo:not([style*="display: none"]) ~ .header-text {
+    margin-left: -21px; /* Half of logo width (42px / 2) */
 }
 
 /* Title and Subtitle */
