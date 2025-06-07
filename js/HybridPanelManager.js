@@ -271,16 +271,6 @@ class HybridPanelManager {
         
         return `
             <div class="panel-section">
-                <label>Current User</label>
-                ${this.renderUserSelector()}
-            </div>
-            
-            <div class="panel-section">
-                <label>Day Selection</label>
-                ${this.renderDaySelector()}
-            </div>
-            
-            <div class="panel-section">
                 <label>Theme Colors</label>
                 ${this.renderColorPicker()}
             </div>
@@ -315,17 +305,30 @@ class HybridPanelManager {
             return this.renderSyncSettings();
         }
         
+        // Always show user and day selection at the top
+        let content = `
+            <div class="panel-section">
+                <label>Current User</label>
+                ${this.renderUserSelector()}
+            </div>
+            
+            <div class="panel-section">
+                <label>Day Selection</label>
+                ${this.renderDaySelector()}
+            </div>
+        `;
+        
         if (!this.app.grownupMode) {
-            // View mode: Show validation question and Edit button
-            return `
+            // View mode: Add validation section for edit functions
+            content += `
                 <div class="panel-section">
-                    <label>Access Edit Mode</label>
+                    <label>Edit Functions</label>
                     ${this.renderValidationSection()}
                 </div>
             `;
         } else {
-            // Edit mode: Show app settings + admin tools
-            return `
+            // Edit mode: Show edit functions
+            content += `
                 <div class="panel-section">
                     <label>Edit Mode</label>
                     ${this.renderViewModeButton()}
@@ -341,6 +344,8 @@ class HybridPanelManager {
                 </div>
             `;
         }
+        
+        return content;
     }
 
     renderColorPicker() {
@@ -537,9 +542,6 @@ class HybridPanelManager {
                     <span class="material-icons">edit</span>
                     <span>Enter Edit Mode</span>
                 </button>
-                <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 16px; text-align: center;">
-                    💡 Tip: Switch users and days in the Preferences panel
-                </p>
             </div>
         `;
     }
