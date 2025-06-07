@@ -332,18 +332,6 @@ class HybridPanelManager {
                 </div>
                 
                 <div class="panel-section">
-                    <label>Current User</label>
-                    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin: 0 0 12px 0;">Switch users to edit their activities</p>
-                    ${this.renderUserSelector()}
-                </div>
-                
-                <div class="panel-section">
-                    <label>Day Selection</label>
-                    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin: 0 0 12px 0;">Edit activities for today or tomorrow</p>
-                    ${this.renderDaySelector()}
-                </div>
-                
-                <div class="panel-section">
                     ${this.renderTitleSubtitleEditor()}
                 </div>
                 
@@ -549,6 +537,9 @@ class HybridPanelManager {
                     <span class="material-icons">edit</span>
                     <span>Enter Edit Mode</span>
                 </button>
+                <p style="font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 16px; text-align: center;">
+                    💡 Tip: Switch users and days in the Preferences panel
+                </p>
             </div>
         `;
     }
