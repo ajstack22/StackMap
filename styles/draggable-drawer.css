@@ -18,7 +18,7 @@
     display: flex;
     align-items: flex-end; /* Align to bottom */
     justify-content: center;
-    margin-right: 15px; /* 15px gap before the 'S' */
+    margin-right: 8px; /* Reduced to half - 8px gap before the 'S' */
     margin-bottom: 2px; /* Fine-tune baseline alignment */
 }
 
@@ -473,7 +473,7 @@ body.drawer-active {
     .stackmap-logo {
         width: 30px; /* Proportionally smaller for mobile */
         height: 30px;
-        margin-right: 12px; /* Less gap on mobile */
+        margin-right: 6px; /* Half the gap on mobile */
     }
     
     .title {
@@ -526,7 +526,7 @@ body.drawer-active {
     .stackmap-logo {
         width: 24px; /* Even smaller for small mobile */
         height: 24px;
-        margin-right: 10px; /* Less gap on small mobile */
+        margin-right: 5px; /* Half the gap on small mobile */
     }
     
     .title {
