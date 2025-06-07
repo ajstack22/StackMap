@@ -26,20 +26,28 @@ class HybridPanelManager {
     }
 
     createFloatingButtons() {
-        const nav = document.createElement('nav');
-        nav.className = 'floating-nav';
-        nav.innerHTML = `
+        // Create left side preferences button
+        const leftNav = document.createElement('nav');
+        leftNav.className = 'floating-nav floating-nav--left';
+        leftNav.innerHTML = `
             <button id="hybridPreferencesBtn" class="fab" 
                     aria-label="Open preferences" title="Preferences">
                 <span class="material-icons">palette</span>
             </button>
+        `;
+        
+        // Create right side management button
+        const rightNav = document.createElement('nav');
+        rightNav.className = 'floating-nav floating-nav--right';
+        rightNav.innerHTML = `
             <button id="hybridManageBtn" class="fab" 
                     aria-label="Open management panel" title="Manage">
                 <span class="material-icons">settings</span>
             </button>
         `;
         
-        document.body.appendChild(nav);
+        document.body.appendChild(leftNav);
+        document.body.appendChild(rightNav);
     }
 
     createSidePanels() {

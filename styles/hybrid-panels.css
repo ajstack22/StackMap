@@ -5,11 +5,18 @@
 .floating-nav {
     position: fixed;
     top: 20px;
-    right: 20px;
-    z-index: 1600;
+    z-index: 1010;
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.floating-nav--left {
+    left: 20px;
+}
+
+.floating-nav--right {
+    right: 20px;
 }
 
 .fab {
@@ -65,7 +72,7 @@
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
     padding: 80px 20px 20px;
-    z-index: 1500;
+    z-index: 1006;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
     overflow-y: auto;
@@ -277,7 +284,7 @@
     height: 100vh;
     background: rgba(0, 0, 0, 0.3);
     backdrop-filter: blur(2px);
-    z-index: 1400;
+    z-index: 1000;
     opacity: 0;
     visibility: hidden;
     transition: all 0.3s ease;
@@ -292,8 +299,15 @@
 @media (max-width: 768px) {
     .floating-nav {
         top: 15px;
-        right: 15px;
         gap: 10px;
+    }
+    
+    .floating-nav--left {
+        left: 15px;
+    }
+    
+    .floating-nav--right {
+        right: 15px;
     }
     
     .fab {
