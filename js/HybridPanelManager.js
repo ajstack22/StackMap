@@ -234,6 +234,13 @@ class HybridPanelManager {
             contentDiv.innerHTML = this.renderPreferencesContent();
         } else {
             contentDiv.innerHTML = this.renderManagementContent();
+            
+            // Setup input event listeners after rendering
+            if (this.app.grownupMode) {
+                setTimeout(() => {
+                    this.setupTitleSubtitleInputs();
+                }, 0);
+            }
         }
     }
 
@@ -271,11 +278,15 @@ class HybridPanelManager {
                 </div>
             `;
         } else {
-            // Edit mode: Show View button and admin tools
+            // Edit mode: Show app settings + admin tools
             return `
                 <div class="panel-section">
                     <label>Edit Mode</label>
                     ${this.renderViewModeButton()}
+                </div>
+                
+                <div class="panel-section">
+                    ${this.renderTitleSubtitleEditor()}
                 </div>
                 
                 <div class="panel-section">
@@ -475,6 +486,45 @@ class HybridPanelManager {
                 <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
                     <span class="material-icons">person_add</span>
                     Add User
+                </button>
+            </div>
+        `;
+    }
+
+    /**
+     * Title/Subtitle Editor for Management Panel
+     * Simple form-based editing that saves per user
+     */
+    renderTitleSubtitleEditor() {
+        const currentUser = this.app.appState.getCurrentUser();
+        const currentTitle = currentUser.customTitle || 'StackMap';
+        const currentSubtitle = currentUser.customSubtitle || 'Routine Ready';
+        
+        return `
+            <div class="title-subtitle-editor">
+                <div class="editor-field">
+                    <label for="hybridTitleInput">Title</label>
+                    <input type="text" 
+                           id="hybridTitleInput" 
+                           value="${this.escapeHtml(currentTitle)}" 
+                           placeholder="Enter app title"
+                           class="panel-input"
+                           maxlength="50">
+                </div>
+                
+                <div class="editor-field">
+                    <label for="hybridSubtitleInput">Subtitle</label>
+                    <input type="text" 
+                           id="hybridSubtitleInput" 
+                           value="${this.escapeHtml(currentSubtitle)}" 
+                           placeholder="Enter app subtitle"
+                           class="panel-input"
+                           maxlength="50">
+                </div>
+                
+                <button class="save-settings-btn" onclick="hybridPanelManager.saveTitleSubtitle()">
+                    <span class="material-icons">check</span>
+                    <span>Save</span>
                 </button>
             </div>
         `;
@@ -746,6 +796,131 @@ class HybridPanelManager {
         }
     }
 
+    /**
+     * Save title/subtitle from panel inputs
+     */
+    saveTitleSubtitle() {
+        const titleInput = document.getElementById('hybridTitleInput');
+        const subtitleInput = document.getElementById('hybridSubtitleInput');
+        
+        if (!titleInput || !subtitleInput) {
+            console.error('Title/subtitle inputs not found');
+            return;
+        }
+        
+        // Get values and sanitize
+        const newTitle = this.sanitizeText(titleInput.value.trim() || 'StackMap', 50);
+        const newSubtitle = this.sanitizeText(subtitleInput.value.trim() || 'Routine Ready', 50);
+        
+        // Update current user settings
+        const currentUser = this.app.appState.getCurrentUser();
+        currentUser.customTitle = newTitle;
+        currentUser.customSubtitle = newSubtitle;
+        
+        // Update app settings for consistency
+        this.app.appState.settings.title = newTitle;
+        this.app.appState.settings.subtitle = newSubtitle;
+        this.app.appState.settings.isDefaultTitle = (newTitle === 'StackMap');
+        this.app.appState.settings.isDefaultSubtitle = (newSubtitle === 'Routine Ready');
+        
+        // Persist to localStorage
+        this.app.appState._triggerSave();
+        
+        // Update header elements immediately
+        this.updateHeaderElements(newTitle, newSubtitle);
+        
+        // Update browser tab title
+        this.app.updateTabTitle();
+        
+        // Update logo visibility
+        this.app.updateLogoVisibility(newTitle);
+        
+        // Visual feedback
+        this.showSaveSuccess();
+        
+        console.log('Title/subtitle updated from management panel:', { title: newTitle, subtitle: newSubtitle });
+    }
+
+
+    /**
+     * Update header elements from panel
+     */
+    updateHeaderElements(title, subtitle) {
+        const mainTitle = document.getElementById('mainTitle');
+        const mainSubtitle = document.getElementById('subtitle');
+        
+        if (mainTitle) mainTitle.textContent = title;
+        if (mainSubtitle) mainSubtitle.textContent = subtitle;
+        
+        // Update any duplicate header elements if they exist
+        const fixedTitle = document.getElementById('fixedTitle');
+        const fixedSubtitle = document.getElementById('fixedSubtitle');
+        
+        if (fixedTitle) fixedTitle.textContent = title;
+        if (fixedSubtitle) fixedSubtitle.textContent = subtitle;
+    }
+
+    /**
+     * Show save success feedback
+     */
+    showSaveSuccess() {
+        const saveBtn = document.querySelector('.save-settings-btn');
+        if (saveBtn) {
+            const originalContent = saveBtn.innerHTML;
+            saveBtn.innerHTML = '<span class="material-icons">check_circle</span><span>Saved!</span>';
+            saveBtn.style.background = 'rgba(76, 175, 80, 0.3)';
+            
+            setTimeout(() => {
+                saveBtn.innerHTML = originalContent;
+                saveBtn.style.background = '';
+            }, 2000);
+        }
+    }
+
+    /**
+     * Setup input handling - Enter key to save
+     */
+    setupTitleSubtitleInputs() {
+        const titleInput = document.getElementById('hybridTitleInput');
+        const subtitleInput = document.getElementById('hybridSubtitleInput');
+        
+        if (titleInput) {
+            // Save on Enter key
+            titleInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.saveTitleSubtitle();
+                }
+            });
+        }
+        
+        if (subtitleInput) {
+            // Save on Enter key
+            subtitleInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    this.saveTitleSubtitle();
+                }
+            });
+        }
+    }
+
+    /**
+     * Utility: Text sanitization
+     */
+    sanitizeText(text, maxLength) {
+        return text.replace(/[<>]/g, '').substring(0, maxLength).trim();
+    }
+
+    /**
+     * Utility: HTML escaping for security
+     */
+    escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
     // ===== HELPER METHODS =====
 
     handleFABVisibility(panelsOpen) {
@@ -966,6 +1141,20 @@ class HybridPanelManager {
                 panel.addEventListener('mousedown', (e) => {
                     if (!this.state.activePanel) return;
                     
+                    // Don't interfere with input fields, buttons, or other interactive elements
+                    const target = e.target;
+                    const isInteractive = target.tagName === 'INPUT' || 
+                                        target.tagName === 'TEXTAREA' || 
+                                        target.tagName === 'BUTTON' ||
+                                        target.tagName === 'SELECT' ||
+                                        target.closest('button') ||
+                                        target.closest('.segment') ||
+                                        target.closest('.color-option');
+                    
+                    if (isInteractive) {
+                        return; // Let the interaction happen normally
+                    }
+                    
                     mouseStartX = e.clientX;
                     mouseStartTime = Date.now();
                     isMouseDown = true;
@@ -976,6 +1165,9 @@ class HybridPanelManager {
                 
                 panel.addEventListener('mousemove', (e) => {
                     if (!this.state.activePanel || !isMouseDown) return;
+                    
+                    // Don't track movement if started on an interactive element
+                    if (!mouseStartX) return;
                     
                     mouseCurrentX = e.clientX;
                     const deltaX = mouseCurrentX - mouseStartX;

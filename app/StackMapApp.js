@@ -135,114 +135,6 @@ class StackMapApp {
         }
         if (subtitle) subtitle.textContent = userSubtitle;
         
-        // Setup edit listeners
-        this.setupTitleEditListeners();
-    }
-    
-    setupTitleEditListeners() {
-        const mainTitle = document.getElementById('mainTitle');
-        const subtitle = document.getElementById('subtitle');
-        
-        if (mainTitle) {
-            // CRITICAL UX FIX: Add click handler for better discoverability
-            mainTitle.addEventListener('click', () => {
-                if (this.grownupMode) {
-                    mainTitle.contentEditable = true;
-                    mainTitle.focus();
-                    // Select all text for easier editing
-                    const range = document.createRange();
-                    range.selectNodeContents(mainTitle);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }
-            });
-            
-            mainTitle.addEventListener('focus', () => {
-                if (this.grownupMode) {
-                    mainTitle.contentEditable = true;
-                }
-            });
-            
-            mainTitle.addEventListener('blur', () => {
-                mainTitle.contentEditable = false;
-                this.saveTitleChanges();
-            });
-            
-            mainTitle.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    mainTitle.blur();
-                } else if (e.key === 'Escape') {
-                    // Cancel editing and restore original text
-                    mainTitle.blur();
-                    const currentUser = this.appState.getCurrentUser();
-                    mainTitle.textContent = currentUser.customTitle || 'StackMap';
-                }
-            });
-        }
-        
-        if (subtitle) {
-            // CRITICAL UX FIX: Add click handler for better discoverability
-            subtitle.addEventListener('click', () => {
-                if (this.grownupMode) {
-                    subtitle.contentEditable = true;
-                    subtitle.focus();
-                    // Select all text for easier editing
-                    const range = document.createRange();
-                    range.selectNodeContents(subtitle);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
-                }
-            });
-            
-            subtitle.addEventListener('focus', () => {
-                if (this.grownupMode) {
-                    subtitle.contentEditable = true;
-                }
-            });
-            
-            subtitle.addEventListener('blur', () => {
-                subtitle.contentEditable = false;
-                this.saveTitleChanges();
-            });
-            
-            subtitle.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    subtitle.blur();
-                } else if (e.key === 'Escape') {
-                    // Cancel editing and restore original text
-                    subtitle.blur();
-                    const currentUser = this.appState.getCurrentUser();
-                    subtitle.textContent = currentUser.customSubtitle || 'Routine Ready';
-                }
-            });
-        }
-    }
-    
-    saveTitleChanges() {
-        const mainTitle = document.getElementById('mainTitle');
-        const subtitle = document.getElementById('subtitle');
-        
-        if (mainTitle && subtitle) {
-            const newTitle = mainTitle.textContent.trim() || 'StackMap';
-            const newSubtitle = subtitle.textContent.trim() || 'Routine Ready';
-            
-            // Update logo visibility when title changes
-            this.updateLogoVisibility(newTitle);
-            
-            // Save to current user
-            const currentUser = this.appState.getCurrentUser();
-            currentUser.customTitle = newTitle;
-            currentUser.customSubtitle = newSubtitle;
-            
-            
-            // Save to storage
-            this.appState.saveCurrentUserData();
-            this.appState.onStateChange();
-        }
     }
     
     initializeDrawer() {
@@ -456,20 +348,9 @@ class StackMapApp {
         
         if (userSection) {
             const allUsers = this.appState.getAllUsers();
+            console.log('All users:', allUsers);
             userSection.style.display = 'flex'; // Always show section
             
-            // Hide Day label when there's only one user to reduce clutter
-            const dayLabel = document.querySelector('label[for="drawerDaySelect"]');
-            const dayDropdown = document.getElementById('drawerDaySelect');
-            if (dayLabel && dayDropdown) {
-                if (allUsers.length > 1) {
-                    dayLabel.style.display = 'block';
-                    dayDropdown.style.marginTop = '0';
-                } else {
-                    dayLabel.style.display = 'none';
-                    dayDropdown.style.marginTop = '30px'; // Add spacing to maintain position
-                }
-            }
             
             console.log('populateDrawerSelects - Users:', allUsers.length, 'GrownupMode:', this.grownupMode);
             
@@ -1547,7 +1428,6 @@ class StackMapApp {
         this.forceDrawerOpen();
         
         // Old grownup button update removed - using hybrid panels
-        this.updateInlineEditability();
         
         // Update preferences panel if it's open (now handled by HybridPanelManager)
         // Old system disabled - HybridPanelManager handles panel updates automatically
@@ -1589,7 +1469,6 @@ class StackMapApp {
         }
         
         // Old grownup button update removed - using hybrid panels
-        this.updateInlineEditability();
         
         // Update preferences panel if it's open (now handled by HybridPanelManager)
         // Old system disabled - HybridPanelManager handles panel updates automatically
@@ -1609,39 +1488,6 @@ class StackMapApp {
         
         this.render();
         this.syncFixedHeader();
-    }
-
-    updateInlineEditability() {
-        const title = document.getElementById('mainTitle');
-        const subtitle = document.getElementById('subtitle');
-        const fixedTitle = document.getElementById('fixedTitle');
-        const fixedSubtitle = document.getElementById('fixedSubtitle');
-        
-        [title, fixedTitle].forEach(titleElement => {
-            if (titleElement) {
-                if (this.grownupMode) {
-                    titleElement.title = 'Click to edit title';
-                    titleElement.style.cursor = 'pointer';
-                } else {
-                    titleElement.removeAttribute('title');
-                    titleElement.contentEditable = "false";
-                    titleElement.style.cursor = 'default';
-                }
-            }
-        });
-        
-        [subtitle, fixedSubtitle].forEach(subtitleElement => {
-            if (subtitleElement) {
-                if (this.grownupMode) {
-                    subtitleElement.title = 'Click to edit subtitle';
-                    subtitleElement.style.cursor = 'pointer';
-                } else {
-                    subtitleElement.removeAttribute('title');
-                    subtitleElement.contentEditable = "false";
-                    subtitleElement.style.cursor = 'default';
-                }
-            }
-        });
     }
 
     render() {
@@ -2204,6 +2050,59 @@ class StackMapApp {
         this.appState.ui.editingCardIndex = -1;
         ComponentBuilder.closeModalCard();
         this.render();
+    }
+
+    // USER MANAGEMENT
+    addNewUser() {
+        try {
+            // Get name from user
+            const userName = prompt('Enter new user name:');
+            if (!userName || userName.trim() === '') {
+                return; // User cancelled or entered empty name
+            }
+            
+            // Get emoji icon (optional)
+            const userIcon = prompt('Enter an emoji for the user (or leave blank for default):', '👤') || '👤';
+            
+            // Add the user through AppState
+            const newUserId = this.appState.addUser(userName.trim(), userIcon);
+            
+            // Switch to the new user
+            this.appState.switchUser(newUserId);
+            
+            // Update UI
+            this.populateUserDropdowns();
+            
+            // Force drawer to refresh if it's open
+            const drawerExtension = document.getElementById('drawerExtension');
+            if (drawerExtension && drawerExtension.classList.contains('open')) {
+                this.populateDrawerSelects();
+            }
+            
+            // Also populate drawer selects after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                this.populateDrawerSelects();
+                
+                // Force drawer open if we now have multiple users
+                const allUsers = this.appState.getAllUsers();
+                if (allUsers.length > 1) {
+                    const drawerHandle = document.getElementById('drawerHandle');
+                    const drawerExtension = document.getElementById('drawerExtension');
+                    if (drawerHandle && drawerExtension && !drawerExtension.classList.contains('open')) {
+                        console.log('Opening drawer to show user selector');
+                        drawerHandle.click();
+                    }
+                }
+            }, 100);
+            
+            this.render();
+            
+            console.log('New user added:', userName, 'with icon:', userIcon, 'Total users:', this.appState.getAllUsers().length);
+            
+        } catch (error) {
+            alert(error.message);
+            console.error('Error adding user:', error);
+        }
     }
 
     // DATA MANAGEMENT

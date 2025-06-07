@@ -58,34 +58,7 @@
     transform: translateX(-27px); /* Move 27px left to perfectly center (-8px + -19px offset fix) */
 }
 
-/* CRITICAL UX FIX: Enhanced edit mode styles for title/subtitle */
-.grownup-mode .app-header .title,
-.grownup-mode .app-header .subtitle {
-    transition: all 0.2s ease;
-    border-radius: 6px;
-    padding: 2px 8px;
-}
-
-.grownup-mode .app-header .title:hover,
-.grownup-mode .app-header .subtitle:hover {
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
-}
-
-.grownup-mode .app-header .title[contenteditable="true"],
-.grownup-mode .app-header .subtitle[contenteditable="true"] {
-    background: rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: 4px 12px;
-    cursor: text;
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.4);
-}
-
-.grownup-mode .app-header .title:focus,
-.grownup-mode .app-header .subtitle:focus {
-    background: rgba(255, 255, 255, 0.2);
-    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.5);
-}
+/* Title/subtitle editing now handled through Management panel */
 
 /* Additional header styles for drawer */
 .app-header {
@@ -244,7 +217,7 @@
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 6px; /* REDUCED: Smaller gap since first group has no label */
+    justify-content: center; /* Center content vertically for alignment */
     min-width: 0; /* Allow flex items to shrink */
     width: 280px; /* 75% wider (160px * 1.75) */
     max-width: 280px; /* Enforce same size */
