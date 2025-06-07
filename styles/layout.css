@@ -411,7 +411,7 @@ body.drawer-active {
 .stackmap-logo {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 0; /* Remove gap - margin-right is handled in draggable-drawer.css */
     padding: 0; /* No padding/box */
     border-radius: 0;
     background: transparent; /* No background */

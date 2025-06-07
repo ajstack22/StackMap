@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logo Spacing Test</title>
+    <link rel="stylesheet" href="styles/index.css">
+    <style>
+        body {
+            background: #667eea;
+            padding: 50px;
+        }
+        
+        /* Debug styles */
+        .header-logo-title {
+            background: rgba(255,0,0,0.1);
+            outline: 1px dashed red;
+        }
+        
+        .stackmap-logo {
+            background: rgba(0,255,0,0.1);
+            outline: 1px dashed green;
+        }
+        
+        .header-text {
+            background: rgba(0,0,255,0.1);
+            outline: 1px dashed blue;
+        }
+        
+        /* Measurement helper */
+        .measurement {
+            position: absolute;
+            background: yellow;
+            height: 2px;
+            width: 100%;
+            top: 50%;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-header">
+        <div class="header-content">
+            <div class="header-logo-title">
+                <div class="stackmap-logo">
+                    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
+                        <rect x="7" y="7" width="18" height="2.5" fill="white" rx="1.25"/>
+                        <rect x="7" y="11.5" width="18" height="2.5" fill="white" rx="1.25"/>
+                        <rect x="7" y="16" width="18" height="2.5" fill="white" rx="1.25"/>
+                        <rect x="7" y="20.5" width="18" height="5" fill="white" rx="2.5"/>
+                    </svg>
+                </div>
+                <div class="header-text">
+                    <h1 class="title">StackMap</h1>
+                    <p class="subtitle">Routine Ready</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div style="margin-top: 100px; color: white;">
+        <h2>Debugging Info:</h2>
+        <div id="debug-info"></div>
+    </div>
+    
+    <script>
+        window.addEventListener('load', () => {
+            const logoTitle = document.querySelector('.header-logo-title');
+            const logo = document.querySelector('.stackmap-logo');
+            const text = document.querySelector('.header-text');
+            const title = document.querySelector('.title');
+            
+            const logoRect = logo.getBoundingClientRect();
+            const textRect = text.getBoundingClientRect();
+            const titleRect = title.getBoundingClientRect();
+            
+            const gap = textRect.left - logoRect.right;
+            
+            const debugInfo = `
+                <p>Logo right edge: ${logoRect.right.toFixed(2)}px</p>
+                <p>Text left edge: ${textRect.left.toFixed(2)}px</p>
+                <p>Title left edge: ${titleRect.left.toFixed(2)}px</p>
+                <p>Gap between logo and text: ${gap.toFixed(2)}px</p>
+                <p>Logo width: ${logoRect.width.toFixed(2)}px</p>
+                <p>Logo computed styles:</p>
+                <pre>${JSON.stringify({
+                    marginRight: getComputedStyle(logo).marginRight,
+                    paddingRight: getComputedStyle(logo).paddingRight,
+                    gap: getComputedStyle(logoTitle).gap
+                }, null, 2)}</pre>
+            `;
+            
+            document.getElementById('debug-info').innerHTML = debugInfo;
+        });
+    </script>
+</body>
+</html>

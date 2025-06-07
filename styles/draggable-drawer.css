@@ -466,14 +466,15 @@ body.drawer-active {
     /* Header already fixed - see layout.css */
     
     .header-logo-title {
-        gap: 10px;
+        gap: 0; /* Maintain 0 gap - logo margin-right handles spacing */
         margin-bottom: 6px;
     }
     
     .stackmap-logo {
-        width: 30px; /* Proportionally smaller for mobile */
-        height: 30px;
+        width: 26px; /* Smaller for mobile */
+        height: 26px;
         margin-right: 2px; /* Very close gap on mobile */
+        margin-bottom: 1px; /* Less baseline adjustment on mobile */
     }
     
     .title {
@@ -520,13 +521,14 @@ body.drawer-active {
     }
     
     .header-logo-title {
-        gap: 8px;
+        gap: 0; /* Maintain 0 gap - logo margin-right handles spacing */
     }
     
     .stackmap-logo {
-        width: 24px; /* Even smaller for small mobile */
-        height: 24px;
+        width: 20px; /* Even smaller for small mobile */
+        height: 20px;
         margin-right: 2px; /* Very close gap on small mobile */
+        margin-bottom: 1px; /* Less baseline adjustment on small mobile */
     }
     
     .title {
