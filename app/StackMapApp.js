@@ -123,7 +123,11 @@ class StackMapApp {
         // Get current user's custom title and subtitle
         const currentUser = this.appState.getCurrentUser();
         const userTitle = currentUser.customTitle || 'StackMap';
-        const userSubtitle = currentUser.customSubtitle || 'Routine Ready';
+        
+        // Create personalized subtitle with user's name and day
+        const currentDay = this.appState.ui.currentDay || 'today';
+        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+        const userSubtitle = `${currentUser.name}'s ${dayText}`;
         
         // Update all title elements
         const mainTitle = document.getElementById('mainTitle');

@@ -1012,6 +1012,55 @@ textarea.panel-input {
     }
 }
 
+/* ===== USER SELECTOR GRID ===== */
+.user-selector-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.user-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 16px 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 80px;
+}
+
+.user-option:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.user-option--active {
+    background: white !important;
+    border-color: white;
+}
+
+.user-option--active .user-icon,
+.user-option--active .user-name {
+    color: var(--primary-color) !important;
+}
+
+.user-icon {
+    font-size: 2rem;
+    line-height: 1;
+}
+
+.user-name {
+    font-size: 0.9rem;
+    font-weight: 500;
+    text-align: center;
+    word-break: break-word;
+}
+
 /* ===== SYNC STATUS CARD ===== */
 .sync-status-card {
     text-align: center;

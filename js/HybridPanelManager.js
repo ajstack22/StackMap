@@ -44,6 +44,9 @@ class HybridPanelManager {
         
         // Create backdrop
         this.createBackdrop();
+        
+        // Initialize subtitle with user's name and day
+        this.updateSubtitle();
     }
 
     createFloatingButtons() {
@@ -268,6 +271,16 @@ class HybridPanelManager {
         
         return `
             <div class="panel-section">
+                <label>Current User</label>
+                ${this.renderUserSelector()}
+            </div>
+            
+            <div class="panel-section">
+                <label>Day Selection</label>
+                ${this.renderDaySelector()}
+            </div>
+            
+            <div class="panel-section">
                 <label>Theme Colors</label>
                 ${this.renderColorPicker()}
             </div>
@@ -445,6 +458,45 @@ class HybridPanelManager {
                         aria-pressed="${showIndicators}">
                     <span class="material-icons">check_circle</span>
                     <span>On</span>
+                </button>
+            </div>
+        `;
+    }
+    
+    renderUserSelector() {
+        const currentUser = this.app.appState.getCurrentUser();
+        const allUsers = this.app.appState.getAllUsers();
+        
+        return `
+            <div class="user-selector-grid">
+                ${allUsers.map(user => `
+                    <button class="user-option ${user.id === currentUser.id ? 'user-option--active' : ''}" 
+                            onclick="hybridPanelManager.selectUser('${user.id}')"
+                            title="${user.name}">
+                        <span class="user-icon">${user.icon || '👤'}</span>
+                        <span class="user-name">${user.name}</span>
+                    </button>
+                `).join('')}
+            </div>
+        `;
+    }
+    
+    renderDaySelector() {
+        const currentDay = this.app.appState.ui.currentDay || 'today';
+        
+        return `
+            <div class="segmented-control" data-control="day">
+                <button class="segment ${currentDay === 'today' ? 'segment--active' : ''}" 
+                        onclick="hybridPanelManager.selectDay('today')"
+                        aria-pressed="${currentDay === 'today'}">
+                    <span class="material-icons">today</span>
+                    <span>Today</span>
+                </button>
+                <button class="segment ${currentDay === 'tomorrow' ? 'segment--active' : ''}" 
+                        onclick="hybridPanelManager.selectDay('tomorrow')"
+                        aria-pressed="${currentDay === 'tomorrow'}">
+                    <span class="material-icons">event</span>
+                    <span>Tomorrow</span>
                 </button>
             </div>
         `;
@@ -941,6 +993,43 @@ class HybridPanelManager {
         }
         
         console.log('Completion indicators toggled to:', show);
+    }
+    
+    selectUser(userId) {
+        if (this.app.appState.users.profiles[userId]) {
+            this.app.appState.switchUser(userId);
+            this.app.render();
+            this.app.initializeTitleSubtitle(); // Update title and subtitle
+            
+            // Re-render preferences to show updated selection
+            this.renderPanelContent('left');
+            
+            console.log('Switched to user:', userId);
+        }
+    }
+    
+    selectDay(day) {
+        this.app.appState.ui.currentDay = day;
+        this.app.appState._triggerSave();
+        this.app.render();
+        this.app.initializeTitleSubtitle(); // Update title and subtitle
+        
+        // Re-render preferences to show updated selection
+        this.renderPanelContent('left');
+        
+        console.log('Switched to day:', day);
+    }
+    
+    updateSubtitle() {
+        const currentUser = this.app.appState.getCurrentUser();
+        const currentDay = this.app.appState.ui.currentDay || 'today';
+        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+        
+        // Update subtitle to show user's name and day
+        const subtitle = document.getElementById('subtitle');
+        if (subtitle) {
+            subtitle.textContent = `${currentUser.name}'s ${dayText}`;
+        }
     }
 
 
