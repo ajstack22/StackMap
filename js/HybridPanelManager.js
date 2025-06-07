@@ -13,7 +13,8 @@ class HybridPanelManager {
             editingIndex: -1,
             showingUserForm: false,
             editingUser: null,
-            editingUserId: null
+            editingUserId: null,
+            showingSyncSettings: false
         };
         
         // Default values for new activity
@@ -296,6 +297,11 @@ class HybridPanelManager {
             return this.renderUserForm();
         }
         
+        // If showing sync settings, render that instead
+        if (this.state.showingSyncSettings) {
+            return this.renderSyncSettings();
+        }
+        
         if (!this.app.grownupMode) {
             // View mode: Show validation question and Edit button
             return `
@@ -513,6 +519,10 @@ class HybridPanelManager {
                 <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
                     <span class="material-icons">person_add</span>
                     Add User
+                </button>
+                <button class="admin-btn" onclick="hybridPanelManager.openSyncSettings()">
+                    <span class="material-icons">cloud_sync</span>
+                    Google Drive Sync
                 </button>
             </div>
         `;
@@ -1165,6 +1175,7 @@ class HybridPanelManager {
         this.state.showingUserForm = false;
         this.state.editingUser = null;
         this.state.editingUserId = null;
+        this.state.showingSyncSettings = false;
         this.renderPanelContent('right');
     }
     
@@ -1401,6 +1412,145 @@ class HybridPanelManager {
                 } catch (error) {
                     alert('Error deleting user: ' + error.message);
                 }
+            }
+        }
+    }
+
+    /**
+     * Render Google Drive Sync Settings
+     */
+    renderSyncSettings() {
+        const isSignedIn = this.app.driveSync?.isSignedIn || false;
+        const isSyncing = this.app.driveSync?.isSyncing || false;
+        
+        return `
+            <div class="sync-settings">
+                <div class="panel-section">
+                    <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
+                        <span class="material-icons">arrow_back</span>
+                        Back to Management
+                    </button>
+                </div>
+                
+                <div class="panel-section">
+                    <label>Google Drive Sync</label>
+                    
+                    ${!isSignedIn ? `
+                        <div class="sync-status-card">
+                            <div class="sync-icon">
+                                <span class="material-icons" style="font-size: 48px; color: rgba(255,255,255,0.8);">cloud_off</span>
+                            </div>
+                            <h3 style="color: white; margin: 16px 0 8px 0;">Not Connected</h3>
+                            <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">
+                                Sign in to sync your StackMap data across devices
+                            </p>
+                            <button class="save-settings-btn" onclick="hybridPanelManager.signInToGoogle()">
+                                <span class="material-icons">login</span>
+                                <span>Sign in with Google</span>
+                            </button>
+                        </div>
+                    ` : `
+                        <div class="sync-status-card">
+                            <div class="sync-icon">
+                                <span class="material-icons" style="font-size: 48px; color: rgba(255,255,255,0.8);">cloud_done</span>
+                            </div>
+                            <h3 style="color: white; margin: 16px 0 8px 0;">Connected</h3>
+                            <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">
+                                Your data syncs automatically across all your devices
+                            </p>
+                            
+                            <div class="sync-actions" style="display: flex; flex-direction: column; gap: 12px;">
+                                <button class="admin-btn" onclick="hybridPanelManager.syncNow()" 
+                                        ${isSyncing ? 'disabled' : ''}>
+                                    <span class="material-icons ${isSyncing ? 'spinning' : ''}">sync</span>
+                                    ${isSyncing ? 'Syncing...' : 'Sync Now'}
+                                </button>
+                                
+                                <button class="admin-btn" onclick="hybridPanelManager.downloadFromDrive()">
+                                    <span class="material-icons">cloud_download</span>
+                                    Download from Drive
+                                </button>
+                                
+                                <button class="admin-btn" style="background: rgba(255, 100, 100, 0.2);" 
+                                        onclick="hybridPanelManager.signOutFromGoogle()">
+                                    <span class="material-icons">logout</span>
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                    `}
+                </div>
+                
+                <div class="panel-section">
+                    <label>How Sync Works</label>
+                    <div class="sync-info" style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                        <ul style="margin: 0; padding-left: 20px; color: rgba(255,255,255,0.9);">
+                            <li>Your data is stored in your personal Google Drive</li>
+                            <li>Changes sync automatically every 10 seconds</li>
+                            <li>Work offline and sync when reconnected</li>
+                            <li>All devices stay perfectly in sync</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Open sync settings
+     */
+    openSyncSettings() {
+        // Show sync settings form in the same panel
+        this.state.showingSyncSettings = true;
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = false;
+        
+        // Re-render the management panel with sync settings
+        this.renderPanelContent('right');
+    }
+
+    /**
+     * Google Drive sync methods
+     */
+    signInToGoogle() {
+        if (this.app.driveSync) {
+            this.app.driveSync.signIn();
+            // Re-render after a delay to show status change
+            setTimeout(() => {
+                this.renderPanelContent('right');
+            }, 1000);
+        }
+    }
+    
+    signOutFromGoogle() {
+        if (confirm('Are you sure you want to sign out from Google Drive sync?')) {
+            if (this.app.driveSync) {
+                this.app.driveSync.signOut();
+                // Re-render to show disconnected state
+                setTimeout(() => {
+                    this.renderPanelContent('right');
+                }, 500);
+            }
+        }
+    }
+    
+    syncNow() {
+        if (this.app.driveSync && this.app.driveSync.isSignedIn) {
+            this.app.driveSync.uploadData();
+            // Re-render to show syncing state
+            this.renderPanelContent('right');
+            
+            // Re-render again after sync completes
+            setTimeout(() => {
+                this.renderPanelContent('right');
+            }, 3000);
+        }
+    }
+    
+    downloadFromDrive() {
+        if (this.app.driveSync && this.app.driveSync.isSignedIn) {
+            if (confirm('This will replace your local data with the version from Google Drive. Continue?')) {
+                this.app.driveSync.downloadData();
             }
         }
     }

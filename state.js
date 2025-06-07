@@ -21,6 +21,14 @@ class AppState {
             currentDay: 'today' // Story 4: Current day context
         };
         
+        // Sync metadata for Google Drive
+        this.syncMetadata = {
+            version: 0,
+            lastModified: new Date().toISOString(),
+            deviceId: this.generateDeviceId(),
+            deviceName: this.getDeviceName()
+        };
+        
         // Multi-user support
         this.users = {
             currentUserId: CONFIG.DEFAULT_USER_ID,
@@ -581,16 +589,30 @@ class AppState {
             users: this.users,
             ui: {
                 currentDay: this.ui.currentDay // Persist day selection
-            }
+            },
+            syncMetadata: this.syncMetadata,
+            activities: this.getCurrentActivities() // For backward compatibility
         };
     }
 
     // Enhanced importData to handle user icons
-    importData(data) {
+    importData(data, updateVersion = true) {
         // Restore UI state if present
         if (data.ui) {
             if (data.ui.currentDay) {
                 this.ui.currentDay = data.ui.currentDay;
+            }
+        }
+        
+        // Import sync metadata
+        if (data.syncMetadata) {
+            this.syncMetadata = {
+                ...data.syncMetadata,
+                deviceId: this.generateDeviceId(), // Keep local device ID
+                deviceName: this.getDeviceName() // Update device name
+            };
+            if (updateVersion) {
+                this.syncMetadata.version++; // Increment version after import
             }
         }
         
@@ -664,9 +686,85 @@ class AppState {
 
     // === PRIVATE METHODS ===
     _triggerSave() {
+        // Update sync metadata
+        this.syncMetadata.version++;
+        this.syncMetadata.lastModified = new Date().toISOString();
+        
         if (this.onStateChange) {
             this.onStateChange();
         }
+    }
+    
+    // Device ID generation for sync conflict resolution
+    generateDeviceId() {
+        let deviceId = localStorage.getItem('stackmap-device-id');
+        if (!deviceId) {
+            deviceId = 'device-' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('stackmap-device-id', deviceId);
+        }
+        return deviceId;
+    }
+    
+    // Get a user-friendly device name
+    getDeviceName() {
+        const userAgent = navigator.userAgent;
+        const platform = navigator.platform;
+        
+        if (/iPhone|iPad|iPod/.test(userAgent)) {
+            if (/iPad/.test(userAgent)) return 'iPad';
+            return 'iPhone';
+        }
+        if (/Android/.test(userAgent)) {
+            if (/Mobile/.test(userAgent)) return 'Android Phone';
+            return 'Android Tablet';
+        }
+        if (/Mac/.test(platform)) return 'Mac';
+        if (/Win/.test(platform)) return 'Windows PC';
+        if (/Linux/.test(platform)) return 'Linux PC';
+        
+        return 'Web Browser';
+    }
+    
+    // Merge with remote data for conflict resolution
+    mergeWithRemote(remoteData) {
+        // Merge activities - combine unique activities from both
+        const localActivities = this.getCurrentActivities();
+        const remoteActivities = remoteData.activities || [];
+        
+        // Create a map of activities by title + icon for deduplication
+        const activityMap = new Map();
+        
+        // Add local activities
+        localActivities.forEach(activity => {
+            const key = `${activity.title}|${activity.icon}`;
+            activityMap.set(key, activity);
+        });
+        
+        // Add remote activities (will override locals with same key)
+        remoteActivities.forEach(activity => {
+            const key = `${activity.title}|${activity.icon}`;
+            if (!activityMap.has(key)) {
+                activityMap.set(key, activity);
+            }
+        });
+        
+        // Convert back to array
+        const mergedActivities = Array.from(activityMap.values());
+        
+        // Update current user's activities
+        const user = this.getCurrentUser();
+        if (this.ui.currentDay === 'today') {
+            user.activities = mergedActivities;
+            this.activities = mergedActivities;
+        } else {
+            user.tomorrowActivities = mergedActivities;
+            this.activities = mergedActivities;
+        }
+        
+        // Update version to be higher than both
+        this.syncMetadata.version = Math.max(this.syncMetadata.version, remoteData.syncMetadata?.version || 0) + 1;
+        
+        this._triggerSave();
     }
 }
 
