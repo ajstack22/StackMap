@@ -12,6 +12,9 @@ class HybridPanelManager {
         
         this.initializePanels();
         this.setupEventListeners();
+        
+        // Initialize FAB visibility (show FABs by default)
+        this.handleFABVisibility(false);
     }
 
     initializePanels() {
@@ -23,9 +26,6 @@ class HybridPanelManager {
         
         // Create backdrop
         this.createBackdrop();
-        
-        // Initialize footer color picker
-        this.initializeFooterColorPicker();
     }
 
     createFloatingButtons() {
@@ -59,6 +59,8 @@ class HybridPanelManager {
         leftPanel.id = 'hybridLeftPanel';
         leftPanel.className = 'side-panel side-panel--left';
         leftPanel.innerHTML = `
+            <div class="mobile-handle" onclick="hybridPanelManager.closePanel('left')" aria-label="Close panel"></div>
+            <div class="desktop-handle" onclick="hybridPanelManager.closePanel('left')" aria-label="Close panel"></div>
             <div class="side-panel__content">
                 <h3>Preferences</h3>
                 <div id="hybridLeftContent">
@@ -75,6 +77,8 @@ class HybridPanelManager {
         rightPanel.id = 'hybridRightPanel';
         rightPanel.className = 'side-panel side-panel--right';
         rightPanel.innerHTML = `
+            <div class="mobile-handle" onclick="hybridPanelManager.closePanel('right')" aria-label="Close panel"></div>
+            <div class="desktop-handle" onclick="hybridPanelManager.closePanel('right')" aria-label="Close panel"></div>
             <div class="side-panel__content">
                 <h3>Manage</h3>
                 <div id="hybridRightContent">
@@ -114,6 +118,15 @@ class HybridPanelManager {
                 this.closeAllPanels();
             }
         });
+        
+        // Mobile swipe-down to close
+        this.setupSwipeToClose();
+        
+        // Handle window resize for platform-specific behavior
+        window.addEventListener('resize', () => {
+            // Update FAB visibility based on current state and new screen size
+            this.handleFABVisibility(this.state.activePanel !== null);
+        });
     }
 
     togglePanel(side) {
@@ -140,6 +153,9 @@ class HybridPanelManager {
         panel.classList.add('open');
         button.classList.add('fab--active');
         backdrop.classList.add('active');
+        
+        // Platform-specific FAB behavior
+        this.handleFABVisibility(true);
         
         // Render content
         this.renderPanelContent(side);
@@ -170,6 +186,9 @@ class HybridPanelManager {
         if (!this.state.leftPanelOpen && !this.state.rightPanelOpen) {
             document.getElementById('hybridBackdrop').classList.remove('active');
             
+            // Platform-specific FAB behavior - show FABs when all panels closed
+            this.handleFABVisibility(false);
+            
             // Restore mobile scroll
             if (window.innerWidth <= 768) {
                 document.body.style.overflow = '';
@@ -182,6 +201,11 @@ class HybridPanelManager {
     closeAllPanels() {
         if (this.state.leftPanelOpen) this.closePanel('left');
         if (this.state.rightPanelOpen) this.closePanel('right');
+        
+        // Ensure FABs are shown when all panels are closed
+        if (!this.state.leftPanelOpen && !this.state.rightPanelOpen) {
+            this.handleFABVisibility(false);
+        }
     }
 
     renderPanelContent(side) {
@@ -282,7 +306,7 @@ class HybridPanelManager {
         const isCustomColor = !rainbowColors.slice(0, -1).includes(currentColor);
         
         return `
-            <div class="color-grid" style="grid-template-columns: repeat(6, 1fr); gap: ${isMobile ? '6px' : '8px'};">
+            <div class="color-grid">
                 ${rainbowColors.map(color => {
                     if (color === '#000000') {
                         // Custom color picker
@@ -435,9 +459,6 @@ class HybridPanelManager {
         
         // Update color picker selection state
         this.updateColorPickerState(color);
-        
-        // Update footer color picker
-        this.updateFooterColorPicker(color);
         
         // Update card elements immediately
         this.updateCardColors(color);
@@ -681,6 +702,65 @@ class HybridPanelManager {
 
     // ===== HELPER METHODS =====
 
+    handleFABVisibility(panelsOpen) {
+        const isMobile = window.innerWidth <= 768;
+        const floatingNavs = document.querySelectorAll('.floating-nav');
+        
+        floatingNavs.forEach(nav => {
+            if (isMobile) {
+                // Mobile: Hide FABs when panels are open
+                if (panelsOpen) {
+                    nav.style.opacity = '0';
+                    nav.style.visibility = 'hidden';
+                    nav.style.pointerEvents = 'none';
+                    nav.style.transform = 'translateY(-20px)';
+                    nav.style.transition = 'all 0.3s ease';
+                } else {
+                    nav.style.opacity = '1';
+                    nav.style.visibility = 'visible';
+                    nav.style.pointerEvents = 'auto';
+                    nav.style.transform = 'translateY(0)';
+                    nav.style.transition = 'all 0.3s ease';
+                }
+            } else {
+                // Desktop: Always show FABs but reset styling when panels open
+                nav.style.opacity = '1';
+                nav.style.visibility = 'visible';
+                nav.style.pointerEvents = 'auto';
+                nav.style.transform = 'translateY(0)';
+                
+                const fabs = nav.querySelectorAll('.fab');
+                fabs.forEach(fab => {
+                    if (panelsOpen) {
+                        // Reset to default styling
+                        fab.style.background = 'rgba(255, 255, 255, 0.9)';
+                        fab.style.color = 'var(--primary-color)';
+                        fab.style.transform = 'scale(1)';
+                        fab.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.15)';
+                        fab.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+                        
+                        const icons = fab.querySelectorAll('.material-icons');
+                        icons.forEach(icon => {
+                            icon.style.color = 'var(--primary-color)';
+                        });
+                    } else {
+                        // Clear inline styles to use CSS defaults
+                        fab.style.background = '';
+                        fab.style.color = '';
+                        fab.style.transform = '';
+                        fab.style.boxShadow = '';
+                        fab.style.border = '';
+                        
+                        const icons = fab.querySelectorAll('.material-icons');
+                        icons.forEach(icon => {
+                            icon.style.color = '';
+                        });
+                    }
+                });
+            }
+        });
+    }
+
     getUserSetting(settingName) {
         // Try to get from current user settings first, then fall back to global settings
         const currentUser = this.app?.appState?.getCurrentUser();
@@ -698,63 +778,231 @@ class HybridPanelManager {
             segment.setAttribute('aria-pressed', isActive);
         });
     }
-
-    initializeFooterColorPicker() {
-        const footerColorPicker = document.getElementById('footerColorPicker');
-        const colorPickerFooter = document.getElementById('colorPickerFooter');
+    
+    setupSwipeToClose() {
+        let startX = 0;
+        let startY = 0;
+        let currentX = 0;
+        let currentY = 0;
+        let startTime = 0;
+        let isAtTop = false;
+        let isMobile = window.innerWidth <= 768;
         
-        if (footerColorPicker && colorPickerFooter) {
-            // Popular colors subset for footer (most used colors)
-            const footerColors = [
-                '#1976D2', // Blue
-                '#388E3C', // Green  
-                '#F57C00', // Orange
-                '#7B1FA2', // Purple
-                '#DC143C', // Red
-                '#00695C', // Teal
-                '#5D4037', // Brown
-                '#455A64'  // Blue Grey
-            ];
+        // Add touch event listeners to both panels
+        ['hybridLeftPanel', 'hybridRightPanel'].forEach(panelId => {
+            const panel = document.getElementById(panelId);
+            if (!panel) return;
             
-            const currentColor = this.app.appState.settings.backgroundColor;
+            const isLeftPanel = panelId === 'hybridLeftPanel';
             
-            footerColorPicker.innerHTML = footerColors.map(color => {
-                const isSelected = color === currentColor;
-                return `
-                    <button class="color-option ${isSelected ? 'color-option--selected' : ''}"
-                            style="background: ${color};"
-                            onclick="hybridPanelManager.selectColor('${color}')"
-                            aria-label="Select ${color} theme">
-                        ${isSelected ? '<span class="color-checkmark">✓</span>' : ''}
-                    </button>
-                `;
-            }).join('');
+            // Check if panel is scrolled to top (mobile only)
+            const checkScrollPosition = () => {
+                isAtTop = panel.scrollTop <= 10; // Allow small tolerance
+            };
             
-            // Show footer after a brief delay
-            setTimeout(() => {
-                colorPickerFooter.classList.add('visible');
-            }, 500);
-        }
-    }
-
-    updateFooterColorPicker(selectedColor) {
-        const footerColorPicker = document.getElementById('footerColorPicker');
-        if (!footerColorPicker) return;
-        
-        // Update footer color picker states
-        footerColorPicker.querySelectorAll('.color-option').forEach(option => {
-            option.classList.remove('color-option--selected');
-            const checkmark = option.querySelector('.color-checkmark');
-            if (checkmark) checkmark.remove();
+            panel.addEventListener('scroll', checkScrollPosition);
             
-            // Check if this option matches the selected color
-            const style = option.getAttribute('style');
-            if (style && style.includes(selectedColor)) {
-                option.classList.add('color-option--selected');
-                option.innerHTML += '<span class="color-checkmark">✓</span>';
+            panel.addEventListener('touchstart', (e) => {
+                if (!this.state.activePanel) return;
+                
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+                startTime = Date.now();
+                isMobile = window.innerWidth <= 768;
+                
+                if (isMobile) {
+                    checkScrollPosition();
+                }
+            }, { passive: true });
+            
+            panel.addEventListener('touchmove', (e) => {
+                if (!this.state.activePanel) return;
+                
+                currentX = e.touches[0].clientX;
+                currentY = e.touches[0].clientY;
+                const deltaX = currentX - startX;
+                const deltaY = currentY - startY;
+                
+                if (isMobile) {
+                    // Mobile: Vertical swipe down when at top
+                    if (isAtTop && deltaY > 20 && Math.abs(deltaX) < Math.abs(deltaY)) {
+                        // Add visual feedback - slight panel movement
+                        const moveDistance = Math.min(deltaY * 0.3, 30);
+                        panel.style.transform = `translateY(${moveDistance}px)`;
+                    }
+                } else {
+                    // Desktop: Horizontal swipe gestures
+                    const absX = Math.abs(deltaX);
+                    const absY = Math.abs(deltaY);
+                    
+                    // Only handle horizontal swipes (more horizontal than vertical)
+                    if (absX > absY && absX > 20) {
+                        let shouldShowFeedback = false;
+                        let moveDistance = 0;
+                        
+                        if (isLeftPanel && deltaX < -20) {
+                            // Left panel: swipe left to close
+                            shouldShowFeedback = true;
+                            moveDistance = Math.max(deltaX * 0.3, -50);
+                        } else if (!isLeftPanel && deltaX > 20) {
+                            // Right panel: swipe right to close
+                            shouldShowFeedback = true;
+                            moveDistance = Math.min(deltaX * 0.3, 50);
+                        }
+                        
+                        if (shouldShowFeedback) {
+                            // Add visual feedback - slight panel movement
+                            if (isLeftPanel) {
+                                panel.style.transform = `translateX(${moveDistance}px)`;
+                            } else {
+                                panel.style.transform = `translateX(${moveDistance}px)`;
+                            }
+                        }
+                    }
+                }
+            }, { passive: true });
+            
+            panel.addEventListener('touchend', (e) => {
+                if (!this.state.activePanel) return;
+                
+                const deltaX = currentX - startX;
+                const deltaY = currentY - startY;
+                const deltaTime = Date.now() - startTime;
+                const velocityX = Math.abs(deltaX) / deltaTime;
+                const velocityY = Math.abs(deltaY) / deltaTime;
+                
+                // Reset panel transform
+                panel.style.transform = '';
+                
+                let shouldClose = false;
+                
+                if (isMobile) {
+                    // Mobile: Close panel if at top, swiped down significantly, and fast enough
+                    if (isAtTop && deltaY > 50 && velocityY > 0.3 && Math.abs(deltaX) < Math.abs(deltaY)) {
+                        shouldClose = true;
+                    }
+                } else {
+                    // Desktop: Close panel based on horizontal swipe direction
+                    const absX = Math.abs(deltaX);
+                    const absY = Math.abs(deltaY);
+                    
+                    // Only handle horizontal swipes
+                    if (absX > absY && absX > 60 && velocityX > 0.4) {
+                        if (isLeftPanel && deltaX < -60) {
+                            // Left panel: swipe left to close
+                            shouldClose = true;
+                        } else if (!isLeftPanel && deltaX > 60) {
+                            // Right panel: swipe right to close
+                            shouldClose = true;
+                        }
+                    }
+                }
+                
+                if (shouldClose) {
+                    this.closeAllPanels();
+                }
+                
+                // Reset values
+                startX = 0;
+                startY = 0;
+                currentX = 0;
+                currentY = 0;
+                startTime = 0;
+            }, { passive: true });
+            
+            // Add mouse event support for desktop trackpad/touchscreen gestures
+            if (!isMobile) {
+                let mouseStartX = 0;
+                let mouseCurrentX = 0;
+                let mouseStartTime = 0;
+                let isMouseDown = false;
+                
+                panel.addEventListener('mousedown', (e) => {
+                    if (!this.state.activePanel) return;
+                    
+                    mouseStartX = e.clientX;
+                    mouseStartTime = Date.now();
+                    isMouseDown = true;
+                    
+                    // Prevent text selection during swipe
+                    e.preventDefault();
+                }, { passive: false });
+                
+                panel.addEventListener('mousemove', (e) => {
+                    if (!this.state.activePanel || !isMouseDown) return;
+                    
+                    mouseCurrentX = e.clientX;
+                    const deltaX = mouseCurrentX - mouseStartX;
+                    
+                    // Only handle horizontal movements > 20px
+                    if (Math.abs(deltaX) > 20) {
+                        let shouldShowFeedback = false;
+                        let moveDistance = 0;
+                        
+                        if (isLeftPanel && deltaX < -20) {
+                            // Left panel: swipe left to close
+                            shouldShowFeedback = true;
+                            moveDistance = Math.max(deltaX * 0.2, -30); // Less sensitive for mouse
+                        } else if (!isLeftPanel && deltaX > 20) {
+                            // Right panel: swipe right to close
+                            shouldShowFeedback = true;
+                            moveDistance = Math.min(deltaX * 0.2, 30); // Less sensitive for mouse
+                        }
+                        
+                        if (shouldShowFeedback) {
+                            panel.style.transform = `translateX(${moveDistance}px)`;
+                            panel.style.cursor = 'grabbing';
+                        }
+                    }
+                });
+                
+                panel.addEventListener('mouseup', (e) => {
+                    if (!this.state.activePanel || !isMouseDown) return;
+                    
+                    const deltaX = mouseCurrentX - mouseStartX;
+                    const deltaTime = Date.now() - mouseStartTime;
+                    const velocityX = Math.abs(deltaX) / deltaTime;
+                    
+                    // Reset panel transform and cursor
+                    panel.style.transform = '';
+                    panel.style.cursor = '';
+                    
+                    let shouldClose = false;
+                    
+                    // Desktop mouse: Close panel based on horizontal swipe direction
+                    if (Math.abs(deltaX) > 80 && velocityX > 0.3) { // Higher threshold for mouse
+                        if (isLeftPanel && deltaX < -80) {
+                            // Left panel: swipe left to close
+                            shouldClose = true;
+                        } else if (!isLeftPanel && deltaX > 80) {
+                            // Right panel: swipe right to close
+                            shouldClose = true;
+                        }
+                    }
+                    
+                    if (shouldClose) {
+                        this.closeAllPanels();
+                    }
+                    
+                    // Reset values
+                    mouseStartX = 0;
+                    mouseCurrentX = 0;
+                    mouseStartTime = 0;
+                    isMouseDown = false;
+                });
+                
+                // Handle mouse leave to reset state
+                panel.addEventListener('mouseleave', () => {
+                    if (isMouseDown) {
+                        panel.style.transform = '';
+                        panel.style.cursor = '';
+                        isMouseDown = false;
+                    }
+                });
             }
         });
     }
+
 
     // Hide old floating buttons
     hideOldButtons() {

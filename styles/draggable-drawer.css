@@ -499,19 +499,30 @@ body.drawer-active {
     }
     
     .drawer-dropdowns {
-        flex-direction: column;
-        gap: 16px;
-        padding: 8px 20px 20px; /* MATCHED: Same buffer as mobile handle (20px) */
+        flex-direction: row; /* Keep side-by-side on mobile */
+        gap: 8px; /* Minimal gap for full width */
+        padding: 8px 12px 20px; /* Reduced side padding for full width */
+        max-width: 100%; /* Full width for mobile */
+        width: 100%; /* Ensure full width usage */
+    }
+    
+    /* Span dropdowns across full mobile width */
+    .dropdown-group {
+        width: auto; /* Let flexbox handle sizing */
+        max-width: none; /* Remove desktop max-width */
+        min-width: 0; /* Allow full compression */
+        flex: 1; /* Equal width distribution across full width */
     }
     
     .drawer-select,
     .drawer-add-user {
-        font-size: 1rem;
-        padding: 14px 16px;
+        font-size: 0.9rem; /* Slightly smaller text for narrower dropdowns */
+        padding: 12px 12px; /* Reduced padding for mobile */
+        width: 100%; /* Take full width of their container */
     }
     
     .drawer-select {
-        padding-right: 42px;
+        padding-right: 36px; /* Smaller arrow area for mobile */
     }
 }
 
@@ -541,8 +552,16 @@ body.drawer-active {
     /* Handle stays at bottom of header on mobile too */
     
     .drawer-dropdowns {
-        padding: 8px 16px 20px; /* MATCHED: Same buffer as mobile handle (20px) */
-        gap: 14px;
+        padding: 8px 8px 20px; /* Minimal side padding for maximum width usage */
+        gap: 6px; /* Very small gap for maximum space efficiency */
+        flex-direction: row; /* Keep side-by-side even on very small screens */
+        width: 100%; /* Full width usage on very small screens */
+    }
+    
+    /* Maximum width utilization on very small screens */
+    .dropdown-group {
+        min-width: 0; /* Allow maximum compression */
+        flex: 1; /* Equal distribution of available space */
     }
     
     .dropdown-label {
