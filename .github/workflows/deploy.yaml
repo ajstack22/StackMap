@@ -1,0 +1,17 @@
+name: Auto Deploy to CPanel
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to CPanel
+        uses: pinkasey/cpanel-deploy-action@v1.2.1
+        with:
+          hostname: 'https://stackmap.app'  # Your CPanel URL
+          repository_root: '/home/stackmap/repositories/stackmap'  # Your repo path in CPanel
+          branch: main
+          cpanel_token: '${{ secrets.CPANEL_TOKEN }}'
+          cpanel_username: 'stachblx'  # Your CPanel username
