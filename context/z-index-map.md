@@ -4,11 +4,15 @@
 
 ```
 ┌─────────────────────────────────────┐
+│ StackMap Logo (1011)                │ ← Logo must be above all buttons
+├─────────────────────────────────────┤
 │ Floating Buttons (1010)             │ ← Edit/Preferences buttons
 ├─────────────────────────────────────┤
 │ Drawer Handle (1005)                │ ← Always visible handle
 ├─────────────────────────────────────┤
 │ Preferences Panel (1004)            │ ← Settings overlay
+├─────────────────────────────────────┤
+│ Header Content (1003)               │ ← Header content layer
 ├─────────────────────────────────────┤
 │ Drawer Extension (1002)             │ ← Drawer content when open
 ├─────────────────────────────────────┤
@@ -21,6 +25,12 @@
 ```
 
 ## Detailed Z-Index Values
+
+### 1011 - StackMap Logo
+- **Element**: `.stackmap-logo`
+- **Location**: `styles/draggable-drawer.css`
+- **Why**: Must be visible above floating buttons to prevent overlap
+- **Critical**: Logo needs highest z-index to ensure brand visibility
 
 ### 1010 - Floating Action Buttons
 - **Elements**: `#preferencesBtn`, `#grownupBtn`

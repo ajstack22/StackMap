@@ -19,7 +19,7 @@
     align-items: center;
     justify-content: center;
     position: relative;
-    z-index: 1002; /* Above header but below floating buttons */
+    z-index: 1011; /* Above floating buttons (1010) to ensure logo is visible */
     /* Removed transform to fix alignment */
 }
 
@@ -130,7 +130,7 @@
     border-radius: 2px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3); /* Softer shadow */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    animation: drawerHint 3s ease-in-out 1s; /* Hint animation after 1s delay */
+    /* animation: drawerHint 3s ease-in-out 1s; */ /* Disabled: causes visual distraction during load */
 }
 
 /* Helper animation on page load */
