@@ -7,7 +7,16 @@ class HybridPanelManager {
         this.state = {
             leftPanelOpen: false,
             rightPanelOpen: false,
-            activePanel: null
+            activePanel: null,
+            showingActivityForm: false,
+            editingActivity: null,
+            editingIndex: -1
+        };
+        
+        // Default values for new activity
+        this.newActivityDefaults = {
+            emoji: CONFIG.DEFAULT_EMOJI || '📝',
+            cardType: 'recurring'
         };
         
         this.initializePanels();
@@ -269,6 +278,11 @@ class HybridPanelManager {
     renderManagementContent() {
         const allUsers = this.app.appState.getAllUsers();
         
+        // If showing activity form, render that instead
+        if (this.state.showingActivityForm) {
+            return this.renderActivityForm();
+        }
+        
         if (!this.app.grownupMode) {
             // View mode: Show validation question and Edit button
             return `
@@ -487,6 +501,109 @@ class HybridPanelManager {
                     <span class="material-icons">person_add</span>
                     Add User
                 </button>
+            </div>
+        `;
+    }
+
+    /**
+     * Render Activity Form for creating/editing activities
+     */
+    renderActivityForm() {
+        const isEditing = this.state.editingIndex >= 0;
+        const activity = this.state.editingActivity;
+        
+        // Default values for new activity
+        const emoji = isEditing ? activity.icon : this.newActivityDefaults.emoji;
+        const title = isEditing ? activity.title : '';
+        const description = isEditing ? activity.description : '';
+        const time = isEditing ? (activity.time || '') : '';
+        const cardType = isEditing ? (activity.cardType || 'recurring') : this.newActivityDefaults.cardType;
+        
+        // Generate card type buttons
+        const cardTypeButtons = Object.keys(CARD_TYPE_ICONS).map(type => {
+            const icon = CARD_TYPE_ICONS[type];
+            const label = CARD_TYPE_LABELS[type];
+            const selectedClass = cardType === type ? 'segment--active' : '';
+            
+            return `
+                <button type="button" class="segment ${selectedClass}" 
+                        onclick="hybridPanelManager.selectCardType('${type}')"
+                        data-card-type="${type}">
+                    <span class="material-icons">${icon}</span>
+                    <span>${label}</span>
+                </button>
+            `;
+        }).join('');
+        
+        return `
+            <div class="activity-form">
+                <div class="panel-section">
+                    <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
+                        <span class="material-icons">arrow_back</span>
+                        Back to Management
+                    </button>
+                </div>
+                
+                <div class="panel-section">
+                    <label>${isEditing ? 'Edit Activity' : 'New Activity'}</label>
+                    
+                    <div class="activity-emoji-selector">
+                        <button class="emoji-button" id="activityEmojiButton" 
+                                onclick="hybridPanelManager.showEmojiPicker()">
+                            <span class="emoji-display">${emoji}</span>
+                        </button>
+                        <input type="hidden" id="activityEmoji" value="${emoji}">
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label for="activityTitle">Title</label>
+                        <input type="text" 
+                               id="activityTitle" 
+                               value="${this.escapeHtml(title)}" 
+                               placeholder="Activity name"
+                               class="panel-input"
+                               maxlength="100">
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label for="activityDescription">Description</label>
+                        <textarea id="activityDescription" 
+                                  placeholder="Additional details (optional)"
+                                  class="panel-input"
+                                  rows="3"
+                                  maxlength="500">${this.escapeHtml(description)}</textarea>
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label for="activityTime">Time (optional)</label>
+                        <input type="time" 
+                               id="activityTime" 
+                               value="${time}"
+                               class="panel-input">
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <label>Activity Type</label>
+                    <div class="segmented-control">
+                        ${cardTypeButtons}
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <button class="save-settings-btn" onclick="hybridPanelManager.saveActivity()">
+                        <span class="material-icons">check</span>
+                        <span>${isEditing ? 'Update Activity' : 'Create Activity'}</span>
+                    </button>
+                    
+                    ${isEditing ? `
+                        <button class="admin-btn" style="background: rgba(255, 100, 100, 0.2); margin-top: 12px;" 
+                                onclick="hybridPanelManager.deleteActivity()">
+                            <span class="material-icons">delete</span>
+                            Delete Activity
+                        </button>
+                    ` : ''}
+                </div>
             </div>
         `;
     }
@@ -767,11 +884,21 @@ class HybridPanelManager {
 
     // Admin actions
     addNewCard() {
-        this.closeAllPanels();
-        // Delegate to existing functionality
-        if (this.app.showNewCardForm) {
-            this.app.showNewCardForm();
-        }
+        // Don't close panels - show activity form in the same panel
+        this.state.showingActivityForm = true;
+        this.state.editingActivity = null;
+        this.state.editingIndex = -1;
+        
+        // Re-render the management panel with activity form
+        this.renderPanelContent('right');
+        
+        // Focus on title input after rendering
+        setTimeout(() => {
+            const titleInput = document.getElementById('activityTitle');
+            if (titleInput) {
+                titleInput.focus();
+            }
+        }, 100);
     }
 
     exportData() {
@@ -910,6 +1037,145 @@ class HybridPanelManager {
      */
     sanitizeText(text, maxLength) {
         return text.replace(/[<>]/g, '').substring(0, maxLength).trim();
+    }
+
+    /**
+     * Activity form methods
+     */
+    editActivity(activity, index) {
+        // Open right panel and show activity form in edit mode
+        this.state.showingActivityForm = true;
+        this.state.editingActivity = activity;
+        this.state.editingIndex = index;
+        
+        // Open the management panel
+        this.openPanel('right');
+        
+        // Focus on title input after rendering
+        setTimeout(() => {
+            const titleInput = document.getElementById('activityTitle');
+            if (titleInput) {
+                titleInput.focus();
+            }
+        }, 300);
+    }
+    
+    backToManagement() {
+        this.state.showingActivityForm = false;
+        this.state.editingActivity = null;
+        this.state.editingIndex = -1;
+        this.renderPanelContent('right');
+    }
+    
+    selectCardType(type) {
+        this.newActivityDefaults.cardType = type;
+        
+        // Update button states
+        document.querySelectorAll('.segmented-control .segment').forEach(btn => {
+            const btnType = btn.getAttribute('data-card-type');
+            if (btnType === type) {
+                btn.classList.add('segment--active');
+            } else {
+                btn.classList.remove('segment--active');
+            }
+        });
+    }
+    
+    showEmojiPicker() {
+        const currentEmoji = document.getElementById('activityEmoji').value;
+        const button = document.getElementById('activityEmojiButton');
+        
+        // Create a simple emoji picker inline
+        const emojiGrid = document.createElement('div');
+        emojiGrid.className = 'emoji-picker-inline';
+        emojiGrid.innerHTML = `
+            <div class="emoji-grid">
+                ${EMOJIS.slice(0, 48).map(emoji => `
+                    <button class="emoji-option" data-emoji="${emoji}">
+                        ${emoji}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+        
+        // Insert after the emoji button
+        button.parentElement.appendChild(emojiGrid);
+        
+        // Handle emoji selection
+        emojiGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('emoji-option')) {
+                const selectedEmoji = e.target.getAttribute('data-emoji');
+                document.getElementById('activityEmoji').value = selectedEmoji;
+                button.querySelector('.emoji-display').textContent = selectedEmoji;
+                this.newActivityDefaults.emoji = selectedEmoji;
+                emojiGrid.remove();
+            }
+        });
+        
+        // Close on outside click
+        setTimeout(() => {
+            document.addEventListener('click', function closeEmojiPicker(e) {
+                if (!emojiGrid.contains(e.target) && e.target !== button) {
+                    emojiGrid.remove();
+                    document.removeEventListener('click', closeEmojiPicker);
+                }
+            });
+        }, 100);
+    }
+    
+    saveActivity() {
+        const title = document.getElementById('activityTitle').value.trim();
+        const description = document.getElementById('activityDescription').value.trim();
+        const time = document.getElementById('activityTime').value;
+        const emoji = document.getElementById('activityEmoji').value;
+        const cardType = this.newActivityDefaults.cardType;
+        
+        if (!title) {
+            alert('Please enter an activity title');
+            return;
+        }
+        
+        const activity = {
+            title,
+            description,
+            icon: emoji,
+            time: time || null,
+            cardType,
+            completed: false,
+            visible: true
+        };
+        
+        if (this.state.editingIndex >= 0) {
+            // Update existing activity
+            this.app.appState.activities[this.state.editingIndex] = {
+                ...this.app.appState.activities[this.state.editingIndex],
+                ...activity
+            };
+        } else {
+            // Add new activity
+            this.app.appState.activities.push(activity);
+        }
+        
+        // Save and re-render
+        this.app.appState._triggerSave();
+        this.app.render();
+        
+        // Go back to management panel
+        this.backToManagement();
+        
+        // Show success message
+        this.showSaveSuccess();
+    }
+    
+    deleteActivity() {
+        if (this.state.editingIndex >= 0) {
+            if (confirm('Are you sure you want to delete this activity?')) {
+                this.app.appState.activities.splice(this.state.editingIndex, 1);
+                this.app.appState._triggerSave();
+                this.app.render();
+                this.backToManagement();
+            }
+        }
     }
 
     /**

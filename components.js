@@ -1705,8 +1705,13 @@ class ActivityCard {
             return;
         }
         
-        // Open modal for editing
-        ComponentBuilder.showModalCard(false, this.activity, this.index);
+        // Use panel-based editing if available
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.editActivity(this.activity, this.index);
+        } else {
+            // Fallback to modal
+            ComponentBuilder.showModalCard(false, this.activity, this.index);
+        }
     }
 
     toggleComplete() {

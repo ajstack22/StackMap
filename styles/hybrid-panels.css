@@ -882,6 +882,101 @@
     transform: translateY(100%);
 }
 
+/* ===== ACTIVITY FORM STYLES ===== */
+.activity-form {
+    width: 100%;
+}
+
+.activity-emoji-selector {
+    margin-bottom: 16px;
+    text-align: center;
+    position: relative;
+}
+
+.emoji-button {
+    width: 80px;
+    height: 80px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.emoji-button:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    transform: scale(1.05);
+}
+
+.emoji-display {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+/* Inline emoji picker */
+.emoji-picker-inline {
+    position: absolute;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    padding: 12px;
+    margin-top: 8px;
+    z-index: 100;
+    max-width: 320px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.emoji-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+}
+
+.emoji-option {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    font-size: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.emoji-option:hover {
+    background: #f5f5f5;
+    transform: scale(1.2);
+}
+
+/* Textarea styling */
+textarea.panel-input {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+/* Mobile adjustments for activity form */
+@media (max-width: 768px) {
+    .emoji-picker-inline {
+        max-width: 280px;
+    }
+    
+    .emoji-grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
 /* ===== REDUCED MOTION SUPPORT ===== */
 @media (prefers-reduced-motion: reduce) {
     .side-panel,
@@ -891,7 +986,9 @@
     .color-option,
     .panel-backdrop,
     .admin-btn,
-    .color-picker-footer {
+    .color-picker-footer,
+    .emoji-button,
+    .emoji-option {
         transition: none;
     }
 }

@@ -2433,14 +2433,16 @@ class StackMapApp {
 
     // CARD MANAGEMENT
     showNewCardForm() {
-        // Close any panels first
+        // Use the new panel-based form instead of modal
         if (window.hybridPanelManager) {
-            window.hybridPanelManager.closeAllPanels();
+            // Open management panel and show activity form
+            window.hybridPanelManager.openPanel('right');
+            window.hybridPanelManager.addNewCard();
+        } else {
+            // Fallback to modal if panel manager not available
+            const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
+            console.log('New card modal shown (fallback)');
         }
-        
-        // Show modal for new card
-        const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
-        console.log('New card modal shown');
     }
     
     // LOCAL STORAGE
