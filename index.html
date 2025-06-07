@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="styles/base.css">
     <link rel="stylesheet" href="styles/layout.css">
     <link rel="stylesheet" href="styles/draggable-drawer.css">
+    <link rel="stylesheet" href="styles/hybrid-panels.css">
     
     <!-- Google APIs -->
     <script src="https://apis.google.com/js/api.js"></script>
@@ -236,6 +237,7 @@
     
     <!-- Load managers -->
     <script src="app/PreferencesManager.js"></script>
+    <script src="js/HybridPanelManager.js"></script>
     
     <!-- Load modern components -->
     <script src="components/ModernUserSelector.js"></script>
@@ -338,6 +340,10 @@
             try {
                 window.appInstance = new StackMapApp();
                 console.log('StackMap initialized successfully');
+                
+                // Initialize hybrid panel system
+                window.hybridPanelManager = new HybridPanelManager(window.appInstance);
+                console.log('Hybrid panel system initialized');
                 
                 // Add debug function for inspecting user data
                 window.debugUsers = function() {
