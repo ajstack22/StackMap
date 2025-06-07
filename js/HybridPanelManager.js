@@ -10,13 +10,21 @@ class HybridPanelManager {
             activePanel: null,
             showingActivityForm: false,
             editingActivity: null,
-            editingIndex: -1
+            editingIndex: -1,
+            showingUserForm: false,
+            editingUser: null,
+            editingUserId: null
         };
         
         // Default values for new activity
         this.newActivityDefaults = {
             emoji: CONFIG.DEFAULT_EMOJI || '📝',
             cardType: 'recurring'
+        };
+        
+        // Default values for new user
+        this.newUserDefaults = {
+            icon: '👤'
         };
         
         this.initializePanels();
@@ -281,6 +289,11 @@ class HybridPanelManager {
         // If showing activity form, render that instead
         if (this.state.showingActivityForm) {
             return this.renderActivityForm();
+        }
+        
+        // If showing user form, render that instead
+        if (this.state.showingUserForm) {
+            return this.renderUserForm();
         }
         
         if (!this.app.grownupMode) {
@@ -609,6 +622,80 @@ class HybridPanelManager {
     }
 
     /**
+     * Render User Form for creating/editing users
+     */
+    renderUserForm() {
+        const isEditing = this.state.editingUserId !== null;
+        const user = this.state.editingUser;
+        
+        // Default values
+        const icon = isEditing ? user.icon : this.newUserDefaults.icon;
+        const name = isEditing ? user.name : '';
+        
+        // Common user icons
+        const userIcons = ['👤', '👨', '👩', '👦', '👧', '🧑', '👶', '🧒', '👴', '👵', '🎅', '🦸', '🦹', '👮', '👷', '👨‍🎓', '👩‍🎓', '🧙', '🧛', '🧚'];
+        
+        return `
+            <div class="user-form">
+                <div class="panel-section">
+                    <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
+                        <span class="material-icons">arrow_back</span>
+                        Back to Management
+                    </button>
+                </div>
+                
+                <div class="panel-section">
+                    <label>${isEditing ? 'Edit User' : 'New User'}</label>
+                    
+                    <div class="user-icon-selector">
+                        <button class="emoji-button" id="userIconButton" 
+                                onclick="hybridPanelManager.showUserIconPicker()">
+                            <span class="emoji-display">${icon}</span>
+                        </button>
+                        <input type="hidden" id="userIcon" value="${icon}">
+                    </div>
+                    
+                    <div class="editor-field">
+                        <label for="userName">Name</label>
+                        <input type="text" 
+                               id="userName" 
+                               value="${this.escapeHtml(name)}" 
+                               placeholder="Enter user name"
+                               class="panel-input"
+                               maxlength="50">
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <label>Quick Icons</label>
+                    <div class="quick-icons-grid">
+                        ${userIcons.map(emoji => `
+                            <button class="emoji-option" onclick="hybridPanelManager.selectUserIcon('${emoji}')">
+                                ${emoji}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <button class="save-settings-btn" onclick="hybridPanelManager.saveUser()">
+                        <span class="material-icons">check</span>
+                        <span>${isEditing ? 'Update User' : 'Create User'}</span>
+                    </button>
+                    
+                    ${isEditing && this.app.appState.getAllUsers().length > 1 ? `
+                        <button class="admin-btn" style="background: rgba(255, 100, 100, 0.2); margin-top: 12px;" 
+                                onclick="hybridPanelManager.deleteUser()">
+                            <span class="material-icons">delete</span>
+                            Delete User
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    /**
      * Title/Subtitle Editor for Management Panel
      * Simple form-based editing that saves per user
      */
@@ -916,11 +1003,21 @@ class HybridPanelManager {
     }
 
     addNewUser() {
-        this.closeAllPanels();
-        // Delegate to existing functionality
-        if (this.app.addNewUser) {
-            this.app.addNewUser();
-        }
+        // Don't close panels - show user form in the same panel
+        this.state.showingUserForm = true;
+        this.state.editingUser = null;
+        this.state.editingUserId = null;
+        
+        // Re-render the management panel with user form
+        this.renderPanelContent('right');
+        
+        // Focus on name input after rendering
+        setTimeout(() => {
+            const nameInput = document.getElementById('userName');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 100);
     }
 
     /**
@@ -1061,9 +1158,13 @@ class HybridPanelManager {
     }
     
     backToManagement() {
+        // Reset all form states
         this.state.showingActivityForm = false;
         this.state.editingActivity = null;
         this.state.editingIndex = -1;
+        this.state.showingUserForm = false;
+        this.state.editingUser = null;
+        this.state.editingUserId = null;
         this.renderPanelContent('right');
     }
     
@@ -1174,6 +1275,132 @@ class HybridPanelManager {
                 this.app.appState._triggerSave();
                 this.app.render();
                 this.backToManagement();
+            }
+        }
+    }
+
+    /**
+     * User form methods
+     */
+    selectUserIcon(icon) {
+        document.getElementById('userIcon').value = icon;
+        document.getElementById('userIconButton').querySelector('.emoji-display').textContent = icon;
+        this.newUserDefaults.icon = icon;
+    }
+    
+    showUserIconPicker() {
+        const currentIcon = document.getElementById('userIcon').value;
+        const button = document.getElementById('userIconButton');
+        
+        // Create a simple emoji picker inline
+        const emojiGrid = document.createElement('div');
+        emojiGrid.className = 'emoji-picker-inline';
+        emojiGrid.innerHTML = `
+            <div class="emoji-grid">
+                ${EMOJIS.slice(0, 48).map(emoji => `
+                    <button class="emoji-option" data-emoji="${emoji}">
+                        ${emoji}
+                    </button>
+                `).join('')}
+            </div>
+        `;
+        
+        // Insert after the icon button
+        button.parentElement.appendChild(emojiGrid);
+        
+        // Handle emoji selection
+        emojiGrid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('emoji-option')) {
+                const selectedEmoji = e.target.getAttribute('data-emoji');
+                this.selectUserIcon(selectedEmoji);
+                emojiGrid.remove();
+            }
+        });
+        
+        // Close on outside click
+        setTimeout(() => {
+            document.addEventListener('click', function closeEmojiPicker(e) {
+                if (!emojiGrid.contains(e.target) && e.target !== button) {
+                    emojiGrid.remove();
+                    document.removeEventListener('click', closeEmojiPicker);
+                }
+            });
+        }, 100);
+    }
+    
+    saveUser() {
+        const name = document.getElementById('userName').value.trim();
+        const icon = document.getElementById('userIcon').value;
+        
+        if (!name) {
+            alert('Please enter a user name');
+            return;
+        }
+        
+        try {
+            if (this.state.editingUserId) {
+                // Update existing user
+                const user = this.app.appState.users.profiles[this.state.editingUserId];
+                if (user) {
+                    user.name = name;
+                    user.icon = icon;
+                    this.app.appState._triggerSave();
+                    
+                    // Update UI if this is the current user
+                    if (this.state.editingUserId === this.app.appState.users.currentUserId) {
+                        this.app.populateUserDropdowns();
+                        this.app.render();
+                    }
+                }
+            } else {
+                // Create new user
+                const newUserId = this.app.appState.addUser(name, icon);
+                
+                // Switch to the new user
+                this.app.appState.switchUser(newUserId);
+                this.app.populateUserDropdowns();
+                this.app.populateDrawerSelects();
+                this.app.render();
+            }
+            
+            // Go back to management panel
+            this.backToManagement();
+            
+            // Show success message
+            this.showSaveSuccess();
+        } catch (error) {
+            alert(error.message);
+        }
+    }
+    
+    deleteUser() {
+        if (this.state.editingUserId && this.app.appState.getAllUsers().length > 1) {
+            const user = this.app.appState.users.profiles[this.state.editingUserId];
+            if (confirm(`Are you sure you want to delete user "${user.name}"?`)) {
+                try {
+                    // If deleting current user, switch to another user first
+                    if (this.state.editingUserId === this.app.appState.users.currentUserId) {
+                        const otherUsers = Object.keys(this.app.appState.users.profiles)
+                            .filter(id => id !== this.state.editingUserId);
+                        if (otherUsers.length > 0) {
+                            this.app.appState.switchUser(otherUsers[0]);
+                        }
+                    }
+                    
+                    // Delete the user
+                    delete this.app.appState.users.profiles[this.state.editingUserId];
+                    this.app.appState._triggerSave();
+                    
+                    // Update UI
+                    this.app.populateUserDropdowns();
+                    this.app.populateDrawerSelects();
+                    this.app.render();
+                    
+                    // Go back to management
+                    this.backToManagement();
+                } catch (error) {
+                    alert('Error deleting user: ' + error.message);
+                }
             }
         }
     }

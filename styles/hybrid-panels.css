@@ -966,6 +966,35 @@ textarea.panel-input {
     font-family: inherit;
 }
 
+/* User form styles */
+.user-form {
+    width: 100%;
+}
+
+.user-icon-selector {
+    margin-bottom: 16px;
+    text-align: center;
+    position: relative;
+}
+
+/* Quick icons grid for user selection */
+.quick-icons-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    padding: 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.quick-icons-grid .emoji-option {
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 1.5rem;
+}
+
 /* Mobile adjustments for activity form */
 @media (max-width: 768px) {
     .emoji-picker-inline {
@@ -974,6 +1003,12 @@ textarea.panel-input {
     
     .emoji-grid {
         grid-template-columns: repeat(6, 1fr);
+    }
+    
+    .quick-icons-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+        padding: 12px;
     }
 }
 

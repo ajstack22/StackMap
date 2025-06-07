@@ -378,7 +378,7 @@ class StackMapApp {
                     
                     let dropdownOptions = [];
                     
-                    // Add all users as selectable options (navigation only - editing is in Management panel)
+                    // Add all users as selectable options
                     allUsers.forEach(user => {
                         dropdownOptions.push({
                             id: user.id,
@@ -389,15 +389,38 @@ class StackMapApp {
                         });
                     });
                     
+                    // Add edit option in edit mode
+                    if (this.grownupMode) {
+                        dropdownOptions.push({
+                            id: 'edit-current-user',
+                            text: 'Edit ' + currentUser.name,
+                            icon: '✏️',
+                            selected: false,
+                            type: 'action'
+                        });
+                    }
+                    
                     this.showNativeDropdown('User', dropdownOptions, (selectedId) => {
                         console.log('User dropdown selection:', selectedId);
                         
-                        // Handle user selection (navigation only)
-                        this.handleUserSwitch(selectedId);
-                        const selectedUser = allUsers.find(u => u.id === selectedId);
-                        if (selectedUser && userSelect) {
-                            userSelect.innerHTML = `<span>${selectedUser.icon || '👤'} ${selectedUser.name}</span>`;
-                            userSelect.setAttribute('data-value', selectedId);
+                        // Check if it's an edit action
+                        if (selectedId === 'edit-current-user') {
+                            // Open user edit form in panel
+                            if (window.hybridPanelManager) {
+                                const user = this.appState.getCurrentUser();
+                                window.hybridPanelManager.state.showingUserForm = true;
+                                window.hybridPanelManager.state.editingUser = user;
+                                window.hybridPanelManager.state.editingUserId = user.id;
+                                window.hybridPanelManager.openPanel('right');
+                            }
+                        } else {
+                            // Handle user selection (navigation)
+                            this.handleUserSwitch(selectedId);
+                            const selectedUser = allUsers.find(u => u.id === selectedId);
+                            if (selectedUser && userSelect) {
+                                userSelect.innerHTML = `<span>${selectedUser.icon || '👤'} ${selectedUser.name}</span>`;
+                                userSelect.setAttribute('data-value', selectedId);
+                            }
                         }
                     }, userSelect);
                 });
