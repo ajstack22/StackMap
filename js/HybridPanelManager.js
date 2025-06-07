@@ -332,6 +332,18 @@ class HybridPanelManager {
                 </div>
                 
                 <div class="panel-section">
+                    <label>Current User</label>
+                    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin: 0 0 12px 0;">Switch users to edit their activities</p>
+                    ${this.renderUserSelector()}
+                </div>
+                
+                <div class="panel-section">
+                    <label>Day Selection</label>
+                    <p style="font-size: 0.85rem; color: rgba(255,255,255,0.7); margin: 0 0 12px 0;">Edit activities for today or tomorrow</p>
+                    ${this.renderDaySelector()}
+                </div>
+                
+                <div class="panel-section">
                     ${this.renderTitleSubtitleEditor()}
                 </div>
                 
@@ -1001,8 +1013,13 @@ class HybridPanelManager {
             this.app.render();
             this.app.initializeTitleSubtitle(); // Update title and subtitle
             
-            // Re-render preferences to show updated selection
-            this.renderPanelContent('left');
+            // Re-render both panels to show updated selection
+            if (this.state.leftPanelOpen) {
+                this.renderPanelContent('left');
+            }
+            if (this.state.rightPanelOpen) {
+                this.renderPanelContent('right');
+            }
             
             console.log('Switched to user:', userId);
         }
@@ -1014,8 +1031,13 @@ class HybridPanelManager {
         this.app.render();
         this.app.initializeTitleSubtitle(); // Update title and subtitle
         
-        // Re-render preferences to show updated selection
-        this.renderPanelContent('left');
+        // Re-render both panels to show updated selection
+        if (this.state.leftPanelOpen) {
+            this.renderPanelContent('left');
+        }
+        if (this.state.rightPanelOpen) {
+            this.renderPanelContent('right');
+        }
         
         console.log('Switched to day:', day);
     }
