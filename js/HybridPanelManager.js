@@ -117,6 +117,15 @@ class HybridPanelManager {
             if (e.key === 'Escape' && this.state.activePanel) {
                 this.closeAllPanels();
             }
+            
+            // Enter key support for validation input
+            if (e.key === 'Enter') {
+                const validationInput = document.getElementById('hybridValidationInput');
+                if (validationInput && document.activeElement === validationInput) {
+                    e.preventDefault();
+                    this.checkValidationAnswer();
+                }
+            }
         });
         
         // Mobile swipe-down to close
@@ -159,6 +168,16 @@ class HybridPanelManager {
         
         // Render content
         this.renderPanelContent(side);
+        
+        // Focus validation input if opening management panel in view mode
+        if (side === 'right' && !this.app.grownupMode) {
+            setTimeout(() => {
+                const validationInput = document.getElementById('hybridValidationInput');
+                if (validationInput) {
+                    validationInput.focus();
+                }
+            }, 300); // Small delay to ensure panel animation is complete
+        }
         
         // Mobile scroll lock
         if (window.innerWidth <= 768) {
@@ -242,26 +261,29 @@ class HybridPanelManager {
 
     renderManagementContent() {
         const allUsers = this.app.appState.getAllUsers();
-        const currentDay = this.app.appState.getCurrentDay();
         
-        return `
-            <div class="panel-section">
-                <label>Current View</label>
-                ${this.renderDaySelector(currentDay)}
-            </div>
-            
-            <div class="panel-section">
-                <label>Edit Mode</label>
-                ${this.renderEditModeToggle()}
-            </div>
-            
-            ${this.app.grownupMode ? `
-            <div class="panel-section">
-                <label>Admin Tools</label>
-                ${this.renderAdminButtons()}
-            </div>
-            ` : ''}
-        `;
+        if (!this.app.grownupMode) {
+            // View mode: Show validation question and Edit button
+            return `
+                <div class="panel-section">
+                    <label>Access Edit Mode</label>
+                    ${this.renderValidationSection()}
+                </div>
+            `;
+        } else {
+            // Edit mode: Show View button and admin tools
+            return `
+                <div class="panel-section">
+                    <label>Edit Mode</label>
+                    ${this.renderViewModeButton()}
+                </div>
+                
+                <div class="panel-section">
+                    <label>Admin Tools</label>
+                    ${this.renderAdminButtons()}
+                </div>
+            `;
+        }
     }
 
     renderColorPicker() {
@@ -384,43 +406,54 @@ class HybridPanelManager {
         `;
     }
 
-    renderDaySelector(currentDay) {
+
+    renderValidationSection() {
+        // Get a random validation question
+        const questions = [
+            { question: "What's the first letter of the alphabet?", answer: "A" },
+            { question: "What comes after 2?", answer: "3" },
+            { question: "How many days are in a week?", answer: "7" },
+            { question: "What color do you get when you mix red and blue?", answer: "PURPLE" },
+            { question: "What's 5 + 5?", answer: "10" },
+            { question: "What's the opposite of 'hot'?", answer: "COLD" }
+        ];
+        
+        const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+        
         return `
-            <div class="segmented-control" data-control="day">
-                <button class="segment ${currentDay === 'Today' ? 'segment--active' : ''}" 
-                        onclick="hybridPanelManager.switchDay('today')"
-                        aria-pressed="${currentDay === 'Today'}">
-                    <span class="material-icons">today</span>
-                    <span>Today</span>
-                </button>
-                <button class="segment ${currentDay === 'Tomorrow' ? 'segment--active' : ''}" 
-                        onclick="hybridPanelManager.switchDay('tomorrow')"
-                        aria-pressed="${currentDay === 'Tomorrow'}">
-                    <span class="material-icons">event</span>
-                    <span>Tomorrow</span>
+            <div class="validation-section">
+                <div class="validation-question">
+                    <p>${randomQuestion.question}</p>
+                </div>
+                <div class="validation-input">
+                    <input type="text" id="hybridValidationInput" placeholder="Type your answer" 
+                           data-answer="${randomQuestion.answer.toUpperCase()}"
+                           autofocus
+                           style="width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.3); 
+                                  border-radius: 8px; background: rgba(255,255,255,0.2); 
+                                  color: white; font-size: 1rem; margin-bottom: 12px;
+                                  font-family: inherit;">
+                </div>
+                <button class="segment segment--edit-mode" onclick="hybridPanelManager.checkValidationAnswer()"
+                        style="width: 100%; background: rgba(255,255,255,0.3); border: none; 
+                               border-radius: 8px; padding: 14px; color: white; font-weight: 600;
+                               cursor: pointer; transition: all 0.2s ease;">
+                    <span class="material-icons">edit</span>
+                    <span>Enter Edit Mode</span>
                 </button>
             </div>
         `;
     }
-
-    renderEditModeToggle() {
-        const editMode = this.app.grownupMode;
-        
+    
+    renderViewModeButton() {
         return `
-            <div class="segmented-control" data-control="editMode">
-                <button class="segment ${!editMode ? 'segment--active' : ''}" 
-                        onclick="hybridPanelManager.toggleEditMode(false)"
-                        aria-pressed="${!editMode}">
-                    <span class="material-icons">visibility</span>
-                    <span>View</span>
-                </button>
-                <button class="segment ${editMode ? 'segment--active' : ''}" 
-                        onclick="hybridPanelManager.toggleEditMode(true)"
-                        aria-pressed="${editMode}">
-                    <span class="material-icons">edit</span>
-                    <span>Edit</span>
-                </button>
-            </div>
+            <button class="segment segment--active" onclick="hybridPanelManager.exitEditMode()"
+                    style="width: 100%; background: white; border: none; border-radius: 8px; 
+                           padding: 14px; color: var(--primary-color); font-weight: 600;
+                           cursor: pointer; transition: all 0.2s ease;">
+                <span class="material-icons">visibility</span>
+                <span>Return to View Mode</span>
+            </button>
         `;
     }
 
@@ -646,27 +679,40 @@ class HybridPanelManager {
         console.log('Completion indicators toggled to:', show);
     }
 
-    switchDay(day) {
-        this.app.switchDay(day);
-        
-        // Re-render to update button states
-        this.renderPanelContent('right');
-        
-        console.log('Switched to:', day);
-    }
 
-    toggleEditMode(editMode) {
-        if (editMode) {
+    checkValidationAnswer() {
+        const input = document.getElementById('hybridValidationInput');
+        const userAnswer = input.value.trim().toUpperCase();
+        const correctAnswer = input.getAttribute('data-answer');
+        
+        if (userAnswer === correctAnswer || userAnswer === '') {
+            // Correct answer or empty (shortcut) - enter edit mode
             this.app.enterGrownupMode();
+            
+            // Re-render management panel to show edit mode UI
+            this.renderPanelContent('right');
+            
+            console.log('Validation successful - entered edit mode');
         } else {
-            this.app.exitGrownupMode();
+            // Wrong answer - clear input and show feedback
+            input.value = '';
+            input.style.border = '2px solid rgba(255, 100, 100, 0.8)';
+            input.placeholder = 'Try again...';
+            
+            setTimeout(() => {
+                input.style.border = '2px solid rgba(255,255,255,0.3)';
+                input.placeholder = 'Type your answer';
+            }, 2000);
         }
+    }
+    
+    exitEditMode() {
+        this.app.exitGrownupMode();
         
-        // Re-render both panels to update states
-        if (this.state.leftPanelOpen) this.renderPanelContent('left');
-        if (this.state.rightPanelOpen) this.renderPanelContent('right');
+        // Close the management panel since there's nothing else to do in view mode
+        this.closePanel('right');
         
-        console.log('Edit mode toggled to:', editMode);
+        console.log('Exited edit mode and closed panel');
     }
 
     // Admin actions

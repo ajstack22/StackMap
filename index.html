@@ -30,6 +30,17 @@
     <link rel="stylesheet" href="styles/draggable-drawer.css">
     <link rel="stylesheet" href="styles/hybrid-panels.css">
     
+    <!-- Development Tools (only loaded in dev environments) -->
+    <script>
+        // Load development tools if in development environment
+        if (window.location.hostname === 'localhost' || 
+            window.location.hostname.includes('qual') || 
+            window.location.search.includes('dev=1')) {
+            document.write('<script src="cache-bust.js"><\/script>');
+            document.write('<script src="dev-tools.js"><\/script>');
+        }
+    </script>
+    
     <!-- Google APIs -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -84,17 +95,17 @@
         </header>
     </div>
     
-    <!-- Old Navigation (Hidden - using hybrid system now) -->
-    <nav id="main-navigation" role="navigation" aria-label="Main navigation" style="display: none;">
+    <!-- Old Navigation (Completely disabled - using hybrid system now) -->
+    <nav id="main-navigation" role="navigation" aria-label="Main navigation" style="display: none !important; visibility: hidden !important;">
         <button id="preferencesBtn" class="btn btn--floating btn--preferences" 
                 aria-label="Open preferences and settings" 
-                title="Preferences">
+                title="Preferences" style="display: none !important;">
             <span class="material-icons" aria-hidden="true">palette</span>
         </button>
         
         <button id="grownupBtn" class="btn btn--floating btn--grownup-mode" 
                 aria-label="Switch to edit mode" 
-                title="Edit Mode">
+                title="Edit Mode" style="display: none !important;">
             <span class="material-icons" aria-hidden="true">edit</span>
         </button>
     </nav>
@@ -106,9 +117,9 @@
         </div>
     </main>
     
-    <!-- Old Preferences Panel (Hidden - using hybrid system now) -->
+    <!-- Old Preferences Panel (Completely hidden - using hybrid system now) -->
     <aside id="preferencesPanel" class="preferences-panel hidden" role="dialog" 
-           aria-modal="true" aria-labelledby="preferences-title" style="display: none;">
+           aria-modal="true" aria-labelledby="preferences-title" style="display: none !important; visibility: hidden !important;">
         <div id="preferencesContent" class="preferences-content">
             <h3 id="preferences-title">Preferences</h3>
             <!-- Preferences content will be rendered here -->

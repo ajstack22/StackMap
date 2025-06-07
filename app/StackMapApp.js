@@ -497,7 +497,7 @@ class StackMapApp {
                     
                     let dropdownOptions = [];
                     
-                    // Add all users as selectable options
+                    // Add all users as selectable options (navigation only - editing is in Management panel)
                     allUsers.forEach(user => {
                         dropdownOptions.push({
                             id: user.id,
@@ -506,143 +506,17 @@ class StackMapApp {
                             selected: user.id === currentUser.id,
                             type: 'user'
                         });
-                        
-                        // Add edit/delete options for each user if in grownup mode
-                        if (this.grownupMode) {
-                            dropdownOptions.push({
-                                id: `edit-${user.id}`,
-                                text: `Edit ${user.name}`,
-                                icon: 'edit',
-                                selected: false,
-                                type: 'action'
-                            });
-                            if (allUsers.length > 1) { // Don't allow deleting the last user
-                                dropdownOptions.push({
-                                    id: `delete-${user.id}`,
-                                    text: `Delete ${user.name}`,
-                                    icon: 'delete',
-                                    selected: false,
-                                    type: 'action'
-                                });
-                            }
-                        }
                     });
-                    
-                    // Add create new user option if in edit mode
-                    if (this.grownupMode) {
-                        dropdownOptions.push({
-                            id: 'add-new-user',
-                            text: 'Add New User',
-                            icon: 'add_circle',
-                            selected: false,
-                            type: 'action'
-                        });
-                    }
                     
                     this.showNativeDropdown('User', dropdownOptions, (selectedId) => {
                         console.log('User dropdown selection:', selectedId);
                         
-                        if (selectedId === 'add-new-user') {
-                            this.showAddUserDialog();
-                        } else if (selectedId.startsWith('edit-')) {
-                            const userId = selectedId.replace('edit-', '');
-                            const userToEdit = allUsers.find(u => u.id === userId);
-                            if (userToEdit) {
-                                this.showEditUserDialog(userToEdit);
-                            }
-                        } else if (selectedId.startsWith('delete-')) {
-                            const userId = selectedId.replace('delete-', '');
-                            const userToDelete = allUsers.find(u => u.id === userId);
-                            if (userToDelete && confirm(`Delete user "${userToDelete.name}"? Their activities will be permanently removed.`)) {
-                                // If deleting current user, switch to another user first
-                                if (userId === currentUser.id && allUsers.length > 1) {
-                                    const otherUser = allUsers.find(u => u.id !== userId);
-                                    if (otherUser) {
-                                        this.handleUserSwitch(otherUser.id);
-                                        setTimeout(() => {
-                                            this.deleteUser(userId);
-                                        }, 100);
-                                    }
-                                } else {
-                                    this.deleteUser(userId);
-                                }
-                            }
-                        } else {
-                            // Regular user selection
-                            this.handleUserSwitch(selectedId);
-                            const selectedUser = allUsers.find(u => u.id === selectedId);
-                            if (selectedUser && userSelect) {
-                                userSelect.innerHTML = `<span>${selectedUser.icon || '👤'} ${selectedUser.name}</span>`;
-                                userSelect.setAttribute('data-value', selectedId);
-                            }
-                        }
-                    }, userSelect);
-                });
-            } else if (this.grownupMode) {
-                // Single user in edit mode - show current user with edit option AND add user option
-                console.log('Rendering user dropdown for single user in edit mode');
-                const currentUser = this.appState.getCurrentUser();
-                userSection.innerHTML = `
-                    <button class="drawer-select" id="drawerUserSelect" data-value="${currentUser.id}">
-                        <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
-                    </button>
-                `;
-                
-                const userSelect = document.getElementById('drawerUserSelect');
-                console.log('User select element after creation:', userSelect);
-                
-                if (!userSelect) {
-                    console.error('Failed to find user select element after creation');
-                    return;
-                }
-                
-                userSelect.addEventListener('click', (e) => {
-                    console.log('Single user select clicked!', e);
-                    e.preventDefault();
-                    e.stopPropagation();
-                    
-                    let dropdownOptions = [];
-                    
-                    // Add current user as selectable option
-                    dropdownOptions.push({
-                        id: currentUser.id,
-                        text: currentUser.name,
-                        icon: currentUser.icon || '👤',
-                        selected: true,
-                        type: 'user'
-                    });
-                    
-                    // Add edit option for current user
-                    dropdownOptions.push({
-                        id: `edit-${currentUser.id}`,
-                        text: `Edit ${currentUser.name}`,
-                        icon: 'edit',
-                        selected: false,
-                        type: 'action'
-                    });
-                    
-                    // Add create new user option
-                    dropdownOptions.push({
-                        id: 'add-new-user',
-                        text: 'Add New User',
-                        icon: 'add_circle',
-                        selected: false,
-                        type: 'action'
-                    });
-                    
-                    this.showNativeDropdown('User', dropdownOptions, (selectedId) => {
-                        console.log('Single user dropdown selection:', selectedId);
-                        
-                        if (selectedId === 'add-new-user') {
-                            this.showAddUserDialog();
-                        } else if (selectedId.startsWith('edit-')) {
-                            const userId = selectedId.replace('edit-', '');
-                            if (userId === currentUser.id) {
-                                this.showEditUserDialog(currentUser);
-                            }
-                        } else if (selectedId === currentUser.id) {
-                            // User selected themselves, no action needed
-                            console.log('User selected themselves, no action needed');
+                        // Handle user selection (navigation only)
+                        this.handleUserSwitch(selectedId);
+                        const selectedUser = allUsers.find(u => u.id === selectedId);
+                        if (selectedUser && userSelect) {
+                            userSelect.innerHTML = `<span>${selectedUser.icon || '👤'} ${selectedUser.name}</span>`;
+                            userSelect.setAttribute('data-value', selectedId);
                         }
                     }, userSelect);
                 });
@@ -1314,37 +1188,17 @@ class StackMapApp {
     }
 
     updateGrownupModeButton() {
+        // OLD SYSTEM DISABLED - Using hybrid panel system now
+        console.log('StackMapApp: updateGrownupModeButton called but disabled - using HybridPanelManager');
+        
+        // Hide old button if it exists
         const btn = document.getElementById('grownupBtn');
-        const icon = btn?.querySelector('.material-icons');
-        
-        if (btn && icon) {
-            if (this.grownupMode) {
-                icon.textContent = 'face';
-                btn.title = 'User Mode';
-                btn.setAttribute('aria-label', 'Switch to user mode');
-            } else {
-                icon.textContent = 'edit';
-                btn.title = 'Edit Mode';
-                btn.setAttribute('aria-label', 'Switch to edit mode');
-            }
+        if (btn) {
+            btn.style.display = 'none';
         }
         
-        // Update preferences button icon based on mode
-        const prefBtn = document.getElementById('preferencesBtn');
-        const prefIcon = prefBtn?.querySelector('.material-icons');
-        if (prefBtn && prefIcon) {
-            if (this.grownupMode) {
-                // Edit mode: show settings cog
-                prefIcon.textContent = 'settings';
-                prefBtn.title = 'Settings';
-                prefBtn.setAttribute('aria-label', 'Open settings');
-            } else {
-                // User mode: show palette for colors
-                prefIcon.textContent = 'palette';
-                prefBtn.title = 'Preferences';
-                prefBtn.setAttribute('aria-label', 'Open preferences and color settings');
-            }
-        }
+        // Edit mode toggling is now handled by hybrid panel system
+        return;
     }
 
     updateTabTitle() {
@@ -1353,10 +1207,12 @@ class StackMapApp {
     }
 
     setupEventListeners() {
-        // Grown-up mode toggle
+        // OLD BUTTON SYSTEM DISABLED - Using hybrid panel system now
         const grownupBtn = document.getElementById('grownupBtn');
         if (grownupBtn) {
-            grownupBtn.addEventListener('click', () => this.requestGrownupMode());
+            // Disable old button - edit mode is now handled by hybrid panels
+            grownupBtn.style.display = 'none';
+            console.log('StackMapApp: Old grownup button disabled, using hybrid panels');
         }
         
         // Import/Export file handling

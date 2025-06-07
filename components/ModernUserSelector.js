@@ -126,14 +126,7 @@ class ModernUserSelector {
             this.dropdownOptions.appendChild(option);
         });
         
-        // Add "Add User" option if in grownup mode
-        console.log('Checking grownup mode:', this.app.grownupMode, 'Body class:', document.body.classList.contains('grownup-mode'));
-        if (this.app.grownupMode) {
-            const addOption = this.createAddUserOption();
-            this.dropdownOptions.appendChild(addOption);
-        } else {
-            console.log('Not in grownup mode - Add User option not shown');
-        }
+        // Note: "Add User" functionality is now exclusively in the Management panel
     }
     
     createUserOption(user, isSelected) {
@@ -171,29 +164,6 @@ class ModernUserSelector {
         return option;
     }
     
-    createAddUserOption() {
-        console.log('Creating Add User option');
-        const option = ComponentBuilder.createElement('div', 'dropdown-option dropdown-option--add');
-        option.setAttribute('role', 'option');
-        option.setAttribute('data-action', 'add-user');
-        
-        const content = ComponentBuilder.createElement('div', 'dropdown-option-content');
-        
-        const icon = ComponentBuilder.createElement('div', 'dropdown-option-icon');
-        icon.textContent = '➕';
-        
-        const text = ComponentBuilder.createElement('div', 'dropdown-option-text');
-        const primary = ComponentBuilder.createElement('div', 'dropdown-option-primary');
-        primary.textContent = 'Add User';
-        
-        text.appendChild(primary);
-        content.appendChild(icon);
-        content.appendChild(text);
-        option.appendChild(content);
-        
-        console.log('Add User option created with data-action:', option.getAttribute('data-action'));
-        return option;
-    }
     
     open() {
         if (this.isOpen) return;
@@ -257,20 +227,12 @@ class ModernUserSelector {
         
         // Dropdown clicks
         this.dropdown.addEventListener('click', (e) => {
-            console.log('Dropdown clicked, target:', e.target);
             const option = e.target.closest('.dropdown-option');
             if (option) {
-                console.log('Option found:', option);
                 const userId = option.getAttribute('data-user-id');
-                const action = option.getAttribute('data-action');
-                console.log('userId:', userId, 'action:', action);
                 
                 if (userId) {
                     this.selectUser(userId);
-                } else if (action === 'add-user') {
-                    console.log('Add user action triggered');
-                    this.close();
-                    this.app.showAddUserDialog();
                 }
             }
         });

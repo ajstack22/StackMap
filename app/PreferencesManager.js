@@ -8,30 +8,36 @@ class PreferencesManager {
     }
 
     setupEventListeners() {
-        // Set up preferences button click handler
+        // OLD SYSTEM DISABLED - Using hybrid panel system now
+        // The hybrid panel manager handles all preferences UI
+        console.log('PreferencesManager: Old system disabled, using HybridPanelManager');
+        
+        // Legacy preferences button should not interfere with new system
         const preferencesBtn = document.getElementById('preferencesBtn');
         if (preferencesBtn) {
-            preferencesBtn.addEventListener('click', () => this.togglePreferences());
+            // Remove any existing listeners and disable the old button
+            preferencesBtn.style.display = 'none';
+            console.log('PreferencesManager: Old preferences button hidden');
         }
-
-        // Close panels when clicking outside (now handled by backdrop)
     }
 
-    // PREFERENCES PANEL MANAGEMENT
+    // PREFERENCES PANEL MANAGEMENT - DISABLED (Using hybrid system)
     togglePreferences() {
-        const panel = document.getElementById('preferencesPanel');
-        
-        if (panel.classList.contains('hidden')) {
-            this.showPreferences();
-        } else {
-            this.closePreferences();
+        console.log('PreferencesManager: togglePreferences called but disabled - using HybridPanelManager');
+        // Redirect to hybrid panel system if available
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.togglePanel('left');
         }
+        return;
     }
 
     showPreferences() {
-        const panel = document.getElementById('preferencesPanel');
-        this.updatePreferencesPanel();
-        panel.classList.remove('hidden');
+        console.log('PreferencesManager: showPreferences called but disabled - using HybridPanelManager');
+        // Redirect to hybrid panel system if available
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.openPanel('left');
+        }
+        return;
         
         // Create and show backdrop overlay
         this.createBackdrop();
