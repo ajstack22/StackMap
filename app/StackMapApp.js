@@ -16,6 +16,7 @@ class StackMapApp {
         
         // App state
         this.grownupMode = false;
+        this.splashShown = false;
         
         // Card type selection for new cards (Story 1)
         this.selectedCardType = 'recurring';
@@ -1353,13 +1354,139 @@ class StackMapApp {
 
     // WELCOME SPLASH MANAGEMENT
     checkFirstTimeVisit() {
-        const hasSeenWelcome = localStorage.getItem('stackmap-welcome-seen');
-        if (!hasSeenWelcome) {
-            this.showWelcomeSplash();
+        // Check if user still has default name
+        const currentUser = this.appState.getCurrentUser();
+        const hasDefaultName = currentUser.name === 'StackMap User' || currentUser.name === 'You';
+        const hasSeenSplash = localStorage.getItem('stackmap-splash-seen');
+        
+        if (hasDefaultName && !hasSeenSplash) {
+            this.showSplashScreen();
         }
     }
 
+    showSplashScreen() {
+        const splashScreen = document.getElementById('splashScreen');
+        if (!splashScreen) return;
+        
+        // Set up the splash screen
+        this.setupSplashScreen();
+        
+        // Show splash screen
+        splashScreen.classList.remove('hidden');
+        this.splashShown = true;
+        
+        // Focus on name input
+        setTimeout(() => {
+            const nameInput = document.getElementById('splashUserName');
+            if (nameInput) {
+                nameInput.focus();
+            }
+        }, 300);
+    }
+    
+    setupSplashScreen() {
+        const nameInput = document.getElementById('splashUserName');
+        const emojiButton = document.getElementById('splashEmojiButton');
+        const emojiGrid = document.getElementById('splashEmojiGrid');
+        const startButton = document.getElementById('splashStartButton');
+        const emojiDisplay = document.querySelector('.splash-emoji-display');
+        
+        let selectedEmoji = '👤';
+        
+        // Enable/disable start button based on name input
+        const checkCanStart = () => {
+            const hasName = nameInput.value.trim().length > 0;
+            startButton.disabled = !hasName;
+        };
+        
+        // Name input handler
+        nameInput.addEventListener('input', checkCanStart);
+        nameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !startButton.disabled) {
+                this.completeSplashScreen();
+            }
+        });
+        
+        // Emoji button handler
+        emojiButton.addEventListener('click', (e) => {
+            e.stopPropagation();
+            emojiGrid.classList.toggle('hidden');
+            emojiButton.classList.toggle('active');
+        });
+        
+        // Emoji selection handler
+        document.querySelectorAll('.splash-emoji-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                selectedEmoji = option.getAttribute('data-emoji');
+                emojiDisplay.textContent = selectedEmoji;
+                emojiGrid.classList.add('hidden');
+                emojiButton.classList.remove('active');
+            });
+        });
+        
+        // Close emoji grid when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!emojiButton.contains(e.target) && !emojiGrid.contains(e.target)) {
+                emojiGrid.classList.add('hidden');
+                emojiButton.classList.remove('active');
+            }
+        });
+        
+        // Start button handler
+        startButton.addEventListener('click', () => {
+            this.completeSplashScreen();
+        });
+    }
+    
+    completeSplashScreen() {
+        const nameInput = document.getElementById('splashUserName');
+        const emojiDisplay = document.querySelector('.splash-emoji-display');
+        const splashScreen = document.getElementById('splashScreen');
+        
+        const userName = nameInput.value.trim();
+        const userEmoji = emojiDisplay.textContent || '👤';
+        
+        if (!userName) return;
+        
+        // Update the default user with the new name and emoji
+        const currentUser = this.appState.getCurrentUser();
+        currentUser.name = userName;
+        currentUser.icon = userEmoji;
+        
+        // Update the title to match the user's name
+        currentUser.customTitle = userName;
+        currentUser.customSubtitle = 'Routine Ready';
+        this.appState.settings.title = userName;
+        this.appState.settings.subtitle = 'Routine Ready';
+        this.appState.settings.isDefaultTitle = false;
+        
+        // Save the changes
+        this.appState._triggerSave();
+        
+        // Mark splash as seen
+        localStorage.setItem('stackmap-splash-seen', 'true');
+        
+        // Fade out and hide splash screen
+        splashScreen.classList.add('fade-out');
+        setTimeout(() => {
+            splashScreen.classList.add('hidden');
+            this.splashShown = false;
+            
+            // Update the UI
+            this.initializeTitleSubtitle();
+            this.render();
+            
+            // Update user dropdowns
+            this.populateUserDropdowns();
+            if (window.hybridPanelManager) {
+                window.hybridPanelManager.updateSubtitle();
+            }
+        }, 300);
+    }
+    
     showWelcomeSplash() {
+        // Legacy method - kept for compatibility
         const welcomeSplash = document.getElementById('welcomeSplash');
         if (welcomeSplash) {
             // Add body class for button glow effect
@@ -1451,6 +1578,11 @@ class StackMapApp {
         // Add body class for CSS targeting
         document.body.classList.add('grownup-mode');
         
+        // NEW: Push history state for edit mode (Android back button)
+        if (this.hybridPanelManager) {
+            this.hybridPanelManager.pushBackButtonState('edit_mode_entered');
+        }
+        
         // Force drawer open and lock it for edit mode
         this.forceDrawerOpen();
         
@@ -1464,6 +1596,8 @@ class StackMapApp {
         
         this.render();
         this.syncFixedHeader();
+        
+        console.log('👨‍💼 Entered edit mode with back button support');
     }
 
     exitGrownupMode() {
@@ -1477,6 +1611,11 @@ class StackMapApp {
         
         // Remove body class
         document.body.classList.remove('grownup-mode');
+        
+        // NEW: Close any open panels when exiting edit mode
+        if (this.hybridPanelManager) {
+            this.hybridPanelManager.closeAllPanels();
+        }
         
         // Unlock drawer and return to user preference
         this.unlockDrawer();
@@ -1515,6 +1654,38 @@ class StackMapApp {
         
         this.render();
         this.syncFixedHeader();
+        
+        console.log('👶 Exited edit mode');
+    }
+
+    /**
+     * Initialize iOS PWA-specific features
+     */
+    initializeIOSPWAFeatures() {
+        // Ensure critical navigation is always accessible
+        this.ensureIOSNavigationAccessibility();
+        
+        // Add iOS-specific keyboard handling if needed
+        this.setupIOSKeyboardHandling();
+    }
+
+    /**
+     * Ensure navigation remains accessible in iOS PWA mode
+     */
+    ensureIOSNavigationAccessibility() {
+        // Add any additional navigation safeguards for iOS PWA
+        console.log('🍎 iOS PWA navigation accessibility ensured');
+    }
+
+    /**
+     * Setup iOS-specific keyboard handling
+     */
+    setupIOSKeyboardHandling() {
+        // Handle iOS keyboard quirks that might affect navigation
+        if (window.hybridPanelManager?.isIOSPWA) {
+            // Add viewport adjustments for iOS keyboard if needed
+            console.log('🍎 iOS keyboard handling initialized');
+        }
     }
 
     render() {

@@ -33,6 +33,10 @@ class HybridPanelManager {
         
         // Initialize FAB visibility (show FABs by default)
         this.handleFABVisibility(false);
+        
+        // Initialize mobile navigation enhancements
+        this.initializeBackButtonHandling();
+        this.initializeIOSEnhancements();
     }
 
     initializePanels() {
@@ -168,6 +172,9 @@ class HybridPanelManager {
     }
 
     openPanel(side) {
+        // NEW: Push history state BEFORE opening panel (Android back button)
+        this.pushBackButtonState('panel_opened', side);
+        
         // Close other panel first
         this.closeAllPanels();
         
@@ -203,6 +210,18 @@ class HybridPanelManager {
         // Mobile scroll lock
         if (window.innerWidth <= 768) {
             document.body.style.overflow = 'hidden';
+        }
+        
+        // NEW: iOS-specific enhancements
+        if (this.isIOS) {
+            // Mark navigation help as shown since user found panels
+            this.markIOSNavigationHelpShown();
+            
+            // Hide any navigation hints
+            const navHint = document.querySelector('.ios-nav-hint');
+            if (navHint) {
+                navHint.style.display = 'none';
+            }
         }
         
         console.log(`Opened ${side} panel`);
@@ -1077,10 +1096,10 @@ class HybridPanelManager {
     exitEditMode() {
         this.app.exitGrownupMode();
         
-        // Close the management panel since there's nothing else to do in view mode
-        this.closePanel('right');
+        // NEW: Close any open panels when exiting edit mode
+        this.closeAllPanels();
         
-        console.log('Exited edit mode and closed panel');
+        console.log('Exited edit mode and closed panels');
     }
 
     // Admin actions
@@ -2002,6 +2021,243 @@ class HybridPanelManager {
         const oldNav = document.getElementById('main-navigation');
         if (oldNav) {
             oldNav.style.display = '';
+        }
+    }
+
+    /**
+     * Initialize Android back button handling
+     * Sets up history manipulation to control back button behavior
+     */
+    initializeBackButtonHandling() {
+        // Prevent immediate app exit on first back press
+        this.addInitialHistoryState();
+        
+        // Listen for back button presses
+        this.setupBackButtonListener();
+        
+        console.log('🔙 Android back button handling initialized');
+    }
+
+    /**
+     * Add initial history state to prevent immediate app exit
+     */
+    addInitialHistoryState() {
+        // Only add if we're at the start of history
+        if (window.history.length === 1) {
+            window.history.pushState({ 
+                stackmap: true, 
+                action: 'initial' 
+            }, '', window.location.href);
+            
+            console.log('📱 Initial history state added for back button control');
+        }
+    }
+
+    /**
+     * Listen for popstate events (back button presses)
+     */
+    setupBackButtonListener() {
+        window.addEventListener('popstate', (event) => {
+            console.log('🔙 Back button pressed, state:', event.state);
+            
+            // Check if any panels are open
+            if (this.state.leftPanelOpen || this.state.rightPanelOpen) {
+                // Close the open panel instead of navigating
+                this.handleBackButtonPanelClose();
+                return;
+            }
+            
+            // Check if we're in edit mode
+            if (this.app.grownupMode) {
+                // Exit edit mode instead of navigating
+                this.handleBackButtonEditModeExit();
+                return;
+            }
+            
+            // If nothing is open, allow normal back behavior
+            this.handleBackButtonDefaultBehavior(event);
+        });
+    }
+
+    /**
+     * Handle back button when panels are open
+     */
+    handleBackButtonPanelClose() {
+        console.log('🔙 Closing panel with back button');
+        
+        // Close any open panels
+        this.closeAllPanels();
+        
+        // Push a new state to maintain back button control
+        this.pushBackButtonState('panel_closed');
+    }
+
+    /**
+     * Handle back button when in edit mode
+     */
+    handleBackButtonEditModeExit() {
+        console.log('🔙 Exiting edit mode with back button');
+        
+        // Exit edit mode
+        this.app.exitGrownupMode();
+        
+        // Push a new state to maintain back button control
+        this.pushBackButtonState('edit_mode_exited');
+    }
+
+    /**
+     * Handle back button default behavior
+     */
+    handleBackButtonDefaultBehavior(event) {
+        // If this is our initial state, prevent app exit
+        if (event.state?.stackmap && event.state?.action === 'initial') {
+            console.log('🔙 Preventing app exit, adding new history state');
+            
+            // Add another state to prevent immediate exit
+            this.pushBackButtonState('back_pressed');
+            return;
+        }
+        
+        // Allow normal navigation if user really wants to leave
+        console.log('🔙 Allowing normal back navigation');
+    }
+
+    /**
+     * Push a history state for back button tracking
+     */
+    pushBackButtonState(action, data = null) {
+        const state = {
+            stackmap: true,
+            action: action,
+            data: data,
+            timestamp: Date.now()
+        };
+        
+        window.history.pushState(state, '', window.location.href);
+        console.log('📱 Pushed history state:', state);
+    }
+
+    /**
+     * Initialize iOS-specific navigation enhancements
+     */
+    initializeIOSEnhancements() {
+        this.detectIOSMode();
+        this.setupIOSGestureProtection();
+        this.enhanceIOSNavigation();
+        
+        console.log('🍎 iOS navigation enhancements initialized');
+    }
+
+    /**
+     * Detect iOS device and PWA mode
+     */
+    detectIOSMode() {
+        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+        this.isPWA = window.navigator.standalone === true;
+        this.isIOSPWA = this.isIOS && this.isPWA;
+        
+        if (this.isIOSPWA) {
+            document.body.classList.add('ios-pwa-mode');
+            console.log('🍎 iOS PWA mode detected - enhanced navigation enabled');
+        }
+        
+        if (this.isIOS) {
+            document.body.classList.add('ios-device');
+            console.log('🍎 iOS device detected');
+        }
+    }
+
+    /**
+     * Protect against accidental iOS swipe navigation during panel interactions
+     */
+    setupIOSGestureProtection() {
+        if (!this.isIOS) return;
+        
+        // Prevent swipe navigation when panels are open
+        document.addEventListener('touchstart', (e) => {
+            // Only prevent if near screen edge AND panel is open
+            const nearLeftEdge = e.touches[0].pageX < 20;
+            const nearRightEdge = e.touches[0].pageX > window.innerWidth - 20;
+            const panelOpen = this.state.leftPanelOpen || this.state.rightPanelOpen;
+            
+            if ((nearLeftEdge || nearRightEdge) && panelOpen) {
+                console.log('🍎 Preventing iOS swipe navigation during panel interaction');
+                e.preventDefault();
+            }
+        }, { passive: false });
+        
+        console.log('🍎 iOS gesture protection enabled');
+    }
+
+    /**
+     * Enhance navigation for iOS PWA mode
+     */
+    enhanceIOSNavigation() {
+        if (!this.isIOSPWA) return;
+        
+        // Add persistent navigation hints for PWA mode
+        this.addIOSNavigationHints();
+        
+        // Ensure panels are more discoverable in PWA mode
+        this.enhanceIOSPWADiscoverability();
+    }
+
+    /**
+     * Add navigation hints for iOS PWA users
+     */
+    addIOSNavigationHints() {
+        // Add subtle navigation hints in the header
+        const header = document.querySelector('.app-header');
+        if (header && !document.querySelector('.ios-nav-hint')) {
+            const navHint = document.createElement('div');
+            navHint.className = 'ios-nav-hint';
+            navHint.innerHTML = '⚙️ Tap corners for options';
+            navHint.style.cssText = `
+                position: absolute;
+                top: 5px;
+                right: 10px;
+                font-size: 0.7rem;
+                color: rgba(255,255,255,0.6);
+                pointer-events: none;
+                z-index: 10;
+            `;
+            header.appendChild(navHint);
+            
+            // Hide hint after user interacts
+            setTimeout(() => {
+                navHint.style.opacity = '0';
+                navHint.style.transition = 'opacity 1s ease';
+            }, 5000);
+        }
+    }
+
+    /**
+     * Enhance panel discoverability for iOS PWA mode
+     */
+    enhanceIOSPWADiscoverability() {
+        // Make floating action buttons slightly more prominent in PWA mode
+        const fabs = document.querySelectorAll('.fab');
+        fabs.forEach(fab => {
+            fab.classList.add('ios-pwa-enhanced');
+        });
+        
+        console.log('🍎 Enhanced iOS PWA discoverability');
+    }
+
+    /**
+     * Check if user needs iOS navigation assistance
+     */
+    shouldShowIOSNavigationHelp() {
+        // Show help if in PWA mode and user hasn't interacted recently
+        return this.isIOSPWA && !localStorage.getItem('ios-nav-shown');
+    }
+
+    /**
+     * Mark iOS navigation help as shown
+     */
+    markIOSNavigationHelpShown() {
+        if (this.isIOS) {
+            localStorage.setItem('ios-nav-shown', Date.now().toString());
         }
     }
 }

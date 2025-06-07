@@ -25,6 +25,7 @@
     
     <!-- Styles -->
     <link rel="stylesheet" href="styles/index.css">
+    <link rel="stylesheet" href="styles/splash-screen.css">
     <link rel="stylesheet" href="styles/modal-card.css">
     <link rel="stylesheet" href="styles/base.css">
     <link rel="stylesheet" href="styles/layout.css">
@@ -233,6 +234,7 @@
     
     <!-- Load test suite -->
     <script src="test-suite.js"></script>
+    <script src="test-mobile-navigation.js"></script>
     <script src="test-story5.js"></script>
     <script src="test-transparency.js"></script>
     <script src="test-expandable-header.js"></script>
@@ -337,10 +339,40 @@
                 window.hybridPanelManager = new HybridPanelManager(window.appInstance);
                 console.log('Hybrid panel system initialized');
                 
+                // Add iOS PWA-specific initialization if needed
+                if (window.hybridPanelManager && window.hybridPanelManager.isIOSPWA) {
+                    console.log('🍎 StackMap running in iOS PWA mode - navigation optimized');
+                    
+                    // Add iOS PWA-specific initialization if needed
+                    window.appInstance.initializeIOSPWAFeatures();
+                }
+                
                 // Add debug function for inspecting user data
                 window.debugUsers = function() {
                     console.log('Current users:', window.appInstance.appState.users);
                     console.log('Current user:', window.appInstance.appState.getCurrentUser());
+                };
+                
+                // Add splash screen test function
+                window.testSplashScreen = function() {
+                    // Reset splash seen flag
+                    localStorage.removeItem('stackmap-splash-seen');
+                    
+                    // Reset user to default name
+                    const currentUser = window.appInstance.appState.getCurrentUser();
+                    currentUser.name = 'StackMap User';
+                    currentUser.icon = '👤';
+                    currentUser.customTitle = 'StackMap User';
+                    window.appInstance.appState.settings.title = 'StackMap User';
+                    window.appInstance.appState.settings.isDefaultTitle = true;
+                    
+                    // Save and reload
+                    window.appInstance.appState._triggerSave();
+                    
+                    console.log('✅ Reset to default user. Refreshing to show splash screen...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
                 };
                 
                 // Add helper to fix stuck drawer
@@ -380,5 +412,65 @@
             }
         });
     </script>
+    
+    <!-- First Time Splash Screen -->
+    <div id="splashScreen" class="splash-screen hidden">
+        <div class="splash-content">
+            <!-- Logo -->
+            <div class="splash-logo">
+                <div class="splash-logo-text">StackMap</div>
+            </div>
+            
+            <!-- Welcome message -->
+            <div class="splash-welcome">
+                <h1>Welcome to StackMap</h1>
+                <p>Your visual routine organizer</p>
+            </div>
+            
+            <!-- Name and emoji input -->
+            <div class="splash-form">
+                <div class="splash-input-group">
+                    <label for="splashUserName">What's your name?</label>
+                    <input type="text" id="splashUserName" placeholder="Enter your name" maxlength="50" autocomplete="off">
+                </div>
+                
+                <div class="splash-emoji-group">
+                    <label>Choose your emoji</label>
+                    <div class="splash-emoji-selector">
+                        <button type="button" class="splash-emoji-button" id="splashEmojiButton">
+                            <span class="splash-emoji-display">👤</span>
+                        </button>
+                        <div class="splash-emoji-grid hidden" id="splashEmojiGrid">
+                            <!-- Popular user emojis -->
+                            <button type="button" class="splash-emoji-option" data-emoji="👤">👤</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="😊">😊</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🙂">🙂</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="😎">😎</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🤓">🤓</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="👨">👨</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="👩">👩</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="👦">👦</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="👧">👧</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🧑">🧑</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="👶">👶</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🧒">🧒</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🦸">🦸</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🦹">🦹</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🧙">🧙</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🎅">🎅</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🐶">🐶</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🐱">🐱</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🐻">🐻</button>
+                            <button type="button" class="splash-emoji-option" data-emoji="🦊">🦊</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <button type="button" class="splash-start-button" id="splashStartButton" disabled>
+                    Get Started
+                </button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

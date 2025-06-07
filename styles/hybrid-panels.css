@@ -1208,3 +1208,134 @@ textarea.panel-input {
         transition: none;
     }
 }
+
+/* ===== ANDROID BACK BUTTON DEBUG ===== */
+/* Visual indicator for testing Android back button behavior */
+.back-button-debug {
+    position: fixed;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* Show debug when panels are open */
+.side-panel.open ~ .back-button-debug {
+    opacity: 1;
+}
+
+.back-button-debug::after {
+    content: "Back closes panel";
+}
+
+/* Show when in edit mode */
+.grownup-mode .back-button-debug {
+    opacity: 1;
+}
+
+.grownup-mode .back-button-debug::after {
+    content: "Back exits edit mode";
+}
+
+/* ===== iOS PWA ENHANCEMENTS ===== */
+/* Enhanced visibility for iOS PWA mode */
+.ios-pwa-mode .fab {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15), 0 0 0 1px rgba(255,255,255,0.1);
+    backdrop-filter: blur(10px);
+}
+
+.ios-pwa-mode .fab:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+}
+
+/* iOS device-specific optimizations */
+.ios-device .side-panel {
+    /* Ensure panels work well with iOS safe areas */
+    padding-top: max(80px, env(safe-area-inset-top, 80px));
+    padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+}
+
+.ios-device .app-header {
+    /* Ensure header respects iOS safe areas */
+    padding-top: env(safe-area-inset-top, 0);
+}
+
+/* iOS PWA navigation hints */
+.ios-nav-hint {
+    animation: iosNavHintPulse 2s ease-in-out infinite;
+}
+
+@keyframes iosNavHintPulse {
+    0%, 100% { opacity: 0.6; }
+    50% { opacity: 0.9; }
+}
+
+/* iOS gesture protection indicators */
+.ios-device .side-panel::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, 
+        rgba(255,255,255,0.3) 0%, 
+        transparent 20%, 
+        transparent 80%, 
+        rgba(255,255,255,0.3) 100%);
+    pointer-events: none;
+}
+
+/* Enhanced touch targets for iOS */
+.ios-device .fab {
+    min-width: 56px;
+    min-height: 56px;
+}
+
+.ios-device .panel-close {
+    min-height: 48px;
+    padding: 12px 24px;
+}
+
+/* ===== MOBILE-SPECIFIC OVERRIDES ===== */
+@media (max-width: 768px) {
+    /* Android-specific mobile styles */
+    .back-button-debug {
+        bottom: 80px; /* Above potential Android navigation bar */
+    }
+    
+    /* iOS-specific mobile styles */
+    .ios-device .back-button-debug {
+        bottom: 20px; /* iOS doesn't have navigation bar */
+    }
+    
+    /* Enhanced mobile touch targets */
+    .mobile-nav-enhanced .fab {
+        width: 60px;
+        height: 60px;
+        font-size: 1.4rem;
+    }
+}
+
+/* ===== PLATFORM DETECTION HELPERS ===== */
+/* These classes are added by JavaScript based on platform detection */
+.android-device .android-specific {
+    display: block;
+}
+
+.ios-device .ios-specific {
+    display: block;
+}
+
+.android-specific,
+.ios-specific {
+    display: none;
+}
