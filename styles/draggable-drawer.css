@@ -12,13 +12,13 @@
 }
 
 .stackmap-logo {
-    width: 24px; /* Height of lowercase 't' in 1.8rem font */
-    height: 24px; /* Height of lowercase 't' in 1.8rem font */
+    width: 36px; /* Full height of lowercase 't' including ascender */
+    height: 36px; /* Full height of lowercase 't' including ascender */
     flex-shrink: 0;
     display: flex;
     align-items: flex-end; /* Align to bottom */
     justify-content: center;
-    margin-right: 20px; /* 20px gap before the 'S' */
+    margin-right: 15px; /* 15px gap before the 'S' */
     margin-bottom: 2px; /* Fine-tune baseline alignment */
 }
 
@@ -471,9 +471,9 @@ body.drawer-active {
     }
     
     .stackmap-logo {
-        width: 20px; /* Smaller for mobile */
-        height: 20px;
-        margin-right: 15px; /* Less gap on mobile */
+        width: 30px; /* Proportionally smaller for mobile */
+        height: 30px;
+        margin-right: 12px; /* Less gap on mobile */
     }
     
     .title {
@@ -524,9 +524,9 @@ body.drawer-active {
     }
     
     .stackmap-logo {
-        width: 18px; /* Even smaller for small mobile */
-        height: 18px;
-        margin-right: 12px; /* Less gap on small mobile */
+        width: 24px; /* Even smaller for small mobile */
+        height: 24px;
+        margin-right: 10px; /* Less gap on small mobile */
     }
     
     .title {
