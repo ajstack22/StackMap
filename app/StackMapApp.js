@@ -2106,6 +2106,11 @@ class StackMapApp {
     }
 
     // DATA MANAGEMENT
+    exportData() {
+        // Export full application data
+        this.exportToFile();
+    }
+    
     exportToFile() {
         const data = this.appState.exportData();
         const jsonStr = JSON.stringify(data, null, 2);
@@ -2426,6 +2431,18 @@ class StackMapApp {
         this.currentImportFileName = null;
     }
 
+    // CARD MANAGEMENT
+    showNewCardForm() {
+        // Close any panels first
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.closeAllPanels();
+        }
+        
+        // Show modal for new card
+        const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
+        console.log('New card modal shown');
+    }
+    
     // LOCAL STORAGE
     saveToLocalStorage() {
         const data = this.appState.exportData();
