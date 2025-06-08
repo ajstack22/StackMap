@@ -1425,35 +1425,36 @@ textarea.panel-input {
         bottom: 20px; /* iOS doesn't have navigation bar */
     }
     
-    /* Mobile FABs - 50% increase (56px * 1.5 = 84px) */
+    /* Mobile FABs - reduced by 25% from 84px to 63px */
     .fab {
-        width: 84px;
-        height: 84px;
-        min-width: 84px;
-        min-height: 84px;
+        width: 63px;
+        height: 63px;
+        min-width: 63px;
+        min-height: 63px;
     }
     
     .fab .material-icons {
-        /* Increased icon size for mobile */
-        font-size: 42px;
+        /* Proportionally reduced icon size */
+        font-size: 32px;
     }
     
     /* Adjust positioning for mobile header-content alignment */
     .floating-nav {
-        /* Mobile: padding-top (16px) + logo height (~36px) / 2 ≈ 34px */
-        top: 34px;
+        /* Center on header-content: app-header padding (16px) + half of content height */
+        /* Logo is 36px, title below it, so center point is around 40px */
+        top: 40px;
     }
     
     /* Mobile drawer open state */
     .drawer-open .floating-nav {
-        /* Stay aligned with logo/title on mobile */
-        top: 36px;
+        /* Stay aligned with header-content on mobile */
+        top: 42px;
     }
     
     /* Enhanced mobile touch targets */
     .mobile-nav-enhanced .fab {
-        width: 84px;
-        height: 84px;
+        width: 63px;
+        height: 63px;
         font-size: 1.4rem;
     }
 }
