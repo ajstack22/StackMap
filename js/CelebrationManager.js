@@ -81,6 +81,7 @@ class CelebrationManager {
      */
     
     gentleGlow(element) {
+        console.log('🎉 Triggering gentle glow animation on:', element);
         this.addAnimationClass(element, 'celebrate-gentle-glow');
         this.cleanupAfterAnimation(element, 700);
     }
