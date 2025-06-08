@@ -227,7 +227,8 @@ class CelebrationManager {
      * Trigger celebration based on user preference
      */
     celebrateTask(element, userId) {
-        const preference = this.app.appState.getUserSetting('taskCelebration', userId) || 'gentle-glow';
+        const currentUser = this.app.appState.getCurrentUser();
+        const preference = currentUser.settings?.taskCelebration || 'gentle-glow';
         
         if (this.shouldSkipAnimation()) {
             this.noAnimation(element);
@@ -241,7 +242,8 @@ class CelebrationManager {
     }
 
     celebrateRoutine(containerElement, userId) {
-        const preference = this.app.appState.getUserSetting('routineCelebration', userId) || 'garden-growth';
+        const currentUser = this.app.appState.getCurrentUser();
+        const preference = currentUser.settings?.routineCelebration || 'garden-growth';
         
         if (this.shouldSkipAnimation()) {
             this.noAnimation(containerElement);
