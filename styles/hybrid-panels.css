@@ -151,7 +151,7 @@
     }
 }
 
-/* Palette (left panel) spins clockwise when active */
+/* Palette (left panel) spins clockwise when opening */
 #hybridPreferencesBtn.fab--active .material-icons {
     animation: spin-clockwise 0.6s ease-in-out;
     /* Maintain position during animation */
@@ -160,9 +160,26 @@
     left: 50%;
 }
 
-/* Settings cog (right panel) spins counter-clockwise when active */
+/* Settings cog (right panel) spins counter-clockwise when opening */
 #hybridManageBtn.fab--active .material-icons {
     animation: spin-counter-clockwise 0.6s ease-in-out;
+    /* Maintain position during animation */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+
+/* Reverse spin animations when closing */
+#hybridPreferencesBtn.fab--closing .material-icons {
+    animation: spin-counter-clockwise 0.6s ease-in-out;
+    /* Maintain position during animation */
+    position: absolute;
+    top: 50%;
+    left: 50%;
+}
+
+#hybridManageBtn.fab--closing .material-icons {
+    animation: spin-clockwise 0.6s ease-in-out;
     /* Maintain position during animation */
     position: absolute;
     top: 50%;

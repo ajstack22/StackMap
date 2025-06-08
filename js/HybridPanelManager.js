@@ -244,8 +244,16 @@ class HybridPanelManager {
         const panel = document.getElementById(`hybrid${side.charAt(0).toUpperCase() + side.slice(1)}Panel`);
         const button = document.getElementById(`hybrid${side === 'left' ? 'Preferences' : 'Manage'}Btn`);
         
-        panel.classList.remove('open');
+        // Add closing animation class
+        button.classList.add('fab--closing');
         button.classList.remove('fab--active');
+        
+        // Remove closing class after animation completes
+        setTimeout(() => {
+            button.classList.remove('fab--closing');
+        }, 600); // Match animation duration
+        
+        panel.classList.remove('open');
         
         // Hide backdrop if no panels are open
         if (!this.state.leftPanelOpen && !this.state.rightPanelOpen) {
