@@ -39,8 +39,9 @@
 /* ===== FLOATING ACTION BUTTONS ===== */
 .floating-nav {
     position: fixed;
-    /* Center vertically on header (150px header / 2 = 75px) */
-    top: 75px;
+    /* Align with header-content center */
+    /* Desktop: app-header padding (20px top) + header-content center (~45px) */
+    top: 65px;
     transform: translateY(-50%);
     z-index: 1010;
     display: flex;
@@ -122,8 +123,9 @@
 
 /* Adjust FAB position when drawer is open */
 .drawer-open .floating-nav {
-    /* Center on expanded header (200px / 2 = 100px) */
-    top: 100px;
+    /* Stay aligned with header-content when drawer opens */
+    /* Content doesn't move much, slight adjustment for visual balance */
+    top: 70px;
 }
 
 /* ===== SIDE PANELS ===== */
@@ -1437,14 +1439,16 @@ textarea.panel-input {
         font-size: 42px;
     }
     
-    /* Adjust positioning for smaller mobile headers */
+    /* Adjust positioning for mobile header-content alignment */
     .floating-nav {
-        top: 60px; /* Center on 120px mobile header (120px / 2) */
+        /* Mobile: app-header padding (16px top) + header-content center (~35px) */
+        top: 50px;
     }
     
     /* Mobile drawer open state */
     .drawer-open .floating-nav {
-        top: 90px; /* Center on 180px expanded mobile header (180px / 2) */
+        /* Stay aligned with header-content on mobile */
+        top: 55px;
     }
     
     /* Enhanced mobile touch targets */
