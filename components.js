@@ -1984,7 +1984,7 @@ class EditModeFAB {
                     aria-expanded="false"
                     aria-haspopup="true"
                     style="transform: scale(0); opacity: 0;">
-                <span class="material-icons fab-icon">edit</span>
+                <span class="material-icons fab-icon">mode_edit</span>
             </button>
             
             <!-- Sub-FAB actions (hidden by default) -->

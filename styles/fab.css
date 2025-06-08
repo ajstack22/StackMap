@@ -98,16 +98,26 @@ button.btn.btn--floating.btn--fab {
     color: var(--primary-color) !important;
 }
 
-/* FAB Icon - Match header button icon sizing exactly */
+/* FAB Icon - Force exact match to header button icons */
 .btn--fab .material-icons,
-.btn--fab .fab-icon {
+.btn--fab .fab-icon,
+.btn.btn--floating.btn--fab .material-icons,
+.btn.btn--floating.btn--fab .fab-icon,
+#edit-mode-fab .material-icons,
+#edit-mode-fab .fab-icon {
     color: var(--primary-color) !important; /* Themed icons */
     font-weight: 900 !important; /* Bolder icons */
     font-size: 43px !important; /* 20% larger (36px × 1.2 = 43px) */
     margin: 0 !important;
     padding: 0 !important;
-    display: block !important;
+    display: inline-block !important;
     line-height: 1 !important;
+    width: auto !important;
+    height: auto !important;
+    vertical-align: middle !important;
+    text-align: center !important;
+    -webkit-font-smoothing: antialiased !important;
+    text-rendering: optimizeLegibility !important;
 }
 
 /* Sub-FAB Buttons */
@@ -215,8 +225,11 @@ button.btn.btn--floating.btn--fab {
     }
     
     .btn--fab .material-icons,
-    .btn--fab .fab-icon {
+    .btn--fab .fab-icon,
+    .btn.btn--floating.btn--fab .material-icons,
+    .btn.btn--floating.btn--fab .fab-icon {
         font-size: 32px !important; /* Match header button mobile icon size */
+        font-weight: 900 !important; /* Keep bold on mobile */
     }
     
     .btn.btn--floating.btn--fab-sub {
