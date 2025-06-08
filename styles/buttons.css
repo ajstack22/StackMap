@@ -425,8 +425,18 @@ body.showing-welcome .btn.btn--grownup-mode {
 
 /* Main FAB Button (extends existing .btn--floating) */
 .btn--fab {
+    /* Override layout.css positioning */
+    position: fixed !important;
+    top: auto !important;
+    left: auto !important;
     bottom: 24px !important;
     right: 24px !important;
+    
+    /* Override the 115px size from layout.css */
+    width: 56px !important;
+    height: 56px !important;
+    
+    /* FAB specific styling */
     background: rgba(255, 255, 255, 0.95) !important;
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
@@ -438,6 +448,8 @@ body.showing-welcome .btn.btn--grownup-mode {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    border-radius: 50% !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
 }
 
 .btn--fab:hover {
@@ -573,6 +585,10 @@ body.showing-welcome .btn.btn--grownup-mode {
 /* Tablet adjustments */
 @media (max-width: 768px) {
     .btn--fab {
+        /* Ensure mobile positioning overrides */
+        position: fixed !important;
+        top: auto !important;
+        left: auto !important;
         bottom: 20px !important;
         right: 20px !important;
         width: 52px !important;
@@ -603,6 +619,10 @@ body.showing-welcome .btn.btn--grownup-mode {
 /* Small mobile adjustments */
 @media (max-width: 480px) {
     .btn--fab {
+        /* Ensure mobile positioning overrides */
+        position: fixed !important;
+        top: auto !important;
+        left: auto !important;
         bottom: 16px !important;
         right: 16px !important;
         width: 48px !important;
