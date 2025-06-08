@@ -39,11 +39,15 @@
 /* ===== FLOATING ACTION BUTTONS ===== */
 .floating-nav {
     position: fixed;
-    top: 20px;
+    /* Center vertically on header (150px header / 2 = 75px) */
+    top: 75px;
+    transform: translateY(-50%);
     z-index: 1010;
     display: flex;
     flex-direction: column;
     gap: 12px;
+    /* Smooth transition when drawer opens/closes */
+    transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .floating-nav--left {
@@ -55,8 +59,9 @@
 }
 
 .fab {
-    width: 56px;
-    height: 56px;
+    /* Increased by 25% (56px * 1.25 = 70px) */
+    width: 70px;
+    height: 70px;
     border-radius: 50%;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
@@ -73,8 +78,8 @@
     touch-action: manipulation;
     
     /* Special needs: 44px+ touch target requirement exceeded */
-    min-width: 56px;
-    min-height: 56px;
+    min-width: 70px;
+    min-height: 70px;
 }
 
 .fab:hover {
@@ -88,7 +93,8 @@
 }
 
 .fab .material-icons {
-    font-size: 28px;
+    /* Increased icon size proportionally */
+    font-size: 35px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -101,6 +107,12 @@
     background: var(--primary-color);
     color: white;
     transform: scale(1.05);
+}
+
+/* Adjust FAB position when drawer is open */
+.drawer-open .floating-nav {
+    /* Center on expanded header (200px / 2 = 100px) */
+    top: 100px;
 }
 
 /* ===== SIDE PANELS ===== */
@@ -1401,10 +1413,28 @@ textarea.panel-input {
         bottom: 20px; /* iOS doesn't have navigation bar */
     }
     
+    /* Mobile FABs - 50% increase (56px * 1.5 = 84px) */
+    .fab {
+        width: 84px;
+        height: 84px;
+        min-width: 84px;
+        min-height: 84px;
+    }
+    
+    .fab .material-icons {
+        /* Increased icon size for mobile */
+        font-size: 42px;
+    }
+    
+    /* Adjust positioning for smaller mobile headers if needed */
+    .floating-nav {
+        top: 75px; /* Keep centered on 150px header */
+    }
+    
     /* Enhanced mobile touch targets */
     .mobile-nav-enhanced .fab {
-        width: 60px;
-        height: 60px;
+        width: 84px;
+        height: 84px;
         font-size: 1.4rem;
     }
 }
