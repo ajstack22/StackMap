@@ -21,24 +21,26 @@ class CelebrationManager {
             task: {
                 'none': { name: '❌ No Celebration', func: this.noAnimation },
                 'random': { name: '🎲 Random', func: this.randomTaskCelebration },
+                'confetti': { name: '🎊 Confetti', func: this.confetti },
+                'floating-stars': { name: '⭐ Floating Stars', func: this.floatingStars },
+                'floating-hearts': { name: '💖 Floating Hearts', func: this.floatingHearts },
+                'nature-growth': { name: '🌸 Nature Growth', func: this.natureGrowth },
                 'gentle-glow': { name: '🌟 Gentle Glow', func: this.gentleGlow },
                 'peaceful-wave': { name: '🌊 Peaceful Wave', func: this.peacefulWave },
                 'soft-breathe': { name: '💚 Soft Breathe', func: this.softBreathe },
-                'floating-stars': { name: '⭐ Floating Stars', func: this.floatingStars },
-                'floating-hearts': { name: '💖 Floating Hearts', func: this.floatingHearts },
                 'gentle-ripple': { name: '💫 Gentle Ripple', func: this.gentleRipple },
-                'nature-growth': { name: '🌸 Nature Growth', func: this.natureGrowth },
                 'gentle-spiral': { name: '🌀 Gentle Spiral', func: this.gentleSpiral },
                 'progress-fill': { name: '📊 Progress Fill', func: this.progressFill }
             },
             routine: {
                 'none': { name: '❌ No Celebration', func: this.noAnimation },
                 'random': { name: '🎲 Random', func: this.randomRoutineCelebration },
-                'sunrise-glow': { name: '🌅 Sunrise Glow', func: this.sunriseGlow },
-                'garden-growth': { name: '🌿 Garden Growth', func: this.gardenGrowth },
+                'fireworks': { name: '🎆 Fireworks', func: this.fireworks },
                 'star-shower': { name: '✨ Star Shower', func: this.starShower },
+                'garden-growth': { name: '🌿 Garden Growth', func: this.gardenGrowth },
                 'victory-rainbow': { name: '🌈 Victory Rainbow', func: this.victoryRainbow },
-                'gentle-fireworks': { name: '🎆 Gentle Fireworks', func: this.gentleFireworks },
+                'sunrise-glow': { name: '🌅 Sunrise Glow', func: this.sunriseGlow },
+                'gentle-fireworks': { name: '💫 Gentle Fireworks', func: this.gentleFireworks },
                 'achievement-glow': { name: '🏆 Achievement Glow', func: this.achievementGlow }
             }
         };
@@ -74,6 +76,113 @@ class CelebrationManager {
         
         const randomKey = routineAnimations[Math.floor(Math.random() * routineAnimations.length)];
         this.animations.routine[randomKey].func.call(this, element);
+    }
+
+    /**
+     * ORIGINAL ANIMATIONS - Full screen celebrations
+     */
+    
+    confetti(element) {
+        // Original confetti animation - full screen
+        const colors = [this.app.appState.settings.backgroundColor, '#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4'];
+        const count = CONFIG.CONFETTI_COUNT || 50;
+        
+        for (let i = 0; i < count; i++) {
+            const confetti = document.createElement('div');
+            confetti.className = 'confetti';
+            confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 1 + 's';
+            confetti.style.animationDuration = (Math.random() * 1 + 1.5) + 's';
+            
+            document.body.appendChild(confetti);
+            
+            setTimeout(() => confetti.remove(), 3000);
+        }
+    }
+    
+    fireworks(element) {
+        // Original fireworks animation - full screen
+        const colors = ['#FFD700', '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FECA57', 
+                       '#FF6348', '#DDA0DD', '#98FB98', '#87CEEB', '#FF69B4', '#00CED1',
+                       '#FF1493', '#00FA9A', '#FFB6C1', '#20B2AA', '#FFA500', '#ADFF2F'];
+        
+        // Create multiple firework bursts at random positions
+        for (let burst = 0; burst < 12; burst++) {
+            setTimeout(() => {
+                // Random position across the entire screen
+                const x = 10 + Math.random() * 80;
+                const y = 10 + Math.random() * 80;
+                const burstColor = colors[Math.floor(Math.random() * colors.length)];
+                const particleCount = 15 + Math.floor(Math.random() * 10);
+                const burstSize = 0.8 + Math.random() * 0.6; // Vary the size
+                
+                // Create burst center flash
+                const flash = document.createElement('div');
+                flash.className = 'firework-burst';
+                flash.style.left = x + '%';
+                flash.style.top = y + '%';
+                flash.style.width = '20px';
+                flash.style.height = '20px';
+                flash.style.background = burstColor;
+                flash.style.boxShadow = `0 0 20px ${burstColor}, 0 0 40px ${burstColor}`;
+                flash.style.transform = 'translate(-50%, -50%)';
+                
+                document.body.appendChild(flash);
+                
+                // Flash and remove
+                flash.animate([
+                    { transform: 'translate(-50%, -50%) scale(0)', opacity: 1 },
+                    { transform: 'translate(-50%, -50%) scale(2)', opacity: 0 }
+                ], {
+                    duration: 300,
+                    easing: 'ease-out'
+                });
+                
+                setTimeout(() => flash.remove(), 300);
+                
+                // Create particles
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'firework-particle';
+                    const angle = (Math.PI * 2 * i) / particleCount;
+                    const velocity = (40 + Math.random() * 40) * burstSize;
+                    const particleSize = (4 + Math.random() * 6) + 'px';
+                    const particleColor = Math.random() > 0.5 ? burstColor : colors[Math.floor(Math.random() * colors.length)];
+                    
+                    // Starting position
+                    particle.style.left = x + '%';
+                    particle.style.top = y + '%';
+                    particle.style.width = particleSize;
+                    particle.style.height = particleSize;
+                    particle.style.background = particleColor;
+                    particle.style.boxShadow = `0 0 6px ${particleColor}`;
+                    
+                    // Calculate end position
+                    const endX = Math.cos(angle) * velocity;
+                    const endY = Math.sin(angle) * velocity;
+                    
+                    document.body.appendChild(particle);
+                    
+                    // Animate the particle
+                    particle.animate([
+                        { 
+                            transform: `translate(-50%, -50%)`,
+                            opacity: 1
+                        },
+                        { 
+                            transform: `translate(calc(-50% + ${endX}px), calc(-50% + ${endY}px))`,
+                            opacity: 0
+                        }
+                    ], {
+                        duration: 1500,
+                        easing: 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                    });
+                    
+                    setTimeout(() => particle.remove(), 1500);
+                }
+            }, burst * 200);
+        }
     }
 
     /**
