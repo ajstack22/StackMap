@@ -1725,15 +1725,25 @@ class ActivityCard {
         card.classList.toggle('card--completed');
 
         if (!wasCompleted) {
+            // Trigger task completion celebration
+            if (window.celebrationManager && window.appInstance) {
+                const currentUser = window.appInstance.appState.getCurrentUser();
+                window.celebrationManager.celebrateTask(card, currentUser.id);
+            }
+            
             // Check if all visible cards are now completed
             const visibleActivities = this.appState.getCurrentActivities().filter(a => a.visible);
             const allCards = document.querySelectorAll('.card:not(.card--hidden)');
             const completedCards = document.querySelectorAll('.card--completed:not(.card--hidden)');
             
             if (completedCards.length === visibleActivities.length && visibleActivities.length > 0) {
-                this.renderer.createFireworks();
-            } else {
-                this.renderer.createConfetti();
+                // Trigger routine completion celebration
+                if (window.celebrationManager && window.appInstance) {
+                    const containerElement = document.getElementById('mainContainer') || 
+                                          document.querySelector('.main-container');
+                    const currentUser = window.appInstance.appState.getCurrentUser();
+                    window.celebrationManager.celebrateRoutine(containerElement, currentUser.id);
+                }
             }
         }
     }

@@ -102,6 +102,7 @@ class StackMapApp {
             this.initializeTitleSubtitle();
             this.initializeDrawer();
             this.initializeScrollHeader();
+            this.initializeCelebrationSystem();
         }, 100);
     }
     
@@ -2873,6 +2874,19 @@ class StackMapApp {
         });
         
         console.log('✅ Modal escape key handlers configured');
+    }
+
+    /**
+     * Initialize celebration system
+     */
+    initializeCelebrationSystem() {
+        // Load the celebration manager
+        if (typeof CelebrationManager !== 'undefined') {
+            window.celebrationManager = new CelebrationManager(this);
+            console.log('🎉 Celebration system initialized');
+        } else {
+            console.warn('CelebrationManager not loaded - celebrations disabled');
+        }
     }
 }
 

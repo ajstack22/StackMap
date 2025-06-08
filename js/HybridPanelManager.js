@@ -309,6 +309,8 @@ class HybridPanelManager {
                 <label>Completion Indicators</label>
                 ${this.renderCompletionToggle()}
             </div>
+            
+            ${this.renderCelebrationPreferences()}
         `;
     }
 
@@ -1788,6 +1790,131 @@ class HybridPanelManager {
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
+    }
+
+    /**
+     * Render celebration preferences section
+     */
+    renderCelebrationPreferences() {
+        const currentUser = this.app.appState.getCurrentUser();
+        const taskCelebration = currentUser.settings?.taskCelebration || 'gentle-glow';
+        const routineCelebration = currentUser.settings?.routineCelebration || 'garden-growth';
+
+        return `
+            <div class="panel-section">
+                <label>Celebration Animations</label>
+                
+                <div class="celebration-setting">
+                    <label class="celebration-label">When I complete a task</label>
+                    <div class="celebration-control">
+                        <select class="celebration-dropdown" id="taskCelebrationSelect" 
+                                onchange="hybridPanelManager.updateCelebrationSetting('task', this.value)">
+                            ${this.renderCelebrationOptions('task', taskCelebration)}
+                        </select>
+                        <button class="preview-btn" onclick="hybridPanelManager.previewCelebration('task')" 
+                                title="Preview this animation">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="celebration-setting">
+                    <label class="celebration-label">When I finish my routine</label>
+                    <div class="celebration-control">
+                        <select class="celebration-dropdown" id="routineCelebrationSelect"
+                                onchange="hybridPanelManager.updateCelebrationSetting('routine', this.value)">
+                            ${this.renderCelebrationOptions('routine', routineCelebration)}
+                        </select>
+                        <button class="preview-btn" onclick="hybridPanelManager.previewCelebration('routine')"
+                                title="Preview this animation">
+                            👁️
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="celebration-help">
+                    <small>Animations can always be turned off if they feel overwhelming</small>
+                </div>
+            </div>
+        `;
+    }
+
+    /**
+     * Render dropdown options for celebrations
+     */
+    renderCelebrationOptions(type, selectedValue) {
+        const celebrationManager = window.celebrationManager;
+        if (!celebrationManager) return '';
+        
+        const animations = celebrationManager.animations[type];
+        return Object.keys(animations).map(key => {
+            const animation = animations[key];
+            const selected = key === selectedValue ? 'selected' : '';
+            return `<option value="${key}" ${selected}>${animation.name}</option>`;
+        }).join('');
+    }
+
+    /**
+     * Update celebration setting
+     */
+    updateCelebrationSetting(type, value) {
+        const currentUser = this.app.appState.getCurrentUser();
+        if (!currentUser.settings) currentUser.settings = {};
+        
+        if (type === 'task') {
+            currentUser.settings.taskCelebration = value;
+        } else {
+            currentUser.settings.routineCelebration = value;
+        }
+        
+        this.app.appState._triggerSave();
+        console.log(`Updated ${type} celebration to: ${value}`);
+    }
+
+    /**
+     * Preview celebration animation
+     */
+    previewCelebration(type) {
+        const dropdown = document.getElementById(type + 'CelebrationSelect');
+        const selectedValue = dropdown.value;
+        
+        // Find a test element (first visible card or create temporary)
+        const testElement = document.querySelector('.card:not(.card--completed)') || 
+                           this.createTemporaryPreviewElement();
+        
+        if (window.celebrationManager) {
+            window.celebrationManager.previewAnimation(type, selectedValue, testElement);
+        }
+    }
+
+    /**
+     * Create temporary element for preview if no cards available
+     */
+    createTemporaryPreviewElement() {
+        const temp = document.createElement('div');
+        temp.className = 'card preview-card';
+        temp.style.cssText = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 200px;
+            height: 150px;
+            background: white;
+            border-radius: 12px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        `;
+        temp.innerHTML = '<div style="padding: 20px; text-align: center;">Preview</div>';
+        
+        document.body.appendChild(temp);
+        
+        // Auto-remove after animation
+        setTimeout(() => {
+            if (temp.parentNode) temp.parentNode.removeChild(temp);
+        }, 5000);
+        
+        return temp;
     }
 
     // ===== HELPER METHODS =====
