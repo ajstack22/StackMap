@@ -201,14 +201,14 @@
     background: var(--primary-color);
     backdrop-filter: blur(15px);
     -webkit-backdrop-filter: blur(15px);
-    padding: 80px 20px 20px;
+    padding: 0;
     z-index: 1006;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 0 30px rgba(0, 0, 0, 0.15);
-    overflow-y: auto;
-    scrollbar-width: thin;
-    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    overflow: hidden;
     transform: translateX(-100%);
+    display: flex;
+    flex-direction: column;
 }
 
 /* Desktop vertical handles */
@@ -318,25 +318,64 @@
 
 /* ===== PANEL CONTENT STRUCTURE ===== */
 .side-panel__content {
-    height: 100%;
+    flex: 1;
     display: flex;
     flex-direction: column;
+    position: relative;
+    padding: 80px 20px 20px;
+    min-height: 0;
+}
+
+/* Content area that scrolls */
+#hybridLeftContent, #hybridRightContent {
+    flex: 1;
+    overflow-y: scroll; /* Always show scrollbar for consistency */
+    overflow-x: hidden;
+    padding-bottom: 60px; /* Space for Done button */
+    min-height: 0; /* Important for Firefox */
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+}
+
+#hybridLeftContent::-webkit-scrollbar,
+#hybridRightContent::-webkit-scrollbar {
+    width: 6px;
+}
+
+#hybridLeftContent::-webkit-scrollbar-track,
+#hybridRightContent::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+#hybridLeftContent::-webkit-scrollbar-thumb,
+#hybridRightContent::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 3px;
+}
+
+#hybridLeftContent::-webkit-scrollbar-thumb:hover,
+#hybridRightContent::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.5);
 }
 
 .side-panel h3 {
-    margin: 0 0 24px 0;
+    margin: 0 0 20px 0;
     font-size: 1.5rem;
     font-weight: 700;
     color: white;
     text-align: center;
     text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    flex-shrink: 0;
 }
 
 .panel-section {
-    margin-bottom: 24px;
+    margin-bottom: 20px;
     padding-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     text-align: left; /* Ensure no center text alignment affects children */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .panel-section:last-of-type {
@@ -425,31 +464,24 @@
 /* ===== COLOR PICKER GRID ===== */
 .color-grid {
     display: grid;
-    grid-template-columns: repeat(6, 44px); /* Fixed width columns for precise alignment */
-    gap: 8px;
-    padding: 16px;
+    grid-template-columns: repeat(6, minmax(36px, 1fr));
+    gap: 6px;
+    padding: 12px;
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 12px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.5);
-    justify-items: center;
-    align-items: center;
-    place-items: center; /* Modern shorthand for perfect centering */
-    justify-content: center; /* Center the entire grid content */
-    margin: 0 auto; /* Center the grid itself */
-    box-sizing: border-box; /* Ensure padding doesn't shift content */
-    width: fit-content; /* Only as wide as needed */
-    text-align: center; /* Reset any inherited text alignment */
-    position: relative; /* Ensure proper positioning context */
-    left: 50%; /* Move to center */
-    transform: translateX(-50%); /* Perfectly center */
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .color-option {
-    width: 44px;
-    height: 44px;
+    width: 100%;
+    aspect-ratio: 1;
+    min-width: 36px;
+    min-height: 36px;
     border: 3px solid transparent;
     border-radius: 8px;
     cursor: pointer;
@@ -460,9 +492,6 @@
     justify-content: center;
     touch-action: manipulation;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    justify-self: center;
-    align-self: center;
-    margin: 0 auto; /* Additional centering fallback */
 }
 
 .color-option:hover {
@@ -483,9 +512,24 @@
     text-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
 }
 
+/* Adjust color picker for narrower panel width */
+.side-panel .color-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+/* Ensure proper sizing in panels */
+.side-panel .color-option {
+    min-width: 48px;
+    min-height: 48px;
+}
+
 /* ===== PANEL CLOSE BUTTON ===== */
 .panel-close {
-    margin-top: auto;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    right: 20px;
     padding: 16px 24px;
     background: white;
     color: var(--primary-color);
@@ -497,6 +541,8 @@
     transition: all 0.3s ease;
     min-height: 48px;
     touch-action: manipulation;
+    z-index: 10;
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .panel-close:hover {
@@ -1488,6 +1534,18 @@ textarea.panel-input {
     /* iOS-specific mobile styles */
     .ios-device .back-button-debug {
         bottom: 20px; /* iOS doesn't have navigation bar */
+    }
+    
+    /* Adjust color grid for panel width */
+    .side-panel .color-grid {
+        grid-template-columns: repeat(5, 1fr);
+        gap: 6px;
+        padding: 10px;
+    }
+    
+    .side-panel .color-option {
+        min-width: 40px;
+        min-height: 40px;
     }
     
     /* Mobile FABs - reduced by 25% from 84px to 63px */
