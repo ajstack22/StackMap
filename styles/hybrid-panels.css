@@ -102,12 +102,12 @@
 
 /* Subtle rotation on hover to preview the spin */
 #hybridPreferencesBtn:hover .material-icons {
-    transform: rotate(15deg);
+    transform: translate(-50%, -50%) rotate(15deg);
     transition: transform 0.2s ease;
 }
 
 #hybridManageBtn:hover .material-icons {
-    transform: rotate(-15deg);
+    transform: translate(-50%, -50%) rotate(-15deg);
     transition: transform 0.2s ease;
 }
 
@@ -135,30 +135,38 @@
 /* Icon spin animations when panels open */
 @keyframes spin-clockwise {
     from {
-        transform: rotate(0deg);
+        transform: translate(-50%, -50%) rotate(0deg);
     }
     to {
-        transform: rotate(360deg);
+        transform: translate(-50%, -50%) rotate(360deg);
     }
 }
 
 @keyframes spin-counter-clockwise {
     from {
-        transform: rotate(0deg);
+        transform: translate(-50%, -50%) rotate(0deg);
     }
     to {
-        transform: rotate(-360deg);
+        transform: translate(-50%, -50%) rotate(-360deg);
     }
 }
 
 /* Palette (left panel) spins clockwise when active */
 #hybridPreferencesBtn.fab--active .material-icons {
     animation: spin-clockwise 0.6s ease-in-out;
+    /* Maintain position during animation */
+    position: absolute;
+    top: 50%;
+    left: 50%;
 }
 
 /* Settings cog (right panel) spins counter-clockwise when active */
 #hybridManageBtn.fab--active .material-icons {
     animation: spin-counter-clockwise 0.6s ease-in-out;
+    /* Maintain position during animation */
+    position: absolute;
+    top: 50%;
+    left: 50%;
 }
 
 /* Adjust FAB position when drawer is open */
