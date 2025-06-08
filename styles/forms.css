@@ -748,3 +748,93 @@ html body.grownup-mode .card--completed[style] .card__icon {
     min-height: 44px !important;
     flex-shrink: 0 !important;
 }
+
+/* ===== TOGGLE SWITCH ===== */
+.switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 26px;
+}
+
+.switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(255, 255, 255, 0.3);
+    transition: .3s;
+    border-radius: 34px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 20px;
+    width: 20px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: .3s;
+    border-radius: 50%;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.switch input:checked + .slider {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(255, 255, 255, 1);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.switch input:focus + .slider {
+    box-shadow: 0 0 1px var(--primary-color);
+}
+
+.switch input:checked + .slider:before {
+    transform: translateX(24px);
+}
+
+/* Small switch variant */
+.switch--small {
+    width: 36px;
+    height: 20px;
+}
+
+.switch--small .slider {
+    border-radius: 20px;
+}
+
+.switch--small .slider:before {
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.2);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.switch--small input:checked + .slider:before {
+    transform: translateX(16px);
+}
+
+/* Hover states */
+.switch:hover .slider {
+    background-color: rgba(255, 255, 255, 0.4);
+    border-color: rgba(255, 255, 255, 0.6);
+}
+
+.switch:hover input:checked + .slider {
+    background-color: rgba(255, 255, 255, 1);
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(255, 255, 255, 0.5);
+}

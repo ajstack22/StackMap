@@ -240,16 +240,22 @@ button.btn.btn--floating.btn--fab {
     transition-delay: 0.2s; /* Slight delay for smooth appearance */
 }
 
-/* Mobile backdrop */
+/* Mobile backdrop - enhanced gradient effect */
 .fab-backdrop {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(2px);
-    -webkit-backdrop-filter: blur(2px);
+    background: linear-gradient(
+        135deg,
+        rgba(102, 126, 234, 0.9) 0%,
+        rgba(102, 126, 234, 0.8) 30%,
+        rgba(80, 100, 180, 0.7) 60%,
+        rgba(40, 50, 90, 0.8) 100%
+    );
+    backdrop-filter: blur(8px) saturate(1.5);
+    -webkit-backdrop-filter: blur(8px) saturate(1.5);
     z-index: 1008;
     opacity: 0;
     transition: opacity 0.3s ease;

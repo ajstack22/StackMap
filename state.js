@@ -9,7 +9,9 @@ class AppState {
             isDefaultTitle: true,
             backgroundColor: CONFIG.DEFAULT_COLOR,
             showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
-            showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
+            showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT,
+            autoSync: true,           // NEW: Auto-sync with Google Drive
+            backupReminder: true      // NEW: Show weekly backup reminders
         };
         this.ui = {
             editMode: false,
@@ -339,7 +341,9 @@ class AppState {
                 isDefaultTitle: user.settings?.isDefaultTitle ?? false,
                 backgroundColor: user.settings?.backgroundColor || CONFIG.DEFAULT_COLOR,
                 showNumbers: user.settings?.showNumbers ?? CONFIG.SHOW_NUMBERS_DEFAULT,
-                showCompletionIndicators: user.settings?.showCompletionIndicators ?? CONFIG.SHOW_COMPLETION_DEFAULT
+                showCompletionIndicators: user.settings?.showCompletionIndicators ?? CONFIG.SHOW_COMPLETION_DEFAULT,
+                autoSync: user.settings?.autoSync ?? true,
+                backupReminder: user.settings?.backupReminder ?? true
             };
             
             // Apply theme

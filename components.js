@@ -1956,9 +1956,17 @@ class EditModeFAB {
                 handler: () => this.app.completeAllActivities()
             },
             {
+                id: 'data-management',
+                icon: 'storage',
+                label: 'Data Management',
+                ariaLabel: 'Open data management panel for sync, import, and export',
+                color: '#2196F3', // Blue
+                handler: () => this.app.openDataManagementPanel()
+            },
+            {
                 id: 'exit-edit',
                 icon: 'visibility',
-                label: 'Return to View',
+                label: 'Return to View Mode',
                 ariaLabel: 'Exit edit mode and return to view mode',
                 color: '#F44336', // Red
                 handler: () => this.app.exitGrownupMode()
@@ -1978,6 +1986,54 @@ class EditModeFAB {
         this.container.className = 'fab-container';
         this.container.style.display = 'none'; // Start hidden
         this.container.innerHTML = `
+            <!-- Theme-colored gradient background -->
+            <div class="fab-gradient-bg" style="
+                position: fixed;
+                bottom: 0;
+                right: 0;
+                pointer-events: none;
+                z-index: 1008;
+                overflow: visible;
+            ">
+                <!-- Mobile gradient (matching desktop style) -->
+                <div class="fab-gradient-mobile" style="
+                    display: ${window.innerWidth <= 768 ? 'block' : 'none'};
+                    position: fixed;
+                    bottom: 0;
+                    right: 0;
+                    width: 250px;
+                    height: 100vh;
+                    background: linear-gradient(to right, 
+                        transparent 0%, 
+                        var(--primary-color) 80%, 
+                        var(--primary-color) 100%);
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s ease;
+                    transform-origin: right;
+                    pointer-events: none;
+                "></div>
+                
+                <!-- Desktop gradient (panel-like backdrop) -->
+                <div class="fab-gradient-desktop" style="
+                    display: ${window.innerWidth > 768 ? 'block' : 'none'};
+                    position: fixed;
+                    bottom: 0;
+                    right: 0;
+                    width: 400px;
+                    height: 100vh;
+                    background: linear-gradient(to right, 
+                        transparent 0%, 
+                        var(--primary-color) 80%, 
+                        var(--primary-color) 100%);
+                    opacity: 0;
+                    visibility: hidden;
+                    transition: all 0.3s ease;
+                    transform-origin: right;
+                    pointer-events: none;
+                "></div>
+            </div>
+            
             <!-- Mobile backdrop (only visible on mobile when expanded) -->
             <div class="fab-backdrop" style="display: none;"></div>
             
@@ -2011,6 +2067,17 @@ class EditModeFAB {
         this.subFabs = Array.from(this.container.querySelectorAll('.btn--fab-sub'));
         this.backdrop = this.container.querySelector('.fab-backdrop');
         this.actionsContainer = this.container.querySelector('.fab-actions');
+        this.gradientMobile = this.container.querySelector('.fab-gradient-mobile');
+        this.gradientDesktop = this.container.querySelector('.fab-gradient-desktop');
+        
+        // Update gradient visibility on resize
+        window.addEventListener('resize', () => {
+            if (this.gradientMobile && this.gradientDesktop) {
+                const isMobile = window.innerWidth <= 768;
+                this.gradientMobile.style.display = isMobile ? 'block' : 'none';
+                this.gradientDesktop.style.display = isMobile ? 'none' : 'block';
+            }
+        });
         
         // Append to body
         document.body.appendChild(this.container);
@@ -2073,6 +2140,8 @@ class EditModeFAB {
             // Force a reflow to ensure the display change is applied
             this.container.offsetHeight;
             
+            // Don't show desktop gradient until expanded
+            
             // Animate in after a small delay
             setTimeout(() => {
                 if (this.fab) {
@@ -2088,6 +2157,12 @@ class EditModeFAB {
             if (this.isExpanded) {
                 this.collapse();
             }
+            
+            // Hide gradients
+            if (this.gradientDesktop) {
+                this.gradientDesktop.style.opacity = '0';
+            }
+            
             // Animate out
             this.fab.style.transform = 'scale(0)';
             this.fab.style.opacity = '0';
@@ -2121,6 +2196,19 @@ class EditModeFAB {
         
         // Update ARIA state
         this.fab.setAttribute('aria-expanded', 'true');
+        
+        // Make gradient more visible
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile && this.gradientMobile) {
+            // Mobile: Show gradient backdrop matching desktop style
+            this.gradientMobile.style.opacity = '0.5';
+            this.gradientMobile.style.visibility = 'visible';
+        } else if (!isMobile && this.gradientDesktop) {
+            // Desktop: Show panel-like backdrop matching hybrid panels
+            this.gradientDesktop.style.opacity = '0.5';
+            this.gradientDesktop.style.visibility = 'visible';
+        }
         
         // Show actions container
         this.actionsContainer.style.display = 'block';
@@ -2163,6 +2251,19 @@ class EditModeFAB {
         // Update ARIA state
         this.fab.setAttribute('aria-expanded', 'false');
         
+        // Reduce gradient visibility
+        const isMobile = window.innerWidth <= 768;
+        
+        if (isMobile && this.gradientMobile) {
+            // Mobile: Hide gradient backdrop
+            this.gradientMobile.style.opacity = '0';
+            this.gradientMobile.style.visibility = 'hidden';
+        } else if (!isMobile && this.gradientDesktop) {
+            // Desktop: Hide backdrop
+            this.gradientDesktop.style.opacity = '0';
+            this.gradientDesktop.style.visibility = 'hidden';
+        }
+        
         // Hide mobile backdrop
         this.backdrop.style.opacity = '0';
         setTimeout(() => {
@@ -2191,8 +2292,8 @@ class EditModeFAB {
     updateSubFabPositions() {
         const isMobile = window.innerWidth <= 768;
         const fabSize = isMobile ? 45 : 56; // Match actual header button sizes
-        const subFabSize = isMobile ? 36 : 40; // Proportional sub-FAB sizes
-        const spacing = isMobile ? 12 : 16; // Appropriate spacing
+        const subFabSize = isMobile ? 44 : 48; // Updated to match new larger sizes
+        const spacing = isMobile ? 14 : 18; // Slightly increased spacing for larger buttons
         const edgeOffset = isMobile ? 16 : 24;
         
         // Both mobile and desktop: position sub-FABs vertically above main FAB
@@ -2288,11 +2389,599 @@ class EditModeFAB {
     }
 }
 
+/**
+ * DataManagementPanel - Consolidated data operations panel
+ * Handles Google Drive sync, import/export, and data settings
+ * Accessible from FAB in edit mode
+ */
+class DataManagementPanel {
+    constructor(appInstance) {
+        this.app = appInstance;
+        this.isOpen = false;
+        this.isAnimating = false;
+        this.panel = null;
+        this.backdrop = null;
+        this.container = null;
+        
+        // Google Drive status tracking
+        this.syncStatus = 'unknown'; // 'connected', 'disconnected', 'syncing', 'error'
+        this.lastSyncTime = null;
+    }
+    
+    init() {
+        this.render();
+        this.setupEventListeners();
+        this.updateSyncStatus();
+    }
+    
+    render() {
+        this.container = document.createElement('div');
+        this.container.className = 'data-panel-container';
+        this.container.innerHTML = `
+            <!-- Mobile backdrop -->
+            <div class="data-panel-backdrop" style="display: none;"></div>
+            
+            <!-- Main data panel -->
+            <div class="data-panel" style="transform: translateX(100%);">
+                <!-- Panel header -->
+                <div class="data-panel__header">
+                    <h2 class="data-panel__title">
+                        <span class="material-icons">storage</span>
+                        Data Management
+                    </h2>
+                    <button class="btn btn--round btn--close" 
+                            aria-label="Close data management panel"
+                            id="data-panel-close">
+                        <span class="material-icons">close</span>
+                    </button>
+                </div>
+                
+                <!-- Google Drive Sync Section -->
+                <div class="data-panel__section">
+                    <h3 class="data-panel__section-title">
+                        <span class="material-icons">cloud</span>
+                        Google Drive Sync
+                    </h3>
+                    
+                    <!-- Sync Status Display -->
+                    <div class="sync-status" id="sync-status-display">
+                        <div class="sync-status__indicator" id="sync-indicator">
+                            <span class="material-icons">cloud_off</span>
+                        </div>
+                        <div class="sync-status__info">
+                            <div class="sync-status__text" id="sync-status-text">Checking connection...</div>
+                            <div class="sync-status__time" id="sync-last-time"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sync Actions -->
+                    <div class="data-panel__actions">
+                        <button class="btn btn--primary btn--full-width" 
+                                id="connect-drive-btn"
+                                aria-label="Connect to Google Drive">
+                            <span class="material-icons">link</span>
+                            <span>Connect Google Drive</span>
+                        </button>
+                        
+                        <button class="btn btn--secondary btn--full-width" 
+                                id="sync-now-btn"
+                                aria-label="Sync data now"
+                                style="display: none;">
+                            <span class="material-icons">sync</span>
+                            <span>Sync Now</span>
+                        </button>
+                        
+                        <button class="btn btn--danger btn--full-width" 
+                                id="disconnect-drive-btn"
+                                aria-label="Disconnect Google Drive"
+                                style="display: none;">
+                            <span class="material-icons">link_off</span>
+                            <span>Disconnect Drive</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Import/Export Section -->
+                <div class="data-panel__section">
+                    <h3 class="data-panel__section-title">
+                        <span class="material-icons">import_export</span>
+                        Import & Export
+                    </h3>
+                    
+                    <!-- Export Options -->
+                    <div class="data-panel__subsection">
+                        <h4 class="data-panel__subsection-title">Export Data</h4>
+                        <div class="data-panel__actions">
+                            <button class="btn btn--primary btn--full-width" 
+                                    id="export-json-btn"
+                                    aria-label="Export all data as JSON file">
+                                <span class="material-icons">download</span>
+                                <span>Export as JSON</span>
+                            </button>
+                            
+                            <button class="btn btn--primary btn--full-width" 
+                                    id="export-backup-btn"
+                                    aria-label="Create complete backup file">
+                                <span class="material-icons">backup</span>
+                                <span>Create Backup</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Import Options -->
+                    <div class="data-panel__subsection">
+                        <h4 class="data-panel__subsection-title">Import Data</h4>
+                        <div class="data-panel__actions">
+                            <input type="file" 
+                                   id="import-file-input" 
+                                   accept=".json" 
+                                   style="display: none;"
+                                   aria-label="Select file to import">
+                            
+                            <button class="btn btn--secondary btn--full-width" 
+                                    id="import-json-btn"
+                                    aria-label="Import data from JSON file">
+                                <span class="material-icons">upload</span>
+                                <span>Import from JSON</span>
+                            </button>
+                            
+                            <button class="btn btn--secondary btn--full-width" 
+                                    id="import-backup-btn"
+                                    aria-label="Restore from backup file">
+                                <span class="material-icons">restore</span>
+                                <span>Restore Backup</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Data Settings Section -->
+                <div class="data-panel__section">
+                    <h3 class="data-panel__section-title">
+                        <span class="material-icons">settings</span>
+                        Data Settings
+                    </h3>
+                    
+                    <div class="data-panel__setting">
+                        <label class="data-panel__setting-label">
+                            <input type="checkbox" id="auto-sync-checkbox" checked>
+                            <span class="data-panel__setting-text">Auto-sync when online</span>
+                        </label>
+                    </div>
+                    
+                    <div class="data-panel__setting">
+                        <label class="data-panel__setting-label">
+                            <input type="checkbox" id="backup-reminder-checkbox" checked>
+                            <span class="data-panel__setting-text">Weekly backup reminders</span>
+                        </label>
+                    </div>
+                    
+                    <div class="data-panel__actions">
+                        <button class="btn btn--danger-outline btn--full-width" 
+                                id="clear-all-data-btn"
+                                aria-label="Clear all data (requires confirmation)">
+                            <span class="material-icons">delete_forever</span>
+                            <span>Clear All Data</span>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Panel footer with info -->
+                <div class="data-panel__footer">
+                    <p class="data-panel__info">
+                        <span class="material-icons">info</span>
+                        All data is stored locally and optionally synced to your Google Drive for backup.
+                    </p>
+                </div>
+            </div>
+        `;
+        
+        // Store references
+        this.panel = this.container.querySelector('.data-panel');
+        this.backdrop = this.container.querySelector('.data-panel-backdrop');
+        
+        // Append to body
+        document.body.appendChild(this.container);
+    }
+    
+    setupEventListeners() {
+        // Close button
+        const closeBtn = this.container.querySelector('#data-panel-close');
+        closeBtn.addEventListener('click', () => this.close());
+        
+        // Backdrop click to close
+        this.backdrop.addEventListener('click', () => this.close());
+        
+        // Google Drive actions
+        const connectBtn = this.container.querySelector('#connect-drive-btn');
+        const syncBtn = this.container.querySelector('#sync-now-btn');
+        const disconnectBtn = this.container.querySelector('#disconnect-drive-btn');
+        
+        connectBtn.addEventListener('click', () => this.connectGoogleDrive());
+        syncBtn.addEventListener('click', () => this.syncNow());
+        disconnectBtn.addEventListener('click', () => this.disconnectGoogleDrive());
+        
+        // Import/Export actions
+        const exportJsonBtn = this.container.querySelector('#export-json-btn');
+        const exportBackupBtn = this.container.querySelector('#export-backup-btn');
+        const importJsonBtn = this.container.querySelector('#import-json-btn');
+        const importBackupBtn = this.container.querySelector('#import-backup-btn');
+        const fileInput = this.container.querySelector('#import-file-input');
+        
+        exportJsonBtn.addEventListener('click', () => this.exportJson());
+        exportBackupBtn.addEventListener('click', () => this.exportBackup());
+        importJsonBtn.addEventListener('click', () => this.triggerImport('json'));
+        importBackupBtn.addEventListener('click', () => this.triggerImport('backup'));
+        fileInput.addEventListener('change', (e) => this.handleFileImport(e));
+        
+        // Settings
+        const autoSyncCheckbox = this.container.querySelector('#auto-sync-checkbox');
+        const backupReminderCheckbox = this.container.querySelector('#backup-reminder-checkbox');
+        const clearDataBtn = this.container.querySelector('#clear-all-data-btn');
+        
+        autoSyncCheckbox.addEventListener('change', (e) => this.updateAutoSync(e.target.checked));
+        backupReminderCheckbox.addEventListener('change', (e) => this.updateBackupReminder(e.target.checked));
+        clearDataBtn.addEventListener('click', () => this.clearAllData());
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (this.isOpen && e.key === 'Escape') {
+                this.close();
+            }
+        });
+        
+        // Click outside to close (except FAB)
+        document.addEventListener('click', (e) => {
+            if (this.isOpen && 
+                !this.container.contains(e.target) && 
+                !e.target.closest('.fab-container')) {
+                this.close();
+            }
+        });
+    }
+    
+    open() {
+        if (this.isAnimating || this.isOpen) return;
+        
+        this.isAnimating = true;
+        this.isOpen = true;
+        
+        // Show backdrop
+        this.backdrop.style.display = 'block';
+        requestAnimationFrame(() => {
+            this.backdrop.style.opacity = '1';
+        });
+        
+        // Slide panel in
+        requestAnimationFrame(() => {
+            this.panel.style.transform = 'translateX(0)';
+        });
+        
+        // Update sync status when opening
+        this.updateSyncStatus();
+        
+        // Animation complete
+        setTimeout(() => {
+            this.isAnimating = false;
+        }, 300);
+        
+        // Focus first interactive element
+        setTimeout(() => {
+            const firstBtn = this.panel.querySelector('button:not([style*="display: none"])');
+            if (firstBtn) firstBtn.focus();
+        }, 350);
+        
+        console.log('💾 Data Management Panel opened');
+    }
+    
+    close() {
+        if (this.isAnimating || !this.isOpen) return;
+        
+        this.isAnimating = true;
+        this.isOpen = false;
+        
+        // Hide backdrop
+        this.backdrop.style.opacity = '0';
+        setTimeout(() => {
+            this.backdrop.style.display = 'none';
+        }, 300);
+        
+        // Slide panel out
+        this.panel.style.transform = 'translateX(100%)';
+        
+        // Animation complete
+        setTimeout(() => {
+            this.isAnimating = false;
+        }, 300);
+        
+        console.log('💾 Data Management Panel closed');
+    }
+    
+    updateSyncStatus() {
+        const indicator = this.container.querySelector('#sync-indicator');
+        const statusText = this.container.querySelector('#sync-status-text');
+        const lastTimeText = this.container.querySelector('#sync-last-time');
+        const connectBtn = this.container.querySelector('#connect-drive-btn');
+        const syncBtn = this.container.querySelector('#sync-now-btn');
+        const disconnectBtn = this.container.querySelector('#disconnect-drive-btn');
+        
+        // Check Google Drive connection status
+        if (this.app.googleDriveSync && this.app.googleDriveSync.isConnected()) {
+            this.syncStatus = 'connected';
+            
+            // Update UI for connected state
+            indicator.innerHTML = '<span class="material-icons" style="color: #4caf50;">cloud_done</span>';
+            statusText.textContent = 'Connected to Google Drive';
+            
+            // Show/hide appropriate buttons
+            connectBtn.style.display = 'none';
+            syncBtn.style.display = 'block';
+            disconnectBtn.style.display = 'block';
+            
+            // Update last sync time
+            const lastSync = this.app.googleDriveSync.getLastSyncTime();
+            if (lastSync) {
+                lastTimeText.textContent = `Last sync: ${this.formatSyncTime(lastSync)}`;
+            } else {
+                lastTimeText.textContent = 'Never synced';
+            }
+        } else {
+            this.syncStatus = 'disconnected';
+            
+            // Update UI for disconnected state
+            indicator.innerHTML = '<span class="material-icons" style="color: #ff9800;">cloud_off</span>';
+            statusText.textContent = 'Not connected to Google Drive';
+            lastTimeText.textContent = 'Local storage only';
+            
+            // Show/hide appropriate buttons
+            connectBtn.style.display = 'block';
+            syncBtn.style.display = 'none';
+            disconnectBtn.style.display = 'none';
+        }
+    }
+    
+    formatSyncTime(timestamp) {
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diffMinutes = Math.floor((now - date) / (1000 * 60));
+        
+        if (diffMinutes < 1) return 'Just now';
+        if (diffMinutes < 60) return `${diffMinutes} minutes ago`;
+        if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} hours ago`;
+        return date.toLocaleDateString();
+    }
+    
+    async connectGoogleDrive() {
+        try {
+            if (this.app.googleDriveSync) {
+                await this.app.googleDriveSync.connect();
+                this.updateSyncStatus();
+                this.showSuccess('Connected to Google Drive successfully!');
+            }
+        } catch (error) {
+            console.error('Failed to connect to Google Drive:', error);
+            this.showError('Failed to connect to Google Drive. Please try again.');
+        }
+    }
+    
+    async syncNow() {
+        try {
+            const syncBtn = this.container.querySelector('#sync-now-btn');
+            const originalText = syncBtn.innerHTML;
+            
+            // Show syncing state
+            syncBtn.innerHTML = '<span class="material-icons spinning">sync</span><span>Syncing...</span>';
+            syncBtn.disabled = true;
+            
+            if (this.app.googleDriveSync) {
+                await this.app.googleDriveSync.syncData();
+                this.updateSyncStatus();
+                this.showSuccess('Data synced successfully!');
+            }
+        } catch (error) {
+            console.error('Sync failed:', error);
+            this.showError('Sync failed. Please check your connection and try again.');
+        } finally {
+            // Restore button
+            const syncBtn = this.container.querySelector('#sync-now-btn');
+            syncBtn.innerHTML = '<span class="material-icons">sync</span><span>Sync Now</span>';
+            syncBtn.disabled = false;
+        }
+    }
+    
+    async disconnectGoogleDrive() {
+        if (confirm('Are you sure you want to disconnect from Google Drive? Your local data will remain safe, but automatic syncing will stop.')) {
+            try {
+                if (this.app.googleDriveSync) {
+                    await this.app.googleDriveSync.disconnect();
+                    this.updateSyncStatus();
+                    this.showSuccess('Disconnected from Google Drive');
+                }
+            } catch (error) {
+                console.error('Failed to disconnect:', error);
+                this.showError('Failed to disconnect. Please try again.');
+            }
+        }
+    }
+    
+    exportJson() {
+        try {
+            const data = this.app.appState.exportData();
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stackmap-data-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.showSuccess('Data exported successfully!');
+            console.log('📤 JSON data exported');
+        } catch (error) {
+            console.error('Export failed:', error);
+            this.showError('Failed to export data. Please try again.');
+        }
+    }
+    
+    exportBackup() {
+        try {
+            const data = this.app.appState.exportData();
+            data.backupInfo = {
+                created: new Date().toISOString(),
+                version: CONFIG.APP_VERSION || '1.0.0',
+                type: 'complete-backup'
+            };
+            
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stackmap-backup-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            this.showSuccess('Backup created successfully!');
+            console.log('💾 Backup file created');
+        } catch (error) {
+            console.error('Backup failed:', error);
+            this.showError('Failed to create backup. Please try again.');
+        }
+    }
+    
+    triggerImport(type) {
+        const fileInput = this.container.querySelector('#import-file-input');
+        fileInput.dataset.importType = type;
+        fileInput.click();
+    }
+    
+    async handleFileImport(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        
+        try {
+            const text = await file.text();
+            const data = JSON.parse(text);
+            
+            // Validate data structure
+            if (!data.activities && !data.users) {
+                throw new Error('Invalid file format');
+            }
+            
+            const importType = event.target.dataset.importType;
+            const confirmMessage = importType === 'backup' 
+                ? 'This will replace ALL current data with the backup. Are you sure?' 
+                : 'This will merge the imported data with your current data. Continue?';
+                
+            if (confirm(confirmMessage)) {
+                await this.app.appState.importData(data, importType === 'backup');
+                this.app.renderer.renderActivities();
+                this.showSuccess('Data imported successfully!');
+                console.log(`📥 ${importType} imported:`, file.name);
+            }
+        } catch (error) {
+            console.error('Import failed:', error);
+            this.showError('Failed to import file. Please check the file format and try again.');
+        } finally {
+            // Clear file input
+            event.target.value = '';
+        }
+    }
+    
+    updateAutoSync(enabled) {
+        // Update app settings
+        this.app.appState.settings.autoSync = enabled;
+        this.app.appState.saveState();
+        
+        if (this.app.googleDriveSync) {
+            this.app.googleDriveSync.setAutoSync(enabled);
+        }
+        
+        console.log(`⚙️ Auto-sync ${enabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    updateBackupReminder(enabled) {
+        // Update app settings
+        this.app.appState.settings.backupReminder = enabled;
+        this.app.appState.saveState();
+        
+        console.log(`⚙️ Backup reminders ${enabled ? 'enabled' : 'disabled'}`);
+    }
+    
+    clearAllData() {
+        const confirmText = 'DELETE ALL DATA';
+        const userInput = prompt(
+            `⚠️ WARNING: This will permanently delete ALL your StackMap data!\n\n` +
+            `This includes:\n` +
+            `• All activity cards\n` +
+            `• All user profiles\n` +
+            `• All settings and preferences\n` +
+            `• Google Drive sync connection\n\n` +
+            `Type "${confirmText}" to confirm deletion:`
+        );
+        
+        if (userInput === confirmText) {
+            try {
+                // Clear all data
+                this.app.appState.clearAllData();
+                
+                // Disconnect Google Drive
+                if (this.app.googleDriveSync) {
+                    this.app.googleDriveSync.disconnect();
+                }
+                
+                // Reload app to fresh state
+                window.location.reload();
+                
+                console.log('🗑️ All data cleared');
+            } catch (error) {
+                console.error('Failed to clear data:', error);
+                this.showError('Failed to clear data. Please try again.');
+            }
+        } else if (userInput !== null) {
+            alert('Deletion cancelled - text did not match.');
+        }
+    }
+    
+    showSuccess(message) {
+        // Use existing toast system if available
+        if (this.app.renderer && this.app.renderer.showToast) {
+            this.app.renderer.showToast(message, 'success');
+        } else {
+            alert(`✅ ${message}`);
+        }
+    }
+    
+    showError(message) {
+        // Use existing toast system if available
+        if (this.app.renderer && this.app.renderer.showToast) {
+            this.app.renderer.showToast(message, 'error');
+        } else {
+            alert(`❌ ${message}`);
+        }
+    }
+    
+    destroy() {
+        if (this.container) {
+            document.body.removeChild(this.container);
+            this.container = null;
+            this.panel = null;
+            this.backdrop = null;
+        }
+    }
+}
+
 // Make classes globally available (no ES6 exports)
 window.ComponentBuilder = ComponentBuilder;
 window.ActivityCard = ActivityCard;
 window.EmojiPicker = EmojiPicker;
 window.EditModeFAB = EditModeFAB;
+window.DataManagementPanel = DataManagementPanel;
 
 // INTEGRATED: Make card type configuration globally available
 window.CARD_TYPE_ICONS = CARD_TYPE_ICONS;

@@ -1,0 +1,137 @@
+/* ===== DATA PANEL ANIMATIONS ===== */
+/* Spinning sync icon - aligned with panel opening animation */
+
+/* Default spinning animation for data panel */
+.data-panel .material-icons.spinning {
+    animation: dataPanelSpin 0.6s linear infinite;
+}
+
+/* During panel opening (300ms), match the spin speed */
+.data-panel-container[style*="display: block"] .material-icons.spinning {
+    animation: dataPanelSpinFast 0.3s cubic-bezier(0.4, 0, 0.2, 1) 1, dataPanelSpin 0.6s linear infinite 0.3s;
+}
+
+/* Keyframes for spinning animations */
+@keyframes dataPanelSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes dataPanelSpinFast {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+/* Smooth transition for sync button during sync operation */
+.data-panel #sync-now-btn .material-icons.spinning {
+    animation: dataPanelSpinSync 0.3s ease-in-out infinite;
+}
+
+@keyframes dataPanelSpinSync {
+    0% { 
+        transform: rotate(0deg) scale(1);
+    }
+    50% {
+        transform: rotate(180deg) scale(1.1);
+    }
+    100% { 
+        transform: rotate(360deg) scale(1);
+    }
+}
+
+/* Panel slide-in enhancement with subtle bounce */
+.data-panel {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Add subtle scale animation to panel header icons during opening */
+.data-panel__header .material-icons {
+    animation: headerIconPulse 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes headerIconPulse {
+    0% {
+        transform: scale(0.8);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Sync status indicator animation */
+.sync-status__indicator .material-icons {
+    transition: all 0.3s ease;
+}
+
+.sync-status__indicator .material-icons[style*="color: #4caf50"] {
+    animation: connectedPulse 2s ease-in-out infinite;
+}
+
+@keyframes connectedPulse {
+    0%, 100% {
+        transform: scale(1);
+        filter: drop-shadow(0 0 0 rgba(76, 175, 80, 0));
+    }
+    50% {
+        transform: scale(1.05);
+        filter: drop-shadow(0 0 8px rgba(76, 175, 80, 0.5));
+    }
+}
+
+/* Button hover animations synchronized with panel timing */
+.data-panel .btn--full-width {
+    transition: all 0.15s ease; /* Half of panel opening time for snappy response */
+}
+
+.data-panel .btn--full-width:hover {
+    transform: translateX(4px);
+}
+
+.data-panel .btn--full-width .material-icons {
+    transition: transform 0.15s ease;
+}
+
+.data-panel .btn--full-width:hover .material-icons {
+    transform: rotate(15deg) scale(1.1);
+}
+
+/* Backdrop fade animation matching panel timing */
+.data-panel-backdrop {
+    transition: opacity 0.3s ease; /* Match panel opening duration */
+}
+
+/* FAB sub-button click animation - synchronized with panel opening */
+.btn--fab-sub:active {
+    animation: fabButtonClick 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes fabButtonClick {
+    0% {
+        transform: scale(1) rotate(0deg);
+    }
+    50% {
+        transform: scale(0.9) rotate(180deg);
+    }
+    100% {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+/* Data Management FAB button (storage icon) spin animation */
+.btn--fab-sub[aria-label*="Data Management"]:active .material-icons {
+    animation: storageSpin 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes storageSpin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}

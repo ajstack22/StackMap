@@ -151,27 +151,27 @@
     }
 }
 
-/* Palette (left panel) spins clockwise when opening */
+/* Palette (left panel) spins clockwise when opening - synchronized to 0.3s */
 #hybridPreferencesBtn.fab--active .material-icons {
-    animation: spin-clockwise 0.6s ease-in-out;
+    animation: spin-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     /* Maintain position during animation */
     position: absolute;
     top: 50%;
     left: 50%;
 }
 
-/* Settings cog (right panel) spins counter-clockwise when opening */
+/* Settings cog (right panel) spins counter-clockwise when opening - synchronized to 0.3s */
 #hybridManageBtn.fab--active .material-icons {
-    animation: spin-counter-clockwise 1s ease-in-out;
+    animation: spin-counter-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     /* Maintain position during animation */
     position: absolute;
     top: 50%;
     left: 50%;
 }
 
-/* Reverse spin animations when closing */
+/* Reverse spin animations when closing - synchronized to 0.3s */
 #hybridPreferencesBtn.fab--closing .material-icons {
-    animation: spin-counter-clockwise 0.6s ease-in-out;
+    animation: spin-counter-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     /* Maintain position during animation */
     position: absolute;
     top: 50%;
@@ -179,7 +179,7 @@
 }
 
 #hybridManageBtn.fab--closing .material-icons {
-    animation: spin-clockwise 1s ease-in-out;
+    animation: spin-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     /* Maintain position during animation */
     position: absolute;
     top: 50%;
@@ -1625,5 +1625,55 @@ textarea.panel-input {
         width: 32px;
         height: 32px;
         font-size: 0.9rem;
+    }
+}
+
+/* ===== PREFERENCES TEXT INPUTS ===== */
+/* Text inputs for title/subtitle in preferences panel */
+.preferences-text-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    margin-bottom: 12px;
+}
+
+.preferences-text-input:hover {
+    border-color: rgba(255, 255, 255, 0.5);
+    background: rgba(255, 255, 255, 0.25);
+}
+
+.preferences-text-input:focus {
+    outline: none;
+    border-color: white;
+    background: rgba(255, 255, 255, 0.3);
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2);
+}
+
+.preferences-text-input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.title-subtitle-editor-preferences {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+/* Last input doesn't need bottom margin */
+.title-subtitle-editor-preferences .preferences-text-input:last-child {
+    margin-bottom: 0;
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .preferences-text-input {
+        border: 2px solid white;
+        background: rgba(0, 0, 0, 0.5);
     }
 }

@@ -69,7 +69,7 @@ class HybridPanelManager {
         rightNav.className = 'floating-nav floating-nav--right';
         rightNav.innerHTML = `
             <button id="hybridManageBtn" class="fab" 
-                    aria-label="Open management panel" title="Manage">
+                    aria-label="Open settings panel" title="Settings">
                 <span class="material-icons">settings</span>
             </button>
         `;
@@ -105,7 +105,7 @@ class HybridPanelManager {
             <div class="mobile-handle" onclick="hybridPanelManager.closePanel('right')" aria-label="Close panel"></div>
             <div class="desktop-handle" onclick="hybridPanelManager.closePanel('right')" aria-label="Close panel"></div>
             <div class="side-panel__content">
-                <h3>Manage</h3>
+                <h3>Settings</h3>
                 <div id="hybridRightContent">
                     <!-- Content will be rendered here -->
                 </div>
@@ -149,14 +149,6 @@ class HybridPanelManager {
                 this.closeAllPanels();
             }
             
-            // Enter key support for validation input
-            if (e.key === 'Enter') {
-                const validationInput = document.getElementById('hybridValidationInput');
-                if (validationInput && document.activeElement === validationInput) {
-                    e.preventDefault();
-                    this.checkValidationAnswer();
-                }
-            }
         });
         
         // Mobile swipe-down to close
@@ -288,13 +280,6 @@ class HybridPanelManager {
             contentDiv.innerHTML = this.renderPreferencesContent();
         } else {
             contentDiv.innerHTML = this.renderManagementContent();
-            
-            // Setup input event listeners after rendering
-            if (this.app.grownupMode) {
-                setTimeout(() => {
-                    this.setupTitleSubtitleInputs();
-                }, 0);
-            }
         }
     }
 
@@ -306,6 +291,11 @@ class HybridPanelManager {
             <div class="panel-section">
                 <label>Theme Colors</label>
                 ${this.renderColorPicker()}
+            </div>
+            
+            <div class="panel-section">
+                <label>App Title & Subtitle</label>
+                ${this.renderTitleSubtitleEditorForPreferences()}
             </div>
             
             <div class="panel-section">
@@ -340,8 +330,20 @@ class HybridPanelManager {
             return this.renderSyncSettings();
         }
         
-        // Always show user and day selection at the top
+        // Subtle Edit Mode switch in top-left corner
         let content = `
+            <div style="position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 8px;">
+                <label class="switch switch--small" style="margin: 0;">
+                    <input type="checkbox" id="editModeSwitch" ${this.app.grownupMode ? 'checked' : ''} 
+                           onchange="hybridPanelManager.handleEditModeSwitch(this.checked)">
+                    <span class="slider"></span>
+                </label>
+                <span class="material-icons" style="font-size: 20px; color: white; font-weight: 600;">edit</span>
+            </div>
+        `;
+        
+        // Always show user and day selection
+        content += `
             <div class="panel-section">
                 <label>Current User</label>
                 ${this.renderUserSelector()}
@@ -352,33 +354,6 @@ class HybridPanelManager {
                 ${this.renderDaySelector()}
             </div>
         `;
-        
-        if (!this.app.grownupMode) {
-            // View mode: Add validation section for edit functions
-            content += `
-                <div class="panel-section">
-                    <label>Edit Functions</label>
-                    ${this.renderValidationSection()}
-                </div>
-            `;
-        } else {
-            // Edit mode: Show edit functions
-            content += `
-                <div class="panel-section">
-                    <label>Edit Mode</label>
-                    ${this.renderViewModeButton()}
-                </div>
-                
-                <div class="panel-section">
-                    ${this.renderTitleSubtitleEditor()}
-                </div>
-                
-                <div class="panel-section">
-                    <label>Admin Tools</label>
-                    ${this.renderAdminButtons()}
-                </div>
-            `;
-        }
         
         return content;
     }
@@ -543,55 +518,6 @@ class HybridPanelManager {
     }
 
 
-    renderValidationSection() {
-        // Get a random validation question
-        const questions = [
-            { question: "What's the first letter of the alphabet?", answer: "A" },
-            { question: "What comes after 2?", answer: "3" },
-            { question: "How many days are in a week?", answer: "7" },
-            { question: "What color do you get when you mix red and blue?", answer: "PURPLE" },
-            { question: "What's 5 + 5?", answer: "10" },
-            { question: "What's the opposite of 'hot'?", answer: "COLD" }
-        ];
-        
-        const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
-        
-        return `
-            <div class="validation-section">
-                <div class="validation-question">
-                    <p>${randomQuestion.question}</p>
-                </div>
-                <div class="validation-input">
-                    <input type="text" id="hybridValidationInput" placeholder="Type your answer" 
-                           data-answer="${randomQuestion.answer.toUpperCase()}"
-                           autofocus
-                           style="width: 100%; padding: 12px; border: 2px solid rgba(255,255,255,0.3); 
-                                  border-radius: 8px; background: rgba(255,255,255,0.2); 
-                                  color: white; font-size: 1rem; margin-bottom: 12px;
-                                  font-family: inherit;">
-                </div>
-                <button class="segment segment--edit-mode" onclick="hybridPanelManager.checkValidationAnswer()"
-                        style="width: 100%; background: rgba(255,255,255,0.3); border: none; 
-                               border-radius: 8px; padding: 14px; color: white; font-weight: 600;
-                               cursor: pointer; transition: all 0.2s ease;">
-                    <span class="material-icons">edit</span>
-                    <span>Enter Edit Mode</span>
-                </button>
-            </div>
-        `;
-    }
-    
-    renderViewModeButton() {
-        return `
-            <button class="segment segment--active" onclick="hybridPanelManager.exitEditMode()"
-                    style="width: 100%; background: white; border: none; border-radius: 8px; 
-                           padding: 14px; color: var(--primary-color); font-weight: 600;
-                           cursor: pointer; transition: all 0.2s ease;">
-                <span class="material-icons">visibility</span>
-                <span>Return to View Mode</span>
-            </button>
-        `;
-    }
 
     renderAdminButtons() {
         return `
@@ -798,40 +724,37 @@ class HybridPanelManager {
     }
 
     /**
-     * Title/Subtitle Editor for Management Panel
-     * Simple form-based editing that saves per user
+     * Title/Subtitle Editor for Preferences Panel
+     * Shows the actual displayed subtitle
      */
-    renderTitleSubtitleEditor() {
+    renderTitleSubtitleEditorForPreferences() {
         const currentUser = this.app.appState.getCurrentUser();
         const currentTitle = currentUser.customTitle || 'StackMap';
-        const currentSubtitle = currentUser.customSubtitle || 'Routine Ready';
+        
+        // Get the actual displayed subtitle
+        const currentDay = this.app.appState.ui.currentDay || 'today';
+        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+        const displayedSubtitle = `${currentUser.name}'s ${dayText}`;
         
         return `
-            <div class="title-subtitle-editor">
-                <div class="editor-field">
-                    <label for="hybridTitleInput">Title</label>
-                    <input type="text" 
-                           id="hybridTitleInput" 
-                           value="${this.escapeHtml(currentTitle)}" 
-                           placeholder="Enter app title"
-                           class="panel-input"
-                           maxlength="50">
-                </div>
+            <div class="title-subtitle-editor-preferences">
+                <input type="text" 
+                       id="prefTitleInput" 
+                       value="${this.escapeHtml(currentTitle)}" 
+                       placeholder="App title"
+                       class="preferences-text-input"
+                       maxlength="50"
+                       onchange="hybridPanelManager.saveTitleSubtitleFromPreferences()">
                 
-                <div class="editor-field">
-                    <label for="hybridSubtitleInput">Subtitle</label>
-                    <input type="text" 
-                           id="hybridSubtitleInput" 
-                           value="${this.escapeHtml(currentSubtitle)}" 
-                           placeholder="Enter app subtitle"
-                           class="panel-input"
-                           maxlength="50">
-                </div>
-                
-                <button class="save-settings-btn" onclick="hybridPanelManager.saveTitleSubtitle()">
-                    <span class="material-icons">check</span>
-                    <span>Save</span>
-                </button>
+                <input type="text" 
+                       id="prefSubtitleInput" 
+                       value="${this.escapeHtml(displayedSubtitle)}" 
+                       placeholder="App subtitle"
+                       class="preferences-text-input"
+                       maxlength="50"
+                       readonly
+                       style="opacity: 0.7; cursor: not-allowed;"
+                       title="This updates automatically based on the current user and day">
             </div>
         `;
     }
@@ -1083,30 +1006,298 @@ class HybridPanelManager {
     }
 
 
-    checkValidationAnswer() {
-        const input = document.getElementById('hybridValidationInput');
-        const userAnswer = input.value.trim().toUpperCase();
-        const correctAnswer = input.getAttribute('data-answer');
-        
-        if (userAnswer === correctAnswer || userAnswer === '') {
-            // Correct answer or empty (shortcut) - enter edit mode
-            this.app.enterGrownupMode();
+    
+    handleEditModeSwitch(isChecked) {
+        if (isChecked) {
+            // User wants to enter edit mode - show validation first
+            this.showEditModeValidation();
             
-            // Re-render management panel to show edit mode UI
-            this.renderPanelContent('right');
-            
-            console.log('Validation successful - entered edit mode');
+            // Close panel after a short delay to ensure modal is visible
+            setTimeout(() => {
+                this.closePanel('right');
+            }, 100);
         } else {
-            // Wrong answer - clear input and show feedback
+            // User wants to exit edit mode
+            this.exitEditMode();
+        }
+    }
+    
+    showEditModeValidation() {
+        try {
+            // Remove any existing validation modals first
+            this.removeValidationModal();
+            
+            // Create validation modal with StackMap aesthetic
+            const modal = document.createElement('div');
+            modal.className = 'edit-mode-validation-modal';
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: white;
+                padding: 32px;
+                border-radius: 24px;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
+                z-index: 10000;
+                max-width: 420px;
+                width: calc(100% - 48px);
+                border: 3px solid #e0e0e0;
+                text-align: center;
+            `;
+            
+            console.log('Creating validation modal');
+        
+        // Get a random validation question
+        const questions = [
+            { question: "What's the first letter of the alphabet?", answer: "A" },
+            { question: "What comes after 2?", answer: "3" },
+            { question: "How many days are in a week?", answer: "7" },
+            { question: "What color do you get when you mix red and blue?", answer: "PURPLE" },
+            { question: "What's 5 + 5?", answer: "10" },
+            { question: "What's the opposite of 'hot'?", answer: "COLD" }
+        ];
+        
+        const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+        
+        // Create modal content
+        modal.innerHTML = `
+            <div style="font-size: 3rem; margin-bottom: 16px;">🔐</div>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.6rem; color: #333; font-weight: 700;">Parent Verification</h3>
+            <p style="margin: 0 0 24px 0; font-size: 1.1rem; color: #666; line-height: 1.4;">${randomQuestion.question}</p>
+            <input type="text" id="validationInput" placeholder="Type your answer here" 
+                   style="width: 100%; padding: 14px 18px; border: 3px solid #e0e0e0; 
+                          border-radius: 12px; font-size: 1.1rem; margin-bottom: 20px;
+                          font-family: inherit; font-weight: 500; text-align: center;
+                          background: white; color: #333;
+                          transition: all 0.3s ease; box-sizing: border-box;">
+            <div style="display: flex; gap: 12px;">
+                <button id="validationCancelBtn"
+                        style="flex: 1; padding: 14px; border: 3px solid #e0e0e0; 
+                               border-radius: 12px; background: white; color: #666; 
+                               font-size: 1.05rem; font-weight: 600; cursor: pointer;
+                               transition: all 0.3s ease; font-family: inherit;
+                               min-height: 48px;">
+                    <span class="material-icons" style="vertical-align: middle; margin-right: 6px; font-size: 1.2rem;">close</span>
+                    Cancel
+                </button>
+                <button id="validationSubmitBtn" data-answer="${randomQuestion.answer}"
+                        style="flex: 1; padding: 14px; border: none; 
+                               border-radius: 12px; background: var(--primary-color); 
+                               color: white; font-size: 1.05rem; font-weight: 600; cursor: pointer;
+                               transition: all 0.3s ease; font-family: inherit;
+                               min-height: 48px; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                    <span class="material-icons" style="vertical-align: middle; margin-right: 6px; font-size: 1.2rem;">check</span>
+                    Submit
+                </button>
+            </div>
+        `;
+        
+        // Add backdrop with blur effect
+        const backdrop = document.createElement('div');
+        backdrop.className = 'edit-mode-validation-backdrop';
+        backdrop.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 9998;
+            animation: fadeIn 0.3s ease;
+            cursor: pointer;
+        `;
+        
+        // Click backdrop to cancel
+        backdrop.addEventListener('click', () => {
+            this.cancelValidation();
+        });
+        
+        document.body.appendChild(backdrop);
+        document.body.appendChild(modal);
+        
+        // Add entrance animation
+        modal.style.animation = 'modalSlideIn 0.4s ease';
+        
+        // Safety timeout - remove modal if something goes wrong
+        this.validationTimeout = setTimeout(() => {
+            console.warn('Validation modal timeout - removing modal');
+            this.cancelValidation();
+        }, 30000); // 30 second timeout
+        
+        // Add modal slide-in animation inline
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes modalSlideIn {
+                from {
+                    transform: translate(-50%, -50%) scale(0.9);
+                    opacity: 0;
+                }
+                to {
+                    transform: translate(-50%, -50%) scale(1);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add event listeners after DOM is ready
+        setTimeout(() => {
+            // Focus input
+            const input = document.getElementById('validationInput');
+            if (input) {
+                input.focus();
+                input.setAttribute('title', 'Press Enter to submit');
+                
+                // Add focus styles
+                input.addEventListener('focus', () => {
+                    input.style.borderColor = 'var(--primary-color)';
+                    input.style.boxShadow = '0 0 0 3px rgba(102, 126, 234, 0.2)';
+                });
+                
+                input.addEventListener('blur', () => {
+                    input.style.borderColor = '#e0e0e0';
+                    input.style.boxShadow = 'none';
+                });
+            }
+            
+            // Button event listeners
+            const cancelBtn = document.getElementById('validationCancelBtn');
+            const submitBtn = document.getElementById('validationSubmitBtn');
+            
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => this.cancelValidation());
+                
+                // Hover effects
+                cancelBtn.addEventListener('mouseover', () => {
+                    cancelBtn.style.backgroundColor = '#f5f5f5';
+                    cancelBtn.style.borderColor = '#ccc';
+                });
+                
+                cancelBtn.addEventListener('mouseout', () => {
+                    cancelBtn.style.backgroundColor = 'white';
+                    cancelBtn.style.borderColor = '#e0e0e0';
+                });
+            }
+            
+            if (submitBtn) {
+                const answer = submitBtn.getAttribute('data-answer');
+                submitBtn.addEventListener('click', () => this.submitValidation(answer));
+                
+                // Hover effects
+                submitBtn.addEventListener('mouseover', () => {
+                    submitBtn.style.transform = 'translateY(-1px)';
+                    submitBtn.style.boxShadow = '0 4px 12px rgba(102, 126, 234, 0.4)';
+                });
+                
+                submitBtn.addEventListener('mouseout', () => {
+                    submitBtn.style.transform = 'translateY(0)';
+                    submitBtn.style.boxShadow = '0 2px 8px rgba(102, 126, 234, 0.3)';
+                });
+            }
+            
+            // Keyboard events
+            const handleKeyPress = (e) => {
+                if (e.key === 'Enter' && document.activeElement === input) {
+                    const answer = submitBtn ? submitBtn.getAttribute('data-answer') : '';
+                    this.submitValidation(answer);
+                } else if (e.key === 'Escape') {
+                    this.cancelValidation();
+                }
+            };
+            
+            document.addEventListener('keydown', handleKeyPress);
+            
+            // Store handler for cleanup
+            this.validationKeyHandler = handleKeyPress;
+        }, 100);
+        
+        } catch (error) {
+            console.error('Error creating validation modal:', error);
+            this.removeValidationModal();
+            // Reset the switch
+            const editModeSwitch = document.getElementById('editModeSwitch');
+            if (editModeSwitch) {
+                editModeSwitch.checked = false;
+            }
+        }
+    }
+    
+    submitValidation(correctAnswer) {
+        const input = document.getElementById('validationInput');
+        const userAnswer = input.value.trim().toUpperCase();
+        
+        if (userAnswer === correctAnswer.toUpperCase()) {
+            // Correct answer - enter edit mode
+            this.app.enterGrownupMode();
+            this.removeValidationModal();
+            console.log('Validation successful - entered edit mode');
+            
+            // Auto-expand FAB after a short delay
+            setTimeout(() => {
+                if (this.app.editFAB && this.app.editFAB.isVisible()) {
+                    this.app.editFAB.expand();
+                }
+            }, 500);
+        } else {
+            // Wrong answer - show feedback
             input.value = '';
-            input.style.border = '2px solid rgba(255, 100, 100, 0.8)';
+            input.style.borderColor = '#ff6b6b';
+            input.style.boxShadow = '0 0 0 3px rgba(255, 107, 107, 0.2)';
             input.placeholder = 'Try again...';
             
+            // Shake animation
+            input.style.animation = 'shake 0.5s ease';
+            
             setTimeout(() => {
-                input.style.border = '2px solid rgba(255,255,255,0.3)';
-                input.placeholder = 'Type your answer';
+                input.style.borderColor = '#e0e0e0';
+                input.style.boxShadow = 'none';
+                input.placeholder = 'Type your answer here';
+                input.style.animation = '';
+                input.focus();
             }, 2000);
         }
+    }
+    
+    cancelValidation() {
+        this.removeValidationModal();
+        // Uncheck the switch
+        const editModeSwitch = document.getElementById('editModeSwitch');
+        if (editModeSwitch) {
+            editModeSwitch.checked = false;
+        }
+    }
+    
+    removeValidationModal() {
+        // Clear any timeout
+        if (this.validationTimeout) {
+            clearTimeout(this.validationTimeout);
+            this.validationTimeout = null;
+        }
+        
+        // Remove event listener
+        if (this.validationKeyHandler) {
+            document.removeEventListener('keydown', this.validationKeyHandler);
+            this.validationKeyHandler = null;
+        }
+        
+        // Remove modal and backdrop
+        const modal = document.querySelector('.edit-mode-validation-modal, .validation-modal');
+        const backdrop = document.querySelector('.edit-mode-validation-backdrop, .validation-backdrop');
+        if (modal) modal.remove();
+        if (backdrop) backdrop.remove();
+        
+        // Remove any inline styles added
+        const inlineStyles = document.querySelectorAll('style');
+        inlineStyles.forEach(style => {
+            if (style.textContent && style.textContent.includes('modalSlideIn')) {
+                style.remove();
+            }
+        });
+        
+        console.log('Validation modal removed');
     }
     
     exitEditMode() {
@@ -1170,37 +1361,33 @@ class HybridPanelManager {
     }
 
     /**
-     * Save title/subtitle from panel inputs
+     * Save title from preferences panel inputs
+     * (Subtitle is auto-generated and read-only)
      */
-    saveTitleSubtitle() {
-        const titleInput = document.getElementById('hybridTitleInput');
-        const subtitleInput = document.getElementById('hybridSubtitleInput');
+    saveTitleSubtitleFromPreferences() {
+        const titleInput = document.getElementById('prefTitleInput');
         
-        if (!titleInput || !subtitleInput) {
-            console.error('Title/subtitle inputs not found');
+        if (!titleInput) {
+            console.error('Title input not found in preferences');
             return;
         }
         
-        // Get values and sanitize
+        // Get value and sanitize
         const newTitle = this.sanitizeText(titleInput.value.trim() || 'StackMap', 50);
-        const newSubtitle = this.sanitizeText(subtitleInput.value.trim() || 'Routine Ready', 50);
         
         // Update current user settings
         const currentUser = this.app.appState.getCurrentUser();
         currentUser.customTitle = newTitle;
-        currentUser.customSubtitle = newSubtitle;
         
         // Update app settings for consistency
         this.app.appState.settings.title = newTitle;
-        this.app.appState.settings.subtitle = newSubtitle;
         this.app.appState.settings.isDefaultTitle = (newTitle === 'StackMap');
-        this.app.appState.settings.isDefaultSubtitle = (newSubtitle === 'Routine Ready');
         
         // Persist to localStorage
         this.app.appState._triggerSave();
         
         // Update header elements immediately
-        this.updateHeaderElements(newTitle, newSubtitle);
+        this.updateHeaderElements(newTitle, null);
         
         // Update browser tab title
         this.app.updateTabTitle();
@@ -1208,10 +1395,7 @@ class HybridPanelManager {
         // Update logo visibility
         this.app.updateLogoVisibility(newTitle);
         
-        // Visual feedback
-        this.showSaveSuccess();
-        
-        console.log('Title/subtitle updated from management panel:', { title: newTitle, subtitle: newSubtitle });
+        console.log('Title updated from preferences:', { title: newTitle });
     }
 
 
@@ -1220,17 +1404,20 @@ class HybridPanelManager {
      */
     updateHeaderElements(title, subtitle) {
         const mainTitle = document.getElementById('mainTitle');
-        const mainSubtitle = document.getElementById('subtitle');
         
         if (mainTitle) mainTitle.textContent = title;
-        if (mainSubtitle) mainSubtitle.textContent = subtitle;
+        
+        // If subtitle isn't provided, keep the current dynamic subtitle
+        if (subtitle !== null) {
+            const mainSubtitle = document.getElementById('subtitle');
+            if (mainSubtitle) mainSubtitle.textContent = subtitle;
+        }
         
         // Update any duplicate header elements if they exist
         const fixedTitle = document.getElementById('fixedTitle');
-        const fixedSubtitle = document.getElementById('fixedSubtitle');
-        
         if (fixedTitle) fixedTitle.textContent = title;
-        if (fixedSubtitle) fixedSubtitle.textContent = subtitle;
+        
+        // Note: The subtitle is dynamically generated, so we don't update fixedSubtitle here
     }
 
     /**
@@ -1250,33 +1437,6 @@ class HybridPanelManager {
         }
     }
 
-    /**
-     * Setup input handling - Enter key to save
-     */
-    setupTitleSubtitleInputs() {
-        const titleInput = document.getElementById('hybridTitleInput');
-        const subtitleInput = document.getElementById('hybridSubtitleInput');
-        
-        if (titleInput) {
-            // Save on Enter key
-            titleInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.saveTitleSubtitle();
-                }
-            });
-        }
-        
-        if (subtitleInput) {
-            // Save on Enter key
-            subtitleInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
-                    this.saveTitleSubtitle();
-                }
-            });
-        }
-    }
 
     /**
      * Utility: Text sanitization

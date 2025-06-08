@@ -18,6 +18,10 @@ class StackMapApp {
         this.editFAB = new window.EditModeFAB(this);
         this.editFAB.init();
         
+        // Initialize Data Management Panel
+        this.dataPanel = new window.DataManagementPanel(this);
+        this.dataPanel.init();
+        
         // App state
         this.grownupMode = false;
         this.splashShown = false;
@@ -1661,12 +1665,23 @@ class StackMapApp {
         // Close any open modal
         ComponentBuilder.closeModalCard();
         
+        // Close any open native dropdowns
+        const openDropdown = document.querySelector('.native-dropdown');
+        if (openDropdown) {
+            openDropdown.remove();
+        }
+        
         // Remove body class
         document.body.classList.remove('grownup-mode');
         
         // Hide FAB
         if (this.editFAB) {
             this.editFAB.hide();
+        }
+        
+        // Close data panel if open
+        if (this.dataPanel && this.dataPanel.isOpen) {
+            this.dataPanel.close();
         }
         
         // NEW: Close any open panels when exiting edit mode
@@ -1713,6 +1728,16 @@ class StackMapApp {
         this.syncFixedHeader();
         
         console.log('👶 Exited edit mode');
+    }
+
+    /**
+     * Open the data management panel
+     */
+    openDataManagementPanel() {
+        console.log('💾 Opening Data Management Panel');
+        if (this.dataPanel) {
+            this.dataPanel.open();
+        }
     }
 
     /**
