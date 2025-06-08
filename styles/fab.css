@@ -263,13 +263,13 @@ button.btn.btn--floating.btn--fab {
     button.btn.btn--floating.btn--fab {
         bottom: 20px !important;
         right: 20px !important;
-        /* Match header button size on mobile */
-        width: 84px !important;
-        height: 84px !important;
-        min-width: 84px !important;
-        min-height: 84px !important;
-        max-width: 84px !important;
-        max-height: 84px !important;
+        /* Match actual header button size on mobile from responsive.css */
+        width: 45px !important;
+        height: 45px !important;
+        min-width: 45px !important;
+        min-height: 45px !important;
+        max-width: 45px !important;
+        max-height: 45px !important;
     }
     
     /* Override the top: 20px from buttons.css mobile styles */
@@ -285,24 +285,24 @@ button.btn.btn--floating.btn--fab {
     .btn--fab .fab-icon,
     .btn.btn--floating.btn--fab .material-icons,
     .btn.btn--floating.btn--fab .fab-icon {
-        font-size: 32px !important; /* Match header button icon size */
+        font-size: 28px !important; /* Match header button icon size from responsive.css */
         font-weight: 900 !important; /* Keep bold on mobile */
     }
     
     .btn.btn--floating.btn--fab-sub {
-        /* Proportionally smaller than main FAB (60% of 84px ≈ 50px) */
-        width: 50px !important;
-        height: 50px !important;
-        min-width: 50px !important;
-        min-height: 50px !important;
-        max-width: 50px !important;
-        max-height: 50px !important;
+        /* Proportionally smaller than main FAB (80% of 45px = 36px) */
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        max-width: 36px !important;
+        max-height: 36px !important;
     }
     
     /* Sub-FAB icons proportionally sized */
     .btn--fab-sub .material-icons,
     .btn--fab-sub .fab-icon {
-        font-size: 24px !important; /* Proportional to button size */
+        font-size: 18px !important; /* Proportional to 36px button size */
     }
     
     .fab-label {
@@ -328,12 +328,12 @@ button.btn.btn--floating.btn--fab {
         bottom: 16px !important;
         right: 16px !important;
         /* Keep same as tablet for consistency - match header buttons */
-        width: 84px !important;
-        height: 84px !important;
-        min-width: 84px !important;
-        min-height: 84px !important;
-        max-width: 84px !important;
-        max-height: 84px !important;
+        width: 45px !important;
+        height: 45px !important;
+        min-width: 45px !important;
+        min-height: 45px !important;
+        max-width: 45px !important;
+        max-height: 45px !important;
     }
     
     /* Override any top positioning for sub-FABs */
@@ -347,23 +347,23 @@ button.btn.btn--floating.btn--fab {
     
     .btn--fab .material-icons,
     .btn--fab .fab-icon {
-        font-size: 32px !important; /* Keep same as tablet - match header buttons */
+        font-size: 28px !important; /* Keep same as tablet - match header buttons */
     }
     
     .btn.btn--floating.btn--fab-sub {
-        /* Proportionally smaller than main FAB (60% of 84px ≈ 50px) */
-        width: 50px !important;
-        height: 50px !important;
-        min-width: 50px !important;
-        min-height: 50px !important;
-        max-width: 50px !important;
-        max-height: 50px !important;
+        /* Proportionally smaller than main FAB (80% of 45px = 36px) */
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        max-width: 36px !important;
+        max-height: 36px !important;
     }
     
     /* Sub-FAB icons proportionally sized */
     .btn--fab-sub .material-icons,
     .btn--fab-sub .fab-icon {
-        font-size: 24px !important; /* Proportional to button size */
+        font-size: 18px !important; /* Proportional to 36px button size */
     }
     
     .fab-label {

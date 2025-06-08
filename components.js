@@ -2190,8 +2190,8 @@ class EditModeFAB {
     
     updateSubFabPositions() {
         const isMobile = window.innerWidth <= 768;
-        const fabSize = isMobile ? 84 : 56; // Match header button sizes
-        const subFabSize = isMobile ? 50 : 40; // Proportional sub-FAB sizes
+        const fabSize = isMobile ? 45 : 56; // Match actual header button sizes
+        const subFabSize = isMobile ? 36 : 40; // Proportional sub-FAB sizes
         const spacing = isMobile ? 12 : 16; // Appropriate spacing
         const edgeOffset = isMobile ? 16 : 24;
         
