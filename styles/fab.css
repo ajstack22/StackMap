@@ -18,7 +18,7 @@
     pointer-events: auto !important;
 }
 
-/* Main FAB Button - Override ALL floating button styles */
+/* Main FAB Button - Match header floating button style exactly */
 .btn.btn--floating.btn--fab,
 button.btn.btn--floating.btn--fab {
     /* Critical positioning overrides */
@@ -28,27 +28,33 @@ button.btn.btn--floating.btn--fab {
     bottom: 24px !important;
     right: 24px !important;
     
-    /* Override the 115px size from layout.css */
-    width: 56px !important;
-    height: 56px !important;
-    min-width: 56px !important;
-    min-height: 56px !important;
-    max-width: 56px !important;
-    max-height: 56px !important;
+    /* Match header button size - 115px for desktop */
+    width: 115px !important;
+    height: 115px !important;
+    min-width: 115px !important;
+    min-height: 115px !important;
+    max-width: 115px !important;
+    max-height: 115px !important;
     
-    /* FAB specific styling */
-    background: rgba(255, 255, 255, 0.95) !important;
+    /* Match header button styling exactly */
+    background: rgba(255, 255, 255, 0.9) !important; /* Slightly transparent white */
     backdrop-filter: blur(10px) !important;
     -webkit-backdrop-filter: blur(10px) !important;
-    border: 2px solid var(--primary-color) !important;
+    border: 1px solid rgba(255, 255, 255, 0.3) !important; /* Subtle border like header buttons */
     color: var(--primary-color) !important;
-    border-radius: 50% !important;
+    border-radius: 50% !important; /* Perfect circle */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
     
     /* Display properties */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    
+    /* Performance optimizations from header buttons */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
     
     /* Initial state - hidden */
     transform: scale(0);
@@ -57,6 +63,7 @@ button.btn.btn--floating.btn--fab {
     
     /* Ensure it's clickable */
     cursor: pointer !important;
+    outline: none !important;
     
     /* Override any z-index from other styles */
     z-index: 1010 !important;
@@ -69,26 +76,34 @@ button.btn.btn--floating.btn--fab {
 }
 
 .btn.btn--floating.btn--fab:hover {
-    transform: scale(1.05) translateY(-2px) !important;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
-    background: white !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    transform: scale(1.1) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2) !important;
+    border: 1px solid rgba(255, 255, 255, 0.5) !important;
 }
 
-.btn.btn--floating.btn--fab:active {
-    transform: scale(0.95) !important;
-    transition: transform 0.1s ease !important;
+.btn.btn--floating.btn--fab:hover .material-icons {
+    color: var(--primary-dark) !important; /* Darker theme on hover */
 }
 
+.btn.btn--floating.btn--fab:active,
 .btn.btn--floating.btn--fab:focus {
-    outline: 3px solid var(--primary-color) !important;
-    outline-offset: 2px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    outline: none !important;
+    border: 1px solid rgba(255, 255, 255, 0.4) !important;
 }
 
-/* FAB Icon - Override material icon sizing from layout.css */
+.btn.btn--floating.btn--fab:active .material-icons,
+.btn.btn--floating.btn--fab:focus .material-icons {
+    color: var(--primary-color) !important;
+}
+
+/* FAB Icon - Match header button icon sizing exactly */
 .btn--fab .material-icons,
 .btn--fab .fab-icon {
-    font-size: 28px !important;
-    color: var(--primary-color) !important;
+    color: var(--primary-color) !important; /* Themed icons */
+    font-weight: 900 !important; /* Bolder icons */
+    font-size: 43px !important; /* 20% larger (36px × 1.2 = 43px) */
     margin: 0 !important;
     padding: 0 !important;
     display: block !important;
@@ -184,23 +199,24 @@ button.btn.btn--floating.btn--fab {
 
 /* ===== RESPONSIVE OVERRIDES ===== */
 
-/* Tablet (iPad) */
+/* Tablet (iPad) - Match header button mobile sizes */
 @media (max-width: 768px) {
     .btn.btn--floating.btn--fab,
     button.btn.btn--floating.btn--fab {
         bottom: 20px !important;
         right: 20px !important;
-        width: 52px !important;
-        height: 52px !important;
-        min-width: 52px !important;
-        min-height: 52px !important;
-        max-width: 52px !important;
-        max-height: 52px !important;
+        /* Match header button mobile size */
+        width: 84px !important;
+        height: 84px !important;
+        min-width: 84px !important;
+        min-height: 84px !important;
+        max-width: 84px !important;
+        max-height: 84px !important;
     }
     
     .btn--fab .material-icons,
     .btn--fab .fab-icon {
-        font-size: 26px !important;
+        font-size: 32px !important; /* Match header button mobile icon size */
     }
     
     .btn.btn--floating.btn--fab-sub {
@@ -219,23 +235,24 @@ button.btn.btn--floating.btn--fab {
     }
 }
 
-/* Small mobile */
+/* Small mobile - Keep same as tablet for consistency */
 @media (max-width: 480px) {
     .btn.btn--floating.btn--fab,
     button.btn.btn--floating.btn--fab {
         bottom: 16px !important;
         right: 16px !important;
-        width: 48px !important;
-        height: 48px !important;
-        min-width: 48px !important;
-        min-height: 48px !important;
-        max-width: 48px !important;
-        max-height: 48px !important;
+        /* Keep 84px size like tablet for consistency */
+        width: 84px !important;
+        height: 84px !important;
+        min-width: 84px !important;
+        min-height: 84px !important;
+        max-width: 84px !important;
+        max-height: 84px !important;
     }
     
     .btn--fab .material-icons,
     .btn--fab .fab-icon {
-        font-size: 24px !important;
+        font-size: 32px !important; /* Keep same as tablet */
     }
     
     .btn.btn--floating.btn--fab-sub {
