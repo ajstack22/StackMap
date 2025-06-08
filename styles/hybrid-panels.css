@@ -39,9 +39,9 @@
 /* ===== FLOATING ACTION BUTTONS ===== */
 .floating-nav {
     position: fixed;
-    /* Center on the logo/title area */
-    /* Desktop: padding-top (20px) + logo height (~36px) / 2 ≈ 38px */
-    top: 38px;
+    /* Reduced top spacing by 30% while keeping centered on logo/title */
+    /* Was 38px, reduced to align better with header content */
+    top: 35px;
     transform: translateY(-50%);
     z-index: 1010;
     display: flex;
@@ -124,7 +124,7 @@
 /* Adjust FAB position when drawer is open */
 .drawer-open .floating-nav {
     /* Stay aligned with logo/title area when drawer opens */
-    top: 40px;
+    top: 37px;
 }
 
 /* ===== SIDE PANELS ===== */
@@ -1440,15 +1440,15 @@ textarea.panel-input {
     
     /* Adjust positioning for mobile header-content alignment */
     .floating-nav {
-        /* Center on header-content: app-header padding (16px) + half of content height */
-        /* Logo is now 41px (15% larger), title below it, so center point is around 43px */
-        top: 43px;
+        /* Reduced top spacing by 30% for tighter header */
+        /* Was 43px, now closer to header content */
+        top: 38px;
     }
     
     /* Mobile drawer open state */
     .drawer-open .floating-nav {
         /* Stay aligned with header-content on mobile */
-        top: 45px;
+        top: 40px;
     }
     
     /* Enhanced mobile touch targets */
