@@ -1441,14 +1441,14 @@ textarea.panel-input {
     /* Adjust positioning for mobile header-content alignment */
     .floating-nav {
         /* Center on header-content: app-header padding (16px) + half of content height */
-        /* Logo is 36px, title below it, so center point is around 40px */
-        top: 40px;
+        /* Logo is now 41px (15% larger), title below it, so center point is around 43px */
+        top: 43px;
     }
     
     /* Mobile drawer open state */
     .drawer-open .floating-nav {
         /* Stay aligned with header-content on mobile */
-        top: 42px;
+        top: 45px;
     }
     
     /* Enhanced mobile touch targets */
