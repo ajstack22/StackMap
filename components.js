@@ -1933,9 +1933,10 @@ class EditModeFAB {
         this.actions = [
             {
                 id: 'add-activity',
-                icon: 'add',
+                icon: 'dashboard_customize',
                 label: 'Add Activity',
                 ariaLabel: 'Add new activity card',
+                color: '#4CAF50', // Green
                 handler: () => this.app.showNewCardForm('bottom')
             },
             {
@@ -1943,13 +1944,15 @@ class EditModeFAB {
                 icon: 'person_add',
                 label: 'Add User',
                 ariaLabel: 'Add new user profile',
+                color: '#4CAF50', // Green
                 handler: () => this.app.showAddUserForm()
             },
             {
                 id: 'complete-day',
-                icon: 'check',
+                icon: 'event_available',
                 label: 'Complete Day',
                 ariaLabel: 'Mark all activities as complete',
+                color: '#FF9800', // Orange
                 handler: () => this.app.completeAllActivities()
             },
             {
@@ -1957,6 +1960,7 @@ class EditModeFAB {
                 icon: 'visibility',
                 label: 'Return to View',
                 ariaLabel: 'Exit edit mode and return to view mode',
+                color: '#F44336', // Red
                 handler: () => this.app.exitGrownupMode()
             }
         ];
@@ -1984,17 +1988,17 @@ class EditModeFAB {
                     aria-expanded="false"
                     aria-haspopup="true"
                     style="transform: scale(0); opacity: 0;">
-                <span class="material-icons fab-icon">mode_edit</span>
+                <span class="material-icons fab-icon">edit</span>
             </button>
             
             <!-- Sub-FAB actions (hidden by default) -->
             <div class="fab-actions" style="display: none;">
                 ${this.actions.map((action, index) => `
-                    <button class="btn btn--floating btn--fab-sub" 
+                    <button class="btn btn--floating btn--fab-sub btn--fab-${action.id}" 
                             id="fab-${action.id}"
                             data-action="${action.id}"
                             aria-label="${action.ariaLabel}"
-                            style="transform: scale(0) translateY(20px); opacity: 0;">
+                            style="transform: scale(0) translateY(20px); opacity: 0; background-color: ${action.color} !important;">
                         <span class="material-icons fab-icon">${action.icon}</span>
                         <span class="fab-label">${action.label}</span>
                     </button>

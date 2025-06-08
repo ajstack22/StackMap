@@ -130,7 +130,6 @@ button.btn.btn--floating.btn--fab {
     max-width: 40px !important;
     max-height: 40px !important;
     border-radius: 50% !important;
-    background: var(--primary-color) !important;
     color: white !important;
     border: none !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
@@ -141,6 +140,39 @@ button.btn.btn--floating.btn--fab {
     justify-content: center !important;
     cursor: pointer !important;
     overflow: visible !important;
+}
+
+/* Color-specific hover states */
+.btn--fab-add-activity,
+.btn--fab-add-user {
+    background-color: #4CAF50 !important; /* Green */
+}
+
+.btn--fab-add-activity:hover,
+.btn--fab-add-user:hover {
+    background-color: #45a049 !important; /* Darker green */
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 16px rgba(76, 175, 80, 0.4) !important;
+}
+
+.btn--fab-complete-day {
+    background-color: #FF9800 !important; /* Orange */
+}
+
+.btn--fab-complete-day:hover {
+    background-color: #FB8C00 !important; /* Darker orange */
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 16px rgba(255, 152, 0, 0.4) !important;
+}
+
+.btn--fab-exit-edit {
+    background-color: #F44336 !important; /* Red */
+}
+
+.btn--fab-exit-edit:hover {
+    background-color: #E53935 !important; /* Darker red */
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 16px rgba(244, 67, 54, 0.4) !important;
 }
 
 /* Sub-FAB icon - ensure visibility and centering */
@@ -173,10 +205,7 @@ button.btn.btn--floating.btn--fab {
     border-radius: 50%;
 }
 
-.btn--fab-sub:hover {
-    transform: scale(1.1) !important;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
-}
+/* Hover state handled by color-specific rules above */
 
 /* Ensure sub-FABs are visible when expanded */
 .fab-actions.expanded .btn--fab-sub {
