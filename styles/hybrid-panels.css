@@ -58,6 +58,17 @@
     right: 20px;
 }
 
+/* Adjust spacing on mobile for larger buttons */
+@media (max-width: 768px) {
+    .floating-nav--left {
+        left: 15px;
+    }
+    
+    .floating-nav--right {
+        right: 15px;
+    }
+}
+
 .fab {
     /* Increased by 25% (56px * 1.25 = 70px) */
     width: 70px;
@@ -1426,9 +1437,14 @@ textarea.panel-input {
         font-size: 42px;
     }
     
-    /* Adjust positioning for smaller mobile headers if needed */
+    /* Adjust positioning for smaller mobile headers */
     .floating-nav {
-        top: 75px; /* Keep centered on 150px header */
+        top: 60px; /* Center on 120px mobile header (120px / 2) */
+    }
+    
+    /* Mobile drawer open state */
+    .drawer-open .floating-nav {
+        top: 90px; /* Center on 180px expanded mobile header (180px / 2) */
     }
     
     /* Enhanced mobile touch targets */
