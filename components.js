@@ -1933,7 +1933,7 @@ class EditModeFAB {
         this.actions = [
             {
                 id: 'add-activity',
-                icon: 'add_circle',
+                icon: 'add',
                 label: 'Add Activity',
                 ariaLabel: 'Add new activity card',
                 handler: () => this.app.showNewCardForm('bottom')
@@ -1947,7 +1947,7 @@ class EditModeFAB {
             },
             {
                 id: 'complete-day',
-                icon: 'check_circle',
+                icon: 'check',
                 label: 'Complete Day',
                 ariaLabel: 'Mark all activities as complete',
                 handler: () => this.app.completeAllActivities()
