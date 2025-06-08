@@ -832,8 +832,8 @@ body.grownup-mode .title:hover {
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
     position: fixed;
-    width: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
-    height: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
+    width: 56px !important; /* Standard Material Design FAB size */
+    height: 56px !important; /* Standard Material Design FAB size */
     border-radius: 50%; /* Perfect circle */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1003; /* Above header */
@@ -855,7 +855,7 @@ body.grownup-mode .title:hover {
 .btn--floating .material-icons {
     color: var(--primary-color) !important; /* Themed icons */
     font-weight: 900 !important; /* Bolder icons */
-    font-size: 43px !important; /* CRITICAL FIX: 20% larger (36px × 1.2 = 43px) */
+    font-size: 24px !important; /* Standard icon size for 56px button */
 }
 
 .btn--floating:hover {
@@ -918,12 +918,12 @@ body.grownup-mode .title:hover {
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
 @media (max-width: 768px) {
     .btn--floating {
-        width: 84px !important; /* ENHANCED: Slightly larger for mobile accessibility */
-        height: 84px !important; /* ENHANCED: Slightly larger for mobile accessibility */
+        width: 45px !important; /* Match responsive.css mobile size */
+        height: 45px !important; /* Match responsive.css mobile size */
     }
     
     .btn--floating .material-icons {
-        font-size: 32px !important; /* ENHANCED: Proportionally larger on mobile */
+        font-size: 28px !important; /* Match responsive.css mobile icon size */
     }
     
     .btn--preferences {
@@ -987,8 +987,8 @@ body.grownup-mode .title:hover {
 /* ===== FLOATING BUTTON POSITIONING ===== */
 .btn--floating {
     position: fixed;
-    width: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
-    height: 115px !important; /* CRITICAL FIX: 20% larger (96px × 1.2 = 115px) */
+    width: 56px !important; /* Standard Material Design FAB size */
+    height: 56px !important; /* Standard Material Design FAB size */
     border-radius: 50%; /* Perfect circle */
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     z-index: 1003; /* Above header */
@@ -1010,7 +1010,7 @@ body.grownup-mode .title:hover {
 .btn--floating .material-icons {
     color: var(--primary-color) !important; /* Themed icons */
     font-weight: 900 !important; /* Bolder icons */
-    font-size: 43px !important; /* CRITICAL FIX: 20% larger (36px × 1.2 = 43px) */
+    font-size: 24px !important; /* Standard icon size for 56px button */
 }
 
 .btn--floating:hover {
