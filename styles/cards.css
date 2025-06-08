@@ -516,6 +516,10 @@ body.display-mode-times .card__number {
 }
 
 /* ===== BOLD STACKMAP-STYLE MANAGEMENT CARD ===== */
+/* NOTE: Management card styles deprecated - replaced by FAB system */
+/* FAB system provides cleaner edit mode interface */
+
+/* DEPRECATED - Kept for reference only
 .management-card {
     /* Same dimensions as other cards */
     width: 100% !important;
@@ -712,6 +716,8 @@ body.display-mode-times .card__number {
     margin-right: 12px;
     transition: color 0.3s ease;
 }
+*/
+/* End of deprecated management card styles */
 
 .filter-input-group:focus-within .filter-icon {
     color: var(--primary-color);

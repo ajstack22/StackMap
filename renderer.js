@@ -42,44 +42,25 @@ class AppRenderer {
         // Create a document fragment for better performance
         const fragment = document.createDocumentFragment();
         
+        // NOTE: Management cards replaced by FAB system
+        // FAB system handles edit mode actions now - no management cards needed
         if (this.appState.ui.editMode) {
-            // REMOVED: Edit mode info card completely eliminated
-            console.log('Rendering in edit mode - adding management cards');
+            console.log('Rendering in edit mode - FAB handles edit actions');
             console.log('Current day:', this.appState.getCurrentDay());
             console.log('Current activities:', this.appState.getCurrentActivities().length);
             
-            // Show top management card instead of old new card button
+            // Only show new card form if actively creating a card
             if (this.appState.ui.showingNewCardForm === 'top') {
                 fragment.appendChild(this.createActivityGenerator('top'));
-            } else {
-                const topManagementCard = ComponentBuilder.createManagementCard('top');
-                console.log('Adding top management card:', topManagementCard);
-                if (topManagementCard) {
-                    topManagementCard.style.display = 'flex';  // Force visibility
-                    fragment.appendChild(topManagementCard);
-                } else {
-                    console.error('Failed to create top management card');
-                }
             }
         }
 
         // Render activity cards
         this.renderActivityCards(fragment);
         
-        // Show bottom management card instead of old new card button in edit mode
-        if (this.appState.ui.editMode) {
-            if (this.appState.ui.showingNewCardForm === 'bottom') {
-                fragment.appendChild(this.createActivityGenerator('bottom'));
-            } else {
-                const bottomManagementCard = ComponentBuilder.createManagementCard('bottom');
-                console.log('Adding bottom management card:', bottomManagementCard);
-                if (bottomManagementCard) {
-                    bottomManagementCard.style.display = 'flex';  // Force visibility
-                    fragment.appendChild(bottomManagementCard);
-                } else {
-                    console.error('Failed to create bottom management card');
-                }
-            }
+        // NOTE: Bottom management card removed - FAB handles all edit actions
+        if (this.appState.ui.editMode && this.appState.ui.showingNewCardForm === 'bottom') {
+            fragment.appendChild(this.createActivityGenerator('bottom'));
         }
         
         // Append all at once

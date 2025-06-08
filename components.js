@@ -138,7 +138,10 @@ class ComponentBuilder {
         return logoContainer;
     }
 
-    // STORY 2: Management Card Component - FIXED AESTHETICS
+    // NOTE: Management cards replaced by FAB system
+    // createManagementCard() method deprecated - Use EditModeFAB component instead
+    
+    /* DEPRECATED - Kept for reference only
     static createManagementCard(position = 'top') {
         const card = this.createElement('div', `card management-card management-card--${position}`);
         
@@ -209,6 +212,7 @@ class ComponentBuilder {
         
         return card;
     }
+    */
 
     // Create modal card overlay for new/edit activity with card type support - FIXED BUTTON LAYOUT
     static createModalCard(isNewCard = true, activity = null, index = -1, selectedEmoji = CONFIG.DEFAULT_EMOJI) {
@@ -1910,10 +1914,350 @@ class ActivityCard {
     }
 }
 
+/**
+ * EditModeFAB - Floating Action Button for Edit Mode
+ * Replaces management cards with clean FAB interface
+ * Only visible in edit mode, provides access to all edit actions
+ */
+class EditModeFAB {
+    constructor(appInstance) {
+        this.app = appInstance;
+        this.isExpanded = false;
+        this.isAnimating = false;
+        this.fab = null;
+        this.subFabs = [];
+        this.backdrop = null;
+        this.container = null;
+        
+        // Action definitions with icons and handlers
+        this.actions = [
+            {
+                id: 'add-activity',
+                icon: '➕',
+                label: 'Add Activity',
+                ariaLabel: 'Add new activity card',
+                handler: () => this.app.showNewCardForm('bottom')
+            },
+            {
+                id: 'add-user',
+                icon: '👤',
+                label: 'Add User',
+                ariaLabel: 'Add new user profile',
+                handler: () => this.app.showAddUserForm()
+            },
+            {
+                id: 'complete-day',
+                icon: '✅',
+                label: 'Complete Day',
+                ariaLabel: 'Mark all activities as complete',
+                handler: () => this.app.completeAllActivities()
+            },
+            {
+                id: 'exit-edit',
+                icon: '👁️',
+                label: 'Return to View',
+                ariaLabel: 'Exit edit mode and return to view mode',
+                handler: () => this.app.exitGrownupMode()
+            }
+        ];
+    }
+    
+    init() {
+        this.render();
+        this.setupEventListeners();
+        this.hide(); // Hidden by default, shown when edit mode activated
+    }
+    
+    render() {
+        // Create main container
+        this.container = document.createElement('div');
+        this.container.className = 'fab-container';
+        this.container.innerHTML = `
+            <!-- Mobile backdrop (only visible on mobile when expanded) -->
+            <div class="fab-backdrop" style="display: none;"></div>
+            
+            <!-- Main FAB button -->
+            <button class="btn btn--floating btn--fab" 
+                    id="edit-mode-fab"
+                    aria-label="Edit mode actions menu"
+                    aria-expanded="false"
+                    aria-haspopup="true">
+                <span class="fab-icon">✏️</span>
+            </button>
+            
+            <!-- Sub-FAB actions (hidden by default) -->
+            <div class="fab-actions" style="display: none;">
+                ${this.actions.map((action, index) => `
+                    <button class="btn btn--floating btn--fab-sub" 
+                            id="fab-${action.id}"
+                            data-action="${action.id}"
+                            aria-label="${action.ariaLabel}"
+                            style="transform: scale(0) translateY(20px); opacity: 0;">
+                        <span class="fab-icon">${action.icon}</span>
+                        <span class="fab-label">${action.label}</span>
+                    </button>
+                `).join('')}
+            </div>
+        `;
+        
+        // Store references
+        this.fab = this.container.querySelector('#edit-mode-fab');
+        this.subFabs = Array.from(this.container.querySelectorAll('.btn--fab-sub'));
+        this.backdrop = this.container.querySelector('.fab-backdrop');
+        this.actionsContainer = this.container.querySelector('.fab-actions');
+        
+        // Append to body
+        document.body.appendChild(this.container);
+    }
+    
+    setupEventListeners() {
+        // Main FAB click - toggle expansion
+        this.fab.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.toggle();
+        });
+        
+        // Sub-FAB clicks - execute actions
+        this.subFabs.forEach(subFab => {
+            subFab.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const actionId = subFab.dataset.action;
+                this.handleAction(actionId);
+            });
+        });
+        
+        // Backdrop click - close on mobile
+        this.backdrop.addEventListener('click', () => {
+            this.collapse();
+        });
+        
+        // Click outside to close
+        document.addEventListener('click', (e) => {
+            if (this.isExpanded && !this.container.contains(e.target)) {
+                this.collapse();
+            }
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+            if (!this.isVisible()) return;
+            
+            if (e.key === 'Escape' && this.isExpanded) {
+                this.collapse();
+                this.fab.focus();
+            }
+            
+            // Tab navigation through expanded FAB
+            if (e.key === 'Tab' && this.isExpanded) {
+                this.handleTabNavigation(e);
+            }
+        });
+        
+        // Window resize - reposition if needed
+        window.addEventListener('resize', () => {
+            if (this.isExpanded) {
+                this.updateSubFabPositions();
+            }
+        });
+    }
+    
+    show() {
+        if (this.container) {
+            this.container.style.display = 'block';
+            // Animate in
+            requestAnimationFrame(() => {
+                this.fab.style.transform = 'scale(1)';
+                this.fab.style.opacity = '1';
+            });
+        }
+    }
+    
+    hide() {
+        if (this.container) {
+            if (this.isExpanded) {
+                this.collapse();
+            }
+            // Animate out
+            this.fab.style.transform = 'scale(0)';
+            this.fab.style.opacity = '0';
+            setTimeout(() => {
+                this.container.style.display = 'none';
+            }, 300);
+        }
+    }
+    
+    isVisible() {
+        return this.container && this.container.style.display !== 'none';
+    }
+    
+    toggle() {
+        if (this.isAnimating) return;
+        
+        if (this.isExpanded) {
+            this.collapse();
+        } else {
+            this.expand();
+        }
+    }
+    
+    expand() {
+        if (this.isAnimating || this.isExpanded) return;
+        
+        this.isAnimating = true;
+        this.isExpanded = true;
+        
+        // Update ARIA state
+        this.fab.setAttribute('aria-expanded', 'true');
+        
+        // Show actions container
+        this.actionsContainer.style.display = 'block';
+        
+        // Show mobile backdrop
+        if (window.innerWidth <= 768) {
+            this.backdrop.style.display = 'block';
+            requestAnimationFrame(() => {
+                this.backdrop.style.opacity = '1';
+            });
+        }
+        
+        // Calculate positions and animate sub-FABs
+        this.updateSubFabPositions();
+        
+        // Stagger sub-FAB animations
+        this.subFabs.forEach((subFab, index) => {
+            setTimeout(() => {
+                subFab.style.transform = 'scale(1) translateY(0)';
+                subFab.style.opacity = '1';
+            }, index * 50); // 50ms stagger
+        });
+        
+        // Animation complete
+        setTimeout(() => {
+            this.isAnimating = false;
+        }, this.subFabs.length * 50 + 300);
+        
+        // Announce to screen readers
+        this.announceToScreenReader('Edit menu opened');
+    }
+    
+    collapse() {
+        if (this.isAnimating || !this.isExpanded) return;
+        
+        this.isAnimating = true;
+        this.isExpanded = false;
+        
+        // Update ARIA state
+        this.fab.setAttribute('aria-expanded', 'false');
+        
+        // Hide mobile backdrop
+        this.backdrop.style.opacity = '0';
+        setTimeout(() => {
+            this.backdrop.style.display = 'none';
+        }, 300);
+        
+        // Animate sub-FABs out (reverse order)
+        this.subFabs.slice().reverse().forEach((subFab, index) => {
+            setTimeout(() => {
+                subFab.style.transform = 'scale(0) translateY(20px)';
+                subFab.style.opacity = '0';
+            }, index * 30); // Faster collapse
+        });
+        
+        // Hide actions container after animation
+        setTimeout(() => {
+            this.actionsContainer.style.display = 'none';
+            this.isAnimating = false;
+        }, this.subFabs.length * 30 + 300);
+        
+        // Announce to screen readers
+        this.announceToScreenReader('Edit menu closed');
+    }
+    
+    updateSubFabPositions() {
+        const fabRect = this.fab.getBoundingClientRect();
+        const subFabSize = 40; // Size of sub-FABs
+        const spacing = 16; // Space between FABs
+        
+        this.subFabs.forEach((subFab, index) => {
+            // Position above main FAB
+            const offsetY = (subFabSize + spacing) * (index + 1);
+            subFab.style.bottom = `${24 + 56 + offsetY}px`; // 24px from edge + FAB height + offset
+            subFab.style.right = `${24 + (56 - subFabSize) / 2}px`; // Centered on main FAB
+        });
+    }
+    
+    handleAction(actionId) {
+        const action = this.actions.find(a => a.id === actionId);
+        if (action && action.handler) {
+            // Collapse first
+            this.collapse();
+            
+            // Execute action after collapse animation
+            setTimeout(() => {
+                action.handler();
+            }, 150);
+            
+            // Announce action to screen readers
+            this.announceToScreenReader(`${action.label} activated`);
+        }
+    }
+    
+    handleTabNavigation(e) {
+        const focusableElements = [this.fab, ...this.subFabs.filter(fab => 
+            window.getComputedStyle(fab).opacity !== '0'
+        )];
+        
+        const currentIndex = focusableElements.indexOf(document.activeElement);
+        let nextIndex;
+        
+        if (e.shiftKey) {
+            // Backward navigation
+            nextIndex = currentIndex <= 0 ? focusableElements.length - 1 : currentIndex - 1;
+        } else {
+            // Forward navigation
+            nextIndex = currentIndex >= focusableElements.length - 1 ? 0 : currentIndex + 1;
+        }
+        
+        e.preventDefault();
+        focusableElements[nextIndex].focus();
+    }
+    
+    announceToScreenReader(message) {
+        // Create temporary announcement element
+        const announcement = document.createElement('div');
+        announcement.setAttribute('aria-live', 'polite');
+        announcement.setAttribute('aria-atomic', 'true');
+        announcement.style.position = 'absolute';
+        announcement.style.left = '-10000px';
+        announcement.style.width = '1px';
+        announcement.style.height = '1px';
+        announcement.style.overflow = 'hidden';
+        
+        document.body.appendChild(announcement);
+        announcement.textContent = message;
+        
+        // Remove after announcement
+        setTimeout(() => {
+            document.body.removeChild(announcement);
+        }, 1000);
+    }
+    
+    destroy() {
+        if (this.container) {
+            document.body.removeChild(this.container);
+            this.container = null;
+            this.fab = null;
+            this.subFabs = [];
+            this.backdrop = null;
+        }
+    }
+}
+
 // Make classes globally available (no ES6 exports)
 window.ComponentBuilder = ComponentBuilder;
 window.ActivityCard = ActivityCard;
 window.EmojiPicker = EmojiPicker;
+window.EditModeFAB = EditModeFAB;
 
 // INTEGRATED: Make card type configuration globally available
 window.CARD_TYPE_ICONS = CARD_TYPE_ICONS;

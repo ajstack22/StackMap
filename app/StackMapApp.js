@@ -14,6 +14,10 @@ class StackMapApp {
         this.preferencesManager = new PreferencesManager(this);
         // ValidationManager removed - validation now handled by HybridPanelManager
         
+        // Initialize FAB component
+        this.editFAB = new window.EditModeFAB(this);
+        this.editFAB.init();
+        
         // App state
         this.grownupMode = false;
         this.splashShown = false;
@@ -1609,11 +1613,18 @@ class StackMapApp {
     }
 
     enterGrownupMode() {
+        console.log('🚪 Entering grown-up mode');
+        
         this.grownupMode = true;
         this.appState.ui.editMode = true;
         
         // Add body class for CSS targeting
         document.body.classList.add('grownup-mode');
+        
+        // Show FAB instead of management cards
+        if (this.editFAB) {
+            this.editFAB.show();
+        }
         
         // NEW: Push history state for edit mode (Android back button)
         if (this.hybridPanelManager) {
@@ -1634,10 +1645,14 @@ class StackMapApp {
         this.render();
         this.syncFixedHeader();
         
+        console.log('✅ Edit mode activated with FAB');
+        
         console.log('👨‍💼 Entered edit mode with back button support');
     }
 
     exitGrownupMode() {
+        console.log('🚪 Exiting grown-up mode');
+        
         this.grownupMode = false;
         this.appState.ui.editMode = false;
         this.appState.ui.editingCardIndex = -1;
@@ -1648,6 +1663,11 @@ class StackMapApp {
         
         // Remove body class
         document.body.classList.remove('grownup-mode');
+        
+        // Hide FAB
+        if (this.editFAB) {
+            this.editFAB.hide();
+        }
         
         // NEW: Close any open panels when exiting edit mode
         if (this.hybridPanelManager) {
@@ -2651,7 +2671,7 @@ class StackMapApp {
     }
 
     // CARD MANAGEMENT
-    showNewCardForm() {
+    showNewCardForm(position = 'bottom') {
         // Use the new panel-based form instead of modal
         if (window.hybridPanelManager) {
             // Open management panel and show activity form
@@ -2661,6 +2681,45 @@ class StackMapApp {
             // Fallback to modal if panel manager not available
             const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
             console.log('New card modal shown (fallback)');
+        }
+    }
+    
+    showAddUserForm() {
+        // TODO: Implement user creation form
+        // For now, show placeholder
+        alert('Add User functionality - Coming soon!');
+        console.log('📝 Add User form requested');
+    }
+    
+    completeAllActivities() {
+        const activities = this.appState.getCurrentActivities();
+        const incompleteCount = activities.filter(activity => !activity.completed).length;
+        
+        if (incompleteCount === 0) {
+            alert('All activities are already completed! 🎉');
+            return;
+        }
+        
+        const confirmMessage = `Mark all ${incompleteCount} remaining activities as complete?`;
+        if (confirm(confirmMessage)) {
+            // Mark all as complete
+            activities.forEach(activity => {
+                if (!activity.completed) {
+                    activity.completed = true;
+                    activity.completedAt = new Date().toISOString();
+                }
+            });
+            
+            // Save state
+            this.appState.saveState();
+            
+            // Re-render
+            this.renderer.renderActivities();
+            
+            // Show celebration
+            this.renderer.createFireworks();
+            
+            console.log(`✅ Completed ${incompleteCount} activities`);
         }
     }
     

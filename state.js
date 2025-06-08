@@ -13,6 +13,8 @@ class AppState {
         };
         this.ui = {
             editMode: false,
+            fabExpanded: false,      // NEW: Track FAB expansion state
+            fabAnimating: false,     // NEW: Prevent rapid toggle during animations
             editingCardIndex: -1,
             showingNewCardForm: false,
             selectedEmoji: CONFIG.DEFAULT_EMOJI,

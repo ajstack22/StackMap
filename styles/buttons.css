@@ -396,3 +396,214 @@ body.showing-welcome .btn.btn--grownup-mode {
 .btn--complete-day .material-icons {
     font-size: 18px;
 }
+
+/* ===== FLOATING ACTION BUTTON (FAB) SYSTEM ===== */
+
+/* FAB Container */
+.fab-container {
+    position: fixed;
+    bottom: 0;
+    right: 0;
+    z-index: 1010; /* Above other floating elements */
+    pointer-events: none; /* Allow clicks through to content */
+}
+
+.fab-container * {
+    pointer-events: auto; /* Re-enable clicks on FAB elements */
+}
+
+/* Main FAB Button (extends existing .btn--floating) */
+.btn--fab {
+    bottom: 24px !important;
+    right: 24px !important;
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: blur(10px) !important;
+    -webkit-backdrop-filter: blur(10px) !important;
+    border: 2px solid var(--primary-color) !important;
+    color: var(--primary-color) !important;
+    font-size: 1.2rem !important;
+    transform: scale(0);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+.btn--fab:hover {
+    transform: scale(1.05) translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15) !important;
+    background: white !important;
+}
+
+.btn--fab:active {
+    transform: scale(0.95) !important;
+    transition: transform 0.1s ease !important;
+}
+
+.btn--fab:focus {
+    outline: 3px solid var(--primary-color) !important;
+    outline-offset: 2px !important;
+}
+
+/* Sub-FAB Buttons */
+.btn--fab-sub {
+    position: fixed !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 20px !important;
+    background: var(--primary-color) !important;
+    color: white !important;
+    border: none !important;
+    font-size: 1rem !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    z-index: 1009 !important;
+    
+    /* Invisible touch area extension for 44px minimum */
+    position: relative;
+}
+
+.btn--fab-sub::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    border-radius: 22px;
+    /* Ensures 44px minimum touch target */
+}
+
+.btn--fab-sub:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.btn--fab-sub:focus {
+    outline: 2px solid white !important;
+    outline-offset: 2px !important;
+}
+
+/* FAB Icon */
+.fab-icon {
+    display: inline-block;
+    font-size: inherit;
+    line-height: 1;
+}
+
+/* FAB Labels */
+.fab-label {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: 12px;
+    white-space: nowrap;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+    z-index: 1011;
+}
+
+.btn--fab-sub:hover .fab-label,
+.btn--fab-sub:focus .fab-label {
+    opacity: 1;
+}
+
+/* Mobile backdrop */
+.fab-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+    z-index: 1008;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+/* ===== FAB RESPONSIVE DESIGN ===== */
+
+/* Tablet adjustments */
+@media (max-width: 768px) {
+    .btn--fab {
+        bottom: 20px !important;
+        right: 20px !important;
+        width: 52px !important;
+        height: 52px !important;
+    }
+    
+    .btn--fab-sub {
+        width: 44px !important;
+        height: 44px !important;
+        border-radius: 22px !important;
+    }
+    
+    .btn--fab-sub::before {
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        border-radius: 22px;
+    }
+    
+    .fab-label {
+        opacity: 1 !important; /* Always visible on mobile */
+        font-size: 11px;
+        padding: 4px 8px;
+    }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+    .btn--fab {
+        bottom: 16px !important;
+        right: 16px !important;
+        width: 48px !important;
+        height: 48px !important;
+    }
+    
+    .btn--fab-sub {
+        width: 44px !important;
+        height: 44px !important;
+    }
+    
+    .fab-label {
+        font-size: 10px;
+        padding: 3px 6px;
+        margin-right: 8px;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .btn--fab {
+        border: 3px solid var(--primary-color) !important;
+        background: white !important;
+    }
+    
+    .btn--fab-sub {
+        border: 2px solid white !important;
+    }
+    
+    .fab-label {
+        background: black !important;
+        border: 1px solid white !important;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .btn--fab,
+    .btn--fab-sub,
+    .fab-backdrop {
+        transition: none !important;
+    }
+}
