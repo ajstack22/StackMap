@@ -81,52 +81,111 @@ class CelebrationManager {
      */
     
     gentleGlow(element) {
-        console.log('🎉 Triggering gentle glow animation on:', element);
+        // Create a glowing ring that expands outward
+        const rect = element.getBoundingClientRect();
+        const glow = document.createElement('div');
+        glow.className = 'glow-ring';
+        glow.style.left = rect.left + rect.width / 2 + 'px';
+        glow.style.top = rect.top + rect.height / 2 + 'px';
+        document.body.appendChild(glow);
+        
         this.addAnimationClass(element, 'celebrate-gentle-glow');
+        setTimeout(() => glow.remove(), 1000);
         this.cleanupAfterAnimation(element, 700);
     }
 
     peacefulWave(element) {
-        this.addAnimationClass(element, 'celebrate-peaceful-wave');
-        this.cleanupAfterAnimation(element, 800);
+        // Create a wave that passes through the card
+        const rect = element.getBoundingClientRect();
+        const wave = document.createElement('div');
+        wave.className = 'peaceful-wave-effect';
+        wave.style.left = rect.left - 50 + 'px';
+        wave.style.top = rect.top + 'px';
+        wave.style.width = rect.width + 100 + 'px';
+        wave.style.height = rect.height + 'px';
+        document.body.appendChild(wave);
+        
+        setTimeout(() => wave.remove(), 1000);
     }
 
     softBreathe(element) {
-        this.addAnimationClass(element, 'celebrate-soft-breathe');
-        this.cleanupAfterAnimation(element, 1200);
+        // Create breathing circles
+        const rect = element.getBoundingClientRect();
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                const breathe = document.createElement('div');
+                breathe.className = 'breathe-circle';
+                breathe.style.left = rect.left + rect.width / 2 + 'px';
+                breathe.style.top = rect.top + rect.height / 2 + 'px';
+                document.body.appendChild(breathe);
+                setTimeout(() => breathe.remove(), 1500);
+            }, i * 300);
+        }
     }
 
     floatingStars(element) {
-        this.createParticles(element, '⭐', 3, 'float-up-fade');
+        this.createVisibleParticles(element, '⭐', 6, 'particle-float-up');
         this.addAnimationClass(element, 'celebrate-subtle-scale');
         this.cleanupAfterAnimation(element, 1500);
     }
 
     floatingHearts(element) {
-        this.createParticles(element, '💖', 3, 'float-up-fade');
+        this.createVisibleParticles(element, '💖', 6, 'particle-float-up');
         this.addAnimationClass(element, 'celebrate-subtle-scale');
         this.cleanupAfterAnimation(element, 1500);
     }
 
     gentleRipple(element) {
-        this.addAnimationClass(element, 'celebrate-gentle-ripple');
-        this.cleanupAfterAnimation(element, 1000);
+        // Create expanding ripples
+        const rect = element.getBoundingClientRect();
+        for (let i = 0; i < 3; i++) {
+            setTimeout(() => {
+                const ripple = document.createElement('div');
+                ripple.className = 'gentle-ripple-ring';
+                ripple.style.left = rect.left + rect.width / 2 + 'px';
+                ripple.style.top = rect.top + rect.height / 2 + 'px';
+                document.body.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 1000);
+            }, i * 200);
+        }
     }
 
     natureGrowth(element) {
-        this.createParticles(element, '🌱', 2, 'grow-fade');
+        this.createVisibleParticles(element, '🌱', 4, 'particle-grow');
+        this.createVisibleParticles(element, '🌸', 3, 'particle-bloom');
         this.addAnimationClass(element, 'celebrate-nature-growth');
         this.cleanupAfterAnimation(element, 1200);
     }
 
     gentleSpiral(element) {
-        this.addAnimationClass(element, 'celebrate-gentle-spiral');
-        this.cleanupAfterAnimation(element, 1000);
+        // Create spiral particles
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 8; i++) {
+            const particle = document.createElement('div');
+            particle.className = 'spiral-particle';
+            particle.textContent = '✨';
+            particle.style.left = centerX + 'px';
+            particle.style.top = centerY + 'px';
+            particle.style.animationDelay = (i * 0.1) + 's';
+            document.body.appendChild(particle);
+            setTimeout(() => particle.remove(), 1500);
+        }
     }
 
     progressFill(element) {
-        this.addAnimationClass(element, 'celebrate-progress-fill');
-        this.cleanupAfterAnimation(element, 800);
+        // Create a progress bar that fills
+        const rect = element.getBoundingClientRect();
+        const progress = document.createElement('div');
+        progress.className = 'progress-fill-bar';
+        progress.style.left = rect.left + 'px';
+        progress.style.top = rect.bottom - 5 + 'px';
+        progress.style.width = rect.width + 'px';
+        document.body.appendChild(progress);
+        
+        setTimeout(() => progress.remove(), 1000);
     }
 
     /**
@@ -134,30 +193,143 @@ class CelebrationManager {
      */
     
     sunriseGlow(element) {
+        // Create multiple expanding sun rays
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < 12; i++) {
+            const ray = document.createElement('div');
+            ray.className = 'sun-ray';
+            ray.style.left = centerX + 'px';
+            ray.style.top = centerY + 'px';
+            ray.style.transform = `rotate(${i * 30}deg)`;
+            document.body.appendChild(ray);
+            setTimeout(() => ray.remove(), 2000);
+        }
+        
         this.addOverlayAnimation(element, 'overlay-sunrise-glow');
     }
 
     gardenGrowth(element) {
-        this.createParticles(element, '🌸', 5, 'bloom-fade', true);
-        this.addOverlayAnimation(element, 'overlay-garden-growth');
+        // Create growing flowers
+        const flowers = ['🌸', '🌺', '🌻', '🌷', '🌹'];
+        const rect = element.getBoundingClientRect();
+        
+        for (let i = 0; i < 8; i++) {
+            setTimeout(() => {
+                const flower = document.createElement('div');
+                flower.className = 'garden-flower';
+                flower.textContent = flowers[Math.floor(Math.random() * flowers.length)];
+                flower.style.left = rect.left + Math.random() * rect.width + 'px';
+                flower.style.top = rect.bottom + 'px';
+                document.body.appendChild(flower);
+                setTimeout(() => flower.remove(), 2500);
+            }, i * 200);
+        }
+        
+        this.createVisibleParticles(element, '🦋', 3, 'butterfly-float');
     }
 
     starShower(element) {
-        this.createParticles(element, '✨', 8, 'star-fall', true);
-        this.addOverlayAnimation(element, 'overlay-star-shower');
+        // Create falling stars from top of screen
+        for (let i = 0; i < 15; i++) {
+            setTimeout(() => {
+                const star = document.createElement('div');
+                star.className = 'falling-star';
+                star.textContent = '⭐';
+                star.style.left = Math.random() * window.innerWidth + 'px';
+                star.style.top = '-50px';
+                star.style.animationDelay = Math.random() * 0.5 + 's';
+                document.body.appendChild(star);
+                setTimeout(() => star.remove(), 3000);
+            }, i * 100);
+        }
+        
+        this.createVisibleParticles(element, '✨', 8, 'sparkle-burst');
     }
 
     victoryRainbow(element) {
-        this.addOverlayAnimation(element, 'overlay-victory-rainbow');
+        // Create rainbow arc
+        const rainbow = document.createElement('div');
+        rainbow.className = 'victory-rainbow-arc';
+        document.body.appendChild(rainbow);
+        
+        // Add clouds at the ends
+        const cloudLeft = document.createElement('div');
+        cloudLeft.className = 'rainbow-cloud cloud-left';
+        cloudLeft.textContent = '☁️';
+        document.body.appendChild(cloudLeft);
+        
+        const cloudRight = document.createElement('div');
+        cloudRight.className = 'rainbow-cloud cloud-right';
+        cloudRight.textContent = '☁️';
+        document.body.appendChild(cloudRight);
+        
+        setTimeout(() => {
+            rainbow.remove();
+            cloudLeft.remove();
+            cloudRight.remove();
+        }, 3000);
     }
 
     gentleFireworks(element) {
-        this.createParticles(element, '✨', 6, 'gentle-burst', true);
-        this.addOverlayAnimation(element, 'overlay-gentle-fireworks');
+        // Create multiple firework bursts
+        const colors = ['#FFD700', '#FF69B4', '#87CEEB', '#98FB98', '#DDA0DD'];
+        
+        for (let burst = 0; burst < 5; burst++) {
+            setTimeout(() => {
+                const x = 20 + Math.random() * 60;
+                const y = 20 + Math.random() * 60;
+                
+                // Create burst center
+                const center = document.createElement('div');
+                center.className = 'firework-center';
+                center.style.left = x + '%';
+                center.style.top = y + '%';
+                center.style.backgroundColor = colors[burst % colors.length];
+                document.body.appendChild(center);
+                
+                // Create particles
+                for (let i = 0; i < 12; i++) {
+                    const particle = document.createElement('div');
+                    particle.className = 'firework-spark';
+                    particle.style.left = x + '%';
+                    particle.style.top = y + '%';
+                    particle.style.backgroundColor = colors[burst % colors.length];
+                    particle.style.transform = `rotate(${i * 30}deg)`;
+                    document.body.appendChild(particle);
+                    setTimeout(() => particle.remove(), 1500);
+                }
+                
+                setTimeout(() => center.remove(), 1500);
+            }, burst * 400);
+        }
     }
 
     achievementGlow(element) {
-        this.addOverlayAnimation(element, 'overlay-achievement-glow');
+        // Create trophy and stars
+        const rect = element.getBoundingClientRect();
+        const trophy = document.createElement('div');
+        trophy.className = 'achievement-trophy';
+        trophy.textContent = '🏆';
+        trophy.style.left = rect.left + rect.width / 2 + 'px';
+        trophy.style.top = rect.top + rect.height / 2 + 'px';
+        document.body.appendChild(trophy);
+        
+        // Create orbiting stars
+        for (let i = 0; i < 6; i++) {
+            const star = document.createElement('div');
+            star.className = 'achievement-star';
+            star.textContent = '⭐';
+            star.style.left = rect.left + rect.width / 2 + 'px';
+            star.style.top = rect.top + rect.height / 2 + 'px';
+            star.style.animationDelay = (i * 0.2) + 's';
+            document.body.appendChild(star);
+            setTimeout(() => star.remove(), 2000);
+        }
+        
+        setTimeout(() => trophy.remove(), 2000);
     }
 
     /**
@@ -208,6 +380,35 @@ class CelebrationManager {
                     particle.parentNode.removeChild(particle);
                 }
             }, 2000);
+        }
+    }
+
+    createVisibleParticles(element, emoji, count, animationClass) {
+        const rect = element.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+        
+        for (let i = 0; i < count; i++) {
+            const particle = document.createElement('div');
+            particle.className = `visible-particle ${animationClass}`;
+            particle.textContent = emoji;
+            particle.style.left = centerX + 'px';
+            particle.style.top = centerY + 'px';
+            particle.style.position = 'fixed';
+            particle.style.fontSize = '24px';
+            particle.style.zIndex = '10000';
+            particle.style.pointerEvents = 'none';
+            
+            // Random starting position offset
+            const angle = (Math.PI * 2 * i) / count;
+            const offsetX = Math.cos(angle) * 20;
+            const offsetY = Math.sin(angle) * 20;
+            particle.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+            
+            document.body.appendChild(particle);
+            
+            // Remove after animation
+            setTimeout(() => particle.remove(), 2000);
         }
     }
 
