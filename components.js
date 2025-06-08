@@ -1929,32 +1929,32 @@ class EditModeFAB {
         this.backdrop = null;
         this.container = null;
         
-        // Action definitions with icons and handlers
+        // Action definitions with Material Icons and handlers
         this.actions = [
             {
                 id: 'add-activity',
-                icon: '➕',
+                icon: 'add_circle',
                 label: 'Add Activity',
                 ariaLabel: 'Add new activity card',
                 handler: () => this.app.showNewCardForm('bottom')
             },
             {
                 id: 'add-user',
-                icon: '👤',
+                icon: 'person_add',
                 label: 'Add User',
                 ariaLabel: 'Add new user profile',
                 handler: () => this.app.showAddUserForm()
             },
             {
                 id: 'complete-day',
-                icon: '✅',
+                icon: 'check_circle',
                 label: 'Complete Day',
                 ariaLabel: 'Mark all activities as complete',
                 handler: () => this.app.completeAllActivities()
             },
             {
                 id: 'exit-edit',
-                icon: '👁️',
+                icon: 'visibility',
                 label: 'Return to View',
                 ariaLabel: 'Exit edit mode and return to view mode',
                 handler: () => this.app.exitGrownupMode()
@@ -1982,7 +1982,7 @@ class EditModeFAB {
                     aria-label="Edit mode actions menu"
                     aria-expanded="false"
                     aria-haspopup="true">
-                <span class="fab-icon">✏️</span>
+                <span class="material-icons fab-icon">edit</span>
             </button>
             
             <!-- Sub-FAB actions (hidden by default) -->
@@ -1993,7 +1993,7 @@ class EditModeFAB {
                             data-action="${action.id}"
                             aria-label="${action.ariaLabel}"
                             style="transform: scale(0) translateY(20px); opacity: 0;">
-                        <span class="fab-icon">${action.icon}</span>
+                        <span class="material-icons fab-icon">${action.icon}</span>
                         <span class="fab-label">${action.label}</span>
                     </button>
                 `).join('')}

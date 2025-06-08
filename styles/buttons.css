@@ -421,10 +421,12 @@ body.showing-welcome .btn.btn--grownup-mode {
     -webkit-backdrop-filter: blur(10px) !important;
     border: 2px solid var(--primary-color) !important;
     color: var(--primary-color) !important;
-    font-size: 1.2rem !important;
     transform: scale(0);
     opacity: 0;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 .btn--fab:hover {
@@ -452,10 +454,12 @@ body.showing-welcome .btn.btn--grownup-mode {
     background: var(--primary-color) !important;
     color: white !important;
     border: none !important;
-    font-size: 1rem !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
     z-index: 1009 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
     
     /* Invisible touch area extension for 44px minimum */
     position: relative;
@@ -485,8 +489,19 @@ body.showing-welcome .btn.btn--grownup-mode {
 /* FAB Icon */
 .fab-icon {
     display: inline-block;
-    font-size: inherit;
+    font-size: 24px !important;
     line-height: 1;
+    vertical-align: middle;
+}
+
+/* Main FAB icon size */
+.btn--fab .fab-icon {
+    font-size: 28px !important;
+}
+
+/* Sub-FAB icon size */
+.btn--fab-sub .fab-icon {
+    font-size: 20px !important;
 }
 
 /* FAB Labels */
