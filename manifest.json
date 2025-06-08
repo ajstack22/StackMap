@@ -2,7 +2,8 @@
   "name": "StackMap - Visual Routine Helper",
   "short_name": "StackMap",
   "description": "A gentle routine app designed for special needs children and families. Create visual task sequences that help build independence.",
-  "start_url": "/dev/",
+  "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "background_color": "#667eea",
   "theme_color": "#667eea",
@@ -12,49 +13,49 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/dev/icon-72.png",
+      "src": "/icon-72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/dev/icon-96.png",
+      "src": "/icon-96.png",
       "sizes": "96x96",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/dev/icon-128.png",
+      "src": "/icon-128.png",
       "sizes": "128x128",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/dev/icon-144.png",
+      "src": "/icon-144.png",
       "sizes": "144x144",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/dev/icon-152.png",
+      "src": "/icon-152.png",
       "sizes": "152x152",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/dev/icon-192.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/dev/icon-384.png",
+      "src": "/icon-384.png",
       "sizes": "384x384",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "/dev/icon-512.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
@@ -68,7 +69,7 @@
       "url": "/?action=add",
       "icons": [
         {
-          "src": "icon-192.png",
+          "src": "/icon-192.png",
           "sizes": "192x192"
         }
       ]
@@ -76,17 +77,49 @@
   ],
   "screenshots": [
     {
-      "src": "screenshot-narrow.png",
+      "src": "/screenshot-narrow.png",
       "sizes": "540x720",
       "type": "image/png",
-      "form_factor": "narrow"
+      "form_factor": "narrow",
+      "label": "StackMap mobile view showing daily routine cards"
     },
     {
-      "src": "screenshot-wide.png", 
+      "src": "/screenshot-wide.png", 
       "sizes": "1024x768",
       "type": "image/png",
-      "form_factor": "wide"
+      "form_factor": "wide",
+      "label": "StackMap desktop view with activity management"
     }
   ],
-  "prefer_related_applications": false
+  "prefer_related_applications": false,
+  "related_applications": [],
+  "features": [
+    "screen-wake-lock",
+    "idle-detection"
+  ],
+  "launch_handler": {
+    "client_mode": "focus-existing"
+  },
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "file_handlers": [
+    {
+      "action": "/",
+      "name": "StackMap Backup",
+      "accept": {
+        "application/json": [".json"]
+      }
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "GET",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }

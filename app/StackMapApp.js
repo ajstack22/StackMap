@@ -105,6 +105,55 @@ class StackMapApp {
         }, 100);
     }
     
+    // PWA Update Prompt
+    showUpdatePrompt() {
+        const updateBanner = document.createElement('div');
+        updateBanner.className = 'update-banner';
+        updateBanner.innerHTML = `
+            <div class="update-banner-content">
+                <span class="material-icons">system_update</span>
+                <span>A new version of StackMap is available!</span>
+                <button class="btn btn--small" onclick="window.location.reload()">Update Now</button>
+            </div>
+        `;
+        updateBanner.style.cssText = `
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(102, 126, 234, 0.95);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 8px;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            animation: slideDown 0.3s ease-out;
+        `;
+        
+        document.body.appendChild(updateBanner);
+        
+        // Auto-hide after 10 seconds
+        setTimeout(() => {
+            updateBanner.style.animation = 'slideUp 0.3s ease-out';
+            setTimeout(() => updateBanner.remove(), 300);
+        }, 10000);
+    }
+    
+    // iOS PWA Features
+    initializeIOSPWAFeatures() {
+        // Prevent rubber band scrolling on iOS
+        document.body.addEventListener('touchmove', (e) => {
+            if (e.target.closest('.scrollable')) return;
+            e.preventDefault();
+        }, { passive: false });
+        
+        // Handle iOS safe areas
+        if (CSS.supports('padding-top: env(safe-area-inset-top)')) {
+            document.documentElement.style.setProperty('--safe-area-top', 'env(safe-area-inset-top)');
+            document.documentElement.style.setProperty('--safe-area-bottom', 'env(safe-area-inset-bottom)');
+        }
+    }
+    
     initializeScrollHeader() {
         // No longer needed - header is always fixed
         this.updateBodyPadding();

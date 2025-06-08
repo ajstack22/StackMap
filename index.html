@@ -32,6 +32,18 @@
     <meta name="theme-color" content="#667eea">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StackMap">
+    
+    <!-- Enhanced PWA Support -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="StackMap">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-TileImage" content="icon-144.png">
+    <meta name="msapplication-config" content="browserconfig.xml">
+    
+    <!-- iOS Splash Screens -->
+    <link rel="apple-touch-startup-image" href="splash-1242x2688.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3)">
+    <link rel="apple-touch-startup-image" href="splash-828x1792.png" media="(device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2)">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
@@ -330,6 +342,38 @@
     
     <!-- Main App -->
     <script src="app/StackMapApp.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js').then((registration) => {
+                    console.log('[PWA] ServiceWorker registration successful');
+                    
+                    // Check for updates every hour
+                    setInterval(() => {
+                        registration.update();
+                    }, 3600000);
+                    
+                    // Handle updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New content available, show update prompt
+                                console.log('[PWA] New content available');
+                                if (window.appInstance && window.appInstance.showUpdatePrompt) {
+                                    window.appInstance.showUpdatePrompt();
+                                }
+                            }
+                        });
+                    });
+                }).catch((error) => {
+                    console.log('[PWA] ServiceWorker registration failed:', error);
+                });
+            });
+        }
+    </script>
     
     <!-- App Initialization -->
     <script>
