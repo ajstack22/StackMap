@@ -291,14 +291,14 @@ button.btn.btn--floating.btn--fab {
         opacity: 1 !important;
         font-size: 10px !important;
         padding: 3px 6px !important;
-        /* Position above button on mobile for better visibility */
-        right: auto !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        bottom: 100% !important;
-        top: auto !important;
-        margin-bottom: 4px !important;
-        margin-right: 0 !important;
+        /* Position to the left of button on mobile when vertically stacked */
+        right: 100% !important;
+        left: auto !important;
+        transform: translateY(-50%) !important;
+        bottom: auto !important;
+        top: 50% !important;
+        margin-bottom: 0 !important;
+        margin-right: 8px !important;
         white-space: nowrap !important;
     }
 }
@@ -333,17 +333,17 @@ button.btn.btn--floating.btn--fab {
     }
     
     .fab-label {
-        /* Same as tablet - position above button */
+        /* Same as tablet - position to the left */
         opacity: 1 !important;
         font-size: 10px !important;
         padding: 3px 6px !important;
-        right: auto !important;
-        left: 50% !important;
-        transform: translateX(-50%) !important;
-        bottom: 100% !important;
-        top: auto !important;
-        margin-bottom: 4px !important;
-        margin-right: 0 !important;
+        right: 100% !important;
+        left: auto !important;
+        transform: translateY(-50%) !important;
+        bottom: auto !important;
+        top: 50% !important;
+        margin-bottom: 0 !important;
+        margin-right: 8px !important;
         white-space: nowrap !important;
     }
 }

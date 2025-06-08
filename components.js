@@ -2195,37 +2195,30 @@ class EditModeFAB {
         const spacing = isMobile ? 10 : 16; // Tighter spacing on mobile
         const edgeOffset = isMobile ? 16 : 24;
         
-        // On mobile, position sub-FABs to the left instead of above
-        if (isMobile) {
-            this.subFabs.forEach((subFab, index) => {
-                // Position to the left of main FAB
-                const offsetX = (subFabSize + spacing) * (index + 1);
-                
-                // Keep at same height as main FAB
-                subFab.style.bottom = `${edgeOffset + (fabSize - subFabSize) / 2}px`;
-                subFab.style.right = `${edgeOffset + fabSize + spacing + (offsetX - subFabSize - spacing)}px`;
-                
-                // Ensure we don't go off the left edge
-                const rightPosition = edgeOffset + fabSize + spacing + (offsetX - subFabSize - spacing);
-                if (rightPosition > window.innerWidth - subFabSize - 10) {
-                    // Stack vertically if running out of horizontal space
-                    const verticalIndex = Math.floor(index / 2);
-                    const horizontalIndex = index % 2;
-                    
-                    subFab.style.bottom = `${edgeOffset + fabSize + spacing + (verticalIndex * (subFabSize + spacing))}px`;
-                    subFab.style.right = `${edgeOffset + (horizontalIndex * (subFabSize + spacing))}px`;
-                }
-            });
-        } else {
-            // Desktop: position above main FAB
-            this.subFabs.forEach((subFab, index) => {
-                const offsetY = (subFabSize + spacing) * (index + 1);
-                
-                // Normal vertical positioning
-                subFab.style.bottom = `${edgeOffset + fabSize + offsetY}px`;
+        // Both mobile and desktop: position sub-FABs vertically above main FAB
+        this.subFabs.forEach((subFab, index) => {
+            // Calculate vertical offset for each button
+            const offsetY = (subFabSize + spacing) * (index + 1);
+            
+            // Position above main FAB
+            subFab.style.bottom = `${edgeOffset + fabSize + offsetY}px`;
+            
+            // Center horizontally with main FAB
+            if (isMobile) {
+                // On mobile, align perfectly with main FAB
                 subFab.style.right = `${edgeOffset + (fabSize - subFabSize) / 2}px`;
-            });
-        }
+            } else {
+                // On desktop, center with main FAB
+                subFab.style.right = `${edgeOffset + (fabSize - subFabSize) / 2}px`;
+            }
+            
+            // Ensure we don't go off the top of the screen
+            const topPosition = edgeOffset + fabSize + offsetY + subFabSize;
+            if (topPosition > window.innerHeight - 100) {
+                // If we're running out of vertical space, limit the expansion
+                console.warn('FAB sub-buttons may be too high for viewport');
+            }
+        });
     }
     
     handleAction(actionId) {
