@@ -2190,9 +2190,9 @@ class EditModeFAB {
     
     updateSubFabPositions() {
         const isMobile = window.innerWidth <= 768;
-        const fabSize = isMobile ? 48 : 56; // Updated reasonable sizes
-        const subFabSize = isMobile ? 44 : 40;
-        const spacing = isMobile ? 10 : 16; // Tighter spacing on mobile
+        const fabSize = isMobile ? 84 : 56; // Match header button sizes
+        const subFabSize = isMobile ? 50 : 40; // Proportional sub-FAB sizes
+        const spacing = isMobile ? 12 : 16; // Appropriate spacing
         const edgeOffset = isMobile ? 16 : 24;
         
         // Both mobile and desktop: position sub-FABs vertically above main FAB
