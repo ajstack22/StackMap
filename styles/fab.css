@@ -28,13 +28,13 @@ button.btn.btn--floating.btn--fab {
     bottom: 24px !important;
     right: 24px !important;
     
-    /* Match header button size - 115px for desktop */
-    width: 115px !important;
-    height: 115px !important;
-    min-width: 115px !important;
-    min-height: 115px !important;
-    max-width: 115px !important;
-    max-height: 115px !important;
+    /* More reasonable desktop size */
+    width: 56px !important;
+    height: 56px !important;
+    min-width: 56px !important;
+    min-height: 56px !important;
+    max-width: 56px !important;
+    max-height: 56px !important;
     
     /* Match header button styling exactly */
     background: rgba(255, 255, 255, 0.9) !important; /* Slightly transparent white */
@@ -107,7 +107,7 @@ button.btn.btn--floating.btn--fab {
 #edit-mode-fab .fab-icon {
     color: var(--primary-color) !important; /* Themed icons */
     font-weight: 900 !important; /* Bolder icons */
-    font-size: 43px !important; /* 20% larger (36px × 1.2 = 43px) */
+    font-size: 24px !important; /* Appropriate for 56px button */
     margin: 0 !important;
     padding: 0 !important;
     display: inline-block !important;
@@ -187,9 +187,10 @@ button.btn.btn--floating.btn--fab {
     z-index: 1012;
 }
 
-.btn--fab-sub:hover .fab-label,
-.btn--fab-sub:focus .fab-label {
+/* Show labels when FAB is expanded */
+.fab-actions.expanded .fab-label {
     opacity: 1;
+    transition-delay: 0.2s; /* Slight delay for smooth appearance */
 }
 
 /* Mobile backdrop */
@@ -215,20 +216,20 @@ button.btn.btn--floating.btn--fab {
     button.btn.btn--floating.btn--fab {
         bottom: 20px !important;
         right: 20px !important;
-        /* Match header button mobile size */
-        width: 84px !important;
-        height: 84px !important;
-        min-width: 84px !important;
-        min-height: 84px !important;
-        max-width: 84px !important;
-        max-height: 84px !important;
+        /* Reasonable mobile size */
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        max-width: 48px !important;
+        max-height: 48px !important;
     }
     
     .btn--fab .material-icons,
     .btn--fab .fab-icon,
     .btn.btn--floating.btn--fab .material-icons,
     .btn.btn--floating.btn--fab .fab-icon {
-        font-size: 32px !important; /* Match header button mobile icon size */
+        font-size: 20px !important; /* Appropriate for 48px button */
         font-weight: 900 !important; /* Keep bold on mobile */
     }
     
@@ -254,18 +255,18 @@ button.btn.btn--floating.btn--fab {
     button.btn.btn--floating.btn--fab {
         bottom: 16px !important;
         right: 16px !important;
-        /* Keep 84px size like tablet for consistency */
-        width: 84px !important;
-        height: 84px !important;
-        min-width: 84px !important;
-        min-height: 84px !important;
-        max-width: 84px !important;
-        max-height: 84px !important;
+        /* Keep same as tablet for consistency */
+        width: 48px !important;
+        height: 48px !important;
+        min-width: 48px !important;
+        min-height: 48px !important;
+        max-width: 48px !important;
+        max-height: 48px !important;
     }
     
     .btn--fab .material-icons,
     .btn--fab .fab-icon {
-        font-size: 32px !important; /* Keep same as tablet */
+        font-size: 20px !important; /* Keep same as tablet */
     }
     
     .btn.btn--floating.btn--fab-sub {

@@ -2120,6 +2120,7 @@ class EditModeFAB {
         
         // Show actions container
         this.actionsContainer.style.display = 'block';
+        this.actionsContainer.classList.add('expanded');
         
         // Show mobile backdrop
         if (window.innerWidth <= 768) {
@@ -2175,6 +2176,7 @@ class EditModeFAB {
         // Hide actions container after animation
         setTimeout(() => {
             this.actionsContainer.style.display = 'none';
+            this.actionsContainer.classList.remove('expanded');
             this.isAnimating = false;
         }, this.subFabs.length * 30 + 300);
         
@@ -2184,7 +2186,7 @@ class EditModeFAB {
     
     updateSubFabPositions() {
         const isMobile = window.innerWidth <= 768;
-        const fabSize = isMobile ? 84 : 115; // Match header button sizes
+        const fabSize = isMobile ? 48 : 56; // Updated reasonable sizes
         const subFabSize = isMobile ? 44 : 40;
         const spacing = isMobile ? 12 : 16;
         const edgeOffset = isMobile ? 16 : 24;
