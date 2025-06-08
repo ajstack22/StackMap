@@ -143,7 +143,7 @@ button.btn.btn--floating.btn--fab {
     overflow: visible !important;
 }
 
-/* Sub-FAB icon - ensure visibility */
+/* Sub-FAB icon - ensure visibility and centering */
 .btn--fab-sub .material-icons,
 .btn--fab-sub .fab-icon,
 .btn.btn--floating.btn--fab-sub .material-icons,
@@ -152,11 +152,13 @@ button.btn.btn--floating.btn--fab {
     color: white !important;
     margin: 0 !important;
     padding: 0 !important;
-    display: inline-block !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    width: 100% !important;
+    height: 100% !important;
     line-height: 1 !important;
     font-weight: 400 !important; /* Normal weight for sub-icons */
-    vertical-align: middle !important;
-    text-align: center !important;
     font-family: 'Material Icons' !important;
 }
 
@@ -258,8 +260,17 @@ button.btn.btn--floating.btn--fab {
     
     .fab-label {
         opacity: 1 !important;
-        font-size: 11px;
-        padding: 4px 8px;
+        font-size: 10px !important;
+        padding: 3px 6px !important;
+        /* Position above button on mobile for better visibility */
+        right: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 100% !important;
+        top: auto !important;
+        margin-bottom: 4px !important;
+        margin-right: 0 !important;
+        white-space: nowrap !important;
     }
 }
 
@@ -293,9 +304,18 @@ button.btn.btn--floating.btn--fab {
     }
     
     .fab-label {
-        font-size: 10px;
-        padding: 3px 6px;
-        margin-right: 8px;
+        /* Same as tablet - position above button */
+        opacity: 1 !important;
+        font-size: 10px !important;
+        padding: 3px 6px !important;
+        right: auto !important;
+        left: 50% !important;
+        transform: translateX(-50%) !important;
+        bottom: 100% !important;
+        top: auto !important;
+        margin-bottom: 4px !important;
+        margin-right: 0 !important;
+        white-space: nowrap !important;
     }
 }
 

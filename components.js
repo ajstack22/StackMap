@@ -2188,28 +2188,40 @@ class EditModeFAB {
         const isMobile = window.innerWidth <= 768;
         const fabSize = isMobile ? 48 : 56; // Updated reasonable sizes
         const subFabSize = isMobile ? 44 : 40;
-        const spacing = isMobile ? 12 : 16;
+        const spacing = isMobile ? 10 : 16; // Tighter spacing on mobile
         const edgeOffset = isMobile ? 16 : 24;
         
-        this.subFabs.forEach((subFab, index) => {
-            // Position above main FAB
-            const offsetY = (subFabSize + spacing) * (index + 1);
-            
-            // Calculate position from bottom
-            const bottomPosition = edgeOffset + fabSize + offsetY;
-            
-            // Ensure we don't go off the top of the screen
-            const maxHeight = window.innerHeight - 100; // Leave 100px at top
-            if (bottomPosition > maxHeight) {
-                // If we're going off screen, position to the left instead
+        // On mobile, position sub-FABs to the left instead of above
+        if (isMobile) {
+            this.subFabs.forEach((subFab, index) => {
+                // Position to the left of main FAB
+                const offsetX = (subFabSize + spacing) * (index + 1);
+                
+                // Keep at same height as main FAB
                 subFab.style.bottom = `${edgeOffset + (fabSize - subFabSize) / 2}px`;
-                subFab.style.right = `${edgeOffset + fabSize + (offsetY - fabSize - spacing)}px`;
-            } else {
+                subFab.style.right = `${edgeOffset + fabSize + spacing + (offsetX - subFabSize - spacing)}px`;
+                
+                // Ensure we don't go off the left edge
+                const rightPosition = edgeOffset + fabSize + spacing + (offsetX - subFabSize - spacing);
+                if (rightPosition > window.innerWidth - subFabSize - 10) {
+                    // Stack vertically if running out of horizontal space
+                    const verticalIndex = Math.floor(index / 2);
+                    const horizontalIndex = index % 2;
+                    
+                    subFab.style.bottom = `${edgeOffset + fabSize + spacing + (verticalIndex * (subFabSize + spacing))}px`;
+                    subFab.style.right = `${edgeOffset + (horizontalIndex * (subFabSize + spacing))}px`;
+                }
+            });
+        } else {
+            // Desktop: position above main FAB
+            this.subFabs.forEach((subFab, index) => {
+                const offsetY = (subFabSize + spacing) * (index + 1);
+                
                 // Normal vertical positioning
-                subFab.style.bottom = `${bottomPosition}px`;
+                subFab.style.bottom = `${edgeOffset + fabSize + offsetY}px`;
                 subFab.style.right = `${edgeOffset + (fabSize - subFabSize) / 2}px`;
-            }
-        });
+            });
+        }
     }
     
     handleAction(actionId) {
