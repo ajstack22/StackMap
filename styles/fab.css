@@ -135,20 +135,29 @@ button.btn.btn--floating.btn--fab {
     border: none !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    z-index: 1011 !important;
+    z-index: 1009 !important; /* Below main FAB when not expanded */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     cursor: pointer !important;
+    overflow: visible !important;
 }
 
-/* Sub-FAB icon */
+/* Sub-FAB icon - ensure visibility */
 .btn--fab-sub .material-icons,
-.btn--fab-sub .fab-icon {
+.btn--fab-sub .fab-icon,
+.btn.btn--floating.btn--fab-sub .material-icons,
+.btn.btn--floating.btn--fab-sub .fab-icon {
     font-size: 20px !important;
     color: white !important;
     margin: 0 !important;
     padding: 0 !important;
+    display: inline-block !important;
+    line-height: 1 !important;
+    font-weight: 400 !important; /* Normal weight for sub-icons */
+    vertical-align: middle !important;
+    text-align: center !important;
+    font-family: 'Material Icons' !important;
 }
 
 /* Touch target extension */
@@ -165,6 +174,11 @@ button.btn.btn--floating.btn--fab {
 .btn--fab-sub:hover {
     transform: scale(1.1) !important;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Ensure sub-FABs are visible when expanded */
+.fab-actions.expanded .btn--fab-sub {
+    z-index: 1011 !important; /* Above main FAB when expanded */
 }
 
 /* FAB Labels */
@@ -309,4 +323,30 @@ button.btn.btn--floating.btn--fab {
     .fab-backdrop {
         transition: none !important;
     }
+}
+
+/* Ensure Material Icons render properly in FAB system */
+.fab-container .material-icons {
+    font-family: 'Material Icons' !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    line-height: 1 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    direction: ltr !important;
+    -webkit-font-feature-settings: 'liga' !important;
+    -webkit-font-smoothing: antialiased !important;
+    text-rendering: optimizeLegibility !important;
+}
+
+/* Debug: Make sub-FABs more visible */
+.fab-actions {
+    z-index: 1009 !important;
+}
+
+.fab-actions.expanded {
+    z-index: 1011 !important;
 }
