@@ -1972,6 +1972,7 @@ class EditModeFAB {
         // Create main container
         this.container = document.createElement('div');
         this.container.className = 'fab-container';
+        this.container.style.display = 'none'; // Start hidden
         this.container.innerHTML = `
             <!-- Mobile backdrop (only visible on mobile when expanded) -->
             <div class="fab-backdrop" style="display: none;"></div>
@@ -1981,7 +1982,8 @@ class EditModeFAB {
                     id="edit-mode-fab"
                     aria-label="Edit mode actions menu"
                     aria-expanded="false"
-                    aria-haspopup="true">
+                    aria-haspopup="true"
+                    style="transform: scale(0); opacity: 0;">
                 <span class="material-icons fab-icon">edit</span>
             </button>
             
@@ -2064,16 +2066,21 @@ class EditModeFAB {
     show() {
         if (this.container) {
             this.container.style.display = 'block';
-            // Animate in
-            requestAnimationFrame(() => {
-                this.fab.style.transform = 'scale(1)';
-                this.fab.style.opacity = '1';
-            });
+            // Force a reflow to ensure the display change is applied
+            this.container.offsetHeight;
+            
+            // Animate in after a small delay
+            setTimeout(() => {
+                if (this.fab) {
+                    this.fab.style.transform = 'scale(1)';
+                    this.fab.style.opacity = '1';
+                }
+            }, 50);
         }
     }
     
     hide() {
-        if (this.container) {
+        if (this.container && this.fab) {
             if (this.isExpanded) {
                 this.collapse();
             }
@@ -2081,7 +2088,9 @@ class EditModeFAB {
             this.fab.style.transform = 'scale(0)';
             this.fab.style.opacity = '0';
             setTimeout(() => {
-                this.container.style.display = 'none';
+                if (this.container) {
+                    this.container.style.display = 'none';
+                }
             }, 300);
         }
     }
@@ -2174,15 +2183,30 @@ class EditModeFAB {
     }
     
     updateSubFabPositions() {
-        const fabRect = this.fab.getBoundingClientRect();
-        const subFabSize = 40; // Size of sub-FABs
-        const spacing = 16; // Space between FABs
+        const isMobile = window.innerWidth <= 768;
+        const fabSize = isMobile ? 48 : 56;
+        const subFabSize = isMobile ? 44 : 40;
+        const spacing = isMobile ? 12 : 16;
+        const edgeOffset = isMobile ? 16 : 24;
         
         this.subFabs.forEach((subFab, index) => {
             // Position above main FAB
             const offsetY = (subFabSize + spacing) * (index + 1);
-            subFab.style.bottom = `${24 + 56 + offsetY}px`; // 24px from edge + FAB height + offset
-            subFab.style.right = `${24 + (56 - subFabSize) / 2}px`; // Centered on main FAB
+            
+            // Calculate position from bottom
+            const bottomPosition = edgeOffset + fabSize + offsetY;
+            
+            // Ensure we don't go off the top of the screen
+            const maxHeight = window.innerHeight - 100; // Leave 100px at top
+            if (bottomPosition > maxHeight) {
+                // If we're going off screen, position to the left instead
+                subFab.style.bottom = `${edgeOffset + (fabSize - subFabSize) / 2}px`;
+                subFab.style.right = `${edgeOffset + fabSize + (offsetY - fabSize - spacing)}px`;
+            } else {
+                // Normal vertical positioning
+                subFab.style.bottom = `${bottomPosition}px`;
+                subFab.style.right = `${edgeOffset + (fabSize - subFabSize) / 2}px`;
+            }
         });
     }
     
