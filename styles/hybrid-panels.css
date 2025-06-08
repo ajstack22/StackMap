@@ -1128,6 +1128,89 @@ textarea.panel-input {
     background: rgba(33, 150, 243, 0.9);
 }
 
+/* Modal emoji picker inline styles for hybrid panels */
+.modal-emoji-picker-inline {
+    margin-top: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px;
+    backdrop-filter: blur(10px);
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__filter {
+    width: 100%;
+    padding: 10px 16px;
+    font-size: 0.95rem;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.1);
+    color: white;
+    margin-bottom: 8px;
+    transition: all 0.2s ease;
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__filter:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__filter::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__hint {
+    font-size: 0.8rem;
+    color: rgba(255, 255, 255, 0.6);
+    margin-bottom: 8px;
+    text-align: center;
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: 4px;
+    padding: 4px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__option {
+    width: 100%;
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+    min-height: 36px;
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: scale(1.1);
+}
+
+.modal-emoji-picker-inline .modal-emoji-picker__option--selected {
+    background: rgba(102, 126, 234, 0.3);
+    border-color: var(--primary-color);
+}
+
+/* Responsive grid for smaller screens */
+@media (max-width: 400px) {
+    .modal-emoji-picker-inline .modal-emoji-picker__grid {
+        grid-template-columns: repeat(6, 1fr);
+    }
+}
+
 /* Sync conflict modal */
 .sync-conflict-modal {
     position: fixed;

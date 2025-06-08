@@ -1110,13 +1110,13 @@ class HybridPanelManager {
 
     // Admin actions
     addNewCard() {
-        // Don't close panels - show activity form in the same panel
+        // Show activity form in the right panel
         this.state.showingActivityForm = true;
         this.state.editingActivity = null;
         this.state.editingIndex = -1;
         
-        // Re-render the management panel with activity form
-        this.renderPanelContent('right');
+        // Open the right panel if not already open
+        this.openPanel('right');
         
         // Focus on title input after rendering
         setTimeout(() => {
@@ -1124,7 +1124,7 @@ class HybridPanelManager {
             if (titleInput) {
                 titleInput.focus();
             }
-        }, 100);
+        }, 300);
     }
 
     exportData() {
@@ -1325,42 +1325,139 @@ class HybridPanelManager {
     showEmojiPicker() {
         const currentEmoji = document.getElementById('activityEmoji').value;
         const button = document.getElementById('activityEmojiButton');
+        const emojiDisplay = button.querySelector('.emoji-display');
         
-        // Create a simple emoji picker inline
-        const emojiGrid = document.createElement('div');
-        emojiGrid.className = 'emoji-picker-inline';
-        emojiGrid.innerHTML = `
-            <div class="emoji-grid">
-                ${EMOJIS.slice(0, 48).map(emoji => `
-                    <button class="emoji-option" data-emoji="${emoji}">
-                        ${emoji}
-                    </button>
-                `).join('')}
-            </div>
-        `;
+        // Check if emoji picker already exists
+        const existingPicker = document.querySelector('.modal-emoji-picker-inline');
+        if (existingPicker) {
+            existingPicker.remove();
+            return;
+        }
+        
+        // Create the emoji picker using the modal's enhanced version
+        const picker = document.createElement('div');
+        picker.className = 'modal-emoji-picker-inline';
+        
+        // Create search/paste input
+        const filter = document.createElement('input');
+        filter.type = 'text';
+        filter.className = 'modal-emoji-picker__filter';
+        filter.placeholder = 'Search or paste emoji...';
+        filter.id = 'activityEmojiFilter';
+        
+        // Create hint text
+        const hint = document.createElement('div');
+        hint.className = 'modal-emoji-picker__hint';
+        hint.innerHTML = '💡 Search keywords or paste any emoji';
+        
+        // Create emoji grid
+        const grid = document.createElement('div');
+        grid.className = 'modal-emoji-picker__grid';
+        grid.style.maxHeight = '200px';
+        grid.style.overflowY = 'auto';
+        
+        picker.appendChild(filter);
+        picker.appendChild(hint);
+        picker.appendChild(grid);
         
         // Insert after the emoji button
-        button.parentElement.appendChild(emojiGrid);
+        button.parentElement.appendChild(picker);
         
-        // Handle emoji selection
-        emojiGrid.addEventListener('click', (e) => {
-            if (e.target.classList.contains('emoji-option')) {
-                const selectedEmoji = e.target.getAttribute('data-emoji');
-                document.getElementById('activityEmoji').value = selectedEmoji;
-                button.querySelector('.emoji-display').textContent = selectedEmoji;
-                this.newActivityDefaults.emoji = selectedEmoji;
-                emojiGrid.remove();
+        // Function to render emoji grid
+        const renderEmojiGrid = (emojis) => {
+            grid.innerHTML = '';
+            
+            if (!emojis || emojis.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; padding: 15px; color: #666;">No emojis found</div>';
+                return;
+            }
+            
+            emojis.forEach(emoji => {
+                const emojiBtn = document.createElement('button');
+                emojiBtn.className = 'modal-emoji-picker__option';
+                emojiBtn.textContent = emoji;
+                emojiBtn.title = (EMOJI_NAMES || {})[emoji] || emoji;
+                emojiBtn.type = 'button';
+                
+                if (emoji === currentEmoji) {
+                    emojiBtn.classList.add('modal-emoji-picker__option--selected');
+                }
+                
+                emojiBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Update emoji display and hidden input
+                    document.getElementById('activityEmoji').value = emoji;
+                    emojiDisplay.textContent = emoji;
+                    
+                    // Update selected state
+                    grid.querySelectorAll('.modal-emoji-picker__option').forEach(opt => {
+                        opt.classList.remove('modal-emoji-picker__option--selected');
+                    });
+                    emojiBtn.classList.add('modal-emoji-picker__option--selected');
+                    
+                    // Close picker after a short delay
+                    setTimeout(() => picker.remove(), 150);
+                });
+                
+                grid.appendChild(emojiBtn);
+            });
+        };
+        
+        // Initial render with all emojis
+        renderEmojiGrid(EMOJIS || []);
+        
+        // Handle search and paste
+        const emojiRegex = /\p{Emoji_Presentation}|\p{Emoji}\uFE0F/u;
+        
+        filter.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            
+            // Check for emoji paste
+            const emojiMatch = value.match(emojiRegex);
+            if (emojiMatch) {
+                document.getElementById('activityEmoji').value = emojiMatch[0];
+                emojiDisplay.textContent = emojiMatch[0];
+                picker.remove();
+            } else if (value) {
+                // Search functionality using the smart search from EmojiPicker
+                const filteredEmojis = EmojiPicker.smartEmojiSearch(value);
+                renderEmojiGrid(filteredEmojis);
+            } else {
+                // Show all emojis
+                renderEmojiGrid(EMOJIS || []);
             }
         });
         
-        // Close on outside click
+        filter.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            const emojiMatch = pastedText.match(emojiRegex);
+            
+            if (emojiMatch) {
+                document.getElementById('activityEmoji').value = emojiMatch[0];
+                emojiDisplay.textContent = emojiMatch[0];
+                picker.remove();
+            } else {
+                filter.value = pastedText;
+                filter.dispatchEvent(new Event('input'));
+            }
+        });
+        
+        // Focus on search input
+        setTimeout(() => filter.focus(), 50);
+        
+        // Close picker when clicking outside
+        const closeOnOutsideClick = (e) => {
+            if (!picker.contains(e.target) && !button.contains(e.target)) {
+                picker.remove();
+                document.removeEventListener('click', closeOnOutsideClick);
+            }
+        };
+        
         setTimeout(() => {
-            document.addEventListener('click', function closeEmojiPicker(e) {
-                if (!emojiGrid.contains(e.target) && e.target !== button) {
-                    emojiGrid.remove();
-                    document.removeEventListener('click', closeEmojiPicker);
-                }
-            });
+            document.addEventListener('click', closeOnOutsideClick);
         }, 100);
     }
     

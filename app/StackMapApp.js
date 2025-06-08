@@ -363,8 +363,8 @@ class StackMapApp {
                 // Multiple users - show custom dropdown (no label for cleaner look)
                 const currentUser = this.appState.getCurrentUser();
                 userSection.innerHTML = `
-                    <button class="drawer-select" id="drawerUserSelect" data-value="${currentUser.id}">
-                        <span>${currentUser.icon || '👤'} ${currentUser.name}</span>
+                    <button class="drawer-select" id="drawerUserSelect" data-value="${SecurityUtils.escapeHtml(currentUser.id)}">
+                        <span>${SecurityUtils.escapeHtml(currentUser.icon || '👤')} ${SecurityUtils.escapeHtml(currentUser.name)}</span>
                     </button>
                 `;
                 
@@ -423,7 +423,7 @@ class StackMapApp {
                             this.handleUserSwitch(selectedId);
                             const selectedUser = allUsers.find(u => u.id === selectedId);
                             if (selectedUser && userSelect) {
-                                userSelect.innerHTML = `<span>${selectedUser.icon || '👤'} ${selectedUser.name}</span>`;
+                                userSelect.innerHTML = `<span>${SecurityUtils.escapeHtml(selectedUser.icon || '👤')} ${SecurityUtils.escapeHtml(selectedUser.name)}</span>`;
                                 userSelect.setAttribute('data-value', selectedId);
                             }
                         }
@@ -458,8 +458,8 @@ class StackMapApp {
             
             const selectedDay = dayOptions.find(d => d.id === currentDay);
             daySelect.outerHTML = `
-                <button class="drawer-select" id="drawerDaySelect" data-value="${currentDay}">
-                    <span>${selectedDay?.icon} ${selectedDay?.text}</span>
+                <button class="drawer-select" id="drawerDaySelect" data-value="${SecurityUtils.escapeHtml(currentDay)}">
+                    <span>${SecurityUtils.escapeHtml(selectedDay?.icon)} ${SecurityUtils.escapeHtml(selectedDay?.text)}</span>
                 </button>
             `;
             
@@ -491,7 +491,7 @@ class StackMapApp {
                     console.log('Current day after switch:', this.appState.getCurrentDay());
                     const selected = dayOptions.find(d => d.id === selectedId);
                     if (selected && newDaySelect) {
-                        newDaySelect.innerHTML = `<span>${selected.icon} ${selected.text}</span>`;
+                        newDaySelect.innerHTML = `<span>${SecurityUtils.escapeHtml(selected.icon)} ${SecurityUtils.escapeHtml(selected.text)}</span>`;
                         newDaySelect.setAttribute('data-value', selectedId);
                     }
                     // Refresh the view
@@ -659,19 +659,19 @@ class StackMapApp {
                     let iconContent = '';
                     if (option.type === 'action') {
                         // Use Material Icons for actions
-                        iconContent = `<span class="material-icons">${option.icon}</span>`;
+                        iconContent = `<span class="material-icons">${SecurityUtils.escapeHtml(option.icon)}</span>`;
                     } else {
                         // Use emoji/text for users and day options
-                        iconContent = option.icon;
+                        iconContent = SecurityUtils.escapeHtml(option.icon);
                     }
                     
                     return `
-                        <button class="${optionClass}" 
-                                data-value="${option.id}"
+                        <button class="${SecurityUtils.escapeHtml(optionClass)}" 
+                                data-value="${SecurityUtils.escapeHtml(option.id)}"
                                 role="option"
                                 aria-selected="${option.selected}">
                             <span class="native-dropdown-option-icon">${iconContent}</span>
-                            <span class="native-dropdown-option-text">${option.text}</span>
+                            <span class="native-dropdown-option-text">${SecurityUtils.escapeHtml(option.text)}</span>
                             ${option.selected ? '<span class="native-dropdown-check">✓</span>' : ''}
                         </button>
                     `;
@@ -1167,7 +1167,8 @@ class StackMapApp {
             // Fallback to prompt
             const newName = prompt('Edit user name:', user.name);
             if (newName && newName.trim()) {
-                this.appState.updateUser(user.id, { name: newName.trim() });
+                const sanitizedName = SecurityUtils.sanitizeUserInput(newName.trim(), CONFIG.USER_NAME_MAX_LENGTH);
+                this.appState.updateUser(user.id, { name: sanitizedName });
                 this.populateDrawerSelects();
                 this.render();
             }
@@ -1683,45 +1684,25 @@ class StackMapApp {
         }, 0);
     }
 
-    // NEW CARD FUNCTIONALITY - Now uses modal
+    // NEW CARD FUNCTIONALITY - Now uses side menu
     openNewCardForm(position = 'top') {
         console.log('openNewCardForm called with position:', position);
-        console.log('Current day:', this.appState.getCurrentDay());
-        console.log('Current user:', this.appState.getCurrentUser()?.name);
-        console.log('Current activities:', this.appState.getCurrentActivities().length);
-        console.log('Edit mode:', this.appState.ui.editMode);
-        console.log('Grownup mode:', this.grownupMode);
         
-        // Enhanced debugging for tomorrow view
-        if (this.appState.getCurrentDay() === 'tomorrow') {
-            const user = this.appState.getCurrentUser();
-            console.log('Tomorrow view debugging:');
-            console.log('- Tomorrow activities:', user.tomorrowActivities.length);
-            console.log('- Today activities:', user.activities.length);
-            console.log('- All tomorrow activities:', user.tomorrowActivities.map(a => a.title));
-        }
-        
-        this.appState.ui.showingNewCardForm = position;
-        
-        // Add try-catch to detect any errors in modal creation
-        try {
-            console.log('Attempting to show modal card...');
-            // Show modal for new card with current selected card type
-            const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
-            console.log('Modal card created successfully:', !!modal);
+        // Use the hybrid panel manager to show the activity form
+        if (window.hybridPanelManager) {
+            // Store the position for later use if needed
+            this.appState.ui.showingNewCardForm = position;
             
-            // Double-check the modal exists in DOM
-            setTimeout(() => {
-                const modalInDOM = document.getElementById('modalCardOverlay');
-                console.log('Modal found in DOM after creation:', !!modalInDOM);
-                if (!modalInDOM) {
-                    console.error('MODAL NOT FOUND IN DOM! This might be why the user is seeing something else.');
-                }
-            }, 100);
-            
-        } catch (error) {
-            console.error('Error creating modal card:', error);
-            console.error('This might be why the user sees a different dialog');
+            // Open the management panel and show the add activity form
+            window.hybridPanelManager.addNewCard();
+        } else {
+            console.error('HybridPanelManager not initialized');
+            // Fallback to modal if needed
+            try {
+                ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
+            } catch (error) {
+                console.error('Error showing activity form:', error);
+            }
         }
     }
 
@@ -2245,11 +2226,15 @@ class StackMapApp {
                 return; // User cancelled or entered empty name
             }
             
+            // Sanitize user name
+            const sanitizedName = SecurityUtils.sanitizeUserInput(userName.trim(), CONFIG.USER_NAME_MAX_LENGTH);
+            
             // Get emoji icon (optional)
             const userIcon = prompt('Enter an emoji for the user (or leave blank for default):', '👤') || '👤';
+            const sanitizedIcon = SecurityUtils.sanitizeUserInput(userIcon, 2); // Emojis can be up to 2 chars
             
             // Add the user through AppState
-            const newUserId = this.appState.addUser(userName.trim(), userIcon);
+            const newUserId = this.appState.addUser(sanitizedName, sanitizedIcon);
             
             // Switch to the new user
             this.appState.switchUser(newUserId);
@@ -2427,10 +2412,10 @@ class StackMapApp {
         // Show user selection checkboxes
         userListDiv.innerHTML = analysis.users.map(user => `
             <label class="import-user-option">
-                <input type="checkbox" value="${user.id}" checked>
+                <input type="checkbox" value="${SecurityUtils.escapeHtml(user.id)}" checked>
                 <span class="user-info">
-                    <strong>${user.name}</strong>
-                    <small>${user.activityCount} activities</small>
+                    <strong>${SecurityUtils.escapeHtml(user.name)}</strong>
+                    <small>${SecurityUtils.escapeHtml(user.activityCount)} activities</small>
                 </span>
             </label>
         `).join('');
@@ -2440,7 +2425,7 @@ class StackMapApp {
             conflictsDiv.innerHTML = `
                 <div class="conflict-warning">
                     <h4>⚠️ Name Conflicts</h4>
-                    <ul>${analysis.conflicts.map(conflict => `<li>${conflict}</li>`).join('')}</ul>
+                    <ul>${analysis.conflicts.map(conflict => `<li>${SecurityUtils.escapeHtml(conflict)}</li>`).join('')}</ul>
                     <p>Existing users with same names will be renamed with "-imported" suffix.</p>
                 </div>
             `;
