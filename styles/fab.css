@@ -123,6 +123,8 @@ button.btn.btn--floating.btn--fab {
 /* Sub-FAB Buttons */
 .btn.btn--floating.btn--fab-sub {
     position: fixed !important;
+    top: auto !important; /* Critical: prevent top positioning */
+    left: auto !important; /* Critical: prevent left positioning */
     width: 40px !important;
     height: 40px !important;
     min-width: 40px !important;
@@ -270,6 +272,15 @@ button.btn.btn--floating.btn--fab {
         max-height: 48px !important;
     }
     
+    /* Override the top: 20px from buttons.css mobile styles */
+    .btn.btn--floating.btn--fab-sub,
+    button.btn.btn--floating.btn--fab-sub,
+    .fab-container .btn--fab-sub,
+    .fab-actions .btn--fab-sub {
+        top: auto !important;
+        left: auto !important;
+    }
+    
     .btn--fab .material-icons,
     .btn--fab .fab-icon,
     .btn.btn--floating.btn--fab .material-icons,
@@ -316,6 +327,15 @@ button.btn.btn--floating.btn--fab {
         min-height: 48px !important;
         max-width: 48px !important;
         max-height: 48px !important;
+    }
+    
+    /* Override any top positioning for sub-FABs */
+    .btn.btn--floating.btn--fab-sub,
+    button.btn.btn--floating.btn--fab-sub,
+    .fab-container .btn--fab-sub,
+    .fab-actions .btn--fab-sub {
+        top: auto !important;
+        left: auto !important;
     }
     
     .btn--fab .material-icons,
@@ -398,4 +418,14 @@ button.btn.btn--floating.btn--fab {
 
 .fab-actions.expanded {
     z-index: 1011 !important;
+}
+
+/* Override any conflicting positioning from other stylesheets */
+.fab-container .btn--fab-sub,
+.fab-container .btn.btn--floating.btn--fab-sub,
+.fab-actions .btn--fab-sub,
+.fab-actions .btn.btn--floating.btn--fab-sub {
+    top: auto !important;
+    left: auto !important;
+    /* Positioning is set via JS based on bottom/right values */
 }
