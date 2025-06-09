@@ -94,19 +94,19 @@
     min-height: 70px;
 }
 
-.fab:hover {
+.fab:hover:not(.fab--active):not(.fab--closing) {
     transform: scale(1.1);
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
     background: rgba(255, 255, 255, 0.95);
 }
 
-/* Subtle rotation on hover to preview the spin */
-#hybridPreferencesBtn:hover .material-icons {
+/* Subtle rotation on hover to preview the spin (only when not active) */
+#hybridPreferencesBtn:hover:not(.fab--active):not(.fab--closing) .material-icons {
     transform: translate(-50%, -50%) rotate(15deg);
     transition: transform 0.2s ease;
 }
 
-#hybridManageBtn:hover .material-icons {
+#hybridManageBtn:hover:not(.fab--active):not(.fab--closing) .material-icons {
     transform: translate(-50%, -50%) rotate(-15deg);
     transition: transform 0.2s ease;
 }
@@ -129,7 +129,13 @@
 .fab--active {
     background: var(--primary-color);
     color: white;
-    transform: scale(1.05);
+    transform: scale(0.75); /* 25% reduction from original size */
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+
+.fab--active .material-icons {
+    color: white;
 }
 
 /* Icon spin animations when panels open */
@@ -151,39 +157,91 @@
     }
 }
 
-/* Palette (left panel) spins clockwise when opening - synchronized to 0.3s */
+/* Combined scale and spin animations for active state */
+@keyframes scale-and-spin-clockwise {
+    from {
+        transform: scale(1) rotate(0deg);
+    }
+    to {
+        transform: scale(0.75) rotate(360deg);
+    }
+}
+
+@keyframes scale-and-spin-counter-clockwise {
+    from {
+        transform: scale(1) rotate(0deg);
+    }
+    to {
+        transform: scale(0.75) rotate(-360deg);
+    }
+}
+
+/* Reverse animations for closing */
+@keyframes scale-and-spin-clockwise-reverse {
+    from {
+        transform: scale(0.75) rotate(0deg);
+    }
+    to {
+        transform: scale(1) rotate(360deg);
+    }
+}
+
+@keyframes scale-and-spin-counter-clockwise-reverse {
+    from {
+        transform: scale(0.75) rotate(0deg);
+    }
+    to {
+        transform: scale(1) rotate(-360deg);
+    }
+}
+
+/* Palette (left panel) - button scales and icon spins clockwise when opening */
+#hybridPreferencesBtn.fab--active {
+    animation: scale-and-spin-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 #hybridPreferencesBtn.fab--active .material-icons {
-    animation: spin-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Maintain position during animation */
+    /* Icon maintains center position */
     position: absolute;
     top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-/* Settings cog (right panel) spins counter-clockwise when opening - synchronized to 0.3s */
+/* Settings cog (right panel) - button scales and icon spins counter-clockwise when opening */
+#hybridManageBtn.fab--active {
+    animation: scale-and-spin-counter-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 #hybridManageBtn.fab--active .material-icons {
-    animation: spin-counter-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Maintain position during animation */
+    /* Icon maintains center position */
     position: absolute;
     top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
 }
 
-/* Reverse spin animations when closing - synchronized to 0.3s */
+/* Reverse animations when closing */
+#hybridPreferencesBtn.fab--closing {
+    animation: scale-and-spin-counter-clockwise-reverse 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 #hybridPreferencesBtn.fab--closing .material-icons {
-    animation: spin-counter-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Maintain position during animation */
     position: absolute;
     top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+#hybridManageBtn.fab--closing {
+    animation: scale-and-spin-clockwise-reverse 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 #hybridManageBtn.fab--closing .material-icons {
-    animation: spin-clockwise 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    /* Maintain position during animation */
     position: absolute;
     top: 50%;
     left: 50%;
+    transform: translate(-50%, -50%);
 }
 
 /* Adjust FAB position when drawer is open */
