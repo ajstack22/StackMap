@@ -1976,7 +1976,7 @@ class EditModeFAB {
                 bottom: 0;
                 right: 0;
                 pointer-events: none;
-                z-index: 1008;
+                z-index: 1005;
                 overflow: visible;
             ">
                 <!-- Mobile gradient (matching desktop style) -->

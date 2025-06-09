@@ -368,11 +368,11 @@ class HybridPanelManager {
             </div>
         `;
         
-        // Show Edit Mode section when in edit mode
+        // Show Data Tools section when in edit mode
         if (this.app.grownupMode) {
             content += `
                 <div class="panel-section">
-                    <label>Edit Mode</label>
+                    <label>Data Tools</label>
                     <div class="admin-buttons">
                         <button class="admin-btn" onclick="hybridPanelManager.exportData()">
                             <span class="material-icons">download</span>
@@ -381,10 +381,6 @@ class HybridPanelManager {
                         <button class="admin-btn" onclick="hybridPanelManager.importData()">
                             <span class="material-icons">upload</span>
                             Import Data
-                        </button>
-                        <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
-                            <span class="material-icons">person_add</span>
-                            Add User
                         </button>
                         <button class="admin-btn" onclick="hybridPanelManager.openSyncSettings()">
                             <span class="material-icons">cloud_sync</span>
