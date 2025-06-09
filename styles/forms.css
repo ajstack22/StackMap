@@ -841,9 +841,11 @@ html body.grownup-mode .card--completed[style] .card__icon {
 
 /* ===== SETTINGS PANEL FOOTER LINKS ===== */
 .panel-footer-links {
-    margin-top: 20px;
+    margin-top: 80px; /* Space for absolute positioned Done button */
     padding-bottom: 20px;
     text-align: center;
+    position: relative;
+    z-index: 1;
 }
 
 .panel-links-separator {
