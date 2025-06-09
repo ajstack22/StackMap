@@ -226,6 +226,9 @@ class HybridPanelManager {
     }
 
     closePanel(side) {
+        // Save any pending changes before closing
+        this.saveCurrentSettings();
+        
         // Update state
         this.state[`${side}PanelOpen`] = false;
         if (this.state.activePanel === side) {
@@ -2037,8 +2040,41 @@ class HybridPanelManager {
             currentUser.settings.routineCelebration = value;
         }
         
-        this.app.appState._triggerSave();
+        // Don't save immediately, wait for panel close
         console.log(`Updated ${type} celebration to: ${value}`);
+    }
+    
+    /**
+     * Save all current settings when closing panel
+     */
+    saveCurrentSettings() {
+        // Get current values from the UI
+        const taskSelect = document.getElementById('taskCelebrationSelect');
+        const routineSelect = document.getElementById('routineCelebrationSelect');
+        
+        if (taskSelect || routineSelect) {
+            const currentUser = this.app.appState.getCurrentUser();
+            if (!currentUser.settings) currentUser.settings = {};
+            
+            // Update celebration settings if selects exist
+            if (taskSelect) {
+                currentUser.settings.taskCelebration = taskSelect.value;
+                // Also update in appState settings
+                this.app.appState.settings.taskCelebration = taskSelect.value;
+            }
+            if (routineSelect) {
+                currentUser.settings.routineCelebration = routineSelect.value;
+                // Also update in appState settings
+                this.app.appState.settings.routineCelebration = routineSelect.value;
+            }
+            
+            // Trigger save
+            this.app.appState._triggerSave();
+            console.log('Settings saved on panel close:', {
+                task: currentUser.settings.taskCelebration,
+                routine: currentUser.settings.routineCelebration
+            });
+        }
     }
 
     /**
