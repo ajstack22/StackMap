@@ -847,9 +847,9 @@ html body.grownup-mode .card--completed[style] .card__icon {
 
 .panel-links-separator {
     height: 1px;
-    background-color: #e0e0e0;
+    background-color: rgba(255, 255, 255, 0.2);
     margin: 20px 0;
-    opacity: 0.5;
+    opacity: 0.7;
 }
 
 .panel-links-section {
@@ -861,7 +861,7 @@ html body.grownup-mode .card--completed[style] .card__icon {
 .panel-footer-link {
     display: block;
     padding: 12px 16px;
-    color: #667eea;
+    color: white;
     text-decoration: none;
     font-size: 0.95rem;
     font-family: inherit;
@@ -871,20 +871,22 @@ html body.grownup-mode .card--completed[style] .card__icon {
     line-height: 20px;
     transition: background-color 0.2s ease, color 0.2s ease;
     border: 1px solid transparent;
+    white-space: nowrap;
+    background: rgba(255, 255, 255, 0.1);
 }
 
 .panel-footer-link:hover {
-    background-color: rgba(102, 126, 234, 0.08);
-    color: #5a6fd8;
+    background-color: rgba(255, 255, 255, 0.2);
+    color: white;
 }
 
 .panel-footer-link:focus {
-    outline: 3px solid #667eea;
+    outline: 2px solid white;
     outline-offset: 2px;
 }
 
 .panel-footer-link:active {
-    background-color: rgba(102, 126, 234, 0.15);
+    background-color: rgba(255, 255, 255, 0.25);
 }
 
 /* Mobile Responsive */
@@ -912,36 +914,21 @@ html body.grownup-mode .card--completed[style] .card__icon {
 /* High Contrast Mode Support */
 @media (prefers-contrast: high) {
     .panel-footer-link {
-        border: 1px solid #667eea;
+        border: 1px solid white;
+        font-weight: 600;
     }
     
     .panel-footer-link:hover {
-        background-color: #667eea;
-        color: white;
+        background-color: white;
+        color: var(--primary-color);
     }
     
     .panel-footer-link:focus {
-        outline-width: 4px;
+        outline-width: 3px;
     }
     
     .panel-links-separator {
-        background-color: #333;
-        opacity: 1;
-    }
-}
-
-/* Dark Mode Support (if StackMap implements it) */
-@media (prefers-color-scheme: dark) {
-    .panel-footer-link {
-        color: #a8b4ff;
-    }
-    
-    .panel-footer-link:hover {
-        background-color: rgba(168, 180, 255, 0.1);
-        color: #c4cdff;
-    }
-    
-    .panel-links-separator {
-        background-color: #444;
+        background-color: white;
+        opacity: 0.5;
     }
 }
