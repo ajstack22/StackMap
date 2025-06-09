@@ -468,13 +468,14 @@ body.drawer-active {
     .header-logo-title {
         gap: 0; /* Maintain 0 gap - logo margin-right handles spacing */
         margin-bottom: 6px;
+        align-items: center; /* Center align icon with text on mobile */
     }
     
     .stackmap-logo {
-        width: 26px; /* Smaller for mobile */
-        height: 26px;
-        margin-right: 2px; /* Very close gap on mobile */
-        margin-bottom: 1px; /* Less baseline adjustment on mobile */
+        width: 32px; /* Match title text height (2.07rem ≈ 33px, using 32px for clean scaling) */
+        height: 32px;
+        margin-right: 1.4px; /* 30% reduction from 2px */
+        margin-bottom: 0; /* Remove baseline adjustment for center alignment */
     }
     
     .title {
@@ -522,13 +523,14 @@ body.drawer-active {
     
     .header-logo-title {
         gap: 0; /* Maintain 0 gap - logo margin-right handles spacing */
+        align-items: center; /* Center align on small screens too */
     }
     
     .stackmap-logo {
-        width: 20px; /* Even smaller for small mobile */
-        height: 20px;
-        margin-right: 2px; /* Very close gap on small mobile */
-        margin-bottom: 1px; /* Less baseline adjustment on small mobile */
+        width: 26px; /* Match smaller title text height (1.6rem ≈ 26px) */
+        height: 26px;
+        margin-right: 1.4px; /* 30% reduction from 2px */
+        margin-bottom: 0; /* Remove baseline adjustment for center alignment */
     }
     
     .title {
