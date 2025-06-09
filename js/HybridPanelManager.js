@@ -1107,7 +1107,7 @@ class HybridPanelManager {
         // Create modal content
         modal.innerHTML = `
             <div style="font-size: 3rem; margin-bottom: 16px;">🔐</div>
-            <h3 style="margin: 0 0 8px 0; font-size: 1.6rem; color: #333; font-weight: 700;">Parent Verification</h3>
+            <h3 style="margin: 0 0 8px 0; font-size: 1.6rem; color: #333; font-weight: 700;">Simple Question</h3>
             <p style="margin: 0 0 24px 0; font-size: 1.1rem; color: #666; line-height: 1.4;">${randomQuestion.question}</p>
             <input type="text" id="validationInput" placeholder="Type your answer here" 
                    style="width: 100%; padding: 14px 18px; border: 3px solid #e0e0e0; 
