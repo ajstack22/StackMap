@@ -343,7 +343,9 @@ class AppState {
                 showNumbers: user.settings?.showNumbers ?? CONFIG.SHOW_NUMBERS_DEFAULT,
                 showCompletionIndicators: user.settings?.showCompletionIndicators ?? CONFIG.SHOW_COMPLETION_DEFAULT,
                 autoSync: user.settings?.autoSync ?? true,
-                backupReminder: user.settings?.backupReminder ?? true
+                backupReminder: user.settings?.backupReminder ?? true,
+                taskCelebration: user.settings?.taskCelebration || 'gentle-glow',
+                routineCelebration: user.settings?.routineCelebration || 'garden-growth'
             };
             
             // Apply theme

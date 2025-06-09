@@ -373,7 +373,7 @@ class CelebrationManager {
      */
     celebrateTask(element, userId) {
         const currentUser = this.app.appState.getCurrentUser();
-        const preference = currentUser.settings?.taskCelebration || 'rainbow';
+        const preference = currentUser.settings?.taskCelebration || 'gentle-glow';
         
         if (this.shouldSkipAnimation()) {
             this.noAnimation(element);
@@ -388,7 +388,7 @@ class CelebrationManager {
 
     celebrateRoutine(containerElement, userId) {
         const currentUser = this.app.appState.getCurrentUser();
-        const preference = currentUser.settings?.routineCelebration || 'rainbow';
+        const preference = currentUser.settings?.routineCelebration || 'garden-growth';
         
         if (this.shouldSkipAnimation()) {
             this.noAnimation(containerElement);
