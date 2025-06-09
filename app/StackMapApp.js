@@ -1447,6 +1447,26 @@ class StackMapApp {
         const nameInput = document.getElementById('splashUserName');
         const emojiInput = document.getElementById('splashUserEmoji');
         const startButton = document.getElementById('splashStartButton');
+        const refreshButton = document.getElementById('splashEmojiRefresh');
+        const optionsContainer = document.getElementById('splashEmojiOptions');
+        
+        // Common emojis for user avatars
+        this.userEmojis = [
+            '😊', '😎', '🤩', '😄', '😁', '🥳', '🤗', '😇', '🙂', '😋',
+            '🦄', '🐶', '🐱', '🐼', '🐨', '🦁', '🐯', '🦊', '🐻', '🐸',
+            '🦋', '🌈', '⭐', '🌟', '✨', '🌺', '🌻', '🌸', '🌼', '🌷',
+            '🎨', '🎯', '🎪', '🎭', '🎬', '🎮', '🎸', '🎺', '🎹', '🎤',
+            '🚀', '✈️', '🚁', '🚂', '🏎️', '🏍️', '🛸', '🛶', '⛵', '🚤',
+            '🍎', '🍓', '🍊', '🍋', '🍌', '🍉', '🍇', '🥝', '🍑', '🍒',
+            '🏈', '🏀', '⚽', '🎾', '🏐', '🎱', '🏓', '🏸', '🥏', '🎳',
+            '💜', '💙', '💚', '💛', '🧡', '❤️', '🤍', '🖤', '💝', '💖'
+        ];
+        
+        // Initialize with default emoji
+        this.selectedEmoji = '👤';
+        
+        // Show random emojis
+        this.showRandomEmojis();
         
         // Enable/disable start button based on name input
         const checkCanStart = () => {
@@ -1462,28 +1482,61 @@ class StackMapApp {
             }
         });
         
-        // Emoji input handler - filter to only allow emojis
-        emojiInput.addEventListener('input', (e) => {
-            const value = e.target.value;
-            // Keep only the first emoji character
-            const emojiMatch = value.match(/\p{Emoji}/u);
-            if (emojiMatch) {
-                e.target.value = emojiMatch[0];
-            } else if (value.length === 0) {
-                // If empty, reset to default
-                e.target.value = '👤';
-            }
-        });
-        
-        // Focus on emoji input to trigger keyboard
-        emojiInput.addEventListener('focus', (e) => {
-            // Select all text for easy replacement
-            e.target.select();
+        // Refresh button handler
+        refreshButton.addEventListener('click', () => {
+            this.showRandomEmojis();
         });
         
         // Start button handler
         startButton.addEventListener('click', () => {
             this.completeSplashScreen();
+        });
+    }
+    
+    showRandomEmojis() {
+        const optionsContainer = document.getElementById('splashEmojiOptions');
+        const emojiInput = document.getElementById('splashUserEmoji');
+        
+        // Get 5 random emojis
+        const randomEmojis = [];
+        const tempEmojis = [...this.userEmojis];
+        
+        for (let i = 0; i < 5 && tempEmojis.length > 0; i++) {
+            const randomIndex = Math.floor(Math.random() * tempEmojis.length);
+            randomEmojis.push(tempEmojis.splice(randomIndex, 1)[0]);
+        }
+        
+        // Clear current options
+        optionsContainer.innerHTML = '';
+        
+        // Create emoji buttons
+        randomEmojis.forEach(emoji => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'splash-emoji-option';
+            button.textContent = emoji;
+            button.setAttribute('aria-label', `Select ${emoji} as your emoji`);
+            
+            // Check if this emoji is currently selected
+            if (emoji === this.selectedEmoji) {
+                button.classList.add('selected');
+            }
+            
+            button.addEventListener('click', () => {
+                // Remove selected class from all buttons
+                optionsContainer.querySelectorAll('.splash-emoji-option').forEach(btn => {
+                    btn.classList.remove('selected');
+                });
+                
+                // Add selected class to clicked button
+                button.classList.add('selected');
+                
+                // Update selected emoji
+                this.selectedEmoji = emoji;
+                emojiInput.value = emoji;
+            });
+            
+            optionsContainer.appendChild(button);
         });
     }
     
@@ -1493,7 +1546,7 @@ class StackMapApp {
         const splashScreen = document.getElementById('splashScreen');
         
         const userName = nameInput.value.trim();
-        const userEmoji = emojiInput.value || '👤';
+        const userEmoji = this.selectedEmoji || emojiInput.value || '👤';
         
         if (!userName) return;
         

@@ -194,34 +194,88 @@
     text-align: left;
 }
 
-.splash-emoji-input-wrapper {
+.splash-emoji-picker {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+.splash-emoji-options {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.splash-emoji-option {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+    border: 3px solid transparent;
+    border-radius: 12px;
+    background: #f7fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
 }
 
-.splash-emoji-input {
-    width: 100%;
-    padding: 16px;
-    font-size: 2.5rem;
-    text-align: center;
-    border: 2px solid #e2e8f0;
-    border-radius: 10px;
-    outline: none;
-    transition: border-color 0.2s ease;
-    box-sizing: border-box;
-    background: #f8fafc;
-    cursor: pointer;
+.splash-emoji-option:hover {
+    background: #e2e8f0;
+    transform: scale(1.1);
 }
 
-.splash-emoji-input:focus {
+.splash-emoji-option.selected {
     border-color: #667eea;
-    background: white;
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.05);
 }
 
-.splash-emoji-helper {
-    font-size: 0.85rem;
-    color: #999;
-    text-align: center;
-    margin-top: 8px;
+.splash-emoji-option.selected::after {
+    content: '✓';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.splash-emoji-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    color: #667eea;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.splash-emoji-refresh:hover {
+    background: #e2e8f0;
+    border-color: #667eea;
+}
+
+.splash-emoji-refresh .material-icons {
+    font-size: 18px;
 }
 
 /* Start button */
@@ -297,13 +351,19 @@
         font-size: 16px;
     }
     
-    .splash-emoji-input {
-        padding: 12px;
-        font-size: 2rem;
+    .splash-emoji-picker {
+        padding: 16px;
     }
     
-    .splash-emoji-helper {
-        font-size: 0.8rem;
+    .splash-emoji-option {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .splash-emoji-refresh {
+        padding: 8px 12px;
+        font-size: 0.85rem;
     }
 }
 
@@ -311,8 +371,8 @@
 @media (prefers-reduced-motion: reduce) {
     .splash-screen,
     .splash-content,
-    .splash-emoji-button,
     .splash-emoji-option,
+    .splash-emoji-refresh,
     .splash-start-button {
         animation: none;
         transition: none;

@@ -510,17 +510,17 @@
                 </div>
                 
                 <div class="splash-emoji-group">
-                    <label for="splashUserEmoji">Choose your emoji</label>
-                    <div class="splash-emoji-input-wrapper">
-                        <input type="text" 
-                               id="splashUserEmoji" 
-                               class="splash-emoji-input" 
-                               placeholder="👤" 
-                               value="👤"
-                               maxlength="2"
-                               autocomplete="off">
-                        <div class="splash-emoji-helper">Tap to open emoji keyboard</div>
+                    <label>Choose your emoji</label>
+                    <div class="splash-emoji-picker">
+                        <div class="splash-emoji-options" id="splashEmojiOptions">
+                            <!-- Emoji options will be populated by JavaScript -->
+                        </div>
+                        <button type="button" class="splash-emoji-refresh" id="splashEmojiRefresh" aria-label="Show more emojis">
+                            <span class="material-icons">refresh</span>
+                            More emojis
+                        </button>
                     </div>
+                    <input type="hidden" id="splashUserEmoji" value="👤">
                 </div>
                 
                 <button type="button" class="splash-start-button" id="splashStartButton" disabled>
