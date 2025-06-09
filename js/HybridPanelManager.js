@@ -372,38 +372,30 @@ class HybridPanelManager {
         const currentColor = this.app.appState.settings.backgroundColor;
         const isMobile = window.innerWidth <= 768;
         
-        // Rainbow-organized color palette (4 full rows) with colors dark enough for white text
+        // Rainbow-organized color palette (3 rows) with colors dark enough for white text
         const rainbowColors = [
             // ROW 1: Reds to Oranges to Yellows
             '#DC143C', // Crimson Red
             '#E91E63', // Pink/Magenta
             '#FF5722', // Deep Orange
-            '#FF8F00', // Dark Orange
             '#F57C00', // Amber
             '#FBC02D', // Dark Yellow
+            '#689F38', // Light Green
             
-            // ROW 2: Greens to Blues to Teals
-            '#689F38', // Light Green (dark enough)
+            // ROW 2: Greens to Blues to Purples
             '#388E3C', // Green
             '#00695C', // Dark Teal
-            '#0097A7', // Cyan (darker)
+            '#0097A7', // Cyan
             '#1976D2', // Blue
             '#303F9F', // Indigo
-            
-            // ROW 3: Purples to Browns to Greys
             '#512DA8', // Deep Purple
-            '#7B1FA2', // Purple
-            '#C2185B', // Deep Pink
-            '#5D4037', // Brown
-            '#455A64', // Blue Grey (darker)
-            '#424242', // Dark Grey
             
-            // ROW 4: Additional colors + Custom picker
+            // ROW 3: Additional colors + Custom picker
+            '#7B1FA2', // Purple
+            '#5D4037', // Brown
+            '#455A64', // Blue Grey
             '#B71C1C', // Dark Red
-            '#4A148C', // Deep Purple
             '#1A237E', // Deep Blue
-            '#0D5302', // Dark Green
-            '#3E2723', // Dark Brown
             '#000000'  // Custom color picker (palette icon) - last position
         ];
         
