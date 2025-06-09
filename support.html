@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<!-- saved from url=(0036)https://stackmap.app/contribute.html -->
+<html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support StackMap - Contribute</title>
+    <style>
+        :root {
+            --primary-color: #667eea;
+            --primary-dark: #5a67d8;
+            --text-color: #333;
+            --text-light: #666;
+            --bg-color: #f8f9fa;
+            --card-bg: white;
+            --border-color: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(to bottom, var(--primary-color) 0%, var(--primary-color) 200px, var(--bg-color) 200px);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 30px;
+        }
+
+        .logo {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 20px;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+        }
+
+        .tagline {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            font-style: italic;
+        }
+
+        .content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-top: 20px;
+            border-top: 2px solid var(--border-color);
+        }
+
+        h2:first-child {
+            border-top: none;
+            padding-top: 0;
+            margin-top: 0;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: var(--text-color);
+        }
+
+        .story-highlight {
+            background: rgba(102, 126, 234, 0.1);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary-color);
+            margin: 20px 0;
+        }
+
+        .donation-options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .donation-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 20px;
+            background: white;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            text-decoration: none;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+
+        .donation-link:hover {
+            border-color: var(--primary-color);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2);
+        }
+
+        .donation-icon {
+            width: 50px;
+            height: 50px;
+            background: var(--primary-color);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+
+        .donation-info h3 {
+            margin: 0 0 5px 0;
+            color: var(--primary-dark);
+            font-size: 1.2rem;
+        }
+
+        .donation-info p {
+            margin: 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .coming-soon {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .coming-soon .donation-info h3::after {
+            content: " - Coming Soon";
+            color: var(--text-light);
+            font-size: 0.9rem;
+            font-style: italic;
+        }
+
+        .heart-message {
+            text-align: center;
+            padding: 30px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(102, 126, 234, 0.1) 100%);
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+
+        .heart-message .heart {
+            font-size: 3rem;
+            color: #e74c3c;
+            margin-bottom: 15px;
+        }
+
+        .back-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin: 30px 0;
+            padding: 12px 24px;
+            background: var(--primary-color);
+            color: white;
+            text-decoration: none;
+            border-radius: 12px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .back-link:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+        }
+
+        .disclaimer {
+            background: rgba(255, 193, 7, 0.1);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            color: #856404;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            h2 {
+                font-size: 1.5rem;
+            }
+
+            .header, .content {
+                padding: 20px;
+            }
+
+            .donation-link {
+                padding: 15px;
+            }
+
+            .donation-icon {
+                width: 40px;
+                height: 40px;
+                font-size: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 10px;">
+                <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="30" cy="30" r="30" fill="white"></circle>
+                    <rect x="15" y="18" width="30" height="4" rx="2" fill="#667eea"></rect>
+                    <rect x="15" y="26" width="30" height="4" rx="2" fill="#667eea"></rect>
+                    <rect x="15" y="34" width="30" height="8" rx="2" fill="#5a67d8"></rect>
+                </svg>
+                <span style="font-size: 2.5rem; font-weight: 700; color: var(--primary-color); text-shadow: 0 2px 4px rgba(0,0,0,0.1);">StackMap</span>
+            </h1>
+            <p class="tagline">Supporting Special Needs Families, One Routine at a Time</p>
+        </div>
+
+        <div class="content">
+            <h2>Our Story</h2>
+            <p>StackMap was born from a simple belief: every family navigating special needs deserves access to quality tools that make daily life easier. As developers and parents, we understand the unique challenges that special needs families face every day.</p>
+
+            <div class="story-highlight">
+                <p><strong>Our mission is simple:</strong> Keep StackMap free and accessible for every family who needs it. We believe that financial constraints should never prevent a family from accessing tools that can help their children thrive.</p>
+            </div>
+
+            <p>We've designed StackMap specifically for special needs and autistic children, with features like:</p>
+            <ul>
+                <li>Visual routine cards that provide structure and predictability</li>
+                <li>Large, touch-friendly interfaces for children with motor challenges</li>
+                <li>Celebration animations that encourage and motivate</li>
+                <li>Offline functionality for consistent access to routines</li>
+                <li>Simple, parent-friendly controls</li>
+            </ul>
+
+            <h2>Supporting StackMap</h2>
+            <p><strong>We want to be absolutely clear: contributions are never expected or required.</strong> StackMap will always remain free for families who need it. Your use of the app and feedback are contributions enough.</p>
+
+            <p>However, if StackMap has been helpful to your family and you find yourself in a position where you'd like to contribute financially, your support helps us:</p>
+            <ul>
+                <li>Keep the servers running and the app available 24/7</li>
+                <li>Continue developing new features requested by families</li>
+                <li>Maintain the highest security and privacy standards</li>
+                <li>Keep StackMap free for families who cannot afford to contribute</li>
+            </ul>
+
+            <h2>Ways to Contribute</h2>
+            <p>If you'd like to support StackMap's mission, here are some ways you can help:</p>
+
+            <div class="donation-options">
+                <a href="https://paypal.me/stackadamj" target="_blank" class="donation-link">
+                    <div class="donation-icon">💳</div>
+                    <div class="donation-info">
+                        <h3>PayPal</h3>
+                        <p>Quick and secure one-time or recurring contributions</p>
+                    </div>
+                </a>
+
+                <a href="https://www.venmo.com/u/stackadamj" target="_blank" class="donation-link">
+                    <div class="donation-icon">📱</div>
+                    <div class="donation-info">
+                        <h3>Venmo</h3>
+                        <p>Easy mobile contributions from your phone</p>
+                    </div>
+                </a>
+
+                <div class="donation-link coming-soon">
+                    <div class="donation-icon">🎁</div>
+                    <div class="donation-info">
+                        <h3>Patreon</h3>
+                        <p>Join our community of supporters with exclusive updates</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="disclaimer">
+                <strong>Note:</strong> StackMap is an independent project created to serve special needs families. Contributions go directly toward hosting, development, and keeping the service free for all families.
+            </div>
+
+            <div class="heart-message">
+                <div class="heart">❤️</div>
+                <h3>Every Contribution Makes a Difference</h3>
+                <p>Whether it's $1 or $100, every contribution helps us continue our mission of supporting special needs families. But remember, your family's success with StackMap is the greatest reward we could ask for.</p>
+            </div>
+
+            <h2>Other Ways to Help</h2>
+            <p>Not in a position to contribute financially? No problem! Here are other meaningful ways to support StackMap:</p>
+            <ul>
+                <li><strong>Share with other families:</strong> Tell other special needs families about StackMap</li>
+                <li><strong>Provide feedback:</strong> Help us improve by sharing your experiences and suggestions</li>
+                <li><strong>Spread awareness:</strong> Share on social media to help other families discover StackMap</li>
+                <li><strong>Join our community:</strong> Connect with other families using StackMap</li>
+            </ul>
+
+            <h2>Thank You</h2>
+            <p>To every family using StackMap, every person who has shared feedback, and everyone who has supported this project in any way - thank you. Together, we're building something that makes a real difference in the lives of special needs children and their families.</p>
+
+            <p>Your trust in StackMap means everything to us. We're honored to be a small part of your family's daily routine and journey.</p>
+
+            <p style="text-align: center; margin-top: 30px; font-style: italic; color: var(--primary-dark);">
+                With gratitude,<br>
+                <strong>The StackMap Team</strong>
+            </p>
+        </div>
+
+        <a href="https://stackmap.app/" class="back-link">
+            <span>←</span>
+            Back to StackMap
+        </a>
+    </div>
+
+</body></html>

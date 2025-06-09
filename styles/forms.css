@@ -838,3 +838,110 @@ html body.grownup-mode .card--completed[style] .card__icon {
     background-color: rgba(255, 255, 255, 1);
     box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 2px rgba(255, 255, 255, 0.5);
 }
+
+/* ===== SETTINGS PANEL FOOTER LINKS ===== */
+.panel-footer-links {
+    margin-top: 20px;
+    padding-bottom: 20px;
+}
+
+.panel-links-separator {
+    height: 1px;
+    background-color: #e0e0e0;
+    margin: 20px 0;
+    opacity: 0.5;
+}
+
+.panel-links-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.panel-footer-link {
+    display: block;
+    padding: 12px 16px;
+    color: #667eea;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-family: inherit;
+    text-align: center;
+    border-radius: 8px;
+    min-height: 44px;
+    line-height: 20px;
+    transition: background-color 0.2s ease, color 0.2s ease;
+    border: 1px solid transparent;
+}
+
+.panel-footer-link:hover {
+    background-color: rgba(102, 126, 234, 0.08);
+    color: #5a6fd8;
+}
+
+.panel-footer-link:focus {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+}
+
+.panel-footer-link:active {
+    background-color: rgba(102, 126, 234, 0.15);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .panel-footer-links {
+        margin-top: 30px;
+        padding-bottom: 30px;
+    }
+    
+    .panel-links-separator {
+        margin: 25px 0;
+    }
+    
+    .panel-links-section {
+        gap: 12px;
+    }
+    
+    .panel-footer-link {
+        padding: 16px 20px;
+        font-size: 1rem;
+        min-height: 48px;
+    }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+    .panel-footer-link {
+        border: 1px solid #667eea;
+    }
+    
+    .panel-footer-link:hover {
+        background-color: #667eea;
+        color: white;
+    }
+    
+    .panel-footer-link:focus {
+        outline-width: 4px;
+    }
+    
+    .panel-links-separator {
+        background-color: #333;
+        opacity: 1;
+    }
+}
+
+/* Dark Mode Support (if StackMap implements it) */
+@media (prefers-color-scheme: dark) {
+    .panel-footer-link {
+        color: #a8b4ff;
+    }
+    
+    .panel-footer-link:hover {
+        background-color: rgba(168, 180, 255, 0.1);
+        color: #c4cdff;
+    }
+    
+    .panel-links-separator {
+        background-color: #444;
+    }
+}

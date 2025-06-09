@@ -112,6 +112,37 @@ class HybridPanelManager {
                 <button class="panel-close" onclick="hybridPanelManager.closePanel('right')">
                     Done
                 </button>
+                
+                <!-- Legal and Support Links Footer -->
+                <div class="panel-footer-links">
+                    <div class="panel-links-separator"></div>
+                    
+                    <div class="panel-links-section">
+                        <a href="support.html" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="panel-footer-link" 
+                           aria-label="Support StackMap - opens in new window">
+                            💖 Support Us
+                        </a>
+                        
+                        <a href="terms.html" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="panel-footer-link" 
+                           aria-label="Read Terms of Service - opens in new window">
+                            Terms of Service
+                        </a>
+                        
+                        <a href="privacy.html" 
+                           target="_blank" 
+                           rel="noopener noreferrer" 
+                           class="panel-footer-link" 
+                           aria-label="Read Privacy Policy - opens in new window">
+                            Privacy Policy
+                        </a>
+                    </div>
+                </div>
             </div>
         `;
         
