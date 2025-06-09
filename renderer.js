@@ -45,9 +45,9 @@ class AppRenderer {
         // NOTE: Management cards replaced by FAB system
         // FAB system handles edit mode actions now - no management cards needed
         if (this.appState.ui.editMode) {
-            console.log('Rendering in edit mode - FAB handles edit actions');
-            console.log('Current day:', this.appState.getCurrentDay());
-            console.log('Current activities:', this.appState.getCurrentActivities().length);
+            // console.log('Rendering in edit mode - FAB handles edit actions');
+            // console.log('Current day:', this.appState.getCurrentDay());
+            // console.log('Current activities:', this.appState.getCurrentActivities().length);
             
             // Only show new card form if actively creating a card
             if (this.appState.ui.showingNewCardForm === 'top') {

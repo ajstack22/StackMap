@@ -46,7 +46,7 @@ class GoogleDriveSync {
             // Check for stored auth token
             this.checkStoredAuth();
             
-            console.log('Google Drive API initialized successfully');
+            // console.log('Google Drive API initialized successfully');
         } catch (error) {
             console.error('Error loading Google APIs:', error);
             this.showSyncError('Failed to load Google services. Please refresh the page.');
@@ -65,7 +65,7 @@ class GoogleDriveSync {
                     access_token: this.accessToken
                 });
                 this.updateSignInStatus(true);
-                console.log('Restored Google Drive connection from storage');
+                // console.log('Restored Google Drive connection from storage');
                 
                 // Start sync checks
                 this.startSyncCheckInterval();
@@ -74,7 +74,7 @@ class GoogleDriveSync {
                 // Token expired, clean up
                 localStorage.removeItem('stackmap-google-token');
                 this.accessToken = null;
-                console.log('Stored token expired, need to re-authenticate');
+                // console.log('Stored token expired, need to re-authenticate');
             }
         }
     }
@@ -94,12 +94,12 @@ class GoogleDriveSync {
             error_callback: this.handleTokenError.bind(this)
         });
 
-        console.log('Google Identity Services initialized');
+        // console.log('Google Identity Services initialized');
     }
 
     handleCredentialResponse(response) {
         // This handles the ID token, but we need access token for API calls
-        console.log('Credential response received');
+        // console.log('Credential response received');
     }
 
     handleTokenResponse(response) {
@@ -121,7 +121,7 @@ class GoogleDriveSync {
         });
 
         this.updateSignInStatus(true);
-        console.log('Successfully signed in with access token');
+        // console.log('Successfully signed in with access token');
         
         // Clear folder ID to force refresh on new sign-in
         this.folderId = null;
@@ -158,7 +158,7 @@ class GoogleDriveSync {
                 syncBtn.classList.remove('hidden');
             }
             
-            console.log('Signed in to Google Drive');
+            // console.log('Signed in to Google Drive');
         } else {
             this.currentUser = null;
             this.accessToken = null;
@@ -173,7 +173,7 @@ class GoogleDriveSync {
             syncActions.style.display = 'none';
             syncBtn.classList.add('hidden');
             
-            console.log('Signed out');
+            // console.log('Signed out');
         }
     }
 
@@ -228,7 +228,7 @@ class GoogleDriveSync {
             const data = await response.json();
             
             if (data.error) {
-                console.log('Token is invalid:', data.error);
+                // console.log('Token is invalid:', data.error);
                 return false;
             }
             
@@ -242,7 +242,7 @@ class GoogleDriveSync {
     async refreshTokenIfNeeded() {
         const isValid = await this.checkTokenValidity();
         if (!isValid) {
-            console.log('Token expired, requesting new token...');
+            // console.log('Token expired, requesting new token...');
             // Clear invalid stored token
             localStorage.removeItem('stackmap-google-token');
             this.tokenClient.requestAccessToken({ prompt: '' });
@@ -262,7 +262,7 @@ class GoogleDriveSync {
             const remoteVersion = remoteData.syncMetadata?.version || 0;
             
             if (remoteVersion > this.lastKnownRemoteVersion && remoteVersion !== localVersion) {
-                console.log(`Remote changes detected: v${remoteVersion} (local: v${localVersion})`);
+                // console.log(`Remote changes detected: v${remoteVersion} (local: v${localVersion})`);
                 
                 // Check if remote is newer than local
                 if (remoteVersion > localVersion) {
@@ -278,7 +278,7 @@ class GoogleDriveSync {
             
             this.lastKnownRemoteVersion = remoteVersion;
         } catch (error) {
-            console.log('Error checking for remote changes:', error);
+            // console.log('Error checking for remote changes:', error);
         }
     }
 
@@ -487,7 +487,7 @@ class GoogleDriveSync {
             
             if (existingFile) {
                 // Update existing file using simple media upload
-                console.log('Updating existing file:', existingFile.id);
+                // console.log('Updating existing file:', existingFile.id);
                 
                 response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`, {
                     method: 'PATCH',
@@ -499,7 +499,7 @@ class GoogleDriveSync {
                 });
             } else {
                 // Create new file
-                console.log('Creating new file in folder:', this.folderId);
+                // console.log('Creating new file in folder:', this.folderId);
                 
                 const metadata = {
                     name: this.STACKMAP_FILE_NAME,
@@ -521,11 +521,11 @@ class GoogleDriveSync {
             }
 
             const responseText = await response.text();
-            console.log('Upload response status:', response.status);
+            // console.log('Upload response status:', response.status);
             
             if (response.ok) {
                 this.showSyncSuccess('Saved to Google Drive');
-                console.log('Data uploaded successfully');
+                // console.log('Data uploaded successfully');
                 
                 // Update last known version
                 this.lastKnownRemoteVersion = data.syncMetadata.version;
@@ -607,11 +607,11 @@ class GoogleDriveSync {
                 fields: 'files(id, name)'
             });
 
-            console.log('Folder search response:', response.result);
+            // console.log('Folder search response:', response.result);
 
             if (response.result.files && response.result.files.length > 0) {
                 this.folderId = response.result.files[0].id;
-                console.log('Found existing folder:', this.folderId);
+                // console.log('Found existing folder:', this.folderId);
                 return;
             }
 
@@ -625,7 +625,7 @@ class GoogleDriveSync {
             });
 
             this.folderId = folderResponse.result.id;
-            console.log('Created StackMap folder:', this.folderId);
+            // console.log('Created StackMap folder:', this.folderId);
         } catch (error) {
             console.error('Error ensuring folder:', error);
             throw error;
@@ -644,7 +644,7 @@ class GoogleDriveSync {
                 fields: 'files(id, name)'
             });
 
-            console.log('File search response:', response.result);
+            // console.log('File search response:', response.result);
 
             return response.result.files && response.result.files.length > 0 ? response.result.files[0] : null;
         } catch (error) {
@@ -745,7 +745,7 @@ class GoogleDriveSync {
             try {
                 await this.uploadData();
             } catch (error) {
-                console.log('Auto-sync failed, will try again next time');
+                // console.log('Auto-sync failed, will try again next time');
             }
         }
     }

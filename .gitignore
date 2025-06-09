@@ -1,1 +1,52 @@
-*.env*
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# Development
+.DS_Store
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+*.sublime-*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+logs/
+*.log
+
+# Testing
+coverage/
+.nyc_output/
+
+# Build outputs
+dist/
+build/
+
+# Cache
+.cache/
+.parcel-cache/
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Backup files
+*.backup
+*.bak
+
+# API Keys (if any slip through)
+*apikey*
+*api_key*
+*secret*
+
+# Local development files
+dev-tools.js
+uat-*.js
+test-*.js

@@ -9,7 +9,7 @@ class CelebrationManager {
         this.animations = this.initializeAnimations();
         this.setupAccessibilityFeatures();
         this.injectAnimationStyles();
-        console.log('🎉 Celebration Manager initialized');
+        // console.log('🎉 Celebration Manager initialized');
     }
 
     /**
@@ -19,26 +19,26 @@ class CelebrationManager {
     initializeAnimations() {
         return {
             task: {
-                'none': { name: '❌ No Celebration', func: this.noAnimation },
-                'random': { name: '🎲 Random', func: this.randomTaskCelebration },
-                'rainbow': { name: '🌈 Rainbow Confetti', func: this.rainbowConfetti },
-                'ocean': { name: '🌊 Ocean Blue Confetti', func: this.oceanConfetti },
-                'sunset': { name: '🌅 Sunset Orange Confetti', func: this.sunsetConfetti },
-                'spring': { name: '🌸 Spring Pastel Confetti', func: this.springConfetti },
-                'gold': { name: '⭐ Gold Star Confetti', func: this.goldConfetti },
-                'heart': { name: '💖 Pink Heart Confetti', func: this.heartConfetti },
-                'cosmic': { name: '🌌 Cosmic Purple Confetti', func: this.cosmicConfetti }
+                'none': { name: '❌ No Celebration', func: this.noAnimation.bind(this) },
+                'random': { name: '🎲 Random', func: this.randomTaskCelebration.bind(this) },
+                'rainbow': { name: '🌈 Rainbow Confetti', func: this.rainbowConfetti.bind(this) },
+                'ocean': { name: '🌊 Ocean Blue Confetti', func: this.oceanConfetti.bind(this) },
+                'sunset': { name: '🌅 Sunset Orange Confetti', func: this.sunsetConfetti.bind(this) },
+                'spring': { name: '🌸 Spring Pastel Confetti', func: this.springConfetti.bind(this) },
+                'gold': { name: '⭐ Gold Star Confetti', func: this.goldConfetti.bind(this) },
+                'heart': { name: '💖 Pink Heart Confetti', func: this.heartConfetti.bind(this) },
+                'cosmic': { name: '🌌 Cosmic Purple Confetti', func: this.cosmicConfetti.bind(this) }
             },
             routine: {
-                'none': { name: '❌ No Celebration', func: this.noAnimation },
-                'random': { name: '🎲 Random', func: this.randomRoutineCelebration },
-                'rainbow': { name: '🌈 Rainbow Fireworks', func: this.rainbowFireworks },
-                'ocean': { name: '🌊 Ocean Blue Fireworks', func: this.oceanFireworks },
-                'sunset': { name: '🌅 Sunset Orange Fireworks', func: this.sunsetFireworks },
-                'spring': { name: '🌸 Spring Pastel Fireworks', func: this.springFireworks },
-                'gold': { name: '⭐ Gold Star Fireworks', func: this.goldFireworks },
-                'cosmic': { name: '🌌 Cosmic Purple Fireworks', func: this.cosmicFireworks },
-                'ultimate': { name: '🎆 Ultimate Fireworks', func: this.ultimateFireworks }
+                'none': { name: '❌ No Celebration', func: this.noAnimation.bind(this) },
+                'random': { name: '🎲 Random', func: this.randomRoutineCelebration.bind(this) },
+                'rainbow': { name: '🌈 Rainbow Fireworks', func: this.rainbowFireworks.bind(this) },
+                'ocean': { name: '🌊 Ocean Blue Fireworks', func: this.oceanFireworks.bind(this) },
+                'sunset': { name: '🌅 Sunset Orange Fireworks', func: this.sunsetFireworks.bind(this) },
+                'spring': { name: '🌸 Spring Pastel Fireworks', func: this.springFireworks.bind(this) },
+                'gold': { name: '⭐ Gold Star Fireworks', func: this.goldFireworks.bind(this) },
+                'cosmic': { name: '🌌 Cosmic Purple Fireworks', func: this.cosmicFireworks.bind(this) },
+                'ultimate': { name: '🎆 Ultimate Fireworks', func: this.ultimateFireworks.bind(this) }
             }
         };
     }
@@ -373,7 +373,7 @@ class CelebrationManager {
      */
     celebrateTask(element, userId) {
         const currentUser = this.app.appState.getCurrentUser();
-        const preference = currentUser.settings?.taskCelebration || 'gentle-glow';
+        const preference = currentUser.settings?.taskCelebration || 'rainbow';
         
         if (this.shouldSkipAnimation()) {
             this.noAnimation(element);
@@ -388,7 +388,7 @@ class CelebrationManager {
 
     celebrateRoutine(containerElement, userId) {
         const currentUser = this.app.appState.getCurrentUser();
-        const preference = currentUser.settings?.routineCelebration || 'garden-growth';
+        const preference = currentUser.settings?.routineCelebration || 'rainbow';
         
         if (this.shouldSkipAnimation()) {
             this.noAnimation(containerElement);
@@ -415,7 +415,7 @@ class CelebrationManager {
         // Listen for changes to motion preferences
         const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
         motionQuery.addListener((e) => {
-            console.log('Motion preference changed:', e.matches ? 'reduced' : 'normal');
+            // console.log('Motion preference changed:', e.matches ? 'reduced' : 'normal');
         });
     }
 

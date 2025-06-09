@@ -75,22 +75,6 @@
       ]
     }
   ],
-  "screenshots": [
-    {
-      "src": "/screenshot-narrow.png",
-      "sizes": "540x720",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "StackMap mobile view showing daily routine cards"
-    },
-    {
-      "src": "/screenshot-wide.png", 
-      "sizes": "1024x768",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "StackMap desktop view with activity management"
-    }
-  ],
   "prefer_related_applications": false,
   "related_applications": [],
   "features": [

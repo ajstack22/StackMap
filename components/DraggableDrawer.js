@@ -20,10 +20,10 @@ class DraggableDrawer {
     }
     
     init() {
-        console.log('Initializing drawer for:', this.containerId);
-        console.log('Container:', this.container);
-        console.log('Indicator:', this.indicator);
-        console.log('Submenu:', this.submenu);
+        // console.log('Initializing drawer for:', this.containerId);
+        // console.log('Container:', this.container);
+        // console.log('Indicator:', this.indicator);
+        // console.log('Submenu:', this.submenu);
         
         if (!this.container || !this.indicator || !this.submenu) {
             console.error('Missing required elements for drawer');

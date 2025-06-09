@@ -124,7 +124,7 @@ class HybridPanelManager {
         backdrop.id = 'hybridBackdrop';
         backdrop.className = 'panel-backdrop';
         backdrop.addEventListener('click', (e) => {
-            console.log('Backdrop clicked');
+            // console.log('Backdrop clicked');
             // Only close if clicking the backdrop itself, not a child element
             if (e.target === backdrop) {
                 this.closeAllPanels();
@@ -222,7 +222,7 @@ class HybridPanelManager {
             }
         }
         
-        console.log(`Opened ${side} panel`);
+        // console.log(`Opened ${side} panel`);
     }
 
     closePanel(side) {
@@ -263,7 +263,7 @@ class HybridPanelManager {
             }
         }
         
-        console.log(`Closed ${side} panel`);
+        // console.log(`Closed ${side} panel`);
     }
 
     closeAllPanels() {
@@ -372,6 +372,20 @@ class HybridPanelManager {
         if (this.app.grownupMode) {
             content += `
                 <div class="panel-section">
+                    <label>Actions</label>
+                    <div class="admin-buttons">
+                        <button class="admin-btn" onclick="hybridPanelManager.addNewCard()">
+                            <span class="material-icons">add</span>
+                            Add Activity
+                        </button>
+                        <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
+                            <span class="material-icons">person_add</span>
+                            Add User
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
                     <label>Data Tools</label>
                     <div class="admin-buttons">
                         <button class="admin-btn" onclick="hybridPanelManager.exportData()">
@@ -398,7 +412,7 @@ class HybridPanelManager {
         const currentColor = this.app.appState.settings.backgroundColor;
         const isMobile = window.innerWidth <= 768;
         
-        // Rainbow-organized color palette (3 rows) with colors dark enough for white text
+        // Rainbow-organized color palette (4 rows) with colors dark enough for white text
         const rainbowColors = [
             // ROW 1: Reds to Oranges to Yellows
             '#DC143C', // Crimson Red
@@ -411,16 +425,20 @@ class HybridPanelManager {
             // ROW 2: Greens to Blues to Purples
             '#388E3C', // Green
             '#00695C', // Dark Teal
+            '#00838F', // Dark Turquoise
             '#0097A7', // Cyan
             '#1976D2', // Blue
             '#303F9F', // Indigo
-            '#512DA8', // Deep Purple
             
-            // ROW 3: Additional colors + Custom picker
+            // ROW 3: Purples and Additional colors
+            '#512DA8', // Deep Purple
             '#7B1FA2', // Purple
+            '#C2185B', // Dark Rose/Berry
             '#5D4037', // Brown
             '#455A64', // Blue Grey
             '#B71C1C', // Dark Red
+            
+            // ROW 4: Deep Blues + Custom picker
             '#1A237E', // Deep Blue
             '#000000'  // Custom color picker (palette icon) - last position
         ];
@@ -609,7 +627,7 @@ class HybridPanelManager {
                 <div class="panel-section">
                     <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
                         <span class="material-icons">arrow_back</span>
-                        Back to Management
+                        Back
                     </button>
                 </div>
                 
@@ -696,7 +714,7 @@ class HybridPanelManager {
                 <div class="panel-section">
                     <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
                         <span class="material-icons">arrow_back</span>
-                        Back to Management
+                        Back
                     </button>
                 </div>
                 
@@ -806,7 +824,7 @@ class HybridPanelManager {
         // Update logo colors
         this.updateLogoColors(color);
         
-        console.log('Color changed to:', color);
+        // console.log('Color changed to:', color);
     }
     
     openCustomColorPicker() {
@@ -962,7 +980,7 @@ class HybridPanelManager {
             this.app.renderer.renderCards();
         }
         
-        console.log('Display mode changed to:', mode);
+        // console.log('Display mode changed to:', mode);
     }
 
     toggleCompletionIndicators(show) {
@@ -983,7 +1001,7 @@ class HybridPanelManager {
             this.app.renderer.renderCards();
         }
         
-        console.log('Completion indicators toggled to:', show);
+        // console.log('Completion indicators toggled to:', show);
     }
     
     selectUser(userId) {
@@ -1000,7 +1018,7 @@ class HybridPanelManager {
                 this.renderPanelContent('right');
             }
             
-            console.log('Switched to user:', userId);
+            // console.log('Switched to user:', userId);
         }
     }
     
@@ -1018,7 +1036,7 @@ class HybridPanelManager {
             this.renderPanelContent('right');
         }
         
-        console.log('Switched to day:', day);
+        // console.log('Switched to day:', day);
     }
     
     updateSubtitle() {
@@ -1072,7 +1090,7 @@ class HybridPanelManager {
                 text-align: center;
             `;
             
-            console.log('Creating validation modal');
+            // console.log('Creating validation modal');
         
         // Get a random validation question
         const questions = [
@@ -1259,7 +1277,7 @@ class HybridPanelManager {
             // Correct answer - enter edit mode
             this.app.enterGrownupMode();
             this.removeValidationModal();
-            console.log('Validation successful - entered edit mode');
+            // console.log('Validation successful - entered edit mode');
             
             // Re-render panel content to show Edit Mode section
             this.renderPanelContent('right');
@@ -1846,7 +1864,7 @@ class HybridPanelManager {
                 <div class="panel-section">
                     <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
                         <span class="material-icons">arrow_back</span>
-                        Back to Management
+                        Back
                     </button>
                 </div>
                 
@@ -1926,6 +1944,7 @@ class HybridPanelManager {
         // Re-render the management panel with sync settings
         this.renderPanelContent('right');
     }
+    
 
     /**
      * Google Drive sync methods
@@ -1987,8 +2006,8 @@ class HybridPanelManager {
      */
     renderCelebrationPreferences() {
         const currentUser = this.app.appState.getCurrentUser();
-        const taskCelebration = currentUser.settings?.taskCelebration || 'gentle-glow';
-        const routineCelebration = currentUser.settings?.routineCelebration || 'garden-growth';
+        const taskCelebration = currentUser.settings?.taskCelebration || 'rainbow';
+        const routineCelebration = currentUser.settings?.routineCelebration || 'rainbow';
 
         return `
             <div class="panel-section">
@@ -2488,7 +2507,7 @@ class HybridPanelManager {
         // Listen for back button presses
         this.setupBackButtonListener();
         
-        console.log('🔙 Android back button handling initialized');
+        // Android back button handling initialized
     }
 
     /**
@@ -2598,7 +2617,7 @@ class HybridPanelManager {
         this.setupIOSGestureProtection();
         this.enhanceIOSNavigation();
         
-        console.log('🍎 iOS navigation enhancements initialized');
+        // iOS navigation enhancements initialized
     }
 
     /**

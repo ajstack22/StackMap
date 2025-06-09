@@ -164,3 +164,20 @@ URL Parameters:
 if (window.location.search.includes('devtools=1')) {
     StackMapDev.showCacheStatus();
 }
+
+// Test splash screen functions
+window.testSplash = function() {
+    localStorage.removeItem('stackmap-splash-seen');
+    location.reload();
+};
+
+// Test two-page splash screen without reload
+window.showSplash = function() {
+    const app = window.stackMapApp;
+    if (app) {
+        // Reset the default user name to trigger splash
+        const currentUser = app.appState.getCurrentUser();
+        currentUser.name = 'StackMap User';
+        app.showSplashScreen();
+    }
+};

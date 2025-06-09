@@ -95,10 +95,10 @@ class AppState {
         
         // Debug logging for tomorrow activities
         if (!isToday) {
-            console.log('TOMORROW: Activity added successfully to tomorrow activities');
-            console.log('TOMORROW: New activity:', newActivity.title);
-            console.log('TOMORROW: Total tomorrow activities:', user.tomorrowActivities.length);
-            console.log('TOMORROW: Legacy activities array synced:', this.activities.length);
+            // console.log('TOMORROW: Activity added successfully to tomorrow activities');
+            // console.log('TOMORROW: New activity:', newActivity.title);
+            // console.log('TOMORROW: Total tomorrow activities:', user.tomorrowActivities.length);
+            // console.log('TOMORROW: Legacy activities array synced:', this.activities.length);
         }
         
         this._triggerSave();
@@ -344,8 +344,8 @@ class AppState {
                 showCompletionIndicators: user.settings?.showCompletionIndicators ?? CONFIG.SHOW_COMPLETION_DEFAULT,
                 autoSync: user.settings?.autoSync ?? true,
                 backupReminder: user.settings?.backupReminder ?? true,
-                taskCelebration: user.settings?.taskCelebration || 'gentle-glow',
-                routineCelebration: user.settings?.routineCelebration || 'garden-growth'
+                taskCelebration: user.settings?.taskCelebration || 'rainbow',
+                routineCelebration: user.settings?.routineCelebration || 'rainbow'
             };
             
             // Apply theme

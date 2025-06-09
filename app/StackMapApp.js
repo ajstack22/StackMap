@@ -217,7 +217,7 @@ class StackMapApp {
         let currentY = 0;
         
         const openDrawer = (savePreference = true) => {
-            console.log('Opening drawer...');
+        // console.log('Opening drawer...');
             isOpen = true;
             drawerHandle.setAttribute('aria-expanded', 'true');
             drawerExtension.setAttribute('aria-hidden', 'false');
@@ -246,15 +246,15 @@ class StackMapApp {
             });
             
             this.populateDrawerSelects();
-            console.log('Drawer opened');
+        // console.log('Drawer opened');
         };
         
         const closeDrawer = (savePreference = true) => {
-            console.log('closeDrawer called');
+        // console.log('closeDrawer called');
             
             // Check if drawer is locked in edit mode
             if (this.grownupMode && drawerExtension.classList.contains('edit-mode-locked')) {
-                console.log('Drawer close prevented - locked in edit mode');
+        // console.log('Drawer close prevented - locked in edit mode');
                 return;
             }
             
@@ -282,7 +282,7 @@ class StackMapApp {
                 group.style.transitionDuration = '0.2s';
             });
             
-            console.log('Drawer closed');
+        // console.log('Drawer closed');
         };
         
         // Touch/drag support
@@ -318,13 +318,13 @@ class StackMapApp {
         // Click handlers
         drawerHandle.addEventListener('click', (e) => {
             e.stopPropagation(); // Prevent event bubbling
-            console.log('Drawer handle clicked, isOpen:', isOpen);
+        // console.log('Drawer handle clicked, isOpen:', isOpen);
             if (!isDragging) {
                 if (isOpen) {
-                    console.log('Closing drawer...');
+        // console.log('Closing drawer...');
                     closeDrawer();
                 } else {
-                    console.log('Opening drawer...');
+        // console.log('Opening drawer...');
                     openDrawer();
                 }
             }
@@ -379,9 +379,9 @@ class StackMapApp {
         // Set initial state based on preferences (after all event listeners are set up)
         if (isOpen) {
             openDrawer(false); // Don't save preference on initialization
-            console.log('Drawer initialized in open state');
+        // console.log('Drawer initialized in open state');
         } else {
-            console.log('Drawer initialized in closed state');
+        // console.log('Drawer initialized in closed state');
         }
     }
     
@@ -402,20 +402,20 @@ class StackMapApp {
     }
     
     populateDrawerSelects() {
-        console.log('populateDrawerSelects called');
+        // console.log('populateDrawerSelects called');
         const userSection = document.getElementById('userSection');
         const daySelect = document.getElementById('drawerDaySelect');
         
-        console.log('User section element:', userSection);
-        console.log('Day select element:', daySelect);
+        // console.log('User section element:', userSection);
+        // console.log('Day select element:', daySelect);
         
         if (userSection) {
             const allUsers = this.appState.getAllUsers();
-            console.log('All users:', allUsers);
+        // console.log('All users:', allUsers);
             userSection.style.display = 'flex'; // Always show section
             
             
-            console.log('populateDrawerSelects - Users:', allUsers.length, 'GrownupMode:', this.grownupMode);
+        // console.log('populateDrawerSelects - Users:', allUsers.length, 'GrownupMode:', this.grownupMode);
             
             if (allUsers.length > 1) {
                 // Multiple users - show custom dropdown (no label for cleaner look)
@@ -427,7 +427,7 @@ class StackMapApp {
                 `;
                 
                 const userSelect = document.getElementById('drawerUserSelect');
-                console.log('User select element after creation:', userSelect);
+        // console.log('User select element after creation:', userSelect);
                 
                 if (!userSelect) {
                     console.error('Failed to find user select element after creation');
@@ -435,7 +435,7 @@ class StackMapApp {
                 }
                 
                 userSelect.addEventListener('click', (e) => {
-                    console.log('User select clicked!', e);
+        // console.log('User select clicked!', e);
                     e.preventDefault();
                     e.stopPropagation();
                     
@@ -464,7 +464,7 @@ class StackMapApp {
                     }
                     
                     this.showNativeDropdown('User', dropdownOptions, (selectedId) => {
-                        console.log('User dropdown selection:', selectedId);
+        // console.log('User dropdown selection:', selectedId);
                         
                         // Check if it's an edit action
                         if (selectedId === 'edit-current-user') {
@@ -522,7 +522,7 @@ class StackMapApp {
             `;
             
             const newDaySelect = document.getElementById('drawerDaySelect');
-            console.log('Day select element after creation:', newDaySelect);
+        // console.log('Day select element after creation:', newDaySelect);
             
             if (!newDaySelect) {
                 console.error('Failed to find day select element after creation');
@@ -530,7 +530,7 @@ class StackMapApp {
             }
             
             newDaySelect.addEventListener('click', (e) => {
-                console.log('Day select clicked!', e);
+        // console.log('Day select clicked!', e);
                 e.preventDefault();
                 e.stopPropagation();
                 
@@ -543,10 +543,10 @@ class StackMapApp {
                     icon: day.icon,
                     selected: day.id === freshCurrentDay
                 })), (selectedId) => {
-                    console.log('Day selected:', selectedId);
-                    console.log('Current day before switch:', this.appState.getCurrentDay());
+        // console.log('Day selected:', selectedId);
+        // console.log('Current day before switch:', this.appState.getCurrentDay());
                     this.switchDay(selectedId);
-                    console.log('Current day after switch:', this.appState.getCurrentDay());
+        // console.log('Current day after switch:', this.appState.getCurrentDay());
                     const selected = dayOptions.find(d => d.id === selectedId);
                     if (selected && newDaySelect) {
                         newDaySelect.innerHTML = `<span>${SecurityUtils.escapeHtml(selected.icon)} ${SecurityUtils.escapeHtml(selected.text)}</span>`;
@@ -560,7 +560,7 @@ class StackMapApp {
     }
     
     showCustomDropdown(title, options, onSelect, triggerElement = null) {
-        console.log('showCustomDropdown called with:', title, options);
+        // console.log('showCustomDropdown called with:', title, options);
         
         // Use native-style dropdown if trigger element is provided
         if (triggerElement) {
@@ -574,13 +574,13 @@ class StackMapApp {
         const closeBtn = modal?.querySelector('.dropdown-modal-close');
         const backdrop = modal?.querySelector('.dropdown-modal-backdrop');
         
-        console.log('Modal elements found:', {
-            modal: !!modal,
-            modalTitle: !!modalTitle,
-            modalOptions: !!modalOptions,
-            closeBtn: !!closeBtn,
-            backdrop: !!backdrop
-        });
+        // console.log('Modal elements found:', {
+        //     modal: !!modal,
+        //     modalTitle: !!modalTitle,
+        //     modalOptions: !!modalOptions,
+        //     closeBtn: !!closeBtn,
+        //     backdrop: !!backdrop
+        // });
         
         if (!modal || !modalTitle || !modalOptions) {
             console.error('Missing modal elements for dropdown');
@@ -596,7 +596,7 @@ class StackMapApp {
             </button>
         `).join('');
         
-        console.log('Modal content populated, showing modal');
+        // console.log('Modal content populated, showing modal');
         modal.classList.remove('hidden');
         
         // Force modal to be extremely visible using inline styles
@@ -639,15 +639,15 @@ class StackMapApp {
         
         // Debug modal visibility
         setTimeout(() => {
-            console.log('Modal classes after show:', modal.className);
-            console.log('Modal display style:', getComputedStyle(modal).display);
-            console.log('Modal z-index:', getComputedStyle(modal).zIndex);
-            console.log('Modal visibility:', getComputedStyle(modal).visibility);
-            console.log('Modal position:', getComputedStyle(modal).position);
+        // console.log('Modal classes after show:', modal.className);
+        // console.log('Modal display style:', getComputedStyle(modal).display);
+        // console.log('Modal z-index:', getComputedStyle(modal).zIndex);
+        // console.log('Modal visibility:', getComputedStyle(modal).visibility);
+        // console.log('Modal position:', getComputedStyle(modal).position);
         }, 100);
         
         const handleClose = () => {
-            console.log('Closing dropdown modal');
+        // console.log('Closing dropdown modal');
             modal.classList.add('hidden');
             modal.style.cssText = ''; // Clear forced styles
             modal.style.display = 'none'; // Ensure it's hidden
@@ -660,16 +660,16 @@ class StackMapApp {
         
         modalOptions.querySelectorAll('.dropdown-option').forEach(option => {
             option.addEventListener('click', (e) => {
-                console.log('Dropdown option click event fired:', e);
+        // console.log('Dropdown option click event fired:', e);
                 e.preventDefault();
                 e.stopPropagation();
                 const value = option.getAttribute('data-value');
-                console.log('Dropdown option clicked:', value, 'Element:', option);
+        // console.log('Dropdown option clicked:', value, 'Element:', option);
                 if (value) {
-                    console.log('Calling onSelect with:', value);
+        // console.log('Calling onSelect with:', value);
                     try {
                         onSelect(value);
-                        console.log('onSelect called successfully, now closing modal');
+        // console.log('onSelect called successfully, now closing modal');
                     } catch (error) {
                         console.error('Error in onSelect callback:', error);
                     }
@@ -680,11 +680,11 @@ class StackMapApp {
             });
         });
         
-        console.log('Event listeners attached to dropdown options');
+        // console.log('Event listeners attached to dropdown options');
     }
     
     showNativeDropdown(title, options, onSelect, triggerElement) {
-        console.log('showNativeDropdown called with:', title, options, triggerElement);
+        // console.log('showNativeDropdown called with:', title, options, triggerElement);
         
         // Remove any existing native dropdown
         const existingDropdown = document.querySelector('.native-dropdown');
@@ -694,7 +694,7 @@ class StackMapApp {
         
         // Mobile-specific detection
         const isMobile = window.innerWidth <= 768 || /Mobi|Android/i.test(navigator.userAgent);
-        console.log('Screen width:', window.innerWidth, 'Detected as mobile:', isMobile);
+        // console.log('Screen width:', window.innerWidth, 'Detected as mobile:', isMobile);
         
         if (isMobile) {
             // Use full-screen modal picker for mobile
@@ -1076,11 +1076,11 @@ class StackMapApp {
             return;
         }
         
-        console.log('DEFAULT_ACTIVITIES found, loading', DEFAULT_ACTIVITIES.length, 'activities');
+        // console.log('DEFAULT_ACTIVITIES found, loading', DEFAULT_ACTIVITIES.length, 'activities');
         
         // Load all default activities from the external data file
         DEFAULT_ACTIVITIES.forEach((activity, index) => {
-            console.log(`Adding activity ${index + 1}:`, activity.title, 'visible:', activity.visible);
+        // console.log(`Adding activity ${index + 1}:`, activity.title, 'visible:', activity.visible);
             // Ensure all default activities have a card type
             const activityWithType = {
                 ...activity,
@@ -1116,9 +1116,9 @@ class StackMapApp {
         // Switch back to original day
         this.appState.setCurrentDay(currentDay);
         
-        console.log('Total activities after loading defaults:', this.appState.activities.length);
-        console.log('Visible activities:', this.appState.activities.filter(a => a.visible).length);
-        console.log('Hidden activities:', this.appState.activities.filter(a => !a.visible).length);
+        // console.log('Total activities after loading defaults:', this.appState.activities.length);
+        // console.log('Visible activities:', this.appState.activities.filter(a => a.visible).length);
+        // console.log('Hidden activities:', this.appState.activities.filter(a => !a.visible).length);
     }
     
     setupAutoSyncInterval() {
@@ -1156,7 +1156,7 @@ class StackMapApp {
 
     updateGrownupModeButton() {
         // OLD SYSTEM DISABLED - Using hybrid panel system now
-        console.log('StackMapApp: updateGrownupModeButton called but disabled - using HybridPanelManager');
+        // console.log('StackMapApp: updateGrownupModeButton called but disabled - using HybridPanelManager');
         
         // Hide old button if it exists
         const btn = document.getElementById('grownupBtn');
@@ -1179,7 +1179,7 @@ class StackMapApp {
         if (grownupBtn) {
             // Disable old button - edit mode is now handled by hybrid panels
             grownupBtn.style.display = 'none';
-            console.log('StackMapApp: Old grownup button disabled, using hybrid panels');
+        // console.log('StackMapApp: Old grownup button disabled, using hybrid panels');
         }
         
         // Import/Export file handling
@@ -1206,7 +1206,7 @@ class StackMapApp {
     }
     
     showAddUserDialog() {
-        console.log('showAddUserDialog called in StackMapApp');
+        // console.log('showAddUserDialog called in StackMapApp');
         // Use the new Add User modal instead of prompt
         if (typeof ComponentBuilder !== 'undefined' && ComponentBuilder.showAddUserModal) {
             ComponentBuilder.showAddUserModal();
@@ -1216,7 +1216,7 @@ class StackMapApp {
     }
     
     showEditUserDialog(user) {
-        console.log('showEditUserDialog called for user:', user);
+        // console.log('showEditUserDialog called for user:', user);
         // Use the ComponentBuilder to show edit user modal
         if (typeof ComponentBuilder !== 'undefined' && ComponentBuilder.showEditUserModal) {
             ComponentBuilder.showEditUserModal(user);
@@ -1234,7 +1234,7 @@ class StackMapApp {
     }
     
     deleteUser(userId) {
-        console.log('deleteUser called for userId:', userId);
+        // console.log('deleteUser called for userId:', userId);
         try {
             // Use AppState's deleteUser method if it exists
             if (typeof this.appState.deleteUser === 'function') {
@@ -1242,7 +1242,7 @@ class StackMapApp {
                 if (success) {
                     this.populateDrawerSelects();
                     this.render();
-                    console.log('User deleted successfully');
+        // console.log('User deleted successfully');
                 }
             } else {
                 console.error('AppState.deleteUser method not available');
@@ -1305,7 +1305,7 @@ class StackMapApp {
     
     // Story 4: Switch between today and tomorrow
     switchDay(day) {
-        console.log('switchDay called with:', day, 'current:', this.appState.getCurrentDay());
+        // console.log('switchDay called with:', day, 'current:', this.appState.getCurrentDay());
         if (this.appState.getCurrentDay() !== day) {
             this.appState.setCurrentDay(day);
             
@@ -1313,7 +1313,7 @@ class StackMapApp {
             if (day === 'tomorrow') {
                 const user = this.appState.getCurrentUser();
                 if (user.tomorrowActivities.length === 0 && user.activities.length > 0) {
-                    console.log('Tomorrow is empty, copying recurring activities from today');
+        // console.log('Tomorrow is empty, copying recurring activities from today');
                     // Copy recurring activities from today to tomorrow
                     user.activities.forEach(activity => {
                         if (activity.cardType === 'recurring' || !activity.cardType) {
@@ -1368,14 +1368,14 @@ class StackMapApp {
             this.render();
             this.updateDayCounts();
             
-            console.log('After switchDay - Current activities:', this.appState.getCurrentActivities().length);
-            console.log('Edit mode:', this.appState.ui.editMode);
-            console.log('Grownup mode:', this.grownupMode);
+        // console.log('After switchDay - Current activities:', this.appState.getCurrentActivities().length);
+        // console.log('Edit mode:', this.appState.ui.editMode);
+        // console.log('Grownup mode:', this.grownupMode);
             
             // Debug management cards after render
             setTimeout(() => {
                 const managementCards = document.querySelectorAll('.management-card');
-                console.log('Management cards in DOM after render:', managementCards.length);
+        // console.log('Management cards in DOM after render:', managementCards.length);
                 if (managementCards.length === 0) {
                     console.warn('No management cards found! Edit mode:', this.appState.ui.editMode);
                 }
@@ -1427,20 +1427,22 @@ class StackMapApp {
         const splashScreen = document.getElementById('splashScreen');
         if (!splashScreen) return;
         
+        // Reset pages to initial state
+        const page1 = document.getElementById('splashPage1');
+        const page2 = document.getElementById('splashPage2');
+        page1.classList.remove('hidden', 'splash-page-transition-out', 'splash-page-transition-in');
+        page2.classList.add('hidden');
+        page2.classList.remove('splash-page-transition-out', 'splash-page-transition-in');
+        
+        // Reset fade-out class
+        splashScreen.classList.remove('fade-out');
+        
         // Set up the splash screen
         this.setupSplashScreen();
         
         // Show splash screen
         splashScreen.classList.remove('hidden');
         this.splashShown = true;
-        
-        // Focus on name input
-        setTimeout(() => {
-            const nameInput = document.getElementById('splashUserName');
-            if (nameInput) {
-                nameInput.focus();
-            }
-        }, 300);
     }
     
     setupSplashScreen() {
@@ -1449,6 +1451,11 @@ class StackMapApp {
         const startButton = document.getElementById('splashStartButton');
         const refreshButton = document.getElementById('splashEmojiRefresh');
         const optionsContainer = document.getElementById('splashEmojiOptions');
+        const nextButton = document.getElementById('splashNextButton');
+        const backButton = document.getElementById('splashBackButton');
+        const page1 = document.getElementById('splashPage1');
+        const page2 = document.getElementById('splashPage2');
+        const splashScreen = document.getElementById('splashScreen');
         
         // Common emojis for user avatars
         this.userEmojis = [
@@ -1465,8 +1472,55 @@ class StackMapApp {
         // Initialize with default emoji
         this.selectedEmoji = '👤';
         
-        // Show random emojis
-        this.showRandomEmojis();
+        // Next button handler (Page 1 -> Page 2)
+        nextButton.addEventListener('click', () => {
+            // Add transitioning class to prevent initial animation interference
+            page1.classList.add('transitioning');
+            page2.classList.add('transitioning');
+            
+            // Animate page transition
+            page1.classList.add('slide-out-left');
+            
+            setTimeout(() => {
+                page1.classList.add('hidden');
+                page1.classList.remove('slide-out-left');
+                page2.classList.remove('hidden');
+                page2.classList.add('slide-in-right');
+                
+                // Show random emojis when entering page 2
+                this.showRandomEmojis();
+                
+                // Focus on name input and cleanup animation classes
+                setTimeout(() => {
+                    nameInput.focus();
+                    page2.classList.remove('slide-in-right', 'transitioning');
+                    page1.classList.remove('transitioning');
+                }, 400);
+            }, 400);
+        });
+        
+        // Back button handler (Page 2 -> Page 1)
+        backButton.addEventListener('click', () => {
+            // Add transitioning class to prevent initial animation interference
+            page1.classList.add('transitioning');
+            page2.classList.add('transitioning');
+            
+            // Animate page transition back
+            page2.classList.add('slide-out-right');
+            
+            setTimeout(() => {
+                page2.classList.add('hidden');
+                page2.classList.remove('slide-out-right');
+                page1.classList.remove('hidden');
+                page1.classList.add('slide-in-left');
+                
+                // Cleanup animation classes
+                setTimeout(() => {
+                    page1.classList.remove('slide-in-left', 'transitioning');
+                    page2.classList.remove('transitioning');
+                }, 400);
+            }, 400);
+        });
         
         // Enable/disable start button based on name input
         const checkCanStart = () => {
@@ -1491,6 +1545,30 @@ class StackMapApp {
         startButton.addEventListener('click', () => {
             this.completeSplashScreen();
         });
+        
+        // Keyboard navigation
+        const handleKeyDown = (e) => {
+            // Escape key handling
+            if (e.key === 'Escape') {
+                // Don't allow closing on first visit
+                if (!localStorage.getItem('stackmap-splash-seen')) {
+                    return;
+                }
+                
+                // Close splash screen
+                splashScreen.classList.add('fade-out');
+                setTimeout(() => {
+                    splashScreen.classList.add('hidden');
+                    this.splashShown = false;
+                    document.removeEventListener('keydown', handleKeyDown);
+                }, 300);
+            }
+        };
+        
+        // Add keyboard listener when splash is shown
+        if (this.splashShown) {
+            document.addEventListener('keydown', handleKeyDown);
+        }
     }
     
     showRandomEmojis() {
@@ -1670,7 +1748,7 @@ class StackMapApp {
     }
 
     enterGrownupMode() {
-        console.log('🚪 Entering grown-up mode');
+        // console.log('🚪 Entering grown-up mode');
         
         this.grownupMode = true;
         this.appState.ui.editMode = true;
@@ -1702,13 +1780,13 @@ class StackMapApp {
         this.render();
         this.syncFixedHeader();
         
-        console.log('✅ Edit mode activated with FAB');
+        // console.log('✅ Edit mode activated with FAB');
         
-        console.log('👨‍💼 Entered edit mode with back button support');
+        // console.log('👨‍💼 Entered edit mode with back button support');
     }
 
     exitGrownupMode() {
-        console.log('🚪 Exiting grown-up mode');
+        // console.log('🚪 Exiting grown-up mode');
         
         this.grownupMode = false;
         this.appState.ui.editMode = false;
@@ -1780,14 +1858,14 @@ class StackMapApp {
         this.render();
         this.syncFixedHeader();
         
-        console.log('👶 Exited edit mode');
+        // console.log('👶 Exited edit mode');
     }
 
     /**
      * Open the data management panel
      */
     openDataManagementPanel() {
-        console.log('💾 Opening Data Management Panel');
+        // console.log('💾 Opening Data Management Panel');
         if (this.dataPanel) {
             this.dataPanel.open();
         }
@@ -1809,7 +1887,7 @@ class StackMapApp {
      */
     ensureIOSNavigationAccessibility() {
         // Add any additional navigation safeguards for iOS PWA
-        console.log('🍎 iOS PWA navigation accessibility ensured');
+        // console.log('🍎 iOS PWA navigation accessibility ensured');
     }
 
     /**
@@ -1819,7 +1897,7 @@ class StackMapApp {
         // Handle iOS keyboard quirks that might affect navigation
         if (window.hybridPanelManager?.isIOSPWA) {
             // Add viewport adjustments for iOS keyboard if needed
-            console.log('🍎 iOS keyboard handling initialized');
+        // console.log('🍎 iOS keyboard handling initialized');
         }
     }
 
@@ -1834,7 +1912,7 @@ class StackMapApp {
 
     // NEW CARD FUNCTIONALITY - Now uses side menu
     openNewCardForm(position = 'top') {
-        console.log('openNewCardForm called with position:', position);
+        // console.log('openNewCardForm called with position:', position);
         
         // Use the hybrid panel manager to show the activity form
         if (window.hybridPanelManager) {
@@ -1860,15 +1938,15 @@ class StackMapApp {
     }
 
     addActivity(position = 'top') {
-        console.log('addActivity called with position:', position);
-        console.log('Current day before add:', this.appState.getCurrentDay());
+        // console.log('addActivity called with position:', position);
+        // console.log('Current day before add:', this.appState.getCurrentDay());
         
         const titleInput = document.getElementById('newActivityTitle');
         const descInput = document.getElementById('newActivityDescription');
         const timeInput = document.getElementById('newActivityTime');
         
         if (!titleInput || !descInput) {
-            console.log('Required inputs not found');
+        // console.log('Required inputs not found');
             return;
         }
         
@@ -1876,7 +1954,7 @@ class StackMapApp {
         const description = descInput.value.trim();
         const time = timeInput ? timeInput.value : '';
         
-        console.log('Adding activity:', title, 'to day:', this.appState.getCurrentDay());
+        // console.log('Adding activity:', title, 'to day:', this.appState.getCurrentDay());
         
         if (!title) {
             alert('Please enter a title');
@@ -1888,8 +1966,8 @@ class StackMapApp {
             // Use the current form position or default
             const currentPosition = this.appState.ui.showingNewCardForm || position;
             
-            console.log('Using position:', currentPosition);
-            console.log('Activities before add:', this.appState.getCurrentActivities().length);
+        // console.log('Using position:', currentPosition);
+        // console.log('Activities before add:', this.appState.getCurrentActivities().length);
             
             // Use the AppState method which handles position properly
             this.appState.addActivity({
@@ -1900,15 +1978,15 @@ class StackMapApp {
                 cardType: this.selectedCardType // Story 1: Include selected card type
             }, currentPosition);
             
-            console.log('Activities after add:', this.appState.getCurrentActivities().length);
+        // console.log('Activities after add:', this.appState.getCurrentActivities().length);
             
             // Enhanced debugging for tomorrow activities
             if (this.appState.getCurrentDay() === 'tomorrow') {
                 const user = this.appState.getCurrentUser();
-                console.log('After adding to tomorrow:');
-                console.log('- Tomorrow activities count:', user.tomorrowActivities.length);
-                console.log('- Latest tomorrow activity:', user.tomorrowActivities[user.tomorrowActivities.length - 1]?.title);
-                console.log('- getCurrentActivities() count:', this.appState.getCurrentActivities().length);
+        // console.log('After adding to tomorrow:');
+        // console.log('- Tomorrow activities count:', user.tomorrowActivities.length);
+        // console.log('- Latest tomorrow activity:', user.tomorrowActivities[user.tomorrowActivities.length - 1]?.title);
+        // console.log('- getCurrentActivities() count:', this.appState.getCurrentActivities().length);
             }
             
             this.clearNewActivity();
@@ -1917,9 +1995,9 @@ class StackMapApp {
             
             // Verify the activity appears after render
             setTimeout(() => {
-                console.log('After render - Activities in DOM:', document.querySelectorAll('.card:not(.management-card)').length);
+        // console.log('After render - Activities in DOM:', document.querySelectorAll('.card:not(.management-card)').length);
                 const managementCards = document.querySelectorAll('.management-card');
-                console.log('Management cards in DOM after add:', managementCards.length);
+        // console.log('Management cards in DOM after add:', managementCards.length);
             }, 100);
         } catch (error) {
             console.error('Error adding activity:', error);
@@ -1998,7 +2076,7 @@ class StackMapApp {
         this.appState.ui.filterSourcePosition = sourcePosition; // Track which management card is filtering
         
         // Debug log
-        console.log('Filtering:', normalizedTerm, 'from position:', sourcePosition);
+        // console.log('Filtering:', normalizedTerm, 'from position:', sourcePosition);
         
         // Hide/show management cards based on filter state
         if (normalizedTerm && sourcePosition) {
@@ -2067,10 +2145,10 @@ class StackMapApp {
 
     // Management card filtering methods
     hideOtherManagementCards(activePosition) {
-        console.log('Hiding other management cards, active position:', activePosition);
+        // console.log('Hiding other management cards, active position:', activePosition);
         document.querySelectorAll('.management-card').forEach(card => {
             const isActiveCard = card.classList.contains(`management-card--${activePosition}`);
-            console.log('Card classes:', card.className, 'Is active?', isActiveCard);
+        // console.log('Card classes:', card.className, 'Is active?', isActiveCard);
             if (!isActiveCard) {
                 card.style.display = 'none';
             }
@@ -2078,7 +2156,7 @@ class StackMapApp {
     }
 
     showAllManagementCards() {
-        console.log('Showing all management cards');
+        // console.log('Showing all management cards');
         document.querySelectorAll('.management-card').forEach(card => {
             card.style.display = '';
         });
@@ -2406,7 +2484,7 @@ class StackMapApp {
                     const drawerHandle = document.getElementById('drawerHandle');
                     const drawerExtension = document.getElementById('drawerExtension');
                     if (drawerHandle && drawerExtension && !drawerExtension.classList.contains('open')) {
-                        console.log('Opening drawer to show user selector');
+        // console.log('Opening drawer to show user selector');
                         drawerHandle.click();
                     }
                 }
@@ -2414,7 +2492,7 @@ class StackMapApp {
             
             this.render();
             
-            console.log('New user added:', userName, 'with icon:', userIcon, 'Total users:', this.appState.getAllUsers().length);
+        // console.log('New user added:', userName, 'with icon:', userIcon, 'Total users:', this.appState.getAllUsers().length);
             
         } catch (error) {
             alert(error.message);
@@ -2758,7 +2836,7 @@ class StackMapApp {
         } else {
             // Fallback to modal if panel manager not available
             const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
-            console.log('New card modal shown (fallback)');
+        // console.log('New card modal shown (fallback)');
         }
     }
     
@@ -2766,7 +2844,7 @@ class StackMapApp {
         // TODO: Implement user creation form
         // For now, show placeholder
         alert('Add User functionality - Coming soon!');
-        console.log('📝 Add User form requested');
+        // console.log('📝 Add User form requested');
     }
     
     completeAllActivities() {
@@ -2797,7 +2875,7 @@ class StackMapApp {
             // Show celebration
             this.renderer.createFireworks();
             
-            console.log(`✅ Completed ${incompleteCount} activities`);
+        // console.log(`✅ Completed ${incompleteCount} activities`);
         }
     }
     
@@ -2843,7 +2921,7 @@ class StackMapApp {
             localStorage.setItem('stackmap-drawer-preference', JSON.stringify({
                 drawerOpen: isOpen
             }));
-            console.log('Drawer preference saved:', isOpen);
+        // console.log('Drawer preference saved:', isOpen);
         } catch (error) {
             console.error('Error saving drawer preference:', error);
         }
@@ -2852,7 +2930,7 @@ class StackMapApp {
     shouldDrawerBeOpen() {
         const isEditMode = this.grownupMode;
         const userPref = this.getDrawerPreference();
-        console.log('Determining drawer state - Edit mode:', isEditMode, 'User preference:', userPref.drawerOpen);
+        // console.log('Determining drawer state - Edit mode:', isEditMode, 'User preference:', userPref.drawerOpen);
         return isEditMode || userPref.drawerOpen;
     }
     
@@ -2871,7 +2949,7 @@ class StackMapApp {
         // Add visual locked state
         drawerExtension?.classList.add('edit-mode-locked');
         drawerHandle?.classList.add('edit-mode-locked');
-        console.log('Drawer forced open and locked for edit mode');
+        // console.log('Drawer forced open and locked for edit mode');
     }
     
     unlockDrawer() {
@@ -2880,7 +2958,7 @@ class StackMapApp {
         
         drawerExtension?.classList.remove('edit-mode-locked');
         drawerHandle?.classList.remove('edit-mode-locked');
-        console.log('Drawer unlocked from edit mode');
+        // console.log('Drawer unlocked from edit mode');
     }
     
     // CRITICAL UX FIX: Universal modal outside-click behavior
@@ -2891,7 +2969,7 @@ class StackMapApp {
         // Set up escape key handler for all modals
         this.setupModalEscapeKeyHandler();
         
-        console.log('✅ Universal modal behavior initialized');
+        // console.log('✅ Universal modal behavior initialized');
     }
     
     setupModalOutsideClickHandlers() {
@@ -2963,7 +3041,7 @@ class StackMapApp {
             });
         });
         
-        console.log('✅ Modal outside-click handlers configured for', modalConfigs.length, 'modal types');
+        // console.log('✅ Modal outside-click handlers configured for', modalConfigs.length, 'modal types');
     }
     
     setupModalEscapeKeyHandler() {
@@ -3010,7 +3088,7 @@ class StackMapApp {
             }
         });
         
-        console.log('✅ Modal escape key handlers configured');
+        // console.log('✅ Modal escape key handlers configured');
     }
 
     /**
@@ -3020,7 +3098,7 @@ class StackMapApp {
         // Load the celebration manager
         if (typeof CelebrationManager !== 'undefined') {
             window.celebrationManager = new CelebrationManager(this);
-            console.log('🎉 Celebration system initialized');
+        // console.log('🎉 Celebration system initialized');
         } else {
             console.warn('CelebrationManager not loaded - celebrations disabled');
         }
@@ -3029,21 +3107,21 @@ class StackMapApp {
 
 // Debugging helper function
 window.testDropdowns = function() {
-    console.log('=== DROPDOWN TEST ===');
+        // console.log('=== DROPDOWN TEST ===');
     const userSelect = document.getElementById('drawerUserSelect');
     const daySelect = document.getElementById('drawerDaySelect');
     
-    console.log('User select element:', userSelect);
-    console.log('Day select element:', daySelect);
+        // console.log('User select element:', userSelect);
+        // console.log('Day select element:', daySelect);
     
     if (userSelect) {
-        console.log('Testing user select click...');
+        // console.log('Testing user select click...');
         userSelect.click();
     }
     
     setTimeout(() => {
         if (daySelect) {
-            console.log('Testing day select click...');
+        // console.log('Testing day select click...');
             daySelect.click();
         }
     }, 1000);
@@ -3051,28 +3129,28 @@ window.testDropdowns = function() {
 
 // Debug switchDay functionality specifically
 window.testSwitchDay = function() {
-    console.log('=== TESTING SWITCHDAY FUNCTIONALITY ===');
-    console.log('Current day:', window.appInstance?.appState?.getCurrentDay?.());
-    console.log('switchDay method exists:', typeof window.appInstance?.switchDay === 'function');
-    console.log('setCurrentDay method exists:', typeof window.appInstance?.appState?.setCurrentDay === 'function');
+        // console.log('=== TESTING SWITCHDAY FUNCTIONALITY ===');
+        // console.log('Current day:', window.appInstance?.appState?.getCurrentDay?.());
+        // console.log('switchDay method exists:', typeof window.appInstance?.switchDay === 'function');
+        // console.log('setCurrentDay method exists:', typeof window.appInstance?.appState?.setCurrentDay === 'function');
     
     // Test direct state change
-    console.log('Testing direct setCurrentDay call...');
-    console.log('Before:', window.appInstance.appState.getCurrentDay());
+        // console.log('Testing direct setCurrentDay call...');
+        // console.log('Before:', window.appInstance.appState.getCurrentDay());
     window.appInstance.appState.setCurrentDay('tomorrow');
-    console.log('After setCurrentDay(tomorrow):', window.appInstance.appState.getCurrentDay());
+        // console.log('After setCurrentDay(tomorrow):', window.appInstance.appState.getCurrentDay());
     
     // Test full switchDay method
     setTimeout(() => {
-        console.log('Testing full switchDay method...');
-        console.log('Before:', window.appInstance.appState.getCurrentDay());
+        // console.log('Testing full switchDay method...');
+        // console.log('Before:', window.appInstance.appState.getCurrentDay());
         window.appInstance.switchDay('today');
-        console.log('After switchDay(today):', window.appInstance.appState.getCurrentDay());
+        // console.log('After switchDay(today):', window.appInstance.appState.getCurrentDay());
     }, 500);
     
     // Test the dropdown modal directly
     setTimeout(() => {
-        console.log('Testing dropdown modal for day selection...');
+        // console.log('Testing dropdown modal for day selection...');
         const today = new Date();
         const tomorrow = new Date(today);
         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -3091,23 +3169,23 @@ window.testSwitchDay = function() {
         ];
         
         window.appInstance.showNativeDropdown('Test Day', dayOptions, (selectedId) => {
-            console.log('Test dropdown selected:', selectedId);
-            console.log('Before dropdown switchDay:', window.appInstance.appState.getCurrentDay());
+        // console.log('Test dropdown selected:', selectedId);
+        // console.log('Before dropdown switchDay:', window.appInstance.appState.getCurrentDay());
             window.appInstance.switchDay(selectedId);
-            console.log('After dropdown switchDay:', window.appInstance.appState.getCurrentDay());
+        // console.log('After dropdown switchDay:', window.appInstance.appState.getCurrentDay());
         }, document.body);
     }, 1500);
 };
 
 // Test modal visibility directly and restore original content
 window.testModal = function() {
-    console.log('=== TESTING MODAL VISIBILITY ===');
+        // console.log('=== TESTING MODAL VISIBILITY ===');
     const modal = document.getElementById('dropdownModal');
-    console.log('Modal element found:', !!modal);
+        // console.log('Modal element found:', !!modal);
     
     if (modal) {
-        console.log('Current modal classes:', modal.className);
-        console.log('Current display:', getComputedStyle(modal).display);
+        // console.log('Current modal classes:', modal.className);
+        // console.log('Current display:', getComputedStyle(modal).display);
         
         // Restore original modal content
         modal.innerHTML = `
@@ -3124,13 +3202,13 @@ window.testModal = function() {
         `;
         
         modal.classList.add('hidden');
-        console.log('Modal content restored to original state');
+        // console.log('Modal content restored to original state');
     }
 };
 
 // Fix the modal content immediately
 window.fixModal = function() {
-    console.log('=== FIXING MODAL CONTENT ===');
+        // console.log('=== FIXING MODAL CONTENT ===');
     const modal = document.getElementById('dropdownModal');
     if (modal) {
         modal.innerHTML = `
@@ -3146,13 +3224,13 @@ window.fixModal = function() {
             </div>
         `;
         modal.classList.add('hidden');
-        console.log('Modal content fixed');
+        // console.log('Modal content fixed');
     }
 };
 
 // Force show modal with extreme visibility
 window.forceShowModal = function() {
-    console.log('=== FORCING MODAL TO BE VISIBLE ===');
+        // console.log('=== FORCING MODAL TO BE VISIBLE ===');
     const modal = document.getElementById('dropdownModal');
     if (modal) {
         // Remove all classes and reset completely
@@ -3197,14 +3275,14 @@ window.forceShowModal = function() {
             </div>
         `;
         
-        console.log('Modal forced to maximum visibility');
-        console.log('Modal computed styles:', {
-            display: getComputedStyle(modal).display,
-            zIndex: getComputedStyle(modal).zIndex,
-            opacity: getComputedStyle(modal).opacity,
-            visibility: getComputedStyle(modal).visibility,
-            position: getComputedStyle(modal).position
-        });
+        // console.log('Modal forced to maximum visibility');
+        // console.log('Modal computed styles:', {
+        //     display: getComputedStyle(modal).display,
+        //     zIndex: getComputedStyle(modal).zIndex,
+        //     opacity: getComputedStyle(modal).opacity,
+        //     visibility: getComputedStyle(modal).visibility,
+        //     position: getComputedStyle(modal).position
+        // });
     }
 };
 
@@ -3213,92 +3291,92 @@ window.StackMapApp = StackMapApp;
 
 // Add debugging helpers
 window.testAddUser = function() {
-    console.log('Testing Add User functionality...');
+        // console.log('Testing Add User functionality...');
     if (window.appInstance) {
-        console.log('App instance found');
-        console.log('Grownup mode:', window.appInstance.grownupMode);
+        // console.log('App instance found');
+        // console.log('Grownup mode:', window.appInstance.grownupMode);
         if (!window.appInstance.grownupMode) {
-            console.log('Entering grownup mode first...');
+        // console.log('Entering grownup mode first...');
             window.appInstance.enterGrownupMode();
         }
-        console.log('Showing Add User dialog...');
+        // console.log('Showing Add User dialog...');
         window.appInstance.showAddUserDialog();
     } else {
-        console.log('App instance not found!');
+        // console.log('App instance not found!');
     }
 };
 
 window.debugUsers = function() {
     if (window.appInstance && window.appInstance.appState) {
-        console.log('=== USER DATA DEBUG ===');
-        console.log('All users:', window.appInstance.appState.users);
-        console.log('User profiles:', window.appInstance.appState.users.profiles);
-        console.log('Current user ID:', window.appInstance.appState.users.currentUserId);
-        console.log('Current user object:', window.appInstance.appState.getCurrentUser());
+        // console.log('=== USER DATA DEBUG ===');
+        // console.log('All users:', window.appInstance.appState.users);
+        // console.log('User profiles:', window.appInstance.appState.users.profiles);
+        // console.log('Current user ID:', window.appInstance.appState.users.currentUserId);
+        // console.log('Current user object:', window.appInstance.appState.getCurrentUser());
         
         // Log each user's details
         const users = window.appInstance.appState.getAllUsers();
-        console.log('All users array:', users);
+        // console.log('All users array:', users);
         users.forEach((user, index) => {
-            console.log(`User ${index + 1}:`, {
-                id: user.id,
-                name: user.name,
-                icon: user.icon,
-                avatar: user.avatar,
-                hasIcon: !!user.icon,
-                hasAvatar: !!user.avatar
-            });
+        // console.log(`User ${index + 1}:`, {
+        //         id: user.id,
+        //         name: user.name,
+        //         icon: user.icon,
+        //         avatar: user.avatar,
+        //         hasIcon: !!user.icon,
+        //         hasAvatar: !!user.avatar
+        //     });
         });
     } else {
-        console.log('App instance or appState not found!');
+        // console.log('App instance or appState not found!');
     }
 };
 
 // Story 2 Validation Suite
 const validateStory2 = () => {
-    console.log('=== STORY 2 VALIDATION ===');
+        // console.log('=== STORY 2 VALIDATION ===');
     
     // Test 1: UI Elements Present
     const userSelector = document.getElementById('userSelector');
     const fixedUserSelector = document.getElementById('fixedUserSelector');
     // Add user buttons are now inside dropdown menu
     
-    console.log('✅ Static dropdown present:', !!userSelector);
-    console.log('✅ Fixed dropdown present:', !!fixedUserSelector);
-    console.log('✅ Add user button moved to dropdown menu: true');
-    console.log('✅ Fixed add user button moved to dropdown menu: true');
+        // console.log('✅ Static dropdown present:', !!userSelector);
+        // console.log('✅ Fixed dropdown present:', !!fixedUserSelector);
+        // console.log('✅ Add user button moved to dropdown menu: true');
+        // console.log('✅ Fixed add user button moved to dropdown menu: true');
     
     // Test 2: Dropdown Population
     if (userSelector) {
-        console.log('✅ Dropdown options count:', userSelector.options.length);
-        console.log('✅ Current selection:', userSelector.value);
+        // console.log('✅ Dropdown options count:', userSelector.options.length);
+        // console.log('✅ Current selection:', userSelector.value);
         
         // List all available users
         const users = Array.from(userSelector.options).map(opt => opt.text);
-        console.log('✅ Available users:', users);
+        // console.log('✅ Available users:', users);
     }
     
     // Test 3: Add User Button Visibility (now in dropdown)
     const isGrownupMode = document.body.classList.contains('grownup-mode');
-    console.log('✅ Grown-up mode:', isGrownupMode);
-    console.log('✅ Add user option in dropdown (grown-up mode only):', isGrownupMode);
+        // console.log('✅ Grown-up mode:', isGrownupMode);
+        // console.log('✅ Add user option in dropdown (grown-up mode only):', isGrownupMode);
     
     // Test 4: Touch Targets (Mobile Accessibility)
     if (userSelector) {
         const dropdownRect = userSelector.getBoundingClientRect();
         const touchTarget = Math.min(dropdownRect.width, dropdownRect.height);
-        console.log('✅ Dropdown touch target size:', touchTarget + 'px', touchTarget >= 44 ? '(PASS)' : '(FAIL - needs 44px+)');
+        // console.log('✅ Dropdown touch target size:', touchTarget + 'px', touchTarget >= 44 ? '(PASS)' : '(FAIL - needs 44px+)');
     }
     
     // Test 5: Event Handlers
-    console.log('✅ User switching method exists:', typeof appInstance.handleUserSwitch === 'function');
-    console.log('✅ Add user method exists:', typeof appInstance.showAddUserDialog === 'function');
+        // console.log('✅ User switching method exists:', typeof appInstance.handleUserSwitch === 'function');
+        // console.log('✅ Add user method exists:', typeof appInstance.showAddUserDialog === 'function');
     
     // Test 6: Responsive Design
     const isMobile = window.innerWidth <= 768;
-    console.log('✅ Current viewport:', window.innerWidth + 'px', isMobile ? '(Mobile)' : '(Desktop)');
+        // console.log('✅ Current viewport:', window.innerWidth + 'px', isMobile ? '(Mobile)' : '(Desktop)');
     
-    console.log('=== VALIDATION COMPLETE ===');
+        // console.log('=== VALIDATION COMPLETE ===');
     
     // Return summary
     const passed = userSelector && fixedUserSelector && 
@@ -3313,40 +3391,40 @@ window.validateStory2 = validateStory2;
 
 // Story 3 Validation Suite
 const validateStory3 = () => {
-    console.log('=== STORY 3 VALIDATION ===');
+        // console.log('=== STORY 3 VALIDATION ===');
     
     // Test 1: Export Interface Present
     const exportAllBtn = document.querySelector('.export-all-btn');
     const exportUserBtn = document.querySelector('.export-user-btn');
     const userExportSelect = document.querySelector('.user-export-select');
     
-    console.log('✅ Export all button present:', !!exportAllBtn);
-    console.log('✅ Export user button present:', !!exportUserBtn);
-    console.log('✅ User export dropdown present:', !!userExportSelect);
+        // console.log('✅ Export all button present:', !!exportAllBtn);
+        // console.log('✅ Export user button present:', !!exportUserBtn);
+        // console.log('✅ User export dropdown present:', !!userExportSelect);
     
     // Test 2: Export Methods Exist
-    console.log('✅ Export user method exists:', typeof appInstance.exportUser === 'function');
-    console.log('✅ Export all users method exists:', typeof appInstance.exportAllUsers === 'function');
+        // console.log('✅ Export user method exists:', typeof appInstance.exportUser === 'function');
+        // console.log('✅ Export all users method exists:', typeof appInstance.exportAllUsers === 'function');
     
     // Test 3: Import Preview Modal
     const importModal = document.getElementById('importPreviewModal');
-    console.log('✅ Import preview modal present:', !!importModal);
+        // console.log('✅ Import preview modal present:', !!importModal);
     
     // Test 4: Import Analysis Methods
-    console.log('✅ Import preview method exists:', typeof appInstance.showImportPreview === 'function');
-    console.log('✅ Import analysis method exists:', typeof appInstance.analyzeImportFile === 'function');
+        // console.log('✅ Import preview method exists:', typeof appInstance.showImportPreview === 'function');
+        // console.log('✅ Import analysis method exists:', typeof appInstance.analyzeImportFile === 'function');
     
     // Test 5: File Naming Functions
-    console.log('✅ Download file method exists:', typeof appInstance.downloadFile === 'function');
+        // console.log('✅ Download file method exists:', typeof appInstance.downloadFile === 'function');
     
     // Test 6: User Export Dropdown Population
     if (userExportSelect) {
         const optionCount = userExportSelect.options.length;
-        console.log('✅ Export dropdown populated:', optionCount > 1);
-        console.log('✅ Export dropdown user count:', optionCount - 1, '(excluding placeholder)');
+        // console.log('✅ Export dropdown populated:', optionCount > 1);
+        // console.log('✅ Export dropdown user count:', optionCount - 1, '(excluding placeholder)');
     }
     
-    console.log('=== VALIDATION COMPLETE ===');
+        // console.log('=== VALIDATION COMPLETE ===');
     
     const passed = exportAllBtn && exportUserBtn && importModal && 
                   typeof appInstance.exportUser === 'function' &&
@@ -3357,16 +3435,16 @@ const validateStory3 = () => {
 
 // Test export functionality
 const testExport = () => {
-    console.log('=== EXPORT FUNCTIONALITY TEST ===');
+        // console.log('=== EXPORT FUNCTIONALITY TEST ===');
     
     const users = appInstance.appState.getAllUsers();
-    console.log('Available users for export:', users.map(u => u.name));
+        // console.log('Available users for export:', users.map(u => u.name));
     
     if (users.length > 0) {
-        console.log('✅ Ready to test individual user export');
-        console.log('✅ Ready to test all users export');
+        // console.log('✅ Ready to test individual user export');
+        // console.log('✅ Ready to test all users export');
     } else {
-        console.log('❌ No users available for export testing');
+        // console.log('❌ No users available for export testing');
     }
 };
 
@@ -3376,48 +3454,48 @@ window.testExport = testExport;
 
 // Story 4 Validation Suite
 const validateStory4 = () => {
-    console.log('=== STORY 4 VALIDATION ===');
+        // console.log('=== STORY 4 VALIDATION ===');
     
     // Test 1: Day Selector Present
     const daySelector = document.getElementById('daySelectorContainer');
     const todayOption = document.querySelector('.day-option--today');
     const tomorrowOption = document.querySelector('.day-option--tomorrow');
     
-    console.log('✅ Day selector container present:', !!daySelector);
-    console.log('✅ Today option present:', !!todayOption);
-    console.log('✅ Tomorrow option present:', !!tomorrowOption);
+        // console.log('✅ Day selector container present:', !!daySelector);
+        // console.log('✅ Today option present:', !!todayOption);
+        // console.log('✅ Tomorrow option present:', !!tomorrowOption);
     
     // Test 2: Day Switching Methods
-    console.log('✅ Switch day method exists:', typeof appInstance.switchDay === 'function');
-    console.log('✅ Complete day method exists:', typeof appInstance.completeDayTransition === 'function');
+        // console.log('✅ Switch day method exists:', typeof appInstance.switchDay === 'function');
+        // console.log('✅ Complete day method exists:', typeof appInstance.completeDayTransition === 'function');
     
     // Test 3: Data Structure
     const user = appInstance.appState.getCurrentUser();
-    console.log('✅ Tomorrow activities array exists:', Array.isArray(user.tomorrowActivities));
-    console.log('✅ Current day tracking:', appInstance.appState.getCurrentDay());
+        // console.log('✅ Tomorrow activities array exists:', Array.isArray(user.tomorrowActivities));
+        // console.log('✅ Current day tracking:', appInstance.appState.getCurrentDay());
     
     // Test 4: Day Counts
     const todayCount = document.getElementById('todayCount');
     const tomorrowCount = document.getElementById('tomorrowCount');
-    console.log('✅ Today count element:', !!todayCount);
-    console.log('✅ Tomorrow count element:', !!tomorrowCount);
+        // console.log('✅ Today count element:', !!todayCount);
+        // console.log('✅ Tomorrow count element:', !!tomorrowCount);
     
     // Test 5: Complete Day Button
     const completeDayBtn = document.querySelector('.btn--complete-day');
-    console.log('✅ Complete day button present:', !!completeDayBtn);
+        // console.log('✅ Complete day button present:', !!completeDayBtn);
     
     // Test 6: Visual Context
     const bodyClasses = document.body.className;
-    console.log('✅ Body has day context class:', bodyClasses.includes('viewing-'));
+        // console.log('✅ Body has day context class:', bodyClasses.includes('viewing-'));
     
     // Test 7: Touch Targets (Mobile Accessibility)
     if (todayOption) {
         const optionRect = todayOption.getBoundingClientRect();
         const touchTarget = Math.min(optionRect.width, optionRect.height);
-        console.log('✅ Day option touch target:', touchTarget + 'px', touchTarget >= 44 ? '(PASS)' : '(FAIL)');
+        // console.log('✅ Day option touch target:', touchTarget + 'px', touchTarget >= 44 ? '(PASS)' : '(FAIL)');
     }
     
-    console.log('=== VALIDATION COMPLETE ===');
+        // console.log('=== VALIDATION COMPLETE ===');
     
     const passed = daySelector && todayOption && tomorrowOption &&
                   typeof appInstance.switchDay === 'function' &&
@@ -3429,13 +3507,13 @@ const validateStory4 = () => {
 
 // Test day transition functionality
 const testDayTransition = () => {
-    console.log('=== DAY TRANSITION TEST ===');
+        // console.log('=== DAY TRANSITION TEST ===');
     
     const user = appInstance.appState.getCurrentUser();
     
-    console.log('Current day:', appInstance.appState.getCurrentDay());
-    console.log('Today activities:', user.activities.length);
-    console.log('Tomorrow activities:', user.tomorrowActivities.length);
+        // console.log('Current day:', appInstance.appState.getCurrentDay());
+        // console.log('Today activities:', user.activities.length);
+        // console.log('Tomorrow activities:', user.tomorrowActivities.length);
     
     // Test card type distribution
     const todayTypes = user.activities.reduce((acc, activity) => {
@@ -3443,7 +3521,7 @@ const testDayTransition = () => {
         return acc;
     }, {});
     
-    console.log('Today card types:', todayTypes);
+        // console.log('Today card types:', todayTypes);
     
     if (user.tomorrowActivities.length > 0) {
         const tomorrowTypes = user.tomorrowActivities.reduce((acc, activity) => {
@@ -3451,11 +3529,11 @@ const testDayTransition = () => {
             return acc;
         }, {});
         
-        console.log('Tomorrow card types:', tomorrowTypes);
+        // console.log('Tomorrow card types:', tomorrowTypes);
     }
     
-    console.log('✅ Ready for day transition testing');
-    console.log('=== TEST COMPLETE ===');
+        // console.log('✅ Ready for day transition testing');
+        // console.log('=== TEST COMPLETE ===');
 };
 
 // Make validation functions globally available
@@ -3464,51 +3542,51 @@ window.testDayTransition = testDayTransition;
 
 // Debug function for day switching issues
 window.debugDaySwitch = function() {
-    console.log('=== DAY SWITCH DEBUG ===');
+        // console.log('=== DAY SWITCH DEBUG ===');
     const user = window.appInstance.appState.getCurrentUser();
-    console.log('Current user:', user.name);
-    console.log('Current day:', window.appInstance.appState.getCurrentDay());
-    console.log('Today activities:', user.activities.length);
-    console.log('Tomorrow activities:', user.tomorrowActivities.length);
-    console.log('getCurrentActivities():', window.appInstance.appState.getCurrentActivities().length);
-    console.log('Legacy activities array:', window.appInstance.appState.activities.length);
+        // console.log('Current user:', user.name);
+        // console.log('Current day:', window.appInstance.appState.getCurrentDay());
+        // console.log('Today activities:', user.activities.length);
+        // console.log('Tomorrow activities:', user.tomorrowActivities.length);
+        // console.log('getCurrentActivities():', window.appInstance.appState.getCurrentActivities().length);
+        // console.log('Legacy activities array:', window.appInstance.appState.activities.length);
     
     // Show activity details
-    console.log('Today activities:', user.activities.map(a => a.title));
-    console.log('Tomorrow activities:', user.tomorrowActivities.map(a => a.title));
-    console.log('=== END DEBUG ===');
+        // console.log('Today activities:', user.activities.map(a => a.title));
+        // console.log('Tomorrow activities:', user.tomorrowActivities.map(a => a.title));
+        // console.log('=== END DEBUG ===');
 };
 
 // Debug function specifically for management cards
 window.debugManagementCards = function() {
-    console.log('=== MANAGEMENT CARDS DEBUG ===');
-    console.log('Edit mode:', window.appInstance.appState.ui.editMode);
-    console.log('Grownup mode:', window.appInstance.grownupMode);
-    console.log('Current day:', window.appInstance.appState.getCurrentDay());
+        // console.log('=== MANAGEMENT CARDS DEBUG ===');
+        // console.log('Edit mode:', window.appInstance.appState.ui.editMode);
+        // console.log('Grownup mode:', window.appInstance.grownupMode);
+        // console.log('Current day:', window.appInstance.appState.getCurrentDay());
     
     // Check DOM
     const managementCards = document.querySelectorAll('.management-card');
-    console.log('Management cards in DOM:', managementCards.length);
+        // console.log('Management cards in DOM:', managementCards.length);
     
     if (managementCards.length > 0) {
         managementCards.forEach((card, index) => {
-            console.log(`Card ${index + 1}:`, {
-                classes: card.className,
-                display: getComputedStyle(card).display,
-                visibility: getComputedStyle(card).visibility,
-                position: getComputedStyle(card).position,
-                zIndex: getComputedStyle(card).zIndex
-            });
+        // console.log(`Card ${index + 1}:`, {
+        //         classes: card.className,
+        //         display: getComputedStyle(card).display,
+        //         visibility: getComputedStyle(card).visibility,
+        //         position: getComputedStyle(card).position,
+        //         zIndex: getComputedStyle(card).zIndex
+        //     });
         });
     }
     
     // Check container
     const container = document.getElementById('mainContainer');
     if (container) {
-        console.log('Main container children:', container.children.length);
+        // console.log('Main container children:', container.children.length);
         Array.from(container.children).forEach((child, index) => {
             if (child.classList.contains('management-card')) {
-                console.log(`Management card found at index ${index}:`, child.className);
+        // console.log(`Management card found at index ${index}:`, child.className);
             }
         });
     }
@@ -3517,23 +3595,23 @@ window.debugManagementCards = function() {
     if (window.ComponentBuilder) {
         try {
             const testCard = window.ComponentBuilder.createManagementCard('test');
-            console.log('Test management card created successfully:', !!testCard);
+        // console.log('Test management card created successfully:', !!testCard);
         } catch (error) {
             console.error('Error creating test management card:', error);
         }
     }
     
-    console.log('=== END MANAGEMENT CARDS DEBUG ===');
+        // console.log('=== END MANAGEMENT CARDS DEBUG ===');
 };
 
 // Debug function for investigating the "new user prompt" issue
 window.debugNewCardIssue = function() {
-    console.log('=== NEW CARD ISSUE DEBUG ===');
+        // console.log('=== NEW CARD ISSUE DEBUG ===');
     
     // Check current state
-    console.log('Current day:', window.appInstance.appState.getCurrentDay());
-    console.log('Edit mode:', window.appInstance.appState.ui.editMode);
-    console.log('Grownup mode:', window.appInstance.grownupMode);
+        // console.log('Current day:', window.appInstance.appState.getCurrentDay());
+        // console.log('Edit mode:', window.appInstance.appState.ui.editMode);
+        // console.log('Grownup mode:', window.appInstance.grownupMode);
     
     // Check modals in DOM
     const activityModal = document.getElementById('modalCardOverlay');
@@ -3541,45 +3619,45 @@ window.debugNewCardIssue = function() {
     const editUserModal = document.getElementById('editUserModal');
     const dropdownModal = document.getElementById('dropdownModal');
     
-    console.log('Modals in DOM:');
-    console.log('- Activity modal (modalCardOverlay):', !!activityModal);
-    console.log('- Add user modal:', !!addUserModal);
-    console.log('- Edit user modal:', !!editUserModal);
-    console.log('- Dropdown modal:', !!dropdownModal);
+        // console.log('Modals in DOM:');
+        // console.log('- Activity modal (modalCardOverlay):', !!activityModal);
+        // console.log('- Add user modal:', !!addUserModal);
+        // console.log('- Edit user modal:', !!editUserModal);
+        // console.log('- Dropdown modal:', !!dropdownModal);
     
     if (addUserModal) {
-        console.log('Add user modal is visible! This might be the "new user prompt"');
-        console.log('Add user modal display:', getComputedStyle(addUserModal).display);
-        console.log('Add user modal z-index:', getComputedStyle(addUserModal).zIndex);
+        // console.log('Add user modal is visible! This might be the "new user prompt"');
+        // console.log('Add user modal display:', getComputedStyle(addUserModal).display);
+        // console.log('Add user modal z-index:', getComputedStyle(addUserModal).zIndex);
     }
     
     // Check management cards
     const managementCards = document.querySelectorAll('.management-card');
-    console.log('Management cards:', managementCards.length);
+        // console.log('Management cards:', managementCards.length);
     
     if (managementCards.length > 0) {
         managementCards.forEach((card, index) => {
             const addButton = card.querySelector('.btn--add-card');
-            console.log(`Management card ${index + 1} add button:`, !!addButton);
+        // console.log(`Management card ${index + 1} add button:`, !!addButton);
             if (addButton) {
-                console.log(`- onclick handler:`, addButton.onclick?.toString?.());
+        // console.log(`- onclick handler:`, addButton.onclick?.toString?.());
             }
         });
     }
     
     // Test manual card creation
-    console.log('Testing manual openNewCardForm...');
+        // console.log('Testing manual openNewCardForm...');
     try {
         window.appInstance.openNewCardForm('top');
         setTimeout(() => {
             const modalAfterTest = document.getElementById('modalCardOverlay');
-            console.log('Modal created after manual test:', !!modalAfterTest);
+        // console.log('Modal created after manual test:', !!modalAfterTest);
         }, 200);
     } catch (error) {
         console.error('Error in manual test:', error);
     }
     
-    console.log('=== END NEW CARD ISSUE DEBUG ===');
+        // console.log('=== END NEW CARD ISSUE DEBUG ===');
 };
 
 // ===== DRAWER STORY TESTING FUNCTIONS =====
@@ -3589,7 +3667,7 @@ window.testDrawer = {
     // Clear preferences to test default behavior
     clearPrefs: () => {
         localStorage.removeItem('stackmap-drawer-preference');
-        console.log('Drawer preferences cleared');
+        // console.log('Drawer preferences cleared');
         window.location.reload();
     },
     
@@ -3602,7 +3680,7 @@ window.testDrawer = {
             editMode: window.appInstance?.grownupMode || false,
             isLocked: drawerExtension?.classList.contains('edit-mode-locked') || false
         };
-        console.log('Drawer State:', result);
+        // console.log('Drawer State:', result);
         return result;
     },
     
@@ -3610,13 +3688,13 @@ window.testDrawer = {
     toggleEdit: () => {
         if (window.appInstance?.grownupMode) {
             window.appInstance.exitGrownupMode();
-            console.log('Exited edit mode');
+        // console.log('Exited edit mode');
         } else {
             // Open management panel for validation (handled by HybridPanelManager)
             if (window.hybridPanelManager) {
                 window.hybridPanelManager.openPanel('right');
             }
-            console.log('Attempting to enter edit mode');
+        // console.log('Attempting to enter edit mode');
         }
     },
     
@@ -3632,7 +3710,7 @@ window.testDrawer = {
             }
         `;
         document.head.appendChild(style);
-        console.log('Slow motion animations enabled');
+        // console.log('Slow motion animations enabled');
     },
     
     // Reset animations to normal speed
@@ -3643,13 +3721,13 @@ window.testDrawer = {
                 style.remove();
             }
         });
-        console.log('Normal animation speed restored');
+        // console.log('Normal animation speed restored');
     },
     
     // Force drawer open (for testing)
     forceOpen: () => {
         window.appInstance?.forceDrawerOpen();
-        console.log('Drawer forced open');
+        // console.log('Drawer forced open');
     },
     
     // Force drawer closed (for testing)
@@ -3658,16 +3736,16 @@ window.testDrawer = {
         if (drawerHandle) {
             const closeEvent = new CustomEvent('closeDrawer');
             drawerHandle.dispatchEvent(closeEvent);
-            console.log('Drawer forced closed');
+        // console.log('Drawer forced closed');
         }
     }
 };
 
-console.log('🧪 Drawer testing functions available:');
-console.log('testDrawer.clearPrefs() - Clear preferences and reload');
-console.log('testDrawer.checkState() - Check current drawer state');
-console.log('testDrawer.toggleEdit() - Toggle edit mode');
-console.log('testDrawer.slowMotion() - Enable slow animations for testing');
-console.log('testDrawer.normalSpeed() - Restore normal animation speed');
-console.log('testDrawer.forceOpen() - Force drawer open');
-console.log('testDrawer.forceClose() - Force drawer closed');
+        // console.log('🧪 Drawer testing functions available:');
+        // console.log('testDrawer.clearPrefs() - Clear preferences and reload');
+        // console.log('testDrawer.checkState() - Check current drawer state');
+        // console.log('testDrawer.toggleEdit() - Toggle edit mode');
+        // console.log('testDrawer.slowMotion() - Enable slow animations for testing');
+        // console.log('testDrawer.normalSpeed() - Restore normal animation speed');
+        // console.log('testDrawer.forceOpen() - Force drawer open');
+        // console.log('testDrawer.forceClose() - Force drawer closed');

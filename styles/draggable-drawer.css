@@ -279,7 +279,7 @@
     display: block;
     text-align: center; /* Center the labels */
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* Subtle shadow for readability */
-    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important; /* CRITICAL FIX: Font consistency */
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important; /* CRITICAL FIX: Font consistency */
 }
 
 /* Drawer Select Dropdowns - Material White Design */
@@ -307,7 +307,7 @@
     min-height: 48px; /* Larger touch target */
     height: 48px; /* ENFORCE: Consistent height with add-user button */
     box-sizing: border-box;
-    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important; /* CRITICAL FIX: Font consistency */
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important; /* CRITICAL FIX: Font consistency */
     display: flex !important; /* ENSURE: Flexbox for alignment */
     align-items: center !important; /* ENSURE: Vertical centering */
     justify-content: center !important; /* ENSURE: Horizontal centering */
@@ -360,7 +360,7 @@
     min-height: 48px; /* Match select height */
     height: 48px; /* ENFORCE: Consistent height with select button */
     box-sizing: border-box;
-    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important; /* CRITICAL FIX: Font consistency */
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important; /* CRITICAL FIX: Font consistency */
     display: flex !important; /* ENSURE: Flexbox for alignment */
     align-items: center !important; /* ENSURE: Vertical centering */
     justify-content: center !important; /* ENSURE: Horizontal centering */
@@ -808,7 +808,7 @@ body.drawer-active {
 .dropdown-modal *,
 .dropdown-option,
 .dropdown-option-text {
-    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important;
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
 }
 
 /* CRITICAL FIX: Preserve Material Icons font family */
@@ -824,6 +824,6 @@ body.drawer-active {
 select.drawer-select option,
 .native-dropdown-option,
 .dropdown-option {
-    font-family: 'Comic Relief', 'Comic Sans MS', cursive, sans-serif !important;
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif !important;
     font-weight: 500; /* Match app font weight */
 }

@@ -14,7 +14,10 @@
     justify-content: center;
     opacity: 1;
     transition: opacity 0.3s ease;
+    overflow: hidden; /* Prevent scrolling during transitions */
 }
+
+/* Remove animation optimizations since we're not animating */
 
 .splash-screen.hidden {
     display: none;
@@ -37,7 +40,35 @@
     overflow-y: auto;
     text-align: center;
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.5s ease;
+    position: relative;
+    margin: 0 auto; /* Ensure horizontal centering */
+}
+
+/* No animation - just show the content */
+.splash-page-1 {
+    /* animation disabled */
+}
+
+/* Disable initial animation during transitions */
+.splash-content.transitioning {
+    animation: none !important;
+}
+
+/* Page transition animations */
+.splash-content.slide-out-left {
+    animation: slide-out-left 0.4s ease-in-out forwards;
+}
+
+.splash-content.slide-in-right {
+    animation: slide-in-right 0.4s ease-in-out forwards;
+}
+
+.splash-content.slide-out-right {
+    animation: slide-out-right 0.4s ease-in-out forwards;
+}
+
+.splash-content.slide-in-left {
+    animation: slide-in-left 0.4s ease-in-out forwards;
 }
 
 @keyframes slideUp {
@@ -292,6 +323,7 @@
     transition: all 0.3s ease;
     margin-top: 8px;
     box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
 .splash-start-button:not(:disabled):hover {
@@ -367,13 +399,132 @@
     }
 }
 
+/* Two-page splash styling */
+.splash-page-1,
+.splash-page-2 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 480px;
+}
+
+.splash-page-2.hidden {
+    display: none;
+}
+
+/* Page transitions */
+.splash-page-transition-out {
+    animation: slideOutLeft 0.4s ease forwards;
+}
+
+.splash-page-transition-in {
+    animation: slideInRight 0.4s ease forwards;
+}
+
+@keyframes slideOutLeft {
+    from {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-150%, -50%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translate(50%, -50%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+}
+
+/* Back button styling */
+.splash-back-button {
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #667eea;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.splash-back-button:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Button group for two buttons side by side */
+.splash-button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.splash-button-group .splash-start-button {
+    flex: 1;
+    margin-top: 0;
+}
+
+.splash-button-group .splash-back-button {
+    flex: 0 0 100px;
+}
+
+/* Welcome page specific styles */
+.splash-page-1 .splash-welcome {
+    margin-bottom: 24px;
+}
+
+/* Setup page specific styles */
+.splash-page-2 .splash-welcome h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.splash-page-2 .splash-welcome p {
+    font-size: 0.95rem;
+    color: #666;
+    margin: 0 0 20px 0;
+}
+
+/* Mobile adjustments for two-page layout */
+@media (max-width: 768px) {
+    .splash-button-group {
+        flex-direction: column-reverse;
+    }
+    
+    .splash-button-group .splash-back-button {
+        flex: 1;
+        width: 100%;
+    }
+    
+    .splash-page-2 .splash-welcome h2 {
+        font-size: 1.3rem;
+    }
+}
+
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
     .splash-screen,
     .splash-content,
     .splash-emoji-option,
     .splash-emoji-refresh,
-    .splash-start-button {
+    .splash-start-button,
+    .splash-back-button,
+    .splash-page-transition-out,
+    .splash-page-transition-in {
         animation: none;
         transition: none;
     }

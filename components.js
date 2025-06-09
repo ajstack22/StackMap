@@ -602,7 +602,7 @@ class ComponentBuilder {
 
     // NEW: Show Add User Modal with Emoji Picker (similar to activity flow)
     static showAddUserModal() {
-        console.log('showAddUserModal called');
+        // console.log('showAddUserModal called');
         const overlay = this.createElement('div', 'add-user-modal');
         overlay.id = 'addUserModal';
         
@@ -611,9 +611,9 @@ class ComponentBuilder {
         
         // Close modal when clicking overlay
         overlay.addEventListener('click', (e) => {
-            console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
+            // console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
             if (e.target === overlay) {
-                console.log('Closing modal via overlay click');
+                // console.log('Closing modal via overlay click');
                 this.closeAddUserModal();
             }
         });
@@ -704,16 +704,16 @@ class ComponentBuilder {
 
     // NEW: Add user functionality with emoji support
     static addUser() {
-        console.log('addUser called');
+        // console.log('addUser called');
         const nameInput = document.getElementById('userName');
         if (!nameInput) {
-            console.error('Name input not found');
+            // console.error('Name input not found');
             return;
         }
         
         const name = nameInput.value.trim();
         const icon = this.selectedUserEmoji || '👤';
-        console.log('Creating user:', name, 'with icon:', icon);
+        // console.log('Creating user:', name, 'with icon:', icon);
         
         if (!name) {
             // Show error feedback
@@ -732,9 +732,9 @@ class ComponentBuilder {
         try {
             // Add the user through AppState with emoji
             if (window.appInstance && window.appInstance.appState) {
-                console.log('Adding user through appState');
+                // console.log('Adding user through appState');
                 const userId = window.appInstance.appState.addUser(name, icon);
-                console.log('New user ID:', userId);
+                // console.log('New user ID:', userId);
                 
                 // Switch to the new user
                 window.appInstance.handleUserSwitch(userId);
@@ -748,14 +748,14 @@ class ComponentBuilder {
                 // Refresh the dropdown
                 window.appInstance.populateUserDropdowns();
             } else {
-                console.error('App instance not found');
+                // console.error('App instance not found');
             }
         } catch (error) {
-            console.error('Error adding user:', error);
+            // console.error('Error adding user:', error);
             // Show error (probably max users reached)
             nameInput.classList.add('error');
             nameInput.placeholder = error.message || 'Maximum users reached';
-            console.error('Error adding user:', error);
+            // console.error('Error adding user:', error);
         }
     }
 
@@ -803,7 +803,7 @@ class ComponentBuilder {
 
     // NEW: Show Edit User Modal with current user data and emoji picker
     static showEditUserModal(user) {
-        console.log('showEditUserModal called with user:', user);
+        // console.log('showEditUserModal called with user:', user);
         const overlay = this.createElement('div', 'edit-user-modal');
         overlay.id = 'editUserModal';
         
@@ -813,9 +813,9 @@ class ComponentBuilder {
         
         // Close modal when clicking overlay
         overlay.addEventListener('click', (e) => {
-            console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
+            // console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
             if (e.target === overlay) {
-                console.log('Closing modal via overlay click');
+                // console.log('Closing modal via overlay click');
                 this.closeEditUserModal();
             }
         });
@@ -908,16 +908,16 @@ class ComponentBuilder {
 
     // NEW: Save edited user data
     static saveEditUser() {
-        console.log('saveEditUser called');
+        // console.log('saveEditUser called');
         const nameInput = document.getElementById('editUserName');
         if (!nameInput || !this.editingUser) {
-            console.error('Name input or editing user not found');
+            // console.error('Name input or editing user not found');
             return;
         }
         
         const newName = nameInput.value.trim();
         const newIcon = this.selectedUserEmoji || '👤';
-        console.log('Updating user:', this.editingUser.id, 'with name:', newName, 'and icon:', newIcon);
+        // console.log('Updating user:', this.editingUser.id, 'with name:', newName, 'and icon:', newIcon);
         
         if (!newName) {
             // Show error feedback
@@ -936,7 +936,7 @@ class ComponentBuilder {
         try {
             // Update the user through AppState
             if (window.appInstance && window.appInstance.appState) {
-                console.log('Updating user through appState');
+                // console.log('Updating user through appState');
                 
                 // Update user data
                 window.appInstance.appState.updateUser(this.editingUser.id, {
@@ -960,10 +960,10 @@ class ComponentBuilder {
                     window.appInstance.initializeTitleSubtitle();
                 }
             } else {
-                console.error('App instance not found');
+                // console.error('App instance not found');
             }
         } catch (error) {
-            console.error('Error updating user:', error);
+            // console.error('Error updating user:', error);
             // Show error
             nameInput.classList.add('error');
             nameInput.placeholder = error.message || 'Error updating user';
@@ -1763,7 +1763,7 @@ class ActivityCard {
                 return;
             }
             
-            console.log('Drag start:', e.target.dataset.index);
+            // console.log('Drag start:', e.target.dataset.index);
             this.appState.ui.draggedElement = e.target;
             this.draggedIndex = parseInt(e.target.dataset.index);
             
@@ -1802,7 +1802,7 @@ class ActivityCard {
         
         card.addEventListener('drop', (e) => {
             e.preventDefault();
-            console.log('Drop event');
+            // console.log('Drop event');
             
             const draggedElement = this.appState.ui.draggedElement;
             const targetCard = e.target.closest('.card');
@@ -1812,7 +1812,7 @@ class ActivityCard {
             const draggedIndex = parseInt(draggedElement.dataset.index);
             const targetIndex = parseInt(targetCard.dataset.index);
             
-            console.log('Moving from', draggedIndex, 'to', targetIndex);
+            // console.log('Moving from', draggedIndex, 'to', targetIndex);
             
             if (!isNaN(draggedIndex) && !isNaN(targetIndex) && draggedIndex !== targetIndex) {
                 this.appState.moveActivity(draggedIndex, targetIndex);
@@ -1821,7 +1821,7 @@ class ActivityCard {
         });
         
         card.addEventListener('dragend', (e) => {
-            console.log('Drag end');
+            // console.log('Drag end');
             this.cleanupDragStates();
         });
         
@@ -2655,7 +2655,7 @@ class DataManagementPanel {
             if (firstBtn) firstBtn.focus();
         }, 350);
         
-        console.log('💾 Data Management Panel opened');
+        // console.log('💾 Data Management Panel opened');
     }
     
     close() {
@@ -2678,7 +2678,7 @@ class DataManagementPanel {
             this.isAnimating = false;
         }, 300);
         
-        console.log('💾 Data Management Panel closed');
+        // console.log('💾 Data Management Panel closed');
     }
     
     updateSyncStatus() {
@@ -2803,7 +2803,7 @@ class DataManagementPanel {
             URL.revokeObjectURL(url);
             
             this.showSuccess('Data exported successfully!');
-            console.log('📤 JSON data exported');
+            // console.log('📤 JSON data exported');
         } catch (error) {
             console.error('Export failed:', error);
             this.showError('Failed to export data. Please try again.');
@@ -2831,7 +2831,7 @@ class DataManagementPanel {
             URL.revokeObjectURL(url);
             
             this.showSuccess('Backup created successfully!');
-            console.log('💾 Backup file created');
+            // console.log('💾 Backup file created');
         } catch (error) {
             console.error('Backup failed:', error);
             this.showError('Failed to create backup. Please try again.');
@@ -2866,7 +2866,7 @@ class DataManagementPanel {
                 await this.app.appState.importData(data, importType === 'backup');
                 this.app.renderer.renderActivities();
                 this.showSuccess('Data imported successfully!');
-                console.log(`📥 ${importType} imported:`, file.name);
+                // console.log(`📥 ${importType} imported:`, file.name);
             }
         } catch (error) {
             console.error('Import failed:', error);
@@ -2886,7 +2886,7 @@ class DataManagementPanel {
             this.app.googleDriveSync.setAutoSync(enabled);
         }
         
-        console.log(`⚙️ Auto-sync ${enabled ? 'enabled' : 'disabled'}`);
+        // console.log(`⚙️ Auto-sync ${enabled ? 'enabled' : 'disabled'}`);
     }
     
     updateBackupReminder(enabled) {
@@ -2894,7 +2894,7 @@ class DataManagementPanel {
         this.app.appState.settings.backupReminder = enabled;
         this.app.appState.saveState();
         
-        console.log(`⚙️ Backup reminders ${enabled ? 'enabled' : 'disabled'}`);
+        // console.log(`⚙️ Backup reminders ${enabled ? 'enabled' : 'disabled'}`);
     }
     
     clearAllData() {
@@ -2922,7 +2922,7 @@ class DataManagementPanel {
                 // Reload app to fresh state
                 window.location.reload();
                 
-                console.log('🗑️ All data cleared');
+                // console.log('🗑️ All data cleared');
             } catch (error) {
                 console.error('Failed to clear data:', error);
                 this.showError('Failed to clear data. Please try again.');

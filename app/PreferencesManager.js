@@ -10,20 +10,20 @@ class PreferencesManager {
     setupEventListeners() {
         // OLD SYSTEM DISABLED - Using hybrid panel system now
         // The hybrid panel manager handles all preferences UI
-        console.log('PreferencesManager: Old system disabled, using HybridPanelManager');
+        // console.log('PreferencesManager: Old system disabled, using HybridPanelManager');
         
         // Legacy preferences button should not interfere with new system
         const preferencesBtn = document.getElementById('preferencesBtn');
         if (preferencesBtn) {
             // Remove any existing listeners and disable the old button
             preferencesBtn.style.display = 'none';
-            console.log('PreferencesManager: Old preferences button hidden');
+            // console.log('PreferencesManager: Old preferences button hidden');
         }
     }
 
     // PREFERENCES PANEL MANAGEMENT - DISABLED (Using hybrid system)
     togglePreferences() {
-        console.log('PreferencesManager: togglePreferences called but disabled - using HybridPanelManager');
+        // console.log('PreferencesManager: togglePreferences called but disabled - using HybridPanelManager');
         // Redirect to hybrid panel system if available
         if (window.hybridPanelManager) {
             window.hybridPanelManager.togglePanel('left');
@@ -32,7 +32,7 @@ class PreferencesManager {
     }
 
     showPreferences() {
-        console.log('PreferencesManager: showPreferences called but disabled - using HybridPanelManager');
+        // console.log('PreferencesManager: showPreferences called but disabled - using HybridPanelManager');
         // Redirect to hybrid panel system if available
         if (window.hybridPanelManager) {
             window.hybridPanelManager.openPanel('left');
@@ -154,7 +154,7 @@ class PreferencesManager {
                     Tap the title or subtitle above to edit them!
                 </div>
                 <div class="preferences-footer" style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
-                    <button class="btn btn--primary" onclick="console.log('Old preferences system - use hybrid panels')">Done</button>
+                    <button class="btn btn--primary" onclick="// console.log('Old preferences system - use hybrid panels')">Done</button>
                     <button class="btn btn--link" onclick="appInstance.showWelcomeAgain?.()" title="Show welcome tutorial again" style="display: flex; align-items: center; gap: 4px;">
                         <span class="material-icons" style="font-size: 1.1rem;">help_outline</span>
                         Welcome Guide
@@ -209,7 +209,7 @@ class PreferencesManager {
                 </div>
                 
                 <div class="preferences-footer" style="display: flex; justify-content: center;">
-                    <button class="btn btn--primary" onclick="console.log('Old preferences system - use hybrid panels')" style="padding: ${isMobile ? '6px 20px' : '10px 28px'}; font-size: ${isMobile ? '0.9rem' : '1.05rem'}; font-weight: 600;">Done</button>
+                    <button class="btn btn--primary" onclick="// console.log('Old preferences system - use hybrid panels')" style="padding: ${isMobile ? '6px 20px' : '10px 28px'}; font-size: ${isMobile ? '0.9rem' : '1.05rem'}; font-weight: 600;">Done</button>
                 </div>
                 
                 <div class="preferences-legal" style="margin-top: ${isMobile ? '16px' : '24px'}; padding-top: ${isMobile ? '16px' : '24px'}; border-top: 1px solid #e0e0e0; text-align: center;">
@@ -273,7 +273,7 @@ class PreferencesManager {
                     
                     return `<div class="color-picker__option color-picker__option--custom" 
                                  style="background-color: ${displayColor}; width: 100%; height: ${size}; border-radius: ${isMobile ? '4px' : '6px'}; cursor: pointer; transition: all 0.2s ease; border: 2px solid ${isCustomColor ? '#333' : 'transparent'}; position: relative; box-sizing: border-box;" 
-                                 onclick="console.log('Old color picker - use hybrid panels')" 
+                                 onclick="// console.log('Old color picker - use hybrid panels')" 
                                  title="Custom Color Picker">
                                  <span class="material-icons" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); color: white; font-size: ${isMobile ? '12px' : '18px'}; text-shadow: 0 0 3px rgba(0,0,0,0.8);">palette</span>
                             </div>`;

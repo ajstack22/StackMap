@@ -238,18 +238,19 @@
     }
     
     .preferences-panel {
-        left: 10px !important;
-        right: 10px !important;
+        left: 4px !important;
+        right: 4px !important;
         max-width: none !important;
         min-width: auto !important;
         width: auto !important;
         top: 100px !important;
         max-height: calc(100vh - 120px) !important;
         margin: 0 !important;
+        padding: 12px !important; /* Reduced padding on mobile */
     }
     
     .validation-content {
-        padding: 20px;
+        padding: 12px;
     }
     
     .color-picker {
@@ -419,8 +420,38 @@
     .btn--round .material-icons {
         font-size: 16px;
     }
+    
+    /* Mobile edit mode buttons - all 54x54 for better touch targets */
+    .card .btn--round {
+        width: 54px !important;
+        height: 54px !important;
+        min-width: 54px !important;
+        min-height: 54px !important;
+    }
+    
+    .card .btn--round .material-icons {
+        font-size: 24px !important;
+    }
+    
+    /* Mobile card type indicator - match 54x54 button size */
+    .card .card__type-indicator,
+    .card__type-indicator {
+        bottom: 15px !important; /* Same as other bottom buttons */
+        width: 54px !important;
+        height: 54px !important;
+        min-width: 54px !important;
+        min-height: 54px !important;
+        max-width: 54px !important;
+        max-height: 54px !important;
+    }
+    
+    .card .card__type-indicator .material-icons,
+    .card__type-indicator .material-icons {
+        font-size: 24px !important;
+    }
 }
 
+/* More specific than cards.css to ensure proper override */
 @media (max-width: 480px) {
     :root {
         --title-size: 1.6rem;
@@ -507,6 +538,9 @@
     
     .preferences-panel {
         max-height: calc(100vh - 100px) !important;
+        left: 2px !important;
+        right: 2px !important;
+        padding: 10px !important; /* Even less padding on very small screens */
     }
     
     /* Maintain consistent indicator sizing even on very small screens */
@@ -567,5 +601,34 @@
     
     .btn--round .material-icons {
         font-size: 14px;
+    }
+    
+    /* Override cards.css - Very small screen buttons should still be 54x54 */
+    body .card .btn--round {
+        width: 54px !important;
+        height: 54px !important;
+        min-width: 54px !important;
+        min-height: 54px !important;
+    }
+    
+    body .card .btn--round .material-icons {
+        font-size: 24px !important;
+    }
+    
+    /* Override cards.css 36px setting - card type indicator must be 54x54 */
+    body .card .card__type-indicator,
+    body .card__type-indicator {
+        bottom: 15px !important; /* Same as other bottom buttons */
+        width: 54px !important;
+        height: 54px !important;
+        min-width: 54px !important;
+        min-height: 54px !important;
+        max-width: 54px !important;
+        max-height: 54px !important;
+    }
+    
+    body .card .card__type-indicator .material-icons,
+    body .card__type-indicator .material-icons {
+        font-size: 24px !important;
     }
 }

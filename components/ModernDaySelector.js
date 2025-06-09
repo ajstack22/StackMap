@@ -234,7 +234,7 @@ class ModernDaySelector {
     }
     
     open() {
-        console.log('Day selector open() called, isOpen:', this.isOpen);
+        // console.log('Day selector open() called, isOpen:', this.isOpen);
         if (this.isOpen) return;
         
         this.isOpen = true;
@@ -245,7 +245,7 @@ class ModernDaySelector {
         this.selector.setAttribute('aria-expanded', 'true');
         this.modal.classList.add('day-modal--open');
         this.backdrop.classList.add('selector-backdrop--open');
-        console.log('Day selector opened, classes added');
+        // console.log('Day selector opened, classes added');
         
         // Focus management
         this.previousFocus = document.activeElement;
@@ -263,7 +263,7 @@ class ModernDaySelector {
     }
     
     close() {
-        console.log('Day selector close() called, isOpen:', this.isOpen);
+        // console.log('Day selector close() called, isOpen:', this.isOpen);
         if (!this.isOpen) return;
         
         this.isOpen = false;
@@ -273,7 +273,7 @@ class ModernDaySelector {
         this.selector.setAttribute('aria-expanded', 'false');
         this.modal.classList.remove('day-modal--open');
         this.backdrop.classList.remove('selector-backdrop--open');
-        console.log('Day selector closed, classes removed');
+        // console.log('Day selector closed, classes removed');
         
         // Return focus
         if (this.previousFocus) {
@@ -302,9 +302,9 @@ class ModernDaySelector {
         
         // Backdrop click - Fix for test
         this.backdrop.addEventListener('click', (e) => {
-            console.log('Day selector backdrop clicked, target:', e.target, 'backdrop:', this.backdrop);
+            // console.log('Day selector backdrop clicked, target:', e.target, 'backdrop:', this.backdrop);
             if (e.target === this.backdrop) {
-                console.log('Closing day modal via backdrop click');
+                // console.log('Closing day modal via backdrop click');
                 this.close();
             }
         });

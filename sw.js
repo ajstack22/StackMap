@@ -1,8 +1,8 @@
 // Service Worker for StackMap PWA
-// Version: 1.0.0
-// Last Updated: 2025-01-06
+// Version: 1.0.1
+// Last Updated: 2025-01-09
 
-const CACHE_NAME = 'stackmap-v1.0.0';
+const CACHE_NAME = 'stackmap-v1.0.1';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 
@@ -11,8 +11,6 @@ const CORE_ASSETS = [
   '/',
   '/index.html',
   '/offline.html',
-  '/styles.css',
-  '/styles/index.css',
   '/manifest.json',
   '/icon-192.png',
   '/icon-512.png'
@@ -25,13 +23,13 @@ const STATIC_ASSETS = [
   '/components.js',
   '/state.js',
   '/renderer.js',
-  '/config.js',
   '/drive-sync.js',
   '/env-loader.js',
   '/data/default-activities.js',
   '/data/emoji-list.js',
   '/data/emoji-names.js',
   '/js/HybridPanelManager.js',
+  '/js/CelebrationManager.js',
   '/components/DraggableDrawer.js',
   '/components/ModernDaySelector.js',
   '/components/ModernUserSelector.js',
@@ -40,11 +38,16 @@ const STATIC_ASSETS = [
   '/config/themes.js',
   '/utils/security.js',
   // All CSS modules
+  '/styles/index.css',
   '/styles/animations.css',
   '/styles/base.css',
   '/styles/buttons.css',
   '/styles/cards.css',
+  '/styles/celebrations.css',
+  '/styles/data-panel.css',
+  '/styles/data-panel-animations.css',
   '/styles/draggable-drawer.css',
+  '/styles/fab.css',
   '/styles/forms.css',
   '/styles/hybrid-panels.css',
   '/styles/layout.css',
@@ -67,11 +70,11 @@ const STATIC_ASSETS = [
 
 // Install event - cache core assets
 self.addEventListener('install', (event) => {
-  console.log('[SW] Installing Service Worker');
+  // console.log('[SW] Installing Service Worker');
   
   event.waitUntil(
     caches.open(CACHE_NAME).then((cache) => {
-      console.log('[SW] Caching core assets');
+      // console.log('[SW] Caching core assets');
       return cache.addAll(CORE_ASSETS);
     }).then(() => {
       // Force the waiting service worker to become active
@@ -82,7 +85,7 @@ self.addEventListener('install', (event) => {
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[SW] Activating Service Worker');
+  // console.log('[SW] Activating Service Worker');
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
@@ -90,7 +93,7 @@ self.addEventListener('activate', (event) => {
         cacheNames.map((cacheName) => {
           // Delete old version caches but keep runtime and fonts caches
           if (cacheName.startsWith('stackmap-v') && cacheName !== CACHE_NAME) {
-            console.log('[SW] Deleting old cache:', cacheName);
+            // console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -99,7 +102,7 @@ self.addEventListener('activate', (event) => {
       // Cache additional static assets in background
       caches.open(CACHE_NAME).then((cache) => {
         cache.addAll(STATIC_ASSETS).catch((err) => {
-          console.log('[SW] Failed to cache some static assets:', err);
+          // console.log('[SW] Failed to cache some static assets:', err);
         });
       });
       // Take control of all pages immediately
@@ -173,7 +176,7 @@ async function handleGoogleFonts(request) {
     }
     return networkResponse;
   } catch (error) {
-    console.log('[SW] Font fetch failed:', error);
+    // console.log('[SW] Font fetch failed:', error);
     return new Response('', { status: 404 });
   }
 }
@@ -194,6 +197,6 @@ self.addEventListener('sync', (event) => {
 
 async function syncUserData() {
   // This would sync local changes to server when online
-  console.log('[SW] Background sync triggered');
+  // console.log('[SW] Background sync triggered');
   // Implementation would depend on your backend
 }
