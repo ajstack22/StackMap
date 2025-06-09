@@ -1940,28 +1940,12 @@ class EditModeFAB {
                 handler: () => this.app.showNewCardForm('bottom')
             },
             {
-                id: 'add-user',
-                icon: 'person_add',
-                label: 'Add User',
-                ariaLabel: 'Add new user profile',
-                color: '#4CAF50', // Green
-                handler: () => this.app.showAddUserForm()
-            },
-            {
                 id: 'complete-day',
                 icon: 'event_available',
                 label: 'Complete Day',
                 ariaLabel: 'Mark all activities as complete',
                 color: '#FF9800', // Orange
                 handler: () => this.app.completeAllActivities()
-            },
-            {
-                id: 'data-management',
-                icon: 'storage',
-                label: 'Data Management',
-                ariaLabel: 'Open data management panel for sync, import, and export',
-                color: '#2196F3', // Blue
-                handler: () => this.app.openDataManagementPanel()
             },
             {
                 id: 'exit-edit',

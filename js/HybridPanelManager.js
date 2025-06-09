@@ -368,6 +368,33 @@ class HybridPanelManager {
             </div>
         `;
         
+        // Show Edit Mode section when in edit mode
+        if (this.app.grownupMode) {
+            content += `
+                <div class="panel-section">
+                    <label>Edit Mode</label>
+                    <div class="admin-buttons">
+                        <button class="admin-btn" onclick="hybridPanelManager.exportData()">
+                            <span class="material-icons">download</span>
+                            Export Data
+                        </button>
+                        <button class="admin-btn" onclick="hybridPanelManager.importData()">
+                            <span class="material-icons">upload</span>
+                            Import Data
+                        </button>
+                        <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
+                            <span class="material-icons">person_add</span>
+                            Add User
+                        </button>
+                        <button class="admin-btn" onclick="hybridPanelManager.openSyncSettings()">
+                            <span class="material-icons">cloud_sync</span>
+                            Google Drive Sync
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
         return content;
     }
 
@@ -1016,14 +1043,12 @@ class HybridPanelManager {
         if (isChecked) {
             // User wants to enter edit mode - show validation first
             this.showEditModeValidation();
-            
-            // Close panel after a short delay to ensure modal is visible
-            setTimeout(() => {
-                this.closePanel('right');
-            }, 100);
+            // Don't close panel - let user access Edit Mode functions
         } else {
             // User wants to exit edit mode
             this.exitEditMode();
+            // Re-render content to hide Edit Mode section
+            this.renderPanelContent('right');
         }
     }
     
@@ -1240,12 +1265,8 @@ class HybridPanelManager {
             this.removeValidationModal();
             console.log('Validation successful - entered edit mode');
             
-            // Auto-expand FAB after a short delay
-            setTimeout(() => {
-                if (this.app.editFAB && this.app.editFAB.isVisible()) {
-                    this.app.editFAB.expand();
-                }
-            }, 500);
+            // Re-render panel content to show Edit Mode section
+            this.renderPanelContent('right');
         } else {
             // Wrong answer - show feedback
             input.value = '';
