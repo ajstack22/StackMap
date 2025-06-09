@@ -33,81 +33,72 @@ function validateSettingsFooterLinks() {
         failed += 2;
     }
     
-    // Test 2: Validate All Three Links
-    const expectedLinks = [
-        { text: '💖 Support Us', href: 'support.html', hasEmoji: true },
-        { text: 'Terms of Service', href: 'terms.html', hasEmoji: false },
-        { text: 'Privacy Policy', href: 'privacy.html', hasEmoji: false }
-    ];
+    // Test 2: Validate Learn More Link
+    const footerLink = document.querySelector('.panel-footer-link');
     
-    const footerLinksElements = document.querySelectorAll('.panel-footer-link');
-    
-    if (footerLinksElements.length === 3) {
-        console.log('✅ All three links present');
+    if (footerLink) {
+        console.log('✅ Learn More link present');
         passed++;
         
-        footerLinksElements.forEach((link, index) => {
-            const expected = expectedLinks[index];
-            const linkText = link.textContent.trim();
-            
-            // Check text content
-            if (linkText === expected.text) {
-                console.log(`✅ ${expected.text} text correct`);
-                passed++;
-            } else {
-                console.log(`❌ ${expected.text} text incorrect (got: "${linkText}")`);
-                failed++;
-            }
-            
-            // Check href
-            if (link.getAttribute('href') === expected.href) {
-                console.log(`✅ ${expected.text} URL correct`);
-                passed++;
-            } else {
-                console.log(`❌ ${expected.text} URL incorrect`);
-                failed++;
-            }
-            
-            // Check target attribute
-            if (link.getAttribute('target') === '_blank') {
-                console.log(`✅ ${expected.text} opens in new tab`);
-                passed++;
-            } else {
-                console.log(`❌ ${expected.text} missing target="_blank"`);
-                failed++;
-            }
-            
-            // Check security attributes
-            if (link.getAttribute('rel') === 'noopener noreferrer') {
-                console.log(`✅ ${expected.text} has security attributes`);
-                passed++;
-            } else {
-                console.log(`❌ ${expected.text} missing security attributes`);
-                failed++;
-            }
-            
-            // Check ARIA label
-            if (link.getAttribute('aria-label')) {
-                console.log(`✅ ${expected.text} has ARIA label`);
-                passed++;
-            } else {
-                console.log(`❌ ${expected.text} missing ARIA label`);
-                failed++;
-            }
-            
-            // Check touch target
-            const linkHeight = link.offsetHeight;
-            if (linkHeight >= 44) {
-                console.log(`✅ ${expected.text} meets touch target (${linkHeight}px)`);
-                passed++;
-            } else {
-                console.log(`❌ ${expected.text} too small (${linkHeight}px, needs 44px)`);
-                failed++;
-            }
-        });
+        const linkText = footerLink.textContent.trim();
+        
+        // Check text content
+        if (linkText === 'Learn More') {
+            console.log('✅ Link text correct');
+            passed++;
+        } else {
+            console.log(`❌ Link text incorrect (got: "${linkText}")`);
+            failed++;
+        }
+        
+        // Check href
+        if (footerLink.getAttribute('href') === 'support.html') {
+            console.log('✅ Link URL correct');
+            passed++;
+        } else {
+            console.log('❌ Link URL incorrect');
+            failed++;
+        }
+        
+        // Check target attribute
+        if (footerLink.getAttribute('target') === '_blank') {
+            console.log('✅ Link opens in new tab');
+            passed++;
+        } else {
+            console.log('❌ Link missing target="_blank"');
+            failed++;
+        }
+        
+        // Check security attributes
+        if (footerLink.getAttribute('rel') === 'noopener noreferrer') {
+            console.log('✅ Link has security attributes');
+            passed++;
+        } else {
+            console.log('❌ Link missing security attributes');
+            failed++;
+        }
+        
+        // Check ARIA label
+        if (footerLink.getAttribute('aria-label')) {
+            console.log('✅ Link has ARIA label');
+            passed++;
+        } else {
+            console.log('❌ Link missing ARIA label');
+            failed++;
+        }
+        
+        // Check touch target
+        const linkHeight = footerLink.offsetHeight;
+        if (linkHeight >= 44) {
+            console.log(`✅ Link meets touch target (${linkHeight}px)`);
+            passed++;
+        } else {
+            console.log(`❌ Link too small (${linkHeight}px, needs 44px)`);
+            failed++;
+        }
     } else {
-        console.log(`❌ Expected 3 links, found ${footerLinksElements.length}`);
-        failed++;
+        console.log('❌ Learn More link not found');
+        failed += 7;
     }
     
     // Test 3: Visual Separator

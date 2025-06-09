@@ -843,6 +843,7 @@ html body.grownup-mode .card--completed[style] .card__icon {
 .panel-footer-links {
     margin-top: 20px;
     padding-bottom: 20px;
+    text-align: center;
 }
 
 .panel-links-separator {
@@ -859,20 +860,21 @@ html body.grownup-mode .card--completed[style] .card__icon {
 }
 
 .panel-footer-link {
-    display: block;
-    padding: 12px 16px;
+    display: inline-block;
+    padding: 10px 20px;
     color: white;
     text-decoration: none;
-    font-size: 0.95rem;
+    font-size: 0.9rem;
     font-family: inherit;
     text-align: center;
     border-radius: 8px;
     min-height: 44px;
-    line-height: 20px;
-    transition: background-color 0.2s ease, color 0.2s ease;
+    line-height: 24px;
+    transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
     border: 1px solid transparent;
     white-space: nowrap;
     background: rgba(255, 255, 255, 0.1);
+    margin: 0 auto;
 }
 
 .panel-footer-link:hover {
