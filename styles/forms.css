@@ -841,11 +841,12 @@ html body.grownup-mode .card--completed[style] .card__icon {
 
 /* ===== SETTINGS PANEL FOOTER LINKS ===== */
 .panel-footer-links {
-    margin-top: 80px; /* Space for absolute positioned Done button */
-    padding-bottom: 20px;
+    position: absolute;
+    bottom: 90px; /* Position above the Done button (20px + button height ~56px + spacing) */
+    left: 20px;
+    right: 20px;
     text-align: center;
-    position: relative;
-    z-index: 1;
+    z-index: 5;
 }
 
 .panel-links-separator {
@@ -896,8 +897,7 @@ html body.grownup-mode .card--completed[style] .card__icon {
 /* Mobile Responsive */
 @media (max-width: 768px) {
     .panel-footer-links {
-        margin-top: 30px;
-        padding-bottom: 30px;
+        bottom: 85px; /* Slightly less spacing on mobile */
     }
     
     .panel-links-separator {
