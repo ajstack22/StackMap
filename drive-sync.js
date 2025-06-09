@@ -18,12 +18,23 @@ class GoogleDriveSync {
 
     async initializeGoogleAPIs() {
         try {
-            // Wait for Google APIs to load
-            await new Promise((resolve) => {
-                if (window.gapi && window.google) {
-                    resolve();
+            // Wait for Google APIs to load with timeout
+            await new Promise((resolve, reject) => {
+                let checkCount = 0;
+                const checkGoogleAPIs = () => {
+                    if (window.gapi && window.google && window.google.accounts) {
+                        resolve();
+                    } else if (checkCount++ > 50) { // 5 seconds timeout
+                        reject(new Error('Google APIs failed to load'));
+                    } else {
+                        setTimeout(checkGoogleAPIs, 100);
+                    }
+                };
+                
+                if (document.readyState === 'complete') {
+                    checkGoogleAPIs();
                 } else {
-                    window.addEventListener('load', resolve);
+                    window.addEventListener('load', checkGoogleAPIs);
                 }
             });
 
@@ -80,21 +91,31 @@ class GoogleDriveSync {
     }
 
     initializeGoogleIdentity() {
-        // Initialize Google Identity Services for authentication
-        google.accounts.id.initialize({
-            client_id: CONFIG.GOOGLE_CLIENT_ID,
-            callback: this.handleCredentialResponse.bind(this)
-        });
+        try {
+            // Check if Google Identity Services is loaded
+            if (!window.google || !window.google.accounts) {
+                console.error('Google Identity Services not loaded');
+                return;
+            }
 
-        // Initialize Google Auth for token access
-        this.tokenClient = google.accounts.oauth2.initTokenClient({
-            client_id: CONFIG.GOOGLE_CLIENT_ID,
-            scope: 'https://www.googleapis.com/auth/drive.file',
-            callback: this.handleTokenResponse.bind(this),
-            error_callback: this.handleTokenError.bind(this)
-        });
+            // Initialize Google Identity Services for authentication
+            google.accounts.id.initialize({
+                client_id: CONFIG.GOOGLE_CLIENT_ID,
+                callback: this.handleCredentialResponse.bind(this)
+            });
 
-        // console.log('Google Identity Services initialized');
+            // Initialize Google Auth for token access
+            this.tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.GOOGLE_CLIENT_ID,
+                scope: 'https://www.googleapis.com/auth/drive.file',
+                callback: this.handleTokenResponse.bind(this),
+                error_callback: this.handleTokenError.bind(this)
+            });
+
+            // console.log('Google Identity Services initialized');
+        } catch (error) {
+            console.error('Error initializing Google Identity Services:', error);
+        }
     }
 
     handleCredentialResponse(response) {
@@ -195,6 +216,18 @@ class GoogleDriveSync {
 
     async signIn() {
         try {
+            // Check if tokenClient is initialized
+            if (!this.tokenClient) {
+                console.error('Google Identity Services not initialized. Trying to initialize...');
+                this.initializeGoogleIdentity();
+                
+                // If still no tokenClient, show error
+                if (!this.tokenClient) {
+                    this.showSyncError('Google Sign-In is not available. Please refresh the page.');
+                    return;
+                }
+            }
+            
             // Request access token
             this.tokenClient.requestAccessToken({ prompt: 'consent' });
         } catch (error) {

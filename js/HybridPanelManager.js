@@ -1337,7 +1337,7 @@ class HybridPanelManager {
             }
         });
         
-        console.log('Validation modal removed');
+        // console.log('Validation modal removed');
     }
     
     exitEditMode() {
@@ -1346,7 +1346,7 @@ class HybridPanelManager {
         // NEW: Close any open panels when exiting edit mode
         this.closeAllPanels();
         
-        console.log('Exited edit mode and closed panels');
+        // console.log('Exited edit mode and closed panels');
     }
 
     // Admin actions
@@ -1435,7 +1435,7 @@ class HybridPanelManager {
         // Update logo visibility
         this.app.updateLogoVisibility(newTitle);
         
-        console.log('Title updated from preferences:', { title: newTitle });
+        // console.log('Title updated from preferences:', { title: newTitle });
     }
 
 
@@ -2077,7 +2077,7 @@ class HybridPanelManager {
         }
         
         // Don't save immediately, wait for panel close
-        console.log(`Updated ${type} celebration to: ${value}`);
+        // console.log(`Updated ${type} celebration to: ${value}`);
     }
     
     /**
@@ -2106,10 +2106,10 @@ class HybridPanelManager {
             
             // Trigger save
             this.app.appState._triggerSave();
-            console.log('Settings saved on panel close:', {
-                task: currentUser.settings.taskCelebration,
-                routine: currentUser.settings.routineCelebration
-            });
+            // console.log('Settings saved on panel close:', {
+            //     task: currentUser.settings.taskCelebration,
+            //     routine: currentUser.settings.routineCelebration
+            // });
         }
     }
 
@@ -2521,7 +2521,7 @@ class HybridPanelManager {
                 action: 'initial' 
             }, '', window.location.href);
             
-            console.log('📱 Initial history state added for back button control');
+            // console.log('📱 Initial history state added for back button control');
         }
     }
 
@@ -2530,7 +2530,7 @@ class HybridPanelManager {
      */
     setupBackButtonListener() {
         window.addEventListener('popstate', (event) => {
-            console.log('🔙 Back button pressed, state:', event.state);
+            // console.log('🔙 Back button pressed, state:', event.state);
             
             // Check if any panels are open
             if (this.state.leftPanelOpen || this.state.rightPanelOpen) {
@@ -2555,7 +2555,7 @@ class HybridPanelManager {
      * Handle back button when panels are open
      */
     handleBackButtonPanelClose() {
-        console.log('🔙 Closing panel with back button');
+        // console.log('🔙 Closing panel with back button');
         
         // Close any open panels
         this.closeAllPanels();
@@ -2568,7 +2568,7 @@ class HybridPanelManager {
      * Handle back button when in edit mode
      */
     handleBackButtonEditModeExit() {
-        console.log('🔙 Exiting edit mode with back button');
+        // console.log('🔙 Exiting edit mode with back button');
         
         // Exit edit mode
         this.app.exitGrownupMode();
@@ -2583,7 +2583,7 @@ class HybridPanelManager {
     handleBackButtonDefaultBehavior(event) {
         // If this is our initial state, prevent app exit
         if (event.state?.stackmap && event.state?.action === 'initial') {
-            console.log('🔙 Preventing app exit, adding new history state');
+            // console.log('🔙 Preventing app exit, adding new history state');
             
             // Add another state to prevent immediate exit
             this.pushBackButtonState('back_pressed');
@@ -2591,7 +2591,7 @@ class HybridPanelManager {
         }
         
         // Allow normal navigation if user really wants to leave
-        console.log('🔙 Allowing normal back navigation');
+        // console.log('🔙 Allowing normal back navigation');
     }
 
     /**
@@ -2606,7 +2606,7 @@ class HybridPanelManager {
         };
         
         window.history.pushState(state, '', window.location.href);
-        console.log('📱 Pushed history state:', state);
+        // console.log('📱 Pushed history state:', state);
     }
 
     /**
@@ -2630,12 +2630,12 @@ class HybridPanelManager {
         
         if (this.isIOSPWA) {
             document.body.classList.add('ios-pwa-mode');
-            console.log('🍎 iOS PWA mode detected - enhanced navigation enabled');
+            // console.log('🍎 iOS PWA mode detected - enhanced navigation enabled');
         }
         
         if (this.isIOS) {
             document.body.classList.add('ios-device');
-            console.log('🍎 iOS device detected');
+            // console.log('🍎 iOS device detected');
         }
     }
 
@@ -2653,12 +2653,12 @@ class HybridPanelManager {
             const panelOpen = this.state.leftPanelOpen || this.state.rightPanelOpen;
             
             if ((nearLeftEdge || nearRightEdge) && panelOpen) {
-                console.log('🍎 Preventing iOS swipe navigation during panel interaction');
+                // console.log('🍎 Preventing iOS swipe navigation during panel interaction');
                 e.preventDefault();
             }
         }, { passive: false });
         
-        console.log('🍎 iOS gesture protection enabled');
+        // console.log('🍎 iOS gesture protection enabled');
     }
 
     /**
@@ -2713,7 +2713,7 @@ class HybridPanelManager {
             fab.classList.add('ios-pwa-enhanced');
         });
         
-        console.log('🍎 Enhanced iOS PWA discoverability');
+        // console.log('🍎 Enhanced iOS PWA discoverability');
     }
 
     /**
