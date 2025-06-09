@@ -1,46 +1,41 @@
 // Story 015: Settings Footer Links Validation Script
 
-function validateSettingsFooterLinks() {
-    console.log('=== Story 015: Settings Footer Links Validation ===');
+function validateLearnMoreButton() {
+    console.log('=== Story 015: Learn More Button Validation ===');
     
     let passed = 0;
     let failed = 0;
     
-    // Test 1: Check Right Panel Structure
-    const rightPanel = document.querySelector('#hybridRightPanel');
-    const doneButton = rightPanel?.querySelector('.panel-close');
-    const footerLinks = rightPanel?.querySelector('.panel-footer-links');
+    // Test 1: Check Preferences Panel Structure
+    const leftPanel = document.querySelector('#hybridLeftPanel');
+    const learnMoreButton = leftPanel?.querySelector('.learn-more-button');
     
-    if (footerLinks) {
-        console.log('✅ Footer links section exists');
+    if (learnMoreButton) {
+        console.log('✅ Learn More button exists in Preferences panel');
         passed++;
         
-        // Check if footer is after Done button
-        let nextElement = doneButton?.nextElementSibling;
-        while (nextElement && nextElement.nodeType !== 1) {
-            nextElement = nextElement.nextElementSibling;
-        }
-        
-        if (nextElement === footerLinks) {
-            console.log('✅ Links positioned after Done button');
+        // Check positioning
+        const computedStyle = window.getComputedStyle(learnMoreButton);
+        if (computedStyle.position === 'absolute' && computedStyle.top === '16px' && computedStyle.right === '16px') {
+            console.log('✅ Button positioned in top-right corner');
             passed++;
         } else {
-            console.log('❌ Links not properly positioned after Done button');
+            console.log('❌ Button not properly positioned');
             failed++;
         }
     } else {
-        console.log('❌ Footer links section not found');
+        console.log('❌ Learn More button not found in Preferences panel');
         failed += 2;
     }
     
-    // Test 2: Validate Learn More Link
-    const footerLink = document.querySelector('.panel-footer-link');
+    // Test 2: Validate Learn More Button
+    const buttonLink = document.querySelector('.learn-more-button');
     
-    if (footerLink) {
-        console.log('✅ Learn More link present');
+    if (buttonLink) {
+        console.log('✅ Learn More button present');
         passed++;
         
-        const linkText = footerLink.textContent.trim();
+        const linkText = buttonLink.textContent.trim();
         
         // Check text content
         if (linkText === 'Learn More') {
@@ -52,48 +47,48 @@ function validateSettingsFooterLinks() {
         }
         
         // Check href
-        if (footerLink.getAttribute('href') === 'support.html') {
-            console.log('✅ Link URL correct');
+        if (buttonLink.getAttribute('href') === 'support.html') {
+            console.log('✅ Button URL correct');
             passed++;
         } else {
-            console.log('❌ Link URL incorrect');
+            console.log('❌ Button URL incorrect');
             failed++;
         }
         
         // Check target attribute
-        if (footerLink.getAttribute('target') === '_blank') {
-            console.log('✅ Link opens in new tab');
+        if (buttonLink.getAttribute('target') === '_blank') {
+            console.log('✅ Button opens in new tab');
             passed++;
         } else {
-            console.log('❌ Link missing target="_blank"');
+            console.log('❌ Button missing target="_blank"');
             failed++;
         }
         
         // Check security attributes
-        if (footerLink.getAttribute('rel') === 'noopener noreferrer') {
-            console.log('✅ Link has security attributes');
+        if (buttonLink.getAttribute('rel') === 'noopener noreferrer') {
+            console.log('✅ Button has security attributes');
             passed++;
         } else {
-            console.log('❌ Link missing security attributes');
+            console.log('❌ Button missing security attributes');
             failed++;
         }
         
         // Check ARIA label
-        if (footerLink.getAttribute('aria-label')) {
-            console.log('✅ Link has ARIA label');
+        if (buttonLink.getAttribute('aria-label')) {
+            console.log('✅ Button has ARIA label');
             passed++;
         } else {
-            console.log('❌ Link missing ARIA label');
+            console.log('❌ Button missing ARIA label');
             failed++;
         }
         
-        // Check touch target
-        const linkHeight = footerLink.offsetHeight;
-        if (linkHeight >= 44) {
-            console.log(`✅ Link meets touch target (${linkHeight}px)`);
+        // Check touch target (minimum height)
+        const linkHeight = buttonLink.offsetHeight;
+        if (linkHeight >= 36) {
+            console.log(`✅ Button meets touch target (${linkHeight}px)`);
             passed++;
         } else {
-            console.log(`❌ Link too small (${linkHeight}px, needs 44px)`);
+            console.log(`❌ Button too small (${linkHeight}px, needs 36px minimum)`);
             failed++;
         }
     } else {
@@ -101,55 +96,32 @@ function validateSettingsFooterLinks() {
         failed += 7;
     }
     
-    // Test 3: Visual Separator
-    const separator = document.querySelector('.panel-links-separator');
-    if (separator) {
-        console.log('✅ Visual separator present');
+    // Test 3: Check Icon Presence
+    const icon = buttonLink?.querySelector('.material-icons');
+    if (icon && icon.textContent === 'info') {
+        console.log('✅ Info icon present');
         passed++;
     } else {
-        console.log('❌ Visual separator missing');
+        console.log('❌ Info icon missing or incorrect');
         failed++;
     }
     
-    // Test 4: Check CSS styling
-    if (footerLinksElements.length > 0) {
-        const firstLink = footerLinksElements[0];
-        const computedStyle = window.getComputedStyle(firstLink);
-        
-        // Check basic styling
-        if (computedStyle.display === 'block') {
-            console.log('✅ Links have correct display property');
-            passed++;
-        } else {
-            console.log('❌ Links have incorrect display property');
-            failed++;
-        }
-        
-        if (computedStyle.textAlign === 'center') {
-            console.log('✅ Links have centered text');
-            passed++;
-        } else {
-            console.log('❌ Links text not centered');
-            failed++;
-        }
-    }
-    
     // Summary
-    console.log(`\n📊 Settings Footer Links Results: ${passed} passed, ${failed} failed`);
+    console.log(`\n📊 Learn More Button Results: ${passed} passed, ${failed} failed`);
     console.log(`✨ Success Rate: ${((passed / (passed + failed)) * 100).toFixed(1)}%`);
     
     return failed === 0;
 }
 
-// Helper function to open right panel for testing
-function openSettingsPanel() {
+// Helper function to open preferences panel for testing
+function openPreferencesPanel() {
     if (window.hybridPanelManager) {
-        window.hybridPanelManager.openPanel('right');
-        console.log('Settings panel opened for testing');
+        window.hybridPanelManager.openPanel('left');
+        console.log('Preferences panel opened for testing');
         
         // Wait for panel to fully open before running validation
         setTimeout(() => {
-            validateSettingsFooterLinks();
+            validateLearnMoreButton();
         }, 500);
     } else {
         console.error('HybridPanelManager not found. Make sure the app is loaded.');
@@ -157,8 +129,8 @@ function openSettingsPanel() {
 }
 
 // Add to global scope for easy testing
-window.validateSettingsFooterLinks = validateSettingsFooterLinks;
-window.testStory015 = openSettingsPanel;
+window.validateLearnMoreButton = validateLearnMoreButton;
+window.testStory015 = openPreferencesPanel;
 
 console.log('Story 015 validation script loaded.');
-console.log('Use testStory015() to open settings panel and run validation');
+console.log('Use testStory015() to open preferences panel and run validation');

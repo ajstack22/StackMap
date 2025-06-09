@@ -112,19 +112,6 @@ class HybridPanelManager {
                 <button class="panel-close" onclick="hybridPanelManager.closePanel('right')">
                     Done
                 </button>
-                
-                <!-- Learn More Link Footer -->
-                <div class="panel-footer-links">
-                    <div class="panel-links-separator"></div>
-                    
-                    <a href="support.html" 
-                       target="_blank" 
-                       rel="noopener noreferrer" 
-                       class="panel-footer-link" 
-                       aria-label="Learn more about StackMap - opens in new window">
-                        Learn More
-                    </a>
-                </div>
             </div>
         `;
         
@@ -301,6 +288,16 @@ class HybridPanelManager {
         const settings = this.app.appState.settings;
         
         return `
+            <!-- Learn More button in top-right corner -->
+            <a href="support.html" 
+               target="_blank" 
+               rel="noopener noreferrer" 
+               class="learn-more-button"
+               aria-label="Learn more about StackMap - opens in new window">
+                <span class="material-icons">info</span>
+                <span class="learn-more-text">Learn More</span>
+            </a>
+            
             <div class="panel-section">
                 <label>Theme Colors</label>
                 ${this.renderColorPicker()}
