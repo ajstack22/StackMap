@@ -15,17 +15,11 @@
                         (window.location.pathname.startsWith('/mu') || 
                          window.location.pathname.startsWith('/dev'));
     
-    if (isDev || isTestDomain) {
-        // Development values - replace with your actual credentials
-        // Better approach: use a local .env.local file and a build process
-        window.STACKMAP_GOOGLE_CLIENT_ID = '';
-        window.STACKMAP_GOOGLE_API_KEY = '';
-        
-        console.warn('StackMap: Running in development mode. Google Drive sync disabled until API credentials are configured.');
-        console.warn('To enable Google Drive sync:');
-        console.warn('1. Get credentials from https://console.cloud.google.com/');
-        console.warn('2. Set window.STACKMAP_GOOGLE_CLIENT_ID and window.STACKMAP_GOOGLE_API_KEY in env-loader.js');
-        console.warn('3. Do NOT commit credentials to version control');
+    if (isDev && !isTestDomain) {
+        // Only show warning for true development (localhost)
+        // Allow test domains to use the credentials below
+        console.warn('StackMap: Running in development mode.');
+        console.warn('Google Drive sync will use the configured credentials.');
     }
     
     // Production environments should set these as actual environment variables

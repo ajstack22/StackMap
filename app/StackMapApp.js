@@ -7,17 +7,8 @@ class StackMapApp {
         this.appState = new AppState();
         this.renderer = new AppRenderer(this.appState, this);
         
-        // Create a stub object first to prevent errors
-        this.driveSync = {
-            isSignedIn: false,
-            isSyncing: false,
-            signIn: () => console.log('Google Drive sync is not enabled'),
-            signOut: () => console.log('Google Drive sync is not enabled'),
-            syncNow: () => console.log('Google Drive sync is not enabled'),
-            autoSync: () => {},
-            uploadData: () => Promise.resolve(),
-            downloadData: () => Promise.resolve()
-        };
+        // Create a placeholder object that will be replaced when sync initializes
+        this.driveSync = null;
         
         // Defer Google Drive sync initialization to not block startup
         const urlParams = new URLSearchParams(window.location.search);

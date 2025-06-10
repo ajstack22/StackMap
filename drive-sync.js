@@ -820,3 +820,6 @@ class GoogleDriveSync {
         }
     }
 }
+
+// Make available globally
+window.GoogleDriveSync = GoogleDriveSync;

@@ -2281,18 +2281,27 @@ class HybridPanelManager {
      * Google Drive sync methods
      */
     signInToGoogle() {
-        if (this.app.driveSync) {
+        if (this.app.driveSync && this.app.driveSync.signIn) {
             this.app.driveSync.signIn();
             // Re-render after a delay to show status change
             setTimeout(() => {
                 this.renderPanelContent('right');
             }, 1000);
+        } else {
+            console.log('Google Drive sync is initializing, please wait...');
+            // Try again after a delay
+            setTimeout(() => {
+                if (this.app.driveSync && this.app.driveSync.signIn) {
+                    this.app.driveSync.signIn();
+                    this.renderPanelContent('right');
+                }
+            }, 2000);
         }
     }
     
     signOutFromGoogle() {
         if (confirm('Are you sure you want to sign out from Google Drive sync?')) {
-            if (this.app.driveSync) {
+            if (this.app.driveSync && this.app.driveSync.signOut) {
                 this.app.driveSync.signOut();
                 // Re-render to show disconnected state
                 setTimeout(() => {
