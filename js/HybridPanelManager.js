@@ -365,6 +365,12 @@ class HybridPanelManager {
             <div class="panel-section">
                 <label>Current User</label>
                 ${this.renderUserSelector()}
+                ${this.app.grownupMode ? `
+                    <button class="admin-btn" style="margin-top: 12px; width: 100%;" onclick="hybridPanelManager.addNewUser()">
+                        <span class="material-icons">person_add</span>
+                        Add User
+                    </button>
+                ` : ''}
             </div>
             
             <div class="panel-section">
@@ -383,10 +389,6 @@ class HybridPanelManager {
                             <span class="material-icons">add</span>
                             Add Activity
                         </button>
-                        <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
-                            <span class="material-icons">person_add</span>
-                            Add User
-                        </button>
                     </div>
                 </div>
                 
@@ -400,10 +402,6 @@ class HybridPanelManager {
                         <button class="admin-btn" onclick="hybridPanelManager.importData()">
                             <span class="material-icons">upload</span>
                             Import Data
-                        </button>
-                        <button class="admin-btn" onclick="hybridPanelManager.openSyncSettings()">
-                            <span class="material-icons">cloud_sync</span>
-                            Google Drive Sync
                         </button>
                     </div>
                 </div>
@@ -535,17 +533,14 @@ class HybridPanelManager {
         const isEditMode = this.app.grownupMode;
         
         return `
-            <div class="user-selector-grid">
+            <div class="user-selector-list">
                 ${allUsers.map(user => `
-                    <div class="user-option-wrapper">
-                        <button class="user-option ${user.id === currentUser.id ? 'user-option--active' : ''}" 
-                                onclick="hybridPanelManager.selectUser('${user.id}')"
-                                title="${user.name}">
-                            <span class="user-icon">${user.icon || '👤'}</span>
-                            <span class="user-name">${user.name}</span>
-                        </button>
+                    <div class="user-list-item ${user.id === currentUser.id ? 'user-list-item--active' : ''}" 
+                         onclick="hybridPanelManager.selectUser('${user.id}')">
+                        <span class="user-icon">${user.icon || '👤'}</span>
+                        <span class="user-name">${user.name}</span>
                         ${isEditMode ? `
-                            <button class="user-edit-btn" 
+                            <button class="user-edit-inline-btn" 
                                     onclick="event.stopPropagation(); hybridPanelManager.editExistingUser('${user.id}')"
                                     title="Edit ${user.name}">
                                 <span class="material-icons">edit</span>
@@ -598,10 +593,6 @@ class HybridPanelManager {
                 <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
                     <span class="material-icons">person_add</span>
                     Add User
-                </button>
-                <button class="admin-btn" onclick="hybridPanelManager.openSyncSettings()">
-                    <span class="material-icons">cloud_sync</span>
-                    Google Drive Sync
                 </button>
             </div>
         `;
