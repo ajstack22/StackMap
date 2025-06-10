@@ -537,8 +537,8 @@ class HybridPanelManager {
         return `
             <div class="user-selector-grid">
                 ${allUsers.map(user => `
-                    <div class="user-option-wrapper ${user.id === currentUser.id ? 'user-option--active' : ''}">
-                        <button class="user-option" 
+                    <div class="user-option-wrapper">
+                        <button class="user-option ${user.id === currentUser.id ? 'user-option--active' : ''}" 
                                 onclick="hybridPanelManager.selectUser('${user.id}')"
                                 title="${user.name}">
                             <span class="user-icon">${user.icon || '👤'}</span>

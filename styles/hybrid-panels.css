@@ -1258,15 +1258,9 @@ textarea.panel-input {
 /* User option wrapper for edit mode */
 .user-option-wrapper {
     position: relative;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+    width: fit-content;
 }
 
-.user-option-wrapper.user-option--active .user-option {
-    background: rgba(102, 126, 234, 0.15);
-    border-color: var(--primary-color);
-}
 
 /* Edit button for users */
 .user-edit-btn {
