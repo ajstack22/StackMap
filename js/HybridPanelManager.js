@@ -984,7 +984,7 @@ class HybridPanelManager {
         
         // Update cards
         if (this.app.renderer) {
-            this.app.renderer.renderCards();
+            this.app.renderer.render();
         }
         
         // console.log('Display mode changed to:', mode);
@@ -1005,7 +1005,7 @@ class HybridPanelManager {
         
         // Update cards
         if (this.app.renderer) {
-            this.app.renderer.renderCards();
+            this.app.renderer.render();
         }
         
         // console.log('Completion indicators toggled to:', show);

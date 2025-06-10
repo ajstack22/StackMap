@@ -1116,7 +1116,13 @@ class ActivityCard {
 
     render() {
         const { editMode, editingCardIndex } = this.appState.ui;
-        const { backgroundColor, displayMode, showCompletionIndicators } = this.appState.settings;
+        // Get settings from current user first, then fall back to global settings
+        const currentUser = this.appState.getCurrentUser();
+        const userSettings = currentUser?.settings || {};
+        const backgroundColor = userSettings.backgroundColor || this.appState.settings.backgroundColor;
+        const displayMode = userSettings.displayMode || this.appState.settings.displayMode || CONFIG.DISPLAY_MODES.NUMBERS;
+        const showCompletionIndicators = userSettings.showCompletionIndicators !== undefined ? 
+            userSettings.showCompletionIndicators : this.appState.settings.showCompletionIndicators;
         const isEditing = editingCardIndex === this.index;
         
         // Create card with completion state
@@ -1157,7 +1163,11 @@ class ActivityCard {
 
     renderViewMode(backgroundColor, displayMode) {
         const { editMode } = this.appState.ui;
-        const { showCompletionIndicators } = this.appState.settings;
+        // Get showCompletionIndicators from current user settings
+        const currentUser = this.appState.getCurrentUser();
+        const userSettings = currentUser?.settings || {};
+        const showCompletionIndicators = userSettings.showCompletionIndicators !== undefined ? 
+            userSettings.showCompletionIndicators : this.appState.settings.showCompletionIndicators;
         const displayIndex = this.getDisplayIndex();
         
         // Generate badge content based on display mode
