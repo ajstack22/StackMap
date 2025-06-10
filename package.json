@@ -4,7 +4,8 @@
   "description": "StackMap - Visual Daily Activity Tracker",
   "private": true,
   "scripts": {
-    "test": "node tests/run-tests.js",
+    "test": "node tests/run-tests-ci.js",
+    "test:browser": "node tests/run-tests.js",
     "test:watch": "nodemon tests/run-tests.js",
     "serve": "npx http-server -p 5500",
     "deploy": "bash scripts/deploy.sh",

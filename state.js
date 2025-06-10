@@ -674,91 +674,124 @@ class AppState {
 
     // Enhanced importData to handle user icons
     importData(data, updateVersion = true) {
-        // Restore UI state if present
-        if (data.ui) {
-            if (data.ui.currentDay) {
-                this.ui.currentDay = data.ui.currentDay;
-            }
-        }
+        console.log('[State] Starting importData with data structure:', {
+            hasUsers: !!data.users,
+            hasActivities: !!data.activities,
+            hasSettings: !!data.settings,
+            version: data.version,
+            exportType: data.exportType
+        });
         
-        // Import sync metadata
-        if (data.syncMetadata) {
-            this.syncMetadata = {
-                ...data.syncMetadata,
-                deviceId: this.generateDeviceId(), // Keep local device ID
-                deviceName: this.getDeviceName() // Update device name
-            };
-            if (updateVersion) {
-                this.syncMetadata.version++; // Increment version after import
+        try {
+            // Validate input data
+            if (!data || typeof data !== 'object') {
+                throw new Error('Invalid import data: expected object');
             }
-        }
-        
-        if (data.users) {
-            // New multi-user format
-            this.users = data.users;
             
-            // Story 4: Ensure all users have tomorrow activities array and icons
-            Object.values(this.users.profiles).forEach(user => {
-                if (!user.tomorrowActivities) {
-                    user.tomorrowActivities = [];
+            // Restore UI state if present
+            if (data.ui) {
+                if (data.ui.currentDay) {
+                    this.ui.currentDay = data.ui.currentDay;
                 }
-                // NEW: Ensure all users have icons (migration)
-                if (!user.icon) {
-                    user.icon = '👤'; // Default icon for imported users without icons
-                }
-            });
+            }
             
-            // Ensure current user exists
-            if (!this.users.profiles[this.users.currentUserId]) {
+            // Import sync metadata
+            if (data.syncMetadata) {
+                this.syncMetadata = {
+                    ...data.syncMetadata,
+                    deviceId: this.generateDeviceId(), // Keep local device ID
+                    deviceName: this.getDeviceName() // Update device name
+                };
+                if (updateVersion) {
+                    this.syncMetadata.version++; // Increment version after import
+                }
+            }
+            
+            if (data.users) {
+                // New multi-user format
+                console.log('[State] Importing multi-user format');
+                this.users = data.users;
+                
+                // Story 4: Ensure all users have tomorrow activities array and icons
+                Object.values(this.users.profiles).forEach(user => {
+                    if (!user.tomorrowActivities) {
+                        user.tomorrowActivities = [];
+                    }
+                    // NEW: Ensure all users have icons (migration)
+                    if (!user.icon) {
+                        user.icon = '👤'; // Default icon for imported users without icons
+                    }
+                });
+                
+                // Ensure current user exists
+                if (!this.users.profiles[this.users.currentUserId]) {
+                    this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+                }
+                
+                this.loadUserData();
+            } else if (data.activities) {
+                // Legacy single-user format - migrate to default user
+                console.log('[State] Importing legacy single-user format (v' + (data.version || '1.0') + ')');
+                
+                // Validate activities array
+                if (!Array.isArray(data.activities)) {
+                    throw new Error('Invalid activities format: expected array');
+                }
+                
+                const activities = data.activities.slice(0, CONFIG.MAX_ACTIVITIES).map(activity => ({
+                    ...activity,
+                    cardType: this._validateCardType(activity.cardType || 'recurring'),
+                    createdDate: activity.createdDate || new Date().toISOString().split('T')[0],
+                    time: activity.time || '',
+                    visible: activity.visible !== undefined ? activity.visible : true,
+                    completed: activity.completed || false
+                }));
+                
+                let settings = {
+                    title: 'StackMap User',
+                    subtitle: 'Routine Ready',
+                    isDefaultTitle: true,
+                    backgroundColor: CONFIG.DEFAULT_COLOR,
+                    showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
+                    showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
+                };
+                
+                if (data.settings) {
+                    // Ensure backgroundColor exists before assigning
+                    if (!data.settings.backgroundColor) {
+                        data.settings.backgroundColor = CONFIG.DEFAULT_COLOR;
+                    }
+                    settings = {...settings, ...data.settings};
+                    // Ensure we have the new subtitle field
+                    if (!settings.subtitle) {
+                        settings.subtitle = 'Routine Ready';
+                    }
+                }
+                
+                // Migrate to default user with icon
+                this.users.profiles[CONFIG.DEFAULT_USER_ID] = {
+                    id: CONFIG.DEFAULT_USER_ID,
+                    name: settings.title || 'StackMap User',
+                    icon: '👤', // NEW: Default icon for legacy imports
+                    activities: activities,
+                    tomorrowActivities: [], // Story 4: Initialize empty tomorrow
+                    settings: settings
+                };
+                
                 this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+                this.loadUserData();
+                console.log('[State] Legacy import successful, created user:', this.users.profiles[CONFIG.DEFAULT_USER_ID].name);
+            } else {
+                throw new Error('No valid data to import: missing both users and activities');
             }
             
-            this.loadUserData();
-        } else if (data.activities) {
-            // Legacy single-user format - migrate to default user
-            const activities = data.activities.slice(0, CONFIG.MAX_ACTIVITIES).map(activity => ({
-                ...activity,
-                cardType: this._validateCardType(activity.cardType || 'recurring'),
-                createdDate: activity.createdDate || new Date().toISOString().split('T')[0],
-                time: activity.time || ''
-            }));
+            this._triggerSave();
+            console.log('[State] Import completed successfully');
             
-            let settings = {
-                title: 'StackMap User',
-                subtitle: 'Routine Ready',
-                isDefaultTitle: true,
-                backgroundColor: CONFIG.DEFAULT_COLOR,
-                showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
-                showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
-            };
-            
-            if (data.settings) {
-                // Ensure backgroundColor exists before assigning
-                if (!data.settings.backgroundColor) {
-                    data.settings.backgroundColor = CONFIG.DEFAULT_COLOR;
-                }
-                settings = {...settings, ...data.settings};
-                // Ensure we have the new subtitle field
-                if (!settings.subtitle) {
-                    settings.subtitle = 'Routine Ready';
-                }
-            }
-            
-            // Migrate to default user with icon
-            this.users.profiles[CONFIG.DEFAULT_USER_ID] = {
-                id: CONFIG.DEFAULT_USER_ID,
-                name: settings.title || 'StackMap User',
-                icon: '👤', // NEW: Default icon for legacy imports
-                activities: activities,
-                tomorrowActivities: [], // Story 4: Initialize empty tomorrow
-                settings: settings
-            };
-            
-            this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
-            this.loadUserData();
+        } catch (error) {
+            console.error('[State] Import failed:', error);
+            throw error; // Re-throw to be handled by caller
         }
-        
-        this._triggerSave();
     }
 
     // === PRIVATE METHODS ===

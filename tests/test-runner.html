@@ -135,6 +135,7 @@
                 <label for="testSuite">Test Suite:</label>
                 <select id="testSuite">
                     <option value="edit-mode">Edit Mode Tests</option>
+                    <option value="import-export-data">Import/Export Data Tests</option>
                     <option value="all">All Tests</option>
                 </select>
             </div>
@@ -171,16 +172,29 @@
         function injectTestScript() {
             if (!appWindow) return;
             
-            const script = appWindow.document.createElement('script');
-            script.src = '../tests/uat-edit-mode.js';
-            script.onload = () => {
-                log('✅ Test script loaded');
-                document.getElementById('runTests').disabled = false;
-            };
-            script.onerror = () => {
-                log('❌ Failed to load test script');
-            };
-            appWindow.document.head.appendChild(script);
+            // Load all test scripts
+            const scripts = [
+                '../tests/uat-edit-mode.js',
+                '../tests/uat-import-export-data.js'
+            ];
+            
+            let loadedCount = 0;
+            
+            scripts.forEach(src => {
+                const script = appWindow.document.createElement('script');
+                script.src = src;
+                script.onload = () => {
+                    loadedCount++;
+                    if (loadedCount === scripts.length) {
+                        log('✅ All test scripts loaded');
+                        document.getElementById('runTests').disabled = false;
+                    }
+                };
+                script.onerror = () => {
+                    log(`❌ Failed to load test script: ${src}`);
+                };
+                appWindow.document.head.appendChild(script);
+            });
         }
         
         async function runSelectedTests() {
@@ -208,6 +222,8 @@
                 
                 if (testSuite === 'edit-mode') {
                     await runEditModeTests();
+                } else if (testSuite === 'import-export-data') {
+                    await runImportExportDataTests();
                 } else if (testSuite === 'all') {
                     await runAllTests();
                 }
@@ -247,11 +263,38 @@
             }
         }
         
+        
+        async function runImportExportDataTests() {
+            if (!appWindow.ImportExportDataUAT) {
+                throw new Error('ImportExportDataUAT not found in app window');
+            }
+            
+            const tester = new appWindow.ImportExportDataUAT();
+            await tester.runTests();
+            
+            // Update status based on results
+            const statusEl = document.getElementById('testStatus');
+            const allPassed = tester.testResults.every(t => t.passed);
+            
+            if (allPassed) {
+                statusEl.className = 'test-status success';
+                statusEl.textContent = '✅ All tests passed!';
+            } else {
+                statusEl.className = 'test-status failure';
+                const failed = tester.testResults.filter(t => !t.passed).length;
+                statusEl.textContent = `❌ ${failed} test(s) failed - see output for details`;
+            }
+        }
+        
+        
+        
         async function runAllTests() {
             log('🧪 Running all test suites...\n');
             
-            // Add more test suites here as they are created
+            // Run all test suites
             await runEditModeTests();
+            log('\n--- Next Test Suite ---\n');
+            await runImportExportDataTests();
             
             log('\n✅ All test suites completed');
         }

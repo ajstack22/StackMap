@@ -1117,10 +1117,6 @@ class ActivityCard {
 
     render() {
         const { editMode, editingCardIndex } = this.appState.ui;
-        // Debug log for first card
-        if (this.index === 0) {
-            console.log('ActivityCard.render - editMode:', editMode, 'body has grownup-mode:', document.body.classList.contains('grownup-mode'));
-        }
         // Get settings from current user first, then fall back to global settings
         const currentUser = this.appState.getCurrentUser();
         const userSettings = currentUser?.settings || {};
@@ -1217,7 +1213,6 @@ class ActivityCard {
     }
 
     renderEditButtons() {
-        console.log('renderEditButtons called for card:', this.index);
         // In grown-up mode, show completion checkbox in top-left
         const checkboxIcon = '✓';
         const checkboxBg = this.activity.completed ? 'var(--primary-color)' : '#e8e8e8';
@@ -2074,57 +2069,31 @@ class DataManagementPanel {
                     </div>
                 `}
                 
-                <!-- Import/Export Section -->
+                <!-- Import Section -->
                 <div class="data-panel__section">
                     <h3 class="data-panel__section-title">
-                        <span class="material-icons">import_export</span>
-                        Import & Export
+                        <span class="material-icons">upload_file</span>
+                        Import Data
                     </h3>
                     
-                    <!-- Export Options -->
-                    <div class="data-panel__subsection">
-                        <h4 class="data-panel__subsection-title">Export Data</h4>
-                        <div class="data-panel__actions">
-                            <button class="btn btn--primary btn--full-width" 
-                                    id="export-json-btn"
-                                    aria-label="Export all data as JSON file">
-                                <span class="material-icons">download</span>
-                                <span>Export as JSON</span>
-                            </button>
-                            
-                            <button class="btn btn--primary btn--full-width" 
-                                    id="export-backup-btn"
-                                    aria-label="Create complete backup file">
-                                <span class="material-icons">backup</span>
-                                <span>Create Backup</span>
-                            </button>
-                        </div>
+                    <div class="data-panel__info" style="margin-bottom: 16px;">
+                        <span class="material-icons">info</span>
+                        To export data, use the Settings panel in grown-up mode.
                     </div>
                     
-                    <!-- Import Options -->
-                    <div class="data-panel__subsection">
-                        <h4 class="data-panel__subsection-title">Import Data</h4>
-                        <div class="data-panel__actions">
-                            <input type="file" 
-                                   id="import-file-input" 
-                                   accept=".json" 
-                                   style="display: none;"
-                                   aria-label="Select file to import">
-                            
-                            <button class="btn btn--secondary btn--full-width" 
-                                    id="import-json-btn"
-                                    aria-label="Import data from JSON file">
-                                <span class="material-icons">upload</span>
-                                <span>Import from JSON</span>
-                            </button>
-                            
-                            <button class="btn btn--secondary btn--full-width" 
-                                    id="import-backup-btn"
-                                    aria-label="Restore from backup file">
-                                <span class="material-icons">restore</span>
-                                <span>Restore Backup</span>
-                            </button>
-                        </div>
+                    <div class="data-panel__actions">
+                        <input type="file" 
+                               id="import-file-input" 
+                               accept=".json" 
+                               style="display: none;"
+                               aria-label="Select file to import">
+                        
+                        <button class="btn btn--primary btn--full-width" 
+                                id="import-json-btn"
+                                aria-label="Import data from file">
+                            <span class="material-icons">upload</span>
+                            <span>Import from File</span>
+                        </button>
                     </div>
                 </div>
                 
@@ -2194,17 +2163,11 @@ class DataManagementPanel {
         syncBtn.addEventListener('click', () => this.syncNow());
         disconnectBtn.addEventListener('click', () => this.disconnectGoogleDrive());
         
-        // Import/Export actions
-        const exportJsonBtn = this.container.querySelector('#export-json-btn');
-        const exportBackupBtn = this.container.querySelector('#export-backup-btn');
+        // Import actions
         const importJsonBtn = this.container.querySelector('#import-json-btn');
-        const importBackupBtn = this.container.querySelector('#import-backup-btn');
         const fileInput = this.container.querySelector('#import-file-input');
         
-        exportJsonBtn.addEventListener('click', () => this.exportJson());
-        exportBackupBtn.addEventListener('click', () => this.exportBackup());
         importJsonBtn.addEventListener('click', () => this.triggerImport('json'));
-        importBackupBtn.addEventListener('click', () => this.triggerImport('backup'));
         fileInput.addEventListener('change', (e) => this.handleFileImport(e));
         
         // Settings
@@ -2407,55 +2370,6 @@ class DataManagementPanel {
         }
     }
     
-    exportJson() {
-        try {
-            const data = this.app.appState.exportData();
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `stackmap-data-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            this.showSuccess('Data exported successfully!');
-            // console.log('📤 JSON data exported');
-        } catch (error) {
-            console.error('Export failed:', error);
-            this.showError('Failed to export data. Please try again.');
-        }
-    }
-    
-    exportBackup() {
-        try {
-            const data = this.app.appState.exportData();
-            data.backupInfo = {
-                created: new Date().toISOString(),
-                version: CONFIG.APP_VERSION || '1.0.0',
-                type: 'complete-backup'
-            };
-            
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `stackmap-backup-${new Date().toISOString().split('T')[0]}.json`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            this.showSuccess('Backup created successfully!');
-            // console.log('💾 Backup file created');
-        } catch (error) {
-            console.error('Backup failed:', error);
-            this.showError('Failed to create backup. Please try again.');
-        }
-    }
     
     triggerImport(type) {
         const fileInput = this.container.querySelector('#import-file-input');
@@ -2468,28 +2382,18 @@ class DataManagementPanel {
         if (!file) return;
         
         try {
-            const text = await file.text();
-            const data = JSON.parse(text);
+            // Route through StackMapApp's import preview system
+            console.log('[DataManagementPanel] Delegating import to StackMapApp preview system');
             
-            // Validate data structure
-            if (!data.activities && !data.users) {
-                throw new Error('Invalid file format');
-            }
+            // Close the data panel first
+            this.close();
             
-            const importType = event.target.dataset.importType;
-            const confirmMessage = importType === 'backup' 
-                ? 'This will replace ALL current data with the backup. Are you sure?' 
-                : 'This will merge the imported data with your current data. Continue?';
-                
-            if (confirm(confirmMessage)) {
-                await this.app.appState.importData(data, importType === 'backup');
-                this.app.renderer.renderActivities();
-                this.showSuccess('Data imported successfully!');
-                // console.log(`📥 ${importType} imported:`, file.name);
-            }
+            // Trigger the app's import handler which shows the preview modal
+            this.app.importFromFile({ target: { files: [file] } });
+            
         } catch (error) {
-            console.error('Import failed:', error);
-            this.showError('Failed to import file. Please check the file format and try again.');
+            console.error('[DataManagementPanel] Import delegation failed:', error);
+            this.showError('Failed to process import file. Please try again.');
         } finally {
             // Clear file input
             event.target.value = '';

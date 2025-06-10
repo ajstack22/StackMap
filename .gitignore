@@ -55,3 +55,10 @@ dev-tools.js
 # Test artifacts
 tests/test-failure.png
 package-lock.json
+
+# Test results
+test-results/
+test-output.tmp
+
+# Release notes (contain sensitive deployment info)
+releases/

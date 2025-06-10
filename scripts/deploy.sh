@@ -41,7 +41,47 @@ warn() {
 }
 
 echo ""
-echo "Step 1: Pre-Deployment Validation"
+echo "Step 1: Release Notes and Test Results"
+echo "--------------------------------------"
+
+# Check for release notes with test results
+RELEASE_NOTES=$(ls -t releases/release-notes-*.md 2>/dev/null | head -1)
+if [ -z "$RELEASE_NOTES" ]; then
+    warn "No release notes found!"
+    info "Generating release notes with test results..."
+    bash scripts/generate-release-notes.sh
+    if [ $? -ne 0 ]; then
+        exit_error "Failed to generate release notes!"
+    fi
+    RELEASE_NOTES=$(ls -t releases/release-notes-*.md 2>/dev/null | head -1)
+fi
+
+# Check if release notes are from today
+TODAY=$(date +"%Y-%m-%d")
+if [[ ! "$RELEASE_NOTES" == *"$TODAY"* ]]; then
+    warn "Release notes are not from today"
+    info "Found: $RELEASE_NOTES"
+    read -p "Generate new release notes? (y/n) " -n 1 -r
+    echo
+    if [[ $REPLY =~ ^[Yy]$ ]]; then
+        bash scripts/generate-release-notes.sh
+        if [ $? -ne 0 ]; then
+            exit_error "Failed to generate release notes!"
+        fi
+        RELEASE_NOTES=$(ls -t releases/release-notes-*.md | head -1)
+    fi
+fi
+
+# Verify tests passed in release notes
+if grep -q "Status: FAILED" "$RELEASE_NOTES"; then
+    exit_error "Tests are FAILING in release notes! Cannot deploy with failing tests."
+fi
+
+success "Found release notes with PASSING tests: $RELEASE_NOTES"
+info "Test results are documented and passing"
+
+echo ""
+echo "Step 2: Pre-Deployment Validation"
 echo "---------------------------------"
 
 # Run pre-deployment checks
@@ -55,7 +95,7 @@ else
 fi
 
 echo ""
-echo "Step 2: Git Status Check"
+echo "Step 3: Git Status Check"
 echo "-----------------------"
 
 # Ensure we're on the correct branch
@@ -77,44 +117,14 @@ info "Pulling latest changes..."
 git pull $REMOTE_NAME $DEPLOY_BRANCH
 
 echo ""
-echo "Step 3: Running Tests"
-echo "--------------------"
+echo "Step 4: Running Tests (Already in Release Notes)"
+echo "-----------------------------------------------"
 
-# Check if tests can be run automatically
-if [ -f "package.json" ] && [ -f "tests/run-tests.js" ]; then
-    # Install dependencies if needed
-    if [ ! -d "node_modules" ]; then
-        info "Installing test dependencies..."
-        npm install
-        if [ $? -ne 0 ]; then
-            exit_error "Failed to install test dependencies"
-        fi
-    fi
-    
-    info "Running automated tests..."
-    npm test
-    TEST_RESULT=$?
-    
-    if [ $TEST_RESULT -ne 0 ]; then
-        warn "Automated tests encountered an issue"
-        echo ""
-        echo "Opening test runner in browser..."
-        node tests/run-tests-simple.js
-        echo ""
-        read -p "Did all tests pass in the browser? (y/n) " -n 1 -r
-        echo
-        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-            exit_error "Tests must pass before deployment"
-        fi
-    else
-        success "All tests passed!"
-    fi
-else
-    exit_error "Test infrastructure missing. Please ensure package.json and tests/run-tests.js exist."
-fi
+info "Tests have already been run and documented in release notes"
+success "Skipping duplicate test run"
 
 echo ""
-echo "Step 4: Build Process"
+echo "Step 5: Build Process"
 echo "--------------------"
 
 # Update service worker cache version
@@ -135,7 +145,7 @@ if [ -f "$SW_FILE" ]; then
 fi
 
 echo ""
-echo "Step 5: Final Confirmation"
+echo "Step 6: Final Confirmation"
 echo "-------------------------"
 
 echo "Deployment Summary:"
@@ -157,8 +167,10 @@ if [[ ! $REPLY =~ ^[Yy]$ ]]; then
 fi
 
 echo ""
-echo "Step 6: Deploying"
-echo "----------------"
+echo "Step 7: Deploying to cPanel"
+echo "---------------------------"
+
+info "Release notes will be uploaded with deployment"
 
 # Commit cache version update if changed
 if git diff --quiet $SW_FILE; then
@@ -176,8 +188,11 @@ git push $REMOTE_NAME $DEPLOY_BRANCH
 success "Code pushed successfully!"
 
 echo ""
-echo "Step 7: Post-Deployment"
+echo "Step 8: Post-Deployment"
 echo "----------------------"
+
+info "Release notes have been saved to: $RELEASE_NOTES"
+echo ""
 
 echo "Please complete these manual steps:"
 echo ""

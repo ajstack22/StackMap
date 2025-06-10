@@ -8,17 +8,24 @@ echo "🔧 Setting up StackMap git hooks..."
 if [ -d ".git" ]; then
     # Remove existing hooks if they exist
     rm -f .git/hooks/pre-push
+    rm -f .git/hooks/pre-commit
     
-    # Create symlink to our custom hooks
+    # Create symlinks to our custom hooks
     ln -s ../../.githooks/pre-push .git/hooks/pre-push
+    ln -s ../../.githooks/pre-commit .git/hooks/pre-commit
     
     echo "✅ Git hooks configured successfully!"
     echo ""
-    echo "The pre-push hook will now:"
+    echo "The pre-commit hook will:"
+    echo "  - Run UAT tests before each commit"
+    echo "  - Check for console.log statements"
+    echo "  - Warn about large files (>1MB)"
+    echo ""
+    echo "The pre-push hook will:"
     echo "  - Run pre-deployment checks before pushing to main"
     echo "  - Validate all required files exist"
     echo "  - Check for common issues"
-    echo "  - Remind you to run UAT tests"
+    echo "  - Ensure tests are passing"
     echo ""
 else
     echo "❌ Error: Not in a git repository"

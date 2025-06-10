@@ -2631,16 +2631,30 @@ class StackMapApp {
         const file = event.target.files[0];
         if (!file) return;
         
+        console.log('[StackMapApp] Starting import process for file:', file.name);
         this.currentImportFileName = file.name;
         
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
+                console.log('[StackMapApp] Successfully parsed JSON file');
+                console.log('[StackMapApp] File structure:', {
+                    version: data.version,
+                    hasActivities: !!data.activities,
+                    hasUsers: !!data.users,
+                    hasSettings: !!data.settings,
+                    exportType: data.exportType
+                });
                 this.showImportPreview(data);
             } catch (error) {
-                alert('Error importing file. Please ensure it\'s a valid StackMap file.');
+                console.error('[StackMapApp] Error parsing import file:', error);
+                alert('Error importing file. Please ensure it\'s a valid StackMap JSON file.');
             }
+        };
+        reader.onerror = (error) => {
+            console.error('[StackMapApp] Error reading file:', error);
+            alert('Error reading file. Please try again.');
         };
         reader.readAsText(file);
         
@@ -2649,6 +2663,7 @@ class StackMapApp {
     
     // Story 3: Show import preview before applying
     showImportPreview(fileData) {
+        console.log('[StackMapApp] Showing import preview modal');
         const modal = document.getElementById('importPreviewModal');
         const fileNameSpan = document.getElementById('importFileName');
         const fileTypeSpan = document.getElementById('importFileType');
@@ -2656,14 +2671,26 @@ class StackMapApp {
         const userListDiv = document.getElementById('importUserList');
         const conflictsDiv = document.getElementById('importConflicts');
         
-        // Analyze import file
-        const analysis = this.analyzeImportFile(fileData);
-        this.pendingImportData = { analysis, fileData };
+        if (!modal) {
+            console.error('[StackMapApp] Import preview modal not found in DOM');
+            alert('Import preview not available. The file will be imported directly.');
+            // Fallback to direct import
+            this.appState.importData(fileData);
+            this.updateTabTitle();
+            this.populateUserDropdowns();
+            this.render();
+            return;
+        }
         
-        // Populate preview information
-        fileNameSpan.textContent = analysis.fileName;
-        fileTypeSpan.textContent = analysis.type;
-        userCountSpan.textContent = analysis.userCount;
+        try {
+            // Analyze import file
+            const analysis = this.analyzeImportFile(fileData);
+            this.pendingImportData = { analysis, fileData };
+            
+            // Populate preview information
+            fileNameSpan.textContent = analysis.fileName;
+            fileTypeSpan.textContent = analysis.type;
+            userCountSpan.textContent = analysis.userCount;
         
         // Show user selection checkboxes
         userListDiv.innerHTML = analysis.users.map(user => `
@@ -2676,28 +2703,36 @@ class StackMapApp {
             </label>
         `).join('');
         
-        // Show conflicts if any
-        if (analysis.conflicts.length > 0) {
-            conflictsDiv.innerHTML = `
-                <div class="conflict-warning">
-                    <h4>⚠️ Name Conflicts</h4>
-                    <ul>${analysis.conflicts.map(conflict => `<li>${SecurityUtils.escapeHtml(conflict)}</li>`).join('')}</ul>
-                    <p>Existing users with same names will be renamed with "-imported" suffix.</p>
-                </div>
-            `;
-        } else {
-            conflictsDiv.innerHTML = '';
+            // Show conflicts if any
+            if (analysis.conflicts.length > 0) {
+                conflictsDiv.innerHTML = `
+                    <div class="conflict-warning">
+                        <h4>⚠️ Name Conflicts</h4>
+                        <ul>${analysis.conflicts.map(conflict => `<li>${SecurityUtils.escapeHtml(conflict)}</li>`).join('')}</ul>
+                        <p>Existing users with same names will be renamed with "-imported" suffix.</p>
+                    </div>
+                `;
+            } else {
+                conflictsDiv.innerHTML = '';
+            }
+            
+            // Set up event handlers
+            document.getElementById('confirmImport').onclick = () => this.confirmImport();
+            document.getElementById('cancelImport').onclick = () => this.cancelImport();
+            
+            modal.classList.remove('hidden');
+            console.log('[StackMapApp] Import preview modal displayed successfully');
+            
+        } catch (error) {
+            console.error('[StackMapApp] Error showing import preview:', error);
+            alert('Error preparing import preview: ' + error.message);
+            this.cancelImport();
         }
-        
-        // Set up event handlers
-        document.getElementById('confirmImport').onclick = () => this.confirmImport();
-        document.getElementById('cancelImport').onclick = () => this.cancelImport();
-        
-        modal.classList.remove('hidden');
     }
     
     // Story 3: Analyze import file and detect conflicts
     analyzeImportFile(data) {
+        console.log('[StackMapApp] Analyzing import file structure');
         const existingUsers = this.appState.getAllUsers();
         const existingNames = existingUsers.map(u => u.name.toLowerCase());
         
@@ -2715,20 +2750,43 @@ class StackMapApp {
             users = Object.values(data.users.profiles);
             type = 'Multi-User (Legacy)';
         } else if (data.activities) {
-            // Legacy single-user format
+            // Legacy single-user format (v1.0)
+            console.log('[StackMapApp] Detected legacy v1.0 format');
+            const userName = data.settings?.title || 'My StackMap';
             users = [{
                 id: 'imported-' + Date.now(),
-                name: data.settings?.title || 'Imported User',
+                name: userName,
+                icon: '👤', // Default icon for legacy imports
                 activities: data.activities,
-                settings: data.settings || {}
+                tomorrowActivities: [], // Initialize for Story 4
+                settings: data.settings || {
+                    title: userName,
+                    subtitle: 'Routine Ready',
+                    isDefaultTitle: true,
+                    backgroundColor: '#667eea',
+                    showCompletionIndicators: true
+                },
+                metadata: {
+                    activityCount: data.activities?.length || 0,
+                    lastModified: new Date().toISOString()
+                }
             }];
-            type = 'Single User (Legacy)';
+            type = 'Single User (Legacy v' + (data.version || '1.0') + ')';
+        } else {
+            console.error('[StackMapApp] Unrecognized file format:', data);
+            throw new Error('Unrecognized file format');
         }
         
         // Detect name conflicts
         const conflicts = users
             .filter(user => existingNames.includes(user.name.toLowerCase()))
             .map(user => `"${user.name}" already exists`);
+        
+        console.log('[StackMapApp] Analysis complete:', {
+            type,
+            userCount: users.length,
+            conflicts: conflicts.length
+        });
         
         return {
             fileName: this.currentImportFileName || 'uploaded-file.json',
@@ -2815,6 +2873,7 @@ class StackMapApp {
     
     // Story 3: Import a single user with conflict resolution
     importSingleUser(userData, existingNames) {
+        console.log('[StackMapApp] Importing single user:', userData.name);
         let userName = userData.name;
         
         // Handle name conflicts
@@ -2826,21 +2885,31 @@ class StackMapApp {
                 userName = userData.name + '-imported' + counter;
                 counter++;
             }
+            console.log('[StackMapApp] Renamed user due to conflict:', userData.name, '->', userName);
         }
         
         // Add user to state
         const newUserId = this.appState.addUser(userName);
         
-        // Update the user's data
-        this.appState.users.profiles[newUserId] = {
+        // Ensure all required fields are properly initialized
+        const userProfile = {
             id: newUserId,
             name: userName,
+            icon: userData.icon || '👤', // Default icon for imports
             activities: userData.activities || [],
+            tomorrowActivities: userData.tomorrowActivities || [], // Story 4 support
             settings: userData.settings || {
                 ...this.appState.settings,
-                title: userName
+                title: userName,
+                subtitle: userData.settings?.subtitle || 'Routine Ready',
+                backgroundColor: userData.settings?.backgroundColor || '#667eea',
+                showCompletionIndicators: userData.settings?.showCompletionIndicators !== false
             }
         };
+        
+        // Update the user's data
+        this.appState.users.profiles[newUserId] = userProfile;
+        console.log('[StackMapApp] User imported successfully:', userProfile);
         
         // Add the new name to existing names to prevent duplicates within this import
         existingNames.push(userName.toLowerCase());
