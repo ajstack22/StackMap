@@ -141,6 +141,7 @@
             
             <button id="runTests" onclick="runSelectedTests()">Run Tests</button>
             <button id="clearOutput" onclick="clearOutput()">Clear Output</button>
+            <button id="copyOutput" onclick="copyOutput()">Copy Output</button>
             <button id="reloadApp" onclick="reloadApp()">Reload App</button>
         </div>
         
@@ -171,7 +172,7 @@
             if (!appWindow) return;
             
             const script = appWindow.document.createElement('script');
-            script.src = 'uat-edit-mode.js';
+            script.src = '../tests/uat-edit-mode.js';
             script.onload = () => {
                 log('✅ Test script loaded');
                 document.getElementById('runTests').disabled = false;
@@ -270,6 +271,43 @@
             testOutput = [];
             updateOutput();
             document.getElementById('testStatus').style.display = 'none';
+        }
+        
+        function copyOutput() {
+            const outputEl = document.getElementById('testOutput');
+            const text = outputEl.textContent;
+            
+            // Create a temporary textarea to copy from
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            
+            // Select and copy
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); // For mobile devices
+            
+            try {
+                document.execCommand('copy');
+                
+                // Update button text temporarily
+                const copyBtn = document.getElementById('copyOutput');
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = 'Copied!';
+                copyBtn.style.background = '#48bb78';
+                
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                    copyBtn.style.background = '';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy:', err);
+                alert('Failed to copy output. Please select and copy manually.');
+            }
+            
+            // Clean up
+            document.body.removeChild(textarea);
         }
         
         function reloadApp() {

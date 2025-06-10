@@ -71,7 +71,11 @@ async function runTests() {
         log.test('Launching browser...');
         browser = await puppeteer.launch({
             headless: 'new', // Use new headless mode
-            args: ['--no-sandbox', '--disable-setuid-sandbox'] // For CI environments
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--incognito' // Use incognito mode for clean state
+            ]
         });
 
         const page = await browser.newPage();
