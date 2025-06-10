@@ -104,6 +104,12 @@ class GoogleDriveSync {
                 return;
             }
 
+            // Skip initialization if no client ID
+            if (!CONFIG.GOOGLE_CLIENT_ID) {
+                console.warn('Google Client ID not configured');
+                return;
+            }
+
             // Initialize Google Identity Services for authentication
             google.accounts.id.initialize({
                 client_id: CONFIG.GOOGLE_CLIENT_ID,
@@ -222,6 +228,17 @@ class GoogleDriveSync {
 
     async signIn() {
         try {
+            // Check if credentials are configured
+            if (!CONFIG.GOOGLE_CLIENT_ID || !CONFIG.GOOGLE_API_KEY) {
+                this.showSyncError('Google Drive sync is not configured. Please contact your administrator to set up Google API credentials.');
+                console.info('To enable Google Drive sync:');
+                console.info('1. Set up a Google Cloud project at https://console.cloud.google.com/');
+                console.info('2. Enable the Google Drive API');
+                console.info('3. Create OAuth 2.0 credentials');
+                console.info('4. Add the Client ID and API Key to your environment configuration');
+                return;
+            }
+            
             // Check if tokenClient is initialized
             if (!this.tokenClient) {
                 console.error('Google Identity Services not initialized. Trying to initialize...');

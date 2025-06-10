@@ -25,4 +25,22 @@
     
     // Production environments should set these as actual environment variables
     // and inject them during the build/deployment process
+    
+    // For production without a build process, you can set them here
+    // Replace with your actual Google OAuth credentials
+    
+    // IMPORTANT: Add your Google OAuth credentials here
+    // Get these from https://console.cloud.google.com/
+    // 1. Create/select project
+    // 2. Enable Google Drive API
+    // 3. Create OAuth 2.0 Client ID (Web application)
+    // 4. Add https://stackmap.app to Authorized JavaScript origins
+    // 5. Add https://stackmap.app to Authorized redirect URIs
+    
+    if (!window.STACKMAP_GOOGLE_CLIENT_ID) {
+        window.STACKMAP_GOOGLE_CLIENT_ID = '801001508845-59jevf4piac2cg3g9q6srjb297sd4hbr.apps.googleusercontent.com'; // Replace with your Client ID
+    }
+    if (!window.STACKMAP_GOOGLE_API_KEY) {
+        window.STACKMAP_GOOGLE_API_KEY = 'AIzaSyD8D106PcgbDC2ZLAST5j1o73k2OrE2V0M'; // Replace with your API Key
+    }
 })();
