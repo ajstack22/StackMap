@@ -408,6 +408,10 @@ class HybridPanelManager {
                             <span class="material-icons">upload</span>
                             Import Data
                         </button>
+                        <button class="admin-btn" onclick="hybridPanelManager.openSyncSettings()">
+                            <span class="material-icons">cloud</span>
+                            Google Drive Sync
+                        </button>
                     </div>
                 </div>
             `;
