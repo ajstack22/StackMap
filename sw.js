@@ -1,8 +1,8 @@
 // Service Worker for StackMap PWA
-// Version: 1.2.1
-// Last Updated: 2025-01-09
+// Version: 1.2.2
+// Last Updated: 2025-06-10
 
-const CACHE_NAME = 'stackmap-v1.2.1';
+const CACHE_NAME = 'stackmap-v1.2.2';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 
