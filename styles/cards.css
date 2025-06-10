@@ -50,6 +50,7 @@ body.grownup-mode .card:not(.management-card):not(.edit-info-card) {
     gap: 10px;
     cursor: pointer;
     user-select: none;
+    position: relative; /* CRITICAL: Needed for absolutely positioned edit buttons */
     /* CRITICAL FIX: Remove conflicting border - handled by global rule above */
 }
 

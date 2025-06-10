@@ -655,7 +655,8 @@ class HybridPanelManager {
                                value="${this.escapeHtml(title)}" 
                                placeholder="Activity name"
                                class="panel-input"
-                               maxlength="100">
+                               maxlength="100"
+                               autocomplete="off">
                     </div>
                     
                     <div class="editor-field">
@@ -664,7 +665,8 @@ class HybridPanelManager {
                                   placeholder="Additional details (optional)"
                                   class="panel-input"
                                   rows="3"
-                                  maxlength="500">${this.escapeHtml(description)}</textarea>
+                                  maxlength="500"
+                                  autocomplete="off">${this.escapeHtml(description)}</textarea>
                     </div>
                     
                     <div class="editor-field">
@@ -672,7 +674,8 @@ class HybridPanelManager {
                         <input type="time" 
                                id="activityTime" 
                                value="${time}"
-                               class="panel-input">
+                               class="panel-input"
+                               autocomplete="off">
                     </div>
                 </div>
                 
@@ -742,7 +745,8 @@ class HybridPanelManager {
                                value="${this.escapeHtml(name)}" 
                                placeholder="Enter user name"
                                class="panel-input"
-                               maxlength="50">
+                               maxlength="50"
+                               autocomplete="off">
                     </div>
                 </div>
                 
@@ -798,6 +802,7 @@ class HybridPanelManager {
                        placeholder="App title"
                        class="preferences-text-input"
                        maxlength="50"
+                       autocomplete="off"
                        onchange="hybridPanelManager.saveTitleSubtitleFromPreferences()">
                 
                 <input type="text" 
@@ -806,6 +811,7 @@ class HybridPanelManager {
                        placeholder="App subtitle (auto-generated if empty)"
                        class="preferences-text-input"
                        maxlength="50"
+                       autocomplete="off"
                        onchange="hybridPanelManager.saveTitleSubtitleFromPreferences()"
                        title="Leave empty for auto-generated subtitle based on user and day">
             </div>
@@ -1075,6 +1081,13 @@ class HybridPanelManager {
     
     showEditModeValidation() {
         try {
+            // Prevent multiple modals
+            if (this.validationModalActive) {
+                console.warn('Validation modal already active');
+                return;
+            }
+            this.validationModalActive = true;
+            
             // Remove any existing validation modals first
             this.removeValidationModal();
             
@@ -1117,6 +1130,7 @@ class HybridPanelManager {
             <h3 style="margin: 0 0 8px 0; font-size: 1.6rem; color: #333; font-weight: 700;">Simple Question</h3>
             <p style="margin: 0 0 24px 0; font-size: 1.1rem; color: #666; line-height: 1.4;">${randomQuestion.question}</p>
             <input type="text" id="validationInput" placeholder="Type your answer here" 
+                   autocomplete="off"
                    style="width: 100%; padding: 14px 18px; border: 3px solid #e0e0e0; 
                           border-radius: 12px; font-size: 1.1rem; margin-bottom: 20px;
                           font-family: inherit; font-weight: 500; text-align: center;
@@ -1299,13 +1313,23 @@ class HybridPanelManager {
             // Correct answer - remove modal first, then enter edit mode
             this.removeValidationModal();
             
-            // Small delay to ensure modal is fully removed
+            // Enter edit mode immediately
             setTimeout(() => {
                 this.app.enterGrownupMode();
                 // console.log('Validation successful - entered edit mode');
                 
+                // Cleanup attempts after entering edit mode (won't delay UI)
+                setTimeout(() => this.removeValidationModal(), 100);
+                setTimeout(() => this.removeValidationModal(), 300);
+                setTimeout(() => this.removeValidationModal(), 500);
+                
                 // Re-render panel content to show Edit Mode section
                 this.renderPanelContent('right');
+                
+                // Force another render of main content to ensure edit controls appear
+                setTimeout(() => {
+                    this.app.render();
+                }, 50);
             }, 100);
         } else {
             // Wrong answer - show feedback
@@ -1329,6 +1353,7 @@ class HybridPanelManager {
     
     cancelValidation() {
         this.removeValidationModal();
+        this.validationModalActive = false;
         // Uncheck the switch
         const editModeSwitch = document.getElementById('editModeSwitch');
         if (editModeSwitch) {
@@ -1351,18 +1376,43 @@ class HybridPanelManager {
             }
             
             // Remove modal and backdrop - try multiple selectors
-            const modals = document.querySelectorAll('.edit-mode-validation-modal, .validation-modal');
-            const backdrops = document.querySelectorAll('.edit-mode-validation-backdrop, .validation-backdrop');
+            const modals = document.querySelectorAll('.edit-mode-validation-modal, .validation-modal, [class*="validation-modal"]');
+            const backdrops = document.querySelectorAll('.edit-mode-validation-backdrop, .validation-backdrop, [class*="validation-backdrop"]');
             
             modals.forEach(modal => {
                 if (modal && modal.parentNode) {
                     modal.parentNode.removeChild(modal);
+                } else if (modal) {
+                    modal.remove();
                 }
             });
             
             backdrops.forEach(backdrop => {
                 if (backdrop && backdrop.parentNode) {
                     backdrop.parentNode.removeChild(backdrop);
+                } else if (backdrop) {
+                    backdrop.remove();
+                }
+            });
+            
+            // Also remove any fixed position elements that might be the modal
+            const fixedElements = document.querySelectorAll('[style*="position: fixed"]');
+            fixedElements.forEach(element => {
+                // Check if it contains validation modal content
+                if (element.innerHTML && (
+                    element.innerHTML.includes('Simple Question') || 
+                    element.innerHTML.includes('validationInput') ||
+                    element.innerHTML.includes('🔐'))) {
+                    element.remove();
+                }
+            });
+            
+            // Remove any elements with very high z-index that might be blocking
+            const highZIndexElements = document.querySelectorAll('[style*="z-index: 9999"], [style*="z-index: 10000"], [style*="z-index: 10001"]');
+            highZIndexElements.forEach(element => {
+                if (element.style.position === 'fixed' && element.innerHTML && 
+                    (element.innerHTML.includes('validation') || element.innerHTML.includes('Simple Question'))) {
+                    element.remove();
                 }
             });
             
@@ -1374,13 +1424,34 @@ class HybridPanelManager {
                 }
             });
             
-            // console.log('Validation modal removed');
+            // Force body overflow reset in case modal was preventing scroll
+            document.body.style.overflow = '';
+            document.documentElement.style.overflow = '';
+            
+            // Reset the flag
+            this.validationModalActive = false;
+            
+            // console.log('Validation modal removed with aggressive cleanup');
         } catch (error) {
             console.error('Error removing validation modal:', error);
+            // Last resort - remove any stuck modal elements
+            try {
+                const allDivs = document.querySelectorAll('div');
+                allDivs.forEach(div => {
+                    if (div.style.position === 'fixed' && div.style.zIndex && 
+                        parseInt(div.style.zIndex) > 9000 && 
+                        div.innerHTML && div.innerHTML.includes('validation')) {
+                        div.remove();
+                    }
+                });
+            } catch (e) {
+                console.error('Final cleanup failed:', e);
+            }
         }
     }
     
     exitEditMode() {
+        // Call the full exit method
         this.app.exitGrownupMode();
         
         // NEW: Close any open panels when exiting edit mode

@@ -92,10 +92,13 @@ class AppRenderer {
             <div style="margin-top: 12px;">
                 <input type="text" class="form-field form-field--title" 
                        id="newActivityTitle" placeholder="New activity..." maxlength="${CONFIG.MAX_TITLE_LENGTH}" 
+                       autocomplete="off"
                        style="font-size: 1.5rem; padding: 10px 14px;">
                 <input type="text" class="form-field form-field--description" 
                        id="newActivityDescription" placeholder="Remember to make it fun!" 
-                       maxlength="${CONFIG.MAX_DESCRIPTION_LENGTH}" style="margin-top: 8px; font-size: 1rem; padding: 8px 12px;">
+                       maxlength="${CONFIG.MAX_DESCRIPTION_LENGTH}" 
+                       autocomplete="off"
+                       style="margin-top: 8px; font-size: 1rem; padding: 8px 12px;">
                 <div style="margin-top: 12px; display: flex; gap: 10px; justify-content: center;">
                     <button class="btn btn--primary" onclick="appInstance.addActivity('${position}')">Add Activity</button>
                     <button class="btn btn--secondary" onclick="appInstance.closeNewCardForm()">Cancel</button>

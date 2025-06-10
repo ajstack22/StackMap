@@ -51,7 +51,6 @@ const STATIC_ASSETS = [
   '/styles/forms.css',
   '/styles/hybrid-panels.css',
   '/styles/layout.css',
-  '/styles/modal-card.css',
   '/styles/modals.css',
   '/styles/responsive.css',
   '/styles/selectors.css',

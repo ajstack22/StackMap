@@ -1764,7 +1764,8 @@ class StackMapApp {
         }
         
         // NEW: Push history state for edit mode (Android back button)
-        this.hybridPanelManager.pushBackButtonState('edit_mode_entered');
+        // Note: pushBackButtonState doesn't exist on hybridPanelManager
+        // This functionality may need to be implemented differently
         
         // Force drawer open and lock it for edit mode
         this.forceDrawerOpen();
@@ -1777,8 +1778,17 @@ class StackMapApp {
         // Update drawer to show Add User button and edit options
         this.populateDrawerSelects();
         
+        // Force complete re-render to ensure edit controls appear
         this.render();
         this.syncFixedHeader();
+        
+        // Double-check edit mode is set
+        if (!this.appState.ui.editMode) {
+            console.error('Edit mode not properly set!');
+            this.appState.ui.editMode = true;
+            // Try rendering again
+            this.render();
+        }
         
         // console.log('✅ Edit mode activated with FAB');
         
@@ -1793,8 +1803,7 @@ class StackMapApp {
         this.appState.ui.editingCardIndex = -1;
         this.appState.ui.showingNewCardForm = false;
         
-        // Close any open modal
-        ComponentBuilder.closeModalCard();
+        // Modal system was removed in cleanup - no longer needed
         
         // Close any open native dropdowns
         const openDropdown = document.querySelector('.native-dropdown');
@@ -1816,7 +1825,9 @@ class StackMapApp {
         }
         
         // NEW: Close any open panels when exiting edit mode
-        this.hybridPanelManager.closeAllPanels();
+        if (this.hybridPanelManager && this.hybridPanelManager.closeAllPanels) {
+            this.hybridPanelManager.closeAllPanels();
+        }
         
         // Unlock drawer and return to user preference
         this.unlockDrawer();
@@ -1853,8 +1864,20 @@ class StackMapApp {
             input.value = '';
         });
         
+        // Force immediate render to update UI
         this.render();
         this.syncFixedHeader();
+        
+        // Double-check the body class was removed
+        if (document.body.classList.contains('grownup-mode')) {
+            console.warn('Body class grownup-mode still present after exit!');
+            document.body.classList.remove('grownup-mode');
+        }
+        
+        // Force another render to ensure cards resize properly
+        setTimeout(() => {
+            this.render();
+        }, 50);
         
         // console.log('👶 Exited edit mode');
     }

@@ -173,7 +173,8 @@ class ComponentBuilder {
                                class="filter-input" 
                                id="cardFilter${position}" 
                                placeholder="Type to find cards..."
-                               maxlength="50">
+                               maxlength="50"
+                               autocomplete="off">
                         <button class="btn btn--icon btn--clear-filter" 
                                 id="clearFilter${position}"
                                 style="display: none;"
@@ -1116,6 +1117,10 @@ class ActivityCard {
 
     render() {
         const { editMode, editingCardIndex } = this.appState.ui;
+        // Debug log for first card
+        if (this.index === 0) {
+            console.log('ActivityCard.render - editMode:', editMode, 'body has grownup-mode:', document.body.classList.contains('grownup-mode'));
+        }
         // Get settings from current user first, then fall back to global settings
         const currentUser = this.appState.getCurrentUser();
         const userSettings = currentUser?.settings || {};
@@ -1196,11 +1201,15 @@ class ActivityCard {
             }
         }
         
+        const editButtons = editMode ? this.renderEditButtons() : '';
+        const editTimePill = editMode && this.activity.time && this.activity.time.trim() ? this.renderEditTimePill(backgroundColor) : '';
+        const cardTypeIndicator = editMode ? this.renderCardTypeIndicator() : '';
+        
         return `
             ${badgeContent}
-            ${editMode ? this.renderEditButtons() : ''}
-            ${editMode && this.activity.time && this.activity.time.trim() ? this.renderEditTimePill(backgroundColor) : ''}
-            ${editMode ? this.renderCardTypeIndicator() : ''}
+            ${editButtons}
+            ${editTimePill}
+            ${cardTypeIndicator}
             <div class="card__icon">${this.activity.icon}</div>
             <div class="card__title">${this.activity.title}</div>
             <div class="card__description">${this.activity.description}</div>
@@ -1208,6 +1217,7 @@ class ActivityCard {
     }
 
     renderEditButtons() {
+        console.log('renderEditButtons called for card:', this.index);
         // In grown-up mode, show completion checkbox in top-left
         const checkboxIcon = '✓';
         const checkboxBg = this.activity.completed ? 'var(--primary-color)' : '#e8e8e8';
