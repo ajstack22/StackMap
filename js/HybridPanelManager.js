@@ -1787,12 +1787,22 @@ class HybridPanelManager {
     confirmImport() {
         if (!this.state.importPreviewData) return;
         
+        // Get selected checkboxes BEFORE closing panel
+        const selectedCheckboxes = document.querySelectorAll('.import-checkbox:checked');
+        const selectedUserIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+        
+        if (selectedUserIds.length === 0) {
+            alert('Please select at least one user to import');
+            return;
+        }
+        
+        // Store the selection for the app to use
+        this.state.importPreviewData.selectedUserIds = selectedUserIds;
+        
         // Delegate to app's confirmImport method
         this.app.confirmImport();
         
-        // Close the panel
-        this.backToManagement();
-        this.closeAllPanels();
+        // Only close if import was successful (app will handle this)
     }
     
     /**

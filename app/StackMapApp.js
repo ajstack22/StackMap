@@ -2768,11 +2768,18 @@ class StackMapApp {
         if (!this.pendingImportData) return;
         
         const { analysis, fileData } = this.pendingImportData;
-        // Get selected checkboxes from the hybrid panel
-        const selectedCheckboxes = document.querySelectorAll('.import-checkbox:checked');
-        const selectedUserIds = Array.from(selectedCheckboxes).map(cb => cb.value);
         
-        if (selectedUserIds.length === 0) {
+        // Get selected user IDs from hybrid panel manager
+        let selectedUserIds;
+        if (window.hybridPanelManager && window.hybridPanelManager.state.importPreviewData) {
+            selectedUserIds = window.hybridPanelManager.state.importPreviewData.selectedUserIds;
+        } else {
+            // Fallback: try to get from DOM (shouldn't happen)
+            const selectedCheckboxes = document.querySelectorAll('.import-checkbox:checked');
+            selectedUserIds = Array.from(selectedCheckboxes).map(cb => cb.value);
+        }
+        
+        if (!selectedUserIds || selectedUserIds.length === 0) {
             alert('Please select at least one user to import');
             return;
         }
@@ -2791,8 +2798,15 @@ class StackMapApp {
                 : `${importedCount} users imported successfully!`;
             alert(message);
             
+            // Clean up
             this.pendingImportData = null;
             this.currentImportFileName = null;
+            
+            // Close the import panel
+            if (window.hybridPanelManager) {
+                window.hybridPanelManager.backToManagement();
+                window.hybridPanelManager.closeAllPanels();
+            }
         } catch (error) {
             alert('Error during import: ' + error.message);
         }
