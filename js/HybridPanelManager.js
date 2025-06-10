@@ -1852,6 +1852,12 @@ class HybridPanelManager {
                 
                 // Switch to the new user
                 this.app.appState.switchUser(newUserId);
+                
+                // Check if the new user needs default activities
+                if (this.app.appState.activities.length === 0) {
+                    this.app.createDefaultActivities();
+                }
+                
                 this.app.populateUserDropdowns();
                 this.app.populateDrawerSelects();
                 this.app.render();

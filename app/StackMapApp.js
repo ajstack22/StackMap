@@ -1206,6 +1206,12 @@ class StackMapApp {
     handleUserSwitch(userId) {
         if (userId && userId !== this.appState.users.currentUserId) {
             this.appState.switchUser(userId);
+            
+            // Check if the new user needs default activities
+            if (this.appState.activities.length === 0) {
+                this.createDefaultActivities();
+            }
+            
             this.renderer.render();
             this.renderer.updateHeader();
             this.syncFixedHeader();
@@ -2473,6 +2479,11 @@ class StackMapApp {
             
             // Switch to the new user
             this.appState.switchUser(newUserId);
+            
+            // Check if the new user needs default activities
+            if (this.appState.activities.length === 0) {
+                this.createDefaultActivities();
+            }
             
             // Update UI
             this.populateUserDropdowns();

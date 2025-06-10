@@ -219,6 +219,50 @@ class AppState {
 
     // === USER MANAGEMENT ===
     // Enhanced addUser method with emoji support
+    getDefaultActivitiesForNewUser() {
+        // Check if DEFAULT_ACTIVITIES is available
+        if (typeof DEFAULT_ACTIVITIES !== 'undefined') {
+            // Add cardType to each activity and create new instances
+            return DEFAULT_ACTIVITIES.map((activity, index) => ({
+                ...activity,
+                cardType: activity.cardType || 'recurring',
+                completed: false,
+                id: 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + '_' + index
+            }));
+        } else {
+            // Fallback to basic activities if DEFAULT_ACTIVITIES not loaded
+            return [
+                {
+                    title: 'Morning Stretch',
+                    description: 'Wake up your body!',
+                    icon: '🌞',
+                    visible: true,
+                    cardType: 'recurring',
+                    completed: false,
+                    id: 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                },
+                {
+                    title: 'Brush Teeth',
+                    description: 'Keep them clean and shiny!',
+                    icon: '🦷',
+                    visible: true,
+                    cardType: 'recurring',
+                    completed: false,
+                    id: 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + '_2'
+                },
+                {
+                    title: 'Get Dressed',
+                    description: 'Pick your favorite outfit!',
+                    icon: '👕',
+                    visible: true,
+                    cardType: 'recurring',
+                    completed: false,
+                    id: 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + '_3'
+                }
+            ];
+        }
+    }
+
     addUser(name, icon = '👤') {
         // Validate input
         if (!name || typeof name !== 'string') {
@@ -253,13 +297,14 @@ class AppState {
         // Create new user ID
         const userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         
-        // Create user profile with icon
+        // Create user profile with icon and default activities
+        const defaultActivities = this.getDefaultActivitiesForNewUser();
         this.users.profiles[userId] = {
             id: userId,
             name: trimmedName,
             icon: icon, // NEW: Store user's chosen emoji icon
-            activities: [],
-            tomorrowActivities: [], // Story 4: Tomorrow's activities
+            activities: [...defaultActivities],
+            tomorrowActivities: [...defaultActivities], // Story 4: Tomorrow's activities get same defaults
             settings: {
                 title: trimmedName + "'s StackMap",
                 subtitle: 'Routine Ready',
