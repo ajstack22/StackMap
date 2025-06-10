@@ -2663,65 +2663,26 @@ class StackMapApp {
     
     // Story 3: Show import preview before applying
     showImportPreview(fileData) {
-        console.log('[StackMapApp] Showing import preview modal');
-        const modal = document.getElementById('importPreviewModal');
-        const fileNameSpan = document.getElementById('importFileName');
-        const fileTypeSpan = document.getElementById('importFileType');
-        const userCountSpan = document.getElementById('importUserCount');
-        const userListDiv = document.getElementById('importUserList');
-        const conflictsDiv = document.getElementById('importConflicts');
-        
-        if (!modal) {
-            console.error('[StackMapApp] Import preview modal not found in DOM');
-            alert('Import preview not available. The file will be imported directly.');
-            // Fallback to direct import
-            this.appState.importData(fileData);
-            this.updateTabTitle();
-            this.populateUserDropdowns();
-            this.render();
-            return;
-        }
+        console.log('[StackMapApp] Showing import preview in hybrid panel');
         
         try {
             // Analyze import file
             const analysis = this.analyzeImportFile(fileData);
             this.pendingImportData = { analysis, fileData };
             
-            // Populate preview information
-            fileNameSpan.textContent = analysis.fileName;
-            fileTypeSpan.textContent = analysis.type;
-            userCountSpan.textContent = analysis.userCount;
-        
-        // Show user selection checkboxes
-        userListDiv.innerHTML = analysis.users.map(user => `
-            <label class="import-user-option">
-                <input type="checkbox" value="${SecurityUtils.escapeHtml(user.id)}" checked>
-                <span class="user-info">
-                    <strong>${SecurityUtils.escapeHtml(user.name)}</strong>
-                    <small>${SecurityUtils.escapeHtml(user.activityCount)} activities</small>
-                </span>
-            </label>
-        `).join('');
-        
-            // Show conflicts if any
-            if (analysis.conflicts.length > 0) {
-                conflictsDiv.innerHTML = `
-                    <div class="conflict-warning">
-                        <h4>⚠️ Name Conflicts</h4>
-                        <ul>${analysis.conflicts.map(conflict => `<li>${SecurityUtils.escapeHtml(conflict)}</li>`).join('')}</ul>
-                        <p>Existing users with same names will be renamed with "-imported" suffix.</p>
-                    </div>
-                `;
+            // Use hybrid panel manager to show import preview
+            if (window.hybridPanelManager) {
+                window.hybridPanelManager.showImportPreview(analysis, fileData);
+                console.log('[StackMapApp] Import preview displayed in hybrid panel');
             } else {
-                conflictsDiv.innerHTML = '';
+                console.error('[StackMapApp] HybridPanelManager not available');
+                alert('Import preview not available. The file will be imported directly.');
+                // Fallback to direct import
+                this.appState.importData(fileData);
+                this.updateTabTitle();
+                this.populateUserDropdowns();
+                this.render();
             }
-            
-            // Set up event handlers
-            document.getElementById('confirmImport').onclick = () => this.confirmImport();
-            document.getElementById('cancelImport').onclick = () => this.cancelImport();
-            
-            modal.classList.remove('hidden');
-            console.log('[StackMapApp] Import preview modal displayed successfully');
             
         } catch (error) {
             console.error('[StackMapApp] Error showing import preview:', error);
@@ -2807,7 +2768,8 @@ class StackMapApp {
         if (!this.pendingImportData) return;
         
         const { analysis, fileData } = this.pendingImportData;
-        const selectedCheckboxes = document.querySelectorAll('#importUserList input[type="checkbox"]:checked');
+        // Get selected checkboxes from the hybrid panel
+        const selectedCheckboxes = document.querySelectorAll('.import-user-list input[type="checkbox"]:checked');
         const selectedUserIds = Array.from(selectedCheckboxes).map(cb => cb.value);
         
         if (selectedUserIds.length === 0) {
@@ -2829,7 +2791,8 @@ class StackMapApp {
                 : `${importedCount} users imported successfully!`;
             alert(message);
             
-            this.cancelImport();
+            this.pendingImportData = null;
+            this.currentImportFileName = null;
         } catch (error) {
             alert('Error during import: ' + error.message);
         }
@@ -2919,10 +2882,9 @@ class StackMapApp {
     
     // Story 3: Cancel import
     cancelImport() {
-        const modal = document.getElementById('importPreviewModal');
-        modal.classList.add('hidden');
         this.pendingImportData = null;
         this.currentImportFileName = null;
+        // Hybrid panel handles closing itself
     }
 
     // CARD MANAGEMENT

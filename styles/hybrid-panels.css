@@ -1994,3 +1994,100 @@ textarea.panel-input {
         background: rgba(0, 0, 0, 0.5);
     }
 }
+
+/* Import Preview Styles */
+.import-preview-form {
+    padding: 0;
+}
+
+.import-file-info {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 12px;
+}
+
+.import-file-info p {
+    margin: 4px 0;
+    font-size: 0.9rem;
+    color: #333;
+}
+
+.import-file-info strong {
+    color: #000;
+}
+
+.import-user-list {
+    max-height: 300px;
+    overflow-y: auto;
+    margin: 0 -4px;
+}
+
+.import-user-option {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    margin: 4px 0;
+    background: rgba(255, 255, 255, 0.8);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.import-user-option:hover {
+    background: rgba(255, 255, 255, 1);
+    border-color: rgba(0, 0, 0, 0.2);
+}
+
+.import-user-option input[type="checkbox"] {
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.import-user-option .user-info {
+    flex-grow: 1;
+}
+
+.import-user-option .user-info strong {
+    display: block;
+    font-size: 0.95rem;
+    margin-bottom: 2px;
+}
+
+.import-user-option .user-info small {
+    color: #666;
+    font-size: 0.85rem;
+}
+
+.conflict-warning {
+    background: rgba(255, 152, 0, 0.1);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 8px;
+}
+
+.conflict-warning h4 {
+    margin: 0 0 8px 0;
+    color: #f57c00;
+    font-size: 1rem;
+}
+
+.conflict-warning ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.conflict-warning li {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 4px 0;
+}
+
+.conflict-warning p {
+    margin: 8px 0 0 0;
+    font-size: 0.85rem;
+    color: #666;
+    font-style: italic;
+}

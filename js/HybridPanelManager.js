@@ -343,6 +343,11 @@ class HybridPanelManager {
             return this.renderSyncSettings();
         }
         
+        // If showing import preview, render that instead
+        if (this.state.showingImportPreview) {
+            return this.renderImportPreview();
+        }
+        
         // Start with empty content
         let content = '';
         
@@ -1667,7 +1672,115 @@ class HybridPanelManager {
         this.state.editingUser = null;
         this.state.editingUserId = null;
         this.state.showingSyncSettings = false;
+        this.state.showingImportPreview = false;
+        this.state.importPreviewData = null;
         this.renderPanelContent('right');
+    }
+    
+    /**
+     * Show import preview in the management panel
+     */
+    showImportPreview(analysis, fileData) {
+        console.log('[HybridPanelManager] Showing import preview');
+        this.state.showingImportPreview = true;
+        this.state.importPreviewData = { analysis, fileData };
+        
+        // Open the management panel
+        this.openPanel('right');
+    }
+    
+    /**
+     * Render import preview form
+     */
+    renderImportPreview() {
+        if (!this.state.importPreviewData) {
+            return this.renderManagementContent();
+        }
+        
+        const { analysis, fileData } = this.state.importPreviewData;
+        
+        return `
+            <div class="import-preview-form">
+                <div class="panel-section">
+                    <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
+                        <span class="material-icons">arrow_back</span>
+                        Back
+                    </button>
+                </div>
+                
+                <div class="panel-section">
+                    <label>Import Preview</label>
+                    <div class="import-file-info">
+                        <p><strong>File:</strong> ${this.escapeHtml(analysis.fileName)}</p>
+                        <p><strong>Type:</strong> ${this.escapeHtml(analysis.type)}</p>
+                        <p><strong>Users Found:</strong> ${analysis.userCount}</p>
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <label>Select Users to Import</label>
+                    <div class="import-user-list">
+                        ${analysis.users.map(user => `
+                            <label class="import-user-option">
+                                <input type="checkbox" value="${this.escapeHtml(user.id)}" checked>
+                                <span class="user-info">
+                                    <strong>${this.escapeHtml(user.name)}</strong>
+                                    <small>${user.activityCount} activities</small>
+                                </span>
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+                
+                ${analysis.conflicts.length > 0 ? `
+                    <div class="panel-section">
+                        <div class="conflict-warning">
+                            <h4>⚠️ Name Conflicts</h4>
+                            <ul>${analysis.conflicts.map(conflict => 
+                                `<li>${this.escapeHtml(conflict)}</li>`
+                            ).join('')}</ul>
+                            <p>Existing users with same names will be renamed with "-imported" suffix.</p>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                <div class="panel-section">
+                    <button class="save-settings-btn" onclick="hybridPanelManager.confirmImport()">
+                        <span class="material-icons">upload</span>
+                        <span>Import Selected</span>
+                    </button>
+                    
+                    <button class="admin-btn" style="margin-top: 12px;" onclick="hybridPanelManager.cancelImport()">
+                        <span class="material-icons">close</span>
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        `;
+    }
+    
+    /**
+     * Confirm import action
+     */
+    confirmImport() {
+        if (!this.state.importPreviewData) return;
+        
+        // Delegate to app's confirmImport method
+        this.app.confirmImport();
+        
+        // Close the panel
+        this.backToManagement();
+        this.closeAllPanels();
+    }
+    
+    /**
+     * Cancel import action
+     */
+    cancelImport() {
+        console.log('[HybridPanelManager] Import cancelled');
+        this.state.showingImportPreview = false;
+        this.state.importPreviewData = null;
+        this.backToManagement();
     }
     
     selectCardType(type) {
