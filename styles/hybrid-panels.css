@@ -1255,6 +1255,53 @@ textarea.panel-input {
     word-break: break-word;
 }
 
+/* User option wrapper for edit mode */
+.user-option-wrapper {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.user-option-wrapper.user-option--active .user-option {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: var(--primary-color);
+}
+
+/* Edit button for users */
+.user-edit-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 10;
+}
+
+.user-edit-btn:hover {
+    background: white;
+    transform: scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.user-edit-btn .material-icons {
+    font-size: 16px;
+    color: #666;
+}
+
+.user-edit-btn:hover .material-icons {
+    color: var(--primary-color);
+}
+
 /* ===== SYNC STATUS CARD ===== */
 .sync-status-card {
     text-align: center;

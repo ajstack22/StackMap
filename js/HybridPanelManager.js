@@ -528,16 +528,26 @@ class HybridPanelManager {
     renderUserSelector() {
         const currentUser = this.app.appState.getCurrentUser();
         const allUsers = this.app.appState.getAllUsers();
+        const isEditMode = this.app.grownupMode;
         
         return `
             <div class="user-selector-grid">
                 ${allUsers.map(user => `
-                    <button class="user-option ${user.id === currentUser.id ? 'user-option--active' : ''}" 
-                            onclick="hybridPanelManager.selectUser('${user.id}')"
-                            title="${user.name}">
-                        <span class="user-icon">${user.icon || '👤'}</span>
-                        <span class="user-name">${user.name}</span>
-                    </button>
+                    <div class="user-option-wrapper ${user.id === currentUser.id ? 'user-option--active' : ''}">
+                        <button class="user-option" 
+                                onclick="hybridPanelManager.selectUser('${user.id}')"
+                                title="${user.name}">
+                            <span class="user-icon">${user.icon || '👤'}</span>
+                            <span class="user-name">${user.name}</span>
+                        </button>
+                        ${isEditMode ? `
+                            <button class="user-edit-btn" 
+                                    onclick="event.stopPropagation(); hybridPanelManager.editExistingUser('${user.id}')"
+                                    title="Edit ${user.name}">
+                                <span class="material-icons">edit</span>
+                            </button>
+                        ` : ''}
+                    </div>
                 `).join('')}
             </div>
         `;
@@ -1397,6 +1407,29 @@ class HybridPanelManager {
             const nameInput = document.getElementById('userName');
             if (nameInput) {
                 nameInput.focus();
+            }
+        }, 100);
+    }
+
+    editExistingUser(userId) {
+        // Get the user data
+        const user = this.app.appState.users.profiles[userId];
+        if (!user) return;
+        
+        // Set up editing state
+        this.state.showingUserForm = true;
+        this.state.editingUser = user;
+        this.state.editingUserId = userId;
+        
+        // Re-render the management panel with user form
+        this.renderPanelContent('right');
+        
+        // Focus on name input after rendering
+        setTimeout(() => {
+            const nameInput = document.getElementById('userName');
+            if (nameInput) {
+                nameInput.focus();
+                nameInput.select();
             }
         }, 100);
     }
