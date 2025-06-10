@@ -44,6 +44,7 @@ class ImportExportDataUAT {
             await this.testRoundTripDataIntegrity();
             await this.testConflictResolution();
             await this.testMultiUserHandling();
+            await this.testImportUIFlow();
             
             this.reportResults();
         } catch (error) {
@@ -416,6 +417,93 @@ class ImportExportDataUAT {
             
         } catch (error) {
             console.error('Multi-user test error:', error);
+            this.endTest(false, `Test failed: ${error.message}`);
+        }
+    }
+    
+    async testImportUIFlow() {
+        this.startTest('Import UI Flow and Timing');
+        
+        try {
+            // This test simulates the actual UI flow that exposed the bug
+            
+            // 1. Create test data to import
+            const testUser = {
+                id: 'ui-test-' + Date.now(),
+                name: 'UI Flow Test',
+                icon: '🎯',
+                activities: [{
+                    title: 'Test Activity',
+                    icon: '✅'
+                }]
+            };
+            
+            const importData = {
+                version: "2.0",
+                exportType: "single-user",
+                user: testUser
+            };
+            
+            // 2. Simulate showing import preview in hybrid panel
+            if (window.hybridPanelManager) {
+                const analysis = this.app.analyzeImportFile(importData);
+                window.hybridPanelManager.showImportPreview(analysis, importData);
+                
+                // 3. Wait for panel to render
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // 4. Check that UI elements exist
+                const checkboxes = document.querySelectorAll('.import-checkbox');
+                this.assert(checkboxes.length > 0, 'Import checkboxes rendered');
+                
+                // 5. Simulate the timing issue - try to confirm immediately
+                const initialUserCount = this.app.appState.getAllUsers().length;
+                
+                // Store the confirmImport method to test both paths
+                const originalConfirm = this.app.confirmImport.bind(this.app);
+                
+                // Test 1: Simulate old broken flow (panel closes before reading checkboxes)
+                let errorCaught = false;
+                try {
+                    // Temporarily break the flow to test the old behavior
+                    window.hybridPanelManager.closeAllPanels();
+                    // Now checkboxes are gone from DOM
+                    const brokenCheckboxes = document.querySelectorAll('.import-checkbox:checked');
+                    this.assert(brokenCheckboxes.length === 0, 'Checkboxes removed after panel close');
+                } catch (e) {
+                    errorCaught = true;
+                }
+                
+                // Reset for proper test
+                window.hybridPanelManager.showImportPreview(analysis, importData);
+                await new Promise(resolve => setTimeout(resolve, 100));
+                
+                // Test 2: New flow - confirm import properly
+                window.hybridPanelManager.confirmImport();
+                
+                // 6. Verify import actually happened
+                await new Promise(resolve => setTimeout(resolve, 100));
+                const newUserCount = this.app.appState.getAllUsers().length;
+                this.assert(newUserCount > initialUserCount, 'User was imported');
+                
+                // 7. Verify imported data
+                const importedUser = this.app.appState.getAllUsers().find(u => u.name === 'UI Flow Test');
+                this.assert(importedUser !== undefined, 'Imported user found');
+                this.assert(importedUser.icon === '🎯', 'User icon preserved');
+                this.assert(importedUser.activities.length === 1, 'Activities imported');
+                
+                // Clean up
+                if (importedUser) {
+                    delete this.app.appState.users.profiles[importedUser.id];
+                }
+                
+                this.endTest(true, 'Import UI flow handles timing correctly');
+            } else {
+                this.endTest(false, 'HybridPanelManager not available');
+            }
+            
+        } catch (error) {
+            console.error('Import UI flow test error:', error);
             this.endTest(false, `Test failed: ${error.message}`);
         }
     }

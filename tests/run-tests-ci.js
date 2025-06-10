@@ -19,7 +19,8 @@ let failedTests = 0;
 // Check test files exist
 const testFiles = [
     'tests/uat-edit-mode.js',
-    'tests/uat-import-export-data.js'
+    'tests/uat-import-export-data.js',
+    'tests/uat-ui-timing.js'
 ];
 
 console.log('Checking test infrastructure...');
