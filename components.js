@@ -2399,6 +2399,11 @@ class DataManagementPanel {
     }
     
     render() {
+        // Check if sync should be enabled (bypass with ?enableSync=true)
+        const urlParams = new URLSearchParams(window.location.search);
+        const syncEnabled = urlParams.get('enableSync') === 'true' || 
+                           (CONFIG.GOOGLE_CLIENT_ID && CONFIG.GOOGLE_API_KEY);
+        
         this.container = document.createElement('div');
         this.container.className = 'data-panel-container';
         this.container.innerHTML = `
@@ -2420,50 +2425,69 @@ class DataManagementPanel {
                     </button>
                 </div>
                 
-                <!-- Google Drive Sync Section -->
-                <div class="data-panel__section">
-                    <h3 class="data-panel__section-title">
-                        <span class="material-icons">cloud</span>
-                        Google Drive Sync
-                    </h3>
-                    
-                    <!-- Sync Status Display -->
-                    <div class="sync-status" id="sync-status-display">
-                        <div class="sync-status__indicator" id="sync-indicator">
-                            <span class="material-icons">cloud_off</span>
+                ${syncEnabled ? `
+                    <!-- Google Drive Sync Section -->
+                    <div class="data-panel__section">
+                        <h3 class="data-panel__section-title">
+                            <span class="material-icons">cloud</span>
+                            Google Drive Sync
+                        </h3>
+                        
+                        <!-- Sync Status Display -->
+                        <div class="sync-status" id="sync-status-display">
+                            <div class="sync-status__indicator" id="sync-indicator">
+                                <span class="material-icons">cloud_off</span>
+                            </div>
+                            <div class="sync-status__info">
+                                <div class="sync-status__text" id="sync-status-text">Checking connection...</div>
+                                <div class="sync-status__time" id="sync-last-time"></div>
+                            </div>
                         </div>
-                        <div class="sync-status__info">
-                            <div class="sync-status__text" id="sync-status-text">Checking connection...</div>
-                            <div class="sync-status__time" id="sync-last-time"></div>
+                        
+                        <!-- Sync Actions -->
+                        <div class="data-panel__actions">
+                            <button class="btn btn--primary btn--full-width" 
+                                    id="connect-drive-btn"
+                                    aria-label="Connect to Google Drive">
+                                <span class="material-icons">link</span>
+                                <span>Connect Google Drive</span>
+                            </button>
+                            
+                            <button class="btn btn--secondary btn--full-width" 
+                                    id="sync-now-btn"
+                                    aria-label="Sync data now"
+                                    style="display: none;">
+                                <span class="material-icons">sync</span>
+                                <span>Sync Now</span>
+                            </button>
+                            
+                            <button class="btn btn--danger btn--full-width" 
+                                    id="disconnect-drive-btn"
+                                    aria-label="Disconnect Google Drive"
+                                    style="display: none;">
+                                <span class="material-icons">link_off</span>
+                                <span>Disconnect Drive</span>
+                            </button>
                         </div>
                     </div>
-                    
-                    <!-- Sync Actions -->
-                    <div class="data-panel__actions">
-                        <button class="btn btn--primary btn--full-width" 
-                                id="connect-drive-btn"
-                                aria-label="Connect to Google Drive">
-                            <span class="material-icons">link</span>
-                            <span>Connect Google Drive</span>
-                        </button>
+                ` : `
+                    <!-- Google Drive Sync Coming Soon -->
+                    <div class="data-panel__section">
+                        <h3 class="data-panel__section-title">
+                            <span class="material-icons">cloud_queue</span>
+                            Google Drive Sync
+                        </h3>
                         
-                        <button class="btn btn--secondary btn--full-width" 
-                                id="sync-now-btn"
-                                aria-label="Sync data now"
-                                style="display: none;">
-                            <span class="material-icons">sync</span>
-                            <span>Sync Now</span>
-                        </button>
-                        
-                        <button class="btn btn--danger btn--full-width" 
-                                id="disconnect-drive-btn"
-                                aria-label="Disconnect Google Drive"
-                                style="display: none;">
-                            <span class="material-icons">link_off</span>
-                            <span>Disconnect Drive</span>
-                        </button>
+                        <div style="padding: 16px; background: rgba(255,255,255,0.05); border-radius: 8px; text-align: center;">
+                            <span class="material-icons" style="font-size: 48px; color: rgba(255,255,255,0.3); margin-bottom: 12px; display: block;">cloud_queue</span>
+                            <h4 style="color: rgba(255,255,255,0.9); margin: 0 0 8px 0;">Coming Soon</h4>
+                            <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">
+                                Google Drive sync will be available in a future update.
+                                Stay tuned for seamless data synchronization!
+                            </p>
+                        </div>
                     </div>
-                </div>
+                `}
                 
                 <!-- Import/Export Section -->
                 <div class="data-panel__section">
@@ -2682,6 +2706,16 @@ class DataManagementPanel {
     }
     
     updateSyncStatus() {
+        // Check if sync should be enabled
+        const urlParams = new URLSearchParams(window.location.search);
+        const syncEnabled = urlParams.get('enableSync') === 'true' || 
+                           (CONFIG.GOOGLE_CLIENT_ID && CONFIG.GOOGLE_API_KEY);
+        
+        if (!syncEnabled) {
+            // Skip updating sync status if sync is not enabled
+            return;
+        }
+        
         const indicator = this.container.querySelector('#sync-indicator');
         const statusText = this.container.querySelector('#sync-status-text');
         const lastTimeText = this.container.querySelector('#sync-last-time');

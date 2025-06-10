@@ -1860,6 +1860,11 @@ class HybridPanelManager {
         const isSignedIn = this.app.driveSync?.isSignedIn || false;
         const isSyncing = this.app.driveSync?.isSyncing || false;
         
+        // Check if sync should be enabled (bypass with ?enableSync=true)
+        const urlParams = new URLSearchParams(window.location.search);
+        const syncEnabled = urlParams.get('enableSync') === 'true' || 
+                           (CONFIG.GOOGLE_CLIENT_ID && CONFIG.GOOGLE_API_KEY);
+        
         return `
             <div class="sync-settings">
                 <div class="panel-section">
@@ -1872,7 +1877,24 @@ class HybridPanelManager {
                 <div class="panel-section">
                     <label>Google Drive Sync</label>
                     
-                    ${!isSignedIn ? `
+                    ${!syncEnabled ? `
+                        <!-- Coming Soon Stub -->
+                        <div class="sync-status-card">
+                            <div class="sync-icon">
+                                <span class="material-icons" style="font-size: 48px; color: rgba(255,255,255,0.5);">cloud_queue</span>
+                            </div>
+                            <h3 style="color: white; margin: 16px 0 8px 0;">Coming Soon</h3>
+                            <p style="color: rgba(255,255,255,0.8); margin-bottom: 20px;">
+                                Google Drive sync will be available in a future update
+                            </p>
+                            <div style="padding: 16px; background: rgba(255,255,255,0.1); border-radius: 8px; margin-top: 20px;">
+                                <p style="color: rgba(255,255,255,0.7); margin: 0; font-size: 14px;">
+                                    We're working on bringing you seamless data synchronization across all your devices. 
+                                    Stay tuned for this exciting feature!
+                                </p>
+                            </div>
+                        </div>
+                    ` : !isSignedIn ? `
                         <div class="sync-status-card">
                             <div class="sync-icon">
                                 <span class="material-icons" style="font-size: 48px; color: rgba(255,255,255,0.8);">cloud_off</span>
@@ -1918,17 +1940,19 @@ class HybridPanelManager {
                     `}
                 </div>
                 
-                <div class="panel-section">
-                    <label>How Sync Works</label>
-                    <div class="sync-info" style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
-                        <ul style="margin: 0; padding-left: 20px; color: rgba(255,255,255,0.9);">
-                            <li>Your data is stored in your personal Google Drive</li>
-                            <li>Changes sync automatically every 10 seconds</li>
-                            <li>Work offline and sync when reconnected</li>
-                            <li>All devices stay perfectly in sync</li>
-                        </ul>
+                ${syncEnabled ? `
+                    <div class="panel-section">
+                        <label>How Sync Works</label>
+                        <div class="sync-info" style="background: rgba(255,255,255,0.1); padding: 16px; border-radius: 8px;">
+                            <ul style="margin: 0; padding-left: 20px; color: rgba(255,255,255,0.9);">
+                                <li>Your data is stored in your personal Google Drive</li>
+                                <li>Changes sync automatically every 10 seconds</li>
+                                <li>Work offline and sync when reconnected</li>
+                                <li>All devices stay perfectly in sync</li>
+                            </ul>
+                        </div>
                     </div>
-                </div>
+                ` : ''}
             </div>
         `;
     }

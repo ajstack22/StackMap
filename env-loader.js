@@ -5,12 +5,17 @@
 // In development, you can set these values here temporarily
 // But DO NOT commit actual credentials to version control
 (function() {
-    // Check if running in development
+    // Check if running in development or test environments
     const isDev = window.location.hostname === 'localhost' || 
                   window.location.hostname.includes('qual') || 
                   window.location.search.includes('dev=1');
     
-    if (isDev) {
+    // Check if on test subdomains
+    const isTestDomain = window.location.hostname === 'stackmap.app' && 
+                        (window.location.pathname.startsWith('/mu') || 
+                         window.location.pathname.startsWith('/dev'));
+    
+    if (isDev || isTestDomain) {
         // Development values - replace with your actual credentials
         // Better approach: use a local .env.local file and a build process
         window.STACKMAP_GOOGLE_CLIENT_ID = '';

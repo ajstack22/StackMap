@@ -7,8 +7,26 @@ class StackMapApp {
         this.appState = new AppState();
         this.renderer = new AppRenderer(this.appState, this);
         
-        // Initialize Google Drive sync
-        this.driveSync = new GoogleDriveSync(this);
+        // Initialize Google Drive sync only if enabled
+        const urlParams = new URLSearchParams(window.location.search);
+        const syncEnabled = urlParams.get('enableSync') === 'true' || 
+                           (window.CONFIG?.GOOGLE_CLIENT_ID && window.CONFIG?.GOOGLE_API_KEY);
+        
+        if (syncEnabled) {
+            this.driveSync = new GoogleDriveSync(this);
+        } else {
+            // Create a stub object to prevent errors
+            this.driveSync = {
+                isSignedIn: false,
+                isSyncing: false,
+                signIn: () => console.log('Google Drive sync is not enabled'),
+                signOut: () => console.log('Google Drive sync is not enabled'),
+                syncNow: () => console.log('Google Drive sync is not enabled'),
+                autoSync: () => {},
+                uploadData: () => Promise.resolve(),
+                downloadData: () => Promise.resolve()
+            };
+        }
         
         // Initialize managers
         this.preferencesManager = new PreferencesManager(this);
