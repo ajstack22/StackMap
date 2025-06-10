@@ -2769,7 +2769,7 @@ class StackMapApp {
         
         const { analysis, fileData } = this.pendingImportData;
         // Get selected checkboxes from the hybrid panel
-        const selectedCheckboxes = document.querySelectorAll('.import-user-list input[type="checkbox"]:checked');
+        const selectedCheckboxes = document.querySelectorAll('.import-checkbox:checked');
         const selectedUserIds = Array.from(selectedCheckboxes).map(cb => cb.value);
         
         if (selectedUserIds.length === 0) {

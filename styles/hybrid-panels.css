@@ -2000,94 +2000,128 @@ textarea.panel-input {
     padding: 0;
 }
 
-.import-file-info {
-    background: rgba(0, 0, 0, 0.05);
-    padding: 12px;
-    border-radius: 8px;
-    margin-bottom: 12px;
+/* Import Summary - matches other panel info displays */
+.import-summary {
+    background: rgba(255, 255, 255, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    border-radius: 12px;
+    padding: 16px;
+    backdrop-filter: blur(10px);
 }
 
-.import-file-info p {
-    margin: 4px 0;
+.import-summary-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 0;
+}
+
+.import-summary-item:not(:last-child) {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.import-summary-label {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
     font-size: 0.9rem;
-    color: #333;
 }
 
-.import-file-info strong {
-    color: #000;
+.import-summary-value {
+    color: white;
+    font-size: 0.9rem;
 }
 
-.import-user-list {
+/* User Selection - matches other checkbox patterns */
+.import-users-container {
     max-height: 300px;
     overflow-y: auto;
     margin: 0 -4px;
+    padding: 4px;
 }
 
-.import-user-option {
+.import-user-row {
+    margin-bottom: 8px;
+}
+
+.import-checkbox-label {
     display: flex;
-    align-items: center;
-    padding: 8px;
-    margin: 4px 0;
-    background: rgba(255, 255, 255, 0.8);
-    border: 1px solid rgba(0, 0, 0, 0.1);
+    align-items: flex-start;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.import-user-option:hover {
-    background: rgba(255, 255, 255, 1);
-    border-color: rgba(0, 0, 0, 0.2);
+.import-checkbox-label:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
 }
 
-.import-user-option input[type="checkbox"] {
+.import-checkbox {
+    width: 20px;
+    height: 20px;
     margin-right: 12px;
+    margin-top: 2px;
+    cursor: pointer;
     flex-shrink: 0;
+    accent-color: white;
 }
 
-.import-user-option .user-info {
-    flex-grow: 1;
+.import-user-details {
+    flex: 1;
 }
 
-.import-user-option .user-info strong {
-    display: block;
+.import-user-name {
+    font-weight: 600;
+    color: white;
     font-size: 0.95rem;
     margin-bottom: 2px;
 }
 
-.import-user-option .user-info small {
-    color: #666;
+.import-user-meta {
+    color: rgba(255, 255, 255, 0.8);
     font-size: 0.85rem;
 }
 
-.conflict-warning {
-    background: rgba(255, 152, 0, 0.1);
-    border: 1px solid rgba(255, 152, 0, 0.3);
-    border-radius: 8px;
-    padding: 12px;
-    margin-top: 8px;
+/* Warning Box - matches other warning styles */
+.import-warning-box {
+    background: rgba(255, 152, 0, 0.2);
+    border: 1px solid rgba(255, 152, 0, 0.4);
+    border-radius: 12px;
+    padding: 16px;
+    backdrop-filter: blur(10px);
 }
 
-.conflict-warning h4 {
-    margin: 0 0 8px 0;
-    color: #f57c00;
-    font-size: 1rem;
+.import-warning-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 12px;
 }
 
-.conflict-warning ul {
-    margin: 8px 0;
-    padding-left: 20px;
+.import-warning-header .material-icons {
+    color: #ff9800;
+    font-size: 20px;
 }
 
-.conflict-warning li {
-    color: #666;
+.import-warning-content {
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.import-warning-item {
+    padding: 4px 0;
     font-size: 0.9rem;
-    margin: 4px 0;
 }
 
-.conflict-warning p {
-    margin: 8px 0 0 0;
+.import-warning-note {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255, 152, 0, 0.3);
     font-size: 0.85rem;
-    color: #666;
     font-style: italic;
+    color: rgba(255, 255, 255, 0.8);
 }

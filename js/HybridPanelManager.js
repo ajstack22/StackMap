@@ -1701,7 +1701,7 @@ class HybridPanelManager {
         
         return `
             <div class="import-preview-form">
-                <div class="panel-section">
+                <div class="panel-section" style="padding-top: 0;">
                     <button class="admin-btn" onclick="hybridPanelManager.backToManagement()">
                         <span class="material-icons">arrow_back</span>
                         Back
@@ -1710,36 +1710,57 @@ class HybridPanelManager {
                 
                 <div class="panel-section">
                     <label>Import Preview</label>
-                    <div class="import-file-info">
-                        <p><strong>File:</strong> ${this.escapeHtml(analysis.fileName)}</p>
-                        <p><strong>Type:</strong> ${this.escapeHtml(analysis.type)}</p>
-                        <p><strong>Users Found:</strong> ${analysis.userCount}</p>
+                    <div class="import-summary">
+                        <div class="import-summary-item">
+                            <span class="import-summary-label">File:</span>
+                            <span class="import-summary-value">${this.escapeHtml(analysis.fileName)}</span>
+                        </div>
+                        <div class="import-summary-item">
+                            <span class="import-summary-label">Type:</span>
+                            <span class="import-summary-value">${this.escapeHtml(analysis.type)}</span>
+                        </div>
+                        <div class="import-summary-item">
+                            <span class="import-summary-label">Users:</span>
+                            <span class="import-summary-value">${analysis.userCount}</span>
+                        </div>
                     </div>
                 </div>
                 
                 <div class="panel-section">
                     <label>Select Users to Import</label>
-                    <div class="import-user-list">
+                    <div class="import-users-container">
                         ${analysis.users.map(user => `
-                            <label class="import-user-option">
-                                <input type="checkbox" value="${this.escapeHtml(user.id)}" checked>
-                                <span class="user-info">
-                                    <strong>${this.escapeHtml(user.name)}</strong>
-                                    <small>${user.activityCount} activities</small>
-                                </span>
-                            </label>
+                            <div class="import-user-row">
+                                <label class="import-checkbox-label">
+                                    <input type="checkbox" 
+                                           class="import-checkbox" 
+                                           value="${this.escapeHtml(user.id)}" 
+                                           checked>
+                                    <div class="import-user-details">
+                                        <div class="import-user-name">${this.escapeHtml(user.name)}</div>
+                                        <div class="import-user-meta">${user.activityCount} activities</div>
+                                    </div>
+                                </label>
+                            </div>
                         `).join('')}
                     </div>
                 </div>
                 
                 ${analysis.conflicts.length > 0 ? `
                     <div class="panel-section">
-                        <div class="conflict-warning">
-                            <h4>⚠️ Name Conflicts</h4>
-                            <ul>${analysis.conflicts.map(conflict => 
-                                `<li>${this.escapeHtml(conflict)}</li>`
-                            ).join('')}</ul>
-                            <p>Existing users with same names will be renamed with "-imported" suffix.</p>
+                        <div class="import-warning-box">
+                            <div class="import-warning-header">
+                                <span class="material-icons">warning</span>
+                                <span>Name Conflicts Detected</span>
+                            </div>
+                            <div class="import-warning-content">
+                                ${analysis.conflicts.map(conflict => 
+                                    `<div class="import-warning-item">${this.escapeHtml(conflict)}</div>`
+                                ).join('')}
+                                <div class="import-warning-note">
+                                    Users will be renamed with "-imported" suffix
+                                </div>
+                            </div>
                         </div>
                     </div>
                 ` : ''}
@@ -1750,9 +1771,10 @@ class HybridPanelManager {
                         <span>Import Selected</span>
                     </button>
                     
-                    <button class="admin-btn" style="margin-top: 12px;" onclick="hybridPanelManager.cancelImport()">
+                    <button class="admin-btn" style="background: rgba(255, 100, 100, 0.2); margin-top: 12px;" 
+                            onclick="hybridPanelManager.cancelImport()">
                         <span class="material-icons">close</span>
-                        Cancel
+                        Cancel Import
                     </button>
                 </div>
             </div>
