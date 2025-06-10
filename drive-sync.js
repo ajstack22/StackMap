@@ -18,6 +18,12 @@ class GoogleDriveSync {
 
     async initializeGoogleAPIs() {
         try {
+            // Check if credentials are configured
+            if (!CONFIG.GOOGLE_CLIENT_ID || !CONFIG.GOOGLE_API_KEY) {
+                console.warn('Google Drive sync disabled: API credentials not configured');
+                return;
+            }
+            
             // Wait for Google APIs to load with timeout
             await new Promise((resolve, reject) => {
                 let checkCount = 0;

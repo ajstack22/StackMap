@@ -1,7 +1,7 @@
 {
   "name": "StackMap - Visual Routine Helper",
   "short_name": "StackMap",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A gentle routine app designed for special needs children and families. Create visual task sequences that help build independence.",
   "start_url": "/",
   "scope": "/",
