@@ -344,8 +344,12 @@ class HybridPanelManager {
         }
         
         // Subtle Edit Mode switch in top-left corner
+        // Adjust position for iOS devices to account for safe area padding
+        const isIOS = this.app.isIOSDevice || false;
+        const topPosition = isIOS ? '90px' : '16px';
+        
         let content = `
-            <div style="position: absolute; top: 16px; left: 16px; display: flex; align-items: center; gap: 8px;">
+            <div style="position: absolute; top: ${topPosition}; left: 16px; display: flex; align-items: center; gap: 8px; z-index: 10;">
                 <label class="switch switch--small" style="margin: 0;">
                     <input type="checkbox" id="editModeSwitch" ${this.app.grownupMode ? 'checked' : ''} 
                            onchange="hybridPanelManager.handleEditModeSwitch(this.checked)">
