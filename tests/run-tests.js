@@ -13,10 +13,11 @@ const chalk = require('chalk');
 const { spawn } = require('child_process');
 
 // Configuration
-const PORT = 5501; // Different from default dev server
+const PORT = 5500; // Use existing dev server if running
 const HOST = 'localhost';
 const TEST_URL = `http://${HOST}:${PORT}/tests/test-runner.html`;
 const APP_ROOT = path.join(__dirname, '..');
+const USE_EXISTING_SERVER = true; // Try to use existing dev server first
 
 // Test results
 let testsPassed = true;
@@ -32,52 +33,33 @@ const log = {
     test: (msg) => console.log(chalk.cyan('🧪'), msg)
 };
 
-// Simple static file server
-function createServer() {
-    return new Promise((resolve, reject) => {
-        const express = require('http').createServer((req, res) => {
-            let filePath = path.join(APP_ROOT, req.url === '/' ? '/index.html' : req.url);
-            
-            // Security: prevent directory traversal
-            if (!filePath.startsWith(APP_ROOT)) {
-                res.writeHead(403);
-                res.end('Forbidden');
-                return;
+// Check if server is already running or start a new one
+async function createServer() {
+    const { exec } = require('child_process');
+    
+    // Check if server is already running
+    return new Promise((resolve) => {
+        exec(`lsof -i :${PORT}`, (error, stdout) => {
+            if (!error && stdout) {
+                // Server is already running
+                log.info(`Using existing dev server at http://${HOST}:${PORT}`);
+                resolve();
+            } else {
+                // Start new server
+                log.info('Starting test server...');
+                serverProcess = exec(`npx http-server ${APP_ROOT} -p ${PORT} -c-1`, (error) => {
+                    if (error && !error.killed) {
+                        log.error(`Server error: ${error.message}`);
+                    }
+                });
+                
+                // Wait for server to start
+                setTimeout(() => {
+                    log.info(`Test server running at http://${HOST}:${PORT}`);
+                    resolve();
+                }, 3000);
             }
-
-            // Check if file exists
-            fs.access(filePath, fs.constants.F_OK, (err) => {
-                if (err) {
-                    res.writeHead(404);
-                    res.end('Not Found');
-                    return;
-                }
-
-                // Determine content type
-                const ext = path.extname(filePath);
-                const contentTypes = {
-                    '.html': 'text/html',
-                    '.js': 'application/javascript',
-                    '.css': 'text/css',
-                    '.json': 'application/json',
-                    '.png': 'image/png',
-                    '.jpg': 'image/jpeg',
-                    '.svg': 'image/svg+xml'
-                };
-                const contentType = contentTypes[ext] || 'text/plain';
-
-                // Serve file
-                res.writeHead(200, { 'Content-Type': contentType });
-                fs.createReadStream(filePath).pipe(res);
-            });
         });
-
-        server = express.listen(PORT, HOST, () => {
-            log.info(`Test server running at http://${HOST}:${PORT}`);
-            resolve();
-        });
-
-        server.on('error', reject);
     });
 }
 
@@ -212,8 +194,8 @@ async function main() {
         await runTests();
         
         // Clean up
-        if (server) {
-            server.close();
+        if (serverProcess) {
+            serverProcess.kill();
         }
         
         // Exit with appropriate code
@@ -233,12 +215,12 @@ async function main() {
 
 // Handle cleanup on exit
 process.on('SIGINT', () => {
-    if (server) server.close();
+    if (serverProcess) serverProcess.kill();
     process.exit(1);
 });
 
 process.on('SIGTERM', () => {
-    if (server) server.close();
+    if (serverProcess) serverProcess.kill();
     process.exit(1);
 });
 

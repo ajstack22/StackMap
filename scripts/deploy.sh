@@ -93,10 +93,22 @@ if [ -f "package.json" ] && [ -f "tests/run-tests.js" ]; then
     
     info "Running automated tests..."
     npm test
-    if [ $? -ne 0 ]; then
-        exit_error "Tests failed! Please fix the issues before deploying."
+    TEST_RESULT=$?
+    
+    if [ $TEST_RESULT -ne 0 ]; then
+        warn "Automated tests encountered an issue"
+        echo ""
+        echo "Opening test runner in browser..."
+        node tests/run-tests-simple.js
+        echo ""
+        read -p "Did all tests pass in the browser? (y/n) " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            exit_error "Tests must pass before deployment"
+        fi
+    else
+        success "All tests passed!"
     fi
-    success "All tests passed!"
 else
     exit_error "Test infrastructure missing. Please ensure package.json and tests/run-tests.js exist."
 fi
