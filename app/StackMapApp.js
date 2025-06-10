@@ -88,6 +88,9 @@ class StackMapApp {
         // ALWAYS apply theme to ensure CSS variables are set
         this.appState.applyTheme();
         
+        // Apply user settings to body classes
+        this.appState.applyUserSettings();
+        
         this.setupEventListeners();
         this.populateUserDropdowns();
         this.renderDaySelectors(); // Story 4: Initialize day selectors
@@ -1210,6 +1213,9 @@ class StackMapApp {
                 this.createDefaultActivities();
             }
             
+            // Apply user settings to body classes
+            this.appState.applyUserSettings();
+            
             this.renderer.render();
             this.renderer.updateHeader();
             this.syncFixedHeader();
@@ -1741,6 +1747,11 @@ class StackMapApp {
     enterGrownupMode() {
         // console.log('🚪 Entering grown-up mode');
         
+        // Ensure any validation modals are removed
+        if (this.hybridPanelManager) {
+            this.hybridPanelManager.removeValidationModal();
+        }
+        
         this.grownupMode = true;
         this.appState.ui.editMode = true;
         
@@ -2201,14 +2212,20 @@ class StackMapApp {
         this.appState._triggerSave();
     }
     
-    // Legacy method for backward compatibility (still used in some places)
+    // Process cards for new day - handles card types and sorting
     processCardsForNewDay() {
-        const activeCards = [];      // recurring + single-use (stay visible and on top)
+        const activeCards = [];      // recurring cards (stay visible and on top)
         const frequentCards = [];    // move to bottom and hide
         let deletedCount = 0;
         let hiddenCount = 0;
         
-        this.appState.activities.forEach((activity) => {
+        // Get current user and current day's activities
+        const user = this.appState.getCurrentUser();
+        const currentActivities = this.appState.getCurrentDay() === 'today' 
+            ? user.activities 
+            : user.tomorrowActivities;
+        
+        currentActivities.forEach((activity) => {
             const cardType = activity.cardType || 'recurring';
             
             switch (cardType) {
@@ -2216,7 +2233,8 @@ class StackMapApp {
                     // Mark as incomplete and keep at top
                     activeCards.push({
                         ...activity,
-                        completed: false
+                        completed: false,
+                        visible: true
                     });
                     break;
                     
@@ -2239,13 +2257,23 @@ class StackMapApp {
                     // Fallback to recurring behavior
                     activeCards.push({
                         ...activity,
-                        completed: false
+                        completed: false,
+                        visible: true
                     });
             }
         });
         
-        // Rebuild array: active cards first (maintaining their order), then hidden frequent cards
-        this.appState.activities = [...activeCards, ...frequentCards];
+        // Rebuild array: active cards first (maintaining their order), then hidden frequent cards at bottom
+        const newActivities = [...activeCards, ...frequentCards];
+        
+        // Update the correct day's activities
+        if (this.appState.getCurrentDay() === 'today') {
+            user.activities = newActivities;
+            this.appState.activities = newActivities; // Update legacy array
+        } else {
+            user.tomorrowActivities = newActivities;
+            this.appState.activities = newActivities; // Update legacy array
+        }
         
         // Trigger save
         this.appState._triggerSave();
@@ -2829,9 +2857,9 @@ class StackMapApp {
             return;
         }
         
-        const confirmMessage = `Mark all ${incompleteCount} remaining activities as complete?`;
+        const confirmMessage = `Complete day and reset for tomorrow? This will:\n• Keep recurring cards\n• Hide frequent cards\n• Remove single-use cards`;
         if (confirm(confirmMessage)) {
-            // Mark all as complete
+            // First mark all as complete
             activities.forEach(activity => {
                 if (!activity.completed) {
                     activity.completed = true;
@@ -2839,16 +2867,26 @@ class StackMapApp {
                 }
             });
             
+            // Process cards for new day (handles card types and sorting)
+            const counts = this.processCardsForNewDay();
+            
             // Save state
-            this.appState.saveState();
+            this.appState._triggerSave();
             
             // Re-render
-            this.renderer.renderActivities();
+            this.render();
+            
+            // Show sorting wave animation and success message
+            setTimeout(() => {
+                this.showSortingWaveAnimation(counts);
+            }, 250);
             
             // Show celebration
-            this.renderer.createFireworks();
+            if (window.celebrationManager) {
+                window.celebrationManager.triggerRoutineCompletion();
+            }
             
-        // console.log(`✅ Completed ${incompleteCount} activities`);
+        // console.log(`✅ Completed day with ${counts.frequentCount} frequent cards hidden and ${counts.deletedCount} single-use cards removed`);
         }
     }
     

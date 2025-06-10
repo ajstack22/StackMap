@@ -1268,7 +1268,13 @@ class ActivityCard {
     // CHILD MODE: Click to complete (only if indicators are enabled)
     handleClick(e) {
         if (!e.target.closest('.card').classList.contains('card--dragging')) {
-            if (this.appState.settings.showCompletionIndicators !== false) {
+            // Get current user settings
+            const currentUser = this.appState.getCurrentUser();
+            const userSettings = currentUser?.settings || {};
+            const showCompletionIndicators = userSettings.showCompletionIndicators !== undefined ? 
+                userSettings.showCompletionIndicators : this.appState.settings.showCompletionIndicators;
+            
+            if (showCompletionIndicators !== false) {
                 this.toggleComplete();
             }
         }

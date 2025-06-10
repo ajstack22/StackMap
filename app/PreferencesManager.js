@@ -295,6 +295,12 @@ class PreferencesManager {
             button.addEventListener('click', (e) => {
                 const mode = e.target.getAttribute('data-mode');
                 
+                // Update current user's settings
+                const currentUser = this.app.appState.getCurrentUser();
+                if (currentUser) {
+                    currentUser.settings.displayMode = mode;
+                }
+                
                 // Update app state
                 this.app.appState.settings.displayMode = mode;
                 this.app.appState._triggerSave();
@@ -325,6 +331,13 @@ class PreferencesManager {
             
             // Add event listener to the new element
             newCompletionToggle.addEventListener('change', (e) => {
+                // Update current user's settings
+                const currentUser = this.app.appState.getCurrentUser();
+                if (currentUser) {
+                    currentUser.settings.showCompletionIndicators = e.target.checked;
+                }
+                
+                // Also update global settings
                 this.app.appState.settings.showCompletionIndicators = e.target.checked;
                 this.app.appState._triggerSave();
                 

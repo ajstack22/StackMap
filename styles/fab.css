@@ -98,6 +98,24 @@ button.btn.btn--floating.btn--fab {
     color: var(--primary-color) !important;
 }
 
+/* When FAB is expanded (has aria-expanded="true"), keep the icon the theme color */
+.btn.btn--floating.btn--fab[aria-expanded="true"] {
+    background: rgba(255, 255, 255, 0.95) !important;
+}
+
+.btn.btn--floating.btn--fab[aria-expanded="true"] .material-icons,
+.btn.btn--floating.btn--fab[aria-expanded="true"] .fab-icon {
+    color: var(--primary-color) !important; /* Keep the theme color, not blue */
+}
+
+/* Override layout.css active state - maintain theme color, not change to blue */
+.btn.btn--floating.btn--fab:active .material-icons,
+.btn.btn--floating.btn--fab:active .fab-icon,
+.btn.btn--floating.btn--fab:focus .material-icons,
+.btn.btn--floating.btn--fab:focus .fab-icon {
+    color: var(--primary-color) !important; /* Maintain theme color */
+}
+
 /* FAB Icon - Force exact match to header button icons */
 .btn--fab .material-icons,
 .btn--fab .fab-icon,

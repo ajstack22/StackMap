@@ -1191,6 +1191,15 @@ class HybridPanelManager {
                     opacity: 1;
                 }
             }
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                20%, 40%, 60%, 80% { transform: translateX(5px); }
+            }
+            @keyframes fadeIn {
+                from { opacity: 0; }
+                to { opacity: 1; }
+            }
         `;
         document.head.appendChild(style);
         
@@ -1278,16 +1287,26 @@ class HybridPanelManager {
     
     submitValidation(correctAnswer) {
         const input = document.getElementById('validationInput');
+        if (!input) {
+            console.error('Validation input not found');
+            this.removeValidationModal();
+            return;
+        }
+        
         const userAnswer = input.value.trim().toUpperCase();
         
         if (userAnswer === correctAnswer.toUpperCase()) {
-            // Correct answer - enter edit mode
-            this.app.enterGrownupMode();
+            // Correct answer - remove modal first, then enter edit mode
             this.removeValidationModal();
-            // console.log('Validation successful - entered edit mode');
             
-            // Re-render panel content to show Edit Mode section
-            this.renderPanelContent('right');
+            // Small delay to ensure modal is fully removed
+            setTimeout(() => {
+                this.app.enterGrownupMode();
+                // console.log('Validation successful - entered edit mode');
+                
+                // Re-render panel content to show Edit Mode section
+                this.renderPanelContent('right');
+            }, 100);
         } else {
             // Wrong answer - show feedback
             input.value = '';
@@ -1318,33 +1337,47 @@ class HybridPanelManager {
     }
     
     removeValidationModal() {
-        // Clear any timeout
-        if (this.validationTimeout) {
-            clearTimeout(this.validationTimeout);
-            this.validationTimeout = null;
-        }
-        
-        // Remove event listener
-        if (this.validationKeyHandler) {
-            document.removeEventListener('keydown', this.validationKeyHandler);
-            this.validationKeyHandler = null;
-        }
-        
-        // Remove modal and backdrop
-        const modal = document.querySelector('.edit-mode-validation-modal, .validation-modal');
-        const backdrop = document.querySelector('.edit-mode-validation-backdrop, .validation-backdrop');
-        if (modal) modal.remove();
-        if (backdrop) backdrop.remove();
-        
-        // Remove any inline styles added
-        const inlineStyles = document.querySelectorAll('style');
-        inlineStyles.forEach(style => {
-            if (style.textContent && style.textContent.includes('modalSlideIn')) {
-                style.remove();
+        try {
+            // Clear any timeout
+            if (this.validationTimeout) {
+                clearTimeout(this.validationTimeout);
+                this.validationTimeout = null;
             }
-        });
-        
-        // console.log('Validation modal removed');
+            
+            // Remove event listener
+            if (this.validationKeyHandler) {
+                document.removeEventListener('keydown', this.validationKeyHandler);
+                this.validationKeyHandler = null;
+            }
+            
+            // Remove modal and backdrop - try multiple selectors
+            const modals = document.querySelectorAll('.edit-mode-validation-modal, .validation-modal');
+            const backdrops = document.querySelectorAll('.edit-mode-validation-backdrop, .validation-backdrop');
+            
+            modals.forEach(modal => {
+                if (modal && modal.parentNode) {
+                    modal.parentNode.removeChild(modal);
+                }
+            });
+            
+            backdrops.forEach(backdrop => {
+                if (backdrop && backdrop.parentNode) {
+                    backdrop.parentNode.removeChild(backdrop);
+                }
+            });
+            
+            // Remove any inline styles added
+            const inlineStyles = document.querySelectorAll('style');
+            inlineStyles.forEach(style => {
+                if (style.textContent && (style.textContent.includes('modalSlideIn') || style.textContent.includes('shake'))) {
+                    style.remove();
+                }
+            });
+            
+            // console.log('Validation modal removed');
+        } catch (error) {
+            console.error('Error removing validation modal:', error);
+        }
     }
     
     exitEditMode() {

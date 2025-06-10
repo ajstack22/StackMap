@@ -396,6 +396,9 @@ class AppState {
             // Apply theme
             this.applyTheme();
             
+            // Apply user settings to body classes
+            this.applyUserSettings();
+            
             return true;
         } catch (error) {
             console.error('Error loading user data:', error);
@@ -632,6 +635,27 @@ class AppState {
         if (window.hybridPanelManager) {
             window.hybridPanelManager.updateLogoColors(color);
         }
+    }
+    
+    // Apply user settings to body classes
+    applyUserSettings() {
+        // Get current user settings
+        const currentUser = this.getCurrentUser();
+        const userSettings = currentUser?.settings || {};
+        const showCompletionIndicators = userSettings.showCompletionIndicators !== undefined ? 
+            userSettings.showCompletionIndicators : this.settings.showCompletionIndicators;
+        
+        // Apply completion indicators setting
+        if (showCompletionIndicators === false) {
+            document.body.classList.add('hide-completion-indicators');
+        } else {
+            document.body.classList.remove('hide-completion-indicators');
+        }
+        
+        // Apply display mode setting
+        const displayMode = userSettings.displayMode || this.settings.displayMode || CONFIG.DISPLAY_MODES.NUMBERS;
+        document.body.classList.remove('display-mode-none', 'display-mode-numbers', 'display-mode-times');
+        document.body.classList.add(`display-mode-${displayMode}`);
     }
 
     // === DATA EXPORT/IMPORT ===
