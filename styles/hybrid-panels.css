@@ -1709,6 +1709,7 @@ textarea.panel-input {
 }
 
 /* ===== EDIT MODE TOGGLE POSITIONING ===== */
+/* Legacy absolute positioned toggle - kept for compatibility */
 .edit-mode-toggle-container {
     position: absolute;
     top: 16px;
@@ -1717,6 +1718,30 @@ textarea.panel-input {
     align-items: center;
     gap: 8px;
     z-index: 100; /* Increased z-index to ensure visibility */
+}
+
+/* New inline edit mode toggle */
+.edit-mode-toggle-inline {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+}
+
+.edit-mode-toggle-inline .setting-label {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.edit-mode-toggle-inline .setting-label::before {
+    content: 'edit';
+    font-family: 'Material Icons';
+    font-size: 20px;
+    color: rgba(255, 255, 255, 0.8);
 }
 
 /* iOS safe area adjustment - apply to all iOS devices including newer ones */

@@ -343,16 +343,20 @@ class HybridPanelManager {
             return this.renderSyncSettings();
         }
         
-        // Subtle Edit Mode switch in top-left corner
-        // Use CSS class for proper safe area handling instead of inline styles
-        let content = `
-            <div class="edit-mode-toggle-container">
-                <label class="switch switch--small" style="margin: 0;">
-                    <input type="checkbox" id="editModeSwitch" ${this.app.grownupMode ? 'checked' : ''} 
-                           onchange="hybridPanelManager.handleEditModeSwitch(this.checked)">
-                    <span class="slider"></span>
-                </label>
-                <span class="material-icons" style="font-size: 20px; color: white; font-weight: 600;">edit</span>
+        // Start with empty content
+        let content = '';
+        
+        // Edit Mode switch as first section
+        content += `
+            <div class="panel-section" style="padding-top: 0;">
+                <div class="edit-mode-toggle-inline">
+                    <span class="setting-label">Edit Mode</span>
+                    <label class="switch switch--small">
+                        <input type="checkbox" id="editModeSwitch" ${this.app.grownupMode ? 'checked' : ''} 
+                               onchange="hybridPanelManager.handleEditModeSwitch(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
             </div>
         `;
         
