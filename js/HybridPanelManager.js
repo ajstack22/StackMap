@@ -788,10 +788,12 @@ class HybridPanelManager {
         const currentUser = this.app.appState.getCurrentUser();
         const currentTitle = currentUser.customTitle || 'StackMap';
         
-        // Get the actual displayed subtitle
-        const currentDay = this.app.appState.ui.currentDay || 'today';
-        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-        const displayedSubtitle = `${currentUser.name}'s ${dayText}`;
+        // Get the actual displayed subtitle (custom or auto-generated)
+        const displayedSubtitle = currentUser.customSubtitle || (() => {
+            const currentDay = this.app.appState.ui.currentDay || 'today';
+            const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+            return `${currentUser.name}'s ${dayText}`;
+        })();
         
         return `
             <div class="title-subtitle-editor-preferences">
@@ -806,12 +808,11 @@ class HybridPanelManager {
                 <input type="text" 
                        id="prefSubtitleInput" 
                        value="${this.escapeHtml(displayedSubtitle)}" 
-                       placeholder="App subtitle"
+                       placeholder="App subtitle (auto-generated if empty)"
                        class="preferences-text-input"
                        maxlength="50"
-                       readonly
-                       style="opacity: 0.7; cursor: not-allowed;"
-                       title="This updates automatically based on the current user and day">
+                       onchange="hybridPanelManager.saveTitleSubtitleFromPreferences()"
+                       title="Leave empty for auto-generated subtitle based on user and day">
             </div>
         `;
     }
@@ -1440,28 +1441,45 @@ class HybridPanelManager {
      */
     saveTitleSubtitleFromPreferences() {
         const titleInput = document.getElementById('prefTitleInput');
+        const subtitleInput = document.getElementById('prefSubtitleInput');
         
         if (!titleInput) {
             console.error('Title input not found in preferences');
             return;
         }
         
-        // Get value and sanitize
+        // Get values and sanitize
         const newTitle = this.sanitizeText(titleInput.value.trim() || 'StackMap', 50);
+        const newSubtitle = subtitleInput ? this.sanitizeText(subtitleInput.value.trim(), 50) : '';
         
         // Update current user settings
         const currentUser = this.app.appState.getCurrentUser();
         currentUser.customTitle = newTitle;
         
+        // Store custom subtitle if provided, otherwise it will auto-generate
+        if (newSubtitle) {
+            currentUser.customSubtitle = newSubtitle;
+        } else {
+            // Remove custom subtitle to revert to auto-generated
+            delete currentUser.customSubtitle;
+        }
+        
         // Update app settings for consistency
         this.app.appState.settings.title = newTitle;
         this.app.appState.settings.isDefaultTitle = (newTitle === 'StackMap');
+        
+        // Get the subtitle to display (custom or auto-generated)
+        const currentDay = this.app.appState.ui.currentDay || 'today';
+        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+        const autoSubtitle = `${currentUser.name}'s ${dayText}`;
+        const displaySubtitle = newSubtitle || autoSubtitle;
+        this.app.appState.settings.subtitle = displaySubtitle;
         
         // Persist to localStorage
         this.app.appState._triggerSave();
         
         // Update header elements immediately
-        this.updateHeaderElements(newTitle, null);
+        this.updateHeaderElements(newTitle, displaySubtitle);
         
         // Update browser tab title
         this.app.updateTabTitle();
@@ -2080,7 +2098,7 @@ class HybridPanelManager {
                         </select>
                         <button class="preview-btn" onclick="hybridPanelManager.previewCelebration('task')" 
                                 title="Preview this animation">
-                            👁️
+                            <span class="material-icons">visibility</span>
                         </button>
                     </div>
                 </div>
@@ -2094,7 +2112,7 @@ class HybridPanelManager {
                         </select>
                         <button class="preview-btn" onclick="hybridPanelManager.previewCelebration('routine')"
                                 title="Preview this animation">
-                            👁️
+                            <span class="material-icons">visibility</span>
                         </button>
                     </div>
                 </div>

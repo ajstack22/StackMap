@@ -1828,6 +1828,11 @@ textarea.panel-input {
     transform: scale(1.05);
 }
 
+.preview-btn .material-icons {
+    font-size: 20px;
+    line-height: 1;
+}
+
 .celebration-help {
     margin-top: 8px;
     text-align: center;

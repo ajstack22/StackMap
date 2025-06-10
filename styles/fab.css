@@ -8,7 +8,7 @@
     left: 0 !important;
     right: 0 !important;
     bottom: 0 !important;
-    z-index: 1003 !important;
+    z-index: 1004 !important; /* Above other floating buttons */
     pointer-events: none !important;
     overflow: visible !important;
     display: block !important;
@@ -66,7 +66,7 @@ button.btn.btn--floating.btn--fab {
     outline: none !important;
     
     /* Override any z-index from other styles */
-    z-index: 1003 !important;
+    z-index: 1004 !important; /* Above other floating buttons */
 }
 
 /* When visible */
@@ -136,7 +136,7 @@ button.btn.btn--floating.btn--fab {
     border: none !important;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15) !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
-    z-index: 1002 !important; /* Below main FAB when not expanded */
+    z-index: 1003 !important; /* Below main FAB (1004) when not expanded */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -196,22 +196,24 @@ button.btn.btn--floating.btn--fab {
     font-family: 'Material Icons' !important;
 }
 
-/* Touch target extension */
+/* Touch target extension - larger hit area for better mobile usability */
 .btn--fab-sub::before {
     content: '';
     position: absolute;
-    top: -2px;
-    left: -2px;
-    right: -2px;
-    bottom: -2px;
+    top: -8px;
+    left: -8px;
+    right: -8px;
+    bottom: -8px;
     border-radius: 50%;
+    z-index: -1; /* Behind the button */
 }
 
 /* Hover state handled by color-specific rules above */
 
 /* Ensure sub-FABs are visible when expanded */
 .fab-actions.expanded .btn--fab-sub {
-    z-index: 1003 !important; /* Above main FAB when expanded */
+    z-index: 1005 !important; /* Above main FAB (1004) when expanded */
+    pointer-events: auto !important; /* Ensure clicks work */
 }
 
 /* FAB Labels */
@@ -231,7 +233,7 @@ button.btn.btn--floating.btn--fab {
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.2s ease;
-    z-index: 1003;
+    z-index: 1005; /* Above FAB container */
 }
 
 /* Show labels when FAB is expanded */
@@ -433,11 +435,18 @@ button.btn.btn--floating.btn--fab {
 
 /* Debug: Make sub-FABs more visible */
 .fab-actions {
-    z-index: 1002 !important;
+    z-index: 1003 !important;
+    pointer-events: none !important; /* Let clicks pass through container */
 }
 
 .fab-actions.expanded {
-    z-index: 1003 !important;
+    z-index: 1005 !important; /* Above everything when expanded */
+    pointer-events: none !important; /* Let clicks pass through container */
+}
+
+/* Ensure individual buttons are clickable */
+.fab-actions .btn--fab-sub {
+    pointer-events: auto !important;
 }
 
 /* Override any conflicting positioning from other stylesheets */

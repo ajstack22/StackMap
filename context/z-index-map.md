@@ -10,9 +10,15 @@
 ├─────────────────────────────────────┤
 │ Drawer Handle (1005)                │ ← Always visible handle
 ├─────────────────────────────────────┤
+│ FAB Sub-buttons Expanded (1005)     │ ← FAB action buttons when menu open
+├─────────────────────────────────────┤
+│ FAB Container & Main Button (1004)  │ ← Edit mode FAB system
+├─────────────────────────────────────┤
 │ Preferences Panel (1004)            │ ← Settings overlay
 ├─────────────────────────────────────┤
 │ Header Content (1003)               │ ← Header content layer
+├─────────────────────────────────────┤
+│ FAB Sub-buttons (1003)              │ ← FAB action buttons when menu closed
 ├─────────────────────────────────────┤
 │ Drawer Extension (1002)             │ ← Drawer content when open
 ├─────────────────────────────────────┤
@@ -38,22 +44,23 @@
 - **Why**: Must always be accessible, even when drawer/panels are open
 - **Classes**: `.btn--preferences`, `.btn--grownup-mode`
 
-### 1005 - Drawer Handle
-- **Element**: `#drawerHandle`
-- **Location**: `styles/draggable-drawer.css`
-- **Why**: Must be visible even when drawer has `overflow: hidden`
-- **Critical**: Child of drawer but needs to appear outside parent bounds
+### 1005 - Drawer Handle & Expanded FAB Sub-buttons
+- **Elements**: `#drawerHandle`, `.fab-actions.expanded .btn--fab-sub`
+- **Location**: `styles/draggable-drawer.css`, `styles/fab.css`
+- **Why**: Must be visible and clickable above all other elements
+- **Critical**: FAB sub-buttons need highest z-index when expanded to ensure clicks work
 
-### 1004 - Preferences Panel
-- **Element**: `#preferencesPanel`
-- **Location**: `styles/layout.css`
-- **Why**: Modal-like overlay that appears above content but below buttons
+### 1004 - Preferences Panel & FAB System
+- **Elements**: `#preferencesPanel`, `.fab-container`, `.btn--fab`
+- **Location**: `styles/layout.css`, `styles/fab.css`
+- **Why**: Modal-like overlays that appear above content but below highest priority buttons
+- **Critical**: FAB container needs dedicated z-index layer to prevent conflicts
 
-### 1003 - Native Dropdowns & Floating Buttons
-- **Elements**: `.native-dropdown`, Generic `.btn--floating`
-- **Location**: `styles/selectors.css`, `styles/layout.css`
-- **Why**: Above drawer content but below buttons/handle
-- **Critical**: Native dropdowns use this level for both mobile and desktop
+### 1003 - Native Dropdowns, Floating Buttons & FAB Sub-buttons
+- **Elements**: `.native-dropdown`, Generic `.btn--floating`, `.btn--fab-sub`
+- **Location**: `styles/selectors.css`, `styles/layout.css`, `styles/fab.css`
+- **Why**: Above drawer content but below main FAB and highest priority elements
+- **Critical**: FAB sub-buttons start at this level and elevate to 1005 when expanded
 
 ### 1002 - Drawer Extension Content
 - **Element**: `#drawerExtension`
