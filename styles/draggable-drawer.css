@@ -69,7 +69,12 @@
     outline: none;
     transition: all 0.2s ease;
     text-align: center;
-    /* Removed transform: translateX(-27px) to properly center the subtitle */
+    /* Make subtitle truly centered regardless of logo */
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    top: 48px; /* Adjust based on title position */
 }
 
 /* Title/subtitle editing now handled through Management panel */
@@ -82,7 +87,8 @@
 
 /* Header content container */
 .header-content {
-    padding: 16px 10px 8px;
+    padding: 16px 10px 40px; /* Increased bottom padding to account for absolute subtitle */
+    position: relative; /* Ensure subtitle is positioned relative to this */
 }
 
 /* App header content already styled in layout.css */
@@ -486,6 +492,8 @@ body.drawer-active {
     .subtitle {
         font-size: 0.8rem;
         margin-top: 27px; /* INCREASED: Even more space between title and subtitle on mobile */
+        /* Maintain absolute centering on mobile */
+        top: 44px; /* Slightly less on mobile due to smaller title */
     }
     
     .drawer-dropdowns {
