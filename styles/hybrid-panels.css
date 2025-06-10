@@ -1536,8 +1536,14 @@ textarea.panel-input {
 /* iOS device-specific optimizations */
 .ios-device .side-panel {
     /* Ensure panels work well with iOS safe areas */
-    padding-top: max(80px, env(safe-area-inset-top, 80px));
+    padding-top: max(80px, calc(80px + env(safe-area-inset-top, 0px)));
     padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
+}
+
+/* Ensure content area respects safe areas */
+.ios-device .side-panel__content {
+    /* Add safe area to existing padding */
+    padding-top: calc(80px + env(safe-area-inset-top, 0px));
 }
 
 .ios-device .app-header {
@@ -1653,6 +1659,61 @@ textarea.panel-input {
 .android-specific,
 .ios-specific {
     display: none;
+}
+
+/* ===== EDIT MODE TOGGLE POSITIONING ===== */
+.edit-mode-toggle-container {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 100; /* Increased z-index to ensure visibility */
+}
+
+/* iOS safe area adjustment - apply to all iOS devices including newer ones */
+.ios-device .edit-mode-toggle-container,
+.ios-pwa-mode .edit-mode-toggle-container {
+    /* Use env() with fallback for older devices */
+    top: calc(16px + env(safe-area-inset-top, 0px));
+}
+
+/* Additional padding for devices with notches/Dynamic Island */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .ios-device .side-panel .edit-mode-toggle-container,
+    .ios-pwa-mode .side-panel .edit-mode-toggle-container {
+        /* Ensure visibility below safe area with minimum 60px for newer devices like iPhone 16 */
+        top: max(60px, calc(16px + env(safe-area-inset-top, 0px)));
+    }
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .edit-mode-toggle-container {
+        /* Slightly larger gap from top on mobile */
+        top: 20px;
+    }
+    
+    .ios-device .edit-mode-toggle-container,
+    .ios-pwa-mode .edit-mode-toggle-container {
+        /* Mobile iOS needs more space - minimum 70px for Dynamic Island devices */
+        top: max(70px, calc(20px + env(safe-area-inset-top, 0px)));
+    }
+}
+
+/* Fallback for undetected iOS devices - check for safe area support */
+@supports (padding-top: env(safe-area-inset-top)) {
+    .side-panel .edit-mode-toggle-container {
+        /* If safe areas are supported, assume we might need space */
+        top: max(50px, calc(16px + env(safe-area-inset-top, 0px)));
+    }
+    
+    @media (max-width: 768px) {
+        .side-panel .edit-mode-toggle-container {
+            top: max(65px, calc(20px + env(safe-area-inset-top, 0px)));
+        }
+    }
 }
 
 /* ===== CELEBRATION PREFERENCES STYLING ===== */

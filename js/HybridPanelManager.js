@@ -344,12 +344,9 @@ class HybridPanelManager {
         }
         
         // Subtle Edit Mode switch in top-left corner
-        // Adjust position for iOS devices to account for safe area padding
-        const isIOS = this.app.isIOSDevice || false;
-        const topPosition = isIOS ? '90px' : '16px';
-        
+        // Use CSS class for proper safe area handling instead of inline styles
         let content = `
-            <div style="position: absolute; top: ${topPosition}; left: 16px; display: flex; align-items: center; gap: 8px; z-index: 10;">
+            <div class="edit-mode-toggle-container">
                 <label class="switch switch--small" style="margin: 0;">
                     <input type="checkbox" id="editModeSwitch" ${this.app.grownupMode ? 'checked' : ''} 
                            onchange="hybridPanelManager.handleEditModeSwitch(this.checked)">
@@ -2628,8 +2625,12 @@ class HybridPanelManager {
      * Detect iOS device and PWA mode
      */
     detectIOSMode() {
-        this.isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-        this.isPWA = window.navigator.standalone === true;
+        // Enhanced iOS detection for newer devices
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        this.isIOS = /iPad|iPhone|iPod/.test(userAgent) && !window.MSStream || 
+                     (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+        this.isPWA = window.navigator.standalone === true || 
+                     window.matchMedia('(display-mode: standalone)').matches;
         this.isIOSPWA = this.isIOS && this.isPWA;
         
         if (this.isIOSPWA) {
