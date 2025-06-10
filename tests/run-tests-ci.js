@@ -20,7 +20,8 @@ let failedTests = 0;
 const testFiles = [
     'tests/uat-edit-mode.js',
     'tests/uat-import-export-data.js',
-    'tests/uat-ui-timing.js'
+    'tests/uat-ui-timing.js',
+    'tests/uat-drive-sync.js'
 ];
 
 console.log('Checking test infrastructure...');

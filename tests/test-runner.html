@@ -137,6 +137,7 @@
                     <option value="edit-mode">Edit Mode Tests</option>
                     <option value="import-export-data">Import/Export Data Tests</option>
                     <option value="ui-timing">UI Timing Tests</option>
+                    <option value="drive-sync">Drive Sync Tests</option>
                     <option value="all">All Tests</option>
                 </select>
             </div>
@@ -177,7 +178,8 @@
             const scripts = [
                 '../tests/uat-edit-mode.js',
                 '../tests/uat-import-export-data.js',
-                '../tests/uat-ui-timing.js'
+                '../tests/uat-ui-timing.js',
+                '../tests/uat-drive-sync.js'
             ];
             
             let loadedCount = 0;
@@ -228,6 +230,8 @@
                     await runImportExportDataTests();
                 } else if (testSuite === 'ui-timing') {
                     await runUITimingTests();
+                } else if (testSuite === 'drive-sync') {
+                    await runDriveSyncTests();
                 } else if (testSuite === 'all') {
                     await runAllTests();
                 }
@@ -314,6 +318,28 @@
             }
         }
         
+        async function runDriveSyncTests() {
+            if (!appWindow.DriveSyncTests) {
+                throw new Error('DriveSyncTests not found in app window');
+            }
+            
+            const tester = new appWindow.DriveSyncTests();
+            await tester.runTests();
+            
+            // Update status based on results
+            const statusEl = document.getElementById('testStatus');
+            const allPassed = tester.testResults.every(t => t.passed);
+            
+            if (allPassed) {
+                statusEl.className = 'test-status success';
+                statusEl.textContent = '✅ All Drive sync tests passed!';
+            } else {
+                statusEl.className = 'test-status failure';
+                const failed = tester.testResults.filter(t => !t.passed).length;
+                statusEl.textContent = `❌ ${failed} Drive sync test(s) failed`;
+            }
+        }
+        
         async function runAllTests() {
             log('🧪 Running all test suites...\n');
             
@@ -323,6 +349,8 @@
             await runImportExportDataTests();
             log('\n--- Next Test Suite ---\n');
             await runUITimingTests();
+            log('\n--- Next Test Suite ---\n');
+            await runDriveSyncTests();
             
             log('\n✅ All test suites completed');
         }
