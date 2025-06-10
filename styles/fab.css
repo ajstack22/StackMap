@@ -101,6 +101,7 @@ button.btn.btn--floating.btn--fab {
 /* When FAB is expanded (has aria-expanded="true"), keep the icon the theme color */
 .btn.btn--floating.btn--fab[aria-expanded="true"] {
     background: rgba(255, 255, 255, 0.95) !important;
+    z-index: 1006 !important; /* Above expanded actions (1005) to ensure clickability */
 }
 
 .btn.btn--floating.btn--fab[aria-expanded="true"] .material-icons,

@@ -48,5 +48,10 @@ Desktop.ini
 
 # Local development files
 dev-tools.js
-uat-*.js
-test-*.js
+# Don't ignore UAT tests - they're part of the codebase
+# uat-*.js
+# test-*.js
+
+# Test artifacts
+tests/test-failure.png
+package-lock.json

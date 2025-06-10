@@ -160,6 +160,37 @@ jobs:
           DEPLOYMENT.md
 ```
 
+## Pre-Deployment Testing
+
+### Running User Acceptance Tests (UAT)
+
+Before deploying to production, run the UAT suite to ensure critical functionality:
+
+1. **Local Testing**:
+   ```bash
+   # Open test runner in browser
+   open tests/test-runner.html
+   # Or navigate to: http://localhost:5500/tests/test-runner.html
+   ```
+
+2. **Test Suites Available**:
+   - **Edit Mode Tests**: Validates edit mode toggle, button visibility, card resizing
+   - **All Tests**: Runs all available test suites
+
+3. **Expected Results**:
+   - All tests should pass before deployment
+   - If tests fail, fix issues and re-run
+   - Document any new bugs found and add corresponding tests
+
+### Adding New Tests
+
+When fixing bugs or adding features:
+
+1. Create new test file in `/tests/` directory
+2. Follow the pattern in `uat-edit-mode.js`
+3. Add test suite to `test-runner.html`
+4. Update this document with new test requirements
+
 ## Post-Deployment Checklist
 
 1. ✅ Verify index.html loads correctly
@@ -171,6 +202,16 @@ jobs:
 7. ✅ Verify multi-user functionality
 8. ✅ Test export/import features
 9. ✅ Check responsive design on mobile
+10. ✅ Run UAT suite on production URL
+
+### Production UAT Testing
+
+After deployment, run tests against production:
+
+1. Update test-runner.html iframe src to production URL
+2. Run all test suites
+3. Document any production-specific issues
+4. Monitor browser console for errors
 
 ## Troubleshooting
 
@@ -202,6 +243,25 @@ jobs:
 4. Monitor access logs
 5. Use strong cPanel passwords
 6. Enable two-factor authentication
+
+## Test-Driven Development Process
+
+### When to Add Tests
+
+1. **Bug Fixes**: Always add a test that reproduces the bug before fixing
+2. **New Features**: Create tests for expected behavior
+3. **Regression Prevention**: Add tests for issues that reappear
+
+### Current Test Coverage
+
+- **Edit Mode**: Toggle functionality, button visibility, card resizing, error handling
+- **More test suites to be added as needed**
+
+### Test Naming Convention
+
+- Test files: `uat-[feature-name].js`
+- Test methods: `test[FeatureName][Behavior]()`
+- Example: `testEditModeToggle()`, `testCardResizing()`
 
 ## Support
 
