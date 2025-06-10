@@ -7,25 +7,28 @@ class StackMapApp {
         this.appState = new AppState();
         this.renderer = new AppRenderer(this.appState, this);
         
-        // Initialize Google Drive sync only if enabled
+        // Create a stub object first to prevent errors
+        this.driveSync = {
+            isSignedIn: false,
+            isSyncing: false,
+            signIn: () => console.log('Google Drive sync is not enabled'),
+            signOut: () => console.log('Google Drive sync is not enabled'),
+            syncNow: () => console.log('Google Drive sync is not enabled'),
+            autoSync: () => {},
+            uploadData: () => Promise.resolve(),
+            downloadData: () => Promise.resolve()
+        };
+        
+        // Defer Google Drive sync initialization to not block startup
         const urlParams = new URLSearchParams(window.location.search);
         const syncEnabled = urlParams.get('enableSync') === 'true' || 
                            (window.CONFIG?.GOOGLE_CLIENT_ID && window.CONFIG?.GOOGLE_API_KEY);
         
         if (syncEnabled) {
-            this.driveSync = new GoogleDriveSync(this);
-        } else {
-            // Create a stub object to prevent errors
-            this.driveSync = {
-                isSignedIn: false,
-                isSyncing: false,
-                signIn: () => console.log('Google Drive sync is not enabled'),
-                signOut: () => console.log('Google Drive sync is not enabled'),
-                syncNow: () => console.log('Google Drive sync is not enabled'),
-                autoSync: () => {},
-                uploadData: () => Promise.resolve(),
-                downloadData: () => Promise.resolve()
-            };
+            // Initialize Google Drive sync after app loads
+            setTimeout(() => {
+                this.driveSync = new GoogleDriveSync(this);
+            }, 1000);
         }
         
         // Initialize managers
@@ -94,18 +97,10 @@ class StackMapApp {
         // Check for first-time visit and show welcome splash
         this.checkFirstTimeVisit();
         
-        // Setup scroll header after everything is loaded
-        setTimeout(() => {
+        // Setup scroll header immediately
+        requestAnimationFrame(() => {
             this.setupScrollHeader();
-        }, 100);
-        
-        // Ensure proper icon state on load
-        // Old grownup button update removed - using hybrid panels
-        
-        // Force correct icons immediately
-        setTimeout(() => {
-            // Old grownup button update removed - using hybrid panels
-        }, 100);
+        });
         
         // Set initial tab title
         this.updateTabTitle();
@@ -123,13 +118,11 @@ class StackMapApp {
             this.setupAutoSyncInterval();
         }
         
-        // Initialize after DOM is ready
-        setTimeout(() => {
-            this.initializeTitleSubtitle();
-            this.initializeDrawer();
-            this.initializeScrollHeader();
-            this.initializeCelebrationSystem();
-        }, 100);
+        // Initialize immediately
+        this.initializeTitleSubtitle();
+        this.initializeDrawer();
+        this.initializeScrollHeader();
+        this.initializeCelebrationSystem();
     }
     
     // PWA Update Prompt
@@ -1686,27 +1679,25 @@ class StackMapApp {
             // Add body class for button glow effect
             document.body.classList.add('showing-welcome');
             
-            // Show the splash with a slight delay for better UX
-            setTimeout(() => {
-                welcomeSplash.classList.remove('hidden');
-                
-                // Set up event listeners for dismissal
-                welcomeSplash.addEventListener('click', (e) => {
-                    // Only dismiss if clicking outside the content
-                    if (e.target === welcomeSplash) {
-                        this.dismissWelcome();
-                    }
-                });
-                
-                // Escape key dismissal
-                const handleEscape = (e) => {
-                    if (e.key === 'Escape') {
-                        this.dismissWelcome();
-                        document.removeEventListener('keydown', handleEscape);
-                    }
-                };
-                document.addEventListener('keydown', handleEscape);
-            }, 500);
+            // Show the splash immediately
+            welcomeSplash.classList.remove('hidden');
+            
+            // Set up event listeners for dismissal
+            welcomeSplash.addEventListener('click', (e) => {
+                // Only dismiss if clicking outside the content
+                if (e.target === welcomeSplash) {
+                    this.dismissWelcome();
+                }
+            });
+            
+            // Escape key dismissal
+            const handleEscape = (e) => {
+                if (e.key === 'Escape') {
+                    this.dismissWelcome();
+                    document.removeEventListener('keydown', handleEscape);
+                }
+            };
+            document.addEventListener('keydown', handleEscape);
         }
     }
 
