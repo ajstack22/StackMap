@@ -62,3 +62,6 @@ test-output.tmp
 
 # Release notes (contain sensitive deployment info)
 releases/
+
+# Deployment logs
+deploy-log-*.txt

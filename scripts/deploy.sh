@@ -188,10 +188,51 @@ git push $REMOTE_NAME $DEPLOY_BRANCH
 success "Code pushed successfully!"
 
 echo ""
-echo "Step 8: Post-Deployment"
+echo "Step 8: Create Deployment Log"
+echo "-----------------------------"
+
+# Create deployment log with test results
+DEPLOY_LOG="deploy-log-$(date +%Y-%m-%d-%H%M%S).txt"
+info "Creating deployment log: $DEPLOY_LOG"
+
+{
+    echo "STACKMAP DEPLOYMENT LOG"
+    echo "======================"
+    echo ""
+    echo "Date: $(date)"
+    echo "Branch: $DEPLOY_BRANCH"
+    echo "Version: $NEW_VERSION"
+    echo "Commit: $(git rev-parse --short HEAD) - $(git log -1 --pretty=%s)"
+    echo ""
+    echo "TEST RESULTS"
+    echo "============"
+    
+    # Extract test results from release notes
+    if [ -f "$RELEASE_NOTES" ]; then
+        sed -n '/## Test Results/,/## Pre-Deployment Checklist/p' "$RELEASE_NOTES" | head -n -1
+    else
+        echo "No release notes found"
+    fi
+    
+    echo ""
+    echo "DEPLOYMENT ACTIONS"
+    echo "=================="
+    echo "- Service worker cache updated to: $NEW_VERSION"
+    echo "- Code pushed to: $REMOTE_NAME/$DEPLOY_BRANCH"
+    echo "- Release notes saved to: $RELEASE_NOTES"
+    echo ""
+    echo "DEPLOYMENT STATUS: SUCCESS"
+    echo ""
+} > "$DEPLOY_LOG"
+
+success "Deployment log created"
+
+echo ""
+echo "Step 9: Post-Deployment"
 echo "----------------------"
 
 info "Release notes have been saved to: $RELEASE_NOTES"
+info "Deployment log has been saved to: $DEPLOY_LOG"
 echo ""
 
 echo "Please complete these manual steps:"
@@ -202,6 +243,13 @@ echo "3. [ ] Run UAT tests against production"
 echo "4. [ ] Check browser console for errors"
 echo "5. [ ] Test on multiple devices/browsers"
 echo "6. [ ] Verify PWA installation works"
+echo "7. [ ] Upload deployment log to cPanel"
+echo ""
+
+info "To upload deployment log to cPanel:"
+echo "  1. Log into cPanel File Manager"
+echo "  2. Navigate to public_html/logs/ (create if needed)"
+echo "  3. Upload: $DEPLOY_LOG"
 echo ""
 
 # If deployment URL is configured, open it
