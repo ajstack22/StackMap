@@ -375,17 +375,31 @@ class GoogleDriveSync {
         const localDevice = this.app.appState.syncMetadata.deviceName;
         const remoteDevice = remoteData.syncMetadata.deviceName;
         
+        // Count users and total activities for better conflict info
+        const localUsers = Object.keys(this.app.appState.users.profiles).length;
+        const remoteUsers = remoteData.users ? Object.keys(remoteData.users.profiles).length : 1;
+        
+        const localTotalActivities = Object.values(this.app.appState.users.profiles)
+            .reduce((sum, user) => sum + (user.activities?.length || 0) + (user.tomorrowActivities?.length || 0), 0);
+        
+        const remoteTotalActivities = remoteData.users 
+            ? Object.values(remoteData.users.profiles)
+                .reduce((sum, user) => sum + (user.activities?.length || 0) + (user.tomorrowActivities?.length || 0), 0)
+            : (remoteData.activities?.length || 0);
+        
         // Create conflict resolution modal
         this.showConflictModal({
             local: {
                 device: localDevice,
                 time: localTime,
-                activities: this.app.appState.activities.length
+                users: localUsers,
+                activities: localTotalActivities
             },
             remote: {
                 device: remoteDevice,
                 time: remoteTime,
-                activities: remoteData.activities.length
+                users: remoteUsers,
+                activities: remoteTotalActivities
             }
         }, remoteData);
     }
@@ -403,20 +417,20 @@ class GoogleDriveSync {
                     <div class="sync-conflict-option">
                         <h3>This Device (${conflictInfo.local.device})</h3>
                         <p>Modified: ${conflictInfo.local.time}</p>
-                        <p>${conflictInfo.local.activities} activities</p>
+                        <p>${conflictInfo.local.users} users, ${conflictInfo.local.activities} total activities</p>
                         <button class="btn btn--primary" id="keepLocal">Keep This Version</button>
                     </div>
                     
                     <div class="sync-conflict-option">
                         <h3>Other Device (${conflictInfo.remote.device})</h3>
                         <p>Modified: ${conflictInfo.remote.time}</p>
-                        <p>${conflictInfo.remote.activities} activities</p>
+                        <p>${conflictInfo.remote.users} users, ${conflictInfo.remote.activities} total activities</p>
                         <button class="btn btn--secondary" id="keepRemote">Use Other Version</button>
                     </div>
                     
                     <div class="sync-conflict-option sync-conflict-option--merge">
                         <h3>Merge Both</h3>
-                        <p>Combine activities from both devices</p>
+                        <p>Combine all users and activities from both devices</p>
                         <button class="btn btn--secondary" id="mergeBoth">Merge</button>
                     </div>
                 </div>

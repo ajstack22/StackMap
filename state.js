@@ -837,11 +837,83 @@ class AppState {
     
     // Merge with remote data for conflict resolution
     mergeWithRemote(remoteData) {
-        // Merge activities - combine unique activities from both
-        const localActivities = this.getCurrentActivities();
-        const remoteActivities = remoteData.activities || [];
+        console.log('[State] Merging with remote data');
         
-        // Create a map of activities by title + icon for deduplication
+        // For multi-user sync, we need to merge each user's data
+        if (remoteData.users && remoteData.users.profiles) {
+            // Merge each user's data
+            Object.keys(remoteData.users.profiles).forEach(userId => {
+                const remoteUser = remoteData.users.profiles[userId];
+                const localUser = this.users.profiles[userId];
+                
+                if (localUser) {
+                    // User exists locally - merge their activities
+                    console.log(`[State] Merging data for user: ${localUser.name}`);
+                    
+                    // Merge today activities
+                    const mergedToday = this.mergeActivities(
+                        localUser.activities || [], 
+                        remoteUser.activities || []
+                    );
+                    localUser.activities = mergedToday;
+                    
+                    // Merge tomorrow activities
+                    const mergedTomorrow = this.mergeActivities(
+                        localUser.tomorrowActivities || [],
+                        remoteUser.tomorrowActivities || []
+                    );
+                    localUser.tomorrowActivities = mergedTomorrow;
+                    
+                    // Update user settings if remote is newer
+                    if (remoteUser.settings) {
+                        localUser.settings = { ...localUser.settings, ...remoteUser.settings };
+                    }
+                } else {
+                    // User doesn't exist locally - add them
+                    console.log(`[State] Adding new user from remote: ${remoteUser.name}`);
+                    this.users.profiles[userId] = remoteUser;
+                }
+            });
+            
+            // Check if any local users need to be kept that aren't in remote
+            // (This preserves locally created users)
+            Object.keys(this.users.profiles).forEach(userId => {
+                if (!remoteData.users.profiles[userId]) {
+                    console.log(`[State] Keeping local-only user: ${this.users.profiles[userId].name}`);
+                }
+            });
+            
+        } else {
+            // Legacy format - merge current user only
+            console.log('[State] Merging legacy format - current user only');
+            const localActivities = this.getCurrentActivities();
+            const remoteActivities = remoteData.activities || [];
+            const mergedActivities = this.mergeActivities(localActivities, remoteActivities);
+            
+            const user = this.getCurrentUser();
+            if (this.ui.currentDay === 'today') {
+                user.activities = mergedActivities;
+                this.activities = mergedActivities;
+            } else {
+                user.tomorrowActivities = mergedActivities;
+                this.activities = mergedActivities;
+            }
+        }
+        
+        // Update version to be higher than both
+        this.syncMetadata.version = Math.max(
+            this.syncMetadata.version, 
+            remoteData.syncMetadata?.version || 0
+        ) + 1;
+        
+        // Reload current user data to ensure consistency
+        this.loadUserData();
+        
+        this._triggerSave();
+    }
+    
+    // Helper method to merge two arrays of activities
+    mergeActivities(localActivities, remoteActivities) {
         const activityMap = new Map();
         
         // Add local activities
@@ -855,26 +927,18 @@ class AppState {
             const key = `${activity.title}|${activity.icon}`;
             if (!activityMap.has(key)) {
                 activityMap.set(key, activity);
+            } else {
+                // Merge properties, preferring completed status from either
+                const localActivity = activityMap.get(key);
+                activityMap.set(key, {
+                    ...localActivity,
+                    ...activity,
+                    completed: localActivity.completed || activity.completed
+                });
             }
         });
         
-        // Convert back to array
-        const mergedActivities = Array.from(activityMap.values());
-        
-        // Update current user's activities
-        const user = this.getCurrentUser();
-        if (this.ui.currentDay === 'today') {
-            user.activities = mergedActivities;
-            this.activities = mergedActivities;
-        } else {
-            user.tomorrowActivities = mergedActivities;
-            this.activities = mergedActivities;
-        }
-        
-        // Update version to be higher than both
-        this.syncMetadata.version = Math.max(this.syncMetadata.version, remoteData.syncMetadata?.version || 0) + 1;
-        
-        this._triggerSave();
+        return Array.from(activityMap.values());
     }
 }
 
