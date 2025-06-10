@@ -222,14 +222,20 @@ class ComponentBuilder {
         // Close modal when clicking overlay (not the card itself)
         overlay.addEventListener('click', (e) => {
             if (e.target === overlay) {
-                this.closeModalCard();
+                // Close hybrid panel if open
+                if (window.hybridPanelManager) {
+                    window.hybridPanelManager.closePanel();
+                }
             }
         });
         
         // Escape key handler
         const handleEscape = (e) => {
             if (e.key === 'Escape') {
-                this.closeModalCard();
+                // Close hybrid panel if open
+                if (window.hybridPanelManager) {
+                    window.hybridPanelManager.closePanel();
+                }
                 document.removeEventListener('keydown', handleEscape);
             }
         };
@@ -307,9 +313,9 @@ class ComponentBuilder {
             <div class="modal-card__actions">
                 ${isNewCard ? 
                     `<button class="btn btn--primary" onclick="appInstance.addActivity()">Add Activity</button>
-                     <button class="btn btn--secondary" onclick="ComponentBuilder.closeModalCard()">Cancel</button>` :
+                     <button class="btn btn--secondary" onclick="window.hybridPanelManager && window.hybridPanelManager.closePanel()">Cancel</button>` :
                     `<button class="btn btn--primary" onclick="appInstance.saveCardEdit(${index})">Save Changes</button>
-                     <button class="btn btn--secondary" onclick="ComponentBuilder.closeModalCard()">Cancel</button>`
+                     <button class="btn btn--secondary" onclick="window.hybridPanelManager && window.hybridPanelManager.closePanel()">Cancel</button>`
                 }
             </div>
         `;
@@ -416,143 +422,16 @@ class ComponentBuilder {
         return overlay;
     }
 
-    // Create compact modal emoji picker
-    static createModalEmojiPicker(selectedEmoji, onEmojiSelect, filterId) {
-        const picker = this.createElement('div', 'modal-emoji-picker');
-        
-        // Search/paste input
-        const filter = this.createElement('input', 'modal-emoji-picker__filter');
-        filter.type = 'text';
-        filter.placeholder = 'Search or paste emoji...';
-        filter.id = filterId;
-        
-        // Hint text
-        const hint = this.createElement('div', 'modal-emoji-picker__hint');
-        hint.innerHTML = '💡 Search keywords or paste any emoji';
-        
-        // Compact grid (2 rows visible)
-        const grid = this.createElement('div', 'modal-emoji-picker__grid');
-        grid.id = `${filterId}_grid`;
-        
-        picker.appendChild(filter);
-        picker.appendChild(hint);
-        picker.appendChild(grid);
-        
-        // Populate grid with emojis
-        this.renderModalEmojiGrid(grid, selectedEmoji, onEmojiSelect, EMOJIS || []);
-        
-        // Handle input for search and paste
-        const emojiRegex = /\p{Emoji_Presentation}|\p{Emoji}\uFE0F/u;
-        
-        filter.addEventListener('input', (e) => {
-            const value = e.target.value.trim();
-            
-            // Check for emoji paste
-            const emojiMatch = value.match(emojiRegex);
-            if (emojiMatch) {
-                onEmojiSelect(emojiMatch[0]);
-                filter.value = '';
-                this.renderModalEmojiGrid(grid, selectedEmoji, onEmojiSelect, EMOJIS || []);
-            } else if (value) {
-                // Search functionality
-                const filteredEmojis = EmojiPicker.smartEmojiSearch(value);
-                this.renderModalEmojiGrid(grid, selectedEmoji, onEmojiSelect, filteredEmojis);
-            } else {
-                // Show all emojis
-                this.renderModalEmojiGrid(grid, selectedEmoji, onEmojiSelect, EMOJIS || []);
-            }
-        });
-        
-        filter.addEventListener('paste', (e) => {
-            e.preventDefault();
-            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-            const emojiMatch = pastedText.match(emojiRegex);
-            
-            if (emojiMatch) {
-                onEmojiSelect(emojiMatch[0]);
-                filter.value = '';
-            } else {
-                filter.value = pastedText;
-                filter.dispatchEvent(new Event('input'));
-            }
-        });
-        
-        return picker;
-    }
-
-    static renderModalEmojiGrid(grid, selectedEmoji, onEmojiSelect, emojis) {
-        grid.innerHTML = '';
-        
-        if (!emojis || !Array.isArray(emojis) || emojis.length === 0) {
-            grid.innerHTML = '<div style="grid-column: 1 / -1; text-align: center; padding: 15px; color: #666; font-size: 0.85rem;">No emojis found</div>';
-            return;
-        }
-        
-        emojis.forEach(emoji => {
-            const button = this.createElement('button', 'modal-emoji-picker__option');
-            button.textContent = emoji;
-            button.title = (EMOJI_NAMES || {})[emoji] || emoji;
-            button.type = 'button';
-            
-            if (emoji === selectedEmoji) {
-                button.classList.add('modal-emoji-picker__option--selected');
-            }
-            
-            button.addEventListener('click', (e) => {
-                e.preventDefault();
-                
-                // Update selection
-                grid.querySelectorAll('.modal-emoji-picker__option').forEach(opt => {
-                    opt.classList.remove('modal-emoji-picker__option--selected');
-                });
-                button.classList.add('modal-emoji-picker__option--selected');
-                
-                // Call callback
-                if (typeof onEmojiSelect === 'function') {
-                    onEmojiSelect(emoji);
-                }
-            });
-            
-            grid.appendChild(button);
-        });
-    }
-
-    // Show modal card
-    static showModalCard(isNewCard = true, activity = null, index = -1, selectedEmoji = CONFIG.DEFAULT_EMOJI) {
-        // Add body class to hide other cards
-        document.body.classList.add('modal-active');
-        
-        // Create and show modal
-        const modal = this.createModalCard(isNewCard, activity, index, selectedEmoji);
-        document.body.appendChild(modal);
-        
-        return modal;
-    }
-
-    // Close modal card
-    static closeModalCard() {
-        const overlay = document.getElementById('modalCardOverlay');
-        if (overlay) {
-            // Add closing animation
-            overlay.classList.add('modal-card-overlay--closing');
-            
-            // Remove after animation
-            setTimeout(() => {
-                overlay.remove();
-                document.body.classList.remove('modal-active');
-                
-                // Clean up app state
-                if (window.appInstance) {
-                    window.appInstance.appState.ui.showingNewCardForm = false;
-                    window.appInstance.appState.ui.editingCardIndex = -1;
-                }
-            }, 300);
-        }
-    }
-
     static createActivityForm(selectedEmoji, isNewCard = true, activity = null, index = -1) {
-        // Legacy method - now redirects to modal
-        return this.showModalCard(isNewCard, activity, index, selectedEmoji);
+        // Use hybrid panel manager for activity forms
+        if (window.hybridPanelManager) {
+            if (isNewCard) {
+                window.hybridPanelManager.showNewActivityPanel();
+            } else {
+                window.hybridPanelManager.editActivity(activity, index);
+            }
+        }
+        return null;
     }
 
     // Delegate to EmojiPicker class for backward compatibility
@@ -600,175 +479,22 @@ class ComponentBuilder {
         }));
     }
 
-    // NEW: Show Add User Modal with Emoji Picker (similar to activity flow)
+    // User management methods now use hybrid panel manager
     static showAddUserModal() {
-        // console.log('showAddUserModal called');
-        const overlay = this.createElement('div', 'add-user-modal');
-        overlay.id = 'addUserModal';
-        
-        // Store selected emoji (default to person emoji)
-        this.selectedUserEmoji = '👤';
-        
-        // Close modal when clicking overlay
-        overlay.addEventListener('click', (e) => {
-            // console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
-            if (e.target === overlay) {
-                // console.log('Closing modal via overlay click');
-                this.closeAddUserModal();
-            }
-        });
-        
-        // Escape key handler
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') {
-                this.closeAddUserModal();
-                document.removeEventListener('keydown', handleEscape);
-            }
-        };
-        document.addEventListener('keydown', handleEscape);
-        
-        const modal = this.createElement('div', 'add-user-content');
-        modal.innerHTML = `
-            <div class="modal-header">
-                <h2>Add User</h2>
-            </div>
-            
-            <div class="modal-body">
-                <div class="user-icon-section">
-                    <div class="user-icon-display" id="userIcon" onclick="document.getElementById('userEmojiFilter').focus()">${this.selectedUserEmoji}</div>
-                    <label class="user-icon-label">Choose an icon:</label>
-                </div>
-                
-                <div class="emoji-picker-slot" id="userEmojiPicker"></div>
-                
-                <div class="form-field">
-                    <label for="userName">User Name:</label>
-                    <input type="text" 
-                           id="userName" 
-                           class="form-input" 
-                           placeholder="Enter name..." 
-                           maxlength="20"
-                           autocomplete="off">
-                </div>
-                
-                <div class="modal-info">
-                    <p>Each user gets their own personalized StackMap with separate activities and settings.</p>
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn btn--primary" onclick="ComponentBuilder.addUser()">
-                    Add User
-                </button>
-                <button class="btn btn--secondary" onclick="ComponentBuilder.closeAddUserModal()">
-                    Cancel
-                </button>
-            </div>
-        `;
-        
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-        
-        // Add emoji picker after modal is in DOM
-        setTimeout(() => {
-            const emojiSlot = document.getElementById('userEmojiPicker');
-            if (emojiSlot) {
-                const emojiPicker = this.createModalEmojiPicker(
-                    this.selectedUserEmoji,
-                    (emoji) => {
-                        this.selectedUserEmoji = emoji;
-                        const iconDisplay = document.getElementById('userIcon');
-                        if (iconDisplay) {
-                            iconDisplay.textContent = emoji;
-                        }
-                    },
-                    'userEmojiFilter'
-                );
-                emojiSlot.appendChild(emojiPicker);
-            }
-            
-            // Focus on name input
-            const nameInput = document.getElementById('userName');
-            if (nameInput) {
-                nameInput.focus();
-                
-                // Allow Enter key to submit
-                nameInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        this.addUser();
-                    }
-                });
-            }
-        }, 100);
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.showAddUserPanel();
+        }
     }
 
-    // NEW: Add user functionality with emoji support
     static addUser() {
-        // console.log('addUser called');
-        const nameInput = document.getElementById('userName');
-        if (!nameInput) {
-            // console.error('Name input not found');
-            return;
-        }
-        
-        const name = nameInput.value.trim();
-        const icon = this.selectedUserEmoji || '👤';
-        // console.log('Creating user:', name, 'with icon:', icon);
-        
-        if (!name) {
-            // Show error feedback
-            nameInput.classList.add('error');
-            nameInput.placeholder = 'Name is required';
-            nameInput.focus();
-            return;
-        }
-        
-        if (name.length > 20) {
-            nameInput.classList.add('error');
-            nameInput.value = name.substring(0, 20);
-            return;
-        }
-        
-        try {
-            // Add the user through AppState with emoji
-            if (window.appInstance && window.appInstance.appState) {
-                // console.log('Adding user through appState');
-                const userId = window.appInstance.appState.addUser(name, icon);
-                // console.log('New user ID:', userId);
-                
-                // Switch to the new user
-                window.appInstance.handleUserSwitch(userId);
-                
-                // Close modal
-                this.closeAddUserModal();
-                
-                // Show success feedback
-                this.showUserSuccess(name, icon);
-                
-                // Refresh the dropdown
-                window.appInstance.populateUserDropdowns();
-            } else {
-                // console.error('App instance not found');
-            }
-        } catch (error) {
-            // console.error('Error adding user:', error);
-            // Show error (probably max users reached)
-            nameInput.classList.add('error');
-            nameInput.placeholder = error.message || 'Maximum users reached';
-            // console.error('Error adding user:', error);
-        }
+        // This method is now handled by the hybrid panel manager
+        console.warn('ComponentBuilder.addUser() is deprecated. Use hybridPanelManager instead.');
     }
 
-    // NEW: Close add user modal
     static closeAddUserModal() {
-        const modal = document.getElementById('addUserModal');
-        if (modal) {
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.remove();
-                // Clean up stored emoji
-                this.selectedUserEmoji = null;
-            }, 200);
+        // This method is now handled by the hybrid panel manager
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.closePanel();
         }
     }
 
@@ -801,186 +527,22 @@ class ComponentBuilder {
         }, 3000);
     }
 
-    // NEW: Show Edit User Modal with current user data and emoji picker
+    // User edit methods now use hybrid panel manager
     static showEditUserModal(user) {
-        // console.log('showEditUserModal called with user:', user);
-        const overlay = this.createElement('div', 'edit-user-modal');
-        overlay.id = 'editUserModal';
-        
-        // Store current user data and selected emoji
-        this.editingUser = user;
-        this.selectedUserEmoji = user.icon || '👤';
-        
-        // Close modal when clicking overlay
-        overlay.addEventListener('click', (e) => {
-            // console.log('Overlay clicked, target:', e.target, 'overlay:', overlay);
-            if (e.target === overlay) {
-                // console.log('Closing modal via overlay click');
-                this.closeEditUserModal();
-            }
-        });
-        
-        // Escape key handler
-        const handleEscape = (e) => {
-            if (e.key === 'Escape') {
-                this.closeEditUserModal();
-                document.removeEventListener('keydown', handleEscape);
-            }
-        };
-        document.addEventListener('keydown', handleEscape);
-        
-        const modal = this.createElement('div', 'edit-user-content');
-        modal.innerHTML = `
-            <div class="modal-header">
-                <h2>Edit User</h2>
-            </div>
-            
-            <div class="modal-body">
-                <div class="user-icon-section">
-                    <div class="user-icon-display" id="editUserIcon" onclick="document.getElementById('editUserEmojiFilter').focus()">${this.selectedUserEmoji}</div>
-                    <label class="user-icon-label">Choose an icon:</label>
-                </div>
-                
-                <div class="emoji-picker-slot" id="editUserEmojiPicker"></div>
-                
-                <div class="form-field">
-                    <label for="editUserName">User Name:</label>
-                    <input type="text" 
-                           id="editUserName" 
-                           class="form-input" 
-                           placeholder="Enter name..." 
-                           value="${user.name}"
-                           maxlength="20"
-                           autocomplete="off">
-                </div>
-                
-                <div class="modal-info">
-                    <p>Update this user's name and icon. Changes will be saved immediately.</p>
-                </div>
-            </div>
-            
-            <div class="modal-actions">
-                <button class="btn btn--primary" onclick="ComponentBuilder.saveEditUser()">
-                    Save Changes
-                </button>
-                <button class="btn btn--secondary" onclick="ComponentBuilder.closeEditUserModal()">
-                    Cancel
-                </button>
-            </div>
-        `;
-        
-        overlay.appendChild(modal);
-        document.body.appendChild(overlay);
-        
-        // Add emoji picker after modal is in DOM
-        setTimeout(() => {
-            const emojiSlot = document.getElementById('editUserEmojiPicker');
-            if (emojiSlot) {
-                const emojiPicker = this.createModalEmojiPicker(
-                    this.selectedUserEmoji,
-                    (emoji) => {
-                        this.selectedUserEmoji = emoji;
-                        const iconDisplay = document.getElementById('editUserIcon');
-                        if (iconDisplay) {
-                            iconDisplay.textContent = emoji;
-                        }
-                    },
-                    'editUserEmojiFilter'
-                );
-                emojiSlot.appendChild(emojiPicker);
-            }
-            
-            // Focus on name input and select text for easy editing
-            const nameInput = document.getElementById('editUserName');
-            if (nameInput) {
-                nameInput.focus();
-                nameInput.select();
-                
-                // Allow Enter key to submit
-                nameInput.addEventListener('keydown', (e) => {
-                    if (e.key === 'Enter') {
-                        this.saveEditUser();
-                    }
-                });
-            }
-        }, 100);
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.showEditUserPanel(user);
+        }
     }
 
-    // NEW: Save edited user data
     static saveEditUser() {
-        // console.log('saveEditUser called');
-        const nameInput = document.getElementById('editUserName');
-        if (!nameInput || !this.editingUser) {
-            // console.error('Name input or editing user not found');
-            return;
-        }
-        
-        const newName = nameInput.value.trim();
-        const newIcon = this.selectedUserEmoji || '👤';
-        // console.log('Updating user:', this.editingUser.id, 'with name:', newName, 'and icon:', newIcon);
-        
-        if (!newName) {
-            // Show error feedback
-            nameInput.classList.add('error');
-            nameInput.placeholder = 'Name is required';
-            nameInput.focus();
-            return;
-        }
-        
-        if (newName.length > 20) {
-            nameInput.classList.add('error');
-            nameInput.value = newName.substring(0, 20);
-            return;
-        }
-        
-        try {
-            // Update the user through AppState
-            if (window.appInstance && window.appInstance.appState) {
-                // console.log('Updating user through appState');
-                
-                // Update user data
-                window.appInstance.appState.updateUser(this.editingUser.id, {
-                    name: newName,
-                    icon: newIcon
-                });
-                
-                // Close modal
-                this.closeEditUserModal();
-                
-                // Show success feedback
-                this.showEditUserSuccess(newName, newIcon);
-                
-                // Refresh the drawer and UI
-                window.appInstance.populateDrawerSelects();
-                window.appInstance.render();
-                
-                // Update title if we edited the current user
-                const currentUser = window.appInstance.appState.getCurrentUser();
-                if (currentUser.id === this.editingUser.id) {
-                    window.appInstance.initializeTitleSubtitle();
-                }
-            } else {
-                // console.error('App instance not found');
-            }
-        } catch (error) {
-            // console.error('Error updating user:', error);
-            // Show error
-            nameInput.classList.add('error');
-            nameInput.placeholder = error.message || 'Error updating user';
-        }
+        // This method is now handled by the hybrid panel manager
+        console.warn('ComponentBuilder.saveEditUser() is deprecated. Use hybridPanelManager instead.');
     }
 
-    // NEW: Close edit user modal
     static closeEditUserModal() {
-        const modal = document.getElementById('editUserModal');
-        if (modal) {
-            modal.style.opacity = '0';
-            setTimeout(() => {
-                modal.remove();
-                // Clean up stored data
-                this.editingUser = null;
-                this.selectedUserEmoji = null;
-            }, 200);
+        // This method is now handled by the hybrid panel manager
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.closePanel();
         }
     }
 
@@ -1709,12 +1271,9 @@ class ActivityCard {
             return;
         }
         
-        // Use panel-based editing if available
+        // Use panel-based editing
         if (window.hybridPanelManager) {
             window.hybridPanelManager.editActivity(this.activity, this.index);
-        } else {
-            // Fallback to modal
-            ComponentBuilder.showModalCard(false, this.activity, this.index);
         }
     }
 

@@ -480,13 +480,11 @@ class StackMapApp {
                         // Check if it's an edit action
                         if (selectedId === 'edit-current-user') {
                             // Open user edit form in panel
-                            if (window.hybridPanelManager) {
-                                const user = this.appState.getCurrentUser();
-                                window.hybridPanelManager.state.showingUserForm = true;
-                                window.hybridPanelManager.state.editingUser = user;
-                                window.hybridPanelManager.state.editingUserId = user.id;
-                                window.hybridPanelManager.openPanel('right');
-                            }
+                            const user = this.appState.getCurrentUser();
+                            window.hybridPanelManager.state.showingUserForm = true;
+                            window.hybridPanelManager.state.editingUser = user;
+                            window.hybridPanelManager.state.editingUserId = user.id;
+                            window.hybridPanelManager.openPanel('right');
                         } else {
                             // Handle user selection (navigation)
                             this.handleUserSwitch(selectedId);
@@ -1224,30 +1222,14 @@ class StackMapApp {
     
     showAddUserDialog() {
         // console.log('showAddUserDialog called in StackMapApp');
-        // Use the new Add User modal instead of prompt
-        if (typeof ComponentBuilder !== 'undefined' && ComponentBuilder.showAddUserModal) {
-            ComponentBuilder.showAddUserModal();
-        } else {
-            console.error('ComponentBuilder.showAddUserModal not available');
-        }
+        // Use the hybrid panel manager for adding users
+        window.hybridPanelManager.showAddUserPanel();
     }
     
     showEditUserDialog(user) {
         // console.log('showEditUserDialog called for user:', user);
-        // Use the ComponentBuilder to show edit user modal
-        if (typeof ComponentBuilder !== 'undefined' && ComponentBuilder.showEditUserModal) {
-            ComponentBuilder.showEditUserModal(user);
-        } else {
-            console.error('ComponentBuilder.showEditUserModal not available');
-            // Fallback to prompt
-            const newName = prompt('Edit user name:', user.name);
-            if (newName && newName.trim()) {
-                const sanitizedName = SecurityUtils.sanitizeUserInput(newName.trim(), CONFIG.USER_NAME_MAX_LENGTH);
-                this.appState.updateUser(user.id, { name: sanitizedName });
-                this.populateDrawerSelects();
-                this.render();
-            }
-        }
+        // Use the hybrid panel manager for editing users
+        window.hybridPanelManager.showEditUserPanel(user);
     }
     
     deleteUser(userId) {
@@ -1672,9 +1654,7 @@ class StackMapApp {
             
             // Update user dropdowns
             this.populateUserDropdowns();
-            if (window.hybridPanelManager) {
-                window.hybridPanelManager.updateSubtitle();
-            }
+            window.hybridPanelManager.updateSubtitle();
         }, 300);
     }
     
@@ -1726,9 +1706,7 @@ class StackMapApp {
 
     showWelcomeAgain() {
         // Close preferences panel first (now handled by HybridPanelManager)
-        if (window.hybridPanelManager) {
-            window.hybridPanelManager.closeAllPanels();
-        }
+        window.hybridPanelManager.closeAllPanels();
         
         // Show welcome splash again (temporarily reset the localStorage flag)
         const originalFlag = localStorage.getItem('stackmap-welcome-seen');
@@ -1756,9 +1734,7 @@ class StackMapApp {
             this.exitGrownupMode();
         } else {
             // Open management panel for validation (handled by HybridPanelManager)
-            if (window.hybridPanelManager) {
-                window.hybridPanelManager.openPanel('right');
-            }
+            window.hybridPanelManager.openPanel('right');
         }
     }
 
@@ -1777,9 +1753,7 @@ class StackMapApp {
         }
         
         // NEW: Push history state for edit mode (Android back button)
-        if (this.hybridPanelManager) {
-            this.hybridPanelManager.pushBackButtonState('edit_mode_entered');
-        }
+        this.hybridPanelManager.pushBackButtonState('edit_mode_entered');
         
         // Force drawer open and lock it for edit mode
         this.forceDrawerOpen();
@@ -1831,9 +1805,7 @@ class StackMapApp {
         }
         
         // NEW: Close any open panels when exiting edit mode
-        if (this.hybridPanelManager) {
-            this.hybridPanelManager.closeAllPanels();
-        }
+        this.hybridPanelManager.closeAllPanels();
         
         // Unlock drawer and return to user preference
         this.unlockDrawer();
@@ -1910,7 +1882,7 @@ class StackMapApp {
      */
     setupIOSKeyboardHandling() {
         // Handle iOS keyboard quirks that might affect navigation
-        if (window.hybridPanelManager?.isIOSPWA) {
+        if (window.hybridPanelManager.isIOSPWA) {
             // Add viewport adjustments for iOS keyboard if needed
         // console.log('🍎 iOS keyboard handling initialized');
         }
@@ -1929,27 +1901,16 @@ class StackMapApp {
     openNewCardForm(position = 'top') {
         // console.log('openNewCardForm called with position:', position);
         
-        // Use the hybrid panel manager to show the activity form
-        if (window.hybridPanelManager) {
-            // Store the position for later use if needed
-            this.appState.ui.showingNewCardForm = position;
-            
-            // Open the management panel and show the add activity form
-            window.hybridPanelManager.addNewCard();
-        } else {
-            console.error('HybridPanelManager not initialized');
-            // Fallback to modal if needed
-            try {
-                ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
-            } catch (error) {
-                console.error('Error showing activity form:', error);
-            }
-        }
+        // Store the position for later use if needed
+        this.appState.ui.showingNewCardForm = position;
+        
+        // Open the management panel and show the add activity form
+        window.hybridPanelManager.addNewCard();
     }
 
     closeNewCardForm() {
         this.appState.ui.showingNewCardForm = false;
-        ComponentBuilder.closeModalCard();
+        // No longer needed - hybrid panel handles this
     }
 
     addActivity(position = 'top') {
@@ -2042,9 +2003,7 @@ class StackMapApp {
 
     // COLOR SELECTION - Delegate to HybridPanelManager
     selectColor(color) {
-        if (window.hybridPanelManager) {
-            window.hybridPanelManager.selectColor(color);
-        }
+        window.hybridPanelManager.selectColor(color);
     }
 
     // ACTIVITY MANAGEMENT
@@ -2849,15 +2808,9 @@ class StackMapApp {
     // CARD MANAGEMENT
     showNewCardForm(position = 'bottom') {
         // Use the new panel-based form instead of modal
-        if (window.hybridPanelManager) {
-            // Open management panel and show activity form
-            window.hybridPanelManager.openPanel('right');
-            window.hybridPanelManager.addNewCard();
-        } else {
-            // Fallback to modal if panel manager not available
-            const modal = ComponentBuilder.showModalCard(true, null, -1, this.appState.ui.selectedEmoji);
-        // console.log('New card modal shown (fallback)');
-        }
+        // Open management panel and show activity form
+        window.hybridPanelManager.openPanel('right');
+        window.hybridPanelManager.addNewCard();
     }
     
     showAddUserForm() {
@@ -3711,9 +3664,7 @@ window.testDrawer = {
         // console.log('Exited edit mode');
         } else {
             // Open management panel for validation (handled by HybridPanelManager)
-            if (window.hybridPanelManager) {
-                window.hybridPanelManager.openPanel('right');
-            }
+            window.hybridPanelManager.openPanel('right');
         // console.log('Attempting to enter edit mode');
         }
     },
