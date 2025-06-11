@@ -215,27 +215,25 @@
             }
         }
         
-        // Load required scripts if on debug page
-        if (!document.querySelector('script[src*="env-loader.js"]')) {
-            log('Loading app configuration...', 'info');
-            
-            const scripts = [
-                'env-loader.js',
-                'config/constants.js',
-                'https://apis.google.com/js/api.js',
-                'https://accounts.google.com/gsi/client'
-            ];
-            
-            scripts.forEach(src => {
+        // Only load Google scripts for testing
+        const scripts = [
+            'https://apis.google.com/js/api.js',
+            'https://accounts.google.com/gsi/client'
+        ];
+        
+        scripts.forEach(src => {
+            if (!document.querySelector(`script[src="${src}"]`)) {
                 const script = document.createElement('script');
                 script.src = src;
-                if (src.includes('google')) {
-                    script.async = true;
-                    script.defer = true;
-                }
                 document.head.appendChild(script);
-            });
-        }
+            }
+        });
+        
+        // Mock CONFIG object with test credentials
+        window.CONFIG = {
+            GOOGLE_CLIENT_ID: window.STACKMAP_GOOGLE_CLIENT_ID || '801001508845-59jevf4piac2cg3g9q6srjb297sd4hbr.apps.googleusercontent.com',
+            GOOGLE_API_KEY: window.STACKMAP_GOOGLE_API_KEY || 'AIzaSyD8D106PcgbDC2ZLAST5j1o73k2OrE2V0M'
+        };
         
         // Auto-run diagnostics after a delay
         setTimeout(() => {

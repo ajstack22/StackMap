@@ -25,11 +25,9 @@ const CONFIG = {
     USER_NAME_MAX_LENGTH: 20,
     
     // Google Drive API Configuration
-    // These should be set as environment variables or loaded from a secure configuration
-    // For local development, create a .env.local file (do not commit to version control)
-    // For production, set these in your hosting environment
-    GOOGLE_CLIENT_ID: window.STACKMAP_GOOGLE_CLIENT_ID || '',
-    GOOGLE_API_KEY: window.STACKMAP_GOOGLE_API_KEY || '',
+    // Direct credentials for production use
+    GOOGLE_CLIENT_ID: '801001508845-59jevf4piac2cg3g9q6srjb297sd4hbr.apps.googleusercontent.com',
+    GOOGLE_API_KEY: 'AIzaSyD8D106PcgbDC2ZLAST5j1o73k2OrE2V0M',
     
     // Auto-sync settings
     AUTO_SYNC_ENABLED: true,

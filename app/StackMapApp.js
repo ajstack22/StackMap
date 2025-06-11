@@ -12,8 +12,8 @@ class StackMapApp {
         
         // Defer Google Drive sync initialization to not block startup
         const urlParams = new URLSearchParams(window.location.search);
-        const syncEnabled = urlParams.get('enableSync') === 'true' || 
-                           (window.CONFIG?.GOOGLE_CLIENT_ID && window.CONFIG?.GOOGLE_API_KEY);
+        // Always enable sync since we have hardcoded credentials
+        const syncEnabled = true;
         
         if (syncEnabled) {
             // Initialize Google Drive sync after app loads and Google APIs are ready
