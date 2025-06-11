@@ -16,19 +16,8 @@ class StackMapApp {
                            (window.CONFIG?.GOOGLE_CLIENT_ID && window.CONFIG?.GOOGLE_API_KEY);
         
         if (syncEnabled) {
-            // Initialize Google Drive sync after app loads
-            // Use requestIdleCallback for better performance, fallback to setTimeout
-            if ('requestIdleCallback' in window) {
-                requestIdleCallback(() => {
-                    console.log('[StackMapApp] Initializing Google Drive sync...');
-                    this.driveSync = new GoogleDriveSync(this);
-                }, { timeout: 1000 });
-            } else {
-                setTimeout(() => {
-                    console.log('[StackMapApp] Initializing Google Drive sync...');
-                    this.driveSync = new GoogleDriveSync(this);
-                }, 100); // Reduced from 1000ms to 100ms
-            }
+            // Initialize Google Drive sync after app loads and Google APIs are ready
+            this.initializeDriveSync();
         }
         
         // Initialize managers
@@ -133,6 +122,65 @@ class StackMapApp {
                 this.driveSync.cleanup();
             }
         });
+    }
+    
+    // Initialize Google Drive sync with proper timing
+    async initializeDriveSync() {
+        console.log('[StackMapApp] Waiting for Google APIs to load...');
+        
+        // Wait for Google APIs with extended timeout and retry
+        let retryCount = 0;
+        const maxRetries = 100; // 10 seconds total
+        
+        const waitForGoogleAPIs = async () => {
+            while (retryCount < maxRetries) {
+                if (window.gapi && window.google && window.google.accounts) {
+                    console.log('[StackMapApp] Google APIs loaded, initializing Drive sync...');
+                    try {
+                        this.driveSync = new GoogleDriveSync(this);
+                        return true;
+                    } catch (error) {
+                        console.error('[StackMapApp] Failed to initialize Drive sync:', error);
+                        return false;
+                    }
+                }
+                
+                // Check if scripts are blocked
+                if (retryCount === 20) { // After 2 seconds
+                    const gapiScript = document.querySelector('script[src*="apis.google.com"]');
+                    const gsiScript = document.querySelector('script[src*="accounts.google.com"]');
+                    
+                    if (!gapiScript || !gsiScript) {
+                        console.error('[StackMapApp] Google API scripts not found in DOM');
+                        return false;
+                    }
+                    
+                    // Check if scripts failed to load
+                    if (gapiScript.onerror || gsiScript.onerror) {
+                        console.error('[StackMapApp] Google API scripts failed to load - may be blocked');
+                        return false;
+                    }
+                }
+                
+                retryCount++;
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            console.warn('[StackMapApp] Google APIs did not load after 10 seconds');
+            console.warn('Possible causes:');
+            console.warn('1. Scripts blocked by ad blocker or firewall');
+            console.warn('2. Network connectivity issues');
+            console.warn('3. Content Security Policy blocking scripts');
+            console.warn('4. Domain not authorized in Google Cloud Console');
+            return false;
+        };
+        
+        // Use requestIdleCallback if available, otherwise immediate
+        if ('requestIdleCallback' in window) {
+            requestIdleCallback(() => waitForGoogleAPIs(), { timeout: 1000 });
+        } else {
+            waitForGoogleAPIs();
+        }
     }
     
     // PWA Update Prompt
@@ -3376,6 +3424,28 @@ window.forceShowModal = function() {
 
 // Make available globally
 window.StackMapApp = StackMapApp;
+
+// Manual Google Drive sync initialization (for debugging)
+window.initDriveSync = async function() {
+    console.log('Manually initializing Google Drive sync...');
+    if (!window.appInstance) {
+        console.error('App instance not found');
+        return;
+    }
+    
+    if (window.appInstance.driveSync) {
+        console.warn('Drive sync already initialized');
+        return;
+    }
+    
+    // Force enable sync
+    const result = await window.appInstance.initializeDriveSync();
+    if (result) {
+        console.log('Drive sync initialized successfully');
+    } else {
+        console.error('Drive sync initialization failed');
+    }
+};
 
 // Add debugging helpers
 window.testAddUser = function() {
