@@ -1514,6 +1514,14 @@ class EditModeFAB {
                 handler: () => this.app.showNewCardForm('bottom')
             },
             {
+                id: 'add-from-library',
+                icon: 'library_add',
+                label: 'Add from Library',
+                ariaLabel: 'Add activities from library',
+                color: '#2196F3', // Blue
+                handler: () => this.openLibraryMenu()
+            },
+            {
                 id: 'complete-day',
                 icon: 'event_available',
                 label: 'Complete Day',
@@ -1737,13 +1745,8 @@ class EditModeFAB {
     }
     
     toggle() {
-        if (this.isAnimating) return;
-        
-        if (this.isExpanded) {
-            this.collapse();
-        } else {
-            this.expand();
-        }
+        // Open edit mode hybrid menu instead of expanding FABs
+        this.openEditModeMenu();
     }
     
     expand() {
@@ -1934,6 +1937,20 @@ class EditModeFAB {
         setTimeout(() => {
             document.body.removeChild(announcement);
         }, 1000);
+    }
+    
+    openEditModeMenu() {
+        // Use hybrid panel manager to show edit mode menu
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.showEditModeMenu(this.actions);
+        }
+    }
+    
+    openLibraryMenu() {
+        // Use hybrid panel manager to show library menu
+        if (window.hybridPanelManager) {
+            window.hybridPanelManager.showLibraryMenu();
+        }
     }
     
     destroy() {
