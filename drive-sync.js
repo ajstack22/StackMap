@@ -61,6 +61,9 @@ class GoogleDriveSync {
                 apiKey: CONFIG.GOOGLE_API_KEY,
                 discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
             });
+            
+            // Load the Drive API
+            await gapi.client.load('drive', 'v3');
 
             // Initialize Google Identity Services
             this.initializeGoogleIdentity();
@@ -186,19 +189,19 @@ class GoogleDriveSync {
 
         // Check if DOM elements exist before using them
         if (!signInBtn || !syncStatus || !syncActions || !syncBtn || !syncUser) {
-            console.warn('Google Drive sync UI elements not found');
-            return;
+            console.warn('[GoogleDriveSync] UI elements not found - sync state updated internally');
+            // Don't return early - let internal state update even if UI is missing
         }
 
         if (isSignedIn) {
-            // Update UI
-            signInBtn.style.display = 'none';
-            syncStatus.style.display = 'flex';
-            syncActions.style.display = 'flex';
-            syncUser.textContent = 'Connected to Google Drive';
+            // Update UI if elements exist
+            if (signInBtn) signInBtn.style.display = 'none';
+            if (syncStatus) syncStatus.style.display = 'flex';
+            if (syncActions) syncActions.style.display = 'flex';
+            if (syncUser) syncUser.textContent = 'Connected to Google Drive';
             
             // Show sync button in grown-up mode
-            if (this.app.grownupMode) {
+            if (this.app.grownupMode && syncBtn) {
                 syncBtn.classList.remove('hidden');
             }
             
@@ -211,11 +214,11 @@ class GoogleDriveSync {
             // Stop sync checks
             this.stopSyncCheckInterval();
             
-            // Update UI
-            signInBtn.style.display = 'block';
-            syncStatus.style.display = 'none';
-            syncActions.style.display = 'none';
-            syncBtn.classList.add('hidden');
+            // Update UI if elements exist
+            if (signInBtn) signInBtn.style.display = 'block';
+            if (syncStatus) syncStatus.style.display = 'none';
+            if (syncActions) syncActions.style.display = 'none';
+            if (syncBtn) syncBtn.classList.add('hidden');
             
             // console.log('Signed out');
         }
@@ -681,6 +684,12 @@ class GoogleDriveSync {
 
     async ensureStackMapFolder() {
         try {
+            // Make sure Drive API is loaded
+            if (!gapi.client.drive) {
+                console.error('[GoogleDriveSync] Drive API not loaded, attempting to load...');
+                await gapi.client.load('drive', 'v3');
+            }
+            
             // Search for existing folder
             const response = await gapi.client.drive.files.list({
                 q: `name='${this.STACKMAP_FOLDER_NAME}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
