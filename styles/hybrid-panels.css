@@ -380,7 +380,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    padding: 80px 20px 20px;
+    padding: 24px 20px 20px;
     min-height: 0;
 }
 
@@ -1646,14 +1646,14 @@ textarea.panel-input {
 /* iOS device-specific optimizations */
 .ios-device .side-panel {
     /* Ensure panels work well with iOS safe areas */
-    padding-top: max(80px, calc(80px + env(safe-area-inset-top, 0px)));
+    padding-top: max(24px, calc(24px + env(safe-area-inset-top, 0px)));
     padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
 }
 
 /* Ensure content area respects safe areas */
 .ios-device .side-panel__content {
     /* Add safe area to existing padding */
-    padding-top: calc(80px + env(safe-area-inset-top, 0px));
+    padding-top: calc(24px + env(safe-area-inset-top, 0px));
 }
 
 .ios-device .app-header {

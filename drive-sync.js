@@ -93,6 +93,18 @@ class GoogleDriveSync {
                 gapi.client.setToken({
                     access_token: this.accessToken
                 });
+                
+                // Ensure Drive API is loaded before using restored token
+                if (!gapi.client.drive) {
+                    try {
+                        console.log('[GoogleDriveSync] Loading Drive API for restored session...');
+                        await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+                    } catch (error) {
+                        console.error('[GoogleDriveSync] Failed to load Drive API:', error);
+                        return;
+                    }
+                }
+                
                 this.updateSignInStatus(true);
                 // console.log('Restored Google Drive connection from storage');
                 
@@ -147,7 +159,7 @@ class GoogleDriveSync {
         // console.log('Credential response received');
     }
 
-    handleTokenResponse(response) {
+    async handleTokenResponse(response) {
         if (response.error) {
             console.error('Token error:', response.error);
             this.showSyncError('Failed to get authorization. Please try again.');
@@ -164,6 +176,19 @@ class GoogleDriveSync {
         gapi.client.setToken({
             access_token: this.accessToken
         });
+        
+        // Ensure Drive API is loaded before proceeding
+        if (!gapi.client.drive) {
+            try {
+                console.log('[GoogleDriveSync] Loading Drive API after authentication...');
+                await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+                console.log('[GoogleDriveSync] Drive API loaded successfully');
+            } catch (error) {
+                console.error('[GoogleDriveSync] Failed to load Drive API:', error);
+                this.showSyncError('Failed to initialize Google Drive API');
+                return;
+            }
+        }
 
         this.updateSignInStatus(true);
         // console.log('Successfully signed in with access token');
