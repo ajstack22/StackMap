@@ -11,7 +11,7 @@ jobs:
         uses: pinkasey/cpanel-deploy-action@v1.2.1
         with:
           hostname: 'https://stackmap.app:2083'  # CPanel API port
-          repository_root: '/home/stachblx/public_html/mu'  # Your repo path in CPanel
+          repository_root: '/home/stachblx/public_html/stackmap.app'  # Your repo path in CPanel
           branch: main
           cpanel_token: '${{ secrets.CPANEL_TOKEN }}'
           cpanel_username: 'stachblx'  # Your CPanel username
