@@ -17,9 +17,18 @@ class StackMapApp {
         
         if (syncEnabled) {
             // Initialize Google Drive sync after app loads
-            setTimeout(() => {
-                this.driveSync = new GoogleDriveSync(this);
-            }, 1000);
+            // Use requestIdleCallback for better performance, fallback to setTimeout
+            if ('requestIdleCallback' in window) {
+                requestIdleCallback(() => {
+                    console.log('[StackMapApp] Initializing Google Drive sync...');
+                    this.driveSync = new GoogleDriveSync(this);
+                }, { timeout: 1000 });
+            } else {
+                setTimeout(() => {
+                    console.log('[StackMapApp] Initializing Google Drive sync...');
+                    this.driveSync = new GoogleDriveSync(this);
+                }, 100); // Reduced from 1000ms to 100ms
+            }
         }
         
         // Initialize managers
@@ -1126,7 +1135,7 @@ class StackMapApp {
     
     setupAutoSyncInterval() {
         setInterval(() => {
-            if (this.driveSync.isSignedIn && this.grownupMode) {
+            if (this.driveSync && this.driveSync.isSignedIn && this.grownupMode) {
                 this.driveSync.autoSync();
             }
         }, CONFIG.AUTO_SYNC_INTERVAL);
@@ -1139,7 +1148,7 @@ class StackMapApp {
         
         // Wait 5 seconds after last change before auto-syncing
         this.autoSyncTimeout = setTimeout(() => {
-            if (this.driveSync && this.driveSync.autoSync) {
+            if (this.driveSync) {
                 this.driveSync.autoSync();
             }
         }, 5000);

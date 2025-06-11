@@ -2289,13 +2289,31 @@ class HybridPanelManager {
             }, 1000);
         } else {
             console.log('Google Drive sync is initializing, please wait...');
-            // Try again after a delay
-            setTimeout(() => {
+            // Show loading message to user
+            alert('Google Drive sync is still initializing. Please wait a moment and try again.');
+            
+            // Set up retry with exponential backoff
+            let retryCount = 0;
+            const maxRetries = 5;
+            
+            const trySignIn = () => {
                 if (this.app.driveSync && this.app.driveSync.signIn) {
+                    console.log('Google Drive sync ready, attempting sign in');
                     this.app.driveSync.signIn();
                     this.renderPanelContent('right');
+                } else if (retryCount < maxRetries) {
+                    retryCount++;
+                    const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
+                    console.log(`Retry ${retryCount}/${maxRetries} in ${delay}ms`);
+                    setTimeout(trySignIn, delay);
+                } else {
+                    console.error('Google Drive sync failed to initialize after multiple retries');
+                    alert('Google Drive sync failed to initialize. Please refresh the page and try again.');
                 }
-            }, 2000);
+            };
+            
+            // Start retry after initial delay
+            setTimeout(trySignIn, 2000);
         }
     }
     

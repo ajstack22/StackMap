@@ -1,6 +1,7 @@
 // === GOOGLE DRIVE SYNC ===
 class GoogleDriveSync {
     constructor(app) {
+        console.log('[GoogleDriveSync] Initializing...');
         this.app = app;
         this.isSignedIn = false;
         this.currentUser = null;
@@ -18,11 +19,15 @@ class GoogleDriveSync {
 
     async initializeGoogleAPIs() {
         try {
+            console.log('[GoogleDriveSync] Starting API initialization...');
+            
             // Check if credentials are configured
             if (!CONFIG.GOOGLE_CLIENT_ID || !CONFIG.GOOGLE_API_KEY) {
                 console.warn('Google Drive sync disabled: API credentials not configured');
                 return;
             }
+            
+            console.log('[GoogleDriveSync] Credentials found, loading Google APIs...');
             
             // Wait for Google APIs to load with timeout
             await new Promise((resolve, reject) => {
@@ -63,9 +68,9 @@ class GoogleDriveSync {
             // Check for stored auth token
             this.checkStoredAuth();
             
-            // console.log('Google Drive API initialized successfully');
+            console.log('[GoogleDriveSync] Google Drive API initialized successfully');
         } catch (error) {
-            console.error('Error loading Google APIs:', error);
+            console.error('[GoogleDriveSync] Error loading Google APIs:', error);
             this.showSyncError('Failed to load Google services. Please refresh the page.');
         }
     }
