@@ -130,18 +130,20 @@ echo "--------------------"
 # Update service worker cache version
 SW_FILE="sw.js"
 if [ -f "$SW_FILE" ]; then
-    # Increment cache version
-    CURRENT_VERSION=$(grep -o "CACHE_VERSION = '[0-9]*'" $SW_FILE | grep -o "[0-9]*")
-    NEW_VERSION=$((CURRENT_VERSION + 1))
+    # Update CACHE_NAME with current date
+    TODAY=$(date +"%Y-%m-%d")
+    CURRENT_CACHE=$(grep -o "CACHE_NAME = 'stackmap-v[^']*'" $SW_FILE | cut -d"'" -f2)
+    NEW_CACHE="stackmap-v1.2.2-$TODAY"
     
     # For macOS sed
     if [[ "$OSTYPE" == "darwin"* ]]; then
-        sed -i '' "s/CACHE_VERSION = '$CURRENT_VERSION'/CACHE_VERSION = '$NEW_VERSION'/" $SW_FILE
+        sed -i '' "s/CACHE_NAME = '[^']*'/CACHE_NAME = '$NEW_CACHE'/" $SW_FILE
     else
-        sed -i "s/CACHE_VERSION = '$CURRENT_VERSION'/CACHE_VERSION = '$NEW_VERSION'/" $SW_FILE
+        sed -i "s/CACHE_NAME = '[^']*'/CACHE_NAME = '$NEW_CACHE'/" $SW_FILE
     fi
     
-    success "Updated service worker cache version to $NEW_VERSION"
+    success "Updated service worker cache name to $NEW_CACHE"
+    NEW_VERSION="1.2.2-$TODAY"
 fi
 
 echo ""
