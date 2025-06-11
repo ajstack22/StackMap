@@ -126,6 +126,13 @@ class StackMapApp {
         this.initializeDrawer();
         this.initializeScrollHeader();
         this.initializeCelebrationSystem();
+        
+        // Add cleanup handler for page unload
+        window.addEventListener('beforeunload', () => {
+            if (this.driveSync) {
+                this.driveSync.cleanup();
+            }
+        });
     }
     
     // PWA Update Prompt

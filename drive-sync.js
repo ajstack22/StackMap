@@ -184,6 +184,12 @@ class GoogleDriveSync {
         const syncBtn = document.getElementById('syncBtn');
         const syncUser = document.getElementById('syncUser');
 
+        // Check if DOM elements exist before using them
+        if (!signInBtn || !syncStatus || !syncActions || !syncBtn || !syncUser) {
+            console.warn('Google Drive sync UI elements not found');
+            return;
+        }
+
         if (isSignedIn) {
             // Update UI
             signInBtn.style.display = 'none';
@@ -820,8 +826,45 @@ class GoogleDriveSync {
             try {
                 await this.uploadData();
             } catch (error) {
-                // console.log('Auto-sync failed, will try again next time');
+                console.error('Auto-sync failed:', error);
+                this.handleSyncError(error, 'auto-sync');
             }
+        }
+    }
+
+    // Add cleanup method
+    cleanup() {
+        this.stopSyncCheckInterval();
+        if (this.autoSyncTimeout) {
+            clearTimeout(this.autoSyncTimeout);
+            this.autoSyncTimeout = null;
+        }
+        // Clear any pending operations
+        this.isSyncing = false;
+    }
+
+    // Add error handling helper
+    handleSyncError(error, operation) {
+        console.error(`Drive sync error during ${operation}:`, error);
+        
+        // Check for specific error types
+        if (error.status === 401) {
+            // Token expired or invalid
+            this.showSyncError('Authentication expired. Please sign in again.');
+            this.signOut();
+        } else if (error.status === 403) {
+            // Permission denied
+            this.showSyncError('Permission denied. Please check your Google Drive permissions.');
+        } else if (error.status === 404) {
+            // File not found - might need to recreate folder
+            this.folderId = null;
+            this.showSyncError('Sync folder not found. Will recreate on next sync.');
+        } else if (!navigator.onLine) {
+            // Network error
+            this.showSyncError('No internet connection. Sync will resume when online.');
+        } else {
+            // Generic error
+            this.showSyncError(`Sync failed: ${error.message || 'Unknown error'}`);
         }
     }
 }

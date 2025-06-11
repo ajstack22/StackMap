@@ -289,10 +289,18 @@ class UITimingTests {
     }
 }
 
+// Make available globally for test runner
+if (typeof window !== 'undefined') {
+    window.UITimingTests = UITimingTests;
+}
+
 // Auto-run if opened directly
-if (typeof module === 'undefined') {
-    document.addEventListener('DOMContentLoaded', async () => {
-        const tester = new UITimingTests();
-        await tester.runTests();
-    });
+if (typeof module === 'undefined' && typeof window !== 'undefined') {
+    // Only auto-run if not in iframe
+    if (window.parent === window) {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const tester = new UITimingTests();
+            await tester.runTests();
+        });
+    }
 }

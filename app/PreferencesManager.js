@@ -127,22 +127,22 @@ class PreferencesManager {
                 <div class="preferences-section">
                     <label>Google Drive Sync</label>
                     <div class="sync-controls">
-                        <button class="btn btn--secondary" id="googleSignInBtn" onclick="appInstance.driveSync.signIn()" style="background: #888; color: white;">
+                        <button class="btn btn--secondary" id="googleSignInBtn" onclick="appInstance.driveSync && appInstance.driveSync.signIn()" style="background: #888; color: white;">
                             Connect Google Drive
                         </button>
                         <div class="sync-status" id="syncStatus" style="display: none;">
                             <div class="sync-user" id="syncUser">Connected to Google Drive</div>
                         </div>
                         <div class="sync-actions" id="syncActions" style="display: none; flex-direction: column; gap: 8px;">
-                            <button class="btn btn--secondary btn--small" onclick="appInstance.driveSync.uploadData()">
+                            <button class="btn btn--secondary btn--small" onclick="appInstance.driveSync && appInstance.driveSync.uploadData()">
                                 <span class="material-icons">cloud_upload</span>
                                 Save to Drive
                             </button>
-                            <button class="btn btn--secondary btn--small" onclick="appInstance.driveSync.downloadData()">
+                            <button class="btn btn--secondary btn--small" onclick="appInstance.driveSync && appInstance.driveSync.downloadData()">
                                 <span class="material-icons">cloud_download</span>
                                 Load from Drive
                             </button>
-                            <button class="btn btn--secondary btn--small" onclick="appInstance.driveSync.signOut()">
+                            <button class="btn btn--secondary btn--small" onclick="appInstance.driveSync && appInstance.driveSync.signOut()">
                                 <span class="material-icons">logout</span>
                                 Disconnect
                             </button>
@@ -380,7 +380,7 @@ class PreferencesManager {
         const syncStatus = document.getElementById('syncStatus');
         const syncActions = document.getElementById('syncActions');
         
-        if (this.app.driveSync.isSignedIn) {
+        if (this.app.driveSync && this.app.driveSync.isSignedIn) {
             if (signInBtn) signInBtn.style.display = 'none';
             if (syncStatus) syncStatus.style.display = 'flex';
             if (syncActions) syncActions.style.display = 'flex';

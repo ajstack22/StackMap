@@ -27,6 +27,12 @@ class DriveSyncTests {
             await this.testSyncMetadata();
             await this.testLegacyFormatSync();
             
+            // New tests for recent fixes
+            await this.testDriveSyncInitialization();
+            await this.testDriveSyncErrorHandling();
+            await this.testDriveSyncCleanup();
+            await this.testDriveSyncNullChecks();
+            
             this.reportResults();
         } catch (error) {
             console.error('Fatal test error:', error);
@@ -40,7 +46,12 @@ class DriveSyncTests {
         
         try {
             // Get the app state
-            const app = window.app || window.stackMapApp;
+            console.log('Looking for app instance...');
+            console.log('window.app:', window.app);
+            console.log('window.stackMapApp:', window.stackMapApp);
+            console.log('window.appInstance:', window.appInstance);
+            
+            const app = window.app || window.stackMapApp || window.appInstance;
             if (!app) {
                 this.endTest(false, 'App not found');
                 return;
@@ -74,7 +85,7 @@ class DriveSyncTests {
         this.startTest('Multi-User Sync Data');
         
         try {
-            const app = window.app || window.stackMapApp;
+            const app = window.app || window.stackMapApp || window.appInstance;
             if (!app) {
                 this.endTest(false, 'App not found');
                 return;
@@ -136,7 +147,7 @@ class DriveSyncTests {
         this.startTest('Conflict Detection');
         
         try {
-            const app = window.app || window.stackMapApp;
+            const app = window.app || window.stackMapApp || window.appInstance;
             if (!app) {
                 this.endTest(false, 'App not found');
                 return;
@@ -177,7 +188,7 @@ class DriveSyncTests {
         this.startTest('Data Merge Strategies');
         
         try {
-            const app = window.app || window.stackMapApp;
+            const app = window.app || window.stackMapApp || window.appInstance;
             if (!app) {
                 this.endTest(false, 'App not found');
                 return;
@@ -222,7 +233,7 @@ class DriveSyncTests {
         this.startTest('Sync Metadata Handling');
         
         try {
-            const app = window.app || window.stackMapApp;
+            const app = window.app || window.stackMapApp || window.appInstance;
             if (!app) {
                 this.endTest(false, 'App not found');
                 return;
@@ -265,7 +276,7 @@ class DriveSyncTests {
         this.startTest('Legacy Format Sync Compatibility');
         
         try {
-            const app = window.app || window.stackMapApp;
+            const app = window.app || window.stackMapApp || window.appInstance;
             if (!app) {
                 this.endTest(false, 'App not found');
                 return;
@@ -299,6 +310,164 @@ class DriveSyncTests {
             this.assert(hasLegacyTask || currentUserCount > 0, 'Legacy data handled appropriately');
             
             this.endTest(true, 'Legacy format sync compatibility works');
+            
+        } catch (error) {
+            this.endTest(false, `Test failed: ${error.message}`);
+        }
+    }
+    
+    async testDriveSyncInitialization() {
+        this.startTest('Drive Sync Initialization');
+        
+        try {
+            const app = window.app || window.stackMapApp || window.appInstance;
+            if (!app) {
+                this.endTest(false, 'App not found');
+                return;
+            }
+            
+            // Check if driveSync exists (may be null if not enabled)
+            const hasDriveSync = 'driveSync' in app;
+            this.assert(hasDriveSync, 'driveSync property exists on app');
+            
+            if (app.driveSync) {
+                // Check required methods
+                this.assert(typeof app.driveSync.signIn === 'function', 'signIn method exists');
+                this.assert(typeof app.driveSync.signOut === 'function', 'signOut method exists');
+                this.assert(typeof app.driveSync.uploadData === 'function', 'uploadData method exists');
+                this.assert(typeof app.driveSync.downloadData === 'function', 'downloadData method exists');
+                this.assert(typeof app.driveSync.cleanup === 'function', 'cleanup method exists');
+                this.assert(typeof app.driveSync.handleSyncError === 'function', 'handleSyncError method exists');
+                
+                this.endTest(true, 'Drive sync initialized with all required methods');
+            } else {
+                this.endTest(true, 'Drive sync is null (not enabled or lazy loading)');
+            }
+            
+        } catch (error) {
+            this.endTest(false, `Test failed: ${error.message}`);
+        }
+    }
+    
+    async testDriveSyncErrorHandling() {
+        this.startTest('Drive Sync Error Handling');
+        
+        try {
+            const app = window.app || window.stackMapApp || window.appInstance;
+            if (!app) {
+                this.endTest(false, 'App not found');
+                return;
+            }
+            
+            if (!app.driveSync) {
+                this.endTest(true, 'Drive sync not available - skipping error handling test');
+                return;
+            }
+            
+            // Test updateSignInStatus with missing DOM elements
+            try {
+                app.driveSync.updateSignInStatus(false);
+                this.assert(true, 'updateSignInStatus handles missing DOM elements');
+            } catch (error) {
+                this.assert(false, `updateSignInStatus threw error: ${error.message}`);
+            }
+            
+            // Test error handler with various error types
+            const errorTypes = [
+                { status: 401, message: 'Unauthorized' },
+                { status: 403, message: 'Forbidden' },
+                { status: 404, message: 'Not Found' },
+                { message: 'Network error' }
+            ];
+            
+            for (const error of errorTypes) {
+                try {
+                    app.driveSync.handleSyncError(error, 'test-operation');
+                    this.assert(true, `handleSyncError handles ${error.status || 'generic'} errors`);
+                } catch (err) {
+                    this.assert(false, `handleSyncError failed for ${error.status}: ${err.message}`);
+                }
+            }
+            
+            this.endTest(true, 'Error handling works correctly');
+            
+        } catch (error) {
+            this.endTest(false, `Test failed: ${error.message}`);
+        }
+    }
+    
+    async testDriveSyncCleanup() {
+        this.startTest('Drive Sync Cleanup');
+        
+        try {
+            const app = window.app || window.stackMapApp || window.appInstance;
+            if (!app) {
+                this.endTest(false, 'App not found');
+                return;
+            }
+            
+            if (!app.driveSync) {
+                this.endTest(true, 'Drive sync not available - skipping cleanup test');
+                return;
+            }
+            
+            // Store original state
+            const originalInterval = app.driveSync.syncCheckInterval;
+            
+            // Test cleanup
+            try {
+                app.driveSync.cleanup();
+                
+                this.assert(!app.driveSync.syncCheckInterval, 'syncCheckInterval cleared');
+                this.assert(!app.driveSync.isSyncing, 'isSyncing flag reset');
+                
+                // Restore if needed
+                if (originalInterval) {
+                    app.driveSync.startSyncCheckInterval();
+                }
+                
+                this.endTest(true, 'Cleanup method works correctly');
+            } catch (error) {
+                this.assert(false, `Cleanup failed: ${error.message}`);
+                this.endTest(false, 'Cleanup method failed');
+            }
+            
+        } catch (error) {
+            this.endTest(false, `Test failed: ${error.message}`);
+        }
+    }
+    
+    async testDriveSyncNullChecks() {
+        this.startTest('Drive Sync Null Safety Checks');
+        
+        try {
+            const app = window.app || window.stackMapApp || window.appInstance;
+            if (!app) {
+                this.endTest(false, 'App not found');
+                return;
+            }
+            
+            // Test autoSync with null checks
+            if (app.autoSyncTimeout !== undefined) {
+                try {
+                    app.debouncedAutoSync();
+                    this.assert(true, 'debouncedAutoSync handles null driveSync');
+                } catch (error) {
+                    this.assert(false, `debouncedAutoSync failed: ${error.message}`);
+                }
+            }
+            
+            // Test PreferencesManager null checks
+            if (app.preferencesManager) {
+                try {
+                    app.preferencesManager.updateSyncControls();
+                    this.assert(true, 'PreferencesManager handles null driveSync');
+                } catch (error) {
+                    this.assert(false, `PreferencesManager failed: ${error.message}`);
+                }
+            }
+            
+            this.endTest(true, 'Null safety checks working correctly');
             
         } catch (error) {
             this.endTest(false, `Test failed: ${error.message}`);
@@ -382,10 +551,18 @@ class DriveSyncTests {
     }
 }
 
+// Make available globally for test runner
+if (typeof window !== 'undefined') {
+    window.DriveSyncTests = DriveSyncTests;
+}
+
 // Auto-run if opened directly
-if (typeof module === 'undefined') {
-    document.addEventListener('DOMContentLoaded', async () => {
-        const tester = new DriveSyncTests();
-        await tester.runTests();
-    });
+if (typeof module === 'undefined' && typeof window !== 'undefined') {
+    // Only auto-run if not in iframe
+    if (window.parent === window) {
+        document.addEventListener('DOMContentLoaded', async () => {
+            const tester = new DriveSyncTests();
+            await tester.runTests();
+        });
+    }
 }

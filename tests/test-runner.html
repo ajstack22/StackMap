@@ -189,8 +189,19 @@
                 script.src = src;
                 script.onload = () => {
                     loadedCount++;
+                    log(`✅ Loaded ${src}`);
+                    
+                    // Check what's available in the app window
+                    if (src.includes('drive-sync')) {
+                        log(`DriveSyncTests available: ${!!appWindow.DriveSyncTests}`);
+                    }
+                    if (src.includes('ui-timing')) {
+                        log(`UITimingTests available: ${!!appWindow.UITimingTests}`);
+                    }
+                    
                     if (loadedCount === scripts.length) {
                         log('✅ All test scripts loaded');
+                        log(`Test classes available: EditModeUAT=${!!appWindow.EditModeUAT}, ImportExportDataUAT=${!!appWindow.ImportExportDataUAT}, UITimingTests=${!!appWindow.UITimingTests}, DriveSyncTests=${!!appWindow.DriveSyncTests}`);
                         document.getElementById('runTests').disabled = false;
                     }
                 };
