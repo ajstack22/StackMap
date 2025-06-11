@@ -58,12 +58,16 @@ class GoogleDriveSync {
             });
 
             await gapi.client.init({
-                apiKey: CONFIG.GOOGLE_API_KEY,
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+                apiKey: CONFIG.GOOGLE_API_KEY
             });
             
-            // Load the Drive API
-            await gapi.client.load('drive', 'v3');
+            // Load the Drive API discovery document
+            await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+            
+            // Verify Drive API is loaded
+            if (!gapi.client.drive) {
+                throw new Error('Drive API failed to load');
+            }
 
             // Initialize Google Identity Services
             this.initializeGoogleIdentity();
@@ -687,7 +691,7 @@ class GoogleDriveSync {
             // Make sure Drive API is loaded
             if (!gapi.client.drive) {
                 console.error('[GoogleDriveSync] Drive API not loaded, attempting to load...');
-                await gapi.client.load('drive', 'v3');
+                await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
             }
             
             // Search for existing folder
