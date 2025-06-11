@@ -2138,83 +2138,78 @@ textarea.panel-input {
 
 /* ===== EDIT MODE MENU STYLES ===== */
 .edit-mode-menu {
-    padding: 20px;
+    /* No padding needed, using admin-section styles */
 }
 
-.edit-mode-menu h3 {
-    margin: 0 0 20px 0;
-    color: var(--primary-color);
-    font-size: 1.3rem;
-    text-align: center;
+/* Primary style for Add to Day button */
+.admin-btn--primary {
+    background: var(--primary-color) !important;
 }
 
-.edit-mode-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+.admin-btn--primary:hover {
+    background: var(--primary-dark) !important;
 }
 
-.action-button {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    gap: 16px;
-    padding: 16px 20px;
-    border: none;
-    border-radius: 12px;
-    background-color: var(--primary-color);
-    color: white;
-    font-size: 1rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    text-align: left;
-    width: 100%;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-}
-
-.action-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.action-button:active {
-    transform: translateY(0);
-}
-
-.action-button .material-icons {
-    font-size: 24px;
-    flex-shrink: 0;
+.admin-btn--primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none !important;
 }
 
 /* ===== LIBRARY MENU STYLES ===== */
 .library-menu {
-    padding: 20px;
     display: flex;
     flex-direction: column;
     height: 100%;
+    position: relative;
 }
 
-.library-menu h3 {
-    margin: 0 0 20px 0;
-    color: var(--primary-color);
-    font-size: 1.3rem;
+.library-header {
+    padding: 0 0 16px 0;
     text-align: center;
+}
+
+.library-header h3 {
+    margin: 0 0 8px 0;
+    color: white;
+    font-size: 1.4rem;
+    font-weight: 600;
+}
+
+.library-hint {
+    margin: 0;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 0.9rem;
+}
+
+.library-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    padding: 16px;
 }
 
 .library-sections {
     flex: 1;
     overflow-y: auto;
-    margin-bottom: 20px;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
 }
 
 .library-section {
     margin-bottom: 24px;
 }
 
+.library-section:last-child {
+    margin-bottom: 0;
+}
+
 .library-section h4 {
     margin: 0 0 12px 0;
-    color: #666;
+    color: #333;
     font-size: 1rem;
     font-weight: 600;
     padding-bottom: 8px;
@@ -2224,78 +2219,80 @@ textarea.panel-input {
 .library-cards {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
 }
 
 .library-card {
-    display: flex;
-    align-items: center;
-    padding: 12px;
+    background: white;
     border-radius: 8px;
-    cursor: pointer;
+    overflow: hidden;
     transition: background-color 0.2s ease;
-    user-select: none;
 }
 
 .library-card:hover {
-    background-color: rgba(102, 126, 234, 0.05);
-}
-
-.library-card-checkbox {
-    width: 20px;
-    height: 20px;
-    margin: 0;
-    cursor: pointer;
-    accent-color: var(--primary-color);
+    background-color: #f5f5f5;
 }
 
 .library-card-label {
     display: flex;
     align-items: center;
+    padding: 16px;
+    cursor: pointer;
+    width: 100%;
+    margin: 0;
+    gap: 16px;
+    min-height: 60px; /* Touch-friendly height */
+}
+
+.library-card-checkbox {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    cursor: pointer;
+    accent-color: var(--primary-color);
+}
+
+.library-card-content {
+    display: flex;
+    align-items: center;
     gap: 12px;
     flex: 1;
-    margin-left: 12px;
-    cursor: pointer;
 }
 
 .library-card-icon {
-    font-size: 1.5rem;
-    width: 32px;
+    font-size: 2rem;
+    width: 40px;
     text-align: center;
+    flex-shrink: 0;
 }
 
 .library-card-title {
     flex: 1;
-    font-size: 0.95rem;
-    color: #333;
-}
-
-.library-actions {
-    padding-top: 16px;
-    border-top: 1px solid #e0e0e0;
-}
-
-.library-actions .btn--primary {
-    width: 100%;
-    padding: 14px;
     font-size: 1rem;
-    font-weight: 600;
-    background-color: var(--primary-color);
-    color: white;
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.2s ease;
+    color: #333;
+    font-weight: 500;
 }
 
-.library-actions .btn--primary:hover:not(:disabled) {
-    background-color: var(--primary-dark);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+.library-footer {
+    padding: 16px 0 0 0;
+    margin-top: auto;
 }
 
-.library-actions .btn--primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    transform: none;
+.library-footer .admin-btn {
+    width: 100%;
+    justify-content: center;
+    font-size: 1.1rem;
+    padding: 16px;
+    min-height: 56px;
+}
+
+/* Mobile optimization for library */
+@media (max-width: 768px) {
+    .library-content {
+        margin: 0 -4px; /* Extend to edges on mobile */
+    }
+    
+    .library-card-label {
+        padding: 14px 12px;
+    }
 }

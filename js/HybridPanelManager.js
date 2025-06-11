@@ -3107,16 +3107,17 @@ class HybridPanelManager {
         
         content.innerHTML = `
             <div class="edit-mode-menu">
-                <h3>Edit Mode Actions</h3>
-                <div class="edit-mode-actions">
-                    ${actions.map(action => `
-                        <button class="action-button" 
-                                onclick="hybridPanelManager.executeEditAction('${action.id}')"
-                                style="background-color: ${action.color}">
-                            <span class="material-icons">${action.icon}</span>
-                            <span>${action.label}</span>
-                        </button>
-                    `).join('')}
+                <div class="admin-section">
+                    <h4>Edit Mode Actions</h4>
+                    <div class="admin-buttons">
+                        ${actions.map(action => `
+                            <button class="admin-btn" 
+                                    onclick="hybridPanelManager.executeEditAction('${action.id}')">
+                                <span class="material-icons">${action.icon}</span>
+                                <span>${action.label}</span>
+                            </button>
+                        `).join('')}
+                    </div>
                 </div>
             </div>
         `;
@@ -3159,40 +3160,47 @@ class HybridPanelManager {
         
         content.innerHTML = `
             <div class="library-menu">
-                <h3>Activity Library</h3>
-                <div class="library-sections">
-                    ${userLibrary.length > 0 ? `
-                        <div class="library-section">
-                            <h4>Your Library</h4>
-                            <div class="library-cards">
-                                ${this.renderLibraryCards(userLibrary, 'user')}
+                <div class="library-header">
+                    <h3>Activity Library</h3>
+                    <p class="library-hint">Select activities to add to your day</p>
+                </div>
+                
+                <div class="library-content">
+                    <div class="library-sections">
+                        ${userLibrary.length > 0 ? `
+                            <div class="library-section">
+                                <h4>Your Library</h4>
+                                <div class="library-cards">
+                                    ${this.renderLibraryCards(userLibrary, 'user')}
+                                </div>
                             </div>
-                        </div>
-                    ` : ''}
-                    
-                    ${groupLibrary.length > 0 ? `
-                        <div class="library-section">
-                            <h4>Group Library</h4>
-                            <div class="library-cards">
-                                ${this.renderLibraryCards(groupLibrary, 'group')}
+                        ` : ''}
+                        
+                        ${groupLibrary.length > 0 ? `
+                            <div class="library-section">
+                                <h4>Group Library</h4>
+                                <div class="library-cards">
+                                    ${this.renderLibraryCards(groupLibrary, 'group')}
+                                </div>
                             </div>
-                        </div>
-                    ` : ''}
-                    
-                    <div class="library-section">
-                        <h4>Base Templates</h4>
-                        <div class="library-cards">
-                            ${this.renderLibraryCards(baseLibrary, 'base')}
+                        ` : ''}
+                        
+                        <div class="library-section">
+                            <h4>Base Templates</h4>
+                            <div class="library-cards">
+                                ${this.renderLibraryCards(baseLibrary, 'base')}
+                            </div>
                         </div>
                     </div>
                 </div>
                 
-                <div class="library-actions">
-                    <button class="btn btn--primary" 
+                <div class="library-footer">
+                    <button class="admin-btn admin-btn--primary" 
                             onclick="hybridPanelManager.addSelectedCards()"
                             id="addToDay"
                             disabled>
-                        Add to Day
+                        <span class="material-icons">add_circle</span>
+                        <span>Add to Day</span>
                     </button>
                 </div>
             </div>
@@ -3206,15 +3214,16 @@ class HybridPanelManager {
         return cards.map(card => `
             <div class="library-card" 
                  data-card-id="${card.id}"
-                 data-library-type="${libraryType}"
-                 onclick="hybridPanelManager.toggleCardSelection('${card.id}', '${libraryType}')">
-                <input type="checkbox" 
-                       class="library-card-checkbox"
-                       id="lib-${card.id}"
-                       onchange="hybridPanelManager.updateAddButton()">
+                 data-library-type="${libraryType}">
                 <label for="lib-${card.id}" class="library-card-label">
-                    <span class="library-card-icon">${card.icon}</span>
-                    <span class="library-card-title">${card.title}</span>
+                    <input type="checkbox" 
+                           class="library-card-checkbox"
+                           id="lib-${card.id}"
+                           onchange="hybridPanelManager.updateAddButton()">
+                    <span class="library-card-content">
+                        <span class="library-card-icon">${card.icon}</span>
+                        <span class="library-card-title">${card.title}</span>
+                    </span>
                 </label>
             </div>
         `).join('');
@@ -3239,9 +3248,12 @@ class HybridPanelManager {
         const addButton = document.getElementById('addToDay');
         if (addButton) {
             addButton.disabled = checkboxes.length === 0;
-            addButton.textContent = checkboxes.length > 0 
-                ? `Add ${checkboxes.length} to Day` 
-                : 'Add to Day';
+            const span = addButton.querySelector('span:last-child');
+            if (span) {
+                span.textContent = checkboxes.length > 0 
+                    ? `Add ${checkboxes.length} to Day` 
+                    : 'Add to Day';
+            }
         }
     }
     
