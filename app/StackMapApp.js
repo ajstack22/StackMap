@@ -9,6 +9,7 @@ class StackMapApp {
         
         // Create a placeholder object that will be replaced when sync initializes
         this.driveSync = null;
+        this.isInitializing = true; // Flag to prevent auto-sync during initial load
         
         // Defer Google Drive sync initialization to not block startup
         const urlParams = new URLSearchParams(window.location.search);
@@ -47,8 +48,8 @@ class StackMapApp {
             // Save current user data before saving to storage
             this.appState.saveCurrentUserData();
             this.saveToLocalStorage();
-            // Auto-sync to Drive if enabled and signed in
-            if (CONFIG.AUTO_SYNC_ENABLED) {
+            // Auto-sync to Drive if enabled and signed in (but not during initial load)
+            if (CONFIG.AUTO_SYNC_ENABLED && !this.isInitializing) {
                 this.debouncedAutoSync();
             }
         };
@@ -122,6 +123,12 @@ class StackMapApp {
                 this.driveSync.cleanup();
             }
         });
+        
+        // Mark initialization complete after a short delay
+        setTimeout(() => {
+            this.isInitializing = false;
+            console.log('[StackMapApp] Initialization complete, auto-sync enabled');
+        }, 2000);
     }
     
     // Initialize Google Drive sync with proper timing
@@ -1203,7 +1210,7 @@ class StackMapApp {
         
         // Wait 5 seconds after last change before auto-syncing
         this.autoSyncTimeout = setTimeout(() => {
-            if (this.driveSync) {
+            if (this.driveSync && this.driveSync.autoSync) {
                 this.driveSync.autoSync();
             }
         }, 5000);
