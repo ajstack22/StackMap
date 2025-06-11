@@ -2133,6 +2133,183 @@ class StackMapApp {
         }
     }
 
+    // CARD MENU
+    openCardMenu(index, event) {
+        // Close any existing menu
+        this.closeCardMenu();
+        
+        // Get card element position
+        const button = event.currentTarget;
+        const rect = button.getBoundingClientRect();
+        
+        // Create menu container
+        const menu = document.createElement('div');
+        menu.className = 'card-menu';
+        menu.setAttribute('data-card-index', index);
+        
+        // Create menu options
+        const menuOptions = [
+            {
+                icon: 'content_copy',
+                label: 'Duplicate',
+                action: () => {
+                    this.duplicateActivity(index);
+                    this.closeCardMenu();
+                }
+            },
+            {
+                icon: 'person_add',
+                label: 'Add to User Library',
+                action: () => {
+                    this.addToLibrary(index, 'user');
+                    this.closeCardMenu();
+                }
+            },
+            {
+                icon: 'group_add',
+                label: 'Add to Group Library',
+                action: () => {
+                    this.addToLibrary(index, 'group');
+                    this.closeCardMenu();
+                }
+            },
+            {
+                icon: 'delete',
+                label: 'Delete',
+                action: () => {
+                    this.deleteActivity(index);
+                    this.closeCardMenu();
+                },
+                className: 'card-menu__option--danger'
+            }
+        ];
+        
+        // Build menu HTML
+        menu.innerHTML = menuOptions.map(option => `
+            <div class="card-menu__option ${option.className || ''}">
+                <span class="material-icons">${option.icon}</span>
+                <span>${option.label}</span>
+            </div>
+        `).join('');
+        
+        // Add click handlers
+        menuOptions.forEach((option, i) => {
+            menu.children[i].addEventListener('click', (e) => {
+                e.stopPropagation();
+                option.action();
+            });
+        });
+        
+        // Position menu
+        document.body.appendChild(menu);
+        
+        // Calculate position (show above button if near bottom)
+        const menuHeight = menu.offsetHeight;
+        const windowHeight = window.innerHeight;
+        const spaceBelow = windowHeight - rect.bottom;
+        
+        if (spaceBelow < menuHeight + 10) {
+            // Position above
+            menu.style.bottom = (windowHeight - rect.top + 5) + 'px';
+            menu.style.top = 'auto';
+        } else {
+            // Position below
+            menu.style.top = (rect.bottom + 5) + 'px';
+            menu.style.bottom = 'auto';
+        }
+        
+        // Horizontal position (align to right edge of button)
+        menu.style.right = (window.innerWidth - rect.right) + 'px';
+        menu.style.left = 'auto';
+        
+        // Show menu with animation
+        requestAnimationFrame(() => {
+            menu.classList.add('card-menu--open');
+        });
+        
+        // Add backdrop
+        const backdrop = document.createElement('div');
+        backdrop.className = 'card-menu-backdrop';
+        backdrop.addEventListener('click', () => this.closeCardMenu());
+        document.body.appendChild(backdrop);
+        
+        // Close on escape key
+        this.cardMenuEscapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeCardMenu();
+            }
+        };
+        document.addEventListener('keydown', this.cardMenuEscapeHandler);
+    }
+    
+    closeCardMenu() {
+        const menu = document.querySelector('.card-menu');
+        const backdrop = document.querySelector('.card-menu-backdrop');
+        
+        if (menu) {
+            menu.classList.remove('card-menu--open');
+            setTimeout(() => menu.remove(), 200);
+        }
+        
+        if (backdrop) {
+            backdrop.remove();
+        }
+        
+        if (this.cardMenuEscapeHandler) {
+            document.removeEventListener('keydown', this.cardMenuEscapeHandler);
+            this.cardMenuEscapeHandler = null;
+        }
+    }
+    
+    // CARD LIBRARY
+    addToLibrary(index, libraryType) {
+        const activity = this.appState.activities[index];
+        if (!activity) return;
+        
+        // Create a clean copy of the activity without user-specific data
+        const libraryCard = {
+            title: activity.title,
+            description: activity.description,
+            icon: activity.icon,
+            cardType: activity.cardType || 'recurring',
+            time: activity.time || ''
+        };
+        
+        // Add to the appropriate library
+        const success = this.appState.addToLibrary(libraryCard, libraryType);
+        
+        if (success) {
+            // Show confirmation
+            const message = libraryType === 'user' 
+                ? 'Added to your personal library' 
+                : 'Added to group library';
+            this.showNotification(message, 'success');
+        } else {
+            this.showNotification('Failed to add to library', 'error');
+        }
+    }
+    
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        notification.className = `notification notification--${type}`;
+        notification.textContent = message;
+        
+        // Add to body
+        document.body.appendChild(notification);
+        
+        // Trigger animation
+        requestAnimationFrame(() => {
+            notification.classList.add('notification--show');
+        });
+        
+        // Remove after delay
+        setTimeout(() => {
+            notification.classList.remove('notification--show');
+            setTimeout(() => notification.remove(), 300);
+        }, 2500);
+    }
+
     // EDIT MODE: Toggle completion without celebration
     toggleGrownupCompletion(index) {
         this.appState.toggleActivityCompletion(index);

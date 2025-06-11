@@ -49,9 +49,11 @@ class AppState {
                         backgroundColor: CONFIG.DEFAULT_COLOR,
                         showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
                         showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
-                    }
+                    },
+                    library: [] // User-specific library cards
                 }
-            }
+            },
+            groupLibrary: [] // Shared library for all users
         };
         
         // External save handler
@@ -312,7 +314,8 @@ class AppState {
                 backgroundColor: CONFIG.DEFAULT_COLOR,
                 showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
                 showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
-            }
+            },
+            library: [] // Initialize empty library for new user
         };
         
         this._triggerSave();
@@ -565,6 +568,88 @@ class AppState {
         return stats;
     }
 
+    // === LIBRARY MANAGEMENT ===
+    addToLibrary(card, libraryType) {
+        try {
+            // Create a unique ID for the library card
+            const libraryCard = {
+                ...card,
+                id: `lib_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                addedDate: new Date().toISOString(),
+                addedBy: this.users.currentUserId
+            };
+            
+            if (libraryType === 'user') {
+                const user = this.getCurrentUser();
+                if (!user.library) {
+                    user.library = [];
+                }
+                
+                // Check for duplicates
+                const isDuplicate = user.library.some(item => 
+                    item.title === card.title && item.icon === card.icon
+                );
+                
+                if (!isDuplicate) {
+                    user.library.push(libraryCard);
+                    this._triggerSave();
+                    return true;
+                }
+            } else if (libraryType === 'group') {
+                if (!this.users.groupLibrary) {
+                    this.users.groupLibrary = [];
+                }
+                
+                // Check for duplicates
+                const isDuplicate = this.users.groupLibrary.some(item => 
+                    item.title === card.title && item.icon === card.icon
+                );
+                
+                if (!isDuplicate) {
+                    this.users.groupLibrary.push(libraryCard);
+                    this._triggerSave();
+                    return true;
+                }
+            }
+            
+            return false; // Duplicate or invalid type
+        } catch (error) {
+            console.error('Error adding to library:', error);
+            return false;
+        }
+    }
+    
+    getLibrary(libraryType) {
+        if (libraryType === 'user') {
+            const user = this.getCurrentUser();
+            return user.library || [];
+        } else if (libraryType === 'group') {
+            return this.users.groupLibrary || [];
+        } else if (libraryType === 'base') {
+            // Base library will be loaded from default-activities.js
+            return [];
+        }
+        return [];
+    }
+    
+    removeFromLibrary(cardId, libraryType) {
+        if (libraryType === 'user') {
+            const user = this.getCurrentUser();
+            if (user.library) {
+                user.library = user.library.filter(card => card.id !== cardId);
+                this._triggerSave();
+                return true;
+            }
+        } else if (libraryType === 'group') {
+            if (this.users.groupLibrary) {
+                this.users.groupLibrary = this.users.groupLibrary.filter(card => card.id !== cardId);
+                this._triggerSave();
+                return true;
+            }
+        }
+        return false;
+    }
+
     // === SETTINGS MANAGEMENT ===
     updateTitle(title) {
         this.settings.title = title;
@@ -721,7 +806,16 @@ class AppState {
                     if (!user.icon) {
                         user.icon = '👤'; // Default icon for imported users without icons
                     }
+                    // Ensure all users have library array
+                    if (!user.library) {
+                        user.library = [];
+                    }
                 });
+                
+                // Ensure group library exists
+                if (!this.users.groupLibrary) {
+                    this.users.groupLibrary = [];
+                }
                 
                 // Ensure current user exists
                 if (!this.users.profiles[this.users.currentUserId]) {
@@ -775,8 +869,12 @@ class AppState {
                     icon: '👤', // NEW: Default icon for legacy imports
                     activities: activities,
                     tomorrowActivities: [], // Story 4: Initialize empty tomorrow
-                    settings: settings
+                    settings: settings,
+                    library: [] // Initialize empty library
                 };
+                
+                // Initialize group library for legacy imports
+                this.users.groupLibrary = [];
                 
                 this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
                 this.loadUserData();

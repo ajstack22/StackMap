@@ -1230,17 +1230,11 @@ class ActivityCard {
                     aria-label="Toggle visibility" title="${this.activity.visible ? 'Hide from routine' : 'Show in routine'}">
                 <span class="material-icons">${this.activity.visible ? 'visibility' : 'visibility_off'}</span>
             </button>
-            <button class="btn btn--round btn--duplicate" 
+            <button class="btn btn--round btn--menu" 
                     style="bottom: 15px; right: 15px;"
-                    onclick="event.stopPropagation(); appInstance.duplicateActivity(${this.index})" 
-                    aria-label="Duplicate card" title="Make a copy">
-                <span class="material-icons">content_copy</span>
-            </button>
-            <button class="btn btn--round btn--delete" 
-                    style="bottom: 15px; left: 15px;"
-                    onclick="event.stopPropagation(); appInstance.deleteActivity(${this.index})" 
-                    aria-label="Delete card" title="Delete card">
-                <span class="material-icons">delete</span>
+                    onclick="event.stopPropagation(); appInstance.openCardMenu(${this.index}, event)" 
+                    aria-label="Card menu" title="More actions">
+                <span class="material-icons">more_vert</span>
             </button>
         `;
     }
