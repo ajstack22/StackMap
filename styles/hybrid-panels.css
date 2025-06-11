@@ -380,7 +380,7 @@
     display: flex;
     flex-direction: column;
     position: relative;
-    padding: 24px 20px 20px;
+    padding: 120px 20px 20px; /* Desktop padding for FABs */
     min-height: 0;
 }
 
@@ -650,6 +650,11 @@
 
 /* ===== MOBILE OPTIMIZATIONS ===== */
 @media (max-width: 768px) {
+    /* Reduce top padding on mobile since panels slide up from bottom */
+    .side-panel__content {
+        padding: 24px 20px 20px; /* Much less padding needed on mobile */
+    }
+    
     .floating-nav {
         top: 15px;
         gap: 10px;
@@ -1646,14 +1651,14 @@ textarea.panel-input {
 /* iOS device-specific optimizations */
 .ios-device .side-panel {
     /* Ensure panels work well with iOS safe areas */
-    padding-top: max(24px, calc(24px + env(safe-area-inset-top, 0px)));
+    padding-top: max(120px, calc(120px + env(safe-area-inset-top, 0px)));
     padding-bottom: max(20px, env(safe-area-inset-bottom, 20px));
 }
 
 /* Ensure content area respects safe areas */
 .ios-device .side-panel__content {
     /* Add safe area to existing padding */
-    padding-top: calc(24px + env(safe-area-inset-top, 0px));
+    padding-top: calc(120px + env(safe-area-inset-top, 0px));
 }
 
 .ios-device .app-header {
@@ -1720,6 +1725,11 @@ textarea.panel-input {
     .side-panel .color-option {
         min-width: 40px;
         min-height: 40px;
+    }
+    
+    /* iOS device mobile top padding adjustment */
+    .ios-device .side-panel__content {
+        padding-top: calc(24px + env(safe-area-inset-top, 0px));
     }
     
     /* Mobile FABs - reduced by 25% from 84px to 63px */

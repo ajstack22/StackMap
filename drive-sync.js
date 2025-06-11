@@ -144,7 +144,9 @@ class GoogleDriveSync {
             this.tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CONFIG.GOOGLE_CLIENT_ID,
                 scope: 'https://www.googleapis.com/auth/drive.file',
-                callback: this.handleTokenResponse.bind(this),
+                callback: async (response) => {
+                    await this.handleTokenResponse(response);
+                },
                 error_callback: this.handleTokenError.bind(this)
             });
 
@@ -713,10 +715,29 @@ class GoogleDriveSync {
 
     async ensureStackMapFolder() {
         try {
-            // Make sure Drive API is loaded
+            // Make sure Drive API is loaded with retry
             if (!gapi.client.drive) {
-                console.error('[GoogleDriveSync] Drive API not loaded, attempting to load...');
-                await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+                console.log('[GoogleDriveSync] Drive API not loaded, attempting to load...');
+                let retries = 3;
+                while (retries > 0 && !gapi.client.drive) {
+                    try {
+                        await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
+                        if (gapi.client.drive) {
+                            console.log('[GoogleDriveSync] Drive API loaded successfully');
+                            break;
+                        }
+                    } catch (error) {
+                        console.error('[GoogleDriveSync] Failed to load Drive API, retries left:', retries - 1);
+                        retries--;
+                        if (retries > 0) {
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                        }
+                    }
+                }
+                
+                if (!gapi.client.drive) {
+                    throw new Error('Failed to load Drive API after multiple attempts');
+                }
             }
             
             // Search for existing folder
