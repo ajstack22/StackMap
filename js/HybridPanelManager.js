@@ -28,6 +28,19 @@ class HybridPanelManager {
             icon: '👤'
         };
         
+        // Initialize dynamic menu system
+        console.log('HybridPanelManager constructor - initializing menu system');
+        this.menuSystem = new DynamicMenuSystem(app);
+        this.registerMenuConfigurations();
+        
+        // Menu states for dynamic menus
+        this.menuStates = {
+            activityLibrary: {
+                selectedActivities: { user: [], group: [], base: [] },
+                selectedCount: 0
+            }
+        };
+        
         this.initializePanels();
         this.setupEventListeners();
         
@@ -37,6 +50,19 @@ class HybridPanelManager {
         // Initialize mobile navigation enhancements
         this.initializeBackButtonHandling();
         this.initializeIOSEnhancements();
+    }
+
+    registerMenuConfigurations() {
+        // Register all menu configurations from MenuConfigurations.js
+        console.log('Registering menu configurations, window.MenuConfigurations:', window.MenuConfigurations);
+        if (window.MenuConfigurations) {
+            Object.entries(window.MenuConfigurations).forEach(([id, config]) => {
+                console.log('Registering menu:', id);
+                this.menuSystem.registerMenu(id, config);
+            });
+        } else {
+            console.error('window.MenuConfigurations not found during registration!');
+        }
     }
 
     initializePanels() {
@@ -86,14 +112,8 @@ class HybridPanelManager {
         leftPanel.innerHTML = `
             <div class="mobile-handle" onclick="hybridPanelManager.closePanel('left')" aria-label="Close panel"></div>
             <div class="desktop-handle" onclick="hybridPanelManager.closePanel('left')" aria-label="Close panel"></div>
-            <div class="side-panel__content">
-                <h3>Preferences</h3>
-                <div id="hybridLeftContent">
-                    <!-- Content will be rendered here -->
-                </div>
-                <button class="panel-close" onclick="hybridPanelManager.closePanel('left')">
-                    Done
-                </button>
+            <div class="side-panel__content" id="hybridLeftContent">
+                <!-- Dynamic content will be rendered here -->
             </div>
         `;
         
@@ -104,14 +124,8 @@ class HybridPanelManager {
         rightPanel.innerHTML = `
             <div class="mobile-handle" onclick="hybridPanelManager.closePanel('right')" aria-label="Close panel"></div>
             <div class="desktop-handle" onclick="hybridPanelManager.closePanel('right')" aria-label="Close panel"></div>
-            <div class="side-panel__content">
-                <h3>Settings</h3>
-                <div id="hybridRightContent">
-                    <!-- Content will be rendered here -->
-                </div>
-                <button class="panel-close" onclick="hybridPanelManager.closePanel('right')">
-                    Done
-                </button>
+            <div class="side-panel__content" id="hybridRightContent">
+                <!-- Dynamic content will be rendered here -->
             </div>
         `;
         
@@ -278,12 +292,41 @@ class HybridPanelManager {
 
     renderPanelContent(side) {
         const contentDiv = document.getElementById(`hybrid${side.charAt(0).toUpperCase() + side.slice(1)}Content`);
+        console.log('renderPanelContent called:', { side, contentDiv: contentDiv ? 'found' : 'not found' });
         
-        if (side === 'left') {
-            contentDiv.innerHTML = this.renderPreferencesContent();
-        } else {
-            contentDiv.innerHTML = this.renderManagementContent();
+        // Determine which menu to show based on state
+        let menuId = side === 'left' ? 'preferences' : 'settings';
+        let menuState = {};
+        
+        if (side === 'right') {
+            // Check for special states in right panel
+            if (this.state.showingActivityForm) {
+                menuId = 'activityForm';
+                menuState = { 
+                    editingActivity: this.state.editingActivity,
+                    editingIndex: this.state.editingIndex
+                };
+            } else if (this.state.showingUserForm) {
+                menuId = 'userForm';
+                menuState = {
+                    editingUser: this.state.editingUser,
+                    editingUserId: this.state.editingUserId
+                };
+            } else if (this.state.showingSyncSettings) {
+                menuId = 'syncSettings';
+            } else if (this.state.showingLibraryMenu) {
+                menuId = 'activityLibrary';
+                menuState = this.menuStates.activityLibrary;
+            } else if (this.state.showingUserManagement) {
+                menuId = 'userManagement';
+            }
         }
+        
+        // Use dynamic menu system
+        console.log('About to render menu:', { menuId, side, menuState });
+        const menuContent = this.menuSystem.renderMenu(menuId, side, menuState);
+        console.log('Menu content length:', menuContent.length);
+        contentDiv.innerHTML = menuContent;
     }
 
     renderPreferencesContent() {
@@ -3300,6 +3343,215 @@ class HybridPanelManager {
             this.app.render();
             this.app.showNotification(`Added ${addedCount} ${addedCount === 1 ? 'activity' : 'activities'} to your day`, 'success');
         }
+    }
+
+    // New methods for dynamic menu system
+    showLibraryMenu() {
+        this.state.showingLibraryMenu = true;
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = false;
+        this.state.showingSyncSettings = false;
+        this.state.showingUserManagement = false;
+        
+        // Reset library selection state
+        this.menuStates.activityLibrary = {
+            selectedActivities: { user: [], group: [], base: [] },
+            selectedCount: 0
+        };
+        
+        this.renderPanelContent('right');
+    }
+
+    showUserManagement() {
+        this.state.showingUserManagement = true;
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = false;
+        this.state.showingSyncSettings = false;
+        this.state.showingLibraryMenu = false;
+        
+        this.renderPanelContent('right');
+    }
+
+    refreshCurrentPanel() {
+        if (this.state.leftPanelOpen) {
+            this.renderPanelContent('left');
+        } else if (this.state.rightPanelOpen) {
+            this.renderPanelContent('right');
+        }
+    }
+
+    toggleLibrarySelection(type, index) {
+        if (!this.menuStates.activityLibrary.selectedActivities[type]) {
+            this.menuStates.activityLibrary.selectedActivities[type] = [];
+        }
+        
+        const selected = this.menuStates.activityLibrary.selectedActivities[type];
+        const idx = selected.indexOf(index);
+        
+        if (idx > -1) {
+            selected.splice(idx, 1);
+        } else {
+            selected.push(index);
+        }
+        
+        // Update count
+        this.menuStates.activityLibrary.selectedCount = 
+            (this.menuStates.activityLibrary.selectedActivities.user?.length || 0) +
+            (this.menuStates.activityLibrary.selectedActivities.group?.length || 0) +
+            (this.menuStates.activityLibrary.selectedActivities.base?.length || 0);
+        
+        this.refreshCurrentPanel();
+    }
+
+    addSelectedToLibrary() {
+        const state = this.menuStates.activityLibrary;
+        const activities = [];
+        
+        // Collect selected activities
+        if (state.selectedActivities.user) {
+            state.selectedActivities.user.forEach(index => {
+                if (this.app.appState.userActivities && this.app.appState.userActivities[index]) {
+                    activities.push(this.app.appState.userActivities[index]);
+                }
+            });
+        }
+        
+        if (state.selectedActivities.group) {
+            state.selectedActivities.group.forEach(index => {
+                if (this.app.appState.groupActivities && this.app.appState.groupActivities[index]) {
+                    activities.push(this.app.appState.groupActivities[index]);
+                }
+            });
+        }
+        
+        if (state.selectedActivities.base) {
+            state.selectedActivities.base.forEach(index => {
+                if (this.app.baseActivities && this.app.baseActivities[index]) {
+                    activities.push(this.app.baseActivities[index]);
+                }
+            });
+        }
+        
+        // Add activities to current day
+        let addedCount = 0;
+        activities.forEach(activity => {
+            try {
+                this.app.appState.addActivity({
+                    title: activity.title,
+                    icon: activity.icon || '📌',
+                    cardType: activity.cardType || 'recurring',
+                    visible: true
+                });
+                addedCount++;
+            } catch (error) {
+                console.error('Failed to add activity:', error);
+            }
+        });
+        
+        // Close panel and show result
+        this.closeAllPanels();
+        
+        if (addedCount > 0) {
+            this.app.render();
+            this.app.showNotification(`Added ${addedCount} ${addedCount === 1 ? 'activity' : 'activities'} to your day`, 'success');
+        }
+    }
+
+    // Activity form methods
+    cancelActivityForm() {
+        this.state.showingActivityForm = false;
+        this.state.editingActivity = null;
+        this.state.editingIndex = -1;
+        this.renderPanelContent('right');
+    }
+
+    saveActivity() {
+        const title = document.getElementById('activityTitle')?.value?.trim();
+        const selectedIcon = document.querySelector('.icon-option.selected')?.getAttribute('data-icon') || this.newActivityDefaults.emoji;
+        const selectedColor = document.querySelector('.color-option.selected')?.getAttribute('data-color') || 'blue';
+        
+        if (!title) {
+            this.app.showNotification('Please enter an activity title', 'error');
+            return;
+        }
+        
+        const activity = {
+            title,
+            icon: selectedIcon,
+            color: selectedColor,
+            cardType: this.newActivityDefaults.cardType,
+            visible: true
+        };
+        
+        if (this.state.editingActivity && this.state.editingIndex >= 0) {
+            // Update existing activity
+            this.app.updateActivity(this.state.editingIndex, activity);
+        } else {
+            // Add new activity
+            this.app.appState.addActivity(activity);
+        }
+        
+        // Reset form state
+        this.cancelActivityForm();
+        this.app.render();
+    }
+
+    // User form methods
+    cancelUserForm() {
+        this.state.showingUserForm = false;
+        this.state.editingUser = null;
+        this.state.editingUserId = null;
+        this.renderPanelContent('right');
+    }
+
+    saveUser() {
+        const name = document.getElementById('userName')?.value?.trim();
+        const selectedIcon = document.querySelector('#userIconSelector .icon-option.selected')?.getAttribute('data-icon') || this.newUserDefaults.icon;
+        
+        if (!name) {
+            this.app.showNotification('Please enter a user name', 'error');
+            return;
+        }
+        
+        if (this.state.editingUserId) {
+            // Update existing user
+            this.app.appState.updateUser(this.state.editingUserId, { name, icon: selectedIcon });
+        } else {
+            // Add new user
+            this.app.appState.addUser(name, selectedIcon);
+        }
+        
+        // Reset form state
+        this.cancelUserForm();
+        this.app.render();
+        this.updateSubtitle();
+    }
+
+    // Sync methods
+    toggleSync(enabled) {
+        if (enabled) {
+            this.app.driveSync?.authenticate();
+        } else {
+            this.app.driveSync?.disconnect();
+        }
+    }
+
+    syncNow() {
+        this.app.driveSync?.syncNow();
+    }
+
+    disconnectSync() {
+        this.app.driveSync?.disconnect();
+        this.renderPanelContent('right');
+    }
+
+    openSyncSettings() {
+        this.state.showingSyncSettings = true;
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = false;
+        this.state.showingLibraryMenu = false;
+        this.state.showingUserManagement = false;
+        this.renderPanelContent('right');
     }
 }
 
