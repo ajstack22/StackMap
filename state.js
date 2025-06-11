@@ -626,8 +626,33 @@ class AppState {
         } else if (libraryType === 'group') {
             return this.users.groupLibrary || [];
         } else if (libraryType === 'base') {
-            // Base library will be loaded from default-activities.js
-            return [];
+            // Base library loaded from default-activities.js
+            // Combine DEFAULT_ACTIVITIES and ACTIVITY_LIBRARY
+            const baseCards = [];
+            
+            // Add default activities
+            if (window.DEFAULT_ACTIVITIES) {
+                window.DEFAULT_ACTIVITIES.forEach((activity, index) => {
+                    baseCards.push({
+                        ...activity,
+                        id: `base_default_${index}`,
+                        source: 'default'
+                    });
+                });
+            }
+            
+            // Add extended library activities
+            if (window.ACTIVITY_LIBRARY) {
+                Object.entries(window.ACTIVITY_LIBRARY).forEach(([key, activity]) => {
+                    baseCards.push({
+                        ...activity,
+                        id: `base_library_${key}`,
+                        source: 'library'
+                    });
+                });
+            }
+            
+            return baseCards;
         }
         return [];
     }
