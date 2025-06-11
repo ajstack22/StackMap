@@ -1139,7 +1139,9 @@ class StackMapApp {
         
         // Wait 5 seconds after last change before auto-syncing
         this.autoSyncTimeout = setTimeout(() => {
-            this.driveSync.autoSync();
+            if (this.driveSync && this.driveSync.autoSync) {
+                this.driveSync.autoSync();
+            }
         }, 5000);
     }
 
