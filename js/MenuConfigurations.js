@@ -23,34 +23,34 @@ window.MenuConfigurations = {
                 type: 'custom',
                 label: 'Theme Colors',
                 render: function(state, menuSystem) {
-                    return menuSystem.app.hybridPanelManager.renderColorPicker();
+                    return window.hybridPanelManager.renderColorPicker();
                 }
             },
             {
                 type: 'custom',
                 label: 'App Title & Subtitle',
                 render: function(state, menuSystem) {
-                    return menuSystem.app.hybridPanelManager.renderTitleSubtitleEditorForPreferences();
+                    return window.hybridPanelManager.renderTitleSubtitleEditorForPreferences();
                 }
             },
             {
                 type: 'custom',
                 label: 'Card Display',
                 render: function(state, menuSystem) {
-                    return menuSystem.app.hybridPanelManager.renderDisplayModeSelector();
+                    return window.hybridPanelManager.renderDisplayModeSelector();
                 }
             },
             {
                 type: 'custom',
                 label: 'Completion Indicators',
                 render: function(state, menuSystem) {
-                    return menuSystem.app.hybridPanelManager.renderCompletionToggle();
+                    return window.hybridPanelManager.renderCompletionToggle();
                 }
             },
             {
                 type: 'custom',
                 render: function(state, menuSystem) {
-                    return menuSystem.app.hybridPanelManager.renderCelebrationPreferences();
+                    return window.hybridPanelManager.renderCelebrationPreferences();
                 }
             }
         ]
@@ -84,7 +84,7 @@ window.MenuConfigurations = {
                     html += `
                         <div class="panel-section">
                             <label>Current User</label>
-                            ${app.hybridPanelManager.renderUserSelector()}
+                            ${window.hybridPanelManager.renderUserSelector()}
                             ${app.grownupMode ? `
                                 <button class="admin-btn" style="margin-top: 12px; width: 100%;" onclick="hybridPanelManager.addNewUser()">
                                     <span class="material-icons">person_add</span>
@@ -98,7 +98,7 @@ window.MenuConfigurations = {
                     html += `
                         <div class="panel-section">
                             <label>Day Selection</label>
-                            ${app.hybridPanelManager.renderDaySelector()}
+                            ${window.hybridPanelManager.renderDaySelector()}
                         </div>
                     `;
                     
@@ -144,7 +144,7 @@ window.MenuConfigurations = {
                         const editSwitch = document.getElementById('editModeSwitch');
                         if (editSwitch) {
                             editSwitch.addEventListener('change', (e) => {
-                                app.hybridPanelManager.handleEditModeSwitch(e.target.checked);
+                                window.hybridPanelManager.handleEditModeSwitch(e.target.checked);
                             });
                         }
                     }, 0);
@@ -171,13 +171,18 @@ window.MenuConfigurations = {
                     // Add hint
                     html += '<div class="library-hint">Select activities to add to your stack</div>';
                     
+                    // Get libraries using the correct method
+                    const userActivities = app.appState.getLibrary('user');
+                    const groupActivities = app.appState.getLibrary('group');
+                    const baseActivities = app.appState.getLibrary('base');
+                    
                     // User Activities
-                    if (app.appState.userActivities && app.appState.userActivities.length > 0) {
+                    if (userActivities && userActivities.length > 0) {
                         html += '<div class="library-section">';
                         html += '<h4>My Activities</h4>';
                         html += '<div class="activity-grid">';
                         
-                        app.appState.userActivities.forEach((activity, index) => {
+                        userActivities.forEach((activity, index) => {
                             const id = `user-activity-${index}`;
                             const isSelected = state.selectedActivities && state.selectedActivities.user && state.selectedActivities.user.includes(index);
                             
@@ -192,12 +197,12 @@ window.MenuConfigurations = {
                     }
                     
                     // Group Activities
-                    if (app.appState.groupActivities && app.appState.groupActivities.length > 0) {
+                    if (groupActivities && groupActivities.length > 0) {
                         html += '<div class="library-section">';
                         html += '<h4>Group Activities</h4>';
                         html += '<div class="activity-grid">';
                         
-                        app.appState.groupActivities.forEach((activity, index) => {
+                        groupActivities.forEach((activity, index) => {
                             const id = `group-activity-${index}`;
                             const isSelected = state.selectedActivities && state.selectedActivities.group && state.selectedActivities.group.includes(index);
                             
@@ -212,12 +217,12 @@ window.MenuConfigurations = {
                     }
                     
                     // Base Activities
-                    if (app.baseActivities && app.baseActivities.length > 0) {
+                    if (baseActivities && baseActivities.length > 0) {
                         html += '<div class="library-section">';
                         html += '<h4>StackMap Activities</h4>';
                         html += '<div class="activity-grid">';
                         
-                        app.baseActivities.forEach((activity, index) => {
+                        baseActivities.forEach((activity, index) => {
                             const id = `base-activity-${index}`;
                             const isSelected = state.selectedActivities && state.selectedActivities.base && state.selectedActivities.base.includes(index);
                             
@@ -235,32 +240,37 @@ window.MenuConfigurations = {
                     
                     // Add click handlers after rendering
                     setTimeout(() => {
+                        // Re-get the libraries to ensure they're accessible in this scope
+                        const userLibrary = app.appState.getLibrary('user');
+                        const groupLibrary = app.appState.getLibrary('group');
+                        const baseLibrary = app.appState.getLibrary('base');
+                        
                         // User activities
-                        app.appState.userActivities?.forEach((_, index) => {
+                        userLibrary?.forEach((_, index) => {
                             const element = document.getElementById(`user-activity-${index}`);
                             if (element) {
                                 element.addEventListener('click', () => {
-                                    app.hybridPanelManager.toggleLibrarySelection('user', index);
+                                    window.hybridPanelManager.toggleLibrarySelection('user', index);
                                 });
                             }
                         });
                         
                         // Group activities
-                        app.appState.groupActivities?.forEach((_, index) => {
+                        groupLibrary?.forEach((_, index) => {
                             const element = document.getElementById(`group-activity-${index}`);
                             if (element) {
                                 element.addEventListener('click', () => {
-                                    app.hybridPanelManager.toggleLibrarySelection('group', index);
+                                    window.hybridPanelManager.toggleLibrarySelection('group', index);
                                 });
                             }
                         });
                         
                         // Base activities
-                        app.baseActivities?.forEach((_, index) => {
+                        baseLibrary?.forEach((_, index) => {
                             const element = document.getElementById(`base-activity-${index}`);
                             if (element) {
                                 element.addEventListener('click', () => {
-                                    app.hybridPanelManager.toggleLibrarySelection('base', index);
+                                    window.hybridPanelManager.toggleLibrarySelection('base', index);
                                 });
                             }
                         });
@@ -271,9 +281,23 @@ window.MenuConfigurations = {
             }
         ],
         footer: {
-            type: 'dynamic-button',
-            textTemplate: 'Add {count} to Library',
-            action: 'addSelectedToLibrary'
+            type: 'custom',
+            render: function(state, menuSystem) {
+                const count = state.selectedCount || 0;
+                const buttonText = count === 0 ? 'Select Activities' : `Add ${count} to Day`;
+                const disabled = count === 0 ? 'disabled' : '';
+                
+                return `
+                    <div style="display: flex; flex-direction: column; gap: 12px;">
+                        <button class="footer-button primary-button" ${disabled} onclick="window.hybridPanelManager.addSelectedToLibrary()">
+                            ${buttonText}
+                        </button>
+                        <button class="panel-close" onclick="window.hybridPanelManager.closePanel('right')">
+                            Done
+                        </button>
+                    </div>
+                `;
+            }
         }
     },
 
@@ -354,12 +378,12 @@ window.MenuConfigurations = {
                         
                         // Cancel button
                         document.getElementById('cancelActivityBtn')?.addEventListener('click', () => {
-                            app.hybridPanelManager.cancelActivityForm();
+                            window.hybridPanelManager.cancelActivityForm();
                         });
                         
                         // Save button
                         document.getElementById('saveActivityBtn')?.addEventListener('click', () => {
-                            app.hybridPanelManager.saveActivity();
+                            window.hybridPanelManager.saveActivity();
                         });
                     }, 0);
                     
@@ -424,12 +448,12 @@ window.MenuConfigurations = {
                         
                         // Cancel button
                         document.getElementById('cancelUserBtn')?.addEventListener('click', () => {
-                            app.hybridPanelManager.cancelUserForm();
+                            window.hybridPanelManager.cancelUserForm();
                         });
                         
                         // Save button
                         document.getElementById('saveUserBtn')?.addEventListener('click', () => {
-                            app.hybridPanelManager.saveUser();
+                            window.hybridPanelManager.saveUser();
                         });
                     }, 0);
                     
@@ -472,14 +496,14 @@ window.MenuConfigurations = {
                     setTimeout(() => {
                         // Add user button
                         document.getElementById('addUserBtn')?.addEventListener('click', () => {
-                            app.hybridPanelManager.addNewUser();
+                            window.hybridPanelManager.addNewUser();
                         });
                         
                         // Edit user buttons
                         document.querySelectorAll('.edit-user-btn').forEach(btn => {
                             btn.addEventListener('click', (e) => {
                                 const userId = e.target.getAttribute('data-user-id');
-                                app.hybridPanelManager.editExistingUser(userId);
+                                window.hybridPanelManager.editExistingUser(userId);
                             });
                         });
                     }, 0);
@@ -539,15 +563,15 @@ window.MenuConfigurations = {
                     // Add event handlers
                     setTimeout(() => {
                         document.getElementById('syncToggle')?.addEventListener('change', (e) => {
-                            app.hybridPanelManager.toggleSync(e.target.checked);
+                            window.hybridPanelManager.toggleSync(e.target.checked);
                         });
                         
                         document.getElementById('syncNowBtn')?.addEventListener('click', () => {
-                            app.hybridPanelManager.syncNow();
+                            window.hybridPanelManager.syncNow();
                         });
                         
                         document.getElementById('disconnectBtn')?.addEventListener('click', () => {
-                            app.hybridPanelManager.disconnectSync();
+                            window.hybridPanelManager.disconnectSync();
                         });
                     }, 0);
                     

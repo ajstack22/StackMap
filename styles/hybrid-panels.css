@@ -2438,8 +2438,9 @@ textarea.panel-input {
     position: sticky;
     bottom: 0;
     background: inherit;
-    padding: 16px 0;
+    padding: 16px 20px;
     margin-top: auto;
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .footer-button {
@@ -2579,6 +2580,9 @@ textarea.panel-input {
     flex-direction: column;
     gap: 24px;
     padding: 8px;
+    flex: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 300px);
 }
 
 .library-hint {

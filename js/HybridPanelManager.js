@@ -62,6 +62,18 @@ class HybridPanelManager {
             });
         } else {
             console.error('window.MenuConfigurations not found during registration!');
+            // Try again after a short delay
+            setTimeout(() => {
+                console.log('Retrying menu registration...');
+                if (window.MenuConfigurations) {
+                    Object.entries(window.MenuConfigurations).forEach(([id, config]) => {
+                        console.log('Registering menu (retry):', id);
+                        this.menuSystem.registerMenu(id, config);
+                    });
+                } else {
+                    console.error('window.MenuConfigurations still not found after retry!');
+                }
+            }, 100);
         }
     }
 
@@ -3182,168 +3194,6 @@ class HybridPanelManager {
             }, 200);
         }
     }
-    
-    /**
-     * Show library menu for adding activities
-     */
-    showLibraryMenu() {
-        // Open right panel with library interface
-        this.openPanel('right');
-        
-        const content = document.getElementById('hybridRightContent');
-        if (!content) return;
-        
-        // Get libraries
-        const userLibrary = this.app.appState.getLibrary('user');
-        const groupLibrary = this.app.appState.getLibrary('group');
-        const baseLibrary = this.app.appState.getLibrary('base');
-        
-        // Track selected cards
-        this.selectedLibraryCards = new Set();
-        
-        content.innerHTML = `
-            <div class="library-menu">
-                <div class="library-header">
-                    <h3>Activity Library</h3>
-                    <p class="library-hint">Select activities to add to your day</p>
-                </div>
-                
-                <div class="library-content">
-                    <div class="library-sections">
-                        ${userLibrary.length > 0 ? `
-                            <div class="library-section">
-                                <h4>Your Library</h4>
-                                <div class="library-cards">
-                                    ${this.renderLibraryCards(userLibrary, 'user')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        ${groupLibrary.length > 0 ? `
-                            <div class="library-section">
-                                <h4>Group Library</h4>
-                                <div class="library-cards">
-                                    ${this.renderLibraryCards(groupLibrary, 'group')}
-                                </div>
-                            </div>
-                        ` : ''}
-                        
-                        <div class="library-section">
-                            <h4>Base Templates</h4>
-                            <div class="library-cards">
-                                ${this.renderLibraryCards(baseLibrary, 'base')}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="library-footer">
-                    <button class="admin-btn admin-btn--primary" 
-                            onclick="hybridPanelManager.addSelectedCards()"
-                            id="addToDay"
-                            disabled>
-                        <span class="material-icons">add_circle</span>
-                        <span>Add to Day</span>
-                    </button>
-                </div>
-            </div>
-        `;
-    }
-    
-    /**
-     * Render library cards as selectable list items
-     */
-    renderLibraryCards(cards, libraryType) {
-        return cards.map(card => `
-            <div class="library-card" 
-                 data-card-id="${card.id}"
-                 data-library-type="${libraryType}">
-                <label for="lib-${card.id}" class="library-card-label">
-                    <input type="checkbox" 
-                           class="library-card-checkbox"
-                           id="lib-${card.id}"
-                           onchange="hybridPanelManager.updateAddButton()">
-                    <span class="library-card-content">
-                        <span class="library-card-icon">${card.icon}</span>
-                        <span class="library-card-title">${card.title}</span>
-                    </span>
-                </label>
-            </div>
-        `).join('');
-    }
-    
-    /**
-     * Toggle library card selection
-     */
-    toggleCardSelection(cardId, libraryType) {
-        const checkbox = document.getElementById(`lib-${cardId}`);
-        if (checkbox) {
-            checkbox.checked = !checkbox.checked;
-            this.updateAddButton();
-        }
-    }
-    
-    /**
-     * Update Add to Day button state
-     */
-    updateAddButton() {
-        const checkboxes = document.querySelectorAll('.library-card-checkbox:checked');
-        const addButton = document.getElementById('addToDay');
-        if (addButton) {
-            addButton.disabled = checkboxes.length === 0;
-            const span = addButton.querySelector('span:last-child');
-            if (span) {
-                span.textContent = checkboxes.length > 0 
-                    ? `Add ${checkboxes.length} to Day` 
-                    : 'Add to Day';
-            }
-        }
-    }
-    
-    /**
-     * Add selected library cards to current day
-     */
-    addSelectedCards() {
-        const checkboxes = document.querySelectorAll('.library-card-checkbox:checked');
-        let addedCount = 0;
-        
-        checkboxes.forEach(checkbox => {
-            const cardDiv = checkbox.closest('.library-card');
-            const cardId = cardDiv.dataset.cardId;
-            const libraryType = cardDiv.dataset.libraryType;
-            
-            // Get the card from the appropriate library
-            const library = this.app.appState.getLibrary(libraryType);
-            const card = library.find(c => c.id === cardId);
-            
-            if (card) {
-                // Create new activity from library card
-                const newActivity = {
-                    title: card.title,
-                    description: card.description || '',
-                    icon: card.icon,
-                    cardType: card.cardType || 'recurring',
-                    time: card.time || '',
-                    visible: true
-                };
-                
-                try {
-                    this.app.appState.addActivity(newActivity);
-                    addedCount++;
-                } catch (error) {
-                    console.error('Failed to add activity:', error);
-                }
-            }
-        });
-        
-        // Close panel and show result
-        this.closePanel('right');
-        
-        if (addedCount > 0) {
-            this.app.render();
-            this.app.showNotification(`Added ${addedCount} ${addedCount === 1 ? 'activity' : 'activities'} to your day`, 'success');
-        }
-    }
 
     // New methods for dynamic menu system
     showLibraryMenu() {
@@ -3407,27 +3257,32 @@ class HybridPanelManager {
         const state = this.menuStates.activityLibrary;
         const activities = [];
         
+        // Get libraries using the correct method
+        const userLibrary = this.app.appState.getLibrary('user');
+        const groupLibrary = this.app.appState.getLibrary('group');
+        const baseLibrary = this.app.appState.getLibrary('base');
+        
         // Collect selected activities
         if (state.selectedActivities.user) {
             state.selectedActivities.user.forEach(index => {
-                if (this.app.appState.userActivities && this.app.appState.userActivities[index]) {
-                    activities.push(this.app.appState.userActivities[index]);
+                if (userLibrary && userLibrary[index]) {
+                    activities.push(userLibrary[index]);
                 }
             });
         }
         
         if (state.selectedActivities.group) {
             state.selectedActivities.group.forEach(index => {
-                if (this.app.appState.groupActivities && this.app.appState.groupActivities[index]) {
-                    activities.push(this.app.appState.groupActivities[index]);
+                if (groupLibrary && groupLibrary[index]) {
+                    activities.push(groupLibrary[index]);
                 }
             });
         }
         
         if (state.selectedActivities.base) {
             state.selectedActivities.base.forEach(index => {
-                if (this.app.baseActivities && this.app.baseActivities[index]) {
-                    activities.push(this.app.baseActivities[index]);
+                if (baseLibrary && baseLibrary[index]) {
+                    activities.push(baseLibrary[index]);
                 }
             });
         }
