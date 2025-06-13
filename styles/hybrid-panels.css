@@ -51,9 +51,8 @@
 /* ===== FLOATING ACTION BUTTONS ===== */
 .floating-nav {
     position: fixed;
-    /* Further reduced to align with smaller header */
-    top: 26px; /* Reduced by 25% from 35px */
-    transform: translateY(-50%);
+    /* Positioned to align with header */
+    top: 20px;
     z-index: 1005;
     display: flex;
     flex-direction: column;
@@ -67,7 +66,7 @@ body:has(.side-panel.open) .floating-nav {
     opacity: 0;
     visibility: hidden;
     pointer-events: none;
-    transform: translateY(-50%) scale(0.8);
+    transform: scale(0.8);
     z-index: 1;
 }
 
@@ -633,7 +632,7 @@ body:has(.side-panel.open) .floating-nav {
     align-items: center;
     justify-content: center;
     gap: 4px;
-    padding: 12px 8px;
+    padding: 9px 8px;
     border: none;
     border-radius: 8px;
     background: transparent;
@@ -643,7 +642,7 @@ body:has(.side-panel.open) .floating-nav {
     text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     cursor: pointer;
     transition: all 0.2s ease;
-    min-height: 48px;
+    min-height: 36px;
     touch-action: manipulation;
     position: relative;
 }
@@ -836,7 +835,7 @@ body:has(.side-panel.open) .floating-nav {
     }
     
     .floating-nav {
-        top: 15px;
+        top: 20px;
         gap: 10px;
     }
     
@@ -849,14 +848,14 @@ body:has(.side-panel.open) .floating-nav {
     }
     
     .fab {
-        width: 48px;
-        height: 48px;
-        min-width: 48px;
-        min-height: 48px;
+        width: 56px;
+        height: 56px;
+        min-width: 56px;
+        min-height: 56px;
     }
     
     .fab .material-icons {
-        font-size: 24px;
+        font-size: 28px;
     }
     
     /* Mobile: Panels slide up from bottom */
@@ -1060,7 +1059,7 @@ body:has(.side-panel.open) .floating-nav {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 14px 18px;
+    padding: 10px 18px;
     border: none;
     border-radius: 10px;
     background: rgba(255, 255, 255, 0.2);
@@ -1069,7 +1068,7 @@ body:has(.side-panel.open) .floating-nav {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.3s ease;
-    min-height: 48px;
+    min-height: 36px;
     touch-action: manipulation;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
@@ -1540,7 +1539,7 @@ textarea.panel-input {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px 16px;
+    padding: 9px 16px;
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid transparent;
     border-radius: 8px;
@@ -1987,8 +1986,8 @@ textarea.panel-input {
     
     /* Mobile fixed header adjustments */
     .panel-fixed-header {
-        padding: 12px 16px;
-        min-height: 60px;
+        padding: 15px 16px;
+        min-height: 70px;
         position: fixed;
         top: 0;
         width: 100%;
@@ -1996,16 +1995,16 @@ textarea.panel-input {
     }
     
     .panel-fixed-header h3 {
-        font-size: 1.25rem;
+        font-size: 1.4rem;
     }
     
     .menu-title-icon {
-        font-size: 20px;
+        font-size: 24px;
     }
     
     /* Adjust scrollable content for fixed header */
     .panel-scrollable-content {
-        padding-top: 80px; /* Account for fixed header */
+        padding-top: 85px; /* Account for fixed header */
         padding-bottom: 80px; /* Account for fixed footer */
     }
     
@@ -2120,15 +2119,14 @@ textarea.panel-input {
     
     /* Adjust positioning for mobile header-content alignment */
     .floating-nav {
-        /* Reduced top spacing by 30% for tighter header */
-        /* Was 43px, now closer to header content */
-        top: 38px;
+        /* Keep FABs at top but ensure header has enough space */
+        top: 20px;
     }
     
     /* Mobile drawer open state */
     .drawer-open .floating-nav {
         /* Stay aligned with header-content on mobile */
-        top: 40px;
+        top: 20px;
     }
     
     /* Enhanced mobile touch targets */
@@ -2853,14 +2851,14 @@ textarea.panel-input {
     background: rgba(255, 255, 255, 0.2);
     color: white;
     border: 2px solid rgba(255, 255, 255, 0.3);
-    padding: 14px 36px;
+    padding: 10px 36px;
     border-radius: 25px;
     font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    min-height: 48px; /* Touch-friendly height */
+    min-height: 36px; /* Touch-friendly height */
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 

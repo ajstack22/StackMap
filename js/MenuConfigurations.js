@@ -88,20 +88,15 @@ window.MenuConfigurations = {
                     // Wrap content that should be visible based on mode
                     html += `<div id="settingsContent" style="${state.showingValidation ? 'display: none;' : ''}">`;
                     
-                    // User selector with stylized current user display
-                    const currentUser = app.appState.getCurrentUser();
+                    // User selector
                     html += `
                         <div class="panel-section">
                             <label>Current User</label>
-                            <div class="current-user-display">
-                                <span class="user-avatar">${currentUser?.icon || '👤'}</span>
-                                <span class="user-name">${currentUser?.name || 'Guest'}</span>
-                            </div>
+                            ${window.hybridPanelManager.renderUserSelector()}
                             ${app.grownupMode ? `
-                                ${window.hybridPanelManager.renderUserSelector()}
-                                <button class="admin-btn" style="margin-top: 12px; width: 100%;" onclick="hybridPanelManager.showUserManagement()">
-                                    <span class="material-icons">manage_accounts</span>
-                                    Manage Users
+                                <button class="admin-btn" style="margin-top: 12px; width: 100%;" onclick="hybridPanelManager.addNewUser()">
+                                    <span class="material-icons">person_add</span>
+                                    Add User
                                 </button>
                             ` : ''}
                         </div>

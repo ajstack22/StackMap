@@ -61,7 +61,7 @@
 }
 
 .subtitle {
-    font-size: 0.75rem; /* Reduced by 25% from 1rem */
+    font-size: 0.9375rem; /* Increased by 25% from 0.75rem */
     color: rgba(255, 255, 255, 0.8);
     margin: 18px 0 0 0; /* Reduced by 25% from 24px */
     padding: 0;

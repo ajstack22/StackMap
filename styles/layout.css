@@ -293,14 +293,14 @@ body.drawer-active .header-shadow {
 
 /* Body padding - cards stay in fixed position */
 body {
-    padding-top: 26px !important; /* Reduced by 25% from 35px */
+    padding-top: 40px !important; /* Reasonable gap below header */
     padding-bottom: 0 !important; /* Default: no bottom padding when closed */
     transition: padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Cards stay in same position when drawer opens */
 body.drawer-active {
-    padding-top: 64px !important; /* Reduced by 25% from 85px */
+    padding-top: 85px !important; /* Adjust for drawer expansion */
     padding-bottom: 0 !important; /* Normal bottom padding */
 }
 
@@ -324,12 +324,12 @@ body.drawer-active {
     }
     
     body {
-        padding-top: 19px !important; /* Reduced by 25% from 25px */
+        padding-top: 30px !important; /* Reasonable gap below header on mobile */
         padding-bottom: 0 !important; /* Default: no bottom padding when closed */
     }
     
     body.drawer-active {
-        padding-top: 56px !important; /* Reduced by 25% from 75px */
+        padding-top: 75px !important; /* Adjust for drawer expansion on mobile */
         padding-bottom: 0 !important; /* Normal bottom padding */
     }
 }
@@ -470,7 +470,7 @@ body.drawer-active {
 
 /* StackMap Subtitle */
 .stackmap-subtitle {
-    font-size: 0.64rem; /* Reduced by 25% from 0.85rem */
+    font-size: 0.8rem; /* Increased by 25% from 0.64rem */
     color: rgba(255, 255, 255, 0.7);
     font-weight: 400;
     letter-spacing: 0.5px;
