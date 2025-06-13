@@ -61,6 +61,32 @@ class AppState {
     }
 
     // === ACTIVITY MANAGEMENT ===
+    
+    // Ensure all activities have proper card numbers
+    ensureCardNumbers() {
+        // Fix card numbers for all users
+        Object.values(this.users.profiles).forEach(user => {
+            // Fix today's activities
+            if (user.activities) {
+                user.activities.forEach((activity, index) => {
+                    activity.cardNumber = index + 1;
+                });
+            }
+            
+            // Fix tomorrow's activities
+            if (user.tomorrowActivities) {
+                user.tomorrowActivities.forEach((activity, index) => {
+                    activity.cardNumber = index + 1;
+                });
+            }
+        });
+        
+        // Also fix the legacy activities array
+        const currentUser = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        this.activities = isToday ? [...currentUser.activities] : [...currentUser.tomorrowActivities];
+    }
+    
     addActivity(activity, position = 'bottom') {
         // Story 4: Get the current user and determine which activities to modify
         const user = this.getCurrentUser();
@@ -87,6 +113,11 @@ class AppState {
         } else {
             targetActivities.push(newActivity);
         }
+        
+        // Assign card numbers to all activities
+        targetActivities.forEach((activity, index) => {
+            activity.cardNumber = index + 1;
+        });
         
         // CRITICAL FIX: Sync the legacy activities array with current context
         if (isToday) {
@@ -139,6 +170,11 @@ class AppState {
         
         if (index >= 0 && index < targetActivities.length) {
             targetActivities.splice(index, 1);
+            
+            // Reassign card numbers after removal
+            targetActivities.forEach((activity, idx) => {
+                activity.cardNumber = idx + 1;
+            });
             
             // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
@@ -1059,6 +1095,9 @@ class AppState {
         
         // Reload current user data to ensure consistency
         this.loadUserData();
+        
+        // Ensure all activities have proper card numbers
+        this.ensureCardNumbers();
         
         this._triggerSave();
     }

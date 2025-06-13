@@ -1280,8 +1280,24 @@ class ActivityCard {
     }
 
     getDisplayIndex() {
+        // Use the stored cardNumber if available, otherwise calculate from visible position
+        if (this.activity.cardNumber !== undefined) {
+            // cardNumber is 1-based, convert to 0-based index
+            return this.activity.cardNumber - 1;
+        }
+        
+        // Fallback: calculate from visible activities
         const visibleActivities = this.appState.getCurrentActivities().filter(a => a.visible);
-        return visibleActivities.indexOf(this.activity);
+        let visibleIndex = 0;
+        for (let i = 0; i < visibleActivities.length; i++) {
+            if (visibleActivities[i] === this.activity || 
+                (visibleActivities[i].title === this.activity.title && 
+                 visibleActivities[i].icon === this.activity.icon)) {
+                return visibleIndex;
+            }
+            visibleIndex++;
+        }
+        return this.index; // Final fallback to actual index
     }
 
     // CHILD MODE: Click to complete (only if indicators are enabled)
