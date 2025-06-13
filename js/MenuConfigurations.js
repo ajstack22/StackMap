@@ -567,7 +567,7 @@ window.MenuConfigurations = {
         footer: {
             type: 'custom',
             render: function(state, menuSystem) {
-                const buttonText = state.editingActivity ? 'Save Card' : 'Add Card';
+                const buttonText = state.editingActivity ? 'Save & Close' : 'Add Card';
                 
                 return `
                     <button class="footer-button primary-button" onclick="window.hybridPanelManager.saveActivity()">

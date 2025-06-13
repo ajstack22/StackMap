@@ -1672,12 +1672,15 @@ class HybridPanelManager {
         // Get the correct activities array
         const currentActivities = this.app.appState.getCurrentActivities();
         
-        if (this.menuStates.activityForm.editingIndex >= 0) {
+        // Check for editing index in multiple places for compatibility
+        const editingIndex = this.menuStates.activityForm?.editingIndex ?? this.state.editingIndex;
+        
+        if (editingIndex >= 0) {
             // Editing existing activity - preserve completion status
-            const existingActivity = currentActivities[this.menuStates.activityForm.editingIndex];
+            const existingActivity = currentActivities[editingIndex];
             activity.completed = existingActivity.completed || false;
             activity.visible = existingActivity.visible !== undefined ? existingActivity.visible : true;
-            currentActivities[this.menuStates.activityForm.editingIndex] = activity;
+            currentActivities[editingIndex] = activity;
         } else {
             // Adding new activity
             currentActivities.push(activity);
