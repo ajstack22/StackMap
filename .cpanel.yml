@@ -2,7 +2,7 @@
 deployment:
   branch: main
   tasks:
-    - export DEPLOYPATH=/home/stachblx/public_html/stackmap.app
+    - export DEPLOYPATH=/home/stachblx/public_html/mu
     - /bin/cp -R . $DEPLOYPATH
     - /bin/rm -rf $DEPLOYPATH/.git
     - /bin/rm -rf $DEPLOYPATH/.cpanel.yml
