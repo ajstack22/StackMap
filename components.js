@@ -1368,7 +1368,8 @@ class ActivityCard {
         card.draggable = true;
         
         card.addEventListener('dragstart', (e) => {
-            if (!this.appState.ui.editMode) {
+            // Check current edit mode state
+            if (!this.app.grownupMode) {
                 e.preventDefault();
                 return;
             }
