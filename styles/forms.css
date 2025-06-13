@@ -55,6 +55,11 @@ input[type="file"] {
     color: #333;
 }
 
+/* Shake animation for validation errors */
+.form-field.shake {
+    animation: shake 0.5s ease-in-out;
+}
+
 /* ===== USER DROPDOWN ===== */
 .user-dropdown {
     background: white;

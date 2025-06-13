@@ -12,14 +12,14 @@
 }
 
 .stackmap-logo {
-    width: 36px; /* Full height of lowercase 't' including ascender */
-    height: 36px; /* Full height of lowercase 't' including ascender */
+    width: 32px; /* Match the height of lowercase 't' */
+    height: 32px; /* Match the height of lowercase 't' */
     flex-shrink: 0;
     display: flex;
     align-items: flex-end; /* Align to bottom */
     justify-content: center;
-    margin-right: 2px; /* Very close - only 2px gap before the 'S' */
-    margin-bottom: 2px; /* Fine-tune baseline alignment */
+    margin-right: 3px; /* Small gap before the 'S' */
+    margin-bottom: -2px; /* Align with baseline of text */
 }
 
 .stackmap-logo svg {
@@ -48,7 +48,7 @@
 
 /* Title and Subtitle */
 .title {
-    font-size: 1.8rem;
+    font-size: 1.35rem; /* Reduced by 25% from 1.8rem */
     font-weight: 700;
     color: white;
     margin: 0;
@@ -61,9 +61,9 @@
 }
 
 .subtitle {
-    font-size: 1rem; /* Increased from 0.85rem to make bigger */
+    font-size: 0.75rem; /* Reduced by 25% from 1rem */
     color: rgba(255, 255, 255, 0.8);
-    margin: 24px 0 0 0; /* INCREASED: More breathing room from title (16px → 24px) */
+    margin: 18px 0 0 0; /* Reduced by 25% from 24px */
     padding: 0;
     line-height: 1.2;
     outline: none;
@@ -74,7 +74,7 @@
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
-    top: 48px; /* Adjust based on title position */
+    top: 36px; /* Reduced by 25% from 48px */
 }
 
 /* Title/subtitle editing now handled through Management panel */
@@ -87,7 +87,7 @@
 
 /* Header content container */
 .header-content {
-    padding: 16px 10px 40px; /* Increased bottom padding to account for absolute subtitle */
+    padding: 12px 10px 30px; /* Reduced by 25% */
     position: relative; /* Ensure subtitle is positioned relative to this */
 }
 
@@ -478,10 +478,10 @@ body.drawer-active {
     }
     
     .stackmap-logo {
-        width: 32px; /* Match title text height (2.07rem ≈ 33px, using 32px for clean scaling) */
-        height: 32px;
-        margin-right: 1.4px; /* 30% reduction from 2px */
-        margin-bottom: 0; /* Remove baseline adjustment for center alignment */
+        width: 36px; /* Proportionally larger for mobile title size */
+        height: 36px;
+        margin-right: 3px; /* Small gap */
+        margin-bottom: -2px; /* Align with baseline */
     }
     
     .title {
@@ -535,10 +535,10 @@ body.drawer-active {
     }
     
     .stackmap-logo {
-        width: 26px; /* Match smaller title text height (1.6rem ≈ 26px) */
-        height: 26px;
-        margin-right: 1.4px; /* 30% reduction from 2px */
-        margin-bottom: 0; /* Remove baseline adjustment for center alignment */
+        width: 30px; /* Proportionally sized for smaller title */
+        height: 30px;
+        margin-right: 3px; /* Small gap */
+        margin-bottom: -2px; /* Align with baseline */
     }
     
     .title {

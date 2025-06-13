@@ -75,7 +75,7 @@ class AppState {
             title: activity.title || 'New Activity',
             description: activity.description || '',
             icon: activity.icon || CONFIG.DEFAULT_EMOJI,
-            visible: activity.visible !== undefined ? activity.visible : true,
+            visible: true, // Always visible since we removed the visibility toggle
             completed: activity.completed || false,
             cardType: this._validateCardType(activity.cardType || 'recurring'), // Story 1
             createdDate: activity.createdDate || new Date().toISOString().split('T')[0], // Story 1
@@ -163,6 +163,34 @@ class AppState {
             targetActivities.splice(toIndex, 0, removed);
             
             // CRITICAL FIX: Sync the legacy activities array with current context
+            if (isToday) {
+                this.activities = [...user.activities];
+            } else {
+                this.activities = [...user.tomorrowActivities];
+            }
+            
+            this._triggerSave();
+        }
+    }
+
+    updateCardPosition(currentIndex, newIndex) {
+        // Get the current user and determine which activities to modify
+        const user = this.getCurrentUser();
+        const isToday = this.ui.currentDay === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
+        
+        if (currentIndex >= 0 && currentIndex < targetActivities.length &&
+            newIndex >= 0 && newIndex < targetActivities.length) {
+            // Move the card
+            const [removed] = targetActivities.splice(currentIndex, 1);
+            targetActivities.splice(newIndex, 0, removed);
+            
+            // Update card numbers for all activities
+            targetActivities.forEach((activity, index) => {
+                activity.cardNumber = index + 1;
+            });
+            
+            // Sync the legacy activities array with current context
             if (isToday) {
                 this.activities = [...user.activities];
             } else {

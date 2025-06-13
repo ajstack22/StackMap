@@ -70,10 +70,10 @@ class StackMapApp {
         // Initialize universal modal outside-click behavior
         this.initializeModalBehavior();
         
-        // If no saved data, create default activities
-        if (!hasData || this.appState.activities.length === 0) {
-            this.createDefaultActivities();
-        }
+        // Default activities are now loaded from Card Library, not automatically
+        // if (!hasData || this.appState.activities.length === 0) {
+        //     this.createDefaultActivities();
+        // }
         
         // ALWAYS apply theme to ensure CSS variables are set
         this.appState.applyTheme();
@@ -1272,10 +1272,10 @@ class StackMapApp {
         if (userId && userId !== this.appState.users.currentUserId) {
             this.appState.switchUser(userId);
             
-            // Check if the new user needs default activities
-            if (this.appState.activities.length === 0) {
-                this.createDefaultActivities();
-            }
+            // Default activities are now loaded from Card Library, not automatically
+            // if (this.appState.activities.length === 0) {
+            //     this.createDefaultActivities();
+            // }
             
             // Apply user settings to body classes
             this.appState.applyUserSettings();
@@ -1376,6 +1376,9 @@ class StackMapApp {
     switchDay(day) {
         // console.log('switchDay called with:', day, 'current:', this.appState.getCurrentDay());
         if (this.appState.getCurrentDay() !== day) {
+            // Save current scroll position
+            const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+            
             this.appState.setCurrentDay(day);
             
             // Ensure tomorrow has activities if empty and user has today activities
@@ -1436,6 +1439,15 @@ class StackMapApp {
             
             this.render();
             this.updateDayCounts();
+            
+            // Restore scroll position after render
+            requestAnimationFrame(() => {
+                window.scrollTo({
+                    top: currentScroll,
+                    left: 0,
+                    behavior: 'instant'
+                });
+            });
             
         // console.log('After switchDay - Current activities:', this.appState.getCurrentActivities().length);
         // console.log('Edit mode:', this.appState.ui.editMode);
@@ -1986,12 +1998,27 @@ class StackMapApp {
         }
     }
 
-    render() {
+    render(preserveScroll = false) {
+        let currentScroll = 0;
+        if (preserveScroll) {
+            currentScroll = window.pageYOffset || document.documentElement.scrollTop;
+        }
+        
         this.renderer.render();
         setTimeout(() => {
             this.syncFixedHeader();
             // Reapply filter if one exists
             this.reapplyFilter();
+            
+            if (preserveScroll && currentScroll > 0) {
+                requestAnimationFrame(() => {
+                    window.scrollTo({
+                        top: currentScroll,
+                        left: 0,
+                        behavior: 'instant'
+                    });
+                });
+            }
         }, 0);
     }
 
@@ -2124,6 +2151,70 @@ class StackMapApp {
     toggleVisibility(index) {
         this.appState.toggleActivityVisibility(index);
         this.render();
+    }
+
+    toggleKeep(index) {
+        const user = this.appState.getCurrentUser();
+        const currentDay = this.appState.getCurrentDay();
+        
+        if (currentDay === 'today') {
+            // Handle pinning on Today view
+            const activities = user.activities;
+            if (activities[index]) {
+                const activity = activities[index];
+                activity.keep = !activity.keep;
+                
+                if (activity.keep) {
+                    // When pinning, also add to tomorrow
+                    const tomorrowCopy = {
+                        ...activity,
+                        completed: false,
+                        keep: true, // Keep the pin status on tomorrow's copy so it's visible
+                        cardNumber: user.tomorrowActivities.length + 1
+                    };
+                    user.tomorrowActivities.push(tomorrowCopy);
+                } else {
+                    // When unpinning, remove from tomorrow if it exists
+                    const activityTitle = activity.title;
+                    const activityIcon = activity.icon;
+                    user.tomorrowActivities = user.tomorrowActivities.filter(
+                        a => !(a.title === activityTitle && a.icon === activityIcon)
+                    );
+                }
+            }
+        } else if (currentDay === 'tomorrow') {
+            // Handle pinning on Tomorrow view
+            const activities = user.tomorrowActivities;
+            if (activities[index]) {
+                const activity = activities[index];
+                activity.keep = !activity.keep;
+                // No need to add to Today when pinning on Tomorrow
+            }
+        }
+        
+        this.appState._triggerSave();
+        this.render(true); // Preserve scroll when toggling pins
+        this.updateDayCounts();
+    }
+
+    editCardNumber(index) {
+        const activities = this.appState.getCurrentActivities();
+        const activity = activities[index];
+        if (!activity) return;
+
+        const currentNumber = activity.cardNumber || index + 1;
+        const newNumber = prompt(`Enter new position for "${activity.title}" (1-${activities.length}):`, currentNumber);
+        
+        if (newNumber && !isNaN(newNumber)) {
+            const num = parseInt(newNumber);
+            if (num >= 1 && num <= activities.length) {
+                // Update card numbers and resort
+                this.appState.updateCardPosition(index, num - 1);
+                this.render();
+            } else {
+                alert(`Please enter a number between 1 and ${activities.length}`);
+            }
+        }
     }
 
     deleteActivity(index) {
@@ -2413,7 +2504,19 @@ class StackMapApp {
 
     // Story 4: COMPLETE DAY FUNCTIONALITY
     showCompleteDayConfirmation() {
-        if (confirm('Complete today and plan tomorrow?\n\nThis will:\n• Move tomorrow\'s activities to today\n• Create new tomorrow from today\'s recurring/frequent cards\n• Remove completed single-use cards')) {
+        const user = this.appState.getCurrentUser();
+        
+        // Check if there are any activities to process
+        if (!user.activities || user.activities.length === 0) {
+            this.showSuccessToast('No cards to process. Add some cards first!');
+            return;
+        }
+        
+        // Count pinned cards
+        const pinnedCount = user.activities.filter(a => a.keep === true).length;
+        const tomorrowCount = user.tomorrowActivities ? user.tomorrowActivities.length : 0;
+        
+        if (confirm(`Complete today and move to tomorrow?\n\nThis will:\n• Move tomorrow's ${tomorrowCount} cards to today\n• Keep ${pinnedCount} pinned cards for tomorrow\n• Discard ${user.activities.length - pinnedCount} unpinned cards`)) {
             
             // 0.25 second delay before processing
             setTimeout(() => {
@@ -2438,25 +2541,17 @@ class StackMapApp {
         
         // Process today's activities for new tomorrow
         const newTomorrow = [];
-        todayActivities.forEach(activity => {
-            const cardType = activity.cardType || 'recurring';
-            
-            if (cardType === 'recurring') {
-                // Recurring cards go to tomorrow, reset to incomplete
+        todayActivities.forEach((activity, index) => {
+            // Keep cards that have the keep flag set to true
+            if (activity.keep === true) {
                 newTomorrow.push({
                     ...activity,
                     completed: false,
-                    visible: true
-                });
-            } else if (cardType === 'frequent') {
-                // Frequent cards go to tomorrow, hidden and incomplete
-                newTomorrow.push({
-                    ...activity,
-                    completed: false,
-                    visible: false
+                    keep: false, // Reset keep flag for next day
+                    cardNumber: newTomorrow.length + 1 // Assign new card numbers
                 });
             }
-            // Single-use cards are not carried forward
+            // Cards without keep flag are discarded
         });
         
         // Set new tomorrow
@@ -2476,12 +2571,10 @@ class StackMapApp {
         this.appState._triggerSave();
     }
     
-    // Process cards for new day - handles card types and sorting
+    // Process cards for new day - handles keep/discard logic
     processCardsForNewDay() {
-        const activeCards = [];      // recurring cards (stay visible and on top)
-        const frequentCards = [];    // move to bottom and hide
-        let deletedCount = 0;
-        let hiddenCount = 0;
+        const keptCards = [];
+        let discardedCount = 0;
         
         // Get current user and current day's activities
         const user = this.appState.getCurrentUser();
@@ -2489,65 +2582,39 @@ class StackMapApp {
             ? user.activities 
             : user.tomorrowActivities;
         
-        currentActivities.forEach((activity) => {
-            const cardType = activity.cardType || 'recurring';
-            
-            switch (cardType) {
-                case 'recurring':
-                    // Mark as incomplete and keep at top
-                    activeCards.push({
-                        ...activity,
-                        completed: false,
-                        visible: true
-                    });
-                    break;
-                    
-                case 'frequent':
-                    // Mark as incomplete, hide, and move to bottom
-                    frequentCards.push({
-                        ...activity,
-                        completed: false,
-                        visible: false
-                    });
-                    hiddenCount++;
-                    break;
-                    
-                case 'single-use':
-                    // Delete by not adding to any array
-                    deletedCount++;
-                    break;
-                    
-                default:
-                    // Fallback to recurring behavior
-                    activeCards.push({
-                        ...activity,
-                        completed: false,
-                        visible: true
-                    });
+        currentActivities.forEach((activity, index) => {
+            if (activity.keep === true) {
+                // Keep the card and reset for next day
+                keptCards.push({
+                    ...activity,
+                    completed: false,
+                    keep: false,
+                    cardNumber: keptCards.length + 1
+                });
+            } else {
+                // Discard the card
+                discardedCount++;
             }
         });
         
-        // Rebuild array: active cards first (maintaining their order), then hidden frequent cards at bottom
-        const newActivities = [...activeCards, ...frequentCards];
-        
-        // Update the correct day's activities
+        // Update the correct day's activities with kept cards
         if (this.appState.getCurrentDay() === 'today') {
-            user.activities = newActivities;
-            this.appState.activities = newActivities; // Update legacy array
+            user.activities = keptCards;
+            this.appState.activities = keptCards; // Update legacy array
         } else {
-            user.tomorrowActivities = newActivities;
-            this.appState.activities = newActivities; // Update legacy array
+            user.tomorrowActivities = keptCards;
+            this.appState.activities = keptCards; // Update legacy array
         }
         
         // Trigger save
         this.appState._triggerSave();
         
-        return { frequentCount: hiddenCount, deletedCount };
+        return { keptCount: keptCards.length, discardedCount };
     }
 
     // New method for the sorting wave animation
     showSortingWaveAnimation(counts) {
-        const { frequentCount, deletedCount } = counts;
+        const { keptCount, discardedCount } = counts;
         
         // Get all visible activity cards (not management cards)
         const cards = document.querySelectorAll('.card:not(.management-card):not(.card--hidden)');
@@ -2572,20 +2639,20 @@ class StackMapApp {
         // Show success message after animation completes
         const totalAnimationTime = cards.length * 50 + 150;
         setTimeout(() => {
-            this.showDayResetSuccess(frequentCount, deletedCount);
+            this.showDayResetSuccess(keptCount, discardedCount);
         }, totalAnimationTime);
     }
 
     // New method for the success feedback
-    showDayResetSuccess(frequentCount, deletedCount) {
+    showDayResetSuccess(keptCount, discardedCount) {
         let message = '✨ Day reset! Ready for new routine.';
         let details = [];
         
-        if (frequentCount > 0) {
-            details.push(`${frequentCount} frequent card${frequentCount > 1 ? 's' : ''} moved to bottom`);
+        if (keptCount > 0) {
+            details.push(`${keptCount} card${keptCount > 1 ? 's' : ''} kept`);
         }
-        if (deletedCount > 0) {
-            details.push(`${deletedCount} single-use card${deletedCount > 1 ? 's' : ''} deleted`);
+        if (discardedCount > 0) {
+            details.push(`${discardedCount} card${discardedCount > 1 ? 's' : ''} discarded`);
         }
         
         if (details.length > 0) {
@@ -2731,10 +2798,10 @@ class StackMapApp {
             // Switch to the new user
             this.appState.switchUser(newUserId);
             
-            // Check if the new user needs default activities
-            if (this.appState.activities.length === 0) {
-                this.createDefaultActivities();
-            }
+            // Default activities are now loaded from Card Library, not automatically
+            // if (this.appState.activities.length === 0) {
+            //     this.createDefaultActivities();
+            // }
             
             // Update UI
             this.populateUserDropdowns();

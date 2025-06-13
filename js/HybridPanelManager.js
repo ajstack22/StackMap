@@ -41,6 +41,12 @@ class HybridPanelManager {
             }
         };
         
+        // Navigation history for each panel
+        this.navigationHistory = {
+            left: [],
+            right: []
+        };
+        
         this.initializePanels();
         this.setupEventListeners();
         
@@ -166,6 +172,13 @@ class HybridPanelManager {
         });
         
         document.getElementById('hybridManageBtn').addEventListener('click', () => {
+            // Reset menu state flags to ensure Settings menu shows
+            this.state.showingActivityForm = false;
+            this.state.showingUserForm = false;
+            this.state.showingSyncSettings = false;
+            this.state.showingLibraryMenu = false;
+            this.state.showingUserManagement = false;
+            
             this.togglePanel('right');
         });
         
@@ -202,6 +215,9 @@ class HybridPanelManager {
         // Close other panel first
         this.closeAllPanels();
         
+        // Clear navigation history for this panel
+        this.navigationHistory[side] = [];
+        
         // Update state
         this.state[`${side}PanelOpen`] = true;
         this.state.activePanel = side;
@@ -221,14 +237,42 @@ class HybridPanelManager {
         // Render content
         this.renderPanelContent(side);
         
-        // Focus validation input if opening management panel in view mode
-        if (side === 'right' && !this.app.grownupMode) {
-            setTimeout(() => {
-                const validationInput = document.getElementById('hybridValidationInput');
-                if (validationInput) {
-                    validationInput.focus();
-                }
-            }, 300); // Small delay to ensure panel animation is complete
+        // Handle post-render actions
+        if (side === 'right') {
+            // Check if we need to scroll to actions (from edit FAB)
+            if (this.state.scrollToActions) {
+                setTimeout(() => {
+                    const scrollableContent = document.querySelector('.side-panel--right .panel-scrollable-content');
+                    if (scrollableContent) {
+                        // Find the actions section
+                        const labels = scrollableContent.querySelectorAll('label');
+                        let actionsSection = null;
+                        
+                        labels.forEach(label => {
+                            if (label.textContent.trim() === 'Actions') {
+                                actionsSection = label.closest('.panel-section');
+                            }
+                        });
+                        
+                        if (actionsSection) {
+                            // Calculate position and scroll
+                            const sectionTop = actionsSection.offsetTop;
+                            scrollableContent.scrollTop = sectionTop - 20; // 20px padding from top
+                        }
+                    }
+                    this.state.scrollToActions = false; // Reset flag
+                }, 350); // Wait for panel animation
+            }
+            
+            // Focus validation input if opening management panel in view mode
+            if (!this.app.grownupMode) {
+                setTimeout(() => {
+                    const validationInput = document.getElementById('hybridValidationInput');
+                    if (validationInput) {
+                        validationInput.focus();
+                    }
+                }, 300); // Small delay to ensure panel animation is complete
+            }
         }
         
         // Mobile scroll lock
@@ -302,7 +346,7 @@ class HybridPanelManager {
         }
     }
 
-    renderPanelContent(side) {
+    renderPanelContent(side, addToHistory = true) {
         const contentDiv = document.getElementById(`hybrid${side.charAt(0).toUpperCase() + side.slice(1)}Content`);
         console.log('renderPanelContent called:', { side, contentDiv: contentDiv ? 'found' : 'not found' });
         
@@ -320,7 +364,7 @@ class HybridPanelManager {
                 };
             } else if (this.state.showingUserForm) {
                 menuId = 'userForm';
-                menuState = {
+                menuState = this.menuStates.userForm || {
                     editingUser: this.state.editingUser,
                     editingUserId: this.state.editingUserId
                 };
@@ -332,6 +376,16 @@ class HybridPanelManager {
             } else if (this.state.showingUserManagement) {
                 menuId = 'userManagement';
             }
+        }
+        
+        // Add to navigation history if this is a new navigation
+        if (addToHistory && this.navigationHistory[side].length > 0) {
+            const currentMenu = this.navigationHistory[side][this.navigationHistory[side].length - 1];
+            if (currentMenu !== menuId) {
+                this.navigationHistory[side].push(menuId);
+            }
+        } else if (addToHistory && this.navigationHistory[side].length === 0) {
+            this.navigationHistory[side].push(menuId);
         }
         
         // Use dynamic menu system
@@ -383,15 +437,11 @@ class HybridPanelManager {
     renderManagementContent() {
         const allUsers = this.app.appState.getAllUsers();
         
-        // If showing activity form, render that instead
-        if (this.state.showingActivityForm) {
-            return this.renderActivityForm();
-        }
+        // Activity form is now handled by the menu system
+        // Don't render the old form here
         
-        // If showing user form, render that instead
-        if (this.state.showingUserForm) {
-            return this.renderUserForm();
-        }
+        // User form is now handled by the menu system
+        // Don't render the old form here
         
         // If showing sync settings, render that instead
         if (this.state.showingSyncSettings) {
@@ -1049,12 +1099,16 @@ class HybridPanelManager {
         this.app.appState.settings.displayMode = mode;
         this.app.appState._triggerSave();
         
-        // Re-render to update button states
-        this.renderPanelContent('left');
+        // Update button states without re-rendering
+        this.updateSegmentedControl('displayMode', mode);
         
-        // Update cards
+        // Force a complete re-render by creating a new renderer instance
+        // This ensures no cached state is carried over
         if (this.app.renderer) {
-            this.app.renderer.render();
+            // Create a completely new renderer instance
+            this.app.renderer = new AppRenderer(this.app.appState, this.app);
+            // Render with the new instance
+            this.app.render();
         }
         
         // console.log('Display mode changed to:', mode);
@@ -1070,12 +1124,36 @@ class HybridPanelManager {
         this.app.appState.settings.showCompletionIndicators = show;
         this.app.appState._triggerSave();
         
-        // Re-render to update button states
-        this.renderPanelContent('left');
+        // Update button states without re-rendering
+        this.updateSegmentedControl('completion', show ? 'on' : 'off');
         
-        // Update cards
-        if (this.app.renderer) {
-            this.app.renderer.render();
+        // Apply user settings to update body classes immediately
+        this.app.appState.applyUserSettings();
+        
+        // Force a complete re-render with aggressive DOM clearing
+        if (this.app.renderer && this.app.renderer.container) {
+            // Clear the container completely
+            const container = this.app.renderer.container;
+            
+            // Remove all event listeners by cloning the container
+            const newContainer = container.cloneNode(false);
+            container.parentNode.replaceChild(newContainer, container);
+            
+            // Create a completely new renderer instance with the new container
+            this.app.renderer = new AppRenderer(this.app.appState, this.app);
+            this.app.renderer.container = newContainer;
+            
+            // Force a layout reflow
+            void newContainer.offsetHeight;
+            
+            // Use requestAnimationFrame to ensure the DOM is updated
+            requestAnimationFrame(() => {
+                // Render with the new instance
+                this.app.render();
+                
+                // Force another reflow after render
+                void newContainer.offsetHeight;
+            });
         }
         
         // console.log('Completion indicators toggled to:', show);
@@ -1132,15 +1210,25 @@ class HybridPanelManager {
     
     handleEditModeSwitch(isChecked) {
         if (isChecked) {
-            // User wants to enter edit mode - show validation first
-            this.showEditModeValidation();
-            // Don't close panel - let user access Edit Mode functions
+            // Enter edit mode directly - validation is handled in MenuConfigurations
+            this.app.enterGrownupMode();
         } else {
             // User wants to exit edit mode
             this.exitEditMode();
             // Re-render content to hide Edit Mode section
             this.renderPanelContent('right');
         }
+    }
+    
+    getValidationQuestions() {
+        return [
+            { question: "What's the first letter of the alphabet?", answer: "A" },
+            { question: "What comes after 2?", answer: "3" },
+            { question: "How many days are in a week?", answer: "7" },
+            { question: "What color do you get when you mix red and blue?", answer: "PURPLE" },
+            { question: "What's 5 + 5?", answer: "10" },
+            { question: "What's the opposite of 'hot'?", answer: "COLD" }
+        ];
     }
     
     showEditModeValidation() {
@@ -1527,13 +1615,23 @@ class HybridPanelManager {
 
     // Admin actions
     addNewCard() {
-        // Show activity form in the right panel
-        this.state.showingActivityForm = true;
-        this.state.editingActivity = null;
-        this.state.editingIndex = -1;
+        // Initialize form state
+        this.menuStates.activityForm = {
+            editingActivity: null,
+            editingIndex: -1,
+            selectedEmoji: '🎯',
+            selectedCardType: 'recurring'
+        };
         
-        // Open the right panel if not already open
-        this.openPanel('right');
+        // Reset all panel states
+        this.state.showingUserManagement = false;
+        this.state.showingActivityForm = true;
+        this.state.showingUserForm = false;
+        this.state.showingSyncSettings = false;
+        this.state.showingLibraryMenu = false;
+        
+        // Show the activity form panel
+        this.renderPanelContent('right');
         
         // Focus on title input after rendering
         setTimeout(() => {
@@ -1542,6 +1640,66 @@ class HybridPanelManager {
                 titleInput.focus();
             }
         }, 300);
+    }
+    
+    saveActivity() {
+        // Get form values
+        const title = document.getElementById('activityTitle')?.value?.trim();
+        const description = document.getElementById('activityDescription')?.value?.trim();
+        const emoji = document.getElementById('activityEmoji')?.value || '🎯';
+        const time = document.getElementById('activityTime')?.value?.trim();
+        const cardType = this.menuStates.activityForm.selectedCardType || 'recurring';
+        
+        // Validate title
+        if (!title) {
+            alert('Card title is required.');
+            const titleInput = document.getElementById('activityTitle');
+            if (titleInput) titleInput.focus();
+            return;
+        }
+        
+        // Create activity object
+        const activity = {
+            icon: emoji,
+            title: title,
+            description: description || '',
+            time: time || '',
+            cardType: cardType,
+            completed: false,
+            visible: true
+        };
+        
+        // Get the correct activities array
+        const currentActivities = this.app.appState.getCurrentActivities();
+        
+        if (this.menuStates.activityForm.editingIndex >= 0) {
+            // Editing existing activity - preserve completion status
+            const existingActivity = currentActivities[this.menuStates.activityForm.editingIndex];
+            activity.completed = existingActivity.completed || false;
+            activity.visible = existingActivity.visible !== undefined ? existingActivity.visible : true;
+            currentActivities[this.menuStates.activityForm.editingIndex] = activity;
+        } else {
+            // Adding new activity
+            currentActivities.push(activity);
+        }
+        
+        // Save state
+        this.app.appState._triggerSave();
+        
+        // Refresh the main view
+        this.app.render();
+        
+        // Navigate back
+        this.navigateBack('right');
+    }
+    
+    selectCardType(type) {
+        this.menuStates.activityForm.selectedCardType = type;
+        
+        // Update UI
+        document.querySelectorAll('.segment[data-card-type]').forEach(btn => {
+            btn.classList.toggle('segment--active', btn.getAttribute('data-card-type') === type);
+        });
     }
 
     exportData() {
@@ -1559,12 +1717,25 @@ class HybridPanelManager {
     }
 
     addNewUser() {
-        // Don't close panels - show user form in the same panel
-        this.state.showingUserForm = true;
+        // Initialize form state for new user
+        this.menuStates.userForm = {
+            editingUser: null,
+            editingUserId: null,
+            selectedIcon: '👤'
+        };
+        
+        // Also set state for renderPanelContent
         this.state.editingUser = null;
         this.state.editingUserId = null;
         
-        // Re-render the management panel with user form
+        // Reset all panel states
+        this.state.showingUserManagement = false;
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = true;
+        this.state.showingSyncSettings = false;
+        this.state.showingLibraryMenu = false;
+        
+        // Show the user form panel
         this.renderPanelContent('right');
         
         // Focus on name input after rendering
@@ -1581,12 +1752,25 @@ class HybridPanelManager {
         const user = this.app.appState.users.profiles[userId];
         if (!user) return;
         
-        // Set up editing state
-        this.state.showingUserForm = true;
+        // Initialize form state
+        this.menuStates.userForm = {
+            editingUser: user,
+            editingUserId: userId,
+            selectedIcon: user.icon || '👤'
+        };
+        
+        // Also set state for renderPanelContent
         this.state.editingUser = user;
         this.state.editingUserId = userId;
         
-        // Re-render the management panel with user form
+        // Reset all panel states
+        this.state.showingUserManagement = false;
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = true;
+        this.state.showingSyncSettings = false;
+        this.state.showingLibraryMenu = false;
+        
+        // Show the user form panel
         this.renderPanelContent('right');
         
         // Focus on name input after rendering
@@ -1597,6 +1781,68 @@ class HybridPanelManager {
                 nameInput.select();
             }
         }, 100);
+    }
+    
+    showUserIconPicker() {
+        // For now, users can use the quick select grid
+        // In future, could open a full emoji picker
+    }
+    
+    selectUserIcon(icon) {
+        // Update state
+        this.menuStates.userForm.selectedIcon = icon;
+        
+        // Update UI
+        const iconDisplay = document.querySelector('.user-icon-selector .icon-display');
+        if (iconDisplay) {
+            iconDisplay.textContent = icon;
+        }
+        
+        // Update hidden input
+        const iconInput = document.getElementById('userIcon');
+        if (iconInput) {
+            iconInput.value = icon;
+        }
+        
+        // Update grid selection
+        document.querySelectorAll('.user-icon-option').forEach(btn => {
+            btn.classList.toggle('selected', btn.getAttribute('data-icon') === icon);
+        });
+    }
+    
+    saveUser() {
+        // Get form values
+        const name = document.getElementById('userName')?.value?.trim();
+        const icon = document.getElementById('userIcon')?.value || '👤';
+        
+        // Validate name
+        if (!name) {
+            alert('User name is required.');
+            const nameInput = document.getElementById('userName');
+            if (nameInput) nameInput.focus();
+            return;
+        }
+        
+        const state = this.menuStates.userForm;
+        
+        if (state.editingUserId) {
+            // Editing existing user
+            this.app.appState.updateUser(state.editingUserId, { name, icon });
+        } else {
+            // Adding new user
+            this.app.appState.addUser(name, icon);
+        }
+        
+        // Save state
+        this.app.appState._triggerSave();
+        
+        // If we're editing the current user, update the app
+        if (state.editingUserId === this.app.appState.getCurrentUser()?.id) {
+            this.app.initializeTitleSubtitle();
+        }
+        
+        // Navigate back
+        this.navigateBack('right');
     }
 
     /**
@@ -1705,12 +1951,20 @@ class HybridPanelManager {
      * Activity form methods
      */
     editActivity(activity, index) {
-        // Open right panel and show activity form in edit mode
+        // Initialize form state for editing
+        this.menuStates.activityForm = {
+            editingActivity: activity,
+            editingIndex: index,
+            selectedEmoji: activity.icon || '🎯',
+            selectedCardType: activity.cardType || 'recurring'
+        };
+        
+        // Set state for compatibility
         this.state.showingActivityForm = true;
         this.state.editingActivity = activity;
         this.state.editingIndex = index;
         
-        // Open the management panel
+        // Open the right panel
         this.openPanel('right');
         
         // Focus on title input after rendering
@@ -1718,8 +1972,31 @@ class HybridPanelManager {
             const titleInput = document.getElementById('activityTitle');
             if (titleInput) {
                 titleInput.focus();
+                titleInput.select();
             }
         }, 300);
+    }
+    
+    selectActivityIcon(icon) {
+        // Update state
+        this.menuStates.activityForm.selectedEmoji = icon;
+        
+        // Update UI
+        const emojiDisplay = document.querySelector('.activity-emoji-selector .emoji-display');
+        if (emojiDisplay) {
+            emojiDisplay.textContent = icon;
+        }
+        
+        // Update hidden input
+        const emojiInput = document.getElementById('activityEmoji');
+        if (emojiInput) {
+            emojiInput.value = icon;
+        }
+        
+        // Update grid selection
+        document.querySelectorAll('.activity-icon-option').forEach(btn => {
+            btn.classList.toggle('selected', btn.getAttribute('data-icon') === icon);
+        });
     }
     
     backToManagement() {
@@ -2494,6 +2771,14 @@ class HybridPanelManager {
     }
     
     /**
+     * Save color theme selection
+     */
+    saveColorTheme() {
+        // Color changes are saved immediately via selectColor method
+        // This is called for consistency but no action needed
+    }
+    
+    /**
      * Save all current settings when closing panel
      */
     saveCurrentSettings() {
@@ -2645,7 +2930,17 @@ class HybridPanelManager {
     updateSegmentedControl(controlType, activeValue) {
         const segments = document.querySelectorAll(`[data-control="${controlType}"] .segment`);
         segments.forEach(segment => {
-            const isActive = segment.onclick.toString().includes(`'${activeValue}'`);
+            let isActive = false;
+            
+            if (controlType === 'completion') {
+                // For completion toggle, check the onclick for true/false
+                const showValue = activeValue === 'on';
+                isActive = segment.onclick.toString().includes(`(${showValue})`);
+            } else {
+                // For other controls, check for the string value
+                isActive = segment.onclick.toString().includes(`'${activeValue}'`);
+            }
+            
             segment.classList.toggle('segment--active', isActive);
             segment.setAttribute('aria-pressed', isActive);
         });
@@ -3223,11 +3518,153 @@ class HybridPanelManager {
     }
 
     refreshCurrentPanel() {
-        if (this.state.leftPanelOpen) {
-            this.renderPanelContent('left');
-        } else if (this.state.rightPanelOpen) {
-            this.renderPanelContent('right');
+        // Save scroll positions before refresh
+        let mainScrollTop = 0;
+        let libraryScrollTop = 0;
+        let bodyScrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        
+        const scrollableContent = document.querySelector('.panel-scrollable-content');
+        if (scrollableContent) {
+            mainScrollTop = scrollableContent.scrollTop;
         }
+        
+        // Also save library sections scroll position if it exists
+        const librarySections = document.querySelector('.library-sections');
+        if (librarySections) {
+            libraryScrollTop = librarySections.scrollTop;
+        }
+        
+        // Save currently focused element to prevent focus-related scrolling
+        const activeElement = document.activeElement;
+        const shouldRestoreFocus = activeElement && activeElement.tagName === 'INPUT' && activeElement.type === 'checkbox';
+        
+        if (this.state.leftPanelOpen) {
+            this.renderPanelContent('left', false);
+        } else if (this.state.rightPanelOpen) {
+            this.renderPanelContent('right', false);
+        }
+        
+        // Use double requestAnimationFrame for more reliable scroll restoration
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                const newScrollableContent = document.querySelector('.panel-scrollable-content');
+                if (newScrollableContent) {
+                    newScrollableContent.scrollTop = mainScrollTop;
+                }
+                
+                // Restore library sections scroll if applicable
+                const newLibrarySections = document.querySelector('.library-sections');
+                if (newLibrarySections) {
+                    newLibrarySections.scrollTop = libraryScrollTop;
+                }
+                
+                // Restore body scroll position to prevent jumping to top
+                window.scrollTo(0, bodyScrollTop);
+                
+                // Remove the blur() call that was causing scroll issues
+                // Instead, just ensure no element has focus to prevent keyboard popup on mobile
+                if (window.innerWidth <= 768) {
+                    const activeEl = document.activeElement;
+                    if (activeEl && activeEl.tagName === 'INPUT') {
+                        activeEl.blur();
+                    }
+                }
+            });
+        });
+    }
+    
+    navigateBack(side) {
+        const history = this.navigationHistory[side];
+        
+        if (history.length <= 1) {
+            // If we're at the root menu or no history, close the panel
+            this.closePanel(side);
+        } else {
+            // Pop the current menu from history
+            history.pop();
+            
+            // Get the previous menu
+            const previousMenu = history[history.length - 1];
+            
+            // Reset all state flags
+            this.state.showingActivityForm = false;
+            this.state.showingUserForm = false;
+            this.state.showingSyncSettings = false;
+            this.state.showingLibraryMenu = false;
+            this.state.showingUserManagement = false;
+            
+            // Set the appropriate state for the previous menu
+            switch (previousMenu) {
+                case 'activityLibrary':
+                    this.state.showingLibraryMenu = true;
+                    break;
+                case 'userManagement':
+                    this.state.showingUserManagement = true;
+                    break;
+                case 'syncSettings':
+                    this.state.showingSyncSettings = true;
+                    break;
+                case 'activityForm':
+                    this.state.showingActivityForm = true;
+                    break;
+                case 'userForm':
+                    this.state.showingUserForm = true;
+                    break;
+            }
+            
+            // Render the previous menu without adding to history
+            this.renderPanelContent(side, false);
+        }
+    }
+    
+    saveAndExit(side, menuId) {
+        // Save any pending changes based on the current menu
+        switch (menuId) {
+            case 'preferences':
+                // Save preferences changes
+                this.saveColorTheme();
+                this.saveCurrentSettings();
+                break;
+                
+            case 'settings':
+                // Settings are saved immediately on change
+                this.saveCurrentSettings();
+                break;
+                
+            case 'activityForm':
+                // Try to save activity form
+                this.handleFormDone('activity');
+                return; // handleFormDone will handle navigation
+                
+            case 'userForm':
+                // Try to save user form
+                this.handleFormDone('user');
+                return; // handleFormDone will handle navigation
+                
+            case 'activityLibrary':
+                // Add selected activities if any
+                if (this.menuStates.activityLibrary.selectedCount > 0) {
+                    this.addSelectedToLibrary();
+                }
+                break;
+                
+            case 'syncSettings':
+                // Sync settings are saved immediately
+                break;
+                
+            case 'userManagement':
+                // No specific save action needed
+                break;
+        }
+        
+        // Save any other pending changes
+        this.app.appState._triggerSave();
+        
+        // Close the panel
+        this.closePanel(side);
+        
+        // Show a subtle confirmation
+        this.app.showNotification && this.app.showNotification('Changes saved', 'success');
     }
 
     toggleLibrarySelection(type, index) {
@@ -3250,7 +3687,33 @@ class HybridPanelManager {
             (this.menuStates.activityLibrary.selectedActivities.group?.length || 0) +
             (this.menuStates.activityLibrary.selectedActivities.base?.length || 0);
         
-        this.refreshCurrentPanel();
+        // Instead of refreshing the entire panel, just update the specific elements
+        this.updateLibrarySelectionUI(type, index, idx === -1);
+    }
+    
+    updateLibrarySelectionUI(type, index, isSelected) {
+        // Update the specific card element
+        const element = document.getElementById(`${type}-activity-${index}`);
+        if (element) {
+            if (isSelected) {
+                element.classList.add('selected');
+                const checkbox = element.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = true;
+            } else {
+                element.classList.remove('selected');
+                const checkbox = element.querySelector('input[type="checkbox"]');
+                if (checkbox) checkbox.checked = false;
+            }
+        }
+        
+        // Update the footer button
+        const count = this.menuStates.activityLibrary.selectedCount;
+        const buttonText = count === 0 ? 'Select Cards' : `Add ${count} to Day`;
+        const footerButton = document.querySelector('.footer-button.primary-button');
+        if (footerButton) {
+            footerButton.textContent = buttonText;
+            footerButton.disabled = count === 0;
+        }
     }
 
     addSelectedToLibrary() {
@@ -3407,6 +3870,115 @@ class HybridPanelManager {
         this.state.showingLibraryMenu = false;
         this.state.showingUserManagement = false;
         this.renderPanelContent('right');
+    }
+    
+    handleFormDone(formType) {
+        if (formType === 'activity') {
+            // Get form values
+            const title = document.getElementById('activityTitle')?.value?.trim();
+            const selectedIcon = document.querySelector('.icon-option.selected')?.getAttribute('data-icon');
+            const selectedColor = document.querySelector('.color-option.selected')?.getAttribute('data-color');
+            
+            // Check if required fields are filled
+            if (!title) {
+                this.showFormExitDialog('activity', 'Activity title is required.');
+                return;
+            }
+            
+            // Save the activity
+            const activity = {
+                title,
+                icon: selectedIcon || this.newActivityDefaults.emoji,
+                color: selectedColor || 'blue',
+                cardType: this.newActivityDefaults.cardType,
+                visible: true
+            };
+            
+            if (this.state.editingActivity && this.state.editingIndex >= 0) {
+                this.app.updateActivity(this.state.editingIndex, activity);
+            } else {
+                this.app.appState.addActivity(activity);
+            }
+            
+            // Reset form state and navigate back
+            this.cancelActivityForm();
+            this.app.render();
+            
+        } else if (formType === 'user') {
+            // Get form values
+            const name = document.getElementById('userName')?.value?.trim();
+            const selectedIcon = document.querySelector('#userIconSelector .icon-option.selected')?.getAttribute('data-icon');
+            
+            // Check if required fields are filled
+            if (!name) {
+                this.showFormExitDialog('user', 'User name is required.');
+                return;
+            }
+            
+            // Save the user
+            if (this.state.editingUserId) {
+                this.app.appState.updateUser(this.state.editingUserId, { name, icon: selectedIcon || this.newUserDefaults.icon });
+            } else {
+                this.app.appState.addUser(name, selectedIcon || this.newUserDefaults.icon);
+            }
+            
+            // Reset form state and navigate back
+            this.cancelUserForm();
+            this.app.render();
+            this.updateSubtitle();
+        }
+        
+        // Save any pending title/subtitle changes
+        this.saveCurrentSettings();
+    }
+    
+    showFormExitDialog(formType, missingField) {
+        const modal = document.createElement('div');
+        modal.className = 'form-exit-modal';
+        modal.innerHTML = `
+            <div class="form-exit-dialog">
+                <h3>Incomplete Form</h3>
+                <p>${missingField}</p>
+                <p>Would you like to:</p>
+                <div class="form-exit-buttons">
+                    <button onclick="window.hybridPanelManager.continueEditing()">
+                        <span class="material-icons">edit</span>
+                        Continue Editing
+                    </button>
+                    <button onclick="window.hybridPanelManager.exitWithoutSaving('${formType}')">
+                        <span class="material-icons">exit_to_app</span>
+                        Exit Without Saving
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        const backdrop = document.createElement('div');
+        backdrop.className = 'form-exit-backdrop';
+        backdrop.onclick = () => this.continueEditing();
+        
+        document.body.appendChild(backdrop);
+        document.body.appendChild(modal);
+        
+        this.currentExitModal = { modal, backdrop };
+    }
+    
+    continueEditing() {
+        if (this.currentExitModal) {
+            this.currentExitModal.modal.remove();
+            this.currentExitModal.backdrop.remove();
+            this.currentExitModal = null;
+        }
+    }
+    
+    exitWithoutSaving(formType) {
+        this.continueEditing();
+        
+        if (formType === 'activity') {
+            this.cancelActivityForm();
+        } else if (formType === 'user') {
+            this.cancelUserForm();
+        }
     }
 }
 

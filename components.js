@@ -1173,39 +1173,50 @@ class ActivityCard {
         
         // Generate badge content based on display mode
         let badgeContent = '';
-        if (!editMode) {
-            switch (displayMode) {
-                case CONFIG.DISPLAY_MODES.NONE:
-                    // No badge displayed
-                    badgeContent = '';
-                    break;
-                case CONFIG.DISPLAY_MODES.NUMBERS:
-                    // Show sequential numbers in circular badge
+        switch (displayMode) {
+            case CONFIG.DISPLAY_MODES.NONE:
+                // No badge displayed
+                badgeContent = '';
+                break;
+            case CONFIG.DISPLAY_MODES.NUMBERS:
+                // Show sequential numbers in circular badge
+                if (editMode) {
+                    // In edit mode, make the number clickable
+                    badgeContent = `<div class="card__number card__number--editable" 
+                                        style="background: ${backgroundColor}; cursor: pointer;" 
+                                        onclick="event.stopPropagation(); appInstance.editCardNumber(${this.index})"
+                                        title="Click to change position">${displayIndex + 1}</div>`;
+                } else {
                     badgeContent = `<div class="card__number" style="background: ${backgroundColor};">${displayIndex + 1}</div>`;
-                    break;
-                case CONFIG.DISPLAY_MODES.TIMES:
-                    // Show time in elongated pill badge (only if time is set)
-                    if (this.activity.time && this.activity.time.trim()) {
-                        const formattedTime = ComponentBuilder.formatTime(this.activity.time);
-                        badgeContent = `<div class="card__time-pill" style="background: ${backgroundColor};">${formattedTime}</div>`;
-                    }
-                    // If no time is set, don't show any badge
-                    break;
-                default:
-                    // Default to numbers for backward compatibility
+                }
+                break;
+            case CONFIG.DISPLAY_MODES.TIMES:
+                // Show time in elongated pill badge (only if time is set)
+                if (this.activity.time && this.activity.time.trim()) {
+                    const formattedTime = ComponentBuilder.formatTime(this.activity.time);
+                    badgeContent = `<div class="card__time-pill" style="background: ${backgroundColor};">${formattedTime}</div>`;
+                }
+                // If no time is set, don't show any badge
+                break;
+            default:
+                // Default to numbers for backward compatibility
+                if (editMode) {
+                    badgeContent = `<div class="card__number card__number--editable" 
+                                        style="background: ${backgroundColor}; cursor: pointer;" 
+                                        onclick="event.stopPropagation(); appInstance.editCardNumber(${this.index})"
+                                        title="Click to change position">${displayIndex + 1}</div>`;
+                } else {
                     badgeContent = `<div class="card__number" style="background: ${backgroundColor};">${displayIndex + 1}</div>`;
-            }
+                }
         }
         
         const editButtons = editMode ? this.renderEditButtons() : '';
         const editTimePill = editMode && this.activity.time && this.activity.time.trim() ? this.renderEditTimePill(backgroundColor) : '';
-        const cardTypeIndicator = editMode ? this.renderCardTypeIndicator() : '';
         
         return `
             ${badgeContent}
             ${editButtons}
             ${editTimePill}
-            ${cardTypeIndicator}
             <div class="card__icon">${this.activity.icon}</div>
             <div class="card__title">${this.activity.title}</div>
             <div class="card__description">${this.activity.description}</div>
@@ -1213,23 +1224,46 @@ class ActivityCard {
     }
 
     renderEditButtons() {
-        // In grown-up mode, show completion checkbox in top-left
-        const checkboxIcon = '✓';
-        const checkboxBg = this.activity.completed ? 'var(--primary-color)' : '#e8e8e8';
-        const checkboxColor = this.activity.completed ? 'white' : '#999';
+        // Get showCompletionIndicators setting
+        const currentUser = this.appState.getCurrentUser();
+        const userSettings = currentUser?.settings || {};
+        const showCompletionIndicators = userSettings.showCompletionIndicators !== undefined ? 
+            userSettings.showCompletionIndicators : this.appState.settings.showCompletionIndicators;
+        
+        // Only show completion checkbox if indicators are enabled
+        let completionButton = '';
+        if (showCompletionIndicators !== false) {
+            const checkboxIcon = '✓';
+            const checkboxBg = this.activity.completed ? 'var(--primary-color)' : '#e8e8e8';
+            const checkboxColor = this.activity.completed ? 'white' : '#999';
+            
+            completionButton = `
+                <button class="btn btn--round btn--checkbox" 
+                        style="top: 15px; left: 15px; background: ${checkboxBg}; color: ${checkboxColor}; font-size: 1.35rem; font-weight: 900; font-family: inherit; line-height: 1; padding: 0;" 
+                        onclick="event.stopPropagation(); appInstance.toggleGrownupCompletion(${this.index})" 
+                        aria-label="Toggle completion" title="${this.activity.completed ? 'Mark incomplete' : 'Mark complete'}">✓</button>
+            `;
+        }
+        
+        // Keep/Discard button (using thumbtack icon) - show on both Today and Tomorrow
+        let keepButton = '';
+        const keepActivity = this.activity.keep || false;
+        const keepBg = keepActivity ? 'var(--primary-color)' : '#e8e8e8';
+        const keepColor = keepActivity ? 'white' : '#999';
+        const keepTitle = keepActivity ? 'Card will be kept' : 'Card will be discarded';
+        
+        keepButton = `
+            <button class="btn btn--round btn--keep" 
+                    style="bottom: 15px; left: 15px; background: ${keepBg}; color: ${keepColor};"
+                    onclick="event.stopPropagation(); appInstance.toggleKeep(${this.index})" 
+                    aria-label="Toggle keep" title="${keepTitle}">
+                <span class="material-icons">push_pin</span>
+            </button>
+        `;
         
         return `
-            <button class="btn btn--round btn--checkbox" 
-                    style="top: 15px; left: 15px; background: ${checkboxBg}; color: ${checkboxColor}; font-size: 1.35rem; font-weight: 900; font-family: inherit; line-height: 1; padding: 0;" 
-                    onclick="event.stopPropagation(); appInstance.toggleGrownupCompletion(${this.index})" 
-                    aria-label="Toggle completion" title="${this.activity.completed ? 'Mark incomplete' : 'Mark complete'}">✓</button>
-            
-            <button class="btn btn--round btn--visibility ${!this.activity.visible ? 'btn--visibility--hidden' : ''}" 
-                    style="top: 15px; right: 15px;"
-                    onclick="event.stopPropagation(); appInstance.toggleVisibility(${this.index})" 
-                    aria-label="Toggle visibility" title="${this.activity.visible ? 'Hide from routine' : 'Show in routine'}">
-                <span class="material-icons">${this.activity.visible ? 'visibility' : 'visibility_off'}</span>
-            </button>
+            ${completionButton}
+            ${keepButton}
             <button class="btn btn--round btn--menu" 
                     style="bottom: 15px; right: 15px;"
                     onclick="event.stopPropagation(); appInstance.openCardMenu(${this.index}, event)" 
@@ -1239,20 +1273,6 @@ class ActivityCard {
         `;
     }
 
-    // INTEGRATED: Use centralized card type configuration
-    renderCardTypeIndicator() {
-        const cardType = this.activity.cardType || 'recurring';
-        const icon = ComponentBuilder.getCardTypeIcon(cardType);
-        const label = ComponentBuilder.getCardTypeLabel(cardType);
-        
-        return `
-            <div class="card__type-indicator" 
-                 onclick="event.stopPropagation(); appInstance.cycleCardType(${this.index})"
-                 title="Card Type: ${label} (Click to cycle)">
-                <span class="material-icons">${icon}</span>
-            </div>
-        `;
-    }
 
     renderEditTimePill(backgroundColor) {
         const formattedTime = ComponentBuilder.formatTime(this.activity.time);
@@ -1940,9 +1960,20 @@ class EditModeFAB {
     }
     
     openEditModeMenu() {
-        // Use hybrid panel manager to show edit mode menu
+        // Open settings menu with flag to scroll to actions
         if (window.hybridPanelManager) {
-            window.hybridPanelManager.showEditModeMenu(this.actions);
+            // Reset menu state flags to ensure Settings menu shows
+            window.hybridPanelManager.state.showingActivityForm = false;
+            window.hybridPanelManager.state.showingUserForm = false;
+            window.hybridPanelManager.state.showingSyncSettings = false;
+            window.hybridPanelManager.state.showingLibraryMenu = false;
+            window.hybridPanelManager.state.showingUserManagement = false;
+            
+            // Set flag to scroll to actions after render
+            window.hybridPanelManager.state.scrollToActions = true;
+            
+            // Open the right panel (Settings)
+            window.hybridPanelManager.openPanel('right');
         }
     }
     

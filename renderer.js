@@ -147,9 +147,37 @@ class AppRenderer {
     renderActivityCards(fragment) {
         // Story 4: Use context-aware activities
         const currentActivities = this.appState.getCurrentActivities();
-        const activitiesToShow = this.appState.ui.editMode 
-            ? currentActivities 
-            : currentActivities.filter(activity => activity.visible);
+        // Show all activities since we removed the visibility toggle
+        let activitiesToShow = currentActivities;
+
+        // Get current user settings for display mode
+        const currentUser = this.appState.getCurrentUser();
+        const userSettings = currentUser?.settings || {};
+        const displayMode = userSettings.displayMode || this.appState.settings.displayMode || 'numbers';
+
+        // Sort activities based on display mode
+        if (displayMode === 'times') {
+            // Sort by time when in times mode
+            activitiesToShow = [...activitiesToShow].sort((a, b) => {
+                // Parse times (convert to minutes for comparison)
+                const timeA = this.parseTimeToMinutes(a.time);
+                const timeB = this.parseTimeToMinutes(b.time);
+                
+                // Activities without times go to the end
+                if (timeA === null && timeB === null) return 0;
+                if (timeA === null) return 1;
+                if (timeB === null) return -1;
+                
+                return timeA - timeB;
+            });
+        } else {
+            // Sort by card number in numbers mode or default
+            activitiesToShow = [...activitiesToShow].sort((a, b) => {
+                const numA = a.cardNumber || currentActivities.indexOf(a) + 1;
+                const numB = b.cardNumber || currentActivities.indexOf(b) + 1;
+                return numA - numB;
+            });
+        }
 
         activitiesToShow.forEach((activity, displayIndex) => {
             const originalIndex = currentActivities.indexOf(activity);
@@ -163,6 +191,46 @@ class AppRenderer {
             
             fragment.appendChild(cardElement);
         });
+    }
+
+    parseTimeToMinutes(timeStr) {
+        if (!timeStr || !timeStr.trim()) return null;
+        
+        // Handle various time formats
+        const time = timeStr.trim().toLowerCase();
+        let hours = 0;
+        let minutes = 0;
+        
+        // Try to parse 12-hour format (e.g., "2:30pm", "8:00am")
+        const twelveHourMatch = time.match(/^(\d{1,2}):(\d{2})\s*(am|pm)$/);
+        if (twelveHourMatch) {
+            hours = parseInt(twelveHourMatch[1]);
+            minutes = parseInt(twelveHourMatch[2]);
+            const period = twelveHourMatch[3];
+            
+            if (period === 'pm' && hours !== 12) hours += 12;
+            if (period === 'am' && hours === 12) hours = 0;
+        } else {
+            // Try to parse 24-hour format (e.g., "14:30", "08:00")
+            const twentyFourHourMatch = time.match(/^(\d{1,2}):(\d{2})$/);
+            if (twentyFourHourMatch) {
+                hours = parseInt(twentyFourHourMatch[1]);
+                minutes = parseInt(twentyFourHourMatch[2]);
+            } else {
+                // Try simple hour format (e.g., "2pm", "8am")
+                const simpleMatch = time.match(/^(\d{1,2})\s*(am|pm)$/);
+                if (simpleMatch) {
+                    hours = parseInt(simpleMatch[1]);
+                    const period = simpleMatch[2];
+                    
+                    if (period === 'pm' && hours !== 12) hours += 12;
+                    if (period === 'am' && hours === 12) hours = 0;
+                }
+            }
+        }
+        
+        // Return total minutes since midnight
+        return (hours * 60) + minutes;
     }
 
     updateUIState() {

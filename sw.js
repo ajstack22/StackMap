@@ -2,7 +2,7 @@
 // Version: 1.2.2
 // Last Updated: 2025-06-10
 
-const CACHE_NAME = 'stackmap-v1.2.2-2025-06-11-debug';
+const CACHE_NAME = 'stackmap-v1.2.2-2025-06-12-preserve-scroll';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 

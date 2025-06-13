@@ -341,12 +341,8 @@ class PreferencesManager {
                 this.app.appState.settings.showCompletionIndicators = e.target.checked;
                 this.app.appState._triggerSave();
                 
-                // Update body class to hide/show completion indicators
-                if (e.target.checked) {
-                    document.body.classList.remove('hide-completion-indicators');
-                } else {
-                    document.body.classList.add('hide-completion-indicators');
-                }
+                // Apply user settings to update body classes immediately
+                this.app.appState.applyUserSettings();
                 
                 this.app.render();
             });

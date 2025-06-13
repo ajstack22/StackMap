@@ -56,9 +56,8 @@
 .day-selector-container {
     display: flex;
     justify-content: center;
-    margin-bottom: 20px; /* INCREASED from 12px for better spacing */
-    margin-top: 18px; /* NEW: Add space from subtitle */
-    min-height: 44px; /* Reduced container height */
+    margin: 0; /* Remove margins for proper centering */
+    min-height: 33px; /* Reduced by 25% from 44px */
     width: 100%; /* Ensure full width */
 }
 
@@ -80,7 +79,7 @@
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-height: 44px;
+    min-height: 33px; /* Reduced by 25% from 44px */
     min-width: 160px;
 }
 
@@ -96,13 +95,13 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 12px 20px;
+    padding: 9px 15px; /* Reduced by 25% */
     cursor: pointer;
     color: rgba(255, 255, 255, 0.7); /* Subtle text */
     font-weight: 500; /* Lighter weight */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    min-width: 80px;
-    min-height: 44px;
+    min-width: 60px; /* Reduced by 25% from 80px */
+    min-height: 33px; /* Reduced by 25% from 44px */
     position: relative;
     box-sizing: border-box;
     flex: 1;
@@ -120,7 +119,7 @@
 }
 
 .day-label {
-    font-size: 0.9rem;
+    font-size: 0.68rem; /* Reduced by 25% from 0.9rem */
     font-weight: inherit; /* Inherit from parent */
     margin-bottom: 2px;
     line-height: 1.2;
@@ -191,7 +190,7 @@ body.viewing-tomorrow .card {
     top: 0;
     left: 0;
     right: 0;
-    height: 150px; /* 50% larger (100px * 1.5) */
+    height: 112px; /* Reduced by 25% from 150px */
     z-index: 1001 !important; /* SAFARI FIX: Force z-index */
     border-radius: 0; /* STRAIGHT: Clean straight line across all devices */
     /* ENHANCED: Smooth shadow transitions with Material Design easing */
@@ -212,7 +211,7 @@ body.viewing-tomorrow .card {
 
 /* Header wrapper when drawer is open */
 .header-wrapper.drawer-open {
-    height: 200px; /* FURTHER REDUCED: Tighter spacing to header edge */
+    height: 150px; /* Reduced by 25% from 200px */
     /* No shadow - let drawer extension handle shadows */
     box-shadow: none;
 }
@@ -225,20 +224,21 @@ body.viewing-tomorrow .card {
     left: 0 !important;
     right: 0 !important;
     width: 100% !important;
+    height: 100% !important; /* Fill the wrapper height */
     background: var(--background-gradient-start) !important; /* Use theme background */
     text-align: center !important;
-    padding: 20px 10px 40px !important; /* Extra bottom padding for click area */
+    padding: 0 !important; /* Remove padding, use flexbox for centering */
     z-index: 1002 !important; /* SAFARI FIX: Higher z-index to appear above drawer extension */
     /* Simple straight shadow */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
     border: none !important;
     margin: 0 !important;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
     flex-direction: column !important;
     align-items: center !important;
     justify-content: center !important;
     box-sizing: border-box !important;
-    display: flex !important;
     overflow: visible !important; /* Allow drawer to extend */
     border-radius: 0 !important; /* Straight across shelf */
 }
@@ -246,7 +246,7 @@ body.viewing-tomorrow .card {
 /* Dedicated shadow layer - sits between header (1001) and cards (1) */
 .header-shadow {
     position: fixed;
-    top: 148px; /* Position at bottom edge of header wrapper */
+    top: 111px; /* Reduced by 25% from 148px */
     left: 0; /* Full screen width */
     right: 0; /* Full screen width */
     height: 8px; /* Slightly smaller for cleaner look */
@@ -269,17 +269,17 @@ body.viewing-tomorrow .card {
 
 /* Desktop shadow positioning when drawer opens */
 body.drawer-active .header-shadow {
-    top: 198px; /* ADJUSTED: Match new drawer height (200px - 2px) */
+    top: 149px; /* Reduced by 25% from 198px */
 }
 
 /* Mobile shadow positioning */
 @media (max-width: 768px) {
     .header-shadow {
-        top: 118px; /* Position at bottom edge of mobile header wrapper */
+        top: 89px; /* Reduced by 25% from 118px */
     }
     
     body.drawer-active .header-shadow {
-        top: 178px; /* ADJUSTED: Match new mobile drawer height (180px - 2px) */
+        top: 134px; /* Reduced by 25% from 178px */
     }
 }
 
@@ -293,42 +293,43 @@ body.drawer-active .header-shadow {
 
 /* Body padding - cards stay in fixed position */
 body {
-    padding-top: 35px !important; /* Fixed position - cards don't move */
+    padding-top: 26px !important; /* Reduced by 25% from 35px */
     padding-bottom: 0 !important; /* Default: no bottom padding when closed */
     transition: padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Cards stay in same position when drawer opens */
 body.drawer-active {
-    padding-top: 85px !important; /* MINIMAL: Just enough to clear the drawer (35px + 50px clearance) */
+    padding-top: 64px !important; /* Reduced by 25% from 85px */
     padding-bottom: 0 !important; /* Normal bottom padding */
 }
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
     .header-wrapper {
-        height: 120px; /* 50% larger (80px * 1.5) */
+        height: 90px; /* Reduced by 25% from 120px */
         /* No shadow - let drawer extension handle shadows */
         box-shadow: none;
     }
     
     .header-wrapper.drawer-open {
-        height: 180px; /* FURTHER REDUCED: Tighter mobile spacing */
+        height: 135px; /* Reduced by 25% from 180px */
         /* No shadow - let drawer extension handle shadows */
         box-shadow: none;
     }
     
     .app-header {
-        padding: 16px 10px 45px !important; /* More bottom padding for handle */
+        padding: 0 !important; /* Remove padding, use flexbox for centering */
+        height: 100% !important; /* Fill the wrapper height */
     }
     
     body {
-        padding-top: 25px !important; /* Fixed position - mobile cards don't move */
+        padding-top: 19px !important; /* Reduced by 25% from 25px */
         padding-bottom: 0 !important; /* Default: no bottom padding when closed */
     }
     
     body.drawer-active {
-        padding-top: 75px !important; /* MINIMAL: Just enough to clear mobile drawer (25px + 50px clearance) */
+        padding-top: 56px !important; /* Reduced by 25% from 75px */
         padding-bottom: 0 !important; /* Normal bottom padding */
     }
 }
@@ -336,10 +337,13 @@ body.drawer-active {
 /* Header content styles */
 .app-header .header-content {
     width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
 }
 
 /* Container for title and day selector to handle button alignment */
@@ -349,6 +353,7 @@ body.drawer-active {
     flex-direction: column;
     align-items: center;
     justify-content: center;
+    gap: 8px; /* Add spacing between elements */
 }
 
 /* ===== USER SELECTOR CONTAINER ===== */
@@ -356,21 +361,21 @@ body.drawer-active {
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    margin-bottom: 4px;
-    min-height: 44px; /* Ensure touch target */
+    gap: 6px; /* Reduced by 25% from 8px */
+    margin: 0; /* Remove margin for proper centering */
+    min-height: 33px; /* Reduced by 25% from 44px */
 }
 
 /* === TRANSPARENT USER DROPDOWN === */
 .user-dropdown {
-    min-height: 44px;
-    min-width: 140px;
-    padding: 8px 36px 8px 12px;
+    min-height: 33px; /* Reduced by 25% from 44px */
+    min-width: 105px; /* Reduced by 25% from 140px */
+    padding: 6px 27px 6px 9px; /* Reduced by 25% */
     border-radius: 22px; /* More rounded for softer look */
     border: 1px solid rgba(255, 255, 255, 0.1); /* Barely visible border */
     background: rgba(255, 255, 255, 0.05); /* Nearly transparent */
     color: rgba(255, 255, 255, 0.7); /* Subtle text */
-    font-size: 0.85rem; /* Slightly smaller */
+    font-size: 0.64rem; /* Reduced by 25% from 0.85rem */
     font-weight: 500; /* Lighter weight */
     cursor: pointer;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transitions */
@@ -426,13 +431,13 @@ body.drawer-active {
 }
 
 .stackmap-logo-icon {
-    width: 28px;
-    height: 28px;
+    width: 21px; /* Reduced by 25% from 28px */
+    height: 21px; /* Reduced by 25% from 28px */
     opacity: 0.9;
 }
 
 .stackmap-logo-text {
-    font-size: 1.4rem;
+    font-size: 1.05rem; /* Reduced by 25% from 1.4rem */
     font-weight: 700;
     color: white;
     text-shadow: 0 2px 10px rgba(0,0,0,0.2);
@@ -450,7 +455,7 @@ body.drawer-active {
 }
 
 .stackmap-text {
-    font-size: 2.2rem;
+    font-size: 1.65rem; /* Reduced by 25% from 2.2rem */
     font-weight: 700;
     background: linear-gradient(135deg, 
         rgba(255, 255, 255, 0.95) 0%, 
@@ -460,12 +465,12 @@ body.drawer-active {
     background-clip: text;
     text-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
     letter-spacing: -0.5px;
-    margin-top: -15px; /* Move title up by 15px */
+    margin: 0; /* Remove negative margin for proper centering */
 }
 
 /* StackMap Subtitle */
 .stackmap-subtitle {
-    font-size: 0.85rem;
+    font-size: 0.64rem; /* Reduced by 25% from 0.85rem */
     color: rgba(255, 255, 255, 0.7);
     font-weight: 400;
     letter-spacing: 0.5px;
@@ -475,10 +480,7 @@ body.drawer-active {
     text-align: center;
     min-width: 200px;
     outline: none;
-    margin-top: -15px; /* Move subtitle up by 15px */
-    margin-bottom: 8px; /* NEW: Add space before day selector */
-    margin-left: auto;
-    margin-right: auto;
+    margin: 4px auto 6px; /* Balanced margins for centering */
     display: block;
 }
 

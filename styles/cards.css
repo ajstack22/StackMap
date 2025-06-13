@@ -148,6 +148,11 @@ body.grownup-mode .card::before {
     display: none !important;
 }
 
+/* Hide the actual checkbox button when completion indicators are disabled */
+body.hide-completion-indicators .btn--checkbox {
+    display: none !important;
+}
+
 /* ===== NUMBER BADGE - TOP RIGHT POSITION (CIRCULAR LIKE COMPLETION) ===== */
 .card__number {
     position: absolute !important;
@@ -171,6 +176,17 @@ body.grownup-mode .card::before {
     z-index: 10 !important;
     padding: 0 !important;
     margin: 0 !important;
+}
+
+/* Editable number badge in edit mode */
+.card__number--editable {
+    pointer-events: auto !important;
+    cursor: pointer !important;
+}
+
+.card__number--editable:hover {
+    transform: scale(1.1) !important;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.4) !important;
 }
 
 /* Time badge - EXACT SAME STYLE AS NUMBER (CIRCULAR) */
@@ -339,8 +355,12 @@ body.grownup-mode .card::before {
     position: absolute;
     bottom: 15px;
     right: 15px;
-    background: #9c27b0;
-    color: white;
+    background: #e8e8e8;
+    color: #999;
+}
+
+.btn--keep {
+    transition: all 0.2s ease;
 }
 
 /* Card Menu Styles */

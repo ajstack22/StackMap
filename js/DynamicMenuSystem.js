@@ -24,11 +24,28 @@ class DynamicMenuSystem {
 
         let html = '';
         
-        // Render title if provided
+        // Create fixed header with title and back button
+        html += '<div class="panel-fixed-header">';
+        
+        // Back button
+        const backButtonClass = side === 'left' ? 'back-button-left' : 'back-button-right';
+        html += `<button class="panel-back-button ${backButtonClass}" onclick="window.hybridPanelManager.navigateBack('${side}')">
+            <span class="material-icons">arrow_back</span>
+            <span class="back-text">Back</span>
+        </button>`;
+        
+        // Title with icon
         if (config.title) {
-            html += `<h3>${config.title}</h3>`;
+            const titleText = typeof config.title === 'function' ? config.title(this.app, state) : config.title;
+            const titleIcon = this.getMenuIcon(menuId);
+            html += `<h3><span class="material-icons menu-title-icon">${titleIcon}</span> ${titleText}</h3>`;
         }
-
+        
+        html += '</div>'; // End fixed header
+        
+        // Create scrollable content area
+        html += '<div class="panel-scrollable-content">';
+        
         // Render based on layout type
         const layout = config.layout || 'sections';
         
@@ -39,11 +56,29 @@ class DynamicMenuSystem {
         } else if (layout === 'form') {
             html += this.renderFormLayout(config, state);
         }
-
-        // Render footer if provided
+        
+        html += '</div>'; // End scrollable content
+        
+        // Create fixed footer
+        html += '<div class="panel-fixed-footer">';
+        
+        // Check if config has a custom footer
         if (config.footer) {
-            html += this.renderFooter(config.footer, state);
+            // Render custom footer
+            if (config.footer.type === 'custom' && config.footer.render) {
+                html += config.footer.render(state, this);
+            } else {
+                html += this.renderFooter(config.footer, state);
+            }
+        } else {
+            // Default Save & Exit button
+            html += `<button class="save-exit-button" onclick="window.hybridPanelManager.saveAndExit('${side}', '${menuId}')">
+                <span class="material-icons">save</span>
+                <span>Save & Exit</span>
+            </button>`;
         }
+        
+        html += '</div>'; // End fixed footer
 
         return html;
     }
@@ -475,6 +510,20 @@ class DynamicMenuSystem {
         // This would return formatted activities for the library
         // For now, return empty array
         return [];
+    }
+    
+    getMenuIcon(menuId) {
+        const iconMap = {
+            'preferences': 'palette',
+            'settings': 'settings',
+            'activityLibrary': 'library_books',
+            'activityForm': 'add_circle',
+            'userForm': 'person_add',
+            'userManagement': 'manage_accounts',
+            'syncSettings': 'cloud_sync'
+        };
+        
+        return iconMap[menuId] || 'menu';
     }
 }
 
