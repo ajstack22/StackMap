@@ -1643,12 +1643,13 @@ class HybridPanelManager {
     }
     
     saveActivity() {
-        // Get form values
-        const title = document.getElementById('activityTitle')?.value?.trim();
-        const description = document.getElementById('activityDescription')?.value?.trim();
-        const emoji = document.getElementById('activityEmoji')?.value || '🎯';
-        const time = document.getElementById('activityTime')?.value?.trim();
-        const cardType = this.menuStates.activityForm.selectedCardType || 'recurring';
+        try {
+            // Get form values
+            const title = document.getElementById('activityTitle')?.value?.trim();
+            const description = document.getElementById('activityDescription')?.value?.trim();
+            const emoji = document.getElementById('activityEmoji')?.value || '🎯';
+            const time = document.getElementById('activityTime')?.value?.trim();
+            const cardType = this.menuStates.activityForm?.selectedCardType || 'recurring';
         
         // Validate title
         if (!title) {
@@ -1669,31 +1670,34 @@ class HybridPanelManager {
             visible: true
         };
         
-        // Get the correct activities array
-        const currentActivities = this.app.appState.getCurrentActivities();
-        
         // Check for editing index in multiple places for compatibility
         const editingIndex = this.menuStates.activityForm?.editingIndex ?? this.state.editingIndex;
         
         if (editingIndex >= 0) {
-            // Editing existing activity - preserve completion status
+            // Editing existing activity - use updateActivity method
+            const currentActivities = this.app.appState.getCurrentActivities();
             const existingActivity = currentActivities[editingIndex];
+            
+            // Preserve existing properties
             activity.completed = existingActivity.completed || false;
             activity.visible = existingActivity.visible !== undefined ? existingActivity.visible : true;
-            currentActivities[editingIndex] = activity;
+            
+            // Use the state's updateActivity method
+            this.app.appState.updateActivity(editingIndex, activity);
         } else {
             // Adding new activity
-            currentActivities.push(activity);
+            this.app.appState.addActivity(activity);
         }
-        
-        // Save state
-        this.app.appState._triggerSave();
         
         // Refresh the main view
         this.app.render();
         
         // Navigate back
         this.navigateBack('right');
+        } catch (error) {
+            console.error('Error in saveActivity:', error);
+            alert('Error saving activity: ' + error.message);
+        }
     }
     
     selectCardType(type) {
