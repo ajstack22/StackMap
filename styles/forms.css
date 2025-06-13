@@ -502,6 +502,68 @@ body.fixed-header-visible .preferences-panel {
     font-size: 1.1rem;
 }
 
+.sync-connect {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.sync-connect p {
+    color: #666;
+    margin-bottom: 20px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+}
+
+.sync-connect .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    font-size: 1rem;
+}
+
+.sync-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #667eea;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin: 5px 0;
+    width: 100%;
+    transition: background 0.2s ease;
+}
+
+.sync-button:hover {
+    background: #5a67d8;
+}
+
+.disconnect-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #e53e3e;
+    color: white;
+    border: none;
+    padding: 10px 16px;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    margin: 5px 0;
+    width: 100%;
+    transition: background 0.2s ease;
+}
+
+.disconnect-button:hover {
+    background: #c53030;
+}
+
 .preferences-hint {
     background: rgba(102, 126, 234, 0.1);
     padding: 8px; /* Reduced from 10px */

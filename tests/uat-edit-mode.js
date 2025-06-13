@@ -1,8 +1,12 @@
 /**
- * User Acceptance Tests for Edit Mode Functionality
+ * DEPRECATED - Use uat-edit-mode-updated.js instead
  * 
- * This test suite validates that edit mode can be toggled on/off
- * and that expected UI changes occur during transitions
+ * This test suite is outdated and tests the old UI that no longer exists.
+ * The new test suite (uat-edit-mode-updated.js) tests:
+ * - Segmented control (View/Edit buttons) instead of toggle switch
+ * - Keep/Discard model instead of Hide/Show buttons
+ * - FAB that opens Settings directly instead of sub-menu
+ * - Card menu button instead of individual edit buttons
  */
 
 class EditModeUAT {

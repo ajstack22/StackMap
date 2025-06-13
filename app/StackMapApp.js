@@ -2874,7 +2874,9 @@ class StackMapApp {
             user: {
                 id: userId,
                 name: user.name,
+                icon: user.icon || '👤',  // Include user icon
                 activities: user.activities,
+                tomorrowActivities: user.tomorrowActivities || [],  // Include tomorrow activities
                 settings: user.settings,
                 metadata: {
                     activityCount: user.activities.length,

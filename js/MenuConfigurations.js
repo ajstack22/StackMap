@@ -712,38 +712,59 @@ window.MenuConfigurations = {
                 type: 'custom',
                 render: function(state, menuSystem) {
                     const app = menuSystem.app;
+                    const driveSync = app.driveSync;
+                    const isSignedIn = driveSync && driveSync.isSignedIn;
                     const syncEnabled = app.appState.syncSettings?.enabled || false;
                     const lastSync = app.appState.syncSettings?.lastSync;
                     
                     let html = '<div class="sync-settings">';
                     
-                    // Sync status
-                    html += '<div class="sync-status">';
-                    if (syncEnabled) {
-                        html += '<div class="status-indicator active">✓ Sync Enabled</div>';
-                        if (lastSync) {
-                            const date = new Date(lastSync);
-                            html += `<div class="last-sync">Last sync: ${date.toLocaleString()}</div>`;
-                        }
+                    // Check if Google Drive is connected
+                    if (!isSignedIn) {
+                        // Show connect button
+                        html += '<div class="sync-connect">';
+                        html += '<p>Connect to Google Drive to enable automatic backup and sync across devices.</p>';
+                        html += '<button class="btn btn--primary" onclick="appInstance.driveSync && appInstance.driveSync.signIn()">';
+                        html += '<span class="material-icons">cloud</span> Connect Google Drive';
+                        html += '</button>';
+                        html += '</div>';
                     } else {
-                        html += '<div class="status-indicator">Sync Disabled</div>';
-                    }
-                    html += '</div>';
+                        // Sync status
+                        html += '<div class="sync-status">';
+                        if (syncEnabled) {
+                            html += '<div class="status-indicator active">✓ Sync Enabled</div>';
+                            if (lastSync) {
+                                const date = new Date(lastSync);
+                                html += `<div class="last-sync">Last sync: ${date.toLocaleString()}</div>`;
+                            }
+                        } else {
+                            html += '<div class="status-indicator">Sync Connected but Disabled</div>';
+                        }
+                        html += '</div>';
                     
-                    // Sync toggle
-                    html += '<div class="sync-toggle">';
-                    html += `<label class="toggle-switch">`;
-                    html += `<input type="checkbox" id="syncToggle" ${syncEnabled ? 'checked' : ''} />`;
-                    html += `<span class="toggle-slider"></span>`;
-                    html += `</label>`;
-                    html += `<span class="toggle-label">Enable Google Drive Sync</span>`;
-                    html += '</div>';
-                    
-                    // Sync actions
-                    if (syncEnabled) {
+                        // Sync toggle
+                        html += '<div class="sync-toggle">';
+                        html += `<label class="toggle-switch">`;
+                        html += `<input type="checkbox" id="syncToggle" ${syncEnabled ? 'checked' : ''} />`;
+                        html += `<span class="toggle-slider"></span>`;
+                        html += `</label>`;
+                        html += `<span class="toggle-label">Enable Automatic Sync</span>`;
+                        html += '</div>';
+                        
+                        // Sync actions
                         html += '<div class="sync-actions">';
-                        html += '<button id="syncNowBtn" class="sync-button">Sync Now</button>';
-                        html += '<button id="disconnectBtn" class="disconnect-button">Disconnect</button>';
+                        if (syncEnabled) {
+                            html += '<button id="syncNowBtn" class="sync-button">Sync Now</button>';
+                        }
+                        html += '<button id="uploadBtn" class="sync-button" onclick="appInstance.driveSync && appInstance.driveSync.uploadData()">';
+                        html += '<span class="material-icons">cloud_upload</span> Save to Drive';
+                        html += '</button>';
+                        html += '<button id="downloadBtn" class="sync-button" onclick="appInstance.driveSync && appInstance.driveSync.downloadData()">';
+                        html += '<span class="material-icons">cloud_download</span> Load from Drive';
+                        html += '</button>';
+                        html += '<button id="disconnectBtn" class="disconnect-button" onclick="appInstance.driveSync && appInstance.driveSync.signOut()">';
+                        html += '<span class="material-icons">logout</span> Disconnect';
+                        html += '</button>';
                         html += '</div>';
                     }
                     
