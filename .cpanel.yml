@@ -1,5 +1,6 @@
 ---
 deployment:
+  branch: main
   tasks:
     - export DEPLOYPATH=/home/stachblx/public_html/stackmap.app
     - /bin/cp -R . $DEPLOYPATH
