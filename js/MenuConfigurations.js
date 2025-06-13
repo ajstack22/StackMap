@@ -492,7 +492,13 @@ window.MenuConfigurations = {
                     
                     let html = '<div class="activity-icons-grid">';
                     
-                    const commonIcons = ['🎯', '🏃', '💪', '🧘', '📚', '💻', '🎨', '🎵', '🍳', '🧹', '💤', '🚶', '🏋️', '📱', '✍️'];
+                    // Combined set of icons for both activities and users
+                    const commonIcons = [
+                        '🎯', '🏃', '💪', '🧘', '📚', '💻', '🎨', '🎵',
+                        '🍳', '🧹', '💤', '🚶', '🏋️', '📱', '✍️', '🎮',
+                        '👤', '👨', '👩', '👦', '👧', '🧑', '👶', '👴',
+                        '⚽', '🏀', '🎾', '🏈', '⚡', '🌟', '🔥', '💎'
+                    ];
                     commonIcons.forEach(icon => {
                         const selected = icon === selectedEmoji ? 'selected' : '';
                         html += `<button class="activity-icon-option ${selected}" 
@@ -622,7 +628,13 @@ window.MenuConfigurations = {
                     
                     let html = '<div class="user-icons-grid">';
                     
-                    const userIcons = ['👤', '👨', '👩', '👦', '👧', '🧑', '👶', '👴', '👵', '🦸', '👨‍💼', '👩‍💼', '🧑‍🎓', '👨‍🎓', '👩‍🎓'];
+                    // Use same combined set of icons as activities
+                    const userIcons = [
+                        '👤', '👨', '👩', '👦', '👧', '🧑', '👶', '👴',
+                        '🎯', '🏃', '💪', '🧘', '📚', '💻', '🎨', '🎵',
+                        '🍳', '🧹', '💤', '🚶', '🏋️', '📱', '✍️', '🎮',
+                        '⚽', '🏀', '🎾', '🏈', '⚡', '🌟', '🔥', '💎'
+                    ];
                     userIcons.forEach(icon => {
                         const selected = icon === selectedIcon ? 'selected' : '';
                         html += `<button class="user-icon-option ${selected}" 

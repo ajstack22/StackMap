@@ -2371,38 +2371,92 @@ class HybridPanelManager {
     showUserIconPicker() {
         const currentIcon = document.getElementById('userIcon').value;
         const button = document.getElementById('userIconButton');
+        const iconDisplay = button.querySelector('.icon-display');
         
-        // Create a simple emoji picker inline
-        const emojiGrid = document.createElement('div');
-        emojiGrid.className = 'emoji-picker-inline';
-        emojiGrid.innerHTML = `
-            <div class="emoji-grid">
-                ${EMOJIS.slice(0, 48).map(emoji => `
-                    <button class="emoji-option" data-emoji="${emoji}">
-                        ${emoji}
-                    </button>
-                `).join('')}
-            </div>
-        `;
+        // Check if emoji picker already exists
+        const existingPicker = document.querySelector('.modal-emoji-picker-inline');
+        if (existingPicker) {
+            existingPicker.remove();
+            return;
+        }
+        
+        // Create the emoji picker using the same enhanced version as activities
+        const picker = document.createElement('div');
+        picker.className = 'modal-emoji-picker-inline';
+        
+        // Create search/paste input
+        const filter = document.createElement('input');
+        filter.type = 'text';
+        filter.className = 'modal-emoji-picker__filter';
+        filter.placeholder = 'Search or paste emoji...';
+        filter.id = 'userIconFilter';
+        
+        // Create hint text
+        const hint = document.createElement('div');
+        hint.className = 'modal-emoji-picker__hint';
+        hint.innerHTML = '💡 Search keywords or paste any emoji';
+        
+        // Create emoji grid
+        const grid = document.createElement('div');
+        grid.className = 'modal-emoji-picker__grid';
+        grid.style.maxHeight = '200px';
+        grid.style.overflowY = 'auto';
+        
+        picker.appendChild(filter);
+        picker.appendChild(hint);
+        picker.appendChild(grid);
         
         // Insert after the icon button
-        button.parentElement.appendChild(emojiGrid);
+        button.parentElement.appendChild(picker);
+        
+        // Render emojis
+        const renderEmojis = (searchTerm = '') => {
+            let emojisToShow = EMOJIS;
+            
+            if (searchTerm) {
+                // Check if it's a direct emoji paste
+                if (this.isEmoji(searchTerm)) {
+                    this.selectUserIcon(searchTerm);
+                    picker.remove();
+                    return;
+                }
+                
+                // Otherwise search
+                emojisToShow = this.searchEmojis(searchTerm);
+            }
+            
+            grid.innerHTML = emojisToShow.slice(0, 100).map(emoji => 
+                `<button class="modal-emoji-picker__option ${emoji === currentIcon ? 'selected' : ''}" 
+                         data-emoji="${emoji}">${emoji}</button>`
+            ).join('');
+        };
+        
+        // Initial render
+        renderEmojis();
+        
+        // Search functionality
+        filter.addEventListener('input', (e) => {
+            renderEmojis(e.target.value);
+        });
+        
+        // Focus on search input
+        filter.focus();
         
         // Handle emoji selection
-        emojiGrid.addEventListener('click', (e) => {
-            if (e.target.classList.contains('emoji-option')) {
+        grid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-emoji-picker__option')) {
                 const selectedEmoji = e.target.getAttribute('data-emoji');
                 this.selectUserIcon(selectedEmoji);
-                emojiGrid.remove();
+                picker.remove();
             }
         });
         
         // Close on outside click
         setTimeout(() => {
-            document.addEventListener('click', function closeEmojiPicker(e) {
-                if (!emojiGrid.contains(e.target) && e.target !== button) {
-                    emojiGrid.remove();
-                    document.removeEventListener('click', closeEmojiPicker);
+            document.addEventListener('click', function closePicker(e) {
+                if (!picker.contains(e.target) && e.target !== button && !button.contains(e.target)) {
+                    picker.remove();
+                    document.removeEventListener('click', closePicker);
                 }
             });
         }, 100);

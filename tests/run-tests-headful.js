@@ -8,7 +8,7 @@
 const puppeteer = require('puppeteer');
 const chalk = require('chalk');
 
-const PORT = 5500;
+const PORT = process.env.PORT || 5501;
 const HOST = 'localhost';
 const TEST_URL = `http://${HOST}:${PORT}/tests/test-runner.html`;
 

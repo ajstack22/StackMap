@@ -1391,12 +1391,14 @@ textarea.panel-input {
 /* User icons grid */
 .user-icons-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
     padding: 12px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     backdrop-filter: blur(10px);
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .user-icon-option {
@@ -1745,7 +1747,7 @@ textarea.panel-input {
 
 .modal-emoji-picker-inline .modal-emoji-picker__grid {
     display: grid;
-    grid-template-columns: repeat(8, 1fr);
+    grid-template-columns: repeat(6, 1fr);
     gap: 4px;
     padding: 4px;
     background: rgba(0, 0, 0, 0.2);
@@ -1782,7 +1784,7 @@ textarea.panel-input {
 /* Responsive grid for smaller screens */
 @media (max-width: 400px) {
     .modal-emoji-picker-inline .modal-emoji-picker__grid {
-        grid-template-columns: repeat(6, 1fr);
+        grid-template-columns: repeat(5, 1fr);
     }
 }
 
@@ -2986,12 +2988,14 @@ textarea.panel-input {
 /* Activity icons grid */
 .activity-icons-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 12px;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
     padding: 12px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 12px;
     backdrop-filter: blur(10px);
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .activity-icon-option {
@@ -3030,6 +3034,29 @@ textarea.panel-input {
     font-size: 1rem;
     color: var(--primary-color);
     font-weight: bold;
+}
+
+/* Scrollbar styling for icon grids */
+.activity-icons-grid::-webkit-scrollbar,
+.user-icons-grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.activity-icons-grid::-webkit-scrollbar-track,
+.user-icons-grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.activity-icons-grid::-webkit-scrollbar-thumb,
+.user-icons-grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.activity-icons-grid::-webkit-scrollbar-thumb:hover,
+.user-icons-grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
 }
 
 .form-group {
