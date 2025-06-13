@@ -1219,7 +1219,7 @@ class ActivityCard {
             ${editTimePill}
             <div class="card__icon">${this.activity.icon}</div>
             <div class="card__title">${this.activity.title}</div>
-            <div class="card__description">${this.activity.description}</div>
+            ${this.activity.description ? `<div class="card__description">${this.activity.description}</div>` : ''}
         `;
     }
 
