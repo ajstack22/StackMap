@@ -1,6 +1,6 @@
 {
   "name": "stackmap",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "description": "StackMap - Visual Daily Activity Tracker",
   "private": true,
   "scripts": {
