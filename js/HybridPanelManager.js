@@ -1670,6 +1670,10 @@ class HybridPanelManager {
             visible: true
         };
         
+        console.log('Saving activity:', activity);
+        console.log('Description from form:', description);
+        console.log('Icon from form:', emoji);
+        
         // Check for editing index in multiple places for compatibility
         const editingIndex = this.menuStates.activityForm?.editingIndex ?? this.state.editingIndex;
         
@@ -1988,8 +1992,9 @@ class HybridPanelManager {
         // Update state
         this.menuStates.activityForm.selectedEmoji = icon;
         
-        // Update UI
-        const emojiDisplay = document.querySelector('.activity-emoji-selector .emoji-display');
+        // Update UI - find the button's emoji display
+        const emojiButton = document.getElementById('activityEmojiButton');
+        const emojiDisplay = emojiButton?.querySelector('.emoji-display');
         if (emojiDisplay) {
             emojiDisplay.textContent = icon;
         }
@@ -1998,6 +2003,7 @@ class HybridPanelManager {
         const emojiInput = document.getElementById('activityEmoji');
         if (emojiInput) {
             emojiInput.value = icon;
+            console.log('Updated emoji input to:', icon);
         }
         
         // Update grid selection

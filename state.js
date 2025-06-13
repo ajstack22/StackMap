@@ -138,18 +138,23 @@ class AppState {
     }
 
     updateActivity(index, updates) {
+        console.log('updateActivity called with:', { index, updates });
+        
         // Story 4: Get the current user and determine which activities to modify
         const user = this.getCurrentUser();
         const isToday = this.ui.currentDay === 'today';
         const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (index >= 0 && index < targetActivities.length) {
+            console.log('Before update:', targetActivities[index]);
+            
             // Story 1: Validate card type if being updated
             if (updates.cardType) {
                 updates.cardType = this._validateCardType(updates.cardType);
             }
             
             Object.assign(targetActivities[index], updates);
+            console.log('After update:', targetActivities[index]);
             
             // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
