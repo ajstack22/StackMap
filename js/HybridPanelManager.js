@@ -3864,7 +3864,7 @@ class HybridPanelManager {
         
         if (this.state.editingActivity && this.state.editingIndex >= 0) {
             // Update existing activity
-            this.app.updateActivity(this.state.editingIndex, activity);
+            this.app.appState.updateActivity(this.state.editingIndex, activity);
         } else {
             // Add new activity
             this.app.appState.addActivity(activity);
@@ -3956,7 +3956,7 @@ class HybridPanelManager {
             };
             
             if (this.state.editingActivity && this.state.editingIndex >= 0) {
-                this.app.updateActivity(this.state.editingIndex, activity);
+                this.app.appState.updateActivity(this.state.editingIndex, activity);
             } else {
                 this.app.appState.addActivity(activity);
             }
