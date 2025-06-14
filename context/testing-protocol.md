@@ -100,12 +100,12 @@ const result = await runAllTests();
 
 ## 🎯 **Story-Specific Testing**
 
-### **When Working on Story 1 (Card Types):**
+### **When Working on Story 1 (Pinned Cards - Simplified):**
 ```javascript
-// Validate card type management
+// All cards are now pinned/recurring only
 quickTest("story1")
-testActivityCreation()        // Card creation with types
-testAccessibility()          // Type indicators accessibility
+testActivityCreation()        // Card creation (pinned only)
+testAccessibility()          // Card accessibility
 ```
 
 ### **When Working on Story 2 (Multi-User):**

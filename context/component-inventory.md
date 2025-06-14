@@ -274,7 +274,7 @@ User Input → StackMapApp → AppState → Renderer → DOM Update
 - Completion tracking with celebrations
 - Drag and drop reordering
 - Edit mode with action buttons
-- Card types (recurring, frequent, single-use)
+- All cards are pinned (recurring)
 - Time badges and numbering
 
 ### Modal System

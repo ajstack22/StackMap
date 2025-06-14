@@ -4025,6 +4025,89 @@ class HybridPanelManager {
         }
     }
 
+    updateLibrarySearch(searchTerm) {
+        // Update just the card grids without refreshing the entire panel
+        const librarySections = document.querySelector('.library-sections');
+        if (!librarySections) return;
+        
+        const app = this.app;
+        const state = this.menuStates.activityLibrary;
+        
+        // Get libraries
+        const userActivities = app.appState.getLibrary('user');
+        const groupActivities = app.appState.getLibrary('group');
+        const baseActivities = app.appState.getLibrary('base');
+        
+        // Filter activities
+        const searchLower = searchTerm.toLowerCase();
+        const filterActivities = (activities) => {
+            if (!searchLower) return activities;
+            return activities.filter(activity => 
+                activity.title.toLowerCase().includes(searchLower) ||
+                (activity.description && activity.description.toLowerCase().includes(searchLower)) ||
+                (activity.icon && activity.icon.includes(searchLower))
+            );
+        };
+        
+        const filteredUser = filterActivities(userActivities || []);
+        const filteredGroup = filterActivities(groupActivities || []);
+        const filteredBase = filterActivities(baseActivities || []);
+        
+        // Update each section
+        this.updateLibrarySection('user', userActivities, filteredUser, searchLower, state);
+        this.updateLibrarySection('group', groupActivities, filteredGroup, searchLower, state);
+        this.updateLibrarySection('base', baseActivities, filteredBase, searchLower, state);
+        
+        // Show no results message if needed
+        let noResultsDiv = librarySections.querySelector('.no-results-message');
+        if (searchLower && filteredUser.length === 0 && filteredGroup.length === 0 && filteredBase.length === 0) {
+            if (!noResultsDiv) {
+                noResultsDiv = document.createElement('div');
+                noResultsDiv.className = 'no-results-message';
+                noResultsDiv.style.cssText = 'padding: 20px; text-align: center; color: #666;';
+                librarySections.appendChild(noResultsDiv);
+            }
+            noResultsDiv.textContent = `No cards found matching "${searchTerm}"`;
+        } else if (noResultsDiv) {
+            noResultsDiv.remove();
+        }
+    }
+    
+    updateLibrarySection(type, allActivities, filteredActivities, searchTerm, state) {
+        const section = document.querySelector(`[data-section="${type}"]`)?.closest('.library-section');
+        if (!section || !allActivities || allActivities.length === 0) return;
+        
+        // Update count in header
+        const countSpan = section.querySelector('.section-count');
+        if (countSpan) {
+            countSpan.textContent = `(${filteredActivities.length}${searchTerm ? '/' + allActivities.length : ''})`;
+        }
+        
+        // Update grid
+        const grid = section.querySelector('.activity-grid');
+        if (!grid) return;
+        
+        // Hide or show entire section based on filtered results
+        if (filteredActivities.length === 0) {
+            section.style.display = 'none';
+            return;
+        } else {
+            section.style.display = '';
+        }
+        
+        // Update visibility of each card
+        allActivities.forEach((activity, index) => {
+            const card = document.getElementById(`${type}-activity-${index}`);
+            if (card) {
+                if (filteredActivities.includes(activity)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+    }
+
     addSelectedToLibrary() {
         const state = this.menuStates.activityLibrary;
         const activities = [];

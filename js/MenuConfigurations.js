@@ -392,16 +392,17 @@ window.MenuConfigurations = {
                         const searchInput = document.getElementById('librarySearchInput');
                         if (searchInput) {
                             searchInput.addEventListener('input', (e) => {
-                                state.searchTerm = e.target.value;
-                                // Preserve scroll position
-                                const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
-                                window.hybridPanelManager.refreshCurrentPanel();
-                                // Restore scroll position
-                                window.scrollTo(0, scrollPos);
+                                const value = e.target.value;
+                                state.searchTerm = value;
+                                
+                                // Update just the library cards without refreshing the whole panel
+                                window.hybridPanelManager.updateLibrarySearch(value);
                             });
                             
-                            // Focus search input if it exists
-                            searchInput.focus();
+                            // Only focus if no search term (initial load)
+                            if (!state.searchTerm) {
+                                searchInput.focus();
+                            }
                         }
                         
                         // Handle collapsible headers
