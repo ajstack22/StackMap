@@ -906,6 +906,16 @@ class AppState {
                     }
                 });
                 
+                // Check if any activity is hidden and mark all as visible
+                Object.values(this.users.profiles).forEach(user => {
+                    if (user.activities && user.activities.some(a => a.visible === false)) {
+                        console.log('[State] Found hidden activities, marking all as visible');
+                        user.activities.forEach(a => {
+                            a.visible = true;
+                        });
+                    }
+                });
+                
                 // Ensure group library exists
                 if (!this.users.groupLibrary) {
                     this.users.groupLibrary = [];
@@ -934,6 +944,14 @@ class AppState {
                     visible: activity.visible !== undefined ? activity.visible : true,
                     completed: activity.completed || false
                 }));
+                
+                // Check if any activity is hidden and mark all as visible
+                if (activities.some(a => a.visible === false)) {
+                    console.log('[State] Found hidden activities in legacy format, marking all as visible');
+                    activities.forEach(a => {
+                        a.visible = true;
+                    });
+                }
                 
                 let settings = {
                     title: 'StackMap User',

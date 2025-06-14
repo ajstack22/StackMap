@@ -19,8 +19,7 @@ class HybridPanelManager {
         
         // Default values for new activity
         this.newActivityDefaults = {
-            emoji: CONFIG.DEFAULT_EMOJI || '📝',
-            cardType: 'recurring'
+            emoji: CONFIG.DEFAULT_EMOJI || '📝'
         };
         
         // Default values for new user
@@ -393,6 +392,16 @@ class HybridPanelManager {
         const menuContent = this.menuSystem.renderMenu(menuId, side, menuState);
         console.log('Menu content length:', menuContent.length);
         contentDiv.innerHTML = menuContent;
+        
+        // Initialize always-visible emoji picker for activity form
+        if (menuId === 'activityForm') {
+            setTimeout(() => this.initializeActivityEmojiPicker(), 0);
+        }
+        
+        // Initialize always-visible icon picker for user form
+        if (menuId === 'userForm') {
+            setTimeout(() => this.initializeUserIconPicker(), 0);
+        }
     }
 
     renderPreferencesContent() {
@@ -1620,7 +1629,6 @@ class HybridPanelManager {
             editingActivity: null,
             editingIndex: -1,
             selectedEmoji: '🎯',
-            selectedCardType: 'recurring'
         };
         
         // Reset all panel states
@@ -1659,13 +1667,13 @@ class HybridPanelManager {
             return;
         }
         
-        // Create activity object
+        // Create activity object (all cards are now pinned/recurring)
         const activity = {
             icon: emoji,
             title: title,
             description: description || '',
             time: time || '',
-            cardType: cardType,
+            cardType: 'recurring',  // Always recurring/pinned
             completed: false,
             visible: true
         };
@@ -1696,22 +1704,21 @@ class HybridPanelManager {
         // Refresh the main view
         this.app.render();
         
-        // Navigate back
-        this.navigateBack('right');
+        // Navigate back based on where we came from
+        const returnTo = this.menuStates.activityForm?.returnTo || this.state.returnTo || 'close';
+        if (returnTo === 'close') {
+            // Came from main screen, close the panel
+            this.closePanel('right');
+        } else {
+            // Came from within settings, navigate back
+            this.navigateBack('right');
+        }
         } catch (error) {
             console.error('Error in saveActivity:', error);
             alert('Error saving activity: ' + error.message);
         }
     }
     
-    selectCardType(type) {
-        this.menuStates.activityForm.selectedCardType = type;
-        
-        // Update UI
-        document.querySelectorAll('.segment[data-card-type]').forEach(btn => {
-            btn.classList.toggle('segment--active', btn.getAttribute('data-card-type') === type);
-        });
-    }
 
     exportData() {
         this.closeAllPanels();
@@ -1794,6 +1801,91 @@ class HybridPanelManager {
         }, 100);
     }
     
+    initializeUserIconPicker() {
+        const container = document.getElementById('userIconPickerContainer');
+        if (!container) return;
+        
+        const currentIcon = document.getElementById('userIcon')?.value || '👤';
+        
+        // Create the emoji picker
+        const picker = document.createElement('div');
+        picker.className = 'modal-emoji-picker-inline';
+        
+        // Create current icon preview
+        const preview = document.createElement('div');
+        preview.className = 'modal-emoji-picker__preview';
+        preview.innerHTML = `<span class="modal-emoji-picker__preview-emoji">${currentIcon}</span>`;
+        
+        // Create search/paste input
+        const filter = document.createElement('input');
+        filter.type = 'text';
+        filter.className = 'modal-emoji-picker__filter';
+        filter.placeholder = 'Search or paste emoji...';
+        filter.id = 'userIconFilter';
+        
+        // Create hint text
+        const hint = document.createElement('div');
+        hint.className = 'modal-emoji-picker__hint';
+        hint.innerHTML = '💡 Search keywords or paste any emoji';
+        
+        // Create emoji grid
+        const grid = document.createElement('div');
+        grid.className = 'modal-emoji-picker__grid';
+        grid.style.maxHeight = '200px';
+        grid.style.overflowY = 'auto';
+        
+        picker.appendChild(preview);
+        picker.appendChild(filter);
+        picker.appendChild(hint);
+        picker.appendChild(grid);
+        
+        // Clear container and add picker
+        container.innerHTML = '';
+        container.appendChild(picker);
+        
+        // Function to render emoji grid (similar to activity picker)
+        const renderEmojis = (searchTerm = '') => {
+            const emojisToShow = searchTerm ? 
+                (EMOJIS || []).filter(emoji => {
+                    const name = (EMOJI_NAMES || {})[emoji];
+                    return name && name.toLowerCase().includes(searchTerm.toLowerCase());
+                }) : (EMOJIS || []);
+                
+            grid.innerHTML = emojisToShow.slice(0, 100).map(emoji => 
+                `<button class="modal-emoji-picker__option ${emoji === currentIcon ? 'modal-emoji-picker__option--selected' : ''}" 
+                         data-emoji="${emoji}">${emoji}</button>`
+            ).join('');
+        };
+        
+        // Initial render
+        renderEmojis();
+        
+        // Search functionality
+        filter.addEventListener('input', (e) => {
+            renderEmojis(e.target.value);
+        });
+        
+        // Handle emoji selection
+        grid.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-emoji-picker__option')) {
+                const selectedEmoji = e.target.getAttribute('data-emoji');
+                this.selectUserIcon(selectedEmoji);
+                
+                // Update preview
+                const previewEmoji = picker.querySelector('.modal-emoji-picker__preview-emoji');
+                if (previewEmoji) {
+                    previewEmoji.textContent = selectedEmoji;
+                }
+                
+                // Update selected state
+                grid.querySelectorAll('.modal-emoji-picker__option').forEach(opt => {
+                    opt.classList.remove('modal-emoji-picker__option--selected');
+                });
+                e.target.classList.add('modal-emoji-picker__option--selected');
+            }
+        });
+    }
+
     showUserIconPicker() {
         // For now, users can use the quick select grid
         // In future, could open a full emoji picker
@@ -1961,19 +2053,20 @@ class HybridPanelManager {
     /**
      * Activity form methods
      */
-    editActivity(activity, index) {
+    editActivity(activity, index, returnTo = 'close') {
         // Initialize form state for editing
         this.menuStates.activityForm = {
             editingActivity: activity,
             editingIndex: index,
             selectedEmoji: activity.icon || '🎯',
-            selectedCardType: activity.cardType || 'recurring'
+            returnTo: returnTo  // Track where to return after save
         };
         
         // Set state for compatibility
         this.state.showingActivityForm = true;
         this.state.editingActivity = activity;
         this.state.editingIndex = index;
+        this.state.returnTo = returnTo;  // Also store in state
         
         // Open the right panel
         this.openPanel('right');
@@ -2178,21 +2271,20 @@ class HybridPanelManager {
         });
     }
     
-    showEmojiPicker() {
-        const currentEmoji = document.getElementById('activityEmoji').value;
-        const button = document.getElementById('activityEmojiButton');
-        const emojiDisplay = button.querySelector('.emoji-display');
+    initializeActivityEmojiPicker() {
+        const container = document.getElementById('activityEmojiPickerContainer');
+        if (!container) return;
         
-        // Check if emoji picker already exists
-        const existingPicker = document.querySelector('.modal-emoji-picker-inline');
-        if (existingPicker) {
-            existingPicker.remove();
-            return;
-        }
+        const currentEmoji = document.getElementById('activityEmoji')?.value || '🎯';
         
-        // Create the emoji picker using the modal's enhanced version
+        // Create the emoji picker
         const picker = document.createElement('div');
         picker.className = 'modal-emoji-picker-inline';
+        
+        // Create current emoji preview
+        const preview = document.createElement('div');
+        preview.className = 'modal-emoji-picker__preview';
+        preview.innerHTML = `<span class="modal-emoji-picker__preview-emoji">${currentEmoji}</span>`;
         
         // Create search/paste input
         const filter = document.createElement('input');
@@ -2212,6 +2304,142 @@ class HybridPanelManager {
         grid.style.maxHeight = '200px';
         grid.style.overflowY = 'auto';
         
+        picker.appendChild(preview);
+        picker.appendChild(filter);
+        picker.appendChild(hint);
+        picker.appendChild(grid);
+        
+        // Clear container and add picker
+        container.innerHTML = '';
+        container.appendChild(picker);
+        
+        // Function to render emoji grid
+        const renderEmojiGrid = (emojis) => {
+            grid.innerHTML = '';
+            
+            if (!emojis || emojis.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; padding: 15px; color: #666;">No emojis found</div>';
+                return;
+            }
+            
+            emojis.forEach(emoji => {
+                const emojiBtn = document.createElement('button');
+                emojiBtn.className = 'modal-emoji-picker__option';
+                emojiBtn.textContent = emoji;
+                emojiBtn.title = (EMOJI_NAMES || {})[emoji] || emoji;
+                emojiBtn.type = 'button';
+                
+                if (emoji === currentEmoji) {
+                    emojiBtn.classList.add('modal-emoji-picker__option--selected');
+                }
+                
+                emojiBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Update emoji display and hidden input
+                    document.getElementById('activityEmoji').value = emoji;
+                    
+                    // Update preview
+                    const previewEmoji = picker.querySelector('.modal-emoji-picker__preview-emoji');
+                    if (previewEmoji) {
+                        previewEmoji.textContent = emoji;
+                    }
+                    
+                    // Update selected state
+                    grid.querySelectorAll('.modal-emoji-picker__option').forEach(opt => {
+                        opt.classList.remove('modal-emoji-picker__option--selected');
+                    });
+                    emojiBtn.classList.add('modal-emoji-picker__option--selected');
+                    
+                    // Update state
+                    this.state.selectedEmoji = emoji;
+                });
+                
+                grid.appendChild(emojiBtn);
+            });
+        };
+        
+        // Initial render with all emojis
+        renderEmojiGrid(EMOJIS || []);
+        
+        // Handle search and paste
+        const emojiRegex = /\p{Emoji_Presentation}|\p{Emoji}\uFE0F/u;
+        
+        filter.addEventListener('input', (e) => {
+            const value = e.target.value.trim();
+            
+            // Check if the input is an emoji
+            if (emojiRegex.test(value)) {
+                // Update with pasted emoji
+                document.getElementById('activityEmoji').value = value;
+                const previewEmoji = picker.querySelector('.modal-emoji-picker__preview-emoji');
+                if (previewEmoji) {
+                    previewEmoji.textContent = value;
+                }
+                this.state.selectedEmoji = value;
+                filter.value = '';
+                return;
+            }
+            
+            // Otherwise filter emojis
+            if (!value) {
+                renderEmojiGrid(EMOJIS || []);
+            } else {
+                const searchTerm = value.toLowerCase();
+                const filtered = (EMOJIS || []).filter(emoji => {
+                    const name = (EMOJI_NAMES || {})[emoji];
+                    return name && name.toLowerCase().includes(searchTerm);
+                });
+                renderEmojiGrid(filtered);
+            }
+        });
+    }
+
+    showEmojiPicker() {
+        const currentEmoji = document.getElementById('activityEmoji').value;
+        const button = document.getElementById('activityEmojiButton');
+        const emojiDisplay = button.querySelector('.emoji-display');
+        
+        // Check if emoji picker already exists
+        const existingPicker = document.querySelector('.modal-emoji-picker-inline');
+        if (existingPicker) {
+            existingPicker.remove();
+            button.style.display = ''; // Show button again
+            return;
+        }
+        
+        // Hide the button when picker is open
+        button.style.display = 'none';
+        
+        // Create the emoji picker using the modal's enhanced version
+        const picker = document.createElement('div');
+        picker.className = 'modal-emoji-picker-inline';
+        
+        // Create current emoji preview
+        const preview = document.createElement('div');
+        preview.className = 'modal-emoji-picker__preview';
+        preview.innerHTML = `<span class="modal-emoji-picker__preview-emoji">${currentEmoji}</span>`;
+        
+        // Create search/paste input
+        const filter = document.createElement('input');
+        filter.type = 'text';
+        filter.className = 'modal-emoji-picker__filter';
+        filter.placeholder = 'Search or paste emoji...';
+        filter.id = 'activityEmojiFilter';
+        
+        // Create hint text
+        const hint = document.createElement('div');
+        hint.className = 'modal-emoji-picker__hint';
+        hint.innerHTML = '💡 Search keywords or paste any emoji';
+        
+        // Create emoji grid
+        const grid = document.createElement('div');
+        grid.className = 'modal-emoji-picker__grid';
+        grid.style.maxHeight = '200px';
+        grid.style.overflowY = 'auto';
+        
+        picker.appendChild(preview);
         picker.appendChild(filter);
         picker.appendChild(hint);
         picker.appendChild(grid);
@@ -2247,6 +2475,12 @@ class HybridPanelManager {
                     document.getElementById('activityEmoji').value = emoji;
                     emojiDisplay.textContent = emoji;
                     
+                    // Update preview
+                    const previewEmoji = picker.querySelector('.modal-emoji-picker__preview-emoji');
+                    if (previewEmoji) {
+                        previewEmoji.textContent = emoji;
+                    }
+                    
                     // Update selected state
                     grid.querySelectorAll('.modal-emoji-picker__option').forEach(opt => {
                         opt.classList.remove('modal-emoji-picker__option--selected');
@@ -2254,7 +2488,10 @@ class HybridPanelManager {
                     emojiBtn.classList.add('modal-emoji-picker__option--selected');
                     
                     // Close picker after a short delay
-                    setTimeout(() => picker.remove(), 150);
+                    setTimeout(() => {
+                        picker.remove();
+                        button.style.display = ''; // Show button again
+                    }, 150);
                 });
                 
                 grid.appendChild(emojiBtn);
@@ -2334,24 +2571,20 @@ class HybridPanelManager {
             description,
             icon: emoji,
             time: time || null,
-            cardType,
+            cardType: 'recurring',  // Always recurring/pinned
             completed: false,
             visible: true
         };
         
         if (this.state.editingIndex >= 0) {
-            // Update existing activity
-            this.app.appState.activities[this.state.editingIndex] = {
-                ...this.app.appState.activities[this.state.editingIndex],
-                ...activity
-            };
+            // Update existing activity using the proper method
+            this.app.appState.updateActivity(this.state.editingIndex, activity);
         } else {
-            // Add new activity
-            this.app.appState.activities.push(activity);
+            // Add new activity using the proper method
+            this.app.appState.addActivity(activity);
         }
         
-        // Save and re-render
-        this.app.appState._triggerSave();
+        // Re-render (save is already triggered by updateActivity/addActivity)
         this.app.render();
         
         // Go back to management panel
@@ -2364,8 +2597,8 @@ class HybridPanelManager {
     deleteActivity() {
         if (this.state.editingIndex >= 0) {
             if (confirm('Are you sure you want to delete this activity?')) {
-                this.app.appState.activities.splice(this.state.editingIndex, 1);
-                this.app.appState._triggerSave();
+                // Use the proper method to remove activity
+                this.app.appState.removeActivity(this.state.editingIndex);
                 this.app.render();
                 this.backToManagement();
             }
@@ -2397,6 +2630,11 @@ class HybridPanelManager {
         const picker = document.createElement('div');
         picker.className = 'modal-emoji-picker-inline';
         
+        // Create current icon preview
+        const preview = document.createElement('div');
+        preview.className = 'modal-emoji-picker__preview';
+        preview.innerHTML = `<span class="modal-emoji-picker__preview-emoji">${currentIcon}</span>`;
+        
         // Create search/paste input
         const filter = document.createElement('input');
         filter.type = 'text';
@@ -2415,6 +2653,7 @@ class HybridPanelManager {
         grid.style.maxHeight = '200px';
         grid.style.overflowY = 'auto';
         
+        picker.appendChild(preview);
         picker.appendChild(filter);
         picker.appendChild(hint);
         picker.appendChild(grid);
@@ -3852,7 +4091,8 @@ class HybridPanelManager {
 
     saveActivity() {
         const title = document.getElementById('activityTitle')?.value?.trim();
-        const selectedIcon = document.querySelector('.icon-option.selected')?.getAttribute('data-icon') || this.newActivityDefaults.emoji;
+        const description = document.getElementById('activityDescription')?.value?.trim();
+        const selectedIcon = document.getElementById('activityEmoji')?.value || document.querySelector('.icon-option.selected')?.getAttribute('data-icon') || this.newActivityDefaults.emoji;
         const selectedColor = document.querySelector('.color-option.selected')?.getAttribute('data-color') || 'blue';
         
         if (!title) {
@@ -3862,9 +4102,10 @@ class HybridPanelManager {
         
         const activity = {
             title,
+            description: description || '',
             icon: selectedIcon,
             color: selectedColor,
-            cardType: this.newActivityDefaults.cardType,
+            cardType: 'recurring',  // Always recurring/pinned
             visible: true
         };
         
@@ -3943,7 +4184,8 @@ class HybridPanelManager {
         if (formType === 'activity') {
             // Get form values
             const title = document.getElementById('activityTitle')?.value?.trim();
-            const selectedIcon = document.querySelector('.icon-option.selected')?.getAttribute('data-icon');
+            const description = document.getElementById('activityDescription')?.value?.trim();
+            const selectedIcon = document.getElementById('activityEmoji')?.value || document.querySelector('.icon-option.selected')?.getAttribute('data-icon');
             const selectedColor = document.querySelector('.color-option.selected')?.getAttribute('data-color');
             
             // Check if required fields are filled
@@ -3955,9 +4197,10 @@ class HybridPanelManager {
             // Save the activity
             const activity = {
                 title,
+                description: description || '',
                 icon: selectedIcon || this.newActivityDefaults.emoji,
                 color: selectedColor || 'blue',
-                cardType: this.newActivityDefaults.cardType,
+                cardType: 'recurring',  // Always recurring/pinned
                 visible: true
             };
             

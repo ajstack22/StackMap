@@ -451,12 +451,9 @@ window.MenuConfigurations = {
                     
                     let html = '';
                     
-                    // Emoji selector - large interactive button
+                    // Emoji picker - always visible
                     html += '<div class="activity-emoji-selector">';
-                    html += `<button class="emoji-button" id="activityEmojiButton" 
-                            onclick="window.hybridPanelManager.showEmojiPicker()">
-                        <span class="emoji-display">${selectedEmoji}</span>
-                    </button>`;
+                    html += `<div id="activityEmojiPickerContainer"></div>`;
                     html += `<input type="hidden" id="activityEmoji" value="${selectedEmoji}">`;
                     html += '</div>';
                     
@@ -474,74 +471,6 @@ window.MenuConfigurations = {
                     html += `<input type="text" id="activityDescription" class="form-field form-field--description" 
                             placeholder="Optional description" value="${activity.description || ''}" 
                             maxlength="50" autocomplete="off" />`;
-                    html += '</div>';
-                    
-                    return html;
-                }
-            },
-            {
-                type: 'custom',
-                label: 'Quick Select Icons',
-                render: function(state, menuSystem) {
-                    const selectedEmoji = state.selectedEmoji || state.editingActivity?.icon || '🎯';
-                    
-                    let html = '<div class="activity-icons-grid">';
-                    
-                    // Combined set of icons for both activities and users
-                    const commonIcons = [
-                        '🎯', '🏃', '💪', '🧘', '📚', '💻', '🎨', '🎵',
-                        '🍳', '🧹', '💤', '🚶', '🏋️', '📱', '✍️', '🎮',
-                        '👤', '👨', '👩', '👦', '👧', '🧑', '👶', '👴',
-                        '⚽', '🏀', '🎾', '🏈', '⚡', '🌟', '🔥', '💎'
-                    ];
-                    commonIcons.forEach(icon => {
-                        const selected = icon === selectedEmoji ? 'selected' : '';
-                        html += `<button class="activity-icon-option ${selected}" 
-                                data-icon="${icon}"
-                                onclick="window.hybridPanelManager.selectActivityIcon('${icon}')">
-                            ${icon}
-                        </button>`;
-                    });
-                    
-                    html += '</div>';
-                    
-                    return html;
-                }
-            },
-            {
-                type: 'custom', 
-                label: 'Card Type',
-                render: function(state, menuSystem) {
-                    const activity = state.editingActivity || {};
-                    const cardType = state.selectedCardType || activity.cardType || 'recurring';
-                    
-                    const CARD_TYPE_ICONS = {
-                        recurring: 'repeat',
-                        onetime: 'looks_one'
-                    };
-                    
-                    const CARD_TYPE_LABELS = {
-                        recurring: 'Recurring',
-                        onetime: 'One-time'
-                    };
-                    
-                    let html = '<div class="segmented-control">';
-                    
-                    Object.keys(CARD_TYPE_ICONS).forEach(type => {
-                        const icon = CARD_TYPE_ICONS[type];
-                        const label = CARD_TYPE_LABELS[type];
-                        const selectedClass = cardType === type ? 'segment--active' : '';
-                        
-                        html += `
-                            <button type="button" class="segment ${selectedClass}" 
-                                    onclick="window.hybridPanelManager.selectCardType('${type}')"
-                                    data-card-type="${type}">
-                                <span class="material-icons">${icon}</span>
-                                <span>${label}</span>
-                            </button>
-                        `;
-                    });
-                    
                     html += '</div>';
                     
                     return html;
@@ -595,12 +524,9 @@ window.MenuConfigurations = {
                     
                     let html = '';
                     
-                    // Large icon selector button (like emoji selector in activity form)
+                    // Icon picker - always visible
                     html += '<div class="user-icon-selector">';
-                    html += `<button class="icon-button" id="userIconButton" 
-                            onclick="window.hybridPanelManager.showUserIconPicker()">
-                        <span class="icon-display">${selectedIcon}</span>
-                    </button>`;
+                    html += `<div id="userIconPickerContainer"></div>`;
                     html += `<input type="hidden" id="userIcon" value="${selectedIcon}">`;
                     html += '</div>';
                     
@@ -610,35 +536,6 @@ window.MenuConfigurations = {
                     html += `<input type="text" id="userName" class="form-field form-field--title" 
                             placeholder="Enter user name" value="${user.name || ''}" 
                             maxlength="20" autocomplete="off" />`;
-                    html += '</div>';
-                    
-                    return html;
-                }
-            },
-            {
-                type: 'custom',
-                label: 'Quick Select Icons',
-                render: function(state, menuSystem) {
-                    const selectedIcon = state.selectedIcon || state.editingUser?.icon || '👤';
-                    
-                    let html = '<div class="user-icons-grid">';
-                    
-                    // Use same combined set of icons as activities
-                    const userIcons = [
-                        '👤', '👨', '👩', '👦', '👧', '🧑', '👶', '👴',
-                        '🎯', '🏃', '💪', '🧘', '📚', '💻', '🎨', '🎵',
-                        '🍳', '🧹', '💤', '🚶', '🏋️', '📱', '✍️', '🎮',
-                        '⚽', '🏀', '🎾', '🏈', '⚡', '🌟', '🔥', '💎'
-                    ];
-                    userIcons.forEach(icon => {
-                        const selected = icon === selectedIcon ? 'selected' : '';
-                        html += `<button class="user-icon-option ${selected}" 
-                                data-icon="${icon}"
-                                onclick="window.hybridPanelManager.selectUserIcon('${icon}')">
-                            ${icon}
-                        </button>`;
-                    });
-                    
                     html += '</div>';
                     
                     return html;

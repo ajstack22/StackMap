@@ -1351,9 +1351,7 @@ textarea.panel-input {
 
 /* User icon selector - similar to emoji selector */
 .user-icon-selector {
-    display: flex;
-    justify-content: center;
-    margin: 20px 0 30px 0;
+    margin: 0 0 20px 0;
 }
 
 .user-icon-selector .icon-button {
@@ -1706,12 +1704,26 @@ textarea.panel-input {
 
 /* Modal emoji picker inline styles for hybrid panels */
 .modal-emoji-picker-inline {
-    margin-top: 12px;
     background: rgba(0, 0, 0, 0.2);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 12px;
     padding: 12px;
     backdrop-filter: blur(10px);
+    width: 100%;
+}
+
+.modal-emoji-picker__preview {
+    text-align: center;
+    margin-bottom: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.modal-emoji-picker__preview-emoji {
+    font-size: 3rem;
+    line-height: 1;
+    display: block;
 }
 
 .modal-emoji-picker-inline .modal-emoji-picker__filter {
@@ -1746,7 +1758,7 @@ textarea.panel-input {
 
 .modal-emoji-picker-inline .modal-emoji-picker__grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 4px;
     padding: 4px;
     background: rgba(0, 0, 0, 0.2);
@@ -1783,7 +1795,7 @@ textarea.panel-input {
 /* Responsive grid for smaller screens */
 @media (max-width: 400px) {
     .modal-emoji-picker-inline .modal-emoji-picker__grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
@@ -2947,9 +2959,7 @@ textarea.panel-input {
 
 /* Activity emoji selector - similar to user icon selector */
 .activity-emoji-selector {
-    display: flex;
-    justify-content: center;
-    margin: 20px 0 30px 0;
+    margin: 0 0 20px 0;
 }
 
 .activity-emoji-selector .emoji-button {

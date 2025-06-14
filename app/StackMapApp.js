@@ -1354,8 +1354,8 @@ class StackMapApp {
     getDayCounts() {
         const user = this.appState.getCurrentUser();
         return {
-            today: user.activities.filter(a => a.visible).length,
-            tomorrow: user.tomorrowActivities.filter(a => a.visible).length
+            today: user.activities.length,
+            tomorrow: user.tomorrowActivities.length
         };
     }
     
