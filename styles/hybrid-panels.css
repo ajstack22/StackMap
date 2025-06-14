@@ -1537,7 +1537,7 @@ textarea.panel-input {
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 9px 16px;
+    padding: 9px 80px 9px 16px; /* Extra padding on right for action buttons */
     background: rgba(255, 255, 255, 0.1);
     border: 2px solid transparent;
     border-radius: 8px;
@@ -1568,11 +1568,18 @@ textarea.panel-input {
     color: white;
 }
 
-.user-edit-inline-btn {
+.user-action-buttons {
     position: absolute;
     right: 12px;
     top: 50%;
     transform: translateY(-50%);
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.user-edit-inline-btn,
+.user-delete-inline-btn {
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -1587,10 +1594,20 @@ textarea.panel-input {
 
 .user-edit-inline-btn:hover {
     background: rgba(255, 255, 255, 0.3);
-    transform: translateY(-50%) scale(1.1);
+    transform: scale(1.1);
 }
 
-.user-edit-inline-btn .material-icons {
+.user-delete-inline-btn {
+    background: rgba(255, 100, 100, 0.2);
+}
+
+.user-delete-inline-btn:hover {
+    background: rgba(255, 100, 100, 0.4);
+    transform: scale(1.1);
+}
+
+.user-edit-inline-btn .material-icons,
+.user-delete-inline-btn .material-icons {
     font-size: 18px;
     color: white;
 }

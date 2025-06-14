@@ -686,20 +686,44 @@ class HybridPanelManager {
         
         return `
             <div class="user-selector-list">
-                ${allUsers.map(user => `
-                    <div class="user-list-item ${user.id === currentUser.id ? 'user-list-item--active' : ''}" 
-                         onclick="hybridPanelManager.selectUser('${user.id}')">
-                        <span class="user-icon">${user.icon || '👤'}</span>
-                        <span class="user-name">${user.name}</span>
-                        ${isEditMode ? `
-                            <button class="user-edit-inline-btn" 
-                                    onclick="event.stopPropagation(); hybridPanelManager.editExistingUser('${user.id}')"
-                                    title="Edit ${user.name}">
-                                <span class="material-icons">edit</span>
-                            </button>
-                        ` : ''}
-                    </div>
-                `).join('')}
+                ${allUsers.map(user => {
+                    const isCurrentUser = user.id === currentUser.id;
+                    const isDefaultUser = user.id === 'default';
+                    const canDelete = !isCurrentUser && !isDefaultUser && allUsers.length > 1;
+                    
+                    console.log('[USER DELETE CHECK]', {
+                        userName: user.name,
+                        userId: user.id,
+                        isCurrentUser,
+                        isDefaultUser,
+                        allUsersLength: allUsers.length,
+                        canDelete
+                    });
+                    
+                    return `
+                        <div class="user-list-item ${isCurrentUser ? 'user-list-item--active' : ''}" 
+                             onclick="hybridPanelManager.selectUser('${user.id}')">
+                            <span class="user-icon">${user.icon || '👤'}</span>
+                            <span class="user-name">${user.name}</span>
+                            ${isEditMode ? `
+                                <div class="user-action-buttons">
+                                    <button class="user-edit-inline-btn" 
+                                            onclick="event.stopPropagation(); hybridPanelManager.editExistingUser('${user.id}')"
+                                            title="Edit ${user.name}">
+                                        <span class="material-icons">edit</span>
+                                    </button>
+                                    ${canDelete ? `
+                                        <button class="user-delete-inline-btn" 
+                                                onclick="event.stopPropagation(); hybridPanelManager.deleteUser('${user.id}')"
+                                                title="Delete ${user.name}">
+                                            <span class="material-icons">delete</span>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                }).join('')}
             </div>
         `;
     }
@@ -1651,6 +1675,10 @@ class HybridPanelManager {
             selectedEmoji: '🎯',
         };
         
+        // Reset editing state to ensure we're creating a new card
+        this.state.editingActivity = null;
+        this.state.editingIndex = -1;
+        
         // Reset all panel states
         this.state.showingUserManagement = false;
         this.state.showingActivityForm = true;
@@ -2086,6 +2114,55 @@ class HybridPanelManager {
                 this.renderPanelContent('right', false);
             }
         }, 100);
+    }
+
+    deleteUser(userId) {
+        console.log('[DELETE USER] deleteUser called for:', userId);
+        
+        // Get user info for confirmation message
+        const user = this.app.appState.users.profiles[userId];
+        if (!user) {
+            console.error('[DELETE USER] User not found:', userId);
+            return;
+        }
+        
+        // Check if it's the current user
+        if (userId === this.app.appState.getCurrentUser()?.id) {
+            alert("You cannot delete the currently active user. Please switch to another user first.");
+            return;
+        }
+        
+        // Check if it's the default user
+        if (userId === 'default') {
+            alert("The default user cannot be deleted.");
+            return;
+        }
+        
+        // Confirm deletion
+        if (!confirm(`Are you sure you want to delete user "${user.name}"? This action cannot be undone.`)) {
+            return;
+        }
+        
+        // Delete the user
+        const success = this.app.appState.deleteUser(userId);
+        
+        if (success) {
+            console.log('[DELETE USER] User deleted successfully');
+            
+            // Refresh the UI
+            this.app.render();
+            
+            // Refresh the settings panel
+            this.renderPanelContent('right', false);
+            
+            // Show success notification if available
+            if (this.app.showNotification) {
+                this.app.showNotification(`User "${user.name}" has been deleted`, 'success');
+            }
+        } else {
+            console.error('[DELETE USER] Failed to delete user');
+            alert("Failed to delete user. Please try again.");
+        }
     }
 
     /**

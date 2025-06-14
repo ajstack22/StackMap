@@ -497,6 +497,11 @@ class AppState {
             return false;
         }
         
+        // Need at least one user
+        if (Object.keys(this.users.profiles).length <= 1) {
+            return false;
+        }
+        
         if (this.users.profiles[userId]) {
             delete this.users.profiles[userId];
             this._triggerSave();
