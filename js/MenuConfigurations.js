@@ -520,7 +520,12 @@ window.MenuConfigurations = {
                 render: function(state, menuSystem) {
                     const app = menuSystem.app;
                     const user = state.editingUser || {};
-                    const selectedIcon = state.selectedIcon || user.icon || '👤';
+                    // Check both state and user for icon, preferring state.selectedIcon if available
+                    const selectedIcon = state.selectedIcon || state.editingUser?.icon || user.icon || '👤';
+                    
+                    console.log('User form render - state:', state);
+                    console.log('User form render - user:', user);
+                    console.log('User form render - selectedIcon:', selectedIcon);
                     
                     let html = '';
                     

@@ -363,10 +363,16 @@ class HybridPanelManager {
                 };
             } else if (this.state.showingUserForm) {
                 menuId = 'userForm';
-                menuState = this.menuStates.userForm || {
-                    editingUser: this.state.editingUser,
-                    editingUserId: this.state.editingUserId
-                };
+                // Ensure menuStates.userForm exists with proper defaults
+                if (!this.menuStates.userForm) {
+                    this.menuStates.userForm = {
+                        editingUser: this.state.editingUser,
+                        editingUserId: this.state.editingUserId,
+                        selectedIcon: this.state.editingUser?.icon || '👤'
+                    };
+                }
+                menuState = this.menuStates.userForm;
+                console.log('User form menuState:', menuState);
             } else if (this.state.showingSyncSettings) {
                 menuId = 'syncSettings';
             } else if (this.state.showingLibraryMenu) {
@@ -400,7 +406,30 @@ class HybridPanelManager {
         
         // Initialize always-visible icon picker for user form
         if (menuId === 'userForm') {
-            setTimeout(() => this.initializeUserIconPicker(), 0);
+            console.log('User form detected, initializing icon picker...');
+            setTimeout(() => {
+                console.log('Timeout executing, calling initializeUserIconPicker');
+                this.initializeUserIconPicker();
+                
+                // Debug: Check what's in the container after initialization
+                setTimeout(() => {
+                    const container = document.getElementById('userIconPickerContainer');
+                    if (container) {
+                        console.log('Container check after init:');
+                        console.log('- Container exists:', !!container);
+                        console.log('- Container has content:', container.innerHTML.length > 0);
+                        console.log('- Picker element exists:', !!container.querySelector('.modal-emoji-picker-inline'));
+                        console.log('- Grid exists:', !!container.querySelector('.modal-emoji-picker__grid'));
+                        const buttons = container.querySelectorAll('.modal-emoji-picker__option');
+                        console.log('- Number of emoji buttons:', buttons.length);
+                        if (buttons.length > 0) {
+                            console.log('- First 5 emojis:', Array.from(buttons).slice(0, 5).map(b => b.textContent).join(' '));
+                        }
+                    } else {
+                        console.error('Container still not found after initialization!');
+                    }
+                }, 200);
+            }, 100);
         }
     }
 
@@ -1735,6 +1764,8 @@ class HybridPanelManager {
     }
 
     addNewUser() {
+        console.log('addNewUser called');
+        
         // Initialize form state for new user
         this.menuStates.userForm = {
             editingUser: null,
@@ -1770,6 +1801,8 @@ class HybridPanelManager {
         const user = this.app.appState.users.profiles[userId];
         if (!user) return;
         
+        console.log('[EDIT USER] Editing user:', user.name, 'with icon:', user.icon);
+        
         // Initialize form state
         this.menuStates.userForm = {
             editingUser: user,
@@ -1802,10 +1835,28 @@ class HybridPanelManager {
     }
     
     initializeUserIconPicker() {
+        console.log('[ICON PICKER FIX v2] initializeUserIconPicker called');
         const container = document.getElementById('userIconPickerContainer');
-        if (!container) return;
+        if (!container) {
+            console.error('[ICON PICKER FIX v2] userIconPickerContainer not found');
+            return;
+        }
+        console.log('[ICON PICKER FIX v2] Container found:', container);
         
-        const currentIcon = document.getElementById('userIcon')?.value || '👤';
+        // Ensure menuStates.userForm exists
+        if (!this.menuStates.userForm) {
+            this.menuStates.userForm = {};
+        }
+        
+        // Get current icon from hidden input, state, or editing user
+        const hiddenInput = document.getElementById('userIcon');
+        const editingUser = this.menuStates.userForm?.editingUser;
+        const currentIcon = hiddenInput?.value || this.menuStates.userForm?.selectedIcon || editingUser?.icon || '👤';
+        console.log('Current icon:', currentIcon, 'from sources:', {
+            hiddenInput: hiddenInput?.value,
+            state: this.menuStates.userForm?.selectedIcon,
+            editingUser: editingUser?.icon
+        });
         
         // Create the emoji picker
         const picker = document.createElement('div');
@@ -1845,16 +1896,29 @@ class HybridPanelManager {
         
         // Function to render emoji grid (similar to activity picker)
         const renderEmojis = (searchTerm = '') => {
+            console.log('renderEmojis called with searchTerm:', searchTerm);
+            console.log('EMOJIS available:', typeof EMOJIS !== 'undefined', 'length:', EMOJIS?.length);
+            console.log('EMOJI_NAMES available:', typeof EMOJI_NAMES !== 'undefined', 'count:', Object.keys(EMOJI_NAMES || {}).length);
+            
+            // Check if emoji data is loaded
+            if (typeof EMOJIS === 'undefined' || !EMOJIS) {
+                console.error('EMOJIS data not loaded');
+                grid.innerHTML = '<div style="padding: 20px; text-align: center; color: #666;">Loading emojis...</div>';
+                return;
+            }
+            
             const emojisToShow = searchTerm ? 
                 (EMOJIS || []).filter(emoji => {
                     const name = (EMOJI_NAMES || {})[emoji];
                     return name && name.toLowerCase().includes(searchTerm.toLowerCase());
                 }) : (EMOJIS || []);
                 
-            grid.innerHTML = emojisToShow.slice(0, 100).map(emoji => 
+            const html = emojisToShow.slice(0, 100).map(emoji => 
                 `<button class="modal-emoji-picker__option ${emoji === currentIcon ? 'modal-emoji-picker__option--selected' : ''}" 
-                         data-emoji="${emoji}">${emoji}</button>`
+                         data-emoji="${emoji}" type="button">${emoji}</button>`
             ).join('');
+            grid.innerHTML = html || '<div style="padding: 20px; text-align: center; color: #666;">No emojis found</div>';
+            console.log('Grid populated with', emojisToShow.slice(0, 100).length, 'emojis');
         };
         
         // Initial render
@@ -1862,7 +1926,39 @@ class HybridPanelManager {
         
         // Search functionality
         filter.addEventListener('input', (e) => {
-            renderEmojis(e.target.value);
+            const value = e.target.value.trim();
+            
+            // Check if it's an emoji (simple check for single character with high code point)
+            if (value.length <= 2 && /\p{Emoji}/u.test(value)) {
+                console.log('Detected emoji paste:', value);
+                this.selectUserIcon(value);
+                filter.value = '';
+                renderEmojis('');
+            } else {
+                renderEmojis(value);
+            }
+        });
+        
+        // Handle paste event for better emoji detection
+        filter.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const pastedText = (e.clipboardData || window.clipboardData).getData('text');
+            console.log('Pasted text:', pastedText);
+            
+            // Check if pasted text is an emoji
+            if (pastedText && /\p{Emoji}/u.test(pastedText)) {
+                const emojiMatch = pastedText.match(/\p{Emoji}/u);
+                if (emojiMatch) {
+                    console.log('Selecting pasted emoji:', emojiMatch[0]);
+                    this.selectUserIcon(emojiMatch[0]);
+                    filter.value = '';
+                    renderEmojis('');
+                }
+            } else {
+                // If not an emoji, treat as search
+                filter.value = pastedText;
+                renderEmojis(pastedText);
+            }
         });
         
         // Handle emoji selection
@@ -1884,6 +1980,8 @@ class HybridPanelManager {
                 e.target.classList.add('modal-emoji-picker__option--selected');
             }
         });
+        
+        console.log('User icon picker initialized successfully');
     }
 
     showUserIconPicker() {
@@ -1892,31 +1990,50 @@ class HybridPanelManager {
     }
     
     selectUserIcon(icon) {
+        console.log('selectUserIcon called with:', icon);
+        
+        // Ensure menuStates.userForm exists
+        if (!this.menuStates.userForm) {
+            this.menuStates.userForm = {};
+        }
+        
         // Update state
         this.menuStates.userForm.selectedIcon = icon;
         
-        // Update UI
-        const iconDisplay = document.querySelector('.user-icon-selector .icon-display');
-        if (iconDisplay) {
-            iconDisplay.textContent = icon;
+        // Update UI - look for preview emoji
+        const previewEmoji = document.querySelector('.modal-emoji-picker__preview-emoji');
+        if (previewEmoji) {
+            previewEmoji.textContent = icon;
+            console.log('Updated preview emoji to:', icon);
         }
         
         // Update hidden input
         const iconInput = document.getElementById('userIcon');
         if (iconInput) {
             iconInput.value = icon;
+            console.log('Updated hidden input to:', icon);
         }
         
         // Update grid selection
-        document.querySelectorAll('.user-icon-option').forEach(btn => {
-            btn.classList.toggle('selected', btn.getAttribute('data-icon') === icon);
+        document.querySelectorAll('.modal-emoji-picker__option').forEach(btn => {
+            const isSelected = btn.getAttribute('data-emoji') === icon;
+            btn.classList.toggle('modal-emoji-picker__option--selected', isSelected);
         });
     }
     
     saveUser() {
         // Get form values
         const name = document.getElementById('userName')?.value?.trim();
-        const icon = document.getElementById('userIcon')?.value || '👤';
+        const iconInput = document.getElementById('userIcon');
+        const icon = iconInput?.value || '👤';
+        
+        console.log('[SAVE USER] Starting save:', { 
+            name, 
+            icon,
+            iconInputExists: !!iconInput,
+            iconInputValue: iconInput?.value,
+            menuState: this.menuStates.userForm?.selectedIcon
+        });
         
         // Validate name
         if (!name) {
@@ -1927,12 +2044,22 @@ class HybridPanelManager {
         }
         
         const state = this.menuStates.userForm;
+        console.log('[SAVE USER] Form state:', state);
         
         if (state.editingUserId) {
             // Editing existing user
+            console.log('[SAVE USER] Updating existing user:', state.editingUserId);
+            console.log('[SAVE USER] Icon before update:', this.app.appState.users.profiles[state.editingUserId]?.icon);
+            
             this.app.appState.updateUser(state.editingUserId, { name, icon });
+            
+            // Verify the update
+            const updatedUser = this.app.appState.users.profiles[state.editingUserId];
+            console.log('[SAVE USER] User after update:', updatedUser);
+            console.log('[SAVE USER] Icon after update:', updatedUser?.icon);
         } else {
             // Adding new user
+            console.log('[SAVE USER] Adding new user');
             this.app.appState.addUser(name, icon);
         }
         
@@ -1944,8 +2071,18 @@ class HybridPanelManager {
             this.app.initializeTitleSubtitle();
         }
         
-        // Navigate back
+        // Force refresh of UI
+        this.app.render();
+        
+        // Navigate back and ensure settings menu is refreshed
         this.navigateBack('right');
+        
+        // Force refresh the settings panel to show updated icon
+        setTimeout(() => {
+            if (this.navigationHistory.right[this.navigationHistory.right.length - 1] === 'settings') {
+                this.renderPanelContent('right', false);
+            }
+        }, 100);
     }
 
     /**
@@ -2608,111 +2745,9 @@ class HybridPanelManager {
     /**
      * User form methods
      */
-    selectUserIcon(icon) {
-        document.getElementById('userIcon').value = icon;
-        document.getElementById('userIconButton').querySelector('.emoji-display').textContent = icon;
-        this.newUserDefaults.icon = icon;
-    }
+    // Removed old selectUserIcon - see updated method below
     
-    showUserIconPicker() {
-        const currentIcon = document.getElementById('userIcon').value;
-        const button = document.getElementById('userIconButton');
-        const iconDisplay = button.querySelector('.icon-display');
-        
-        // Check if emoji picker already exists
-        const existingPicker = document.querySelector('.modal-emoji-picker-inline');
-        if (existingPicker) {
-            existingPicker.remove();
-            return;
-        }
-        
-        // Create the emoji picker using the same enhanced version as activities
-        const picker = document.createElement('div');
-        picker.className = 'modal-emoji-picker-inline';
-        
-        // Create current icon preview
-        const preview = document.createElement('div');
-        preview.className = 'modal-emoji-picker__preview';
-        preview.innerHTML = `<span class="modal-emoji-picker__preview-emoji">${currentIcon}</span>`;
-        
-        // Create search/paste input
-        const filter = document.createElement('input');
-        filter.type = 'text';
-        filter.className = 'modal-emoji-picker__filter';
-        filter.placeholder = 'Search or paste emoji...';
-        filter.id = 'userIconFilter';
-        
-        // Create hint text
-        const hint = document.createElement('div');
-        hint.className = 'modal-emoji-picker__hint';
-        hint.innerHTML = '💡 Search keywords or paste any emoji';
-        
-        // Create emoji grid
-        const grid = document.createElement('div');
-        grid.className = 'modal-emoji-picker__grid';
-        grid.style.maxHeight = '200px';
-        grid.style.overflowY = 'auto';
-        
-        picker.appendChild(preview);
-        picker.appendChild(filter);
-        picker.appendChild(hint);
-        picker.appendChild(grid);
-        
-        // Insert after the icon button
-        button.parentElement.appendChild(picker);
-        
-        // Render emojis
-        const renderEmojis = (searchTerm = '') => {
-            let emojisToShow = EMOJIS;
-            
-            if (searchTerm) {
-                // Check if it's a direct emoji paste
-                if (this.isEmoji(searchTerm)) {
-                    this.selectUserIcon(searchTerm);
-                    picker.remove();
-                    return;
-                }
-                
-                // Otherwise search
-                emojisToShow = this.searchEmojis(searchTerm);
-            }
-            
-            grid.innerHTML = emojisToShow.slice(0, 100).map(emoji => 
-                `<button class="modal-emoji-picker__option ${emoji === currentIcon ? 'selected' : ''}" 
-                         data-emoji="${emoji}">${emoji}</button>`
-            ).join('');
-        };
-        
-        // Initial render
-        renderEmojis();
-        
-        // Search functionality
-        filter.addEventListener('input', (e) => {
-            renderEmojis(e.target.value);
-        });
-        
-        // Focus on search input
-        filter.focus();
-        
-        // Handle emoji selection
-        grid.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal-emoji-picker__option')) {
-                const selectedEmoji = e.target.getAttribute('data-emoji');
-                this.selectUserIcon(selectedEmoji);
-                picker.remove();
-            }
-        });
-        
-        // Close on outside click
-        setTimeout(() => {
-            document.addEventListener('click', function closePicker(e) {
-                if (!picker.contains(e.target) && e.target !== button && !button.contains(e.target)) {
-                    picker.remove();
-                    document.removeEventListener('click', closePicker);
-                }
-            });
-        }, 100);
-    }
+    // Removed old showUserIconPicker - icon picker is now always visible inline
     
     saveUser() {
         const name = document.getElementById('userName').value.trim();
