@@ -180,3 +180,49 @@ For automated deployment, consider using:
 - GitHub Actions with cPanel deployment action
 - cPanel's Git Version Control
 - CI/CD pipeline with your hosting provider
+
+## Pulling Changes FROM cPanel
+
+### Method 1: Using rsync (Recommended)
+
+Run the provided script:
+```bash
+./scripts/pull-from-cpanel.sh
+```
+
+First, configure the script with your details:
+```bash
+CPANEL_HOST="your-domain.com"
+CPANEL_USER="your-cpanel-username"
+CPANEL_PATH="/home/$CPANEL_USER/public_html/stackmap"
+```
+
+### Method 2: Using Git
+
+1. **Setup Git remote for cPanel:**
+   ```bash
+   ./scripts/setup-cpanel-git.sh
+   ```
+
+2. **Pull changes:**
+   ```bash
+   git pull cpanel main
+   ```
+
+3. **If conflicts occur:**
+   ```bash
+   git pull cpanel main --allow-unrelated-histories
+   ```
+
+### Method 3: Manual FTP Download
+
+1. Connect to your cPanel via FTP
+2. Download changed files to a temporary directory
+3. Compare and merge changes manually
+
+### Important Notes
+
+- Always backup your local changes before pulling
+- Review all changes before committing
+- Update service worker version after significant changes
+- Test thoroughly after syncing

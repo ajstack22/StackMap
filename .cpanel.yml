@@ -22,5 +22,11 @@ deployment:
     - /bin/rm -f $DEPLOYPATH/.env.example
     - /bin/rm -f $DEPLOYPATH/package.json
     - /bin/rm -f $DEPLOYPATH/package-lock.json
+    - /bin/rm -rf $DEPLOYPATH/context
+    - /bin/rm -f $DEPLOYPATH/dev-tools.js
+    - /bin/rm -f $DEPLOYPATH/*.log
+    - /bin/rm -f $DEPLOYPATH/debug-*.js
+    - /bin/rm -f $DEPLOYPATH/test-*.html
+    - /bin/rm -f $DEPLOYPATH/test-*.js
     - find $DEPLOYPATH -type f -exec chmod 644 {} \;
     - find $DEPLOYPATH -type d -exec chmod 755 {} \;
