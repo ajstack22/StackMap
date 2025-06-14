@@ -902,16 +902,7 @@ class HybridPanelManager {
                     </div>
                 </div>
                 
-                <div class="panel-section">
-                    <label>Quick Icons</label>
-                    <div class="quick-icons-grid">
-                        ${userIcons.map(emoji => `
-                            <button class="emoji-option" onclick="hybridPanelManager.selectUserIcon('${emoji}')">
-                                ${emoji}
-                            </button>
-                        `).join('')}
-                    </div>
-                </div>
+                <!-- Quick icons removed - icon picker is now handled by MenuConfigurations -->
                 
                 <div class="panel-section">
                     <button class="save-settings-btn" onclick="hybridPanelManager.saveUser()">
