@@ -3271,8 +3271,10 @@ class StackMapApp {
     // LOCAL STORAGE
     saveToLocalStorage() {
         const data = this.appState.exportData();
+        console.log('[SAVE] Saving to localStorage, current user:', this.appState.getCurrentUser());
         try {
             localStorage.setItem('stackMapData', JSON.stringify(data));
+            console.log('[SAVE] Successfully saved to localStorage');
         } catch (error) {
             console.error('Failed to save to localStorage:', error);
         }

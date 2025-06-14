@@ -2022,17 +2022,29 @@ class HybridPanelManager {
     }
     
     saveUser() {
+        console.log('[SAVE USER] saveUser() method called!');
+        
         // Get form values
         const name = document.getElementById('userName')?.value?.trim();
         const iconInput = document.getElementById('userIcon');
-        const icon = iconInput?.value || '👤';
+        
+        // Debug: Check all possible icon sources
+        console.log('[SAVE USER] Icon sources:', {
+            menuStateIcon: this.menuStates.userForm?.selectedIcon,
+            hiddenInputValue: iconInput?.value,
+            currentPreview: document.querySelector('.modal-emoji-picker__preview-emoji')?.textContent
+        });
+        
+        // IMPORTANT: Use the menuState selectedIcon if available, as it's more reliable
+        const icon = this.menuStates.userForm?.selectedIcon || iconInput?.value || '👤';
         
         console.log('[SAVE USER] Starting save:', { 
             name, 
             icon,
             iconInputExists: !!iconInput,
             iconInputValue: iconInput?.value,
-            menuState: this.menuStates.userForm?.selectedIcon
+            menuState: this.menuStates.userForm?.selectedIcon,
+            usingMenuState: !!this.menuStates.userForm?.selectedIcon
         });
         
         // Validate name
@@ -2749,56 +2761,7 @@ class HybridPanelManager {
     
     // Removed old showUserIconPicker - icon picker is now always visible inline
     
-    saveUser() {
-        const name = document.getElementById('userName').value.trim();
-        const icon = document.getElementById('userIcon').value;
-        
-        if (!name) {
-            alert('Please enter a user name');
-            return;
-        }
-        
-        try {
-            if (this.state.editingUserId) {
-                // Update existing user
-                const user = this.app.appState.users.profiles[this.state.editingUserId];
-                if (user) {
-                    user.name = name;
-                    user.icon = icon;
-                    this.app.appState._triggerSave();
-                    
-                    // Update UI if this is the current user
-                    if (this.state.editingUserId === this.app.appState.users.currentUserId) {
-                        this.app.populateUserDropdowns();
-                        this.app.render();
-                    }
-                }
-            } else {
-                // Create new user
-                const newUserId = this.app.appState.addUser(name, icon);
-                
-                // Switch to the new user
-                this.app.appState.switchUser(newUserId);
-                
-                // Check if the new user needs default activities
-                if (this.app.appState.activities.length === 0) {
-                    this.app.createDefaultActivities();
-                }
-                
-                this.app.populateUserDropdowns();
-                this.app.populateDrawerSelects();
-                this.app.render();
-            }
-            
-            // Go back to management panel
-            this.backToManagement();
-            
-            // Show success message
-            this.showSaveSuccess();
-        } catch (error) {
-            alert(error.message);
-        }
-    }
+    // REMOVED - Another duplicate saveUser method
     
     deleteUser() {
         if (this.state.editingUserId && this.app.appState.getAllUsers().length > 1) {
@@ -3915,10 +3878,14 @@ class HybridPanelManager {
     }
     
     navigateBack(side) {
+        console.log('[NAVIGATE BACK] Called for side:', side);
+        console.log('[NAVIGATE BACK] Current menu:', this.navigationHistory[side][this.navigationHistory[side].length - 1]);
+        
         const history = this.navigationHistory[side];
         
         if (history.length <= 1) {
             // If we're at the root menu or no history, close the panel
+            console.log('[NAVIGATE BACK] Closing panel - at root menu');
             this.closePanel(side);
         } else {
             // Pop the current menu from history
@@ -3926,6 +3893,7 @@ class HybridPanelManager {
             
             // Get the previous menu
             const previousMenu = history[history.length - 1];
+            console.log('[NAVIGATE BACK] Going back to:', previousMenu);
             
             // Reset all state flags
             this.state.showingActivityForm = false;
@@ -4165,28 +4133,7 @@ class HybridPanelManager {
         this.renderPanelContent('right');
     }
 
-    saveUser() {
-        const name = document.getElementById('userName')?.value?.trim();
-        const selectedIcon = document.querySelector('#userIconSelector .icon-option.selected')?.getAttribute('data-icon') || this.newUserDefaults.icon;
-        
-        if (!name) {
-            this.app.showNotification('Please enter a user name', 'error');
-            return;
-        }
-        
-        if (this.state.editingUserId) {
-            // Update existing user
-            this.app.appState.updateUser(this.state.editingUserId, { name, icon: selectedIcon });
-        } else {
-            // Add new user
-            this.app.appState.addUser(name, selectedIcon);
-        }
-        
-        // Reset form state
-        this.cancelUserForm();
-        this.app.render();
-        this.updateSubtitle();
-    }
+    // REMOVED - Duplicate saveUser method that was using old selectors
 
     // Sync methods
     toggleSync(enabled) {

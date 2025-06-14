@@ -259,6 +259,19 @@ window.MenuConfigurations = {
                     const app = menuSystem.app;
                     let html = '<div class="library-sections" style="height: 100%; min-height: 0;">';
                     
+                    // Add search field
+                    html += `
+                        <div style="padding: 12px 16px 8px;">
+                            <input type="text" 
+                                id="librarySearchInput" 
+                                class="form-field" 
+                                placeholder="Type to search cards..." 
+                                value="${state.searchTerm || ''}"
+                                style="width: 100%; margin: 0;"
+                                autocomplete="off" />
+                        </div>
+                    `;
+                    
                     // Add hint
                     html += '<div class="library-hint">Select cards to add to your stack</div>';
                     
@@ -267,20 +280,38 @@ window.MenuConfigurations = {
                     const groupActivities = app.appState.getLibrary('group');
                     const baseActivities = app.appState.getLibrary('base');
                     
+                    // Filter activities based on search term
+                    const searchTerm = (state.searchTerm || '').toLowerCase();
+                    const filterActivities = (activities) => {
+                        if (!searchTerm) return activities;
+                        return activities.filter(activity => 
+                            activity.title.toLowerCase().includes(searchTerm) ||
+                            (activity.description && activity.description.toLowerCase().includes(searchTerm)) ||
+                            (activity.icon && activity.icon.includes(searchTerm))
+                        );
+                    };
+                    
+                    const filteredUserActivities = filterActivities(userActivities || []);
+                    const filteredGroupActivities = filterActivities(groupActivities || []);
+                    const filteredBaseActivities = filterActivities(baseActivities || []);
+                    
                     // User Activities
-                    if (userActivities && userActivities.length > 0) {
+                    if (userActivities && userActivities.length > 0 && filteredUserActivities.length > 0) {
                         const isUserCollapsed = state.collapsedSections && state.collapsedSections.user;
                         html += '<div class="library-section">';
                         html += `<h4 class="collapsible-header ${isUserCollapsed ? 'collapsed' : ''}" data-section="user">
                             <span class="collapse-icon">${isUserCollapsed ? '▶' : '▼'}</span>
                             My Cards
-                            <span class="section-count">(${userActivities.length})</span>
+                            <span class="section-count">(${filteredUserActivities.length}${searchTerm ? '/' + userActivities.length : ''})</span>
                         </h4>`;
                         html += `<div class="activity-grid ${isUserCollapsed ? 'collapsed' : ''}">`;
                         
-                        userActivities.forEach((activity, index) => {
-                            const id = `user-activity-${index}`;
-                            const isSelected = state.selectedActivities && state.selectedActivities.user && state.selectedActivities.user.includes(index);
+                        userActivities.forEach((activity, originalIndex) => {
+                            // Skip if filtered out
+                            if (!filteredUserActivities.includes(activity)) return;
+                            
+                            const id = `user-activity-${originalIndex}`;
+                            const isSelected = state.selectedActivities && state.selectedActivities.user && state.selectedActivities.user.includes(originalIndex);
                             
                             html += `<div class="library-activity ${isSelected ? 'selected' : ''}" id="${id}">`;
                             html += `<input type="checkbox" ${isSelected ? 'checked' : ''} tabindex="-1" />`;
@@ -293,19 +324,22 @@ window.MenuConfigurations = {
                     }
                     
                     // Group Activities
-                    if (groupActivities && groupActivities.length > 0) {
+                    if (groupActivities && groupActivities.length > 0 && filteredGroupActivities.length > 0) {
                         const isGroupCollapsed = state.collapsedSections && state.collapsedSections.group;
                         html += '<div class="library-section">';
                         html += `<h4 class="collapsible-header ${isGroupCollapsed ? 'collapsed' : ''}" data-section="group">
                             <span class="collapse-icon">${isGroupCollapsed ? '▶' : '▼'}</span>
                             Group Cards
-                            <span class="section-count">(${groupActivities.length})</span>
+                            <span class="section-count">(${filteredGroupActivities.length}${searchTerm ? '/' + groupActivities.length : ''})</span>
                         </h4>`;
                         html += `<div class="activity-grid ${isGroupCollapsed ? 'collapsed' : ''}">`;
                         
-                        groupActivities.forEach((activity, index) => {
-                            const id = `group-activity-${index}`;
-                            const isSelected = state.selectedActivities && state.selectedActivities.group && state.selectedActivities.group.includes(index);
+                        groupActivities.forEach((activity, originalIndex) => {
+                            // Skip if filtered out
+                            if (!filteredGroupActivities.includes(activity)) return;
+                            
+                            const id = `group-activity-${originalIndex}`;
+                            const isSelected = state.selectedActivities && state.selectedActivities.group && state.selectedActivities.group.includes(originalIndex);
                             
                             html += `<div class="library-activity ${isSelected ? 'selected' : ''}" id="${id}">`;
                             html += `<input type="checkbox" ${isSelected ? 'checked' : ''} tabindex="-1" />`;
@@ -318,19 +352,22 @@ window.MenuConfigurations = {
                     }
                     
                     // Base Activities
-                    if (baseActivities && baseActivities.length > 0) {
+                    if (baseActivities && baseActivities.length > 0 && filteredBaseActivities.length > 0) {
                         const isBaseCollapsed = state.collapsedSections && state.collapsedSections.base;
                         html += '<div class="library-section">';
                         html += `<h4 class="collapsible-header ${isBaseCollapsed ? 'collapsed' : ''}" data-section="base">
                             <span class="collapse-icon">${isBaseCollapsed ? '▶' : '▼'}</span>
                             StackMap Cards
-                            <span class="section-count">(${baseActivities.length})</span>
+                            <span class="section-count">(${filteredBaseActivities.length}${searchTerm ? '/' + baseActivities.length : ''})</span>
                         </h4>`;
                         html += `<div class="activity-grid ${isBaseCollapsed ? 'collapsed' : ''}">`;
                         
-                        baseActivities.forEach((activity, index) => {
-                            const id = `base-activity-${index}`;
-                            const isSelected = state.selectedActivities && state.selectedActivities.base && state.selectedActivities.base.includes(index);
+                        baseActivities.forEach((activity, originalIndex) => {
+                            // Skip if filtered out
+                            if (!filteredBaseActivities.includes(activity)) return;
+                            
+                            const id = `base-activity-${originalIndex}`;
+                            const isSelected = state.selectedActivities && state.selectedActivities.base && state.selectedActivities.base.includes(originalIndex);
                             
                             html += `<div class="library-activity ${isSelected ? 'selected' : ''}" id="${id}">`;
                             html += `<input type="checkbox" ${isSelected ? 'checked' : ''} tabindex="-1" />`;
@@ -342,10 +379,31 @@ window.MenuConfigurations = {
                         html += '</div></div>';
                     }
                     
+                    // Show message if no results
+                    if (searchTerm && filteredUserActivities.length === 0 && filteredGroupActivities.length === 0 && filteredBaseActivities.length === 0) {
+                        html += '<div style="padding: 20px; text-align: center; color: #666;">No cards found matching "' + searchTerm + '"</div>';
+                    }
+                    
                     html += '</div>';
                     
                     // Add click handlers after rendering
                     setTimeout(() => {
+                        // Handle search input
+                        const searchInput = document.getElementById('librarySearchInput');
+                        if (searchInput) {
+                            searchInput.addEventListener('input', (e) => {
+                                state.searchTerm = e.target.value;
+                                // Preserve scroll position
+                                const scrollPos = window.pageYOffset || document.documentElement.scrollTop;
+                                window.hybridPanelManager.refreshCurrentPanel();
+                                // Restore scroll position
+                                window.scrollTo(0, scrollPos);
+                            });
+                            
+                            // Focus search input if it exists
+                            searchInput.focus();
+                        }
+                        
                         // Handle collapsible headers
                         document.querySelectorAll('.collapsible-header').forEach(header => {
                             header.addEventListener('click', (e) => {
@@ -553,7 +611,7 @@ window.MenuConfigurations = {
                 const buttonText = state.editingUser ? 'Save User' : 'Add User';
                 
                 return `
-                    <button class="footer-button primary-button" onclick="window.hybridPanelManager.saveUser()">
+                    <button class="footer-button primary-button" onclick="console.log('[USER FORM] Save button clicked'); console.log('hybridPanelManager exists:', !!window.hybridPanelManager); console.log('saveUser exists:', !!(window.hybridPanelManager && window.hybridPanelManager.saveUser)); if (window.hybridPanelManager && window.hybridPanelManager.saveUser) { window.hybridPanelManager.saveUser(); } else { console.error('Cannot find saveUser method!'); }">
                         ${buttonText}
                     </button>
                 `;

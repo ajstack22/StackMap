@@ -543,6 +543,9 @@ class AppState {
 
     // NEW: General update user method
     updateUser(userId, updates) {
+        console.log('[STATE] updateUser called with:', { userId, updates });
+        console.trace('[STATE] updateUser call stack');
+        
         if (!this.users.profiles[userId]) {
             throw new Error('User not found');
         }
@@ -582,7 +585,9 @@ class AppState {
         
         // Validate and update icon if provided
         if (updates.icon !== undefined) {
+            console.log('[STATE] Updating user icon from:', user.icon, 'to:', updates.icon);
             user.icon = updates.icon || '👤';
+            console.log('[STATE] User icon after update:', user.icon);
         }
         
         // Update any other properties
