@@ -1,8 +1,8 @@
 // Service Worker for StackMap PWA
-// Version: 1.5.4
+// Version: 1.5.5
 // Last Updated: 2025-06-15
 
-const CACHE_NAME = 'stackmap-v1.5.4-2025-06-15-drag-drop-working';
+const CACHE_NAME = 'stackmap-v1.5.5-2025-06-15-version-display';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 

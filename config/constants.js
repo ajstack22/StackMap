@@ -1,5 +1,9 @@
 // config/constants.js - Core Configuration Constants
 const CONFIG = {
+    // App version - update this when making significant changes
+    APP_VERSION: '1.5.5',
+    APP_BUILD_DATE: '2025-06-15',
+    
     MAX_TITLE_LENGTH: 30,
     MAX_DESCRIPTION_LENGTH: 50,
     MAX_ACTIVITIES: 75,

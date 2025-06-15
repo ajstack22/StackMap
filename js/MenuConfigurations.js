@@ -154,6 +154,18 @@ window.MenuConfigurations = {
                     // Close the settings content div
                     html += '</div>';
                     
+                    // Add version info at the bottom (only in edit mode)
+                    if (app.grownupMode) {
+                        html += `
+                            <div class="panel-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
+                                <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                                    Version ${CONFIG.APP_VERSION || '1.5.4'}<br>
+                                    <span style="font-size: 0.75rem;">Build ${CONFIG.APP_BUILD_DATE || '2025-06-15'}</span>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
                     // Add event listeners
                     setTimeout(() => {
                         const viewModeBtn = document.getElementById('viewModeBtn');
