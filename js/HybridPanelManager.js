@@ -737,7 +737,10 @@ class HybridPanelManager {
                 container.replaceWith(container.cloneNode(true));
                 const newContainer = document.querySelector('.user-selector-list');
                 
-                newContainer.addEventListener('click', (e) => {
+                // Store reference to this for use in event handler
+                const manager = this;
+                
+                newContainer.addEventListener('click', function(e) {
                     const target = e.target.closest('[data-action]');
                     if (!target) return;
                     
@@ -745,24 +748,28 @@ class HybridPanelManager {
                     const userId = target.dataset.userId;
                     
                     console.log('[USER ACTION]', { action, userId, targetElement: target });
+                    console.log('[USER ACTION] Manager reference:', !!manager);
+                    console.log('[USER ACTION] Manager.deleteUser exists:', !!manager.deleteUser);
                     
                     switch(action) {
                         case 'select-user':
-                            if (this.selectUser) {
-                                this.selectUser(userId);
+                            if (manager.selectUser) {
+                                manager.selectUser(userId);
                             }
                             break;
                         case 'edit-user':
                             e.stopPropagation();
-                            if (this.editExistingUser) {
-                                this.editExistingUser(userId);
+                            if (manager.editExistingUser) {
+                                manager.editExistingUser(userId);
                             }
                             break;
                         case 'delete-user':
                             e.stopPropagation();
-                            if (this.deleteUser) {
-                                console.log('[DELETE ACTION] Calling deleteUser with:', userId);
-                                this.deleteUser(userId);
+                            console.log('[DELETE ACTION] About to call deleteUser with:', userId);
+                            try {
+                                manager.deleteUser(userId);
+                            } catch (err) {
+                                console.error('[DELETE ACTION] Error calling deleteUser:', err);
                             }
                             break;
                     }
@@ -2194,44 +2201,65 @@ class HybridPanelManager {
 
     deleteUser(userId) {
         console.log('[DELETE USER] deleteUser called for:', userId);
+        console.log('[DELETE USER] this.app exists:', !!this.app);
+        console.log('[DELETE USER] this.app.appState exists:', !!this.app?.appState);
+        console.log('[DELETE USER] users.profiles exists:', !!this.app?.appState?.users?.profiles);
         
-        // Get user info for confirmation message
-        const user = this.app.appState.users.profiles[userId];
-        if (!user) {
-            console.error('[DELETE USER] User not found:', userId);
-            return;
-        }
-        
-        // Check if it's the current user
-        if (userId === this.app.appState.getCurrentUser()?.id) {
-            alert("You cannot delete the currently active user. Please switch to another user first.");
-            return;
-        }
-        
-        // Confirm deletion
-        if (!confirm(`Are you sure you want to delete user "${user.name}"? This action cannot be undone.`)) {
-            return;
-        }
-        
-        // Delete the user
-        const success = this.app.appState.deleteUser(userId);
-        
-        if (success) {
-            console.log('[DELETE USER] User deleted successfully');
+        try {
+            // Get user info for confirmation message
+            const user = this.app.appState.users.profiles[userId];
+            console.log('[DELETE USER] User lookup result:', user);
             
-            // Refresh the UI
-            this.app.render();
-            
-            // Refresh the settings panel
-            this.renderPanelContent('right', false);
-            
-            // Show success notification if available
-            if (this.app.showNotification) {
-                this.app.showNotification(`User "${user.name}" has been deleted`, 'success');
+            if (!user) {
+                console.error('[DELETE USER] User not found:', userId);
+                console.error('[DELETE USER] Available users:', Object.keys(this.app.appState.users.profiles));
+                return;
             }
-        } else {
-            console.error('[DELETE USER] Failed to delete user');
-            alert("Failed to delete user. Please try again.");
+            
+            // Check if it's the current user
+            const currentUser = this.app.appState.getCurrentUser();
+            console.log('[DELETE USER] Current user:', currentUser?.id, 'Deleting:', userId);
+            
+            if (userId === currentUser?.id) {
+                alert("You cannot delete the currently active user. Please switch to another user first.");
+                return;
+            }
+            
+            // Confirm deletion
+            const confirmMessage = `Are you sure you want to delete user "${user.name}"? This action cannot be undone.`;
+            console.log('[DELETE USER] Showing confirm dialog:', confirmMessage);
+            
+            if (!confirm(confirmMessage)) {
+                console.log('[DELETE USER] User cancelled deletion');
+                return;
+            }
+            
+            console.log('[DELETE USER] User confirmed deletion, proceeding...');
+            
+            // Delete the user
+            const success = this.app.appState.deleteUser(userId);
+            console.log('[DELETE USER] Delete operation result:', success);
+            
+            if (success) {
+                console.log('[DELETE USER] User deleted successfully');
+                
+                // Refresh the UI
+                this.app.render();
+                
+                // Refresh the settings panel
+                this.renderPanelContent('right', false);
+                
+                // Show success notification if available
+                if (this.app.showNotification) {
+                    this.app.showNotification(`User "${user.name}" has been deleted`, 'success');
+                }
+            } else {
+                console.error('[DELETE USER] Failed to delete user');
+                alert("Failed to delete user. Please try again.");
+            }
+        } catch (error) {
+            console.error('[DELETE USER] Error in deleteUser:', error);
+            console.error('[DELETE USER] Stack trace:', error.stack);
         }
     }
 
