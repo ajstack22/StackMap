@@ -1,8 +1,8 @@
 // Service Worker for StackMap PWA
-// Version: 1.4.9
+// Version: 1.5.0
 // Last Updated: 2025-06-15
 
-const CACHE_NAME = 'stackmap-v1.4.9-2025-06-15-fix-delete-button';
+const CACHE_NAME = 'stackmap-v1.5.0-2025-06-15-fix-delete-event-handling';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 

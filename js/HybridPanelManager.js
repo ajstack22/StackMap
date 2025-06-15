@@ -684,7 +684,8 @@ class HybridPanelManager {
         const allUsers = this.app.appState.getAllUsers();
         const isEditMode = this.app.grownupMode;
         
-        return `
+        // Generate HTML first
+        const html = `
             <div class="user-selector-list">
                 ${allUsers.map(user => {
                     const isCurrentUser = user.id === currentUser.id;
@@ -700,19 +701,22 @@ class HybridPanelManager {
                     
                     return `
                         <div class="user-list-item ${isCurrentUser ? 'user-list-item--active' : ''}" 
-                             onclick="if (window.hybridPanelManager && window.hybridPanelManager.selectUser) { window.hybridPanelManager.selectUser('${user.id}'); } else { console.error('hybridPanelManager not available'); }">
+                             data-user-id="${user.id}"
+                             data-action="select-user">
                             <span class="user-icon">${user.icon || '👤'}</span>
                             <span class="user-name">${user.name}</span>
                             ${isEditMode ? `
                                 <div class="user-action-buttons">
                                     <button class="user-edit-inline-btn" 
-                                            onclick="event.stopPropagation(); if (window.hybridPanelManager && window.hybridPanelManager.editExistingUser) { window.hybridPanelManager.editExistingUser('${user.id}'); } else { console.error('hybridPanelManager not available'); }"
+                                            data-user-id="${user.id}"
+                                            data-action="edit-user"
                                             title="Edit ${user.name}">
                                         <span class="material-icons">edit</span>
                                     </button>
                                     ${canDelete ? `
                                         <button class="user-delete-inline-btn" 
-                                                onclick="event.stopPropagation(); if (window.hybridPanelManager && window.hybridPanelManager.deleteUser) { window.hybridPanelManager.deleteUser('${user.id}'); } else { console.error('hybridPanelManager not available'); }"
+                                                data-user-id="${user.id}"
+                                                data-action="delete-user"
                                                 title="Delete ${user.name}">
                                             <span class="material-icons">delete</span>
                                         </button>
@@ -724,6 +728,49 @@ class HybridPanelManager {
                 }).join('')}
             </div>
         `;
+        
+        // Set up event listeners after DOM is updated
+        setTimeout(() => {
+            const container = document.querySelector('.user-selector-list');
+            if (container) {
+                // Remove any existing listeners
+                container.replaceWith(container.cloneNode(true));
+                const newContainer = document.querySelector('.user-selector-list');
+                
+                newContainer.addEventListener('click', (e) => {
+                    const target = e.target.closest('[data-action]');
+                    if (!target) return;
+                    
+                    const action = target.dataset.action;
+                    const userId = target.dataset.userId;
+                    
+                    console.log('[USER ACTION]', { action, userId, targetElement: target });
+                    
+                    switch(action) {
+                        case 'select-user':
+                            if (this.selectUser) {
+                                this.selectUser(userId);
+                            }
+                            break;
+                        case 'edit-user':
+                            e.stopPropagation();
+                            if (this.editExistingUser) {
+                                this.editExistingUser(userId);
+                            }
+                            break;
+                        case 'delete-user':
+                            e.stopPropagation();
+                            if (this.deleteUser) {
+                                console.log('[DELETE ACTION] Calling deleteUser with:', userId);
+                                this.deleteUser(userId);
+                            }
+                            break;
+                    }
+                });
+            }
+        }, 0);
+        
+        return html;
     }
     
     renderDaySelector() {
