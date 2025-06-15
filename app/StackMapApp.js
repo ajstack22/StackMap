@@ -116,6 +116,7 @@ class StackMapApp {
         this.initializeDrawer();
         this.initializeScrollHeader();
         this.initializeCelebrationSystem();
+        this.initializeKeyboardShortcuts();
         
         // Add cleanup handler for page unload
         window.addEventListener('beforeunload', () => {
@@ -255,14 +256,42 @@ class StackMapApp {
     }
 
     initializeTitleSubtitle() {
-        // Get current user's custom title and subtitle
+        // Get current user and day
         const currentUser = this.appState.getCurrentUser();
-        const userTitle = currentUser.customTitle || 'StackMap';
+        if (!currentUser) {
+            console.error('[StackMapApp] No current user for title initialization');
+            return;
+        }
         
-        // Create personalized subtitle with user's name and day
         const currentDay = this.appState.ui.currentDay || 'today';
-        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-        const userSubtitle = `${currentUser.name}'s ${dayText}`;
+        
+        // Initialize day titles/subtitles if they don't exist
+        if (!currentUser.dayTitles) {
+            currentUser.dayTitles = { today: null, tomorrow: null };
+        }
+        if (!currentUser.daySubtitles) {
+            currentUser.daySubtitles = { today: null, tomorrow: null };
+        }
+        
+        // Determine title to use (per-day or default)
+        let userTitle;
+        if (currentUser.dayTitles[currentDay]) {
+            userTitle = currentUser.dayTitles[currentDay];
+        } else {
+            userTitle = currentUser.customTitle || 'StackMap';
+        }
+        
+        // Determine subtitle to use (per-day, custom, or auto-generated)
+        let userSubtitle;
+        if (currentUser.daySubtitles[currentDay]) {
+            userSubtitle = currentUser.daySubtitles[currentDay];
+        } else if (currentUser.customSubtitle) {
+            userSubtitle = currentUser.customSubtitle;
+        } else {
+            // Auto-generate subtitle
+            const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+            userSubtitle = `${currentUser.name}'s ${dayText}`;
+        }
         
         // Update all title elements
         const mainTitle = document.getElementById('mainTitle');
@@ -1380,6 +1409,14 @@ class StackMapApp {
             const currentScroll = window.pageYOffset || document.documentElement.scrollTop;
             
             this.appState.setCurrentDay(day);
+            
+            // Update title/subtitle for the new day
+            this.initializeTitleSubtitle();
+            
+            // Refresh preferences panel if open to show correct day's values
+            if (window.hybridPanelManager && window.hybridPanelManager.isPanelOpen('left')) {
+                window.hybridPanelManager.renderPanelContent('left', false);
+            }
             
             // Ensure tomorrow has activities if empty and user has today activities
             if (day === 'tomorrow') {
@@ -2878,6 +2915,10 @@ class StackMapApp {
                 activities: user.activities,
                 tomorrowActivities: user.tomorrowActivities || [],  // Include tomorrow activities
                 settings: user.settings,
+                dayTitles: user.dayTitles || { today: null, tomorrow: null },  // Include day-specific titles
+                daySubtitles: user.daySubtitles || { today: null, tomorrow: null },  // Include day-specific subtitles
+                customTitle: user.customTitle,  // Include custom title
+                customSubtitle: user.customSubtitle,  // Include custom subtitle
                 metadata: {
                     activityCount: user.activities.length,
                     lastModified: new Date().toISOString()
@@ -3191,7 +3232,12 @@ class StackMapApp {
                 subtitle: userData.settings?.subtitle || 'Routine Ready',
                 backgroundColor: userData.settings?.backgroundColor || '#667eea',
                 showCompletionIndicators: userData.settings?.showCompletionIndicators !== false
-            }
+            },
+            dayTitles: userData.dayTitles || { today: null, tomorrow: null }, // Import day-specific titles
+            daySubtitles: userData.daySubtitles || { today: null, tomorrow: null }, // Import day-specific subtitles
+            customTitle: userData.customTitle || null, // Import custom title
+            customSubtitle: userData.customSubtitle || null, // Import custom subtitle
+            library: userData.library || [] // Import user library
         };
         
         // Update the user's data
@@ -3493,6 +3539,36 @@ class StackMapApp {
         } else {
             console.warn('CelebrationManager not loaded - celebrations disabled');
         }
+    }
+    
+    /**
+     * Initialize keyboard shortcuts for the application
+     */
+    initializeKeyboardShortcuts() {
+        // Add keyboard shortcut for toggling edit mode
+        document.addEventListener('keydown', (e) => {
+            // Check for Ctrl+E (Windows/Linux) or Cmd+E (Mac)
+            if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+                e.preventDefault(); // Prevent default browser behavior
+                
+                // Don't toggle if user is typing in an input field
+                const activeElement = document.activeElement;
+                const isTyping = activeElement && (
+                    activeElement.tagName === 'INPUT' || 
+                    activeElement.tagName === 'TEXTAREA' ||
+                    activeElement.contentEditable === 'true'
+                );
+                
+                if (!isTyping) {
+                    // Toggle edit mode
+                    if (this.grownupMode) {
+                        this.exitGrownupMode();
+                    } else {
+                        this.enterGrownupMode();
+                    }
+                }
+            }
+        });
     }
 }
 

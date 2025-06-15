@@ -50,14 +50,47 @@ class AppState {
                         showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
                         showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
                     },
+                    // Per-day titles and subtitles
+                    dayTitles: {
+                        today: null,     // null means use default customTitle
+                        tomorrow: null   // null means use default customTitle
+                    },
+                    daySubtitles: {
+                        today: null,     // null means use auto-generated
+                        tomorrow: null   // null means use auto-generated
+                    },
                     library: [] // User-specific library cards
                 }
             },
             groupLibrary: [] // Shared library for all users
         };
         
+        // Initialize default user with default activities
+        this._initializeDefaultUser();
+        
         // External save handler
         this.onStateChange = null;
+    }
+
+    // Initialize default user with default activities
+    _initializeDefaultUser() {
+        const defaultUser = this.users.profiles[CONFIG.DEFAULT_USER_ID];
+        if (defaultUser && defaultUser.activities.length === 0) {
+            const defaultActivities = this.getDefaultActivitiesForNewUser();
+            defaultUser.activities = defaultActivities;
+            defaultUser.tomorrowActivities = [...defaultActivities];
+            
+            // Ensure card numbers are assigned
+            defaultUser.activities.forEach((activity, index) => {
+                activity.cardNumber = index + 1;
+            });
+            defaultUser.tomorrowActivities.forEach((activity, index) => {
+                activity.cardNumber = index + 1;
+            });
+            
+            // Sync with legacy activities array
+            this.activities = [...defaultUser.activities];
+        }
     }
 
     // === ACTIVITY MANAGEMENT ===
@@ -83,13 +116,19 @@ class AppState {
         
         // Also fix the legacy activities array
         const currentUser = this.getCurrentUser();
-        const isToday = this.ui.currentDay === 'today';
-        this.activities = isToday ? [...currentUser.activities] : [...currentUser.tomorrowActivities];
+        if (currentUser) {
+            const isToday = this.ui.currentDay === 'today';
+            this.activities = isToday ? [...(currentUser.activities || [])] : [...(currentUser.tomorrowActivities || [])];
+        }
     }
     
     addActivity(activity, position = 'bottom') {
         // Story 4: Get the current user and determine which activities to modify
         const user = this.getCurrentUser();
+        if (!user) {
+            throw new Error('No current user found');
+        }
+        
         const isToday = this.ui.currentDay === 'today';
         const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
@@ -293,13 +332,15 @@ class AppState {
     getDefaultActivitiesForNewUser() {
         // Check if DEFAULT_ACTIVITIES is available
         if (typeof DEFAULT_ACTIVITIES !== 'undefined') {
-            // Add cardType to each activity and create new instances
-            return DEFAULT_ACTIVITIES.map((activity, index) => ({
-                ...activity,
-                cardType: activity.cardType || 'recurring',
-                completed: false,
-                id: 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + '_' + index
-            }));
+            // Filter only visible activities and add cardType to each
+            return DEFAULT_ACTIVITIES
+                .filter(activity => activity.visible === true)
+                .map((activity, index) => ({
+                    ...activity,
+                    cardType: activity.cardType || 'recurring',
+                    completed: false,
+                    id: 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + '_' + index
+                }));
         } else {
             // Fallback to basic activities if DEFAULT_ACTIVITIES not loaded
             return [
@@ -384,6 +425,15 @@ class AppState {
                 showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
                 showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
             },
+            // Per-day titles and subtitles
+            dayTitles: {
+                today: null,     // null means use default customTitle
+                tomorrow: null   // null means use default customTitle
+            },
+            daySubtitles: {
+                today: null,     // null means use auto-generated
+                tomorrow: null   // null means use auto-generated
+            },
             library: [] // Initialize empty library for new user
         };
         
@@ -392,7 +442,13 @@ class AppState {
     }
 
     getCurrentUser() {
-        return this.users.profiles[this.users.currentUserId];
+        const user = this.users.profiles[this.users.currentUserId];
+        if (!user) {
+            console.error('[State] No current user found, falling back to default');
+            this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+            return this.users.profiles[CONFIG.DEFAULT_USER_ID];
+        }
+        return user;
     }
     
     // Story 4: Get activities for current day context
@@ -445,6 +501,13 @@ class AppState {
             if (!user.icon) {
                 user.icon = '👤'; // Default icon for existing users without icons
             }
+            
+            // Initialize missing fields for backward compatibility
+            if (!user.activities) user.activities = [];
+            if (!user.tomorrowActivities) user.tomorrowActivities = [];
+            if (!user.dayTitles) user.dayTitles = { today: null, tomorrow: null };
+            if (!user.daySubtitles) user.daySubtitles = { today: null, tomorrow: null };
+            if (!user.library) user.library = [];
             
             // Load activities based on current day
             this.activities = this.ui.currentDay === 'today' 
@@ -913,6 +976,13 @@ class AppState {
                     // Ensure all users have library array
                     if (!user.library) {
                         user.library = [];
+                    }
+                    // Ensure all users have day-specific titles and subtitles
+                    if (!user.dayTitles) {
+                        user.dayTitles = { today: null, tomorrow: null };
+                    }
+                    if (!user.daySubtitles) {
+                        user.daySubtitles = { today: null, tomorrow: null };
                     }
                 });
                 

@@ -1,12 +1,12 @@
 # StackMap Development Prompt Template
 
-## Story/Bug: [TITLE HERE]
+## Story/Bug: Add ability to change each day's title and subtitle
 
 ### Context
 I'm working on StackMap, a visual routine management app for special needs children. This is a **vanilla JavaScript only** project with **zero dependencies** and **special needs accessibility as the top priority**.
 
 ### Task Description
-The mechanism for changing the user icon is not working, it will not even change in the picker.
+Currently each user only has a single title/subtitle (there may be a second subtitle because I know there can be today and tomorrow, but I'm not sure if they can be set separately other than that)
 
 ### Critical Constraints (MUST FOLLOW)
 1. **NO ES6 imports** - Use script tags and window globals only
@@ -104,10 +104,9 @@ runAllTests() // Must pass 100%
 - Test with the mindset of a parent helping their special needs child
 
 ### Questions to Answer Before Implementation
-1. How does this change help special needs children?
-2. Will this work reliably offline?
-3. Can parents understand and maintain this?
-4. Does this follow all existing patterns?
+1. Will this work reliably offline?
+2. Can parents understand and maintain this?
+3. Does this follow all existing patterns?
 
 ---
 

@@ -1,8 +1,8 @@
 // Service Worker for StackMap PWA
-// Version: 1.4.3
+// Version: 1.4.7
 // Last Updated: 2025-06-14
 
-const CACHE_NAME = 'stackmap-v1.4.3-2025-06-14-fix-new-card-creation';
+const CACHE_NAME = 'stackmap-v1.4.7-2025-06-14-apply-to-all-ui';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 

@@ -952,14 +952,28 @@ class HybridPanelManager {
      */
     renderTitleSubtitleEditorForPreferences() {
         const currentUser = this.app.appState.getCurrentUser();
-        const currentTitle = currentUser.customTitle || 'StackMap';
+        const currentDay = this.app.appState.ui.currentDay || 'today';
         
-        // Get the actual displayed subtitle (custom or auto-generated)
-        const displayedSubtitle = currentUser.customSubtitle || (() => {
-            const currentDay = this.app.appState.ui.currentDay || 'today';
-            const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-            return `${currentUser.name}'s ${dayText}`;
-        })();
+        // Initialize day titles/subtitles if they don't exist
+        if (!currentUser.dayTitles) {
+            currentUser.dayTitles = { today: null, tomorrow: null };
+        }
+        if (!currentUser.daySubtitles) {
+            currentUser.daySubtitles = { today: null, tomorrow: null };
+        }
+        
+        // Check if using per-day titles (inverse of apply to all)
+        const hasPerDayTitles = currentUser.dayTitles.today || currentUser.dayTitles.tomorrow;
+        const applyToAll = !hasPerDayTitles;
+        
+        // Get the current day's title/subtitle or default
+        const currentTitle = currentDay === 'today' 
+            ? (currentUser.dayTitles.today || currentUser.customTitle || 'StackMap')
+            : (currentUser.dayTitles.tomorrow || currentUser.customTitle || 'StackMap');
+            
+        const currentSubtitle = currentDay === 'today'
+            ? (currentUser.daySubtitles.today || currentUser.customSubtitle || '')
+            : (currentUser.daySubtitles.tomorrow || currentUser.customSubtitle || '');
         
         return `
             <div class="title-subtitle-editor-preferences">
@@ -974,13 +988,30 @@ class HybridPanelManager {
                 
                 <input type="text" 
                        id="prefSubtitleInput" 
-                       value="${this.escapeHtml(displayedSubtitle)}" 
+                       value="${this.escapeHtml(currentSubtitle)}" 
                        placeholder="App subtitle (auto-generated if empty)"
                        class="preferences-text-input"
                        maxlength="50"
                        autocomplete="off"
                        onchange="hybridPanelManager.saveTitleSubtitleFromPreferences()"
                        title="Leave empty for auto-generated subtitle based on user and day">
+                
+                <div style="margin-top: 12px;">
+                    <label class="toggle-label" style="display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" 
+                               id="applyToAllDaysToggle" 
+                               ${applyToAll ? 'checked' : ''} 
+                               onchange="hybridPanelManager.toggleApplyToAllDays(this.checked)"
+                               style="width: auto; margin: 0;">
+                        <span style="font-size: 14px;">Apply to every day</span>
+                    </label>
+                </div>
+                
+                <div id="currentDayNote" style="${applyToAll ? 'display: none;' : ''}margin-top: 8px;">
+                    <p style="font-size: 12px; color: #666; margin: 4px 0;">
+                        Currently editing: <strong>${currentDay === 'today' ? "Today's" : "Tomorrow's"}</strong> title/subtitle
+                    </p>
+                </div>
             </div>
         `;
     }
@@ -2169,55 +2200,112 @@ class HybridPanelManager {
      * Save title from preferences panel inputs
      * (Subtitle is auto-generated and read-only)
      */
+    toggleApplyToAllDays(applyToAll) {
+        const noteDiv = document.getElementById('currentDayNote');
+        
+        if (noteDiv) {
+            noteDiv.style.display = applyToAll ? 'none' : '';
+        }
+        
+        const currentUser = this.app.appState.getCurrentUser();
+        
+        if (applyToAll) {
+            // When switching to "apply to all", clear per-day titles
+            // This will make the app use customTitle/customSubtitle for all days
+            if (currentUser.dayTitles) {
+                currentUser.dayTitles.today = null;
+                currentUser.dayTitles.tomorrow = null;
+            }
+            if (currentUser.daySubtitles) {
+                currentUser.daySubtitles.today = null;
+                currentUser.daySubtitles.tomorrow = null;
+            }
+            
+            // Save current values as the global values
+            const titleInput = document.getElementById('prefTitleInput');
+            const subtitleInput = document.getElementById('prefSubtitleInput');
+            
+            if (titleInput) {
+                currentUser.customTitle = this.sanitizeText(titleInput.value.trim() || 'StackMap', 50);
+            }
+            if (subtitleInput) {
+                const subtitle = this.sanitizeText(subtitleInput.value.trim(), 50);
+                if (subtitle) {
+                    currentUser.customSubtitle = subtitle;
+                } else {
+                    delete currentUser.customSubtitle;
+                }
+            }
+            
+            this.app.appState._triggerSave();
+        }
+        
+        // Update the display
+        this.app.initializeTitleSubtitle();
+    }
+
     saveTitleSubtitleFromPreferences() {
+        const currentUser = this.app.appState.getCurrentUser();
+        const currentDay = this.app.appState.ui.currentDay || 'today';
+        
+        // Initialize day titles/subtitles if they don't exist
+        if (!currentUser.dayTitles) {
+            currentUser.dayTitles = { today: null, tomorrow: null };
+        }
+        if (!currentUser.daySubtitles) {
+            currentUser.daySubtitles = { today: null, tomorrow: null };
+        }
+        
+        // Get input values
         const titleInput = document.getElementById('prefTitleInput');
         const subtitleInput = document.getElementById('prefSubtitleInput');
+        const applyToAllToggle = document.getElementById('applyToAllDaysToggle');
         
-        if (!titleInput) {
-            console.error('Title input not found in preferences');
-            return;
-        }
+        if (!titleInput) return;
         
-        // Get values and sanitize
         const newTitle = this.sanitizeText(titleInput.value.trim() || 'StackMap', 50);
-        const newSubtitle = subtitleInput ? this.sanitizeText(subtitleInput.value.trim(), 50) : '';
+        const newSubtitle = this.sanitizeText(subtitleInput.value.trim(), 50);
+        const applyToAll = applyToAllToggle ? applyToAllToggle.checked : true;
         
-        // Update current user settings
-        const currentUser = this.app.appState.getCurrentUser();
-        currentUser.customTitle = newTitle;
-        
-        // Store custom subtitle if provided, otherwise it will auto-generate
-        if (newSubtitle) {
-            currentUser.customSubtitle = newSubtitle;
+        if (applyToAll) {
+            // Apply to all days - use customTitle/customSubtitle
+            currentUser.customTitle = newTitle;
+            if (newSubtitle) {
+                currentUser.customSubtitle = newSubtitle;
+            } else {
+                delete currentUser.customSubtitle;
+            }
+            
+            // Clear per-day titles
+            currentUser.dayTitles.today = null;
+            currentUser.dayTitles.tomorrow = null;
+            currentUser.daySubtitles.today = null;
+            currentUser.daySubtitles.tomorrow = null;
+            
+            // Update app settings for consistency
+            this.app.appState.settings.title = newTitle;
+            this.app.appState.settings.isDefaultTitle = (newTitle === 'StackMap');
         } else {
-            // Remove custom subtitle to revert to auto-generated
-            delete currentUser.customSubtitle;
+            // Apply only to current day
+            currentUser.dayTitles[currentDay] = newTitle;
+            if (newSubtitle) {
+                currentUser.daySubtitles[currentDay] = newSubtitle;
+            } else {
+                currentUser.daySubtitles[currentDay] = null;
+            }
+            
+            // If both days now have specific titles, we might want to clear customTitle
+            // But we'll keep it as a fallback
         }
-        
-        // Update app settings for consistency
-        this.app.appState.settings.title = newTitle;
-        this.app.appState.settings.isDefaultTitle = (newTitle === 'StackMap');
-        
-        // Get the subtitle to display (custom or auto-generated)
-        const currentDay = this.app.appState.ui.currentDay || 'today';
-        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-        const autoSubtitle = `${currentUser.name}'s ${dayText}`;
-        const displaySubtitle = newSubtitle || autoSubtitle;
-        this.app.appState.settings.subtitle = displaySubtitle;
         
         // Persist to localStorage
         this.app.appState._triggerSave();
         
-        // Update header elements immediately
-        this.updateHeaderElements(newTitle, displaySubtitle);
+        // Update the display
+        this.app.initializeTitleSubtitle();
         
         // Update browser tab title
         this.app.updateTabTitle();
-        
-        // Update logo visibility
-        this.app.updateLogoVisibility(newTitle);
-        
-        // console.log('Title updated from preferences:', { title: newTitle });
     }
 
 
