@@ -688,14 +688,12 @@ class HybridPanelManager {
             <div class="user-selector-list">
                 ${allUsers.map(user => {
                     const isCurrentUser = user.id === currentUser.id;
-                    const isDefaultUser = user.id === 'default';
-                    const canDelete = !isCurrentUser && !isDefaultUser && allUsers.length > 1;
+                    const canDelete = !isCurrentUser && allUsers.length > 1;
                     
                     console.log('[USER DELETE CHECK]', {
                         userName: user.name,
                         userId: user.id,
                         isCurrentUser,
-                        isDefaultUser,
                         allUsersLength: allUsers.length,
                         canDelete
                     });
@@ -2160,12 +2158,6 @@ class HybridPanelManager {
         // Check if it's the current user
         if (userId === this.app.appState.getCurrentUser()?.id) {
             alert("You cannot delete the currently active user. Please switch to another user first.");
-            return;
-        }
-        
-        // Check if it's the default user
-        if (userId === 'default') {
-            alert("The default user cannot be deleted.");
             return;
         }
         

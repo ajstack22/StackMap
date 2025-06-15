@@ -444,9 +444,23 @@ class AppState {
     getCurrentUser() {
         const user = this.users.profiles[this.users.currentUserId];
         if (!user) {
-            console.error('[State] No current user found, falling back to default');
-            this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
-            return this.users.profiles[CONFIG.DEFAULT_USER_ID];
+            console.error('[State] No current user found, finding fallback');
+            
+            // Try to find any available user
+            const userIds = Object.keys(this.users.profiles);
+            if (userIds.length > 0) {
+                // Prefer the default user if it exists, otherwise use the first user
+                if (this.users.profiles[CONFIG.DEFAULT_USER_ID]) {
+                    this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+                } else {
+                    this.users.currentUserId = userIds[0];
+                }
+                return this.users.profiles[this.users.currentUserId];
+            }
+            
+            // No users exist at all - this should never happen, but handle it
+            console.error('[State] No users exist at all!');
+            return null;
         }
         return user;
     }
@@ -555,8 +569,8 @@ class AppState {
     }
 
     deleteUser(userId) {
-        // Can't delete the default user or the current user
-        if (userId === CONFIG.DEFAULT_USER_ID || userId === this.users.currentUserId) {
+        // Can't delete the current user
+        if (userId === this.users.currentUserId) {
             return false;
         }
         
