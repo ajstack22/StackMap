@@ -514,7 +514,7 @@ class HybridPanelManager {
                 <label>Current User</label>
                 ${this.renderUserSelector()}
                 ${this.app.grownupMode ? `
-                    <button class="admin-btn" style="margin-top: 12px; width: 100%;" onclick="hybridPanelManager.addNewUser()">
+                    <button class="admin-btn" style="margin-top: 12px; width: 100%;" onclick="if (window.hybridPanelManager && window.hybridPanelManager.addNewUser) { window.hybridPanelManager.addNewUser(); } else { console.error('hybridPanelManager not available'); }">
                         <span class="material-icons">person_add</span>
                         Add User
                     </button>
@@ -700,19 +700,19 @@ class HybridPanelManager {
                     
                     return `
                         <div class="user-list-item ${isCurrentUser ? 'user-list-item--active' : ''}" 
-                             onclick="hybridPanelManager.selectUser('${user.id}')">
+                             onclick="if (window.hybridPanelManager && window.hybridPanelManager.selectUser) { window.hybridPanelManager.selectUser('${user.id}'); } else { console.error('hybridPanelManager not available'); }">
                             <span class="user-icon">${user.icon || '👤'}</span>
                             <span class="user-name">${user.name}</span>
                             ${isEditMode ? `
                                 <div class="user-action-buttons">
                                     <button class="user-edit-inline-btn" 
-                                            onclick="event.stopPropagation(); hybridPanelManager.editExistingUser('${user.id}')"
+                                            onclick="event.stopPropagation(); if (window.hybridPanelManager && window.hybridPanelManager.editExistingUser) { window.hybridPanelManager.editExistingUser('${user.id}'); } else { console.error('hybridPanelManager not available'); }"
                                             title="Edit ${user.name}">
                                         <span class="material-icons">edit</span>
                                     </button>
                                     ${canDelete ? `
                                         <button class="user-delete-inline-btn" 
-                                                onclick="event.stopPropagation(); hybridPanelManager.deleteUser('${user.id}')"
+                                                onclick="event.stopPropagation(); if (window.hybridPanelManager && window.hybridPanelManager.deleteUser) { window.hybridPanelManager.deleteUser('${user.id}'); } else { console.error('hybridPanelManager not available'); }"
                                                 title="Delete ${user.name}">
                                             <span class="material-icons">delete</span>
                                         </button>
