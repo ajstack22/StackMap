@@ -684,10 +684,19 @@ class HybridPanelManager {
         const allUsers = this.app.appState.getAllUsers();
         const isEditMode = this.app.grownupMode;
         
+        // Store users data for event handlers
+        this._userSelectorData = {
+            currentUserId: currentUser.id,
+            users: allUsers.reduce((acc, user) => {
+                acc[user.id] = user;
+                return acc;
+            }, {})
+        };
+        
         // Generate HTML first
         const html = `
             <div class="user-selector-list">
-                ${allUsers.map(user => {
+                ${allUsers.map((user, index) => {
                     const isCurrentUser = user.id === currentUser.id;
                     const canDelete = !isCurrentUser && allUsers.length > 1;
                     
@@ -702,6 +711,7 @@ class HybridPanelManager {
                     return `
                         <div class="user-list-item ${isCurrentUser ? 'user-list-item--active' : ''}" 
                              data-user-id="${user.id}"
+                             data-user-index="${index}"
                              data-action="select-user">
                             <span class="user-icon">${user.icon || '👤'}</span>
                             <span class="user-name">${user.name}</span>
@@ -716,7 +726,9 @@ class HybridPanelManager {
                                     ${canDelete ? `
                                         <button class="user-delete-inline-btn" 
                                                 data-user-id="${user.id}"
+                                                data-user-name="${user.name}"
                                                 data-action="delete-user"
+                                                onclick="event.stopPropagation(); window.hybridPanelManager._handleDeleteUser('${user.id}', '${user.name.replace(/'/g, "\\'")}')"
                                                 title="Delete ${user.name}">
                                             <span class="material-icons">delete</span>
                                         </button>
@@ -766,10 +778,21 @@ class HybridPanelManager {
                         case 'delete-user':
                             e.stopPropagation();
                             console.log('[DELETE ACTION] About to call deleteUser with:', userId);
+                            console.log('[DELETE ACTION] Type of userId:', typeof userId);
+                            console.log('[DELETE ACTION] manager object keys:', Object.keys(manager));
+                            console.log('[DELETE ACTION] deleteUser method:', manager.deleteUser);
                             try {
-                                manager.deleteUser(userId);
+                                // Try direct window reference as fallback
+                                if (window.hybridPanelManager && window.hybridPanelManager.deleteUser) {
+                                    console.log('[DELETE ACTION] Using window.hybridPanelManager.deleteUser');
+                                    window.hybridPanelManager.deleteUser(userId);
+                                } else {
+                                    console.log('[DELETE ACTION] Using manager.deleteUser');
+                                    manager.deleteUser.call(manager, userId);
+                                }
                             } catch (err) {
                                 console.error('[DELETE ACTION] Error calling deleteUser:', err);
+                                console.error('[DELETE ACTION] Stack:', err.stack);
                             }
                             break;
                     }
@@ -2199,6 +2222,40 @@ class HybridPanelManager {
         }, 100);
     }
 
+    // Simple handler for delete button
+    _handleDeleteUser(userId, userName) {
+        console.log('[_handleDeleteUser] Called with:', { userId, userName });
+        
+        // Double-check we're not deleting the current user
+        const currentUserId = this.app.appState.getCurrentUser()?.id;
+        if (userId === currentUserId) {
+            alert("You cannot delete the currently active user. Please switch to another user first.");
+            return;
+        }
+        
+        // Show confirmation
+        if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
+            console.log('[_handleDeleteUser] User confirmed deletion');
+            
+            // Perform deletion
+            const success = this.app.appState.deleteUser(userId);
+            
+            if (success) {
+                console.log('[_handleDeleteUser] Delete successful');
+                // Refresh UI
+                this.app.render();
+                this.renderPanelContent('right', false);
+                
+                if (this.app.showNotification) {
+                    this.app.showNotification(`User "${userName}" has been deleted`, 'success');
+                }
+            } else {
+                console.error('[_handleDeleteUser] Delete failed');
+                alert("Failed to delete user. Please try again.");
+            }
+        }
+    }
+    
     deleteUser(userId) {
         console.log('[DELETE USER] deleteUser called for:', userId);
         console.log('[DELETE USER] this.app exists:', !!this.app);
