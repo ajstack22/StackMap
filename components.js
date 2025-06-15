@@ -1369,7 +1369,13 @@ class ActivityCard {
         
         card.addEventListener('dragstart', (e) => {
             // Check current edit mode state
-            if (!this.app.grownupMode) {
+            console.log('[DRAG DEBUG] dragstart event fired');
+            console.log('[DRAG DEBUG] this.app:', !!this.app);
+            console.log('[DRAG DEBUG] this.app.grownupMode:', this.app?.grownupMode);
+            console.log('[DRAG DEBUG] this.appState.ui.editMode:', this.appState?.ui?.editMode);
+            
+            if (!this.app.grownupMode && !this.appState.ui.editMode) {
+                console.log('[DRAG DEBUG] Preventing drag - not in edit mode');
                 e.preventDefault();
                 return;
             }
