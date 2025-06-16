@@ -1536,7 +1536,7 @@ class StackMapApp {
             this.initializeTitleSubtitle();
             
             // Refresh preferences panel if open to show correct day's values
-            if (window.hybridPanelManager && window.hybridPanelManager.isPanelOpen('left')) {
+            if (window.hybridPanelManager && window.hybridPanelManager.state && window.hybridPanelManager.state.leftPanelOpen) {
                 window.hybridPanelManager.renderPanelContent('left', false);
             }
             
