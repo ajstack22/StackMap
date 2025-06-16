@@ -358,8 +358,16 @@ class HybridPanelManager {
         const contentDiv = document.getElementById(`hybrid${side.charAt(0).toUpperCase() + side.slice(1)}Content`);
         console.log('renderPanelContent called:', { side, contentDiv: contentDiv ? 'found' : 'not found' });
         
-        // Determine which menu to show based on state
-        let menuId = side === 'left' ? 'preferences' : 'settings';
+        // Check navigation history first to see what menu should be shown
+        let menuId;
+        if (this.navigationHistory[side].length > 0) {
+            // Use the last menu in the navigation history
+            menuId = this.navigationHistory[side][this.navigationHistory[side].length - 1];
+        } else {
+            // Default menus if no history
+            menuId = side === 'left' ? 'preferences' : 'settings';
+        }
+        
         let menuState = {};
         
         if (side === 'right') {
