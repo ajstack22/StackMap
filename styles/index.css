@@ -674,67 +674,7 @@ input[type="file"] {
     box-shadow: 0 1px 2px rgba(0,0,0,0.2);
 }
 
-.color-picker {
-    display: grid;
-    grid-template-columns: repeat(6, 1fr);
-    gap: 8px;
-    background: rgba(255,255,255,0.9);
-    padding: 15px;
-    border-radius: 12px;
-    border: 2px solid #ddd;
-    max-width: 100%;
-    margin: 0 auto;
-}
-
-/* COMPACT version for preferences panel */
-.color-picker--compact {
-    grid-template-columns: repeat(8, 1fr) !important;
-    gap: 4px !important;
-    padding: 8px !important;
-    border-radius: 8px !important;
-    max-height: 120px !important;
-    overflow-y: auto !important;
-}
-
-.color-picker--compact .color-picker__option {
-    width: 20px !important;
-    height: 20px !important;
-    border-radius: 4px !important;
-    border-width: 2px !important;
-}
-
-.color-picker--compact .color-picker__option--selected::after {
-    font-size: 10px !important;
-}
-
-.color-picker__option {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    border: 3px solid transparent;
-    cursor: pointer;
-    transition: all var(--transition-fast);
-    position: relative;
-}
-
-.color-picker__option:hover,
-.color-picker__option--selected {
-    transform: scale(1.1);
-    border-color: #333;
-    box-shadow: 0 0 0 2px rgba(0,0,0,0.2);
-}
-
-.color-picker__option--selected::after {
-    content: '✓';
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-size: 14px;
-    font-weight: bold;
-    text-shadow: 0 0 3px rgba(0,0,0,0.8);
-}
+/* Color picker styles removed - now in hybrid-panels.css */
 
 /* ===== PANEL COMPONENTS ===== */
 .preferences-content h3 {

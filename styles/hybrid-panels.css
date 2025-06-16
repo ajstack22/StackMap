@@ -535,6 +535,17 @@ body:has(.side-panel.open) .floating-nav {
     min-height: 0; /* Important for nested flex containers */
 }
 
+/* Ensure celebration section has enough bottom padding on mobile */
+@media (max-width: 768px) {
+    .panel-section:last-child {
+        padding-bottom: 20px; /* Extra padding for last section */
+    }
+    
+    .celebration-setting {
+        margin-bottom: 16px; /* Ensure space between celebration controls */
+    }
+}
+
 .panel-scrollable-content::-webkit-scrollbar {
     width: 6px;
 }
@@ -955,7 +966,7 @@ body:has(.side-panel.open) .floating-nav {
     
     /* Mobile color picker adjustments */
     .color-grid {
-        grid-template-columns: repeat(6, 1fr); /* Full width columns for mobile */
+        grid-template-columns: repeat(4, 1fr); /* 4 columns for mobile - creates 4x5 grid */
         padding: 12px;
         gap: 6px;
         justify-items: center;
@@ -2034,7 +2045,7 @@ textarea.panel-input {
     /* Adjust scrollable content for fixed header */
     .panel-scrollable-content {
         padding-top: 85px; /* Account for fixed header */
-        padding-bottom: 80px; /* Account for fixed footer */
+        padding-bottom: 90px; /* Increased to ensure celebration buttons are visible */
     }
     
     /* Mobile fixed footer adjustments */
@@ -2121,7 +2132,7 @@ textarea.panel-input {
     
     /* Adjust color grid for panel width */
     .side-panel .color-grid {
-        grid-template-columns: repeat(5, 1fr);
+        grid-template-columns: repeat(4, 1fr); /* 4 columns on mobile for better touch targets */
         gap: 6px;
         padding: 10px;
     }
@@ -2278,10 +2289,13 @@ textarea.panel-input {
     display: flex;
     gap: 8px;
     align-items: center;
+    max-width: 100%; /* Prevent overflow */
 }
 
 .celebration-dropdown {
     flex: 1;
+    min-width: 0; /* Allow shrinking if needed */
+    max-width: calc(100% - 44px); /* Account for preview button */
     padding: 10px 12px;
     border: 2px solid rgba(255, 255, 255, 0.3);
     border-radius: 6px;

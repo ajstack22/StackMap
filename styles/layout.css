@@ -920,12 +920,12 @@ body.grownup-mode .title:hover {
 /* ===== RESPONSIVE ADJUSTMENTS ===== */
 @media (max-width: 768px) {
     .btn--floating {
-        width: 45px !important; /* Match responsive.css mobile size */
-        height: 45px !important; /* Match responsive.css mobile size */
+        width: 44px !important; /* Reduced size while maintaining 44px min touch target */
+        height: 44px !important; /* Match responsive.css mobile size */
     }
     
     .btn--floating .material-icons {
-        font-size: 28px !important; /* Match responsive.css mobile icon size */
+        font-size: 18px !important; /* 30% smaller icon (from 28px to ~20px, rounded to 18px) */
     }
     
     .btn--preferences {

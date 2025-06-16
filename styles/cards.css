@@ -114,8 +114,8 @@ body:not(.grownup-mode) .card:active {
     position: absolute;
     top: 15px;
     left: 15px;
-    width: 45px;
-    height: 45px;
+    width: 44px;  /* Match edit mode button size */
+    height: 44px;
     border-radius: 50%;
     background: #e8e8e8;
     box-shadow: 0 3px 12px rgba(0,0,0,0.3);
@@ -160,8 +160,8 @@ body.hide-completion-indicators .btn--checkbox {
     right: 15px !important;
     left: auto !important;
     transform: none !important;
-    width: 45px !important;
-    height: 45px !important;
+    width: 44px !important;  /* Match edit mode button size */
+    height: 44px !important;
     border-radius: 50% !important;
     background: var(--primary-color) !important;
     color: #fff !important;
@@ -197,8 +197,8 @@ body.hide-completion-indicators .btn--checkbox {
     right: 15px !important;
     left: auto !important;
     transform: none !important;
-    width: 45px !important;
-    height: 45px !important;
+    width: 44px !important;  /* Match edit mode button size */
+    height: 44px !important;
     border-radius: 50% !important;
     background: var(--primary-color) !important;
     color: #fff !important;
@@ -492,6 +492,18 @@ body:not(.grownup-mode) .card__time-pill {
 /* EDIT MODE: Show type indicators, hide completion indicators */
 body.grownup-mode .card__type-indicator {
     display: flex !important;
+}
+
+/* EDIT MODE: Number badges should be 54x54 to match edit buttons */
+body.grownup-mode .card__number {
+    width: 54px !important;
+    height: 54px !important;
+    font-size: 24px !important;
+}
+
+body.grownup-mode .card__time-pill {
+    width: 54px !important;
+    height: 54px !important;
 }
 
 /* Display mode settings */
@@ -1008,13 +1020,22 @@ body.display-mode-times .card__number {
         padding: 8px 0;
     }
     
-    /* Scale down all badges proportionally */
-    .card::before,
-    .card__number,
-    .card__time-pill {
-        width: 40px !important;
-        height: 40px !important;
+    /* Child mode: Keep badges at 44px */
+    body:not(.grownup-mode) .card::before,
+    body:not(.grownup-mode) .card__number,
+    body:not(.grownup-mode) .card__time-pill {
+        width: 44px !important;
+        height: 44px !important;
         top: 12px !important;
+    }
+    
+    /* Edit mode: All elements 54px */
+    body.grownup-mode .card::before,
+    body.grownup-mode .card__number,
+    body.grownup-mode .card__time-pill,
+    body.grownup-mode .card .btn--round {
+        width: 54px !important;
+        height: 54px !important;
     }
     
     .card::before {
@@ -1032,7 +1053,7 @@ body.display-mode-times .card__number {
     }
     
     .card__number {
-        font-size: 18px !important;
+        font-size: 20px !important;  /* Match desktop for consistency */
     }
     
     .card__time-pill {
@@ -1058,8 +1079,8 @@ body.display-mode-times .card__number {
     }
     
     .card .btn--round {
-        width: 40px !important;
-        height: 40px !important;
+        width: 54px !important;  /* Match desktop size for edit mode */
+        height: 54px !important;
     }
     
     .btn--checkbox,
@@ -1170,22 +1191,22 @@ body.display-mode-times .card__number {
         padding: 10px 0;
     }
     
-    /* Further scale down for small mobile */
+    /* Keep consistent 44px size even on small mobile */
     .card::before,
     .card__number,
     .card__time-pill {
-        width: 35px !important;
-        height: 35px !important;
+        width: 44px !important;
+        height: 44px !important;
         top: 10px !important;
     }
     
     .card::before {
         left: 10px !important;
-        font-size: 16px !important;
+        font-size: 18px !important;  /* Consistent with 44px size */
     }
     
     .card--completed::before {
-        font-size: 16px !important;
+        font-size: 18px !important;  /* Consistent with 44px size */
     }
     
     .card__number,
@@ -1194,7 +1215,7 @@ body.display-mode-times .card__number {
     }
     
     .card__number {
-        font-size: 16px !important;
+        font-size: 20px !important;  /* Consistent with 44px size */
     }
     
     .card__time-pill {
@@ -1203,12 +1224,12 @@ body.display-mode-times .card__number {
     
     .card .card__type-indicator,
     .card__type-indicator {
-        width: 36px !important; /* Match small screens */
-        height: 36px !important;
-        min-width: 36px !important;
-        min-height: 36px !important;
-        max-width: 36px !important;
-        max-height: 36px !important;
+        width: 44px !important; /* Keep consistent with other elements */
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        max-width: 44px !important;
+        max-height: 44px !important;
         bottom: 10px;
         border-radius: 50%; /* Keep perfect circle */
     }

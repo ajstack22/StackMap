@@ -295,14 +295,14 @@ button.btn.btn--floating:hover .material-icons,
 @media (max-width: 768px) {
     button.btn.btn--floating,
     .btn.btn--floating {
-        width: 48px !important;
-        height: 48px !important; /* Perfect circle */
+        width: 44px !important;  /* Reduced size while maintaining 44px min touch target */
+        height: 44px !important; /* Perfect circle */
         top: 20px !important;
     }
     
     button.btn.btn--floating .material-icons,
     .btn.btn--floating .material-icons {
-        font-size: 22px !important;
+        font-size: 18px !important;  /* 30% smaller icon (from 24px to ~17px, rounded to 18px) */
     }
     
     button.btn.btn--preferences,

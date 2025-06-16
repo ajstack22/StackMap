@@ -291,12 +291,12 @@ button.btn.btn--floating.btn--fab {
         bottom: 20px !important;
         right: 20px !important;
         /* Match actual header button size on mobile from responsive.css */
-        width: 45px !important;
-        height: 45px !important;
-        min-width: 45px !important;
-        min-height: 45px !important;
-        max-width: 45px !important;
-        max-height: 45px !important;
+        width: 44px !important;  /* Reduced size while maintaining 44px min touch target */
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        max-width: 44px !important;
+        max-height: 44px !important;
     }
     
     /* Override the top: 20px from buttons.css mobile styles */
@@ -312,7 +312,7 @@ button.btn.btn--floating.btn--fab {
     .btn--fab .fab-icon,
     .btn.btn--floating.btn--fab .material-icons,
     .btn.btn--floating.btn--fab .fab-icon {
-        font-size: 28px !important; /* Match header button icon size from responsive.css */
+        font-size: 18px !important; /* 30% smaller icon (from 28px to ~20px, rounded to 18px) */
         font-weight: 900 !important; /* Keep bold on mobile */
     }
     
@@ -355,12 +355,12 @@ button.btn.btn--floating.btn--fab {
         bottom: 16px !important;
         right: 16px !important;
         /* Keep same as tablet for consistency - match header buttons */
-        width: 45px !important;
-        height: 45px !important;
-        min-width: 45px !important;
-        min-height: 45px !important;
-        max-width: 45px !important;
-        max-height: 45px !important;
+        width: 44px !important;  /* Reduced size while maintaining 44px min touch target */
+        height: 44px !important;
+        min-width: 44px !important;
+        min-height: 44px !important;
+        max-width: 44px !important;
+        max-height: 44px !important;
     }
     
     /* Override any top positioning for sub-FABs */
@@ -374,7 +374,7 @@ button.btn.btn--floating.btn--fab {
     
     .btn--fab .material-icons,
     .btn--fab .fab-icon {
-        font-size: 28px !important; /* Keep same as tablet - match header buttons */
+        font-size: 18px !important; /* 30% smaller icon (from 28px to ~20px, rounded to 18px) */
     }
     
     .btn.btn--floating.btn--fab-sub {

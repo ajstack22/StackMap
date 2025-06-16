@@ -22,8 +22,7 @@ class StackMapApp {
         }
         
         // Initialize managers
-        this.preferencesManager = new PreferencesManager(this);
-        // ValidationManager removed - validation now handled by HybridPanelManager
+        // PreferencesManager removed - all functionality now handled by HybridPanelManager
         
         // Initialize FAB component
         this.editFAB = new window.EditModeFAB(this);
