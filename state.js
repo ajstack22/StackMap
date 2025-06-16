@@ -78,7 +78,11 @@ class AppState {
         if (defaultUser && defaultUser.activities.length === 0) {
             const defaultActivities = this.getDefaultActivitiesForNewUser();
             defaultUser.activities = defaultActivities;
-            defaultUser.tomorrowActivities = [...defaultActivities];
+            // Deep clone activities for tomorrow to avoid shared references
+            defaultUser.tomorrowActivities = defaultActivities.map(activity => ({
+                ...activity,
+                completionStates: activity.completionStates ? { ...activity.completionStates } : { today: false, tomorrow: false }
+            }));
             
             // Ensure card numbers are assigned
             defaultUser.activities.forEach((activity, index) => {
@@ -142,6 +146,7 @@ class AppState {
             icon: activity.icon || CONFIG.DEFAULT_EMOJI,
             visible: true, // Always visible since we removed the visibility toggle
             completed: activity.completed || false,
+            completionStates: activity.completionStates || { today: false, tomorrow: false },
             cardType: this._validateCardType(activity.cardType || 'recurring'), // Story 1
             createdDate: activity.createdDate || new Date().toISOString().split('T')[0], // Story 1
             time: activity.time || ''
@@ -311,9 +316,24 @@ class AppState {
         const user = this.getCurrentUser();
         const isToday = this.ui.currentDay === 'today';
         const targetActivities = isToday ? user.activities : user.tomorrowActivities;
+        const currentDay = this.ui.currentDay;
         
         if (index >= 0 && index < targetActivities.length) {
-            targetActivities[index].completed = !targetActivities[index].completed;
+            const activity = targetActivities[index];
+            
+            // Initialize completionStates if not present (backward compatibility)
+            if (!activity.completionStates) {
+                activity.completionStates = {
+                    today: activity.completed || false,
+                    tomorrow: activity.completed || false
+                };
+            }
+            
+            // Toggle completion for the current day only
+            activity.completionStates[currentDay] = !activity.completionStates[currentDay];
+            
+            // Update the legacy completed field for backward compatibility
+            activity.completed = activity.completionStates[currentDay];
             
             // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
@@ -421,7 +441,11 @@ class AppState {
             name: trimmedName,
             icon: icon, // NEW: Store user's chosen emoji icon
             activities: [...defaultActivities],
-            tomorrowActivities: [...defaultActivities], // Story 4: Tomorrow's activities get same defaults
+            // Deep clone activities for tomorrow to avoid shared references
+            tomorrowActivities: defaultActivities.map(activity => ({
+                ...activity,
+                completionStates: activity.completionStates ? { ...activity.completionStates } : { today: false, tomorrow: false }
+            })), // Story 4: Tomorrow's activities get same defaults
             settings: {
                 title: trimmedName + "'s StackMap",
                 subtitle: 'Routine Ready',
@@ -1003,6 +1027,28 @@ class AppState {
                     if (!user.daySubtitles) {
                         user.daySubtitles = { today: null, tomorrow: null };
                     }
+                    
+                    // Migrate completion status to completionStates
+                    if (user.activities) {
+                        user.activities.forEach(activity => {
+                            if (!activity.completionStates) {
+                                activity.completionStates = {
+                                    today: activity.completed || false,
+                                    tomorrow: false
+                                };
+                            }
+                        });
+                    }
+                    if (user.tomorrowActivities) {
+                        user.tomorrowActivities.forEach(activity => {
+                            if (!activity.completionStates) {
+                                activity.completionStates = {
+                                    today: false,
+                                    tomorrow: activity.completed || false
+                                };
+                            }
+                        });
+                    }
                 });
                 
                 // Check if any activity is hidden and mark all as visible
@@ -1041,7 +1087,8 @@ class AppState {
                     createdDate: activity.createdDate || new Date().toISOString().split('T')[0],
                     time: activity.time || '',
                     visible: activity.visible !== undefined ? activity.visible : true,
-                    completed: activity.completed || false
+                    completed: activity.completed || false,
+                    completionStates: activity.completionStates || { today: activity.completed || false, tomorrow: false }
                 }));
                 
                 // Check if any activity is hidden and mark all as visible
@@ -1245,12 +1292,31 @@ class AppState {
                 activityMap.set(key, {
                     ...localActivity,
                     ...activity,
-                    completed: localActivity.completed || activity.completed
+                    completed: localActivity.completed || activity.completed,
+                    // Deep merge completionStates
+                    completionStates: {
+                        ...(localActivity.completionStates || {}),
+                        ...(activity.completionStates || {})
+                    }
                 });
             }
         });
         
         return Array.from(activityMap.values());
+    }
+    
+    // Helper method to deep clone an activity
+    deepCloneActivity(activity) {
+        return {
+            ...activity,
+            // Deep clone nested objects
+            completionStates: activity.completionStates ? { ...activity.completionStates } : { today: false, tomorrow: false }
+        };
+    }
+    
+    // Helper method to deep clone an array of activities
+    deepCloneActivities(activities) {
+        return activities.map(activity => this.deepCloneActivity(activity));
     }
 }
 

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Completion States</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            cursor: pointer;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 3px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Completion States Isolation</h1>
+    
+    <div class="test-section">
+        <h2>Test Controls</h2>
+        <button onclick="runAllTests()">Run All Tests</button>
+        <button onclick="clearResults()">Clear Results</button>
+    </div>
+    
+    <div id="results"></div>
+    
+    <script>
+        const resultsDiv = document.getElementById('results');
+        
+        function log(message, isError = false) {
+            const div = document.createElement('div');
+            div.className = `test-result ${isError ? 'error' : 'success'}`;
+            div.innerHTML = message;
+            resultsDiv.appendChild(div);
+        }
+        
+        function clearResults() {
+            resultsDiv.innerHTML = '';
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            log('<h3>Starting Tests...</h3>');
+            
+            // Test 1: Test shallow vs deep clone
+            testShallowVsDeepClone();
+            
+            // Test 2: Test activity cloning
+            testActivityCloning();
+            
+            // Test 3: Test array spread issues
+            testArraySpreadIssues();
+            
+            // Test 4: Test the fix
+            testDeepCloneFix();
+        }
+        
+        function testShallowVsDeepClone() {
+            log('<h4>Test 1: Shallow vs Deep Clone</h4>');
+            
+            // Create an activity with nested object
+            const original = {
+                title: 'Test Activity',
+                completionStates: { today: false, tomorrow: false }
+            };
+            
+            // Shallow clone with spread
+            const shallow = { ...original };
+            
+            // Modify shallow clone's nested object
+            shallow.completionStates.today = true;
+            
+            // Check if original was affected
+            if (original.completionStates.today === true) {
+                log('❌ Shallow clone shares nested object reference - original was modified!', true);
+                log(`Original: ${JSON.stringify(original.completionStates)}`);
+                log(`Shallow: ${JSON.stringify(shallow.completionStates)}`);
+            } else {
+                log('✅ Original was not affected (this should not happen with spread operator)');
+            }
+        }
+        
+        function testActivityCloning() {
+            log('<h4>Test 2: Activity Array Cloning</h4>');
+            
+            // Simulate what happens in the original code
+            const todayActivities = [
+                { title: 'Activity 1', completionStates: { today: false, tomorrow: false } },
+                { title: 'Activity 2', completionStates: { today: false, tomorrow: false } }
+            ];
+            
+            // This is how the buggy code clones
+            const tomorrowActivities = [...todayActivities];
+            
+            // Modify tomorrow's first activity
+            tomorrowActivities[0].completionStates.tomorrow = true;
+            
+            // Check if today's activity was affected
+            if (todayActivities[0].completionStates.tomorrow === true) {
+                log('❌ Array spread creates new array but shares object references!', true);
+                log(`Today[0]: ${JSON.stringify(todayActivities[0].completionStates)}`);
+                log(`Tomorrow[0]: ${JSON.stringify(tomorrowActivities[0].completionStates)}`);
+            } else {
+                log('✅ Activities are properly isolated');
+            }
+        }
+        
+        function testArraySpreadIssues() {
+            log('<h4>Test 3: Demonstrating the Bug</h4>');
+            
+            // This simulates the bug in the original code
+            const activities = [
+                { title: 'Morning Routine', completionStates: { today: false, tomorrow: false } }
+            ];
+            
+            // User has today activities
+            const user = {
+                activities: activities,
+                tomorrowActivities: [...activities] // Bug: shallow copy
+            };
+            
+            // User completes activity in today view
+            user.activities[0].completionStates.today = true;
+            
+            // Check tomorrow's view
+            if (user.tomorrowActivities[0].completionStates.today === true) {
+                log('❌ Bug reproduced: Completing in Today affects Tomorrow!', true);
+                log(`Today state: ${JSON.stringify(user.activities[0].completionStates)}`);
+                log(`Tomorrow state: ${JSON.stringify(user.tomorrowActivities[0].completionStates)}`);
+            }
+        }
+        
+        function testDeepCloneFix() {
+            log('<h4>Test 4: Deep Clone Fix</h4>');
+            
+            // Helper to deep clone
+            function deepCloneActivity(activity) {
+                return {
+                    ...activity,
+                    completionStates: activity.completionStates ? { ...activity.completionStates } : { today: false, tomorrow: false }
+                };
+            }
+            
+            const activities = [
+                { title: 'Morning Routine', completionStates: { today: false, tomorrow: false } }
+            ];
+            
+            // Fixed version with deep clone
+            const user = {
+                activities: activities,
+                tomorrowActivities: activities.map(a => deepCloneActivity(a))
+            };
+            
+            // User completes activity in today view
+            user.activities[0].completionStates.today = true;
+            
+            // Check tomorrow's view
+            if (user.tomorrowActivities[0].completionStates.today === false) {
+                log('✅ Fixed: Today and Tomorrow activities are properly isolated!');
+                log(`Today state: ${JSON.stringify(user.activities[0].completionStates)}`);
+                log(`Tomorrow state: ${JSON.stringify(user.tomorrowActivities[0].completionStates)}`);
+            } else {
+                log('❌ Fix failed: Activities are still sharing state', true);
+            }
+        }
+        
+        // Auto-run tests on load
+        window.onload = () => {
+            runAllTests();
+        };
+    </script>
+</body>
+</html>

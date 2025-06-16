@@ -1427,10 +1427,13 @@ class StackMapApp {
                     // Copy recurring activities from today to tomorrow
                     user.activities.forEach(activity => {
                         if (activity.cardType === 'recurring' || !activity.cardType) {
-                            const tomorrowActivity = {
-                                ...activity,
-                                completed: false // Reset completion for tomorrow
-                            };
+                            // Deep clone the activity to avoid shared references
+                            const tomorrowActivity = this.appState.deepCloneActivity(activity);
+                            // Reset completion for tomorrow
+                            tomorrowActivity.completed = false;
+                            if (tomorrowActivity.completionStates) {
+                                tomorrowActivity.completionStates.tomorrow = false;
+                            }
                             user.tomorrowActivities.push(tomorrowActivity);
                         }
                     });
@@ -2566,20 +2569,24 @@ class StackMapApp {
         // Save current today activities for processing
         const todayActivities = [...user.activities];
         
-        // Move tomorrow to today
-        user.activities = [...user.tomorrowActivities];
+        // Deep clone tomorrow activities to today to avoid shared references
+        user.activities = this.appState.deepCloneActivities(user.tomorrowActivities);
         
         // Process today's activities for new tomorrow
         const newTomorrow = [];
         todayActivities.forEach((activity, index) => {
             // Keep cards that have the keep flag set to true
             if (activity.keep === true) {
-                newTomorrow.push({
-                    ...activity,
-                    completed: false,
-                    keep: false, // Reset keep flag for next day
-                    cardNumber: newTomorrow.length + 1 // Assign new card numbers
-                });
+                // Deep clone the activity to avoid shared references
+                const tomorrowActivity = this.appState.deepCloneActivity(activity);
+                tomorrowActivity.completed = false;
+                tomorrowActivity.keep = false; // Reset keep flag for next day
+                // Reset completion states for tomorrow
+                if (tomorrowActivity.completionStates) {
+                    tomorrowActivity.completionStates.tomorrow = false;
+                }
+                tomorrowActivity.cardNumber = newTomorrow.length + 1; // Assign new card numbers
+                newTomorrow.push(tomorrowActivity);
             }
             // Cards without keep flag are discarded
         });

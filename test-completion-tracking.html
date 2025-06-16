@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Card Completion Tracking</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 3px;
+        }
+        .pass {
+            background: #d4edda;
+            color: #155724;
+        }
+        .fail {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Card Completion Tracking Test</h1>
+    
+    <div class="test-section">
+        <h2>Test Setup</h2>
+        <button onclick="setupTest()">Setup Test Data</button>
+        <button onclick="clearData()">Clear All Data</button>
+        <div id="setup-result"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test Results</h2>
+        <button onclick="runTests()">Run All Tests</button>
+        <div id="test-results"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Current State</h2>
+        <button onclick="showState()">Show Current State</button>
+        <pre id="current-state"></pre>
+    </div>
+
+    <script>
+        // Load required files
+        const loadScript = (src) => {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = src;
+                script.onload = resolve;
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        };
+        
+        async function loadDependencies() {
+            // Load config first
+            await loadScript('config/index.js');
+            // Load state management
+            await loadScript('state.js');
+        }
+        
+        loadDependencies().then(() => {
+            console.log('Dependencies loaded');
+        });
+        
+        function setupTest() {
+            const resultDiv = document.getElementById('setup-result');
+            
+            try {
+                // Create a new app state
+                window.testState = new AppState();
+                
+                // Add a test activity
+                testState.addActivity({
+                    title: 'Test Activity',
+                    description: 'This is a test activity',
+                    icon: '🎯',
+                    completed: false
+                });
+                
+                resultDiv.innerHTML = '<div class="test-result pass">Test data setup complete</div>';
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="test-result fail">Setup failed: ${error.message}</div>`;
+            }
+        }
+        
+        function clearData() {
+            localStorage.clear();
+            window.testState = null;
+            document.getElementById('setup-result').innerHTML = '<div class="test-result pass">Data cleared</div>';
+        }
+        
+        function runTests() {
+            if (!window.testState) {
+                document.getElementById('test-results').innerHTML = '<div class="test-result fail">Please setup test data first</div>';
+                return;
+            }
+            
+            const results = [];
+            
+            // Test 1: Check initial state
+            const activity = testState.getCurrentActivities()[0];
+            if (activity.completionStates && 
+                activity.completionStates.today === false && 
+                activity.completionStates.tomorrow === false) {
+                results.push({ test: 'Initial completion states', passed: true });
+            } else {
+                results.push({ test: 'Initial completion states', passed: false, 
+                    error: 'Missing or incorrect completionStates' });
+            }
+            
+            // Test 2: Toggle completion in Today view
+            testState.ui.currentDay = 'today';
+            testState.toggleActivityCompletion(0);
+            
+            if (activity.completionStates.today === true && 
+                activity.completionStates.tomorrow === false) {
+                results.push({ test: 'Toggle completion in Today', passed: true });
+            } else {
+                results.push({ test: 'Toggle completion in Today', passed: false,
+                    error: 'Today should be true, Tomorrow should be false' });
+            }
+            
+            // Test 3: Switch to Tomorrow and verify
+            testState.ui.currentDay = 'tomorrow';
+            testState.loadUserData(); // Reload activities for tomorrow
+            const tomorrowActivity = testState.getCurrentActivities()[0];
+            
+            if (tomorrowActivity && 
+                tomorrowActivity.completionStates.today === true && 
+                tomorrowActivity.completionStates.tomorrow === false) {
+                results.push({ test: 'Tomorrow view shows independent state', passed: true });
+            } else {
+                results.push({ test: 'Tomorrow view shows independent state', passed: false,
+                    error: 'Tomorrow activity should have independent completion state' });
+            }
+            
+            // Test 4: Toggle completion in Tomorrow
+            testState.toggleActivityCompletion(0);
+            
+            if (tomorrowActivity.completionStates.today === true && 
+                tomorrowActivity.completionStates.tomorrow === true) {
+                results.push({ test: 'Toggle completion in Tomorrow', passed: true });
+            } else {
+                results.push({ test: 'Toggle completion in Tomorrow', passed: false,
+                    error: 'Both days should now be completed' });
+            }
+            
+            // Test 5: Export/Import maintains state
+            const exported = testState.exportData();
+            const newState = new AppState();
+            newState.importData(exported);
+            
+            const importedActivity = newState.getCurrentActivities()[0];
+            if (importedActivity && 
+                importedActivity.completionStates &&
+                importedActivity.completionStates.today === true &&
+                importedActivity.completionStates.tomorrow === true) {
+                results.push({ test: 'Export/Import preserves completion states', passed: true });
+            } else {
+                results.push({ test: 'Export/Import preserves completion states', passed: false,
+                    error: 'Completion states not preserved' });
+            }
+            
+            // Test 6: Backward compatibility
+            const legacyActivity = {
+                title: 'Legacy Activity',
+                completed: true
+            };
+            newState.addActivity(legacyActivity);
+            const addedActivity = newState.getCurrentActivities()[1];
+            
+            if (addedActivity.completionStates &&
+                addedActivity.completionStates.today === true &&
+                addedActivity.completionStates.tomorrow === false) {
+                results.push({ test: 'Backward compatibility for legacy completed field', passed: true });
+            } else {
+                results.push({ test: 'Backward compatibility for legacy completed field', passed: false,
+                    error: 'Legacy completed field not migrated correctly' });
+            }
+            
+            // Display results
+            const resultsHtml = results.map(r => 
+                `<div class="test-result ${r.passed ? 'pass' : 'fail'}">
+                    ${r.test}: ${r.passed ? 'PASSED' : 'FAILED' + (r.error ? ' - ' + r.error : '')}
+                </div>`
+            ).join('');
+            
+            document.getElementById('test-results').innerHTML = resultsHtml;
+        }
+        
+        function showState() {
+            if (!window.testState) {
+                document.getElementById('current-state').textContent = 'No test state initialized';
+                return;
+            }
+            
+            const state = {
+                currentDay: testState.ui.currentDay,
+                activities: testState.getCurrentActivities().map(a => ({
+                    title: a.title,
+                    completed: a.completed,
+                    completionStates: a.completionStates
+                }))
+            };
+            
+            document.getElementById('current-state').textContent = JSON.stringify(state, null, 2);
+        }
+    </script>
+</body>
+</html>
