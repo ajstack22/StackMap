@@ -81,34 +81,16 @@ window.MenuConfigurations = {
                     // Wrap content that should be visible based on mode
                     html += `<div id="settingsContent" style="${state.showingValidation ? 'display: none;' : ''}">`;
                     
-                    // User selector
-                    html += `
-                        <div class="panel-section">
-                            <label>Current User</label>
-                            ${window.hybridPanelManager.renderUserSelector()}
-                            ${app.grownupMode ? `
-                                <button class="admin-btn" style="margin-top: 12px; width: 100%;" onclick="hybridPanelManager.addNewUser()">
-                                    <span class="material-icons">person_add</span>
-                                    Add User
-                                </button>
-                            ` : ''}
-                        </div>
-                    `;
-                    
-                    // Day selector
-                    html += `
-                        <div class="panel-section">
-                            <label>Day Selection</label>
-                            ${window.hybridPanelManager.renderDaySelector()}
-                        </div>
-                    `;
-                    
                     // Actions (only in edit mode)
                     if (app.grownupMode) {
                         html += `
                             <div class="panel-section">
                                 <label>Actions</label>
                                 <div class="admin-buttons">
+                                    <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
+                                        <span class="material-icons">person_add</span>
+                                        Add User
+                                    </button>
                                     <button class="admin-btn" onclick="hybridPanelManager.addNewCard()">
                                         <span class="material-icons">add</span>
                                         Add Card
@@ -678,7 +660,7 @@ window.MenuConfigurations = {
 
     userDaySelector: {
         id: 'userDaySelector',
-        title: 'Select User & Day',
+        title: 'User & Day',
         layout: 'sections',
         sections: [
             {
@@ -704,7 +686,7 @@ window.MenuConfigurations = {
                             const isActive = user.id === currentUser.id;
                             html += `
                                 <button class="selector-option ${isActive ? 'active' : ''}" 
-                                        onclick="appInstance.handleUserSwitch('${user.id}'); window.hybridPanelManager.closePanel('right');">
+                                        onclick="appInstance.handleUserSwitch('${user.id}'); window.hybridPanelManager.closePanel('left');">
                                     <span class="selector-option-icon">${user.icon || '👤'}</span>
                                     <span class="selector-option-name">${user.name}</span>
                                 </button>
@@ -723,7 +705,7 @@ window.MenuConfigurations = {
                     // Today button
                     html += `
                         <button class="selector-option selector-option-day ${currentDay === 'today' ? 'active' : ''}" 
-                                onclick="appInstance.switchDay('today'); window.hybridPanelManager.closePanel('right');">
+                                onclick="appInstance.switchDay('today'); window.hybridPanelManager.closePanel('left');">
                             <span class="selector-option-icon">${app.createDateIcon(today)}</span>
                             <span class="selector-option-name">Today</span>
                         </button>
@@ -732,7 +714,7 @@ window.MenuConfigurations = {
                     // Tomorrow button
                     html += `
                         <button class="selector-option selector-option-day ${currentDay === 'tomorrow' ? 'active' : ''}" 
-                                onclick="appInstance.switchDay('tomorrow'); window.hybridPanelManager.closePanel('right');">
+                                onclick="appInstance.switchDay('tomorrow'); window.hybridPanelManager.closePanel('left');">
                             <span class="selector-option-icon">${app.createDateIcon(tomorrow)}</span>
                             <span class="selector-option-name">Tomorrow</span>
                         </button>

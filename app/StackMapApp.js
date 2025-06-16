@@ -1386,10 +1386,9 @@ class StackMapApp {
     
     // Selector Panel Methods
     showSelectorPanel() {
-        // Set the panel state to show selector
+        // Open the user/day selector in the left panel
         if (window.hybridPanelManager) {
-            window.hybridPanelManager.state.showingSelector = true;
-            window.hybridPanelManager.openPanel('right');
+            window.hybridPanelManager.showMenu('userDaySelector', 'left');
         }
     }
     
