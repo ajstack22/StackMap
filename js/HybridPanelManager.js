@@ -3915,9 +3915,21 @@ class HybridPanelManager {
     }
     
     showUserDaySelector() {
-        // Navigate to the user/day selector menu
-        this.navigationHistory.left = ['userDaySelector'];
+        // Clear any existing states that would show other menus
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = false;
+        this.state.showingSyncSettings = false;
+        this.state.showingLibraryMenu = false;
+        this.state.showingUserManagement = false;
+        
+        // Open left panel
         this.openPanel('left');
+        
+        // After panel opens, push the userDaySelector to navigation history
+        setTimeout(() => {
+            this.navigationHistory.left.push('userDaySelector');
+            this.renderPanelContent('left');
+        }, 0);
     }
 
     refreshCurrentPanel() {
