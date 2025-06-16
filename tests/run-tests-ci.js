@@ -18,7 +18,7 @@ let failedTests = 0;
 
 // Check test files exist
 const testFiles = [
-    'tests/uat-edit-mode.js',
+    'tests/uat-edit-mode-updated.js',
     'tests/uat-import-export-data.js',
     'tests/uat-ui-timing.js',
     'tests/uat-drive-sync.js'
