@@ -242,6 +242,11 @@ class AppState {
             const [removed] = targetActivities.splice(fromIndex, 1);
             targetActivities.splice(toIndex, 0, removed);
             
+            // Update card numbers to match new positions
+            targetActivities.forEach((activity, index) => {
+                activity.cardNumber = index + 1;
+            });
+            
             // CRITICAL FIX: Sync the legacy activities array with current context
             if (isToday) {
                 this.activities = [...user.activities];

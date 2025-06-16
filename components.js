@@ -1365,16 +1365,32 @@ class ActivityCard {
     setupDragAndDrop(card) {
         if (!card) return;
         
-        card.draggable = true;
+        // Check if we're in edit mode - use body class which is most reliable
+        const isEditMode = document.body.classList.contains('grownup-mode') || this.appState.ui.editMode;
         
+        // Make card draggable only in edit mode
+        card.draggable = isEditMode;
+        
+        // Add proper cursor styles for drag handle
+        if (isEditMode) {
+            card.style.cursor = 'move';
+        }
+        
+        // Touch event variables
+        let touchItem = null;
+        let touchOffset = { x: 0, y: 0 };
+        let touchClone = null;
+        
+        // Mouse drag events
         card.addEventListener('dragstart', (e) => {
-            // Check current edit mode state - allow drag if either grownupMode OR editMode is true
-            if (!this.app.grownupMode && !this.appState.ui.editMode) {
+            // Check current edit mode state - use body class which is most reliable
+            const canDrag = document.body.classList.contains('grownup-mode') || this.appState.ui.editMode;
+            
+            if (!canDrag) {
                 e.preventDefault();
                 return;
             }
             
-            // console.log('Drag start:', e.target.dataset.index);
             this.appState.ui.draggedElement = e.target;
             this.draggedIndex = parseInt(e.target.dataset.index);
             
@@ -1413,7 +1429,6 @@ class ActivityCard {
         
         card.addEventListener('drop', (e) => {
             e.preventDefault();
-            // console.log('Drop event');
             
             const draggedElement = this.appState.ui.draggedElement;
             const targetCard = e.target.closest('.card');
@@ -1423,8 +1438,6 @@ class ActivityCard {
             const draggedIndex = parseInt(draggedElement.dataset.index);
             const targetIndex = parseInt(targetCard.dataset.index);
             
-            // console.log('Moving from', draggedIndex, 'to', targetIndex);
-            
             if (!isNaN(draggedIndex) && !isNaN(targetIndex) && draggedIndex !== targetIndex) {
                 this.appState.moveActivity(draggedIndex, targetIndex);
                 this.renderer.render();
@@ -1432,7 +1445,6 @@ class ActivityCard {
         });
         
         card.addEventListener('dragend', (e) => {
-            // console.log('Drag end');
             this.cleanupDragStates();
         });
         
@@ -1442,6 +1454,121 @@ class ActivityCard {
                 targetCard.classList.remove('card--drop-target');
             }
         });
+        
+        // Touch events for mobile support
+        card.addEventListener('touchstart', (e) => {
+            // Check current edit mode state - use body class which is most reliable
+            const canDrag = document.body.classList.contains('grownup-mode') || this.appState.ui.editMode;
+            
+            if (!canDrag) {
+                return;
+            }
+            
+            // Prevent default to avoid scrolling
+            e.preventDefault();
+            
+            touchItem = e.target.closest('.card');
+            if (!touchItem) return;
+            
+            const touch = e.touches[0];
+            const rect = touchItem.getBoundingClientRect();
+            touchOffset.x = touch.clientX - rect.left;
+            touchOffset.y = touch.clientY - rect.top;
+            
+            // Create a clone for dragging
+            touchClone = touchItem.cloneNode(true);
+            touchClone.style.position = 'fixed';
+            touchClone.style.pointerEvents = 'none';
+            touchClone.style.zIndex = '9999';
+            touchClone.style.opacity = '0.8';
+            touchClone.style.transform = 'scale(1.05)';
+            touchClone.style.transition = 'none';
+            touchClone.classList.add('card--dragging');
+            
+            document.body.appendChild(touchClone);
+            
+            // Set initial position
+            touchClone.style.left = `${touch.clientX - touchOffset.x}px`;
+            touchClone.style.top = `${touch.clientY - touchOffset.y}px`;
+            
+            // Mark the original card as being dragged
+            touchItem.classList.add('card--dragging');
+            this.appState.ui.draggedElement = touchItem;
+            this.draggedIndex = parseInt(touchItem.dataset.index);
+            
+            // Add visual feedback to other cards
+            document.querySelectorAll('.card:not(.card--dragging)').forEach(c => {
+                c.classList.add('card--droppable');
+            });
+        }, { passive: false });
+        
+        card.addEventListener('touchmove', (e) => {
+            if (!touchClone || !touchItem) return;
+            
+            e.preventDefault();
+            
+            const touch = e.touches[0];
+            
+            // Move the clone
+            touchClone.style.left = `${touch.clientX - touchOffset.x}px`;
+            touchClone.style.top = `${touch.clientY - touchOffset.y}px`;
+            
+            // Find the element under the touch point
+            touchClone.style.display = 'none';
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            touchClone.style.display = '';
+            
+            if (!elementBelow) return;
+            
+            const targetCard = elementBelow.closest('.card');
+            if (!targetCard || targetCard === touchItem) return;
+            
+            // Clear previous highlights
+            document.querySelectorAll('.card--drop-target').forEach(c => {
+                c.classList.remove('card--drop-target');
+            });
+            
+            // Add highlight to current target
+            targetCard.classList.add('card--drop-target');
+            
+            // Live sorting animation
+            this.animateLiveSort(targetCard);
+        }, { passive: false });
+        
+        card.addEventListener('touchend', (e) => {
+            if (!touchClone || !touchItem) return;
+            
+            e.preventDefault();
+            
+            const touch = e.changedTouches[0];
+            
+            // Find the element under the touch point
+            touchClone.style.display = 'none';
+            const elementBelow = document.elementFromPoint(touch.clientX, touch.clientY);
+            touchClone.style.display = '';
+            
+            if (elementBelow) {
+                const targetCard = elementBelow.closest('.card');
+                if (targetCard && targetCard !== touchItem) {
+                    const draggedIndex = parseInt(touchItem.dataset.index);
+                    const targetIndex = parseInt(targetCard.dataset.index);
+                    
+                    if (!isNaN(draggedIndex) && !isNaN(targetIndex) && draggedIndex !== targetIndex) {
+                        this.appState.moveActivity(draggedIndex, targetIndex);
+                        this.renderer.render();
+                    }
+                }
+            }
+            
+            // Clean up
+            if (touchClone) {
+                touchClone.remove();
+                touchClone = null;
+            }
+            
+            touchItem = null;
+            this.cleanupDragStates();
+        }, { passive: false });
     }
     
     animateLiveSort(targetCard) {
@@ -2399,7 +2526,7 @@ class DataManagementPanel {
             syncBtn.disabled = true;
             
             if (this.app.googleDriveSync) {
-                await this.app.googleDriveSync.syncData();
+                await this.app.googleDriveSync.syncNow();
                 this.updateSyncStatus();
                 this.showSuccess('Data synced successfully!');
             }
