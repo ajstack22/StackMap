@@ -37,7 +37,7 @@ window.MenuConfigurations = {
 
     settings: {
         id: 'settings',
-        title: 'Settings',
+        title: 'Edit',
         layout: 'sections',
         sections: [
             {
@@ -46,42 +46,39 @@ window.MenuConfigurations = {
                     const app = menuSystem.app;
                     let html = '';
                     
-                    // Edit Mode toggle as segmented control
-                    html += `
-                        <div class="panel-section" style="padding-top: 0; padding-bottom: 20px;">
-                            <label>Mode Selection</label>
-                            <div class="segmented-control">
-                                <button type="button" class="segment ${!app.grownupMode ? 'segment--active' : ''}" 
-                                        id="viewModeBtn" data-mode="view">
+                    // Show different content based on mode
+                    if (app.grownupMode) {
+                        // In edit mode - show prominent "Return to View Mode" button
+                        html += `
+                            <div class="panel-section" style="padding-top: 0; padding-bottom: 20px;">
+                                <button type="button" class="return-to-view-button" id="returnToViewBtn">
                                     <span class="material-icons">visibility</span>
-                                    <span>View</span>
-                                </button>
-                                <button type="button" class="segment ${app.grownupMode ? 'segment--active' : ''}" 
-                                        id="editModeBtn" data-mode="edit">
-                                    <span class="material-icons">edit</span>
-                                    <span>Edit</span>
+                                    <span>Return to View Mode</span>
                                 </button>
                             </div>
-                            <div id="validationSection" style="display: none; margin-top: 16px;">
-                                <div class="validation-question">
-                                    <label id="validationQuestionLabel" style="color: white; font-weight: 600; margin-bottom: 8px; display: block;"></label>
-                                    <input type="text" id="validationInput" class="form-field" placeholder="Type your answer" 
-                                           style="margin-bottom: 12px;" autocomplete="off">
-                                    <button id="validationSubmit" class="footer-button primary-button" style="width: 100%;">
-                                        Submit
-                                    </button>
-                                    <div id="validationError" style="color: #ff6b6b; margin-top: 8px; display: none;">
-                                        Incorrect answer. Please try again.
+                        `;
+                    } else {
+                        // In view mode - show validation to enter edit mode
+                        html += `
+                            <div class="panel-section" style="padding-top: 0; padding-bottom: 20px;">
+                                <div id="validationSection">
+                                    <div class="validation-question">
+                                        <label id="validationQuestionLabel" style="color: white; font-weight: 600; margin-bottom: 8px; display: block;"></label>
+                                        <input type="text" id="validationInput" class="form-field" placeholder="Type your answer" 
+                                               style="margin-bottom: 12px;" autocomplete="off">
+                                        <button id="validationSubmit" class="footer-button primary-button" style="width: 100%;">
+                                            Submit
+                                        </button>
+                                        <div id="validationError" style="color: #ff6b6b; margin-top: 8px; display: none;">
+                                            Incorrect answer. Please try again.
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
+                        `;
+                    }
                     
-                    // Wrap content that should be visible based on mode
-                    html += `<div id="settingsContent" style="${state.showingValidation ? 'display: none;' : ''}">`;
-                    
-                    // Actions (only in edit mode)
+                    // Only show actions in edit mode
                     if (app.grownupMode) {
                         html += `
                             <div class="panel-section">
@@ -143,51 +140,33 @@ window.MenuConfigurations = {
                     
                     // Add event listeners
                     setTimeout(() => {
-                        const viewModeBtn = document.getElementById('viewModeBtn');
-                        const editModeBtn = document.getElementById('editModeBtn');
-                        const validationSection = document.getElementById('validationSection');
+                        const returnToViewBtn = document.getElementById('returnToViewBtn');
                         const validationInput = document.getElementById('validationInput');
                         const validationSubmit = document.getElementById('validationSubmit');
                         const validationError = document.getElementById('validationError');
                         const settingsContent = document.getElementById('settingsContent');
                         
-                        // View mode button
-                        if (viewModeBtn) {
-                            viewModeBtn.addEventListener('click', () => {
-                                if (app.grownupMode) {
-                                    // Exit edit mode
-                                    window.hybridPanelManager.handleEditModeSwitch(false);
-                                    state.showingValidation = false;
-                                    validationSection.style.display = 'none';
-                                    settingsContent.style.display = 'block';
-                                    
-                                    // Update button states
-                                    viewModeBtn.classList.add('segment--active');
-                                    editModeBtn.classList.remove('segment--active');
-                                }
+                        // Return to View Mode button (in edit mode)
+                        if (returnToViewBtn) {
+                            returnToViewBtn.addEventListener('click', () => {
+                                // Exit edit mode
+                                window.hybridPanelManager.handleEditModeSwitch(false);
+                                // Close the panel
+                                window.hybridPanelManager.closePanel('right');
                             });
                         }
                         
-                        // Edit mode button
-                        if (editModeBtn) {
-                            editModeBtn.addEventListener('click', () => {
-                                if (!app.grownupMode) {
-                                    // Show validation question
-                                    state.showingValidation = true;
-                                    validationSection.style.display = 'block';
-                                    settingsContent.style.display = 'none';
-                                    
-                                    // Generate random question
-                                    const questions = window.hybridPanelManager.getValidationQuestions();
-                                    const randomQ = questions[Math.floor(Math.random() * questions.length)];
-                                    state.currentQuestion = randomQ;
-                                    
-                                    document.getElementById('validationQuestionLabel').textContent = randomQ.question;
-                                    validationInput.value = '';
-                                    validationInput.focus();
-                                    validationError.style.display = 'none';
-                                }
-                            });
+                        // In view mode - show validation question immediately
+                        if (!app.grownupMode) {
+                            // Generate random question
+                            const questions = window.hybridPanelManager.getValidationQuestions();
+                            const randomQ = questions[Math.floor(Math.random() * questions.length)];
+                            state.currentQuestion = randomQ;
+                            
+                            document.getElementById('validationQuestionLabel').textContent = randomQ.question;
+                            validationInput.value = '';
+                            validationInput.focus();
+                            validationError.style.display = 'none';
                         }
                         
                         if (validationSubmit) {
@@ -198,13 +177,6 @@ window.MenuConfigurations = {
                                 if (answer === correctAnswer || answer === 'A') {
                                     // Correct answer
                                     window.hybridPanelManager.handleEditModeSwitch(true);
-                                    state.showingValidation = false;
-                                    validationSection.style.display = 'none';
-                                    settingsContent.style.display = 'block';
-                                    
-                                    // Update button states
-                                    viewModeBtn.classList.remove('segment--active');
-                                    editModeBtn.classList.add('segment--active');
                                     
                                     // Refresh the panel to show edit mode content
                                     window.hybridPanelManager.refreshCurrentPanel();
@@ -660,7 +632,10 @@ window.MenuConfigurations = {
 
     userDaySelector: {
         id: 'userDaySelector',
-        title: 'User & Day',
+        title: function(app) {
+            const allUsers = app.appState.getAllUsers();
+            return allUsers.length > 1 ? 'User & Day' : 'Day';
+        },
         layout: 'sections',
         sections: [
             {

@@ -52,6 +52,11 @@ class HybridPanelManager {
         // Initialize FAB visibility (show FABs by default)
         this.handleFABVisibility(false);
         
+        // Initialize FAB icon based on current mode
+        if (this.app.grownupMode) {
+            this.updateFABIcon('edit');
+        }
+        
         // Initialize mobile navigation enhancements
         this.initializeBackButtonHandling();
         this.initializeIOSEnhancements();
@@ -112,8 +117,8 @@ class HybridPanelManager {
         rightNav.className = 'floating-nav floating-nav--right';
         rightNav.innerHTML = `
             <button id="hybridManageBtn" class="fab" 
-                    aria-label="Open settings panel" title="Settings">
-                <span class="material-icons">settings</span>
+                    aria-label="Open edit panel" title="Edit">
+                <span class="material-icons">face</span>
             </button>
         `;
         
@@ -1315,11 +1320,25 @@ class HybridPanelManager {
         if (isChecked) {
             // Enter edit mode directly - validation is handled in MenuConfigurations
             this.app.enterGrownupMode();
+            // Change FAB icon to pencil
+            this.updateFABIcon('edit');
         } else {
             // User wants to exit edit mode
             this.exitEditMode();
+            // Change FAB icon back to face
+            this.updateFABIcon('face');
             // Re-render content to hide Edit Mode section
             this.renderPanelContent('right');
+        }
+    }
+    
+    updateFABIcon(icon) {
+        const fabButton = document.getElementById('hybridManageBtn');
+        if (fabButton) {
+            const iconElement = fabButton.querySelector('.material-icons');
+            if (iconElement) {
+                iconElement.textContent = icon;
+            }
         }
     }
     
