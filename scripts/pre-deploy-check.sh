@@ -60,7 +60,7 @@ check_file "app/StackMapApp.js" "Main app file exists"
 echo ""
 echo "2. Checking Test Suite..."
 echo "------------------------"
-check_file "tests/uat-edit-mode.js" "Edit mode UAT exists"
+check_file "tests/uat-edit-mode-updated.js" "Edit mode UAT exists"
 check_file "tests/test-runner.html" "Test runner exists"
 
 echo ""
