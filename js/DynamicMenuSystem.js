@@ -515,11 +515,12 @@ class DynamicMenuSystem {
     getMenuIcon(menuId) {
         const iconMap = {
             'preferences': 'palette',
-            'settings': 'settings',
+            'settings': 'edit',
             'activityLibrary': 'library_books',
             'activityForm': 'add_circle',
             'userForm': 'person_add',
             'userManagement': 'manage_accounts',
+            'userDaySelector': 'calendar_today',
             'syncSettings': 'cloud_sync'
         };
         

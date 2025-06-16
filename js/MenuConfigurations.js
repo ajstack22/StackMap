@@ -48,13 +48,15 @@ window.MenuConfigurations = {
                     
                     // Show different content based on mode
                     if (app.grownupMode) {
-                        // In edit mode - show prominent "Return to View Mode" button
+                        // In edit mode - show "Return to User Mode" button
                         html += `
-                            <div class="panel-section" style="padding-top: 0; padding-bottom: 20px;">
-                                <button type="button" class="return-to-view-button" id="returnToViewBtn">
-                                    <span class="material-icons">visibility</span>
-                                    <span>Return to View Mode</span>
-                                </button>
+                            <div class="panel-section" style="padding-top: 0;">
+                                <div class="admin-buttons">
+                                    <button type="button" class="admin-btn" id="returnToViewBtn" style="font-weight: bold;">
+                                        <span class="material-icons" style="font-weight: bold;">face</span>
+                                        Return to User Mode
+                                    </button>
+                                </div>
                             </div>
                         `;
                     } else {

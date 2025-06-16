@@ -3876,35 +3876,3 @@ input:checked + .slider:before {
 }
 
 /* Learn More styles removed - no longer needed */
-
-/* Return to View Mode Button */
-.return-to-view-button {
-    width: 100%;
-    padding: 16px 24px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    border: none;
-    border-radius: 12px;
-    font-size: 1.1rem;
-    font-weight: 600;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
-    transition: all 0.3s ease;
-}
-
-.return-to-view-button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-}
-
-.return-to-view-button:active {
-    transform: translateY(0);
-}
-
-.return-to-view-button .material-icons {
-    font-size: 24px;
-}
