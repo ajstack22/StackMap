@@ -22,9 +22,12 @@ styles/index.css (MAIN - imports all others)
 #### **Component Modules:**
 - **`styles/buttons.css`** - All button styles (floating, round, primary, secondary)
 - **`styles/cards.css`** - Card components, completion states, drag/drop
-- **`styles/forms.css`** - Input fields, checkboxes, emoji picker, color picker
+- **`styles/forms.css`** - Input fields, checkboxes, emoji picker (preferences removed)
 - **`styles/modals.css`** - General modal overlays, welcome screen, toasts
-- **`styles/modal-card.css`** - Editing modal interface, time fields
+- **`styles/hybrid-panels.css`** - Modern side panel system (settings, management)
+- **`styles/fab.css`** - Floating action buttons
+- **`styles/celebrations.css`** - Celebration animation effects
+- **`styles/splash-screen.css`** - Welcome and first-time user screens
 - **`styles/draggable-drawer.css`** - Drawer system, handle positioning (⚠️ CRITICAL: See drawer-architecture.md)
 - **`styles/selectors.css`** - User and day selector components, **NATIVE DROPDOWN SYSTEM** (lines 680-873)
 
@@ -53,7 +56,8 @@ styles/index.css (MAIN - imports all others)
 | Mobile responsiveness | `responsive.css` | ❌ New mobile file |
 | Layout/positioning | `layout.css` | ❌ New layout file |
 | Animations/transitions | `animations.css` | ❌ New animation file |
-| Modal interfaces | `modals.css` or `modal-card.css` | ❌ New modal file |
+| Modal interfaces | `modals.css` | ❌ New modal file |
+| Side panels | `hybrid-panels.css` | ❌ New panel file |
 | Utility classes | `utilities.css` | ❌ New utility file |
 | Theme colors | `variables.css` | ❌ New theme file |
 

@@ -22,14 +22,14 @@ StackMap is a visual routine management application designed specifically for sp
 
 ## 📁 Complete File Structure
 
-### **30 Confirmed Files (After Cleanup):**
+### **Current File Structure (As of June 2025):**
 
 #### **Core Application (7 files):**
 - **index.html** - Entry point with accessibility-first markup
-- **StackMapApp.js** - Main application controller
+- **app/StackMapApp.js** - Main application controller
 - **state.js** - Data management and persistence  
 - **renderer.js** - UI rendering and visual updates
-- **components.js** - ALL UI components (unified file)
+- **components.js** - Legacy UI components (DataManagementPanel obsolete)
 - **drive-sync.js** - Google Drive cloud synchronization
 - **sw.js** - Service worker for PWA offline support
 
@@ -42,16 +42,18 @@ StackMap is a visual routine management application designed specifically for sp
 - **data/emoji-names.js** - Searchable emoji keywords
 - **data/default-activities.js** - Initial routine templates
 
-#### **Management (1 file):**
-- **app/PreferencesManager.js** - Settings panel controller
+#### **Modern Managers (4 files):**
+- **js/HybridPanelManager.js** - Unified settings/management panels
+- **js/CelebrationManager.js** - Animation system
+- **js/DynamicMenuSystem.js** - Context menus
+- **js/MenuConfigurations.js** - Menu definitions
 
-#### **Styles (13 files - Modular System):**
+#### **Styles (Active CSS Files):**
 - **styles/index.css** - Main stylesheet (imports all others)
 - **styles/layout.css** - Positioning and header management
 - **styles/responsive.css** - Mobile-first breakpoints
 - **styles/buttons.css** - All button component styles
-- **styles/forms.css** - Input fields and form styling
-- **styles/modal-card.css** - Editing modal interface
+- **styles/forms.css** - Input fields (preferences styles removed)
 - **styles/modals.css** - General modal overlays
 - **styles/cards.css** - Activity card components
 - **styles/base.css** - Typography and foundation
@@ -59,17 +61,26 @@ StackMap is a visual routine management application designed specifically for sp
 - **styles/utilities.css** - Helper classes
 - **styles/animations.css** - Celebrations and transitions
 - **styles/sync-modal.css** - Cloud sync interface
+- **styles/hybrid-panels.css** - Modern side panel system
+- **styles/fab.css** - Floating action buttons
+- **styles/draggable-drawer.css** - Mobile drawer
+- **styles/celebrations.css** - Animation effects
+- **styles/selectors.css** - Dropdown components
+- **styles/splash-screen.css** - Welcome screens
 
 #### **PWA Infrastructure (2 files):**
 - **manifest.json** - Progressive Web App configuration
 - **offline.html** - Offline fallback page
 
-#### **Files DELETED (5 duplicates removed):**
-- ~~app.js~~ (old version of StackMapApp.js)
-- ~~ComponentBuilder.js~~ (content merged into components.js)
-- ~~ActivityCard.js~~ (embedded in components.js)
-- ~~EmojiPicker.js~~ (embedded in components.js)  
-- ~~ValidationManager.js~~ (redundant with inline version)
+#### **Files REMOVED (As of June 2025):**
+- ~~app/PreferencesManager.js~~ (replaced by HybridPanelManager)
+- ~~modal-card.css~~ (replaced by hybrid panels)
+- ~~data-panel.css~~ (functionality in HybridPanelManager)
+- ~~data-panel-animations.css~~ (functionality in HybridPanelManager)
+- ~~ValidationManager.js~~ (validation in HybridPanelManager)
+- ~~tests/uat-edit-mode.js~~ (replaced by uat-edit-mode-updated.js)
+- ~~debug-menu-test.html~~ (debug file removed)
+- ~~drive-sync-debug.html~~ (debug file removed)
 
 ## 🎨 Component Architecture
 
@@ -193,11 +204,12 @@ User Interaction → StackMapApp → AppState → Renderer → DOM
 
 ### **Implementation:**
 ```javascript
-// Built into renderer.js
-function createConfetti() {
-    // Special needs-friendly celebration
-    // Short duration, gentle colors, clear feedback
-}
+// Handled by CelebrationManager.js
+window.celebrationManager = new CelebrationManager();
+celebrationManager.playCelebration('confetti', {
+    theme: 'rainbow',
+    duration: 3000
+});
 ```
 
 ## 🔗 File Dependencies

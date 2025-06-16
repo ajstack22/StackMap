@@ -2,7 +2,7 @@
 
 ## Component Overview
 
-### Active Components
+### Core Application Files
 
 #### StackMapApp.js
 **Location**: `/app/StackMapApp.js`
@@ -34,13 +34,37 @@
 - Backdrop visibility
 ```
 
-#### PreferencesManager.js
-**Location**: `/app/PreferencesManager.js`
-**Purpose**: Manages preferences panel and settings
+### Modern Manager Classes
+
+#### HybridPanelManager.js
+**Location**: `/js/HybridPanelManager.js`
+**Purpose**: Unified panel system for settings and management
+**Key Features**:
+- Side panels that slide in from left/right
+- Settings: colors, display options, celebrations
+- Management: users, activities, import/export
+- Platform-aware behavior (mobile/desktop)
+- Replaces old PreferencesManager and DataManagementPanel
+
+#### CelebrationManager.js
+**Location**: `/js/CelebrationManager.js`
+**Purpose**: Handles all celebration animations
 **Key Methods**:
-- `togglePreferences()` - Show/hide preferences panel
-- `setupKidModeControls()` - Initialize color picker and display options
-- `updateLogoColors()` - Updates SVG logo based on theme
+- `playCelebration(type, options)` - Trigger animations
+- `playConfetti()` - Task completion animation
+- `playFireworks()` - Routine completion animation
+
+#### DynamicMenuSystem.js
+**Location**: `/js/DynamicMenuSystem.js`
+**Purpose**: Context menu handler for edit mode
+**Features**:
+- Card edit menus
+- User management menus
+- Dynamic positioning
+
+#### MenuConfigurations.js
+**Location**: `/js/MenuConfigurations.js`
+**Purpose**: Menu definitions and options
 
 #### State.js
 **Location**: `/state.js`
@@ -133,24 +157,22 @@ appState.ui = {
 
 ## Data Flow
 
-### User Selection Change
+### User Selection Change (via ModernUserSelector)
 ```
-1. Dropdown/button change event
-2. handleUserSwitch() called
-3. saveCurrentUserData() - saves current user's state
-4. switchUser() - changes currentUserId
-5. loadUserData() - loads new user's data
-6. render() - updates UI
-7. Update dropdowns to show new selection
+1. User clicks on user button/avatar
+2. HybridPanelManager renders user list
+3. User selection triggers switchUser()
+4. State updates and saves
+5. UI re-renders with new user data
 ```
 
-### Day Selection Change
+### Settings Change (via HybridPanelManager)
 ```
-1. Dropdown change event
-2. switchDay() called
-3. Updates ui.currentDay
-4. Updates body classes (viewing-today/viewing-tomorrow)
-5. render() - shows appropriate activities
+1. User opens settings panel
+2. Changes color/display/celebration options  
+3. HybridPanelManager updates state
+4. Live preview shown immediately
+5. Changes persist to localStorage
 ```
 
 ## CSS Class Management

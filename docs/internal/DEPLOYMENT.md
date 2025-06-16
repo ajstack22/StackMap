@@ -187,7 +187,7 @@ Before deploying to production, run the UAT suite to ensure critical functionali
 When fixing bugs or adding features:
 
 1. Create new test file in `/tests/` directory
-2. Follow the pattern in `uat-edit-mode.js`
+2. Follow the pattern in `uat-edit-mode-updated.js`
 3. Add test suite to `test-runner.html`
 4. Update this document with new test requirements
 

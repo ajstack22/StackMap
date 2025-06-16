@@ -34,7 +34,7 @@ This guide documents the User Acceptance Testing (UAT) framework for StackMap, i
 ### Key Components
 
 1. **test-runner.html** - Browser-based test interface
-2. **uat-edit-mode.js** - Edit mode test suite (example implementation)
+2. **uat-edit-mode-updated.js** - Edit mode test suite (current implementation)
 3. **run-tests.js** - Automated test runner using Puppeteer
 4. **pre-deploy-check.sh** - Pre-deployment validation script
 

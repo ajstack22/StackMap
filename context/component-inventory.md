@@ -65,35 +65,47 @@
 - **`data/emoji-names.js`** - Searchable emoji keywords
 - **`data/default-activities.js`** - Initial routine templates
 
-#### Management Files (1 file)
-- **`app/PreferencesManager.js`** - Settings panel functionality
+#### Modern Manager Files (4 files)
+- **`js/HybridPanelManager.js`** - Unified settings/management panels
+- **`js/CelebrationManager.js`** - Animation system
+- **`js/DynamicMenuSystem.js`** - Context menus
+- **`js/MenuConfigurations.js`** - Menu definitions
 
-#### CSS Files (13 modular files)
+#### CSS Files (Active stylesheets)
 Request specific CSS files based on what you're styling:
 - **`styles/index.css`** - Main stylesheet (imports all others)
 - **`styles/layout.css`** - Headers, positioning, floating buttons
 - **`styles/responsive.css`** - Mobile breakpoints
 - **`styles/buttons.css`** - All button styles
 - **`styles/cards.css`** - Card components and states
-- **`styles/forms.css`** - Inputs and form elements
+- **`styles/forms.css`** - Inputs and form elements (preferences removed)
 - **`styles/modals.css`** - General modal styles
-- **`styles/modal-card.css`** - Activity editing modal
 - **`styles/base.css`** - Typography and foundations
 - **`styles/variables.css`** - CSS custom properties
 - **`styles/utilities.css`** - Helper classes
 - **`styles/animations.css`** - Confetti, fireworks, transitions
 - **`styles/sync-modal.css`** - Sync conflict UI
+- **`styles/hybrid-panels.css`** - Modern side panel system
+- **`styles/fab.css`** - Floating action buttons
+- **`styles/draggable-drawer.css`** - Mobile drawer
+- **`styles/celebrations.css`** - Animation effects
+- **`styles/selectors.css`** - Dropdown components
+- **`styles/splash-screen.css`** - Welcome screens
 
 #### PWA Files (2 files)
 - **`manifest.json`** - PWA configuration
 - **`offline.html`** - Offline fallback page
 
-### ⚠️ DELETED FILES - DO NOT REQUEST
-- ~~app.js~~ (use StackMapApp.js)
-- ~~ComponentBuilder.js~~ (merged into components.js)
-- ~~ActivityCard.js~~ (merged into components.js)
-- ~~EmojiPicker.js~~ (merged into components.js)
-- ~~ValidationManager.js~~ (inline in index.html)
+### ⚠️ REMOVED FILES - DO NOT REQUEST
+- ~~app/PreferencesManager.js~~ (replaced by HybridPanelManager)
+- ~~styles/modal-card.css~~ (replaced by hybrid panels)
+- ~~styles/data-panel.css~~ (functionality in HybridPanelManager)
+- ~~styles/data-panel-animations.css~~ (functionality in HybridPanelManager)
+- ~~ValidationManager.js~~ (validation in HybridPanelManager)
+- ~~DataManagementPanel~~ (functionality in HybridPanelManager)
+- ~~tests/uat-edit-mode.js~~ (use uat-edit-mode-updated.js)
+- ~~debug-menu-test.html~~ (debug file removed)
+- ~~drive-sync-debug.html~~ (debug file removed)
 
 ## 🧩 Component Inventory
 
@@ -243,7 +255,7 @@ User Input → StackMapApp → AppState → Renderer → DOM Update
 |------|-------------------|
 | Fix card completion | `components.js`, `renderer.js` |
 | Change card appearance | `cards.css`, `components.js` |
-| Add settings option | `PreferencesManager.js`, `state.js` |
+| Add settings option | `HybridPanelManager.js`, `state.js` |
 | Modify header | `layout.css`, `renderer.js` |
 | Fix mobile layout | `responsive.css`, specific component CSS |
 | Add animation | `animations.css`, `renderer.js` |
@@ -287,7 +299,7 @@ User Input → StackMapApp → AppState → Renderer → DOM Update
 - Form validation
 
 ### Theme System
-**Files needed:** `state.js`, `variables.css`, `PreferencesManager.js`
+**Files needed:** `state.js`, `variables.css`, `HybridPanelManager.js`
 **Features:**
 - Dynamic color themes
 - CSS variable updates
