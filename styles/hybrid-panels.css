@@ -1893,6 +1893,68 @@ textarea.panel-input {
     border-color: #2196f3;
 }
 
+/* ===== SELECTOR STYLES ===== */
+.selector-options {
+    display: grid;
+    gap: 8px;
+}
+
+.selector-options-horizontal {
+    grid-template-columns: 1fr 1fr;
+}
+
+.selector-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: 100%;
+    text-align: left;
+    color: white;
+}
+
+.selector-option:hover {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.selector-option.active {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.selector-option-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.selector-option-icon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.selector-option-name {
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+.selector-option-day {
+    flex-direction: column;
+    text-align: center;
+    padding: 16px;
+}
+
+.selector-option-day .selector-option-icon {
+    margin-bottom: 8px;
+}
+
 /* ===== REDUCED MOTION SUPPORT ===== */
 @media (prefers-reduced-motion: reduce) {
     .side-panel,

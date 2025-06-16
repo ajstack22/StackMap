@@ -683,6 +683,77 @@ window.MenuConfigurations = {
         ]
     },
 
+    userDaySelector: {
+        id: 'userDaySelector',
+        title: 'Select User & Day',
+        layout: 'sections',
+        sections: [
+            {
+                type: 'custom',
+                render: function(state, menuSystem) {
+                    const app = menuSystem.app;
+                    const allUsers = app.appState.getAllUsers();
+                    const currentUser = app.appState.getCurrentUser();
+                    const currentDay = app.appState.getCurrentDay();
+                    const today = new Date();
+                    const tomorrow = new Date(today);
+                    tomorrow.setDate(tomorrow.getDate() + 1);
+                    
+                    let html = '';
+                    
+                    // User section (only show if multiple users or in edit mode)
+                    if (allUsers.length > 1 || app.grownupMode) {
+                        html += '<div class="panel-section">';
+                        html += '<label>Select User</label>';
+                        html += '<div class="selector-options">';
+                        
+                        allUsers.forEach(user => {
+                            const isActive = user.id === currentUser.id;
+                            html += `
+                                <button class="selector-option ${isActive ? 'active' : ''}" 
+                                        onclick="appInstance.handleUserSwitch('${user.id}'); window.hybridPanelManager.closePanel('right');">
+                                    <span class="selector-option-icon">${user.icon || '👤'}</span>
+                                    <span class="selector-option-name">${user.name}</span>
+                                </button>
+                            `;
+                        });
+                        
+                        html += '</div>';
+                        html += '</div>';
+                    }
+                    
+                    // Day section
+                    html += '<div class="panel-section">';
+                    html += '<label>Select Day</label>';
+                    html += '<div class="selector-options selector-options-horizontal">';
+                    
+                    // Today button
+                    html += `
+                        <button class="selector-option selector-option-day ${currentDay === 'today' ? 'active' : ''}" 
+                                onclick="appInstance.switchDay('today'); window.hybridPanelManager.closePanel('right');">
+                            <span class="selector-option-icon">${app.createDateIcon(today)}</span>
+                            <span class="selector-option-name">Today</span>
+                        </button>
+                    `;
+                    
+                    // Tomorrow button
+                    html += `
+                        <button class="selector-option selector-option-day ${currentDay === 'tomorrow' ? 'active' : ''}" 
+                                onclick="appInstance.switchDay('tomorrow'); window.hybridPanelManager.closePanel('right');">
+                            <span class="selector-option-icon">${app.createDateIcon(tomorrow)}</span>
+                            <span class="selector-option-name">Tomorrow</span>
+                        </button>
+                    `;
+                    
+                    html += '</div>';
+                    html += '</div>';
+                    
+                    return html;
+                }
+            }
+        ]
+    },
+
     syncSettings: {
         id: 'syncSettings',
         title: 'Google Drive Sync',

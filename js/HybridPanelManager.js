@@ -14,7 +14,8 @@ class HybridPanelManager {
             showingUserForm: false,
             editingUser: null,
             editingUserId: null,
-            showingSyncSettings: false
+            showingSyncSettings: false,
+            showingSelector: false
         };
         
         // Default values for new activity
@@ -177,6 +178,7 @@ class HybridPanelManager {
             this.state.showingSyncSettings = false;
             this.state.showingLibraryMenu = false;
             this.state.showingUserManagement = false;
+            this.state.showingSelector = false;
             
             this.togglePanel('right');
         });
@@ -304,6 +306,16 @@ class HybridPanelManager {
             this.state.activePanel = null;
         }
         
+        // Reset special states when closing right panel
+        if (side === 'right') {
+            this.state.showingActivityForm = false;
+            this.state.showingUserForm = false;
+            this.state.showingSyncSettings = false;
+            this.state.showingLibraryMenu = false;
+            this.state.showingUserManagement = false;
+            this.state.showingSelector = false;
+        }
+        
         // Update UI
         const panel = document.getElementById(`hybrid${side.charAt(0).toUpperCase() + side.slice(1)}Panel`);
         const button = document.getElementById(`hybrid${side === 'left' ? 'Preferences' : 'Manage'}Btn`);
@@ -375,6 +387,8 @@ class HybridPanelManager {
                 console.log('User form menuState:', menuState);
             } else if (this.state.showingSyncSettings) {
                 menuId = 'syncSettings';
+            } else if (this.state.showingSelector) {
+                menuId = 'userDaySelector';
             } else if (this.state.showingLibraryMenu) {
                 menuId = 'activityLibrary';
                 menuState = this.menuStates.activityLibrary;
@@ -4169,6 +4183,7 @@ class HybridPanelManager {
             this.state.showingSyncSettings = false;
             this.state.showingLibraryMenu = false;
             this.state.showingUserManagement = false;
+            this.state.showingSelector = false;
             
             // Set the appropriate state for the previous menu
             switch (previousMenu) {
