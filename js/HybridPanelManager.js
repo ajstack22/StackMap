@@ -1327,8 +1327,8 @@ class HybridPanelManager {
             this.exitEditMode();
             // Change FAB icon back to face
             this.updateFABIcon('face');
-            // Re-render content to hide Edit Mode section
-            this.renderPanelContent('right');
+            // Don't re-render if called from Return to User Mode button
+            // The panel will be closed separately
         }
     }
     

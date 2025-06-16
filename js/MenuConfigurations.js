@@ -151,10 +151,12 @@ window.MenuConfigurations = {
                         // Return to View Mode button (in edit mode)
                         if (returnToViewBtn) {
                             returnToViewBtn.addEventListener('click', () => {
-                                // Exit edit mode
-                                window.hybridPanelManager.handleEditModeSwitch(false);
-                                // Close the panel
+                                // Close the panel first
                                 window.hybridPanelManager.closePanel('right');
+                                // Then exit edit mode after a delay to avoid flash
+                                setTimeout(() => {
+                                    window.hybridPanelManager.handleEditModeSwitch(false);
+                                }, 300);
                             });
                         }
                         
