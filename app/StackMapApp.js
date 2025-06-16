@@ -1388,7 +1388,7 @@ class StackMapApp {
     showSelectorPanel() {
         // Open the user/day selector in the left panel
         if (window.hybridPanelManager) {
-            window.hybridPanelManager.showMenu('userDaySelector', 'left');
+            window.hybridPanelManager.showUserDaySelector();
         }
     }
     

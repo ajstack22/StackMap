@@ -3913,6 +3913,12 @@ class HybridPanelManager {
         
         this.renderPanelContent('right');
     }
+    
+    showUserDaySelector() {
+        // Navigate to the user/day selector menu
+        this.navigationHistory.left = ['userDaySelector'];
+        this.openPanel('left');
+    }
 
     refreshCurrentPanel() {
         // Save scroll positions before refresh
