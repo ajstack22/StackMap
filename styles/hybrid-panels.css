@@ -1098,6 +1098,23 @@ body:has(.side-panel.open) .floating-nav {
     line-height: 1;
 }
 
+/* White variant for Return to User Mode button */
+.admin-btn--white {
+    background: white;
+    color: var(--primary-color);
+    text-shadow: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.admin-btn--white:hover {
+    background: #f8f9fa;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.admin-btn--white .material-icons {
+    color: var(--primary-color);
+}
+
 /* ===== TITLE/SUBTITLE EDITOR ===== */
 .title-subtitle-editor {
     margin-bottom: 8px;

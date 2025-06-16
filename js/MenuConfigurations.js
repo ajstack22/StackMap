@@ -52,7 +52,7 @@ window.MenuConfigurations = {
                         html += `
                             <div class="panel-section" style="padding-top: 0;">
                                 <div class="admin-buttons">
-                                    <button type="button" class="admin-btn" id="returnToViewBtn" style="font-weight: bold;">
+                                    <button type="button" class="admin-btn admin-btn--white" id="returnToViewBtn" style="font-weight: bold;">
                                         <span class="material-icons" style="font-weight: bold;">face</span>
                                         Return to User Mode
                                     </button>
