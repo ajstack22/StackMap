@@ -280,16 +280,17 @@ class StackMapApp {
             userTitle = currentUser.customTitle || 'StackMap';
         }
         
-        // Determine subtitle to use (per-day, custom, or auto-generated)
+        // Always show user and day context in subtitle
+        const allUsers = this.appState.getAllUsers();
+        const showUserName = allUsers.length > 1; // Only show user name if multiple users
+        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+        
+        // Format: "User • Today's Routine" or just "Today's Routine" for single user
         let userSubtitle;
-        if (currentUser.daySubtitles[currentDay]) {
-            userSubtitle = currentUser.daySubtitles[currentDay];
-        } else if (currentUser.customSubtitle) {
-            userSubtitle = currentUser.customSubtitle;
+        if (showUserName) {
+            userSubtitle = `${currentUser.name} • ${dayText}'s Routine`;
         } else {
-            // Auto-generate subtitle
-            const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-            userSubtitle = `${currentUser.name}'s ${dayText}`;
+            userSubtitle = `${dayText}'s Routine`;
         }
         
         // Update all title elements
@@ -300,7 +301,31 @@ class StackMapApp {
             mainTitle.textContent = userTitle;
             this.updateLogoVisibility(userTitle);
         }
-        if (subtitle) subtitle.textContent = userSubtitle;
+        if (subtitle) {
+            subtitle.textContent = userSubtitle;
+            
+            // Make subtitle clickable if there are multiple users or we're in edit mode
+            if (allUsers.length > 1 || this.grownupMode) {
+                subtitle.classList.add('clickable');
+                subtitle.setAttribute('role', 'button');
+                subtitle.setAttribute('aria-label', 'Click to change user or day');
+                
+                // Remove any existing click handlers
+                subtitle.replaceWith(subtitle.cloneNode(true));
+                const newSubtitle = document.getElementById('subtitle');
+                
+                // Add click handler
+                newSubtitle.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    this.showSelectorModal();
+                });
+            } else {
+                subtitle.classList.remove('clickable');
+                subtitle.removeAttribute('role');
+                subtitle.removeAttribute('aria-label');
+            }
+        }
         
     }
     
@@ -1380,6 +1405,102 @@ class StackMapApp {
         // Logo is now in the unified header HTML
     }
     
+    // Selector Modal Methods
+    showSelectorModal() {
+        const modal = document.getElementById('selectorModal');
+        if (!modal) return;
+        
+        // Populate user options
+        const userOptions = document.getElementById('userSelectorOptions');
+        const allUsers = this.appState.getAllUsers();
+        const currentUser = this.appState.getCurrentUser();
+        
+        userOptions.innerHTML = allUsers.map(user => `
+            <button class="selector-option ${user.id === currentUser.id ? 'active' : ''}" 
+                    data-user-id="${SecurityUtils.escapeHtml(user.id)}"
+                    onclick="appInstance.selectUser('${SecurityUtils.escapeHtml(user.id)}')">
+                <span class="selector-option-icon">${SecurityUtils.escapeHtml(user.icon || '👤')}</span>
+                <span class="selector-option-name">${SecurityUtils.escapeHtml(user.name)}</span>
+            </button>
+        `).join('');
+        
+        // Hide user section if only one user and not in edit mode
+        const userSection = document.getElementById('userSelectorSection');
+        if (allUsers.length === 1 && !this.grownupMode) {
+            userSection.style.display = 'none';
+        } else {
+            userSection.style.display = 'block';
+        }
+        
+        // Populate day options
+        const dayOptions = document.getElementById('daySelectorOptions');
+        const currentDay = this.appState.getCurrentDay();
+        const today = new Date();
+        const tomorrow = new Date(today);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        
+        dayOptions.innerHTML = `
+            <button class="selector-option selector-option-day ${currentDay === 'today' ? 'active' : ''}" 
+                    data-day="today"
+                    onclick="appInstance.selectDay('today')">
+                <span class="selector-option-icon">${this.createDateIcon(today)}</span>
+                <span class="selector-option-name">Today</span>
+            </button>
+            <button class="selector-option selector-option-day ${currentDay === 'tomorrow' ? 'active' : ''}" 
+                    data-day="tomorrow"
+                    onclick="appInstance.selectDay('tomorrow')">
+                <span class="selector-option-icon">${this.createDateIcon(tomorrow)}</span>
+                <span class="selector-option-name">Tomorrow</span>
+            </button>
+        `;
+        
+        // Show modal
+        modal.classList.remove('hidden');
+        document.body.style.overflow = 'hidden'; // Prevent background scrolling
+        
+        // Add escape key handler
+        this.modalEscapeHandler = (e) => {
+            if (e.key === 'Escape') {
+                this.closeSelectorModal();
+            }
+        };
+        document.addEventListener('keydown', this.modalEscapeHandler);
+        
+        // Add backdrop click handler
+        const backdrop = modal.querySelector('.selector-modal-backdrop');
+        backdrop.addEventListener('click', () => this.closeSelectorModal());
+    }
+    
+    closeSelectorModal() {
+        const modal = document.getElementById('selectorModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            document.body.style.overflow = ''; // Restore scrolling
+            
+            // Remove event handlers
+            if (this.modalEscapeHandler) {
+                document.removeEventListener('keydown', this.modalEscapeHandler);
+                this.modalEscapeHandler = null;
+            }
+        }
+    }
+    
+    selectUser(userId) {
+        const currentUser = this.appState.getCurrentUser();
+        if (userId !== currentUser.id) {
+            this.handleUserSwitch(userId);
+        }
+        this.closeSelectorModal();
+    }
+    
+    selectDay(day) {
+        const currentDay = this.appState.getCurrentDay();
+        if (day !== currentDay) {
+            this.switchDay(day);
+        }
+        this.closeSelectorModal();
+    }
+    
     // Story 4: Get activity counts for each day
     getDayCounts() {
         const user = this.appState.getCurrentUser();
@@ -1872,6 +1993,9 @@ class StackMapApp {
         // Add body class for CSS targeting
         document.body.classList.add('grownup-mode');
         
+        // Update subtitle to reflect edit mode
+        this.initializeTitleSubtitle();
+        
         // Show FAB instead of management cards
         if (this.editFAB) {
             this.editFAB.show();
@@ -1916,6 +2040,9 @@ class StackMapApp {
         this.appState.ui.editMode = false;
         this.appState.ui.editingCardIndex = -1;
         this.appState.ui.showingNewCardForm = false;
+        
+        // Update subtitle to reflect normal mode
+        this.initializeTitleSubtitle();
         
         // Modal system was removed in cleanup - no longer needed
         
