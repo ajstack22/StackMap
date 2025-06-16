@@ -50,15 +50,6 @@ class AppState {
                         showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
                         showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
                     },
-                    // Per-day titles and subtitles
-                    dayTitles: {
-                        today: null,     // null means use default customTitle
-                        tomorrow: null   // null means use default customTitle
-                    },
-                    daySubtitles: {
-                        today: null,     // null means use auto-generated
-                        tomorrow: null   // null means use auto-generated
-                    },
                     library: [] // User-specific library cards
                 }
             },
@@ -429,15 +420,6 @@ class AppState {
                 showNumbers: CONFIG.SHOW_NUMBERS_DEFAULT,
                 showCompletionIndicators: CONFIG.SHOW_COMPLETION_DEFAULT
             },
-            // Per-day titles and subtitles
-            dayTitles: {
-                today: null,     // null means use default customTitle
-                tomorrow: null   // null means use default customTitle
-            },
-            daySubtitles: {
-                today: null,     // null means use auto-generated
-                tomorrow: null   // null means use auto-generated
-            },
             library: [] // Initialize empty library for new user
         };
         
@@ -525,8 +507,6 @@ class AppState {
             // Initialize missing fields for backward compatibility
             if (!user.activities) user.activities = [];
             if (!user.tomorrowActivities) user.tomorrowActivities = [];
-            if (!user.dayTitles) user.dayTitles = { today: null, tomorrow: null };
-            if (!user.daySubtitles) user.daySubtitles = { today: null, tomorrow: null };
             if (!user.library) user.library = [];
             
             // Load activities based on current day - deep clone to prevent shared references
@@ -997,13 +977,6 @@ class AppState {
                     // Ensure all users have library array
                     if (!user.library) {
                         user.library = [];
-                    }
-                    // Ensure all users have day-specific titles and subtitles
-                    if (!user.dayTitles) {
-                        user.dayTitles = { today: null, tomorrow: null };
-                    }
-                    if (!user.daySubtitles) {
-                        user.daySubtitles = { today: null, tomorrow: null };
                     }
                     
                     // Ensure activities have completed property

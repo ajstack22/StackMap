@@ -61,52 +61,43 @@
 }
 
 .subtitle {
-    font-size: 0.9375rem; /* Increased by 25% from 0.75rem */
-    color: rgba(255, 255, 255, 0.8);
-    margin: 18px 0 0 0; /* Reduced by 25% from 24px */
-    padding: 0;
+    font-size: 0.875rem;
+    font-weight: 500;
+    background: white;
+    color: var(--primary-color);
+    margin: 18px auto 0;
+    padding: 6px 18px;
     line-height: 1.2;
     outline: none;
     transition: all 0.2s ease;
     text-align: center;
-    /* Make subtitle truly centered regardless of logo */
     position: absolute;
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
-    top: 36px; /* Reduced by 25% from 48px */
-}
-
-/* Clickable subtitle styles */
-.subtitle.clickable {
-    cursor: pointer;
-    padding: 4px 16px !important;
-    border-radius: 20px;
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid transparent;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
     width: auto;
     max-width: 90%;
+    top: 36px;
+    border-radius: 20px;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.subtitle.clickable:hover {
-    background: rgba(255, 255, 255, 0.2);
-    border-color: rgba(255, 255, 255, 0.3);
-    transform: translateX(-50%) translateY(-1px);
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.subtitle.clickable:active {
-    transform: translateX(-50%) translateY(0);
-    background: rgba(255, 255, 255, 0.25);
+.subtitle:hover {
+    transform: translateX(-50%) translateY(-1px) scale(1.02);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
-.subtitle.clickable:focus {
-    outline: 2px solid rgba(255, 255, 255, 0.5);
+.subtitle:active {
+    transform: translateX(-50%) translateY(0) scale(0.98);
+}
+
+.subtitle:focus {
+    outline: 2px solid var(--primary-color);
     outline-offset: 2px;
 }
 

@@ -14,13 +14,6 @@ window.MenuConfigurations = {
             },
             {
                 type: 'custom',
-                label: 'App Title & Subtitle',
-                render: function(state, menuSystem) {
-                    return window.hybridPanelManager.renderTitleSubtitleEditorForPreferences();
-                }
-            },
-            {
-                type: 'custom',
                 label: 'Card Display',
                 render: function(state, menuSystem) {
                     return window.hybridPanelManager.renderDisplayModeSelector();

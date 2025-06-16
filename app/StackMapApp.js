@@ -264,33 +264,20 @@ class StackMapApp {
         
         const currentDay = this.appState.ui.currentDay || 'today';
         
-        // Initialize day titles/subtitles if they don't exist
-        if (!currentUser.dayTitles) {
-            currentUser.dayTitles = { today: null, tomorrow: null };
-        }
-        if (!currentUser.daySubtitles) {
-            currentUser.daySubtitles = { today: null, tomorrow: null };
-        }
+        // Title remains customizable (for now)
+        let userTitle = currentUser.customTitle || 'StackMap';
         
-        // Determine title to use (per-day or default)
-        let userTitle;
-        if (currentUser.dayTitles[currentDay]) {
-            userTitle = currentUser.dayTitles[currentDay];
-        } else {
-            userTitle = currentUser.customTitle || 'StackMap';
-        }
-        
-        // Always show user and day context in subtitle
+        // Subtitle is now standardized - always show user/day
         const allUsers = this.appState.getAllUsers();
-        const showUserName = allUsers.length > 1; // Only show user name if multiple users
+        const showUserName = allUsers.length > 1;
         const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
         
-        // Format: "User • Today's Routine" or just "Today's Routine" for single user
+        // Format: "User • Today" or just "Tomorrow" for single user
         let userSubtitle;
         if (showUserName) {
-            userSubtitle = `${currentUser.name} • ${dayText}'s Routine`;
+            userSubtitle = `${currentUser.name} • ${dayText}`;
         } else {
-            userSubtitle = `${dayText}'s Routine`;
+            userSubtitle = dayText;
         }
         
         // Update all title elements
@@ -304,29 +291,21 @@ class StackMapApp {
         if (subtitle) {
             subtitle.textContent = userSubtitle;
             
-            // Make subtitle clickable if there are multiple users or we're in edit mode
-            if (allUsers.length > 1 || this.grownupMode) {
-                subtitle.classList.add('clickable');
-                subtitle.setAttribute('role', 'button');
-                subtitle.setAttribute('aria-label', 'Click to change user or day');
-                
-                // Remove any existing click handlers
-                subtitle.replaceWith(subtitle.cloneNode(true));
-                const newSubtitle = document.getElementById('subtitle');
-                
-                // Add click handler
-                newSubtitle.addEventListener('click', (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    this.showSelectorPanel();
-                });
-            } else {
-                subtitle.classList.remove('clickable');
-                subtitle.removeAttribute('role');
-                subtitle.removeAttribute('aria-label');
-            }
+            // Remove any existing click handlers
+            subtitle.replaceWith(subtitle.cloneNode(true));
+            const newSubtitle = document.getElementById('subtitle');
+            
+            // Always clickable - users can switch in both modes
+            newSubtitle.setAttribute('role', 'button');
+            newSubtitle.setAttribute('aria-label', 'Click to change user or day');
+            
+            // Add click handler
+            newSubtitle.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.showSelectorPanel();
+            });
         }
-        
     }
     
     initializeDrawer() {
@@ -2949,10 +2928,7 @@ class StackMapApp {
                 activities: user.activities,
                 tomorrowActivities: user.tomorrowActivities || [],  // Include tomorrow activities
                 settings: user.settings,
-                dayTitles: user.dayTitles || { today: null, tomorrow: null },  // Include day-specific titles
-                daySubtitles: user.daySubtitles || { today: null, tomorrow: null },  // Include day-specific subtitles
                 customTitle: user.customTitle,  // Include custom title
-                customSubtitle: user.customSubtitle,  // Include custom subtitle
                 metadata: {
                     activityCount: user.activities.length,
                     lastModified: new Date().toISOString()
@@ -3267,10 +3243,7 @@ class StackMapApp {
                 backgroundColor: userData.settings?.backgroundColor || '#667eea',
                 showCompletionIndicators: userData.settings?.showCompletionIndicators !== false
             },
-            dayTitles: userData.dayTitles || { today: null, tomorrow: null }, // Import day-specific titles
-            daySubtitles: userData.daySubtitles || { today: null, tomorrow: null }, // Import day-specific subtitles
             customTitle: userData.customTitle || null, // Import custom title
-            customSubtitle: userData.customSubtitle || null, // Import custom subtitle
             library: userData.library || [] // Import user library
         };
         
