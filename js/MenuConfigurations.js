@@ -158,17 +158,24 @@ window.MenuConfigurations = {
                             });
                         }
                         
-                        // In view mode - show validation question immediately
+                        // In view mode - show validation question after a delay
                         if (!app.grownupMode) {
-                            // Generate random question
-                            const questions = window.hybridPanelManager.getValidationQuestions();
-                            const randomQ = questions[Math.floor(Math.random() * questions.length)];
-                            state.currentQuestion = randomQ;
-                            
-                            document.getElementById('validationQuestionLabel').textContent = randomQ.question;
-                            validationInput.value = '';
-                            validationInput.focus();
-                            validationError.style.display = 'none';
+                            // Wait for any closing animations to finish
+                            setTimeout(() => {
+                                // Generate random question
+                                const questions = window.hybridPanelManager.getValidationQuestions();
+                                const randomQ = questions[Math.floor(Math.random() * questions.length)];
+                                state.currentQuestion = randomQ;
+                                
+                                document.getElementById('validationQuestionLabel').textContent = randomQ.question;
+                                if (validationInput) {
+                                    validationInput.value = '';
+                                    validationInput.focus();
+                                }
+                                if (validationError) {
+                                    validationError.style.display = 'none';
+                                }
+                            }, 300); // Wait 300ms for panel transitions
                         }
                         
                         if (validationSubmit) {
