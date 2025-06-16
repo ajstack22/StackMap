@@ -14,8 +14,7 @@
 @import url('./animations.css');
 @import url('./sync-modal.css');
 @import url('./selectors.css');
-@import url('./data-panel.css');
-@import url('./data-panel-animations.css');
+/* data-panel.css and data-panel-animations.css removed - functionality moved to HybridPanelManager */
 @import url('./fab.css');
 
 /* ===== THEME VARIABLES ===== */

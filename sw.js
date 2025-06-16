@@ -19,7 +19,6 @@ const CORE_ASSETS = [
 // Additional assets to cache
 const STATIC_ASSETS = [
   '/app/StackMapApp.js',
-  '/app/PreferencesManager.js',
   '/components.js',
   '/state.js',
   '/renderer.js',
@@ -44,8 +43,7 @@ const STATIC_ASSETS = [
   '/styles/buttons.css',
   '/styles/cards.css',
   '/styles/celebrations.css',
-  '/styles/data-panel.css',
-  '/styles/data-panel-animations.css',
+  // data-panel CSS removed - functionality in HybridPanelManager
   '/styles/draggable-drawer.css',
   '/styles/fab.css',
   '/styles/forms.css',

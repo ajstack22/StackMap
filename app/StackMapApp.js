@@ -28,9 +28,9 @@ class StackMapApp {
         this.editFAB = new window.EditModeFAB(this);
         this.editFAB.init();
         
-        // Initialize Data Management Panel
-        this.dataPanel = new window.DataManagementPanel(this);
-        this.dataPanel.init();
+        // DataManagementPanel removed - functionality moved to HybridPanelManager
+        // this.dataPanel = new window.DataManagementPanel(this);
+        // this.dataPanel.init();
         
         // App state
         this.grownupMode = false;
@@ -1994,15 +1994,7 @@ class StackMapApp {
         // console.log('👶 Exited edit mode');
     }
 
-    /**
-     * Open the data management panel
-     */
-    openDataManagementPanel() {
-        // console.log('💾 Opening Data Management Panel');
-        if (this.dataPanel) {
-            this.dataPanel.open();
-        }
-    }
+    // Data management panel removed - functionality in HybridPanelManager
 
     /**
      * Initialize iOS PWA-specific features
@@ -3264,12 +3256,7 @@ class StackMapApp {
         window.hybridPanelManager.addNewCard();
     }
     
-    showAddUserForm() {
-        // TODO: Implement user creation form
-        // For now, show placeholder
-        alert('Add User functionality - Coming soon!');
-        // console.log('📝 Add User form requested');
-    }
+    // User creation is now handled by HybridPanelManager
     
     completeAllActivities() {
         const activities = this.appState.getCurrentActivities();

@@ -13,33 +13,54 @@
 // /app Directory - Application Logic Managers
 // ==========================================
 //
-// Active Managers:
-// ---------------
+// Active Components:
+// -----------------
 // 1. StackMapApp.js - Main application controller
 //    - Initializes all components and managers
 //    - Coordinates state management
 //    - Handles mode switching (edit/user)
 //    - Manages local storage persistence
 //    - Controls welcome splash screen
-//    - Handles inline editing of title/subtitle
+//    - Google Drive sync initialization
 //
-// 2. HybridPanelManager.js - Modern panel system with JavaScript state management
-//    - Replaces old modal system with side panels
-//    - Color theme selection and application
+// /js Directory - Modern Manager Classes
+// =====================================
+//
+// 2. HybridPanelManager.js - Unified panel system
+//    - Side panels for settings and management
+//    - Color theme selection and live preview
 //    - Toggle card numbers and completion indicators
 //    - Edit mode validation with simple questions
-//    - Admin tools (add cards, import/export, user management)
-//    - Platform-specific behavior (mobile/desktop)
+//    - User management (add, edit, delete users)
+//    - Data import/export functionality
+//    - Title/subtitle editing
+//    - Celebration animation settings
 //
-// Deprecated/Disabled:
-// -------------------
-// - PreferencesManager.js: Disabled - replaced by HybridPanelManager
+// 3. CelebrationManager.js - Animation system
+//    - Confetti animations for task completion
+//    - Fireworks for routine completion
+//    - Multiple color themes for celebrations
+//    - Performance-optimized animations
+//
+// 4. DynamicMenuSystem.js - Context menu handler
+//    - Card edit menus in edit mode
+//    - User management menus
+//
+// /components Directory - UI Components
+// ====================================
+//
+// 5. ModernUserSelector.js - User switching interface
+// 6. ModernDaySelector.js - Day selection interface
+// 7. DraggableDrawer.js - Mobile drawer navigation
+// 8. EditModeFAB.js - Floating action button for edit mode
+//
+// Previously Removed:
+// ------------------
+// - PreferencesManager.js: Removed - replaced by HybridPanelManager
 // - ValidationManager.js: Removed - validation now in HybridPanelManager
-//
-// Removed/Unused:
-// --------------
-// - FocusManager.js: Deleted - unused accessibility features
-// - WelcomeManager.js: Deleted - functionality in StackMapApp
+// - DataManagementPanel: Removed - functionality in HybridPanelManager
+// - FocusManager.js: Removed - unused accessibility features
+// - WelcomeManager.js: Removed - functionality in StackMapApp
 //
 // === KEY ARCHITECTURAL DECISIONS ===
 // - NO ES6 modules - use script tags and window globals

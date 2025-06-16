@@ -281,89 +281,9 @@ input[type="file"] {
 /* All color picker styles have been moved to hybrid-panels.css */
 /* The old PreferencesManager color pickers are no longer used */
 
-/* ===== PANEL COMPONENTS ===== */
-.preferences-panel {
-    position: fixed !important;
-    top: 120px !important;
-    left: 20px !important;
-    right: 20px !important;
-    background: white !important;
-    border-radius: var(--card-border-radius);
-    padding: 16px !important; /* Reduced from 20px */
-    box-shadow: var(--card-shadow);
-    z-index: 999 !important;
-    min-width: 280px;
-    max-width: 320px;
-    max-height: calc(100vh - 140px) !important;
-    overflow-y: auto !important;
-    transition: top 0.3s ease;
-    width: auto !important;
-}
-
-body.fixed-header-visible .preferences-panel {
-    top: 80px !important;
-}
-
-.preferences-content h3 {
-    margin-top: 0;
-    margin-bottom: 16px; /* Reduced from 20px */
-    color: #333;
-    text-align: center;
-    font-size: 1.4rem; /* Slightly smaller */
-}
-
-.preferences-section {
-    margin-bottom: 16px; /* Reduced from 20px */
-}
-
-.preferences-section label {
-    display: block;
-    margin-bottom: 8px; /* Reduced from 10px */
-    font-weight: 600;
-    color: #333;
-    font-size: 0.95rem; /* Slightly smaller */
-}
-
-.preferences-checkbox {
-    display: flex !important;
-    align-items: flex-start !important; /* Changed to flex-start for better text wrapping */
-    gap: 8px; /* Reduced from 10px */
-    cursor: pointer;
-    font-weight: 500 !important;
-    margin-bottom: 6px; /* Add spacing between checkboxes */
-    font-size: 0.9rem; /* Slightly smaller text */
-}
-
-.preferences-checkbox span {
-    line-height: 1.4;
-    word-break: break-word;
-    hyphens: auto;
-    flex: 1;
-}
-
-.preferences-checkbox input[type="checkbox"] {
-    width: 18px; /* Maintain good touch target */
-    height: 18px; /* Maintain good touch target */
-    accent-color: var(--primary-color);
-    flex-shrink: 0;
-    margin-top: 2px; /* Align with first line of text */
-}
-
-/* Preferences text inputs */
-.preferences-text-input {
-    width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    margin-bottom: 8px;
-    transition: border-color 0.3s ease;
-}
-
-.preferences-text-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
-}
+/* ===== PANEL COMPONENTS - REMOVED ===== */
+/* All preferences panel styles have been removed */
+/* Preferences are now handled by HybridPanelManager with different styling */
 
 .title-subtitle-editor-preferences {
     margin-bottom: 16px;
@@ -515,24 +435,7 @@ body.fixed-header-visible .preferences-panel {
     background: #c53030;
 }
 
-.preferences-hint {
-    background: rgba(102, 126, 234, 0.1);
-    padding: 8px; /* Reduced from 10px */
-    border-radius: 6px; /* Reduced from 8px */
-    font-size: 0.8rem; /* Reduced from 0.9rem */
-    color: #666;
-    text-align: center;
-    margin: 0;
-    line-height: 1.2; /* Tighter line height */
-}
-
-.preferences-footer {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 16px; /* Reduced from 20px */
-    gap: 10px;
-}
+/* Preferences hint and footer styles removed - now handled by HybridPanelManager */
 
 /* ===== FORM RESPONSIVE STYLES ===== */
 @media (max-width: 768px) {
@@ -584,37 +487,7 @@ body.fixed-header-visible .preferences-panel {
         padding: 10px 12px;
     }
     
-    .preferences-panel {
-        left: 10px !important;
-        right: 10px !important;
-        max-width: none !important;
-        min-width: auto !important;
-        width: auto !important;
-        top: 100px !important;
-        max-height: calc(100vh - 120px) !important;
-        margin: 0 !important;
-        padding: 12px !important; /* Even more compact on mobile */
-    }
-    
-    body.fixed-header-visible .preferences-panel {
-        top: 70px !important;
-    }
-    
-    /* Color picker styles removed - now handled by hybrid-panels.css */
-    
-    .preferences-footer {
-        flex-direction: column;
-        gap: 8px;
-    }
-    
-    .preferences-footer .btn--primary {
-        width: 100%;
-    }
-    
-    .preferences-footer .btn--link {
-        align-self: center;
-        font-size: 0.8rem;
-    }
+    /* Preferences panel styles removed - now handled by hybrid-panels.css */
     
     .sync-actions {
         gap: 6px;
@@ -653,16 +526,7 @@ body.fixed-header-visible .preferences-panel {
         padding: 10px !important; /* Most compact on small screens */
     }
     
-    /* Fix checkbox text cutoff on small screens */
-    .preferences-checkbox {
-        font-size: 0.75rem !important; /* Smaller text on very small screens */
-    }
-    
-    .preferences-checkbox span {
-        line-height: 1.3 !important;
-        word-wrap: break-word !important;
-        flex: 1 !important;
-    }
+    /* Preferences checkbox styles removed - now handled by hybrid-panels.css */
     
     .emoji-picker__grid {
         grid-template-columns: repeat(5, 1fr);
