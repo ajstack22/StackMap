@@ -1126,12 +1126,8 @@ class ActivityCard {
             userSettings.showCompletionIndicators : this.appState.settings.showCompletionIndicators;
         const isEditing = editingCardIndex === this.index;
         
-        // Create card with completion state based on current day
-        const currentDay = this.appState.ui.currentDay;
-        const isCompleted = this.activity.completionStates ? 
-            this.activity.completionStates[currentDay] : 
-            this.activity.completed;
-        const completedClass = isCompleted ? 'card--completed' : '';
+        // Create card with completion state
+        const completedClass = this.activity.completed ? 'card--completed' : '';
         const hiddenClass = !this.activity.visible ? 'card--hidden' : '';
         
         const card = ComponentBuilder.createElement('div', 
@@ -1238,18 +1234,14 @@ class ActivityCard {
         let completionButton = '';
         if (showCompletionIndicators !== false) {
             const checkboxIcon = '✓';
-            const currentDay = this.appState.ui.currentDay;
-            const isCompleted = this.activity.completionStates ? 
-                this.activity.completionStates[currentDay] : 
-                this.activity.completed;
-            const checkboxBg = isCompleted ? 'var(--primary-color)' : '#e8e8e8';
-            const checkboxColor = isCompleted ? 'white' : '#999';
+            const checkboxBg = this.activity.completed ? 'var(--primary-color)' : '#e8e8e8';
+            const checkboxColor = this.activity.completed ? 'white' : '#999';
             
             completionButton = `
                 <button class="btn btn--round btn--checkbox" 
                         style="top: 15px; left: 15px; background: ${checkboxBg}; color: ${checkboxColor}; font-size: 1.35rem; font-weight: 900; font-family: inherit; line-height: 1; padding: 0;" 
                         onclick="event.stopPropagation(); appInstance.toggleGrownupCompletion(${this.index})" 
-                        aria-label="Toggle completion" title="${isCompleted ? 'Mark incomplete' : 'Mark complete'}">✓</button>
+                        aria-label="Toggle completion" title="${this.activity.completed ? 'Mark incomplete' : 'Mark complete'}">✓</button>
             `;
         }
         

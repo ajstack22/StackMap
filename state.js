@@ -78,11 +78,10 @@ class AppState {
         if (defaultUser && defaultUser.activities.length === 0) {
             const defaultActivities = this.getDefaultActivitiesForNewUser();
             defaultUser.activities = defaultActivities;
-            // Deep clone activities for tomorrow to avoid shared references
-            defaultUser.tomorrowActivities = defaultActivities.map(activity => ({
-                ...activity,
-                completionStates: activity.completionStates ? { ...activity.completionStates } : { today: false, tomorrow: false }
-            }));
+            
+            // Deep clone activities for tomorrow with new IDs to avoid shared references
+            // This is the same approach used in addUser method
+            defaultUser.tomorrowActivities = this.deepCloneActivities(defaultActivities, true); // true = generate new IDs
             
             // Ensure card numbers are assigned
             defaultUser.activities.forEach((activity, index) => {
@@ -92,8 +91,8 @@ class AppState {
                 activity.cardNumber = index + 1;
             });
             
-            // Sync with legacy activities array
-            this.activities = [...defaultUser.activities];
+            // Sync with legacy activities array - deep clone
+            this.activities = this.deepCloneActivities(defaultUser.activities);
         }
     }
 
@@ -122,7 +121,7 @@ class AppState {
         const currentUser = this.getCurrentUser();
         if (currentUser) {
             const isToday = this.ui.currentDay === 'today';
-            this.activities = isToday ? [...(currentUser.activities || [])] : [...(currentUser.tomorrowActivities || [])];
+            this.activities = isToday ? this.deepCloneActivities(currentUser.activities || []) : this.deepCloneActivities(currentUser.tomorrowActivities || []);
         }
     }
     
@@ -146,7 +145,6 @@ class AppState {
             icon: activity.icon || CONFIG.DEFAULT_EMOJI,
             visible: true, // Always visible since we removed the visibility toggle
             completed: activity.completed || false,
-            completionStates: activity.completionStates || { today: false, tomorrow: false },
             cardType: this._validateCardType(activity.cardType || 'recurring'), // Story 1
             createdDate: activity.createdDate || new Date().toISOString().split('T')[0], // Story 1
             time: activity.time || ''
@@ -163,11 +161,11 @@ class AppState {
             activity.cardNumber = index + 1;
         });
         
-        // CRITICAL FIX: Sync the legacy activities array with current context
+        // CRITICAL FIX: Sync the legacy activities array with current context - deep clone
         if (isToday) {
-            this.activities = [...user.activities];
+            this.activities = this.deepCloneActivities(user.activities);
         } else {
-            this.activities = [...user.tomorrowActivities];
+            this.activities = this.deepCloneActivities(user.tomorrowActivities);
         }
         
         // Debug logging for tomorrow activities
@@ -200,11 +198,11 @@ class AppState {
             Object.assign(targetActivities[index], updates);
             console.log('After update:', targetActivities[index]);
             
-            // CRITICAL FIX: Sync the legacy activities array with current context
+            // CRITICAL FIX: Sync the legacy activities array with current context - deep clone
             if (isToday) {
-                this.activities = [...user.activities];
+                this.activities = this.deepCloneActivities(user.activities);
             } else {
-                this.activities = [...user.tomorrowActivities];
+                this.activities = this.deepCloneActivities(user.tomorrowActivities);
             }
             
             this._triggerSave();
@@ -225,11 +223,11 @@ class AppState {
                 activity.cardNumber = idx + 1;
             });
             
-            // CRITICAL FIX: Sync the legacy activities array with current context
+            // CRITICAL FIX: Sync the legacy activities array with current context - deep clone
             if (isToday) {
-                this.activities = [...user.activities];
+                this.activities = this.deepCloneActivities(user.activities);
             } else {
-                this.activities = [...user.tomorrowActivities];
+                this.activities = this.deepCloneActivities(user.tomorrowActivities);
             }
             
             this._triggerSave();
@@ -252,11 +250,11 @@ class AppState {
                 activity.cardNumber = index + 1;
             });
             
-            // CRITICAL FIX: Sync the legacy activities array with current context
+            // CRITICAL FIX: Sync the legacy activities array with current context - deep clone
             if (isToday) {
-                this.activities = [...user.activities];
+                this.activities = this.deepCloneActivities(user.activities);
             } else {
-                this.activities = [...user.tomorrowActivities];
+                this.activities = this.deepCloneActivities(user.tomorrowActivities);
             }
             
             this._triggerSave();
@@ -280,11 +278,11 @@ class AppState {
                 activity.cardNumber = index + 1;
             });
             
-            // Sync the legacy activities array with current context
+            // Sync the legacy activities array with current context - deep clone
             if (isToday) {
-                this.activities = [...user.activities];
+                this.activities = this.deepCloneActivities(user.activities);
             } else {
-                this.activities = [...user.tomorrowActivities];
+                this.activities = this.deepCloneActivities(user.tomorrowActivities);
             }
             
             this._triggerSave();
@@ -300,11 +298,11 @@ class AppState {
         if (index >= 0 && index < targetActivities.length) {
             targetActivities[index].visible = !targetActivities[index].visible;
             
-            // CRITICAL FIX: Sync the legacy activities array with current context
+            // CRITICAL FIX: Sync the legacy activities array with current context - deep clone
             if (isToday) {
-                this.activities = [...user.activities];
+                this.activities = this.deepCloneActivities(user.activities);
             } else {
-                this.activities = [...user.tomorrowActivities];
+                this.activities = this.deepCloneActivities(user.tomorrowActivities);
             }
             
             this._triggerSave();
@@ -312,35 +310,15 @@ class AppState {
     }
 
     toggleActivityCompletion(index) {
-        // Story 4: Get the current user and determine which activities to modify
-        const user = this.getCurrentUser();
-        const isToday = this.ui.currentDay === 'today';
-        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
-        const currentDay = this.ui.currentDay;
-        
-        if (index >= 0 && index < targetActivities.length) {
-            const activity = targetActivities[index];
+        if (index >= 0 && index < this.activities.length) {
+            // Work with the activity in the legacy array (which is already a clone)
+            const activity = this.activities[index];
             
-            // Initialize completionStates if not present (backward compatibility)
-            if (!activity.completionStates) {
-                activity.completionStates = {
-                    today: activity.completed || false,
-                    tomorrow: activity.completed || false
-                };
-            }
+            // Simply toggle the completed state - each card only exists in one day
+            activity.completed = !activity.completed;
             
-            // Toggle completion for the current day only
-            activity.completionStates[currentDay] = !activity.completionStates[currentDay];
-            
-            // Update the legacy completed field for backward compatibility
-            activity.completed = activity.completionStates[currentDay];
-            
-            // CRITICAL FIX: Sync the legacy activities array with current context
-            if (isToday) {
-                this.activities = [...user.activities];
-            } else {
-                this.activities = [...user.tomorrowActivities];
-            }
+            // Save the modified activities back to the user profile
+            this.saveCurrentUserData();
             
             this._triggerSave();
         }
@@ -440,12 +418,9 @@ class AppState {
             id: userId,
             name: trimmedName,
             icon: icon, // NEW: Store user's chosen emoji icon
-            activities: [...defaultActivities],
-            // Deep clone activities for tomorrow to avoid shared references
-            tomorrowActivities: defaultActivities.map(activity => ({
-                ...activity,
-                completionStates: activity.completionStates ? { ...activity.completionStates } : { today: false, tomorrow: false }
-            })), // Story 4: Tomorrow's activities get same defaults
+            // Deep clone activities for both today and tomorrow to avoid shared references
+            activities: this.deepCloneActivities(defaultActivities),
+            tomorrowActivities: this.deepCloneActivities(defaultActivities, true), // Story 4: Tomorrow's activities get same defaults with new IDs
             settings: {
                 title: trimmedName + "'s StackMap",
                 subtitle: 'Routine Ready',
@@ -510,9 +485,11 @@ class AppState {
         if (day === 'today' || day === 'tomorrow') {
             this.ui.currentDay = day;
             
-            // Sync the legacy activities array with the current day's activities
+            // Sync the legacy activities array with the current day's activities - deep clone to prevent shared references
             const user = this.getCurrentUser();
-            this.activities = day === 'today' ? [...user.activities] : [...user.tomorrowActivities];
+            this.activities = day === 'today' 
+                ? this.deepCloneActivities(user.activities) 
+                : this.deepCloneActivities(user.tomorrowActivities);
             
             this._triggerSave();
         }
@@ -552,10 +529,10 @@ class AppState {
             if (!user.daySubtitles) user.daySubtitles = { today: null, tomorrow: null };
             if (!user.library) user.library = [];
             
-            // Load activities based on current day
+            // Load activities based on current day - deep clone to prevent shared references
             this.activities = this.ui.currentDay === 'today' 
-                ? [...(user.activities || [])]
-                : [...(user.tomorrowActivities || [])];
+                ? this.deepCloneActivities(user.activities || [])
+                : this.deepCloneActivities(user.tomorrowActivities || []);
             
             // Load settings with fallback defaults
             this.settings = {
@@ -587,12 +564,13 @@ class AppState {
     saveCurrentUserData() {
         const user = this.getCurrentUser();
         if (user) {
-            // Save activities to the correct day
+            // Save activities to the correct day - deep clone to prevent shared references
             if (this.ui.currentDay === 'today') {
-                user.activities = [...this.activities];
+                user.activities = this.deepCloneActivities(this.activities);
             } else {
-                user.tomorrowActivities = [...this.activities];
+                user.tomorrowActivities = this.deepCloneActivities(this.activities);
             }
+            
             user.settings = {...this.settings};
         }
     }
@@ -756,13 +734,13 @@ class AppState {
     // === LIBRARY MANAGEMENT ===
     addToLibrary(card, libraryType) {
         try {
-            // Create a unique ID for the library card
-            const libraryCard = {
-                ...card,
-                id: `lib_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                addedDate: new Date().toISOString(),
-                addedBy: this.users.currentUserId
-            };
+            // Deep clone the card to avoid shared references
+            const libraryCard = this.deepCloneActivity(card);
+            
+            // Add library-specific properties
+            libraryCard.id = `lib_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            libraryCard.addedDate = new Date().toISOString();
+            libraryCard.addedBy = this.users.currentUserId;
             
             if (libraryType === 'user') {
                 const user = this.getCurrentUser();
@@ -1028,26 +1006,36 @@ class AppState {
                         user.daySubtitles = { today: null, tomorrow: null };
                     }
                     
-                    // Migrate completion status to completionStates
+                    // Ensure activities have completed property
                     if (user.activities) {
                         user.activities.forEach(activity => {
-                            if (!activity.completionStates) {
-                                activity.completionStates = {
-                                    today: activity.completed || false,
-                                    tomorrow: false
-                                };
+                            if (activity.completed === undefined) {
+                                activity.completed = false;
                             }
                         });
                     }
                     if (user.tomorrowActivities) {
                         user.tomorrowActivities.forEach(activity => {
-                            if (!activity.completionStates) {
-                                activity.completionStates = {
-                                    today: false,
-                                    tomorrow: activity.completed || false
-                                };
+                            if (activity.completed === undefined) {
+                                activity.completed = false;
                             }
                         });
+                    }
+                    
+                    // ALWAYS check for duplicate IDs between Today and Tomorrow
+                    if (user.activities && user.tomorrowActivities) {
+                        const todayIds = new Set(user.activities.map(a => a.id));
+                        let fixedCount = 0;
+                        user.tomorrowActivities.forEach((activity, index) => {
+                            if (todayIds.has(activity.id)) {
+                                // Generate new ID for tomorrow activity if it duplicates today
+                                activity.id = 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + '_fix_' + index;
+                                fixedCount++;
+                            }
+                        });
+                        if (fixedCount > 0) {
+                            console.log(`[State] Fixed ${fixedCount} duplicate IDs for user ${user.name} during import`);
+                        }
                     }
                 });
                 
@@ -1087,8 +1075,7 @@ class AppState {
                     createdDate: activity.createdDate || new Date().toISOString().split('T')[0],
                     time: activity.time || '',
                     visible: activity.visible !== undefined ? activity.visible : true,
-                    completed: activity.completed || false,
-                    completionStates: activity.completionStates || { today: activity.completed || false, tomorrow: false }
+                    completed: activity.completed || false
                 }));
                 
                 // Check if any activity is hidden and mark all as visible
@@ -1292,12 +1279,7 @@ class AppState {
                 activityMap.set(key, {
                     ...localActivity,
                     ...activity,
-                    completed: localActivity.completed || activity.completed,
-                    // Deep merge completionStates
-                    completionStates: {
-                        ...(localActivity.completionStates || {}),
-                        ...(activity.completionStates || {})
-                    }
+                    completed: localActivity.completed || activity.completed
                 });
             }
         });
@@ -1306,17 +1288,41 @@ class AppState {
     }
     
     // Helper method to deep clone an activity
-    deepCloneActivity(activity) {
-        return {
-            ...activity,
-            // Deep clone nested objects
-            completionStates: activity.completionStates ? { ...activity.completionStates } : { today: false, tomorrow: false }
+    deepCloneActivity(activity, generateNewId = false) {
+        const cloned = {
+            ...activity
         };
+        
+        // Generate new ID if requested
+        if (generateNewId) {
+            cloned.id = 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+        
+        // Reset completion when cloning for a different day
+        if (generateNewId) {
+            cloned.completed = false;
+        }
+        
+        return cloned;
     }
     
     // Helper method to deep clone an array of activities
-    deepCloneActivities(activities) {
-        return activities.map(activity => this.deepCloneActivity(activity));
+    deepCloneActivities(activities, generateNewIds = false) {
+        const cloned = activities.map(activity => this.deepCloneActivity(activity, generateNewIds));
+        
+        // Additional safety check to ensure no duplicate IDs within the array
+        if (generateNewIds) {
+            const seenIds = new Set();
+            cloned.forEach((activity, index) => {
+                if (seenIds.has(activity.id)) {
+                    // Regenerate ID if duplicate found
+                    activity.id = 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9) + '_dedup_' + index;
+                }
+                seenIds.add(activity.id);
+            });
+        }
+        
+        return cloned;
     }
 }
 

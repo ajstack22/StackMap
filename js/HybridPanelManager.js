@@ -1337,8 +1337,8 @@ class HybridPanelManager {
     }
     
     selectDay(day) {
-        this.app.appState.ui.currentDay = day;
-        this.app.appState._triggerSave();
+        // Use the proper state method to switch days
+        this.app.appState.setCurrentDay(day);
         this.app.render();
         this.app.initializeTitleSubtitle(); // Update title and subtitle
         

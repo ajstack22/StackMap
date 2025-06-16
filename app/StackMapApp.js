@@ -1428,12 +1428,9 @@ class StackMapApp {
                     user.activities.forEach(activity => {
                         if (activity.cardType === 'recurring' || !activity.cardType) {
                             // Deep clone the activity to avoid shared references
-                            const tomorrowActivity = this.appState.deepCloneActivity(activity);
+                            const tomorrowActivity = this.appState.deepCloneActivity(activity, true); // true = generate new ID
                             // Reset completion for tomorrow
                             tomorrowActivity.completed = false;
-                            if (tomorrowActivity.completionStates) {
-                                tomorrowActivity.completionStates.tomorrow = false;
-                            }
                             user.tomorrowActivities.push(tomorrowActivity);
                         }
                     });
@@ -2168,14 +2165,18 @@ class StackMapApp {
     duplicateActivity(index) {
         if (index >= 0 && index < this.appState.activities.length) {
             const originalActivity = this.appState.activities[index];
-            const duplicatedActivity = {
-                ...originalActivity,
-                title: originalActivity.title + ' (Copy)',
-                completed: false // Reset completion state
-            };
+            // Deep clone the activity to avoid shared references
+            const duplicatedActivity = this.appState.deepCloneActivity(originalActivity);
+            
+            // Customize the duplicate
+            duplicatedActivity.title = originalActivity.title + ' (Copy)';
+            duplicatedActivity.completed = false;
+            // Generate new unique ID
+            duplicatedActivity.id = 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
             
             // Insert after the original
             this.appState.activities.splice(index + 1, 0, duplicatedActivity);
+            this.appState.saveCurrentUserData(); // Save the modified activities back to user profile
             this.appState._triggerSave();
             this.render();
         }
@@ -2198,13 +2199,11 @@ class StackMapApp {
                 activity.keep = !activity.keep;
                 
                 if (activity.keep) {
-                    // When pinning, also add to tomorrow
-                    const tomorrowCopy = {
-                        ...activity,
-                        completed: false,
-                        keep: true, // Keep the pin status on tomorrow's copy so it's visible
-                        cardNumber: user.tomorrowActivities.length + 1
-                    };
+                    // When pinning, also add to tomorrow - use deep clone with new ID
+                    const tomorrowCopy = this.appState.deepCloneActivity(activity, true); // true = generate new ID
+                    tomorrowCopy.completed = false;
+                    tomorrowCopy.keep = true; // Keep the pin status on tomorrow's copy so it's visible
+                    tomorrowCopy.cardNumber = user.tomorrowActivities.length + 1;
                     user.tomorrowActivities.push(tomorrowCopy);
                 } else {
                     // When unpinning, remove from tomorrow if it exists
@@ -2581,10 +2580,6 @@ class StackMapApp {
                 const tomorrowActivity = this.appState.deepCloneActivity(activity);
                 tomorrowActivity.completed = false;
                 tomorrowActivity.keep = false; // Reset keep flag for next day
-                // Reset completion states for tomorrow
-                if (tomorrowActivity.completionStates) {
-                    tomorrowActivity.completionStates.tomorrow = false;
-                }
                 tomorrowActivity.cardNumber = newTomorrow.length + 1; // Assign new card numbers
                 newTomorrow.push(tomorrowActivity);
             }
@@ -2621,13 +2616,12 @@ class StackMapApp {
         
         currentActivities.forEach((activity, index) => {
             if (activity.keep === true) {
-                // Keep the card and reset for next day
-                keptCards.push({
-                    ...activity,
-                    completed: false,
-                    keep: false,
-                    cardNumber: keptCards.length + 1
-                });
+                // Keep the card and reset for next day - use deep clone
+                const keptCard = this.appState.deepCloneActivity(activity);
+                keptCard.completed = false;
+                keptCard.keep = false;
+                keptCard.cardNumber = keptCards.length + 1;
+                keptCards.push(keptCard);
             } else {
                 // Discard the card
                 discardedCount++;
