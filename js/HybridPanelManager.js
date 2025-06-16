@@ -3245,18 +3245,6 @@ class HybridPanelManager {
         }
     }
     
-    syncNow() {
-        if (this.app.driveSync && this.app.driveSync.isSignedIn) {
-            this.app.driveSync.uploadData();
-            // Re-render to show syncing state
-            this.renderPanelContent('right');
-            
-            // Re-render again after sync completes
-            setTimeout(() => {
-                this.renderPanelContent('right');
-            }, 3000);
-        }
-    }
     
     downloadFromDrive() {
         if (this.app.driveSync && this.app.driveSync.isSignedIn) {
@@ -4508,7 +4496,16 @@ class HybridPanelManager {
     }
 
     syncNow() {
-        this.app.driveSync?.syncNow();
+        if (this.app.driveSync && this.app.driveSync.isSignedIn) {
+            this.app.driveSync.syncNow();
+            // Re-render to show syncing state
+            this.renderPanelContent('right');
+            
+            // Re-render again after sync completes
+            setTimeout(() => {
+                this.renderPanelContent('right');
+            }, 3000);
+        }
     }
 
     disconnectSync() {

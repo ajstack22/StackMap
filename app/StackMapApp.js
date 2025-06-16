@@ -1226,7 +1226,8 @@ class StackMapApp {
     setupAutoSyncInterval() {
         setInterval(() => {
             if (this.driveSync && this.driveSync.isSignedIn && this.grownupMode) {
-                this.driveSync.autoSync();
+                // Silently sync in the background
+                this.driveSync.autoSync(true);
             }
         }, CONFIG.AUTO_SYNC_INTERVAL);
     }
@@ -1236,12 +1237,14 @@ class StackMapApp {
             clearTimeout(this.autoSyncTimeout);
         }
         
-        // Wait 5 seconds after last change before auto-syncing
+        // Wait 30 seconds after last change before auto-syncing
+        // This prevents constant sync notifications during active use
         this.autoSyncTimeout = setTimeout(() => {
-            if (this.driveSync && this.driveSync.autoSync) {
-                this.driveSync.autoSync();
+            if (this.driveSync && this.driveSync.autoSync && this.driveSync.isSignedIn) {
+                // Silently sync without notifications
+                this.driveSync.autoSync(true); // Pass silent flag
             }
-        }, 5000);
+        }, 30000);
     }
 
     setupScrollHeader() {
@@ -1273,8 +1276,7 @@ class StackMapApp {
     }
 
     updateTabTitle() {
-        const { isDefaultTitle, title } = this.appState.settings;
-        document.title = isDefaultTitle ? 'StackMap' : title;
+        document.title = 'StackMap';
     }
 
     setupEventListeners() {

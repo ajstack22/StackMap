@@ -736,7 +736,7 @@ window.MenuConfigurations = {
                         if (syncEnabled) {
                             html += '<button id="syncNowBtn" class="sync-button">Sync Now</button>';
                         }
-                        html += '<button id="uploadBtn" class="sync-button" onclick="appInstance.driveSync && appInstance.driveSync.uploadData()">';
+                        html += '<button id="uploadBtn" class="sync-button" onclick="appInstance.driveSync && appInstance.driveSync.syncNow()">';
                         html += '<span class="material-icons">cloud_upload</span> Save to Drive';
                         html += '</button>';
                         html += '<button id="downloadBtn" class="sync-button" onclick="appInstance.driveSync && appInstance.driveSync.downloadData()">';

@@ -256,12 +256,12 @@ class GoogleDriveSync {
     }
 
     startSyncCheckInterval() {
-        // Check for remote changes every 10 seconds (reduced from 30)
+        // Check for remote changes every 30 seconds to reduce notification spam
         this.syncCheckInterval = setInterval(() => {
             if (this.isSignedIn && !this.isSyncing) {
                 this.checkForRemoteChanges();
             }
-        }, 10000);
+        }, 30000);
     }
 
     stopSyncCheckInterval() {
@@ -409,9 +409,10 @@ class GoogleDriveSync {
         const remoteDevice = remoteData.syncMetadata.deviceName;
         
         // Auto-apply updates for better real-time sync
-        // Show subtle notification but apply changes immediately
+        // Silently apply changes without notification for better UX
         this.applyRemoteChanges(remoteData);
-        this.showToast(`Updated from ${remoteDevice}`, 'success');
+        // Only log to console for debugging
+        console.log(`Synced changes from ${remoteDevice} at ${remoteTime}`);
     }
 
     handleConflict(remoteData) {
@@ -567,7 +568,7 @@ class GoogleDriveSync {
         setTimeout(remove, 10000);
     }
 
-    async uploadData() {
+    async uploadData(silent = false) {
         if (!this.isSignedIn || this.isSyncing) {
             return;
         }
@@ -582,7 +583,9 @@ class GoogleDriveSync {
                 return;
             }
 
+            if (!silent) {
             this.showSyncProgress('Saving to Google Drive...');
+        }
             
             // Get current app data
             const data = this.app.appState.exportData();
@@ -639,7 +642,9 @@ class GoogleDriveSync {
             // console.log('Upload response status:', response.status);
             
             if (response.ok) {
+                if (!silent) {
                 this.showSyncSuccess('Saved to Google Drive');
+            }
                 // console.log('Data uploaded successfully');
                 
                 // Update last known version
@@ -648,7 +653,9 @@ class GoogleDriveSync {
                 console.error('Upload failed:', response.status, responseText);
                 
                 if (response.status === 403) {
+                    if (!silent) {
                     this.showSyncError('Permission denied. Please sign out and sign in again.');
+                }
                     // Force re-authentication
                     this.isSignedIn = false;
                     this.accessToken = null;
@@ -658,7 +665,9 @@ class GoogleDriveSync {
             }
         } catch (error) {
             console.error('Upload error:', error);
+            if (!silent) {
             this.showSyncError(`Failed to save: ${error.message || 'Unknown error'}`);
+        }
         } finally {
             this.isSyncing = false;
         }
@@ -880,13 +889,28 @@ class GoogleDriveSync {
     }
 
     // Auto-sync when data changes (always enabled)
-    async autoSync() {
+    async autoSync(silent = false) {
         if (this.isSignedIn && !this.isSyncing) {
             try {
-                await this.uploadData();
+                await this.uploadData(silent);
             } catch (error) {
                 console.error('Auto-sync failed:', error);
-                this.handleSyncError(error, 'auto-sync');
+                if (!silent) {
+                    this.handleSyncError(error, 'auto-sync');
+                }
+            }
+        }
+    }
+
+    // Manual sync triggered by user (always shows notifications)
+    async syncNow() {
+        if (this.isSignedIn && !this.isSyncing) {
+            try {
+                // Always show notifications for manual syncs
+                await this.uploadData(false);
+            } catch (error) {
+                console.error('Manual sync failed:', error);
+                this.handleSyncError(error, 'manual-sync');
             }
         }
     }
