@@ -82,6 +82,21 @@
             #main-content {
                 padding-top: 60px !important; /* 40px banner + 20px extra for header */
             }
+            
+            /* Make demo banner more compact on mobile */
+            .demo-text {
+                display: none;
+            }
+            
+            /* Show shorter version on mobile */
+            .demo-banner-mobile {
+                display: inline;
+            }
+        }
+        
+        /* Hide mobile text on desktop */
+        .demo-banner-mobile {
+            display: none;
         }
         
         /* Ensure backdrop also accounts for banner */
@@ -98,9 +113,10 @@
 </head>
 <body>
     <!-- Demo Mode Banner -->
-    <div style="background-color: #f59e0b; color: white; text-align: center; padding: 8px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; height: 40px; box-sizing: border-box;">
-        🎮 DEMO MODE - Mushroom Kingdom Data 🍄
-        <a href="#" onclick="localStorage.removeItem('stackMapDemoMode'); window.location.replace('/'); return false;" style="color: white; margin-left: 20px; text-decoration: underline; cursor: pointer;">Exit Demo</a>
+    <div style="background-color: #f59e0b; color: white; text-align: center; padding: 8px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px;">
+        <span class="demo-text">🎮 DEMO MODE - Mushroom Kingdom 🍄</span>
+        <span class="demo-banner-mobile">🎮 DEMO 🍄</span>
+        <a href="#" onclick="localStorage.removeItem('stackMapDemoMode'); window.location.replace('/'); return false;" style="color: white; text-decoration: underline; cursor: pointer; white-space: nowrap;">Exit</a>
     </div>
     
     <!-- Header Wrapper for unified shadow -->
