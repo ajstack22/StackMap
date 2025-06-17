@@ -36,7 +36,7 @@
         }
         
         #main-content {
-            padding-top: 20px !important; /* Normal spacing below header */
+            padding-top: 40px !important; /* Extra spacing for demo banner */
             position: relative;
             z-index: 1; /* Below header */
         }
@@ -49,6 +49,8 @@
         /* Ensure no card visibility between banner and header */
         .header-wrapper {
             background: var(--background-gradient-start, #667eea); /* Solid background to hide cards */
+            overflow: visible !important; /* Ensure shadow is visible */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; /* Ensure shadow shows */
         }
         
         
@@ -80,7 +82,7 @@
             
             /* Adjust main content padding on mobile */
             #main-content {
-                padding-top: 40px !important; /* Extra padding for mobile layout */
+                padding-top: 60px !important; /* Extra padding for mobile layout */
             }
             
             /* Make banner text smaller on mobile */
