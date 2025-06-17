@@ -133,7 +133,7 @@ if [ -f "$SW_FILE" ]; then
     # Update CACHE_NAME with current date
     TODAY=$(date +"%Y-%m-%d")
     CURRENT_CACHE=$(grep -o "CACHE_NAME = 'stackmap-v[^']*'" $SW_FILE | cut -d"'" -f2)
-    NEW_CACHE="stackmap-v1.2.2-$TODAY"
+    NEW_CACHE="stackmap-v1.5.7-$TODAY"
     
     # For macOS sed
     if [[ "$OSTYPE" == "darwin"* ]]; then
@@ -143,7 +143,7 @@ if [ -f "$SW_FILE" ]; then
     fi
     
     success "Updated service worker cache name to $NEW_CACHE"
-    NEW_VERSION="1.2.2-$TODAY"
+    NEW_VERSION="1.5.7-$TODAY"
 fi
 
 echo ""
