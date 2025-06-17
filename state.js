@@ -136,6 +136,7 @@ class AppState {
             icon: activity.icon || CONFIG.DEFAULT_EMOJI,
             visible: true, // Always visible since we removed the visibility toggle
             completed: activity.completed || false,
+            keep: activity.keep || false, // Pin/keep status
             cardType: this._validateCardType(activity.cardType || 'recurring'), // Story 1
             createdDate: activity.createdDate || new Date().toISOString().split('T')[0], // Story 1
             time: activity.time || ''
@@ -979,11 +980,14 @@ class AppState {
                         user.library = [];
                     }
                     
-                    // Ensure activities have completed property
+                    // Ensure activities have completed and keep properties
                     if (user.activities) {
                         user.activities.forEach(activity => {
                             if (activity.completed === undefined) {
                                 activity.completed = false;
+                            }
+                            if (activity.keep === undefined) {
+                                activity.keep = false;
                             }
                         });
                     }
@@ -991,6 +995,9 @@ class AppState {
                         user.tomorrowActivities.forEach(activity => {
                             if (activity.completed === undefined) {
                                 activity.completed = false;
+                            }
+                            if (activity.keep === undefined) {
+                                activity.keep = false;
                             }
                         });
                     }
@@ -1048,7 +1055,8 @@ class AppState {
                     createdDate: activity.createdDate || new Date().toISOString().split('T')[0],
                     time: activity.time || '',
                     visible: activity.visible !== undefined ? activity.visible : true,
-                    completed: activity.completed || false
+                    completed: activity.completed || false,
+                    keep: activity.keep || false
                 }));
                 
                 // Check if any activity is hidden and mark all as visible

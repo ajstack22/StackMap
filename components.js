@@ -1391,6 +1391,12 @@ class ActivityCard {
                 return;
             }
             
+            // Don't start drag if clicking on a button
+            if (e.target.closest('.btn')) {
+                e.preventDefault();
+                return;
+            }
+            
             this.appState.ui.draggedElement = e.target;
             this.draggedIndex = parseInt(e.target.dataset.index);
             
@@ -1461,6 +1467,11 @@ class ActivityCard {
             const canDrag = document.body.classList.contains('grownup-mode') || this.appState.ui.editMode;
             
             if (!canDrag) {
+                return;
+            }
+            
+            // Don't start drag if touching a button
+            if (e.target.closest('.btn')) {
                 return;
             }
             

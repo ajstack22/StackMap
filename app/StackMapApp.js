@@ -2283,11 +2283,15 @@ class StackMapApp {
             const activities = user.activities;
             if (activities[index]) {
                 const activity = activities[index];
-                activity.keep = !activity.keep;
+                const newKeepValue = !activity.keep;
                 
-                if (activity.keep) {
+                // Update the activity using the state method
+                this.appState.updateActivity(index, { keep: newKeepValue });
+                
+                if (newKeepValue) {
                     // When pinning, also add to tomorrow - use deep clone with new ID
-                    const tomorrowCopy = this.appState.deepCloneActivity(activity, true); // true = generate new ID
+                    const updatedActivity = user.activities[index]; // Get the updated activity
+                    const tomorrowCopy = this.appState.deepCloneActivity(updatedActivity, true); // true = generate new ID
                     tomorrowCopy.completed = false;
                     tomorrowCopy.keep = true; // Keep the pin status on tomorrow's copy so it's visible
                     tomorrowCopy.cardNumber = user.tomorrowActivities.length + 1;
@@ -2306,8 +2310,10 @@ class StackMapApp {
             const activities = user.tomorrowActivities;
             if (activities[index]) {
                 const activity = activities[index];
-                activity.keep = !activity.keep;
-                // No need to add to Today when pinning on Tomorrow
+                const newKeepValue = !activity.keep;
+                
+                // Update the activity using the state method
+                this.appState.updateActivity(index, { keep: newKeepValue });
             }
         }
         
