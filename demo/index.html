@@ -36,15 +36,21 @@
         }
         
         #main-content {
-            padding-top: 40px !important; /* Add space for banner */
+            /* Don't add extra padding-top, let the header-wrapper handle spacing */
             position: relative;
             z-index: 1; /* Below header */
+        }
+        
+        /* Ensure card gaps are preserved */
+        .main-container {
+            gap: 20px !important; /* Ensure gaps between cards */
         }
         
         /* Ensure no card visibility between banner and header */
         .header-wrapper {
             background: var(--background-gradient-start, #667eea); /* Solid background to hide cards */
         }
+        
         
         /* Adjust side panels for demo banner */
         .side-panel {
@@ -92,7 +98,7 @@
 </head>
 <body>
     <!-- Demo Mode Banner -->
-    <div style="background-color: #f59e0b; color: white; text-align: center; padding: 8px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000;">
+    <div style="background-color: #f59e0b; color: white; text-align: center; padding: 8px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; height: 40px; box-sizing: border-box;">
         🎮 DEMO MODE - Mushroom Kingdom Data 🍄
         <a href="#" onclick="localStorage.removeItem('stackMapDemoMode'); window.location.replace('/'); return false;" style="color: white; margin-left: 20px; text-decoration: underline; cursor: pointer;">Exit Demo</a>
     </div>
