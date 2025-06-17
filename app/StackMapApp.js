@@ -3400,8 +3400,11 @@ class StackMapApp {
         const data = this.appState.exportData();
         console.log('[SAVE] Saving to localStorage, current user:', this.appState.getCurrentUser());
         try {
-            localStorage.setItem('stackMapData', JSON.stringify(data));
-            console.log('[SAVE] Successfully saved to localStorage');
+            // Check if we're in demo mode and use appropriate key
+            const isDemo = localStorage.getItem('stackMapDemoMode') === 'true';
+            const dataKey = isDemo ? 'stackMapData-demo' : 'stackMapData';
+            localStorage.setItem(dataKey, JSON.stringify(data));
+            console.log('[SAVE] Successfully saved to localStorage with key:', dataKey);
         } catch (error) {
             console.error('Failed to save to localStorage:', error);
         }
@@ -3409,7 +3412,11 @@ class StackMapApp {
 
     loadFromLocalStorage() {
         try {
-            const saved = localStorage.getItem('stackMapData');
+            // Check if we're in demo mode and use appropriate key
+            const isDemo = localStorage.getItem('stackMapDemoMode') === 'true';
+            const dataKey = isDemo ? 'stackMapData-demo' : 'stackMapData';
+            const saved = localStorage.getItem(dataKey);
+            
             if (saved) {
                 const data = JSON.parse(saved);
                 this.appState.importData(data);
@@ -3417,7 +3424,9 @@ class StackMapApp {
             }
         } catch (error) {
             console.error('Error loading saved data:', error);
-            localStorage.removeItem('stackMapData');
+            const isDemo = localStorage.getItem('stackMapDemoMode') === 'true';
+            const dataKey = isDemo ? 'stackMapData-demo' : 'stackMapData';
+            localStorage.removeItem(dataKey);
         }
         return false;
     }

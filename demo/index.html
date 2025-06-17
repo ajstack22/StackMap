@@ -24,6 +24,7 @@
     <link rel="stylesheet" href="../styles/draggable-drawer.css">
     <link rel="stylesheet" href="../styles/splash-screen.css">
     <link rel="stylesheet" href="../styles/utilities.css">
+    <link rel="stylesheet" href="../styles/cards-autosize.css">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
@@ -71,9 +72,9 @@
         // SYNCHRONOUSLY load demo data before anything else
         // This blocks all other scripts from loading until demo data is set
         (function() {
-            // Clear any existing data first
-            localStorage.clear();
-            console.log('Cleared localStorage for clean demo state');
+            // Only clear demo-specific data, not all localStorage
+            localStorage.removeItem('stackMapData-demo');
+            localStorage.removeItem('stackMapDemoMode');
             
             const xhr = new XMLHttpRequest();
             xhr.open('GET', '../demo-mushroom-kingdom.json', false); // false = synchronous
@@ -81,8 +82,8 @@
             
             if (xhr.status === 200) {
                 const demoData = JSON.parse(xhr.responseText);
-                // Use correct localStorage key that StackMapApp expects
-                localStorage.setItem('stackMapData', JSON.stringify(demoData));
+                // Use a demo-specific key to avoid contaminating main app
+                localStorage.setItem('stackMapData-demo', JSON.stringify(demoData));
                 localStorage.setItem('stackMapDemoMode', 'true');
                 console.log('Demo data loaded successfully. Current user:', demoData.users?.currentUserId);
                 console.log('User profiles:', Object.keys(demoData.users?.profiles || {}));

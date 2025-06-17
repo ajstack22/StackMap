@@ -1,0 +1,170 @@
+/* ===== AUTO-SIZING CARDS ===== */
+/* Cards expand based on content, rows maintain uniform height */
+
+/* Remove fixed height constraints and allow cards to grow */
+.card, .management-card, .edit-info-card, .new-card {
+    width: 100% !important;
+    min-height: 240px !important;  /* Minimum height */
+    max-height: none !important;   /* Remove max height constraint */
+    height: auto !important;       /* Allow natural height */
+    box-sizing: border-box;
+    border-radius: var(--card-border-radius);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    transition: all var(--transition-fast);
+    position: relative;
+    overflow: visible;
+    z-index: 1;
+    
+    /* Clean rendering */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    filter: none !important;
+    -webkit-filter: none !important;
+    isolation: auto !important;
+    transform: none !important;
+    -webkit-transform: none !important;
+    backface-visibility: visible !important;
+    -webkit-backface-visibility: visible !important;
+    border: none !important;
+}
+
+/* Standard card styling with flexible height */
+.card {
+    background: rgba(255, 255, 255, 0.95) !important;
+    padding: 25px !important;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+}
+
+/* Edit mode maintains flexible height */
+body.grownup-mode .card:not(.management-card):not(.edit-info-card) {
+    padding: 35px 25px !important;
+    min-height: 280px !important;  /* Slightly taller minimum in edit mode */
+    max-height: none !important;
+}
+
+/* Child mode with flexible height */
+body:not(.grownup-mode) .card:not(.management-card):not(.edit-info-card) {
+    min-height: 220px !important;  /* Smaller minimum in child mode */
+    max-height: none !important;
+    padding: 20px !important;
+}
+
+/* Grid container uses CSS Grid auto-sizing for equal height rows */
+.main-container {
+    display: grid;
+    padding: 20px;
+    padding-top: 80px; /* Space for header on desktop */
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    grid-auto-rows: 1fr; /* This makes all cards in a row the same height */
+    align-items: stretch; /* Stretch all cards to fill their grid cell */
+}
+
+/* Adjust padding on mobile where header is smaller */
+@media (max-width: 768px) {
+    .main-container {
+        padding-top: 20px; /* Less top padding on mobile */
+    }
+}
+
+/* Ensure cards fill their grid cells */
+.main-container > * {
+    height: 100%;
+}
+
+/* Card content adapts to available space */
+.card__icon {
+    font-size: 3rem;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.card__title {
+    font-size: var(--card-title-size);
+    font-weight: 600;
+    color: #333;
+    line-height: 1.3;
+    word-wrap: break-word;
+    hyphens: auto;
+    flex-shrink: 0;
+}
+
+.card__description {
+    font-size: 0.9rem;
+    color: #666;
+    line-height: 1.4;
+    margin-top: auto; /* Push to bottom if card is taller */
+    word-wrap: break-word;
+    hyphens: auto;
+}
+
+/* Card type indicator adjusts with card size */
+.card-type-indicator {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+}
+
+/* Card numbers adjust with card size */
+.card-number {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+}
+
+/* Completion indicators remain fixed */
+.completion-indicator {
+    position: absolute;
+    bottom: 15px;
+    right: 15px;
+}
+
+/* Edit buttons remain in corners */
+.card__edit-btn,
+.card__delete-btn,
+.card__hide-btn,
+.card__pin-btn {
+    position: absolute;
+}
+
+/* Responsive adjustments */
+@media (min-width: 1200px) {
+    .main-container {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+}
+
+@media (max-width: 1199px) and (min-width: 768px) {
+    .main-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 767px) {
+    .main-container {
+        grid-template-columns: 1fr;
+        padding: 15px;
+        gap: 15px;
+    }
+    
+    .card {
+        min-height: 200px !important;
+    }
+    
+    body:not(.grownup-mode) .card {
+        min-height: 180px !important;
+    }
+}
