@@ -179,6 +179,7 @@ class HybridPanelManager {
             this.state.showingUserForm = false;
             this.state.showingSyncSettings = false;
             this.state.showingLibraryMenu = false;
+            this.state.showingLibraryEditor = false;
             this.state.showingUserManagement = false;
             
             this.togglePanel('right');
@@ -315,6 +316,7 @@ class HybridPanelManager {
             this.state.showingUserForm = false;
             this.state.showingSyncSettings = false;
             this.state.showingLibraryMenu = false;
+            this.state.showingLibraryEditor = false;
             this.state.showingUserManagement = false;
         }
         
@@ -382,7 +384,8 @@ class HybridPanelManager {
             // Check for special states in right panel
             if (this.state.showingActivityForm) {
                 menuId = 'activityForm';
-                menuState = { 
+                // Use menuStates.activityForm if available (for library editing), otherwise use state
+                menuState = this.menuStates.activityForm || { 
                     editingActivity: this.state.editingActivity,
                     editingIndex: this.state.editingIndex
                 };
@@ -403,6 +406,9 @@ class HybridPanelManager {
             } else if (this.state.showingLibraryMenu) {
                 menuId = 'activityLibrary';
                 menuState = this.menuStates.activityLibrary;
+            } else if (this.state.showingLibraryEditor) {
+                menuId = 'libraryEditor';
+                menuState = this.menuStates.libraryEditor;
             } else if (this.state.showingUserManagement) {
                 menuId = 'userManagement';
             }
@@ -1314,10 +1320,10 @@ class HybridPanelManager {
         const currentDay = this.app.appState.ui.currentDay || 'today';
         const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
         
-        // Update subtitle format: always "Name • Day"
+        // Update subtitle format: "Emoji Name • Day"
         const subtitle = document.getElementById('subtitle');
         if (subtitle) {
-            subtitle.textContent = `${currentUser.name} • ${dayText}`;
+            subtitle.textContent = `${currentUser.icon} ${currentUser.name} • ${dayText}`;
         }
     }
 
@@ -1773,7 +1779,119 @@ class HybridPanelManager {
     }
     
     saveActivity() {
+        console.log('saveActivity called, editingLibraryCard:', this.state.editingLibraryCard, 'addingLibraryCard:', this.state.addingLibraryCard);
         try {
+            // Check if we're adding a new library card
+            if (this.state.addingLibraryCard) {
+                const { libraryType } = this.state.addingLibraryCard;
+                
+                // Get form values
+                const title = document.getElementById('activityTitle')?.value?.trim();
+                const description = document.getElementById('activityDescription')?.value?.trim();
+                const emoji = document.getElementById('activityEmoji')?.value || '🎯';
+                const time = document.getElementById('activityTime')?.value?.trim();
+                
+                // Validate title
+                if (!title) {
+                    alert('Card title is required.');
+                    const titleInput = document.getElementById('activityTitle');
+                    if (titleInput) titleInput.focus();
+                    return;
+                }
+                
+                // Create new library card
+                const newCard = {
+                    title: title,
+                    description: description || '',
+                    icon: emoji,
+                    time: time || '',
+                    cardType: 'recurring',
+                    id: `lib_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    addedDate: new Date().toISOString(),
+                    addedBy: this.app.appState.users.currentUserId
+                };
+                
+                // Add to library
+                const success = this.app.appState.addToLibrary(newCard, libraryType);
+                
+                if (success) {
+                    // Clear adding state
+                    this.state.addingLibraryCard = null;
+                    
+                    // Return to library editor
+                    this.showLibraryEditor();
+                    
+                    // Show success message
+                    this.showToast(`Card added to ${libraryType} library`, 'success');
+                } else {
+                    this.showToast('Failed to add card to library', 'error');
+                }
+                
+                return;
+            }
+            
+            // Check if we're editing a library card
+            if (this.state.editingLibraryCard) {
+                const { libraryType, index, card } = this.state.editingLibraryCard;
+                
+                // Get form values
+                const title = document.getElementById('activityTitle')?.value?.trim();
+                const description = document.getElementById('activityDescription')?.value?.trim();
+                const emoji = document.getElementById('activityEmoji')?.value || '🎯';
+                const time = document.getElementById('activityTime')?.value?.trim();
+                
+                // Validate title
+                if (!title) {
+                    alert('Card title is required.');
+                    const titleInput = document.getElementById('activityTitle');
+                    if (titleInput) titleInput.focus();
+                    return;
+                }
+                
+                // Update the library card through state
+                const updatedCard = {
+                    title: title,
+                    description: description || '',
+                    icon: emoji,
+                    time: time || '',
+                    cardType: 'recurring'
+                };
+                
+                // Update the library card
+                console.log('Updating library card:', { libraryType, index, updatedCard });
+                const success = this.app.appState.updateLibraryCard(libraryType, index, updatedCard);
+                console.log('Update success:', success);
+                
+                if (!success) {
+                    // Fallback: directly update and trigger save
+                    console.log('Using fallback update method');
+                    const library = this.app.appState.getLibrary(libraryType);
+                    const currentCard = library[index];
+                    
+                    if (currentCard) {
+                        Object.assign(currentCard, updatedCard);
+                        this.app.appState._triggerSave();
+                    }
+                }
+                
+                // Clear editing state
+                this.state.editingLibraryCard = null;
+                this.state.editingActivity = null;
+                this.state.editingIndex = -1;
+                
+                // Return to library editor
+                this.showLibraryEditor();
+                
+                // Clear the navigation history to prevent loops
+                this.navigationHistory.right = ['libraryEditor'];
+                
+                // Show success message
+                this.showToast('Library card updated', 'success');
+                
+                return;
+            }
+            
+            // Normal activity save flow
             // Get form values
             const title = document.getElementById('activityTitle')?.value?.trim();
             const description = document.getElementById('activityDescription')?.value?.trim();
@@ -1835,6 +1953,7 @@ class HybridPanelManager {
             // Came from within settings, navigate back
             this.navigateBack('right');
         }
+        
         } catch (error) {
             console.error('Error in saveActivity:', error);
             alert('Error saving activity: ' + error.message);
@@ -1975,8 +2094,6 @@ class HybridPanelManager {
         // Create emoji grid
         const grid = document.createElement('div');
         grid.className = 'modal-emoji-picker__grid';
-        grid.style.maxHeight = '200px';
-        grid.style.overflowY = 'auto';
         
         picker.appendChild(preview);
         picker.appendChild(filter);
@@ -2587,8 +2704,6 @@ class HybridPanelManager {
         // Create emoji grid
         const grid = document.createElement('div');
         grid.className = 'modal-emoji-picker__grid';
-        grid.style.maxHeight = '200px';
-        grid.style.overflowY = 'auto';
         
         picker.appendChild(preview);
         picker.appendChild(filter);
@@ -2722,8 +2837,6 @@ class HybridPanelManager {
         // Create emoji grid
         const grid = document.createElement('div');
         grid.className = 'modal-emoji-picker__grid';
-        grid.style.maxHeight = '200px';
-        grid.style.overflowY = 'auto';
         
         picker.appendChild(preview);
         picker.appendChild(filter);
@@ -2840,45 +2953,7 @@ class HybridPanelManager {
         }, 100);
     }
     
-    saveActivity() {
-        const title = document.getElementById('activityTitle').value.trim();
-        const description = document.getElementById('activityDescription').value.trim();
-        const time = document.getElementById('activityTime').value;
-        const emoji = document.getElementById('activityEmoji').value;
-        const cardType = this.newActivityDefaults.cardType;
-        
-        if (!title) {
-            alert('Please enter an activity title');
-            return;
-        }
-        
-        const activity = {
-            title,
-            description,
-            icon: emoji,
-            time: time || null,
-            cardType: 'recurring',  // Always recurring/pinned
-            completed: false,
-            visible: true
-        };
-        
-        if (this.state.editingIndex >= 0) {
-            // Update existing activity using the proper method
-            this.app.appState.updateActivity(this.state.editingIndex, activity);
-        } else {
-            // Add new activity using the proper method
-            this.app.appState.addActivity(activity);
-        }
-        
-        // Re-render (save is already triggered by updateActivity/addActivity)
-        this.app.render();
-        
-        // Go back to management panel
-        this.backToManagement();
-        
-        // Show success message
-        this.showSaveSuccess();
-    }
+    // Duplicate saveActivity method removed - using the main saveActivity method above
     
     deleteActivity() {
         if (this.state.editingIndex >= 0) {
@@ -3926,12 +4001,32 @@ class HybridPanelManager {
         this.state.showingUserForm = false;
         this.state.showingSyncSettings = false;
         this.state.showingUserManagement = false;
+        this.state.showingLibraryEditor = false;
         
         // Reset library selection state
         this.menuStates.activityLibrary = {
             selectedActivities: { user: [], group: [], base: [] },
             selectedCount: 0
         };
+        
+        this.renderPanelContent('right');
+    }
+    
+    showLibraryEditor() {
+        this.state.showingLibraryEditor = true;
+        this.state.showingLibraryMenu = false;
+        this.state.showingActivityForm = false;
+        this.state.showingUserForm = false;
+        this.state.showingSyncSettings = false;
+        this.state.showingUserManagement = false;
+        
+        // Initialize library editor state
+        if (!this.menuStates.libraryEditor) {
+            this.menuStates.libraryEditor = {
+                activeTab: 'user',
+                selectedCards: []
+            };
+        }
         
         this.renderPanelContent('right');
     }
@@ -4332,41 +4427,17 @@ class HybridPanelManager {
         this.state.showingActivityForm = false;
         this.state.editingActivity = null;
         this.state.editingIndex = -1;
-        this.renderPanelContent('right');
+        
+        // If we were editing a library card, return to library editor
+        if (this.state.editingLibraryCard) {
+            this.state.editingLibraryCard = null;
+            this.showLibraryEditor();
+        } else {
+            this.renderPanelContent('right');
+        }
     }
 
-    saveActivity() {
-        const title = document.getElementById('activityTitle')?.value?.trim();
-        const description = document.getElementById('activityDescription')?.value?.trim();
-        const selectedIcon = document.getElementById('activityEmoji')?.value || document.querySelector('.icon-option.selected')?.getAttribute('data-icon') || this.newActivityDefaults.emoji;
-        const selectedColor = document.querySelector('.color-option.selected')?.getAttribute('data-color') || 'blue';
-        
-        if (!title) {
-            this.app.showNotification('Please enter an activity title', 'error');
-            return;
-        }
-        
-        const activity = {
-            title,
-            description: description || '',
-            icon: selectedIcon,
-            color: selectedColor,
-            cardType: 'recurring',  // Always recurring/pinned
-            visible: true
-        };
-        
-        if (this.state.editingActivity && this.state.editingIndex >= 0) {
-            // Update existing activity
-            this.app.appState.updateActivity(this.state.editingIndex, activity);
-        } else {
-            // Add new activity
-            this.app.appState.addActivity(activity);
-        }
-        
-        // Reset form state
-        this.cancelActivityForm();
-        this.app.render();
-    }
+    // Duplicate saveActivity method removed - using the main saveActivity method above
 
     // User form methods
     cancelUserForm() {
@@ -4588,6 +4659,210 @@ class HybridPanelManager {
             });
         }
     }
+    
+    // Library Editor Methods
+    addLibraryCard(libraryType) {
+        // Set up state for adding a new library card
+        this.state.addingLibraryCard = {
+            libraryType,
+            isNew: true
+        };
+        
+        // Show activity form for creating new card
+        this.state.showingActivityForm = true;
+        this.state.showingLibraryEditor = false;
+        
+        // Set form values for new card
+        this.menuStates.activityForm = {
+            selectedEmoji: '🎯',
+            selectedCardType: 'recurring',
+            returnTo: 'libraryEditor',
+            editingActivity: null // No existing activity
+        };
+        
+        // Clear normal editing state
+        this.state.editingActivity = null;
+        this.state.editingIndex = -1;
+        this.state.editingLibraryCard = null;
+        
+        // Render the form
+        this.renderPanelContent('right', false);
+        
+        // Focus on title input after rendering
+        setTimeout(() => {
+            const titleInput = document.getElementById('activityTitle');
+            if (titleInput) {
+                titleInput.focus();
+            }
+        }, 100);
+    }
+    
+    editLibraryCard(libraryType, index) {
+        const library = this.app.appState.getLibrary(libraryType);
+        const card = library[index];
+        
+        if (!card) return;
+        
+        // Set up editing state
+        this.state.editingLibraryCard = {
+            libraryType,
+            index,
+            card: {...card} // Clone to avoid direct mutations
+        };
+        
+        // Show activity form for editing
+        this.state.showingActivityForm = true;
+        this.state.showingLibraryEditor = false;
+        
+        // Set form values
+        this.menuStates.activityForm = {
+            selectedEmoji: card.icon || '🎯',
+            selectedCardType: card.cardType || 'recurring',
+            returnTo: 'libraryEditor', // Ensure we return to library editor
+            editingActivity: card // Pass the card as editing activity so the form can use it
+        };
+        
+        // Clear normal editing state to prevent conflicts
+        this.state.editingActivity = null;
+        this.state.editingIndex = -1;
+        
+        // Don't add to navigation history since we're managing the return manually
+        this.renderPanelContent('right', false);
+        
+        // Populate form after render and reinitialize emoji picker with correct value
+        setTimeout(() => {
+            const titleInput = document.getElementById('activityTitle');
+            const descInput = document.getElementById('activityDescription');
+            const emojiInput = document.getElementById('activityEmoji');
+            const timeInput = document.getElementById('activityTime');
+            
+            if (titleInput) titleInput.value = card.title || '';
+            if (descInput) descInput.value = card.description || '';
+            if (timeInput) timeInput.value = card.time || '';
+            
+            // Set the emoji value and reinitialize the picker to show the correct emoji
+            if (emojiInput) {
+                emojiInput.value = card.icon || '🎯';
+                // Reinitialize the emoji picker to show the correct selected emoji
+                this.initializeActivityEmojiPicker();
+            }
+            
+            if (titleInput) titleInput.focus();
+        }, 100);
+    }
+    
+    deleteLibraryCard(libraryType, index) {
+        const library = this.app.appState.getLibrary(libraryType);
+        const card = library[index];
+        
+        if (!card) return;
+        
+        if (confirm(`Delete "${card.title}" from ${libraryType} library?`)) {
+            this.app.appState.removeFromLibrary(card.id, libraryType);
+            
+            // Clear selection if this card was selected
+            if (this.menuStates.libraryEditor?.selectedCards?.includes(index)) {
+                this.menuStates.libraryEditor.selectedCards = 
+                    this.menuStates.libraryEditor.selectedCards.filter(i => i !== index);
+            }
+            
+            // Re-render
+            this.renderPanelContent('right');
+        }
+    }
+    
+    deleteSelectedLibraryCards() {
+        const state = this.menuStates.libraryEditor;
+        if (!state || !state.selectedCards || state.selectedCards.length === 0) return;
+        
+        const activeTab = state.activeTab || 'user';
+        const library = this.app.appState.getLibrary(activeTab);
+        const count = state.selectedCards.length;
+        
+        if (confirm(`Delete ${count} selected cards from ${activeTab} library?`)) {
+            // Sort indices in reverse order to delete from end to start
+            const sortedIndices = [...state.selectedCards].sort((a, b) => b - a);
+            
+            sortedIndices.forEach(index => {
+                const card = library[index];
+                if (card && card.id) {
+                    this.app.appState.removeFromLibrary(card.id, activeTab);
+                }
+            });
+            
+            // Clear selection
+            state.selectedCards = [];
+            
+            // Re-render
+            this.renderPanelContent('right');
+        }
+    }
+    
+    moveSelectedToGroup() {
+        const state = this.menuStates.libraryEditor;
+        if (!state || !state.selectedCards || state.selectedCards.length === 0) return;
+        
+        const userLibrary = this.app.appState.getLibrary('user');
+        const movedCount = state.selectedCards.length;
+        let successCount = 0;
+        
+        // Sort indices in reverse order to process from end to start
+        const sortedIndices = [...state.selectedCards].sort((a, b) => b - a);
+        
+        sortedIndices.forEach(index => {
+            const card = userLibrary[index];
+            if (card) {
+                // Add to group library
+                const success = this.app.appState.addToLibrary(card, 'group');
+                if (success) {
+                    successCount++;
+                    // Remove from user library
+                    this.app.appState.removeFromLibrary(card.id, 'user');
+                }
+            }
+        });
+        
+        // Clear selection
+        state.selectedCards = [];
+        
+        // Show feedback
+        if (successCount > 0) {
+            this.showToast(`Moved ${successCount} cards to group library`, 'success');
+        }
+        
+        // Re-render
+        this.renderPanelContent('right');
+    }
+    
+    showToast(message, type = 'info') {
+        // Simple toast notification
+        const toast = document.createElement('div');
+        toast.className = `toast toast-${type}`;
+        toast.textContent = message;
+        toast.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: ${type === 'success' ? '#4CAF50' : '#2196F3'};
+            color: white;
+            padding: 12px 24px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            z-index: 10000;
+            animation: slideUp 0.3s ease;
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.style.animation = 'slideDown 0.3s ease';
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 300);
+        }, 3000);
+    }
+    
 }
 
 // Global instance for onclick handlers

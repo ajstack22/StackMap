@@ -37,7 +37,7 @@ window.MenuConfigurations = {
 
     settings: {
         id: 'settings',
-        title: 'Edit',
+        title: 'Edit Mode',
         layout: 'sections',
         sections: [
             {
@@ -94,6 +94,10 @@ window.MenuConfigurations = {
                                     <button class="admin-btn" onclick="hybridPanelManager.showLibraryMenu()">
                                         <span class="material-icons">library_books</span>
                                         Card Library
+                                    </button>
+                                    <button class="admin-btn" onclick="hybridPanelManager.showLibraryEditor()">
+                                        <span class="material-icons">edit_note</span>
+                                        Manage Libraries
                                     </button>
                                     <button class="admin-btn" onclick="appInstance.showCompleteDayConfirmation()">
                                         <span class="material-icons">event_available</span>
@@ -578,7 +582,8 @@ window.MenuConfigurations = {
         footer: {
             type: 'custom',
             render: function(state, menuSystem) {
-                const buttonText = state.editingActivity ? 'Save & Close' : 'Add Card';
+                const isEditing = state.editingActivity || window.hybridPanelManager.state.editingLibraryCard;
+                const buttonText = isEditing ? 'Save' : 'Add Card';
                 
                 return `
                     <button class="footer-button primary-button" onclick="window.hybridPanelManager.saveActivity()">
@@ -847,6 +852,162 @@ window.MenuConfigurations = {
                         
                         document.getElementById('disconnectBtn')?.addEventListener('click', () => {
                             window.hybridPanelManager.disconnectSync();
+                        });
+                    }, 0);
+                    
+                    return html;
+                }
+            }
+        ]
+    },
+
+    libraryEditor: {
+        id: 'libraryEditor',
+        title: 'Manage Libraries',
+        layout: 'flex-column',
+        sections: [
+            {
+                type: 'custom',
+                flex: 1,
+                render: function(state, menuSystem) {
+                    const app = menuSystem.app;
+                    let html = '<div class="library-editor" style="height: 100%; display: flex; flex-direction: column;">';
+                    
+                    // Tab navigation
+                    html += `
+                        <div class="library-tabs">
+                            <button class="library-tab ${state.activeTab === 'user' ? 'active' : ''}" data-tab="user">
+                                <span class="material-icons">person</span>
+                                My Library
+                            </button>
+                            <button class="library-tab ${state.activeTab === 'group' ? 'active' : ''}" data-tab="group">
+                                <span class="material-icons">group</span>
+                                Group Library
+                            </button>
+                            <button class="library-tab ${state.activeTab === 'base' ? 'active' : ''}" data-tab="base">
+                                <span class="material-icons">collections_bookmark</span>
+                                Base Library
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Tab content
+                    html += '<div class="library-tab-content" style="flex: 1; overflow-y: auto; padding: 16px;">';
+                    
+                    const activeTab = state.activeTab || 'user';
+                    const library = app.appState.getLibrary(activeTab);
+                    const canEdit = activeTab !== 'base'; // Can't edit base library
+                    
+                    if (!library || library.length === 0) {
+                        html += '<div class="empty-library">No cards in this library yet.</div>';
+                    } else {
+                        // Bulk actions
+                        if (canEdit && state.selectedCards && state.selectedCards.length > 0) {
+                            html += `
+                                <div class="bulk-actions">
+                                    <span class="bulk-actions__count">${state.selectedCards.length} selected</span>
+                                    <div class="bulk-actions__buttons">
+                                        <button class="btn btn--small" onclick="hybridPanelManager.deleteSelectedLibraryCards()" title="Delete selected cards">
+                                            <span class="material-icons">delete</span>
+                                            Delete
+                                        </button>
+                                        ${activeTab === 'user' ? `
+                                            <button class="btn btn--small" onclick="hybridPanelManager.moveSelectedToGroup()" title="Move selected cards to group library">
+                                                <span class="material-icons">drive_file_move</span>
+                                                To Group
+                                            </button>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                            `;
+                        }
+                        
+                        // Library cards list
+                        html += '<div class="library-cards-list">';
+                        library.forEach((card, index) => {
+                            const isSelected = state.selectedCards && state.selectedCards.includes(index);
+                            html += `
+                                <div class="library-card-item ${isSelected ? 'selected' : ''}" data-index="${index}">
+                                    ${canEdit ? `
+                                        <input type="checkbox" 
+                                            class="library-card-checkbox" 
+                                            ${isSelected ? 'checked' : ''} 
+                                            data-index="${index}" />
+                                    ` : ''}
+                                    <div class="library-card-title">${card.title}</div>
+                                    ${canEdit ? `
+                                        <div class="library-card-actions">
+                                            <button class="btn btn--icon" onclick="hybridPanelManager.editLibraryCard('${activeTab}', ${index})" title="Edit">
+                                                <span class="material-icons">edit</span>
+                                            </button>
+                                            <button class="btn btn--icon" onclick="hybridPanelManager.deleteLibraryCard('${activeTab}', ${index})" title="Delete">
+                                                <span class="material-icons">delete</span>
+                                            </button>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            `;
+                        });
+                        html += '</div>';
+                    }
+                    
+                    // Add card button for editable libraries
+                    if (canEdit) {
+                        html += `
+                            <div style="padding: 16px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                                <button class="footer-button primary-button" style="width: 100%;" onclick="hybridPanelManager.addLibraryCard('${activeTab}')">
+                                    <span class="material-icons" style="margin-right: 8px;">add</span>
+                                    Add Card
+                                </button>
+                            </div>
+                        `;
+                    }
+                    
+                    html += '</div>'; // library-tab-content
+                    html += '</div>'; // library-editor
+                    
+                    // Add event listeners
+                    setTimeout(() => {
+                        // Tab switching
+                        document.querySelectorAll('.library-tab').forEach(tab => {
+                            tab.addEventListener('click', (e) => {
+                                const newTab = e.currentTarget.dataset.tab;
+                                state.activeTab = newTab;
+                                state.selectedCards = []; // Clear selection when switching tabs
+                                window.hybridPanelManager.renderPanelContent('right', false);
+                            });
+                        });
+                        
+                        // Checkbox handling
+                        document.querySelectorAll('.library-card-checkbox').forEach(checkbox => {
+                            checkbox.addEventListener('change', (e) => {
+                                const index = parseInt(e.target.dataset.index);
+                                if (!state.selectedCards) state.selectedCards = [];
+                                
+                                if (e.target.checked) {
+                                    if (!state.selectedCards.includes(index)) {
+                                        state.selectedCards.push(index);
+                                    }
+                                } else {
+                                    state.selectedCards = state.selectedCards.filter(i => i !== index);
+                                }
+                                window.hybridPanelManager.renderPanelContent('right', false);
+                            });
+                        });
+                        
+                        // Click on card to select (but not on buttons)
+                        document.querySelectorAll('.library-card-item').forEach(item => {
+                            item.addEventListener('click', (e) => {
+                                if (e.target.closest('.library-card-actions') || e.target.closest('.library-card-checkbox')) {
+                                    return; // Don't toggle when clicking actions or checkbox
+                                }
+                                
+                                const checkbox = item.querySelector('.library-card-checkbox');
+                                if (checkbox) {
+                                    checkbox.checked = !checkbox.checked;
+                                    checkbox.dispatchEvent(new Event('change'));
+                                }
+                            });
                         });
                     }, 0);
                     

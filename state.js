@@ -818,6 +818,33 @@ class AppState {
         }
         return false;
     }
+    
+    updateLibraryCard(libraryType, index, updates) {
+        if (libraryType === 'user') {
+            const user = this.getCurrentUser();
+            if (user.library && user.library[index]) {
+                // Preserve existing properties like id and addedBy
+                user.library[index] = {
+                    ...user.library[index],
+                    ...updates
+                };
+                this._triggerSave();
+                return true;
+            }
+        } else if (libraryType === 'group') {
+            if (this.users.groupLibrary && this.users.groupLibrary[index]) {
+                // Preserve existing properties like id and addedBy
+                this.users.groupLibrary[index] = {
+                    ...this.users.groupLibrary[index],
+                    ...updates
+                };
+                this._triggerSave();
+                return true;
+            }
+        }
+        // Base library cannot be edited
+        return false;
+    }
 
     // === SETTINGS MANAGEMENT ===
     updateTitle(title) {

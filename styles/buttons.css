@@ -295,14 +295,17 @@ button.btn.btn--floating:hover .material-icons,
 @media (max-width: 768px) {
     button.btn.btn--floating,
     .btn.btn--floating {
-        width: 44px !important;  /* Reduced size while maintaining 44px min touch target */
+        width: 44px !important;  /* Back to 44px to ensure 50px total with any padding */
         height: 44px !important; /* Perfect circle */
         top: 20px !important;
+        box-sizing: border-box !important;
+        padding: 0 !important;
+        border: none !important;
     }
     
     button.btn.btn--floating .material-icons,
     .btn.btn--floating .material-icons {
-        font-size: 18px !important;  /* 30% smaller icon (from 24px to ~17px, rounded to 18px) */
+        font-size: 18px !important;  /* Proportional icon for smaller button */
     }
     
     button.btn.btn--preferences,
@@ -340,13 +343,16 @@ button.btn.btn--floating:hover .material-icons,
 @media (max-width: 480px) {
     button.btn.btn--floating,
     .btn.btn--floating {
-        width: 44px !important;
+        width: 44px !important;  /* Consistent size on all mobile */
         height: 44px !important; /* Perfect circle */
+        box-sizing: border-box !important;
+        padding: 0 !important;
+        border: none !important;
     }
     
     button.btn.btn--floating .material-icons,
     .btn.btn--floating .material-icons {
-        font-size: 20px !important;
+        font-size: 18px !important;
     }
 }
 

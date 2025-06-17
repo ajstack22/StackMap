@@ -213,14 +213,17 @@
     }
     
     .btn--floating {
-        width: 44px;  /* Reduced size while maintaining 44px min touch target */
+        width: 44px;  /* Back to 44px */
         height: 44px;
         position: fixed !important;
         z-index: 1001 !important;
+        box-sizing: border-box !important;
+        padding: 0 !important;
+        border: none !important;
     }
     
     .btn--floating .material-icons {
-        font-size: 18px !important;  /* 30% smaller icon (from 28px to ~20px, rounded to 18px) */
+        font-size: 18px !important;  /* Proportional icon size */
     }
     
     /* Adjusted button positions for permanent fixed header */

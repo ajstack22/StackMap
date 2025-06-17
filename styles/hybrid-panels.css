@@ -145,6 +145,13 @@ body:has(.side-panel.open) .floating-nav {
     line-height: 1;
 }
 
+/* Mobile icon size override */
+@media (max-width: 768px) {
+    .fab .material-icons {
+        font-size: 24px !important; /* Override desktop size */
+    }
+}
+
 .fab--active {
     background: var(--primary-color);
     color: white;
@@ -290,6 +297,10 @@ body:has(.side-panel.open) .floating-nav {
 
 /* Desktop vertical handles */
 @media (min-width: 769px) {
+    /* Wider panels on desktop for better readability */
+    .side-panel {
+        width: 380px; /* Increased from 320px */
+    }
     .side-panel--left::after {
         content: '';
         position: absolute;
@@ -864,14 +875,17 @@ body:has(.side-panel.open) .floating-nav {
     }
     
     .fab {
-        width: 56px;
-        height: 56px;
-        min-width: 56px;
-        min-height: 56px;
+        width: 50px !important;
+        height: 50px !important;
+        min-width: 50px !important;
+        min-height: 50px !important;
+        box-sizing: border-box !important;
     }
     
     .fab .material-icons {
-        font-size: 28px;
+        font-size: 22px !important; /* Override desktop 35px size */
+        width: 100% !important;
+        height: 100% !important;
     }
     
     /* Mobile: Panels slide up from bottom */
@@ -1898,11 +1912,14 @@ textarea.panel-input {
 
 .modal-emoji-picker-inline .modal-emoji-picker__grid {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px;
-    padding: 4px;
+    grid-template-columns: repeat(5, 1fr); /* 5 columns instead of 4 for better fit */
+    gap: 6px; /* Slightly more gap */
+    padding: 8px;
     background: rgba(0, 0, 0, 0.2);
     border-radius: 8px;
+    max-height: 140px; /* Show 3.5 rows (40px * 3.5 = 140px) */
+    overflow-y: auto;
+    scroll-behavior: smooth;
 }
 
 .modal-emoji-picker-inline .modal-emoji-picker__option {
@@ -1911,20 +1928,23 @@ textarea.panel-input {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.5rem; /* Larger emoji size */
     background: transparent;
     border: 1px solid transparent;
     border-radius: 6px;
     cursor: pointer;
     transition: all 0.15s ease;
     padding: 0;
-    min-height: 36px;
+    height: 40px; /* Fixed height instead of min-height */
+    position: relative; /* For better hover effect */
+    overflow: hidden; /* Prevent emoji overflow */
 }
 
 .modal-emoji-picker-inline .modal-emoji-picker__option:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
-    transform: scale(1.1);
+    transform: scale(1.05); /* Smaller scale to prevent overlap */
+    z-index: 1; /* Ensure hover state appears above others */
 }
 
 .modal-emoji-picker-inline .modal-emoji-picker__option--selected {
@@ -1932,10 +1952,29 @@ textarea.panel-input {
     border-color: var(--primary-color);
 }
 
+/* Scrollbar styling for emoji grid */
+.modal-emoji-picker__grid::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-emoji-picker__grid::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.modal-emoji-picker__grid::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.modal-emoji-picker__grid::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 /* Responsive grid for smaller screens */
 @media (max-width: 400px) {
     .modal-emoji-picker-inline .modal-emoji-picker__grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(4, 1fr); /* 4 columns on small screens */
     }
 }
 
@@ -3367,6 +3406,7 @@ textarea.panel-input {
     overflow-y: auto;
     height: 100%; /* Use full height of parent flex container */
     -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    box-sizing: border-box; /* Include padding in the height calculation */
 }
 
 .library-hint {
@@ -3448,6 +3488,7 @@ textarea.panel-input {
     cursor: pointer;
     transition: all 0.2s ease;
     width: 100%;
+    box-sizing: border-box; /* Ensure padding is included in width */
 }
 
 .library-activity:hover {
@@ -3988,3 +4029,289 @@ input:checked + .slider:before {
 }
 
 /* Learn More styles removed - no longer needed */
+
+/* ===== LIBRARY EDITOR STYLES ===== */
+.library-tabs {
+    display: flex;
+    gap: 8px;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.1);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    flex-wrap: wrap; /* Allow tabs to wrap on mobile */
+}
+
+.library-tab {
+    flex: 1;
+    min-width: 100px; /* Minimum width for tabs */
+    padding: 12px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    font-weight: 500;
+}
+
+.library-tab:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: white;
+}
+
+.library-tab.active {
+    background: var(--primary-color);
+    color: white;
+    border-color: var(--primary-color);
+}
+
+.library-tab .material-icons {
+    font-size: 20px;
+}
+
+/* Mobile optimization for library tabs */
+@media (max-width: 768px) {
+    .library-tabs {
+        padding: 12px;
+        gap: 6px;
+    }
+    
+    .library-tab {
+        padding: 10px 12px;
+        font-size: 0.9rem;
+        min-width: 80px;
+    }
+    
+    .library-tab .material-icons {
+        font-size: 18px;
+    }
+    
+    /* Hide tab text on very small screens */
+    @media (max-width: 380px) {
+        .library-tab {
+            padding: 10px;
+            min-width: 0;
+            flex: 0 0 auto;
+        }
+        
+        .library-tab span:not(.material-icons) {
+            display: none;
+        }
+    }
+}
+
+.empty-library {
+    text-align: center;
+    padding: 40px;
+    color: rgba(255, 255, 255, 0.6);
+    font-style: italic;
+}
+
+.bulk-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    margin-bottom: 16px;
+    gap: 12px;
+}
+
+.bulk-actions__count {
+    color: rgba(255, 255, 255, 0.8);
+    font-weight: 500;
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.bulk-actions__buttons {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+}
+
+/* Responsive adjustments for bulk actions */
+@media (max-width: 480px) {
+    .bulk-actions {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .bulk-actions__buttons {
+        width: 100%;
+        display: flex;
+        gap: 6px;
+    }
+    
+    .bulk-actions__buttons .btn--small {
+        flex: 1; /* Equal width buttons on mobile */
+    }
+}
+
+@media (max-width: 768px) {
+    .bulk-actions {
+        padding: 8px;
+    }
+    
+    .bulk-actions .btn--small {
+        font-size: 0.85rem;
+        padding: 6px 12px;
+    }
+    
+    .bulk-actions .btn--small .material-icons {
+        font-size: 16px;
+    }
+}
+
+.library-cards-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.library-card-item {
+    display: flex;
+    align-items: center;
+    gap: 8px; /* Reduced gap */
+    padding: 12px; /* Reduced padding */
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    border: 2px solid transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 56px; /* Slightly smaller but still touch-friendly */
+    position: relative;
+}
+
+.library-card-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 0 10px var(--primary-color);
+}
+
+.library-card-item.selected {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 12px var(--primary-color);
+}
+
+.library-card-checkbox {
+    cursor: pointer;
+    width: 18px; /* Slightly smaller */
+    height: 18px;
+    flex-shrink: 0;
+}
+
+.library-card-title {
+    font-size: 0.95rem; /* Slightly smaller to fit more */
+    font-weight: 500;
+    flex: 1;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0; /* Allow text to shrink */
+    padding-right: 8px; /* Add spacing before buttons */
+}
+
+.library-card-actions {
+    display: flex;
+    gap: 2px; /* Smaller gap */
+    flex-shrink: 0; /* Prevent actions from shrinking */
+    opacity: 0; /* Hide by default on desktop */
+    transition: opacity 0.2s ease;
+}
+
+/* Show actions on hover for desktop */
+@media (min-width: 769px) {
+    .library-card-item:hover .library-card-actions {
+        opacity: 1;
+    }
+    
+    /* Always show for selected items */
+    .library-card-item.selected .library-card-actions {
+        opacity: 1;
+    }
+}
+
+/* Always show actions on mobile/touch devices */
+@media (max-width: 768px) {
+    .library-card-actions {
+        opacity: 1;
+    }
+}
+
+.btn--icon {
+    width: 32px; /* Smaller buttons */
+    height: 32px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn--icon:hover {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.btn--icon .material-icons {
+    font-size: 16px; /* Smaller to match smaller buttons */
+}
+
+/* Small button style for bulk actions */
+.btn--small {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.btn--small:hover {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.btn--small .material-icons {
+    font-size: 18px;
+}
+
+/* Toast notifications */
+@keyframes slideUp {
+    from {
+        transform: translate(-50%, 100%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+}
+
+@keyframes slideDown {
+    from {
+        transform: translate(-50%, 0);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-50%, 100%);
+        opacity: 0;
+    }
+}
+

@@ -1669,7 +1669,6 @@ class ActivityCard {
 window.ComponentBuilder = ComponentBuilder;
 window.ActivityCard = ActivityCard;
 window.EmojiPicker = EmojiPicker;
-window.DataManagementPanel = DataManagementPanel;
 
 // INTEGRATED: Make card type configuration globally available
 window.CARD_TYPE_ICONS = CARD_TYPE_ICONS;
