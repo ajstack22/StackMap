@@ -4,16 +4,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StackMap Demo - Mushroom Kingdom</title>
-    <link rel="stylesheet" href="../styles/main.css">
-    <link rel="stylesheet" href="../styles/activity-cards.css">
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/base.css">
+    <link rel="stylesheet" href="../styles/variables.css">
+    <link rel="stylesheet" href="../styles/layout.css">
+    <link rel="stylesheet" href="../styles/cards.css">
     <link rel="stylesheet" href="../styles/modals.css">
     <link rel="stylesheet" href="../styles/forms.css">
     <link rel="stylesheet" href="../styles/buttons.css">
     <link rel="stylesheet" href="../styles/responsive.css">
     <link rel="stylesheet" href="../styles/hybrid-panels.css">
-    <link rel="stylesheet" href="../styles/user-management.css">
-    <link rel="stylesheet" href="../styles/sync-settings.css">
+    <link rel="stylesheet" href="../styles/selectors.css">
+    <link rel="stylesheet" href="../styles/sync-modal.css">
     <link rel="stylesheet" href="../styles/animations.css">
+    <link rel="stylesheet" href="../styles/celebrations.css">
+    <link rel="stylesheet" href="../styles/fab.css">
+    <link rel="stylesheet" href="../styles/draggable-drawer.css">
+    <link rel="stylesheet" href="../styles/splash-screen.css">
+    <link rel="stylesheet" href="../styles/utilities.css">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
         /* Demo-specific styles */
@@ -163,15 +171,41 @@
     <div id="app"></div>
 
     <!-- Scripts -->
-    <script src="../config.js"></script>
-    <script src="../emoji-list.js"></script>
-    <script src="../emoji-names.js"></script>
+    <script>
+        // Define CONFIG inline for demo to avoid loading issues
+        const CONFIG = {
+            DEFAULT_EMOJI: '📝',
+            DEFAULT_COLOR: '#4a90e2',
+            DEFAULT_USER_ID: 'default',
+            SHOW_NUMBERS_DEFAULT: true,
+            SHOW_COMPLETION_DEFAULT: true,
+            CELEBRATION_ENABLED: true,
+            CONFETTI_DURATION: 3000,
+            AUTO_SYNC_ENABLED: false,
+            AUTO_SYNC_INTERVAL: null,
+            DATA_VERSION: 2,
+            MAX_ACTIVITIES: 100,
+            MAX_USERS: 10,
+            USER_NAME_MAX_LENGTH: 30,
+            DISPLAY_MODES: {
+                NUMBERS: 'numbers',
+                ICONS: 'icons',
+                BOTH: 'both'
+            },
+            GOOGLE_CLIENT_ID: null,
+            GOOGLE_API_KEY: null
+        };
+    </script>
+    <script src="../data/emoji-list.js"></script>
+    <script src="../data/emoji-names.js"></script>
     <script src="../components.js"></script>
     <script src="../state.js"></script>
+    <script src="../js/CelebrationManager.js"></script>
     <script src="../js/DynamicMenuSystem.js"></script>
     <script src="../js/MenuConfigurations.js"></script>
     <script src="../js/HybridPanelManager.js"></script>
     <script src="../renderer.js"></script>
+    <script src="../drive-sync.js"></script>
     <script src="../app/StackMapApp.js"></script>
     
     <script>
