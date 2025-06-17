@@ -4056,6 +4056,11 @@ class HybridPanelManager {
         this.openPanel('left', true); // true = skip history clear
     }
 
+    showSupport() {
+        // Navigate to support menu
+        this.openPanel('right', 'support');
+    }
+
     refreshCurrentPanel() {
         // Save scroll positions before refresh
         let mainScrollTop = 0;

@@ -185,13 +185,18 @@ window.MenuConfigurations = {
                         `;
                     }
                     
-                    // Add version info at the bottom (only in edit mode)
+                    // Add version info and support link at the bottom (only in edit mode)
                     if (app.grownupMode) {
                         html += `
                             <div class="panel-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
                                 <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">
                                     Version ${CONFIG.APP_VERSION || '1.5.4'}<br>
                                     <span style="font-size: 0.75rem;">Build ${CONFIG.APP_BUILD_DATE || '2025-06-15'}</span>
+                                </div>
+                                <div style="margin-top: 12px;">
+                                    <a href="#" onclick="hybridPanelManager.showSupport(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
+                                        Support & Privacy
+                                    </a>
                                 </div>
                             </div>
                         `;
@@ -1010,6 +1015,78 @@ window.MenuConfigurations = {
                             });
                         });
                     }, 0);
+                    
+                    return html;
+                }
+            }
+        ]
+    },
+    
+    support: {
+        id: 'support',
+        title: 'Support & Privacy',
+        layout: 'sections',
+        sections: [
+            {
+                type: 'custom',
+                render: function(state, menuSystem) {
+                    let html = '';
+                    
+                    // Support section
+                    html += `
+                        <div class="panel-section">
+                            <h3 style="color: white; margin-bottom: 16px;">Support</h3>
+                            <p style="color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 16px;">
+                                Need help? We're here for you!
+                            </p>
+                            <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                                <li style="margin-bottom: 8px;">Email: <a href="mailto:support@stackmap.app" style="color: white;">support@stackmap.app</a></li>
+                                <li style="margin-bottom: 8px;">Response time: Within 24-48 hours</li>
+                                <li>Include your device type and issue description</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="panel-section">
+                            <h3 style="color: white; margin-bottom: 16px;">Privacy Policy</h3>
+                            <p style="color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 16px;">
+                                Your privacy is important to us. StackMap is designed with privacy in mind:
+                            </p>
+                            <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                                <li style="margin-bottom: 8px;">All data is stored locally on your device</li>
+                                <li style="margin-bottom: 8px;">Google Drive sync is optional and uses your own account</li>
+                                <li style="margin-bottom: 8px;">We don't collect personal information</li>
+                                <li style="margin-bottom: 8px;">No ads or tracking</li>
+                            </ul>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">
+                                <a href="https://stackmap.app/privacy" target="_blank" style="color: white; text-decoration: underline;">
+                                    View full Privacy Policy
+                                </a>
+                            </p>
+                        </div>
+                        
+                        <div class="panel-section">
+                            <h3 style="color: white; margin-bottom: 16px;">Terms of Use</h3>
+                            <p style="color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 16px;">
+                                StackMap is provided as-is for personal and educational use. By using StackMap, you agree to use it responsibly and lawfully.
+                            </p>
+                            <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">
+                                <a href="https://stackmap.app/terms" target="_blank" style="color: white; text-decoration: underline;">
+                                    View full Terms of Use
+                                </a>
+                            </p>
+                        </div>
+                        
+                        <div class="panel-section">
+                            <h3 style="color: white; margin-bottom: 16px;">About StackMap</h3>
+                            <p style="color: rgba(255,255,255,0.8); line-height: 1.5;">
+                                StackMap helps families create visual routines that make daily tasks easier and more fun. Originally designed for children with special needs, StackMap is now used by families, teachers, and anyone who benefits from visual organization.
+                            </p>
+                            <div style="margin-top: 16px; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                                Version ${CONFIG.APP_VERSION || '1.5.8'}<br>
+                                Build ${CONFIG.APP_BUILD_DATE || '2025-06-17'}
+                            </div>
+                        </div>
+                    `;
                     
                     return html;
                 }
