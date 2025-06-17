@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StackMap - Mushroom Kingdom Demo</title>
+    
+    <!-- All CSS files -->
     <link rel="stylesheet" href="../styles/index.css">
     <link rel="stylesheet" href="../styles/base.css">
     <link rel="stylesheet" href="../styles/variables.css">
@@ -28,13 +30,32 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-    <!-- Main App Container -->
+    <!-- Main App Container (app will render everything here) -->
     <div id="app"></div>
 
     <!-- Hidden File Input for Import -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
+
+    <!-- Scripts -->
+    <script>
+        // Set demo mode flag first
+        window.DEMO_MODE = true;
+        
+        // Pre-load demo data into localStorage before any scripts run
+        (async function() {
+            try {
+                const response = await fetch('../demo-mushroom-kingdom.json');
+                const demoData = await response.json();
+                localStorage.setItem('stackMapState', JSON.stringify(demoData));
+                localStorage.setItem('stackMapDemoMode', 'true');
+                console.log('Demo data loaded successfully');
+            } catch (error) {
+                console.error('Failed to load demo data:', error);
+            }
+        })();
+    </script>
     
-    <!-- Load JavaScript files in dependency order -->
+    <!-- Load all required scripts in order -->
     <script src="../utils/security.js"></script>
     <script src="../config/constants.js"></script>
     <script src="../config/themes.js"></script>
@@ -60,37 +81,19 @@
     <!-- Main App -->
     <script src="../app/StackMapApp.js"></script>
     
-    <!-- Google APIs (needed even with sync disabled) -->
+    <!-- Google APIs -->
     <script src="https://apis.google.com/js/api.js"></script>
     <script src="https://accounts.google.com/gsi/client"></script>
     
+    <!-- Initialize exactly like main app -->
     <script>
-        // Prevent demo data from syncing
-        window.DEMO_MODE = true;
-        
-        // Demo initialization
-        document.addEventListener('DOMContentLoaded', async () => {
+        document.addEventListener('DOMContentLoaded', () => {
             try {
-                // Load the demo data first
-                const response = await fetch('../demo-mushroom-kingdom.json');
-                const demoData = await response.json();
-                
-                // Store in localStorage before app initialization
-                localStorage.setItem('stackMapState', JSON.stringify(demoData));
-                localStorage.setItem('stackMapDemoMode', 'true');
-                
-                // Initialize the app exactly like the main app does
                 window.appInstance = new StackMapApp();
-                
-                // Initialize hybrid panel system (required for the app to work)
                 window.hybridPanelManager = new HybridPanelManager(window.appInstance);
-                
-                // Initialize the app
                 window.appInstance.init();
-                
             } catch (error) {
-                console.error('Failed to initialize demo:', error);
-                alert('Failed to load demo. Please try refreshing the page.');
+                console.error('Failed to initialize app:', error);
             }
         });
     </script>

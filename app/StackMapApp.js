@@ -13,8 +13,8 @@ class StackMapApp {
         
         // Defer Google Drive sync initialization to not block startup
         const urlParams = new URLSearchParams(window.location.search);
-        // Always enable sync since we have hardcoded credentials
-        const syncEnabled = true;
+        // Always enable sync since we have hardcoded credentials (unless in demo mode)
+        const syncEnabled = !window.DEMO_MODE;
         
         if (syncEnabled) {
             // Initialize Google Drive sync after app loads and Google APIs are ready
@@ -1613,6 +1613,11 @@ class StackMapApp {
 
     // WELCOME SPLASH MANAGEMENT
     checkFirstTimeVisit() {
+        // Skip splash screen in demo mode
+        if (window.DEMO_MODE) {
+            return;
+        }
+        
         // Check if user still has default name
         const currentUser = this.appState.getCurrentUser();
         const hasDefaultName = currentUser.name === 'StackMap User' || currentUser.name === 'You';
