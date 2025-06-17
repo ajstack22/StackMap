@@ -21,6 +21,12 @@ class GoogleDriveSync {
         try {
             console.log('[GoogleDriveSync] Starting API initialization...');
             
+            // Skip initialization in demo mode
+            if (window.DEMO_MODE || localStorage.getItem('stackMapDemoMode') === 'true') {
+                console.log('[GoogleDriveSync] Demo mode detected, skipping Google Drive sync');
+                return;
+            }
+            
             // Check if credentials are configured
             if (!CONFIG.GOOGLE_CLIENT_ID || !CONFIG.GOOGLE_API_KEY) {
                 console.warn('Google Drive sync disabled: API credentials not configured');

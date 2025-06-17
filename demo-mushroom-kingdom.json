@@ -1,0 +1,520 @@
+{
+  "version": 2,
+  "syncMetadata": {
+    "version": 1,
+    "lastModified": "2025-01-17T12:00:00.000Z",
+    "deviceId": "demo-device",
+    "deviceName": "Mushroom Kingdom Demo"
+  },
+  "users": {
+    "currentUserId": "mario-id",
+    "profiles": {
+      "mario-id": {
+        "id": "mario-id",
+        "name": "Mario",
+        "icon": "🔴",
+        "activities": [
+          {
+            "id": "mario-1",
+            "title": "Morning Power-Up",
+            "emoji": "🍄",
+            "description": "Take morning vitamins and eat a healthy breakfast",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1
+          },
+          {
+            "id": "mario-2",
+            "title": "Speech Therapy",
+            "emoji": "💬",
+            "description": "Practice 'Mama Mia' sounds with speech therapist",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "mario-3",
+            "title": "Jump Practice",
+            "emoji": "🦘",
+            "description": "Occupational therapy - practice jumping and balance",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3
+          },
+          {
+            "id": "mario-4",
+            "title": "Fix-It Time",
+            "emoji": "🔧",
+            "description": "Fine motor skills practice with tools and puzzles",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "mario-5",
+            "title": "Social Skills",
+            "emoji": "👋",
+            "description": "Practice greetings and taking turns with friends",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          },
+          {
+            "id": "mario-6",
+            "title": "Pipe Navigation",
+            "emoji": "🟢",
+            "description": "Sensory break in the quiet room",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 6
+          },
+          {
+            "id": "mario-7",
+            "title": "Coin Counting",
+            "emoji": "🪙",
+            "description": "Math practice with counting and sorting",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 7
+          },
+          {
+            "id": "mario-8",
+            "title": "Story Time",
+            "emoji": "📚",
+            "description": "Read about adventures in the Mushroom Kingdom",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 8
+          }
+        ],
+        "tomorrowActivities": [],
+        "settings": {
+          "title": "Mario",
+          "subtitle": "Let's-a-go!",
+          "isDefaultTitle": false,
+          "backgroundColor": "#ff0000",
+          "showNumbers": true,
+          "showCompletionIndicators": true
+        },
+        "library": [
+          {
+            "title": "Save Princess",
+            "emoji": "👸",
+            "description": "Help someone who needs assistance",
+            "cardType": "single-use"
+          },
+          {
+            "title": "Fire Flower Power",
+            "emoji": "🔥",
+            "description": "Deep breathing exercises",
+            "cardType": "frequent"
+          }
+        ]
+      },
+      "luigi-id": {
+        "id": "luigi-id",
+        "name": "Luigi",
+        "icon": "🟢",
+        "activities": [
+          {
+            "id": "luigi-1",
+            "title": "Brave Start",
+            "emoji": "💚",
+            "description": "Morning affirmations and confidence building",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1
+          },
+          {
+            "id": "luigi-2",
+            "title": "Ghost Busting",
+            "emoji": "👻",
+            "description": "Anxiety management techniques",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "luigi-3",
+            "title": "Speech Practice",
+            "emoji": "🗣️",
+            "description": "Work on volume control and clear speech",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3
+          },
+          {
+            "id": "luigi-4",
+            "title": "Mansion Exploration",
+            "emoji": "🏚️",
+            "description": "Sensory integration activities",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "luigi-5",
+            "title": "Brother Time",
+            "emoji": "👬",
+            "description": "Social interaction and cooperation practice",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          },
+          {
+            "id": "luigi-6",
+            "title": "Vacuum Training",
+            "emoji": "🔌",
+            "description": "Life skills - cleaning and organizing",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 6
+          },
+          {
+            "id": "luigi-7",
+            "title": "Green Machine",
+            "emoji": "🥗",
+            "description": "Try new healthy foods",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 7
+          },
+          {
+            "id": "luigi-8",
+            "title": "Quiet Time",
+            "emoji": "🤫",
+            "description": "Relaxation and mindfulness exercises",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 8
+          }
+        ],
+        "tomorrowActivities": [],
+        "settings": {
+          "title": "Luigi",
+          "subtitle": "Okie Dokie!",
+          "isDefaultTitle": false,
+          "backgroundColor": "#00ff00",
+          "showNumbers": true,
+          "showCompletionIndicators": true
+        },
+        "library": [
+          {
+            "title": "Poltergust Practice",
+            "emoji": "🌪️",
+            "description": "Deep pressure sensory activity",
+            "cardType": "frequent"
+          },
+          {
+            "title": "Courage Boost",
+            "emoji": "⭐",
+            "description": "Face a fear with support",
+            "cardType": "single-use"
+          }
+        ]
+      },
+      "toad-id": {
+        "id": "toad-id",
+        "name": "Toad",
+        "icon": "🍄",
+        "activities": [
+          {
+            "id": "toad-1",
+            "title": "Kingdom Helper",
+            "emoji": "🏰",
+            "description": "Morning routine and getting ready",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1
+          },
+          {
+            "id": "toad-2",
+            "title": "Communication Board",
+            "emoji": "📋",
+            "description": "AAC device practice and communication",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "toad-3",
+            "title": "Item Shop",
+            "emoji": "🛍️",
+            "description": "Money skills and making choices",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3
+          },
+          {
+            "id": "toad-4",
+            "title": "Mushroom Moves",
+            "emoji": "🕺",
+            "description": "Physical therapy and movement",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "toad-5",
+            "title": "Helper Tasks",
+            "emoji": "✅",
+            "description": "Complete classroom jobs and responsibilities",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          },
+          {
+            "id": "toad-6",
+            "title": "Visual Schedule",
+            "emoji": "📅",
+            "description": "Review and follow daily picture schedule",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 6
+          },
+          {
+            "id": "toad-7",
+            "title": "Snack Time",
+            "emoji": "🍎",
+            "description": "Practice requesting and eating independently",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 7
+          },
+          {
+            "id": "toad-8",
+            "title": "Friend Time",
+            "emoji": "🤝",
+            "description": "Structured play and social interaction",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 8
+          }
+        ],
+        "tomorrowActivities": [],
+        "settings": {
+          "title": "Toad",
+          "subtitle": "Ready to Help!",
+          "isDefaultTitle": false,
+          "backgroundColor": "#ff69b4",
+          "showNumbers": true,
+          "showCompletionIndicators": true
+        },
+        "library": [
+          {
+            "title": "Power-Up Alert",
+            "emoji": "⚡",
+            "description": "Sensory break needed",
+            "cardType": "single-use"
+          },
+          {
+            "title": "Kingdom Tour",
+            "emoji": "🗺️",
+            "description": "Practice giving directions",
+            "cardType": "frequent"
+          }
+        ]
+      },
+      "peach-id": {
+        "id": "peach-id",
+        "name": "Princess Peach",
+        "icon": "👑",
+        "activities": [
+          {
+            "id": "peach-1",
+            "title": "Royal Morning",
+            "emoji": "☀️",
+            "description": "Self-care routine and grooming skills",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1
+          },
+          {
+            "id": "peach-2",
+            "title": "Tea Party Talk",
+            "emoji": "🫖",
+            "description": "Speech therapy with social scenarios",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "peach-3",
+            "title": "Emotion Kingdom",
+            "emoji": "🎭",
+            "description": "Identify and express feelings",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3
+          },
+          {
+            "id": "peach-4",
+            "title": "Art Therapy",
+            "emoji": "🎨",
+            "description": "Express creativity and fine motor practice",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "peach-5",
+            "title": "Kingdom Rules",
+            "emoji": "📜",
+            "description": "Understanding social rules and expectations",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          },
+          {
+            "id": "peach-6",
+            "title": "Parasol Balance",
+            "emoji": "☂️",
+            "description": "Gross motor skills and coordination",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 6
+          },
+          {
+            "id": "peach-7",
+            "title": "Cooking Class",
+            "emoji": "🍰",
+            "description": "Life skills and following recipes",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 7
+          },
+          {
+            "id": "peach-8",
+            "title": "Calm Castle",
+            "emoji": "🏰",
+            "description": "Evening relaxation and wind-down routine",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 8
+          }
+        ],
+        "tomorrowActivities": [],
+        "settings": {
+          "title": "Princess Peach",
+          "subtitle": "Sweet as Cake!",
+          "isDefaultTitle": false,
+          "backgroundColor": "#ffb6c1",
+          "showNumbers": true,
+          "showCompletionIndicators": true
+        },
+        "library": [
+          {
+            "title": "Royal Decree",
+            "emoji": "📣",
+            "description": "Practice assertive communication",
+            "cardType": "single-use"
+          },
+          {
+            "title": "Float Power",
+            "emoji": "🌸",
+            "description": "Calming breathing exercise",
+            "cardType": "frequent"
+          }
+        ]
+      }
+    },
+    "groupLibrary": [
+      {
+        "title": "Power Star",
+        "emoji": "⭐",
+        "description": "Celebrate a big achievement",
+        "cardType": "single-use"
+      },
+      {
+        "title": "Warp Pipe",
+        "emoji": "🟩",
+        "description": "Transition to next activity",
+        "cardType": "frequent"
+      },
+      {
+        "title": "1-Up Mushroom",
+        "emoji": "🍄",
+        "description": "Extra sensory break",
+        "cardType": "single-use"
+      },
+      {
+        "title": "Question Block",
+        "emoji": "❓",
+        "description": "Ask for help when needed",
+        "cardType": "frequent"
+      },
+      {
+        "title": "Coin Collect",
+        "emoji": "🪙",
+        "description": "Earn reward for good choices",
+        "cardType": "frequent"
+      },
+      {
+        "title": "Rainbow Road",
+        "emoji": "🌈",
+        "description": "Free choice activity",
+        "cardType": "single-use"
+      },
+      {
+        "title": "Bowser Battle",
+        "emoji": "🐢",
+        "description": "Face a challenging task",
+        "cardType": "single-use"
+      },
+      {
+        "title": "Yoshi Ride",
+        "emoji": "🦖",
+        "description": "Partner activity with a friend",
+        "cardType": "frequent"
+      },
+      {
+        "title": "Music Box",
+        "emoji": "🎵",
+        "description": "Music therapy session",
+        "cardType": "frequent"
+      },
+      {
+        "title": "Super Leaf",
+        "emoji": "🍂",
+        "description": "Outdoor sensory activity",
+        "cardType": "frequent"
+      }
+    ]
+  },
+  "settings": {
+    "autoSync": false,
+    "backupReminder": false
+  }
+}
