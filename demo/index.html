@@ -83,20 +83,26 @@
                 padding-top: 60px !important; /* 40px banner + 20px extra for header */
             }
             
-            /* Make demo banner more compact on mobile */
-            .demo-text {
-                display: none;
+            /* Make banner text smaller on mobile */
+            .demo-banner {
+                font-size: 12px !important;
+                padding: 6px 3px !important;
             }
             
-            /* Show shorter version on mobile */
-            .demo-banner-mobile {
-                display: inline;
+            .demo-banner a {
+                font-size: 11px !important;
             }
         }
         
-        /* Hide mobile text on desktop */
-        .demo-banner-mobile {
-            display: none;
+        /* Very small screens */
+        @media (max-width: 360px) {
+            .demo-banner {
+                font-size: 11px !important;
+            }
+            
+            .demo-banner a {
+                font-size: 10px !important;
+            }
         }
         
         /* Ensure backdrop also accounts for banner */
@@ -113,10 +119,9 @@
 </head>
 <body>
     <!-- Demo Mode Banner -->
-    <div style="background-color: #f59e0b; color: white; text-align: center; padding: 8px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 14px;">
-        <span class="demo-text">🎮 DEMO MODE - Mushroom Kingdom 🍄</span>
-        <span class="demo-banner-mobile">🎮 DEMO 🍄</span>
-        <a href="#" onclick="localStorage.removeItem('stackMapDemoMode'); window.location.replace('/'); return false;" style="color: white; text-decoration: underline; cursor: pointer; white-space: nowrap;">Exit</a>
+    <div class="demo-banner" style="background-color: #f59e0b; color: white; text-align: center; padding: 8px 5px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px;">
+        <span style="white-space: nowrap;">🎮 DEMO - Mushroom Kingdom 🍄</span>
+        <a href="#" onclick="localStorage.removeItem('stackMapDemoMode'); window.location.replace('/'); return false;" style="color: white; text-decoration: underline; cursor: pointer; white-space: nowrap; font-size: 12px;">Exit</a>
     </div>
     
     <!-- Header Wrapper for unified shadow -->
@@ -222,10 +227,214 @@
                 window.appInstance = new StackMapApp();
                 window.hybridPanelManager = new HybridPanelManager(window.appInstance);
                 window.appInstance.init();
+                
+                // Show demo welcome popup after a short delay
+                setTimeout(() => {
+                    showDemoWelcome();
+                }, 500);
             } catch (error) {
                 console.error('Failed to initialize app:', error);
             }
         });
+        
+        function showDemoWelcome() {
+            // Check if user has already seen the demo welcome
+            if (localStorage.getItem('stackmap-demo-welcome-seen') === 'true') {
+                return;
+            }
+            
+            // Create welcome modal
+            const modal = document.createElement('div');
+            modal.className = 'demo-welcome-modal';
+            modal.innerHTML = `
+                <div class="demo-welcome-backdrop"></div>
+                <div class="demo-welcome-content">
+                    <div class="demo-welcome-header">
+                        <h2>🎮 Welcome to the StackMap Demo!</h2>
+                    </div>
+                    
+                    <div class="demo-welcome-body">
+                        <p><strong>This demo showcases how StackMap helps children with special needs manage their daily routines.</strong></p>
+                        
+                        <div class="demo-welcome-section">
+                            <h3>🍄 Meet the Mushroom Kingdom Crew</h3>
+                            <p>We've created therapeutic activity schedules for Mario, Luigi, Peach, Toad, and even Bowser! Each character has:</p>
+                            <ul>
+                                <li>Daily activities focused on skills development</li>
+                                <li>Pinned tasks for important routines</li>
+                                <li>Tomorrow's activities for planning ahead</li>
+                                <li>Personal themes and colors</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="demo-welcome-section">
+                            <h3>🎯 Try These Features</h3>
+                            <ul>
+                                <li><strong>Tap cards</strong> to mark activities complete</li>
+                                <li><strong>Switch users</strong> using the dropdown menu</li>
+                                <li><strong>Toggle between Today/Tomorrow</strong> to see different activities</li>
+                                <li><strong>Enter Edit Mode</strong> (Player 1 mode) to customize activities</li>
+                                <li><strong>Change themes</strong> with the palette button</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="demo-welcome-section">
+                            <h3>✨ Have Fun Exploring!</h3>
+                            <p>Take StackMap for a test drive! This demo data won't affect your real data, so feel free to experiment.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="demo-welcome-footer">
+                        <button class="demo-welcome-button" onclick="closeDemoWelcome()">
+                            Let's Go! 🚀
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Add styles
+            const style = document.createElement('style');
+            style.textContent = \`
+                .demo-welcome-modal {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    z-index: 10001;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                }
+                
+                .demo-welcome-backdrop {
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    z-index: 1;
+                }
+                
+                .demo-welcome-content {
+                    position: relative;
+                    background: white;
+                    border-radius: 16px;
+                    max-width: 500px;
+                    width: 100%;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+                    z-index: 2;
+                }
+                
+                .demo-welcome-header {
+                    background: #f59e0b;
+                    color: white;
+                    padding: 24px;
+                    border-radius: 16px 16px 0 0;
+                    text-align: center;
+                }
+                
+                .demo-welcome-header h2 {
+                    margin: 0;
+                    font-size: 1.5rem;
+                    font-weight: 700;
+                }
+                
+                .demo-welcome-body {
+                    padding: 24px;
+                }
+                
+                .demo-welcome-body p {
+                    margin: 0 0 16px 0;
+                    line-height: 1.5;
+                    color: #333;
+                }
+                
+                .demo-welcome-section {
+                    margin-bottom: 24px;
+                }
+                
+                .demo-welcome-section:last-child {
+                    margin-bottom: 0;
+                }
+                
+                .demo-welcome-section h3 {
+                    margin: 0 0 12px 0;
+                    color: #f59e0b;
+                    font-size: 1.1rem;
+                }
+                
+                .demo-welcome-section ul {
+                    margin: 0;
+                    padding-left: 24px;
+                }
+                
+                .demo-welcome-section li {
+                    margin-bottom: 8px;
+                    line-height: 1.4;
+                    color: #555;
+                }
+                
+                .demo-welcome-footer {
+                    padding: 24px;
+                    text-align: center;
+                    border-top: 1px solid #eee;
+                }
+                
+                .demo-welcome-button {
+                    background: #f59e0b;
+                    color: white;
+                    border: none;
+                    padding: 12px 32px;
+                    font-size: 1.1rem;
+                    font-weight: 600;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    transition: all 0.2s ease;
+                }
+                
+                .demo-welcome-button:hover {
+                    background: #dc7a00;
+                    transform: translateY(-1px);
+                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+                }
+                
+                @media (max-width: 480px) {
+                    .demo-welcome-modal {
+                        padding: 0;
+                    }
+                    
+                    .demo-welcome-content {
+                        max-width: 100%;
+                        height: 100%;
+                        max-height: 100%;
+                        border-radius: 0;
+                    }
+                    
+                    .demo-welcome-header {
+                        border-radius: 0;
+                    }
+                }
+            \`;
+            document.head.appendChild(style);
+        }
+        
+        function closeDemoWelcome() {
+            // Mark as seen
+            localStorage.setItem('stackmap-demo-welcome-seen', 'true');
+            
+            // Remove modal
+            const modal = document.querySelector('.demo-welcome-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
     </script>
 </body>
 </html>
