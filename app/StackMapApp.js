@@ -54,6 +54,27 @@ class StackMapApp {
         this.init();
     }
 
+    // Helper method to get the appropriate storage key based on demo mode
+    getStorageKey(baseKey) {
+        const isDemo = localStorage.getItem('stackMapDemoMode') === 'true';
+        // Some keys should remain shared between demo and main app
+        const sharedKeys = ['stackmap-device-id', 'stackmap-google-token', 'ios-nav-shown'];
+        if (sharedKeys.includes(baseKey)) {
+            return baseKey;
+        }
+        return isDemo ? `${baseKey}-demo` : baseKey;
+    }
+    
+    // Clean up demo mode when navigating away
+    static cleanupDemoMode() {
+        // Only clean up if we're actually in demo mode
+        if (localStorage.getItem('stackMapDemoMode') === 'true') {
+            localStorage.removeItem('stackMapDemoMode');
+            // Demo data is kept separate, so no need to clear it
+            console.log('Demo mode cleaned up');
+        }
+    }
+
     init() {
         // Load data FIRST
         const hasData = this.loadFromLocalStorage();
@@ -342,9 +363,9 @@ class StackMapApp {
         // Title remains customizable (for now)
         let userTitle = currentUser.customTitle || 'StackMap';
         
-        // Subtitle format: always "Name • Day"
+        // Subtitle format: always "Emoji Name • Day"
         const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-        const userSubtitle = `${currentUser.name} • ${dayText}`;
+        const userSubtitle = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${currentUser.name} • ${dayText}`;
         
         // Update all title elements
         const mainTitle = document.getElementById('mainTitle');
@@ -358,7 +379,7 @@ class StackMapApp {
             this.setupTitleEditing(mainTitle);
         }
         if (subtitle) {
-            subtitle.textContent = userSubtitle;
+            subtitle.innerHTML = userSubtitle;
             
             // Remove any existing click handlers
             subtitle.replaceWith(subtitle.cloneNode(true));
@@ -1621,7 +1642,7 @@ class StackMapApp {
         // Check if user still has default name
         const currentUser = this.appState.getCurrentUser();
         const hasDefaultName = currentUser.name === 'StackMap User' || currentUser.name === 'You';
-        const hasSeenSplash = localStorage.getItem('stackmap-splash-seen');
+        const hasSeenSplash = localStorage.getItem(this.getStorageKey('stackmap-splash-seen'));
         
         if (hasDefaultName && !hasSeenSplash) {
             this.showSplashScreen();
@@ -1756,7 +1777,7 @@ class StackMapApp {
             // Escape key handling
             if (e.key === 'Escape') {
                 // Don't allow closing on first visit
-                if (!localStorage.getItem('stackmap-splash-seen')) {
+                if (!localStorage.getItem(this.getStorageKey('stackmap-splash-seen'))) {
                     return;
                 }
                 
@@ -1846,7 +1867,7 @@ class StackMapApp {
         this.appState._triggerSave();
         
         // Mark splash as seen
-        localStorage.setItem('stackmap-splash-seen', 'true');
+        localStorage.setItem(this.getStorageKey('stackmap-splash-seen'), 'true');
         
         // Fade out and hide splash screen
         splashScreen.classList.add('fade-out');
@@ -1905,7 +1926,7 @@ class StackMapApp {
                 document.body.classList.remove('showing-welcome');
                 
                 // Mark as seen in localStorage
-                localStorage.setItem('stackmap-welcome-seen', 'true');
+                localStorage.setItem(this.getStorageKey('stackmap-welcome-seen'), 'true');
             }, 300);
         }
     }
@@ -1915,8 +1936,8 @@ class StackMapApp {
         window.hybridPanelManager.closeAllPanels();
         
         // Show welcome splash again (temporarily reset the localStorage flag)
-        const originalFlag = localStorage.getItem('stackmap-welcome-seen');
-        localStorage.removeItem('stackmap-welcome-seen');
+        const originalFlag = localStorage.getItem(this.getStorageKey('stackmap-welcome-seen'));
+        localStorage.removeItem(this.getStorageKey('stackmap-welcome-seen'));
         
         setTimeout(() => {
             this.showWelcomeSplash();
@@ -1926,7 +1947,7 @@ class StackMapApp {
             this.dismissWelcome = () => {
                 originalDismiss();
                 if (originalFlag) {
-                    localStorage.setItem('stackmap-welcome-seen', originalFlag);
+                    localStorage.setItem(this.getStorageKey('stackmap-welcome-seen'), originalFlag);
                 }
                 // Restore original method
                 this.dismissWelcome = originalDismiss;
@@ -3435,7 +3456,7 @@ class StackMapApp {
     
     getDrawerPreference() {
         try {
-            const pref = localStorage.getItem('stackmap-drawer-preference');
+            const pref = localStorage.getItem(this.getStorageKey('stackmap-drawer-preference'));
             return pref ? JSON.parse(pref) : { drawerOpen: true }; // Default open for discoverability
         } catch (error) {
             console.error('Error reading drawer preference:', error);
@@ -3445,7 +3466,7 @@ class StackMapApp {
     
     setDrawerPreference(isOpen) {
         try {
-            localStorage.setItem('stackmap-drawer-preference', JSON.stringify({
+            localStorage.setItem(this.getStorageKey('stackmap-drawer-preference'), JSON.stringify({
                 drawerOpen: isOpen
             }));
         // console.log('Drawer preference saved:', isOpen);

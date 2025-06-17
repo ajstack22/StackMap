@@ -1320,10 +1320,10 @@ class HybridPanelManager {
         const currentDay = this.app.appState.ui.currentDay || 'today';
         const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
         
-        // Update subtitle format: "Emoji Name • Day"
+        // Update subtitle format: "Emoji Name • Day" with larger emoji
         const subtitle = document.getElementById('subtitle');
         if (subtitle) {
-            subtitle.textContent = `${currentUser.icon} ${currentUser.name} • ${dayText}`;
+            subtitle.innerHTML = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${currentUser.name} • ${dayText}`;
         }
     }
 

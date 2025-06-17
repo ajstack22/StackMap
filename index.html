@@ -58,7 +58,6 @@
     <link rel="stylesheet" href="styles/draggable-drawer.css">
     <link rel="stylesheet" href="styles/hybrid-panels.css">
     <link rel="stylesheet" href="styles/celebrations.css">
-    <link rel="stylesheet" href="styles/cards-autosize.css">
     
     <!-- Environment Configuration (load before other scripts) -->
     <script src="env-loader.js"></script>
@@ -222,6 +221,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             try {
+                // Clean up demo mode if we're coming from the demo
+                if (typeof StackMapApp !== 'undefined' && StackMapApp.cleanupDemoMode) {
+                    StackMapApp.cleanupDemoMode();
+                }
+                
                 window.appInstance = new StackMapApp();
                 
                 // Initialize hybrid panel system (replaces old PreferencesManager)

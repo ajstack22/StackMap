@@ -24,15 +24,48 @@
     <link rel="stylesheet" href="../styles/draggable-drawer.css">
     <link rel="stylesheet" href="../styles/splash-screen.css">
     <link rel="stylesheet" href="../styles/utilities.css">
-    <link rel="stylesheet" href="../styles/cards-autosize.css">
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+    <style>
+        /* Adjust positioning for demo banner */
+        .floating-nav {
+            top: 60px !important; /* 20px original + 40px banner */
+        }
+        
+        #main-content {
+            padding-top: 40px !important; /* Add space for banner */
+        }
+        
+        /* Adjust side panels for demo banner */
+        .side-panel {
+            top: 40px !important; /* Push down by banner height */
+            height: calc(100vh - 40px) !important; /* Reduce height by banner height */
+        }
+        
+        /* Ensure backdrop also accounts for banner */
+        .backdrop {
+            top: 40px !important;
+            height: calc(100% - 40px) !important;
+        }
+        
+        /* Also adjust the FAB buttons */
+        .fab {
+            /* FABs are already positioned correctly, but ensure they're below banner */
+        }
+    </style>
 </head>
 <body>
+    <!-- Demo Mode Banner -->
+    <div style="background-color: #f59e0b; color: white; text-align: center; padding: 8px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000;">
+        🎮 DEMO MODE - Mushroom Kingdom Data 🍄
+        <a href="#" onclick="localStorage.removeItem('stackMapDemoMode'); window.location.replace('/'); return false;" style="color: white; margin-left: 20px; text-decoration: underline; cursor: pointer;">Exit Demo</a>
+    </div>
+    
     <!-- Header Wrapper for unified shadow -->
-    <div class="header-wrapper" id="headerWrapper">
+    <div class="header-wrapper" id="headerWrapper" style="top: 40px;">
         <!-- Unified Application Header -->
         <header class="app-header" role="banner" id="appHeader">
             <div class="header-content">
@@ -75,6 +108,10 @@
             // Only clear demo-specific data, not all localStorage
             localStorage.removeItem('stackMapData-demo');
             localStorage.removeItem('stackMapDemoMode');
+            // Clear demo-specific UI preferences
+            localStorage.removeItem('stackmap-splash-seen-demo');
+            localStorage.removeItem('stackmap-welcome-seen-demo');
+            localStorage.removeItem('stackmap-drawer-preference-demo');
             
             const xhr = new XMLHttpRequest();
             xhr.open('GET', '../demo-mushroom-kingdom.json', false); // false = synchronous

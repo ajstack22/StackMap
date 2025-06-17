@@ -12,23 +12,24 @@
       "mario-id": {
         "id": "mario-id",
         "name": "Mario",
-        "icon": "🔴",
+        "icon": "🍄",
         "activities": [
           {
             "id": "mario-1",
             "title": "Morning Power-Up",
             "icon": "🍄",
-            "description": "Take morning vitamins and eat a healthy breakfast",
+            "description": "Vitamins & breakfast",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
-            "cardNumber": 1
+            "cardNumber": 1,
+            "isPinned": true
           },
           {
             "id": "mario-2",
-            "title": "Speech Therapy",
+            "title": "Speech Practice",
             "icon": "💬",
-            "description": "Practice 'Mama Mia' sounds with speech therapist",
+            "description": "Work on 'M' sounds",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -38,7 +39,7 @@
             "id": "mario-3",
             "title": "Jump Practice",
             "icon": "🦘",
-            "description": "Occupational therapy - practice jumping and balance",
+            "description": "Balance & coordination",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -48,7 +49,7 @@
             "id": "mario-4",
             "title": "Fix-It Time",
             "icon": "🔧",
-            "description": "Fine motor skills practice with tools and puzzles",
+            "description": "Fine motor skills",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -58,7 +59,7 @@
             "id": "mario-5",
             "title": "Social Skills",
             "icon": "👋",
-            "description": "Practice greetings and taking turns with friends",
+            "description": "Greetings & turns",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -66,9 +67,9 @@
           },
           {
             "id": "mario-6",
-            "title": "Pipe Navigation",
+            "title": "Quiet Break",
             "icon": "🟢",
-            "description": "Sensory break in the quiet room",
+            "description": "Sensory room time",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -78,24 +79,77 @@
             "id": "mario-7",
             "title": "Coin Counting",
             "icon": "🪙",
-            "description": "Math practice with counting and sorting",
+            "description": "Math & sorting",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
-            "cardNumber": 7
+            "cardNumber": 7,
+            "isPinned": true
           },
           {
             "id": "mario-8",
             "title": "Story Time",
             "icon": "📚",
-            "description": "Read about adventures in the Mushroom Kingdom",
+            "description": "Adventure reading",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
             "cardNumber": 8
           }
         ],
-        "tomorrowActivities": [],
+        "tomorrowActivities": [
+          {
+            "id": "mario-t1",
+            "title": "Plumber Training",
+            "icon": "🔧",
+            "description": "Practice with tools",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1
+          },
+          {
+            "id": "mario-t2",
+            "title": "Castle Visit",
+            "icon": "🏰",
+            "description": "Social time with Peach",
+            "cardType": "single-use",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "mario-t3",
+            "title": "Music Class",
+            "icon": "🎵",
+            "description": "Learn new songs",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3,
+            "isPinned": true
+          },
+          {
+            "id": "mario-t4",
+            "title": "Swimming",
+            "icon": "🏊",
+            "description": "Water safety skills",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "mario-t5",
+            "title": "Art Project",
+            "icon": "🎨",
+            "description": "Creative expression",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          }
+        ],
         "settings": {
           "title": "Mario",
           "subtitle": "Let's-a-go!",
@@ -122,13 +176,13 @@
       "luigi-id": {
         "id": "luigi-id",
         "name": "Luigi",
-        "icon": "🟢",
+        "icon": "👻",
         "activities": [
           {
             "id": "luigi-1",
             "title": "Brave Start",
             "icon": "💚",
-            "description": "Morning affirmations and confidence building",
+            "description": "Morning confidence",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -136,19 +190,20 @@
           },
           {
             "id": "luigi-2",
-            "title": "Ghost Busting",
+            "title": "Calm Time",
             "icon": "👻",
-            "description": "Anxiety management techniques",
+            "description": "Anxiety tools",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
-            "cardNumber": 2
+            "cardNumber": 2,
+            "isPinned": true
           },
           {
             "id": "luigi-3",
-            "title": "Speech Practice",
+            "title": "Voice Work",
             "icon": "🗣️",
-            "description": "Work on volume control and clear speech",
+            "description": "Volume practice",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -156,9 +211,9 @@
           },
           {
             "id": "luigi-4",
-            "title": "Mansion Exploration",
+            "title": "Sensory Play",
             "icon": "🏚️",
-            "description": "Sensory integration activities",
+            "description": "Integration time",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -168,7 +223,7 @@
             "id": "luigi-5",
             "title": "Brother Time",
             "icon": "👬",
-            "description": "Social interaction and cooperation practice",
+            "description": "Cooperation skills",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -176,9 +231,9 @@
           },
           {
             "id": "luigi-6",
-            "title": "Vacuum Training",
+            "title": "Clean Up",
             "icon": "🔌",
-            "description": "Life skills - cleaning and organizing",
+            "description": "Life skills",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -186,9 +241,9 @@
           },
           {
             "id": "luigi-7",
-            "title": "Green Machine",
+            "title": "Green Foods",
             "icon": "🥗",
-            "description": "Try new healthy foods",
+            "description": "Try new foods",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -198,19 +253,71 @@
             "id": "luigi-8",
             "title": "Quiet Time",
             "icon": "🤫",
-            "description": "Relaxation and mindfulness exercises",
+            "description": "Mindfulness",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
             "cardNumber": 8
           }
         ],
-        "tomorrowActivities": [],
+        "tomorrowActivities": [
+          {
+            "id": "luigi-t1",
+            "title": "Mansion Cleanup",
+            "icon": "🏚️",
+            "description": "Organize room",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1,
+            "isPinned": true
+          },
+          {
+            "id": "luigi-t2",
+            "title": "Courage Medal",
+            "icon": "🏅",
+            "description": "Reward for bravery",
+            "cardType": "single-use",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "luigi-t3",
+            "title": "Nature Walk",
+            "icon": "🌳",
+            "description": "Outdoor exploration",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3
+          },
+          {
+            "id": "luigi-t4",
+            "title": "Puzzle Time",
+            "icon": "🧩",
+            "description": "Problem solving",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "luigi-t5",
+            "title": "Evening Journal",
+            "icon": "📝",
+            "description": "Write about feelings",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          }
+        ],
         "settings": {
           "title": "Luigi",
           "subtitle": "Okie Dokie!",
           "isDefaultTitle": false,
-          "backgroundColor": "#00ff00",
+          "backgroundColor": "#228B22",
           "showNumbers": true,
           "showCompletionIndicators": true
         },
@@ -232,13 +339,13 @@
       "toad-id": {
         "id": "toad-id",
         "name": "Toad",
-        "icon": "🍄",
+        "icon": "🏰",
         "activities": [
           {
             "id": "toad-1",
-            "title": "Kingdom Helper",
+            "title": "Morning Helper",
             "icon": "🏰",
-            "description": "Morning routine and getting ready",
+            "description": "Get ready routine",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -246,9 +353,9 @@
           },
           {
             "id": "toad-2",
-            "title": "Communication Board",
+            "title": "AAC Practice",
             "icon": "📋",
-            "description": "AAC device practice and communication",
+            "description": "Device communication",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -258,7 +365,7 @@
             "id": "toad-3",
             "title": "Item Shop",
             "icon": "🛍️",
-            "description": "Money skills and making choices",
+            "description": "Money & choices",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -266,9 +373,9 @@
           },
           {
             "id": "toad-4",
-            "title": "Mushroom Moves",
+            "title": "Move Time",
             "icon": "🕺",
-            "description": "Physical therapy and movement",
+            "description": "Physical therapy",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -276,19 +383,20 @@
           },
           {
             "id": "toad-5",
-            "title": "Helper Tasks",
+            "title": "Helper Jobs",
             "icon": "✅",
-            "description": "Complete classroom jobs and responsibilities",
+            "description": "Class responsibilities",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
-            "cardNumber": 5
+            "cardNumber": 5,
+            "isPinned": true
           },
           {
             "id": "toad-6",
-            "title": "Visual Schedule",
+            "title": "Picture Schedule",
             "icon": "📅",
-            "description": "Review and follow daily picture schedule",
+            "description": "Follow daily plan",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -298,7 +406,7 @@
             "id": "toad-7",
             "title": "Snack Time",
             "icon": "🍎",
-            "description": "Practice requesting and eating independently",
+            "description": "Independent eating",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -308,19 +416,71 @@
             "id": "toad-8",
             "title": "Friend Time",
             "icon": "🤝",
-            "description": "Structured play and social interaction",
+            "description": "Structured play",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
             "cardNumber": 8
           }
         ],
-        "tomorrowActivities": [],
+        "tomorrowActivities": [
+          {
+            "id": "toad-t1",
+            "title": "Library Helper",
+            "icon": "📚",
+            "description": "Organize books",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1
+          },
+          {
+            "id": "toad-t2",
+            "title": "Kart Racing",
+            "icon": "🏎️",
+            "description": "Fun motor activity",
+            "cardType": "single-use",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "toad-t3",
+            "title": "Cooking Helper",
+            "icon": "👨‍🍳",
+            "description": "Kitchen skills",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3,
+            "isPinned": true
+          },
+          {
+            "id": "toad-t4",
+            "title": "Garden Time",
+            "icon": "🌻",
+            "description": "Plant care",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "toad-t5",
+            "title": "Clean Up Song",
+            "icon": "🎶",
+            "description": "Tidy with music",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          }
+        ],
         "settings": {
           "title": "Toad",
           "subtitle": "Ready to Help!",
           "isDefaultTitle": false,
-          "backgroundColor": "#ff69b4",
+          "backgroundColor": "#4169E1",
           "showNumbers": true,
           "showCompletionIndicators": true
         },
@@ -348,7 +508,7 @@
             "id": "peach-1",
             "title": "Royal Morning",
             "icon": "☀️",
-            "description": "Self-care routine and grooming skills",
+            "description": "Self-care routine",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -356,9 +516,9 @@
           },
           {
             "id": "peach-2",
-            "title": "Tea Party Talk",
+            "title": "Tea Talk",
             "icon": "🫖",
-            "description": "Speech therapy with social scenarios",
+            "description": "Social speech",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -366,19 +526,20 @@
           },
           {
             "id": "peach-3",
-            "title": "Emotion Kingdom",
+            "title": "Feelings Time",
             "icon": "🎭",
-            "description": "Identify and express feelings",
+            "description": "Express emotions",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
-            "cardNumber": 3
+            "cardNumber": 3,
+            "isPinned": true
           },
           {
             "id": "peach-4",
-            "title": "Art Therapy",
+            "title": "Art Time",
             "icon": "🎨",
-            "description": "Express creativity and fine motor practice",
+            "description": "Creative expression",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -386,9 +547,9 @@
           },
           {
             "id": "peach-5",
-            "title": "Kingdom Rules",
+            "title": "Social Rules",
             "icon": "📜",
-            "description": "Understanding social rules and expectations",
+            "description": "Learn expectations",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
@@ -396,9 +557,9 @@
           },
           {
             "id": "peach-6",
-            "title": "Parasol Balance",
+            "title": "Balance Play",
             "icon": "☂️",
-            "description": "Gross motor skills and coordination",
+            "description": "Gross motor skills",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -406,9 +567,9 @@
           },
           {
             "id": "peach-7",
-            "title": "Cooking Class",
+            "title": "Cooking Time",
             "icon": "🍰",
-            "description": "Life skills and following recipes",
+            "description": "Follow recipes",
             "cardType": "frequent",
             "completed": false,
             "visible": true,
@@ -418,19 +579,71 @@
             "id": "peach-8",
             "title": "Calm Castle",
             "icon": "🏰",
-            "description": "Evening relaxation and wind-down routine",
+            "description": "Evening wind-down",
             "cardType": "recurring",
             "completed": false,
             "visible": true,
             "cardNumber": 8
           }
         ],
-        "tomorrowActivities": [],
+        "tomorrowActivities": [
+          {
+            "id": "peach-t1",
+            "title": "Royal Duties",
+            "icon": "👑",
+            "description": "Leadership practice",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1,
+            "isPinned": true
+          },
+          {
+            "id": "peach-t2",
+            "title": "Garden Party",
+            "icon": "🌺",
+            "description": "Social event planning",
+            "cardType": "single-use",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "peach-t3",
+            "title": "Dance Class",
+            "icon": "💃",
+            "description": "Movement therapy",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3
+          },
+          {
+            "id": "peach-t4",
+            "title": "Letter Writing",
+            "icon": "✉️",
+            "description": "Communication skills",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "peach-t5",
+            "title": "Meditation",
+            "icon": "🧘‍♀️",
+            "description": "Mindfulness practice",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          }
+        ],
         "settings": {
           "title": "Princess Peach",
           "subtitle": "Sweet as Cake!",
           "isDefaultTitle": false,
-          "backgroundColor": "#ffb6c1",
+          "backgroundColor": "#ff69b4",
           "showNumbers": true,
           "showCompletionIndicators": true
         },
@@ -454,13 +667,13 @@
       {
         "title": "Power Star",
         "icon": "⭐",
-        "description": "Celebrate a big achievement",
+        "description": "Big achievement",
         "cardType": "single-use"
       },
       {
         "title": "Warp Pipe",
         "icon": "🟩",
-        "description": "Transition to next activity",
+        "description": "Next activity",
         "cardType": "frequent"
       },
       {
@@ -470,15 +683,15 @@
         "cardType": "single-use"
       },
       {
-        "title": "Question Block",
+        "title": "Help Block",
         "icon": "❓",
-        "description": "Ask for help when needed",
+        "description": "Ask for help",
         "cardType": "frequent"
       },
       {
-        "title": "Coin Collect",
+        "title": "Coin Reward",
         "icon": "🪙",
-        "description": "Earn reward for good choices",
+        "description": "Good choice prize",
         "cardType": "frequent"
       },
       {
@@ -488,15 +701,15 @@
         "cardType": "single-use"
       },
       {
-        "title": "Bowser Battle",
+        "title": "Boss Battle",
         "icon": "🐢",
-        "description": "Face a challenging task",
+        "description": "Hard challenge",
         "cardType": "single-use"
       },
       {
         "title": "Yoshi Ride",
         "icon": "🦖",
-        "description": "Partner activity with a friend",
+        "description": "Partner activity",
         "cardType": "frequent"
       },
       {
