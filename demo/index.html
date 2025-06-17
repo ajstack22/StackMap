@@ -41,16 +41,20 @@
         // Set demo mode flag first
         window.DEMO_MODE = true;
         
-        // Pre-load demo data into localStorage before any scripts run
-        (async function() {
-            try {
-                const response = await fetch('../demo-mushroom-kingdom.json');
-                const demoData = await response.json();
+        // SYNCHRONOUSLY load demo data before anything else
+        // This blocks all other scripts from loading until demo data is set
+        (function() {
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', '../demo-mushroom-kingdom.json', false); // false = synchronous
+            xhr.send();
+            
+            if (xhr.status === 200) {
+                const demoData = JSON.parse(xhr.responseText);
                 localStorage.setItem('stackMapState', JSON.stringify(demoData));
                 localStorage.setItem('stackMapDemoMode', 'true');
                 console.log('Demo data loaded successfully');
-            } catch (error) {
-                console.error('Failed to load demo data:', error);
+            } else {
+                console.error('Failed to load demo data');
             }
         })();
     </script>
