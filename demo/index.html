@@ -22,49 +22,47 @@
     <link rel="stylesheet" href="../styles/draggable-drawer.css">
     <link rel="stylesheet" href="../styles/splash-screen.css">
     <link rel="stylesheet" href="../styles/utilities.css">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
     <!-- Main App Container -->
     <div id="app"></div>
 
-    <!-- Scripts -->
-    <script>
-        // Define CONFIG inline for demo to avoid loading issues
-        const CONFIG = {
-            DEFAULT_EMOJI: '📝',
-            DEFAULT_COLOR: '#4a90e2',
-            DEFAULT_USER_ID: 'default',
-            SHOW_NUMBERS_DEFAULT: true,
-            SHOW_COMPLETION_DEFAULT: true,
-            CELEBRATION_ENABLED: true,
-            CONFETTI_DURATION: 3000,
-            AUTO_SYNC_ENABLED: false,
-            AUTO_SYNC_INTERVAL: null,
-            DATA_VERSION: 2,
-            MAX_ACTIVITIES: 100,
-            MAX_USERS: 10,
-            USER_NAME_MAX_LENGTH: 30,
-            DISPLAY_MODES: {
-                NUMBERS: 'numbers',
-                ICONS: 'icons',
-                BOTH: 'both'
-            },
-            GOOGLE_CLIENT_ID: null,
-            GOOGLE_API_KEY: null
-        };
-    </script>
+    <!-- Hidden File Input for Import -->
+    <input type="file" id="fileInput" accept=".json" style="display: none;">
+    
+    <!-- Load JavaScript files in dependency order -->
+    <script src="../utils/security.js"></script>
+    <script src="../config/constants.js"></script>
+    <script src="../config/themes.js"></script>
     <script src="../data/emoji-list.js"></script>
     <script src="../data/emoji-names.js"></script>
-    <script src="../components.js"></script>
+    <script src="../data/default-activities.js"></script>
     <script src="../state.js"></script>
-    <script src="../js/CelebrationManager.js"></script>
+    <script src="../components.js"></script>
+    <script src="../renderer.js"></script>
+    <script src="../drive-sync.js"></script>
+    
+    <!-- Load managers -->
     <script src="../js/DynamicMenuSystem.js"></script>
     <script src="../js/MenuConfigurations.js"></script>
     <script src="../js/HybridPanelManager.js"></script>
-    <script src="../renderer.js"></script>
-    <script src="../drive-sync.js"></script>
+    <script src="../js/CelebrationManager.js"></script>
+    
+    <!-- Load modern components -->
+    <script src="../components/ModernUserSelector.js"></script>
+    <script src="../components/ModernDaySelector.js"></script>
+    <script src="../components/DraggableDrawer.js"></script>
+    
+    <!-- Main App -->
     <script src="../app/StackMapApp.js"></script>
+    
+    <!-- Google APIs (needed even with sync disabled) -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
     
     <script>
         // Demo initialization - just load the demo data and run the normal app
