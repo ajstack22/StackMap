@@ -45,6 +45,22 @@
             height: calc(100vh - 40px) !important; /* Reduce height by banner height */
         }
         
+        /* Mobile-specific adjustments for side panels */
+        @media (max-width: 768px) {
+            .side-panel {
+                /* On mobile, panels slide up from bottom, so we need different calculation */
+                top: auto !important;
+                bottom: 0 !important;
+                height: calc(100vh - 40px) !important; /* Still reduce total height */
+                max-height: calc(100vh - 40px) !important;
+            }
+            
+            /* When panel is open on mobile */
+            .side-panel.open {
+                transform: translateY(0) !important;
+            }
+        }
+        
         /* Ensure backdrop also accounts for banner */
         .backdrop {
             top: 40px !important;

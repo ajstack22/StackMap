@@ -154,7 +154,7 @@
           "title": "Mario",
           "subtitle": "Let's-a-go!",
           "isDefaultTitle": false,
-          "backgroundColor": "#ff0000",
+          "backgroundColor": "#dc143c",
           "showNumbers": true,
           "showCompletionIndicators": true
         },
@@ -658,6 +658,170 @@
             "title": "Float Power",
             "icon": "🌸",
             "description": "Calming breathing exercise",
+            "cardType": "frequent"
+          }
+        ]
+      },
+      "bowser-id": {
+        "id": "bowser-id",
+        "name": "Bowser",
+        "icon": "🔥",
+        "activities": [
+          {
+            "id": "bowser-1",
+            "title": "Castle Management",
+            "icon": "🏰",
+            "description": "Kingdom planning",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1,
+            "isPinned": true
+          },
+          {
+            "id": "bowser-2",
+            "title": "Anger Management",
+            "icon": "😤",
+            "description": "Calm down strategies",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2,
+            "isPinned": true
+          },
+          {
+            "id": "bowser-3",
+            "title": "Fire Breathing",
+            "icon": "🔥",
+            "description": "Control practice",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3
+          },
+          {
+            "id": "bowser-4",
+            "title": "Shell Polish",
+            "icon": "🐢",
+            "description": "Self-care routine",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "bowser-5",
+            "title": "Minion Meeting",
+            "icon": "👥",
+            "description": "Team leadership",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          },
+          {
+            "id": "bowser-6",
+            "title": "Gentle Time",
+            "icon": "🧸",
+            "description": "Soft side practice",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 6
+          },
+          {
+            "id": "bowser-7",
+            "title": "Strategy Games",
+            "icon": "♟️",
+            "description": "Planning skills",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 7
+          },
+          {
+            "id": "bowser-8",
+            "title": "Bedtime Roar",
+            "icon": "🌙",
+            "description": "Evening routine",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 8
+          }
+        ],
+        "tomorrowActivities": [
+          {
+            "id": "bowser-t1",
+            "title": "Jr. Training",
+            "icon": "👶",
+            "description": "Parenting time",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 1
+          },
+          {
+            "id": "bowser-t2",
+            "title": "Lava Bath",
+            "icon": "🌋",
+            "description": "Relaxation therapy",
+            "cardType": "single-use",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 2
+          },
+          {
+            "id": "bowser-t3",
+            "title": "Friendship Letter",
+            "icon": "💌",
+            "description": "Write to Mario",
+            "cardType": "frequent",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 3,
+            "isPinned": true
+          },
+          {
+            "id": "bowser-t4",
+            "title": "Music Lesson",
+            "icon": "🎹",
+            "description": "Piano practice",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 4
+          },
+          {
+            "id": "bowser-t5",
+            "title": "Apology Practice",
+            "icon": "🙏",
+            "description": "Social skills",
+            "cardType": "recurring",
+            "completed": false,
+            "visible": true,
+            "cardNumber": 5
+          }
+        ],
+        "settings": {
+          "title": "Bowser",
+          "subtitle": "Roar with Pride!",
+          "isDefaultTitle": false,
+          "backgroundColor": "#8B0000",
+          "showNumbers": true,
+          "showCompletionIndicators": true
+        },
+        "library": [
+          {
+            "title": "Rampage Break",
+            "icon": "💥",
+            "description": "Safe destruction zone",
+            "cardType": "single-use"
+          },
+          {
+            "title": "Koopa Meditation",
+            "icon": "🧘",
+            "description": "Find inner peace",
             "cardType": "frequent"
           }
         ]
