@@ -447,8 +447,8 @@ body:has(.side-panel.open) .floating-nav {
 }
 
 .panel-section {
-    margin-bottom: 24px;
-    padding-bottom: 24px;
+    margin-bottom: 20px;
+    padding-bottom: 20px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.15);
     text-align: left;
     width: 100%;
@@ -616,9 +616,14 @@ body:has(.side-panel.open) .floating-nav {
 
 /* Handled by .panel-section:last-child rule above */
 
+/* First section needs less top spacing */
+.panel-section:first-child {
+    padding-top: 0;
+}
+
 .panel-section label {
     display: block;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
     font-weight: 600;
     color: white;
     font-size: 1rem;
@@ -1115,6 +1120,95 @@ body:has(.side-panel.open) .floating-nav {
     color: var(--primary-color);
 }
 
+/* ===== USER ACTION LIST ===== */
+.user-action-list {
+    margin-top: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.user-action-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    transition: background 0.2s ease;
+}
+
+.user-action-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.user-action-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+    min-width: 0;
+}
+
+.user-action-icon {
+    font-size: 1.4rem;
+    flex-shrink: 0;
+}
+
+.user-action-name {
+    font-weight: 500;
+    color: white;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.user-action-buttons {
+    display: flex;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.user-action-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 6px;
+    border: none;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.user-action-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-1px);
+}
+
+.user-action-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.user-action-btn .material-icons {
+    font-size: 18px;
+}
+
+.user-action-btn--edit:hover:not(:disabled) {
+    background: rgba(33, 150, 243, 0.3);
+}
+
+.user-action-btn--delete:hover:not(:disabled) {
+    background: rgba(244, 67, 54, 0.3);
+}
+
+.user-action-btn--disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
 /* ===== TITLE/SUBTITLE EDITOR ===== */
 .title-subtitle-editor {
     margin-bottom: 8px;
@@ -1596,6 +1690,7 @@ textarea.panel-input {
     color: white;
 }
 
+/* Old user-action-buttons style - removed due to conflict with new Edit menu layout
 .user-action-buttons {
     position: absolute;
     right: 12px;
@@ -1604,7 +1699,7 @@ textarea.panel-input {
     display: flex;
     gap: 6px;
     align-items: center;
-}
+} */
 
 .user-edit-inline-btn,
 .user-delete-inline-btn {

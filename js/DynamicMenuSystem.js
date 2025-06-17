@@ -71,10 +71,14 @@ class DynamicMenuSystem {
                 html += this.renderFooter(config.footer, state);
             }
         } else {
-            // Default Save & Exit button
+            // Default Exit button (changes to Save & Exit if there are changes)
+            const hasChanges = this.checkForUnsavedChanges(menuId, state);
+            const buttonText = hasChanges ? 'Save & Exit' : 'Exit';
+            const iconName = hasChanges ? 'save' : 'close';
+            
             html += `<button class="save-exit-button" onclick="window.hybridPanelManager.saveAndExit('${side}', '${menuId}')">
-                <span class="material-icons">save</span>
-                <span>Save & Exit</span>
+                <span class="material-icons">${iconName}</span>
+                <span>${buttonText}</span>
             </button>`;
         }
         
@@ -487,6 +491,30 @@ class DynamicMenuSystem {
             this.app.hybridPanelManager.refreshCurrentPanel();
         }
     }
+    
+    updateFooterButton(side) {
+        // Update the footer button text based on current state
+        const activeMenu = this.activeMenus[side];
+        if (!activeMenu) return;
+        
+        const { id: menuId, state } = activeMenu;
+        const hasChanges = this.checkForUnsavedChanges(menuId, state);
+        const buttonText = hasChanges ? 'Save & Exit' : 'Exit';
+        const iconName = hasChanges ? 'save' : 'close';
+        
+        // Find and update the button
+        const panel = document.querySelector(`.side-panel--${side}`);
+        if (!panel) return;
+        
+        const button = panel.querySelector('.save-exit-button');
+        if (!button) return;
+        
+        const icon = button.querySelector('.material-icons');
+        const text = button.querySelector('span:not(.material-icons)');
+        
+        if (icon) icon.textContent = iconName;
+        if (text) text.textContent = buttonText;
+    }
 
     getUsersData() {
         const users = [];
@@ -525,6 +553,72 @@ class DynamicMenuSystem {
         };
         
         return iconMap[menuId] || 'menu';
+    }
+    
+    checkForUnsavedChanges(menuId, state) {
+        // Check for unsaved changes based on menu type
+        switch (menuId) {
+            case 'preferences':
+                // Preferences save immediately, no unsaved changes
+                return false;
+                
+            case 'activityForm':
+                // Check if any form fields have been filled
+                const titleInput = document.getElementById('activityTitle');
+                const descInput = document.getElementById('activityDescription');
+                const timeInput = document.getElementById('activityTime');
+                const hasTitle = titleInput && titleInput.value.trim() !== '';
+                const hasDesc = descInput && descInput.value.trim() !== '';
+                const hasTime = timeInput && timeInput.value.trim() !== '';
+                
+                if (state.editingActivity) {
+                    // Editing mode - check if values differ from original
+                    const activity = state.editingActivity;
+                    const titleChanged = titleInput && titleInput.value !== activity.title;
+                    const descChanged = descInput && descInput.value !== (activity.description || '');
+                    const timeChanged = timeInput && timeInput.value !== (activity.time || '');
+                    const iconChanged = state.selectedEmoji && state.selectedEmoji !== activity.icon;
+                    return titleChanged || descChanged || timeChanged || iconChanged;
+                } else {
+                    // New activity - check if any field has content
+                    return hasTitle || hasDesc || hasTime || (state.selectedEmoji && state.selectedEmoji !== this.app.newActivityDefaults.emoji);
+                }
+                
+            case 'userForm':
+                // Check if user form has changes
+                const nameInput = document.getElementById('userName');
+                const hasName = nameInput && nameInput.value.trim() !== '';
+                
+                if (state.editingUser) {
+                    // Editing mode - check if values differ
+                    const user = state.editingUser;
+                    const nameChanged = nameInput && nameInput.value !== user.name;
+                    const iconChanged = state.selectedIcon && state.selectedIcon !== user.icon;
+                    return nameChanged || iconChanged;
+                } else {
+                    // New user - check if name is filled
+                    return hasName || (state.selectedIcon && state.selectedIcon !== '👤');
+                }
+                
+            case 'activityLibrary':
+                // Check if any activities are selected
+                return state.selectedCount > 0;
+                
+            case 'syncSettings':
+                // Sync settings save immediately
+                return false;
+                
+            case 'userDaySelector':
+                // No changes to save in this menu
+                return false;
+                
+            case 'settings':
+                // Settings/Edit menu has no saveable state
+                return false;
+                
+            default:
+                return false;
+        }
     }
 }
 

@@ -82,14 +82,11 @@ window.MenuConfigurations = {
                     
                     // Only show actions in edit mode
                     if (app.grownupMode) {
+                        // Card Actions
                         html += `
                             <div class="panel-section">
-                                <label>Actions</label>
+                                <label>Card Actions</label>
                                 <div class="admin-buttons">
-                                    <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
-                                        <span class="material-icons">person_add</span>
-                                        Add User
-                                    </button>
                                     <button class="admin-btn" onclick="hybridPanelManager.addNewCard()">
                                         <span class="material-icons">add</span>
                                         Add Card
@@ -104,7 +101,66 @@ window.MenuConfigurations = {
                                     </button>
                                 </div>
                             </div>
+                        `;
+                        
+                        // User Actions
+                        const allUsers = app.appState.getAllUsers();
+                        const currentUser = app.appState.getCurrentUser();
+                        
+                        html += `
+                            <div class="panel-section">
+                                <label>User Actions</label>
+                                <div class="admin-buttons">
+                                    <button class="admin-btn" onclick="hybridPanelManager.addNewUser()">
+                                        <span class="material-icons">person_add</span>
+                                        Add User
+                                    </button>
+                                </div>
+                                <div class="user-action-list">
+                        `;
+                        
+                        // Add each user with edit/delete buttons
+                        allUsers.forEach(user => {
+                            const isCurrentUser = user.id === currentUser.id;
+                            const canDelete = !isCurrentUser && allUsers.length > 1;
                             
+                            html += `
+                                <div class="user-action-item">
+                                    <div class="user-action-info">
+                                        <span class="user-action-icon">${user.icon || '👤'}</span>
+                                        <span class="user-action-name">${user.name}</span>
+                                    </div>
+                                    <div class="user-action-buttons">
+                                        <button class="user-action-btn user-action-btn--edit" 
+                                                onclick="window.hybridPanelManager.editExistingUser('${user.id}')"
+                                                title="Edit ${user.name}">
+                                            <span class="material-icons">edit</span>
+                                        </button>
+                                        ${canDelete ? `
+                                            <button class="user-action-btn user-action-btn--delete" 
+                                                    onclick="window.hybridPanelManager._handleDeleteUser('${user.id}', '${user.name.replace(/'/g, "\\'")}')"
+                                                    title="Delete ${user.name}">
+                                                <span class="material-icons">delete</span>
+                                            </button>
+                                        ` : `
+                                            <button class="user-action-btn user-action-btn--delete user-action-btn--disabled" 
+                                                    disabled
+                                                    title="Cannot delete current user">
+                                                <span class="material-icons">delete</span>
+                                            </button>
+                                        `}
+                                    </div>
+                                </div>
+                            `;
+                        });
+                        
+                        html += `
+                                </div>
+                            </div>
+                        `;
+                        
+                        // Data Tools
+                        html += `
                             <div class="panel-section">
                                 <label>Data Tools</label>
                                 <div class="admin-buttons">
@@ -124,9 +180,6 @@ window.MenuConfigurations = {
                             </div>
                         `;
                     }
-                    
-                    // Close the settings content div
-                    html += '</div>';
                     
                     // Add version info at the bottom (only in edit mode)
                     if (app.grownupMode) {
@@ -662,8 +715,8 @@ window.MenuConfigurations = {
                     
                     let html = '';
                     
-                    // User section (only show if multiple users or in edit mode)
-                    if (allUsers.length > 1 || app.grownupMode) {
+                    // User section (only show if multiple users)
+                    if (allUsers.length > 1) {
                         html += '<div class="panel-section">';
                         html += '<label>Select User</label>';
                         html += '<div class="selector-options">';

@@ -887,14 +887,14 @@ body.grownup-mode .title:hover {
 .btn--preferences {
     left: 20px;
     position: fixed !important;
-    top: 45px; /* Aligned with title/subtitle area */
+    top: 20px; /* Moved further up */
     z-index: 1010 !important; /* Above header and drawer */
 }
 
 .btn--grownup-mode {
     right: 20px;
     position: fixed !important;
-    top: 45px; /* Aligned with title/subtitle area */
+    top: 20px; /* Moved further up */
     z-index: 1010 !important; /* Above header and drawer */
 }
 
@@ -1039,14 +1039,14 @@ body.grownup-mode .title:hover {
 }
 
 .btn--preferences {
-    top: 60px !important; /* CRITICAL FIX: Centered on drawer area */
+    top: 34px !important; /* Moved further up */
     left: 20px;
     position: fixed !important;
     z-index: 1010 !important;
 }
 
 .btn--grownup-mode {
-    top: 60px !important; /* CRITICAL FIX: Centered on drawer area */
+    top: 34px !important; /* Moved further up */
     right: 20px;
     position: fixed !important;
     z-index: 1010 !important;

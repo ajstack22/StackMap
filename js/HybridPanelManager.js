@@ -52,10 +52,8 @@ class HybridPanelManager {
         // Initialize FAB visibility (show FABs by default)
         this.handleFABVisibility(false);
         
-        // Initialize FAB icon based on current mode
-        if (this.app.grownupMode) {
-            this.updateFABIcon('edit');
-        }
+        // FAB icon is always pencil since it opens Edit menu
+        // No need to update based on mode
         
         // Initialize mobile navigation enhancements
         this.initializeBackButtonHandling();
@@ -118,7 +116,7 @@ class HybridPanelManager {
         rightNav.innerHTML = `
             <button id="hybridManageBtn" class="fab" 
                     aria-label="Open edit panel" title="Edit">
-                <span class="material-icons">face</span>
+                <span class="material-icons">edit</span>
             </button>
         `;
         
@@ -212,15 +210,17 @@ class HybridPanelManager {
         }
     }
 
-    openPanel(side) {
+    openPanel(side, skipHistoryClear = false) {
         // NEW: Push history state BEFORE opening panel (Android back button)
         this.pushBackButtonState('panel_opened', side);
         
         // Close other panel first
         this.closeAllPanels();
         
-        // Clear navigation history for this panel
-        this.navigationHistory[side] = [];
+        // Clear navigation history for this panel (unless told not to)
+        if (!skipHistoryClear) {
+            this.navigationHistory[side] = [];
+        }
         
         // Update state
         this.state[`${side}PanelOpen`] = true;
@@ -317,6 +317,9 @@ class HybridPanelManager {
             this.state.showingLibraryMenu = false;
             this.state.showingUserManagement = false;
         }
+        
+        // Clear navigation history when closing to prevent stale menu on reopen
+        this.navigationHistory[side] = [];
         
         // Update UI
         const panel = document.getElementById(`hybrid${side.charAt(0).toUpperCase() + side.slice(1)}Panel`);
@@ -423,7 +426,10 @@ class HybridPanelManager {
         
         // Initialize always-visible emoji picker for activity form
         if (menuId === 'activityForm') {
-            setTimeout(() => this.initializeActivityEmojiPicker(), 0);
+            setTimeout(() => {
+                this.initializeActivityEmojiPicker();
+                this.setupActivityFormListeners(side);
+            }, 0);
         }
         
         // Initialize always-visible icon picker for user form
@@ -432,6 +438,7 @@ class HybridPanelManager {
             setTimeout(() => {
                 console.log('Timeout executing, calling initializeUserIconPicker');
                 this.initializeUserIconPicker();
+                this.setupUserFormListeners(side);
                 
                 // Debug: Check what's in the container after initialization
                 setTimeout(() => {
@@ -1307,10 +1314,10 @@ class HybridPanelManager {
         const currentDay = this.app.appState.ui.currentDay || 'today';
         const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
         
-        // Update subtitle to show user's name and day
+        // Update subtitle format: always "Name • Day"
         const subtitle = document.getElementById('subtitle');
         if (subtitle) {
-            subtitle.textContent = `${currentUser.name}'s ${dayText}`;
+            subtitle.textContent = `${currentUser.name} • ${dayText}`;
         }
     }
 
@@ -1320,13 +1327,11 @@ class HybridPanelManager {
         if (isChecked) {
             // Enter edit mode directly - validation is handled in MenuConfigurations
             this.app.enterGrownupMode();
-            // Change FAB icon to pencil
-            this.updateFABIcon('edit');
+            // FAB icon is already pencil
         } else {
             // User wants to exit edit mode
             this.exitEditMode();
-            // Change FAB icon back to face
-            this.updateFABIcon('face');
+            // FAB icon stays as pencil since it always opens Edit menu
             // Don't re-render if called from Return to User Mode button
             // The panel will be closed separately
         }
@@ -3949,14 +3954,11 @@ class HybridPanelManager {
         this.state.showingLibraryMenu = false;
         this.state.showingUserManagement = false;
         
-        // Open left panel
-        this.openPanel('left');
+        // Set up navigation history with userDaySelector
+        this.navigationHistory.left = ['userDaySelector'];
         
-        // After panel opens, push the userDaySelector to navigation history
-        setTimeout(() => {
-            this.navigationHistory.left.push('userDaySelector');
-            this.renderPanelContent('left');
-        }, 0);
+        // Open left panel without clearing history
+        this.openPanel('left', true); // true = skip history clear
     }
 
     refreshCurrentPanel() {
@@ -4020,11 +4022,15 @@ class HybridPanelManager {
         console.log('[NAVIGATE BACK] Current menu:', this.navigationHistory[side][this.navigationHistory[side].length - 1]);
         
         const history = this.navigationHistory[side];
+        const currentMenu = history[history.length - 1];
         
         if (history.length <= 1) {
             // If we're at the root menu or no history, close the panel
             console.log('[NAVIGATE BACK] Closing panel - at root menu');
             this.closePanel(side);
+            
+            // Clear navigation history after closing to prevent reopening with old menu
+            this.navigationHistory[side] = [];
         } else {
             // Pop the current menu from history
             history.pop();
@@ -4065,17 +4071,26 @@ class HybridPanelManager {
     }
     
     saveAndExit(side, menuId) {
+        let changesMade = false;
+        
+        // Check if there are actual changes and save them
+        const activeMenu = this.menuSystem?.activeMenus[side];
+        const menuState = activeMenu?.state || {};
+        const hasChanges = this.menuSystem?.checkForUnsavedChanges(menuId, menuState) || false;
+        
         // Save any pending changes based on the current menu
         switch (menuId) {
             case 'preferences':
                 // Save preferences changes
                 this.saveColorTheme();
                 this.saveCurrentSettings();
+                // Don't set changesMade - preferences save immediately on change
                 break;
                 
             case 'settings':
                 // Settings are saved immediately on change
                 this.saveCurrentSettings();
+                // Don't set changesMade since settings has no changes to save
                 break;
                 
             case 'activityForm':
@@ -4092,6 +4107,7 @@ class HybridPanelManager {
                 // Add selected activities if any
                 if (this.menuStates.activityLibrary.selectedCount > 0) {
                     this.addSelectedToLibrary();
+                    changesMade = true;
                 }
                 break;
                 
@@ -4102,6 +4118,10 @@ class HybridPanelManager {
             case 'userManagement':
                 // No specific save action needed
                 break;
+                
+            case 'userDaySelector':
+                // No save needed - selections are applied immediately
+                break;
         }
         
         // Save any other pending changes
@@ -4110,8 +4130,10 @@ class HybridPanelManager {
         // Close the panel
         this.closePanel(side);
         
-        // Show a subtle confirmation
-        this.app.showNotification && this.app.showNotification('Changes saved', 'success');
+        // Only show notification if there were actual changes
+        if (changesMade || hasChanges) {
+            this.app.showNotification && this.app.showNotification('Changes saved', 'success');
+        }
     }
 
     toggleLibrarySelection(type, index) {
@@ -4500,6 +4522,70 @@ class HybridPanelManager {
             this.cancelActivityForm();
         } else if (formType === 'user') {
             this.cancelUserForm();
+        }
+    }
+    
+    setupActivityFormListeners(side) {
+        // Add input listeners to update the footer button when form changes
+        const titleInput = document.getElementById('activityTitle');
+        const descInput = document.getElementById('activityDescription');
+        const timeInput = document.getElementById('activityTime');
+        
+        const updateButton = () => {
+            if (this.menuSystem) {
+                this.menuSystem.updateFooterButton(side);
+            }
+        };
+        
+        if (titleInput) {
+            titleInput.addEventListener('input', updateButton);
+            titleInput.addEventListener('change', updateButton);
+        }
+        
+        if (descInput) {
+            descInput.addEventListener('input', updateButton);
+            descInput.addEventListener('change', updateButton);
+        }
+        
+        if (timeInput) {
+            timeInput.addEventListener('input', updateButton);
+            timeInput.addEventListener('change', updateButton);
+        }
+        
+        // Also monitor emoji changes
+        const emojiContainer = document.getElementById('activityEmojiPickerContainer');
+        if (emojiContainer) {
+            emojiContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-emoji-picker__option')) {
+                    setTimeout(updateButton, 50);
+                }
+            });
+        }
+    }
+    
+    setupUserFormListeners(side) {
+        // Add input listeners to update the footer button when form changes
+        const nameInput = document.getElementById('userName');
+        
+        const updateButton = () => {
+            if (this.menuSystem) {
+                this.menuSystem.updateFooterButton(side);
+            }
+        };
+        
+        if (nameInput) {
+            nameInput.addEventListener('input', updateButton);
+            nameInput.addEventListener('change', updateButton);
+        }
+        
+        // Also monitor icon changes
+        const iconContainer = document.getElementById('userIconPickerContainer');
+        if (iconContainer) {
+            iconContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('modal-emoji-picker__option')) {
+                    setTimeout(updateButton, 50);
+                }
+            });
         }
     }
 }

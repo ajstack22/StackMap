@@ -34,7 +34,7 @@ class AppRenderer {
         // Add a spacer div at the very beginning to push cards down
         const spacer = document.createElement('div');
         const isMobile = window.innerWidth <= 768;
-        spacer.style.height = isMobile ? '75px' : '120px';
+        spacer.style.height = '60px'; // Same height for both mobile and desktop
         spacer.style.width = '100%';
         spacer.style.gridColumn = '1 / -1';
         this.container.appendChild(spacer);

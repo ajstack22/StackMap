@@ -24,9 +24,7 @@ class StackMapApp {
         // Initialize managers
         // PreferencesManager removed - all functionality now handled by HybridPanelManager
         
-        // Initialize FAB component
-        this.editFAB = new window.EditModeFAB(this);
-        this.editFAB.init();
+        // Edit FAB removed - edit mode now accessed through main menu
         
         // DataManagementPanel removed - functionality moved to HybridPanelManager
         // this.dataPanel = new window.DataManagementPanel(this);
@@ -250,7 +248,84 @@ class StackMapApp {
         if (appHeader) {
             const headerHeight = appHeader.offsetHeight;
             // Add inline style to body for padding
-            document.body.style.paddingTop = `${headerHeight + 15}px`;
+            // Reduced padding in user mode to move cards up
+            const isEditMode = document.body.classList.contains('grownup-mode');
+            const extraPadding = isEditMode ? 15 : -40; // Move cards up 55px in user mode
+            document.body.style.paddingTop = `${headerHeight + extraPadding}px`;
+        }
+    }
+
+    setupTitleEditing(titleElement) {
+        // Remove any existing click handlers
+        const newTitle = titleElement.cloneNode(true);
+        titleElement.parentNode.replaceChild(newTitle, titleElement);
+        
+        // Add click handler that only works in edit mode
+        newTitle.addEventListener('click', (e) => {
+            if (!this.grownupMode) return;
+            
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const currentText = newTitle.textContent;
+            
+            // Make the title editable
+            newTitle.contentEditable = true;
+            newTitle.style.cursor = 'text';
+            newTitle.style.outline = '2px solid var(--primary-color)';
+            newTitle.style.borderRadius = '4px';
+            newTitle.style.padding = '2px 8px';
+            
+            // Select all text
+            const range = document.createRange();
+            range.selectNodeContents(newTitle);
+            const selection = window.getSelection();
+            selection.removeAllRanges();
+            selection.addRange(range);
+            
+            // Handle save on blur or enter
+            const saveTitle = () => {
+                newTitle.contentEditable = false;
+                newTitle.style.cursor = 'pointer';
+                newTitle.style.outline = 'none';
+                newTitle.style.padding = '0';
+                
+                const newText = newTitle.textContent.trim();
+                if (newText && newText !== currentText) {
+                    // Save the new title
+                    const currentUser = this.appState.getCurrentUser();
+                    if (currentUser) {
+                        currentUser.customTitle = newText;
+                        this.appState.saveCurrentUserData();
+                        this.updateLogoVisibility(newText);
+                        this.updateTabTitle();
+                    }
+                } else if (!newText) {
+                    // Restore original text if empty
+                    newTitle.textContent = currentText;
+                }
+            };
+            
+            // Save on blur
+            newTitle.addEventListener('blur', saveTitle, { once: true });
+            
+            // Save on Enter, cancel on Escape
+            newTitle.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    newTitle.blur();
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    newTitle.textContent = currentText;
+                    newTitle.blur();
+                }
+            });
+        });
+        
+        // Visual indicator in edit mode
+        if (this.grownupMode) {
+            newTitle.style.cursor = 'pointer';
+            newTitle.setAttribute('title', 'Click to edit title');
         }
     }
 
@@ -267,18 +342,9 @@ class StackMapApp {
         // Title remains customizable (for now)
         let userTitle = currentUser.customTitle || 'StackMap';
         
-        // Subtitle is now standardized - always show user/day
-        const allUsers = this.appState.getAllUsers();
-        const showUserName = allUsers.length > 1;
+        // Subtitle format: always "Name • Day"
         const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-        
-        // Format: "User • Today" or just "Tomorrow" for single user
-        let userSubtitle;
-        if (showUserName) {
-            userSubtitle = `${currentUser.name} • ${dayText}`;
-        } else {
-            userSubtitle = dayText;
-        }
+        const userSubtitle = `${currentUser.name} • ${dayText}`;
         
         // Update all title elements
         const mainTitle = document.getElementById('mainTitle');
@@ -287,6 +353,9 @@ class StackMapApp {
         if (mainTitle) {
             mainTitle.textContent = userTitle;
             this.updateLogoVisibility(userTitle);
+            
+            // Make title editable in edit mode
+            this.setupTitleEditing(mainTitle);
         }
         if (subtitle) {
             subtitle.textContent = userSubtitle;
@@ -1887,10 +1956,10 @@ class StackMapApp {
         // Update subtitle to reflect edit mode
         this.initializeTitleSubtitle();
         
-        // Show FAB instead of management cards
-        if (this.editFAB) {
-            this.editFAB.show();
-        }
+        // Update body padding for edit mode
+        this.updateBodyPadding();
+        
+        // FAB removed - edit mode now accessed through main menu
         
         // NEW: Push history state for edit mode (Android back button)
         // Note: pushBackButtonState doesn't exist on hybridPanelManager
@@ -1946,10 +2015,10 @@ class StackMapApp {
         // Remove body class
         document.body.classList.remove('grownup-mode');
         
-        // Hide FAB
-        if (this.editFAB) {
-            this.editFAB.hide();
-        }
+        // Update body padding for user mode
+        this.updateBodyPadding();
+        
+        // FAB removed - edit mode now accessed through main menu
         
         // Close data panel if open
         if (this.dataPanel && this.dataPanel.isOpen) {
@@ -3573,6 +3642,9 @@ class StackMapApp {
     }
 }
 
+// TODO: DELETE THESE TEST FUNCTIONS IN NEXT CLEANUP (commented out for deploy)
+// ============ START OF TEST/DEBUG FUNCTIONS - REMOVE IN NEXT CLEANUP ============
+/*
 // Debugging helper function
 window.testDropdowns = function() {
         // console.log('=== DROPDOWN TEST ===');
@@ -4237,3 +4309,5 @@ window.testDrawer = {
         // console.log('testDrawer.normalSpeed() - Restore normal animation speed');
         // console.log('testDrawer.forceOpen() - Force drawer open');
         // console.log('testDrawer.forceClose() - Force drawer closed');
+*/
+// ============ END OF TEST/DEBUG FUNCTIONS - REMOVE IN NEXT CLEANUP ============

@@ -15,7 +15,7 @@
 @import url('./sync-modal.css');
 @import url('./selectors.css');
 /* data-panel.css and data-panel-animations.css removed - functionality moved to HybridPanelManager */
-@import url('./fab.css');
+/* fab.css removed - edit FAB functionality removed */
 
 /* ===== THEME VARIABLES ===== */
 :root {

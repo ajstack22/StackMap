@@ -100,6 +100,11 @@
         padding: 16px 10px 12px !important;
     }
     
+    /* Remove extra spacing on mobile */
+    .header-logo-title {
+        margin-bottom: 0 !important;
+    }
+    
     .app-header .title {
         font-size: var(--title-size) !important;
         padding: 3px 8px !important;
@@ -220,13 +225,13 @@
     
     /* Adjusted button positions for permanent fixed header */
     .btn--preferences {
-        top: 22px !important;
+        top: 5px !important; /* Moved further up */
         left: 15px !important;
         z-index: 1003 !important;
     }
     
     .btn--grownup-mode {
-        top: 22px !important;
+        top: 5px !important; /* Moved further up */
         right: 15px !important;
         z-index: 1003 !important;
     }
@@ -234,7 +239,7 @@
     /* Dynamic positioning based on subtitle */
     body.has-subtitle .btn--preferences,
     body.has-subtitle .btn--grownup-mode {
-        top: 36px !important;
+        top: 18px !important; /* Moved further up */
     }
     
     .preferences-panel {
@@ -479,6 +484,11 @@
     /* App header on very small screens */
     .app-header {
         padding: 12px 10px 10px !important;
+    }
+    
+    /* Keep minimal spacing on very small screens */
+    .header-logo-title {
+        margin-bottom: 0 !important;
     }
     
     .title {
