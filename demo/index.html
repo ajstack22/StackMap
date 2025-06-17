@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>StackMap - Mushroom Kingdom Demo</title>
     
     <!-- All CSS files -->
@@ -30,18 +30,35 @@
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
-    <!-- Main App Container (app will render everything here) -->
-    <div id="app">
-        <!-- Header -->
-        <header id="main-header">
-            <div id="drawer-wrapper">
-                <!-- Drawer will be inserted here by JS -->
+    <!-- Header Wrapper for unified shadow -->
+    <div class="header-wrapper" id="headerWrapper">
+        <!-- Unified Application Header -->
+        <header class="app-header" role="banner" id="appHeader">
+            <div class="header-content">
+                <div class="header-logo-title">
+                    <div class="stackmap-logo" aria-hidden="true">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                            <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                            <rect x="7" y="10" width="18" height="2.5" fill="var(--primary-color)" rx="1.25"/>
+                            <rect x="7" y="14.5" width="18" height="2.5" fill="var(--primary-color)" rx="1.25"/>
+                            <rect x="7" y="19" width="18" height="5" fill="var(--primary-dark)" rx="2.5"/>
+                        </svg>
+                    </div>
+                    <div class="header-text">
+                        <h1 class="title" id="mainTitle" tabindex="0">StackMap</h1>
+                        <p class="subtitle" id="subtitle" tabindex="0">Routine Ready</p>
+                    </div>
+                </div>
             </div>
         </header>
-        
-        <!-- Main Content Container -->
-        <main id="mainContainer" class="main-content"></main>
     </div>
+    
+    <!-- Main Content Area -->
+    <main id="main-content" role="main" aria-label="Task routine">
+        <div class="main-container" id="mainContainer" role="region" aria-label="Task cards">
+            <!-- Activity cards will be rendered here -->
+        </div>
+    </main>
 
     <!-- Hidden File Input for Import -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
