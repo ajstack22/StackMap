@@ -436,12 +436,9 @@ class AppState {
             // Try to find any available user
             const userIds = Object.keys(this.users.profiles);
             if (userIds.length > 0) {
-                // Prefer the default user if it exists, otherwise use the first user
-                if (this.users.profiles[CONFIG.DEFAULT_USER_ID]) {
-                    this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
-                } else {
-                    this.users.currentUserId = userIds[0];
-                }
+                // Just use the first available user
+                this.users.currentUserId = userIds[0];
+                console.log('[State] Using fallback user:', this.users.currentUserId);
                 return this.users.profiles[this.users.currentUserId];
             }
             
@@ -494,9 +491,8 @@ class AppState {
     loadUserData() {
         const user = this.getCurrentUser();
         if (!user) {
-            console.error('No current user found, falling back to default');
-            this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
-            return this.loadUserData(); // Recursive call with default user
+            console.error('No user data could be loaded');
+            return false;
         }
         
         try {
@@ -991,7 +987,18 @@ class AppState {
             if (data.users) {
                 // New multi-user format
                 console.log('[State] Importing multi-user format');
-                this.users = data.users;
+                // Completely replace the users structure
+                this.users = {
+                    currentUserId: data.users.currentUserId || CONFIG.DEFAULT_USER_ID,
+                    profiles: data.users.profiles || {},
+                    groupLibrary: data.users.groupLibrary || []
+                };
+                
+                console.log('[State] Imported users structure:', {
+                    currentUserId: this.users.currentUserId,
+                    profileIds: Object.keys(this.users.profiles),
+                    profileNames: Object.values(this.users.profiles).map(u => u.name)
+                });
                 
                 // Story 4: Ensure all users have tomorrow activities array and icons
                 Object.values(this.users.profiles).forEach(user => {
@@ -1062,8 +1069,23 @@ class AppState {
                 }
                 
                 // Ensure current user exists
+                console.log('[State] Checking if current user exists:', this.users.currentUserId, 'in profiles:', Object.keys(this.users.profiles));
                 if (!this.users.profiles[this.users.currentUserId]) {
-                    this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+                    // If current user doesn't exist, try default user
+                    if (this.users.profiles[CONFIG.DEFAULT_USER_ID]) {
+                        this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+                    } else {
+                        // If default user also doesn't exist, use first available user
+                        const userIds = Object.keys(this.users.profiles);
+                        if (userIds.length > 0) {
+                            this.users.currentUserId = userIds[0];
+                            console.log('[State] Current user not found, using first available user:', this.users.currentUserId);
+                        } else {
+                            // No users at all - this shouldn't happen
+                            console.error('[State] No users found in imported data!');
+                            this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
+                        }
+                    }
                 }
                 
                 this.loadUserData();

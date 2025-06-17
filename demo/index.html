@@ -44,15 +44,20 @@
         // SYNCHRONOUSLY load demo data before anything else
         // This blocks all other scripts from loading until demo data is set
         (function() {
+            // Clear any existing data first
+            localStorage.clear();
+            console.log('Cleared localStorage for clean demo state');
+            
             const xhr = new XMLHttpRequest();
             xhr.open('GET', '../demo-mushroom-kingdom.json', false); // false = synchronous
             xhr.send();
             
             if (xhr.status === 200) {
                 const demoData = JSON.parse(xhr.responseText);
-                localStorage.setItem('stackMapState', JSON.stringify(demoData));
+                // Use correct localStorage key that StackMapApp expects
+                localStorage.setItem('stackMapData', JSON.stringify(demoData));
                 localStorage.setItem('stackMapDemoMode', 'true');
-                console.log('Demo data loaded successfully');
+                console.log('Demo data loaded successfully to stackMapData key');
             } else {
                 console.error('Failed to load demo data');
             }
