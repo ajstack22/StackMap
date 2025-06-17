@@ -37,6 +37,13 @@
         
         #main-content {
             padding-top: 40px !important; /* Add space for banner */
+            position: relative;
+            z-index: 1; /* Below header */
+        }
+        
+        /* Ensure no card visibility between banner and header */
+        .header-wrapper {
+            background: var(--background-gradient-start, #667eea); /* Solid background to hide cards */
         }
         
         /* Adjust side panels for demo banner */
@@ -58,6 +65,16 @@
             /* When panel is open on mobile */
             .side-panel.open {
                 transform: translateY(0) !important;
+            }
+            
+            /* Adjust header wrapper on mobile to account for banner */
+            .header-wrapper {
+                top: 40px !important; /* Push down by banner height */
+            }
+            
+            /* Adjust main content padding on mobile */
+            #main-content {
+                padding-top: 60px !important; /* 40px banner + 20px extra for header */
             }
         }
         
@@ -81,7 +98,7 @@
     </div>
     
     <!-- Header Wrapper for unified shadow -->
-    <div class="header-wrapper" id="headerWrapper" style="top: 40px;">
+    <div class="header-wrapper" id="headerWrapper" style="top: 40px; z-index: 9999;">
         <!-- Unified Application Header -->
         <header class="app-header" role="banner" id="appHeader">
             <div class="header-content">
