@@ -65,33 +65,34 @@
     <script src="https://accounts.google.com/gsi/client"></script>
     
     <script>
-        // Demo initialization - just load the demo data and run the normal app
-        async function initializeDemo() {
+        // Prevent demo data from syncing
+        window.DEMO_MODE = true;
+        
+        // Demo initialization
+        document.addEventListener('DOMContentLoaded', async () => {
             try {
-                // Load the demo data
+                // Load the demo data first
                 const response = await fetch('../demo-mushroom-kingdom.json');
                 const demoData = await response.json();
                 
-                // Store in localStorage
+                // Store in localStorage before app initialization
                 localStorage.setItem('stackMapState', JSON.stringify(demoData));
                 localStorage.setItem('stackMapDemoMode', 'true');
                 
-                // Initialize the app normally
-                const app = new StackMapApp();
-                window.appInstance = app;
-                app.init();
+                // Initialize the app exactly like the main app does
+                window.appInstance = new StackMapApp();
+                
+                // Initialize hybrid panel system (required for the app to work)
+                window.hybridPanelManager = new HybridPanelManager(window.appInstance);
+                
+                // Initialize the app
+                window.appInstance.init();
                 
             } catch (error) {
                 console.error('Failed to initialize demo:', error);
                 alert('Failed to load demo. Please try refreshing the page.');
             }
-        }
-        
-        // Prevent demo data from syncing
-        window.DEMO_MODE = true;
-        
-        // Initialize on load
-        document.addEventListener('DOMContentLoaded', initializeDemo);
+        });
     </script>
 </body>
 </html>
