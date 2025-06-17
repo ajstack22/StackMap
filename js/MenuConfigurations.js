@@ -194,8 +194,13 @@ window.MenuConfigurations = {
                                     <span style="font-size: 0.75rem;">Build ${CONFIG.APP_BUILD_DATE || '2025-06-15'}</span>
                                 </div>
                                 <div style="margin-top: 12px;">
-                                    <a href="#" onclick="hybridPanelManager.showSupport(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
-                                        Support & Privacy
+                                    <a href="#" onclick="hybridPanelManager.showHelpPrivacy(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
+                                        Help & Privacy
+                                    </a>
+                                </div>
+                                <div style="margin-top: 8px;">
+                                    <a href="#" onclick="hybridPanelManager.showSupportUs(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
+                                        ❤️ Support StackMap
                                     </a>
                                 </div>
                             </div>
@@ -1022,9 +1027,9 @@ window.MenuConfigurations = {
         ]
     },
     
-    support: {
-        id: 'support',
-        title: 'Support & Privacy',
+    helpPrivacy: {
+        id: 'helpPrivacy',
+        title: 'Help & Privacy',
         layout: 'sections',
         sections: [
             {
@@ -1032,15 +1037,15 @@ window.MenuConfigurations = {
                 render: function(state, menuSystem) {
                     let html = '';
                     
-                    // Support section
+                    // Help section
                     html += `
                         <div class="panel-section">
-                            <h3 style="color: white; margin-bottom: 16px;">Support</h3>
+                            <h3 style="color: white; margin-bottom: 16px;">Need Help?</h3>
                             <p style="color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 16px;">
-                                Need help? We're here for you!
+                                We're here to help you get the most out of StackMap!
                             </p>
                             <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
-                                <li style="margin-bottom: 8px;">Email: <a href="mailto:support@stackmap.app" style="color: white;">support@stackmap.app</a></li>
+                                <li style="margin-bottom: 8px;">Email: <a href="mailto:help@stackmap.app" style="color: white;">help@stackmap.app</a></li>
                                 <li style="margin-bottom: 8px;">Response time: Within 24-48 hours</li>
                                 <li>Include your device type and issue description</li>
                             </ul>
@@ -1084,6 +1089,83 @@ window.MenuConfigurations = {
                             <div style="margin-top: 16px; text-align: center; color: rgba(255,255,255,0.6); font-size: 0.85rem;">
                                 Version ${CONFIG.APP_VERSION || '1.5.8'}<br>
                                 Build ${CONFIG.APP_BUILD_DATE || '2025-06-17'}
+                            </div>
+                        </div>
+                    `;
+                    
+                    return html;
+                }
+            }
+        ]
+    },
+    
+    supportUs: {
+        id: 'supportUs',
+        title: '❤️ Support StackMap',
+        layout: 'sections',
+        sections: [
+            {
+                type: 'custom',
+                render: function(state, menuSystem) {
+                    let html = '';
+                    
+                    html += `
+                        <div class="panel-section">
+                            <h3 style="color: white; margin-bottom: 16px;">Support Our Mission</h3>
+                            <p style="color: rgba(255,255,255,0.8); line-height: 1.5; margin-bottom: 20px;">
+                                StackMap is a labor of love, built to help families and individuals with special needs manage their daily routines. Your support helps us keep StackMap free and accessible for everyone who needs it.
+                            </p>
+                            
+                            <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 12px; margin-bottom: 24px;">
+                                <h4 style="color: white; margin: 0 0 16px 0;">Ways to Support</h4>
+                                
+                                <div style="margin-bottom: 20px;">
+                                    <a href="https://www.paypal.com/donate/?hosted_button_id=STACKMAP" target="_blank" 
+                                       style="display: inline-block; background: #0070ba; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
+                                        💳 Donate via PayPal
+                                    </a>
+                                    <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin: 8px 0 0 0;">
+                                        One-time or recurring donations
+                                    </p>
+                                </div>
+                                
+                                <div style="margin-bottom: 20px;">
+                                    <a href="https://venmo.com/stackmap" target="_blank" 
+                                       style="display: inline-block; background: #3d95ce; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
+                                        📱 Send via Venmo
+                                    </a>
+                                    <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin: 8px 0 0 0;">
+                                        @stackmap
+                                    </p>
+                                </div>
+                                
+                                <div style="margin-bottom: 20px;">
+                                    <a href="https://www.patreon.com/stackmap" target="_blank" 
+                                       style="display: inline-block; background: #ff424d; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
+                                        🎨 Become a Patron
+                                    </a>
+                                    <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin: 8px 0 0 0;">
+                                        Monthly support with exclusive updates
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 8px;">
+                                <h4 style="color: white; margin: 0 0 12px 0; font-size: 1rem;">What Your Support Enables</h4>
+                                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin: 0;">
+                                    <li style="margin-bottom: 8px;">Keeping StackMap free for families in need</li>
+                                    <li style="margin-bottom: 8px;">Developing new accessibility features</li>
+                                    <li style="margin-bottom: 8px;">Maintaining servers and infrastructure</li>
+                                    <li style="margin-bottom: 8px;">Creating educational resources</li>
+                                    <li>Supporting the developer community</li>
+                                </ul>
+                            </div>
+                            
+                            <div style="text-align: center; margin-top: 24px;">
+                                <p style="color: rgba(255,255,255,0.6); font-size: 0.85rem; line-height: 1.5;">
+                                    Thank you for believing in our mission!<br>
+                                    Every contribution makes a difference. ❤️
+                                </p>
                             </div>
                         </div>
                     `;

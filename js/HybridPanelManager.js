@@ -4057,8 +4057,13 @@ class HybridPanelManager {
     }
 
     showSupport() {
-        // Navigate to support menu
-        this.openPanel('right', 'support');
+        // Navigate to help & privacy menu
+        this.openPanel('right', 'helpPrivacy');
+    }
+
+    showSupportUs() {
+        // Navigate to support us menu
+        this.openPanel('right', 'supportUs');
     }
 
     refreshCurrentPanel() {
