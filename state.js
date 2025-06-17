@@ -994,6 +994,12 @@ class AppState {
                     groupLibrary: data.users.groupLibrary || []
                 };
                 
+                // If the currentUserId doesn't exist in profiles, use the first available user
+                if (!this.users.profiles[this.users.currentUserId] && Object.keys(this.users.profiles).length > 0) {
+                    this.users.currentUserId = Object.keys(this.users.profiles)[0];
+                    console.log('[State] Current user ID not found, using first available:', this.users.currentUserId);
+                }
+                
                 console.log('[State] Imported users structure:', {
                     currentUserId: this.users.currentUserId,
                     profileIds: Object.keys(this.users.profiles),

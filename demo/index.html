@@ -57,7 +57,8 @@
                 // Use correct localStorage key that StackMapApp expects
                 localStorage.setItem('stackMapData', JSON.stringify(demoData));
                 localStorage.setItem('stackMapDemoMode', 'true');
-                console.log('Demo data loaded successfully to stackMapData key');
+                console.log('Demo data loaded successfully. Current user:', demoData.users?.currentUserId);
+                console.log('User profiles:', Object.keys(demoData.users?.profiles || {}));
             } else {
                 console.error('Failed to load demo data');
             }
