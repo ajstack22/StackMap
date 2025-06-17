@@ -31,7 +31,17 @@
 </head>
 <body>
     <!-- Main App Container (app will render everything here) -->
-    <div id="app"></div>
+    <div id="app">
+        <!-- Header -->
+        <header id="main-header">
+            <div id="drawer-wrapper">
+                <!-- Drawer will be inserted here by JS -->
+            </div>
+        </header>
+        
+        <!-- Main Content Container -->
+        <main id="mainContainer" class="main-content"></main>
+    </div>
 
     <!-- Hidden File Input for Import -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
