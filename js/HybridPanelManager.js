@@ -712,6 +712,7 @@ class HybridPanelManager {
                     const isCurrentUser = user.id === currentUser.id;
                     const canDelete = !isCurrentUser && allUsers.length > 1;
                     
+                    console.log('User item:', {
                         userName: user.name,
                         userId: user.id,
                         isCurrentUser,

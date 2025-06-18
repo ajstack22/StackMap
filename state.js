@@ -1259,6 +1259,7 @@ class AppState {
 
     // Enhanced importData to handle user icons
     importData(data, updateVersion = true) {
+        console.log('Importing data:', {
             hasUsers: !!data.users,
             hasActivities: !!data.activities,
             hasSettings: !!data.settings,

@@ -3224,6 +3224,7 @@ class StackMapApp {
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
+                console.log('Import file loaded:', {
                     version: data.version,
                     hasActivities: !!data.activities,
                     hasUsers: !!data.users,
