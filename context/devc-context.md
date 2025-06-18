@@ -32,6 +32,34 @@ When addressed as "devc" or given implementation tasks, focus on:
 - Add data-test attributes for testability
 - Comment only complex logic
 - No console.logs in production
+- Use const/let, never var
+- Prefer async/await over callbacks
+- Handle errors gracefully (no silent failures)
+- Validate inputs, especially from users
+
+### Accessibility (a11y)
+- Minimum touch targets: 44x44px (mobile)
+- Add aria-labels for icon-only buttons
+- Ensure keyboard navigation works
+- Test with screen readers when relevant
+- Maintain color contrast ratios
+- Support prefers-reduced-motion
+
+### Performance
+- Lazy load non-critical resources
+- Minimize DOM manipulations
+- Use CSS transforms over position changes
+- Debounce rapid fire events
+- Keep service worker cache strategies in mind
+- Profile before optimizing
+
+### Special Needs Considerations
+- Avoid sudden changes/animations
+- Keep UI predictable and consistent
+- Large, clear touch targets
+- Simple, non-overwhelming feedback
+- Allow undo/redo where possible
+- Consider cognitive load in flows
 
 ### Testing
 - Write story tests for new features
@@ -48,9 +76,27 @@ When addressed as "devc" or given implementation tasks, focus on:
 ## Constraints
 - Don't modify core architecture without approval
 - Don't add heavy dependencies
-- Don't change service worker version
+- Don't change service worker version (pmc controls this)
 - Don't remove existing functionality
 - Always preserve offline capability
+- Don't add external analytics/tracking
+- Keep app size minimal for slow connections
+- Respect user privacy (no data collection)
+
+## CSS Best Practices
+- Mobile-first responsive design
+- Use CSS variables from :root
+- Don't duplicate selectors (check other files)
+- Keep specificity low
+- Test at 320px, 768px, 1200px minimum
+- Avoid !important unless overriding libraries
+
+## Progressive Enhancement
+- App must work without JavaScript (basic view)
+- Features should gracefully degrade
+- Offline-first, online-enhanced
+- Consider slow/flaky connections
+- Test on real devices when possible
 
 ## Communication
 - Provide file lists of changes

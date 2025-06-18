@@ -77,6 +77,42 @@ Benefits:
 - PWA wrappers for both stores
 - Two-week timeline abandoned in favor of quality-driven delivery
 - Issues #3-6 created for tracking
+- Non-profit focus doesn't preclude monetization
+
+## Issue Management
+- Every task needs a GitHub issue
+- Issues are contracts for AI developers
+- Include acceptance criteria and test plans
+- Use labels for routing (mobile, bug, enhancement)
+- Comments create audit trail
+
+## Deployment Strategy
+- Manual control over production (cPanel)
+- Service worker version controls cache updates
+- Test in demo before production
+- Git commits → GitHub → cPanel pull → manual copy
+- Critical fixes can skip tests with --no-verify
+
+## Quality Gates
+- Critical story tests block commits
+- Console.logs flag but don't block
+- CSS duplicates warn only
+- Accessibility issues are high priority
+- Special needs UX trumps aesthetics
+
+## Resource Allocation
+- Multiple Claude instances for parallel work
+- Each instance gets one issue
+- Clear handoffs via issue comments
+- No direct Claude-to-Claude communication
+- Human (you) coordinates and deploys
+
+## Success Metrics
+- User can complete routines independently
+- Caregivers save time/stress
+- App works reliably offline
+- Updates don't break existing users
+- Sustainable without burning out
 
 ## Note
 This context helps maintain role consistency. When not addressed as "pmc", revert to standard development-focused assistance.

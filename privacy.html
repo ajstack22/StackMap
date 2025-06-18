@@ -4,398 +4,98 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Privacy Policy - StackMap</title>
+    <link rel="stylesheet" href="styles/base.css">
     <style>
-        :root {
-            --primary-color: #667eea;
-            --primary-dark: #5a67d8;
-            --text-color: #333;
-            --text-light: #666;
-            --bg-color: #f8f9fa;
-            --card-bg: white;
-            --border-color: #e0e0e0;
-        }
-
-        * {
-            box-sizing: border-box;
-        }
-
         body {
-            font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: linear-gradient(to bottom, var(--primary-color) 0%, var(--primary-color) 200px, var(--bg-color) 200px);
-            color: var(--text-color);
-            line-height: 1.6;
-        }
-
-        .container {
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
+            font-family: system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: #333;
         }
-
-        .header {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-            margin-bottom: 30px;
-        }
-
-        .logo {
-            width: 64px;
-            height: 64px;
-            margin: 0 auto 20px;
-        }
-
-        h1 {
-            color: var(--primary-color);
-            font-size: 2.5rem;
-            margin: 0 0 10px 0;
-        }
-
-        .effective-date {
-            color: var(--text-light);
-            font-size: 0.9rem;
-        }
-
-        .content {
-            background: var(--card-bg);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        }
-
-        h2 {
-            color: var(--primary-color);
-            font-size: 1.8rem;
-            margin-top: 30px;
-            margin-bottom: 15px;
-            padding-top: 20px;
-            border-top: 2px solid var(--border-color);
-        }
-
-        h2:first-child {
-            border-top: none;
-            padding-top: 0;
-            margin-top: 0;
-        }
-
-        h3 {
-            color: var(--primary-dark);
-            font-size: 1.3rem;
-            margin-top: 20px;
-            margin-bottom: 10px;
-        }
-
-        p, li {
-            margin-bottom: 10px;
-            color: var(--text-color);
-        }
-
-        ul {
-            padding-left: 30px;
-        }
-
-        li {
-            margin-bottom: 8px;
-        }
-
-        strong {
-            color: var(--primary-dark);
-        }
-
+        h1 { color: #667eea; }
+        h2 { color: #5a67d8; margin-top: 30px; }
         .back-link {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            margin: 30px 0;
-            padding: 12px 24px;
-            background: var(--primary-color);
-            color: white;
+            display: inline-block;
+            margin-bottom: 20px;
+            color: #667eea;
             text-decoration: none;
-            border-radius: 12px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
         }
-
-        .back-link:hover {
-            background: var(--primary-dark);
-            transform: translateY(-2px);
-            box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
-        }
-
-        .contact-info {
-            background: rgba(102, 126, 234, 0.1);
-            padding: 20px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 10px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            h2 {
-                font-size: 1.5rem;
-            }
-
-            .header, .content {
-                padding: 20px;
-            }
+        .back-link:hover { text-decoration: underline; }
+        .last-updated { 
+            color: #666; 
+            font-style: italic;
+            margin-bottom: 30px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1 style="display: flex; align-items: center; justify-content: center; gap: 16px; margin-bottom: 20px;">
-                <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <circle cx="30" cy="30" r="30" fill="white"/>
-                    <rect x="15" y="18" width="30" height="4" rx="2" fill="#667eea"/>
-                    <rect x="15" y="26" width="30" height="4" rx="2" fill="#667eea"/>
-                    <rect x="15" y="34" width="30" height="8" rx="2" fill="#5a67d8"/>
-                </svg>
-                <span style="font-size: 2.5rem; font-weight: 700; color: var(--primary-color); text-shadow: 0 2px 4px rgba(0,0,0,0.1);">StackMap</span>
-            </h1>
-            <h2 style="color: var(--text-color); font-size: 1.8rem; margin: 0;">Privacy Policy</h2>
-            <div class="effective-date">
-                <strong>Effective Date:</strong> June 1, 2025<br>
-                <strong>Last Updated:</strong> June 1, 2025
-            </div>
-        </div>
+    <a href="/" class="back-link">← Back to StackMap</a>
+    
+    <h1>Privacy Policy</h1>
+    <p class="last-updated">Last updated: June 18, 2025</p>
 
-        <div class="content">
-            <h2>Introduction</h2>
-            <p>StackMap is a visual routine app designed specifically for special needs children and families. We are committed to protecting your privacy and the privacy of your children. This Privacy Policy explains how we collect, use, and protect your information when you use our app.</p>
+    <h2>Overview</h2>
+    <p>StackMap is designed with privacy as a core principle. We believe families, especially those with special needs children, deserve tools that respect their privacy and give them control over their data.</p>
 
-            <h2>Information We Collect</h2>
-            
-            <h3>Personal Information</h3>
-            <ul>
-                <li><strong>Account Information:</strong> When you connect Google Drive, we access your Google account email for sync purposes only</li>
-                <li><strong>App Content:</strong> Visual routine cards, titles, descriptions, and customizations you create</li>
-                <li><strong>Device Information:</strong> Basic device type information for sync coordination across devices</li>
-            </ul>
+    <h2>Data Collection</h2>
+    <p><strong>We collect NO personal data by default.</strong> StackMap works entirely offline on your device.</p>
 
-            <h3>Children's Information</h3>
-            <ul>
-                <li><strong>Routine Data:</strong> Visual schedules and routine cards created for children</li>
-                <li><strong>Usage Patterns:</strong> Which activities are completed (stored locally on your device)</li>
-                <li><strong>No Personal Identifiers:</strong> We do not collect names, photos, or personally identifiable information about children</li>
-            </ul>
+    <h2>Data Storage</h2>
+    <ul>
+        <li>All routine data is stored locally on your device</li>
+        <li>No data is sent to our servers (we don't have any)</li>
+        <li>Your routines, progress, and settings stay on your device</li>
+    </ul>
 
-            <h3>Automatically Collected Information</h3>
-            <ul>
-                <li><strong>Technical Data:</strong> App version, browser type, and basic error logs for app improvement</li>
-                <li><strong>Local Storage:</strong> App preferences and routine data stored on your device</li>
-            </ul>
+    <h2>Optional Google Drive Sync</h2>
+    <p>If you choose to enable Google Drive sync:</p>
+    <ul>
+        <li>Data is stored in YOUR Google Drive account</li>
+        <li>We never see or access your data</li>
+        <li>You can disable sync at any time</li>
+        <li>Deleting the app removes local data (Drive data remains yours)</li>
+    </ul>
 
-            <h2>How We Use Your Information</h2>
-            
-            <h3>Primary Uses</h3>
-            <ul>
-                <li><strong>App Functionality:</strong> Displaying and managing visual routine cards</li>
-                <li><strong>Cross-Device Sync:</strong> Synchronizing your routines across family devices via Google Drive</li>
-                <li><strong>App Improvement:</strong> Understanding usage patterns to improve accessibility features</li>
-                <li><strong>Technical Support:</strong> Diagnosing and fixing technical issues</li>
-            </ul>
+    <h2>Children's Privacy</h2>
+    <p>StackMap is designed for use by children with adult supervision:</p>
+    <ul>
+        <li>We don't collect any information from children</li>
+        <li>No accounts or sign-ups required</li>
+        <li>No social features or communication between users</li>
+        <li>No behavioral tracking or analytics</li>
+    </ul>
 
-            <h3>We Do NOT Use Your Information For</h3>
-            <ul>
-                <li>Advertising or marketing</li>
-                <li>Selling to third parties</li>
-                <li>Profiling or behavioral analysis</li>
-                <li>Any purpose beyond core app functionality</li>
-            </ul>
+    <h2>Third-Party Services</h2>
+    <p>StackMap uses only essential services:</p>
+    <ul>
+        <li><strong>Google Drive API</strong> - Only if you enable sync (optional)</li>
+        <li><strong>No analytics</strong> - We don't track usage</li>
+        <li><strong>No advertising</strong> - We don't show ads</li>
+    </ul>
 
-            <h2>Google Drive Integration</h2>
-            
-            <h3>What We Access</h3>
-            <ul>
-                <li><strong>Limited Scope:</strong> Only files created by StackMap in a dedicated folder</li>
-                <li><strong>File Permissions:</strong> Read and write access to StackMap data files only</li>
-                <li><strong>No Browsing:</strong> We cannot access your other Google Drive files or personal documents</li>
-            </ul>
+    <h2>Your Rights</h2>
+    <p>You have complete control:</p>
+    <ul>
+        <li>Export your data anytime</li>
+        <li>Delete your data anytime</li>
+        <li>Use the app without any account</li>
+        <li>Sync is always optional</li>
+    </ul>
 
-            <h3>How Sync Works</h3>
-            <ul>
-                <li>Data is encrypted in transit to Google Drive</li>
-                <li>Files are stored in a dedicated "StackMap Data" folder</li>
-                <li>You maintain full control and can delete data anytime</li>
-                <li>Sync only occurs when you're signed in and using grown-up mode</li>
-            </ul>
+    <h2>Future Changes</h2>
+    <p>If we ever need to update this policy, we will:</p>
+    <ul>
+        <li>Notify you in the app</li>
+        <li>Give you time to review changes</li>
+        <li>Allow you to export your data if you disagree</li>
+    </ul>
 
-            <h2>Data Storage and Security</h2>
-            
-            <h3>Local Storage</h3>
-            <ul>
-                <li><strong>Primary Storage:</strong> All data is primarily stored on your device</li>
-                <li><strong>Offline Functionality:</strong> App works fully offline without internet connection</li>
-                <li><strong>User Control:</strong> You can clear all local data through your browser settings</li>
-            </ul>
-
-            <h3>Cloud Storage (Optional)</h3>
-            <ul>
-                <li><strong>Google Drive Only:</strong> When sync is enabled, encrypted backup copies are stored in your Google Drive</li>
-                <li><strong>Your Control:</strong> You own and control all data in your Google Drive</li>
-                <li><strong>Encryption:</strong> Data is encrypted during transmission to Google's servers</li>
-            </ul>
-
-            <h3>Security Measures</h3>
-            <ul>
-                <li>Industry-standard encryption for data transmission</li>
-                <li>No server-side storage of personal information</li>
-                <li>Regular security updates and monitoring</li>
-                <li>Child-safe design with parental controls</li>
-            </ul>
-
-            <h2>Children's Privacy</h2>
-            
-            <h3>COPPA Compliance</h3>
-            <ul>
-                <li>We do not knowingly collect personal information from children under 13</li>
-                <li>Parents and caregivers maintain full control over all app content</li>
-                <li>No social features or communication with other users</li>
-                <li>No advertising or third-party content</li>
-            </ul>
-
-            <h3>Parental Controls</h3>
-            <ul>
-                <li>"Grown-up Mode" protects sensitive settings</li>
-                <li>Parents control all sync and data management features</li>
-                <li>Simple validation questions prevent accidental changes</li>
-                <li>Full data export and deletion capabilities</li>
-            </ul>
-
-            <h2>Your Rights and Choices</h2>
-            
-            <h3>Data Access</h3>
-            <ul>
-                <li><strong>View Data:</strong> Access all your routine data within the app</li>
-                <li><strong>Export Data:</strong> Download complete data backup in JSON format</li>
-                <li><strong>Delete Data:</strong> Remove all data from the app and Google Drive</li>
-            </ul>
-
-            <h3>Account Controls</h3>
-            <ul>
-                <li><strong>Disconnect Sync:</strong> Unlink Google Drive access anytime</li>
-                <li><strong>Delete Account:</strong> Remove all cloud-stored data</li>
-                <li><strong>Local Data:</strong> Clear browser data to remove local information</li>
-            </ul>
-
-            <h3>Opt-Out Options</h3>
-            <ul>
-                <li><strong>Sync Disabled:</strong> Use app fully offline without Google Drive</li>
-                <li><strong>Analytics:</strong> Disable usage analytics in app settings</li>
-                <li><strong>Updates:</strong> Control automatic updates through device settings</li>
-            </ul>
-
-            <h2>Data Sharing and Third Parties</h2>
-            
-            <h3>We Do Not Share Data With</h3>
-            <ul>
-                <li>Advertisers or marketing companies</li>
-                <li>Social media platforms</li>
-                <li>Analytics companies (beyond basic app functionality)</li>
-                <li>Any third parties for commercial purposes</li>
-            </ul>
-
-            <h3>Limited Sharing Only For</h3>
-            <ul>
-                <li><strong>Google Drive:</strong> When you enable sync features</li>
-                <li><strong>Technical Support:</strong> Only when you specifically request help</li>
-                <li><strong>Legal Requirements:</strong> Only if required by law to protect children's safety</li>
-            </ul>
-
-            <h2>International Users</h2>
-            
-            <h3>Data Location</h3>
-            <ul>
-                <li><strong>Local Storage:</strong> Data stays on your device in your location</li>
-                <li><strong>Google Drive:</strong> Stored according to your Google account's data residency settings</li>
-                <li><strong>No International Transfers:</strong> We do not transfer data internationally</li>
-            </ul>
-
-            <h2>Data Retention</h2>
-            
-            <h3>How Long We Keep Data</h3>
-            <ul>
-                <li><strong>Local Data:</strong> Until you delete the app or clear browser data</li>
-                <li><strong>Google Drive:</strong> Until you delete files from your Google Drive</li>
-                <li><strong>Technical Logs:</strong> Automatically deleted after 30 days</li>
-            </ul>
-
-            <h3>Deletion Process</h3>
-            <ul>
-                <li><strong>Immediate:</strong> Local data deletion is immediate</li>
-                <li><strong>Google Drive:</strong> You control deletion through your Google Drive</li>
-                <li><strong>Account Closure:</strong> All associated data deleted within 30 days</li>
-            </ul>
-
-            <h2>Changes to This Policy</h2>
-            
-            <h3>Updates</h3>
-            <ul>
-                <li>We may update this policy to reflect app improvements</li>
-                <li>Major changes will be highlighted prominently</li>
-                <li>Continued use implies acceptance of updates</li>
-                <li>Previous versions available upon request</li>
-            </ul>
-
-            <h3>Notification</h3>
-            <ul>
-                <li>Email notification if you've provided contact information</li>
-                <li>In-app notification for all users</li>
-                <li>30-day notice period for significant changes</li>
-            </ul>
-
-            <h2>Contact Information</h2>
-            
-            <div class="contact-info">
-                <h3>Questions or Concerns</h3>
-                <ul>
-                    <li><strong>Email:</strong> adam@otto-home.com</li>
-                    <li><strong>Website:</strong> stackmap.com</li>
-                    <li><strong>Response Time:</strong> We aim to respond within 48 hours</li>
-                </ul>
-            </div>
-
-            <h2>Special Considerations for Families</h2>
-            
-            <h3>Multiple Caregivers</h3>
-            <ul>
-                <li>Shared Google accounts allow multiple family members to access routines</li>
-                <li>Each caregiver can manage settings independently</li>
-                <li>Consistent routines across all family devices and locations</li>
-            </ul>
-
-            <h3>Accessibility Features</h3>
-            <ul>
-                <li>Privacy settings designed for users with varying technical abilities</li>
-                <li>Simple language and clear visual indicators</li>
-                <li>Support for assistive technologies and screen readers</li>
-            </ul>
-
-            <h3>Educational Use</h3>
-            <ul>
-                <li>Teachers and therapists may use StackMap with parental permission</li>
-                <li>School districts should review data handling policies</li>
-                <li>Educational records may be subject to FERPA regulations</li>
-            </ul>
-        </div>
-
-        <a href="/" class="back-link">
-            <span>←</span>
-            Back to StackMap
-        </a>
-    </div>
+    <h2>Contact</h2>
+    <p>Questions about privacy? Email: privacy@stackmap.app</p>
+    
+    <h2>Open Source</h2>
+    <p>StackMap's code is open source. You can verify our privacy practices at: <a href="https://github.com/ajstack22/StackMap">github.com/ajstack22/StackMap</a></p>
 </body>
 </html>

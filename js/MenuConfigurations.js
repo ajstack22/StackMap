@@ -189,7 +189,11 @@ window.MenuConfigurations = {
                     if (app.grownupMode) {
                         html += `
                             <div class="panel-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); text-align: center;">
-                                <div style="color: rgba(255,255,255,0.6); font-size: 0.85rem;">
+                                <div id="versionInfo" style="color: rgba(255,255,255,0.6); font-size: 0.85rem; cursor: pointer; transition: color 0.2s ease;"
+                                     onclick="hybridPanelManager.checkForUpdates()"
+                                     onmouseover="this.style.color='rgba(255,255,255,0.8)'"
+                                     onmouseout="this.style.color='rgba(255,255,255,0.6)'"
+                                     title="Click to check for updates">
                                     Version ${CONFIG.APP_VERSION || '1.5.4'}<br>
                                     <span style="font-size: 0.75rem;">Build ${CONFIG.APP_BUILD_DATE || '2025-06-15'}</span>
                                 </div>
