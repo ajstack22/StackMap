@@ -28,7 +28,6 @@ class HybridPanelManager {
         };
         
         // Initialize dynamic menu system
-        console.log('HybridPanelManager constructor - initializing menu system');
         this.menuSystem = new DynamicMenuSystem(app);
         this.registerMenuConfigurations();
         
@@ -62,20 +61,16 @@ class HybridPanelManager {
 
     registerMenuConfigurations() {
         // Register all menu configurations from MenuConfigurations.js
-        console.log('Registering menu configurations, window.MenuConfigurations:', window.MenuConfigurations);
         if (window.MenuConfigurations) {
             Object.entries(window.MenuConfigurations).forEach(([id, config]) => {
-                console.log('Registering menu:', id);
                 this.menuSystem.registerMenu(id, config);
             });
         } else {
             console.error('window.MenuConfigurations not found during registration!');
             // Try again after a short delay
             setTimeout(() => {
-                console.log('Retrying menu registration...');
                 if (window.MenuConfigurations) {
                     Object.entries(window.MenuConfigurations).forEach(([id, config]) => {
-                        console.log('Registering menu (retry):', id);
                         this.menuSystem.registerMenu(id, config);
                     });
                 } else {
@@ -158,7 +153,7 @@ class HybridPanelManager {
         backdrop.id = 'hybridBackdrop';
         backdrop.className = 'panel-backdrop';
         backdrop.addEventListener('click', (e) => {
-            // console.log('Backdrop clicked');
+            // 
             // Only close if clicking the backdrop itself, not a child element
             if (e.target === backdrop) {
                 this.closeAllPanels();
@@ -297,7 +292,7 @@ class HybridPanelManager {
             }
         }
         
-        // console.log(`Opened ${side} panel`);
+        // 
     }
 
     closePanel(side) {
@@ -351,7 +346,7 @@ class HybridPanelManager {
             }
         }
         
-        // console.log(`Closed ${side} panel`);
+        // 
     }
 
     closeAllPanels() {
@@ -366,7 +361,6 @@ class HybridPanelManager {
 
     renderPanelContent(side, addToHistory = true) {
         const contentDiv = document.getElementById(`hybrid${side.charAt(0).toUpperCase() + side.slice(1)}Content`);
-        console.log('renderPanelContent called:', { side, contentDiv: contentDiv ? 'found' : 'not found' });
         
         // Check navigation history first to see what menu should be shown
         let menuId;
@@ -400,7 +394,6 @@ class HybridPanelManager {
                     };
                 }
                 menuState = this.menuStates.userForm;
-                console.log('User form menuState:', menuState);
             } else if (this.state.showingSyncSettings) {
                 menuId = 'syncSettings';
             } else if (this.state.showingLibraryMenu) {
@@ -425,9 +418,7 @@ class HybridPanelManager {
         }
         
         // Use dynamic menu system
-        console.log('About to render menu:', { menuId, side, menuState });
         const menuContent = this.menuSystem.renderMenu(menuId, side, menuState);
-        console.log('Menu content length:', menuContent.length);
         contentDiv.innerHTML = menuContent;
         
         // Initialize always-visible emoji picker for activity form
@@ -440,9 +431,7 @@ class HybridPanelManager {
         
         // Initialize always-visible icon picker for user form
         if (menuId === 'userForm') {
-            console.log('User form detected, initializing icon picker...');
             setTimeout(() => {
-                console.log('Timeout executing, calling initializeUserIconPicker');
                 this.initializeUserIconPicker();
                 this.setupUserFormListeners(side);
                 
@@ -450,15 +439,8 @@ class HybridPanelManager {
                 setTimeout(() => {
                     const container = document.getElementById('userIconPickerContainer');
                     if (container) {
-                        console.log('Container check after init:');
-                        console.log('- Container exists:', !!container);
-                        console.log('- Container has content:', container.innerHTML.length > 0);
-                        console.log('- Picker element exists:', !!container.querySelector('.modal-emoji-picker-inline'));
-                        console.log('- Grid exists:', !!container.querySelector('.modal-emoji-picker__grid'));
                         const buttons = container.querySelectorAll('.modal-emoji-picker__option');
-                        console.log('- Number of emoji buttons:', buttons.length);
                         if (buttons.length > 0) {
-                            console.log('- First 5 emojis:', Array.from(buttons).slice(0, 5).map(b => b.textContent).join(' '));
                         }
                     } else {
                         console.error('Container still not found after initialization!');
@@ -487,8 +469,7 @@ class HybridPanelManager {
                 <label>Theme Colors</label>
                 ${this.renderColorPicker()}
             </div>
-            
-            
+
             <div class="panel-section">
                 <label>Card Display</label>
                 ${this.renderDisplayModeSelector()}
@@ -731,7 +712,6 @@ class HybridPanelManager {
                     const isCurrentUser = user.id === currentUser.id;
                     const canDelete = !isCurrentUser && allUsers.length > 1;
                     
-                    console.log('[USER DELETE CHECK]', {
                         userName: user.name,
                         userId: user.id,
                         isCurrentUser,
@@ -789,11 +769,7 @@ class HybridPanelManager {
                     
                     const action = target.dataset.action;
                     const userId = target.dataset.userId;
-                    
-                    console.log('[USER ACTION]', { action, userId, targetElement: target });
-                    console.log('[USER ACTION] Manager reference:', !!manager);
-                    console.log('[USER ACTION] Manager.deleteUser exists:', !!manager.deleteUser);
-                    
+
                     switch(action) {
                         case 'select-user':
                             if (manager.selectUser) {
@@ -808,17 +784,11 @@ class HybridPanelManager {
                             break;
                         case 'delete-user':
                             e.stopPropagation();
-                            console.log('[DELETE ACTION] About to call deleteUser with:', userId);
-                            console.log('[DELETE ACTION] Type of userId:', typeof userId);
-                            console.log('[DELETE ACTION] manager object keys:', Object.keys(manager));
-                            console.log('[DELETE ACTION] deleteUser method:', manager.deleteUser);
                             try {
                                 // Try direct window reference as fallback
                                 if (window.hybridPanelManager && window.hybridPanelManager.deleteUser) {
-                                    console.log('[DELETE ACTION] Using window.hybridPanelManager.deleteUser');
                                     window.hybridPanelManager.deleteUser(userId);
                                 } else {
-                                    console.log('[DELETE ACTION] Using manager.deleteUser');
                                     manager.deleteUser.call(manager, userId);
                                 }
                             } catch (err) {
@@ -854,8 +824,6 @@ class HybridPanelManager {
             </div>
         `;
     }
-
-
 
     renderAdminButtons() {
         return `
@@ -1052,7 +1020,6 @@ class HybridPanelManager {
         `;
     }
 
-
     // ===== EVENT HANDLERS =====
 
     selectColor(color) {
@@ -1072,7 +1039,7 @@ class HybridPanelManager {
         // Update logo colors
         this.updateLogoColors(color);
         
-        // console.log('Color changed to:', color);
+        // 
     }
     
     openCustomColorPicker() {
@@ -1232,7 +1199,7 @@ class HybridPanelManager {
             this.app.render();
         }
         
-        // console.log('Display mode changed to:', mode);
+        // 
     }
 
     toggleCompletionIndicators(show) {
@@ -1277,7 +1244,7 @@ class HybridPanelManager {
             });
         }
         
-        // console.log('Completion indicators toggled to:', show);
+        // 
     }
     
     selectUser(userId) {
@@ -1294,7 +1261,7 @@ class HybridPanelManager {
                 this.renderPanelContent('right');
             }
             
-            // console.log('Switched to user:', userId);
+            // 
         }
     }
     
@@ -1312,7 +1279,7 @@ class HybridPanelManager {
             this.renderPanelContent('right');
         }
         
-        // console.log('Switched to day:', day);
+        // 
     }
     
     updateSubtitle() {
@@ -1327,8 +1294,6 @@ class HybridPanelManager {
         }
     }
 
-
-    
     handleEditModeSwitch(isChecked) {
         if (isChecked) {
             // Enter edit mode directly - validation is handled in MenuConfigurations
@@ -1395,7 +1360,7 @@ class HybridPanelManager {
                 text-align: center;
             `;
             
-            // console.log('Creating validation modal');
+            // 
         
         // Get a random validation question
         const questions = [
@@ -1602,7 +1567,7 @@ class HybridPanelManager {
             // Enter edit mode immediately
             setTimeout(() => {
                 this.app.enterGrownupMode();
-                // console.log('Validation successful - entered edit mode');
+                // 
                 
                 // Cleanup attempts after entering edit mode (won't delay UI)
                 setTimeout(() => this.removeValidationModal(), 100);
@@ -1717,7 +1682,7 @@ class HybridPanelManager {
             // Reset the flag
             this.validationModalActive = false;
             
-            // console.log('Validation modal removed with aggressive cleanup');
+            // 
         } catch (error) {
             console.error('Error removing validation modal:', error);
             // Last resort - remove any stuck modal elements
@@ -1743,7 +1708,7 @@ class HybridPanelManager {
         // NEW: Close any open panels when exiting edit mode
         this.closeAllPanels();
         
-        // console.log('Exited edit mode and closed panels');
+        // 
     }
 
     // Admin actions
@@ -1779,7 +1744,6 @@ class HybridPanelManager {
     }
     
     saveActivity() {
-        console.log('saveActivity called, editingLibraryCard:', this.state.editingLibraryCard, 'addingLibraryCard:', this.state.addingLibraryCard);
         try {
             // Check if we're adding a new library card
             if (this.state.addingLibraryCard) {
@@ -1858,13 +1822,10 @@ class HybridPanelManager {
                 };
                 
                 // Update the library card
-                console.log('Updating library card:', { libraryType, index, updatedCard });
                 const success = this.app.appState.updateLibraryCard(libraryType, index, updatedCard);
-                console.log('Update success:', success);
                 
                 if (!success) {
                     // Fallback: directly update and trigger save
-                    console.log('Using fallback update method');
                     const library = this.app.appState.getLibrary(libraryType);
                     const currentCard = library[index];
                     
@@ -1917,11 +1878,7 @@ class HybridPanelManager {
             completed: false,
             visible: true
         };
-        
-        console.log('Saving activity:', activity);
-        console.log('Description from form:', description);
-        console.log('Icon from form:', emoji);
-        
+
         // Check for editing index in multiple places for compatibility
         const editingIndex = this.menuStates.activityForm?.editingIndex ?? this.state.editingIndex;
         
@@ -1959,7 +1916,6 @@ class HybridPanelManager {
             alert('Error saving activity: ' + error.message);
         }
     }
-    
 
     exportData() {
         this.closeAllPanels();
@@ -1976,7 +1932,6 @@ class HybridPanelManager {
     }
 
     addNewUser() {
-        console.log('addNewUser called');
         
         // Initialize form state for new user
         this.menuStates.userForm = {
@@ -2012,9 +1967,7 @@ class HybridPanelManager {
         // Get the user data
         const user = this.app.appState.users.profiles[userId];
         if (!user) return;
-        
-        console.log('[EDIT USER] Editing user:', user.name, 'with icon:', user.icon);
-        
+
         // Initialize form state
         this.menuStates.userForm = {
             editingUser: user,
@@ -2047,13 +2000,11 @@ class HybridPanelManager {
     }
     
     initializeUserIconPicker() {
-        console.log('[ICON PICKER FIX v2] initializeUserIconPicker called');
         const container = document.getElementById('userIconPickerContainer');
         if (!container) {
             console.error('[ICON PICKER FIX v2] userIconPickerContainer not found');
             return;
         }
-        console.log('[ICON PICKER FIX v2] Container found:', container);
         
         // Ensure menuStates.userForm exists
         if (!this.menuStates.userForm) {
@@ -2064,7 +2015,6 @@ class HybridPanelManager {
         const hiddenInput = document.getElementById('userIcon');
         const editingUser = this.menuStates.userForm?.editingUser;
         const currentIcon = hiddenInput?.value || this.menuStates.userForm?.selectedIcon || editingUser?.icon || '👤';
-        console.log('Current icon:', currentIcon, 'from sources:', {
             hiddenInput: hiddenInput?.value,
             state: this.menuStates.userForm?.selectedIcon,
             editingUser: editingUser?.icon
@@ -2106,9 +2056,6 @@ class HybridPanelManager {
         
         // Function to render emoji grid (similar to activity picker)
         const renderEmojis = (searchTerm = '') => {
-            console.log('renderEmojis called with searchTerm:', searchTerm);
-            console.log('EMOJIS available:', typeof EMOJIS !== 'undefined', 'length:', EMOJIS?.length);
-            console.log('EMOJI_NAMES available:', typeof EMOJI_NAMES !== 'undefined', 'count:', Object.keys(EMOJI_NAMES || {}).length);
             
             // Check if emoji data is loaded
             if (typeof EMOJIS === 'undefined' || !EMOJIS) {
@@ -2128,7 +2075,6 @@ class HybridPanelManager {
                          data-emoji="${emoji}" type="button">${emoji}</button>`
             ).join('');
             grid.innerHTML = html || '<div style="padding: 20px; text-align: center; color: #666;">No emojis found</div>';
-            console.log('Grid populated with', emojisToShow.slice(0, 100).length, 'emojis');
         };
         
         // Initial render
@@ -2140,7 +2086,6 @@ class HybridPanelManager {
             
             // Check if it's an emoji (simple check for single character with high code point)
             if (value.length <= 2 && /\p{Emoji}/u.test(value)) {
-                console.log('Detected emoji paste:', value);
                 this.selectUserIcon(value);
                 filter.value = '';
                 renderEmojis('');
@@ -2153,13 +2098,11 @@ class HybridPanelManager {
         filter.addEventListener('paste', (e) => {
             e.preventDefault();
             const pastedText = (e.clipboardData || window.clipboardData).getData('text');
-            console.log('Pasted text:', pastedText);
             
             // Check if pasted text is an emoji
             if (pastedText && /\p{Emoji}/u.test(pastedText)) {
                 const emojiMatch = pastedText.match(/\p{Emoji}/u);
                 if (emojiMatch) {
-                    console.log('Selecting pasted emoji:', emojiMatch[0]);
                     this.selectUserIcon(emojiMatch[0]);
                     filter.value = '';
                     renderEmojis('');
@@ -2191,7 +2134,6 @@ class HybridPanelManager {
             }
         });
         
-        console.log('User icon picker initialized successfully');
     }
 
     showUserIconPicker() {
@@ -2200,7 +2142,6 @@ class HybridPanelManager {
     }
     
     selectUserIcon(icon) {
-        console.log('selectUserIcon called with:', icon);
         
         // Ensure menuStates.userForm exists
         if (!this.menuStates.userForm) {
@@ -2214,14 +2155,12 @@ class HybridPanelManager {
         const previewEmoji = document.querySelector('.modal-emoji-picker__preview-emoji');
         if (previewEmoji) {
             previewEmoji.textContent = icon;
-            console.log('Updated preview emoji to:', icon);
         }
         
         // Update hidden input
         const iconInput = document.getElementById('userIcon');
         if (iconInput) {
             iconInput.value = icon;
-            console.log('Updated hidden input to:', icon);
         }
         
         // Update grid selection
@@ -2232,14 +2171,12 @@ class HybridPanelManager {
     }
     
     saveUser() {
-        console.log('[SAVE USER] saveUser() method called!');
         
         // Get form values
         const name = document.getElementById('userName')?.value?.trim();
         const iconInput = document.getElementById('userIcon');
         
         // Debug: Check all possible icon sources
-        console.log('[SAVE USER] Icon sources:', {
             menuStateIcon: this.menuStates.userForm?.selectedIcon,
             hiddenInputValue: iconInput?.value,
             currentPreview: document.querySelector('.modal-emoji-picker__preview-emoji')?.textContent
@@ -2248,7 +2185,6 @@ class HybridPanelManager {
         // IMPORTANT: Use the menuState selectedIcon if available, as it's more reliable
         const icon = this.menuStates.userForm?.selectedIcon || iconInput?.value || '👤';
         
-        console.log('[SAVE USER] Starting save:', { 
             name, 
             icon,
             iconInputExists: !!iconInput,
@@ -2266,22 +2202,16 @@ class HybridPanelManager {
         }
         
         const state = this.menuStates.userForm;
-        console.log('[SAVE USER] Form state:', state);
         
         if (state.editingUserId) {
             // Editing existing user
-            console.log('[SAVE USER] Updating existing user:', state.editingUserId);
-            console.log('[SAVE USER] Icon before update:', this.app.appState.users.profiles[state.editingUserId]?.icon);
             
             this.app.appState.updateUser(state.editingUserId, { name, icon });
             
             // Verify the update
             const updatedUser = this.app.appState.users.profiles[state.editingUserId];
-            console.log('[SAVE USER] User after update:', updatedUser);
-            console.log('[SAVE USER] Icon after update:', updatedUser?.icon);
         } else {
             // Adding new user
-            console.log('[SAVE USER] Adding new user');
             this.app.appState.addUser(name, icon);
         }
         
@@ -2309,7 +2239,6 @@ class HybridPanelManager {
 
     // Simple handler for delete button
     _handleDeleteUser(userId, userName) {
-        console.log('[_handleDeleteUser] Called with:', { userId, userName });
         
         // Double-check we're not deleting the current user
         const currentUserId = this.app.appState.getCurrentUser()?.id;
@@ -2320,13 +2249,11 @@ class HybridPanelManager {
         
         // Show confirmation
         if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-            console.log('[_handleDeleteUser] User confirmed deletion');
             
             // Perform deletion
             const success = this.app.appState.deleteUser(userId);
             
             if (success) {
-                console.log('[_handleDeleteUser] Delete successful');
                 // Refresh UI
                 this.app.render();
                 this.renderPanelContent('right', false);
@@ -2342,15 +2269,10 @@ class HybridPanelManager {
     }
     
     deleteUser(userId) {
-        console.log('[DELETE USER] deleteUser called for:', userId);
-        console.log('[DELETE USER] this.app exists:', !!this.app);
-        console.log('[DELETE USER] this.app.appState exists:', !!this.app?.appState);
-        console.log('[DELETE USER] users.profiles exists:', !!this.app?.appState?.users?.profiles);
         
         try {
             // Get user info for confirmation message
             const user = this.app.appState.users.profiles[userId];
-            console.log('[DELETE USER] User lookup result:', user);
             
             if (!user) {
                 console.error('[DELETE USER] User not found:', userId);
@@ -2360,7 +2282,6 @@ class HybridPanelManager {
             
             // Check if it's the current user
             const currentUser = this.app.appState.getCurrentUser();
-            console.log('[DELETE USER] Current user:', currentUser?.id, 'Deleting:', userId);
             
             if (userId === currentUser?.id) {
                 alert("You cannot delete the currently active user. Please switch to another user first.");
@@ -2369,21 +2290,15 @@ class HybridPanelManager {
             
             // Confirm deletion
             const confirmMessage = `Are you sure you want to delete user "${user.name}"? This action cannot be undone.`;
-            console.log('[DELETE USER] Showing confirm dialog:', confirmMessage);
             
             if (!confirm(confirmMessage)) {
-                console.log('[DELETE USER] User cancelled deletion');
                 return;
             }
-            
-            console.log('[DELETE USER] User confirmed deletion, proceeding...');
-            
+
             // Delete the user
             const success = this.app.appState.deleteUser(userId);
-            console.log('[DELETE USER] Delete operation result:', success);
             
             if (success) {
-                console.log('[DELETE USER] User deleted successfully');
                 
                 // Refresh the UI
                 this.app.render();
@@ -2404,8 +2319,6 @@ class HybridPanelManager {
             console.error('[DELETE USER] Stack trace:', error.stack);
         }
     }
-
-
 
     /**
      * Update header elements from panel
@@ -2444,7 +2357,6 @@ class HybridPanelManager {
             }, 2000);
         }
     }
-
 
     /**
      * Utility: Text sanitization
@@ -2499,7 +2411,6 @@ class HybridPanelManager {
         const emojiInput = document.getElementById('activityEmoji');
         if (emojiInput) {
             emojiInput.value = icon;
-            console.log('Updated emoji input to:', icon);
         }
         
         // Update grid selection
@@ -2526,7 +2437,6 @@ class HybridPanelManager {
      * Show import preview in the management panel
      */
     showImportPreview(analysis, fileData) {
-        console.log('[HybridPanelManager] Showing import preview');
         this.state.showingImportPreview = true;
         this.state.importPreviewData = { analysis, fileData };
         
@@ -2654,7 +2564,6 @@ class HybridPanelManager {
      * Cancel import action
      */
     cancelImport() {
-        console.log('[HybridPanelManager] Import cancelled');
         this.state.showingImportPreview = false;
         this.state.importPreviewData = null;
         this.backToManagement();
@@ -3123,7 +3032,6 @@ class HybridPanelManager {
         // Re-render the management panel with sync settings
         this.renderPanelContent('right');
     }
-    
 
     /**
      * Google Drive sync methods
@@ -3136,7 +3044,6 @@ class HybridPanelManager {
                 this.renderPanelContent('right');
             }, 1000);
         } else {
-            console.log('Google Drive sync is initializing, please wait...');
             // Show loading message to user
             alert('Google Drive sync is still initializing. Please wait a moment and try again.');
             
@@ -3146,13 +3053,11 @@ class HybridPanelManager {
             
             const trySignIn = () => {
                 if (this.app.driveSync && this.app.driveSync.signIn) {
-                    console.log('Google Drive sync ready, attempting sign in');
                     this.app.driveSync.signIn();
                     this.renderPanelContent('right');
                 } else if (retryCount < maxRetries) {
                     retryCount++;
                     const delay = Math.min(1000 * Math.pow(2, retryCount), 5000);
-                    console.log(`Retry ${retryCount}/${maxRetries} in ${delay}ms`);
                     setTimeout(trySignIn, delay);
                 } else {
                     console.error('Google Drive sync failed to initialize after multiple retries');
@@ -3176,8 +3081,7 @@ class HybridPanelManager {
             }
         }
     }
-    
-    
+
     downloadFromDrive() {
         if (this.app.driveSync && this.app.driveSync.isSignedIn) {
             if (confirm('This will replace your local data with the version from Google Drive. Continue?')) {
@@ -3271,7 +3175,7 @@ class HybridPanelManager {
         }
         
         // Don't save immediately, wait for panel close
-        // console.log(`Updated ${type} celebration to: ${value}`);
+        // 
     }
     
     /**
@@ -3691,7 +3595,6 @@ class HybridPanelManager {
         });
     }
 
-
     // Hide old floating buttons
     hideOldButtons() {
         const oldNav = document.getElementById('main-navigation');
@@ -3733,7 +3636,7 @@ class HybridPanelManager {
                 action: 'initial' 
             }, '', window.location.href);
             
-            // console.log('📱 Initial history state added for back button control');
+            // 
         }
     }
 
@@ -3742,7 +3645,7 @@ class HybridPanelManager {
      */
     setupBackButtonListener() {
         window.addEventListener('popstate', (event) => {
-            // console.log('🔙 Back button pressed, state:', event.state);
+            // 
             
             // Check if any panels are open
             if (this.state.leftPanelOpen || this.state.rightPanelOpen) {
@@ -3767,7 +3670,7 @@ class HybridPanelManager {
      * Handle back button when panels are open
      */
     handleBackButtonPanelClose() {
-        // console.log('🔙 Closing panel with back button');
+        // 
         
         // Close any open panels
         this.closeAllPanels();
@@ -3780,7 +3683,7 @@ class HybridPanelManager {
      * Handle back button when in edit mode
      */
     handleBackButtonEditModeExit() {
-        // console.log('🔙 Exiting edit mode with back button');
+        // 
         
         // Exit edit mode
         this.app.exitGrownupMode();
@@ -3795,7 +3698,7 @@ class HybridPanelManager {
     handleBackButtonDefaultBehavior(event) {
         // If this is our initial state, prevent app exit
         if (event.state?.stackmap && event.state?.action === 'initial') {
-            // console.log('🔙 Preventing app exit, adding new history state');
+            // 
             
             // Add another state to prevent immediate exit
             this.pushBackButtonState('back_pressed');
@@ -3803,7 +3706,7 @@ class HybridPanelManager {
         }
         
         // Allow normal navigation if user really wants to leave
-        // console.log('🔙 Allowing normal back navigation');
+        // 
     }
 
     /**
@@ -3818,7 +3721,7 @@ class HybridPanelManager {
         };
         
         window.history.pushState(state, '', window.location.href);
-        // console.log('📱 Pushed history state:', state);
+        // 
     }
 
     /**
@@ -3846,12 +3749,12 @@ class HybridPanelManager {
         
         if (this.isIOSPWA) {
             document.body.classList.add('ios-pwa-mode');
-            // console.log('🍎 iOS PWA mode detected - enhanced navigation enabled');
+            // 
         }
         
         if (this.isIOS) {
             document.body.classList.add('ios-device');
-            // console.log('🍎 iOS device detected');
+            // 
         }
     }
 
@@ -3869,12 +3772,12 @@ class HybridPanelManager {
             const panelOpen = this.state.leftPanelOpen || this.state.rightPanelOpen;
             
             if ((nearLeftEdge || nearRightEdge) && panelOpen) {
-                // console.log('🍎 Preventing iOS swipe navigation during panel interaction');
+                // 
                 e.preventDefault();
             }
         }, { passive: false });
         
-        // console.log('🍎 iOS gesture protection enabled');
+        // 
     }
 
     /**
@@ -3929,7 +3832,7 @@ class HybridPanelManager {
             fab.classList.add('ios-pwa-enhanced');
         });
         
-        // console.log('🍎 Enhanced iOS PWA discoverability');
+        // 
     }
 
     /**
@@ -4123,15 +4026,12 @@ class HybridPanelManager {
     }
     
     navigateBack(side) {
-        console.log('[NAVIGATE BACK] Called for side:', side);
-        console.log('[NAVIGATE BACK] Current menu:', this.navigationHistory[side][this.navigationHistory[side].length - 1]);
         
         const history = this.navigationHistory[side];
         const currentMenu = history[history.length - 1];
         
         if (history.length <= 1) {
             // If we're at the root menu or no history, close the panel
-            console.log('[NAVIGATE BACK] Closing panel - at root menu');
             this.closePanel(side);
             
             // Clear navigation history after closing to prevent reopening with old menu
@@ -4142,7 +4042,6 @@ class HybridPanelManager {
             
             // Get the previous menu
             const previousMenu = history[history.length - 1];
-            console.log('[NAVIGATE BACK] Going back to:', previousMenu);
             
             // Reset all state flags
             this.state.showingActivityForm = false;

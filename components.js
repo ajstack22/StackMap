@@ -1273,7 +1273,6 @@ class ActivityCard {
         `;
     }
 
-
     renderEditTimePill(backgroundColor) {
         const formattedTime = ComponentBuilder.formatTime(this.activity.time);
         return `<div class="card__time-pill--edit" style="background: ${backgroundColor};">${formattedTime}</div>`;
@@ -1662,8 +1661,6 @@ class ActivityCard {
         this.draggedIndex = null;
     }
 }
-
-
 
 // Make classes globally available (no ES6 exports)
 window.ComponentBuilder = ComponentBuilder;
