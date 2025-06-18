@@ -1,8 +1,9 @@
 // Service Worker for StackMap PWA
-// Version: 1.6.5
+// Version: 1.6.6
 // Last Updated: 2025-06-18
 
-const CACHE_NAME = 'stackmap-v1.6.5-2025-06-18';
+const SW_VERSION = '1.6.6';
+const CACHE_NAME = 'stackmap-v1.6.6-2025-06-18';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 const IMAGE_CACHE = 'stackmap-images';
@@ -89,15 +90,21 @@ self.addEventListener('activate', (event) => {
   
   event.waitUntil(
     caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
+      return Promise.all([
+        // Delete old version caches
+        ...cacheNames.map((cacheName) => {
           // Delete caches that aren't in our current list
           if (!currentCaches.includes(cacheName)) {
             // console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
+        }),
+        // CRITICAL: Clear runtime cache to force CSS refresh
+        caches.delete(RUNTIME_CACHE).then(() => {
+          console.log('[SW] Cleared runtime cache for fresh resources');
+          return caches.open(RUNTIME_CACHE);
         })
-      );
+      ]);
     }).then(() => {
       // Cache additional static assets in background
       caches.open(CACHE_NAME).then((cache) => {

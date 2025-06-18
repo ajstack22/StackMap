@@ -71,10 +71,10 @@ module.exports = {
                 
                 // Try to navigate to different sections
                 await page.click('.floating-nav--left .fab');
-                await page.waitForSelector('.side-panel--open');
+                await page.waitForSelector('.side-panel.open');
                 
                 // Verify panel opened despite being offline
-                const panel = await page.$('.side-panel--open');
+                const panel = await page.$('.side-panel.open');
                 if (!panel) {
                     throw new Error('App features not working offline');
                 }
@@ -100,6 +100,9 @@ module.exports = {
             when: 'User opens from home screen',
             then: 'App launches in standalone mode without browser UI',
             test: async (page) => {
+                // Set mobile viewport first
+                await page.setViewport({ width: 375, height: 812 }); // iPhone X dimensions
+                
                 // Simulate standalone mode
                 await page.goto(getTestUrl('?mode=standalone'));
                 

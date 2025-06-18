@@ -39,7 +39,7 @@ module.exports = {
                 await page.click('.floating-nav--right .fab');
                 
                 // Wait for panel to open
-                await page.waitForSelector('.side-panel--open', { timeout: 10000 });
+                await page.waitForSelector('.side-panel.open', { timeout: 10000 });
                 
                 // Find and click Settings menu item
                 await page.evaluate(() => {
@@ -92,15 +92,21 @@ module.exports = {
                     await page.waitForTimeout(1000);
                 }
                 
+                
+                // Set up error capture for disconnect
+                const disconnectErrors = [];
+                page.on('console', msg => {
+                    if (msg.type() === 'error' && msg.text().includes('disconnect')) {
+                        disconnectErrors.push(msg.text());
+                    }
+                });
+                
                 // Now turn it off
-                await syncToggle.click();
+                await page.click('#syncToggle');
                 await page.waitForTimeout(1000);
                 
                 // Check that no errors occurred
-                const errors = await page.evaluate(() => {
-                    const logs = window.__consoleErrors || [];
-                    return logs.filter(e => e.includes('disconnect'));
-                });
+                const errors = disconnectErrors;
                 
                 if (errors.length > 0) {
                     throw new Error(`Disconnect error: ${errors[0]}`);

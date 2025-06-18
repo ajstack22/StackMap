@@ -35,7 +35,7 @@ module.exports = {
                 
                 // Enable sync
                 await page.click('.floating-nav--right .fab');
-                await page.waitForSelector('.side-panel--open');
+                await page.waitForSelector('.side-panel.open', { timeout: 30000 });
                 
                 await page.evaluate(() => {
                     const menuItems = Array.from(document.querySelectorAll('.menu-item'));
@@ -64,11 +64,11 @@ module.exports = {
                 
                 // Close settings
                 await page.keyboard.press('Escape');
-                await page.waitForSelector('.side-panel:not(.side-panel--open)');
+                await page.waitForSelector('.side-panel:not(.open)');
                 
                 // Add a new activity
                 await page.click('.floating-nav--left .fab');
-                await page.waitForSelector('.side-panel--open');
+                await page.waitForSelector('.side-panel.open', { timeout: 30000 });
                 
                 // Click on "New Activity"
                 await page.evaluate(() => {
