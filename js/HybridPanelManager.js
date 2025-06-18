@@ -712,14 +712,6 @@ class HybridPanelManager {
                     const isCurrentUser = user.id === currentUser.id;
                     const canDelete = !isCurrentUser && allUsers.length > 1;
                     
-                    console.log('User item:', {
-                        userName: user.name,
-                        userId: user.id,
-                        isCurrentUser,
-                        allUsersLength: allUsers.length,
-                        canDelete
-                    });
-                    
                     return `
                         <div class="user-list-item ${isCurrentUser ? 'user-list-item--active' : ''}" 
                              data-user-id="${user.id}"
@@ -2016,11 +2008,7 @@ class HybridPanelManager {
         const hiddenInput = document.getElementById('userIcon');
         const editingUser = this.menuStates.userForm?.editingUser;
         const currentIcon = hiddenInput?.value || this.menuStates.userForm?.selectedIcon || editingUser?.icon || '👤';
-        console.log('Current icon sources:', {
-            hiddenInput: hiddenInput?.value,
-            state: this.menuStates.userForm?.selectedIcon,
-            editingUser: editingUser?.icon
-        });
+        // Icon source debug removed
         
         // Create the emoji picker
         const picker = document.createElement('div');
@@ -2178,24 +2166,8 @@ class HybridPanelManager {
         const name = document.getElementById('userName')?.value?.trim();
         const iconInput = document.getElementById('userIcon');
         
-        // Debug: Check all possible icon sources
-        console.log('Icon sources at save:', {
-            menuStateIcon: this.menuStates.userForm?.selectedIcon,
-            hiddenInputValue: iconInput?.value,
-            currentPreview: document.querySelector('.modal-emoji-picker__preview-emoji')?.textContent
-        });
-        
         // IMPORTANT: Use the menuState selectedIcon if available, as it's more reliable
         const icon = this.menuStates.userForm?.selectedIcon || iconInput?.value || '👤';
-        
-        console.log('Form values at save:', {
-            name, 
-            icon,
-            iconInputExists: !!iconInput,
-            iconInputValue: iconInput?.value,
-            menuState: this.menuStates.userForm?.selectedIcon,
-            usingMenuState: !!this.menuStates.userForm?.selectedIcon
-        });
         
         // Validate name
         if (!name) {
@@ -4365,7 +4337,7 @@ class HybridPanelManager {
     // Sync methods
     toggleSync(enabled) {
         if (enabled) {
-            this.app.driveSync?.authenticate();
+            this.app.driveSync?.signIn();
         } else {
             this.app.driveSync?.disconnect();
         }

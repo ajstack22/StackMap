@@ -12,11 +12,10 @@
     "setup": "npm install && bash scripts/setup-git-hooks.sh"
   },
   "devDependencies": {
-    "puppeteer": "^21.0.0",
-    "playwright": "^1.40.0",
     "chalk": "^4.1.2",
     "http-server": "^14.1.1",
-    "nodemon": "^3.0.0"
+    "nodemon": "^3.0.0",
+    "puppeteer": "^21.0.0"
   },
   "engines": {
     "node": ">=14.0.0"
