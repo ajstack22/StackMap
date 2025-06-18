@@ -1,0 +1,47 @@
+# Configuration for auto-labeling PRs based on files changed
+
+# Frontend changes
+frontend:
+  - '**/*.js'
+  - '**/*.html'
+  - '!tests/**/*'
+
+# Style changes  
+styles:
+  - 'styles/**/*'
+  - '**/*.css'
+
+# Documentation
+documentation:
+  - '**/*.md'
+  - 'docs/**/*'
+
+# Configuration
+configuration:
+  - 'config/**/*'
+  - '.github/**/*'
+  - '*.json'
+  - '*.yml'
+  - '*.yaml'
+
+# Tests
+tests:
+  - 'tests/**/*'
+  - '**/*.test.js'
+  - '**/*.spec.js'
+
+# Core functionality
+core:
+  - 'state.js'
+  - 'app/StackMapApp.js'
+  - 'drive-sync.js'
+
+# Mobile-specific
+mobile:
+  - any: ['**/*']
+    all: ['!**/*desktop*', '**/*mobile*']
+
+# Dependencies
+dependencies:
+  - 'package.json'
+  - 'package-lock.json'

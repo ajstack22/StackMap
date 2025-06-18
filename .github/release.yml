@@ -1,0 +1,37 @@
+# GitHub Release changelog configuration
+changelog:
+  exclude:
+    labels:
+      - ignore-for-release
+    authors:
+      - dependabot
+  categories:
+    - title: 🚀 Features
+      labels:
+        - enhancement
+        - feature
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        - fix
+    - title: 📱 Mobile Improvements
+      labels:
+        - mobile
+    - title: ♿ Accessibility
+      labels:
+        - accessibility
+        - a11y
+    - title: ⚡ Performance
+      labels:
+        - performance
+    - title: 📚 Documentation
+      labels:
+        - documentation
+        - docs
+    - title: 🧹 Maintenance
+      labels:
+        - chore
+        - dependencies
+    - title: Other Changes
+      labels:
+        - "*"
