@@ -72,18 +72,12 @@ body.loaded {
 
 /* Ensure proper centering when cards hit max-width */
 @supports (display: grid) {
-    .main-container {
-        justify-items: center;
-    }
+    /* .main-container centering is in layout.css */
 }
 
 /* Desktop: 3+ columns for wide screens only */
 @media (min-width: 1400px) {
-    .main-container {
-        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-        gap: 20px;
-        padding: 0 10px;
-    }
+    /* .main-container rules are in layout.css */
 
     .card {
         padding: 30px 26px; /* Good desktop padding */
@@ -112,11 +106,7 @@ body.loaded {
 
 /* Tablet: Exactly 2 columns */
 @media (min-width: 600px) and (max-width: 1399px) {
-    .main-container {
-        grid-template-columns: 1fr 1fr !important;
-        gap: 18px;
-        padding: 0 10px;
-    }
+    /* .main-container rules are in layout.css */
 
     .card {
         padding: 32px 24px; /* Much more generous padding */
@@ -1151,13 +1141,7 @@ body.showing-welcome .btn--grownup-mode {
     }
 
     /* MOBILE: Single column with proper spacing */
-    .main-container {
-        grid-template-columns: 1fr !important;
-        gap: 16px !important;
-        padding: 0 8px;
-        width: 100%;
-        max-width: 100%;
-    }
+    /* .main-container rules are in layout.css */
 
     /* Welcome screen mobile adjustments */
     .welcome-content {
