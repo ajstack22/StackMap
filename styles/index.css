@@ -68,17 +68,10 @@ body.loaded {
 }
 
 /* ===== LAYOUT ===== */
-/* .main-container styles are in layout.css - do not duplicate here */
-
-/* Ensure proper centering when cards hit max-width */
-@supports (display: grid) {
-    /* .main-container centering is in layout.css */
-}
+/* Grid layout rules are defined in layout.css */
 
 /* Desktop: 3+ columns for wide screens only */
 @media (min-width: 1400px) {
-    /* .main-container rules are in layout.css */
-
     .card {
         padding: 30px 26px; /* Good desktop padding */
         min-height: 220px; /* Proper desktop height */
@@ -104,10 +97,8 @@ body.loaded {
     }
 }
 
-/* Tablet: Exactly 2 columns */
+/* Tablet: 2 columns (controlled by layout.css) */
 @media (min-width: 600px) and (max-width: 1399px) {
-    /* .main-container rules are in layout.css */
-
     .card {
         padding: 32px 24px; /* Much more generous padding */
         min-height: 240px; /* Taller cards like blue reference */
@@ -1140,8 +1131,7 @@ body.showing-welcome .btn--grownup-mode {
         padding: 15px 10px 100px 10px !important;
     }
 
-    /* MOBILE: Single column with proper spacing */
-    /* .main-container rules are in layout.css */
+    /* MOBILE: Single column (controlled by layout.css) */
 
     /* Welcome screen mobile adjustments */
     .welcome-content {
