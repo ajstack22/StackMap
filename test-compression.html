@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compression Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-result {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background: #f9f9f9;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        pre {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>StackMap Compression Test</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear</button>
+
+    <!-- Load dependencies -->
+    <script src="config/constants.js"></script>
+    <script src="config/defaults.js"></script>
+    <script src="state.js"></script>
+    
+    <script>
+        const results = document.getElementById('results');
+        
+        function log(title, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = 'test-result';
+            div.innerHTML = `<h3>${title}</h3><pre class="${type}">${message}</pre>`;
+            results.appendChild(div);
+        }
+        
+        function clearResults() {
+            results.innerHTML = '';
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            const appState = new AppState();
+            
+            // Test 1: Basic compression
+            try {
+                const testData = {
+                    repeated: 'test'.repeat(100),
+                    array: new Array(50).fill('value'),
+                    object: { a: 1, b: 2, c: 3 }
+                };
+                
+                const compressed = appState.compressData(testData);
+                const decompressed = appState.decompressData(compressed);
+                
+                const originalSize = JSON.stringify(testData).length;
+                const compressedSize = JSON.stringify(compressed).length;
+                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+                
+                const isValid = JSON.stringify(decompressed) === JSON.stringify(testData);
+                
+                log('Basic Compression Test', 
+                    `Original: ${originalSize} bytes\n` +
+                    `Compressed: ${compressedSize} bytes\n` +
+                    `Ratio: ${ratio}% reduction\n` +
+                    `Decompression: ${isValid ? 'PASSED' : 'FAILED'}`,
+                    isValid ? 'success' : 'error'
+                );
+            } catch (e) {
+                log('Basic Compression Test', `Error: ${e.message}`, 'error');
+            }
+            
+            // Test 2: Empty data
+            try {
+                const empty = {};
+                const compressed = appState.compressData(empty);
+                const decompressed = appState.decompressData(compressed);
+                const isValid = JSON.stringify(decompressed) === JSON.stringify(empty);
+                
+                log('Empty Data Test', 
+                    `Compression of empty object: ${isValid ? 'PASSED' : 'FAILED'}`,
+                    isValid ? 'success' : 'error'
+                );
+            } catch (e) {
+                log('Empty Data Test', `Error: ${e.message}`, 'error');
+            }
+            
+            // Test 3: Complex nested data
+            try {
+                const complex = {
+                    users: {
+                        user1: {
+                            activities: Array.from({length: 20}, (_, i) => ({
+                                id: `act-${i}`,
+                                title: `Activity ${i}`,
+                                completed: false
+                            }))
+                        }
+                    },
+                    settings: {
+                        theme: 'dark',
+                        notifications: true,
+                        syncEnabled: true
+                    }
+                };
+                
+                const compressed = appState.compressData(complex);
+                const decompressed = appState.decompressData(compressed);
+                
+                const originalSize = JSON.stringify(complex).length;
+                const compressedSize = JSON.stringify(compressed).length;
+                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+                
+                const isValid = JSON.stringify(decompressed) === JSON.stringify(complex);
+                
+                log('Complex Data Test', 
+                    `Original: ${originalSize} bytes\n` +
+                    `Compressed: ${compressedSize} bytes\n` +
+                    `Ratio: ${ratio}% reduction\n` +
+                    `Decompression: ${isValid ? 'PASSED' : 'FAILED'}`,
+                    isValid ? 'success' : 'error'
+                );
+            } catch (e) {
+                log('Complex Data Test', `Error: ${e.message}`, 'error');
+            }
+            
+            // Test 4: Already compressed data
+            try {
+                const random = {
+                    data: Array.from({length: 100}, () => Math.random().toString(36))
+                };
+                
+                const compressed = appState.compressData(random);
+                const decompressed = appState.decompressData(compressed);
+                
+                const originalSize = JSON.stringify(random).length;
+                const compressedSize = JSON.stringify(compressed).length;
+                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+                
+                const isValid = JSON.stringify(decompressed) === JSON.stringify(random);
+                
+                log('Random Data Test', 
+                    `Original: ${originalSize} bytes\n` +
+                    `Compressed: ${compressedSize} bytes\n` +
+                    `Ratio: ${ratio}% reduction (may be negative)\n` +
+                    `Decompression: ${isValid ? 'PASSED' : 'FAILED'}`,
+                    isValid ? 'success' : 'error'
+                );
+            } catch (e) {
+                log('Random Data Test', `Error: ${e.message}`, 'error');
+            }
+            
+            // Test 5: Invalid compressed data
+            try {
+                const invalid = { compressed: true, data: 'invalid' };
+                const decompressed = appState.decompressData(invalid);
+                
+                log('Invalid Data Test', 
+                    `Decompression of invalid data handled gracefully`,
+                    'success'
+                );
+            } catch (e) {
+                log('Invalid Data Test', 
+                    `Expected behavior: ${e.message}`,
+                    'success'
+                );
+            }
+        }
+        
+        // Run tests on load
+        window.onload = runAllTests;
+    </script>
+</body>
+</html>

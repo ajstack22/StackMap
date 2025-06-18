@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Granular Sync Integration</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f4f4f4;
+            border-radius: 4px;
+        }
+        .log-output {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Granular Sync Integration Test</h1>
+    
+    <div class="test-section">
+        <h2>Sync Status</h2>
+        <div id="syncStatus" class="status">
+            <p><strong>Google Drive:</strong> <span id="driveStatus">Not initialized</span></p>
+            <p><strong>Sync Queue:</strong> <span id="queueStatus">Empty</span></p>
+            <p><strong>Operation Log:</strong> <span id="opLogStatus">0 operations</span></p>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="test-section">
+            <h2>Test Operations</h2>
+            <h3>Activity Operations</h3>
+            <button onclick="testAddActivity()">Add Activity</button>
+            <button onclick="testUpdateActivity()">Update Activity</button>
+            <button onclick="testDeleteActivity()">Delete Activity</button>
+            <button onclick="testMoveActivity()">Move Activity</button>
+            
+            <h3>Bulk Operations</h3>
+            <button onclick="testMultipleChanges()">Make 5 Changes</button>
+            <button onclick="testRapidChanges()">Rapid Changes (10)</button>
+            
+            <h3>Network Simulation</h3>
+            <button onclick="goOffline()">Simulate Offline</button>
+            <button onclick="goOnline()">Simulate Online</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Queue Management</h2>
+            <button onclick="showQueueStatus()">Show Queue Status</button>
+            <button onclick="processQueue()">Process Queue Now</button>
+            <button onclick="clearQueue()">Clear Queue</button>
+            <button onclick="showOperationLog()">Show Operation Log</button>
+            <button onclick="clearOperationLog()">Clear Operation Log</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Log Output</h2>
+        <button onclick="clearLog()">Clear Log</button>
+        <div id="logOutput" class="log-output"></div>
+    </div>
+
+    <!-- Load all dependencies -->
+    <script src="config/constants.js"></script>
+    <script src="config/defaults.js"></script>
+    <script src="state.js"></script>
+    <script src="components.js"></script>
+    <script src="app/StackMapApp.js"></script>
+    <script src="drive-sync.js"></script>
+    
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <script>
+        let app;
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+            console.log(`[Granular Sync Test] ${message}`);
+        }
+        
+        function updateStatus() {
+            // Update Drive status
+            const driveStatus = app && app.driveSync && app.driveSync.isSignedIn ? 
+                'Signed in' : 'Not signed in';
+            document.getElementById('driveStatus').textContent = driveStatus;
+            
+            // Update Queue status
+            if (app && app.driveSync && app.driveSync.syncQueue) {
+                const queueStatus = app.driveSync.syncQueue.getStatus();
+                document.getElementById('queueStatus').textContent = 
+                    `${queueStatus.queueLength} items (${queueStatus.isOnline ? 'Online' : 'Offline'})`;
+            }
+            
+            // Update Operation Log status
+            if (app && app.appState) {
+                const stats = app.appState.getOperationLogStats();
+                document.getElementById('opLogStatus').textContent = 
+                    `${stats.total} operations (${stats.pending} pending)`;
+            }
+        }
+        
+        function testAddActivity() {
+            try {
+                const title = 'Test Activity ' + Date.now();
+                log(`Adding activity: ${title}`);
+                
+                app.appState.addActivity({
+                    title: title,
+                    icon: '🧪',
+                    description: 'Added by granular sync test'
+                });
+                
+                log('Activity added successfully', 'success');
+                updateStatus();
+                
+                // Check if operation was tracked
+                const lastOp = app.appState._operationLog[app.appState._operationLog.length - 1];
+                log(`Operation tracked: ${lastOp.type} - ${lastOp.id}`);
+                
+                // Check if it was queued
+                setTimeout(() => {
+                    const queueStatus = app.driveSync.syncQueue.getStatus();
+                    log(`Queue status: ${queueStatus.queueLength} items`);
+                }, 100);
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        function testUpdateActivity() {
+            try {
+                const activities = app.appState.getCurrentActivities();
+                if (activities.length === 0) {
+                    log('No activities to update', 'error');
+                    return;
+                }
+                
+                log('Updating first activity...');
+                app.appState.updateActivity(0, {
+                    title: 'Updated ' + Date.now(),
+                    completed: true
+                });
+                
+                log('Activity updated successfully', 'success');
+                updateStatus();
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        function testDeleteActivity() {
+            try {
+                const activities = app.appState.getCurrentActivities();
+                if (activities.length === 0) {
+                    log('No activities to delete', 'error');
+                    return;
+                }
+                
+                const lastIndex = activities.length - 1;
+                log(`Deleting activity at index ${lastIndex}`);
+                app.appState.removeActivity(lastIndex);
+                
+                log('Activity deleted successfully', 'success');
+                updateStatus();
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        function testMoveActivity() {
+            try {
+                const activities = app.appState.getCurrentActivities();
+                if (activities.length < 2) {
+                    log('Need at least 2 activities to test move', 'error');
+                    return;
+                }
+                
+                log('Moving first activity to end...');
+                app.appState.moveActivity(0, activities.length - 1);
+                
+                log('Activity moved successfully', 'success');
+                updateStatus();
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        function testMultipleChanges() {
+            log('Making multiple changes...');
+            
+            // Add 3 activities
+            for (let i = 0; i < 3; i++) {
+                app.appState.addActivity({
+                    title: `Bulk Activity ${i + 1}`,
+                    icon: '📦'
+                });
+            }
+            
+            // Update one
+            if (app.appState.getCurrentActivities().length > 0) {
+                app.appState.updateActivity(0, { completed: true });
+            }
+            
+            // Delete one
+            if (app.appState.getCurrentActivities().length > 1) {
+                app.appState.removeActivity(1);
+            }
+            
+            log('Multiple changes completed', 'success');
+            updateStatus();
+        }
+        
+        function testRapidChanges() {
+            log('Making rapid changes...');
+            let count = 0;
+            
+            const interval = setInterval(() => {
+                app.appState.addActivity({
+                    title: `Rapid ${count + 1}`,
+                    icon: '⚡'
+                });
+                
+                count++;
+                if (count >= 10) {
+                    clearInterval(interval);
+                    log('Rapid changes completed', 'success');
+                    updateStatus();
+                }
+            }, 100);
+        }
+        
+        function goOffline() {
+            if (app.driveSync && app.driveSync.syncQueue) {
+                app.driveSync.syncQueue.handleOffline();
+                log('Simulated offline state', 'info');
+                updateStatus();
+            }
+        }
+        
+        function goOnline() {
+            if (app.driveSync && app.driveSync.syncQueue) {
+                app.driveSync.syncQueue.handleOnline();
+                log('Simulated online state', 'info');
+                updateStatus();
+            }
+        }
+        
+        function showQueueStatus() {
+            if (app.driveSync && app.driveSync.syncQueue) {
+                const status = app.driveSync.syncQueue.getStatus();
+                log('\n=== Sync Queue Status ===');
+                log(`Queue Length: ${status.queueLength}`);
+                log(`Online: ${status.isOnline}`);
+                log(`Processing: ${status.processing}`);
+                
+                if (status.items.length > 0) {
+                    log('\nQueued Operations:');
+                    status.items.forEach((item, index) => {
+                        log(`${index + 1}. ${item.type} (${new Date(item.timestamp).toLocaleTimeString()})`);
+                    });
+                }
+            }
+        }
+        
+        function processQueue() {
+            if (app.driveSync && app.driveSync.syncQueue) {
+                log('Manually processing queue...');
+                app.driveSync.syncQueue.processQueue();
+                updateStatus();
+            }
+        }
+        
+        function clearQueue() {
+            if (app.driveSync && app.driveSync.syncQueue) {
+                if (confirm('Clear all queued operations?')) {
+                    app.driveSync.syncQueue.clearQueue();
+                    log('Queue cleared', 'success');
+                    updateStatus();
+                }
+            }
+        }
+        
+        function showOperationLog() {
+            const ops = app.appState.getOperationLog();
+            log(`\n=== Operation Log (${ops.length} operations) ===`);
+            
+            ops.slice(-10).forEach((op, index) => {
+                log(`${op.type} [${op.syncStatus}] - ${new Date(op.timestamp).toLocaleTimeString()}`);
+            });
+            
+            const stats = app.appState.getOperationLogStats();
+            log(`\nStats: ${stats.pending} pending, ${stats.synced} synced, ${stats.failed} failed`);
+        }
+        
+        function clearOperationLog() {
+            if (confirm('Clear operation log? This will lose sync history.')) {
+                app.appState.resetOperationLog();
+                log('Operation log cleared', 'success');
+                updateStatus();
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('logOutput').innerHTML = '';
+        }
+        
+        // Initialize app
+        window.onload = function() {
+            log('Initializing StackMap with granular sync...');
+            
+            // Create app instance
+            app = new StackMapApp();
+            window.appInstance = app; // For debugging
+            
+            log('StackMap initialized');
+            log('Waiting for Google APIs...');
+            
+            // Monitor status
+            setInterval(updateStatus, 1000);
+            
+            // Wait for Drive sync to initialize
+            setTimeout(() => {
+                if (app.driveSync) {
+                    log('Drive sync initialized', 'success');
+                    
+                    // Monitor sync queue events
+                    window.addEventListener('syncQueueUpdate', (event) => {
+                        log(`Queue update: ${event.detail.queueLength} items, ` +
+                            `${event.detail.isOnline ? 'online' : 'offline'}, ` +
+                            `${event.detail.processing ? 'processing' : 'idle'}`);
+                    });
+                } else {
+                    log('Drive sync not available (may need API credentials)', 'error');
+                }
+                
+                updateStatus();
+            }, 2000);
+        };
+    </script>
+</body>
+</html>

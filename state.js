@@ -405,17 +405,16 @@ class AppState {
         
         // Debug logging for tomorrow activities
         if (!isToday) {
-            // console.log('TOMORROW: Activity added successfully to tomorrow activities');
-            // console.log('TOMORROW: New activity:', newActivity.title);
-            // console.log('TOMORROW: Total tomorrow activities:', user.tomorrowActivities.length);
-            // console.log('TOMORROW: Legacy activities array synced:', this.activities.length);
+            // 
+            // 
+            // 
+            // 
         }
         
         this._triggerSave();
     }
 
     updateActivity(index, updates) {
-        console.log('updateActivity called with:', { index, updates });
         
         // Story 4: Get the current user and determine which activities to modify
         const user = this.getCurrentUser();
@@ -425,9 +424,7 @@ class AppState {
         if (index >= 0 && index < targetActivities.length) {
             const activity = targetActivities[index];
             const oldValues = {};
-            
-            console.log('Before update:', activity);
-            
+
             // Track what's changing for the operation log
             Object.keys(updates).forEach(key => {
                 if (activity[key] !== updates[key]) {
@@ -441,7 +438,6 @@ class AppState {
             }
             
             Object.assign(activity, updates);
-            console.log('After update:', activity);
             
             // Track the operation
             this._trackOperation('update-activity', {
@@ -731,7 +727,6 @@ class AppState {
             if (userIds.length > 0) {
                 // Just use the first available user
                 this.users.currentUserId = userIds[0];
-                console.log('[State] Using fallback user:', this.users.currentUserId);
                 return this.users.profiles[this.users.currentUserId];
             }
             
@@ -911,7 +906,6 @@ class AppState {
 
     // NEW: General update user method
     updateUser(userId, updates) {
-        console.log('[STATE] updateUser called with:', { userId, updates });
         console.trace('[STATE] updateUser call stack');
         
         if (!this.users.profiles[userId]) {
@@ -955,10 +949,8 @@ class AppState {
         
         // Validate and update icon if provided
         if (updates.icon !== undefined) {
-            console.log('[STATE] Updating user icon from:', user.icon, 'to:', updates.icon);
             oldValues.icon = user.icon;
             user.icon = updates.icon || '👤';
-            console.log('[STATE] User icon after update:', user.icon);
         }
         
         // Update any other properties
@@ -1267,7 +1259,6 @@ class AppState {
 
     // Enhanced importData to handle user icons
     importData(data, updateVersion = true) {
-        console.log('[State] Starting importData with data structure:', {
             hasUsers: !!data.users,
             hasActivities: !!data.activities,
             hasSettings: !!data.settings,
@@ -1309,7 +1300,6 @@ class AppState {
             
             if (data.users) {
                 // New multi-user format
-                console.log('[State] Importing multi-user format');
                 // Completely replace the users structure
                 this.users = {
                     currentUserId: data.users.currentUserId || CONFIG.DEFAULT_USER_ID,
@@ -1320,10 +1310,8 @@ class AppState {
                 // If the currentUserId doesn't exist in profiles, use the first available user
                 if (!this.users.profiles[this.users.currentUserId] && Object.keys(this.users.profiles).length > 0) {
                     this.users.currentUserId = Object.keys(this.users.profiles)[0];
-                    console.log('[State] Current user ID not found, using first available:', this.users.currentUserId);
                 }
                 
-                console.log('[State] Imported users structure:', {
                     currentUserId: this.users.currentUserId,
                     profileIds: Object.keys(this.users.profiles),
                     profileNames: Object.values(this.users.profiles).map(u => u.name)
@@ -1377,7 +1365,6 @@ class AppState {
                             }
                         });
                         if (fixedCount > 0) {
-                            console.log(`[State] Fixed ${fixedCount} duplicate IDs for user ${user.name} during import`);
                         }
                     }
                 });
@@ -1385,7 +1372,6 @@ class AppState {
                 // Check if any activity is hidden and mark all as visible
                 Object.values(this.users.profiles).forEach(user => {
                     if (user.activities && user.activities.some(a => a.visible === false)) {
-                        console.log('[State] Found hidden activities, marking all as visible');
                         user.activities.forEach(a => {
                             a.visible = true;
                         });
@@ -1398,7 +1384,6 @@ class AppState {
                 }
                 
                 // Ensure current user exists
-                console.log('[State] Checking if current user exists:', this.users.currentUserId, 'in profiles:', Object.keys(this.users.profiles));
                 if (!this.users.profiles[this.users.currentUserId]) {
                     // If current user doesn't exist, try default user
                     if (this.users.profiles[CONFIG.DEFAULT_USER_ID]) {
@@ -1408,7 +1393,6 @@ class AppState {
                         const userIds = Object.keys(this.users.profiles);
                         if (userIds.length > 0) {
                             this.users.currentUserId = userIds[0];
-                            console.log('[State] Current user not found, using first available user:', this.users.currentUserId);
                         } else {
                             // No users at all - this shouldn't happen
                             console.error('[State] No users found in imported data!');
@@ -1420,7 +1404,6 @@ class AppState {
                 this.loadUserData();
             } else if (data.activities) {
                 // Legacy single-user format - migrate to default user
-                console.log('[State] Importing legacy single-user format (v' + (data.version || '1.0') + ')');
                 
                 // Validate activities array
                 if (!Array.isArray(data.activities)) {
@@ -1439,7 +1422,6 @@ class AppState {
                 
                 // Check if any activity is hidden and mark all as visible
                 if (activities.some(a => a.visible === false)) {
-                    console.log('[State] Found hidden activities in legacy format, marking all as visible');
                     activities.forEach(a => {
                         a.visible = true;
                     });
@@ -1482,7 +1464,6 @@ class AppState {
                 
                 this.users.currentUserId = CONFIG.DEFAULT_USER_ID;
                 this.loadUserData();
-                console.log('[State] Legacy import successful, created user:', this.users.profiles[CONFIG.DEFAULT_USER_ID].name);
             } else {
                 throw new Error('No valid data to import: missing both users and activities');
             }
@@ -1493,7 +1474,6 @@ class AppState {
             this._dirtyActivities.clear();
             
             this._triggerSave();
-            console.log('[State] Import completed successfully');
             
         } catch (error) {
             console.error('[State] Import failed:', error);
@@ -1544,7 +1524,6 @@ class AppState {
     
     // Merge with remote data for conflict resolution
     mergeWithRemote(remoteData) {
-        console.log('[State] Merging with remote data');
         
         // For multi-user sync, we need to merge each user's data
         if (remoteData.users && remoteData.users.profiles) {
@@ -1555,7 +1534,6 @@ class AppState {
                 
                 if (localUser) {
                     // User exists locally - merge their activities
-                    console.log(`[State] Merging data for user: ${localUser.name}`);
                     
                     // Merge today activities
                     const mergedToday = this.mergeActivities(
@@ -1577,7 +1555,6 @@ class AppState {
                     }
                 } else {
                     // User doesn't exist locally - add them
-                    console.log(`[State] Adding new user from remote: ${remoteUser.name}`);
                     this.users.profiles[userId] = remoteUser;
                 }
             });
@@ -1586,13 +1563,11 @@ class AppState {
             // (This preserves locally created users)
             Object.keys(this.users.profiles).forEach(userId => {
                 if (!remoteData.users.profiles[userId]) {
-                    console.log(`[State] Keeping local-only user: ${this.users.profiles[userId].name}`);
                 }
             });
             
         } else {
             // Legacy format - merge current user only
-            console.log('[State] Merging legacy format - current user only');
             const localActivities = this.getCurrentActivities();
             const remoteActivities = remoteData.activities || [];
             const mergedActivities = this.mergeActivities(localActivities, remoteActivities);
@@ -1687,6 +1662,300 @@ class AppState {
         }
         
         return cloned;
+    }
+    
+    // === DELTA SYNC METHODS ===
+    
+    // Generate a delta (patch) from the operation log
+    generateSyncDelta(fromVersion = 0) {
+        const currentVersion = this.syncMetadata.version;
+        
+        // Get operations since the specified version
+        const relevantOps = this._operationLog.filter(op => {
+            // Only include unsynced operations
+            return op.syncStatus === 'pending';
+        });
+        
+        if (relevantOps.length === 0) {
+            return null;
+        }
+        
+        // Create delta object
+        const delta = {
+            fromVersion: fromVersion,
+            toVersion: currentVersion,
+            deviceId: this.syncMetadata.deviceId,
+            timestamp: Date.now(),
+            operations: relevantOps.map(op => ({
+                id: op.id,
+                type: op.type,
+                timestamp: op.timestamp,
+                data: this._minimizeOperationData(op)
+            })),
+            checksum: null // Will be calculated
+        };
+        
+        // Calculate checksum
+        delta.checksum = this._calculateChecksum(delta);
+        
+        return delta;
+    }
+    
+    // Apply a delta to the current state
+    applyDelta(delta) {
+        // Verify checksum
+        const calculatedChecksum = this._calculateChecksum({
+            ...delta,
+            checksum: null
+        });
+        
+        if (calculatedChecksum !== delta.checksum) {
+            throw new Error('Delta checksum mismatch - data may be corrupted');
+        }
+        
+        // Apply each operation in order
+        delta.operations.forEach(op => {
+            try {
+                this._applyDeltaOperation(op);
+            } catch (error) {
+                console.error('[State] Failed to apply delta operation:', op, error);
+                // Continue with other operations
+            }
+        });
+        
+        // Update sync metadata
+        this.syncMetadata.version = Math.max(this.syncMetadata.version, delta.toVersion);
+        this.syncMetadata.lastModified = new Date().toISOString();
+        
+        this._triggerSave();
+    }
+    
+    // Minimize operation data for network transfer
+    _minimizeOperationData(operation) {
+        const minimal = { ...operation.data };
+        
+        switch (operation.type) {
+            case 'update-activity':
+                // Only send the changes, not the full activity
+                return {
+                    userId: minimal.userId,
+                    activityId: minimal.activityId,
+                    updates: minimal.updates,
+                    dayContext: minimal.dayContext
+                };
+                
+            case 'add-activity':
+                // Send only essential activity data
+                return {
+                    userId: minimal.userId,
+                    activityId: minimal.activityId,
+                    activity: {
+                        id: minimal.activity.id,
+                        title: minimal.activity.title,
+                        icon: minimal.activity.icon,
+                        description: minimal.activity.description,
+                        cardType: minimal.activity.cardType,
+                        completed: minimal.activity.completed,
+                        keep: minimal.activity.keep
+                    },
+                    position: minimal.position,
+                    dayContext: minimal.dayContext
+                };
+                
+            case 'remove-activity':
+                // Only need IDs for deletion
+                return {
+                    userId: minimal.userId,
+                    activityId: minimal.activityId,
+                    dayContext: minimal.dayContext
+                };
+                
+            case 'move-activity':
+                // Only positions needed
+                return {
+                    userId: minimal.userId,
+                    activityId: minimal.activityId,
+                    fromIndex: minimal.fromIndex,
+                    toIndex: minimal.toIndex,
+                    dayContext: minimal.dayContext
+                };
+                
+            default:
+                return minimal;
+        }
+    }
+    
+    // Apply a single delta operation
+    _applyDeltaOperation(operation) {
+        const user = this.users.profiles[operation.data.userId];
+        if (!user) {
+            console.warn('[State] User not found for delta operation:', operation.data.userId);
+            return;
+        }
+        
+        const isToday = operation.data.dayContext === 'today';
+        const targetActivities = isToday ? user.activities : user.tomorrowActivities;
+        
+        switch (operation.type) {
+            case 'add-activity':
+                // Check if activity already exists (idempotency)
+                if (!targetActivities.find(a => a.id === operation.data.activityId)) {
+                    targetActivities.push(operation.data.activity);
+                }
+                break;
+                
+            case 'update-activity':
+                const activityToUpdate = targetActivities.find(a => a.id === operation.data.activityId);
+                if (activityToUpdate) {
+                    Object.assign(activityToUpdate, operation.data.updates);
+                }
+                break;
+                
+            case 'remove-activity':
+                const indexToRemove = targetActivities.findIndex(a => a.id === operation.data.activityId);
+                if (indexToRemove !== -1) {
+                    targetActivities.splice(indexToRemove, 1);
+                }
+                break;
+                
+            case 'move-activity':
+                const activity = targetActivities[operation.data.fromIndex];
+                if (activity && activity.id === operation.data.activityId) {
+                    targetActivities.splice(operation.data.fromIndex, 1);
+                    targetActivities.splice(operation.data.toIndex, 0, activity);
+                }
+                break;
+        }
+        
+        // Update card numbers
+        targetActivities.forEach((activity, index) => {
+            activity.cardNumber = index + 1;
+        });
+    }
+    
+    // Calculate checksum for delta integrity
+    _calculateChecksum(delta) {
+        const dataString = JSON.stringify({
+            fromVersion: delta.fromVersion,
+            toVersion: delta.toVersion,
+            operations: delta.operations
+        });
+        
+        // Simple hash function for checksum
+        let hash = 0;
+        for (let i = 0; i < dataString.length; i++) {
+            const char = dataString.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32-bit integer
+        }
+        
+        return Math.abs(hash).toString(36);
+    }
+    
+    // Compress data for network transfer
+    compressData(data) {
+        const jsonString = JSON.stringify(data);
+        
+        // For browser environment, we'll use a simple compression technique
+        // In production, you might want to use pako or another compression library
+        
+        // Convert to base64 for now (not actual compression, but reduces size for text data)
+        // This is a placeholder - real compression would use gzip/deflate
+        try {
+            // Check if CompressionStream is available (modern browsers)
+            if (typeof CompressionStream !== 'undefined') {
+                // This would be the ideal implementation with CompressionStream
+                // But for now, we'll use a simpler approach
+            }
+            
+            // Simple RLE-like compression for repeated patterns
+            const compressed = this._simpleCompress(jsonString);
+            return {
+                compressed: true,
+                algorithm: 'simple-rle',
+                data: compressed,
+                originalSize: jsonString.length,
+                compressedSize: compressed.length
+            };
+        } catch (error) {
+            // Fallback to no compression
+            return {
+                compressed: false,
+                data: jsonString,
+                originalSize: jsonString.length,
+                compressedSize: jsonString.length
+            };
+        }
+    }
+    
+    // Decompress data
+    decompressData(compressedData) {
+        if (!compressedData.compressed) {
+            return JSON.parse(compressedData.data);
+        }
+        
+        switch (compressedData.algorithm) {
+            case 'simple-rle':
+                const decompressed = this._simpleDecompress(compressedData.data);
+                return JSON.parse(decompressed);
+            default:
+                throw new Error('Unknown compression algorithm: ' + compressedData.algorithm);
+        }
+    }
+    
+    // Simple compression implementation
+    _simpleCompress(str) {
+        // Basic run-length encoding for repeated characters
+        let compressed = '';
+        let count = 1;
+        
+        for (let i = 0; i < str.length; i++) {
+            if (str[i] === str[i + 1] && count < 9) {
+                count++;
+            } else {
+                if (count > 2) {
+                    compressed += count + str[i];
+                } else {
+                    compressed += str[i].repeat(count);
+                }
+                count = 1;
+            }
+        }
+        
+        return compressed;
+    }
+    
+    // Simple decompression implementation
+    _simpleDecompress(compressed) {
+        let decompressed = '';
+        
+        for (let i = 0; i < compressed.length; i++) {
+            if (/\d/.test(compressed[i])) {
+                const count = parseInt(compressed[i]);
+                const char = compressed[i + 1];
+                decompressed += char.repeat(count);
+                i++; // Skip the character we just processed
+            } else {
+                decompressed += compressed[i];
+            }
+        }
+        
+        return decompressed;
+    }
+    
+    // Get data size in bytes
+    getDataSize(data = null) {
+        const dataToMeasure = data || this.exportData();
+        const jsonString = JSON.stringify(dataToMeasure);
+        
+        // Calculate size in bytes (rough estimate for UTF-8)
+        const bytes = new TextEncoder().encode(jsonString).length;
+        
+        return {
+            bytes: bytes,
+            kilobytes: (bytes / 1024).toFixed(2),
+            megabytes: (bytes / 1024 / 1024).toFixed(2)
+        };
     }
 }
 

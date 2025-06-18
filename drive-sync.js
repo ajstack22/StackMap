@@ -162,7 +162,6 @@ class SyncQueue {
         }
         
         this.processing = true;
-        console.log('[SyncQueue] Processing queue with', this.queue.length, 'items');
         
         // Process items in order
         while (this.queue.length > 0 && this.isOnline) {
@@ -243,7 +242,6 @@ class SyncQueue {
     }
     
     handleOnline() {
-        console.log('[SyncQueue] Network online detected');
         this.isOnline = true;
         this.notifyQueueUpdate();
         
@@ -256,7 +254,6 @@ class SyncQueue {
     }
     
     handleOffline() {
-        console.log('[SyncQueue] Network offline detected');
         this.isOnline = false;
         this.notifyQueueUpdate();
     }
@@ -325,7 +322,6 @@ class SyncQueue {
 // === GOOGLE DRIVE SYNC ===
 class GoogleDriveSync {
     constructor(app) {
-        console.log('[GoogleDriveSync] Initializing...');
         this.app = app;
         this.isSignedIn = false;
         this.currentUser = null;
@@ -360,11 +356,9 @@ class GoogleDriveSync {
 
     async initializeGoogleAPIs() {
         try {
-            console.log('[GoogleDriveSync] Starting API initialization...');
             
             // Skip initialization in demo mode
             if (window.DEMO_MODE || localStorage.getItem('stackMapDemoMode') === 'true') {
-                console.log('[GoogleDriveSync] Demo mode detected, skipping Google Drive sync');
                 return;
             }
             
@@ -373,9 +367,7 @@ class GoogleDriveSync {
                 console.warn('Google Drive sync disabled: API credentials not configured');
                 return;
             }
-            
-            console.log('[GoogleDriveSync] Credentials found, loading Google APIs...');
-            
+
             // Wait for Google APIs to load with timeout
             await new Promise((resolve, reject) => {
                 let checkCount = 0;
@@ -422,7 +414,6 @@ class GoogleDriveSync {
             // Check for stored auth token
             await this.checkStoredAuth();
             
-            console.log('[GoogleDriveSync] Google Drive API initialized successfully');
         } catch (error) {
             console.error('[GoogleDriveSync] Error loading Google APIs:', error);
             this.showSyncError('Failed to load Google services. Please refresh the page.');
@@ -451,7 +442,6 @@ class GoogleDriveSync {
                 // Ensure Drive API is loaded before using restored token
                 if (!gapi.client.drive) {
                     try {
-                        console.log('[GoogleDriveSync] Loading Drive API for restored session...');
                         await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
                     } catch (error) {
                         console.error('[GoogleDriveSync] Failed to load Drive API:', error);
@@ -460,7 +450,6 @@ class GoogleDriveSync {
                 }
                 
                 this.updateSignInStatus(true);
-                console.log(`[GoogleDriveSync] Restored session for ${storedEmail || 'user'}`);
                 
                 // Schedule token refresh before it expires
                 this.scheduleTokenRefresh();
@@ -470,7 +459,6 @@ class GoogleDriveSync {
                 this.checkForRemoteChanges();
             } else {
                 // Token expired or about to expire, try silent refresh
-                console.log('[GoogleDriveSync] Stored token expired, attempting silent refresh...');
                 this.performSilentTokenRefresh();
             }
         } else {
@@ -517,7 +505,6 @@ class GoogleDriveSync {
                 hint: localStorage.getItem('stackmap-user-email') || '' // Use stored email as hint
             });
 
-            console.log('[GoogleDriveSync] Google Identity Services initialized');
         } catch (error) {
             console.error('Error initializing Google Identity Services:', error);
         }
@@ -536,10 +523,8 @@ class GoogleDriveSync {
             }
             
             google.accounts.id.prompt((notification) => {
-                console.log('[GoogleDriveSync] One Tap prompt:', notification.getMomentType());
                 if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
                     // One Tap not shown, fall back to regular sign-in
-                    console.log('[GoogleDriveSync] One Tap not shown, user may need to sign in manually');
                 }
             });
         } catch (error) {
@@ -548,14 +533,12 @@ class GoogleDriveSync {
     }
 
     async handleOneTapResponse(response) {
-        console.log('[GoogleDriveSync] One Tap response received');
         
         // Decode the JWT to get user info
         const payload = this.parseJwt(response.credential);
         if (payload && payload.email) {
             // Store user email for future use
             localStorage.setItem('stackmap-user-email', payload.email);
-            console.log(`[GoogleDriveSync] User ${payload.email} signed in via One Tap`);
         }
         
         // Request access token
@@ -607,9 +590,7 @@ class GoogleDriveSync {
         // Ensure Drive API is loaded before proceeding
         if (!gapi.client.drive) {
             try {
-                console.log('[GoogleDriveSync] Loading Drive API after authentication...');
                 await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
-                console.log('[GoogleDriveSync] Drive API loaded successfully');
             } catch (error) {
                 console.error('[GoogleDriveSync] Failed to load Drive API:', error);
                 this.showSyncError('Failed to initialize Google Drive API');
@@ -618,7 +599,6 @@ class GoogleDriveSync {
         }
 
         this.updateSignInStatus(true);
-        console.log('[GoogleDriveSync] Successfully signed in with access token');
         
         // Clear folder ID to force refresh on new sign-in
         this.folderId = null;
@@ -635,7 +615,6 @@ class GoogleDriveSync {
         
         // Process any queued operations
         if (this.syncQueue && this.syncQueue.queue.length > 0) {
-            console.log('[GoogleDriveSync] Processing queued operations after sign-in');
             this.syncQueue.processQueue();
         }
         
@@ -655,7 +634,6 @@ class GoogleDriveSync {
                 const userInfo = await response.json();
                 if (userInfo.email) {
                     localStorage.setItem('stackmap-user-email', userInfo.email);
-                    console.log(`[GoogleDriveSync] Stored user email: ${userInfo.email}`);
                 }
             }
         } catch (error) {
@@ -668,16 +646,13 @@ class GoogleDriveSync {
         
         if (error.type === 'popup_closed' || error.type === 'popup_failed_to_open') {
             // Popup was blocked or closed, try silent refresh
-            console.log('[GoogleDriveSync] Popup blocked/closed, attempting silent refresh...');
             this.performSilentTokenRefresh();
         } else {
             // Apply exponential backoff for retries
             if (this.tokenRefreshRetryCount < this.maxTokenRefreshRetries) {
                 this.tokenRefreshRetryCount++;
                 const delay = Math.min(this.tokenRefreshBackoff * Math.pow(2, this.tokenRefreshRetryCount - 1), 60000); // Max 1 minute
-                
-                console.log(`[GoogleDriveSync] Retrying token refresh in ${delay/1000} seconds (attempt ${this.tokenRefreshRetryCount}/${this.maxTokenRefreshRetries})`);
-                
+
                 setTimeout(() => {
                     this.performSilentTokenRefresh();
                 }, delay);
@@ -703,21 +678,17 @@ class GoogleDriveSync {
         const refreshTime = Math.max(timeUntilExpiry - (5 * 60 * 1000), 0);
         
         if (refreshTime > 0) {
-            console.log(`[GoogleDriveSync] Token refresh scheduled in ${refreshTime/1000/60} minutes`);
             
             this.tokenRefreshTimer = setTimeout(() => {
-                console.log('[GoogleDriveSync] Token refresh timer triggered');
                 this.performSilentTokenRefresh();
             }, refreshTime);
         } else {
             // Token already expired or about to expire
-            console.log('[GoogleDriveSync] Token expired or expiring soon, refreshing now...');
             this.performSilentTokenRefresh();
         }
     }
 
     async performSilentTokenRefresh() {
-        console.log('[GoogleDriveSync] Attempting silent token refresh...');
         
         try {
             // First try iframe-based silent refresh
@@ -725,7 +696,6 @@ class GoogleDriveSync {
             
             if (!success) {
                 // If iframe refresh fails, try requestAccessToken with no prompt
-                console.log('[GoogleDriveSync] Iframe refresh failed, trying prompt-less refresh...');
                 this.requestAccessToken(false);
             }
         } catch (error) {
@@ -848,7 +818,6 @@ class GoogleDriveSync {
                 syncBtn.classList.remove('hidden');
             }
             
-            console.log(`[GoogleDriveSync] Signed in${userEmail ? ' as ' + userEmail : ''}`);
         } else {
             this.currentUser = null;
             this.accessToken = null;
@@ -870,7 +839,6 @@ class GoogleDriveSync {
             if (syncActions) syncActions.style.display = 'none';
             if (syncBtn) syncBtn.classList.add('hidden');
             
-            console.log('[GoogleDriveSync] Signed out');
         }
     }
 
@@ -962,7 +930,6 @@ class GoogleDriveSync {
         
         // First check local expiry
         if (this.tokenExpiresAt && Date.now() >= this.tokenExpiresAt) {
-            console.log('[GoogleDriveSync] Token expired based on local expiry time');
             return false;
         }
         
@@ -971,7 +938,6 @@ class GoogleDriveSync {
             const data = await response.json();
             
             if (data.error) {
-                console.log('[GoogleDriveSync] Token is invalid:', data.error);
                 return false;
             }
             
@@ -991,7 +957,6 @@ class GoogleDriveSync {
     async refreshTokenIfNeeded() {
         const isValid = await this.checkTokenValidity();
         if (!isValid) {
-            console.log('[GoogleDriveSync] Token invalid, performing silent refresh...');
             
             // Clear invalid stored token
             localStorage.removeItem('stackmap-google-token');
@@ -1017,7 +982,7 @@ class GoogleDriveSync {
             const remoteVersion = remoteData.syncMetadata?.version || 0;
             
             if (remoteVersion > this.lastKnownRemoteVersion && remoteVersion !== localVersion) {
-                // console.log(`Remote changes detected: v${remoteVersion} (local: v${localVersion})`);
+                // `);
                 
                 // Check if remote is newer than local
                 if (remoteVersion > localVersion) {
@@ -1033,7 +998,7 @@ class GoogleDriveSync {
             
             this.lastKnownRemoteVersion = remoteVersion;
         } catch (error) {
-            // console.log('Error checking for remote changes:', error);
+            // 
         }
     }
 
@@ -1066,7 +1031,6 @@ class GoogleDriveSync {
         // Silently apply changes without notification for better UX
         this.applyRemoteChanges(remoteData);
         // Only log to console for debugging
-        console.log(`Synced changes from ${remoteDevice} at ${remoteTime}`);
     }
 
     handleConflict(remoteData) {
@@ -1225,7 +1189,6 @@ class GoogleDriveSync {
     async uploadData(silent = false) {
         // If offline, queue the operation
         if (!navigator.onLine) {
-            console.log('[GoogleDriveSync] Offline - queuing upload operation');
             this.syncQueue.enqueue({
                 type: 'upload',
                 data: {
@@ -1290,7 +1253,6 @@ class GoogleDriveSync {
     async downloadData() {
         // If offline, queue the operation
         if (!navigator.onLine) {
-            console.log('[GoogleDriveSync] Offline - cannot download');
             this.showSyncError('Cannot download while offline');
             return;
         }
@@ -1347,13 +1309,11 @@ class GoogleDriveSync {
         try {
             // Make sure Drive API is loaded with retry
             if (!gapi.client.drive) {
-                console.log('[GoogleDriveSync] Drive API not loaded, attempting to load...');
                 let retries = 3;
                 while (retries > 0 && !gapi.client.drive) {
                     try {
                         await gapi.client.load('https://www.googleapis.com/discovery/v1/apis/drive/v3/rest');
                         if (gapi.client.drive) {
-                            console.log('[GoogleDriveSync] Drive API loaded successfully');
                             break;
                         }
                     } catch (error) {
@@ -1377,11 +1337,11 @@ class GoogleDriveSync {
                 fields: 'files(id, name)'
             });
 
-            // console.log('Folder search response:', response.result);
+            // 
 
             if (response.result.files && response.result.files.length > 0) {
                 this.folderId = response.result.files[0].id;
-                // console.log('Found existing folder:', this.folderId);
+                // 
                 return;
             }
 
@@ -1395,7 +1355,7 @@ class GoogleDriveSync {
             });
 
             this.folderId = folderResponse.result.id;
-            // console.log('Created StackMap folder:', this.folderId);
+            // 
         } catch (error) {
             console.error('Error ensuring folder:', error);
             throw error;
@@ -1414,7 +1374,7 @@ class GoogleDriveSync {
                 fields: 'files(id, name)'
             });
 
-            // console.log('File search response:', response.result);
+            // 
 
             return response.result.files && response.result.files.length > 0 ? response.result.files[0] : null;
         } catch (error) {
@@ -1643,7 +1603,6 @@ class GoogleDriveSync {
 
     // Process sync operation from queue
     async processSyncOperation(operation) {
-        console.log('[GoogleDriveSync] Processing queued operation:', operation.type);
         
         switch (operation.type) {
             case 'upload':
@@ -1669,13 +1628,23 @@ class GoogleDriveSync {
                 break;
                 
             case 'update-activity':
-                // For future: handle specific activity updates
-                await this.performUpload(true);
+                await this.performActivityUpdate(operation.data);
                 break;
                 
             case 'delete-activity':
-                // For future: handle specific activity deletions
-                await this.performUpload(true);
+                await this.performActivityDelete(operation.data);
+                break;
+                
+            case 'move-activity':
+                await this.performActivityMove(operation.data);
+                break;
+                
+            case 'batch-update':
+                await this.performBatchUpdate(operation.data);
+                break;
+                
+            case 'switch-user':
+                await this.performUserSwitch(operation.data);
                 break;
                 
             default:
@@ -1769,6 +1738,240 @@ class GoogleDriveSync {
         
         // Apply remote changes
         this.applyRemoteChanges(remoteData);
+    }
+    
+    // Granular sync operation implementations
+    async performActivityUpdate(data) {
+        
+        // Phase 3: Use delta sync for efficient updates
+        try {
+            // Generate delta from recent operations
+            const delta = this.app.appState.generateSyncDelta();
+            
+            if (!delta || delta.operations.length === 0) {
+                // No operations to sync
+                return;
+            }
+            
+            // Check if we should compress
+            const deltaSize = JSON.stringify(delta).length;
+            let payload = delta;
+            let isCompressed = false;
+            
+            if (deltaSize > 10 * 1024) { // 10KB threshold
+                const compressed = this.app.appState.compressData(delta);
+                const compressedSize = JSON.stringify(compressed).length;
+                
+                // Only use compression if it saves >20%
+                if (compressedSize < deltaSize * 0.8) {
+                    payload = compressed;
+                    isCompressed = true;
+                    console.log(`[Delta Sync] Compressed ${deltaSize} bytes to ${compressedSize} bytes`);
+                }
+            }
+            
+            // Send delta to Drive
+            await this.uploadDelta({
+                delta: payload,
+                compressed: isCompressed,
+                checksum: delta.checksum,
+                deviceId: this.app.appState.syncMetadata.deviceId
+            });
+            
+            // Mark operations as synced
+            delta.operations.forEach(op => {
+                this.app.appState._markOperationSynced(op.id);
+            });
+            
+        } catch (error) {
+            console.error('[Delta Sync] Activity update failed, falling back to full sync:', error);
+            // Fall back to full sync if delta fails
+            await this.performUpload(true);
+        }
+    }
+    
+    async performActivityDelete(data) {
+        
+        // Phase 3: Use delta sync for deletes
+        try {
+            const delta = this.app.appState.generateSyncDelta();
+            
+            if (!delta || delta.operations.length === 0) {
+                return;
+            }
+            
+            // For deletes, delta sync is usually small
+            await this.uploadDelta({
+                delta: delta,
+                compressed: false,
+                checksum: delta.checksum,
+                deviceId: this.app.appState.syncMetadata.deviceId
+            });
+            
+            // Mark operations as synced
+            delta.operations.forEach(op => {
+                this.app.appState._markOperationSynced(op.id);
+            });
+            
+        } catch (error) {
+            console.error('[Delta Sync] Activity delete failed, falling back to full sync:', error);
+            await this.performUpload(true);
+        }
+    }
+    
+    async performActivityMove(data) {
+        
+        // Phase 3: Use delta sync for moves
+        try {
+            const delta = this.app.appState.generateSyncDelta();
+            
+            if (!delta || delta.operations.length === 0) {
+                return;
+            }
+            
+            // Move operations are typically small
+            await this.uploadDelta({
+                delta: delta,
+                compressed: false,
+                checksum: delta.checksum,
+                deviceId: this.app.appState.syncMetadata.deviceId
+            });
+            
+            // Mark operations as synced
+            delta.operations.forEach(op => {
+                this.app.appState._markOperationSynced(op.id);
+            });
+            
+        } catch (error) {
+            console.error('[Delta Sync] Activity move failed, falling back to full sync:', error);
+            await this.performUpload(true);
+        }
+    }
+    
+    async performBatchUpdate(data) {
+        
+        // Phase 3: Use delta sync for batch updates
+        try {
+            const delta = this.app.appState.generateSyncDelta();
+            
+            if (!delta || delta.operations.length === 0) {
+                return;
+            }
+            
+            // Batch updates might be large, check for compression
+            const deltaSize = JSON.stringify(delta).length;
+            let payload = delta;
+            let isCompressed = false;
+            
+            if (deltaSize > 10 * 1024) { // 10KB threshold
+                const compressed = this.app.appState.compressData(delta);
+                const compressedSize = JSON.stringify(compressed).length;
+                
+                if (compressedSize < deltaSize * 0.8) {
+                    payload = compressed;
+                    isCompressed = true;
+                    console.log(`[Delta Sync] Batch compressed ${deltaSize} bytes to ${compressedSize} bytes`);
+                }
+            }
+            
+            await this.uploadDelta({
+                delta: payload,
+                compressed: isCompressed,
+                checksum: delta.checksum,
+                deviceId: this.app.appState.syncMetadata.deviceId
+            });
+            
+            // Mark operations as synced
+            delta.operations.forEach(op => {
+                this.app.appState._markOperationSynced(op.id);
+            });
+            
+        } catch (error) {
+            console.error('[Delta Sync] Batch update failed, falling back to full sync:', error);
+            await this.performUpload(true);
+        }
+    }
+    
+    async performUserSwitch(data) {
+        
+        // User switches don't need sync, just local state update
+        // The actual data changes will be synced separately
+        return;
+    }
+    
+    // Upload delta changes to Google Drive
+    async uploadDelta(deltaPayload) {
+        if (!this.isSignedIn) {
+            throw new Error('Not signed in');
+        }
+        
+        // Ensure we have a folder
+        await this.ensureStackMapFolder();
+        
+        // Create delta file name with timestamp
+        const deltaFileName = `stackmap-delta-${Date.now()}.json`;
+        
+        // Upload delta file
+        const metadata = {
+            name: deltaFileName,
+            parents: [this.folderId],
+            mimeType: 'application/json',
+            description: 'StackMap incremental sync delta'
+        };
+        
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', new Blob([JSON.stringify(deltaPayload)], { type: 'application/json' }));
+        
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${this.accessToken}`
+            },
+            body: form
+        });
+        
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(`Delta upload failed: ${error.error?.message || response.statusText}`);
+        }
+        
+        // Also update the main file with new sync metadata
+        await this.updateSyncMetadata();
+        
+        console.log('[Delta Sync] Successfully uploaded delta:', deltaFileName);
+        return response.json();
+    }
+    
+    // Update sync metadata in the main file
+    async updateSyncMetadata() {
+        try {
+            // Get current file
+            const existingFile = await this.findStackMapFile();
+            if (!existingFile) return;
+            
+            // Get current data
+            const currentData = await this.getRemoteData();
+            if (!currentData) return;
+            
+            // Update only sync metadata
+            currentData.syncMetadata = this.app.appState.syncMetadata;
+            currentData.lastSync = new Date().toISOString();
+            
+            // Update file with new metadata
+            await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(currentData, null, 2)
+            });
+            
+        } catch (error) {
+            console.error('[Delta Sync] Failed to update sync metadata:', error);
+            // Non-fatal error, delta was still uploaded
+        }
     }
     
     // Initialize sync queue UI
@@ -2026,7 +2229,6 @@ window.GoogleDriveSync = GoogleDriveSync;
 document.addEventListener('DOMContentLoaded', () => {
     // Only initialize if not already initialized
     if (!window.googleDriveSync) {
-        console.log('Initializing Google Drive Sync...');
         window.googleDriveSync = new GoogleDriveSync();
     }
 });

@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Delta Sync</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            margin: 5px;
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f4f4f4;
+            border-radius: 4px;
+        }
+        .log-output {
+            background: #f4f4f4;
+            padding: 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .success { color: green; }
+        .error { color: red; }
+        .info { color: blue; }
+        .warning { color: orange; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        .delta-info {
+            background: #e3f2fd;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Delta Sync Test Suite</h1>
+    
+    <div class="test-section">
+        <h2>Sync Status</h2>
+        <div id="syncStatus" class="status">
+            <p><strong>Delta Sync:</strong> <span id="deltaSyncStatus">Not initialized</span></p>
+            <p><strong>Compression:</strong> <span id="compressionStatus">Not tested</span></p>
+            <p><strong>Last Delta Size:</strong> <span id="deltaSize">N/A</span></p>
+            <p><strong>Compression Ratio:</strong> <span id="compressionRatio">N/A</span></p>
+        </div>
+    </div>
+    
+    <div class="grid">
+        <div class="test-section">
+            <h2>Delta Generation Tests</h2>
+            <button onclick="testGenerateDelta()">Generate Delta</button>
+            <button onclick="testMultipleOperations()">Test Multiple Ops</button>
+            <button onclick="testLargeDelta()">Test Large Delta</button>
+            <button onclick="testEmptyDelta()">Test Empty Delta</button>
+            
+            <h3>Compression Tests</h3>
+            <button onclick="testCompression()">Test Compression</button>
+            <button onclick="testCompressionThreshold()">Test Threshold</button>
+            <button onclick="compareCompressionSizes()">Compare Sizes</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Delta Sync Tests</h2>
+            <button onclick="testDeltaUpload()">Test Delta Upload</button>
+            <button onclick="testCompressedUpload()">Test Compressed Upload</button>
+            <button onclick="testDeltaFallback()">Test Fallback</button>
+            <button onclick="testRapidDeltas()">Test Rapid Deltas</button>
+            
+            <h3>Integration Tests</h3>
+            <button onclick="testEndToEndDelta()">End-to-End Test</button>
+            <button onclick="testConflictResolution()">Test Conflicts</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Delta Information</h2>
+        <div id="deltaInfo" class="delta-info"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Log Output</h2>
+        <button onclick="clearLog()">Clear Log</button>
+        <div id="logOutput" class="log-output"></div>
+    </div>
+
+    <!-- Load all dependencies -->
+    <script src="config/constants.js"></script>
+    <script src="config/defaults.js"></script>
+    <script src="state.js"></script>
+    <script src="components.js"></script>
+    <script src="app/StackMapApp.js"></script>
+    <script src="drive-sync.js"></script>
+    
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <script>
+        let app;
+        
+        function log(message, type = 'info') {
+            const output = document.getElementById('logOutput');
+            const timestamp = new Date().toLocaleTimeString();
+            const className = type;
+            output.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            output.scrollTop = output.scrollHeight;
+            console.log(`[Delta Sync Test] ${message}`);
+        }
+        
+        function updateDeltaInfo(delta) {
+            const info = document.getElementById('deltaInfo');
+            if (!delta) {
+                info.innerHTML = '<p>No delta generated</p>';
+                return;
+            }
+            
+            const size = JSON.stringify(delta).length;
+            info.innerHTML = `
+                <h3>Delta Details</h3>
+                <p><strong>Version:</strong> ${delta.version}</p>
+                <p><strong>From Version:</strong> ${delta.fromVersion}</p>
+                <p><strong>To Version:</strong> ${delta.toVersion}</p>
+                <p><strong>Operations:</strong> ${delta.operations.length}</p>
+                <p><strong>Checksum:</strong> ${delta.checksum}</p>
+                <p><strong>Size:</strong> ${size} bytes (${(size / 1024).toFixed(2)} KB)</p>
+                <p><strong>Timestamp:</strong> ${new Date(delta.timestamp).toLocaleString()}</p>
+            `;
+            
+            document.getElementById('deltaSize').textContent = `${size} bytes`;
+        }
+        
+        // Test delta generation
+        function testGenerateDelta() {
+            try {
+                log('Testing delta generation...');
+                
+                // Make some changes
+                app.appState.addActivity({
+                    title: 'Delta Test Activity',
+                    icon: '🔬',
+                    description: 'Testing delta sync'
+                });
+                
+                // Generate delta
+                const delta = app.appState.generateSyncDelta();
+                
+                if (delta) {
+                    log(`Delta generated with ${delta.operations.length} operations`, 'success');
+                    updateDeltaInfo(delta);
+                } else {
+                    log('No delta generated (no pending operations)', 'warning');
+                }
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test multiple operations
+        function testMultipleOperations() {
+            try {
+                log('Testing multiple operations...');
+                
+                // Add activity
+                app.appState.addActivity({
+                    title: 'Multi Op 1',
+                    icon: '1️⃣'
+                });
+                
+                // Update activity
+                const activities = app.appState.getCurrentActivities();
+                if (activities.length > 0) {
+                    app.appState.updateActivity(0, {
+                        title: 'Updated Multi Op 1',
+                        completed: true
+                    });
+                }
+                
+                // Add another
+                app.appState.addActivity({
+                    title: 'Multi Op 2',
+                    icon: '2️⃣'
+                });
+                
+                // Delete one
+                if (activities.length > 1) {
+                    app.appState.removeActivity(1);
+                }
+                
+                // Generate delta
+                const delta = app.appState.generateSyncDelta();
+                
+                if (delta) {
+                    log(`Delta generated with ${delta.operations.length} operations`, 'success');
+                    delta.operations.forEach((op, index) => {
+                        log(`  ${index + 1}. ${op.type} - ${op.data.activityId || 'N/A'}`);
+                    });
+                    updateDeltaInfo(delta);
+                }
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test large delta
+        function testLargeDelta() {
+            try {
+                log('Testing large delta generation...');
+                
+                // Add many activities
+                for (let i = 0; i < 50; i++) {
+                    app.appState.addActivity({
+                        title: `Large Delta Activity ${i + 1}`,
+                        icon: '📊',
+                        description: `This is a test description for activity ${i + 1} with some additional text to make the payload larger`
+                    });
+                }
+                
+                // Generate delta
+                const delta = app.appState.generateSyncDelta();
+                
+                if (delta) {
+                    const size = JSON.stringify(delta).length;
+                    log(`Large delta generated: ${size} bytes (${(size / 1024).toFixed(2)} KB)`, 'success');
+                    log(`Contains ${delta.operations.length} operations`);
+                    updateDeltaInfo(delta);
+                }
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test empty delta
+        function testEmptyDelta() {
+            try {
+                log('Testing empty delta...');
+                
+                // Reset operation log
+                app.appState.resetOperationLog();
+                
+                // Generate delta
+                const delta = app.appState.generateSyncDelta();
+                
+                if (delta) {
+                    log('Delta generated but should be empty', 'warning');
+                    updateDeltaInfo(delta);
+                } else {
+                    log('No delta generated (correct behavior)', 'success');
+                }
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test compression
+        function testCompression() {
+            try {
+                log('Testing compression...');
+                
+                // Create test data
+                const testData = {
+                    repeated: 'x'.repeat(1000),
+                    array: new Array(100).fill({ test: 'value' }),
+                    mixed: {
+                        a: 'short',
+                        b: 'This is a longer string that might compress well',
+                        c: new Array(50).fill('repeated')
+                    }
+                };
+                
+                // Compress
+                const compressed = app.appState.compressData(testData);
+                
+                // Calculate sizes
+                const originalSize = JSON.stringify(testData).length;
+                const compressedSize = JSON.stringify(compressed).length;
+                const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+                
+                log(`Original: ${originalSize} bytes`, 'info');
+                log(`Compressed: ${compressedSize} bytes`, 'info');
+                log(`Compression ratio: ${ratio}%`, 'success');
+                
+                document.getElementById('compressionStatus').textContent = 'Working';
+                document.getElementById('compressionRatio').textContent = `${ratio}%`;
+                
+                // Test decompression
+                const decompressed = app.appState.decompressData(compressed);
+                const isValid = JSON.stringify(decompressed) === JSON.stringify(testData);
+                
+                if (isValid) {
+                    log('Decompression successful - data matches', 'success');
+                } else {
+                    log('Decompression failed - data mismatch', 'error');
+                }
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test compression threshold
+        function testCompressionThreshold() {
+            try {
+                log('Testing compression threshold...');
+                
+                // Test different sizes
+                const sizes = [100, 1000, 5000, 10000, 50000];
+                
+                sizes.forEach(size => {
+                    const data = {
+                        text: 'a'.repeat(size),
+                        array: new Array(Math.floor(size / 100)).fill('test')
+                    };
+                    
+                    const originalSize = JSON.stringify(data).length;
+                    const compressed = app.appState.compressData(data);
+                    const compressedSize = JSON.stringify(compressed).length;
+                    const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+                    
+                    log(`Size ${originalSize} bytes: ${ratio}% compression`);
+                });
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Compare compression sizes
+        function compareCompressionSizes() {
+            try {
+                log('Comparing compression for different data types...');
+                
+                // Different data types
+                const tests = [
+                    { name: 'Repetitive text', data: { text: 'hello world '.repeat(100) } },
+                    { name: 'Random IDs', data: { ids: Array.from({length: 100}, () => Math.random().toString(36)) } },
+                    { name: 'Activities', data: { activities: Array.from({length: 20}, (_, i) => ({
+                        id: `act-${i}`,
+                        title: `Activity ${i}`,
+                        completed: i % 2 === 0,
+                        icon: '📋',
+                        description: 'Standard description'
+                    }))} },
+                    { name: 'Mixed data', data: {
+                        users: ['user1', 'user2', 'user3'],
+                        settings: { theme: 'dark', notifications: true },
+                        data: new Array(50).fill({ type: 'action', status: 'pending' })
+                    }}
+                ];
+                
+                tests.forEach(test => {
+                    const originalSize = JSON.stringify(test.data).length;
+                    const compressed = app.appState.compressData(test.data);
+                    const compressedSize = JSON.stringify(compressed).length;
+                    const ratio = ((1 - compressedSize / originalSize) * 100).toFixed(2);
+                    
+                    log(`${test.name}: ${originalSize} → ${compressedSize} bytes (${ratio}% reduction)`);
+                });
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test delta upload
+        async function testDeltaUpload() {
+            try {
+                log('Testing delta upload...');
+                
+                if (!app.driveSync || !app.driveSync.isSignedIn) {
+                    log('Not signed in to Google Drive', 'error');
+                    return;
+                }
+                
+                // Make a change
+                app.appState.addActivity({
+                    title: 'Delta Upload Test',
+                    icon: '🚀'
+                });
+                
+                // Process granular sync
+                app.processGranularSync();
+                
+                log('Delta upload queued', 'success');
+                
+                // Wait for queue processing
+                setTimeout(() => {
+                    const status = app.driveSync.syncQueue.getStatus();
+                    log(`Queue status: ${status.queueLength} items`);
+                }, 1000);
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test compressed upload
+        async function testCompressedUpload() {
+            try {
+                log('Testing compressed delta upload...');
+                
+                if (!app.driveSync || !app.driveSync.isSignedIn) {
+                    log('Not signed in to Google Drive', 'error');
+                    return;
+                }
+                
+                // Create large changes
+                for (let i = 0; i < 20; i++) {
+                    app.appState.addActivity({
+                        title: `Compressed Test ${i}`,
+                        icon: '🗜️',
+                        description: 'This is a longer description to increase payload size for compression testing'
+                    });
+                }
+                
+                // Process sync
+                app.processGranularSync();
+                
+                log('Large delta queued for compression test', 'success');
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test delta fallback
+        async function testDeltaFallback() {
+            try {
+                log('Testing delta sync fallback...');
+                
+                // Simulate an error condition
+                const originalUploadDelta = app.driveSync.uploadDelta;
+                app.driveSync.uploadDelta = async () => {
+                    throw new Error('Simulated delta upload failure');
+                };
+                
+                // Make a change
+                app.appState.addActivity({
+                    title: 'Fallback Test',
+                    icon: '⚠️'
+                });
+                
+                // Process sync
+                app.processGranularSync();
+                
+                log('Delta sync should fall back to full sync', 'warning');
+                
+                // Restore original method
+                setTimeout(() => {
+                    app.driveSync.uploadDelta = originalUploadDelta;
+                    log('Restored normal delta upload', 'info');
+                }, 2000);
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test rapid deltas
+        async function testRapidDeltas() {
+            try {
+                log('Testing rapid delta generation...');
+                
+                let count = 0;
+                const interval = setInterval(() => {
+                    app.appState.addActivity({
+                        title: `Rapid ${count + 1}`,
+                        icon: '⚡'
+                    });
+                    
+                    // Generate and log delta
+                    const delta = app.appState.generateSyncDelta();
+                    if (delta) {
+                        log(`Delta ${count + 1}: ${delta.operations.length} ops`);
+                    }
+                    
+                    count++;
+                    if (count >= 5) {
+                        clearInterval(interval);
+                        log('Rapid delta test complete', 'success');
+                        
+                        // Process all at once
+                        app.processGranularSync();
+                    }
+                }, 200);
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // End-to-end test
+        async function testEndToEndDelta() {
+            try {
+                log('Starting end-to-end delta sync test...');
+                
+                if (!app.driveSync || !app.driveSync.isSignedIn) {
+                    log('Not signed in to Google Drive', 'error');
+                    return;
+                }
+                
+                // 1. Reset state
+                app.appState.resetOperationLog();
+                log('1. Reset operation log', 'info');
+                
+                // 2. Make changes
+                app.appState.addActivity({
+                    title: 'E2E Test Activity',
+                    icon: '🔄'
+                });
+                log('2. Added activity', 'info');
+                
+                // 3. Generate delta
+                const delta = app.appState.generateSyncDelta();
+                if (delta) {
+                    log(`3. Generated delta with ${delta.operations.length} operations`, 'info');
+                    updateDeltaInfo(delta);
+                }
+                
+                // 4. Process sync
+                app.processGranularSync();
+                log('4. Processed granular sync', 'info');
+                
+                // 5. Monitor queue
+                const checkQueue = setInterval(() => {
+                    const status = app.driveSync.syncQueue.getStatus();
+                    if (status.queueLength === 0 && !status.processing) {
+                        clearInterval(checkQueue);
+                        log('5. Sync complete!', 'success');
+                        
+                        // Check if operations were marked as synced
+                        const stats = app.appState.getOperationLogStats();
+                        log(`Operation stats: ${stats.synced} synced, ${stats.pending} pending`);
+                    }
+                }, 500);
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Test conflict resolution
+        async function testConflictResolution() {
+            try {
+                log('Testing conflict resolution (simulation)...');
+                
+                // This would require simulating conflicts between devices
+                log('Conflict resolution requires multiple devices or manual simulation', 'warning');
+                log('See handleConflict() method in drive-sync.js for implementation', 'info');
+                
+            } catch (error) {
+                log('Error: ' + error.message, 'error');
+            }
+        }
+        
+        function clearLog() {
+            document.getElementById('logOutput').innerHTML = '';
+        }
+        
+        // Initialize app
+        window.onload = function() {
+            log('Initializing StackMap with delta sync...');
+            
+            // Create app instance
+            app = new StackMapApp();
+            window.appInstance = app; // For debugging
+            
+            log('StackMap initialized');
+            
+            // Update status
+            document.getElementById('deltaSyncStatus').textContent = 'Ready';
+            
+            // Monitor sync status
+            setInterval(() => {
+                if (app.driveSync && app.driveSync.isSignedIn) {
+                    const queueStatus = app.driveSync.syncQueue.getStatus();
+                    const opStats = app.appState.getOperationLogStats();
+                    
+                    document.getElementById('deltaSyncStatus').textContent = 
+                        `Ready (${opStats.pending} pending ops, ${queueStatus.queueLength} in queue)`;
+                }
+            }, 1000);
+        };
+    </script>
+</body>
+</html>
