@@ -1,103 +1,109 @@
 # Contributing to StackMap
 
-Thank you for your interest in contributing to StackMap! We welcome contributions from everyone, especially those with experience in accessibility and special needs.
-
-## Code of Conduct
-
-This project is dedicated to providing a welcoming and supportive environment for all. We expect all contributors to:
-
-- Be respectful and inclusive
-- Welcome newcomers and help them get started
-- Focus on what is best for the community
-- Show empathy towards other community members
+Thank you for your interest in contributing to StackMap! We're building a tool to help families create visual routines, especially for children with special needs.
 
 ## How to Contribute
 
 ### Reporting Bugs
-
-1. Check if the bug has already been reported in [Issues](https://github.com/yourusername/stackmap/issues)
-2. If not, create a new issue with:
-   - A clear, descriptive title
-   - Steps to reproduce the problem
-   - Expected vs actual behavior
-   - Screenshots if applicable
-   - Device/browser information
+1. Check if the issue already exists
+2. Use the bug report template
+3. Include steps to reproduce
+4. Add screenshots if applicable
+5. Mention your browser and device
 
 ### Suggesting Features
-
-1. Check existing [Issues](https://github.com/yourusername/stackmap/issues) for similar suggestions
-2. Create a new issue labeled "enhancement" with:
-   - Clear description of the feature
-   - Use cases and benefits
-   - Any mockups or examples
+1. Use the feature request template
+2. Explain the problem it solves
+3. Describe your ideal solution
+4. Include mockups if possible
 
 ### Code Contributions
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Make your changes
-4. Test thoroughly on both mobile and desktop
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to your fork (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
-
-## Development Setup
-
-1. Clone your fork:
+#### Setup
 ```bash
-git clone https://github.com/yourusername/stackmap.git
-cd stackmap
+git clone https://github.com/ajstack22/StackMap.git
+cd StackMap
+npm install
 ```
 
-2. Start a local server:
-```bash
-python -m http.server 8000
-```
+#### Development Workflow
+1. Create an issue first to discuss the change
+2. Fork the repository
+3. Create a feature branch (`git checkout -b feature/amazing-feature`)
+4. Make your changes
+5. Test thoroughly (see Testing section)
+6. Commit with clear messages
+7. Push to your fork
+8. Open a Pull Request
 
-3. Open `http://localhost:8000` in your browser
-
-## Coding Guidelines
-
-### JavaScript
-- Use ES6+ features
+#### Coding Standards
+- Use clear, descriptive variable names
+- Comment complex logic
 - Follow existing code style
-- Add comments for complex logic
+- No `console.log` in production code
 - Keep functions small and focused
+- Use semantic HTML
+- Ensure accessibility (ARIA labels, keyboard navigation)
 
-### CSS
-- Use existing CSS modules (don't create new files)
-- Follow the CSS variable system
-- Maintain responsive design
-- Ensure accessibility (contrast, sizing)
+#### CSS Guidelines
+- Styles go in appropriate files (layout.css, cards.css, etc.)
+- Use CSS variables for colors and spacing
+- Mobile-first responsive design
+- Avoid `!important` unless necessary
+- No duplicate selectors across files
 
-### Accessibility Requirements
-- Touch targets minimum 44x44px
-- High contrast ratios (WCAG AA)
-- Screen reader friendly
-- Keyboard navigable
-- Simple, predictable interactions
-
-## Testing
-
+#### Testing
 Before submitting:
+- Test on multiple browsers (Chrome, Firefox, Safari)
+- Test on mobile devices
+- Test offline functionality
+- Test with multiple users
+- Verify sync works correctly
+- Check for console errors
 
-1. Test on multiple browsers (Chrome, Firefox, Safari)
-2. Test on mobile devices
-3. Test with keyboard navigation
-4. Verify offline functionality
-5. Check for console errors
+#### Commit Messages
+- Use present tense ("Add feature" not "Added feature")
+- Be descriptive but concise
+- Reference issue numbers (#123)
+- Use conventional commits if possible:
+  - `feat:` New feature
+  - `fix:` Bug fix
+  - `docs:` Documentation only
+  - `style:` Formatting, no code change
+  - `refactor:` Code change that doesn't fix or add
+  - `test:` Adding tests
+  - `chore:` Maintenance
 
-## Documentation
+### Pull Request Process
+1. Update documentation if needed
+2. Ensure all tests pass
+3. Request review from @ajstack22
+4. Address review feedback
+5. Squash commits if requested
 
-- Update README.md if adding features
-- Document complex functions
-- Update CLAUDE.md for AI pair programming context
+## Development Tips
+
+### Running Locally
+```bash
+# Install a local server
+npm install -g http-server
+
+# Run from project root
+http-server -p 5500
+
+# Visit http://localhost:5500
+```
+
+### Debugging Sync
+- Check Application > Local Storage in DevTools
+- Look for `stackmap-sync-queue`
+- Monitor Network tab for Google Drive API calls
+
+### Testing Demo Mode
+Visit `/demo` to see the Mushroom Kingdom demo data
 
 ## Questions?
-
-Feel free to:
 - Open an issue for questions
-- Reach out on our support page
-- Join community discussions
+- Email support@stackmap.app for sensitive matters
 
-Thank you for helping make StackMap better for families everywhere! 🌟
+Thank you for helping make StackMap better! 🎉

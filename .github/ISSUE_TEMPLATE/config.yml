@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: StackMap Support
+    url: https://stackmap.app/support
+    about: Get help with using StackMap
+  - name: Security Issue
+    url: mailto:security@stackmap.app
+    about: Please report security vulnerabilities via email

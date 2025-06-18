@@ -1,0 +1,57 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Run linting
+      run: npm run lint
+      
+    - name: Run tests
+      run: npm test
+      
+    - name: Check for console.log statements
+      run: |
+        if grep -r "console\.log" --include="*.js" --exclude-dir=node_modules --exclude-dir=tests .; then
+          echo "::warning::Found console.log statements in production code"
+        fi
+
+  build:
+    runs-on: ubuntu-latest
+    needs: test
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Check file sizes
+      run: |
+        find . -name "*.js" -size +500k -exec echo "::warning file={}::Large file detected (>500KB)" \;
+        
+    - name: Validate HTML
+      run: |
+        npx html-validate index.html demo/index.html || true
+        
+    - name: Check for sensitive data
+      run: |
+        # Check for potential API keys or secrets
+        if grep -r "api[_-]key\|secret\|password" --include="*.js" --exclude-dir=node_modules .; then
+          echo "::error::Potential sensitive data found in code"
+          exit 1
+        fi

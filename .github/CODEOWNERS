@@ -1,0 +1,17 @@
+# Code Owners for StackMap
+# These users will be automatically requested for review
+
+# Default owner for everything
+* @ajstack22
+
+# Core functionality
+/state.js @ajstack22
+/app/StackMapApp.js @ajstack22
+/drive-sync.js @ajstack22
+
+# Styles
+/styles/ @ajstack22
+
+# Configuration
+/config/ @ajstack22
+/.github/ @ajstack22
