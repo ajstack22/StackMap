@@ -1760,8 +1760,14 @@ class StackMapApp {
 
     // WELCOME SPLASH MANAGEMENT
     checkFirstTimeVisit() {
-        // Skip splash screen in demo mode
+        // In demo mode, always show welcome splash if not seen
         if (window.DEMO_MODE) {
+            const hasSeenDemoWelcome = localStorage.getItem(this.getStorageKey('stackmap-welcome-seen'));
+            if (!hasSeenDemoWelcome) {
+                setTimeout(() => {
+                    this.showWelcomeSplash();
+                }, 500);
+            }
             return;
         }
         
@@ -2026,6 +2032,18 @@ class StackMapApp {
         // Legacy method - kept for compatibility
         const welcomeSplash = document.getElementById('welcomeSplash');
         if (welcomeSplash) {
+            // Customize content for demo mode
+            if (window.DEMO_MODE) {
+                const title = welcomeSplash.querySelector('#welcome-title');
+                const message = welcomeSplash.querySelector('.welcome-message p');
+                if (title) {
+                    title.textContent = 'Welcome to the Mushroom Kingdom Demo!';
+                }
+                if (message) {
+                    message.innerHTML = '<strong>Explore StackMap with Mario\'s daily routine!</strong> This demo shows how families in the Mushroom Kingdom use StackMap to manage their daily activities.';
+                }
+            }
+            
             // Add body class for button glow effect
             document.body.classList.add('showing-welcome');
             
