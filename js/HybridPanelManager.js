@@ -2179,6 +2179,7 @@ class HybridPanelManager {
         const iconInput = document.getElementById('userIcon');
         
         // Debug: Check all possible icon sources
+        console.log('Icon sources at save:', {
             menuStateIcon: this.menuStates.userForm?.selectedIcon,
             hiddenInputValue: iconInput?.value,
             currentPreview: document.querySelector('.modal-emoji-picker__preview-emoji')?.textContent
