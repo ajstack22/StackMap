@@ -814,7 +814,7 @@ class GoogleDriveSync {
             }
             
             // Show sync button in grown-up mode
-            if (this.app.grownupMode && syncBtn) {
+            if (this.app?.grownupMode && syncBtn) {
                 syncBtn.classList.remove('hidden');
             }
             
