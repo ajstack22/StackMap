@@ -1,0 +1,46 @@
+Transform daily routines into visual success stories with StackMap - the picture schedule app designed for children with autism, ADHD, and other special needs.
+
+VISUAL LEARNING MADE SIMPLE
+StackMap turns abstract daily tasks into concrete visual steps. Using emojis and colorful cards, children can see their day at a glance and tap to complete activities independently.
+
+FEATURES THAT MAKE A DIFFERENCE
+
+• Picture-Based Schedules: Create routines using emojis and images - no reading required
+• Individual Profiles: Each family member gets personalized routines
+• Day-Specific Activities: Different schedules for different days
+• One-Tap Completion: Kids mark activities done with a simple tap
+• Protected Editing: Grown-up mode prevents accidental changes
+• Activity Library: Pre-made cards for common routines
+• Offline First: Works without internet connection
+• Cloud Backup: Optional Google Drive sync
+• Customizable Themes: Choose colors that work for your child
+
+BUILT FOR SPECIAL NEEDS
+Every detail is designed with sensory and processing differences in mind:
+- Large, clear touch targets
+- High contrast visuals
+- Predictable interactions
+- No overwhelming animations
+- Calm, supportive design
+
+PERFECT FOR DAILY ROUTINES
+• Morning preparation
+• School day transitions
+• Homework and study time
+• Therapy schedules
+• Bedtime routines
+• Weekend activities
+• Special events prep
+
+TRUSTED BY FAMILIES
+StackMap was created by a parent who understands the unique challenges of special needs parenting. Built with continuous input from families who use it daily, it's more than an app - it's a bridge to independence.
+
+PRIVACY FOCUSED
+Your routines stay on your device. Optional sync uses your personal Google Drive account. We never access your data.
+
+PROGRESSIVE WEB APP
+Install like a native app but with the flexibility of the web. Works seamlessly across iPhone, iPad, and Mac.
+
+Join thousands of families building independence, one visual routine at a time.
+
+StackMap: Routine Ready

@@ -1,10 +1,11 @@
 // Service Worker for StackMap PWA
-// Version: 1.6.2
+// Version: 1.6.4
 // Last Updated: 2025-06-18
 
-const CACHE_NAME = 'stackmap-v1.6.2-2025-06-18';
+const CACHE_NAME = 'stackmap-v1.6.4-2025-06-18';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
+const IMAGE_CACHE = 'stackmap-images';
 
 // Core files that should always be cached
 const CORE_ASSETS = [
@@ -84,12 +85,14 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   // console.log('[SW] Activating Service Worker');
   
+  const currentCaches = [CACHE_NAME, RUNTIME_CACHE, GOOGLE_FONTS_CACHE, IMAGE_CACHE];
+  
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          // Delete old version caches but keep runtime and fonts caches
-          if (cacheName.startsWith('stackmap-v') && cacheName !== CACHE_NAME) {
+          // Delete caches that aren't in our current list
+          if (!currentCaches.includes(cacheName)) {
             // console.log('[SW] Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
@@ -129,7 +132,19 @@ self.addEventListener('fetch', (event) => {
     return;
   }
   
-  // Use stale-while-revalidate for all app resources
+  // Handle images with cache-first strategy
+  if (request.destination === 'image' || /\.(jpg|jpeg|png|gif|svg|webp)$/i.test(url.pathname)) {
+    event.respondWith(cacheFirst(request, IMAGE_CACHE));
+    return;
+  }
+  
+  // Handle API calls with network-first strategy
+  if (url.pathname.startsWith('/api/') || url.hostname.includes('googleapis.com')) {
+    event.respondWith(networkFirst(request));
+    return;
+  }
+  
+  // Use stale-while-revalidate for all other app resources
   event.respondWith(staleWhileRevalidate(request));
 });
 
@@ -185,6 +200,45 @@ self.addEventListener('message', (event) => {
   }
 });
 
+// Cache-first strategy for images
+async function cacheFirst(request, cacheName = CACHE_NAME) {
+  const cache = await caches.open(cacheName);
+  const cachedResponse = await cache.match(request);
+  
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+  
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.status === 200) {
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    return new Response('', { status: 404 });
+  }
+}
+
+// Network-first strategy for API calls
+async function networkFirst(request) {
+  try {
+    const networkResponse = await fetch(request);
+    if (networkResponse && networkResponse.status === 200) {
+      const cache = await caches.open(RUNTIME_CACHE);
+      cache.put(request, networkResponse.clone());
+    }
+    return networkResponse;
+  } catch (error) {
+    const cache = await caches.open(RUNTIME_CACHE);
+    const cachedResponse = await cache.match(request);
+    return cachedResponse || new Response('{"error": "Offline"}', {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
 // Background sync for data persistence (if supported)
 self.addEventListener('sync', (event) => {
   if (event.tag === 'sync-user-data') {
@@ -197,3 +251,38 @@ async function syncUserData() {
   // console.log('[SW] Background sync triggered');
   // Implementation would depend on your backend
 }
+
+// Handle push notifications
+self.addEventListener('push', (event) => {
+  if (event.data) {
+    const options = {
+      body: event.data.text(),
+      icon: '/icon-192.png',
+      badge: '/icon-72.png',
+      vibrate: [100, 50, 100],
+      data: {
+        dateOfArrival: Date.now(),
+        primaryKey: 1
+      },
+      actions: [
+        { action: 'explore', title: 'Open StackMap' },
+        { action: 'close', title: 'Close' }
+      ]
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification('StackMap Reminder', options)
+    );
+  }
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  
+  if (event.action === 'explore') {
+    event.waitUntil(
+      clients.openWindow('/')
+    );
+  }
+});

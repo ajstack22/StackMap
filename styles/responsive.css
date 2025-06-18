@@ -163,13 +163,18 @@
         width: calc(100vw - 30px) !important; /* Bit more breathing room */
         max-width: calc(100vw - 30px) !important;
         min-width: 0 !important;
-        margin: 0 auto !important; /* Center cards horizontally */
+        margin: 0 auto 16px auto !important; /* Center cards with spacing fallback */
         box-sizing: border-box !important;
         /* Kill any flex/grid child properties */
         grid-column: none !important;
         grid-row: none !important;
         justify-self: stretch !important;
         align-self: stretch !important;
+    }
+    
+    /* Remove bottom margin from last card to prevent double spacing */
+    .main-container > :last-child {
+        margin-bottom: 0 !important;
     }
     
     .panel {

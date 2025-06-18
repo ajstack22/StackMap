@@ -19,28 +19,98 @@ jobs:
         node-version: '18'
         
     - name: Install dependencies
-      run: npm ci
-      
-    - name: Run UAT tests
-      run: npm test
-      
-    - name: Upload test results
-      if: always()
-      uses: actions/upload-artifact@v3
-      with:
-        name: test-results
-        path: test-results/
+      run: |
+        npm ci || npm install
         
-    - name: Comment PR with test results
+    - name: Run test suite
+      run: |
+        node tests/test-runner-enhanced.js
+        
+    - name: Upload test reports
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: test-reports
+        path: tests/reports/
+        
+    - name: Check code quality
+      run: |
+        # Check for console.log statements
+        CONSOLE_LOGS=$(grep -r "console\.log" --include="*.js" --exclude-dir=node_modules --exclude-dir=tests . | grep -v "^[[:space:]]*//" | grep -v "^[[:space:]]*\*" | wc -l)
+        echo "Console.log statements found: $CONSOLE_LOGS"
+        
+        # Check for merge conflicts
+        if find . -name "*.js" -o -name "*.css" -o -name "*.html" | xargs grep -l "<<<<<<< HEAD" 2>/dev/null; then
+          echo "❌ Merge conflict markers found!"
+          exit 1
+        fi
+        
+    - name: Validate service worker
+      run: |
+        SW_VERSION=$(grep -E "const CACHE_VERSION = '[^']+'" sw.js | sed -E "s/.*'([^']+)'.*/\1/")
+        echo "Service Worker Version: $SW_VERSION"
+        
+    - name: Generate deployment report
+      if: github.ref == 'refs/heads/main'
+      run: |
+        mkdir -p deployment-reports
+        cat > deployment-reports/report.json << EOF
+        {
+          "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+          "commit": "${{ github.sha }}",
+          "branch": "${{ github.ref_name }}",
+          "tests": "passed",
+          "ready": true
+        }
+        EOF
+        
+    - name: Comment on PR
       if: github.event_name == 'pull_request'
       uses: actions/github-script@v6
       with:
         script: |
           const fs = require('fs');
-          const testResults = fs.readFileSync('test-results/summary.txt', 'utf8');
+          let testReport = '### Test Results\n\n';
+          
+          try {
+            const report = JSON.parse(fs.readFileSync('tests/reports/latest.json', 'utf8'));
+            const { total, passed, failed } = report.summary;
+            const successRate = Math.round((passed / total) * 100);
+            
+            testReport += `- Total Tests: ${total}\n`;
+            testReport += `- Passed: ${passed} ✅\n`;
+            testReport += `- Failed: ${failed} ❌\n`;
+            testReport += `- Success Rate: ${successRate}%\n`;
+            
+            if (failed > 0) {
+              testReport += '\n#### Failed Tests:\n';
+              // Add failed test details
+            }
+          } catch (e) {
+            testReport += 'Could not parse test report\n';
+          }
+          
           github.rest.issues.createComment({
             issue_number: context.issue.number,
             owner: context.repo.owner,
             repo: context.repo.repo,
-            body: '## Test Results\n\n```\n' + testResults + '\n```'
-          });
+            body: testReport
+          })
+
+  deploy-check:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deployment readiness check
+      run: |
+        echo "✅ All tests passed"
+        echo "✅ Ready for deployment"
+        echo ""
+        echo "Remember to:"
+        echo "1. Bump service worker version"
+        echo "2. Test in demo environment first"
+        echo "3. Follow deployment checklist"

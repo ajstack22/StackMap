@@ -2,6 +2,43 @@
 
 echo "🔍 Running pre-commit checks..."
 
+# Run critical story tests - block commit if they fail
+echo "🧪 Running critical story tests..."
+if [ -f "tests/story-runner.js" ]; then
+    node tests/story-runner.js --critical-only
+    TEST_EXIT_CODE=$?
+    
+    if [ $TEST_EXIT_CODE -ne 0 ]; then
+        echo ""
+        echo "❌ COMMIT BLOCKED: Critical tests failed!"
+        echo "Please fix failing tests before committing."
+        echo ""
+        echo "To see detailed test results:"
+        echo "  - Check test-results/story-report.json"
+        echo "  - Run: npm run test:story --debug"
+        echo ""
+        exit 1
+    fi
+    echo "✅ All critical tests passed"
+elif [ -f "tests/test-runner-enhanced.js" ]; then
+    # Fallback to existing test runner
+    node tests/test-runner-enhanced.js
+    TEST_EXIT_CODE=$?
+    
+    if [ $TEST_EXIT_CODE -ne 0 ]; then
+        echo ""
+        echo "❌ COMMIT BLOCKED: Tests failed!"
+        echo "Please fix failing tests before committing."
+        echo ""
+        exit 1
+    fi
+    echo "✅ All tests passed"
+else
+    echo "⚠️  No test runner found, skipping test validation"
+fi
+
+echo ""
+
 # Check for duplicate CSS selectors
 echo "Checking for duplicate CSS selectors..."
 for css_file in styles/*.css; do
@@ -41,4 +78,19 @@ if [ ! -z "$large_files" ]; then
     echo "$large_files"
 fi
 
+# Final summary
+if [ -f "tests/reports/latest.json" ]; then
+    echo ""
+    echo "📊 Test Summary:"
+    node -e "
+        const report = require('./tests/reports/latest.json');
+        const {total, passed, failed} = report.summary;
+        console.log('  Total: ' + total);
+        console.log('  Passed: ' + passed);
+        console.log('  Failed: ' + failed);
+        console.log('  Success Rate: ' + Math.round((passed/total)*100) + '%');
+    " 2>/dev/null || echo "  (Could not parse test report)"
+fi
+
+echo ""
 echo "✅ Pre-commit checks complete"

@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackMap Enhanced Test Runner</title>
+    <script src="framework/story-test-base.js"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+        
+        .test-controls {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        button:hover {
+            background: #5a67d8;
+        }
+        
+        button:disabled {
+            background: #cbd5e0;
+            cursor: not-allowed;
+        }
+        
+        .button-secondary {
+            background: #4a5568;
+        }
+        
+        .button-secondary:hover {
+            background: #2d3748;
+        }
+        
+        .test-output {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            max-height: 500px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        
+        .test-status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+        
+        .test-status.success {
+            background: #c6f6d5;
+            color: #276749;
+        }
+        
+        .test-status.failure {
+            background: #fed7d7;
+            color: #9b2c2c;
+        }
+        
+        .test-status.running {
+            background: #bee3f8;
+            color: #2c5282;
+        }
+        
+        .app-frame {
+            width: 100%;
+            height: 600px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+        
+        .test-summary {
+            margin-top: 20px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        
+        .test-summary h3 {
+            margin-top: 0;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .summary-card {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .summary-card h4 {
+            margin: 0 0 10px 0;
+            color: #4a5568;
+        }
+        
+        .summary-card .value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2d3748;
+        }
+        
+        .test-filter {
+            margin: 10px 0;
+        }
+        
+        select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 4px;
+            font-size: 16px;
+            margin-left: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 StackMap Enhanced Test Runner</h1>
+        
+        <div class="test-controls">
+            <button onclick="runAllTests()">Run All Tests</button>
+            <button onclick="runStoryTests()">Run Story Tests</button>
+            <button onclick="runIntegrationTests()">Run Integration Tests</button>
+            <button class="button-secondary" onclick="clearResults()">Clear Results</button>
+            <button class="button-secondary" onclick="downloadReport()">Download Report</button>
+            <button class="button-secondary" onclick="reloadApp()">Reload App</button>
+        </div>
+        
+        <div class="test-filter">
+            <label>Filter Tests:
+                <select id="testFilter" onchange="filterTests()">
+                    <option value="all">All Tests</option>
+                    <option value="story">Story Tests Only</option>
+                    <option value="integration">Integration Tests Only</option>
+                    <option value="failed">Failed Tests Only</option>
+                </select>
+            </label>
+        </div>
+        
+        <div id="testStatus" class="test-status" style="display: none;"></div>
+        
+        <iframe id="appFrame" class="app-frame" src="../index.html"></iframe>
+        
+        <div id="testSummary" class="test-summary" style="display: none;">
+            <h3>Test Summary</h3>
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <h4>Total Tests</h4>
+                    <div class="value" id="totalTests">0</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Passed</h4>
+                    <div class="value" id="passedTests" style="color: #48bb78;">0</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Failed</h4>
+                    <div class="value" id="failedTests" style="color: #f56565;">0</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Success Rate</h4>
+                    <div class="value" id="successRate">0%</div>
+                </div>
+            </div>
+        </div>
+        
+        <h3>Test Output:</h3>
+        <div id="results" class="test-output">Test output will appear here...</div>
+    </div>
+    
+    <script>
+        // Store all test reports
+        window.testReports = [];
+        let appWindow = null;
+        let testOutput = [];
+        
+        // Wait for app to load
+        document.getElementById('appFrame').onload = function() {
+            appWindow = this.contentWindow;
+            log('✅ App loaded successfully', 'success');
+            
+            // Make story test base available in app window
+            if (typeof StoryTestBase !== 'undefined') {
+                appWindow.StoryTestBase = StoryTestBase;
+            }
+            
+            // Load test scripts
+            loadTestScripts();
+        };
+        
+        function loadTestScripts() {
+            if (!appWindow) return;
+            
+            const scripts = [
+                // Story tests
+                'stories/story-001-add-card.js',
+                // Integration tests
+                'uat-edit-mode-updated.js',
+                'uat-import-export-data.js',
+                'uat-ui-timing.js',
+                'uat-drive-sync.js'
+            ];
+            
+            let loadedCount = 0;
+            const totalScripts = scripts.length;
+            
+            scripts.forEach(src => {
+                const script = appWindow.document.createElement('script');
+                script.src = '../tests/' + src;
+                script.onload = () => {
+                    loadedCount++;
+                    log(`✅ Loaded ${src}`);
+                    
+                    if (loadedCount === totalScripts) {
+                        log('✅ All test scripts loaded');
+                    }
+                };
+                script.onerror = () => {
+                    loadedCount++;
+                    log(`⚠️ Could not load ${src} (may not exist yet)`, 'warning');
+                };
+                appWindow.document.head.appendChild(script);
+            });
+        }
+        
+        // Test runner functions
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            
+            testOutput.push(logEntry);
+            updateOutput();
+            
+            // Also log to console
+            if (type === 'error') {
+                console.error(message);
+            } else {
+                console.log(message);
+            }
+        }
+        
+        function updateOutput() {
+            const outputEl = document.getElementById('results');
+            outputEl.textContent = testOutput.join('\n');
+            outputEl.scrollTop = outputEl.scrollHeight;
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            window.testReports = [];
+            log('Starting comprehensive test suite...', 'info');
+            
+            updateStatus('running', '🔄 Running all tests...');
+            
+            try {
+                // Capture console from iframe
+                captureIframeConsole();
+                
+                // Run all test types
+                await runStoryTests();
+                await runIntegrationTests();
+                
+                // Generate summary
+                generateSummary();
+                
+                // Update status
+                const failed = window.testReports.some(r => r.scenarios && r.scenarios.failed > 0);
+                if (failed) {
+                    updateStatus('failure', '❌ Some tests failed - see results below');
+                } else {
+                    updateStatus('success', '✅ All tests passed!');
+                }
+                
+                log('\nAll tests completed!', 'success');
+            } catch (error) {
+                log(`\n❌ Test runner error: ${error.message}`, 'error');
+                updateStatus('failure', '❌ Test execution failed');
+            } finally {
+                restoreIframeConsole();
+            }
+        }
+        
+        async function runStoryTests() {
+            log('\n=== Running Story Tests ===', 'info');
+            
+            // Check for story test files
+            if (appWindow.AddCardStoryTest) {
+                log('Running Story 001: Add Card');
+                const test = new appWindow.AddCardStoryTest();
+                await test.run();
+            } else {
+                log('No story tests found', 'warning');
+            }
+        }
+        
+        async function runIntegrationTests() {
+            log('\n=== Running Integration Tests ===', 'info');
+            
+            const tests = [
+                { name: 'Edit Mode', class: 'EditModeUAT' },
+                { name: 'Import/Export', class: 'ImportExportDataUAT' },
+                { name: 'UI Timing', class: 'UITimingTests' },
+                { name: 'Drive Sync', class: 'DriveSyncTests' }
+            ];
+            
+            for (const test of tests) {
+                if (appWindow[test.class]) {
+                    log(`\nRunning ${test.name} tests...`);
+                    try {
+                        const tester = new appWindow[test.class]();
+                        await tester.runTests();
+                    } catch (error) {
+                        log(`❌ ${test.name} test failed: ${error.message}`, 'error');
+                    }
+                } else {
+                    log(`⚠️ ${test.name} test class not found`, 'warning');
+                }
+            }
+        }
+        
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            window.testReports = [];
+            testOutput = [];
+            document.getElementById('testSummary').style.display = 'none';
+            document.getElementById('testStatus').style.display = 'none';
+        }
+        
+        function generateSummary() {
+            if (window.testReports.length === 0) return;
+            
+            let totalScenarios = 0;
+            let passedScenarios = 0;
+            let failedScenarios = 0;
+            
+            window.testReports.forEach(report => {
+                if (report.scenarios) {
+                    totalScenarios += report.scenarios.total;
+                    passedScenarios += report.scenarios.passed;
+                    failedScenarios += report.scenarios.failed;
+                }
+            });
+            
+            // Update summary UI
+            document.getElementById('testSummary').style.display = 'block';
+            document.getElementById('totalTests').textContent = totalScenarios;
+            document.getElementById('passedTests').textContent = passedScenarios;
+            document.getElementById('failedTests').textContent = failedScenarios;
+            document.getElementById('successRate').textContent = 
+                totalScenarios > 0 ? Math.round((passedScenarios / totalScenarios) * 100) + '%' : '0%';
+        }
+        
+        function downloadReport() {
+            const report = {
+                timestamp: new Date().toISOString(),
+                reports: window.testReports,
+                summary: {
+                    total: window.testReports.length,
+                    testOutput: testOutput
+                }
+            };
+            
+            const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `stackmap-test-report-${Date.now()}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            
+            log('Report downloaded', 'success');
+        }
+        
+        function updateStatus(type, message) {
+            const statusEl = document.getElementById('testStatus');
+            statusEl.className = `test-status ${type}`;
+            statusEl.textContent = message;
+            statusEl.style.display = 'block';
+        }
+        
+        function reloadApp() {
+            const iframe = document.getElementById('appFrame');
+            iframe.src = iframe.src;
+            clearResults();
+            log('🔄 Reloading app...', 'info');
+        }
+        
+        function filterTests() {
+            const filter = document.getElementById('testFilter').value;
+            // This would filter the display of test results
+            log(`Filter changed to: ${filter}`, 'info');
+        }
+        
+        // Capture console output from iframe
+        let originalConsole = {};
+        
+        function captureIframeConsole() {
+            if (!appWindow) return;
+            
+            originalConsole.log = appWindow.console.log;
+            originalConsole.error = appWindow.console.error;
+            originalConsole.warn = appWindow.console.warn;
+            
+            appWindow.console.log = (...args) => {
+                log(args.join(' '));
+                originalConsole.log.apply(appWindow.console, args);
+            };
+            
+            appWindow.console.error = (...args) => {
+                log('ERROR: ' + args.join(' '), 'error');
+                originalConsole.error.apply(appWindow.console, args);
+            };
+            
+            appWindow.console.warn = (...args) => {
+                log('WARN: ' + args.join(' '), 'warning');
+                originalConsole.warn.apply(appWindow.console, args);
+            };
+        }
+        
+        function restoreIframeConsole() {
+            if (!appWindow || !originalConsole.log) return;
+            
+            appWindow.console.log = originalConsole.log;
+            appWindow.console.error = originalConsole.error;
+            appWindow.console.warn = originalConsole.warn;
+        }
+    </script>
+</body>
+</html>
