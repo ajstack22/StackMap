@@ -144,10 +144,16 @@ class StackMapApp {
         });
         
         // Mark initialization complete after a short delay
+        // This prevents auto-sync from triggering during initial data load
         setTimeout(() => {
             this.isInitializing = false;
             console.log('[StackMapApp] Initialization complete, auto-sync enabled');
-        }, 2000);
+            
+            // If Drive sync is ready and signed in, trigger initial sync
+            if (this.driveSync && this.driveSync.isSignedIn) {
+                this.debouncedAutoSync();
+            }
+        }, 1000);
     }
     
     // Initialize Google Drive sync with proper timing
@@ -164,6 +170,14 @@ class StackMapApp {
                     console.log('[StackMapApp] Google APIs loaded, initializing Drive sync...');
                     try {
                         this.driveSync = new GoogleDriveSync(this);
+                        
+                        // If drive sync initialized and user is already signed in,
+                        // clear the initialization flag early
+                        if (this.driveSync.isSignedIn) {
+                            this.isInitializing = false;
+                            console.log('[StackMapApp] Drive sync ready, clearing initialization flag');
+                        }
+                        
                         return true;
                     } catch (error) {
                         console.error('[StackMapApp] Failed to initialize Drive sync:', error);
@@ -290,6 +304,48 @@ class StackMapApp {
             
             const currentText = newTitle.textContent;
             
+            // Create character counter
+            const charCounter = document.createElement('div');
+            charCounter.className = 'title-char-counter';
+            charCounter.style.cssText = `
+                position: absolute;
+                bottom: -20px;
+                left: 50%;
+                transform: translateX(-50%);
+                font-size: 0.75rem;
+                padding: 2px 8px;
+                border-radius: 12px;
+                background: rgba(255, 255, 255, 0.9);
+                transition: all 0.2s ease;
+                z-index: 1050;
+                white-space: nowrap;
+            `;
+            
+            // Update character counter
+            const updateCharCounter = () => {
+                const length = newTitle.textContent.length;
+                charCounter.textContent = `${length} characters`;
+                
+                if (length <= 15) {
+                    charCounter.style.color = '#4CAF50';
+                    charCounter.style.background = 'rgba(255, 255, 255, 0.9)';
+                } else if (length <= 20) {
+                    charCounter.style.color = '#FF9800';
+                    charCounter.style.background = 'rgba(255, 243, 224, 0.95)';
+                    charCounter.textContent = `${length} chars - Getting long for mobile`;
+                } else {
+                    charCounter.style.color = '#F44336';
+                    charCounter.style.background = 'rgba(255, 235, 238, 0.95)';
+                    charCounter.textContent = `${length} chars - Too long for mobile`;
+                }
+            };
+            
+            // Add counter to header
+            const headerText = newTitle.parentElement;
+            headerText.style.position = 'relative';
+            headerText.appendChild(charCounter);
+            updateCharCounter();
+            
             // Make the title editable
             newTitle.contentEditable = true;
             newTitle.style.cursor = 'text';
@@ -304,12 +360,20 @@ class StackMapApp {
             selection.removeAllRanges();
             selection.addRange(range);
             
+            // Update counter on input
+            newTitle.addEventListener('input', updateCharCounter);
+            
             // Handle save on blur or enter
             const saveTitle = () => {
                 newTitle.contentEditable = false;
                 newTitle.style.cursor = 'pointer';
                 newTitle.style.outline = 'none';
                 newTitle.style.padding = '0';
+                
+                // Remove character counter
+                if (charCounter.parentNode) {
+                    charCounter.remove();
+                }
                 
                 const newText = newTitle.textContent.trim();
                 if (newText && newText !== currentText) {
@@ -1334,7 +1398,7 @@ class StackMapApp {
         // Wait 30 seconds after last change before auto-syncing
         // This prevents constant sync notifications during active use
         this.autoSyncTimeout = setTimeout(() => {
-            if (this.driveSync && this.driveSync.autoSync && this.driveSync.isSignedIn) {
+            if (this.driveSync && this.driveSync.autoSync && this.driveSync.isSignedIn && !this.isInitializing) {
                 // Silently sync without notifications
                 this.driveSync.autoSync(true); // Pass silent flag
             }

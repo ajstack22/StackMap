@@ -6,12 +6,22 @@ class GoogleDriveSync {
         this.isSignedIn = false;
         this.currentUser = null;
         this.accessToken = null;
+        this.tokenExpiresAt = null;
         this.STACKMAP_FOLDER_NAME = 'StackMap Data';
         this.STACKMAP_FILE_NAME = 'stackmap-data.json';
         this.folderId = null;
         this.lastKnownRemoteVersion = 0;
         this.isSyncing = false;
         this.syncCheckInterval = null;
+        
+        // Token refresh management
+        this.tokenRefreshTimer = null;
+        this.tokenRefreshRetryCount = 0;
+        this.maxTokenRefreshRetries = 5;
+        this.tokenRefreshBackoff = 1000; // Start with 1 second
+        
+        // Silent refresh iframe
+        this.silentRefreshIframe = null;
         
         // Initialize Google APIs
         this.initializeGoogleAPIs();
@@ -79,7 +89,7 @@ class GoogleDriveSync {
             this.initializeGoogleIdentity();
             
             // Check for stored auth token
-            this.checkStoredAuth();
+            await this.checkStoredAuth();
             
             console.log('[GoogleDriveSync] Google Drive API initialized successfully');
         } catch (error) {
@@ -90,12 +100,19 @@ class GoogleDriveSync {
 
     async checkStoredAuth() {
         const storedToken = localStorage.getItem('stackmap-google-token');
-        if (storedToken) {
+        const storedExpiry = localStorage.getItem('stackmap-token-expiry');
+        const storedEmail = localStorage.getItem('stackmap-user-email');
+        
+        if (storedToken && storedExpiry) {
             this.accessToken = storedToken;
+            this.tokenExpiresAt = parseInt(storedExpiry);
             
-            // Validate token is still valid
-            const isValid = await this.checkTokenValidity();
-            if (isValid) {
+            // Check if token is still valid
+            const now = Date.now();
+            const timeUntilExpiry = this.tokenExpiresAt - now;
+            
+            if (timeUntilExpiry > 60000) { // More than 1 minute left
+                // Token is still valid
                 gapi.client.setToken({
                     access_token: this.accessToken
                 });
@@ -112,16 +129,24 @@ class GoogleDriveSync {
                 }
                 
                 this.updateSignInStatus(true);
-                // console.log('Restored Google Drive connection from storage');
+                console.log(`[GoogleDriveSync] Restored session for ${storedEmail || 'user'}`);
+                
+                // Schedule token refresh before it expires
+                this.scheduleTokenRefresh();
                 
                 // Start sync checks
                 this.startSyncCheckInterval();
                 this.checkForRemoteChanges();
             } else {
-                // Token expired, clean up
-                localStorage.removeItem('stackmap-google-token');
-                this.accessToken = null;
-                // console.log('Stored token expired, need to re-authenticate');
+                // Token expired or about to expire, try silent refresh
+                console.log('[GoogleDriveSync] Stored token expired, attempting silent refresh...');
+                this.performSilentTokenRefresh();
+            }
+        } else {
+            // No stored auth, check for returning user
+            if (storedEmail) {
+                // Try Google One Tap for returning user
+                this.showGoogleOneTap(storedEmail);
             }
         }
     }
@@ -140,45 +165,108 @@ class GoogleDriveSync {
                 return;
             }
 
-            // Initialize Google Identity Services for authentication
+            // Initialize Google One Tap
             google.accounts.id.initialize({
                 client_id: CONFIG.GOOGLE_CLIENT_ID,
-                callback: this.handleCredentialResponse.bind(this)
+                callback: this.handleOneTapResponse.bind(this),
+                auto_select: true, // Auto-select for returning users
+                use_fedcm_for_prompt: true, // Future-proofing with FedCM API
+                cancel_on_tap_outside: false,
+                itp_support: true
             });
 
             // Initialize Google Auth for token access
             this.tokenClient = google.accounts.oauth2.initTokenClient({
                 client_id: CONFIG.GOOGLE_CLIENT_ID,
-                scope: 'https://www.googleapis.com/auth/drive.file',
+                scope: 'https://www.googleapis.com/auth/drive.file email',
                 callback: async (response) => {
                     await this.handleTokenResponse(response);
                 },
-                error_callback: this.handleTokenError.bind(this)
+                error_callback: this.handleTokenError.bind(this),
+                hint: localStorage.getItem('stackmap-user-email') || '' // Use stored email as hint
             });
 
-            // console.log('Google Identity Services initialized');
+            console.log('[GoogleDriveSync] Google Identity Services initialized');
         } catch (error) {
             console.error('Error initializing Google Identity Services:', error);
         }
     }
 
-    handleCredentialResponse(response) {
-        // This handles the ID token, but we need access token for API calls
-        // console.log('Credential response received');
+    showGoogleOneTap(loginHint = null) {
+        try {
+            const options = {
+                client_id: CONFIG.GOOGLE_CLIENT_ID,
+                auto_select: true,
+                cancel_on_tap_outside: false
+            };
+            
+            if (loginHint) {
+                options.login_hint = loginHint;
+            }
+            
+            google.accounts.id.prompt((notification) => {
+                console.log('[GoogleDriveSync] One Tap prompt:', notification.getMomentType());
+                if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+                    // One Tap not shown, fall back to regular sign-in
+                    console.log('[GoogleDriveSync] One Tap not shown, user may need to sign in manually');
+                }
+            });
+        } catch (error) {
+            console.error('[GoogleDriveSync] Error showing One Tap:', error);
+        }
+    }
+
+    async handleOneTapResponse(response) {
+        console.log('[GoogleDriveSync] One Tap response received');
+        
+        // Decode the JWT to get user info
+        const payload = this.parseJwt(response.credential);
+        if (payload && payload.email) {
+            // Store user email for future use
+            localStorage.setItem('stackmap-user-email', payload.email);
+            console.log(`[GoogleDriveSync] User ${payload.email} signed in via One Tap`);
+        }
+        
+        // Request access token
+        this.requestAccessToken();
+    }
+
+    parseJwt(token) {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (error) {
+            console.error('[GoogleDriveSync] Error parsing JWT:', error);
+            return null;
+        }
     }
 
     async handleTokenResponse(response) {
         if (response.error) {
             console.error('Token error:', response.error);
-            this.showSyncError('Failed to get authorization. Please try again.');
+            this.handleTokenError(response);
             return;
         }
 
         this.accessToken = response.access_token;
         this.isSignedIn = true;
         
-        // Store token for persistence
+        // Calculate token expiry (tokens typically last 1 hour)
+        const expiresIn = response.expires_in || 3600; // Default to 1 hour
+        this.tokenExpiresAt = Date.now() + (expiresIn * 1000);
+        
+        // Store token and expiry for persistence
         localStorage.setItem('stackmap-google-token', this.accessToken);
+        localStorage.setItem('stackmap-token-expiry', this.tokenExpiresAt.toString());
+        
+        // Get user info if we don't have it
+        if (!localStorage.getItem('stackmap-user-email')) {
+            await this.fetchUserInfo();
+        }
         
         // Set the token for gapi client
         gapi.client.setToken({
@@ -199,10 +287,17 @@ class GoogleDriveSync {
         }
 
         this.updateSignInStatus(true);
-        // console.log('Successfully signed in with access token');
+        console.log('[GoogleDriveSync] Successfully signed in with access token');
         
         // Clear folder ID to force refresh on new sign-in
         this.folderId = null;
+        
+        // Reset retry count on successful auth
+        this.tokenRefreshRetryCount = 0;
+        this.tokenRefreshBackoff = 1000;
+        
+        // Schedule token refresh
+        this.scheduleTokenRefresh();
         
         // Start sync check interval
         this.startSyncCheckInterval();
@@ -211,9 +306,176 @@ class GoogleDriveSync {
         this.checkForRemoteChanges();
     }
 
+    async fetchUserInfo() {
+        try {
+            const response = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                }
+            });
+            
+            if (response.ok) {
+                const userInfo = await response.json();
+                if (userInfo.email) {
+                    localStorage.setItem('stackmap-user-email', userInfo.email);
+                    console.log(`[GoogleDriveSync] Stored user email: ${userInfo.email}`);
+                }
+            }
+        } catch (error) {
+            console.error('[GoogleDriveSync] Error fetching user info:', error);
+        }
+    }
+
     handleTokenError(error) {
-        console.error('Token error callback:', error);
-        this.showSyncError(`Authorization failed: ${error.message || 'Unknown error'}`);
+        console.error('[GoogleDriveSync] Token error:', error);
+        
+        if (error.type === 'popup_closed' || error.type === 'popup_failed_to_open') {
+            // Popup was blocked or closed, try silent refresh
+            console.log('[GoogleDriveSync] Popup blocked/closed, attempting silent refresh...');
+            this.performSilentTokenRefresh();
+        } else {
+            // Apply exponential backoff for retries
+            if (this.tokenRefreshRetryCount < this.maxTokenRefreshRetries) {
+                this.tokenRefreshRetryCount++;
+                const delay = Math.min(this.tokenRefreshBackoff * Math.pow(2, this.tokenRefreshRetryCount - 1), 60000); // Max 1 minute
+                
+                console.log(`[GoogleDriveSync] Retrying token refresh in ${delay/1000} seconds (attempt ${this.tokenRefreshRetryCount}/${this.maxTokenRefreshRetries})`);
+                
+                setTimeout(() => {
+                    this.performSilentTokenRefresh();
+                }, delay);
+            } else {
+                this.showSyncError(`Authorization failed: ${error.message || error.type || 'Unknown error'}`);
+                this.updateSignInStatus(false);
+            }
+        }
+    }
+
+    scheduleTokenRefresh() {
+        // Clear any existing timer
+        if (this.tokenRefreshTimer) {
+            clearTimeout(this.tokenRefreshTimer);
+        }
+        
+        if (!this.tokenExpiresAt) return;
+        
+        const now = Date.now();
+        const timeUntilExpiry = this.tokenExpiresAt - now;
+        
+        // Refresh 5 minutes before expiry
+        const refreshTime = Math.max(timeUntilExpiry - (5 * 60 * 1000), 0);
+        
+        if (refreshTime > 0) {
+            console.log(`[GoogleDriveSync] Token refresh scheduled in ${refreshTime/1000/60} minutes`);
+            
+            this.tokenRefreshTimer = setTimeout(() => {
+                console.log('[GoogleDriveSync] Token refresh timer triggered');
+                this.performSilentTokenRefresh();
+            }, refreshTime);
+        } else {
+            // Token already expired or about to expire
+            console.log('[GoogleDriveSync] Token expired or expiring soon, refreshing now...');
+            this.performSilentTokenRefresh();
+        }
+    }
+
+    async performSilentTokenRefresh() {
+        console.log('[GoogleDriveSync] Attempting silent token refresh...');
+        
+        try {
+            // First try iframe-based silent refresh
+            const success = await this.silentIframeRefresh();
+            
+            if (!success) {
+                // If iframe refresh fails, try requestAccessToken with no prompt
+                console.log('[GoogleDriveSync] Iframe refresh failed, trying prompt-less refresh...');
+                this.requestAccessToken(false);
+            }
+        } catch (error) {
+            console.error('[GoogleDriveSync] Silent refresh error:', error);
+            this.handleTokenError({ type: 'silent_refresh_failed', message: error.message });
+        }
+    }
+
+    async silentIframeRefresh() {
+        return new Promise((resolve) => {
+            try {
+                // Create hidden iframe for silent auth
+                if (this.silentRefreshIframe) {
+                    document.body.removeChild(this.silentRefreshIframe);
+                }
+                
+                this.silentRefreshIframe = document.createElement('iframe');
+                this.silentRefreshIframe.style.display = 'none';
+                this.silentRefreshIframe.setAttribute('aria-hidden', 'true');
+                
+                // Set up message listener for iframe response
+                const messageListener = (event) => {
+                    if (event.origin !== 'https://accounts.google.com') return;
+                    
+                    if (event.data && event.data.type === 'authResult') {
+                        window.removeEventListener('message', messageListener);
+                        
+                        if (event.data.access_token) {
+                            // Successfully got new token
+                            this.handleTokenResponse({
+                                access_token: event.data.access_token,
+                                expires_in: event.data.expires_in
+                            });
+                            resolve(true);
+                        } else {
+                            resolve(false);
+                        }
+                    }
+                };
+                
+                window.addEventListener('message', messageListener);
+                
+                // Build OAuth URL for iframe
+                const params = new URLSearchParams({
+                    client_id: CONFIG.GOOGLE_CLIENT_ID,
+                    redirect_uri: window.location.origin,
+                    response_type: 'token',
+                    scope: 'https://www.googleapis.com/auth/drive.file email',
+                    prompt: 'none',
+                    login_hint: localStorage.getItem('stackmap-user-email') || '',
+                    include_granted_scopes: 'true'
+                });
+                
+                this.silentRefreshIframe.src = `https://accounts.google.com/oauth2/v2/auth?${params.toString()}`;
+                document.body.appendChild(this.silentRefreshIframe);
+                
+                // Timeout after 5 seconds
+                setTimeout(() => {
+                    window.removeEventListener('message', messageListener);
+                    resolve(false);
+                }, 5000);
+                
+            } catch (error) {
+                console.error('[GoogleDriveSync] Iframe refresh error:', error);
+                resolve(false);
+            }
+        });
+    }
+
+    requestAccessToken(showPrompt = true) {
+        if (!this.tokenClient) {
+            console.error('[GoogleDriveSync] Token client not initialized');
+            return;
+        }
+        
+        const options = {
+            prompt: showPrompt ? 'consent' : ''
+        };
+        
+        // Add login hint if available
+        const userEmail = localStorage.getItem('stackmap-user-email');
+        if (userEmail) {
+            options.hint = userEmail;
+            options.login_hint = userEmail;
+        }
+        
+        this.tokenClient.requestAccessToken(options);
     }
 
     updateSignInStatus(isSignedIn) {
@@ -230,23 +492,37 @@ class GoogleDriveSync {
             // Don't return early - let internal state update even if UI is missing
         }
 
+        // Update header sync status indicator
+        this.updateHeaderSyncStatus(isSignedIn);
+
         if (isSignedIn) {
             // Update UI if elements exist
             if (signInBtn) signInBtn.style.display = 'none';
             if (syncStatus) syncStatus.style.display = 'flex';
             if (syncActions) syncActions.style.display = 'flex';
-            if (syncUser) syncUser.textContent = 'Connected to Google Drive';
+            
+            const userEmail = localStorage.getItem('stackmap-user-email');
+            if (syncUser) {
+                syncUser.textContent = userEmail ? `Connected: ${userEmail}` : 'Connected to Google Drive';
+            }
             
             // Show sync button in grown-up mode
             if (this.app.grownupMode && syncBtn) {
                 syncBtn.classList.remove('hidden');
             }
             
-            // console.log('Signed in to Google Drive');
+            console.log(`[GoogleDriveSync] Signed in${userEmail ? ' as ' + userEmail : ''}`);
         } else {
             this.currentUser = null;
             this.accessToken = null;
+            this.tokenExpiresAt = null;
             this.folderId = null;
+            
+            // Clear token refresh timer
+            if (this.tokenRefreshTimer) {
+                clearTimeout(this.tokenRefreshTimer);
+                this.tokenRefreshTimer = null;
+            }
             
             // Stop sync checks
             this.stopSyncCheckInterval();
@@ -257,7 +533,7 @@ class GoogleDriveSync {
             if (syncActions) syncActions.style.display = 'none';
             if (syncBtn) syncBtn.classList.add('hidden');
             
-            // console.log('Signed out');
+            console.log('[GoogleDriveSync] Signed out');
         }
     }
 
@@ -302,8 +578,23 @@ class GoogleDriveSync {
                 }
             }
             
-            // Request access token
-            this.tokenClient.requestAccessToken({ prompt: 'consent' });
+            // Check if we have a stored email for One Tap
+            const storedEmail = localStorage.getItem('stackmap-user-email');
+            if (storedEmail) {
+                // Try One Tap first for returning users
+                this.showGoogleOneTap(storedEmail);
+                
+                // Also prepare regular sign-in as fallback
+                setTimeout(() => {
+                    // If not signed in after 3 seconds, show regular prompt
+                    if (!this.isSignedIn) {
+                        this.requestAccessToken(true);
+                    }
+                }, 3000);
+            } else {
+                // First time user, show regular sign-in
+                this.requestAccessToken(true);
+            }
         } catch (error) {
             console.error('Sign-in error:', error);
             this.showSyncError('Failed to sign in to Google Drive. Please try again.');
@@ -317,8 +608,10 @@ class GoogleDriveSync {
             }
             gapi.client.setToken(null);
             
-            // Clear stored token
+            // Clear stored tokens but keep email for future One Tap
             localStorage.removeItem('stackmap-google-token');
+            localStorage.removeItem('stackmap-token-expiry');
+            // Keep stackmap-user-email for One Tap on next visit
             
             this.updateSignInStatus(false);
         } catch (error) {
@@ -330,18 +623,30 @@ class GoogleDriveSync {
     async checkTokenValidity() {
         if (!this.accessToken) return false;
         
+        // First check local expiry
+        if (this.tokenExpiresAt && Date.now() >= this.tokenExpiresAt) {
+            console.log('[GoogleDriveSync] Token expired based on local expiry time');
+            return false;
+        }
+        
         try {
             const response = await fetch('https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=' + this.accessToken);
             const data = await response.json();
             
             if (data.error) {
-                // console.log('Token is invalid:', data.error);
+                console.log('[GoogleDriveSync] Token is invalid:', data.error);
                 return false;
+            }
+            
+            // Update expiry time if provided
+            if (data.expires_in) {
+                this.tokenExpiresAt = Date.now() + (data.expires_in * 1000);
+                localStorage.setItem('stackmap-token-expiry', this.tokenExpiresAt.toString());
             }
             
             return true;
         } catch (error) {
-            console.error('Error checking token:', error);
+            console.error('[GoogleDriveSync] Error checking token:', error);
             return false;
         }
     }
@@ -349,11 +654,17 @@ class GoogleDriveSync {
     async refreshTokenIfNeeded() {
         const isValid = await this.checkTokenValidity();
         if (!isValid) {
-            // console.log('Token expired, requesting new token...');
+            console.log('[GoogleDriveSync] Token invalid, performing silent refresh...');
+            
             // Clear invalid stored token
             localStorage.removeItem('stackmap-google-token');
-            this.tokenClient.requestAccessToken({ prompt: '' });
-            return false;
+            localStorage.removeItem('stackmap-token-expiry');
+            
+            // Try silent refresh
+            await this.performSilentTokenRefresh();
+            
+            // Check if refresh was successful
+            return this.isSignedIn;
         }
         return true;
     }
@@ -590,8 +901,8 @@ class GoogleDriveSync {
             }
 
             if (!silent) {
-            this.showSyncProgress('Saving to Google Drive...');
-        }
+                this.showSyncProgress('Saving to Google Drive...');
+            }
             
             // Get current app data
             const data = this.app.appState.exportData();
@@ -600,6 +911,13 @@ class GoogleDriveSync {
                 userAgent: navigator.userAgent,
                 timestamp: Date.now()
             };
+
+            // Update sync settings with last sync time
+            if (!this.app.appState.syncSettings) {
+                this.app.appState.syncSettings = {};
+            }
+            this.app.appState.syncSettings.lastSync = data.lastSync;
+            this.app.appState._triggerSave();
 
             // Ensure we have a folder
             await this.ensureStackMapFolder();
@@ -649,8 +967,8 @@ class GoogleDriveSync {
             
             if (response.ok) {
                 if (!silent) {
-                this.showSyncSuccess('Saved to Google Drive');
-            }
+                    this.showSyncSuccess('Saved to Google Drive');
+                }
                 // console.log('Data uploaded successfully');
                 
                 // Update last known version
@@ -660,8 +978,8 @@ class GoogleDriveSync {
                 
                 if (response.status === 403) {
                     if (!silent) {
-                    this.showSyncError('Permission denied. Please sign out and sign in again.');
-                }
+                        this.showSyncError('Permission denied. Please sign out and sign in again.');
+                    }
                     // Force re-authentication
                     this.isSignedIn = false;
                     this.accessToken = null;
@@ -672,8 +990,8 @@ class GoogleDriveSync {
         } catch (error) {
             console.error('Upload error:', error);
             if (!silent) {
-            this.showSyncError(`Failed to save: ${error.message || 'Unknown error'}`);
-        }
+                this.showSyncError(`Failed to save: ${error.message || 'Unknown error'}`);
+            }
         } finally {
             this.isSyncing = false;
         }
@@ -818,7 +1136,48 @@ class GoogleDriveSync {
         }
     }
 
+    updateHeaderSyncStatus(isSignedIn, state = 'synced') {
+        const headerStatus = document.getElementById('headerSyncStatus');
+        if (!headerStatus) return;
+
+        const icon = headerStatus.querySelector('.header-sync-icon');
+        const text = headerStatus.querySelector('.header-sync-text');
+
+        if (!isSignedIn) {
+            headerStatus.style.display = 'none';
+            headerStatus.classList.remove('active');
+            return;
+        }
+
+        headerStatus.style.display = '';
+        headerStatus.classList.add('active');
+        headerStatus.className = 'header-sync-status active ' + state;
+
+        switch (state) {
+            case 'syncing':
+                icon.textContent = 'sync';
+                text.textContent = 'Backing up...';
+                break;
+            case 'synced':
+                icon.textContent = 'cloud_done';
+                text.textContent = 'Backed up';
+                break;
+            case 'error':
+                icon.textContent = 'cloud_off';
+                text.textContent = 'Backup failed';
+                break;
+        }
+
+        // Update last sync time
+        if (state === 'synced' && this.app.appState.syncSettings?.lastSync) {
+            this.app.appState.syncSettings.lastSync = new Date().toISOString();
+        }
+    }
+
     showSyncProgress(message) {
+        // Update header sync status
+        this.updateHeaderSyncStatus(true, 'syncing');
+
         // Update sync button with progress
         const syncBtn = document.getElementById('syncBtn');
         if (syncBtn) {
@@ -833,6 +1192,9 @@ class GoogleDriveSync {
     }
 
     showSyncSuccess(message) {
+        // Update header sync status
+        this.updateHeaderSyncStatus(true, 'synced');
+
         // Reset sync button
         const syncBtn = document.getElementById('syncBtn');
         if (syncBtn) {
@@ -851,6 +1213,9 @@ class GoogleDriveSync {
     }
 
     showSyncError(message) {
+        // Update header sync status
+        this.updateHeaderSyncStatus(true, 'error');
+
         // Reset sync button
         const syncBtn = document.getElementById('syncBtn');
         if (syncBtn) {
@@ -924,10 +1289,22 @@ class GoogleDriveSync {
     // Add cleanup method
     cleanup() {
         this.stopSyncCheckInterval();
+        
         if (this.autoSyncTimeout) {
             clearTimeout(this.autoSyncTimeout);
             this.autoSyncTimeout = null;
         }
+        
+        if (this.tokenRefreshTimer) {
+            clearTimeout(this.tokenRefreshTimer);
+            this.tokenRefreshTimer = null;
+        }
+        
+        if (this.silentRefreshIframe && this.silentRefreshIframe.parentNode) {
+            this.silentRefreshIframe.parentNode.removeChild(this.silentRefreshIframe);
+            this.silentRefreshIframe = null;
+        }
+        
         // Clear any pending operations
         this.isSyncing = false;
     }
