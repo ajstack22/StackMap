@@ -2188,6 +2188,7 @@ class HybridPanelManager {
         // IMPORTANT: Use the menuState selectedIcon if available, as it's more reliable
         const icon = this.menuStates.userForm?.selectedIcon || iconInput?.value || '👤';
         
+        console.log('Form values at save:', {
             name, 
             icon,
             iconInputExists: !!iconInput,
