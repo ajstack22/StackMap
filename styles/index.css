@@ -68,14 +68,7 @@ body.loaded {
 }
 
 /* ===== LAYOUT ===== */
-.main-container {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-    gap: var(--card-gap);
-    max-width: var(--container-max-width);
-    width: 100%;
-    padding: 0 10px;
-}
+/* .main-container styles are in layout.css - do not duplicate here */
 
 /* Ensure proper centering when cards hit max-width */
 @supports (display: grid) {
