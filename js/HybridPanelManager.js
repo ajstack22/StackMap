@@ -2016,6 +2016,7 @@ class HybridPanelManager {
         const hiddenInput = document.getElementById('userIcon');
         const editingUser = this.menuStates.userForm?.editingUser;
         const currentIcon = hiddenInput?.value || this.menuStates.userForm?.selectedIcon || editingUser?.icon || '👤';
+        console.log('Current icon sources:', {
             hiddenInput: hiddenInput?.value,
             state: this.menuStates.userForm?.selectedIcon,
             editingUser: editingUser?.icon

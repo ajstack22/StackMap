@@ -1313,6 +1313,7 @@ class AppState {
                     this.users.currentUserId = Object.keys(this.users.profiles)[0];
                 }
                 
+                console.log('User import state:', {
                     currentUserId: this.users.currentUserId,
                     profileIds: Object.keys(this.users.profiles),
                     profileNames: Object.values(this.users.profiles).map(u => u.name)

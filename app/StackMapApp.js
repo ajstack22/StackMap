@@ -3324,6 +3324,7 @@ class StackMapApp {
             .filter(user => existingNames.includes(user.name.toLowerCase()))
             .map(user => `"${user.name}" already exists`);
         
+        console.log('Import analysis:', {
             type,
             userCount: users.length,
             conflicts: conflicts.length
