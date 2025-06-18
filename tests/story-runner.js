@@ -10,8 +10,9 @@ const path = require('path');
 const fs = require('fs');
 const chalk = require('chalk');
 
-// Reuse existing test infrastructure
-const { createServer, runBrowser } = require('./run-tests');
+// Server management
+const { exec } = require('child_process');
+const http = require('http');
 
 class StoryRunner {
     constructor() {
@@ -129,7 +130,7 @@ class StoryRunner {
         console.log(chalk.cyan(`🧪 Running ${storiesToRun.length} stories...`));
 
         // Start server if needed
-        await createServer();
+        await this.createServer();
 
         // Launch browser
         const browser = await puppeteer.launch({
@@ -149,7 +150,7 @@ class StoryRunner {
         });
 
         // Navigate to app
-        await page.goto('http://localhost:5500', { 
+        await page.goto('http://localhost:5502', { 
             waitUntil: 'networkidle2' 
         });
 
@@ -222,6 +223,38 @@ class StoryRunner {
         }
 
         console.log(chalk.gray('\nFull report: test-results/story-report.json'));
+    }
+
+    // Start local server if needed
+    async createServer() {
+        const PORT = 5502;
+        const HOST = 'localhost';
+        
+        return new Promise((resolve) => {
+            // Check if server is already running
+            exec(`lsof -i :${PORT}`, (error, stdout) => {
+                if (!error && stdout) {
+                    console.log(chalk.gray('Using existing dev server'));
+                    resolve();
+                } else {
+                    // Start new server
+                    console.log(chalk.gray('Starting test server...'));
+                    this.serverProcess = exec(`npm run serve`, {
+                        cwd: path.resolve(__dirname, '..')
+                    });
+                    
+                    this.serverProcess.on('error', (error) => {
+                        console.error(chalk.red('Server error:'), error);
+                    });
+                    
+                    // Give server time to start
+                    setTimeout(() => {
+                        console.log(chalk.gray(`Server running at http://${HOST}:${PORT}`));
+                        resolve();
+                    }, 2000);
+                }
+            });
+        });
     }
 
     // Create example story

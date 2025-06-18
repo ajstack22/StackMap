@@ -1,0 +1,23 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAMID.com.stackmap.app",
+        "paths": [
+          "*",
+          "/",
+          "/routine/*",
+          "/user/*",
+          "/share/*"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAMID.com.stackmap.app"]
+  },
+  "appclips": {
+    "apps": []
+  }
+}

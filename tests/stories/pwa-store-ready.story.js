@@ -1,3 +1,5 @@
+const { getTestUrl } = require('./config');
+
 module.exports = {
     title: 'PWA is ready for app store requirements',
     issue: '#3',
@@ -10,7 +12,7 @@ module.exports = {
             when: 'Page loads with app manifest',
             then: 'All required manifest fields are present',
             test: async (page) => {
-                await page.goto('http://localhost:5500');
+                await page.goto(getTestUrl());
                 
                 // Check manifest is linked
                 const manifestLink = await page.$('link[rel="manifest"]');
@@ -61,7 +63,7 @@ module.exports = {
             then: 'App works fully offline',
             test: async (page) => {
                 // Load the app first
-                await page.goto('http://localhost:5500');
+                await page.goto(getTestUrl());
                 await page.waitForSelector('.main-container');
                 
                 // Go offline
@@ -99,7 +101,7 @@ module.exports = {
             then: 'App launches in standalone mode without browser UI',
             test: async (page) => {
                 // Simulate standalone mode
-                await page.goto('http://localhost:5500?mode=standalone');
+                await page.goto(getTestUrl('?mode=standalone'));
                 
                 // Check that app identifies standalone mode
                 const isStandalone = await page.evaluate(() => {

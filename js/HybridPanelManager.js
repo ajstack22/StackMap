@@ -3945,6 +3945,134 @@ class HybridPanelManager {
         this.openPanel('right', 'supportUs');
     }
 
+    checkForUpdates() {
+        // Check if service worker is available
+        if (!('serviceWorker' in navigator) || !navigator.serviceWorker.controller) {
+            this.showUpdateStatus('Service Worker not available', 'info');
+            return;
+        }
+
+        // Show checking status
+        this.showUpdateStatus('Checking for updates...', 'checking');
+
+        // Get the service worker registration
+        navigator.serviceWorker.ready.then(registration => {
+            // Force check for updates
+            registration.update().then(() => {
+                // Check if there's a waiting service worker
+                if (registration.waiting) {
+                    // Update is available
+                    this.showUpdateStatus('Update available!', 'available');
+                    
+                    // Show the update prompt from the app
+                    if (this.app && this.app.showUpdatePrompt) {
+                        this.app.showUpdatePrompt();
+                    }
+                } else if (registration.installing) {
+                    // Update is being installed
+                    this.showUpdateStatus('Update is downloading...', 'downloading');
+                    
+                    // Listen for the installation to complete
+                    registration.installing.addEventListener('statechange', () => {
+                        if (registration.waiting) {
+                            this.showUpdateStatus('Update available!', 'available');
+                            if (this.app && this.app.showUpdatePrompt) {
+                                this.app.showUpdatePrompt();
+                            }
+                        }
+                    });
+                } else {
+                    // No update available
+                    this.showUpdateStatus('StackMap is up to date!', 'current');
+                }
+            }).catch(error => {
+                console.error('Update check failed:', error);
+                this.showUpdateStatus('Update check failed', 'error');
+            });
+        }).catch(error => {
+            console.error('Service worker not ready:', error);
+            this.showUpdateStatus('Update check failed', 'error');
+        });
+    }
+
+    showUpdateStatus(message, type = 'info') {
+        // Create or update status element
+        let statusEl = document.getElementById('updateStatus');
+        
+        if (!statusEl) {
+            statusEl = document.createElement('div');
+            statusEl.id = 'updateStatus';
+            statusEl.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(0, 0, 0, 0.8);
+                color: white;
+                padding: 12px 24px;
+                border-radius: 8px;
+                z-index: 3000;
+                font-size: 0.9rem;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+                animation: slideUp 0.3s ease-out;
+            `;
+            document.body.appendChild(statusEl);
+        }
+
+        // Set content based on type
+        let icon = '';
+        let color = '';
+        
+        switch(type) {
+            case 'checking':
+                icon = '<span class="material-icons" style="font-size: 18px; animation: spin 1s linear infinite;">sync</span>';
+                color = '#4CAF50';
+                break;
+            case 'available':
+                icon = '<span class="material-icons" style="font-size: 18px;">system_update</span>';
+                color = '#2196F3';
+                break;
+            case 'current':
+                icon = '<span class="material-icons" style="font-size: 18px;">check_circle</span>';
+                color = '#4CAF50';
+                break;
+            case 'downloading':
+                icon = '<span class="material-icons" style="font-size: 18px;">download</span>';
+                color = '#FF9800';
+                break;
+            case 'error':
+                icon = '<span class="material-icons" style="font-size: 18px;">error_outline</span>';
+                color = '#f44336';
+                break;
+            default:
+                icon = '<span class="material-icons" style="font-size: 18px;">info</span>';
+                color = '#2196F3';
+        }
+
+        statusEl.innerHTML = `${icon}<span>${message}</span>`;
+        statusEl.style.backgroundColor = `rgba(${this.hexToRgb(color)}, 0.9)`;
+
+        // Auto-hide after 3 seconds (except for checking status)
+        if (type !== 'checking') {
+            setTimeout(() => {
+                if (statusEl) {
+                    statusEl.style.animation = 'slideDown 0.3s ease-out';
+                    setTimeout(() => statusEl.remove(), 300);
+                }
+            }, 3000);
+        }
+    }
+
+    hexToRgb(hex) {
+        const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? 
+            `${parseInt(result[1], 16)}, ${parseInt(result[2], 16)}, ${parseInt(result[3], 16)}` : 
+            '0, 0, 0';
+    }
+
     refreshCurrentPanel() {
         // Save scroll positions before refresh
         let mainScrollTop = 0;

@@ -1,4 +1,5 @@
 const GoogleDriveMock = require('../mocks/google-drive-mock');
+const { getTestUrl } = require('./config');
 
 module.exports = {
     title: 'Drive sync uses delta sync for incremental updates',
@@ -19,7 +20,7 @@ module.exports = {
             then: 'Only delta changes should be uploaded, not full data',
             test: async (page) => {
                 // Navigate to app
-                await page.goto('http://localhost:5500', { 
+                await page.goto(getTestUrl(), { 
                     waitUntil: 'networkidle2' 
                 });
                 

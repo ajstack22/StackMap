@@ -99,6 +99,9 @@ Benefits:
 - CSS duplicates warn only
 - Accessibility issues are high priority
 - Special needs UX trumps aesthetics
+- **NEVER ignore broken tests** - Fix immediately, don't work around
+- If test infrastructure breaks, that's the new priority
+- "It works without it" is not acceptable
 
 ## Resource Allocation
 - Multiple Claude instances for parallel work

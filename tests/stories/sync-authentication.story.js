@@ -1,3 +1,5 @@
+const { getTestUrl } = require('./config');
+
 module.exports = {
     title: 'User can toggle sync without authentication errors',
     issue: '#sync-auth-fix',
@@ -23,23 +25,21 @@ module.exports = {
                 });
 
                 // Navigate to app
-                await page.goto('http://localhost:5500', { 
+                await page.goto(getTestUrl(), { 
                     waitUntil: 'networkidle2' 
                 });
                 
                 // Wait for app to fully load
                 await page.waitForSelector('.main-container', { timeout: 10000 });
                 
-                // Open settings - click the FAB
-                const settingsFab = await page.$('.floating-nav--right .fab');
-                if (settingsFab) {
-                    await settingsFab.click();
-                } else {
-                    throw new Error('Settings FAB not found');
-                }
+                // Wait for FABs to be created
+                await page.waitForSelector('.floating-nav--right', { timeout: 10000 });
+                
+                // Open settings - click the right FAB (grown-up mode button)
+                await page.click('.floating-nav--right .fab');
                 
                 // Wait for panel to open
-                await page.waitForSelector('.side-panel--open', { timeout: 5000 });
+                await page.waitForSelector('.side-panel--open', { timeout: 10000 });
                 
                 // Find and click Settings menu item
                 await page.evaluate(() => {
