@@ -394,6 +394,15 @@ class AppState {
             this.activities = this.deepCloneActivities(user.tomorrowActivities);
         }
         
+        // Track the operation
+        this._trackOperation('add-activity', {
+            userId: this.users.currentUserId,
+            activityId: newActivity.id,
+            activity: newActivity,
+            position: position,
+            dayContext: this.ui.currentDay
+        });
+        
         // Debug logging for tomorrow activities
         if (!isToday) {
             // console.log('TOMORROW: Activity added successfully to tomorrow activities');
@@ -414,15 +423,35 @@ class AppState {
         const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (index >= 0 && index < targetActivities.length) {
-            console.log('Before update:', targetActivities[index]);
+            const activity = targetActivities[index];
+            const oldValues = {};
+            
+            console.log('Before update:', activity);
+            
+            // Track what's changing for the operation log
+            Object.keys(updates).forEach(key => {
+                if (activity[key] !== updates[key]) {
+                    oldValues[key] = activity[key];
+                }
+            });
             
             // Story 1: Validate card type if being updated
             if (updates.cardType) {
                 updates.cardType = this._validateCardType(updates.cardType);
             }
             
-            Object.assign(targetActivities[index], updates);
-            console.log('After update:', targetActivities[index]);
+            Object.assign(activity, updates);
+            console.log('After update:', activity);
+            
+            // Track the operation
+            this._trackOperation('update-activity', {
+                userId: this.users.currentUserId,
+                activityId: activity.id,
+                activityIndex: index,
+                updates: updates,
+                oldValues: oldValues,
+                dayContext: this.ui.currentDay
+            });
             
             // CRITICAL FIX: Sync the legacy activities array with current context - deep clone
             if (isToday) {
@@ -442,6 +471,17 @@ class AppState {
         const targetActivities = isToday ? user.activities : user.tomorrowActivities;
         
         if (index >= 0 && index < targetActivities.length) {
+            // Track the removed activity before deletion
+            const removedActivity = targetActivities[index];
+            
+            this._trackOperation('remove-activity', {
+                userId: this.users.currentUserId,
+                activityId: removedActivity.id,
+                activityIndex: index,
+                removedActivity: removedActivity,
+                dayContext: this.ui.currentDay
+            });
+            
             targetActivities.splice(index, 1);
             
             // Reassign card numbers after removal
@@ -468,6 +508,17 @@ class AppState {
         
         if (fromIndex >= 0 && fromIndex < targetActivities.length &&
             toIndex >= 0 && toIndex < targetActivities.length) {
+            const movedActivity = targetActivities[fromIndex];
+            
+            // Track the operation before making changes
+            this._trackOperation('move-activity', {
+                userId: this.users.currentUserId,
+                activityId: movedActivity.id,
+                fromIndex: fromIndex,
+                toIndex: toIndex,
+                dayContext: this.ui.currentDay
+            });
+            
             const [removed] = targetActivities.splice(fromIndex, 1);
             targetActivities.splice(toIndex, 0, removed);
             
@@ -640,7 +691,7 @@ class AppState {
         
         // Create user profile with icon and default activities
         const defaultActivities = this.getDefaultActivitiesForNewUser();
-        this.users.profiles[userId] = {
+        const newUser = {
             id: userId,
             name: trimmedName,
             icon: icon, // NEW: Store user's chosen emoji icon
@@ -657,6 +708,14 @@ class AppState {
             },
             library: [] // Initialize empty library for new user
         };
+        
+        this.users.profiles[userId] = newUser;
+        
+        // Track the operation
+        this._trackOperation('add-user', {
+            userId: userId,
+            user: newUser
+        });
         
         this._triggerSave();
         return userId;
@@ -711,12 +770,21 @@ class AppState {
 
     switchUser(userId) {
         if (this.users.profiles[userId]) {
+            const previousUserId = this.users.currentUserId;
+            
             // Save current user data before switching
             this.saveCurrentUserData();
             
             // Switch to new user
             this.users.currentUserId = userId;
             this.loadUserData();
+            
+            // Track the operation
+            this._trackOperation('switch-user', {
+                previousUserId: previousUserId,
+                newUserId: userId
+            });
+            
             this._triggerSave();
         }
     }
@@ -851,6 +919,7 @@ class AppState {
         }
         
         const user = this.users.profiles[userId];
+        const oldValues = {};
         
         // Validate name if being updated
         if (updates.name !== undefined) {
@@ -875,10 +944,11 @@ class AppState {
                 throw new Error('A user with this name already exists');
             }
             
+            oldValues.name = user.name;
             user.name = trimmedName;
             
             // Update title if it matches the old name
-            if (user.settings && user.settings.title === user.name + "'s StackMap") {
+            if (user.settings && user.settings.title === oldValues.name + "'s StackMap") {
                 user.settings.title = trimmedName + "'s StackMap";
             }
         }
@@ -886,6 +956,7 @@ class AppState {
         // Validate and update icon if provided
         if (updates.icon !== undefined) {
             console.log('[STATE] Updating user icon from:', user.icon, 'to:', updates.icon);
+            oldValues.icon = user.icon;
             user.icon = updates.icon || '👤';
             console.log('[STATE] User icon after update:', user.icon);
         }
@@ -893,8 +964,18 @@ class AppState {
         // Update any other properties
         Object.keys(updates).forEach(key => {
             if (key !== 'name' && key !== 'icon' && updates[key] !== undefined) {
+                if (user[key] !== updates[key]) {
+                    oldValues[key] = user[key];
+                }
                 user[key] = updates[key];
             }
+        });
+        
+        // Track the operation
+        this._trackOperation('update-user', {
+            userId: userId,
+            updates: updates,
+            oldValues: oldValues
         });
         
         // If updating current user, reload data to sync with UI
