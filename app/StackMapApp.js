@@ -1765,7 +1765,18 @@ class StackMapApp {
             return;
         }
         
-        // Check if user still has default name
+        // Check if welcome splash has been seen
+        const hasSeenWelcome = localStorage.getItem(this.getStorageKey('stackmap-welcome-seen'));
+        
+        if (!hasSeenWelcome) {
+            // Show the simple welcome splash for all first-time visitors
+            setTimeout(() => {
+                this.showWelcomeSplash();
+            }, 500);
+            return;
+        }
+        
+        // Check if user still has default name for the setup splash
         const currentUser = this.appState.getCurrentUser();
         const hasDefaultName = currentUser.name === 'StackMap User' || currentUser.name === 'You';
         const hasSeenSplash = localStorage.getItem(this.getStorageKey('stackmap-splash-seen'));
