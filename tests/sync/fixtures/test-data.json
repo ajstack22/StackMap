@@ -1,0 +1,347 @@
+{
+  "sampleUsers": {
+    "basicUser": {
+      "name": "Test User",
+      "icon": "👤",
+      "activities": [
+        {
+          "id": "act-1",
+          "title": "Morning Routine",
+          "description": "Complete morning exercise and meditation",
+          "icon": "🌅",
+          "completed": false,
+          "cardType": "recurring",
+          "time": "7:00 AM"
+        },
+        {
+          "id": "act-2",
+          "title": "Project Work",
+          "description": "Focus on main project tasks",
+          "icon": "💻",
+          "completed": false,
+          "cardType": "recurring",
+          "time": "9:00 AM"
+        },
+        {
+          "id": "act-3",
+          "title": "Learning Session",
+          "description": "Study new technology or skill",
+          "icon": "📚",
+          "completed": true,
+          "cardType": "one-time",
+          "time": "2:00 PM"
+        }
+      ],
+      "tomorrowActivities": []
+    },
+    "powerUser": {
+      "name": "Power User",
+      "icon": "⚡",
+      "activities": [
+        {
+          "id": "power-1",
+          "title": "Team Standup",
+          "description": "Daily team synchronization meeting",
+          "icon": "👥",
+          "completed": true,
+          "cardType": "recurring",
+          "time": "9:00 AM"
+        },
+        {
+          "id": "power-2",
+          "title": "Code Review",
+          "description": "Review pull requests from team members",
+          "icon": "🔍",
+          "completed": false,
+          "cardType": "recurring",
+          "time": "10:00 AM"
+        },
+        {
+          "id": "power-3",
+          "title": "Feature Development",
+          "description": "Implement new feature for v2.0",
+          "icon": "🚀",
+          "completed": false,
+          "cardType": "milestone",
+          "time": ""
+        },
+        {
+          "id": "power-4",
+          "title": "Documentation",
+          "description": "Update API documentation",
+          "icon": "📝",
+          "completed": false,
+          "cardType": "one-time",
+          "time": "3:00 PM"
+        },
+        {
+          "id": "power-5",
+          "title": "Performance Testing",
+          "description": "Run performance benchmarks on staging",
+          "icon": "⚡",
+          "completed": true,
+          "cardType": "recurring",
+          "time": "4:00 PM"
+        }
+      ],
+      "tomorrowActivities": [
+        {
+          "id": "tomorrow-1",
+          "title": "Sprint Planning",
+          "description": "Plan next sprint with team",
+          "icon": "📋",
+          "completed": false,
+          "cardType": "recurring",
+          "time": "10:00 AM"
+        }
+      ]
+    }
+  },
+  "sampleStates": {
+    "emptyState": {
+      "version": "1.0.0",
+      "syncMetadata": {
+        "version": 1,
+        "lastModified": "2024-01-01T00:00:00.000Z",
+        "deviceId": "empty-device",
+        "deviceName": "Empty Device"
+      },
+      "users": {
+        "profiles": {},
+        "currentUser": null
+      }
+    },
+    "singleUserState": {
+      "version": "1.0.0",
+      "syncMetadata": {
+        "version": 5,
+        "lastModified": "2024-01-15T10:30:00.000Z",
+        "deviceId": "device-single",
+        "deviceName": "Single User Device"
+      },
+      "users": {
+        "profiles": {
+          "user-1": {
+            "name": "John Doe",
+            "icon": "👨",
+            "activities": [
+              {
+                "id": "john-act-1",
+                "title": "Check emails",
+                "description": "Review and respond to important emails",
+                "icon": "📧",
+                "completed": true,
+                "cardType": "recurring",
+                "time": "8:00 AM"
+              },
+              {
+                "id": "john-act-2",
+                "title": "Team meeting",
+                "description": "Weekly team sync",
+                "icon": "👥",
+                "completed": false,
+                "cardType": "recurring",
+                "time": "10:00 AM"
+              }
+            ],
+            "tomorrowActivities": []
+          }
+        },
+        "currentUser": "user-1"
+      },
+      "syncSettings": {
+        "lastSync": "2024-01-15T10:30:00.000Z",
+        "autoSync": true
+      }
+    },
+    "multiUserState": {
+      "version": "1.0.0",
+      "syncMetadata": {
+        "version": 12,
+        "lastModified": "2024-01-20T14:45:00.000Z",
+        "deviceId": "device-multi",
+        "deviceName": "Family Tablet"
+      },
+      "users": {
+        "profiles": {
+          "parent-1": {
+            "name": "Mom",
+            "icon": "👩",
+            "activities": [
+              {
+                "id": "mom-act-1",
+                "title": "Prepare breakfast",
+                "description": "Make healthy breakfast for family",
+                "icon": "🍳",
+                "completed": true,
+                "cardType": "recurring",
+                "time": "6:30 AM"
+              },
+              {
+                "id": "mom-act-2",
+                "title": "Work calls",
+                "description": "Client meetings",
+                "icon": "📞",
+                "completed": false,
+                "cardType": "recurring",
+                "time": "9:00 AM"
+              }
+            ],
+            "tomorrowActivities": []
+          },
+          "parent-2": {
+            "name": "Dad",
+            "icon": "👨",
+            "activities": [
+              {
+                "id": "dad-act-1",
+                "title": "Morning jog",
+                "description": "5km run in the park",
+                "icon": "🏃",
+                "completed": true,
+                "cardType": "recurring",
+                "time": "6:00 AM"
+              },
+              {
+                "id": "dad-act-2",
+                "title": "Project deadline",
+                "description": "Submit quarterly report",
+                "icon": "📊",
+                "completed": false,
+                "cardType": "milestone",
+                "time": ""
+              }
+            ],
+            "tomorrowActivities": []
+          },
+          "child-1": {
+            "name": "Alex",
+            "icon": "🧒",
+            "activities": [
+              {
+                "id": "alex-act-1",
+                "title": "Math homework",
+                "description": "Complete chapter 5 exercises",
+                "icon": "🔢",
+                "completed": false,
+                "cardType": "one-time",
+                "time": "4:00 PM"
+              },
+              {
+                "id": "alex-act-2",
+                "title": "Piano practice",
+                "description": "Practice for 30 minutes",
+                "icon": "🎹",
+                "completed": true,
+                "cardType": "recurring",
+                "time": "5:00 PM"
+              }
+            ],
+            "tomorrowActivities": []
+          }
+        },
+        "currentUser": "parent-1"
+      },
+      "syncSettings": {
+        "lastSync": "2024-01-20T14:45:00.000Z",
+        "autoSync": true
+      }
+    }
+  },
+  "conflictScenarios": {
+    "sameVersionDifferentDevice": {
+      "local": {
+        "syncMetadata": {
+          "version": 10,
+          "lastModified": "2024-01-25T10:00:00.000Z",
+          "deviceId": "device-A",
+          "deviceName": "Laptop"
+        }
+      },
+      "remote": {
+        "syncMetadata": {
+          "version": 10,
+          "lastModified": "2024-01-25T10:05:00.000Z",
+          "deviceId": "device-B",
+          "deviceName": "Phone"
+        }
+      }
+    },
+    "remoteNewer": {
+      "local": {
+        "syncMetadata": {
+          "version": 8,
+          "lastModified": "2024-01-25T09:00:00.000Z",
+          "deviceId": "device-A",
+          "deviceName": "Laptop"
+        }
+      },
+      "remote": {
+        "syncMetadata": {
+          "version": 12,
+          "lastModified": "2024-01-25T11:00:00.000Z",
+          "deviceId": "device-B",
+          "deviceName": "Phone"
+        }
+      }
+    },
+    "localNewer": {
+      "local": {
+        "syncMetadata": {
+          "version": 15,
+          "lastModified": "2024-01-25T12:00:00.000Z",
+          "deviceId": "device-A",
+          "deviceName": "Laptop"
+        }
+      },
+      "remote": {
+        "syncMetadata": {
+          "version": 12,
+          "lastModified": "2024-01-25T11:00:00.000Z",
+          "deviceId": "device-B",
+          "deviceName": "Phone"
+        }
+      }
+    }
+  },
+  "errorScenarios": {
+    "networkErrors": [
+      {
+        "type": "timeout",
+        "message": "Request timeout after 30000ms"
+      },
+      {
+        "type": "offline",
+        "message": "No internet connection"
+      },
+      {
+        "type": "dns",
+        "message": "DNS resolution failed"
+      }
+    ],
+    "authErrors": [
+      {
+        "status": 401,
+        "message": "Invalid authentication token"
+      },
+      {
+        "status": 403,
+        "message": "Insufficient permissions"
+      }
+    ],
+    "driveErrors": [
+      {
+        "status": 404,
+        "message": "File not found"
+      },
+      {
+        "status": 507,
+        "message": "Insufficient storage quota"
+      },
+      {
+        "status": 429,
+        "message": "Rate limit exceeded"
+      }
+    ]
+  }
+}

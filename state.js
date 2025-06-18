@@ -61,6 +61,13 @@ class AppState {
         
         // External save handler
         this.onStateChange = null;
+        
+        // === OPERATION LOG SYSTEM ===
+        // Track all mutations for sync and dirty tracking
+        this._operationLog = [];
+        this._dirtyUsers = new Set();
+        this._dirtyActivities = new Map(); // Map<userId, Set<activityId>>
+        this._maxOperationLogSize = 1000;
     }
 
     // Initialize default user with default activities
@@ -85,6 +92,232 @@ class AppState {
             // Sync with legacy activities array - deep clone
             this.activities = this.deepCloneActivities(defaultUser.activities);
         }
+    }
+
+    // === OPERATION LOG HELPER METHODS ===
+    
+    /**
+     * Track a mutation operation
+     * @param {string} type - Operation type
+     * @param {Object} data - Operation data
+     */
+    _trackOperation(type, data) {
+        const operation = {
+            id: `op-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: type,
+            timestamp: Date.now(),
+            userId: this.users.currentUserId,
+            data: data,
+            syncStatus: 'pending'
+        };
+        
+        this._operationLog.push(operation);
+        
+        // Track dirty state based on operation type
+        switch (type) {
+            case 'add-activity':
+            case 'update-activity':
+            case 'remove-activity':
+            case 'move-activity':
+                const userId = data.userId || this.users.currentUserId;
+                this._dirtyUsers.add(userId);
+                
+                // Track dirty activities
+                if (!this._dirtyActivities.has(userId)) {
+                    this._dirtyActivities.set(userId, new Set());
+                }
+                if (data.activityId) {
+                    this._dirtyActivities.get(userId).add(data.activityId);
+                }
+                break;
+                
+            case 'update-user':
+            case 'switch-user':
+                this._dirtyUsers.add(data.userId || this.users.currentUserId);
+                break;
+        }
+        
+        // Prune log if it gets too large
+        this._pruneOperationLog();
+    }
+    
+    /**
+     * Get all unsynced operations
+     * @returns {Array} Array of unsynced operations
+     */
+    _getUnsyncedOperations() {
+        return this._operationLog.filter(op => op.syncStatus === 'pending');
+    }
+    
+    /**
+     * Mark operations as synced
+     * @param {Array<string>} operationIds - Array of operation IDs to mark as synced
+     */
+    _markOperationsSynced(operationIds) {
+        const idSet = new Set(operationIds);
+        this._operationLog.forEach(op => {
+            if (idSet.has(op.id)) {
+                op.syncStatus = 'synced';
+            }
+        });
+    }
+    
+    /**
+     * Mark operations as failed
+     * @param {Array<string>} operationIds - Array of operation IDs to mark as failed
+     */
+    _markOperationsFailed(operationIds) {
+        const idSet = new Set(operationIds);
+        this._operationLog.forEach(op => {
+            if (idSet.has(op.id)) {
+                op.syncStatus = 'failed';
+            }
+        });
+    }
+    
+    /**
+     * Keep only the last N operations
+     */
+    _pruneOperationLog() {
+        if (this._operationLog.length > this._maxOperationLogSize) {
+            // Keep the last 1000 operations
+            this._operationLog = this._operationLog.slice(-this._maxOperationLogSize);
+        }
+    }
+    
+    /**
+     * Check if there are any dirty (unsynced) changes
+     * @returns {boolean} True if there are dirty changes
+     */
+    isDirty() {
+        return this._dirtyUsers.size > 0 || this._dirtyActivities.size > 0;
+    }
+    
+    /**
+     * Clear all dirty flags (usually after successful sync)
+     */
+    clearDirtyFlags() {
+        this._dirtyUsers.clear();
+        this._dirtyActivities.clear();
+    }
+    
+    /**
+     * Get only the data that has changed since last sync
+     * @returns {Object} Object containing only changed data
+     */
+    getChangedData() {
+        const changedData = {
+            users: {},
+            hasChanges: false
+        };
+        
+        // Include dirty users
+        this._dirtyUsers.forEach(userId => {
+            if (this.users.profiles[userId]) {
+                const user = this.users.profiles[userId];
+                changedData.users[userId] = {
+                    ...user
+                };
+                
+                // If we have specific dirty activities, only include those
+                if (this._dirtyActivities.has(userId)) {
+                    const dirtyActivityIds = this._dirtyActivities.get(userId);
+                    
+                    // Filter today's activities
+                    if (user.activities) {
+                        changedData.users[userId].activities = user.activities.filter(activity => 
+                            dirtyActivityIds.has(activity.id) || !activity.id
+                        );
+                    }
+                    
+                    // Filter tomorrow's activities
+                    if (user.tomorrowActivities) {
+                        changedData.users[userId].tomorrowActivities = user.tomorrowActivities.filter(activity => 
+                            dirtyActivityIds.has(activity.id) || !activity.id
+                        );
+                    }
+                }
+                
+                changedData.hasChanges = true;
+            }
+        });
+        
+        // Include metadata
+        if (changedData.hasChanges) {
+            changedData.syncMetadata = this.syncMetadata;
+            changedData.version = CONFIG.DATA_VERSION;
+            changedData.operations = this._getUnsyncedOperations();
+        }
+        
+        return changedData;
+    }
+    
+    /**
+     * Get the current operation log
+     * @returns {Array} Array of operations
+     */
+    getOperationLog() {
+        return [...this._operationLog];
+    }
+    
+    /**
+     * Get operation log statistics
+     * @returns {Object} Statistics about the operation log
+     */
+    getOperationLogStats() {
+        return {
+            totalOperations: this._operationLog.length,
+            pendingOperations: this._getUnsyncedOperations().length,
+            syncedOperations: this._operationLog.filter(op => op.syncStatus === 'synced').length,
+            failedOperations: this._operationLog.filter(op => op.syncStatus === 'failed').length,
+            dirtyUsers: this._dirtyUsers.size,
+            dirtyActivities: Array.from(this._dirtyActivities.values()).reduce((sum, set) => sum + set.size, 0)
+        };
+    }
+    
+    /**
+     * Reset the operation log (use with caution)
+     */
+    resetOperationLog() {
+        this._operationLog = [];
+        this._dirtyUsers.clear();
+        this._dirtyActivities.clear();
+    }
+    
+    /**
+     * Rebuild dirty tracking from operation log
+     * Used after importing data
+     */
+    _rebuildDirtyTracking() {
+        this._dirtyUsers.clear();
+        this._dirtyActivities.clear();
+        
+        // Go through pending operations and rebuild dirty state
+        this._operationLog.forEach(op => {
+            if (op.syncStatus === 'pending') {
+                switch (op.type) {
+                    case 'add-activity':
+                    case 'update-activity':
+                    case 'remove-activity':
+                    case 'move-activity':
+                        const userId = op.data.userId || op.userId;
+                        this._dirtyUsers.add(userId);
+                        
+                        if (!this._dirtyActivities.has(userId)) {
+                            this._dirtyActivities.set(userId, new Set());
+                        }
+                        if (op.data.activityId) {
+                            this._dirtyActivities.get(userId).add(op.data.activityId);
+                        }
+                        break;
+                        
+                    case 'update-user':
+                    case 'switch-user':
+                        this._dirtyUsers.add(op.data.userId || op.userId);
+                        break;
+                }
+            }
+        });
     }
 
     // === ACTIVITY MANAGEMENT ===
@@ -131,6 +364,7 @@ class AppState {
         }
 
         const newActivity = {
+            id: activity.id || `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             title: activity.title || 'New Activity',
             description: activity.description || '',
             icon: activity.icon || CONFIG.DEFAULT_EMOJI,
@@ -945,7 +1179,8 @@ class AppState {
                 currentDay: this.ui.currentDay // Persist day selection
             },
             syncMetadata: this.syncMetadata,
-            activities: this.getCurrentActivities() // For backward compatibility
+            activities: this.getCurrentActivities(), // For backward compatibility
+            operationLog: this._operationLog // Include operation log for sync
         };
     }
 
@@ -970,6 +1205,13 @@ class AppState {
                 if (data.ui.currentDay) {
                     this.ui.currentDay = data.ui.currentDay;
                 }
+            }
+            
+            // Import operation log if present
+            if (data.operationLog && Array.isArray(data.operationLog)) {
+                this._operationLog = data.operationLog.slice(-this._maxOperationLogSize); // Keep only last N operations
+                // Rebuild dirty tracking from operation log
+                this._rebuildDirtyTracking();
             }
             
             // Import sync metadata
@@ -1163,6 +1405,11 @@ class AppState {
             } else {
                 throw new Error('No valid data to import: missing both users and activities');
             }
+            
+            // Reset operation log and dirty tracking after import
+            this._operationLog = [];
+            this._dirtyUsers.clear();
+            this._dirtyActivities.clear();
             
             this._triggerSave();
             console.log('[State] Import completed successfully');

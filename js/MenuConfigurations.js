@@ -785,8 +785,9 @@ window.MenuConfigurations = {
 
     syncSettings: {
         id: 'syncSettings',
-        title: 'Google Drive Sync',
+        title: 'Backup',
         layout: 'sections',
+        backTo: 'settings', // Go back to settings menu
         sections: [
             {
                 type: 'custom',

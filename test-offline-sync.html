@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offline Sync Queue Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+        }
+        button {
+            margin: 5px;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            background: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .status {
+            margin: 10px 0;
+            padding: 10px;
+            background: #f5f5f5;
+            border-radius: 4px;
+        }
+        .queue-item {
+            margin: 5px 0;
+            padding: 8px;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .online { color: green; }
+        .offline { color: red; }
+    </style>
+</head>
+<body>
+    <h1>StackMap Offline Sync Queue Test</h1>
+    
+    <div class="test-section">
+        <h2>Network Status</h2>
+        <div class="status">
+            <p>Current Status: <span id="networkStatus" class="online">Online</span></p>
+            <button onclick="toggleOffline()">Toggle Offline Mode</button>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Queue Operations</h2>
+        <button onclick="queueUpload()">Queue Upload</button>
+        <button onclick="queueActivityUpdate()">Queue Activity Update</button>
+        <button onclick="queueActivityDelete()">Queue Activity Delete</button>
+        <button onclick="queueActivityMove()">Queue Activity Move</button>
+        <button onclick="clearQueue()">Clear Queue</button>
+        <button onclick="retryFailed()">Retry Failed Operations</button>
+    </div>
+    
+    <div class="test-section">
+        <h2>Queue Status</h2>
+        <div id="queueStatus" class="status">
+            <p>Queue Length: <span id="queueLength">0</span></p>
+            <p>Processing: <span id="processing">No</span></p>
+            <div id="queueItems"></div>
+        </div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Event Log</h2>
+        <div id="eventLog" class="status" style="max-height: 300px; overflow-y: auto;">
+        </div>
+    </div>
+
+    <script>
+        // Create a mock sync queue for testing
+        class TestSyncQueue {
+            constructor() {
+                this.queue = [];
+                this.processing = false;
+                this.isOnline = navigator.onLine;
+                
+                // Listen for network changes
+                window.addEventListener('online', () => {
+                    this.isOnline = true;
+                    this.log('Network: Online');
+                    this.updateStatus();
+                    setTimeout(() => this.processQueue(), 1000);
+                });
+                
+                window.addEventListener('offline', () => {
+                    this.isOnline = false;
+                    this.log('Network: Offline');
+                    this.updateStatus();
+                });
+                
+                // Initial status
+                this.updateStatus();
+            }
+            
+            enqueue(operation) {
+                const item = {
+                    id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                    ...operation,
+                    timestamp: Date.now()
+                };
+                
+                this.queue.push(item);
+                this.log(`Queued: ${operation.type}`);
+                this.updateStatus();
+                
+                if (this.isOnline && !this.processing) {
+                    setTimeout(() => this.processQueue(), 500);
+                }
+            }
+            
+            async processQueue() {
+                if (!this.isOnline || this.processing || this.queue.length === 0) {
+                    return;
+                }
+                
+                this.processing = true;
+                this.updateStatus();
+                
+                while (this.queue.length > 0 && this.isOnline) {
+                    const item = this.queue[0];
+                    this.log(`Processing: ${item.type}`);
+                    
+                    // Simulate processing delay
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                    
+                    // Simulate random success/failure
+                    if (Math.random() > 0.2) {
+                        this.queue.shift();
+                        this.log(`✓ Success: ${item.type}`);
+                    } else {
+                        this.queue.shift();
+                        this.queue.push(item);
+                        this.log(`✗ Failed: ${item.type} (moved to end of queue)`);
+                    }
+                    
+                    this.updateStatus();
+                }
+                
+                this.processing = false;
+                this.updateStatus();
+            }
+            
+            clearQueue() {
+                this.queue = [];
+                this.log('Queue cleared');
+                this.updateStatus();
+            }
+            
+            updateStatus() {
+                document.getElementById('networkStatus').textContent = this.isOnline ? 'Online' : 'Offline';
+                document.getElementById('networkStatus').className = this.isOnline ? 'online' : 'offline';
+                document.getElementById('queueLength').textContent = this.queue.length;
+                document.getElementById('processing').textContent = this.processing ? 'Yes' : 'No';
+                
+                const itemsDiv = document.getElementById('queueItems');
+                itemsDiv.innerHTML = '<h4>Queue Items:</h4>';
+                
+                if (this.queue.length === 0) {
+                    itemsDiv.innerHTML += '<p>No items in queue</p>';
+                } else {
+                    this.queue.forEach((item, index) => {
+                        const itemDiv = document.createElement('div');
+                        itemDiv.className = 'queue-item';
+                        itemDiv.innerHTML = `
+                            <strong>${index + 1}. ${item.type}</strong><br>
+                            <small>ID: ${item.id}</small><br>
+                            <small>Added: ${new Date(item.timestamp).toLocaleTimeString()}</small>
+                        `;
+                        itemsDiv.appendChild(itemDiv);
+                    });
+                }
+            }
+            
+            log(message) {
+                const logDiv = document.getElementById('eventLog');
+                const entry = document.createElement('div');
+                entry.innerHTML = `<small>${new Date().toLocaleTimeString()}</small> - ${message}`;
+                logDiv.insertBefore(entry, logDiv.firstChild);
+                
+                // Keep only last 50 entries
+                while (logDiv.children.length > 50) {
+                    logDiv.removeChild(logDiv.lastChild);
+                }
+            }
+        }
+        
+        // Create test instance
+        const syncQueue = new TestSyncQueue();
+        
+        // Test functions
+        function toggleOffline() {
+            if (navigator.onLine) {
+                // Note: We can't actually force the browser offline, but we can simulate it
+                window.dispatchEvent(new Event('offline'));
+                syncQueue.isOnline = false;
+                syncQueue.updateStatus();
+            } else {
+                window.dispatchEvent(new Event('online'));
+                syncQueue.isOnline = true;
+                syncQueue.updateStatus();
+            }
+        }
+        
+        function queueUpload() {
+            syncQueue.enqueue({
+                type: 'upload',
+                data: { 
+                    silent: false,
+                    appState: { version: Date.now() }
+                }
+            });
+        }
+        
+        function queueActivityUpdate() {
+            syncQueue.enqueue({
+                type: 'update-activity',
+                data: {
+                    userId: 'user-1',
+                    activityId: `activity-${Date.now()}`,
+                    updates: { title: 'Updated Activity' }
+                }
+            });
+        }
+        
+        function queueActivityDelete() {
+            syncQueue.enqueue({
+                type: 'delete-activity',
+                data: {
+                    userId: 'user-1',
+                    activityId: `activity-${Date.now()}`
+                }
+            });
+        }
+        
+        function queueActivityMove() {
+            syncQueue.enqueue({
+                type: 'move-activity',
+                data: {
+                    userId: 'user-1',
+                    activityId: `activity-${Date.now()}`,
+                    fromIndex: 0,
+                    toIndex: 2
+                }
+            });
+        }
+        
+        function clearQueue() {
+            if (confirm('Clear all queued operations?')) {
+                syncQueue.clearQueue();
+            }
+        }
+        
+        function retryFailed() {
+            syncQueue.log('Retrying failed operations...');
+            if (syncQueue.isOnline) {
+                syncQueue.processQueue();
+            }
+        }
+        
+        // Log initial state
+        syncQueue.log('Test page loaded');
+        syncQueue.log(`Initial network status: ${syncQueue.isOnline ? 'Online' : 'Offline'}`);
+    </script>
+</body>
+</html>

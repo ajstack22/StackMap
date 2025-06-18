@@ -1,3 +1,327 @@
+// === SYNC QUEUE IMPLEMENTATION ===
+class SyncQueue {
+    constructor() {
+        this.queue = [];
+        this.processing = false;
+        this.retryCount = new Map();
+        this.maxRetries = 3;
+        this.retryDelays = [1000, 5000, 15000]; // 1s, 5s, 15s
+        this.STORAGE_KEY = 'stackmap-sync-queue';
+        this.QUEUE_VERSION = 1;
+        
+        // Load queue from localStorage on init
+        this.loadQueue();
+        
+        // Network status monitoring
+        this.isOnline = navigator.onLine;
+        window.addEventListener('online', () => this.handleOnline());
+        window.addEventListener('offline', () => this.handleOffline());
+        
+        // Periodic queue processing
+        this.startPeriodicProcessing();
+    }
+    
+    loadQueue() {
+        try {
+            const stored = localStorage.getItem(this.STORAGE_KEY);
+            if (stored) {
+                const data = JSON.parse(stored);
+                if (data.version === this.QUEUE_VERSION) {
+                    this.queue = data.queue || [];
+                    // Rebuild retry count map
+                    this.queue.forEach(item => {
+                        if (item.retryCount > 0) {
+                            this.retryCount.set(item.id, item.retryCount);
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('[SyncQueue] Error loading queue:', error);
+            this.queue = [];
+        }
+    }
+    
+    saveQueue() {
+        try {
+            const data = {
+                version: this.QUEUE_VERSION,
+                queue: this.queue,
+                timestamp: Date.now()
+            };
+            localStorage.setItem(this.STORAGE_KEY, JSON.stringify(data));
+        } catch (error) {
+            console.error('[SyncQueue] Error saving queue:', error);
+        }
+    }
+    
+    enqueue(operation) {
+        // Create operation with unique ID
+        const item = {
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            type: operation.type,
+            data: operation.data,
+            timestamp: Date.now(),
+            retryCount: 0
+        };
+        
+        // Implement operation deduplication
+        this.deduplicateAndAdd(item);
+        
+        // Save to localStorage
+        this.saveQueue();
+        
+        // Try to process immediately if online
+        if (this.isOnline && !this.processing) {
+            this.processQueue();
+        }
+        
+        return item.id;
+    }
+    
+    deduplicateAndAdd(newItem) {
+        // Remove older operations that would be superseded by this one
+        if (newItem.type === 'upload') {
+            // Remove all previous upload operations as the new one has the latest data
+            this.queue = this.queue.filter(item => item.type !== 'upload');
+        } else if (newItem.type === 'update-activity') {
+            // Remove previous updates to the same activity
+            const activityId = newItem.data.activityId;
+            this.queue = this.queue.filter(item => 
+                !(item.type === 'update-activity' && item.data.activityId === activityId)
+            );
+        } else if (newItem.type === 'delete-activity') {
+            // Remove any updates to this activity and previous delete operations
+            const activityId = newItem.data.activityId;
+            this.queue = this.queue.filter(item => 
+                !(item.type === 'update-activity' && item.data.activityId === activityId) &&
+                !(item.type === 'delete-activity' && item.data.activityId === activityId)
+            );
+        }
+        
+        // Apply operation transformation for complex conflict resolution
+        this.transformOperations(newItem);
+        
+        // Add the new item
+        this.queue.push(newItem);
+    }
+    
+    // Operation transformation for handling complex queued operations
+    transformOperations(newOperation) {
+        // Transform existing operations based on the new operation
+        this.queue = this.queue.map(existingOp => {
+            // Skip if same operation
+            if (existingOp.id === newOperation.id) return existingOp;
+            
+            // Handle activity position changes
+            if (newOperation.type === 'move-activity' && existingOp.type === 'move-activity') {
+                // If both operations move the same activity, keep only the latest position
+                if (existingOp.data.activityId === newOperation.data.activityId) {
+                    return null; // Mark for removal
+                }
+                
+                // Adjust positions if needed
+                if (existingOp.data.fromIndex >= newOperation.data.fromIndex && 
+                    existingOp.data.fromIndex <= newOperation.data.toIndex) {
+                    existingOp.data.fromIndex--;
+                } else if (existingOp.data.fromIndex <= newOperation.data.fromIndex && 
+                           existingOp.data.fromIndex >= newOperation.data.toIndex) {
+                    existingOp.data.fromIndex++;
+                }
+            }
+            
+            // Handle user switching
+            if (newOperation.type === 'switch-user') {
+                // Update user context for pending operations
+                if (existingOp.type === 'update-activity' || existingOp.type === 'delete-activity') {
+                    existingOp.data.previousUserId = existingOp.data.userId || null;
+                    existingOp.data.userId = newOperation.data.userId;
+                }
+            }
+            
+            // Handle batch operations
+            if (newOperation.type === 'batch-update' && existingOp.type === 'update-activity') {
+                // Check if this activity is part of the batch
+                const batchIds = newOperation.data.activityIds || [];
+                if (batchIds.includes(existingOp.data.activityId)) {
+                    // Merge updates
+                    existingOp.data.updates = {
+                        ...existingOp.data.updates,
+                        ...newOperation.data.updates
+                    };
+                }
+            }
+            
+            return existingOp;
+        }).filter(op => op !== null); // Remove marked operations
+    }
+    
+    async processQueue() {
+        if (!this.isOnline || this.processing || this.queue.length === 0) {
+            return;
+        }
+        
+        this.processing = true;
+        console.log('[SyncQueue] Processing queue with', this.queue.length, 'items');
+        
+        // Process items in order
+        while (this.queue.length > 0 && this.isOnline) {
+            const item = this.queue[0];
+            
+            try {
+                // Process the operation
+                await this.processOperation(item);
+                
+                // Success - remove from queue
+                this.queue.shift();
+                this.retryCount.delete(item.id);
+                this.saveQueue();
+                
+                // Notify UI of successful sync
+                this.notifyQueueUpdate();
+                
+            } catch (error) {
+                console.error('[SyncQueue] Operation failed:', error);
+                
+                // Handle failure with retry logic
+                const retries = this.retryCount.get(item.id) || 0;
+                
+                if (retries < this.maxRetries) {
+                    // Increment retry count
+                    this.retryCount.set(item.id, retries + 1);
+                    item.retryCount = retries + 1;
+                    item.lastError = error.message;
+                    
+                    // Move to end of queue for retry
+                    this.queue.shift();
+                    this.queue.push(item);
+                    this.saveQueue();
+                    
+                    // Wait before continuing with exponential backoff
+                    const delay = this.retryDelays[Math.min(retries, this.retryDelays.length - 1)];
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    
+                } else {
+                    // Max retries reached - move to failed queue
+                    console.error('[SyncQueue] Max retries reached for operation:', item);
+                    this.queue.shift();
+                    this.handleFailedOperation(item);
+                    this.saveQueue();
+                }
+            }
+        }
+        
+        this.processing = false;
+        this.notifyQueueUpdate();
+    }
+    
+    async processOperation(item) {
+        // This will be implemented by GoogleDriveSync
+        if (this.operationProcessor) {
+            return await this.operationProcessor(item);
+        }
+        throw new Error('Operation processor not set');
+    }
+    
+    handleFailedOperation(item) {
+        // Store failed operations separately for manual retry
+        const failedKey = 'stackmap-failed-sync-operations';
+        try {
+            const failed = JSON.parse(localStorage.getItem(failedKey) || '[]');
+            failed.push({
+                ...item,
+                failedAt: Date.now()
+            });
+            // Keep only last 50 failed operations
+            if (failed.length > 50) {
+                failed.splice(0, failed.length - 50);
+            }
+            localStorage.setItem(failedKey, JSON.stringify(failed));
+        } catch (error) {
+            console.error('[SyncQueue] Error storing failed operation:', error);
+        }
+    }
+    
+    handleOnline() {
+        console.log('[SyncQueue] Network online detected');
+        this.isOnline = true;
+        this.notifyQueueUpdate();
+        
+        // Start processing queue after a short delay
+        setTimeout(() => {
+            if (this.queue.length > 0) {
+                this.processQueue();
+            }
+        }, 1000);
+    }
+    
+    handleOffline() {
+        console.log('[SyncQueue] Network offline detected');
+        this.isOnline = false;
+        this.notifyQueueUpdate();
+    }
+    
+    startPeriodicProcessing() {
+        // Try to process queue every 30 seconds if online
+        setInterval(() => {
+            if (this.isOnline && this.queue.length > 0 && !this.processing) {
+                this.processQueue();
+            }
+        }, 30000);
+    }
+    
+    notifyQueueUpdate() {
+        // Dispatch custom event for UI updates
+        window.dispatchEvent(new CustomEvent('syncQueueUpdate', {
+            detail: {
+                queueLength: this.queue.length,
+                isOnline: this.isOnline,
+                processing: this.processing
+            }
+        }));
+    }
+    
+    // Get queue status
+    getStatus() {
+        return {
+            queueLength: this.queue.length,
+            isOnline: this.isOnline,
+            processing: this.processing,
+            items: this.queue.map(item => ({
+                id: item.id,
+                type: item.type,
+                timestamp: item.timestamp,
+                retryCount: item.retryCount || 0
+            }))
+        };
+    }
+    
+    // Clear queue (for testing/debugging)
+    clearQueue() {
+        this.queue = [];
+        this.retryCount.clear();
+        this.saveQueue();
+        this.notifyQueueUpdate();
+    }
+    
+    // Manual retry of failed operations
+    retryFailed() {
+        const failedKey = 'stackmap-failed-sync-operations';
+        try {
+            const failed = JSON.parse(localStorage.getItem(failedKey) || '[]');
+            failed.forEach(item => {
+                delete item.failedAt;
+                delete item.retryCount;
+                delete item.lastError;
+                this.enqueue(item);
+            });
+            localStorage.removeItem(failedKey);
+        } catch (error) {
+            console.error('[SyncQueue] Error retrying failed operations:', error);
+        }
+    }
+}
+
 // === GOOGLE DRIVE SYNC ===
 class GoogleDriveSync {
     constructor(app) {
@@ -22,6 +346,13 @@ class GoogleDriveSync {
         
         // Silent refresh iframe
         this.silentRefreshIframe = null;
+        
+        // Initialize sync queue
+        this.syncQueue = new SyncQueue();
+        this.syncQueue.operationProcessor = this.processSyncOperation.bind(this);
+        
+        // Initialize UI for sync queue
+        this.initializeSyncQueueUI();
         
         // Initialize Google APIs
         this.initializeGoogleAPIs();
@@ -301,6 +632,12 @@ class GoogleDriveSync {
         
         // Start sync check interval
         this.startSyncCheckInterval();
+        
+        // Process any queued operations
+        if (this.syncQueue && this.syncQueue.queue.length > 0) {
+            console.log('[GoogleDriveSync] Processing queued operations after sign-in');
+            this.syncQueue.processQueue();
+        }
         
         // Do initial sync check
         this.checkForRemoteChanges();
@@ -886,7 +1223,33 @@ class GoogleDriveSync {
     }
 
     async uploadData(silent = false) {
+        // If offline, queue the operation
+        if (!navigator.onLine) {
+            console.log('[GoogleDriveSync] Offline - queuing upload operation');
+            this.syncQueue.enqueue({
+                type: 'upload',
+                data: {
+                    silent: silent,
+                    appState: this.app.appState.exportData()
+                }
+            });
+            if (!silent) {
+                this.showSyncError('Offline - changes will sync when connection returns');
+            }
+            return;
+        }
+        
         if (!this.isSignedIn || this.isSyncing) {
+            // Queue if not signed in
+            if (!this.isSignedIn) {
+                this.syncQueue.enqueue({
+                    type: 'upload',
+                    data: {
+                        silent: silent,
+                        appState: this.app.appState.exportData()
+                    }
+                });
+            }
             return;
         }
 
@@ -897,6 +1260,14 @@ class GoogleDriveSync {
             if (!await this.refreshTokenIfNeeded()) {
                 this.showSyncError('Please sign in again to continue.');
                 this.isSyncing = false;
+                // Queue the operation
+                this.syncQueue.enqueue({
+                    type: 'upload',
+                    data: {
+                        silent: silent,
+                        appState: this.app.appState.exportData()
+                    }
+                });
                 return;
             }
 
@@ -904,89 +1275,8 @@ class GoogleDriveSync {
                 this.showSyncProgress('Saving to Google Drive...');
             }
             
-            // Get current app data
-            const data = this.app.appState.exportData();
-            data.lastSync = new Date().toISOString();
-            data.deviceInfo = {
-                userAgent: navigator.userAgent,
-                timestamp: Date.now()
-            };
-
-            // Update sync settings with last sync time
-            if (!this.app.appState.syncSettings) {
-                this.app.appState.syncSettings = {};
-            }
-            this.app.appState.syncSettings.lastSync = data.lastSync;
-            this.app.appState._triggerSave();
-
-            // Ensure we have a folder
-            await this.ensureStackMapFolder();
-
-            // Check if file exists
-            const existingFile = await this.findStackMapFile();
-            
-            let response;
-            
-            if (existingFile) {
-                // Update existing file using simple media upload
-                // console.log('Updating existing file:', existingFile.id);
-                
-                response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${this.accessToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(data, null, 2)
-                });
-            } else {
-                // Create new file
-                // console.log('Creating new file in folder:', this.folderId);
-                
-                const metadata = {
-                    name: this.STACKMAP_FILE_NAME,
-                    parents: [this.folderId],
-                    mimeType: 'application/json'
-                };
-
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
-
-                response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${this.accessToken}`
-                    },
-                    body: form
-                });
-            }
-
-            const responseText = await response.text();
-            // console.log('Upload response status:', response.status);
-            
-            if (response.ok) {
-                if (!silent) {
-                    this.showSyncSuccess('Saved to Google Drive');
-                }
-                // console.log('Data uploaded successfully');
-                
-                // Update last known version
-                this.lastKnownRemoteVersion = data.syncMetadata.version;
-            } else {
-                console.error('Upload failed:', response.status, responseText);
-                
-                if (response.status === 403) {
-                    if (!silent) {
-                        this.showSyncError('Permission denied. Please sign out and sign in again.');
-                    }
-                    // Force re-authentication
-                    this.isSignedIn = false;
-                    this.accessToken = null;
-                } else {
-                    throw new Error(`Upload failed: ${response.statusText}`);
-                }
-            }
+            // Use the extracted upload logic
+            await this.performUpload(silent);
         } catch (error) {
             console.error('Upload error:', error);
             if (!silent) {
@@ -998,6 +1288,13 @@ class GoogleDriveSync {
     }
 
     async downloadData() {
+        // If offline, queue the operation
+        if (!navigator.onLine) {
+            console.log('[GoogleDriveSync] Offline - cannot download');
+            this.showSyncError('Cannot download while offline');
+            return;
+        }
+        
         if (!this.isSignedIn || this.isSyncing) {
             return;
         }
@@ -1261,14 +1558,13 @@ class GoogleDriveSync {
 
     // Auto-sync when data changes (always enabled)
     async autoSync(silent = false) {
-        if (this.isSignedIn && !this.isSyncing) {
-            try {
-                await this.uploadData(silent);
-            } catch (error) {
-                console.error('Auto-sync failed:', error);
-                if (!silent) {
-                    this.handleSyncError(error, 'auto-sync');
-                }
+        // Always attempt upload - queue will handle offline/signed-out states
+        try {
+            await this.uploadData(silent);
+        } catch (error) {
+            console.error('Auto-sync failed:', error);
+            if (!silent) {
+                this.handleSyncError(error, 'auto-sync');
             }
         }
     }
@@ -1285,7 +1581,376 @@ class GoogleDriveSync {
             }
         }
     }
+    
+    // Queue specific activity operations for fine-grained sync
+    queueActivityUpdate(userId, activityId, updates) {
+        this.syncQueue.enqueue({
+            type: 'update-activity',
+            data: {
+                userId: userId,
+                activityId: activityId,
+                updates: updates,
+                timestamp: Date.now()
+            }
+        });
+    }
+    
+    queueActivityDelete(userId, activityId) {
+        this.syncQueue.enqueue({
+            type: 'delete-activity',
+            data: {
+                userId: userId,
+                activityId: activityId,
+                timestamp: Date.now()
+            }
+        });
+    }
+    
+    queueActivityMove(userId, activityId, fromIndex, toIndex) {
+        this.syncQueue.enqueue({
+            type: 'move-activity',
+            data: {
+                userId: userId,
+                activityId: activityId,
+                fromIndex: fromIndex,
+                toIndex: toIndex,
+                timestamp: Date.now()
+            }
+        });
+    }
+    
+    queueUserSwitch(newUserId) {
+        this.syncQueue.enqueue({
+            type: 'switch-user',
+            data: {
+                userId: newUserId,
+                timestamp: Date.now()
+            }
+        });
+    }
+    
+    queueBatchUpdate(userId, activityIds, updates) {
+        this.syncQueue.enqueue({
+            type: 'batch-update',
+            data: {
+                userId: userId,
+                activityIds: activityIds,
+                updates: updates,
+                timestamp: Date.now()
+            }
+        });
+    }
 
+    // Process sync operation from queue
+    async processSyncOperation(operation) {
+        console.log('[GoogleDriveSync] Processing queued operation:', operation.type);
+        
+        switch (operation.type) {
+            case 'upload':
+                // Restore app state from queued data if needed
+                if (operation.data.appState) {
+                    // Check if the queued data is newer than current
+                    const queuedVersion = operation.data.appState.syncMetadata?.version || 0;
+                    const currentVersion = this.app.appState.syncMetadata.version;
+                    
+                    if (queuedVersion > currentVersion) {
+                        // Apply the queued state before uploading
+                        this.app.appState.importData(operation.data.appState, false);
+                        this.app.saveToLocalStorage();
+                    }
+                }
+                
+                // Perform the actual upload
+                await this.performUpload(operation.data.silent);
+                break;
+                
+            case 'download':
+                await this.performDownload();
+                break;
+                
+            case 'update-activity':
+                // For future: handle specific activity updates
+                await this.performUpload(true);
+                break;
+                
+            case 'delete-activity':
+                // For future: handle specific activity deletions
+                await this.performUpload(true);
+                break;
+                
+            default:
+                throw new Error(`Unknown operation type: ${operation.type}`);
+        }
+    }
+    
+    // Extracted upload logic for queue processing
+    async performUpload(silent = false) {
+        if (!this.isSignedIn) {
+            throw new Error('Not signed in');
+        }
+        
+        // Get current app data
+        const data = this.app.appState.exportData();
+        data.lastSync = new Date().toISOString();
+        data.deviceInfo = {
+            userAgent: navigator.userAgent,
+            timestamp: Date.now()
+        };
+
+        // Update sync settings with last sync time
+        if (!this.app.appState.syncSettings) {
+            this.app.appState.syncSettings = {};
+        }
+        this.app.appState.syncSettings.lastSync = data.lastSync;
+        this.app.appState._triggerSave();
+
+        // Ensure we have a folder
+        await this.ensureStackMapFolder();
+
+        // Check if file exists
+        const existingFile = await this.findStackMapFile();
+        
+        let response;
+        
+        if (existingFile) {
+            // Update existing file
+            response = await fetch(`https://www.googleapis.com/upload/drive/v3/files/${existingFile.id}?uploadType=media`, {
+                method: 'PATCH',
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data, null, 2)
+            });
+        } else {
+            // Create new file
+            const metadata = {
+                name: this.STACKMAP_FILE_NAME,
+                parents: [this.folderId],
+                mimeType: 'application/json'
+            };
+
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' }));
+
+            response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.accessToken}`
+                },
+                body: form
+            });
+        }
+
+        if (!response.ok) {
+            const responseText = await response.text();
+            throw new Error(`Upload failed: ${response.status} ${responseText}`);
+        }
+        
+        // Update last known version
+        this.lastKnownRemoteVersion = data.syncMetadata.version;
+        
+        if (!silent) {
+            this.showSyncSuccess('Saved to Google Drive');
+        }
+    }
+    
+    // Extracted download logic for queue processing
+    async performDownload() {
+        if (!this.isSignedIn) {
+            throw new Error('Not signed in');
+        }
+        
+        const remoteData = await this.getRemoteData();
+        if (!remoteData) {
+            throw new Error('No remote data found');
+        }
+        
+        // Apply remote changes
+        this.applyRemoteChanges(remoteData);
+    }
+    
+    // Initialize sync queue UI
+    initializeSyncQueueUI() {
+        // Listen for queue updates
+        window.addEventListener('syncQueueUpdate', (event) => {
+            this.updateSyncQueueIndicator(event.detail);
+        });
+        
+        // Create sync queue indicator element
+        this.createSyncQueueIndicator();
+    }
+    
+    createSyncQueueIndicator() {
+        // Create indicator element
+        const indicator = document.createElement('div');
+        indicator.id = 'syncQueueIndicator';
+        indicator.className = 'sync-queue-indicator';
+        indicator.setAttribute('data-tooltip', 'Click to view sync queue details');
+        indicator.innerHTML = `
+            <i class="material-icons">cloud_queue</i>
+            <span class="sync-queue-text">Offline</span>
+            <span class="sync-queue-count">0</span>
+        `;
+        
+        // Add click handler to show queue details
+        indicator.addEventListener('click', () => this.showSyncQueueDetails());
+        
+        document.body.appendChild(indicator);
+    }
+    
+    updateSyncQueueIndicator(status) {
+        const indicator = document.getElementById('syncQueueIndicator');
+        if (!indicator) return;
+        
+        const icon = indicator.querySelector('.material-icons');
+        const text = indicator.querySelector('.sync-queue-text');
+        const count = indicator.querySelector('.sync-queue-count');
+        
+        // Store previous queue length
+        const prevLength = parseInt(count.textContent) || 0;
+        
+        // Update visibility
+        if (status.queueLength > 0 || !status.isOnline) {
+            indicator.classList.add('visible');
+        } else {
+            indicator.classList.remove('visible');
+        }
+        
+        // Add pulse animation for new items
+        if (status.queueLength > prevLength && status.queueLength > 0) {
+            indicator.classList.add('has-new-items');
+            setTimeout(() => indicator.classList.remove('has-new-items'), 2000);
+        }
+        
+        // Update state classes
+        indicator.classList.remove('offline', 'syncing', 'error', 'spinning');
+        icon.classList.remove('spinning');
+        
+        if (!status.isOnline) {
+            indicator.classList.add('offline');
+            icon.textContent = 'cloud_off';
+            text.textContent = 'Offline';
+            indicator.setAttribute('data-tooltip', 'You are offline - changes will sync when connected');
+        } else if (status.processing) {
+            indicator.classList.add('syncing');
+            icon.textContent = 'sync';
+            icon.classList.add('spinning');
+            text.textContent = 'Syncing';
+            indicator.setAttribute('data-tooltip', 'Syncing changes to cloud...');
+        } else if (status.queueLength > 0) {
+            indicator.classList.add('syncing');
+            icon.textContent = 'cloud_queue';
+            text.textContent = 'Pending';
+            indicator.setAttribute('data-tooltip', `${status.queueLength} pending changes - click for details`);
+        }
+        
+        // Update count
+        count.textContent = status.queueLength;
+        count.style.display = status.queueLength > 0 ? 'inline-block' : 'none';
+    }
+    
+    showSyncQueueDetails() {
+        const status = this.syncQueue.getStatus();
+        
+        // Create modal
+        const modal = document.createElement('div');
+        modal.className = 'sync-queue-modal';
+        
+        const content = document.createElement('div');
+        content.className = 'sync-queue-modal-content';
+        
+        content.innerHTML = `
+            <div class="sync-queue-modal-header">
+                <h2><i class="material-icons">cloud_queue</i> Sync Queue Status</h2>
+            </div>
+            
+            <div class="sync-queue-status">
+                <div class="sync-queue-status-item ${status.isOnline ? 'online' : 'offline'}">
+                    <div class="label">Network Status</div>
+                    <div class="value">${status.isOnline ? 'Online' : 'Offline'}</div>
+                </div>
+                <div class="sync-queue-status-item">
+                    <div class="label">Pending Items</div>
+                    <div class="value">${status.queueLength}</div>
+                </div>
+                <div class="sync-queue-status-item">
+                    <div class="label">Processing</div>
+                    <div class="value">${status.processing ? 'Active' : 'Idle'}</div>
+                </div>
+            </div>
+            
+            <div class="sync-queue-operations">
+                ${status.queueLength > 0 ? `
+                    <h3>Pending Operations</h3>
+                    ${status.items.map(item => `
+                        <div class="sync-queue-operation-item">
+                            <div class="sync-queue-operation-header">
+                                <span class="sync-queue-operation-type">${item.type}</span>
+                                <div class="sync-queue-operation-meta">
+                                    <span class="sync-queue-operation-time">${new Date(item.timestamp).toLocaleString()}</span>
+                                    ${item.retryCount > 0 ? `<span class="sync-queue-operation-retries">Retries: ${item.retryCount}</span>` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `).join('')}
+                ` : `
+                    <div class="sync-queue-empty">
+                        <i class="material-icons">check_circle</i>
+                        <p>No pending operations</p>
+                        <p style="font-size: 14px; color: #999;">All changes have been synchronized</p>
+                    </div>
+                `}
+            </div>
+            
+            <div class="sync-queue-modal-actions">
+                ${status.queueLength > 0 ? `
+                    <button id="clearQueueBtn" class="btn-danger">Clear Queue</button>
+                ` : ''}
+                <button id="closeModalBtn" class="btn-primary">Close</button>
+            </div>
+        `;
+        
+        modal.appendChild(content);
+        document.body.appendChild(modal);
+        
+        // Add event listeners
+        document.getElementById('closeModalBtn').addEventListener('click', () => {
+            modal.classList.add('closing');
+            setTimeout(() => document.body.removeChild(modal), 300);
+        });
+        
+        const clearBtn = document.getElementById('clearQueueBtn');
+        if (clearBtn) {
+            clearBtn.addEventListener('click', () => {
+                if (confirm('Are you sure you want to clear the sync queue? Pending changes will be lost.')) {
+                    this.syncQueue.clearQueue();
+                    modal.classList.add('closing');
+                    setTimeout(() => document.body.removeChild(modal), 300);
+                }
+            });
+        }
+        
+        // Close on background click
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.add('closing');
+                setTimeout(() => document.body.removeChild(modal), 300);
+            }
+        });
+        
+        // Close on Escape key
+        const handleEscape = (e) => {
+            if (e.key === 'Escape') {
+                modal.classList.add('closing');
+                setTimeout(() => document.body.removeChild(modal), 300);
+                document.removeEventListener('keydown', handleEscape);
+            }
+        };
+        document.addEventListener('keydown', handleEscape);
+    }
+    
     // Add cleanup method
     cleanup() {
         this.stopSyncCheckInterval();
@@ -1333,7 +1998,35 @@ class GoogleDriveSync {
             this.showSyncError(`Sync failed: ${error.message || 'Unknown error'}`);
         }
     }
+    
+    // Retry failed sync operations
+    retryFailedOperations() {
+        this.syncQueue.retryFailed();
+        this.showToast('Retrying failed sync operations...', 'info');
+    }
+    
+    // Get sync queue status for debugging
+    getSyncQueueStatus() {
+        return this.syncQueue.getStatus();
+    }
+    
+    // Clear sync queue (use with caution)
+    clearSyncQueue() {
+        if (confirm('Are you sure you want to clear the sync queue? All pending changes will be lost.')) {
+            this.syncQueue.clearQueue();
+            this.showToast('Sync queue cleared', 'info');
+        }
+    }
 }
 
 // Make available globally
 window.GoogleDriveSync = GoogleDriveSync;
+
+// Auto-initialize when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    // Only initialize if not already initialized
+    if (!window.googleDriveSync) {
+        console.log('Initializing Google Drive Sync...');
+        window.googleDriveSync = new GoogleDriveSync();
+    }
+});
