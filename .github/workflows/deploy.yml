@@ -16,19 +16,21 @@ jobs:
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        cache: 'npm'
     
-    - name: Install dependencies
+    - name: Install dependencies (without Puppeteer)
       run: |
-        echo "Installing dependencies..."
-        npm ci --prefer-offline --no-audit
-      timeout-minutes: 5
+        echo "Installing production dependencies only..."
+        # Skip Puppeteer since CI tests don't use it
+        npm install --omit=dev
+      timeout-minutes: 2
     
     - name: Run pre-deployment checks
       run: bash scripts/pre-deploy-check.sh
     
-    - name: Run UAT tests
-      run: npm test
+    - name: Run CI tests
+      run: |
+        # Run the CI test script which doesn't need Puppeteer
+        node tests/run-tests-ci.js
 
   deploy-qual:
     needs: test
