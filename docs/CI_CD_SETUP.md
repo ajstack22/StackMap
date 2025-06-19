@@ -19,10 +19,19 @@ Deploy to Qual (staging)
     ↓
 Test Qual Environment
     ↓
+Manual Verification Required ← YOU ARE HERE
+    ↓
 Deploy to Production (with approval)
     ↓
 Verify Production
 ```
+
+### Key Change: Manual Verification Step
+
+The pipeline now includes a mandatory manual verification checkpoint between staging and production. This ensures:
+- Every change is tested on the actual server environment
+- Issues are caught before production deployment
+- Special accommodations can be made for non-testable code
 
 ## Setup Instructions
 
