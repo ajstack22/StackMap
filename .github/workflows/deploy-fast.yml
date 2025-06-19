@@ -1,0 +1,65 @@
+name: Fast Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  quick-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run basic checks (no npm install)
+      run: |
+        echo "🚀 Running quick deployment checks..."
+        echo "Checking critical files..."
+        
+        # Check that critical files exist
+        for file in index.html sw.js manifest.json state.js app/StackMapApp.js; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+        
+        echo "All critical files present!"
+
+  deploy-qual:
+    needs: quick-test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Deploy to Qual via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.CPANEL_HOST }}
+        username: ${{ secrets.CPANEL_USER }}
+        key: ${{ secrets.CPANEL_SSH_KEY }}
+        port: ${{ secrets.CPANEL_PORT }}
+        script: |
+          cd ~/public_html/qual
+          git pull origin main
+          echo "Qual deployment completed at $(date)"
+
+  deploy-prod:
+    needs: deploy-qual
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - name: Deploy to Production via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.CPANEL_HOST }}
+        username: ${{ secrets.CPANEL_USER }}
+        key: ${{ secrets.CPANEL_SSH_KEY }}
+        port: ${{ secrets.CPANEL_PORT }}
+        script: |
+          echo "Deploying from qual to production..."
+          rsync -av --delete ~/public_html/qual/ ~/public_html/
+          echo "Production deployment completed!"
