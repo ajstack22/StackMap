@@ -60,6 +60,29 @@ jobs:
         key: ${{ secrets.CPANEL_SSH_KEY }}
         port: ${{ secrets.CPANEL_PORT }}
         script: |
-          echo "Deploying from qual to production..."
-          rsync -av --delete ~/public_html/qual/ ~/public_html/
-          echo "Production deployment completed!"
+          echo "Creating backup before deployment..."
+          mkdir -p ~/backups
+          tar -czf ~/backups/prod-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C ~/ public_html/
+          
+          echo "Ensuring qual exists..."
+          mkdir -p ~/public_html/qual
+          cd ~/public_html/qual
+          
+          if [ ! -d ".git" ]; then
+            git init
+            git remote add origin https://github.com/ajstack22/StackMap.git
+          fi
+          
+          git pull origin main
+          
+          echo "Deploying from qual to production (WITHOUT --delete)..."
+          rsync -av ~/public_html/qual/ ~/public_html/
+          
+          echo "Verifying deployment..."
+          if [ -f ~/public_html/config/index.js ]; then
+            echo "✅ Deployment verified - critical files exist"
+          else
+            echo "❌ Deployment failed - critical files missing!"
+            echo "Run rollback: tar -xzf ~/backups/prod-backup-*.tar.gz -C ~/"
+            exit 1
+          fi
