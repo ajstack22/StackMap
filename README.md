@@ -48,6 +48,17 @@ npx http-server -p 8000
 - **Styling**: CSS with CSS Variables for theming
 - **Storage**: LocalStorage for offline data persistence
 - **PWA**: Service Worker for offline functionality
+- **Architecture**: 100% client-side (no backend server)
+
+## Architecture Note
+
+StackMap is a **pure client-side application** with no backend server. This means:
+- All code runs in the user's browser
+- API keys in the code are intentional and necessary
+- Security is enforced through Google API Console restrictions (domain-locking)
+- This is standard practice for client-side applications
+
+See [SECURITY.md](SECURITY.md) for detailed security information.
 - **Sync**: Google Drive API for optional cloud backup
 
 ## Project Structure

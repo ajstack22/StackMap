@@ -13,7 +13,10 @@
     "test:watch": "nodemon tests/run-tests.js",
     "test:legacy": "node tests/test-runner-enhanced.js",
     "serve": "npx http-server -p 5500",
-    "deploy": "bash scripts/deploy.sh",
+    "deploy": "npm run tollgate && bash scripts/deploy.sh",
+    "deploy:force": "echo 'Use npm run deploy instead' && exit 1",
+    "tollgate": "node scripts/deployment-tollgate.js",
+    "tollgate:check": "node scripts/deployment-tollgate.js",
     "setup": "npm install && bash scripts/setup-git-hooks.sh",
     "precommit": "bash .githooks/pre-commit",
     "prepush": "bash .githooks/pre-push"

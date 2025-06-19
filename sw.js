@@ -3,7 +3,7 @@
 // Last Updated: 2025-06-18
 
 const SW_VERSION = '1.6.6';
-const CACHE_NAME = 'stackmap-v1.6.6-2025-06-18';
+const CACHE_NAME = 'stackmap-v1.6.6-2025-06-19';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 const IMAGE_CACHE = 'stackmap-images';
@@ -101,7 +101,7 @@ self.addEventListener('activate', (event) => {
         }),
         // CRITICAL: Clear runtime cache to force CSS refresh
         caches.delete(RUNTIME_CACHE).then(() => {
-          console.log('[SW] Cleared runtime cache for fresh resources');
+          // console.log('[SW] Cleared runtime cache for fresh resources');
           return caches.open(RUNTIME_CACHE);
         })
       ]);

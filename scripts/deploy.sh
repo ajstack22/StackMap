@@ -8,6 +8,19 @@ set -e  # Exit on any error
 echo "🚀 StackMap Deployment Script"
 echo "============================"
 
+# Check for deployment lock
+if [ -f ".deployment-lock" ]; then
+    echo ""
+    echo -e "${RED}❌ DEPLOYMENT IS LOCKED${NC}"
+    echo ""
+    echo "The deployment tollgate has blocked this deployment due to failing checks."
+    echo "Review the lock file for details: cat .deployment-lock"
+    echo ""
+    echo "To see current status: npm run tollgate:check"
+    echo ""
+    exit 1
+fi
+
 # Color codes
 RED='\033[0;31m'
 GREEN='\033[0;32m'
