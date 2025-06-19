@@ -66,6 +66,17 @@ jobs:
     environment: staging-verification
     
     steps:
+    - name: Send Notification
+      run: |
+        echo "📱 Sending notification for staging verification..."
+        # Create a notification summary
+        COMMIT_MESSAGE="${{ github.event.head_commit.message }}"
+        COMMIT_SHA="${{ github.sha }}"
+        ACTOR="${{ github.actor }}"
+        
+        # GitHub automatically creates an issue comment for environment approvals
+        echo "::notice title=Staging Ready for Verification::Deployment by $ACTOR is waiting for manual verification. Commit: ${COMMIT_MESSAGE:0:50}..."
+        
     - name: Request Manual Verification
       run: |
         echo "🔍 MANUAL VERIFICATION REQUIRED"

@@ -3254,12 +3254,12 @@ class StackMapApp {
             try {
                 const data = JSON.parse(e.target.result);
                 // console.log('Import file loaded:', {
-                    version: data.version,
-                    hasActivities: !!data.activities,
-                    hasUsers: !!data.users,
-                    hasSettings: !!data.settings,
-                    exportType: data.exportType
-                });
+                //     version: data.version,
+                //     hasActivities: !!data.activities,
+                //     hasUsers: !!data.users,
+                //     hasSettings: !!data.settings,
+                //     exportType: data.exportType
+                // });
                 this.showImportPreview(data);
             } catch (error) {
                 console.error('[StackMapApp] Error parsing import file:', error);
@@ -3354,10 +3354,10 @@ class StackMapApp {
             .map(user => `"${user.name}" already exists`);
         
         // console.log('Import analysis:', {
-            type,
-            userCount: users.length,
-            conflicts: conflicts.length
-        });
+        //     type,
+        //     userCount: users.length,
+        //     conflicts: conflicts.length
+        // });
         
         return {
             fileName: this.currentImportFileName || 'uploaded-file.json',

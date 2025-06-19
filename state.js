@@ -1260,12 +1260,12 @@ class AppState {
     // Enhanced importData to handle user icons
     importData(data, updateVersion = true) {
         // console.log('Importing data:', {
-            hasUsers: !!data.users,
-            hasActivities: !!data.activities,
-            hasSettings: !!data.settings,
-            version: data.version,
-            exportType: data.exportType
-        });
+        //     hasUsers: !!data.users,
+        //     hasActivities: !!data.activities,
+        //     hasSettings: !!data.settings,
+        //     version: data.version,
+        //     exportType: data.exportType
+        // });
         
         try {
             // Validate input data
@@ -1314,10 +1314,10 @@ class AppState {
                 }
                 
                 // console.log('User import state:', {
-                    currentUserId: this.users.currentUserId,
-                    profileIds: Object.keys(this.users.profiles),
-                    profileNames: Object.values(this.users.profiles).map(u => u.name)
-                });
+                //     currentUserId: this.users.currentUserId,
+                //     profileIds: Object.keys(this.users.profiles),
+                //     profileNames: Object.values(this.users.profiles).map(u => u.name)
+                // });
                 
                 // Story 4: Ensure all users have tomorrow activities array and icons
                 Object.values(this.users.profiles).forEach(user => {

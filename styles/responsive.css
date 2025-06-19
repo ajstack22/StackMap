@@ -160,8 +160,8 @@
     .main-container > .management-card,
     .main-container > .panel {
         flex: none !important;
-        width: calc(100vw - 30px) !important; /* Bit more breathing room */
-        max-width: calc(100vw - 30px) !important;
+        width: 100% !important; /* Full width of the padded container */
+        max-width: 100% !important;
         min-width: 0 !important;
         margin: 0 auto 16px auto !important; /* Center cards with spacing fallback */
         box-sizing: border-box !important;
@@ -514,8 +514,11 @@
     /* EVEN MORE REFINED FOR VERY SMALL SCREENS */
     .main-container {
         gap: 14px !important; /* Slightly tighter spacing on very small screens */
-        padding: 15px 10px 100px 10px !important; /* Add horizontal padding */
+        padding: 10px !important; /* Equal padding all around */
+        padding-bottom: 100px !important; /* Extra bottom padding for navigation */
         margin-top: 0 !important;
+        width: 100% !important; /* Full width */
+        box-sizing: border-box !important;
     }
     
     .main-container > .card,
@@ -523,9 +526,9 @@
     .main-container > .edit-info-card,
     .main-container > .management-card,
     .main-container > .panel {
-        width: calc(100vw - 20px) !important; /* Slightly wider on very small screens */
-        max-width: calc(100vw - 20px) !important;
-        margin: 0 auto !important; /* Center cards */
+        width: 100% !important; /* Full width of container */
+        max-width: 100% !important;
+        margin: 0 !important; /* Remove auto margins */
     }
     
     .card {
