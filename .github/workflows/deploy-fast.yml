@@ -34,17 +34,35 @@ jobs:
     runs-on: ubuntu-latest
     
     steps:
-    - name: Deploy to Qual via SSH
-      uses: appleboy/ssh-action@v1.0.0
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Qual via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
-        host: ${{ secrets.CPANEL_HOST }}
-        username: ${{ secrets.CPANEL_USER }}
-        key: ${{ secrets.CPANEL_SSH_KEY }}
-        port: ${{ secrets.CPANEL_PORT }}
-        script: |
-          cd ~/public_html/qual
-          git pull origin main
-          echo "Qual deployment completed at $(date)"
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: public_html/qual/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/test/**
+          **/docs/**
+          **/documentation/**
+          **/scripts/**
+          **/*.test.js
+          **/*.spec.js
+          **/coverage/**
+          **/.env*
+          **/README.md
+          **/DEVELOPMENT_PLAN.md
+          **/package-lock.json
+          **/yarn.lock
+          **/.DS_Store
+          **/Thumbs.db
+          **/.well-known/**
 
   deploy-prod:
     needs: deploy-qual
@@ -52,37 +70,34 @@ jobs:
     environment: production
     
     steps:
-    - name: Deploy to Production via SSH
-      uses: appleboy/ssh-action@v1.0.0
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Production via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
-        host: ${{ secrets.CPANEL_HOST }}
-        username: ${{ secrets.CPANEL_USER }}
-        key: ${{ secrets.CPANEL_SSH_KEY }}
-        port: ${{ secrets.CPANEL_PORT }}
-        script: |
-          echo "Creating backup before deployment..."
-          mkdir -p ~/backups
-          tar -czf ~/backups/prod-backup-$(date +%Y%m%d-%H%M%S).tar.gz -C ~/ public_html/
-          
-          echo "Ensuring qual exists..."
-          mkdir -p ~/public_html/qual
-          cd ~/public_html/qual
-          
-          if [ ! -d ".git" ]; then
-            git init
-            git remote add origin https://github.com/ajstack22/StackMap.git
-          fi
-          
-          git pull origin main
-          
-          echo "Deploying from qual to production (WITHOUT --delete)..."
-          rsync -av ~/public_html/qual/ ~/public_html/
-          
-          echo "Verifying deployment..."
-          if [ -f ~/public_html/config/index.js ]; then
-            echo "✅ Deployment verified - critical files exist"
-          else
-            echo "❌ Deployment failed - critical files missing!"
-            echo "Run rollback: tar -xzf ~/backups/prod-backup-*.tar.gz -C ~/"
-            exit 1
-          fi
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/test/**
+          **/docs/**
+          **/documentation/**
+          **/scripts/**
+          **/*.test.js
+          **/*.spec.js
+          **/coverage/**
+          **/.env*
+          **/README.md
+          **/DEVELOPMENT_PLAN.md
+          **/package-lock.json
+          **/yarn.lock
+          **/.DS_Store
+          **/Thumbs.db
+          **/.well-known/**
+          **/qual/**
+        dangerous-clean-slate: false

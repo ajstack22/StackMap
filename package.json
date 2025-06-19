@@ -19,7 +19,11 @@
     "tollgate:check": "node scripts/deployment-tollgate.js",
     "setup": "npm install && bash scripts/setup-git-hooks.sh",
     "precommit": "bash .githooks/pre-commit",
-    "prepush": "bash .githooks/pre-push"
+    "prepush": "bash .githooks/pre-push",
+    "ci:install": "npm ci --prefer-offline --no-audit --no-fund",
+    "ci:install-fast": "PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true npm ci --prefer-offline --no-audit --no-fund",
+    "ci:install-prod": "npm ci --production --prefer-offline --no-audit --no-fund",
+    "deploy:prod": "bash scripts/deploy-prod.sh"
   },
   "devDependencies": {
     "chalk": "^4.1.2",

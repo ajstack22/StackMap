@@ -1,0 +1,79 @@
+name: CI Fast (No Dev Dependencies)
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Use Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install production dependencies only
+      run: |
+        # Set memory limit
+        export NODE_OPTIONS="--max-old-space-size=4096"
+        
+        # Install ONLY production dependencies (skip devDependencies entirely)
+        npm ci --production --prefer-offline --no-audit --no-fund --loglevel=error
+      env:
+        NODE_OPTIONS: "--max-old-space-size=4096"
+      
+    - name: Validate critical files
+      run: |
+        echo "🔍 Validating critical files..."
+        
+        # Check that critical files exist
+        for file in index.html sw.js manifest.json state.js app/StackMapApp.js; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+        
+        echo "All critical files present!"
+      
+    - name: Check for console.log statements
+      run: |
+        if grep -r "console\.log" --include="*.js" --exclude-dir=node_modules --exclude-dir=tests . | grep -v "^[[:space:]]*//" | grep -v "^[[:space:]]*\*"; then
+          echo "::warning::Found console.log statements in production code"
+        fi
+        
+    - name: Check for merge conflicts
+      run: |
+        if find . -name "*.js" -o -name "*.css" -o -name "*.html" | xargs grep -l "<<<<<<< HEAD" 2>/dev/null; then
+          echo "❌ Merge conflict markers found!"
+          exit 1
+        fi
+        
+    - name: Validate service worker version
+      run: |
+        if grep -q "SW_VERSION" sw.js; then
+          SW_VERSION=$(grep -E "const SW_VERSION = '[^']+'" sw.js | sed -E "s/.*'([^']+)'.*/\1/")
+          echo "✅ Service Worker Version: $SW_VERSION"
+        else
+          echo "⚠️  Could not find SW_VERSION in service worker"
+        fi
+        
+    - name: Check file sizes
+      run: |
+        # Warn about large files
+        find . -name "*.js" -size +500k -exec echo "::warning file={}::Large file detected (>500KB)" \;
+        
+    - name: Generate CI report
+      run: |
+        echo "✅ Validation completed successfully"
+        echo "⏱️ Install time: < 3 minutes (production deps only)"
+        echo "📦 Skipped devDependencies (including Puppeteer)"

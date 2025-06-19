@@ -1,0 +1,44 @@
+name: Auto Deploy to Qual
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  deploy-qual:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Qual
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: /public_html/qual/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/docs/**
+          **/scripts/**
+          **/.github/**
+          **/package-lock.json
+          **/README.md
+          **/*.log
+          **/.DS_Store
+          **/mobile-launch-issues/**
+          **/ios-wrapper/**
+          **/store-assets/**
+          **/issues/**
+          **/launch-prompts/**
+          
+    - name: Summary
+      run: |
+        echo "✅ Automatically deployed to qual!"
+        echo "🌐 View at: https://stackmap.app/qual/"
+        echo ""
+        echo "Ready for production? Ask me to deploy to prod!"

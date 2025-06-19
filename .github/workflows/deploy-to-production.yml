@@ -1,0 +1,50 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "DEPLOY" to confirm production deployment'
+        required: true
+        default: ''
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'DEPLOY'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Production
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/docs/**
+          **/scripts/**
+          **/.github/**
+          **/package-lock.json
+          **/README.md
+          **/*.log
+          **/.DS_Store
+          **/mobile-launch-issues/**
+          **/ios-wrapper/**
+          **/store-assets/**
+          **/issues/**
+          **/launch-prompts/**
+          **/qual/**
+          **/.well-known/**
+          
+    - name: Success
+      run: |
+        echo "✅ Successfully deployed to PRODUCTION!"
+        echo "🌐 Live at: https://stackmap.app/"
+        echo "📅 Deployed at: $(date)"

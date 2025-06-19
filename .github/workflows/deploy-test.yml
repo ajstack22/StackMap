@@ -1,0 +1,115 @@
+name: Test FTP Deploy (Dry Run)
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Target environment to test'
+        required: true
+        default: 'qual'
+        type: choice
+        options:
+          - qual
+          - production
+
+jobs:
+  dry-run-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run basic checks
+      run: |
+        echo "🧪 Running deployment dry-run test..."
+        echo "Target environment: ${{ github.event.inputs.target_environment }}"
+        echo "Checking critical files..."
+        
+        # Check that critical files exist
+        for file in index.html sw.js manifest.json state.js app/StackMapApp.js; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+        
+        echo "All critical files present!"
+        
+        # List files that would be deployed
+        echo ""
+        echo "📦 Files that would be deployed:"
+        find . -type f \
+          -not -path "*/.git/*" \
+          -not -path "*/node_modules/*" \
+          -not -path "*/tests/*" \
+          -not -path "*/test/*" \
+          -not -path "*/docs/*" \
+          -not -path "*/documentation/*" \
+          -not -path "*/scripts/*" \
+          -not -path "*/.well-known/*" \
+          -not -name "*.test.js" \
+          -not -name "*.spec.js" \
+          -not -path "*/coverage/*" \
+          -not -name ".env*" \
+          -not -name "README.md" \
+          -not -name "DEVELOPMENT_PLAN.md" \
+          -not -name "package-lock.json" \
+          -not -name "yarn.lock" \
+          -not -name ".DS_Store" \
+          -not -name "Thumbs.db" \
+          | head -50
+        
+        echo ""
+        echo "Total files to deploy: $(find . -type f \
+          -not -path "*/.git/*" \
+          -not -path "*/node_modules/*" \
+          -not -path "*/tests/*" \
+          -not -path "*/test/*" \
+          -not -path "*/docs/*" \
+          -not -path "*/documentation/*" \
+          -not -path "*/scripts/*" \
+          -not -path "*/.well-known/*" \
+          -not -name "*.test.js" \
+          -not -name "*.spec.js" \
+          -not -path "*/coverage/*" \
+          -not -name ".env*" \
+          -not -name "README.md" \
+          -not -name "DEVELOPMENT_PLAN.md" \
+          -not -name "package-lock.json" \
+          -not -name "yarn.lock" \
+          -not -name ".DS_Store" \
+          -not -name "Thumbs.db" \
+          | wc -l)"
+
+    - name: FTP Deploy Dry Run
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: ${{ github.event.inputs.target_environment == 'production' && 'public_html/' || 'public_html/qual/' }}
+        dry-run: true
+        log-level: verbose
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/test/**
+          **/docs/**
+          **/documentation/**
+          **/scripts/**
+          **/*.test.js
+          **/*.spec.js
+          **/coverage/**
+          **/.env*
+          **/README.md
+          **/DEVELOPMENT_PLAN.md
+          **/package-lock.json
+          **/yarn.lock
+          **/.DS_Store
+          **/Thumbs.db
+          **/.well-known/**
+          ${{ github.event.inputs.target_environment == 'production' && '**/qual/**' || '' }}
