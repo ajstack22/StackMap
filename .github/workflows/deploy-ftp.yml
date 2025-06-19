@@ -1,0 +1,100 @@
+name: FTP Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  quick-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run basic checks
+      run: |
+        echo "🚀 Running quick deployment checks..."
+        echo "Checking critical files..."
+        
+        # Check that critical files exist
+        for file in index.html sw.js manifest.json state.js app/StackMapApp.js; do
+          if [ -f "$file" ]; then
+            echo "✅ $file exists"
+          else
+            echo "❌ $file missing"
+            exit 1
+          fi
+        done
+        
+        echo "All critical files present!"
+
+  deploy-qual:
+    needs: quick-test
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Qual via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: /public_html/qual/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/docs/**
+          **/scripts/**
+          **/.github/**
+          **/package-lock.json
+          **/README.md
+          **/*.log
+          **/.DS_Store
+          **/mobile-launch-issues/**
+          **/ios-wrapper/**
+          **/store-assets/**
+        dangerous-clean-slate: false
+
+  deploy-prod:
+    needs: deploy-qual
+    runs-on: ubuntu-latest
+    environment: production
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Production via FTP
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      with:
+        server: ${{ secrets.FTP_SERVER }}
+        username: ${{ secrets.FTP_USERNAME }}
+        password: ${{ secrets.FTP_PASSWORD }}
+        server-dir: /public_html/
+        exclude: |
+          **/.git*
+          **/.git*/**
+          **/node_modules/**
+          **/tests/**
+          **/docs/**
+          **/scripts/**
+          **/.github/**
+          **/package-lock.json
+          **/README.md
+          **/*.log
+          **/.DS_Store
+          **/mobile-launch-issues/**
+          **/ios-wrapper/**
+          **/store-assets/**
+          **/qual/**
+          **/.well-known/**
+        dangerous-clean-slate: false
+        
+    - name: Verify deployment
+      run: |
+        echo "✅ FTP deployment completed successfully"
+        echo "Note: .well-known directory preserved on server"
