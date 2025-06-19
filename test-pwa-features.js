@@ -1,7 +1,7 @@
 const puppeteer = require('puppeteer');
 
 async function testPWA() {
-  console.log('🚀 Testing PWA Features...\n');
+  // console.log('🚀 Testing PWA Features...\n');
   
   const browser = await puppeteer.launch({
     headless: true,
@@ -16,15 +16,15 @@ async function testPWA() {
     
     // Test 1: Check if manifest is linked
     const manifestLink = await page.$('link[rel="manifest"]');
-    console.log('✅ Manifest Link:', manifestLink ? 'Found' : '❌ Not Found');
+    // console.log('✅ Manifest Link:', manifestLink ? 'Found' : '❌ Not Found');
     
     // Test 2: Check viewport meta tag
     const viewport = await page.$('meta[name="viewport"]');
-    console.log('✅ Viewport Meta:', viewport ? 'Found' : '❌ Not Found');
+    // console.log('✅ Viewport Meta:', viewport ? 'Found' : '❌ Not Found');
     
     // Test 3: Check theme color
     const themeColor = await page.$eval('meta[name="theme-color"]', el => el.content);
-    console.log('✅ Theme Color:', themeColor || '❌ Not Found');
+    // console.log('✅ Theme Color:', themeColor || '❌ Not Found');
     
     // Test 4: Check if service worker registers
     const swRegistered = await page.evaluate(async () => {
@@ -34,7 +34,7 @@ async function testPWA() {
       }
       return false;
     });
-    console.log('✅ Service Worker:', swRegistered ? 'Registered' : '❌ Not Registered');
+    // console.log('✅ Service Worker:', swRegistered ? 'Registered' : '❌ Not Registered');
     
     // Test 5: Check installability
     const canBeInstalled = await page.evaluate(() => {
@@ -48,11 +48,11 @@ async function testPWA() {
         setTimeout(() => resolve(canInstall), 1000);
       });
     });
-    console.log('✅ Installable:', canBeInstalled ? 'Yes (prompt available)' : 'Checking...');
+    // console.log('✅ Installable:', canBeInstalled ? 'Yes (prompt available)' : 'Checking...');
     
     // Test 6: Check HTTPS (localhost is considered secure)
     const isSecure = await page.evaluate(() => window.location.protocol === 'https:' || window.location.hostname === 'localhost');
-    console.log('✅ Secure Context:', isSecure ? 'Yes' : '❌ No');
+    // console.log('✅ Secure Context:', isSecure ? 'Yes' : '❌ No');
     
     // Test 7: Fetch and validate manifest content
     const manifestContent = await page.evaluate(async () => {
@@ -65,18 +65,18 @@ async function testPWA() {
     });
     
     if (manifestContent) {
-      console.log('\n📱 Manifest Content:');
-      console.log('  Name:', manifestContent.name);
-      console.log('  Short Name:', manifestContent.short_name);
-      console.log('  Display:', manifestContent.display);
-      console.log('  Start URL:', manifestContent.start_url);
-      console.log('  Icons:', manifestContent.icons?.length || 0, 'icons defined');
-      console.log('  App ID:', manifestContent.id || '❌ Missing');
-      console.log('  IARC Rating:', manifestContent.iarc_rating_id ? '✅ Present' : '❌ Missing');
+      // console.log('\n📱 Manifest Content:');
+      // console.log('  Name:', manifestContent.name);
+      // console.log('  Short Name:', manifestContent.short_name);
+      // console.log('  Display:', manifestContent.display);
+      // console.log('  Start URL:', manifestContent.start_url);
+      // console.log('  Icons:', manifestContent.icons?.length || 0, 'icons defined');
+      // console.log('  App ID:', manifestContent.id || '❌ Missing');
+      // console.log('  IARC Rating:', manifestContent.iarc_rating_id ? '✅ Present' : '❌ Missing');
     }
     
-    console.log('\n✨ PWA implementation is complete!');
-    console.log('📋 For full Lighthouse audit, please run manually in Brave DevTools');
+    // console.log('\n✨ PWA implementation is complete!');
+    // console.log('📋 For full Lighthouse audit, please run manually in Brave DevTools');
     
   } catch (error) {
     console.error('Error during testing:', error);

@@ -3253,7 +3253,7 @@ class StackMapApp {
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                console.log('Import file loaded:', {
+                // console.log('Import file loaded:', {
                     version: data.version,
                     hasActivities: !!data.activities,
                     hasUsers: !!data.users,
@@ -3353,7 +3353,7 @@ class StackMapApp {
             .filter(user => existingNames.includes(user.name.toLowerCase()))
             .map(user => `"${user.name}" already exists`);
         
-        console.log('Import analysis:', {
+        // console.log('Import analysis:', {
             type,
             userCount: users.length,
             conflicts: conflicts.length

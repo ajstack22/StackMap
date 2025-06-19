@@ -10,16 +10,16 @@ window.StackMapDev = {
             if ('caches' in window) {
                 const cacheNames = await caches.keys();
                 await Promise.all(cacheNames.map(cacheName => caches.delete(cacheName)));
-                console.log('✅ Service Worker caches cleared');
+                // console.log('✅ Service Worker caches cleared');
             }
             
             // Clear localStorage
             localStorage.clear();
-            console.log('✅ localStorage cleared');
+            // console.log('✅ localStorage cleared');
             
             // Clear sessionStorage
             sessionStorage.clear();
-            console.log('✅ sessionStorage cleared');
+            // console.log('✅ sessionStorage cleared');
             
             // Clear IndexedDB (if used)
             if ('indexedDB' in window) {
@@ -36,17 +36,17 @@ window.StackMapDev = {
                         // Ignore errors for non-existent databases
                     }
                 }
-                console.log('✅ IndexedDB cleared');
+                // console.log('✅ IndexedDB cleared');
             }
             
             // Unregister service worker
             if ('serviceWorker' in navigator) {
                 const registrations = await navigator.serviceWorker.getRegistrations();
                 await Promise.all(registrations.map(reg => reg.unregister()));
-                console.log('✅ Service Worker unregistered');
+                // console.log('✅ Service Worker unregistered');
             }
             
-            console.log('🎉 All caches and storage cleared! Refresh the page for clean start.');
+            // console.log('🎉 All caches and storage cleared! Refresh the page for clean start.');
             return true;
         } catch (error) {
             console.error('❌ Error clearing caches:', error);
@@ -85,26 +85,26 @@ window.StackMapDev = {
         // Service Worker status
         if ('serviceWorker' in navigator) {
             const registration = await navigator.serviceWorker.getRegistration();
-            console.log('Service Worker:', registration ? 'Registered' : 'Not registered');
+            // console.log('Service Worker:', registration ? 'Registered' : 'Not registered');
             if (registration) {
-                console.log('SW State:', registration.active?.state || 'inactive');
+                // console.log('SW State:', registration.active?.state || 'inactive');
             }
         }
         
         // Cache storage
         if ('caches' in window) {
             const cacheNames = await caches.keys();
-            console.log('Cache Names:', cacheNames);
+            // console.log('Cache Names:', cacheNames);
             for (const cacheName of cacheNames) {
                 const cache = await caches.open(cacheName);
                 const requests = await cache.keys();
-                console.log(`Cache "${cacheName}":`, requests.length, 'items');
+                // console.log(`Cache "${cacheName}":`, requests.length, 'items');
             }
         }
         
         // Local storage
-        console.log('localStorage items:', localStorage.length);
-        console.log('sessionStorage items:', sessionStorage.length);
+        // console.log('localStorage items:', localStorage.length);
+        // console.log('sessionStorage items:', sessionStorage.length);
         
         console.groupEnd();
     },
@@ -139,7 +139,7 @@ if (window.location.hostname === 'localhost' || window.location.hostname.include
     });
     
     // Welcome message for developers
-    console.log(`
+    // console.log(`
 🛠️  StackMap Development Tools Loaded
     
 Quick Commands:

@@ -3,9 +3,14 @@ deployment:
   branch: main
   tasks:
     - export DEPLOYPATH=/home/stachblx/qual
+    # Clean the directory first (except .well-known for SSL and other critical files)
+    - find $DEPLOYPATH -mindepth 1 -maxdepth 1 -not -name '.well-known' -not -name '.htaccess' -not -name 'error_log' -exec rm -rf {} \;
+    # Now copy fresh files
     - /bin/cp -R . $DEPLOYPATH
+    # Remove development files
     - /bin/rm -rf $DEPLOYPATH/.git
     - /bin/rm -rf $DEPLOYPATH/.cpanel.yml
+    - /bin/rm -rf $DEPLOYPATH/.cpanel-clean.yml
     - /bin/rm -rf $DEPLOYPATH/docs
     - /bin/rm -rf $DEPLOYPATH/Screenshots
     - /bin/rm -rf $DEPLOYPATH/node_modules
@@ -17,6 +22,7 @@ deployment:
     - /bin/rm -f $DEPLOYPATH/CONTRIBUTING.md
     - /bin/rm -f $DEPLOYPATH/SECURITY.md
     - /bin/rm -f $DEPLOYPATH/DEPLOYMENT_GUIDE.md
+    - /bin/rm -f $DEPLOYPATH/DEPLOYMENT_TOLLGATE_ENFORCEMENT.md
     - /bin/rm -f $DEPLOYPATH/deploy-checklist.txt
     - /bin/rm -f $DEPLOYPATH/.gitignore
     - /bin/rm -f $DEPLOYPATH/.env.example
@@ -28,5 +34,16 @@ deployment:
     - /bin/rm -f $DEPLOYPATH/debug-*.js
     - /bin/rm -f $DEPLOYPATH/test-*.html
     - /bin/rm -f $DEPLOYPATH/test-*.js
+    - /bin/rm -rf $DEPLOYPATH/.backup
+    - /bin/rm -rf $DEPLOYPATH/mobile-launch-issues
+    - /bin/rm -rf $DEPLOYPATH/android-twa
+    - /bin/rm -rf $DEPLOYPATH/ios-wrapper
+    - /bin/rm -rf $DEPLOYPATH/store-assets
+    - /bin/rm -rf $DEPLOYPATH/releases
+    - /bin/rm -rf $DEPLOYPATH/test-results
+    - /bin/rm -rf $DEPLOYPATH/cleanup-backup-*
+    - /bin/rm -f $DEPLOYPATH/.deployment-lock
+    - /bin/rm -f $DEPLOYPATH/*.sh
+    # Set proper permissions
     - find $DEPLOYPATH -type f -exec chmod 644 {} \;
     - find $DEPLOYPATH -type d -exec chmod 755 {} \;

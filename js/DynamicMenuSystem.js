@@ -13,7 +13,7 @@ class DynamicMenuSystem {
     }
 
     renderMenu(menuId, side, state = {}) {
-        console.log('DynamicMenuSystem.renderMenu called:', { menuId, side, menuConfigs: Object.keys(this.menuConfigs) });
+        // console.log('DynamicMenuSystem.renderMenu called:', { menuId, side, menuConfigs: Object.keys(this.menuConfigs) });
         const config = this.menuConfigs[menuId];
         if (!config) {
             console.error(`Menu configuration not found for: ${menuId}`, 'Available menus:', Object.keys(this.menuConfigs));

@@ -1259,7 +1259,7 @@ class AppState {
 
     // Enhanced importData to handle user icons
     importData(data, updateVersion = true) {
-        console.log('Importing data:', {
+        // console.log('Importing data:', {
             hasUsers: !!data.users,
             hasActivities: !!data.activities,
             hasSettings: !!data.settings,
@@ -1313,7 +1313,7 @@ class AppState {
                     this.users.currentUserId = Object.keys(this.users.profiles)[0];
                 }
                 
-                console.log('User import state:', {
+                // console.log('User import state:', {
                     currentUserId: this.users.currentUserId,
                     profileIds: Object.keys(this.users.profiles),
                     profileNames: Object.values(this.users.profiles).map(u => u.name)

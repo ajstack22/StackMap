@@ -624,9 +624,9 @@ window.MenuConfigurations = {
                     // Check both state and user for icon, preferring state.selectedIcon if available
                     const selectedIcon = state.selectedIcon || state.editingUser?.icon || user.icon || '👤';
                     
-                    console.log('User form render - state:', state);
-                    console.log('User form render - user:', user);
-                    console.log('User form render - selectedIcon:', selectedIcon);
+                    // console.log('User form render - state:', state);
+                    // console.log('User form render - user:', user);
+                    // console.log('User form render - selectedIcon:', selectedIcon);
                     
                     let html = '';
                     
@@ -654,7 +654,7 @@ window.MenuConfigurations = {
                 const buttonText = state.editingUser ? 'Save User' : 'Add User';
                 
                 return `
-                    <button class="footer-button primary-button" onclick="console.log('[USER FORM] Save button clicked'); console.log('hybridPanelManager exists:', !!window.hybridPanelManager); console.log('saveUser exists:', !!(window.hybridPanelManager && window.hybridPanelManager.saveUser)); if (window.hybridPanelManager && window.hybridPanelManager.saveUser) { window.hybridPanelManager.saveUser(); } else { console.error('Cannot find saveUser method!'); }">
+                    // <button class="footer-button primary-button" onclick="console.log('[USER FORM] Save button clicked'); console.log('hybridPanelManager exists:', !!window.hybridPanelManager); console.log('saveUser exists:', !!(window.hybridPanelManager && window.hybridPanelManager.saveUser)); if (window.hybridPanelManager && window.hybridPanelManager.saveUser) { window.hybridPanelManager.saveUser(); } else { console.error('Cannot find saveUser method!'); }">
                         ${buttonText}
                     </button>
                 `;

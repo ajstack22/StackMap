@@ -1766,7 +1766,7 @@ class GoogleDriveSync {
                 if (compressedSize < deltaSize * 0.8) {
                     payload = compressed;
                     isCompressed = true;
-                    console.log(`[Delta Sync] Compressed ${deltaSize} bytes to ${compressedSize} bytes`);
+                    // console.log(`[Delta Sync] Compressed ${deltaSize} bytes to ${compressedSize} bytes`);
                 }
             }
             
@@ -1870,7 +1870,7 @@ class GoogleDriveSync {
                 if (compressedSize < deltaSize * 0.8) {
                     payload = compressed;
                     isCompressed = true;
-                    console.log(`[Delta Sync] Batch compressed ${deltaSize} bytes to ${compressedSize} bytes`);
+                    // console.log(`[Delta Sync] Batch compressed ${deltaSize} bytes to ${compressedSize} bytes`);
                 }
             }
             
@@ -1939,7 +1939,7 @@ class GoogleDriveSync {
         // Also update the main file with new sync metadata
         await this.updateSyncMetadata();
         
-        console.log('[Delta Sync] Successfully uploaded delta:', deltaFileName);
+        // console.log('[Delta Sync] Successfully uploaded delta:', deltaFileName);
         return response.json();
     }
     

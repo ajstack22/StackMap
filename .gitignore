@@ -70,3 +70,5 @@ tests/reports/
 lighthouse-*.html
 lighthouse-*.json
 test-*.html
+android-twa/*.keystore
+android-twa/local.properties
