@@ -10,7 +10,7 @@
     }
     
     body {
-        padding: 15px 5px 100px 5px !important; /* Reduced side padding */
+        padding: 15px 15px 100px 15px !important; /* Equal side padding for proper centering */
     }
     
     /* Logo now sized to match title text height - see draggable-drawer.css */
@@ -471,7 +471,7 @@
     }
     
     body {
-        padding: 10px 2px 80px 2px !important; /* Even less side padding on very small screens */
+        padding: 10px 10px 80px 10px !important; /* Equal side padding for proper centering */
     }
     
     /* === VERY SMALL SCREEN TRANSPARENCY === */
