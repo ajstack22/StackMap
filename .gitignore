@@ -65,3 +65,8 @@ releases/
 
 # Deployment logs
 deploy-log-*.txt
+tests/reports/
+*.report.html
+lighthouse-*.html
+lighthouse-*.json
+test-*.html

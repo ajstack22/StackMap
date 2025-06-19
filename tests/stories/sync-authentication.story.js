@@ -26,33 +26,52 @@ module.exports = {
 
                 // Navigate to app
                 await page.goto(getTestUrl(), { 
-                    waitUntil: 'networkidle2' 
+                    waitUntil: 'networkidle2',
+                    timeout: 30000
                 });
                 
                 // Wait for app to fully load
                 await page.waitForSelector('.main-container', { timeout: 10000 });
                 
                 // Wait for FABs to be created
-                await page.waitForSelector('.floating-nav--right', { timeout: 10000 });
+                await page.waitForTimeout(2000);
                 
-                // Open settings - click the right FAB (grown-up mode button)
-                await page.click('.floating-nav--right .fab');
+                // Click the right FAB using evaluate (Puppeteer's click doesn't work properly)
+                await page.evaluate(() => {
+                    const btn = document.getElementById('hybridManageBtn');
+                    if (btn) btn.click();
+                });
+                
+                // Wait for panel animation
+                await page.waitForTimeout(500);
                 
                 // Wait for panel to open
-                await page.waitForSelector('.side-panel.open', { timeout: 10000 });
+                await page.waitForSelector('#hybridRightPanel.open', { 
+                    timeout: 10000 
+                });
                 
                 // Find and click Settings menu item
-                await page.evaluate(() => {
+                const settingsClicked = await page.evaluate(() => {
                     const menuItems = Array.from(document.querySelectorAll('.menu-item'));
-                    const settingsItem = menuItems.find(item => 
-                        item.textContent.includes('Settings')
-                    );
+                    const settingsItem = menuItems.find(item => {
+                        const text = item.textContent || '';
+                        return text.includes('Settings') || text.includes('settings');
+                    });
+                    
                     if (settingsItem) {
                         settingsItem.click();
-                    } else {
-                        throw new Error('Settings menu item not found');
+                        return true;
                     }
+                    
+                    return false;
                 });
+                
+                if (!settingsClicked) {
+                    throw new Error('Settings menu item not found');
+                }
+                
+                // Wait for settings content to load
+                await page.waitForTimeout(500);
                 
                 // Wait for sync toggle to appear
                 await page.waitForSelector('#syncToggle', { timeout: 5000 });
@@ -82,16 +101,28 @@ module.exports = {
             when: 'User toggles sync off',
             then: 'Disconnect should work without errors',
             test: async (page) => {
-                // Sync should already be on from previous test
-                const syncToggle = await page.$('#syncToggle');
-                const isChecked = await page.evaluate(el => el.checked, syncToggle);
+                // Check if sync toggle exists
+                const syncToggleExists = await page.$('#syncToggle');
+                
+                if (!syncToggleExists) {
+                    throw new Error('Sync toggle not found - settings panel may have closed');
+                }
+                
+                // Get current state
+                const isChecked = await page.evaluate(() => {
+                    const toggle = document.querySelector('#syncToggle');
+                    return toggle ? toggle.checked : null;
+                });
+                
+                if (isChecked === null) {
+                    throw new Error('Could not read sync toggle state');
+                }
                 
                 if (!isChecked) {
                     // Turn it on first
-                    await syncToggle.click();
+                    await page.click('#syncToggle');
                     await page.waitForTimeout(1000);
                 }
-                
                 
                 // Set up error capture for disconnect
                 const disconnectErrors = [];
@@ -106,10 +137,8 @@ module.exports = {
                 await page.waitForTimeout(1000);
                 
                 // Check that no errors occurred
-                const errors = disconnectErrors;
-                
-                if (errors.length > 0) {
-                    throw new Error(`Disconnect error: ${errors[0]}`);
+                if (disconnectErrors.length > 0) {
+                    throw new Error(`Disconnect error: ${disconnectErrors[0]}`);
                 }
             }
         }

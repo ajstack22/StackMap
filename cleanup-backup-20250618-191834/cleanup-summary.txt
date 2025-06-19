@@ -1,0 +1,28 @@
+StackMap Repository Cleanup Summary
+===================================
+Date: Wed Jun 18 19:18:34 CDT 2025
+Backup Directory: cleanup-backup-20250618-191834
+
+Files Cleaned:
+-------------
+test-compression.html
+lighthouse-pwa-report.html
+localhost_2025-06-18_14-16-58.report.html
+context/cleanup.md
+test-delta-sync.html
+deploy-checklist.txt
+tests/reports/latest.json
+tests/reports/push-validation-20250618-182828.json
+tests/reports/test-report-2025-06-18T23-59-59-391Z.json
+tests/reports/test-report-2025-06-18T23-28-28-056Z.json
+tests/reports/push-validation-20250618-185959.json
+tests/reports/test-report-2025-06-18T23-20-46-050Z.json
+tests/reports/push-validation-20250618-181826.json
+tests/reports/test-report-2025-06-18T21-32-35-798Z.json
+tests/reports/push-validation-20250618-163235.json
+tests/reports/test-report-2025-06-18T23-18-26-585Z.json
+test-granular-sync.html
+test-operation-log.html
+test-sync-queue.html
+test-operation-tracking.html
+lighthouse-report.json
