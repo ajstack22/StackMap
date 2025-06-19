@@ -54,7 +54,7 @@ dev-tools.js
 
 # Test artifacts
 tests/test-failure.png
-package-lock.json
+# package-lock.json  # Commented out - needed for CI/CD npm ci command
 
 # Test results
 test-results/
