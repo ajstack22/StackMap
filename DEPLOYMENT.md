@@ -10,8 +10,22 @@ All other deployment documentation is **DEPRECATED**. This is the **ONLY** appro
 ## Deployment Flow
 
 ```
-Local Development → GitHub → Qual (Staging) → Production
+Local Development → GitHub → [AUTO] → Qual (Staging) → [MANUAL] → Production
 ```
+
+## Automated Deployment Process
+
+### 🤖 Automatic: Push to Main = Deploy to Qual
+- Every push to `main` branch automatically deploys to staging
+- No manual steps required
+- GitHub Actions handles everything
+- Check status at: https://github.com/ajstack22/StackMap/actions
+
+### 🔴 Manual: Deploy to Production
+1. Go to: https://github.com/ajstack22/StackMap/actions/workflows/deploy-production.yml
+2. Click "Run workflow"
+3. Type "deploy" to confirm
+4. Click "Run workflow"
 
 ## Step-by-Step Deployment Process
 
