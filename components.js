@@ -1462,6 +1462,13 @@ class ActivityCard {
         
         // Touch events for mobile support
         card.addEventListener('touchstart', (e) => {
+            // Check if mobile UX enhancements are handling this
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            if (isMobile && window.mobileUX) {
+                // Let mobile UX handler deal with long-press
+                return;
+            }
+            
             // Check current edit mode state - use body class which is most reliable
             const canDrag = document.body.classList.contains('grownup-mode') || this.appState.ui.editMode;
             
