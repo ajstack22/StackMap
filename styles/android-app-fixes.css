@@ -47,22 +47,20 @@
 }
 
 /* If the icon text doesn't render as an icon, show emoji fallback */
-.material-icons.edit:empty::before,
-.material-icons:contains('edit')::after { content: '✏️'; }
-.material-icons.settings:empty::before,
-.material-icons:contains('settings')::after { content: '⚙️'; }
-.material-icons.add:empty::before,
-.material-icons:contains('add')::after { content: '+'; }
-.material-icons.close:empty::before,
-.material-icons:contains('close')::after { content: '×'; }
-.material-icons.check:empty::before,
-.material-icons:contains('check')::after { content: '✓'; }
-.material-icons.delete:empty::before,
-.material-icons:contains('delete')::after { content: '🗑'; }
-.material-icons.palette:empty::before,
-.material-icons:contains('palette')::after { content: '🎨'; }
-.material-icons.refresh:empty::before,
-.material-icons:contains('refresh')::after { content: '↻'; }
+.material-icons.edit:empty::before { content: '✏️'; }
+.material-icons.settings:empty::before { content: '⚙️'; }
+.material-icons.add:empty::before { content: '+'; }
+.material-icons.close:empty::before { content: '×'; }
+.material-icons.check:empty::before { content: '✓'; }
+.material-icons.delete:empty::before { content: '🗑'; }
+.material-icons.palette:empty::before { content: '🎨'; }
+.material-icons.refresh:empty::before { content: '↻'; }
+
+/* Additional icon mappings */
+.material-icons.person:empty::before { content: '👤'; }
+.material-icons.sync:empty::before { content: '🔄'; }
+.material-icons.timer:empty::before { content: '⏱'; }
+.material-icons.more_vert:empty::before { content: '⋮'; }
 
 /* Android WebView specific fix - force icon rendering */
 @supports (-webkit-appearance: none) {
