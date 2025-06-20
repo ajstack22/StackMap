@@ -86,7 +86,7 @@
     Header always set Referrer-Policy "strict-origin-when-cross-origin"
     
     # Content Security Policy (adjust as needed)
-    Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com https://apis.google.com https://accounts.google.com; img-src 'self' data: https:; connect-src 'self' https://www.googleapis.com;"
+    Header always set Content-Security-Policy "default-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://fonts.gstatic.com https://apis.google.com https://accounts.google.com; img-src 'self' data: https:; connect-src 'self' https://www.googleapis.com https://fonts.googleapis.com https://fonts.gstatic.com; frame-src 'self' https://accounts.google.com https://content.googleapis.com; font-src 'self' https://fonts.gstatic.com;"
 </IfModule>
 
 # Disable server signature
