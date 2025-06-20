@@ -1,0 +1,17 @@
+# CRITICAL DEPLOYMENT INFORMATION
+
+## THE ONLY APPROVED DEPLOYMENT METHOD
+
+Local ’ GitHub ’ Qual (stackmap.app/qual) ’ Production (stackmap.app)
+
+Commands:
+- Deploy to Qual: ./scripts/deploy-to-qual.sh
+- Deploy to Prod: ./scripts/deploy-qual-to-prod.sh
+
+NEVER:
+- Deploy directly to production
+- Use GitHub Actions
+- Remove console.logs
+- Create new deployment methods
+
+See /DEPLOYMENT.md for details.
