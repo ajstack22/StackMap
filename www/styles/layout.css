@@ -1,0 +1,1134 @@
+/* ===== LAYOUT STYLES ===== */
+/* Headers, Main Container, and Element Positioning */
+
+/* ===== MAIN CONTAINER LAYOUT ===== */
+.main-container {
+    display: grid;
+    gap: var(--card-gap);
+    margin: 0 auto; /* Center the container */
+    padding: 20px;
+    
+    /* CRITICAL FIX: Responsive grid that actually works */
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    max-width: 1600px; /* Wider to truly accommodate 3 columns */
+    width: calc(100% - 40px);
+}
+
+/* Force exactly 3 columns on large screens */
+@media (min-width: 1200px) {
+    .main-container {
+        grid-template-columns: repeat(3, 1fr) !important;
+        max-width: 1600px !important;
+        gap: 24px !important; /* Slightly larger gap for 3 columns */
+    }
+}
+
+/* ENHANCED: Card sizing for 3-column layout */
+.card {
+    min-width: 280px; /* Minimum width for readability */
+    max-width: 400px; /* Maximum to prevent too wide */
+}
+
+/* ENHANCED: Management cards span full width in 3-column mode */
+.management-card, .edit-info-card {
+    grid-column: 1 / -1; /* Span all columns */
+    max-width: none;
+}
+
+/* ENHANCED: Responsive breakpoints for 3-column layout */
+@media (max-width: 1200px) {
+    .main-container {
+        grid-template-columns: repeat(2, 1fr); /* 2 columns on medium screens */
+        max-width: 900px;
+    }
+}
+
+@media (max-width: 768px) {
+    .main-container {
+        grid-template-columns: 1fr; /* Single column on mobile */
+        max-width: 100%;
+        width: calc(100% - 20px); /* Smaller margins on mobile */
+        padding: 10px;
+    }
+}
+
+/* ===== STORY 4: DAY SELECTOR LAYOUT ===== */
+.day-selector-container {
+    display: flex;
+    justify-content: center;
+    margin: 0; /* Remove margins for proper centering */
+    min-height: 33px; /* Reduced by 25% from 44px */
+    width: 100%; /* Ensure full width */
+}
+
+/* Force dimensions even when parent is hidden (for testing) */
+.static-header .day-selector-container,
+.static-header .user-selector-container {
+    /* These will still be 0px when parent has display:none, but this documents the intent */
+    min-height: 48px;
+}
+
+/* === TRANSPARENT DAY SELECTOR === */
+.day-selector {
+    display: inline-flex;
+    background: rgba(255, 255, 255, 0.05); /* Nearly transparent */
+    border-radius: 20px; /* Softer curves */
+    box-shadow: 0 2px 20px rgba(255, 255, 255, 0.05); /* Subtle shadow */
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-height: 33px; /* Reduced by 25% from 44px */
+    min-width: 160px;
+}
+
+.day-selector:hover {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 25px rgba(255, 255, 255, 0.1);
+}
+
+.day-option {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 9px 15px; /* Reduced by 25% */
+    cursor: pointer;
+    color: rgba(255, 255, 255, 0.7); /* Subtle text */
+    font-weight: 500; /* Lighter weight */
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    min-width: 60px; /* Reduced by 25% from 80px */
+    min-height: 33px; /* Reduced by 25% from 44px */
+    position: relative;
+    box-sizing: border-box;
+    flex: 1;
+}
+
+.day-option:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.day-option.active {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    font-weight: 600;
+}
+
+.day-label {
+    font-size: 0.68rem; /* Reduced by 25% from 0.9rem */
+    font-weight: inherit; /* Inherit from parent */
+    margin-bottom: 2px;
+    line-height: 1.2;
+    display: block;
+    white-space: nowrap;
+}
+
+.day-count {
+    display: none; /* Remove count text from day selector */
+}
+
+.day-option.active .day-count {
+    background: rgba(255, 255, 255, 0.3);
+    color: white;
+}
+
+/* Visual distinction for tomorrow view */
+body.viewing-tomorrow .main-container {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.02), rgba(255, 193, 7, 0.02));
+    border-radius: 16px;
+    padding: 10px;
+}
+
+body.viewing-tomorrow .card {
+    border-left: 3px solid rgba(255, 193, 7, 0.3);
+}
+
+/* Mobile responsive adjustments for day selector */
+@media (max-width: 768px) {
+    .day-selector-container {
+        margin-bottom: 15px;
+    }
+    
+    .day-selector {
+        min-width: 140px; /* Slightly smaller on mobile */
+    }
+    
+    .day-option {
+        min-width: 70px; /* Slightly smaller on mobile but still accessible */
+        padding: 10px 12px; /* Adjusted padding */
+        min-height: 48px; /* Larger touch target on mobile */
+    }
+    
+    .day-label {
+        font-size: 0.85rem;
+    }
+    
+    .day-count {
+        font-size: 0.75rem;
+        padding: 2px 4px; /* Tighter padding on mobile */
+    }
+}
+
+@media (max-width: 480px) {
+    .day-selector {
+        min-width: 120px; /* Even smaller on very small screens */
+    }
+    
+    .day-option {
+        min-width: 60px;
+        padding: 10px;
+    }
+}
+
+/* ===== HEADER WRAPPER FOR UNIFIED SHADOW ===== */
+.header-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 112px; /* Reduced by 25% from 150px */
+    z-index: 1001 !important; /* SAFARI FIX: Force z-index */
+    border-radius: 0; /* STRAIGHT: Clean straight line across all devices */
+    /* ENHANCED: Smooth shadow transitions with Material Design easing */
+    transition: 
+        all 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: visible; /* Ensure handle isn't clipped */
+    /* GENTLE GRADIENT: Dynamically updated by theme system - much more subtle than before */
+    background: var(--background-gradient-start);
+    /* Note: Gradient will be dynamically set by applyTheme() in state.js for any color */
+    /* No shadow - let drawer extension handle shadows */
+    box-shadow: none;
+    /* SAFARI FIX: Force new stacking context */
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    contain: layout style paint;
+}
+
+/* Header wrapper when drawer is open */
+.header-wrapper.drawer-open {
+    height: 150px; /* Reduced by 25% from 200px */
+    /* No shadow - let drawer extension handle shadows */
+    box-shadow: none;
+}
+
+/* ===== UNIFIED APP HEADER ===== */
+.app-header {
+    /* Single header that's always fixed */
+    position: relative !important; /* Relative within wrapper */
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    height: 100% !important; /* Fill the wrapper height */
+    background: var(--background-gradient-start) !important; /* Use theme background */
+    text-align: center !important;
+    padding: 0 !important; /* Remove padding, use flexbox for centering */
+    z-index: 1002 !important; /* SAFARI FIX: Higher z-index to appear above drawer extension */
+    /* Simple straight shadow */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    border: none !important;
+    margin: 0 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-sizing: border-box !important;
+    overflow: visible !important; /* Allow drawer to extend */
+    border-radius: 0 !important; /* Straight across shelf */
+}
+
+/* Dedicated shadow layer - sits between header (1001) and cards (1) */
+.header-shadow {
+    position: fixed;
+    top: 111px; /* Reduced by 25% from 148px */
+    left: 0; /* Full screen width */
+    right: 0; /* Full screen width */
+    height: 8px; /* Slightly smaller for cleaner look */
+    z-index: 500; /* Between header (1001) and cards (1) */
+    background: linear-gradient(
+        to bottom, 
+        rgba(0, 0, 0, 0.15) 0%, 
+        rgba(0, 0, 0, 0) 100%
+    );
+    border-radius: 0; /* Straight shadow - no curves */
+    pointer-events: none; /* Don't block interactions */
+    transition: top 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Match drawer timing */
+}
+
+/* Keep shadow always visible at fixed position */
+.header-shadow {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Desktop shadow positioning when drawer opens */
+body.drawer-active .header-shadow {
+    top: 149px; /* Reduced by 25% from 198px */
+}
+
+/* Mobile shadow positioning */
+@media (max-width: 768px) {
+    .header-shadow {
+        top: 89px; /* Reduced by 25% from 118px */
+    }
+    
+    body.drawer-active .header-shadow {
+        top: 134px; /* Reduced by 25% from 178px */
+    }
+}
+
+/* Same shadow when drawer is extended */
+.app-header.drawer-open {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 0 !important; /* Keep straight when extended */
+}
+
+/* Header slot effect removed for clean drawer transition */
+
+/* Body padding - cards stay in fixed position */
+body {
+    padding-top: 40px !important; /* Reasonable gap below header */
+    padding-bottom: 0 !important; /* Default: no bottom padding when closed */
+    transition: padding-top 0.3s cubic-bezier(0.4, 0, 0.2, 1), padding-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Cards stay in same position when drawer opens */
+body.drawer-active {
+    padding-top: 85px !important; /* Adjust for drawer expansion */
+    padding-bottom: 0 !important; /* Normal bottom padding */
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .header-wrapper {
+        height: 90px; /* Reduced by 25% from 120px */
+        /* No shadow - let drawer extension handle shadows */
+        box-shadow: none;
+    }
+    
+    .header-wrapper.drawer-open {
+        height: 135px; /* Reduced by 25% from 180px */
+        /* No shadow - let drawer extension handle shadows */
+        box-shadow: none;
+    }
+    
+    .app-header {
+        padding: 0 !important; /* Remove padding, use flexbox for centering */
+        height: 100% !important; /* Fill the wrapper height */
+    }
+    
+    body {
+        padding-top: 30px !important; /* Reasonable gap below header on mobile */
+        padding-bottom: 0 !important; /* Default: no bottom padding when closed */
+    }
+    
+    body.drawer-active {
+        padding-top: 75px !important; /* Adjust for drawer expansion on mobile */
+        padding-bottom: 0 !important; /* Normal bottom padding */
+    }
+}
+
+/* Header content styles */
+.app-header .header-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+/* Container for title and day selector to handle button alignment */
+.header-text-container {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px; /* Add spacing between elements */
+}
+
+/* ===== USER SELECTOR CONTAINER ===== */
+.user-selector-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* Reduced by 25% from 8px */
+    margin: 0; /* Remove margin for proper centering */
+    min-height: 33px; /* Reduced by 25% from 44px */
+}
+
+/* === TRANSPARENT USER DROPDOWN === */
+.user-dropdown {
+    min-height: 33px; /* Reduced by 25% from 44px */
+    min-width: 105px; /* Reduced by 25% from 140px */
+    padding: 6px 27px 6px 9px; /* Reduced by 25% */
+    border-radius: 22px; /* More rounded for softer look */
+    border: 1px solid rgba(255, 255, 255, 0.1); /* Barely visible border */
+    background: rgba(255, 255, 255, 0.05); /* Nearly transparent */
+    color: rgba(255, 255, 255, 0.7); /* Subtle text */
+    font-size: 0.64rem; /* Reduced by 25% from 0.85rem */
+    font-weight: 500; /* Lighter weight */
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); /* Smooth transitions */
+    backdrop-filter: blur(10px); /* Subtle blur effect */
+    -webkit-backdrop-filter: blur(10px);
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    
+    /* Nearly invisible dropdown arrow */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20width%3D%2714%27%20height%3D%2714%27%20viewBox%3D%270%200%2014%2014%27%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%3E%3Cpath%20d%3D%27M7%209L3.5%205.5h7L7%209z%27%20fill%3D%27rgba(255,255,255,0.4)%27/%3E%3C/svg%3E');
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 14px;
+}
+
+.user-dropdown:hover {
+    background: rgba(255, 255, 255, 0.15); /* Gentle reveal */
+    border-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.9);
+    transform: translateY(-1px); /* Subtle lift */
+    box-shadow: 0 4px 20px rgba(255, 255, 255, 0.1); /* Soft glow */
+}
+
+.user-dropdown:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.3);
+    outline-offset: 2px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Ensure dropdown options are visible */
+.user-dropdown option {
+    background: var(--primary-color);
+    color: white;
+}
+
+/* === STACKMAP LOGO === */
+.stackmap-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0; /* Remove gap - margin-right is handled in draggable-drawer.css */
+    padding: 0; /* No padding/box */
+    border-radius: 0;
+    background: transparent; /* No background */
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    transition: all 0.3s ease, opacity 0.3s ease, transform 0.3s ease;
+}
+
+.stackmap-logo:hover {
+    background: transparent;
+    transform: translateY(-1px);
+}
+
+.stackmap-logo-icon {
+    width: 21px; /* Reduced by 25% from 28px */
+    height: 21px; /* Reduced by 25% from 28px */
+    opacity: 0.9;
+}
+
+.stackmap-logo-text {
+    font-size: 1.05rem; /* Reduced by 25% from 1.4rem */
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    letter-spacing: -0.5px;
+}
+
+/* StackMap Logo Container */
+.stackmap-logo-container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+}
+
+.stackmap-text {
+    font-size: 1.65rem; /* Reduced by 25% from 2.2rem */
+    font-weight: 700;
+    background: linear-gradient(135deg, 
+        rgba(255, 255, 255, 0.95) 0%, 
+        rgba(255, 255, 255, 0.7) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: 0 2px 10px rgba(255, 255, 255, 0.2);
+    letter-spacing: -0.5px;
+    margin: 0; /* Remove negative margin for proper centering */
+}
+
+/* StackMap Subtitle */
+.stackmap-subtitle {
+    font-size: 0.8rem; /* Increased by 25% from 0.64rem */
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+    letter-spacing: 0.5px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    text-align: center;
+    min-width: 200px;
+    outline: none;
+    margin: 4px auto 6px; /* Balanced margins for centering */
+    display: block;
+}
+
+.stackmap-subtitle:hover {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Edit mode styles */
+.edit-mode .stackmap-subtitle {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: text;
+}
+
+.edit-mode .stackmap-subtitle[contenteditable="true"] {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.4);
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.stackmap-subtitle:focus {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+}
+
+/* ===== EXPANDABLE HEADER LAYOUT ===== */
+.expandable-header-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+}
+
+.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px 20px 8px 20px;
+    min-height: 44px;
+}
+
+/* Expansion Indicator - Subtle drag/tap hint */
+.expansion-indicator {
+    background: transparent;
+    margin: 0 20px 12px 20px;
+    border-radius: 0;
+    padding: 8px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    min-height: 32px; /* Smaller */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    position: relative;
+}
+
+/* Subtle drag indicator dots */
+.expansion-indicator::before {
+    content: '⋮';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 1.2rem;
+    color: rgba(255, 255, 255, 0.3);
+    line-height: 1;
+}
+
+.expansion-indicator:hover::before {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.expansion-indicator:focus {
+    outline: 2px solid rgba(255, 255, 255, 0.4);
+    outline-offset: 2px;
+}
+
+/* Hide text - only show dots */
+.expansion-text {
+    display: none;
+}
+
+.expansion-arrow {
+    display: none;
+}
+
+/* Submenu Container */
+.submenu-container {
+    width: 100%;
+    max-height: 0;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 0;
+    position: relative; /* For close button positioning */
+}
+
+.submenu-container.expanded {
+    max-height: 350px;
+    margin-bottom: 16px;
+    border-radius: 0 0 20px 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    padding-bottom: 70px; /* Space for close button */
+}
+
+.submenu-content {
+    padding: 24px;
+    display: flex;
+    flex-direction: row; /* Side by side on desktop */
+    justify-content: center;
+    align-items: flex-start;
+    gap: 24px;
+    max-width: 600px; /* Narrower on desktop */
+    margin: 0 auto;
+}
+
+/* Stack vertically on mobile */
+@media (max-width: 768px) {
+    .submenu-content {
+        flex-direction: column;
+        gap: 20px;
+        max-width: 100%;
+    }
+}
+
+/* Submenu Sections */
+.submenu-section {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    max-width: 250px; /* Narrower sections */
+}
+
+.submenu-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
+}
+
+/* User Selector in Submenu */
+.submenu-user-dropdown {
+    position: relative;
+}
+
+.submenu-user-current {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 44px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.submenu-user-current:hover {
+    border-color: var(--primary-color);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.user-icon {
+    font-size: 1.4rem;
+    line-height: 1;
+}
+
+.user-name {
+    flex: 1;
+    font-weight: 600;
+    color: #333;
+}
+
+.dropdown-arrow {
+    color: #999;
+    font-size: 0.8rem;
+    transition: transform 0.3s ease;
+}
+
+/* User list dropdown */
+.submenu-user-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 8px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 10;
+    display: none;
+}
+
+.submenu-user-dropdown:hover .submenu-user-list {
+    display: block;
+}
+
+.submenu-user-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submenu-user-option:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
+.submenu-user-option.selected {
+    background: rgba(102, 126, 234, 0.1);
+    font-weight: 600;
+}
+
+/* Day Selector in Submenu */
+.submenu-day-options {
+    display: flex;
+    background: white;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.submenu-day-option {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 16px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 44px;
+    color: #666;
+}
+
+.submenu-day-option:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: var(--primary-color);
+}
+
+.submenu-day-option.selected {
+    background: var(--primary-color);
+    color: white;
+}
+
+.day-icon {
+    margin-bottom: 4px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.calendar-day-icon {
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+}
+
+.submenu-day-option:hover .calendar-day-icon {
+    transform: scale(1.1);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.15));
+}
+
+.submenu-day-option.selected .calendar-day-icon {
+    transform: scale(1.05);
+    filter: drop-shadow(0 2px 6px rgba(0,0,0,0.2));
+}
+
+.day-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* Close Button */
+.submenu-close-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-height: 44px;
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.submenu-close-btn:hover {
+    background: var(--primary-dark);
+    transform: translateX(-50%) translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+/* ===== HEADER TITLES ===== */
+.app-header .title {
+    color: white !important;
+    font-size: var(--title-size) !important;
+    margin: 0 !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
+    transition: all var(--transition-fast);
+    padding: 3px 8px !important;
+    border-radius: 8px;
+    display: block !important;
+    text-align: center !important;
+    width: auto !important;
+    max-width: calc(100vw - 140px) !important;
+    font-weight: 700 !important;
+}
+
+
+.title[contenteditable="true"] {
+    background: rgba(255,255,255,0.2);
+    outline: 2px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+}
+
+body.grownup-mode .title {
+    cursor: pointer;
+}
+
+body.grownup-mode .title:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+
+/* ===== FLOATING BUTTON POSITIONING ===== */
+.btn--floating {
+    position: fixed;
+    width: 56px !important; /* Standard Material Design FAB size */
+    height: 56px !important; /* Standard Material Design FAB size */
+    border-radius: 50%; /* Perfect circle */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1003; /* Above header */
+    background: rgba(255, 255, 255, 0.9) !important; /* Slightly transparent white */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    outline: none;
+}
+
+.btn--floating .material-icons {
+    color: var(--primary-color) !important; /* Themed icons */
+    font-weight: 900 !important; /* Bolder icons */
+    font-size: 24px !important; /* Standard icon size for 56px button */
+}
+
+.btn--floating:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.btn--floating:hover .material-icons {
+    color: var(--primary-dark) !important; /* Darker theme on hover */
+}
+
+.btn--floating:active,
+.btn--floating:focus {
+    background: rgba(255, 255, 255, 0.95) !important;
+    outline: none;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.btn--floating:active .material-icons,
+.btn--floating:focus .material-icons {
+    color: var(--primary-color) !important;
+}
+
+/* Floating button positioning */
+.btn--preferences {
+    left: 20px;
+    position: fixed !important;
+    top: 20px; /* Moved further up */
+    z-index: 1010 !important; /* Above header and drawer */
+}
+
+.btn--grownup-mode {
+    right: 20px;
+    position: fixed !important;
+    top: 20px; /* Moved further up */
+    z-index: 1010 !important; /* Above header and drawer */
+}
+
+/* ===== PANEL POSITIONING ===== */
+.preferences-panel {
+    position: fixed !important;
+    top: 120px !important;
+    left: 20px !important;
+    right: 20px !important;
+    background: rgba(255, 255, 255, 0.95) !important;\n    backdrop-filter: blur(15px);\n    -webkit-backdrop-filter: blur(15px);
+    border-radius: var(--card-border-radius);
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    z-index: 1004 !important; /* Above header (1001) and floating buttons (1003) */
+    min-width: 280px;
+    max-width: 320px;
+    max-height: calc(100vh - 140px) !important;
+    overflow-y: auto !important;
+    transition: top 0.3s ease;
+    width: auto !important;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    .btn--floating {
+        width: 44px !important; /* Reduced size while maintaining 44px min touch target */
+        height: 44px !important; /* Match responsive.css mobile size */
+    }
+    
+    .btn--floating .material-icons {
+        font-size: 18px !important; /* 30% smaller icon (from 28px to ~20px, rounded to 18px) */
+    }
+    
+    .btn--preferences {
+        left: 15px !important;
+        top: 35px !important; /* Aligned with title/subtitle area on mobile */
+    }
+    
+    .btn--grownup-mode {
+        right: 15px !important;
+        top: 35px !important; /* Aligned with title/subtitle area on mobile */
+    }
+    
+    .preferences-panel {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: none !important;
+        min-width: auto !important;
+        width: auto !important;
+        top: 100px !important;
+        max-height: calc(100vh - 120px) !important;
+        margin: 0 !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Very small screens */
+}
+
+/* ===== HEADER TITLES ===== */
+.app-header .title {
+    color: white !important;
+    font-size: var(--title-size) !important;
+    margin: 0 !important;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.3) !important;
+    transition: all var(--transition-fast);
+    padding: 3px 8px !important;
+    border-radius: 8px;
+    display: block !important;
+    text-align: center !important;
+    width: auto !important;
+    max-width: calc(100vw - 140px) !important;
+    font-weight: 700 !important;
+}
+
+
+.title[contenteditable="true"] {
+    background: rgba(255,255,255,0.2);
+    outline: 2px solid rgba(255,255,255,0.5);
+    cursor: pointer;
+}
+
+body.grownup-mode .title {
+    cursor: pointer;
+}
+
+body.grownup-mode .title:hover {
+    background: rgba(255,255,255,0.1);
+}
+
+
+/* ===== FLOATING BUTTON POSITIONING ===== */
+.btn--floating {
+    position: fixed;
+    width: 56px !important; /* Standard Material Design FAB size */
+    height: 56px !important; /* Standard Material Design FAB size */
+    border-radius: 50%; /* Perfect circle */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1003; /* Above header */
+    background: rgba(255, 255, 255, 0.9) !important; /* Slightly transparent white */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    color: var(--primary-color);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    outline: none;
+}
+
+.btn--floating .material-icons {
+    color: var(--primary-color) !important; /* Themed icons */
+    font-weight: 900 !important; /* Bolder icons */
+    font-size: 24px !important; /* Standard icon size for 56px button */
+}
+
+.btn--floating:hover {
+    background: rgba(255, 255, 255, 0.95) !important;
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.btn--floating:hover .material-icons {
+    color: var(--primary-dark) !important; /* Darker theme on hover */
+}
+
+.btn--floating:active,
+.btn--floating:focus {
+    background: rgba(255, 255, 255, 0.95) !important;
+    outline: none;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.btn--floating:active .material-icons,
+.btn--floating:focus .material-icons {
+    color: var(--primary-color) !important;
+}
+
+.btn--preferences {
+    top: 34px !important; /* Moved further up */
+    left: 20px;
+    position: fixed !important;
+    z-index: 1010 !important;
+}
+
+.btn--grownup-mode {
+    top: 34px !important; /* Moved further up */
+    right: 20px;
+    position: fixed !important;
+    z-index: 1010 !important;
+}
+
+/* ===== ADD USER BUTTON ===== */
+.btn--add-user {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px; /* Standardized rounded rectangles */
+    background: white;
+    color: var(--primary-color);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    min-width: 44px; /* Touch target */
+    min-height: 44px; /* Touch target */
+    padding: 0;
+}
+
+.btn--add-user:hover {
+    background: rgba(255, 255, 255, 0.95);
+    transform: scale(1.05);
+    box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+}
+
+.btn--add-user .material-icons {
+    font-size: 20px;
+}
+
+/* Hide add user button in child mode */
+body:not(.grownup-mode) .btn--add-user {
+    display: none !important;
+}
+
+/* ===== PANEL POSITIONING ===== */
+.preferences-panel {
+    position: fixed !important;
+    top: 120px !important;
+    left: 20px !important;
+    right: 20px !important;
+    background: rgba(255, 255, 255, 0.95) !important;\n    backdrop-filter: blur(15px);\n    -webkit-backdrop-filter: blur(15px);
+    border-radius: var(--card-border-radius);
+    padding: 20px;
+    box-shadow: var(--card-shadow);
+    z-index: 1004 !important; /* Above header (1001) and floating buttons (1003) */
+    min-width: 280px;
+    max-width: 320px;
+    max-height: calc(100vh - 140px) !important;
+    overflow-y: auto !important;
+    transition: top 0.3s ease;
+    width: auto !important;
+}
+
+body.fixed-header-visible .preferences-panel {
+    top: 80px !important;
+}
+
+/* ===== RESPONSIVE ADJUSTMENTS ===== */
+@media (max-width: 768px) {
+    /* Styles already defined above */
+    
+    .preferences-panel {
+        left: 10px !important;
+        right: 10px !important;
+        max-width: none !important;
+        min-width: auto !important;
+        width: auto !important;
+        top: 100px !important;
+        max-height: calc(100vh - 120px) !important;
+        margin: 0 !important;
+    }
+    
+    body.fixed-header-visible .preferences-panel {
+        top: 70px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Very small screens */
+}

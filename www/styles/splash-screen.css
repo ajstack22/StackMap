@@ -1,0 +1,531 @@
+/* ===== SPLASH SCREEN STYLES ===== */
+/* First-time user setup screen with default theme */
+
+.splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #667eea; /* Matches default theme */
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 0.3s ease;
+    overflow: hidden; /* Prevent scrolling during transitions */
+}
+
+/* Remove animation optimizations since we're not animating */
+
+.splash-screen.hidden {
+    display: none;
+}
+
+.splash-screen.fade-out {
+    opacity: 0;
+}
+
+.splash-content {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 32px;
+    width: 90%;
+    max-width: 480px;
+    max-height: 90vh;
+    overflow-y: auto;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    position: relative;
+    margin: 0 auto; /* Ensure horizontal centering */
+}
+
+/* No animation - just show the content */
+.splash-page-1 {
+    /* animation disabled */
+}
+
+/* Disable initial animation during transitions */
+.splash-content.transitioning {
+    animation: none !important;
+}
+
+/* Page transition animations */
+.splash-content.slide-out-left {
+    animation: slide-out-left 0.4s ease-in-out forwards;
+}
+
+.splash-content.slide-in-right {
+    animation: slide-in-right 0.4s ease-in-out forwards;
+}
+
+.splash-content.slide-out-right {
+    animation: slide-out-right 0.4s ease-in-out forwards;
+}
+
+.splash-content.slide-in-left {
+    animation: slide-in-left 0.4s ease-in-out forwards;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Logo */
+.splash-logo {
+    margin-bottom: 20px;
+}
+
+.splash-logo svg {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto;
+}
+
+/* Welcome section */
+.splash-welcome {
+    margin-bottom: 20px;
+}
+
+.splash-welcome h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 12px 0;
+}
+
+.splash-welcome p {
+    font-size: 1rem;
+    color: #555;
+    margin: 0 0 16px 0;
+    line-height: 1.5;
+}
+
+.splash-welcome p strong {
+    color: #333;
+    font-weight: 600;
+}
+
+/* Instructions section */
+.splash-instructions {
+    background: rgba(102, 126, 234, 0.08);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+    text-align: left;
+}
+
+.splash-step {
+    display: flex;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.splash-step:last-child {
+    margin-bottom: 0;
+}
+
+.splash-step-number {
+    background: #667eea;
+    color: white;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-right: 12px;
+    flex-shrink: 0;
+}
+
+.splash-step p {
+    margin: 0;
+    font-size: 0.9rem;
+    color: #555;
+    line-height: 1.4;
+}
+
+.splash-step strong {
+    color: #333;
+    font-weight: 600;
+}
+
+.btn--floating-demo {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: rgba(102, 126, 234, 0.15);
+    border-radius: 50%;
+    vertical-align: middle;
+    margin: 0 2px;
+}
+
+.btn--floating-demo .material-icons {
+    font-size: 18px;
+    color: #667eea;
+}
+
+/* Form section */
+.splash-form {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Input group */
+.splash-input-group {
+    text-align: left;
+}
+
+.splash-input-group label,
+.splash-emoji-group label {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 8px;
+}
+
+#splashUserName {
+    width: 100%;
+    padding: 12px 16px;
+    font-size: 1rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    outline: none;
+    transition: border-color 0.2s ease;
+    box-sizing: border-box;
+}
+
+#splashUserName:focus {
+    border-color: #667eea;
+}
+
+#splashUserName::placeholder {
+    color: #cbd5e0;
+}
+
+/* Emoji input */
+.splash-emoji-group {
+    text-align: left;
+}
+
+.splash-emoji-picker {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+}
+
+.splash-emoji-options {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+}
+
+.splash-emoji-option {
+    width: 60px;
+    height: 60px;
+    font-size: 2rem;
+    border: 3px solid transparent;
+    border-radius: 12px;
+    background: #f7fafc;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.splash-emoji-option:hover {
+    background: #e2e8f0;
+    transform: scale(1.1);
+}
+
+.splash-emoji-option.selected {
+    border-color: #667eea;
+    background: rgba(102, 126, 234, 0.1);
+    transform: scale(1.05);
+}
+
+.splash-emoji-option.selected::after {
+    content: '✓';
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 20px;
+    height: 20px;
+    background: #667eea;
+    color: white;
+    border-radius: 50%;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.splash-emoji-refresh {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: #f7fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    color: #667eea;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+}
+
+.splash-emoji-refresh:hover {
+    background: #e2e8f0;
+    border-color: #667eea;
+}
+
+.splash-emoji-refresh .material-icons {
+    font-size: 18px;
+}
+
+/* Start button */
+.splash-start-button {
+    width: 100%;
+    padding: 14px 24px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: white;
+    background: #667eea;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 8px;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.splash-start-button:not(:disabled):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    background: #5a72e5;
+}
+
+.splash-start-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .splash-content {
+        padding: 24px 20px;
+        width: 95%;
+        max-width: 100%;
+    }
+    
+    .splash-logo svg {
+        width: 56px;
+        height: 56px;
+    }
+    
+    .splash-welcome h1 {
+        font-size: 1.5rem;
+    }
+    
+    .splash-welcome p {
+        font-size: 0.95rem;
+    }
+    
+    .splash-instructions {
+        padding: 12px;
+    }
+    
+    .splash-step p {
+        font-size: 0.85rem;
+    }
+    
+    .splash-step-number {
+        width: 20px;
+        height: 20px;
+        font-size: 0.75rem;
+        margin-right: 10px;
+    }
+    
+    .btn--floating-demo {
+        width: 24px;
+        height: 24px;
+    }
+    
+    .btn--floating-demo .material-icons {
+        font-size: 16px;
+    }
+    
+    .splash-emoji-picker {
+        padding: 16px;
+    }
+    
+    .splash-emoji-option {
+        width: 50px;
+        height: 50px;
+        font-size: 1.5rem;
+    }
+    
+    .splash-emoji-refresh {
+        padding: 8px 12px;
+        font-size: 0.85rem;
+    }
+}
+
+/* Two-page splash styling */
+.splash-page-1,
+.splash-page-2 {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 90%;
+    max-width: 480px;
+}
+
+.splash-page-2.hidden {
+    display: none;
+}
+
+/* Page transitions */
+.splash-page-transition-out {
+    animation: slideOutLeft 0.4s ease forwards;
+}
+
+.splash-page-transition-in {
+    animation: slideInRight 0.4s ease forwards;
+}
+
+@keyframes slideOutLeft {
+    from {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+    to {
+        transform: translate(-150%, -50%);
+        opacity: 0;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translate(50%, -50%);
+        opacity: 0;
+    }
+    to {
+        transform: translate(-50%, -50%);
+        opacity: 1;
+    }
+}
+
+/* Back button styling */
+.splash-back-button {
+    padding: 12px 20px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #667eea;
+    background: white;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+}
+
+.splash-back-button:hover {
+    background: rgba(102, 126, 234, 0.1);
+    transform: translateY(-1px);
+}
+
+/* Button group for two buttons side by side */
+.splash-button-group {
+    display: flex;
+    gap: 12px;
+    margin-top: 8px;
+}
+
+.splash-button-group .splash-start-button {
+    flex: 1;
+    margin-top: 0;
+}
+
+.splash-button-group .splash-back-button {
+    flex: 0 0 100px;
+}
+
+/* Welcome page specific styles */
+.splash-page-1 .splash-welcome {
+    margin-bottom: 24px;
+}
+
+/* Setup page specific styles */
+.splash-page-2 .splash-welcome h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.splash-page-2 .splash-welcome p {
+    font-size: 0.95rem;
+    color: #666;
+    margin: 0 0 20px 0;
+}
+
+/* Mobile adjustments for two-page layout */
+@media (max-width: 768px) {
+    .splash-button-group {
+        flex-direction: column-reverse;
+    }
+    
+    .splash-button-group .splash-back-button {
+        flex: 1;
+        width: 100%;
+    }
+    
+    .splash-page-2 .splash-welcome h2 {
+        font-size: 1.3rem;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .splash-screen,
+    .splash-content,
+    .splash-emoji-option,
+    .splash-emoji-refresh,
+    .splash-start-button,
+    .splash-back-button,
+    .splash-page-transition-out,
+    .splash-page-transition-in {
+        animation: none;
+        transition: none;
+    }
+}

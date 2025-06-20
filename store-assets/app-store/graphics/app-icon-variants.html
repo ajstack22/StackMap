@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StackMap - App Icon Variants</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .specs {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .specs h2 {
+            color: #667eea;
+            margin-bottom: 10px;
+        }
+
+        .specs ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .specs li {
+            padding: 5px 0;
+            color: #666;
+        }
+
+        .specs li strong {
+            color: #333;
+        }
+
+        .icon-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .icon-variant {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .icon-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-icon {
+            width: 180px;
+            height: 180px;
+            border-radius: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        /* Icon Design 1: Classic Stack */
+        .icon-1 {
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+        }
+
+        .stack-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .stack-bar {
+            background: white;
+            height: 20px;
+            border-radius: 10px;
+            opacity: 0.9;
+        }
+
+        .stack-bar:nth-child(1) { width: 120px; }
+        .stack-bar:nth-child(2) { width: 120px; }
+        .stack-bar:nth-child(3) { width: 80px; background: #ffd93d; }
+
+        /* Icon Design 2: Emoji Focus */
+        .icon-2 {
+            background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+        }
+
+        .emoji-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .emoji-item {
+            background: rgba(255,255,255,0.9);
+            width: 60px;
+            height: 60px;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+        }
+
+        /* Icon Design 3: Checkmark */
+        .icon-3 {
+            background: linear-gradient(135deg, #9f7aea 0%, #805ad5 100%);
+        }
+
+        .checkmark {
+            width: 100px;
+            height: 100px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 60px;
+        }
+
+        /* Icon Design 4: Family */
+        .icon-4 {
+            background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+        }
+
+        .family-circles {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .family-circle {
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: #ed8936;
+        }
+
+        .family-circle:nth-child(1) {
+            width: 60px;
+            height: 60px;
+            font-size: 24px;
+        }
+
+        .family-circle:nth-child(2) {
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            margin-top: 20px;
+        }
+
+        .family-circle:nth-child(3) {
+            width: 40px;
+            height: 40px;
+            font-size: 16px;
+            margin-top: 30px;
+        }
+
+        /* Icon Design 5: Calendar */
+        .icon-5 {
+            background: linear-gradient(135deg, #3182ce 0%, #2c5282 100%);
+        }
+
+        .calendar-icon {
+            background: white;
+            width: 120px;
+            height: 120px;
+            border-radius: 20px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .calendar-header {
+            background: #3182ce;
+            height: 30px;
+            border-radius: 10px 10px 0 0;
+            margin: -10px -10px 10px -10px;
+        }
+
+        .calendar-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            flex: 1;
+        }
+
+        .calendar-day {
+            background: #e0e0e0;
+            border-radius: 4px;
+        }
+
+        .calendar-day.active {
+            background: #ffd93d;
+        }
+
+        /* Icon Design 6: Minimalist */
+        .icon-6 {
+            background: white;
+            border: 3px solid #667eea;
+        }
+
+        .minimal-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .minimal-bar {
+            height: 16px;
+            border-radius: 8px;
+        }
+
+        .minimal-bar:nth-child(1) { 
+            width: 100px; 
+            background: #667eea;
+        }
+        .minimal-bar:nth-child(2) { 
+            width: 100px; 
+            background: #9f7aea;
+        }
+        .minimal-bar:nth-child(3) { 
+            width: 60px; 
+            background: #ffd93d;
+        }
+
+        .variant-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .variant-description {
+            font-size: 14px;
+            color: #666;
+            line-height: 1.5;
+        }
+
+        /* Master icon - 1024x1024 */
+        .master-icon-section {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .master-icon {
+            width: 512px;
+            height: 512px;
+            margin: 0 auto 30px;
+            border-radius: 114px;
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.3);
+        }
+
+        .master-stack {
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .master-bar {
+            background: white;
+            height: 50px;
+            border-radius: 25px;
+            opacity: 0.9;
+        }
+
+        .master-bar:nth-child(1) { width: 300px; }
+        .master-bar:nth-child(2) { width: 300px; }
+        .master-bar:nth-child(3) { width: 200px; background: #ffd93d; opacity: 1; }
+
+        .size-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 20px;
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+
+        .size-preview {
+            text-align: center;
+        }
+
+        .size-icon {
+            margin: 0 auto 10px;
+            border-radius: 20%;
+            background: linear-gradient(135deg, #667eea 0%, #5a67d8 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .size-label {
+            font-size: 12px;
+            color: #666;
+        }
+
+        /* Export instructions */
+        .export-section {
+            background: #e8f5e9;
+            border: 1px solid #4caf50;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+
+        .export-section h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+
+        .export-section code {
+            background: #c8e6c9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>StackMap App Icon Variants</h1>
+
+        <div class="specs">
+            <h2>App Icon Specifications</h2>
+            <ul>
+                <li><strong>iOS App Store:</strong> 1024 × 1024 pixels (no transparency, no rounded corners)</li>
+                <li><strong>Google Play:</strong> 512 × 512 pixels (32-bit PNG with alpha)</li>
+                <li><strong>Corner radius:</strong> Applied automatically by the stores</li>
+                <li><strong>Safe zone:</strong> Keep important elements within 80% of icon area</li>
+                <li><strong>Colors:</strong> Use high contrast, avoid pure black or white backgrounds</li>
+                <li><strong>Testing:</strong> Preview at small sizes (20px) to ensure clarity</li>
+            </ul>
+        </div>
+
+        <!-- Master Icon -->
+        <div class="master-icon-section">
+            <h2>Master App Icon (1024×1024)</h2>
+            <div class="master-icon">
+                <div class="master-stack">
+                    <div class="master-bar"></div>
+                    <div class="master-bar"></div>
+                    <div class="master-bar"></div>
+                </div>
+            </div>
+            
+            <h3>Size Previews</h3>
+            <div class="size-grid">
+                <div class="size-preview">
+                    <div class="size-icon" style="width: 180px; height: 180px;">
+                        <div class="stack-bars">
+                            <div class="stack-bar"></div>
+                            <div class="stack-bar"></div>
+                            <div class="stack-bar"></div>
+                        </div>
+                    </div>
+                    <div class="size-label">iPhone (180×180)</div>
+                </div>
+                <div class="size-preview">
+                    <div class="size-icon" style="width: 120px; height: 120px;">
+                        <div class="stack-bars" style="gap: 8px;">
+                            <div class="stack-bar" style="height: 14px; width: 80px;"></div>
+                            <div class="stack-bar" style="height: 14px; width: 80px;"></div>
+                            <div class="stack-bar" style="height: 14px; width: 50px;"></div>
+                        </div>
+                    </div>
+                    <div class="size-label">iPhone (120×120)</div>
+                </div>
+                <div class="size-preview">
+                    <div class="size-icon" style="width: 60px; height: 60px;">
+                        <div class="stack-bars" style="gap: 4px;">
+                            <div class="stack-bar" style="height: 8px; width: 40px;"></div>
+                            <div class="stack-bar" style="height: 8px; width: 40px;"></div>
+                            <div class="stack-bar" style="height: 8px; width: 25px;"></div>
+                        </div>
+                    </div>
+                    <div class="size-label">Settings (60×60)</div>
+                </div>
+                <div class="size-preview">
+                    <div class="size-icon" style="width: 40px; height: 40px;">
+                        <div class="stack-bars" style="gap: 3px;">
+                            <div class="stack-bar" style="height: 5px; width: 25px;"></div>
+                            <div class="stack-bar" style="height: 5px; width: 25px;"></div>
+                            <div class="stack-bar" style="height: 5px; width: 15px;"></div>
+                        </div>
+                    </div>
+                    <div class="size-label">Spotlight (40×40)</div>
+                </div>
+                <div class="size-preview">
+                    <div class="size-icon" style="width: 20px; height: 20px; border-radius: 4px;">
+                        <div class="stack-bars" style="gap: 2px;">
+                            <div class="stack-bar" style="height: 3px; width: 12px; border-radius: 1px;"></div>
+                            <div class="stack-bar" style="height: 3px; width: 12px; border-radius: 1px;"></div>
+                            <div class="stack-bar" style="height: 3px; width: 8px; border-radius: 1px;"></div>
+                        </div>
+                    </div>
+                    <div class="size-label">Notification (20×20)</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Icon Variants -->
+        <h2 style="margin: 40px 0 20px;">Alternative Designs</h2>
+        <div class="icon-grid">
+            <!-- Variant 1: Classic Stack -->
+            <div class="icon-variant">
+                <div class="icon-container">
+                    <div class="app-icon icon-1">
+                        <div class="stack-bars">
+                            <div class="stack-bar"></div>
+                            <div class="stack-bar"></div>
+                            <div class="stack-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="variant-title">Classic Stack</h3>
+                <p class="variant-description">Clean, minimalist design representing stacked routine cards. The yellow bar indicates progress.</p>
+            </div>
+
+            <!-- Variant 2: Emoji Focus -->
+            <div class="icon-variant">
+                <div class="icon-container">
+                    <div class="app-icon icon-2">
+                        <div class="emoji-grid">
+                            <div class="emoji-item">🪥</div>
+                            <div class="emoji-item">🎒</div>
+                            <div class="emoji-item">🥣</div>
+                            <div class="emoji-item">✅</div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="variant-title">Activity Grid</h3>
+                <p class="variant-description">Showcases the emoji-based visual system that makes StackMap accessible.</p>
+            </div>
+
+            <!-- Variant 3: Checkmark -->
+            <div class="icon-variant">
+                <div class="icon-container">
+                    <div class="app-icon icon-3">
+                        <div class="checkmark">✓</div>
+                    </div>
+                </div>
+                <h3 class="variant-title">Success Focus</h3>
+                <p class="variant-description">Emphasizes completion and achievement, appealing to goal-oriented users.</p>
+            </div>
+
+            <!-- Variant 4: Family -->
+            <div class="icon-variant">
+                <div class="icon-container">
+                    <div class="app-icon icon-4">
+                        <div class="family-circles">
+                            <div class="family-circle">E</div>
+                            <div class="family-circle">M</div>
+                            <div class="family-circle">S</div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="variant-title">Family Circles</h3>
+                <p class="variant-description">Represents multi-user support and family collaboration features.</p>
+            </div>
+
+            <!-- Variant 5: Calendar -->
+            <div class="icon-variant">
+                <div class="icon-container">
+                    <div class="app-icon icon-5">
+                        <div class="calendar-icon">
+                            <div class="calendar-header"></div>
+                            <div class="calendar-grid">
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day active"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day active"></div>
+                                <div class="calendar-day active"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day"></div>
+                                <div class="calendar-day"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="variant-title">Calendar View</h3>
+                <p class="variant-description">Highlights daily routine planning and schedule management.</p>
+            </div>
+
+            <!-- Variant 6: Minimalist -->
+            <div class="icon-variant">
+                <div class="icon-container">
+                    <div class="app-icon icon-6">
+                        <div class="minimal-stack">
+                            <div class="minimal-bar"></div>
+                            <div class="minimal-bar"></div>
+                            <div class="minimal-bar"></div>
+                        </div>
+                    </div>
+                </div>
+                <h3 class="variant-title">Minimalist</h3>
+                <p class="variant-description">Ultra-clean design for users who prefer simple, distraction-free interfaces.</p>
+            </div>
+        </div>
+
+        <div class="export-section">
+            <h3>📱 Exporting App Icons</h3>
+            <p>To create production-ready app icons:</p>
+            <ol>
+                <li>Choose your preferred design from above</li>
+                <li>Export at these exact sizes:
+                    <ul>
+                        <li><strong>iOS:</strong> 1024×1024px (PNG, no transparency)</li>
+                        <li><strong>Android:</strong> 512×512px (PNG with transparency OK)</li>
+                    </ul>
+                </li>
+                <li>Use online tools to generate all required sizes:
+                    <ul>
+                        <li><code>makeappicon.com</code> - Free icon generator</li>
+                        <li><code>appicon.co</code> - Generates for all platforms</li>
+                        <li><code>iconkit.app</code> - macOS app for icon sets</li>
+                    </ul>
+                </li>
+                <li>Test icons at small sizes (20×20) for clarity</li>
+                <li>Ensure good contrast against both light and dark backgrounds</li>
+            </ol>
+        </div>
+    </div>
+</body>
+</html>

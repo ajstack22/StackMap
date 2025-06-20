@@ -1,0 +1,77 @@
+/* Material Icons for Android - Safe Version */
+
+/* Primary font definition */
+@font-face {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-weight: 400;
+    font-display: block;
+    src: url(https://fonts.gstatic.com/s/materialicons/v142/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+}
+
+/* Backup font definition with fallback */
+@font-face {
+    font-family: 'Material Icons Fallback';
+    font-style: normal;
+    font-weight: 400;
+    src: local('Material Icons'),
+         local('MaterialIcons-Regular'),
+         url(https://fonts.gstatic.com/s/materialicons/v140/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2) format('woff2');
+}
+
+/* Apply to all material icons with fallback font stack */
+.material-icons {
+    font-family: 'Material Icons', 'Material Icons Fallback', Arial, sans-serif !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    font-size: 24px !important;
+    line-height: 1 !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    display: inline-block !important;
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    direction: ltr !important;
+    -webkit-font-smoothing: antialiased !important;
+    text-rendering: optimizeLegibility !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    font-feature-settings: 'liga' !important;
+    
+    /* Android-specific rendering fixes */
+    -webkit-text-stroke: 0.01px transparent;
+    text-shadow: 0 0 0 transparent;
+}
+
+/* Size variations */
+.material-icons.md-18 { font-size: 18px !important; }
+.material-icons.md-24 { font-size: 24px !important; }
+.material-icons.md-36 { font-size: 36px !important; }
+.material-icons.md-48 { font-size: 48px !important; }
+
+/* Color variations */
+.material-icons.md-dark { color: rgba(0, 0, 0, 0.54); }
+.material-icons.md-dark.md-inactive { color: rgba(0, 0, 0, 0.26); }
+.material-icons.md-light { color: rgba(255, 255, 255, 1); }
+.material-icons.md-light.md-inactive { color: rgba(255, 255, 255, 0.3); }
+
+/* Mobile card alignment fixes (from previous android-app-fixes.css) */
+@media (max-width: 768px) {
+    body {
+        padding-left: 15px !important;
+        padding-right: 15px !important;
+    }
+    
+    .main-container {
+        margin-left: auto !important;
+        margin-right: auto !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+        width: 100% !important;
+    }
+    
+    .card {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        transform: none !important;
+    }
+}

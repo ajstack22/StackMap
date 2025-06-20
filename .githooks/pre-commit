@@ -78,6 +78,33 @@ if [ ! -z "$large_files" ]; then
     echo "$large_files"
 fi
 
+# Android-specific checks
+if [ -d "android" ]; then
+    echo ""
+    echo "📱 Android checks..."
+    
+    # Check if Android manifest is valid
+    if [ -f "android/app/src/main/AndroidManifest.xml" ]; then
+        if ! xmllint --noout "android/app/src/main/AndroidManifest.xml" 2>/dev/null; then
+            echo "⚠️  AndroidManifest.xml might have syntax issues"
+        fi
+    fi
+    
+    # Check for hardcoded API keys in Android files
+    if grep -r "api_key\|apiKey\|API_KEY" android/app/src/main --include="*.java" --include="*.xml" 2>/dev/null | grep -v "BuildConfig"; then
+        echo "⚠️  Possible hardcoded API keys found in Android files"
+    fi
+    
+    # Check if version codes match between package.json and build.gradle
+    if [ -f "package.json" ] && [ -f "android/app/build.gradle" ]; then
+        PKG_VERSION=$(node -p "require('./package.json').version" 2>/dev/null)
+        GRADLE_VERSION=$(grep "versionName" android/app/build.gradle | grep -o '"[^"]*"' | tr -d '"' | head -1)
+        if [ "$PKG_VERSION" != "$GRADLE_VERSION" ]; then
+            echo "⚠️  Version mismatch: package.json ($PKG_VERSION) vs build.gradle ($GRADLE_VERSION)"
+        fi
+    fi
+fi
+
 # Final summary
 if [ -f "tests/reports/latest.json" ]; then
     echo ""

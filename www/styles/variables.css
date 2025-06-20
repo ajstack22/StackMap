@@ -1,0 +1,28 @@
+/* ===== THEME VARIABLES ===== */
+:root {
+    /* Theme Variables */
+    --primary-color: #667eea;
+    --primary-dark: #4a5bc7;
+    --background-gradient-start: var(--primary-color);
+    --background-gradient-end: var(--primary-dark);
+    
+    /* Layout */
+    --card-border-radius: 20px;
+    --card-padding: 25px;
+    --card-gap: 20px;
+    --container-max-width: 1200px;
+    
+    /* Typography */
+    --title-size: 3rem;
+    --subtitle-size: 1.2rem;
+    --card-title-size: 1.8rem;
+    --card-desc-size: 1.2rem;
+    
+    /* Shadows - ULTRA-MINIMAL: Professional desktop shadows */
+    --card-shadow: 0 2px 6px rgba(0,0,0,0.06);
+    --card-shadow-hover: 0 3px 8px rgba(0,0,0,0.08);
+    
+    /* Transitions */
+    --transition-fast: 0.3s ease;
+    --transition-slow: 0.5s ease;
+}

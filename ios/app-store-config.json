@@ -1,0 +1,64 @@
+{
+  "appStoreInfo": {
+    "bundleId": "com.stackmap.app",
+    "appName": "StackMap",
+    "subtitle": "Visual Daily Activity Tracker",
+    "primaryCategory": "Productivity",
+    "secondaryCategory": "Lifestyle",
+    "keywords": [
+      "activity tracker",
+      "daily planner",
+      "time management",
+      "productivity",
+      "habit tracker",
+      "visual calendar",
+      "routine builder",
+      "life organizer",
+      "daily journal",
+      "time blocking"
+    ],
+    "supportUrl": "https://stackmap.app/support.html",
+    "marketingUrl": "https://stackmap.app",
+    "privacyPolicyUrl": "https://stackmap.app/privacy.html"
+  },
+  "appDescription": {
+    "promotional": "Transform your daily activities into a beautiful visual map. Track, analyze, and optimize how you spend your time.",
+    "description": "StackMap is a revolutionary visual activity tracker that transforms how you understand and manage your time. Instead of traditional calendars or to-do lists, StackMap presents your daily activities as colorful, interactive cards that you can easily arrange and track.\n\nKey Features:\n• Visual Activity Cards - See your day at a glance with beautiful, color-coded activity cards\n• Smart Time Tracking - Built-in timers help you track exactly how long you spend on each activity\n• Flexible Organization - Drag and drop cards to plan your day or reflect on how you spent your time\n• Progress Insights - Watch your productivity patterns emerge with visual completion tracking\n• Offline First - Works completely offline, syncs when you're ready\n• Privacy Focused - Your data stays on your device unless you choose to sync\n• Multiple Users - Perfect for families or teams sharing devices\n• Custom Activities - Create your own activity types with custom icons and colors\n\nWhether you're a student tracking study time, a professional managing projects, or anyone wanting to understand where their time goes, StackMap makes time tracking intuitive and enjoyable.\n\nNo subscriptions, no ads, no account required. Just a simple, powerful tool to help you make the most of your time."
+  },
+  "versionHistory": {
+    "1.3.0": "• New iOS native app with improved performance\n• Enhanced offline capabilities\n• Better integration with iOS features\n• Improved visual design for mobile devices\n• Bug fixes and stability improvements"
+  },
+  "screenshots": {
+    "required": [
+      {
+        "device": "iphone_6_5",
+        "dimensions": "1284x2778",
+        "description": "Main view showing daily activity cards"
+      },
+      {
+        "device": "iphone_6_5",
+        "dimensions": "1284x2778",
+        "description": "Timer view tracking an activity"
+      },
+      {
+        "device": "iphone_6_5",
+        "dimensions": "1284x2778",
+        "description": "Edit mode with drag and drop"
+      },
+      {
+        "device": "iphone_6_5",
+        "dimensions": "1284x2778",
+        "description": "Activity selection screen"
+      },
+      {
+        "device": "ipad_pro_12_9",
+        "dimensions": "2048x2732",
+        "description": "iPad view with multiple days"
+      }
+    ]
+  },
+  "review": {
+    "demoAccount": "Not required - app works without login",
+    "notes": "StackMap is a visual time tracking app that works completely offline. Users can track their daily activities using visual cards. No account or internet connection required for core functionality."
+  }
+}
