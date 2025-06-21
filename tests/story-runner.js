@@ -317,12 +317,12 @@ class StoryRunner {
 
     // Start local server if needed
     async createServer() {
-        const PORTS = [5502, 5500, 5501, 5000];
+        const PORTS = [5502, 5500, 5501];  // Removed 5000 - conflicts with macOS AirPlay
         const HOST = 'localhost';
         
         // Check if any dev server is already running
         for (const port of PORTS) {
-            const isRunning = await this.checkPort(port);
+            const isRunning = await this.checkPortWithAppVerification(port);
             if (isRunning) {
                 console.log(chalk.gray(`Using existing dev server on port ${port}`));
                 this.serverPort = port;
@@ -391,6 +391,31 @@ class StoryRunner {
             
             req.end();
         });
+    }
+
+    // Check if port is running our app specifically
+    async checkPortWithAppVerification(port) {
+        const browser = await puppeteer.launch({ headless: true });
+        try {
+            const page = await browser.newPage();
+            await page.goto(`http://localhost:${port}`, { 
+                waitUntil: 'domcontentloaded',
+                timeout: 5000 
+            });
+            
+            // Check if it's actually our StackMap app
+            const isStackMap = await page.evaluate(() => {
+                return document.title.includes('StackMap') || 
+                       document.querySelector('.main-container') !== null ||
+                       document.querySelector('link[rel="manifest"]') !== null;
+            });
+            
+            await browser.close();
+            return isStackMap;
+        } catch (error) {
+            await browser.close();
+            return false;
+        }
     }
 
     // Create example story
