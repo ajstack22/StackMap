@@ -1,0 +1,46 @@
+/* Demo banner accommodation styles - DO NOT REMOVE */
+/* These adjust all layout elements to account for the 40px demo banner */
+
+.header-wrapper { 
+    top: 40px !important; 
+}
+
+.main-container { 
+    padding-top: calc(var(--header-height) + 40px) !important; 
+}
+
+.side-panel { 
+    top: 40px !important; 
+    height: calc(100% - 40px) !important; 
+}
+
+.floating-nav { 
+    top: 60px !important; 
+}
+
+.day-selector-backdrop { 
+    top: 40px !important; 
+    height: calc(100% - 40px) !important; 
+}
+
+@media (max-width: 768px) {
+    .side-panel--slide-bottom { 
+        top: 40px !important; 
+        height: calc(100% - 40px) !important; 
+    }
+    
+    .demo-banner {
+        font-size: 12px !important;
+        padding: 6px 5px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .demo-banner {
+        font-size: 11px !important;
+    }
+    
+    .demo-banner a {
+        font-size: 10px !important;
+    }
+}

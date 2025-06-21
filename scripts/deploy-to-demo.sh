@@ -16,13 +16,33 @@ ssh stackmap-cpanel << 'ENDSSH'
     # Pull latest changes
     git pull origin main
     
-    # Copy demo-specific files if they exist in the main repo
+    # Now apply demo-specific modifications to index.html
+    echo "Applying demo customizations..."
+    
+    # 1. Insert demo banner after <body> tag
+    if [ -f "../scripts/demo-banner.html" ]; then
+        # Insert the banner right after the body tag
+        sed -i '/<body[^>]*>/r ../scripts/demo-banner.html' index.html
+    fi
+    
+    # 2. Add demo-specific CSS before </head>
+    if [ -f "../scripts/demo-styles.css" ]; then
+        # Insert the demo styles before </head>
+        sed -i '/<\/head>/i\<style>/* Demo-specific styles */' index.html
+        sed -i '/<style>\/\* Demo-specific styles \*\//r ../scripts/demo-styles.css' index.html
+        sed -i '/<style>\/\* Demo-specific styles \*\//a\</style>' index.html
+    fi
+    
+    # 3. Set DEMO_MODE flag
+    # Add window.DEMO_MODE = true after the first <script> tag
+    sed -i '0,/<script>/{s/<script>/<script>\n    window.DEMO_MODE = true;/}' index.html
+    
+    # 4. Copy demo data file if it exists
     if [ -f "../demo-mushroom-kingdom.json" ]; then
         cp ../demo-mushroom-kingdom.json .
     fi
     
-    # The demo has its own index.html, so we don't copy from main
-    echo "✅ Demo updated (preserving demo-specific index.html)"
+    echo "✅ Demo customizations applied"
 ENDSSH
 
 if [ $? -eq 0 ]; then
