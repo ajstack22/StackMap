@@ -20,18 +20,37 @@ ssh stackmap-cpanel << 'ENDSSH'
     echo "Applying demo customizations..."
     
     # 1. Insert demo banner after <body> tag
-    if [ -f "../scripts/demo-banner.html" ]; then
-        # Insert the banner right after the body tag
-        sed -i '/<body[^>]*>/r ../scripts/demo-banner.html' index.html
-    fi
+    BANNER='<div class="demo-banner" style="background-color: #f59e0b; color: white; text-align: center; padding: 8px 5px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px;"><span style="white-space: nowrap;">🎮 DEMO - Mushroom Kingdom 🍄</span><a href="#" onclick="localStorage.removeItem('\''stackMapDemoMode'\''); window.location.replace('\''/'\'''); return false;" style="color: white; text-decoration: underline; cursor: pointer; white-space: nowrap; font-size: 12px;">Start Using StackMap</a></div>'
+    
+    # Insert banner after body tag
+    sed -i "/<body[^>]*>/a\\$BANNER" index.html
     
     # 2. Add demo-specific CSS before </head>
-    if [ -f "../scripts/demo-styles.css" ]; then
-        # Insert the demo styles before </head>
-        sed -i '/<\/head>/i\<style>/* Demo-specific styles */' index.html
-        sed -i '/<style>\/\* Demo-specific styles \*\//r ../scripts/demo-styles.css' index.html
-        sed -i '/<style>\/\* Demo-specific styles \*\//a\</style>' index.html
-    fi
+    DEMO_STYLES='<style>
+    /* Demo banner accommodation styles */
+    .header-wrapper { top: 40px !important; }
+    .main-container { padding-top: calc(var(--header-height) + 40px) !important; }
+    .side-panel { top: 40px !important; height: calc(100% - 40px) !important; }
+    .floating-nav { top: 60px !important; }
+    .day-selector-backdrop { top: 40px !important; height: calc(100% - 40px) !important; }
+    
+    /* Support for mobile header at bottom */
+    body.mobile-header-bottom .header-wrapper { bottom: 0 !important; top: auto !important; }
+    body.mobile-header-bottom .main-container { padding-top: 40px !important; padding-bottom: var(--header-height) !important; }
+    
+    @media (max-width: 768px) {
+        .side-panel--slide-bottom { top: 40px !important; height: calc(100% - 40px) !important; }
+        .demo-banner { font-size: 12px !important; padding: 6px 5px !important; }
+    }
+    
+    @media (max-width: 480px) {
+        .demo-banner { font-size: 11px !important; }
+        .demo-banner a { font-size: 10px !important; }
+    }
+    </style>'
+    
+    # Insert styles before </head>
+    sed -i "/<\/head>/i\\$DEMO_STYLES" index.html
     
     # 3. Set DEMO_MODE flag
     # Add window.DEMO_MODE = true after the first <script> tag
