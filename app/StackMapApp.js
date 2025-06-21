@@ -445,11 +445,11 @@ class StackMapApp {
         
         const currentDay = this.appState.ui.currentDay || 'today';
         
-        // Title remains customizable (for now)
-        let userTitle = currentUser.customTitle || 'StackMap';
+        // Title shows emoji + day format
+        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+        let userTitle = `${currentUser.icon} ${dayText}`;
         
         // Subtitle format: always "Emoji Name • Day"
-        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
         const userSubtitle = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${currentUser.name} • ${dayText}`;
         
         // Update all title elements
@@ -460,8 +460,8 @@ class StackMapApp {
             mainTitle.textContent = userTitle;
             this.updateLogoVisibility(userTitle);
             
-            // Make title editable in edit mode
-            this.setupTitleEditing(mainTitle);
+            // Title is no longer editable since it's auto-generated
+            // this.setupTitleEditing(mainTitle);
         }
         if (subtitle) {
             subtitle.innerHTML = userSubtitle;

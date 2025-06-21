@@ -3,7 +3,7 @@
 // Last Updated: 2025-06-21-2
 
 const SW_VERSION = '1.6.8';
-const CACHE_NAME = 'stackmap-v1.6.8-2025-06-21-2';
+const CACHE_NAME = 'stackmap-v1.6.8-2025-06-21-3';
 const RUNTIME_CACHE = 'stackmap-runtime';
 const GOOGLE_FONTS_CACHE = 'stackmap-fonts';
 const IMAGE_CACHE = 'stackmap-images';
