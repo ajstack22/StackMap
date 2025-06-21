@@ -11,8 +11,23 @@ body.mobile-header-bottom .header-wrapper {
 }
 
 body.mobile-header-bottom .app-header {
-    /* Add subtle top shadow instead of bottom */
-    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.15) !important;
+    /* Multi-layered elevation effect for bottom header */
+    box-shadow: 
+        0 -2px 4px rgba(0, 0, 0, 0.06),    /* Subtle close shadow */
+        0 -4px 8px rgba(0, 0, 0, 0.08),    /* Medium shadow */
+        0 -8px 16px rgba(0, 0, 0, 0.10),   /* Larger soft shadow */
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important; /* Top highlight */
+    
+    /* Add a subtle gradient overlay for more depth */
+    background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.02) 0%,
+        rgba(255, 255, 255, 0) 100%
+    ), var(--background-color);
+    
+    /* Slight backdrop blur for glass effect (if supported) */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
 }
     
 /* Adjust main content padding */
@@ -25,6 +40,41 @@ body.mobile-header-bottom {
 body.mobile-header-bottom .header-shadow,
 body.header-position-bottom .header-shadow {
     display: none !important;
+}
+
+/* Add a subtle top border for definition */
+body.mobile-header-bottom .app-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(
+        to right,
+        transparent 0%,
+        rgba(0, 0, 0, 0.1) 20%,
+        rgba(0, 0, 0, 0.1) 80%,
+        transparent 100%
+    );
+    z-index: 1;
+}
+
+/* Optional: Add a very subtle glow effect for premium feel */
+body.mobile-header-bottom .app-header::after {
+    content: '';
+    position: absolute;
+    top: -20px;
+    left: 0;
+    right: 0;
+    height: 20px;
+    background: linear-gradient(
+        to top,
+        rgba(34, 105, 196, 0.05) 0%,  /* Fallback blue color with low opacity */
+        transparent 100%
+    );
+    pointer-events: none;
+    z-index: -1;
 }
 
 /* Move FABs to align with bottom header */
