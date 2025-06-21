@@ -32,8 +32,13 @@ body.mobile-header-bottom .app-header {
     
 /* Adjust main content padding */
 body.mobile-header-bottom {
-    padding-top: 15px !important;
+    padding-top: 20px !important; /* Standard top spacing when header is at bottom */
     padding-bottom: 130px !important; /* Account for header height + some spacing */
+}
+
+/* Ensure main container respects the padding */
+body.mobile-header-bottom .main-container {
+    padding-top: 20px !important; /* Override any fixed-header styles */
 }
 
 /* Hide the fixed header shadow when header is at bottom */

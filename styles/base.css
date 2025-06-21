@@ -43,7 +43,7 @@ main {
 
 /* When fixed header is visible, add space */
 body.fixed-header-visible .main-container {
-    padding-top: 100px !important;
+    padding-top: 120px !important; /* Increased to properly clear 112px header */
 }
 
 /* Mobile adjustments for single fixed header */
