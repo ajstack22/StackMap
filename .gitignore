@@ -60,6 +60,9 @@ tests/test-failure.png
 test-results/
 test-output.tmp
 
+# Test browser profiles
+tests/.test-browser-profile/
+
 # Release notes (contain sensitive deployment info)
 releases/
 
