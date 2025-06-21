@@ -323,19 +323,23 @@ class StackMapApp {
             // Update character counter
             const updateCharCounter = () => {
                 const length = newTitle.textContent.length;
-                charCounter.textContent = `${length} characters`;
+                const maxLength = CONFIG.MAX_TITLE_LENGTH || 13;
                 
-                if (length <= 15) {
-                    charCounter.style.color = '#4CAF50';
-                    charCounter.style.background = 'rgba(255, 255, 255, 0.9)';
-                } else if (length <= 20) {
-                    charCounter.style.color = '#FF9800';
-                    charCounter.style.background = 'rgba(255, 243, 224, 0.95)';
-                    charCounter.textContent = `${length} chars - Getting long for mobile`;
+                // Only show counter when approaching or at limit
+                if (length >= maxLength - 2) {
+                    charCounter.style.display = 'block';
+                    charCounter.textContent = `${length}/${maxLength} characters`;
+                    
+                    if (length < maxLength) {
+                        charCounter.style.color = '#FF9800';
+                        charCounter.style.background = 'rgba(255, 243, 224, 0.95)';
+                    } else {
+                        charCounter.style.color = '#F44336';
+                        charCounter.style.background = 'rgba(255, 235, 238, 0.95)';
+                        charCounter.textContent = `${maxLength}/${maxLength} - Maximum reached`;
+                    }
                 } else {
-                    charCounter.style.color = '#F44336';
-                    charCounter.style.background = 'rgba(255, 235, 238, 0.95)';
-                    charCounter.textContent = `${length} chars - Too long for mobile`;
+                    charCounter.style.display = 'none';
                 }
             };
             
@@ -359,8 +363,26 @@ class StackMapApp {
             selection.removeAllRanges();
             selection.addRange(range);
             
-            // Update counter on input
-            newTitle.addEventListener('input', updateCharCounter);
+            // Update counter on input and enforce limit
+            newTitle.addEventListener('input', (e) => {
+                const maxLength = CONFIG.MAX_TITLE_LENGTH || 13;
+                
+                // Enforce character limit
+                if (newTitle.textContent.length > maxLength) {
+                    // Prevent the input
+                    newTitle.textContent = newTitle.textContent.substring(0, maxLength);
+                    
+                    // Move cursor to end
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(newTitle);
+                    range.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+                
+                updateCharCounter();
+            });
             
             // Handle save on blur or enter
             const saveTitle = () => {
