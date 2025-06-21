@@ -197,6 +197,7 @@ show_status() {
     echo -e "${BLUE}Last Deployments:${NC}"
     echo -e "  Web Production: $(jq -r '.lastDeployment.web // "Never"' "$VERSION_FILE")"
     echo -e "  Web Staging:    $(jq -r '.lastDeployment."web-staging" // "Never"' "$VERSION_FILE")"
+    echo -e "  Demo:           $(jq -r '.lastDeployment.demo // "Never"' "$VERSION_FILE")"
     echo -e "  Android:        $(jq -r '.lastDeployment.android // "Never"' "$VERSION_FILE")"
     echo -e "  iOS:            $(jq -r '.lastDeployment.ios // "Never"' "$VERSION_FILE")"
 }
@@ -242,10 +243,11 @@ main() {
     echo "Select deployment target:"
     echo "1) Staging (Web only)"
     echo "2) Production (Web only)"
-    echo "3) Mobile (Android & iOS)"
-    echo "4) Everything (Staging → Production → Mobile)"
-    echo "5) Show status only"
-    read -p "Enter choice (1-5): " choice
+    echo "3) Demo (Web only)"
+    echo "4) Mobile (Android & iOS)"
+    echo "5) Everything (Staging → Production → Mobile)"
+    echo "6) Show status only"
+    read -p "Enter choice (1-6): " choice
     
     case $choice in
         1)
@@ -261,11 +263,16 @@ main() {
             fi
             ;;
         3)
+            # Deploy demo
+            print_header "Deploying Demo Environment"
+            ./scripts/deploy-to-demo.sh
+            ;;
+        4)
             prepare_mobile
             build_android
             build_ios
             ;;
-        4)
+        5)
             # Full deployment pipeline
             print_header "Full Deployment Pipeline"
             
@@ -292,7 +299,7 @@ main() {
                 fi
             fi
             ;;
-        5)
+        6)
             # Status already shown
             ;;
         *)

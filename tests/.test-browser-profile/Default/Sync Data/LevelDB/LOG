@@ -1,3 +1,3 @@
-2025/06/20-22:13:58.426 1d64d Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Sync Data/LevelDB/MANIFEST-000001
-2025/06/20-22:13:58.427 1d64d Recovering log #3
-2025/06/20-22:13:58.427 1d64d Reusing old log /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Sync Data/LevelDB/000003.log 
+2025/06/20-22:26:34.132 206f6 Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Sync Data/LevelDB/MANIFEST-000001
+2025/06/20-22:26:34.132 206f6 Recovering log #3
+2025/06/20-22:26:34.132 206f6 Reusing old log /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Sync Data/LevelDB/000003.log 

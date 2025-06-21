@@ -23,12 +23,17 @@ This guide ensures all platforms (Web/PWA, Android, iOS) are deployed from the s
 - Requires confirmation
 - No mobile builds
 
-### 3. Mobile Only (Android & iOS)
+### 3. Demo Only (Web)
+- Deploys to https://stackmap.app/demo/
+- Preserves demo-specific content (Mushroom Kingdom theme)
+- Backs up current demo before updating
+
+### 4. Mobile Only (Android & iOS)
 - Builds debug APK for Android
 - Builds iOS app (macOS only)
 - Copies from root → www → native platforms
 
-### 4. Everything (Full Pipeline)
+### 5. Everything (Full Pipeline)
 - Increments build number
 - Deploys to staging
 - Confirms and deploys to production

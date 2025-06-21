@@ -4,6 +4,7 @@
   "lastDeployment": {
     "web": null,
     "web-staging": "2025-06-21T03:27:00Z",
+    "demo": null,
     "android": "2025-06-21T03:20:00Z",
     "ios": null
   },
