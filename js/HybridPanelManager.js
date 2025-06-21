@@ -1283,7 +1283,7 @@ class HybridPanelManager {
         // Update subtitle format: "Emoji Name • Day" with larger emoji
         const subtitle = document.getElementById('subtitle');
         if (subtitle) {
-            subtitle.innerHTML = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${currentUser.name} • ${dayText}`;
+            subtitle.innerHTML = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${dayText}`;
         }
     }
 
