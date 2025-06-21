@@ -445,12 +445,12 @@ class StackMapApp {
         
         const currentDay = this.appState.ui.currentDay || 'today';
         
-        // Title shows emoji + day format
-        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
-        let userTitle = `${currentUser.icon} ${dayText}`;
+        // Title remains customizable with 13-character limit
+        let userTitle = currentUser.customTitle || 'StackMap';
         
-        // Subtitle format: always "Emoji Name • Day"
-        const userSubtitle = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${currentUser.name} • ${dayText}`;
+        // Subtitle (pill) shows emoji + day format
+        const dayText = currentDay === 'today' ? 'Today' : 'Tomorrow';
+        const userSubtitle = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${dayText}`;
         
         // Update all title elements
         const mainTitle = document.getElementById('mainTitle');
@@ -460,8 +460,8 @@ class StackMapApp {
             mainTitle.textContent = userTitle;
             this.updateLogoVisibility(userTitle);
             
-            // Title is no longer editable since it's auto-generated
-            // this.setupTitleEditing(mainTitle);
+            // Make title editable in edit mode with 13-character limit
+            this.setupTitleEditing(mainTitle);
         }
         if (subtitle) {
             subtitle.innerHTML = userSubtitle;
