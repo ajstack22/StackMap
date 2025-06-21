@@ -3,7 +3,7 @@ const CONFIG = {
     // App version - update this when making significant changes
     APP_VERSION: '1.4.0',
     APP_BUILD: '1',
-    APP_BUILD_DATE: '2025-01-20',
+    APP_BUILD_DATE: '2025-06-21',
     
     MAX_TITLE_LENGTH: 13,
     MAX_DESCRIPTION_LENGTH: 50,
