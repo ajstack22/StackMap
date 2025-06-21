@@ -21,6 +21,12 @@ body.mobile-header-bottom {
     padding-bottom: 130px !important; /* Account for header height + some spacing */
 }
 
+/* Hide the fixed header shadow when header is at bottom */
+body.mobile-header-bottom .header-shadow,
+body.header-position-bottom .header-shadow {
+    display: none !important;
+}
+
 /* Move FABs to align with bottom header */
 body.mobile-header-bottom .floating-nav {
     top: auto !important;

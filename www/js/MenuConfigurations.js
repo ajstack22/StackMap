@@ -36,9 +36,10 @@ window.MenuConfigurations = {
                 type: 'custom',
                 label: 'Header Position',
                 render: function(state, menuSystem) {
-                    // Show for all users, not just mobile
+                    // Show for all users on all devices
                     if (!window.mobileUX) {
-                        return '';
+                        // Initialize mobileUX if it doesn't exist yet
+                        return '<div class="preference-item">Header position toggle loading...</div>';
                     }
                     
                     return window.mobileUX.createHeaderPositionToggle();
