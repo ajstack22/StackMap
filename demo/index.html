@@ -3,131 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StackMap">
     <title>StackMap - Mushroom Kingdom Demo</title>
     
-    <!-- All CSS files -->
-    <link rel="stylesheet" href="../styles/index.css">
-    <link rel="stylesheet" href="../styles/base.css">
-    <link rel="stylesheet" href="../styles/variables.css">
-    <link rel="stylesheet" href="../styles/layout.css">
-    <link rel="stylesheet" href="../styles/cards.css">
-    <link rel="stylesheet" href="../styles/modals.css">
-    <link rel="stylesheet" href="../styles/forms.css">
-    <link rel="stylesheet" href="../styles/buttons.css">
-    <link rel="stylesheet" href="../styles/responsive.css">
-    <link rel="stylesheet" href="../styles/hybrid-panels.css">
-    <link rel="stylesheet" href="../styles/selectors.css">
-    <link rel="stylesheet" href="../styles/sync-modal.css">
-    <link rel="stylesheet" href="../styles/animations.css">
-    <link rel="stylesheet" href="../styles/celebrations.css">
-    <link rel="stylesheet" href="../styles/fab.css">
-    <link rel="stylesheet" href="../styles/draggable-drawer.css">
-    <link rel="stylesheet" href="../styles/splash-screen.css">
-    <link rel="stylesheet" href="../styles/utilities.css">
+    <!-- Security Headers -->
+    <meta http-equiv="Content-Security-Policy" content="
+        default-src 'self';
+        script-src 'self' 'unsafe-inline' https://apis.google.com https://accounts.google.com;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com;
+        font-src 'self' https://fonts.gstatic.com;
+        img-src 'self' data: blob: https:;
+        connect-src 'self' https://www.googleapis.com https://oauth2.googleapis.com https://apis.google.com https://content.googleapis.com https://www.google.com https://accounts.google.com;
+        frame-src 'self' https://accounts.google.com https://content.googleapis.com https://oauth2.googleapis.com;
+        child-src 'self' https://accounts.google.com https://content.googleapis.com https://oauth2.googleapis.com;
+        base-uri 'self';
+        form-action 'self';
+        object-src 'none';
+    ">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="../manifest.json">
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="128x128" href="../icon-128.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="../icon-96.png">
+    <link rel="icon" type="image/png" sizes="72x72" href="../icon-72.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="../icon-192.png">
+    
+    <!-- Theme -->
+    <meta name="theme-color" content="#667eea">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StackMap">
+    
+    <!-- Enhanced PWA Support -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="StackMap">
+    <meta name="msapplication-TileColor" content="#667eea">
+    <meta name="msapplication-TileImage" content="../icon-144.png">
+    <meta name="msapplication-config" content="../browserconfig.xml">
+    
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     
+    <!-- Styles -->
+    <link rel="stylesheet" href="../styles/index.css?v=20250618-2">
+    <link rel="stylesheet" href="../styles/material-icons-fix.css">
+    <link rel="stylesheet" href="../styles/material-icons-android.css">
+    <link rel="stylesheet" href="../styles/splash-screen.css">
+    <link rel="stylesheet" href="../styles/draggable-drawer.css">
+    <link rel="stylesheet" href="../styles/hybrid-panels.css">
+    <link rel="stylesheet" href="../styles/celebrations.css">
+    <link rel="stylesheet" href="../styles/sync-modal.css">
+    <link rel="stylesheet" href="../styles/mobile-footer-header.css">
+    
+    <!-- Demo-specific styles -->
     <style>
-        /* Adjust positioning for demo banner */
-        .floating-nav {
-            top: 60px !important; /* 20px original + 40px banner */
-        }
+        /* Demo banner accommodation styles */
+        .header-wrapper { top: 40px !important; }
+        .main-container { padding-top: calc(var(--header-height) + 40px) !important; }
+        .side-panel { top: 40px !important; height: calc(100% - 40px) !important; }
+        .floating-nav { top: 60px !important; }
+        .day-selector-backdrop { top: 40px !important; height: calc(100% - 40px) !important; }
         
-        #main-content {
-            padding-top: 40px !important; /* Extra spacing for demo banner */
-            position: relative;
-            z-index: 1; /* Below header */
-        }
+        /* Support for mobile header at bottom */
+        body.mobile-header-bottom .header-wrapper { bottom: 0 !important; top: auto !important; }
+        body.mobile-header-bottom .main-container { padding-top: 40px !important; padding-bottom: var(--header-height) !important; }
         
-        /* Ensure card gaps are preserved */
-        .main-container {
-            gap: 20px !important; /* Ensure gaps between cards */
-        }
-        
-        /* Ensure no card visibility between banner and header */
-        .header-wrapper {
-            background: var(--background-gradient-start, #667eea); /* Solid background to hide cards */
-            overflow: visible !important; /* Ensure shadow is visible */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; /* Ensure shadow shows */
-        }
-        
-        
-        /* Adjust side panels for demo banner */
-        .side-panel {
-            top: 40px !important; /* Push down by banner height */
-            height: calc(100vh - 40px) !important; /* Reduce height by banner height */
-        }
-        
-        /* Mobile-specific adjustments for side panels */
         @media (max-width: 768px) {
-            .side-panel {
-                /* On mobile, panels slide up from bottom, so we need different calculation */
-                top: auto !important;
-                bottom: 0 !important;
-                height: calc(100vh - 40px) !important; /* Still reduce total height */
-                max-height: calc(100vh - 40px) !important;
-            }
-            
-            /* When panel is open on mobile */
-            .side-panel.open {
-                transform: translateY(0) !important;
-            }
-            
-            /* Adjust header wrapper on mobile to account for banner */
-            .header-wrapper {
-                top: 40px !important; /* Push down by banner height */
-            }
-            
-            /* Adjust main content padding on mobile */
-            #main-content {
-                padding-top: 60px !important; /* Extra padding for mobile layout */
-            }
-            
-            /* Make banner text smaller on mobile */
-            .demo-banner {
-                font-size: 12px !important;
-                padding: 6px 3px !important;
-            }
-            
-            .demo-banner a {
-                font-size: 11px !important;
-            }
+            .side-panel--slide-bottom { top: 40px !important; height: calc(100% - 40px) !important; }
+            .demo-banner { font-size: 12px !important; padding: 6px 5px !important; }
         }
         
-        /* Very small screens */
-        @media (max-width: 360px) {
-            .demo-banner {
-                font-size: 11px !important;
-            }
-            
-            .demo-banner a {
-                font-size: 10px !important;
-            }
-        }
-        
-        /* Ensure backdrop also accounts for banner */
-        .backdrop {
-            top: 40px !important;
-            height: calc(100% - 40px) !important;
-        }
-        
-        /* Also adjust the FAB buttons */
-        .fab {
-            /* FABs are already positioned correctly, but ensure they're below banner */
+        @media (max-width: 480px) {
+            .demo-banner { font-size: 11px !important; }
+            .demo-banner a { font-size: 10px !important; }
         }
     </style>
+    
+    <!-- Environment Configuration (load before other scripts) -->
+    <script src="../env-loader.js"></script>
+    
+    <!-- Demo Mode Flag -->
+    <script>
+        window.DEMO_MODE = true;
+    </script>
+    
+    <!-- Development Tools (only loaded in dev environments) -->
+    <script>
+        // Load development tools if in development environment
+        if (window.location.hostname === 'localhost' || 
+            window.location.hostname.includes('qual') || 
+            window.location.search.includes('dev=1')) {
+            document.write('<script src="../dev-tools.js"><\/script>');
+        }
+    </script>
+    
+    <!-- Google APIs - Load asynchronously to prevent blocking -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
 </head>
 <body>
-    <!-- Demo Mode Banner -->
+    <!-- Demo Banner -->
     <div class="demo-banner" style="background-color: #f59e0b; color: white; text-align: center; padding: 8px 5px; font-weight: bold; position: fixed; top: 0; left: 0; right: 0; z-index: 10000; height: 40px; box-sizing: border-box; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px;">
         <span style="white-space: nowrap;">🎮 DEMO - Mushroom Kingdom 🍄</span>
         <a href="#" onclick="localStorage.removeItem('stackMapDemoMode'); window.location.replace('/'); return false;" style="color: white; text-decoration: underline; cursor: pointer; white-space: nowrap; font-size: 12px;">Start Using StackMap</a>
     </div>
-    
     <!-- Header Wrapper for unified shadow -->
-    <div class="header-wrapper" id="headerWrapper" style="top: 40px; z-index: 9999;">
+    <div class="header-wrapper" id="headerWrapper">
         <!-- Unified Application Header -->
         <header class="app-header" role="banner" id="appHeader">
             <div class="header-content">
@@ -149,334 +136,318 @@
         </header>
     </div>
     
+    
     <!-- Main Content Area -->
     <main id="main-content" role="main" aria-label="Task routine">
         <div class="main-container" id="mainContainer" role="region" aria-label="Task cards">
             <!-- Activity cards will be rendered here -->
         </div>
     </main>
-
+    
+    
+    
+    <!-- Welcome Splash Screen -->
+    <div id="welcomeSplash" class="welcome-splash hidden" role="dialog" 
+         aria-modal="true" aria-labelledby="welcome-title">
+        <div class="welcome-content" style="padding: 20px; max-width: 420px;">
+            <div class="welcome-header" style="margin-bottom: 16px;">
+                <div class="welcome-logo" aria-hidden="true" style="width: 48px; height: 48px; margin: 0 auto 12px auto;">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                        <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
+                        <rect x="7" y="10" width="18" height="2.5" fill="#4a90e2" rx="1.25"/>
+                        <rect x="7" y="14.5" width="18" height="2.5" fill="#4a90e2" rx="1.25"/>
+                        <rect x="7" y="19" width="18" height="5" fill="#2c5aa0" rx="2.5"/>
+                    </svg>
+                </div>
+                <h2 id="welcome-title" style="margin: 0; font-size: 1.4rem;">Welcome to StackMap!</h2>
+            </div>
+            
+            <div class="welcome-message" style="margin-bottom: 16px;">
+                <p style="margin: 0 0 8px 0; font-size: 0.9rem; line-height: 1.4;"><strong>StackMap helps families create visual routines</strong> that make daily tasks easier and more fun for everyone, especially children with special needs.</p>
+            </div>
+            
+            <div class="welcome-instructions" style="margin-bottom: 16px;">
+                <div class="welcome-step" style="padding: 8px; margin-bottom: 8px;">
+                    <div class="welcome-step-number" style="width: 20px; height: 20px; font-size: 0.75rem; margin-right: 8px;">1</div>
+                    <p style="margin: 0; font-size: 0.85rem; line-height: 1.3;"><strong>Complete tasks:</strong> Tap cards to mark them done. Watch for celebrations!</p>
+                </div>
+                
+                <div class="welcome-step" style="padding: 8px; margin-bottom: 8px;">
+                    <div class="welcome-step-number" style="width: 20px; height: 20px; font-size: 0.75rem; margin-right: 8px;">2</div>
+                    <p style="margin: 0; font-size: 0.85rem; line-height: 1.3;"><strong>Customize colors:</strong> Use the <span class="btn--floating-demo" style="width: 24px !important; height: 24px !important;"><span class="material-icons" style="font-size: 16px !important;">palette</span></span> button to change colors.</p>
+                </div>
+                
+                <div class="welcome-step" style="padding: 8px; margin-bottom: 8px;">
+                    <div class="welcome-step-number" style="width: 20px; height: 20px; font-size: 0.75rem; margin-right: 8px;">3</div>
+                    <p style="margin: 0; font-size: 0.85rem; line-height: 1.3;"><strong>Edit tasks:</strong> Adults can tap <span class="btn--floating-demo" style="width: 24px !important; height: 24px !important;"><span class="material-icons" style="font-size: 16px !important;">edit</span></span> to enter edit mode.</p>
+                </div>
+            </div>
+            
+            <div class="welcome-actions" style="margin-top: 16px;">
+                <button class="btn btn--large btn--primary" onclick="appInstance.dismissWelcome()" style="padding: 10px 24px; font-size: 1rem;">
+                    Let's Get Started!
+                </button>
+                <div style="margin-top: 12px; text-align: center;">
+                    <a href="../privacy.html" style="color: #667eea; font-size: 0.75rem; text-decoration: underline;">Privacy</a>
+                    <span style="color: #999; margin: 0 6px;">•</span>
+                    <a href="https://stackmap.app/terms" target="_blank" style="color: #667eea; font-size: 0.75rem; text-decoration: underline;">Terms</a>
+                    <span style="color: #999; margin: 0 6px;">•</span>
+                    <a href="mailto:support@stackmap.app" style="color: #667eea; font-size: 0.75rem; text-decoration: underline;">Support</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Hidden File Input for Import -->
     <input type="file" id="fileInput" accept=".json" style="display: none;">
-
-    <!-- Scripts -->
-    <script>
-        // Set demo mode flag first
-        window.DEMO_MODE = true;
-        
-        // SYNCHRONOUSLY load demo data before anything else
-        // This blocks all other scripts from loading until demo data is set
-        (function() {
-            // Only clear demo-specific data, not all localStorage
-            localStorage.removeItem('stackMapData-demo');
-            localStorage.removeItem('stackMapDemoMode');
-            // Clear demo-specific UI preferences
-            localStorage.removeItem('stackmap-splash-seen-demo');
-            localStorage.removeItem('stackmap-welcome-seen-demo');
-            localStorage.removeItem('stackmap-drawer-preference-demo');
-            
-            const xhr = new XMLHttpRequest();
-            xhr.open('GET', '../demo-mushroom-kingdom.json', false); // false = synchronous
-            xhr.send();
-            
-            if (xhr.status === 200) {
-                const demoData = JSON.parse(xhr.responseText);
-                // Use a demo-specific key to avoid contaminating main app
-                localStorage.setItem('stackMapData-demo', JSON.stringify(demoData));
-                localStorage.setItem('stackMapDemoMode', 'true');
-                console.log('Demo data loaded successfully. Current user:', demoData.users?.currentUserId);
-                console.log('User profiles:', Object.keys(demoData.users?.profiles || {}));
-            } else {
-                console.error('Failed to load demo data');
-            }
-        })();
-    </script>
     
-    <!-- Load all required scripts in order -->
+    <!-- Load JavaScript files in dependency order -->
     <script src="../utils/security.js"></script>
     <script src="../config/constants.js"></script>
     <script src="../config/themes.js"></script>
     <script src="../data/emoji-list.js"></script>
     <script src="../data/emoji-names.js"></script>
-    <script src="../data/default-activities.js"></script>
-    <script src="../state.js"></script>
+    <script src="../data/default-activities.js"></script> 
+    <script src="../state.js?v=1.4.0"></script>
     <script src="../components.js"></script>
     <script src="../renderer.js"></script>
     <script src="../drive-sync.js"></script>
     
     <!-- Load managers -->
     <script src="../js/DynamicMenuSystem.js"></script>
-    <script src="../js/MenuConfigurations.js"></script>
-    <script src="../js/HybridPanelManager.js"></script>
+    <script src="../js/MenuConfigurations.js?v=1.3.9"></script>
+    <script src="../js/HybridPanelManager.js?v=1.4.3"></script>
     <script src="../js/CelebrationManager.js"></script>
-    <script src="../js/mobile-ux-fixes.js"></script>
     
     <!-- Load modern components -->
     <script src="../components/ModernUserSelector.js"></script>
     <script src="../components/ModernDaySelector.js"></script>
     <script src="../components/DraggableDrawer.js"></script>
     
+    
     <!-- Main App -->
     <script src="../app/StackMapApp.js"></script>
     
-    <!-- Google APIs -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    <script src="https://accounts.google.com/gsi/client"></script>
+    <!-- Mobile UX Fixes -->
+    <script src="../js/mobile-ux-fixes.js"></script>
     
-    <!-- Initialize exactly like main app -->
+    <!-- Material Icons Fallback for Android -->
+    <!-- <script src="../js/material-icons-fallback.js"></script> -->
+    <script src="../js/material-icons-safe.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('../sw.js').then((registration) => {
+                    // ServiceWorker registered successfully
+                    
+                    // Check for updates every hour
+                    setInterval(() => {
+                        registration.update();
+                    }, 3600000);
+                    
+                    // Handle updates
+                    registration.addEventListener('updatefound', () => {
+                        const newWorker = registration.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New content available, show update prompt
+                                console.log('[PWA] New content available');
+                                if (window.appInstance && window.appInstance.showUpdatePrompt) {
+                                    window.appInstance.showUpdatePrompt();
+                                }
+                            }
+                        });
+                    });
+                }).catch((error) => {
+                    console.log('[PWA] ServiceWorker registration failed:', error);
+                });
+            });
+        }
+    </script>
+    
+    <!-- App Initialization -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             try {
-                window.appInstance = new StackMapApp();
-                window.hybridPanelManager = new HybridPanelManager(window.appInstance);
-                window.appInstance.init();
+                // Clean up demo mode if we're coming from the demo
+                if (typeof StackMapApp !== 'undefined' && StackMapApp.cleanupDemoMode) {
+                    StackMapApp.cleanupDemoMode();
+                }
                 
-                // Show demo welcome popup after a short delay
-                setTimeout(() => {
-                    showDemoWelcome();
-                }, 500);
+                window.appInstance = new StackMapApp();
+                
+                // Initialize hybrid panel system (replaces old PreferencesManager)
+                window.hybridPanelManager = new HybridPanelManager(window.appInstance);
+                
+                // Add iOS PWA-specific initialization if needed
+                if (window.hybridPanelManager && window.hybridPanelManager.isIOSPWA) {
+                    // iOS PWA mode - navigation optimized
+                    
+                    // Add iOS PWA-specific initialization if needed
+                    window.appInstance.initializeIOSPWAFeatures();
+                }
+                
+                // Add debug function for inspecting user data
+                window.debugUsers = function() {
+                    console.log('Current users:', window.appInstance.appState.users);
+                    console.log('Current user:', window.appInstance.appState.getCurrentUser());
+                };
+                
+                // Add splash screen test function
+                window.testSplashScreen = function() {
+                    // Reset splash seen flag
+                    localStorage.removeItem('stackmap-splash-seen');
+                    
+                    // Reset user to default name
+                    const currentUser = window.appInstance.appState.getCurrentUser();
+                    currentUser.name = 'StackMap User';
+                    currentUser.icon = '👤';
+                    currentUser.customTitle = 'StackMap User';
+                    window.appInstance.appState.settings.title = 'StackMap User';
+                    window.appInstance.appState.settings.isDefaultTitle = true;
+                    
+                    // Save and reload
+                    window.appInstance.appState._triggerSave();
+                    
+                    console.log('✅ Reset to default user. Refreshing to show splash screen...');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 500);
+                };
+                
+                // Add helper to fix stuck drawer
+                window.fixDrawer = function() {
+                    const drawerHandle = document.getElementById('drawerHandle');
+                    const drawerExtension = document.getElementById('drawerExtension');
+                    const appHeader = document.getElementById('appHeader');
+                    const headerWrapper = document.getElementById('headerWrapper');
+                    const backdrop = document.querySelector('.drawer-backdrop');
+                    
+                    // Force close all drawer elements
+                    drawerHandle?.setAttribute('aria-expanded', 'false');
+                    drawerExtension?.setAttribute('aria-hidden', 'true');
+                    drawerExtension?.classList.remove('open');
+                    appHeader?.classList.remove('drawer-open');
+                    headerWrapper?.classList.remove('drawer-open');
+                    backdrop?.classList.remove('visible');
+                    document.body.classList.remove('drawer-active');
+                    
+                    console.log('Drawer state reset. Click handle to open again.');
+                };
             } catch (error) {
-                console.error('Failed to initialize app:', error);
+                console.error('Failed to initialize StackMap:', error);
+                
+                const container = document.getElementById('mainContainer');
+                if (container) {
+                    container.innerHTML = `
+                        <div class="card" style="text-align: center; padding: 40px;">
+                            <h2 style="color: #e74c3c;">Oops! Something went wrong</h2>
+                            <p style="color: #666;">StackMap failed to start. Please refresh the page and try again.</p>
+                            <button class="btn btn--primary" onclick="window.location.reload()">
+                                Refresh Page
+                            </button>
+                        </div>
+                    `;
+                }
             }
         });
-        
-        function showDemoWelcome() {
-            // Check if user has already seen the demo welcome
-            if (localStorage.getItem('stackmap-demo-welcome-seen') === 'true') {
-                return;
-            }
-            
-            // Create welcome modal
-            const modal = document.createElement('div');
-            modal.className = 'demo-welcome-modal';
-            modal.innerHTML = `
-                <div class="demo-welcome-backdrop"></div>
-                <div class="demo-welcome-content">
-                    <div class="demo-welcome-header">
-                        <h2 style="display: flex; align-items: center; justify-content: center; gap: 8px; white-space: nowrap;">
-                            <span>🎮 Welcome to the</span>
-                            <span style="display: inline-flex; align-items: center; gap: 6px;">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" style="width: 1em; height: 1em; vertical-align: text-bottom;">
-                                    <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(255,255,255,0.7)" stroke-width="1"/>
-                                    <rect x="7" y="10" width="18" height="2.5" fill="#f59e0b" rx="1.25"/>
-                                    <rect x="7" y="14.5" width="18" height="2.5" fill="#f59e0b" rx="1.25"/>
-                                    <rect x="7" y="19" width="18" height="5" fill="#dc7a00" rx="2.5"/>
-                                </svg>
-                                StackMap
-                            </span>
-                            <span>Demo!</span>
-                        </h2>
-                    </div>
-                    
-                    <div class="demo-welcome-body">
-                        <p><strong>StackMap makes daily routines visual, manageable, and fun for everyone!</strong></p>
-                        
-                        <div class="demo-welcome-section">
-                            <h3>🎯 Who Uses StackMap?</h3>
-                            <ul>
-                                <li><strong>Children with special needs</strong> - Visual schedules for therapy and daily skills</li>
-                                <li><strong>Families</strong> - Morning routines, chores, and homework tracking</li>
-                                <li><strong>Teachers</strong> - Classroom schedules and student activities</li>
-                                <li><strong>Adults with ADHD</strong> - Visual task management and routine building</li>
-                                <li><strong>Anyone</strong> - Who benefits from visual organization and routine tracking!</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="demo-welcome-section">
-                            <h3>🍄 Meet the Mushroom Kingdom Crew</h3>
-                            <p>Our demo features therapeutic schedules for Mario and friends. Each character has:</p>
-                            <ul>
-                                <li>Daily activities and routines</li>
-                                <li>Pinned tasks for important habits</li>
-                                <li>Tomorrow's activities for planning ahead</li>
-                                <li>Personal themes and colors</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="demo-welcome-section">
-                            <h3>🎯 Try These Features</h3>
-                            <ul>
-                                <li><strong>Tap cards</strong> to mark activities complete</li>
-                                <li><strong>Switch users</strong> using the dropdown menu</li>
-                                <li><strong>Toggle between Today/Tomorrow</strong> to see different activities</li>
-                                <li><strong>Enter Edit Mode</strong> (Player 1 mode) to customize activities</li>
-                                <li><strong>Change themes</strong> with the palette button</li>
-                            </ul>
-                        </div>
-                        
-                        <div class="demo-welcome-section">
-                            <h3>✨ Have Fun Exploring!</h3>
-                            <p>Take StackMap for a test drive! Whether you're a parent, teacher, therapist, or just someone who loves visual organization - see how StackMap can work for you. This demo won't affect your real data, so experiment freely!</p>
-                        </div>
-                    </div>
-                    
-                    <div class="demo-welcome-footer">
-                        <button class="demo-welcome-button" onclick="closeDemoWelcome()">
-                            Let's Go! 🚀
-                        </button>
-                        <div style="margin-top: 12px;">
-                            <a href="../support.html" target="_blank" style="color: #f59e0b; font-size: 0.85rem; text-decoration: underline;">Support StackMap</a>
-                            <span style="color: #ccc; margin: 0 8px;">•</span>
-                            <a href="mailto:support@stackmap.app" style="color: #f59e0b; font-size: 0.85rem; text-decoration: underline;">Contact Us</a>
-                        </div>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(modal);
-            
-            // Add styles
-            const style = document.createElement('style');
-            style.textContent = `
-                .demo-welcome-modal {
-                    position: fixed;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    z-index: 10001;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    padding: 20px;
-                }
-                
-                .demo-welcome-backdrop {
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    right: 0;
-                    bottom: 0;
-                    background: rgba(0, 0, 0, 0.7);
-                    z-index: 1;
-                }
-                
-                .demo-welcome-content {
-                    position: relative;
-                    background: white;
-                    border-radius: 16px;
-                    max-width: 500px;
-                    width: 100%;
-                    max-height: 90vh;
-                    overflow-y: auto;
-                    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-                    z-index: 2;
-                }
-                
-                .demo-welcome-header {
-                    background: #f59e0b;
-                    color: white;
-                    padding: 24px;
-                    border-radius: 16px 16px 0 0;
-                    text-align: center;
-                }
-                
-                .demo-welcome-header h2 {
-                    margin: 0;
-                    font-size: 1.5rem;
-                    font-weight: 700;
-                }
-                
-                .demo-welcome-body {
-                    padding: 24px;
-                }
-                
-                .demo-welcome-body p {
-                    margin: 0 0 16px 0;
-                    line-height: 1.5;
-                    color: #333;
-                }
-                
-                .demo-welcome-section {
-                    margin-bottom: 24px;
-                }
-                
-                .demo-welcome-section:last-child {
-                    margin-bottom: 0;
-                }
-                
-                .demo-welcome-section h3 {
-                    margin: 0 0 12px 0;
-                    color: #f59e0b;
-                    font-size: 1.1rem;
-                }
-                
-                .demo-welcome-section ul {
-                    margin: 0;
-                    padding-left: 24px;
-                }
-                
-                .demo-welcome-section li {
-                    margin-bottom: 8px;
-                    line-height: 1.4;
-                    color: #555;
-                }
-                
-                .demo-welcome-footer {
-                    padding: 24px;
-                    text-align: center;
-                    border-top: 1px solid #eee;
-                }
-                
-                .demo-welcome-button {
-                    background: #f59e0b;
-                    color: white;
-                    border: none;
-                    padding: 12px 32px;
-                    font-size: 1.1rem;
-                    font-weight: 600;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    transition: all 0.2s ease;
-                }
-                
-                .demo-welcome-button:hover {
-                    background: #dc7a00;
-                    transform: translateY(-1px);
-                    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
-                }
-                
-                @media (max-width: 480px) {
-                    .demo-welcome-modal {
-                        padding: 0;
-                    }
-                    
-                    .demo-welcome-content {
-                        max-width: 100%;
-                        height: 100%;
-                        max-height: 100%;
-                        border-radius: 0;
-                    }
-                    
-                    .demo-welcome-header {
-                        border-radius: 0;
-                    }
-                    
-                    .demo-welcome-header h2 {
-                        font-size: 1.2rem;
-                        gap: 6px !important;
-                    }
-                }
-            `;
-            document.head.appendChild(style);
-        }
-        
-        function closeDemoWelcome() {
-            // Mark as seen
-            localStorage.setItem('stackmap-demo-welcome-seen', 'true');
-            
-            // Remove modal
-            const modal = document.querySelector('.demo-welcome-modal');
-            if (modal) {
-                modal.remove();
-            }
-        }
-        
-        // Add function to reset demo welcome (for testing)
-        window.resetDemoWelcome = function() {
-            localStorage.removeItem('stackmap-demo-welcome-seen');
-            console.log('Demo welcome reset. Refresh to see it again.');
-        };
     </script>
+    
+    <!-- First Time Splash Screen -->
+    <div id="splashScreen" class="splash-screen hidden">
+        <!-- Page 1: Welcome/Intro -->
+        <div class="splash-content splash-page-1" id="splashPage1">
+            <!-- Logo -->
+            <div class="splash-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                    <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(102,126,234,0.3)" stroke-width="1"/>
+                    <rect x="7" y="10" width="18" height="2.5" fill="#667eea" rx="1.25"/>
+                    <rect x="7" y="14.5" width="18" height="2.5" fill="#667eea" rx="1.25"/>
+                    <rect x="7" y="19" width="18" height="5" fill="#5563d1" rx="2.5"/>
+                </svg>
+            </div>
+            
+            <!-- Welcome message -->
+            <div class="splash-welcome">
+                <h1>Welcome to StackMap!</h1>
+                <p><strong>StackMap helps families create visual routines</strong> that make daily tasks easier and more fun for everyone, especially children with special needs.</p>
+            </div>
+            
+            <!-- Instructions -->
+            <div class="splash-instructions">
+                <div class="splash-step">
+                    <div class="splash-step-number">1</div>
+                    <p><strong>Complete tasks:</strong> Tap cards to mark them done. Watch for celebrations!</p>
+                </div>
+                
+                <div class="splash-step">
+                    <div class="splash-step-number">2</div>
+                    <p><strong>Customize colors:</strong> Use the <span class="btn--floating-demo"><span class="material-icons">palette</span></span> button to change colors.</p>
+                </div>
+                
+                <div class="splash-step">
+                    <div class="splash-step-number">3</div>
+                    <p><strong>Edit tasks:</strong> Adults can tap <span class="btn--floating-demo"><span class="material-icons">settings</span></span> to manage activities.</p>
+                </div>
+            </div>
+            
+            <!-- Next button -->
+            <button type="button" class="splash-start-button" id="splashNextButton">
+                Next
+            </button>
+        </div>
+        
+        <!-- Page 2: User Setup -->
+        <div class="splash-content splash-page-2 hidden" id="splashPage2">
+            <!-- Logo -->
+            <div class="splash-logo">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                    <circle cx="16" cy="16" r="15" fill="rgba(255,255,255,0.9)" stroke="rgba(102,126,234,0.3)" stroke-width="1"/>
+                    <rect x="7" y="10" width="18" height="2.5" fill="#667eea" rx="1.25"/>
+                    <rect x="7" y="14.5" width="18" height="2.5" fill="#667eea" rx="1.25"/>
+                    <rect x="7" y="19" width="18" height="5" fill="#5563d1" rx="2.5"/>
+                </svg>
+            </div>
+            
+            <!-- Setup message -->
+            <div class="splash-welcome">
+                <h2>Let's personalize your experience!</h2>
+                <p>Tell us your name and pick an emoji that represents you.</p>
+            </div>
+            
+            <!-- Name and emoji input -->
+            <div class="splash-form">
+                <div class="splash-input-group">
+                    <label for="splashUserName">What's your name?</label>
+                    <input type="text" id="splashUserName" placeholder="Enter your name" maxlength="50" autocomplete="off">
+                </div>
+                
+                <div class="splash-emoji-group">
+                    <label>Choose your emoji</label>
+                    <div class="splash-emoji-picker">
+                        <div class="splash-emoji-options" id="splashEmojiOptions">
+                            <!-- Emoji options will be populated by JavaScript -->
+                        </div>
+                        <button type="button" class="splash-emoji-refresh" id="splashEmojiRefresh" aria-label="Show more emojis">
+                            <span class="material-icons">refresh</span>
+                            More emojis
+                        </button>
+                    </div>
+                    <input type="hidden" id="splashUserEmoji" value="👤">
+                </div>
+                
+                <div class="splash-button-group">
+                    <button type="button" class="splash-back-button" id="splashBackButton">
+                        Back
+                    </button>
+                    <button type="button" class="splash-start-button" id="splashStartButton" disabled>
+                        Let's Get Started!
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
