@@ -1,2 +1,3 @@
-2025/06/20-21:25:57.775 ef86 Creating DB /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Local Storage/leveldb since it was missing.
-2025/06/20-21:25:57.779 ef86 Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Local Storage/leveldb/MANIFEST-000001
+2025/06/20-22:08:15.768 1c44c Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Local Storage/leveldb/MANIFEST-000001
+2025/06/20-22:08:15.770 1c44c Recovering log #3
+2025/06/20-22:08:15.770 1c44c Reusing old log /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Local Storage/leveldb/000003.log 

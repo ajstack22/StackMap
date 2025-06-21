@@ -1,2 +1,3 @@
-2025/06/20-21:25:57.741 ef58 Creating DB /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Site Characteristics Database since it was missing.
-2025/06/20-21:25:57.746 ef58 Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Site Characteristics Database/MANIFEST-000001
+2025/06/20-22:08:15.737 1c420 Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Site Characteristics Database/MANIFEST-000001
+2025/06/20-22:08:15.737 1c420 Recovering log #3
+2025/06/20-22:08:15.738 1c420 Reusing old log /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/Site Characteristics Database/000003.log 

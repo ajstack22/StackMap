@@ -1,3 +1,3 @@
-2025/06/20-21:47:03.119 1420d Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/shared_proto_db/MANIFEST-000001
-2025/06/20-21:47:03.119 1420d Recovering log #3
-2025/06/20-21:47:03.119 1420d Reusing old log /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/shared_proto_db/000003.log 
+2025/06/20-22:13:59.100 1d65b Reusing MANIFEST /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/shared_proto_db/MANIFEST-000001
+2025/06/20-22:13:59.101 1d65b Recovering log #3
+2025/06/20-22:13:59.101 1d65b Reusing old log /Users/adamstack/StackMap/StackMap/tests/.test-browser-profile/Default/shared_proto_db/000003.log 
