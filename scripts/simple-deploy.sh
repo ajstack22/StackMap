@@ -25,7 +25,7 @@ EOF
     ssh stackmap-cpanel << 'EOF'
         cd ~/public_html
         # Use rsync to make prod identical to qual (excluding .git)
-        rsync -av --delete --exclude='.git' --exclude='error_log' --exclude='.htaccess' qual/ .
+        rsync -av --exclude='.git' --exclude='error_log' --exclude='.htaccess' --exclude='qual' --exclude='demo' qual/ .
         echo "✅ Production updated from qual"
 EOF
 

@@ -1793,6 +1793,18 @@ class StackMapApp {
             return;
         }
         
+        // Check if user still has default name
+        const currentUser = this.appState.getCurrentUser();
+        const hasDefaultName = currentUser.name === 'StackMap User' || currentUser.name === 'You';
+        
+        // If user has default name, they should go through the full flow
+        // regardless of what flags are set - this ensures consistent experience
+        if (hasDefaultName) {
+            // Clear the welcome seen flag to show full flow
+            localStorage.removeItem(this.getStorageKey('stackmap-welcome-seen'));
+            localStorage.removeItem(this.getStorageKey('stackmap-splash-seen'));
+        }
+        
         // Check if welcome splash has been seen
         const hasSeenWelcome = localStorage.getItem(this.getStorageKey('stackmap-welcome-seen'));
         
@@ -1804,12 +1816,10 @@ class StackMapApp {
             return;
         }
         
-        // Check if user still has default name for the setup splash
-        const currentUser = this.appState.getCurrentUser();
-        const hasDefaultName = currentUser.name === 'StackMap User' || currentUser.name === 'You';
+        // Check if setup splash has been seen
         const hasSeenSplash = localStorage.getItem(this.getStorageKey('stackmap-splash-seen'));
         
-        if (hasDefaultName && !hasSeenSplash) {
+        if (!hasSeenSplash) {
             this.showSplashScreen();
         }
     }

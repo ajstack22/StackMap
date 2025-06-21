@@ -211,12 +211,12 @@ window.MenuConfigurations = {
                                     <span style="font-size: 0.75rem;">Build ${CONFIG.APP_BUILD_DATE || '2025-06-15'}</span>
                                 </div>
                                 <div style="margin-top: 12px;">
-                                    <a href="#" onclick="hybridPanelManager.showHelpPrivacy(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
+                                    <a href="/privacy.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
                                         Help & Privacy
                                     </a>
                                 </div>
                                 <div style="margin-top: 8px;">
-                                    <a href="#" onclick="hybridPanelManager.showSupportUs(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
+                                    <a href="/support.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
                                         ❤️ Support StackMap
                                     </a>
                                 </div>
