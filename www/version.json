@@ -3,8 +3,8 @@
   "build": 1,
   "lastDeployment": {
     "web": null,
-    "web-staging": null,
-    "android": null,
+    "web-staging": "2025-06-21T03:27:00Z",
+    "android": "2025-06-21T03:20:00Z",
     "ios": null
   },
   "changelog": {
