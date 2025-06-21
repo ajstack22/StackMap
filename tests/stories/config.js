@@ -1,12 +1,13 @@
 // Shared configuration for all story tests
 module.exports = {
     // Test server configuration
-    TEST_PORT: 5502,
+    TEST_PORT: process.env.TEST_PORT || 5502,
     TEST_HOST: 'localhost',
     
     // Helper to get test URL
     getTestUrl: (path = '') => {
-        return `http://localhost:5502${path}`;
+        const port = process.env.TEST_PORT || 5502;
+        return `http://localhost:${port}${path}`;
     },
     
     // Common timeouts

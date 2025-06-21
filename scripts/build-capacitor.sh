@@ -48,3 +48,9 @@ echo "Copying timer app..."
 cp -r timer www/
 
 echo "Build complete! Files copied to www directory."
+
+# Update version in copied files
+if [ -f "version.json" ]; then
+    cp version.json www/
+    echo "Version file copied to www directory."
+fi

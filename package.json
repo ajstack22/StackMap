@@ -12,7 +12,7 @@
     "test:browser": "node tests/run-tests.js",
     "test:watch": "nodemon tests/run-tests.js",
     "test:legacy": "node tests/test-runner-enhanced.js",
-    "serve": "npx http-server -p 5500",
+    "serve": "npx http-server -p 5502",
     "deploy": "npm run tollgate && bash scripts/deploy.sh",
     "deploy:force": "echo 'Use npm run deploy instead' && exit 1",
     "tollgate": "node scripts/deployment-tollgate.js",

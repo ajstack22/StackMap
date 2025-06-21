@@ -1,31 +1,59 @@
-# StackMap Deployment Guide - THE OFFICIAL METHOD
+# StackMap Deployment Guide - UNIFIED DEPLOYMENT METHOD
 
-**Last Updated**: June 19, 2025  
-**Status**: THIS IS THE ONLY APPROVED DEPLOYMENT METHOD
+**Last Updated**: January 20, 2025  
+**Status**: THIS IS THE OFFICIAL UNIFIED DEPLOYMENT METHOD
 
-## 🚨 CRITICAL: Read This First
+## 🚨 CRITICAL: Use Unified Deployment Script
 
-All other deployment documentation is **DEPRECATED**. This is the **ONLY** approved deployment process for StackMap.
+To prevent version fragmentation across platforms, **ALWAYS** use the unified deployment script:
+
+```bash
+./scripts/unified-deploy.sh
+```
+
+This ensures Web/PWA, Android, and iOS all have the same version.
 
 ## Deployment Flow
 
 ```
-Local Development → GitHub → [AUTO] → Qual (Staging) → [MANUAL] → Production
+Local Development → Unified Deploy Script → All Platforms
+                            ↓
+                    ┌───────┴────────┐
+                    │                │
+                Web/PWA          Mobile Apps
+                    │                │
+            ┌───────┴────┐    ┌─────┴─────┐
+         Staging    Production  Android   iOS
 ```
 
-## Automated Deployment Process
+## Quick Start - Unified Deployment
 
-### 🤖 Automatic: Push to Main = Deploy to Qual
-- Every push to `main` branch automatically deploys to staging
-- No manual steps required
-- GitHub Actions handles everything
-- Check status at: https://github.com/ajstack22/StackMap/actions
+### 🚀 Deploy Everything (Recommended)
+```bash
+./scripts/unified-deploy.sh
+# Select option 4: Everything
+```
 
-### 🔴 Manual: Deploy to Production
-1. Go to: https://github.com/ajstack22/StackMap/actions/workflows/deploy-production.yml
-2. Click "Run workflow"
-3. Type "deploy" to confirm
-4. Click "Run workflow"
+This will:
+1. Increment build number
+2. Deploy to staging
+3. Ask to deploy to production
+4. Build mobile apps
+5. Update version tracking
+
+### 🌐 Deploy Web Only
+```bash
+./scripts/unified-deploy.sh
+# Select option 1: Staging
+# or
+# Select option 2: Production
+```
+
+### 📱 Build Mobile Only
+```bash
+./scripts/unified-deploy.sh
+# Select option 3: Mobile
+```
 
 ## Step-by-Step Deployment Process
 
@@ -38,7 +66,13 @@ npm run serve
 python -m http.server 5500
 ```
 
-### 2. Push to GitHub
+### 2. Check Version Synchronization
+```bash
+# Verify all platforms have same version
+./scripts/verify-versions.sh
+```
+
+### 3. Push to GitHub
 ```bash
 # Commit your changes
 git add .
@@ -48,34 +82,50 @@ git commit -m "Your descriptive commit message"
 git push origin main
 ```
 
-### 3. Deploy to Qual (Staging)
+### 4. Run Unified Deployment
 ```bash
-# SSH into server and pull latest code
-ssh stackmap-cpanel "cd ~/public_html/qual && git pull origin main"
+# Run the unified deployment script
+./scripts/unified-deploy.sh
 
-# Or use this helper command from your local machine:
-./scripts/deploy-to-qual.sh
+# This will automatically:
+# - Run pre-deployment checks (including link verification)
+# - Check for broken links and missing methods
+# - Verify all critical files exist
+# - Run syntax checks
+# - Then prompt for deployment options:
+#   1) Staging (Web only)
+#   2) Production (Web only)  
+#   3) Mobile (Android & iOS)
+#   4) Everything (Recommended)
+#   5) Show status only
 ```
 
-### 4. Test on Qual
-- Visit https://stackmap.app/qual/
-- Test all functionality
-- Check browser console for errors
-- Test on mobile devices
+**Note**: The deployment script now includes comprehensive link checking to prevent broken navigation. If any links are broken, deployment will be blocked unless explicitly overridden.
 
-### 5. Deploy to Production
+### 5. Manual Deployment (Fallback Only)
+
+If the unified script fails, you can deploy manually:
+
+#### Deploy to Staging
 ```bash
-# Run the official deployment script
+./scripts/deploy-to-qual.sh
+# Or manually:
+ssh stackmap-cpanel "cd ~/public_html/qual && git pull origin main"
+```
+
+#### Deploy to Production
+```bash
 ./scripts/deploy-qual-to-prod.sh
 ```
 
-This script will:
-- ✅ Verify qual is working
-- ✅ Create a backup of production  
-- ✅ Deploy code to production
-- ✅ Update service worker cache
-- ✅ Verify deployment success
-- ✅ Provide rollback instructions
+#### Build Mobile
+```bash
+# Android
+cd android && ./build-debug.sh
+
+# iOS (macOS only)
+cd ios/App && pod install && xcodebuild -workspace App.xcworkspace -scheme App
+```
 
 ## Environment URLs
 
@@ -90,14 +140,58 @@ SSH is already configured. Use:
 ssh stackmap-cpanel
 ```
 
+## Version Management
+
+### Version Tracking
+All versions are tracked in `version.json`:
+```json
+{
+  "version": "1.4.0",
+  "build": 42,
+  "lastDeployment": {
+    "web": "2025-01-20T15:30:00Z",
+    "android": "2025-01-20T15:35:00Z",
+    "ios": "2025-01-20T15:40:00Z"
+  }
+}
+```
+
+### Version Synchronization
+- The unified script automatically keeps all platforms in sync
+- Never manually edit version numbers in platform-specific files
+- Always use `./scripts/verify-versions.sh` to check sync status
+
+## Important: File Structure
+
+### DO Edit These Files (Root Directory)
+- ✅ `index.html`
+- ✅ `styles/*.css`
+- ✅ `js/*.js`
+- ✅ `components.js`
+- ✅ All other root files
+
+### DON'T Edit These Files (Generated)
+- ❌ `www/*` - Auto-generated by build script
+- ❌ `android/app/src/main/assets/*` - Copied from www
+- ❌ `ios/App/App/public/*` - Copied from www
+
 ## Emergency Rollback
 
 If something goes wrong:
 ```bash
-# The deployment script will give you the exact rollback command
-# It will look like:
+# Web rollback
 ssh stackmap-cpanel "cd ~ && tar -xzf ~/backups/production-TIMESTAMP.tar.gz"
+
+# Mobile rollback - revert to previous commit
+git checkout HEAD~1
+./scripts/unified-deploy.sh
 ```
+
+## Related Documentation
+
+- **[UNIFIED_DEPLOYMENT_GUIDE.md](./UNIFIED_DEPLOYMENT_GUIDE.md)** - Detailed unified deployment documentation
+- **[VERSION_SYNC_PROTOCOL.md](./docs/VERSION_SYNC_PROTOCOL.md)** - Version synchronization details
+- **[MOBILE_APP_WORKFLOW.md](./docs/MOBILE_APP_WORKFLOW.md)** - Mobile development specifics
 
 ## What NOT to Do
 

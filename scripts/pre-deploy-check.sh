@@ -132,7 +132,25 @@ if grep -r "localhost\|127\.0\.0\.1" --include="*.js" --exclude="sw.js" --exclud
 fi
 
 echo ""
-echo "7. Running UAT Tests..."
+echo "7. Checking Links and Navigation..."
+echo "----------------------------------"
+
+# Run link verification
+if [ -f "scripts/check-links.sh" ]; then
+    ./scripts/check-links.sh
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} All links verified"
+    else
+        echo -e "${RED}✗${NC} Link verification failed"
+        FAILED=$((FAILED + 1))
+    fi
+else
+    echo -e "${RED}✗${NC} Link checker script not found"
+    FAILED=$((FAILED + 1))
+fi
+
+echo ""
+echo "8. Running UAT Tests..."
 echo "----------------------"
 
 # Check if npm dependencies are installed
@@ -148,15 +166,13 @@ fi
 # Run automated tests
 if [ -f "tests/run-tests.js" ] && [ -d "node_modules" ]; then
     echo "Running automated tests..."
-    echo -e "${YELLOW}⚠${NC} Story tests are currently flaky - skipping for now"
-    echo "To run tests manually: npm test"
-    # npm test
-    # if [ $? -eq 0 ]; then
-    #     echo -e "${GREEN}✓${NC} All UAT tests passed"
-    # else
-    #     echo -e "${RED}✗${NC} UAT tests failed"
-    #     FAILED=$((FAILED + 1))
-    # fi
+    npm test
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓${NC} All UAT tests passed"
+    else
+        echo -e "${RED}✗${NC} UAT tests failed"
+        FAILED=$((FAILED + 1))
+    fi
 else
     echo -e "${RED}✗${NC} Test runner not found or dependencies missing"
     FAILED=$((FAILED + 1))

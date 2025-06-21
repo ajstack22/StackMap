@@ -1,0 +1,78 @@
+/* ===== MOBILE FOOTER HEADER OPTION ===== */
+/* Allow users to position header at bottom on mobile devices */
+
+/* When header is positioned at bottom */
+body.mobile-header-bottom .header-wrapper {
+    top: auto !important;
+    bottom: 0 !important;
+    position: fixed;
+    /* Remove shadow - it will be handled by app-header */
+    box-shadow: none !important;
+}
+
+body.mobile-header-bottom .app-header {
+    /* Add subtle top shadow instead of bottom */
+    box-shadow: 0 -4px 8px rgba(0, 0, 0, 0.15) !important;
+}
+    
+/* Adjust main content padding */
+body.mobile-header-bottom {
+    padding-top: 15px !important;
+    padding-bottom: 130px !important; /* Account for header height + some spacing */
+}
+
+/* Move FABs to align with bottom header */
+body.mobile-header-bottom .floating-nav {
+    top: auto !important;
+    bottom: 20px !important;
+}
+
+/* Adjust drawer to slide up from bottom */
+body.mobile-header-bottom .drawer-extension {
+    top: auto !important;
+    bottom: 112px !important; /* Header height */
+    transform-origin: bottom center !important;
+}
+
+/* When drawer is open, extend upward */
+body.mobile-header-bottom .header-wrapper.drawer-open {
+    height: 200px !important; /* Extend upward when drawer opens */
+}
+
+/* Adjust any modals or overlays */
+body.mobile-header-bottom .modal,
+body.mobile-header-bottom .welcome-splash {
+    padding-bottom: 130px; /* Account for bottom header */
+}
+
+/* Safe area adjustments for devices with gesture navigation */
+@supports (padding: env(safe-area-inset-bottom)) {
+    body.mobile-header-bottom .header-wrapper {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    
+    body.mobile-header-bottom {
+        padding-bottom: calc(130px + env(safe-area-inset-bottom)) !important;
+    }
+}
+
+/* Fix for modals when keyboard is open on mobile */
+@media (max-width: 768px) {
+    /* When keyboard is visible, adjust modal position */
+    .modal-container,
+    .validation-modal {
+        position: fixed !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        max-height: 50vh !important; /* Limit height when keyboard is open */
+        overflow-y: auto !important;
+    }
+    
+    /* Ensure the simple question dialog is visible */
+    .simple-confirmation {
+        position: fixed !important;
+        top: 20px !important;
+        transform: none !important;
+        max-height: calc(100vh - 40px) !important;
+    }
+}

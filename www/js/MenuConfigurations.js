@@ -31,6 +31,18 @@ window.MenuConfigurations = {
                 render: function(state, menuSystem) {
                     return window.hybridPanelManager.renderCelebrationPreferences();
                 }
+            },
+            {
+                type: 'custom',
+                label: 'Header Position',
+                render: function(state, menuSystem) {
+                    // Show for all users, not just mobile
+                    if (!window.mobileUX) {
+                        return '';
+                    }
+                    
+                    return window.mobileUX.createHeaderPositionToggle();
+                }
             }
         ]
     },
@@ -1050,7 +1062,7 @@ window.MenuConfigurations = {
                                 We're here to help you get the most out of StackMap!
                             </p>
                             <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
-                                <li style="margin-bottom: 8px;">Email: <a href="mailto:help@stackmap.app" style="color: white;">help@stackmap.app</a></li>
+                                <li style="margin-bottom: 8px;">Email: <a href="mailto:support@stackmap.app" style="color: white;">support@stackmap.app</a></li>
                                 <li style="margin-bottom: 8px;">Response time: Within 24-48 hours</li>
                                 <li>Include your device type and issue description</li>
                             </ul>
@@ -1068,7 +1080,7 @@ window.MenuConfigurations = {
                                 <li style="margin-bottom: 8px;">No ads or tracking</li>
                             </ul>
                             <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">
-                                <a href="https://stackmap.app/privacy" target="_blank" style="color: white; text-decoration: underline;">
+                                <a href="/privacy.html" target="_blank" style="color: white; text-decoration: underline;">
                                     View full Privacy Policy
                                 </a>
                             </p>
@@ -1080,7 +1092,7 @@ window.MenuConfigurations = {
                                 StackMap is provided as-is for personal and educational use. By using StackMap, you agree to use it responsibly and lawfully.
                             </p>
                             <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">
-                                <a href="https://stackmap.app/terms" target="_blank" style="color: white; text-decoration: underline;">
+                                <a href="/terms.html" target="_blank" style="color: white; text-decoration: underline;">
                                     View full Terms of Use
                                 </a>
                             </p>
@@ -1125,7 +1137,7 @@ window.MenuConfigurations = {
                                 <h4 style="color: white; margin: 0 0 16px 0;">Ways to Support</h4>
                                 
                                 <div style="margin-bottom: 20px;">
-                                    <a href="https://www.paypal.com/donate/?hosted_button_id=STACKMAP" target="_blank" 
+                                    <a href="/support.html" target="_blank" 
                                        style="display: inline-block; background: #0070ba; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
                                         💳 Donate via PayPal
                                     </a>
@@ -1135,7 +1147,7 @@ window.MenuConfigurations = {
                                 </div>
                                 
                                 <div style="margin-bottom: 20px;">
-                                    <a href="https://venmo.com/stackmap" target="_blank" 
+                                    <a href="/support.html" target="_blank" 
                                        style="display: inline-block; background: #3d95ce; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
                                         📱 Send via Venmo
                                     </a>
@@ -1145,7 +1157,7 @@ window.MenuConfigurations = {
                                 </div>
                                 
                                 <div style="margin-bottom: 20px;">
-                                    <a href="https://www.patreon.com/stackmap" target="_blank" 
+                                    <a href="/support.html" target="_blank" 
                                        style="display: inline-block; background: #ff424d; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
                                         🎨 Become a Patron
                                     </a>

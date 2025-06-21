@@ -3940,6 +3940,11 @@ class HybridPanelManager {
         this.openPanel('right', 'helpPrivacy');
     }
 
+    showHelpPrivacy() {
+        // Navigate to help & privacy menu
+        this.openPanel('right', 'helpPrivacy');
+    }
+
     showSupportUs() {
         // Navigate to support us menu
         this.openPanel('right', 'supportUs');

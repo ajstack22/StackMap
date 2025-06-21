@@ -1,0 +1,18 @@
+{
+  "version": "1.4.0",
+  "build": 1,
+  "lastDeployment": {
+    "web": null,
+    "web-staging": null,
+    "android": null,
+    "ios": null
+  },
+  "changelog": {
+    "1.4.0": [
+      "Mobile scrolling improvements with long-press drag",
+      "Header position toggle (top/bottom)",
+      "Ghost card cleanup",
+      "Improved modal positioning with keyboard"
+    ]
+  }
+}
