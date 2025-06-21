@@ -76,3 +76,4 @@ lighthouse-*.json
 test-*.html
 android-twa/*.keystore
 android-twa/local.properties
+tests/.test-browser-profile/
