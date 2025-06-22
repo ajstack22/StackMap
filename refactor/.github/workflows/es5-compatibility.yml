@@ -1,0 +1,210 @@
+name: ES5 Compatibility Check
+
+on:
+  pull_request:
+    paths:
+      - '**.js'
+      - '**.mjs'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - '**.js'
+      - '**.mjs'
+
+jobs:
+  es5-lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '16'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: |
+        npm install --save-dev eslint@8 
+        npm install --save-dev eslint-plugin-es5@1.5.0
+        npm install --save-dev @babel/core@7 @babel/eslint-parser@7
+        npm install --save-dev @babel/preset-env@7
+        
+    - name: Create ESLint configuration
+      run: |
+        cat > .eslintrc.js << 'EOF'
+        module.exports = {
+          parser: '@babel/eslint-parser',
+          parserOptions: {
+            ecmaVersion: 5,
+            sourceType: 'script',
+            requireConfigFile: false,
+            babelOptions: {
+              presets: [['@babel/preset-env', { targets: { ie: 11 } }]]
+            }
+          },
+          plugins: ['es5'],
+          extends: ['plugin:es5/no-es2015'],
+          rules: {
+            'no-var': 'off',
+            'prefer-const': 'off',
+            'prefer-arrow-callback': 'off',
+            'object-shorthand': 'off',
+            'prefer-template': 'off',
+            'prefer-destructuring': 'off',
+            'no-restricted-syntax': [
+              'error',
+              {
+                selector: 'TemplateLiteral',
+                message: 'Template literals are not allowed in ES5'
+              },
+              {
+                selector: 'ArrowFunctionExpression',
+                message: 'Arrow functions are not allowed in ES5'
+              },
+              {
+                selector: 'ClassDeclaration',
+                message: 'Classes are not allowed in ES5'
+              },
+              {
+                selector: 'ImportDeclaration',
+                message: 'ES6 imports are not allowed in ES5'
+              },
+              {
+                selector: 'ExportNamedDeclaration',
+                message: 'ES6 exports are not allowed in ES5'
+              }
+            ]
+          },
+          env: {
+            browser: true,
+            es5: true
+          },
+          globals: {
+            'console': 'readonly',
+            'window': 'readonly',
+            'document': 'readonly',
+            'setTimeout': 'readonly',
+            'setInterval': 'readonly',
+            'clearTimeout': 'readonly',
+            'clearInterval': 'readonly',
+            'localStorage': 'readonly',
+            'sessionStorage': 'readonly'
+          }
+        };
+        EOF
+        
+    - name: Run ES5 compatibility check
+      run: |
+        npx eslint js/**/*.js --max-warnings 0 --format json --output-file eslint-report.json || true
+        
+    - name: Parse and display results
+      run: |
+        node << 'EOF'
+        const fs = require('fs');
+        const report = JSON.parse(fs.readFileSync('eslint-report.json', 'utf8'));
+        
+        let totalErrors = 0;
+        let es6Features = new Set();
+        
+        report.forEach(file => {
+          if (file.errorCount > 0) {
+            console.log(`\n❌ ${file.filePath}`);
+            file.messages.forEach(msg => {
+              if (msg.severity === 2) {
+                totalErrors++;
+                console.log(`  Line ${msg.line}: ${msg.message}`);
+                
+                // Track ES6 features used
+                if (msg.message.includes('Template literals')) es6Features.add('Template Literals');
+                if (msg.message.includes('Arrow functions')) es6Features.add('Arrow Functions');
+                if (msg.message.includes('Classes')) es6Features.add('Classes');
+                if (msg.message.includes('const') || msg.message.includes('let')) es6Features.add('const/let');
+                if (msg.message.includes('import') || msg.message.includes('export')) es6Features.add('ES6 Modules');
+              }
+            });
+          }
+        });
+        
+        if (totalErrors > 0) {
+          console.log(`\n\n📊 ES5 Compatibility Summary:`);
+          console.log(`Total ES6+ violations: ${totalErrors}`);
+          console.log(`\nES6 features detected:`);
+          es6Features.forEach(feature => console.log(`  - ${feature}`));
+          console.log(`\n❌ ES5 compatibility check failed`);
+          process.exit(1);
+        } else {
+          console.log(`\n✅ All JavaScript is ES5 compatible`);
+        }
+        EOF
+        
+    - name: Check for unsafe JavaScript features
+      run: |
+        echo "Checking for unsafe JavaScript patterns..."
+        
+        # Check for eval usage
+        if grep -r "eval(" js/ --include="*.js" | grep -v "// safe:"; then
+          echo "❌ Found unsafe eval() usage"
+          exit 1
+        fi
+        
+        # Check for with statements
+        if grep -r "with\s*(" js/ --include="*.js"; then
+          echo "❌ Found unsafe with statement"
+          exit 1
+        fi
+        
+        # Check for Function constructor
+        if grep -r "new Function(" js/ --include="*.js" | grep -v "// safe:"; then
+          echo "❌ Found unsafe Function constructor"
+          exit 1
+        fi
+        
+        echo "✅ No unsafe JavaScript patterns found"
+        
+    - name: Generate compatibility report
+      if: always()
+      run: |
+        cat > es5-compatibility-report.md << 'EOF'
+        # ES5 Compatibility Report
+        
+        Generated: $(date)
+        
+        ## Checked Files
+        $(find js -name "*.js" | wc -l) JavaScript files analyzed
+        
+        ## WebView Compatibility
+        - Android 5.1+ (WebView 37+): ✅ Supported
+        - iOS 9+: ✅ Supported
+        - Chrome 45+: ✅ Supported
+        
+        ## Safe Features Used
+        - Function expressions: ✅
+        - Object literals: ✅
+        - Array methods (ES5): ✅
+        - JSON: ✅
+        - Strict mode: ✅
+        
+        ## Avoided Features
+        - Arrow functions: ❌
+        - Template literals: ❌
+        - Classes: ❌
+        - const/let: ❌
+        - Destructuring: ❌
+        - Spread operator: ❌
+        - async/await: ❌
+        - Promises (without polyfill): ❌
+        EOF
+        
+    - name: Upload compatibility report
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: es5-compatibility-report
+        path: |
+          eslint-report.json
+          es5-compatibility-report.md

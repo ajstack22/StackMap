@@ -1283,7 +1283,7 @@ class HybridPanelManager {
         // Update subtitle format: "Emoji Name • Day" with larger emoji
         const subtitle = document.getElementById('subtitle');
         if (subtitle) {
-            subtitle.innerHTML = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${currentUser.name} • ${dayText}`;
+            subtitle.innerHTML = `<span style="font-size: 1.3em;">${currentUser.icon}</span> ${dayText}`;
         }
     }
 
@@ -4879,6 +4879,186 @@ class HybridPanelManager {
                 document.body.removeChild(toast);
             }, 300);
         }, 3000);
+    }
+    
+    showFullPrivacyPolicy() {
+        // Create a panel with the full privacy policy content
+        const privacyContent = `
+            <div class="panel-section">
+                <h2 style="color: white; margin-bottom: 20px;">Privacy Policy</h2>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px; font-style: italic;">
+                    Last updated: June 18, 2025
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Overview</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    StackMap is designed with privacy as a core principle. We believe families, especially those with special needs children, deserve tools that respect their privacy and give them control over their data.
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Data Collection</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    <strong>We collect NO personal data by default.</strong> StackMap works entirely offline on your device.
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Data Storage</h3>
+                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;">All routine data is stored locally on your device</li>
+                    <li style="margin-bottom: 8px;">No data is sent to our servers (we don't have any)</li>
+                    <li style="margin-bottom: 8px;">Your routines, progress, and settings stay on your device</li>
+                </ul>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Optional Google Drive Sync</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 8px;">
+                    If you choose to enable Google Drive sync:
+                </p>
+                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;">Data is stored in YOUR Google Drive account</li>
+                    <li style="margin-bottom: 8px;">We never see or access your data</li>
+                    <li style="margin-bottom: 8px;">You can disable sync at any time</li>
+                    <li style="margin-bottom: 8px;">Deleting the app removes local data (Drive data remains yours)</li>
+                </ul>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Children's Privacy</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 8px;">
+                    StackMap is designed for use by children with adult supervision:
+                </p>
+                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;">We don't collect any information from children</li>
+                    <li style="margin-bottom: 8px;">No accounts or sign-ups required</li>
+                    <li style="margin-bottom: 8px;">No social features or communication between users</li>
+                    <li style="margin-bottom: 8px;">No behavioral tracking or analytics</li>
+                </ul>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Third-Party Services</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 8px;">
+                    StackMap uses only essential services:
+                </p>
+                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;"><strong>Google Drive API</strong> - Only if you enable sync (optional)</li>
+                    <li style="margin-bottom: 8px;"><strong>No analytics</strong> - We don't track usage</li>
+                    <li style="margin-bottom: 8px;"><strong>No advertising</strong> - We don't show ads</li>
+                </ul>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Your Rights</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 8px;">
+                    You have complete control:
+                </p>
+                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;">Export your data anytime</li>
+                    <li style="margin-bottom: 8px;">Delete your data anytime</li>
+                    <li style="margin-bottom: 8px;">Use the app without any account</li>
+                    <li style="margin-bottom: 8px;">Sync is always optional</li>
+                </ul>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Contact</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    Questions about privacy? Email: <a href="mailto:privacy@stackmap.app" style="color: white;">privacy@stackmap.app</a>
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Open Source</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    StackMap's code is open source. You can verify our privacy practices at: <br>
+                    <a href="https://github.com/ajstack22/StackMap" target="_blank" rel="noopener noreferrer" style="color: white;">github.com/ajstack22/StackMap</a>
+                </p>
+            </div>
+        `;
+        
+        // Open a custom panel with the privacy content
+        this.openCustomPanel('Privacy Policy', privacyContent);
+    }
+    
+    showFullTerms() {
+        // Create a panel with the full terms of use content
+        const termsContent = `
+            <div class="panel-section">
+                <h2 style="color: white; margin-bottom: 20px;">Terms of Service</h2>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px; font-style: italic;">
+                    Last updated: June 18, 2025
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Agreement to Terms</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    By using StackMap, you agree to these Terms of Service. If you don't agree, please don't use the app.
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Use License</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    StackMap is free to use for personal, educational, and therapeutic purposes. You may:
+                </p>
+                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;">Create unlimited routines and cards</li>
+                    <li style="margin-bottom: 8px;">Share the app with others who might benefit</li>
+                    <li style="margin-bottom: 8px;">Use it in schools, therapy centers, and homes</li>
+                </ul>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Restrictions</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 8px;">
+                    You may not:
+                </p>
+                <ul style="color: rgba(255,255,255,0.8); padding-left: 20px; margin-bottom: 16px;">
+                    <li style="margin-bottom: 8px;">Sell or commercialize StackMap</li>
+                    <li style="margin-bottom: 8px;">Modify and redistribute the app</li>
+                    <li style="margin-bottom: 8px;">Use it for any illegal purposes</li>
+                    <li style="margin-bottom: 8px;">Attempt to harm or exploit other users</li>
+                </ul>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">No Warranty</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    StackMap is provided "as is" without any warranties. We do our best to keep it working well, but we can't guarantee it will always be available or error-free.
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Limitation of Liability</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    We're not liable for any damages from using StackMap. Use it at your own discretion and always supervise children.
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Changes to Terms</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6; margin-bottom: 16px;">
+                    We may update these terms. We'll notify you of significant changes through the app.
+                </p>
+                
+                <h3 style="color: white; margin-top: 24px; margin-bottom: 16px;">Contact</h3>
+                <p style="color: rgba(255,255,255,0.8); line-height: 1.6;">
+                    Questions? Email us at: <a href="mailto:support@stackmap.app" style="color: white;">support@stackmap.app</a>
+                </p>
+            </div>
+        `;
+        
+        // Open a custom panel with the terms content
+        this.openCustomPanel('Terms of Service', termsContent);
+    }
+    
+    openCustomPanel(title, content) {
+        // Create a temporary menu configuration for the custom content
+        const customMenuId = 'custom_' + Date.now();
+        
+        if (!window.menuConfigurations) {
+            console.error('Menu configurations not available');
+            return;
+        }
+        
+        // Add the custom menu temporarily
+        window.menuConfigurations[customMenuId] = {
+            id: customMenuId,
+            title: title,
+            layout: 'sections',
+            sections: [
+                {
+                    type: 'custom',
+                    render: function() {
+                        return content;
+                    }
+                }
+            ]
+        };
+        
+        // Open the panel
+        this.openPanel('right', customMenuId);
+        
+        // Clean up the temporary menu after a delay
+        setTimeout(() => {
+            delete window.menuConfigurations[customMenuId];
+        }, 100);
     }
     
 }

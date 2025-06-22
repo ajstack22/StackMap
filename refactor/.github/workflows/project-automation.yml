@@ -1,0 +1,231 @@
+name: Project Board Automation
+
+on:
+  issues:
+    types: [opened, labeled, unlabeled, closed, reopened]
+  pull_request:
+    types: [opened, closed, converted_to_draft, ready_for_review]
+  issue_comment:
+    types: [created]
+
+jobs:
+  auto-add-to-project:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Add to project
+      uses: actions/add-to-project@v0.5.0
+      with:
+        project-url: https://github.com/users/${{ github.repository_owner }}/projects/1
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        
+  move-based-on-labels:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'labeled'
+    steps:
+    - name: Move P0-critical issues
+      if: contains(github.event.label.name, 'P0-critical')
+      uses: alex-page/github-project-automation-plus@v0.8.3
+      with:
+        project: StackMap Refactor
+        column: In Progress
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Move accessibility issues
+      if: contains(github.event.label.name, 'accessibility') || contains(github.event.label.name, 'neurodivergent')
+      uses: alex-page/github-project-automation-plus@v0.8.3
+      with:
+        project: StackMap Refactor
+        column: Accessibility Review
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Move sensory issues
+      if: contains(github.event.label.name, 'sensory')
+      uses: alex-page/github-project-automation-plus@v0.8.3
+      with:
+        project: StackMap Refactor
+        column: Urgent - Sensory
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        
+  auto-assign-milestone:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'issues' && github.event.action == 'opened'
+    steps:
+    - name: Assign milestone based on labels
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+          const labels = issue.labels.map(l => l.name);
+          
+          let milestone = null;
+          
+          // Assign milestone based on issue content and labels
+          if (labels.includes('ES5') || issue.title.includes('ES5')) {
+            milestone = 'v0.1 - ES5 Compatibility';
+          } else if (labels.includes('navigation') || issue.title.includes('navigation')) {
+            milestone = 'v0.2 - Core Navigation';
+          } else if (labels.includes('storage') || labels.includes('offline')) {
+            milestone = 'v0.3 - Offline Storage';
+          } else if (labels.includes('accessibility') || labels.includes('neurodivergent')) {
+            milestone = 'v0.4 - Accessibility';
+          } else if (labels.includes('family') || labels.includes('COPPA')) {
+            milestone = 'v0.5 - Family Features';
+          } else if (labels.includes('TV') || labels.includes('voice')) {
+            milestone = 'v0.6 - TV Interface';
+          }
+          
+          if (milestone) {
+            // Find milestone ID
+            const milestones = await github.rest.issues.listMilestones({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open'
+            });
+            
+            const targetMilestone = milestones.data.find(m => m.title === milestone);
+            
+            if (targetMilestone) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                milestone: targetMilestone.number
+              });
+            }
+          }
+          
+  cognitive-complexity-check:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Calculate cognitive complexity
+      run: |
+        npm install -g cognitive-complexity-ts
+        
+        # Calculate complexity for changed files
+        CHANGED_FILES=$(git diff --name-only origin/main...HEAD | grep -E '\.(js|ts)$' || true)
+        
+        if [ -n "$CHANGED_FILES" ]; then
+          echo "Checking cognitive complexity..."
+          
+          for file in $CHANGED_FILES; do
+            if [ -f "$file" ]; then
+              complexity=$(cognitive-complexity-ts "$file" || echo "0")
+              echo "$file: Complexity = $complexity"
+              
+              # Fail if complexity is too high
+              if [ "$complexity" -gt "10" ]; then
+                echo "❌ File $file has complexity $complexity (max: 10)"
+                echo "This may be difficult for neurodivergent users to understand."
+                exit 1
+              fi
+            fi
+          done
+          
+          echo "✅ All files pass cognitive complexity check"
+        fi
+        
+  auto-close-stale:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/stale@v9
+      with:
+        repo-token: ${{ secrets.GITHUB_TOKEN }}
+        stale-issue-message: |
+          This issue has been automatically marked as stale because it has not had recent activity. 
+          
+          For neurodivergent users who may need more time: this is just a gentle reminder, not pressure! 
+          If you're still working on this or need more time, just comment and we'll keep it open. 
+          
+          It will be closed in 7 days if no further activity occurs.
+        stale-pr-message: |
+          This PR has been automatically marked as stale. 
+          
+          No rush - we understand that different people work at different paces. 
+          If you need more time or have questions, just let us know!
+        days-before-stale: 30
+        days-before-close: 7
+        exempt-issue-labels: 'P0-critical,accessibility,neurodivergent,sensory'
+        exempt-pr-labels: 'P0-critical,accessibility,work-in-progress'
+        
+  notify-accessibility-team:
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'issues' && 
+      github.event.action == 'opened' &&
+      (contains(github.event.issue.labels.*.name, 'accessibility') ||
+       contains(github.event.issue.labels.*.name, 'neurodivergent') ||
+       contains(github.event.issue.labels.*.name, 'sensory'))
+    steps:
+    - name: Notify team
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const issue = context.payload.issue;
+          
+          // Add comment with accessibility team notification
+          await github.rest.issues.createComment({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue.number,
+            body: `🌟 **Accessibility Team Notification**
+            
+This issue has been flagged for accessibility review. 
+
+**Priority Guidelines:**
+- Sensory issues: Address within 48 hours
+- Cognitive barriers: Address within 1 week  
+- General accessibility: Address within sprint
+
+Thank you for helping make StackMap accessible to all users! 💙`
+          });
+          
+          // Auto-assign if possible
+          const assignees = ['accessibility-lead', 'neurodivergent-advocate'];
+          await github.rest.issues.addAssignees({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            issue_number: issue.number,
+            assignees: assignees.filter(a => a) // Filter out undefined
+          });
+
+# Project Board Columns Configuration
+# 
+# Recommended columns for StackMap project board:
+#
+# 1. 📥 Triage
+#    - New issues land here
+#    - Needs priority and milestone assignment
+#
+# 2. 🚨 Urgent - Sensory
+#    - Sensory overload issues
+#    - Motion sickness triggers
+#    - Immediate accessibility barriers
+#
+# 3. 🎯 P0 - Critical
+#    - Blocking issues
+#    - ES5 compatibility
+#    - COPPA compliance
+#
+# 4. 📋 Ready
+#    - Triaged and ready to work
+#    - Has clear acceptance criteria
+#
+# 5. 🔄 In Progress
+#    - Actively being worked on
+#    - Max 1-2 items per person
+#
+# 6. 🧪 Accessibility Review
+#    - Needs accessibility testing
+#    - Neurodivergent user feedback
+#
+# 7. 👀 Review/QA
+#    - Code review needed
+#    - Cross-platform testing
+#
+# 8. ✅ Done
+#    - Completed and merged
+#    - Auto-moved on PR merge

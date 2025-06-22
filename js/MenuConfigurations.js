@@ -211,12 +211,12 @@ window.MenuConfigurations = {
                                     <span style="font-size: 0.75rem;">Build ${CONFIG.APP_BUILD_DATE || '2025-06-15'}</span>
                                 </div>
                                 <div style="margin-top: 12px;">
-                                    <a href="/privacy.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
+                                    <a href="privacy.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
                                         Help & Privacy
                                     </a>
                                 </div>
                                 <div style="margin-top: 8px;">
-                                    <a href="/support.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
+                                    <a href="support.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: underline; font-size: 0.9rem;">
                                         ❤️ Support StackMap
                                     </a>
                                 </div>
@@ -1081,7 +1081,7 @@ window.MenuConfigurations = {
                                 <li style="margin-bottom: 8px;">No ads or tracking</li>
                             </ul>
                             <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">
-                                <a href="/privacy.html" target="_blank" style="color: white; text-decoration: underline;">
+                                <a href="javascript:void(0)" onclick="hybridPanelManager.showFullPrivacyPolicy()" style="color: white; text-decoration: underline; cursor: pointer;">
                                     View full Privacy Policy
                                 </a>
                             </p>
@@ -1093,7 +1093,7 @@ window.MenuConfigurations = {
                                 StackMap is provided as-is for personal and educational use. By using StackMap, you agree to use it responsibly and lawfully.
                             </p>
                             <p style="color: rgba(255,255,255,0.8); font-size: 0.85rem;">
-                                <a href="/terms.html" target="_blank" style="color: white; text-decoration: underline;">
+                                <a href="javascript:void(0)" onclick="hybridPanelManager.showFullTerms()" style="color: white; text-decoration: underline; cursor: pointer;">
                                     View full Terms of Use
                                 </a>
                             </p>
@@ -1138,7 +1138,7 @@ window.MenuConfigurations = {
                                 <h4 style="color: white; margin: 0 0 16px 0;">Ways to Support</h4>
                                 
                                 <div style="margin-bottom: 20px;">
-                                    <a href="/support.html" target="_blank" 
+                                    <a href="https://paypal.me/stackadamj" target="_blank" rel="noopener noreferrer"
                                        style="display: inline-block; background: #0070ba; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
                                         💳 Donate via PayPal
                                     </a>
@@ -1148,7 +1148,7 @@ window.MenuConfigurations = {
                                 </div>
                                 
                                 <div style="margin-bottom: 20px;">
-                                    <a href="/support.html" target="_blank" 
+                                    <a href="https://www.venmo.com/u/stackadamj" target="_blank" rel="noopener noreferrer"
                                        style="display: inline-block; background: #3d95ce; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
                                         📱 Send via Venmo
                                     </a>
@@ -1158,7 +1158,7 @@ window.MenuConfigurations = {
                                 </div>
                                 
                                 <div style="margin-bottom: 20px;">
-                                    <a href="/support.html" target="_blank" 
+                                    <a href="https://patreon.com/StackMap" target="_blank" rel="noopener noreferrer"
                                        style="display: inline-block; background: #ff424d; color: white; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-bottom: 12px;">
                                         🎨 Become a Patron
                                     </a>
