@@ -1,0 +1,106 @@
+name: Research Question
+description: Document a research need for the mobile-first refactor
+title: "[RESEARCH] "
+labels: ["research", "needs-investigation"]
+assignees:
+  - ajstack22
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this template to create research questions that need investigation.
+
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Research Priority
+      options:
+        - P1-high (blocks critical features)
+        - P2-medium (important for UX)
+        - P3-low (nice to understand)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Research Area
+      multiple: true
+      options:
+        - Navigation patterns
+        - Offline functionality
+        - Conflict resolution
+        - Voice interfaces
+        - Device compatibility
+        - Performance optimization
+        - Accessibility patterns
+        - Migration strategies
+        - Family/caregiver features
+        - Notification systems
+    validations:
+      required: true
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Context
+      description: Why do we need this research?
+      placeholder: "Our offline-first architecture needs to handle conflicts, but we don't know how to present them to users with decision-making challenges..."
+    validations:
+      required: true
+
+  - type: textarea
+    id: questions
+    attributes:
+      label: Specific Questions
+      description: What specific questions need answers?
+      placeholder: |
+        - How do we communicate sync conflicts without causing anxiety?
+        - What visual metaphors work for explaining "versions"?
+        - Should we auto-resolve everything with undo?
+    validations:
+      required: true
+
+  - type: textarea
+    id: prompt
+    attributes:
+      label: Research Prompt
+      description: Copy-paste prompt for research Claude
+      render: markdown
+      placeholder: |
+        I'm building a task management app for users with ADHD and autism...
+    validations:
+      required: true
+
+  - type: dropdown
+    id: user-impact
+    attributes:
+      label: User Groups Affected
+      multiple: true
+      options:
+        - ADHD users
+        - Autistic users
+        - Users with motor impairments
+        - Users with cognitive disabilities
+        - Caregivers/parents
+        - Educators/therapists
+    validations:
+      required: true
+
+  - type: textarea
+    id: success-criteria
+    attributes:
+      label: Success Criteria
+      description: How will we know when this research is complete?
+      placeholder: |
+        - Specific UI patterns identified
+        - Copy guidelines documented
+        - Decision tree created
+
+  - type: textarea
+    id: related-issues
+    attributes:
+      label: Related Issues
+      description: Link to related bugs, features, or other research
+      placeholder: "#23, #45"

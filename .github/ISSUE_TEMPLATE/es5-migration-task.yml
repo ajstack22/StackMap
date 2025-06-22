@@ -1,0 +1,93 @@
+name: ES5 Migration Task
+description: Track ES6 to ES5 conversion tasks
+title: "[ES5] Convert "
+labels: ["refactor", "P0-critical", "platform-android"]
+assignees:
+  - ajstack22
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **CRITICAL**: ES6 features break on Android 5 devices used in schools!
+        
+        Use this template to track conversion of specific files or features.
+
+  - type: input
+    id: file
+    attributes:
+      label: File to Convert
+      description: Which file needs ES5 conversion?
+      placeholder: "/refactor/js/app.js"
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: es6-features
+    attributes:
+      label: ES6 Features to Replace
+      description: Check all that apply in this file
+      options:
+        - label: "const/let → var"
+        - label: "Arrow functions → function()"
+        - label: "Classes → constructor functions"
+        - label: "Template literals → string concatenation (if complex)"
+        - label: "for...of → traditional for loops"
+        - label: "Destructuring → traditional assignment"
+        - label: "Default parameters → manual defaults"
+        - label: "Spread operator → Array.concat() or loops"
+        - label: "async/await → Promises with .then()"
+
+  - type: textarea
+    id: code-examples
+    attributes:
+      label: Code Examples
+      description: Show before/after examples of conversions needed
+      render: javascript
+      placeholder: |
+        // BEFORE (ES6)
+        const App = {
+          views: []
+        };
+        
+        // AFTER (ES5)
+        var App = {
+          views: []
+        };
+
+  - type: input
+    id: line-count
+    attributes:
+      label: Approximate Lines to Change
+      description: How many lines need modification?
+      placeholder: "~150 lines"
+
+  - type: checkboxes
+    id: testing
+    attributes:
+      label: Testing Requirements
+      description: Testing needed after conversion
+      options:
+        - label: Test on Android 5 emulator
+        - label: Test on iOS 12 simulator
+        - label: Test in Chrome/Safari/Firefox
+        - label: Run adversarial review
+        - label: Check for memory leaks
+        - label: Verify no functionality lost
+
+  - type: textarea
+    id: risks
+    attributes:
+      label: Conversion Risks
+      description: Any complex patterns that might break?
+      placeholder: |
+        - Event listener bindings might need .bind(this)
+        - Closure scope might change with var
+        - Class inheritance needs prototype chain
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: Other files that depend on this one?
+      placeholder: "This file is imported by..."

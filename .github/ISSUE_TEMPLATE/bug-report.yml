@@ -1,0 +1,129 @@
+name: Bug Report
+description: Report a bug in the mobile-first refactor
+title: "[BUG] "
+labels: ["bug", "needs-triage"]
+assignees:
+  - ajstack22
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug! Please fill out the sections below.
+
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      description: Where does this bug occur?
+      multiple: true
+      options:
+        - Web Browser
+        - PWA
+        - iOS (Capacitor)
+        - Android (Capacitor)
+        - TV Interface
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      description: How severe is this bug?
+      options:
+        - P0-critical (app crashes/unusable)
+        - P1-high (major feature broken)
+        - P2-medium (feature partially broken)
+        - P3-low (minor issue)
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Bug Description
+      description: Clear and concise description of the bug
+      placeholder: "When I click X, Y happens instead of Z"
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to Reproduce
+      description: How can we reproduce this bug?
+      placeholder: |
+        1. Go to '...'
+        2. Click on '...'
+        3. Scroll to '...'
+        4. See error
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should happen?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What actually happens?
+    validations:
+      required: true
+
+  - type: dropdown
+    id: android-version
+    attributes:
+      label: Android Version (if applicable)
+      options:
+        - Android 5 (Lollipop)
+        - Android 6 (Marshmallow)
+        - Android 7 (Nougat)
+        - Android 8 (Oreo)
+        - Android 9 (Pie)
+        - Android 10+
+        - Not applicable
+
+  - type: dropdown
+    id: ios-version
+    attributes:
+      label: iOS Version (if applicable)
+      options:
+        - iOS 12
+        - iOS 13
+        - iOS 14
+        - iOS 15
+        - iOS 16+
+        - Not applicable
+
+  - type: checkboxes
+    id: accessibility-impact
+    attributes:
+      label: Accessibility Impact
+      description: Does this bug affect accessibility?
+      options:
+        - label: Screen reader functionality
+        - label: Keyboard navigation
+        - label: Touch targets
+        - label: Color contrast
+        - label: Focus management
+        - label: Cognitive load
+
+  - type: textarea
+    id: console-errors
+    attributes:
+      label: Console Errors
+      description: Any errors in the browser console?
+      render: javascript
+
+  - type: textarea
+    id: additional
+    attributes:
+      label: Additional Context
+      description: Any other context about the problem?

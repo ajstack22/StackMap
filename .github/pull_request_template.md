@@ -1,46 +1,80 @@
 ## Description
-Brief description of what this PR does.
+<!-- Brief description of changes -->
 
-## Related Issue
-Fixes #(issue number)
+## Related Issues
+<!-- Link issues this PR addresses -->
+Closes #
+Related to #
 
 ## Type of Change
-- [ ] Bug fix (non-breaking change which fixes an issue)
-- [ ] New feature (non-breaking change which adds functionality)
-- [ ] Breaking change (fix or feature that would cause existing functionality to not work as expected)
-- [ ] Documentation update
-- [ ] Performance improvement
-- [ ] Code refactoring
+- [ ] 🐛 Bug fix (non-breaking change fixing an issue)
+- [ ] ✨ New feature (non-breaking change adding functionality)
+- [ ] 💥 Breaking change (fix or feature causing existing functionality to break)
+- [ ] ♻️ Refactor (code change that neither fixes a bug nor adds a feature)
+- [ ] 📝 Documentation update
+- [ ] 🎨 Style/UI update
 
-## Changes Made
-- 
-- 
-- 
+## Platform Testing
+<!-- Check all platforms tested -->
+- [ ] 🌐 Web browser (Chrome, Safari, Firefox)
+- [ ] 📱 PWA (installed and offline)
+- [ ] 🍎 iOS Capacitor (iOS 12+)
+- [ ] 🤖 Android Capacitor (Android 5+)
+- [ ] 📺 TV navigation (arrow keys + enter)
 
-## Testing
-- [ ] Tested on desktop browsers (Chrome, Firefox, Safari)
-- [ ] Tested on mobile (iOS Safari, Chrome)
-- [ ] Tested offline functionality
-- [ ] Tested with multiple users
-- [ ] Tested sync functionality
+## Accessibility Testing
+<!-- Verify all accessibility requirements -->
+- [ ] ⌨️ Keyboard navigation works
+- [ ] 🔊 Screen reader tested
+- [ ] 👆 Touch targets ≥ 44px
+- [ ] 🎨 Color contrast meets WCAG AA
+- [ ] 🎯 Focus indicators visible
+- [ ] 🧠 Cognitive load considered
 
-## Screenshots (if applicable)
-Before | After
---- | ---
-[screenshot] | [screenshot]
+## Code Quality
+<!-- Ensure code meets standards -->
+- [ ] 🏛️ ES5 compatible (no const/let/arrows)
+- [ ] 🧪 Tests written/updated
+- [ ] 📋 JSDoc comments added
+- [ ] 🚫 No console.log statements
+- [ ] 💾 Handles offline scenarios
+- [ ] ⚡ Performance impact considered
 
-## Checklist
-- [ ] My code follows the style guidelines of this project
-- [ ] I have performed a self-review of my own code
-- [ ] I have commented my code, particularly in hard-to-understand areas
-- [ ] I have made corresponding changes to the documentation
-- [ ] My changes generate no new warnings
-- [ ] I have tested that my fix is effective or that my feature works
-- [ ] New and existing unit tests pass locally with my changes
-- [ ] Any dependent changes have been merged and published
+## Adversarial Review Checklist
+<!-- Run through all review personas -->
 
-## Deployment Notes
-Any special instructions for deployment?
+### 🔒 Security Review
+- [ ] No XSS vulnerabilities
+- [ ] External links have rel="noopener noreferrer"
+- [ ] No sensitive data exposed
+- [ ] Input validation implemented
 
-## Performance Impact
-Does this change impact performance? How?
+### 🏃 Performance Review
+- [ ] No memory leaks (event listeners cleaned up)
+- [ ] Efficient algorithms used
+- [ ] Images/assets optimized
+- [ ] Bundle size impact checked
+
+### 🔥 Chaos Engineering Review
+- [ ] Handles rapid clicking/tapping
+- [ ] Survives offline/online transitions
+- [ ] Manages storage quota exceeded
+- [ ] No race conditions
+
+### 🧩 ADHD/Autism Review
+- [ ] Maintains routine consistency
+- [ ] Predictable behaviors
+- [ ] No jarring transitions
+- [ ] Clear error recovery
+
+## Screenshots/Videos
+<!-- If applicable, add screenshots or videos -->
+
+## Additional Notes
+<!-- Any other information reviewers should know -->
+
+## Pre-Merge Checklist
+- [ ] Code has been self-reviewed
+- [ ] Changes tested on actual devices (not just emulators)
+- [ ] Documentation updated if needed
+- [ ] CLAUDE.md updated if patterns changed
