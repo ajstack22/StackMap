@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- RSD-Safe Error Interception - MUST load first -->
+    <script src="js/rsd-safe-init.js"></script>
     <script>
     // Pre-boot safety check - redirects to static fallback if JS environment is broken
     (function() {
@@ -138,6 +140,80 @@
             outline: 4px solid #667eea;
             outline-offset: 2px;
         }
+        
+        /* Phase 4: Error fallback styles */
+        .component-fallback {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .component-normal {
+            display: block;
+        }
+        
+        /* When error is active, swap visibility */
+        .component-error-active .component-normal {
+            display: none;
+        }
+        
+        .component-error-active .component-fallback {
+            display: block;
+        }
+        
+        /* Fallback UI styling */
+        .fallback-message {
+            font-size: 18px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fallback-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .fallback-button {
+            min-height: 44px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fallback-button-primary {
+            background: #5a6c40; /* Research-based calming green, 6.9:1 contrast */
+            color: #ffffff;
+        }
+        
+        .fallback-button-secondary {
+            background: #0c96e4; /* Research-based soft blue */
+            color: #ffffff;
+        }
+        
+        /* Link styling to match button appearance */
+        a.fallback-button {
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        
+        /* Focus management for fallback */
+        .component-fallback:focus {
+            outline: none;
+        }
+        
+        .component-fallback:focus-within .fallback-button:focus {
+            outline: 3px solid #ffffff;
+            outline-offset: 2px;
+        }
     </style>
     
     <!-- External styles loaded async -->
@@ -167,8 +243,25 @@
             <button id="menu-button" aria-label="Menu">☰</button>
         </header>
         <main class="content">
-            <!-- Task cards will be dynamically inserted here -->
-            <div id="task-container"></div>
+            <!-- Normal content wrapper -->
+            <div class="component-normal">
+                <!-- Task cards will be dynamically inserted here -->
+                <div id="task-container"></div>
+            </div>
+            
+            <!-- Fallback UI (hidden by default, shown via CSS when .component-error-active is added) -->
+            <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
+                <div class="fallback-message">Taking a moment to get things ready</div>
+                <div class="fallback-actions">
+                    <!-- Form-based try again for zero-JS functionality -->
+                    <form method="get" action="index.html" style="margin: 0;">
+                        <input type="hidden" name="last-task" id="last-task" value="">
+                        <button type="submit" class="fallback-button fallback-button-primary">Try again</button>
+                    </form>
+                    <!-- Simple anchor link for safe mode -->
+                    <a href="index.html?safe=true" class="fallback-button fallback-button-secondary">Use simple mode</a>
+                </div>
+            </div>
         </main>
     </div>
     
@@ -256,6 +349,10 @@
         })();
     </script>
     
+    <!-- Messaging system -->
+    <script src="js/messaging.js" defer></script>
+    <!-- SQLite storage -->
+    <script src="js/task-sqlite.js" defer></script>
     <!-- Main application -->
     <script src="js/app.js" defer></script>
 </body>

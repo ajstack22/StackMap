@@ -13,8 +13,9 @@
     --color-accent: #667eea;
     --color-accent-hover: #7c8ff0;
     --color-success: #4ade80;
+    --color-success-calm: #5a6c40; /* Research-based calming green */
     --color-warning: #fbbf24;
-    --color-error: #f87171;
+    --color-attention: #4A90E2; /* Calming blue instead of error red */
     
     /* Spacing */
     --spacing-xs: 4px;
