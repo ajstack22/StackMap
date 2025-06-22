@@ -4,6 +4,11 @@
 
 You are working on a **mobile-first refactor** in the `/refactor` directory. This is a ground-up rebuild with a completely different architecture than the parent StackMap app.
 
+### Phase 3 Complete - Phase 4 Ready
+- ✅ Emergency Fallback Phases 1-3 complete
+- 🎯 Phase 4: Inline fallback UI for runtime errors
+- 📚 New research available on remote testing protocols
+
 ### Key Differences from Main App
 - **Single HTML file** (no separate privacy.html, etc.)
 - **View-based navigation** (no page loads)
@@ -34,6 +39,32 @@ npm run lint
 3. Web (PWA + SEO)
 4. TV (mobile + remote control)
 
+## Remote Testing Protocol (NEW from Research)
+
+### Session Requirements
+- **Duration**: 60-90 minutes max
+- **Breaks**: Every 20-30 minutes
+- **Participants**: 20-24 minimum for reliable measures
+- **Platforms**: BrowserStack/LambdaTest for device coverage
+
+### Key Metrics
+1. **Heart Rate Variability (HRV)** - Camera-based at 3m distance
+2. **Task Completion Time** - With error rates
+3. **Behavioral Observation** - Navigation efficiency, scroll patterns
+4. **Validated Scales**: ASRS-5 (ADHD), AQ (Autism), CAT-Q (Camouflaging)
+
+### ADHD Testing Accommodations
+- Concise instructions
+- Frequent check-ins
+- Movement allowed
+- Multi-modal presentation
+
+### Autism Testing Accommodations
+- Literal, concrete language
+- Visual supports
+- Extra processing time
+- Predictable structure
+
 ## File Structure
 
 ```
@@ -42,11 +73,13 @@ npm run lint
 ├── js/
 │   └── app.js         # Main app - view controller, platform detection
 ├── css/
-│   ├── base.css       # Core styles
+│   ├── base.css       # Core styles (includes safe mode)
 │   ├── mobile.css     # Mobile adaptations
 │   └── tv.css         # TV adaptations
-└── docs/
-    └── architecture.md # Technical decisions
+├── docs/
+│   └── architecture.md # Technical decisions
+└── research/
+    └── Remote testing guide... # NEW testing protocols
 ```
 
 ## Coding Standards
@@ -70,9 +103,10 @@ for...of              // 3-20x slower, use for loops
 
 ### CSS Requirements
 - Mobile-first: Start small, enhance up
-- Minimum touch targets: 44px
+- Minimum touch targets: 44px (60px in safe mode)
 - Platform classes: `.platform-ios`, `.platform-tv`
 - Safe area insets: `env(safe-area-inset-top)`
+- Safe mode class: `.safe-mode` (disables animations)
 
 ### View Navigation
 ```javascript
@@ -81,6 +115,29 @@ ViewController.show('privacy-view');
 
 // ❌ WRONG
 window.location.href = '/privacy.html';  // No separate pages!
+```
+
+## Safe Mode Implementation
+
+### Activation
+- URL parameter: `?safe=true`
+- Persistence: `?safe=true&persist=true` (24 hours)
+- Exit: Click banner link
+
+### Features
+- No animations or transitions
+- 60px touch targets
+- Extended timeouts (3.3x multiplier)
+- Simplified UI
+- Usage analytics tracking
+
+### Testing Safe Mode
+```bash
+# Manual testing
+open refactor/index.html?safe=true
+
+# With persistence
+open refactor/index.html?safe=true&persist=true
 ```
 
 ## Commands
@@ -140,8 +197,10 @@ if (platform.isTV) {
 ```javascript
 // Always handle quota errors
 Storage.save('key', data).catch(err => {
-  // Handle gracefully
-  console.warn('Storage full:', err);
+  if (err.name === 'QuotaExceededError') {
+    // Handle storage full
+  }
+  console.warn('Storage error:', err);
 });
 ```
 
@@ -154,13 +213,22 @@ Storage.save('key', data).catch(err => {
 4. [ ] No console errors
 5. [ ] All links work correctly
 6. [ ] External links have `noopener,noreferrer`
-7. [ ] **ADVERSARIAL REVIEW COMPLETED** (see scripts/adversarial-review.md)
+7. [ ] Safe mode works (?safe=true)
+8. [ ] **ADVERSARIAL REVIEW COMPLETED**
 
 ### Platform Verification
 - Web: Chrome, Safari, Firefox
 - Mobile: Real device if possible
 - PWA: Install and test offline
 - TV: 1920px+ viewport with keyboard
+
+### Remote Testing Checklist
+- [ ] 20-24 participants recruited
+- [ ] HRV measurement setup
+- [ ] Screen recording configured
+- [ ] Validated scales prepared
+- [ ] Break schedule planned
+- [ ] Distress protocols ready
 
 ## Common Issues & Solutions
 
@@ -183,6 +251,13 @@ Storage.save('key', data).catch(err => {
 // Check: Body classes applied
 ```
 
+### Issue: Safe mode not activating
+```javascript
+// Check: URL parameter parsing
+// Verify: DOM class addition
+// Test: localStorage persistence
+```
+
 ## Architecture Decisions
 
 ### Why Single HTML?
@@ -203,6 +278,12 @@ Storage.save('key', data).catch(err => {
 - Better performance
 - Future-proof
 
+### Why Safe Mode?
+- Dignified fallback for overwhelmed users
+- Reduces cognitive load
+- Maintains core functionality
+- Respects sensory needs
+
 ## Debugging
 
 ```javascript
@@ -210,7 +291,19 @@ Storage.save('key', data).catch(err => {
 StackMapApp.Platform.detect()        // Check platform
 StackMapApp.ViewController.show('settings-view')  // Navigate
 StackMapApp.Storage.save('test', {}) // Test storage
+window.StackMapSafeMode             // Check safe mode status
 ```
+
+## Emergency Fallback Progress
+
+### Completed Phases
+1. ✅ **Phase 1**: Zero-JavaScript emergency-static.html
+2. ✅ **Phase 2**: Pre-boot error detection (50ms timeout)
+3. ✅ **Phase 3**: Safe mode detection (?safe=true)
+
+### Next Phases
+4. 🎯 **Phase 4**: Inline fallback UI (runtime errors)
+5. ⏳ **Phase 5**: Service worker fallback (offline)
 
 ## Remember
 
