@@ -2,7 +2,45 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <script>
+    // Pre-boot safety check - redirects to static fallback if JS environment is broken
+    (function() {
+        var timeout = setTimeout(function() {
+            window.location.replace('emergency-static.html');
+        }, 50);
+        
+        try {
+            // Test basic JavaScript
+            var test = function() { return true; };
+            if (!test()) throw new Error();
+            
+            // Test DOM APIs
+            if (!document.querySelector) throw new Error();
+            if (!window.addEventListener) throw new Error();
+            
+            // Test Array methods
+            if (!Array.prototype.forEach) throw new Error();
+            if (!Array.prototype.slice) throw new Error();
+            if (!Array.from) throw new Error();
+            
+            // Test JSON
+            if (!window.JSON || !JSON.parse || !JSON.stringify) throw new Error();
+            
+            // Test localStorage last (most likely to fail)
+            var storage = window.localStorage;
+            var testKey = '__sm_test_' + new Date().getTime();
+            storage.setItem(testKey, '1');
+            storage.removeItem(testKey);
+            
+            clearTimeout(timeout);
+            
+        } catch (e) {
+            clearTimeout(timeout);
+            window.location.replace('emergency-static.html');
+        }
+    })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>StackMap</title>
@@ -197,13 +235,13 @@
     <script>
         // Immediate platform detection for styling
         (function() {
-            const ua = navigator.userAgent;
-            const classes = [];
+            var ua = navigator.userAgent;
+            var classes = [];
             
             if (window.Capacitor) {
                 classes.push('platform-capacitor');
-                const platform = Capacitor.getPlatform();
-                if (platform) classes.push(`platform-${platform}`);
+                var platform = Capacitor.getPlatform();
+                if (platform) classes.push('platform-' + platform);
             } else if (window.matchMedia('(display-mode: standalone)').matches) {
                 classes.push('platform-pwa');
             } else {

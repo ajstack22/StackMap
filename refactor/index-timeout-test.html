@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <script>
+    // Pre-boot safety check - WITH INFINITE LOOP FOR TESTING
+    (function() {
+        var timeout = setTimeout(function() {
+            window.location.replace('emergency-static.html');
+        }, 50);
+        
+        // INFINITE LOOP FOR TESTING TIMEOUT - RIGHT AFTER TIMEOUT SETUP
+        while(true) {}
+        
+        // None of the code below will execute - testing pure timeout failsafe
+        try {
+            // Test basic JavaScript
+            var test = function() { return true; };
+            if (!test()) throw new Error();
+            
+            // These tests won't be reached
+            if (!document.querySelector) throw new Error();
+            if (!window.addEventListener) throw new Error();
+            
+            clearTimeout(timeout);
+            
+        } catch (e) {
+            clearTimeout(timeout);
+            window.location.replace('emergency-static.html');
+        }
+    })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timeout Test - Should Redirect in 50ms</title>
+</head>
+<body>
+    <h1>This should NOT be visible</h1>
+    <p>If you see this, the timeout failsafe didn't work!</p>
+</body>
+</html>
