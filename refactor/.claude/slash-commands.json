@@ -1,0 +1,19 @@
+{
+  "commands": [
+    {
+      "name": "review",
+      "description": "Perform adversarial code review",
+      "content": "Please perform an adversarial code review of the recent changes in /refactor.\n\nReview the changes from these 5 critical perspectives:\n\n1. **Security Auditor**: Find XSS vulnerabilities, injection risks, unsafe external link handling, localStorage tampering possibilities, and Capacitor-specific security issues.\n\n2. **Accessibility Expert**: Check for WCAG violations, missing ARIA labels, keyboard navigation breaks, screen reader issues, color contrast problems, and touch target sizes under 44px.\n\n3. **Performance Engineer**: Identify memory leaks (especially event listeners), inefficient algorithms, unnecessary re-renders, blocking operations, large bundle sizes, and slow transitions.\n\n4. **Chaos Engineer**: Find edge cases like rapid clicking, offline/online transitions, storage quota exceeded, concurrent operations, race conditions, platform-specific crashes, and TV remote navigation bugs.\n\n5. **ADHD User Advocate**: Evaluate for consistency breaks, unpredictable behaviors, confusing transitions, loss of context, disrupted routines, and cognitive overload.\n\nFor each issue found, specify:\n- Severity: CRITICAL (app breaks), HIGH (bad UX), MEDIUM (edge case), LOW (optimization)\n- Affected platforms: Web/PWA/iOS/Android/TV\n- Reproduction steps\n- Suggested fix\n\nFocus especially on:\n- State management bugs\n- Platform detection failures\n- Offline functionality breaks\n- Navigation history issues\n- CSS specificity conflicts\n- Error handling gaps\n\nAfter review, provide a summary table of all findings sorted by severity."
+    },
+    {
+      "name": "test-all",
+      "description": "Run all platform tests",
+      "content": "Please run the following comprehensive tests:\n\n1. **Unit Tests**: Run `npm test` and report results\n2. **Lint Check**: Run `npm run lint` and fix any issues\n3. **Browser Testing**: Test in Chrome, Safari, and Firefox\n4. **Mobile Viewport**: Test responsive design at 375px width\n5. **Offline Mode**: Disable network and verify functionality\n6. **TV Navigation**: Test at 1920px width with keyboard only\n7. **Accessibility**: Test with screen reader if possible\n8. **Performance**: Check for memory leaks and slow operations\n\nReport any failures or issues found."
+    },
+    {
+      "name": "check-platforms",
+      "description": "Verify cross-platform compatibility",
+      "content": "Please verify the current implementation works correctly across all platforms:\n\n**Web Browser**:\n- [ ] Loads correctly\n- [ ] Navigation works\n- [ ] History/back button works\n- [ ] External links open in new tab\n\n**PWA**:\n- [ ] Can be installed\n- [ ] Works offline\n- [ ] Icons display correctly\n- [ ] Splash screen shows\n\n**iOS (Capacitor)**:\n- [ ] Safe area insets respected\n- [ ] Navigation animations smooth\n- [ ] External links use in-app browser\n- [ ] No console errors\n\n**Android (Capacitor)**:\n- [ ] Back button handled correctly\n- [ ] Status bar styled appropriately\n- [ ] External links handled\n- [ ] Performance acceptable\n\n**TV/Large Screen**:\n- [ ] Arrow key navigation works\n- [ ] Focus indicators visible\n- [ ] Text readable at distance\n- [ ] All interactive elements reachable\n\nReport any platform-specific issues found."
+    }
+  ]
+}
