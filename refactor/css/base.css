@@ -210,6 +210,98 @@ button.icon {
     font-weight: 500;
 }
 
+/* View transitions */
+.view {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: var(--color-bg);
+}
+
+/* Animation classes */
+.sliding-in {
+    animation: slideIn 250ms ease-out;
+}
+
+.sliding-out {
+    animation: slideOut 250ms ease-out;
+}
+
+.sliding-in-back {
+    animation: slideInBack 250ms ease-out;
+}
+
+.sliding-out-forward {
+    animation: slideOutForward 250ms ease-out;
+}
+
+@keyframes slideIn {
+    from {
+        transform: translateX(100%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOut {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(-30%);
+    }
+}
+
+@keyframes slideInBack {
+    from {
+        transform: translateX(-30%);
+    }
+    to {
+        transform: translateX(0);
+    }
+}
+
+@keyframes slideOutForward {
+    from {
+        transform: translateX(0);
+    }
+    to {
+        transform: translateX(100%);
+    }
+}
+
+/* Depth warning */
+.depth-warning {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-radius: var(--radius-md);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+    z-index: var(--z-toast);
+    animation: fadeIn 200ms ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+    }
+}
+
 /* Utility classes */
 .hidden {
     display: none !important;
@@ -279,4 +371,80 @@ button.icon {
 
 .slide-in {
     animation: slideIn 0.3s ease;
+}
+
+/* Safe Mode Styles */
+.safe-mode {
+    /* Larger touch targets */
+    --min-touch-target: 60px;
+    
+    /* Disabled animations */
+    --transition-duration: 0s;
+    
+    /* Higher contrast */
+    --text-contrast: 1.2;
+}
+
+/* Disable all animations and transitions in safe mode */
+.safe-mode * {
+    animation: none !important;
+    transition: none !important;
+}
+
+/* Larger touch targets for interactive elements */
+.safe-mode .btn,
+.safe-mode button,
+.safe-mode a,
+.safe-mode input[type="checkbox"],
+.safe-mode input[type="radio"],
+.safe-mode select,
+.safe-mode textarea {
+    min-height: var(--min-touch-target);
+    min-width: var(--min-touch-target);
+    padding: 15px;
+}
+
+/* Safe mode banner */
+.safe-mode-banner {
+    background: #5a6c40;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-size: 14px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.safe-mode-banner a {
+    color: white;
+    text-decoration: underline;
+    font-weight: bold;
+}
+
+/* Adjust body padding for fixed banner */
+.safe-mode body {
+    padding-top: 44px;
+}
+
+/* Ensure no hover effects in safe mode */
+.safe-mode *:hover {
+    transform: none !important;
+    box-shadow: none !important;
+}
+
+/* Simplified focus states */
+.safe-mode *:focus {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Disable complex UI elements */
+.safe-mode .floating-panel,
+.safe-mode .tooltip,
+.safe-mode .dropdown-menu {
+    display: none !important;
 }
