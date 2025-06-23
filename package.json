@@ -49,7 +49,7 @@
   "dependencies": {
     "@capacitor/android": "^6.2.1",
     "@capacitor/app": "^6.0.2",
-    "@capacitor/ios": "^6.2.1",
+    "@capacitor/ios": "^7.4.0",
     "@capacitor/splash-screen": "^6.0.3",
     "@capacitor/status-bar": "^6.0.2",
     "y-indexeddb": "^9.0.12",
