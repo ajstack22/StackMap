@@ -605,7 +605,36 @@
         focusableCache: {}, // Cache focusable elements per view
         focusableCacheSize: 0, // Track cache size
         animationTimeoutId: null, // Track current animation timeout
-        focusTimeoutId: null // Track current focus timeout
+        focusTimeoutId: null, // Track current focus timeout
+        
+        // Demo mode support
+        showUserSetup: function() {
+            // Show user creation view or modal
+            if (window.ProfileUI && window.ProfileUI.showUserCreation) {
+                window.ProfileUI.showUserCreation();
+            } else {
+                ViewController.show('settings-view');
+            }
+        },
+        
+        showNotification: function(message, type) {
+            // Show a notification message
+            console.log('[Notification]', type + ':', message);
+            // TODO: Implement visual notification system
+        },
+        
+        getCurrentUserPreferences: function() {
+            if (window.UserManager) {
+                var currentUser = window.UserManager.getCurrentUser();
+                return currentUser ? currentUser.preferences : null;
+            }
+            return null;
+        },
+        
+        init: function() {
+            // Re-initialize the app (used by demo mode)
+            init();
+        }
     };
     
     // View Controller
@@ -676,6 +705,9 @@
                         App.animationTimeoutId = null;
                     }
                     
+                    // Clean up view-specific modules before transitioning
+                    self.cleanupView(fromView);
+                    
                     fromView.classList.add('sliding-out');
                     toView.classList.remove('hidden');
                     toView.classList.add('sliding-in');
@@ -713,7 +745,10 @@
                     }, window.StackMapSafeMode ? Math.round(300 * SAFE_MODE_CONSTANTS.TIMEOUT_MULTIPLIER) : 300);
                 } else {
                     // Instant transition
-                    if (fromView) fromView.classList.add('hidden');
+                    if (fromView) {
+                        this.cleanupView(fromView);
+                        fromView.classList.add('hidden');
+                    }
                     toView.classList.remove('hidden');
                     
                     // Update navigation stack after successful transition
@@ -739,6 +774,11 @@
                     var path = viewId === 'main-view' ? '/' : '#' + viewId.replace('-view', '');
                     history.pushState({ view: viewId, depth: App.navigationStack.length }, '', path);
                 }
+                
+                // Dispatch view change event
+                document.dispatchEvent(new CustomEvent('viewchange', {
+                    detail: { view: viewId, previousView: App.currentView }
+                }));
                 
                 return true;
             } finally {
@@ -834,6 +874,24 @@
             }
             
             return App.focusableCache[viewId].elements;
+        },
+        
+        /**
+         * Clean up view-specific modules to prevent memory leaks
+         */
+        cleanupView: function(view) {
+            // Clean up modules based on view ID
+            if (view.id === 'main-view') {
+                // Clean up TaskDisplay
+                if (window.TaskDisplay && window.TaskDisplay.destroy) {
+                    window.TaskDisplay.destroy();
+                }
+                // Clean up EditMode
+                if (window.EditMode && window.EditMode.destroy) {
+                    window.EditMode.destroy();
+                }
+            }
+            // Add other view cleanups as needed for other modules
         },
         
         announceViewChange: function(view) {
@@ -1002,11 +1060,65 @@
         },
         
         openExternal: function(url) {
-            if (App.platform.isCapacitor && window.Capacitor.Plugins.Browser) {
-                window.Capacitor.Plugins.Browser.open({ url: url });
-            } else {
-                window.open(url, '_blank', 'noopener,noreferrer');
+            // Validate URL
+            if (!url || typeof url !== 'string') {
+                console.error('Invalid URL provided to openExternal');
+                return;
             }
+            
+            // Ensure URL is absolute
+            if (!url.match(/^https?:\/\//i)) {
+                console.error('URL must be absolute (http:// or https://):', url);
+                return;
+            }
+            
+            // Handle native platforms (iOS/Android via Capacitor)
+            if (App.platform.isCapacitor) {
+                try {
+                    if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
+                        // iOS-specific options
+                        var options = { url: url };
+                        if (App.platform.isIOS) {
+                            options.presentationStyle = 'popover';
+                            options.toolbarColor = '#1a1a1a';
+                        }
+                        
+                        window.Capacitor.Plugins.Browser.open(options).catch(function(error) {
+                            console.error('Failed to open URL with Capacitor Browser:', error);
+                            // Fallback to window.open
+                            try {
+                                window.open(url, '_system');
+                            } catch (e) {
+                                console.error('Fallback window.open failed:', e);
+                                alert('Unable to open link. Please try again.');
+                            }
+                        });
+                    } else {
+                        console.warn('Capacitor Browser plugin not available, trying window.open');
+                        window.open(url, '_system');
+                    }
+                } catch (error) {
+                    console.error('Error opening external link:', error);
+                    alert('Unable to open link. Please check your connection.');
+                }
+            } 
+            // Handle web/PWA platforms
+            else {
+                try {
+                    var newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                    if (!newWindow) {
+                        // Popup blocked
+                        console.warn('Popup blocked, showing message to user');
+                        alert('Please allow popups to open external links.');
+                    }
+                } catch (error) {
+                    console.error('Error opening link in browser:', error);
+                    alert('Unable to open link. Please try again.');
+                }
+            }
+            
+            // Log for debugging
+            console.log('Opening external URL:', url, 'Platform:', App.platform);
         }
     };
     
@@ -1103,6 +1215,17 @@
                         self.sqliteReady = true;
                         console.log('SQLite initialized successfully');
                         
+                        // Initialize default activities on first run
+                        if (window.StackMapDefaultActivities) {
+                            window.StackMapDefaultActivities.initialize(function(success, error) {
+                                if (success) {
+                                    console.log('Default activities initialized');
+                                } else if (error !== 'Already initialized') {
+                                    console.error('Failed to initialize default activities:', error);
+                                }
+                            });
+                        }
+                        
                         // Migrate existing localStorage tasks if any
                         self.migrateTasksIfNeeded();
                     } else {
@@ -1116,6 +1239,18 @@
             } else {
                 // Not in native environment, use localStorage
                 console.log('Using localStorage (not in native environment)');
+                
+                // Initialize default activities for localStorage
+                if (window.StackMapDefaultActivities) {
+                    window.StackMapDefaultActivities.initialize(function(success, error) {
+                        if (success) {
+                            console.log('Default activities initialized');
+                        } else if (error !== 'Already initialized') {
+                            console.error('Failed to initialize default activities:', error);
+                        }
+                    });
+                }
+                
                 this.loadSettings();
                 this.loadTasks();
             }
@@ -1828,6 +1963,11 @@
                         '<a href="https://paypal.me/stackadamj" class="support-link">PayPal</a>' +
                         '<a href="https://venmo.com/u/stackadamj" class="support-link">Venmo</a>' +
                         '<a href="https://patreon.com/StackMap" class="support-link">Patreon</a>' +
+                    '</div>' +
+                    '<h3>Resources</h3>' +
+                    '<div class="resource-links">' +
+                        '<a href="https://stackmap.app/help" class="resource-link">Help Documentation</a>' +
+                        '<a href="https://github.com/ajstack22/StackMap" class="resource-link">GitHub Repository</a>' +
                     '</div>';
             }
         }
@@ -1843,6 +1983,50 @@
         Navigation.init();
         Storage.init();
         Content.load();
+        
+        // Initialize user manager
+        if (window.UserManager) {
+            window.UserManager.init(function() {
+                // Migrate existing tasks to default user
+                window.UserManager.migrateExistingTasks();
+                
+                // Render user switcher
+                var switcherContainer = document.getElementById('user-switcher-container');
+                if (switcherContainer) {
+                    window.UserManager.renderUserSwitcher(switcherContainer);
+                }
+                
+                // Check for demo mode after UserManager is ready
+                if (window.DemoMode) {
+                    window.DemoMode.init();
+                }
+            });
+        }
+        
+        // Initialize edit mode
+        if (window.EditMode) {
+            window.EditMode.init();
+        }
+        
+        // Initialize keyboard navigation
+        if (window.StackMapKeyboardNav) {
+            window.StackMapKeyboardNav.init();
+        }
+        
+        // Initialize drag & drop reordering
+        if (window.DragDropReorder) {
+            window.DragDropReorder.init();
+        }
+        
+        // Initialize memory monitor
+        initMemoryMonitor();
+        
+        // Initialize activities progressively (non-blocking)
+        if (window.StackMapDefaultActivities && window.StackMapDefaultActivities.loadProgressive) {
+            window.StackMapDefaultActivities.loadProgressive(function(activities) {
+                console.log('Activities loaded progressively: ' + activities.length);
+            });
+        }
         
         // Recover preserved data
         if (window.StackMapDataPreservation) {
@@ -1937,6 +2121,11 @@
             TVNavigation.cleanup();
         }
         
+        // Stop memory monitor
+        if (window.StackMapMemoryMonitor) {
+            window.StackMapMemoryMonitor.stop();
+        }
+        
         // Clean up safe mode banner if present
         if (window.StackMapSafeModeExitHandler) {
             var exitLink = document.querySelector('.safe-mode-banner a');
@@ -1980,20 +2169,180 @@
         }
     }
     
-    // Start when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        init();
+    /**
+     * Memory Monitor System
+     * Tracks memory usage and warns when approaching limits
+     */
+    var MemoryMonitor = {
+        intervalId: null,
+        warningThreshold: 45, // MB
+        criticalThreshold: 60, // MB
+        lastWarningTime: 0,
+        warningCooldown: 30000, // 30 seconds between warnings
+        
+        check: function() {
+            // Only works in Chrome/Edge with performance.memory API
+            if (!performance.memory) return;
+            
+            var usedMB = Math.round(performance.memory.usedJSHeapSize / 1048576);
+            var limitMB = Math.round(performance.memory.jsHeapSizeLimit / 1048576);
+            
+            // Log memory usage periodically
+            if (Date.now() % 10 === 0) { // Log every 10th check
+                console.log('Memory: ' + usedMB + 'MB / ' + limitMB + 'MB');
+            }
+            
+            // Check if we should warn
+            var now = Date.now();
+            if (usedMB > this.criticalThreshold && now - this.lastWarningTime > this.warningCooldown) {
+                this.lastWarningTime = now;
+                console.error('CRITICAL: Memory usage at ' + usedMB + 'MB - app may crash soon!');
+                this.showWarning('Critical memory usage: ' + usedMB + 'MB', 'critical');
+                
+                // Trigger emergency cleanup
+                this.emergencyCleanup();
+            } else if (usedMB > this.warningThreshold && now - this.lastWarningTime > this.warningCooldown) {
+                this.lastWarningTime = now;
+                console.warn('Memory warning: ' + usedMB + 'MB used');
+                this.showWarning('High memory usage: ' + usedMB + 'MB', 'warning');
+            }
+            
+            return usedMB;
+        },
+        
+        showWarning: function(message, level) {
+            // Create or update memory warning banner
+            var banner = document.getElementById('memory-warning-banner');
+            if (!banner) {
+                banner = document.createElement('div');
+                banner.id = 'memory-warning-banner';
+                banner.style.cssText = 
+                    'position: fixed;' +
+                    'top: 0;' +
+                    'left: 0;' +
+                    'right: 0;' +
+                    'padding: 8px;' +
+                    'text-align: center;' +
+                    'z-index: 10000;' +
+                    'font-size: 14px;' +
+                    'transition: opacity 0.3s;';
+                document.body.appendChild(banner);
+            }
+            
+            // Set color based on level
+            banner.style.backgroundColor = level === 'critical' ? '#d32f2f' : '#ff9800';
+            banner.style.color = 'white';
+            banner.textContent = message;
+            banner.style.opacity = '1';
+            
+            // Auto-hide after 5 seconds
+            setTimeout(function() {
+                if (banner) {
+                    banner.style.opacity = '0';
+                }
+            }, 5000);
+        },
+        
+        emergencyCleanup: function() {
+            console.log('Performing emergency memory cleanup...');
+            
+            // Clear caches
+            if (App.focusableCache) {
+                App.focusableCache = {};
+                App.focusableCacheSize = 0;
+            }
+            
+            // Clear any stored drafts older than 1 hour
+            try {
+                for (var key in localStorage) {
+                    if (key.indexOf('stackmap_task_draft_') === 0) {
+                        localStorage.removeItem(key);
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not clear drafts:', e);
+            }
+            
+            // Force garbage collection if available (usually only in dev tools)
+            if (window.gc) {
+                window.gc();
+            }
+            
+            // Dispatch event for other modules to clean up
+            document.dispatchEvent(new CustomEvent('memoryPressure', {
+                detail: { level: 'critical' }
+            }));
+        },
+        
+        start: function() {
+            var self = this;
+            
+            // Check immediately
+            this.check();
+            
+            // Check every 30 seconds
+            this.intervalId = setInterval(function() {
+                self.check();
+            }, 30000);
+        },
+        
+        stop: function() {
+            if (this.intervalId) {
+                clearInterval(this.intervalId);
+                this.intervalId = null;
+            }
+        }
+    };
+    
+    /**
+     * Initialize memory monitor
+     */
+    function initMemoryMonitor() {
+        // Only start monitor if performance.memory is available
+        if (performance.memory) {
+            MemoryMonitor.start();
+            
+            // Export for debugging
+            window.StackMapMemoryMonitor = MemoryMonitor;
+        }
     }
     
-    // Expose API for debugging
+    // Expose API before init to avoid race conditions
     window.StackMapApp = {
         App: App,
         ViewController: ViewController,
         Platform: Platform,
         Navigation: Navigation,
         Storage: Storage,
-        cleanup: cleanup
+        cleanup: cleanup,
+        openExternalLink: function(url) {
+            return Navigation.openExternal(url);
+        }
     };
+    
+    // Also expose App directly for demo mode
+    window.App = App;
+    
+    // Test helper for external links
+    window.testLinks = {
+        testHelp: function() {
+            Navigation.openExternal('https://stackmap.app/help');
+        },
+        testPrivacy: function() {
+            Navigation.openExternal('https://stackmap.app/privacy');
+        },
+        testSupport: function() {
+            Navigation.openExternal('https://paypal.me/stackadamj');
+        },
+        testPlatform: function() {
+            console.log('Current platform:', Platform.detect());
+        }
+    };
+    
+    // Start when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+    } else {
+        init();
+    }
 })();

@@ -218,8 +218,18 @@
     
     <!-- External styles loaded async -->
     <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/focus-indicators.css">
+    <link rel="stylesheet" href="css/activity-library.css">
+    <link rel="stylesheet" href="css/clusterize.css">
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 768px)">
     <link rel="stylesheet" href="css/tv.css" media="(min-width: 1920px)">
+    <link rel="stylesheet" href="css/grownup-mode.css">
+    <link rel="stylesheet" href="css/demo-mode.css">
+    <link rel="stylesheet" href="css/onboarding.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/timer.css">
+    <link rel="stylesheet" href="css/photo-attachments.css">
     
     <!-- PWA manifest -->
     <link rel="manifest" href="manifest.json">
@@ -228,6 +238,13 @@
     <link rel="preload" href="js/app.js" as="script">
 </head>
 <body>
+    <!-- Skip Links for Keyboard Navigation -->
+    <nav class="skip-links" aria-label="Skip links">
+        <a href="#main" class="skip-link">Skip to main content</a>
+        <a href="#tasks" class="skip-link">Skip to tasks</a>
+        <a href="#add-task" class="skip-link">Skip to add task</a>
+    </nav>
+    
     <!-- Loading State -->
     <div id="loading-view" class="view">
         <div class="loading">
@@ -242,11 +259,16 @@
             <h1>StackMap</h1>
             <button id="menu-button" aria-label="Menu">☰</button>
         </header>
-        <main class="content">
+        <main id="main" class="content">
             <!-- Normal content wrapper -->
             <div class="component-normal">
+                <!-- User switcher -->
+                <div id="user-switcher-container"></div>
+                
                 <!-- Task cards will be dynamically inserted here -->
-                <div id="task-container"></div>
+                <div id="tasks" role="region" aria-label="Task list">
+                    <div id="task-container"></div>
+                </div>
             </div>
             
             <!-- Fallback UI (hidden by default, shown via CSS when .component-error-active is added) -->
@@ -276,6 +298,20 @@
             <section>
                 <h2>Preferences</h2>
                 <!-- Settings content -->
+            </section>
+            <section>
+                <h2>Data Management</h2>
+                <div class="data-management-options">
+                    <button id="export-data-btn" class="btn-primary" style="width: 100%; margin-bottom: 16px;">
+                        📤 Export Data
+                    </button>
+                    <button id="import-data-btn" class="btn-secondary" style="width: 100%; margin-bottom: 8px;">
+                        📥 Import Data
+                    </button>
+                    <p class="form-helper" style="text-align: center; margin-top: 8px;">
+                        Backup your tasks or restore from a previous backup
+                    </p>
+                </div>
             </section>
             <section>
                 <h2>About</h2>
@@ -324,6 +360,76 @@
         </main>
     </div>
     
+    <!-- Profiles View -->
+    <div id="profiles-view" class="view hidden">
+        <header class="header">
+            <button id="profiles-back" aria-label="Back">←</button>
+            <h1>User Profiles</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <div class="component-normal">
+                <!-- Profile list -->
+                <div id="profile-list"></div>
+                
+                <!-- Add new profile button -->
+                <button id="add-profile-btn" class="profile-add-button" aria-label="Add new profile">
+                    + Add Profile
+                </button>
+                
+                <!-- Guest mode button -->
+                <button id="guest-mode-btn" class="profile-guest-button" aria-label="Use guest mode">
+                    👋 Guest Mode
+                </button>
+            </div>
+            
+            <!-- Fallback UI -->
+            <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
+                <div class="fallback-message">Profile management is temporarily unavailable</div>
+                <div class="fallback-actions">
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Try again</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Import Preview Modal -->
+    <div id="import-preview-modal" class="modal hidden" role="dialog" aria-labelledby="import-preview-title">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="import-preview-title" class="modal-title">Import Preview</h2>
+                <button class="modal-close" aria-label="Close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-content">
+                <div id="import-preview-content">
+                    <!-- Preview content will be dynamically inserted here -->
+                </div>
+                <div class="import-options" style="margin-top: 24px;">
+                    <h3 style="font-size: 18px; margin-bottom: 16px;">Import Strategy:</h3>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="import-strategy" value="replace" checked>
+                            <strong>Replace All</strong> - Clear existing data and import new
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="import-strategy" value="merge">
+                            <strong>Merge</strong> - Keep existing data and add imported
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="import-strategy" value="smart">
+                            <strong>Smart Merge</strong> - Update existing, add new
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn-secondary" data-close-modal>Cancel</button>
+                    <button id="confirm-import-btn" class="btn-primary">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
     <!-- Core Scripts -->
     <script>
         // Immediate platform detection for styling
@@ -349,11 +455,62 @@
         })();
     </script>
     
+    <!-- Feature flags for safe rollout -->
+    <script src="js/feature-flags.js" defer></script>
+    <!-- Theme manager (load early for instant theme) -->
+    <script src="js/theme-manager.js"></script>
     <!-- Messaging system -->
     <script src="js/messaging.js" defer></script>
     <!-- SQLite storage -->
     <script src="js/task-sqlite.js" defer></script>
+    <!-- Timer management for memory optimization -->
+    <script src="js/timer-manager.js" defer></script>
+    <!-- Default activities -->
+    <script src="js/default-activities.js" defer></script>
+    <!-- Edit mode system -->
+    <script src="js/edit-mode.js" defer></script>
+    <!-- Modal system -->
+    <script src="js/modal.js" defer></script>
+    <!-- Grown-up Mode Protection -->
+    <script src="js/grownup-mode.js" defer></script>
+    <!-- Demo mode and onboarding -->
+    <script src="js/demo-mode.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
     <!-- Main application -->
     <script src="js/app.js" defer></script>
+    <!-- User management -->
+    <script src="js/user-manager.js" defer></script>
+    <!-- Profile UI -->
+    <script src="js/profile-ui.js" defer></script>
+    <!-- Data Import/Export -->
+    <script src="js/data-export.js" defer></script>
+    <script src="js/data-import.js" defer></script>
+    <script src="js/data-io-ui.js" defer></script>
+    <!-- Virtual scrolling (must load before task-display) -->
+    <script src="js/clusterize.min.js" defer></script>
+    <script src="js/virtual-scroll-adapter.js" defer></script>
+    <!-- Task timer system (must load before task-display) -->
+    <script src="js/task-timer.js" defer></script>
+    <!-- Task display -->
+    <script src="js/task-display.js" defer></script>
+    <!-- Celebration system -->
+    <script src="js/celebration.js" defer></script>
+    <!-- Task reordering -->
+    <script src="js/task-reorder.js" defer></script>
+    <!-- Drag & Drop reordering -->
+    <script src="js/drag-drop-reorder.js" defer></script>
+    <!-- Task cards UI -->
+    <!-- Task Card Pool (Memory Optimization) -->
+    <script src="js/task-card-pool.js" defer></script>
+    <script src="js/task-cards.js" defer></script>
+    <!-- Photo attachments -->
+    <script src="js/photo-attachment-storage.js" defer></script>
+    <script src="js/photo-attachment-ui.js" defer></script>
+    <!-- Keyboard navigation -->
+    <script src="js/keyboard-nav.js" defer></script>
+    <!-- Activity library -->
+    <script src="js/activity-library.js" defer></script>
+    <!-- Theme Settings UI -->
+    <script src="js/theme-settings-ui.js" defer></script>
 </body>
 </html>

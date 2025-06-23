@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Scroll Test - StackMap</title>
+    <style>
+        body {
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #fff;
+            padding: 20px;
+        }
+        
+        .test-controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1000;
+        }
+        
+        .test-controls button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            background: #4a90e2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .test-controls button:hover {
+            background: #357abd;
+        }
+        
+        .stats {
+            margin-top: 20px;
+            font-size: 12px;
+        }
+        
+        .stats div {
+            margin: 5px 0;
+        }
+        
+        #memory-info {
+            color: #4a90e2;
+        }
+        
+        #performance-info {
+            color: #48bb78;
+        }
+        
+        #status-info {
+            color: #ed8936;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-controls">
+        <h3>Virtual Scroll Test</h3>
+        <button onclick="generateTasks(10)">10 Tasks</button>
+        <button onclick="generateTasks(30)">30 Tasks (Threshold)</button>
+        <button onclick="generateTasks(50)">50 Tasks</button>
+        <button onclick="generateTasks(100)">100 Tasks</button>
+        <button onclick="generateTasks(200)">200 Tasks</button>
+        <button onclick="testInteractions()">Test Interactions</button>
+        <button onclick="testAccessibility()">Test Accessibility</button>
+        
+        <div class="stats">
+            <div id="task-count">Tasks: 0</div>
+            <div id="dom-count">DOM Elements: 0</div>
+            <div id="memory-info">Memory: Calculating...</div>
+            <div id="performance-info">FPS: Measuring...</div>
+            <div id="status-info">Status: Ready</div>
+        </div>
+    </div>
+    
+    <div id="app-container"></div>
+    
+    <script>
+        var testTasks = [];
+        var lastFrameTime = performance.now();
+        var frameCount = 0;
+        var fps = 0;
+        
+        // FPS monitoring
+        function measureFPS() {
+            var currentTime = performance.now();
+            frameCount++;
+            
+            if (currentTime >= lastFrameTime + 1000) {
+                fps = Math.round((frameCount * 1000) / (currentTime - lastFrameTime));
+                document.getElementById('performance-info').textContent = 'FPS: ' + fps;
+                frameCount = 0;
+                lastFrameTime = currentTime;
+            }
+            
+            requestAnimationFrame(measureFPS);
+        }
+        measureFPS();
+        
+        function generateTasks(count) {
+            document.getElementById('status-info').textContent = 'Status: Generating ' + count + ' tasks...';
+            
+            // Clear existing tasks
+            testTasks = [];
+            localStorage.removeItem('stackmap_tasks');
+            
+            // Generate test tasks
+            for (var i = 0; i < count; i++) {
+                testTasks.push({
+                    id: 'test_task_' + i,
+                    title: 'Task ' + (i + 1) + ' - ' + generateRandomTitle(),
+                    description: 'Test task description for task ' + (i + 1),
+                    icon: getRandomIcon(),
+                    category: '',
+                    priority: getRandomPriority(),
+                    completed: Math.random() > 0.8,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString(),
+                    user_id: null,
+                    due_date: null,
+                    reminder: null,
+                    tags: [],
+                    order: Date.now() - i,
+                    attachments: []
+                });
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('stackmap_tasks', JSON.stringify(testTasks));
+            
+            // Reload the page to test fresh initialization
+            window.location.href = '../index.html?test=true&virtual-scroll=' + (count > 30 ? 'true' : 'false');
+        }
+        
+        function generateRandomTitle() {
+            var titles = [
+                'Complete project documentation',
+                'Review pull request',
+                'Fix memory leak issue',
+                'Update dependencies',
+                'Write unit tests',
+                'Refactor legacy code',
+                'Optimize database queries',
+                'Design new feature',
+                'Meeting with team',
+                'Debug production issue'
+            ];
+            return titles[Math.floor(Math.random() * titles.length)];
+        }
+        
+        function getRandomIcon() {
+            var icons = ['✓', '🌅', '☕', '🚿', '🪥', '🍳', '💊', '🏃', '📚', '🎮', '📱', '💻', '🛏️', '🍽️', '📝', '🎯', '⏰', '💤', '🧘'];
+            return icons[Math.floor(Math.random() * icons.length)];
+        }
+        
+        function getRandomPriority() {
+            var priorities = ['low', 'medium', 'high'];
+            return priorities[Math.floor(Math.random() * priorities.length)];
+        }
+        
+        function updateStats() {
+            var taskElements = document.querySelectorAll('.task-item');
+            document.getElementById('task-count').textContent = 'Tasks: ' + testTasks.length;
+            document.getElementById('dom-count').textContent = 'DOM Elements: ' + taskElements.length;
+            
+            // Estimate memory usage
+            if (performance.memory) {
+                var mb = (performance.memory.usedJSHeapSize / 1048576).toFixed(2);
+                document.getElementById('memory-info').textContent = 'Memory: ' + mb + ' MB';
+            }
+        }
+        
+        function testInteractions() {
+            document.getElementById('status-info').textContent = 'Status: Testing interactions...';
+            
+            // Test checkbox
+            var checkbox = document.querySelector('.task-checkbox');
+            if (checkbox) {
+                checkbox.click();
+                console.log('✓ Checkbox interaction works');
+            }
+            
+            // Test edit button (if in edit mode)
+            var editBtn = document.querySelector('.task-edit');
+            if (editBtn) {
+                editBtn.click();
+                console.log('✓ Edit button works');
+            }
+            
+            document.getElementById('status-info').textContent = 'Status: Interactions tested';
+        }
+        
+        function testAccessibility() {
+            document.getElementById('status-info').textContent = 'Status: Testing accessibility...';
+            
+            var results = [];
+            
+            // Check ARIA attributes
+            var taskItems = document.querySelectorAll('.task-item');
+            if (taskItems.length > 0) {
+                var firstTask = taskItems[0];
+                if (firstTask.getAttribute('aria-posinset')) {
+                    results.push('✓ aria-posinset present');
+                }
+                if (firstTask.getAttribute('aria-setsize')) {
+                    results.push('✓ aria-setsize present');
+                }
+                if (firstTask.getAttribute('role') === 'listitem') {
+                    results.push('✓ role=listitem present');
+                }
+            }
+            
+            // Check scroll container
+            var scrollArea = document.querySelector('.task-scroll-area');
+            if (scrollArea && scrollArea.getAttribute('role') === 'region') {
+                results.push('✓ Scroll area has role=region');
+            }
+            
+            // Check live region
+            var liveRegion = document.getElementById('virtual-scroll-live-region');
+            if (liveRegion) {
+                results.push('✓ Live region exists');
+            }
+            
+            console.log('Accessibility test results:', results);
+            document.getElementById('status-info').textContent = 'Status: Accessibility tested (' + results.length + ' checks passed)';
+        }
+        
+        // Update stats periodically
+        setInterval(updateStats, 1000);
+        
+        // Check if we're on the main app page
+        if (window.location.pathname.includes('index.html')) {
+            // Wait for app to initialize
+            setTimeout(function() {
+                updateStats();
+                
+                // Check if virtual scrolling is active
+                if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
+                    document.getElementById('status-info').textContent = 'Status: Virtual scrolling ACTIVE';
+                    document.getElementById('status-info').style.color = '#48bb78';
+                } else {
+                    document.getElementById('status-info').textContent = 'Status: Traditional rendering';
+                }
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

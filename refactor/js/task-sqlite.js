@@ -675,6 +675,141 @@
         },
         
         /**
+         * Verify database integrity
+         */
+        verifyIntegrity: function(callback) {
+            var self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(false, new Error('Database not ready'));
+                return;
+            }
+            
+            self.sqlite.query({
+                database: self.dbName,
+                statement: 'PRAGMA integrity_check',
+                values: []
+            }).then(function(result) {
+                var isValid = result.values && result.values.length > 0 && 
+                             result.values[0].integrity_check === 'ok';
+                
+                if (callback) callback(isValid, null);
+            }).catch(function(error) {
+                console.error('SQLite: Integrity check failed', error);
+                if (callback) callback(false, error);
+            });
+        },
+        
+        /**
+         * Begin migration transaction
+         */
+        beginMigration: function(callback) {
+            var self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(false, new Error('Database not ready'));
+                return;
+            }
+            
+            self.sqlite.execute({
+                database: self.dbName,
+                statements: 'BEGIN TRANSACTION'
+            }).then(function() {
+                console.log('SQLite: Migration transaction started');
+                if (callback) callback(true, null);
+            }).catch(function(error) {
+                console.error('SQLite: Failed to begin transaction', error);
+                if (callback) callback(false, error);
+            });
+        },
+        
+        /**
+         * Commit migration transaction
+         */
+        commitMigration: function(callback) {
+            var self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(false, new Error('Database not ready'));
+                return;
+            }
+            
+            self.sqlite.execute({
+                database: self.dbName,
+                statements: 'COMMIT'
+            }).then(function() {
+                console.log('SQLite: Migration transaction committed');
+                if (callback) callback(true, null);
+            }).catch(function(error) {
+                console.error('SQLite: Failed to commit transaction', error);
+                if (callback) callback(false, error);
+            });
+        },
+        
+        /**
+         * Rollback migration transaction
+         */
+        rollbackMigration: function(callback) {
+            var self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(false, new Error('Database not ready'));
+                return;
+            }
+            
+            self.sqlite.execute({
+                database: self.dbName,
+                statements: 'ROLLBACK'
+            }).then(function() {
+                console.log('SQLite: Migration transaction rolled back');
+                if (callback) callback(true, null);
+            }).catch(function(error) {
+                console.error('SQLite: Failed to rollback transaction', error);
+                if (callback) callback(false, error);
+            });
+        },
+        
+        /**
+         * Get migration status
+         */
+        getMigrationStatus: function(callback) {
+            var self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(null, new Error('Database not ready'));
+                return;
+            }
+            
+            // Check for migration metadata
+            self.sqlite.query({
+                database: self.dbName,
+                statement: 'SELECT COUNT(*) as migrated FROM tasks WHERE metadata LIKE ?',
+                values: ['%migrationTimestamp%']
+            }).then(function(result) {
+                var migratedCount = result.values[0].migrated;
+                
+                self.getStats(function(stats, error) {
+                    if (error) {
+                        if (callback) callback(null, error);
+                        return;
+                    }
+                    
+                    var status = {
+                        hasMigratedData: migratedCount > 0,
+                        migratedTaskCount: migratedCount,
+                        totalTaskCount: stats.totalTasks,
+                        isComplete: migratedCount === stats.totalTasks && stats.totalTasks > 0
+                    };
+                    
+                    if (callback) callback(status, null);
+                });
+            }).catch(function(error) {
+                console.error('SQLite: Failed to get migration status', error);
+                if (callback) callback(null, error);
+            });
+        },
+        
+        /**
          * Parse task row from database
          */
         parseTaskRow: function(row) {

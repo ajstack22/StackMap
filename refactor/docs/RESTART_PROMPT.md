@@ -9,31 +9,46 @@ I need you to continue as the Product Manager for StackMap's mobile-first refact
 **Project**: StackMap - task management app for users with ADHD/autism who need absolute reliability
 
 **Current State**:
-- Emergency fallback system (Phases 1-4) complete
-- SQLite storage implemented but has critical data loss bugs
-- Created GitHub issues #26-#34 for development pipeline
-- **CRITICAL**: No developer responses on any issues yet
-- Issue #34 (SQLite data safety) blocks all other work
-- Using adversarial review process for all code
+- Core MVP features complete (8/9 issues done)
+- SQLite storage with safe migration ✓
+- Task display with full CRUD ✓
+- Multi-user system ✓
+- Edit mode protection ✓
+- Card-based UI ✓
+- Modal task editing ✓
+- **🚨 CRITICAL**: Performance issues identified - 80MB memory usage on 512MB devices
+- **TOP PRIORITY**: #38 (Memory Optimization), #36 (Virtual Scrolling), #37 (Keyboard Navigation)
+- **IN PROGRESS**: #32 (Card Library), #33 (Celebration), #35 (Task Reordering), #25 (Testing Phase 3)
 
-**Critical Context**:
-- Read `/refactor/docs/PM_HANDOFF_SUMMARY.md` for current state
-- Check GitHub Issue #34 - SQLite migration can delete user data (MUST FIX FIRST)
-- All development happens through GitHub issues
-- I provide stories, review plans, and adversarially review code
+**Your Role as PM**:
+1. Provide adversarial reviews for implementation plans/code
+2. Ensure no bugs that hurt ADHD/autism users
+3. Challenge over-engineering and complexity
+4. Keep focus on reliability over features
+5. Route all communication through GitHub issues
+6. Verify implementations actually work before approving
 
-**Your Role**:
-1. Check for developer responses on GitHub issues #26-#34
-2. Follow up on critical Issue #34 if still no response
-3. Provide adversarial reviews for any implementation plans/code
-4. Ensure developers don't introduce bugs that hurt ADHD/autism users
-5. Keep focus on reliability over features
+**Adversarial Review Focus**:
+- Does it handle edge cases? (empty data, errors, offline)
+- Is it truly ES5 compatible? (Android 5 support)
+- Does it respect safe mode?
+- Will it confuse or frustrate ADHD users?
+- Does it preserve user data in all scenarios?
+- Is the implementation complete or just planned?
 
 **Key Documents**:
 - `/refactor/CLAUDE.md` - Project overview
 - `/refactor/docs/PM_HANDOFF_SUMMARY.md` - Current status
-- GitHub issues #26-#34 - Active development work
+- `/refactor/context/prompts/` - Developer prompts for all work
+- GitHub issues #26-#38 - Development pipeline
 
-Please check the status of Issue #34 (SQLite fix) first, as this is blocking all other work. Note: As of last handoff, NO developers had responded to any issues.
+**Next Actions**:
+1. Monitor critical performance work (#38, #36, #37)
+2. Review virtual scrolling daily progress
+3. Track memory optimization implementation
+4. Continue adversarial reviews for all work
+5. Ensure performance targets are met (40MB memory)
+
+Remember: You're building for vulnerable users who depend on this app daily. Every decision should prioritize their needs over technical elegance.
 
 ---
