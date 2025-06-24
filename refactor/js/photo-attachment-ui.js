@@ -5,7 +5,7 @@
     'use strict';
 
     // UI Configuration
-    const UI_CONFIG = {
+    var UI_CONFIG = {
         TOUCH_TARGET_MIN: 48,      // Minimum touch target size
         TOUCH_TARGET_CRITICAL: 60, // Critical control size
         GRID_COLUMNS: 3,           // Mobile grid columns
@@ -16,15 +16,35 @@
         HESITATION_THRESHOLD: 2000,// 2 seconds hesitation indicates stress
         ERROR_THRESHOLD: 3         // 3 errors in 30 seconds indicates stress
     };
+    
+    // Make configs available globally
+    if (!window.PHOTO_CONFIG) {
+        window.PHOTO_CONFIG = {
+            MAX_PHOTOS_PER_TASK: 3,
+            MAX_VISIBLE_PHOTOS: 6,
+            MAX_CAPTION_LENGTH: 50
+        };
+    }
+    
+    if (!window.PHOTO_CATEGORIES) {
+        window.PHOTO_CATEGORIES = {
+            memory_aid: { color: '#4A90E2', label: 'Reference' },
+            before: { color: '#7ED321', label: 'Before' },
+            after: { color: '#9013FE', label: 'After' },
+            progress: { color: '#F5A623', label: 'Progress' }
+        };
+    }
 
     // Photo Attachment UI Manager
-    const PhotoAttachmentUI = function(storage) {
+    var PhotoAttachmentUI = function(storage) {
         this.storage = storage;
         this.currentTask = null;
         this.photos = [];
         this.selectedPhoto = null;
         this.stressDetector = new StressDetector();
         this.settings = this._loadSettings();
+        this.thumbnailGrid = null;
+        this.photoViewer = null;
         this.init();
     };
 
@@ -35,6 +55,7 @@
             this._setupEventListeners();
             this._applySettings();
             this._setupLazyLoading();
+            this._initializeCacheBridge();
         },
 
         // Setup global event listeners
@@ -49,9 +70,16 @@
             // Handle orientation changes
             window.addEventListener('orientationchange', function() {
                 setTimeout(function() {
-                    self._lazyLoadThumbnails();
+                    self._refreshPhotoDisplay();
                 }, 100);
             });
+            
+            // Listen for offline queue updates
+            if (window.OfflineQueue) {
+                window.addEventListener('online', function() {
+                    self._syncPendingPhotos();
+                });
+            }
         },
 
         // Create photo attachment UI for a task
@@ -64,6 +92,17 @@
             this.storage.getPhotosForTask(taskId, function(photos) {
                 self.photos = photos;
                 self._renderUI(container);
+                
+                // Preload photos for offline access
+                if (window.PhotoCacheBridge && photos.length > 0) {
+                    var photoIds = photos.map(function(photo) {
+                        return photo.id;
+                    }).filter(Boolean);
+                    
+                    if (photoIds.length > 0) {
+                        window.PhotoCacheBridge.preloadCriticalPhotos(photoIds);
+                    }
+                }
             });
         },
 
@@ -75,9 +114,41 @@
             container.innerHTML = '';
             container.className = 'photo-attachment-container';
             
-            // Add photo grid
-            var grid = this._createPhotoGrid();
-            container.appendChild(grid);
+            // Create grid container
+            var gridContainer = document.createElement('div');
+            container.appendChild(gridContainer);
+            
+            // Initialize thumbnail grid with new component
+            if (window.PhotoThumbnailGrid) {
+                this.thumbnailGrid = new window.PhotoThumbnailGrid(gridContainer, {
+                    onPhotoTap: function(photo, index) {
+                        self._viewPhoto(photo, index);
+                    },
+                    onAddPhoto: function() {
+                        self._triggerPhotoSelection();
+                    },
+                    onPhotoAction: function(action, photo) {
+                        switch(action) {
+                            case 'view':
+                                self._viewPhoto(photo);
+                                break;
+                            case 'edit':
+                                self._editPhoto(photo);
+                                break;
+                            case 'delete':
+                                self._deletePhoto(photo.id);
+                                break;
+                        }
+                    }
+                });
+                
+                // Create the grid
+                this.thumbnailGrid.createGrid(this.photos, window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS);
+            } else {
+                // Fallback to old implementation
+                var grid = this._createPhotoGrid();
+                container.appendChild(grid);
+            }
             
             // Add controls
             var controls = this._createControls();
@@ -138,24 +209,29 @@
             thumbnail.alt = this._getPhotoDescription(photo);
             thumbnail.setAttribute('role', 'img');
             
-            // Load thumbnail with lazy loading
-            this._loadThumbnail(photo.id, function(thumbnailData) {
-                if (thumbnailData) {
-                    // Use data-src for lazy loading
-                    thumbnail.setAttribute('data-src', thumbnailData);
-                    // Load immediately if in viewport
-                    if (self._isInViewport(thumbnail)) {
-                        thumbnail.src = thumbnailData;
-                        thumbnail.removeAttribute('data-src');
-                    }
-                } else {
-                    thumbnail.setAttribute('data-src', photo.localUri);
-                    if (self._isInViewport(thumbnail)) {
-                        thumbnail.src = photo.localUri;
-                        thumbnail.removeAttribute('data-src');
-                    }
+            // Use optimized photo loading
+            if (photo.optimized) {
+                // Set up progressive loading with PhotoLazyLoader
+                thumbnail.setAttribute('data-lazy-src', photo.fullUrl || photo.localUri);
+                thumbnail.setAttribute('data-lazy-medium', photo.mediumUrl);
+                thumbnail.setAttribute('data-lazy-thumbnail', photo.thumbnailUrl);
+                
+                // Show blur placeholder immediately
+                if (photo.thumbnailUrl) {
+                    thumbnailContainer.style.backgroundImage = 'url(' + photo.thumbnailUrl + ')';
+                    thumbnailContainer.style.backgroundSize = 'cover';
+                    thumbnailContainer.style.filter = 'blur(5px)';
                 }
-            });
+            } else {
+                // Fallback: Load thumbnail with lazy loading
+                this._loadThumbnail(photo.id, function(thumbnailData) {
+                    if (thumbnailData) {
+                        thumbnail.setAttribute('data-lazy-src', thumbnailData);
+                    } else {
+                        thumbnail.setAttribute('data-lazy-src', photo.localUri);
+                    }
+                });
+            }
             
             // Category border
             var category = window.PHOTO_CATEGORIES[photo.category];
@@ -307,45 +383,90 @@
         },
 
         // View photo in full screen
-        _viewPhoto: function(photo) {
+        _viewPhoto: function(photo, index) {
             var self = this;
-            var viewer = document.createElement('div');
-            viewer.className = 'photo-viewer';
             
-            // Image container
-            var imageContainer = document.createElement('div');
-            imageContainer.className = 'photo-viewer-image-container';
-            
-            var image = document.createElement('img');
-            image.src = photo.localUri;
-            image.alt = this._getPhotoDescription(photo);
-            imageContainer.appendChild(image);
-            
-            // Zoom controls
-            var zoomControls = this._createZoomControls(image);
-            imageContainer.appendChild(zoomControls);
-            
-            viewer.appendChild(imageContainer);
-            
-            // Caption display
-            if (photo.caption) {
-                var captionDisplay = document.createElement('div');
-                captionDisplay.className = 'photo-viewer-caption';
-                captionDisplay.textContent = photo.caption;
-                viewer.appendChild(captionDisplay);
+            // Use new PhotoViewer component if available
+            if (window.PhotoViewer) {
+                if (!this.photoViewer) {
+                    this.photoViewer = new window.PhotoViewer({
+                        onClose: function() {
+                            // Viewer closed
+                        },
+                        onPhotoChange: function(photo, index) {
+                            // Photo changed
+                        }
+                    });
+                }
+                
+                // Open viewer with all photos, starting at specified index
+                var startIndex = typeof index === 'number' ? index : this.photos.indexOf(photo);
+                this.photoViewer.open(this.photos, startIndex);
+            } else {
+                // Fallback to old implementation
+                var viewer = document.createElement('div');
+                viewer.className = 'photo-viewer';
+                
+                // Image container
+                var imageContainer = document.createElement('div');
+                imageContainer.className = 'photo-viewer-image-container';
+                
+                var image = document.createElement('img');
+                
+                // Use optimized version if available
+                if (photo.optimized && photo.fullUrl) {
+                    image.src = photo.fullUrl;
+                } else {
+                    image.src = photo.localUri;
+                }
+                
+                image.alt = this._getPhotoDescription(photo);
+                
+                // Show loading state
+                image.style.opacity = '0';
+                image.onload = function() {
+                    image.style.transition = 'opacity 300ms ease-in';
+                    image.style.opacity = '1';
+                };
+                
+                imageContainer.appendChild(image);
+                
+                // Zoom controls
+                var zoomControls = this._createZoomControls(image);
+                imageContainer.appendChild(zoomControls);
+                
+                viewer.appendChild(imageContainer);
+                
+                // Caption display
+                if (photo.caption) {
+                    var captionDisplay = document.createElement('div');
+                    captionDisplay.className = 'photo-viewer-caption';
+                    captionDisplay.textContent = photo.caption;
+                    viewer.appendChild(captionDisplay);
+                }
+                
+                // Close button
+                var closeBtn = document.createElement('button');
+                closeBtn.className = 'photo-viewer-close';
+                closeBtn.setAttribute('aria-label', 'Close viewer');
+                closeBtn.textContent = '×';
+                closeBtn.addEventListener('click', function() {
+                    document.body.removeChild(viewer);
+                });
+                viewer.appendChild(closeBtn);
+                
+                // Keyboard navigation
+                viewer.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        document.body.removeChild(viewer);
+                    }
+                });
+                
+                document.body.appendChild(viewer);
+                
+                // Focus for keyboard events
+                viewer.focus();
             }
-            
-            // Close button
-            var closeBtn = document.createElement('button');
-            closeBtn.className = 'photo-viewer-close';
-            closeBtn.setAttribute('aria-label', 'Close viewer');
-            closeBtn.textContent = '×';
-            closeBtn.addEventListener('click', function() {
-                document.body.removeChild(viewer);
-            });
-            viewer.appendChild(closeBtn);
-            
-            document.body.appendChild(viewer);
         },
 
         // Create zoom controls
@@ -502,8 +623,29 @@
             var self = this;
             
             if (confirm('Delete this photo?')) {
+                // Clean up memory if using PhotoOptimizer
+                if (window.PhotoOptimizer) {
+                    window.PhotoOptimizer.revokeObjectUrl('photo_' + photoId);
+                    window.PhotoOptimizer.revokeObjectUrl('thumb_' + photoId);
+                    window.PhotoOptimizer.revokeObjectUrl('medium_' + photoId);
+                }
+                
                 this.storage.deletePhoto(photoId, function(result) {
                     if (result.success) {
+                        self._refreshUI();
+                    } else if (window.OfflineQueue) {
+                        // Queue deletion for offline sync
+                        window.OfflineQueue.queueOperation({
+                            type: 'deletePhoto',
+                            method: 'DELETE',
+                            endpoint: '/api/photos/' + photoId,
+                            data: { photoId: photoId }
+                        });
+                        
+                        // Still remove from UI optimistically
+                        self.photos = self.photos.filter(function(p) {
+                            return p.id !== photoId;
+                        });
                         self._refreshUI();
                     }
                 });
@@ -536,27 +678,179 @@
                 files = files.slice(0, remaining);
             }
             
+            // Show processing indicator
+            self._showProcessingIndicator(true);
+            var processed = 0;
+            var errors = [];
+            
             files.forEach(function(file) {
-                var reader = new FileReader();
-                reader.onload = function(e) {
-                    var photoData = {
-                        uri: e.target.result,
-                        filename: file.name,
-                        size: file.size,
-                        mimeType: file.type
-                    };
-                    
-                    self.storage.addPhoto(self.currentTask, photoData, function(result) {
-                        if (result.success) {
-                            self._refreshUI();
+                // Validate image first
+                if (window.PhotoOptimizer) {
+                    var validation = window.PhotoOptimizer.validateImage(file);
+                    if (!validation.valid) {
+                        errors.push(file.name + ': ' + validation.errors.join(', '));
+                        processed++;
+                        if (processed === files.length) {
+                            self._handlePhotoProcessingComplete(errors);
+                        }
+                        return;
+                    }
+                }
+                
+                // Process with PhotoOptimizer if available
+                if (window.PhotoOptimizer) {
+                    window.PhotoOptimizer.processImage(file, function(error, result) {
+                        if (error) {
+                            errors.push(file.name + ': ' + error.message);
                         } else {
-                            self.stressDetector.recordError();
-                            alert(result.error);
+                            // Create photo data with optimized versions
+                            var photoData = {
+                                filename: file.name,
+                                size: file.size,
+                                mimeType: file.type,
+                                optimized: true,
+                                originalBlob: result.original,
+                                mediumBlob: result.medium,
+                                thumbnailBlob: result.thumbnail,
+                                metadata: result.metadata
+                            };
+                            
+                            // Save to storage with offline queue support
+                            self._savePhotoWithQueue(photoData);
+                        }
+                        
+                        processed++;
+                        if (processed === files.length) {
+                            self._handlePhotoProcessingComplete(errors);
                         }
                     });
-                };
-                reader.readAsDataURL(file);
+                } else {
+                    // Fallback: Read as data URL without optimization
+                    var reader = new FileReader();
+                    reader.onload = function(e) {
+                        var photoData = {
+                            uri: e.target.result,
+                            filename: file.name,
+                            size: file.size,
+                            mimeType: file.type
+                        };
+                        
+                        self.storage.addPhoto(self.currentTask, photoData, function(result) {
+                            if (!result.success) {
+                                errors.push(file.name + ': ' + result.error);
+                                self.stressDetector.recordError();
+                            }
+                            
+                            processed++;
+                            if (processed === files.length) {
+                                self._handlePhotoProcessingComplete(errors);
+                            }
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
             });
+        },
+        
+        // Save photo with offline queue support
+        _savePhotoWithQueue: function(photoData) {
+            var self = this;
+            
+            // Convert blobs to data URLs for storage
+            self._convertBlobsToDataUrls(photoData, function(convertedData) {
+                // Try to save immediately
+                self.storage.addPhoto(self.currentTask, convertedData, function(result) {
+                    if (result.success) {
+                        // Update photo with server ID if returned
+                        if (result.photoId) {
+                            convertedData.id = result.photoId;
+                        }
+                    } else if (window.OfflineQueue) {
+                        // Queue for later if offline
+                        window.OfflineQueue.queueOperation({
+                            type: 'savePhoto',
+                            method: 'POST',
+                            endpoint: '/api/photos',
+                            data: {
+                                taskId: self.currentTask,
+                                photo: convertedData
+                            }
+                        });
+                    } else {
+                        self.stressDetector.recordError();
+                    }
+                });
+            });
+        },
+        
+        // Convert blobs to data URLs for storage
+        _convertBlobsToDataUrls: function(photoData, callback) {
+            var converted = {
+                filename: photoData.filename,
+                size: photoData.size,
+                mimeType: photoData.mimeType,
+                optimized: photoData.optimized,
+                metadata: photoData.metadata
+            };
+            
+            var conversions = 0;
+            var toConvert = 0;
+            
+            // Count conversions needed
+            if (photoData.originalBlob) toConvert++;
+            if (photoData.mediumBlob) toConvert++;
+            if (photoData.thumbnailBlob) toConvert++;
+            
+            // Convert each blob
+            if (photoData.thumbnailBlob && window.PhotoOptimizer) {
+                window.PhotoOptimizer.blobToDataUrl(photoData.thumbnailBlob, function(error, dataUrl) {
+                    if (!error) converted.thumbnailUrl = dataUrl;
+                    conversions++;
+                    if (conversions === toConvert) callback(converted);
+                });
+            }
+            
+            if (photoData.mediumBlob && window.PhotoOptimizer) {
+                window.PhotoOptimizer.blobToDataUrl(photoData.mediumBlob, function(error, dataUrl) {
+                    if (!error) converted.mediumUrl = dataUrl;
+                    conversions++;
+                    if (conversions === toConvert) callback(converted);
+                });
+            }
+            
+            if (photoData.originalBlob && window.PhotoOptimizer) {
+                window.PhotoOptimizer.blobToDataUrl(photoData.originalBlob, function(error, dataUrl) {
+                    if (!error) converted.fullUrl = dataUrl;
+                    conversions++;
+                    if (conversions === toConvert) callback(converted);
+                });
+            }
+            
+            // If no conversions needed, return immediately
+            if (toConvert === 0) {
+                callback(converted);
+            }
+        },
+        
+        // Handle photo processing completion
+        _handlePhotoProcessingComplete: function(errors) {
+            var self = this;
+            
+            self._showProcessingIndicator(false);
+            
+            if (errors.length > 0) {
+                alert('Some photos could not be added:\n' + errors.join('\n'));
+            }
+            
+            self._refreshUI();
+        },
+        
+        // Show/hide processing indicator
+        _showProcessingIndicator: function(show) {
+            var indicator = document.querySelector('.photo-processing-indicator');
+            if (indicator) {
+                indicator.style.display = show ? 'block' : 'none';
+            }
         },
 
         // Load thumbnail from cache
@@ -597,9 +891,15 @@
 
         // Refresh UI
         _refreshUI: function() {
-            var container = document.querySelector('.photo-attachment-container');
-            if (container && this.currentTask) {
-                this.createAttachmentUI(this.currentTask, container);
+            if (this.thumbnailGrid) {
+                // Use new grid refresh method
+                this.thumbnailGrid.refresh(this.photos);
+            } else {
+                // Fallback to full re-render
+                var container = document.querySelector('.photo-attachment-container');
+                if (container && this.currentTask) {
+                    this.createAttachmentUI(this.currentTask, container);
+                }
             }
         },
 
@@ -670,13 +970,32 @@
                 rect.right <= window.innerWidth
             );
         },
+        
+        // Initialize cache bridge for photo optimization
+        _initializeCacheBridge: function() {
+            // PhotoCacheBridge auto-initializes, but we can preload critical photos
+            if (window.PhotoCacheBridge && this.currentTask && this.photos.length > 0) {
+                var photoIds = this.photos.map(function(photo) {
+                    return photo.id;
+                }).filter(Boolean);
+                
+                if (photoIds.length > 0) {
+                    window.PhotoCacheBridge.preloadCriticalPhotos(photoIds);
+                }
+            }
+        },
 
         // Setup lazy loading observers
         _setupLazyLoading: function() {
             var self = this;
             
-            // Use IntersectionObserver if available
-            if ('IntersectionObserver' in window) {
+            // Use PhotoLazyLoader if available
+            if (window.PhotoLazyLoader) {
+                // PhotoLazyLoader auto-initializes and observes images
+                // Just need to trigger observation for any new images
+                window.PhotoLazyLoader.observeImages();
+            } else if ('IntersectionObserver' in window) {
+                // Fallback to basic implementation
                 var observer = new IntersectionObserver(function(entries) {
                     entries.forEach(function(entry) {
                         if (entry.isIntersecting) {
@@ -710,11 +1029,42 @@
                 // Initial load
                 self._lazyLoadThumbnails();
             }
+        },
+        
+        // Sync pending photos when coming online
+        _syncPendingPhotos: function() {
+            var self = this;
+            
+            if (window.OfflineQueue) {
+                var status = window.OfflineQueue.getStatus();
+                if (status.pending > 0) {
+                    console.log('Syncing ' + status.pending + ' pending photos...');
+                    window.OfflineQueue.processQueue();
+                }
+            }
+        },
+        
+        // Refresh photo display without full UI refresh
+        _refreshPhotoDisplay: function() {
+            var self = this;
+            
+            // Update only the photo grid
+            var grid = document.querySelector('.photo-grid');
+            if (grid && self.currentTask) {
+                self.storage.getPhotosForTask(self.currentTask, function(photos) {
+                    self.photos = photos;
+                    var newGrid = self._createPhotoGrid();
+                    grid.parentNode.replaceChild(newGrid, grid);
+                    
+                    // Re-setup lazy loading for new images
+                    self._setupLazyLoading();
+                });
+            }
         }
     };
 
     // Stress Detector
-    const StressDetector = function() {
+    var StressDetector = function() {
         this.metrics = {
             errors: [],
             tapDelays: [],

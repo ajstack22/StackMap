@@ -447,6 +447,31 @@
             this.applyTheme(themeName);
         },
         
+        previewTheme: function(themeName) {
+            // Temporarily apply theme without saving
+            var theme = THEMES[themeName];
+            if (!theme) {
+                console.warn('Unknown theme:', themeName);
+                return;
+            }
+            
+            // Apply CSS properties
+            var root = document.documentElement;
+            for (var prop in theme.properties) {
+                root.style.setProperty(prop, theme.properties[prop]);
+            }
+            
+            // Update body classes
+            document.body.className = document.body.className
+                .replace(/theme-\w+/g, '')
+                .trim() + ' theme-' + themeName;
+            
+            // Apply inline overrides
+            this.applyInlineOverrides(theme);
+            
+            // Don't save preferences or show toast for preview
+        },
+        
         setSensoryPreference: function(key, value) {
             this.sensoryPrefs[key] = value;
             this.applySensoryPreferences();

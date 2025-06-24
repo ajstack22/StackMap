@@ -1,0 +1,467 @@
+/**
+ * Voice Recording Styles
+ * ADHD-optimized with large touch targets and clear visual feedback
+ */
+
+/* Voice Recording Container */
+.voice-recording-container {
+    background: #2a2a2a;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    position: relative;
+}
+
+/* Recording Button - One-tap toggle */
+.voice-record-button {
+    width: 100%;
+    min-height: 60px;
+    background: #dc2626;
+    border: none;
+    border-radius: 30px;
+    color: white;
+    font-size: 18px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.voice-record-button:active {
+    transform: scale(0.98);
+}
+
+.voice-record-button.recording {
+    background: #991b1b;
+    animation: pulse 2s infinite;
+}
+
+.voice-record-button.paused {
+    background: #f59e0b;
+}
+
+.voice-record-button:disabled {
+    background: #4a4a4a;
+    cursor: not-allowed;
+    opacity: 0.6;
+}
+
+/* Recording indicator */
+.recording-indicator {
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    display: inline-block;
+    margin-right: 8px;
+}
+
+.voice-record-button.recording .recording-indicator {
+    animation: blink 1s infinite;
+}
+
+/* Waveform Canvas */
+.voice-waveform-canvas {
+    width: 100%;
+    height: 60px;
+    background: #1a1a1a;
+    border-radius: 8px;
+    margin: 16px 0;
+    display: none;
+}
+
+.voice-recording-container.active .voice-waveform-canvas {
+    display: block;
+}
+
+/* Recording Info */
+.voice-recording-info {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 12px;
+    color: #999;
+    font-size: 14px;
+}
+
+.recording-duration {
+    font-weight: 600;
+    font-size: 16px;
+    color: #fff;
+}
+
+.recording-size {
+    font-size: 12px;
+}
+
+/* Recording Controls */
+.voice-recording-controls {
+    display: none;
+    gap: 12px;
+    margin-top: 16px;
+}
+
+.voice-recording-container.active .voice-recording-controls {
+    display: flex;
+}
+
+.voice-control-button {
+    flex: 1;
+    min-height: 44px;
+    background: #333;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voice-control-button:hover {
+    background: #444;
+}
+
+.voice-control-button.primary {
+    background: #10b981;
+    border-color: #10b981;
+}
+
+.voice-control-button.primary:hover {
+    background: #059669;
+}
+
+.voice-control-button.danger {
+    background: #ef4444;
+    border-color: #ef4444;
+}
+
+.voice-control-button.danger:hover {
+    background: #dc2626;
+}
+
+/* Mode Selection */
+.voice-mode-selector {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.voice-mode-button {
+    flex: 1;
+    padding: 12px;
+    background: #333;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    color: #999;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+}
+
+.voice-mode-button.active {
+    background: #444;
+    border-color: #10b981;
+    color: #fff;
+}
+
+.voice-mode-button .mode-duration {
+    display: block;
+    font-size: 12px;
+    margin-top: 4px;
+    opacity: 0.8;
+}
+
+/* Voice Player */
+.voice-player {
+    background: #333;
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.voice-player-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.voice-play-button {
+    width: 48px;
+    height: 48px;
+    background: #10b981;
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.voice-play-button:hover {
+    background: #059669;
+}
+
+.voice-play-button.playing {
+    background: #f59e0b;
+}
+
+/* Progress Bar */
+.voice-progress-bar {
+    flex: 1;
+    height: 6px;
+    background: #444;
+    border-radius: 3px;
+    position: relative;
+    cursor: pointer;
+}
+
+.voice-progress-fill {
+    height: 100%;
+    background: #10b981;
+    border-radius: 3px;
+    width: 0%;
+    transition: width 0.1s ease;
+}
+
+.voice-progress-bar:hover .voice-progress-fill {
+    background: #059669;
+}
+
+/* Time Display */
+.voice-time-display {
+    font-size: 12px;
+    color: #999;
+    min-width: 80px;
+    text-align: right;
+}
+
+/* Speed Controls */
+.voice-speed-controls {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+}
+
+.voice-speed-button {
+    padding: 8px 12px;
+    background: #444;
+    border: 1px solid #555;
+    border-radius: 6px;
+    color: #999;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.voice-speed-button.active {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+}
+
+/* Recovery Prompt */
+.voice-recovery-prompt {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2a2a2a;
+    border-radius: 12px;
+    padding: 24px;
+    max-width: 400px;
+    width: 90%;
+    z-index: 1000;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+}
+
+.voice-recovery-prompt h3 {
+    margin: 0 0 16px 0;
+    color: #fff;
+    font-size: 20px;
+}
+
+.voice-recovery-prompt p {
+    margin: 0 0 12px 0;
+    color: #ccc;
+}
+
+.recovery-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    font-size: 14px;
+    color: #999;
+}
+
+.recovery-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.recovery-actions button {
+    flex: 1;
+    min-height: 44px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.btn-keep {
+    background: #10b981;
+    color: white;
+}
+
+.btn-keep:hover {
+    background: #059669;
+}
+
+.btn-discard {
+    background: #444;
+    color: #ccc;
+}
+
+.btn-discard:hover {
+    background: #555;
+}
+
+/* Overlay for recovery prompt */
+.voice-recovery-prompt::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: -1;
+}
+
+/* Animations */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4);
+    }
+    70% {
+        box-shadow: 0 0 0 20px rgba(220, 38, 38, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(220, 38, 38, 0);
+    }
+}
+
+@keyframes blink {
+    0%, 100% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.3;
+    }
+}
+
+/* Safe Mode Adjustments */
+.safe-mode .voice-record-button {
+    min-height: 80px;
+    font-size: 20px;
+}
+
+.safe-mode .voice-control-button {
+    min-height: 60px;
+    font-size: 16px;
+}
+
+.safe-mode .voice-recording-container {
+    animation: none;
+}
+
+.safe-mode .voice-record-button {
+    transition: none;
+}
+
+.safe-mode .recording-indicator {
+    animation: none;
+}
+
+/* Accessibility */
+.voice-record-button:focus,
+.voice-control-button:focus,
+.voice-play-button:focus {
+    outline: 3px solid #fff;
+    outline-offset: 2px;
+}
+
+/* Voice attachment in task list */
+.attachment-item.voice {
+    background: #3a3a3a;
+    border: 1px solid #4a4a4a;
+    border-radius: 8px;
+    padding: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.attachment-item.voice .attachment-icon {
+    font-size: 24px;
+}
+
+.attachment-item.voice .attachment-info {
+    flex: 1;
+    color: #ccc;
+}
+
+.attachment-item.voice .attachment-delete {
+    width: 32px;
+    height: 32px;
+    background: #444;
+    border: none;
+    border-radius: 50%;
+    color: #999;
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.attachment-item.voice .attachment-delete:hover {
+    background: #ef4444;
+    color: white;
+}
+
+/* Voice button states in edit modal */
+.voice-btn.recording {
+    background: #dc2626 !important;
+    animation: pulse 2s infinite;
+}
+
+.voice-btn.recording span::before {
+    content: '🔴 ';
+    margin-right: 4px;
+}
+
+/* Platform-specific styles */
+@media (hover: none) {
+    /* Touch devices */
+    .voice-record-button:active {
+        transform: none;
+    }
+    
+    .voice-progress-bar {
+        height: 12px; /* Larger for touch */
+    }
+}

@@ -322,6 +322,11 @@
         onClusterChanged: function() {
             var self = this;
             
+            // Notify keyboard navigation before cluster change
+            if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.beforeVirtualUpdate) {
+                window.StackMapKeyboardNav.beforeVirtualUpdate();
+            }
+            
             // Update accessibility attributes
             self.updateAccessibility();
             
@@ -330,6 +335,13 @@
             
             // Update keyboard navigation
             document.dispatchEvent(new CustomEvent('tasksUpdated'));
+            
+            // Restore focus after cluster change
+            setTimeout(function() {
+                if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.afterVirtualUpdate) {
+                    window.StackMapKeyboardNav.afterVirtualUpdate();
+                }
+            }, 50);
         },
         
         /**
@@ -404,6 +416,11 @@
                 return false;
             }
             
+            // Notify keyboard navigation before update
+            if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.beforeVirtualUpdate) {
+                window.StackMapKeyboardNav.beforeVirtualUpdate();
+            }
+            
             // Clear and rebuild task maps
             self.taskIdMap = {};
             self.taskIndexMap = {};
@@ -416,6 +433,13 @@
             
             // Update accessibility
             self.updateAccessibility();
+            
+            // Notify keyboard navigation after update
+            setTimeout(function() {
+                if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.afterVirtualUpdate) {
+                    window.StackMapKeyboardNav.afterVirtualUpdate();
+                }
+            }, 100);
             
             return true;
         },

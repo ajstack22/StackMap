@@ -1,208 +1,173 @@
-# GitHub Issues to Create for Mobile-First Refactor
+# GitHub Issues to Create for StackMap Kanban Migration
 
-## 🚨 Critical Issues (P0) - Create Immediately
+## Instructions
+1. Go to: https://github.com/yourusername/StackMap/issues
+2. Create each issue below with the provided title and body
+3. Add appropriate labels: `enhancement`, `research`, `mobile-first-refactor`
+4. Create a GitHub Project board with columns: Planning, Ready, Developing, Closed
+5. Add all issues (existing and new) to the project board
 
-### 1. [P0-critical] Replace ES6 with ES5 for Android 5 compatibility
-**Labels**: `P0-critical`, `bug`, `platform-android`, `refactor`  
-**Milestone**: v0.1 - ES5 Compatibility
+## New Issues to Create
 
-Research revealed const/let/arrow functions crash on Android 5 WebViews. 
-- Replace all const/let with var
-- Convert arrow functions to traditional
-- Test on Android 5 emulator
+### Issue 1: Notification Strategies Research
+**Title:** Research: Notification Strategies for ADHD/Executive Dysfunction Users
 
-### 2. [P0-critical] Create ES5 migration tracking meta-issue
-**Labels**: `P0-critical`, `refactor`, `meta`  
-**Milestone**: v0.1 - ES5 Compatibility
+**Labels:** `research`, `ux`, `accessibility`
 
-Track all ES5 conversion tasks:
-- [ ] /refactor/js/app.js
-- [ ] Future JS files
-- [ ] Build process to catch ES6
+**Body:**
+Research optimal notification patterns for users with ADHD and executive dysfunction, focusing on:
 
-## 🔴 High Priority Issues (P1)
+- **Optimal timing**: When to send task reminders without overwhelming
+- **RSD-safe language**: Non-judgmental, encouraging notification text
+- **Frequency thresholds**: Avoiding notification fatigue
+- **Recovery patterns**: Re-engaging users who've been away
 
-### 3. [P1-high] Implement navigation depth limiting (2-3 levels max)
-**Labels**: `P1-high`, `feature`, `adhd`, `cognitive`  
-**Milestone**: v0.2 - Core Navigation
+**Key Questions:**
+- How to handle task reminders for time-blind users?
+- What notification styles reduce anxiety vs increase it?
+- How to balance helpfulness with avoiding nagging?
+- Platform-specific notification capabilities and limits?
 
-Research shows 2-3 levels maximum for ADHD users.
-- Track navigation stack
-- Add breadcrumbs
-- Prevent deeper navigation
+**Deliverables:**
+1. Notification timing framework
+2. Language templates for different notification types
+3. Settings recommendations (user control vs smart defaults)
+4. Implementation guidelines per platform
 
-### 4. [P1-high] Add focus management for screen readers
-**Labels**: `P1-high`, `bug`, `accessibility`  
-**Milestone**: v0.2 - Core Navigation
+**Related:** This research will inform the notification system implementation.
 
-Screen reader users lose context after view changes.
-- Set focus after navigation
-- Announce view changes
-- Maintain focus during transitions
+---
 
-### 5. [P1-high] Implement offline storage foundation
-**Labels**: `P1-high`, `feature`, `offline`  
-**Milestone**: v0.3 - Offline Storage
+### Issue 2: Time Perception & Task Aging Research  
+**Title:** Research: Time Perception & Visual Task Aging for ADHD Users
 
-Start with localStorage, upgrade to IndexedDB.
-- Implement StorageManager
-- Add quota handling
-- Create sync queue
+**Labels:** `research`, `ux`, `accessibility`
 
-## 🔶 Research Issues
+**Body:**
+Research how ADHD users perceive task age and design visual indicators that inform without shaming.
 
-### 6. [Research] Conflict Resolution UX for Neurodivergent Users
-**Labels**: `research`, `adhd`, `autism`, `P2-medium`
+**Focus Areas:**
+- Time blindness patterns in ADHD
+- Visual aging systems (color gradients, opacity, indicators)
+- Emotional impact of seeing "old" tasks
+- Behavioral patterns around task abandonment
 
-How to handle the 5% of conflicts CRDT can't auto-resolve?
-- Visual metaphors for versions
-- Anxiety-free messaging
-- Auto-resolve with undo option?
+**Key Questions:**
+- How do users with time blindness understand "3 days ago"?
+- What visual changes are helpful vs anxiety-inducing?
+- When should old tasks roll over automatically?
+- How to show age without implying failure?
 
-### 7. [Research] Error Recovery Patterns for Executive Function
-**Labels**: `research`, `adhd`, `cognitive`, `P1-high`
+**Deliverables:**
+1. Aging indicator design framework
+2. Non-shameful language for time descriptions
+3. Interaction patterns for old tasks
+4. Technical specs for implementing aging
 
-How do users recover from mistakes?
-- Undo/redo patterns
-- Auto-save vs explicit save
-- Getting "unstuck" flows
+**Related:** Connects to Today/Tomorrow view (#41) and task display systems.
 
-### 8. [Research] Multi-Device Family Synchronization
-**Labels**: `research`, `sync`, `P1-high`
+---
 
-Parent/caregiver device coordination:
-- Account relationships
-- Privacy boundaries
-- Conflict handling
+### Issue 3: Capacitor iOS/Android Build Setup
+**Title:** Set up Capacitor for iOS/Android native app distribution
 
-### 9. [Research] Zero-Disruption Migration Strategy
-**Labels**: `research`, `migration`, `P1-high`
+**Labels:** `enhancement`, `mobile`, `infrastructure`
 
-Moving users without breaking routines:
-- Data migration approach
-- UI transition strategy
-- Fallback handling
+**Body:**
+Configure Capacitor to build and distribute native iOS and Android apps from our PWA.
 
-### 10. [Research] Voice Command Grammar for Special Needs
-**Labels**: `research`, `accessibility`, `platform-tv`, `P2-medium`
+**Requirements:**
+- [ ] Configure Capacitor for iOS build
+- [ ] Configure Capacitor for Android build  
+- [ ] Set up app signing and certificates
+- [ ] Create build scripts for CI/CD
+- [ ] Test on real devices (iOS and Android)
+- [ ] Document build and release process
 
-TV voice control patterns:
-- Command structures
-- Error tolerance
-- Speech variations
+**Success Criteria:**
+- Can build and install on iOS devices
+- Can build and install on Android devices
+- Maintains all PWA functionality
+- Proper app icons and splash screens
+- Works offline like PWA
 
-## 🟡 Medium Priority Issues (P2)
+**Note:** Capacitor is already initialized but needs platform-specific setup.
 
-### 11. [P2-medium] Implement TV spatial navigation (LRUD)
-**Labels**: `P2-medium`, `feature`, `platform-tv`, `accessibility`  
-**Milestone**: v0.2 - Core Navigation
+---
 
-Current TV nav is too basic.
-- Implement spatial algorithm
-- 48x48dp minimum targets
-- Circular navigation
+### Issue 4: Task Filtering & Search
+**Title:** Implement task filtering and search functionality
 
-### 12. [P2-medium] Add animation speed controls
-**Labels**: `P2-medium`, `feature`, `adhd`, `autism`  
-**Milestone**: v0.4 - Accessibility
+**Labels:** `enhancement`, `ux`
 
-200-300ms for ADHD, reduced motion for autism.
-- User preference settings
-- Platform detection
-- Respect prefers-reduced-motion
+**Body:**
+Users need to quickly find specific tasks as their list grows.
 
-### 13. [P2-medium] Create offline indicator system
-**Labels**: `P2-medium`, `feature`, `offline`, `ux`  
-**Milestone**: v0.3 - Offline Storage
+**Requirements:**
+- [ ] Search by task text (fuzzy matching)
+- [ ] Filter by completion status
+- [ ] Filter by date ranges
+- [ ] Filter by attachments (has photo/voice)
+- [ ] Save/quick access to common filters
+- [ ] Maintain performance with large task lists
 
-Static indicators, no spinning.
-- Subtle visual feedback
-- Persistent banner option
-- Clear messaging
+**UI/UX Considerations:**
+- Simple, obvious search box
+- One-tap filter presets
+- Clear indicator when filters active
+- Easy way to clear all filters
 
-## 🟢 Documentation & Process Issues
+**Technical Notes:**
+- Must work with SQLite storage
+- Consider search indexing for performance
+- Filters should persist across sessions
 
-### 14. [Docs] Create developer onboarding guide
-**Labels**: `documentation`, `good-first-issue`
+---
 
-How to contribute to mobile-first refactor:
-- Setup instructions
-- Architecture overview
-- Common patterns
+### Issue 5: Bulk Task Operations
+**Title:** Implement bulk task management features
 
-### 15. [Process] Set up GitHub Actions for ES5 checking
-**Labels**: `automation`, `ci/cd`
+**Labels:** `enhancement`, `ux`
 
-Automated checks for ES6 features:
-- Lint for const/let/arrows
-- Android 5 compatibility test
-- Performance budgets
+**Body:**
+Users with ADHD often get overwhelmed by many tasks and need bulk management options.
 
-## 📊 Meta Issues
+**Requirements:**
+- [ ] Select multiple tasks (with visual feedback)
+- [ ] Bulk complete tasks
+- [ ] Bulk delete tasks  
+- [ ] Bulk move to tomorrow
+- [ ] Bulk clear old tasks (with confirmation)
+- [ ] Select all/none shortcuts
 
-### 16. [Meta] Mobile-First Refactor Roadmap
-**Labels**: `meta`, `roadmap`
+**ADHD Considerations:**
+- Prevent accidental bulk deletes (undo option)
+- Clear visual feedback for selected items
+- Simple selection mechanism (checkbox mode?)
+- Confirmation for destructive actions
+- Quick way to exit bulk mode
 
-Track overall progress:
-- [ ] ES5 Compatibility (Critical)
-- [ ] Core Navigation
-- [ ] Offline Storage
-- [ ] Accessibility
-- [ ] Platform Testing
+**Related:** Works with Today/Tomorrow view (#41)
 
-### 17. [Meta] Research Findings Integration
-**Labels**: `meta`, `research`
+---
 
-Track research implementation:
-- [ ] Navigation patterns applied
-- [ ] Offline architecture implemented
-- [ ] TV accessibility complete
-- [ ] Cross-platform verified
+## Existing Issues to Add to Project Board
 
-## 🏷️ Label Structure
+These issues already exist and should be added to the GitHub Project:
 
-### Priority Labels
-- `P0-critical` - Blocks everything
-- `P1-high` - Blocks major features
-- `P2-medium` - Important but not blocking
-- `P3-low` - Nice to have
+- #24 - Mobile Attachment System (Closed)
+- #27 - Service Worker Offline Support (Closed)  
+- #41 - Today/Tomorrow View Implementation (Closed)
+- #53 - Photo Optimization for Mobile (Planning)
+- #56 - SQLite Phase 2 - Migration System (Developing)
+- #57 - SQLite Phase 3 - Performance Optimization (Developing)
+- #58 - SQLite Phase 4 - Testing & Integration (Ready)
+- #59 - Emergency Fallback Phase 4 (Closed)
+- #60 - Welcome Tutorial Screens (Closed)
+- #61 - Settings Page Implementation (Closed)
 
-### Type Labels
-- `bug` - Something broken
-- `feature` - New functionality
-- `research` - Needs investigation
-- `refactor` - Code improvement
-- `documentation` - Docs only
-- `meta` - Tracking issue
+## Completed Research Without Issue
 
-### Platform Labels
-- `platform-web`
-- `platform-pwa`
-- `platform-ios`
-- `platform-android`
-- `platform-tv`
+- Voice UI Patterns Research (Completed) - Full research available at: `./research/Voice UI design for ADHD users in task management apps.md`
 
-### User Need Labels
-- `adhd`
-- `autism`
-- `motor`
-- `cognitive`
-- `accessibility`
-
-## 🚀 Quick Issue Creation
-
-```bash
-# Use GitHub CLI to create issues quickly
-gh issue create --title "[P0-critical] Replace ES6 with ES5" \
-  --label "P0-critical,bug,platform-android" \
-  --milestone "v0.1 - ES5 Compatibility" \
-  --body "See issue template"
-```
-
-## 📋 Next Steps
-
-1. Create milestones in GitHub
-2. Add all labels to repository
-3. Create P0-critical issues first
-4. Link issues to project board
-5. Start with ES5 conversion!
+This research should be referenced when implementing voice features in the attachment system.

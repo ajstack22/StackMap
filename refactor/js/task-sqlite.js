@@ -18,6 +18,8 @@
         dbVersion: 1,
         isReady: false,
         sqlite: null,
+        isBusy: false,
+        operationQueue: [],
         
         /**
          * Initialize SQLite database
@@ -32,126 +34,258 @@
                 return;
             }
             
-            // Import SQLite plugin
-            Capacitor.Plugins.CapacitorSQLite.then(function(sqlitePlugin) {
-                self.sqlite = sqlitePlugin.CapacitorSQLite;
+            // Get SQLite plugin with correct access pattern
+            try {
+                // Try different access patterns for the plugin
+                if (window.CapacitorSQLite) {
+                    self.sqlite = window.CapacitorSQLite;
+                } else if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.CapacitorSQLite) {
+                    self.sqlite = window.Capacitor.Plugins.CapacitorSQLite;
+                } else {
+                    throw new Error('SQLite plugin not available');
+                }
                 
-                // Create connection
-                self.createConnection()
-                    .then(function() {
-                        return self.createTables();
-                    })
-                    .then(function() {
-                        return self.optimizeForPerformance();
-                    })
-                    .then(function() {
-                        self.isReady = true;
-                        console.log('SQLite: Database initialized successfully');
-                        if (callback) callback(true);
-                    })
-                    .catch(function(error) {
-                        console.error('SQLite: Initialization failed', error);
+                console.log('SQLite: Plugin found, creating connection...');
+                
+                // Create connection with proper API
+                self.createConnection(function(success, error) {
+                    if (success) {
+                        console.log('SQLite: Connection created, creating tables...');
+                        self.createTables(function(tablesCreated) {
+                            if (tablesCreated) {
+                                // Set performance pragmas
+                                self.setPragmas(function(pragmasSet) {
+                                    if (!pragmasSet) {
+                                        console.warn('SQLite: Some pragmas failed, continuing anyway');
+                                    }
+                                    // Create indexes
+                                    self.createIndexes(function(indexesCreated) {
+                                        if (!indexesCreated) {
+                                            console.warn('SQLite: Some indexes failed, continuing anyway');
+                                        }
+                                        self.isReady = true;
+                                        console.log('SQLite: Database initialized successfully');
+                                        if (callback) callback(true);
+                                    });
+                                });
+                            } else {
+                                console.error('SQLite: Failed to create tables');
+                                if (callback) callback(false, 'Failed to create tables');
+                            }
+                        });
+                    } else {
+                        console.error('SQLite: Connection failed', error);
                         if (callback) callback(false, error);
-                    });
-            }).catch(function(error) {
+                    }
+                });
+            } catch(error) {
                 console.error('SQLite: Plugin not available', error);
                 if (callback) callback(false, error);
-            });
+            }
         },
         
         /**
          * Create database connection
          */
-        createConnection: function() {
+        createConnection: function(callback) {
             var self = this;
             
-            return self.sqlite.createConnection({
-                database: self.dbName,
-                version: self.dbVersion,
-                encrypted: false,
-                mode: 'no-encryption',
-                readonly: false
-            }).then(function(db) {
-                self.db = db;
-                return self.sqlite.open({ database: self.dbName });
-            });
+            try {
+                // Create connection with correct parameters
+                self.sqlite.createConnection(
+                    self.dbName,        // database name
+                    false,              // encrypted
+                    'no-encryption',    // mode
+                    1,                  // version
+                    false              // readonly
+                ).then(function(connection) {
+                    // Store the connection object
+                    self.db = connection;
+                    
+                    // Now open the connection - call open ON THE CONNECTION
+                    return self.db.open();
+                }).then(function() {
+                    console.log('SQLite: Database connection opened');
+                    if (callback) callback(true);
+                }).catch(function(error) {
+                    console.error('SQLite: Connection error', error);
+                    if (callback) callback(false, error);
+                });
+            } catch(error) {
+                console.error('SQLite: createConnection failed', error);
+                if (callback) callback(false, error);
+            }
         },
         
         /**
          * Create database tables
          */
-        createTables: function() {
+        createTables: function(callback) {
             var self = this;
             
-            var statements = [
-                'PRAGMA foreign_keys = ON',
-                
-                // Tasks table
-                'CREATE TABLE IF NOT EXISTS tasks (' +
-                '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
-                '  title TEXT NOT NULL,' +
-                '  description TEXT,' +
-                '  completed INTEGER DEFAULT 0,' +
-                '  priority INTEGER DEFAULT 1,' +
-                '  parent_id INTEGER,' +
-                '  created_at TEXT DEFAULT (datetime("now")),' +
-                '  updated_at TEXT DEFAULT (datetime("now")),' +
-                '  completed_at TEXT,' +
-                '  tags TEXT,' +
-                '  metadata TEXT' +
-                ')',
-                
-                // Attachments table
-                'CREATE TABLE IF NOT EXISTS attachments (' +
-                '  id INTEGER PRIMARY KEY AUTOINCREMENT,' +
-                '  task_id INTEGER NOT NULL,' +
-                '  filename TEXT NOT NULL,' +
-                '  file_path TEXT NOT NULL,' +
-                '  file_size INTEGER NOT NULL,' +
-                '  created_at TEXT DEFAULT (datetime("now")),' +
-                '  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE' +
-                ')',
-                
-                // Indexes for performance
-                'CREATE INDEX IF NOT EXISTS idx_tasks_completed ON tasks(completed)',
-                'CREATE INDEX IF NOT EXISTS idx_tasks_created ON tasks(created_at)',
-                'CREATE INDEX IF NOT EXISTS idx_tasks_parent ON tasks(parent_id)',
-                'CREATE INDEX IF NOT EXISTS idx_attachments_task ON attachments(task_id)',
-                
-                // Update trigger for modified timestamp
-                'CREATE TRIGGER IF NOT EXISTS tasks_updated_at ' +
-                'AFTER UPDATE ON tasks ' +
-                'BEGIN ' +
-                '  UPDATE tasks SET updated_at = datetime("now") WHERE id = NEW.id; ' +
-                'END'
-            ];
+            if (!self.db) {
+                if (callback) callback(false, 'No database connection');
+                return;
+            }
             
-            return self.sqlite.executeSet({
-                database: self.dbName,
-                set: statements.map(function(statement) {
-                    return { statement: statement, values: [] };
-                })
+            // For Phase 1, we only need the storage table for key-value pairs
+            var createStorageTable = 
+                'CREATE TABLE IF NOT EXISTS storage (' +
+                '  key TEXT PRIMARY KEY,' +
+                '  value TEXT NOT NULL,' +
+                '  created_at TEXT DEFAULT (datetime("now")),' +
+                '  updated_at TEXT DEFAULT (datetime("now"))' +
+                ')';
+            
+            try {
+                // Use execute method on the connection object
+                self.db.execute(createStorageTable, [], false).then(function() {
+                    console.log('SQLite: Storage table created');
+                    
+                    // Initialize attachment schema if available
+                    if (window.SQLiteAttachmentSchema) {
+                        window.SQLiteAttachmentSchema.init(self.db, function(success, error) {
+                            if (!success) {
+                                console.warn('SQLite: Attachment schema init failed, continuing', error);
+                            }
+                            if (callback) callback(true);
+                        });
+                    } else {
+                        if (callback) callback(true);
+                    }
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to create tables', error);
+                    if (callback) callback(false, error);
+                });
+            } catch(error) {
+                console.error('SQLite: Execute failed', error);
+                if (callback) callback(false, error);
+            }
+        },
+        
+        /**
+         * Execute operation with queue management
+         */
+        _executeOperation: function(operation) {
+            var self = this;
+            
+            if (self.isBusy) {
+                // Queue the operation
+                self.operationQueue.push(operation);
+                return;
+            }
+            
+            self.isBusy = true;
+            operation(function() {
+                self.isBusy = false;
+                // Process next queued operation
+                if (self.operationQueue.length > 0) {
+                    var next = self.operationQueue.shift();
+                    self._executeOperation(next);
+                }
             });
         },
         
         /**
-         * Optimize database for low-memory devices
+         * Create indexes for performance
          */
-        optimizeForPerformance: function() {
+        createIndexes: function(callback) {
             var self = this;
             
-            var statements = [
-                'PRAGMA cache_size = -1024',      // 1MB cache
-                'PRAGMA temp_store = MEMORY',     // Use memory for temp storage
-                'PRAGMA journal_mode = WAL',      // Write-ahead logging
-                'PRAGMA synchronous = NORMAL'     // Balance safety and speed
+            if (!self.db) {
+                if (callback) callback(false, 'No database connection');
+                return;
+            }
+            
+            var indexes = [
+                'CREATE INDEX IF NOT EXISTS idx_storage_updated ON storage(updated_at)',
+                'CREATE INDEX IF NOT EXISTS idx_storage_key ON storage(key)'
             ];
             
-            return self.sqlite.executeSet({
-                database: self.dbName,
-                set: statements.map(function(statement) {
-                    return { statement: statement, values: [] };
-                })
+            var completed = 0;
+            var errors = [];
+            
+            indexes.forEach(function(indexSql) {
+                self.db.execute(indexSql, [], false).then(function() {
+                    completed++;
+                    if (completed === indexes.length) {
+                        console.log('SQLite: Indexes created successfully');
+                        if (callback) callback(true);
+                    }
+                }).catch(function(error) {
+                    completed++;
+                    errors.push(error);
+                    if (completed === indexes.length) {
+                        console.error('SQLite: Some indexes failed', errors);
+                        if (callback) callback(false, errors);
+                    }
+                });
+            });
+        },
+        
+        /**
+         * Optimize database (VACUUM, ANALYZE)
+         */
+        optimizeDatabase: function(callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback(false, 'Database not ready');
+                return;
+            }
+            
+            self._executeOperation(function(done) {
+                // Run VACUUM to reclaim space
+                self.db.execute('VACUUM', [], false).then(function() {
+                    console.log('SQLite: VACUUM completed');
+                    // Run ANALYZE to update statistics
+                    return self.db.execute('ANALYZE', [], false);
+                }).then(function() {
+                    console.log('SQLite: ANALYZE completed');
+                    done();
+                    if (callback) callback(true);
+                }).catch(function(error) {
+                    console.error('SQLite: Optimization failed', error);
+                    done();
+                    if (callback) callback(false, error);
+                });
+            });
+        },
+        
+        /**
+         * Set pragma values for performance
+         */
+        setPragmas: function(callback) {
+            var self = this;
+            
+            if (!self.db) {
+                if (callback) callback(false, 'No database connection');
+                return;
+            }
+            
+            var pragmas = [
+                'PRAGMA cache_size = -2048',      // 2MB cache
+                'PRAGMA temp_store = MEMORY',     // Use memory for temp storage
+                'PRAGMA journal_mode = WAL',      // Write-ahead logging
+                'PRAGMA synchronous = NORMAL',    // Balance safety and speed
+                'PRAGMA mmap_size = 30000000'     // 30MB memory map
+            ];
+            
+            var completed = 0;
+            pragmas.forEach(function(pragma) {
+                self.db.execute(pragma, [], false).then(function() {
+                    completed++;
+                    if (completed === pragmas.length) {
+                        console.log('SQLite: Performance pragmas set');
+                        if (callback) callback(true);
+                    }
+                }).catch(function(error) {
+                    completed++;
+                    console.error('SQLite: Pragma failed', pragma, error);
+                    if (completed === pragmas.length && callback) {
+                        callback(false);
+                    }
+                });
             });
         },
         
@@ -856,26 +990,317 @@
         },
         
         /**
-         * Close database connection
+         * Get item from key-value storage
          */
-        close: function(callback) {
+        getItem: function(key, callback) {
             var self = this;
             
-            if (!self.isReady) {
+            if (!self.isReady || !self.db) {
+                if (callback) callback(new Error('Database not ready'), null);
+                return;
+            }
+            
+            try {
+                // Use query method on the connection object
+                self.db.query('SELECT value FROM storage WHERE key = ?', [key]).then(function(result) {
+                    if (result.values && result.values.length > 0) {
+                        try {
+                            var parsed = JSON.parse(result.values[0].value);
+                            if (callback) callback(null, parsed);
+                        } catch (e) {
+                            if (callback) callback(e, null);
+                        }
+                    } else {
+                        if (callback) callback(null, null);
+                    }
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to get item', error);
+                    if (callback) callback(error, null);
+                });
+            } catch(error) {
+                console.error('SQLite: getItem failed', error);
+                if (callback) callback(error, null);
+            }
+        },
+        
+        /**
+         * Set item in key-value storage
+         */
+        setItem: function(key, value, callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback(new Error('Database not ready'));
+                return;
+            }
+            
+            var jsonValue = JSON.stringify(value);
+            
+            try {
+                // Use run method on the connection object with transaction
+                self.db.run(
+                    'INSERT OR REPLACE INTO storage (key, value, updated_at) VALUES (?, ?, datetime("now"))',
+                    [key, jsonValue],
+                    true  // use transaction
+                ).then(function(result) {
+                    console.log('SQLite: Item saved', key);
+                    if (callback) callback(null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to set item', error);
+                    if (callback) callback(error);
+                });
+            } catch(error) {
+                console.error('SQLite: setItem failed', error);
+                if (callback) callback(error);
+            }
+        },
+        
+        /**
+         * Remove item from key-value storage
+         */
+        removeItem: function(key, callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback(new Error('Database not ready'));
+                return;
+            }
+            
+            try {
+                // Use run method on the connection object
+                self.db.run(
+                    'DELETE FROM storage WHERE key = ?',
+                    [key],
+                    true  // use transaction
+                ).then(function(result) {
+                    console.log('SQLite: Item removed', key);
+                    if (callback) callback(null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to remove item', error);
+                    if (callback) callback(error);
+                });
+            } catch(error) {
+                console.error('SQLite: removeItem failed', error);
+                if (callback) callback(error);
+            }
+        },
+        
+        /**
+         * Clear all key-value storage
+         */
+        clearStorage: function(callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback(new Error('Database not ready'));
+                return;
+            }
+            
+            try {
+                // Use run method on the connection object
+                self.db.run(
+                    'DELETE FROM storage',
+                    [],
+                    true  // use transaction
+                ).then(function(result) {
+                    console.log('SQLite: Storage cleared');
+                    if (callback) callback(null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to clear storage', error);
+                    if (callback) callback(error);
+                });
+            } catch(error) {
+                console.error('SQLite: clearStorage failed', error);
+                if (callback) callback(error);
+            }
+        },
+        
+        /**
+         * Batch set multiple items in a single transaction
+         */
+        setItems: function(items, callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback(new Error('Database not ready'));
+                return;
+            }
+            
+            if (!items || items.length === 0) {
+                if (callback) callback(null);
+                return;
+            }
+            
+            try {
+                // Start transaction
+                self.db.execute('BEGIN TRANSACTION', [], false).then(function() {
+                    console.log('SQLite: Batch operation started for ' + items.length + ' items');
+                    
+                    // Create promises for all inserts
+                    var promises = [];
+                    for (var i = 0; i < items.length; i++) {
+                        var item = items[i];
+                        var promise = self.db.run(
+                            'INSERT OR REPLACE INTO storage (key, value, updated_at) VALUES (?, ?, datetime("now"))',
+                            [item.key, JSON.stringify(item.value)],
+                            false  // no individual transactions
+                        );
+                        promises.push(promise);
+                    }
+                    
+                    // Wait for all inserts to complete
+                    return Promise.all(promises);
+                }).then(function() {
+                    // Commit transaction
+                    return self.db.execute('COMMIT', [], false);
+                }).then(function() {
+                    console.log('SQLite: Batch operation completed successfully');
+                    if (callback) callback(null);
+                }).catch(function(error) {
+                    console.error('SQLite: Batch operation failed', error);
+                    // Rollback on error
+                    self.db.execute('ROLLBACK', [], false).then(function() {
+                        console.log('SQLite: Transaction rolled back');
+                    }).catch(function(rollbackError) {
+                        console.error('SQLite: Rollback failed', rollbackError);
+                    });
+                    if (callback) callback(error);
+                });
+            } catch(error) {
+                console.error('SQLite: setItems failed', error);
+                if (callback) callback(error);
+            }
+        },
+        
+        /**
+         * Batch get multiple items
+         */
+        getItems: function(keys, callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback(new Error('Database not ready'), null);
+                return;
+            }
+            
+            if (!keys || keys.length === 0) {
+                if (callback) callback(null, {});
+                return;
+            }
+            
+            try {
+                // Build query with placeholders
+                var placeholders = keys.map(function() { return '?'; }).join(',');
+                var query = 'SELECT key, value FROM storage WHERE key IN (' + placeholders + ')';
+                
+                self.db.query(query, keys).then(function(result) {
+                    var items = {};
+                    if (result.values && result.values.length > 0) {
+                        for (var i = 0; i < result.values.length; i++) {
+                            var row = result.values[i];
+                            try {
+                                items[row.key] = JSON.parse(row.value);
+                            } catch (e) {
+                                console.error('SQLite: Failed to parse value for key', row.key);
+                            }
+                        }
+                    }
+                    if (callback) callback(null, items);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to get items', error);
+                    if (callback) callback(error, null);
+                });
+            } catch(error) {
+                console.error('SQLite: getItems failed', error);
+                if (callback) callback(error, null);
+            }
+        },
+        
+        /**
+         * Get migration progress - count of items in storage
+         */
+        getMigrationProgress: function(callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback(0, new Error('Database not ready'));
+                return;
+            }
+            
+            try {
+                self.db.query('SELECT COUNT(*) as count FROM storage', []).then(function(result) {
+                    var count = 0;
+                    if (result.values && result.values.length > 0) {
+                        count = result.values[0].count || 0;
+                    }
+                    console.log('SQLite: Migration progress - ' + count + ' items');
+                    if (callback) callback(count, null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to get migration progress', error);
+                    if (callback) callback(0, error);
+                });
+            } catch(error) {
+                console.error('SQLite: getMigrationProgress failed', error);
+                if (callback) callback(0, error);
+            }
+        },
+        
+        /**
+         * Get all keys from storage (for migration verification)
+         */
+        getAllKeys: function(callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
+                if (callback) callback([], new Error('Database not ready'));
+                return;
+            }
+            
+            try {
+                self.db.query('SELECT key FROM storage ORDER BY key', []).then(function(result) {
+                    var keys = [];
+                    if (result.values && result.values.length > 0) {
+                        keys = result.values.map(function(row) {
+                            return row.key;
+                        });
+                    }
+                    if (callback) callback(keys, null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to get all keys', error);
+                    if (callback) callback([], error);
+                });
+            } catch(error) {
+                console.error('SQLite: getAllKeys failed', error);
+                if (callback) callback([], error);
+            }
+        },
+        
+        /**
+         * Close database connection
+         */
+        closeConnection: function(callback) {
+            var self = this;
+            
+            if (!self.isReady || !self.db) {
                 if (callback) callback(true);
                 return;
             }
             
-            self.sqlite.close({
-                database: self.dbName
-            }).then(function() {
-                self.isReady = false;
-                self.db = null;
-                if (callback) callback(true);
-            }).catch(function(error) {
-                console.error('SQLite: Failed to close database', error);
+            try {
+                // Close the connection object
+                self.db.close().then(function() {
+                    self.isReady = false;
+                    self.db = null;
+                    console.log('SQLite: Connection closed');
+                    if (callback) callback(true);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to close connection', error);
+                    if (callback) callback(false);
+                });
+            } catch(error) {
+                console.error('SQLite: closeConnection failed', error);
                 if (callback) callback(false);
-            });
+            }
         }
     };
     

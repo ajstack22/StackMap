@@ -1,0 +1,496 @@
+/**
+ * Undo UI Styles
+ * Calming, ADHD-friendly design with soft colors and organic shapes
+ * 30-second golden window with gentle animations
+ */
+
+:root {
+    /* Calming colors - no harsh reds */
+    --undo-primary: #4A90E2; /* Soft blue */
+    --undo-success: #7ED321; /* Gentle green */
+    --undo-warning: #F5A623; /* Warm amber */
+    --undo-bg: rgba(255, 255, 255, 0.95);
+    --undo-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    --undo-text: #333333;
+    --undo-text-secondary: #666666;
+    
+    /* Dark mode support */
+    --undo-bg-dark: rgba(42, 42, 42, 0.95);
+    --undo-text-dark: #e5e5e5;
+    --undo-text-secondary-dark: rgba(229, 229, 229, 0.7);
+}
+
+/* Dark mode overrides */
+.dark-mode {
+    --undo-bg: var(--undo-bg-dark);
+    --undo-text: var(--undo-text-dark);
+    --undo-text-secondary: var(--undo-text-secondary-dark);
+}
+
+/* Undo container */
+.undo-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+    max-width: 90vw;
+}
+
+/* Undo toast notification */
+.undo-toast {
+    background: var(--undo-bg);
+    border-radius: 24px; /* Rounded, organic shape */
+    box-shadow: var(--undo-shadow);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 12px;
+    pointer-events: auto;
+    
+    /* Gentle entrance animation */
+    animation: slideUp 0.3s ease-out;
+    transition: all 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Golden window indicator */
+.undo-toast.golden-window {
+    border: 2px solid var(--undo-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Hide animation */
+.undo-toast.hiding {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+/* Undo message */
+.undo-message {
+    color: var(--undo-text);
+    font-size: 16px;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Undo button */
+.undo-button {
+    background: var(--undo-primary);
+    color: white;
+    border: none;
+    border-radius: 16px;
+    padding: 8px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-width: 80px;
+    font-weight: 500;
+}
+
+.undo-button:hover {
+    background: #357ABD;
+    transform: scale(1.05);
+}
+
+.undo-button:focus {
+    outline: 3px solid var(--undo-primary);
+    outline-offset: 2px;
+}
+
+.undo-button:active {
+    transform: scale(0.95);
+}
+
+/* Progress bar for golden window */
+.undo-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: rgba(74, 144, 226, 0.2);
+    border-radius: 0 0 24px 24px;
+    overflow: hidden;
+}
+
+.undo-progress {
+    height: 100%;
+    background: var(--undo-primary);
+    width: 100%;
+    transition: width 30s linear;
+    transform-origin: left;
+}
+
+/* History button */
+.undo-history-button {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: var(--undo-bg);
+    border: 2px solid var(--undo-primary);
+    border-radius: 20px;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: var(--undo-shadow);
+    z-index: 999;
+}
+
+.undo-history-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+}
+
+.undo-history-icon {
+    font-size: 20px;
+    color: var(--undo-primary);
+}
+
+.undo-history-label {
+    color: var(--undo-text);
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* History panel */
+.undo-history-panel {
+    position: fixed;
+    right: -400px;
+    top: 0;
+    bottom: 0;
+    width: 400px;
+    max-width: 100vw;
+    background: var(--undo-bg);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+    transition: right 0.3s ease-out;
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+}
+
+.undo-history-panel.active {
+    right: 0;
+}
+
+/* History header */
+.undo-history-header {
+    padding: 20px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.undo-history-header h3 {
+    margin: 0;
+    color: var(--undo-text);
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.undo-history-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--undo-text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.undo-history-close:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: var(--undo-text);
+}
+
+/* History list */
+.undo-history-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+/* History item */
+.undo-history-item {
+    background: rgba(0, 0, 0, 0.03);
+    border-radius: 12px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: all 0.2s ease;
+}
+
+.undo-history-item:hover {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.undo-history-time {
+    color: var(--undo-text-secondary);
+    font-size: 14px;
+    min-width: 80px;
+}
+
+.undo-history-desc {
+    flex: 1;
+    color: var(--undo-text);
+    font-size: 16px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.undo-history-action {
+    background: none;
+    border: 1px solid var(--undo-primary);
+    color: var(--undo-primary);
+    border-radius: 12px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.undo-history-action:hover {
+    background: var(--undo-primary);
+    color: white;
+}
+
+.undo-history-current {
+    color: var(--undo-success);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.undo-history-empty {
+    text-align: center;
+    color: var(--undo-text-secondary);
+    padding: 40px 20px;
+    font-size: 16px;
+}
+
+/* Preview modal */
+.undo-preview-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1002;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.undo-preview-overlay.active {
+    opacity: 1;
+}
+
+.undo-preview-modal {
+    transform: scale(0.9);
+    transition: transform 0.3s ease;
+}
+
+.undo-preview-overlay.active .undo-preview-modal {
+    transform: scale(1);
+}
+
+.undo-preview {
+    background: var(--undo-bg);
+    border-radius: 20px;
+    padding: 32px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    max-width: 400px;
+    width: 90vw;
+    text-align: center;
+}
+
+.undo-preview-icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+}
+
+.undo-preview-title {
+    font-size: 20px;
+    color: var(--undo-text);
+    margin-bottom: 8px;
+    font-weight: 600;
+}
+
+.undo-preview-description {
+    font-size: 16px;
+    color: var(--undo-text-secondary);
+    margin-bottom: 24px;
+    line-height: 1.5;
+}
+
+.undo-preview-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.undo-preview-actions button {
+    padding: 12px 24px;
+    border-radius: 16px;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    min-width: 100px;
+}
+
+.undo-confirm {
+    background: var(--undo-primary);
+    color: white;
+}
+
+.undo-confirm:hover {
+    background: #357ABD;
+    transform: scale(1.05);
+}
+
+.undo-cancel {
+    background: #F0F0F0;
+    color: var(--undo-text);
+}
+
+.undo-cancel:hover {
+    background: #E0E0E0;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+    .undo-container {
+        bottom: 10px;
+        max-width: calc(100vw - 20px);
+    }
+    
+    .undo-toast {
+        padding: 12px 16px;
+        gap: 12px;
+    }
+    
+    .undo-message {
+        font-size: 14px;
+    }
+    
+    .undo-button {
+        padding: 6px 16px;
+        font-size: 14px;
+        min-width: 60px;
+    }
+    
+    .undo-history-panel {
+        width: 100vw;
+    }
+    
+    .undo-history-button {
+        bottom: 10px;
+        right: 10px;
+        padding: 8px 16px;
+    }
+    
+    .undo-history-label {
+        display: none;
+    }
+}
+
+/* Safe mode compatibility */
+.safe-mode .undo-toast,
+.safe-mode .undo-history-panel,
+.safe-mode .undo-preview-overlay {
+    animation: none !important;
+    transition: none !important;
+}
+
+.safe-mode .undo-progress {
+    transition: none !important;
+}
+
+.safe-mode * {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+}
+
+/* Enlarged touch targets in safe mode */
+.safe-mode .undo-button,
+.safe-mode .undo-history-button,
+.safe-mode .undo-history-action,
+.safe-mode .undo-history-close,
+.safe-mode .undo-preview-actions button {
+    min-height: 60px;
+    min-width: 60px;
+    padding: 16px 24px;
+    font-size: 18px;
+}
+
+.safe-mode .undo-toast {
+    padding: 20px 28px;
+}
+
+.safe-mode .undo-history-item {
+    padding: 16px 20px;
+    min-height: 60px;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .undo-toast {
+        animation: none;
+    }
+    
+    .undo-progress {
+        transition: none;
+    }
+    
+    * {
+        transition-duration: 0.01ms !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .undo-toast {
+        border: 2px solid currentColor;
+    }
+    
+    .undo-button {
+        border: 2px solid transparent;
+    }
+    
+    .undo-button:focus {
+        border-color: currentColor;
+    }
+}

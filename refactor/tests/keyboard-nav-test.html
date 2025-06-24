@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyboard Navigation Test - StackMap</title>
+    <link rel="stylesheet" href="../css/base.css">
+    <style>
+        /* Test page specific styles */
+        .test-info {
+            background: #f0f0f0;
+            padding: 20px;
+            margin: 20px;
+            border-radius: 8px;
+        }
+        .test-info h2 {
+            margin-top: 0;
+        }
+        .test-info code {
+            background: #e0e0e0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        .shortcut-list {
+            display: grid;
+            grid-template-columns: 150px 1fr;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .shortcut-list dt {
+            font-family: monospace;
+            font-weight: bold;
+        }
+        .shortcut-list dd {
+            margin: 0;
+        }
+    </style>
+</head>
+<body>
+    <!-- Skip Links -->
+    <nav class="skip-links" aria-label="Skip links">
+        <a href="#main" class="skip-link">Skip to main content</a>
+        <a href="#task-container" class="skip-link">Skip to tasks</a>
+        <a href="#add-task" class="skip-link">Skip to add task</a>
+        <a href="#settings" class="skip-link">Skip to settings</a>
+    </nav>
+
+    <div class="test-info">
+        <h2>Keyboard Navigation Test Page</h2>
+        <p>This page tests the enhanced keyboard navigation implementation for StackMap.</p>
+        
+        <h3>Key Improvements:</h3>
+        <ul>
+            <li>✅ Reduced navigation debounce from 100ms to 50ms</li>
+            <li>✅ Removed two-key shortcuts (g h, g t, g s)</li>
+            <li>✅ Added shortcut conflict detection</li>
+            <li>✅ Focus preservation during virtual scrolling</li>
+            <li>✅ Undo system with Ctrl+Z</li>
+            <li>✅ Emergency escape (3x ESC)</li>
+            <li>✅ Visual shortcut hints</li>
+            <li>✅ Focus mode (F key)</li>
+        </ul>
+        
+        <h3>Keyboard Shortcuts:</h3>
+        <dl class="shortcut-list">
+            <dt>↓/j</dt><dd>Next task</dd>
+            <dt>↑/k</dt><dd>Previous task</dd>
+            <dt>Home</dt><dd>First task</dd>
+            <dt>End</dt><dd>Last task</dd>
+            <dt>Enter/Space</dt><dd>Select/activate task</dd>
+            <dt>T</dt><dd>Create new task</dd>
+            <dt>e</dt><dd>Edit current task</dd>
+            <dt>D</dt><dd>Mark task as done</dd>
+            <dt>t</dt><dd>Set timer</dd>
+            <dt>F</dt><dd>Toggle focus mode</dd>
+            <dt>/</dt><dd>Search tasks</dd>
+            <dt>?</dt><dd>Show help</dd>
+            <dt>Ctrl+Z</dt><dd>Undo last action</dd>
+            <dt>ESC×3</dt><dd>Disable all shortcuts</dd>
+        </dl>
+    </div>
+
+    <main id="main">
+        <button id="add-task-button" data-shortcut="T">Add New Task</button>
+        
+        <div id="task-container" class="task-container">
+            <!-- Sample tasks for testing -->
+            <div class="task-card" data-task-id="1" tabindex="-1" role="option">
+                <input type="checkbox" class="task-checkbox">
+                <h3 class="task-title">Test keyboard navigation</h3>
+            </div>
+            <div class="task-card" data-task-id="2" tabindex="-1" role="option">
+                <input type="checkbox" class="task-checkbox">
+                <h3 class="task-title">Try arrow keys and j/k</h3>
+            </div>
+            <div class="task-card" data-task-id="3" tabindex="-1" role="option">
+                <input type="checkbox" class="task-checkbox">
+                <h3 class="task-title">Press ? for help</h3>
+            </div>
+            <div class="task-card" data-task-id="4" tabindex="-1" role="option">
+                <input type="checkbox" class="task-checkbox">
+                <h3 class="task-title">Press F for focus mode</h3>
+            </div>
+            <div class="task-card" data-task-id="5" tabindex="-1" role="option">
+                <input type="checkbox" class="task-checkbox">
+                <h3 class="task-title">Try ESC three times to disable shortcuts</h3>
+            </div>
+        </div>
+    </main>
+
+    <!-- Mock elements for testing -->
+    <input type="search" id="search-input" placeholder="Search tasks..." style="display: none;">
+    
+    <!-- Load keyboard navigation -->
+    <script src="../js/keyboard-nav.js"></script>
+    <script>
+        // Initialize keyboard navigation
+        if (window.StackMapKeyboardNav) {
+            window.StackMapKeyboardNav.init();
+            console.log('Keyboard navigation initialized');
+        }
+        
+        // Mock functions for testing
+        window.TaskTimer = { exists: true };
+        window.TaskDisplay = {
+            updateTask: function(task) {
+                console.log('Task updated:', task);
+            },
+            startEditing: function(task) {
+                console.log('Editing task:', task);
+            },
+            deleteTask: function(task) {
+                console.log('Deleting task:', task);
+            }
+        };
+        
+        // Test focus mode toggle
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'F' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+                var focusModeActive = document.body.classList.contains('focus-mode');
+                console.log('Focus mode:', focusModeActive ? 'enabled' : 'disabled');
+            }
+        });
+    </script>
+</body>
+</html>

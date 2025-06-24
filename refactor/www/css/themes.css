@@ -1,0 +1,325 @@
+/**
+ * Theme Styles for StackMap
+ * Handles theme-specific overrides and sensory preferences
+ */
+
+/* CSS Fallbacks for older browsers */
+body {
+    /* Fallback colors before CSS variables load */
+    background: #f5f5f5;
+    background: var(--color-bg);
+    color: #333333;
+    color: var(--color-text);
+}
+
+.header {
+    /* Fallback for header */
+    background: #ffffff;
+    background: var(--header-bg);
+    color: #333333;
+    color: var(--header-text);
+}
+
+.card, .task-card {
+    /* Fallback for cards */
+    background: #ffffff;
+    background: var(--card-bg);
+    border: 1px solid #d8d8d8;
+    border: 1px solid var(--card-border);
+}
+
+.btn-primary, button.primary {
+    /* Fallback for primary buttons */
+    background: #667eea;
+    background: var(--primary-purple);
+    color: white;
+}
+
+.btn-primary:hover, button.primary:hover {
+    background: #5a67d8;
+    background: var(--primary-purple-dark);
+}
+
+/* Shadow fallbacks */
+.card, .task-card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-sm);
+}
+
+.modal {
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    box-shadow: var(--shadow-md);
+}
+
+/* Text color fallbacks */
+.text-secondary, .task-description {
+    color: rgba(51, 51, 51, 0.7);
+    color: var(--color-text-secondary);
+}
+
+/* Theme toast notification styles */
+.theme-toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #ffffff;
+    background: var(--card-bg);
+    color: #333333;
+    color: var(--color-text);
+    padding: 12px 24px;
+    border-radius: 24px;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: var(--shadow-lg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    z-index: 10000;
+    opacity: 0;
+    transition: all 0.3s ease;
+}
+
+.theme-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+.theme-toast-icon {
+    font-size: 20px;
+}
+
+.theme-toast-text {
+    font-weight: 500;
+}
+
+/* Reduced Motion Preference */
+@media (prefers-reduced-motion: reduce) {
+    :root {
+        --transition-speed: 0s;
+        --animation-speed: 0s;
+    }
+}
+
+.reduce-motion * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+}
+
+.reduce-motion .view {
+    transition: none !important;
+}
+
+/* Color Vibrancy Settings */
+/* Use transform and opacity for better performance on mobile */
+.color-vibrancy-muted {
+    /* Only apply filter on desktop for performance */
+    filter: saturate(0.7);
+}
+
+@media (max-width: 768px) {
+    /* On mobile, use opacity instead of filter for better performance */
+    .color-vibrancy-muted {
+        filter: none;
+        opacity: 0.95;
+    }
+    
+    .color-vibrancy-muted .btn-primary,
+    .color-vibrancy-muted button.primary {
+        filter: none;
+        opacity: 0.9;
+    }
+}
+
+.color-vibrancy-vibrant {
+    filter: saturate(1.3);
+}
+
+@media (max-width: 768px) {
+    /* Reduce filter intensity on mobile */
+    .color-vibrancy-vibrant {
+        filter: saturate(1.15);
+    }
+}
+
+/* Use will-change for elements that will be filtered */
+.color-vibrancy-muted,
+.color-vibrancy-vibrant {
+    will-change: filter;
+}
+
+/* Remove will-change on mobile to save memory */
+@media (max-width: 768px) {
+    .color-vibrancy-muted,
+    .color-vibrancy-vibrant {
+        will-change: auto;
+    }
+}
+
+/* Contrast Levels */
+.contrast-low {
+    opacity: 0.9;
+}
+
+.contrast-low .header {
+    backdrop-filter: blur(20px);
+}
+
+.contrast-high * {
+    font-weight: 500;
+}
+
+.contrast-high .btn-primary,
+.contrast-high button {
+    font-weight: 700;
+}
+
+/* Theme-specific Overrides */
+
+/* Light Theme */
+.theme-light {
+    color-scheme: light;
+}
+
+.theme-light .header {
+    background: var(--header-bg, #ffffff);
+    color: var(--header-text, #333333);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.theme-light .skip-links a {
+    background: #ffffff;
+    color: #333333;
+}
+
+.theme-light .skip-links a:focus {
+    background: var(--primary-purple);
+    color: white;
+}
+
+/* Dark Theme */
+.theme-dark {
+    color-scheme: dark;
+}
+
+.theme-dark .header {
+    background: var(--header-bg, #1e1e1e);
+    color: var(--header-text, #e0e0e0);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.theme-dark .skip-links a {
+    background: #1e1e1e;
+    color: #e0e0e0;
+}
+
+.theme-dark .skip-links a:focus {
+    background: var(--primary-purple);
+    color: white;
+}
+
+.theme-dark input,
+.theme-dark textarea,
+.theme-dark select {
+    background: var(--color-bg-secondary);
+    color: var(--color-text);
+    border-color: var(--card-border);
+}
+
+/* High Contrast Theme */
+.theme-highContrast {
+    color-scheme: dark;
+}
+
+.theme-highContrast * {
+    font-weight: 500 !important;
+}
+
+.theme-highContrast .header {
+    border-bottom: 2px solid #ffffff;
+}
+
+.theme-highContrast button,
+.theme-highContrast a,
+.theme-highContrast input,
+.theme-highContrast textarea,
+.theme-highContrast select {
+    border: 2px solid #ffffff !important;
+}
+
+.theme-highContrast *:focus {
+    outline: 3px solid #00ff00 !important;
+    outline-offset: 2px !important;
+}
+
+/* Calm Theme */
+.theme-calm {
+    color-scheme: light;
+}
+
+.theme-calm .header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.theme-calm button {
+    transition: all 0.4s ease;
+}
+
+/* Warm Theme */
+.theme-warm {
+    color-scheme: light;
+}
+
+.theme-warm .header {
+    background: var(--header-bg);
+    color: var(--header-text);
+    border-bottom: 1px solid var(--card-border);
+}
+
+.theme-warm a {
+    color: var(--primary-purple);
+}
+
+/* Theme Transition */
+:root {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Skip existing transitions during theme change */
+.theme-transitioning * {
+    transition: none !important;
+}
+
+/* Safe Mode Theme Overrides */
+.safe-mode .theme-dark,
+.safe-mode .theme-highContrast {
+    /* Force light colors in safe mode for better readability */
+    --color-bg: #f5f5f5;
+    --color-text: #333333;
+    --loading-bg: #f5f5f5;
+    --loading-text: #333333;
+}
+
+/* TV Mode Theme Adjustments */
+.platform-tv.theme-dark {
+    --color-bg: #0a0a0a; /* Deeper black for OLED TVs */
+}
+
+.platform-tv *:focus {
+    outline-width: 6px !important; /* Thicker focus for TV viewing distance */
+}
+
+/* Print Styles */
+@media print {
+    body {
+        background: white !important;
+        color: black !important;
+    }
+    
+    .header,
+    .skip-links {
+        display: none !important;
+    }
+}

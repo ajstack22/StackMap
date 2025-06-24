@@ -319,12 +319,12 @@
             
             // Content
             html += '<div class="activity-content">';
-            html += '<div class="activity-title">' + self.escapeHtml(activity.title) + '</div>';
-            html += '<div class="activity-description">' + self.escapeHtml(activity.description) + '</div>';
+            html += '<div class="activity-title">' + this.escapeHtml(activity.title) + '</div>';
+            html += '<div class="activity-description">' + this.escapeHtml(activity.description) + '</div>';
             html += '</div>';
             
             // Add button
-            html += '<button type="button" class="activity-add-btn" data-index="' + self.activities.indexOf(activity) + '" aria-label="Add ' + self.escapeHtml(activity.title) + '">';
+            html += '<button type="button" class="activity-add-btn" data-index="' + this.activities.indexOf(activity) + '" aria-label="Add ' + this.escapeHtml(activity.title) + '">';
             html += '+';
             html += '</button>';
             

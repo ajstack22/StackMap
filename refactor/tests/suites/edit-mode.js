@@ -1,6 +1,6 @@
 /**
  * StackMap Edit Mode Test Suite
- * Tests for 5-minute timeout protection and state preservation
+ * Tests for 30-minute timeout protection and state preservation
  */
 
 var EditModeTests = (function() {
@@ -64,8 +64,8 @@ var EditModeTests = (function() {
             }
         });
         
-        // Test 2: 5-Minute Timeout
-        TestRunner.registerTest('Edit Mode Tests', '5-minute timeout protection', function(test) {
+        // Test 2: 30-Minute Timeout
+        TestRunner.registerTest('Edit Mode Tests', '30-minute timeout protection', function(test) {
             var assert = test.assert;
             
             if (window.EditMode && typeof EditMode.enter === 'function') {
@@ -77,13 +77,13 @@ var EditModeTests = (function() {
                 var timeoutId = EditMode.getTimeoutId ? EditMode.getTimeoutId() : null;
                 assert.ok(timeoutId !== null || EditMode.isActive(), 'Timeout mechanism exists');
                 
-                // Simulate 4 minutes passing (should still be active)
-                simulateTimePassage(240); // 4 minutes
+                // Simulate 29 minutes passing (should still be active)
+                simulateTimePassage(1740); // 29 minutes
                 
                 // In real implementation, check if still active
                 // For testing, we'll verify the timeout duration is correct
-                var FIVE_MINUTES = 5 * 60 * 1000; // 5 minutes in ms
-                assert.ok(true, 'Timeout set for 5 minutes');
+                var THIRTY_MINUTES = 30 * 60 * 1000; // 30 minutes in ms
+                assert.ok(true, 'Timeout set for 30 minutes');
                 
                 // Exit edit mode
                 EditMode.exit();

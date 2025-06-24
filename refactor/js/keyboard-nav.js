@@ -9,8 +9,9 @@
     'use strict';
     
     var KeyboardNav = {
-        // Configuration
-        DEBOUNCE_DELAY: 100, // ms - adjust for ADHD users
+        // Configuration - optimized for ADHD users
+        NAVIGATION_DEBOUNCE: 16,  // ms - one frame for instant response
+        ACTION_DEBOUNCE: 50,      // ms - reduced from 100ms for better feel
         
         // State
         currentFocus: -1,
@@ -19,20 +20,36 @@
         debounceTimer: null,
         isInitialized: false,
         
-        // Keyboard shortcuts
+        // Keyboard shortcuts - removed two-key combos per PM review
         shortcuts: {
-            'n': 'addNewTask',
+            'T': 'addNewTask',        // Changed from 'n' to 'T'
             'e': 'editCurrentTask',
-            'd': 'deleteCurrentTask',
+            'D': 'markTaskDone',      // Changed from delete to mark done (safer)
             't': 'setTimerForCurrentTask',
             '/': 'focusSearch',
             '?': 'showHelp',
-            'g h': 'goHome',
-            'g t': 'goToTasks',
-            'g s': 'goToSettings'
+            'F': 'toggleFocusMode',   // New: focus mode
+            ' ': 'toggleCheckbox'     // New: space for checkbox
         },
-        comboBuffer: [],
-        comboTimeout: null,
+        
+        // Undo system for ADHD users
+        undoStack: [],
+        MAX_UNDO: 5,
+        
+        // Focus preservation for virtual scrolling
+        preservedFocusId: null,
+        
+        // Mobile keyboard detection
+        virtualKeyboardActive: false,
+        lastWindowHeight: 0,
+        
+        // Shortcut conflict tracking
+        conflictingShortcuts: {},
+        
+        // Emergency escape tracking
+        escapeCount: 0,
+        escapeTimer: null,
+        shortcutsDisabled: false,
         
         /**
          * Initialize keyboard navigation
@@ -46,11 +63,14 @@
                 return;
             }
             
+            this.detectShortcutConflicts();
             this.addSkipLinks();
             this.updateFocusableElements();
             this.setupEventListeners();
             this.initializeTabindex();
             this.setupAriaAttributes();
+            this.setupMobileKeyboardDetection();
+            this.addVisualShortcutHints();
             
             this.isInitialized = true;
             console.log('KeyboardNav: Initialized with ' + this.focusableElements.length + ' focusable elements');
@@ -133,11 +153,22 @@
                 // Add keyboard event handling for skip links
                 a.addEventListener('click', function(e) {
                     e.preventDefault();
-                    var target = document.querySelector(link.href);
-                    if (target) {
-                        target.setAttribute('tabindex', '-1');
-                        target.focus();
-                        target.removeAttribute('tabindex');
+                    // Sanitize the selector to prevent XSS
+                    var targetId = link.href.replace(/[^\w\-#]/g, '');
+                    if (!targetId.startsWith('#')) {
+                        console.warn('Invalid skip link target:', link.href);
+                        return;
+                    }
+                    
+                    try {
+                        var target = document.querySelector(targetId);
+                        if (target) {
+                            target.setAttribute('tabindex', '-1');
+                            target.focus();
+                            target.removeAttribute('tabindex');
+                        }
+                    } catch (err) {
+                        console.error('Invalid selector in skip link:', err);
                     }
                 });
                 
@@ -154,44 +185,70 @@
         setupEventListeners: function() {
             var self = this;
             
-            // Keyboard navigation on container
-            this.container.addEventListener('keydown', function(e) {
+            // Create bound functions for cleanup
+            this._handleKeyDown = function(e) {
                 self.handleKeyDown(e);
-            });
+            };
             
-            // Global keyboard shortcuts
-            document.addEventListener('keydown', function(e) {
+            this._handleGlobalKeyDown = function(e) {
                 // Skip if user is typing in an input field
                 var tagName = e.target.tagName.toLowerCase();
                 if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
                     return;
                 }
                 
-                // Skip if modifier keys are pressed (except shift for ?)
+                // Handle Ctrl+Z for undo
+                if (e.ctrlKey && e.key === 'z') {
+                    self.handleUndo(e);
+                    return;
+                }
+                
+                // Skip other modifier combinations (except shift for ?)
                 if (e.ctrlKey || e.altKey || e.metaKey) {
                     return;
                 }
                 
+                // Handle escape key
+                if (e.key === 'Escape') {
+                    // First check if we're in focus mode
+                    if (document.body.classList.contains('focus-mode')) {
+                        e.preventDefault();
+                        self.toggleFocusMode();
+                        return;
+                    }
+                    // Otherwise handle emergency escape (3x ESC)
+                    self.handleEmergencyEscape();
+                }
+                
+                // Skip if shortcuts are disabled
+                if (self.shortcutsDisabled) {
+                    return;
+                }
+                
                 self.handleGlobalShortcut(e);
-            });
+            };
             
-            // Focus event handling
-            this.container.addEventListener('focusin', function(e) {
+            this._handleFocusIn = function(e) {
                 self.handleFocusIn(e);
-            });
+            };
             
-            // Click to focus
-            this.container.addEventListener('click', function(e) {
+            this._handleClick = function(e) {
                 var card = e.target.closest('.task-card');
                 if (card && self.focusableElements.indexOf(card) !== -1) {
                     self.setFocus(self.focusableElements.indexOf(card));
                 }
-            });
+            };
             
-            // Listen for dynamic content changes
-            document.addEventListener('tasksUpdated', function() {
+            this._handleTasksUpdated = function() {
                 self.refresh();
-            });
+            };
+            
+            // Add event listeners
+            this.container.addEventListener('keydown', this._handleKeyDown);
+            document.addEventListener('keydown', this._handleGlobalKeyDown);
+            this.container.addEventListener('focusin', this._handleFocusIn);
+            this.container.addEventListener('click', this._handleClick);
+            document.addEventListener('tasksUpdated', this._handleTasksUpdated);
         },
         
         /**
@@ -211,10 +268,15 @@
                 return; // Let default behavior handle these
             }
             
-            // Debounce other keys
+            // Navigation keys get faster debounce
+            var navigationKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'j', 'k', 'h', 'l'];
+            var isNavigationKey = navigationKeys.indexOf(e.key) !== -1;
+            var debounceTime = isNavigationKey ? this.NAVIGATION_DEBOUNCE : this.ACTION_DEBOUNCE;
+            
+            // Debounce with appropriate timing
             this.debounceTimer = setTimeout(function() {
                 self.processKeyPress(e);
-            }, this.DEBOUNCE_DELAY);
+            }, debounceTime);
         },
         
         /**
@@ -442,7 +504,6 @@
          * Handle global keyboard shortcuts
          */
         handleGlobalShortcut: function(e) {
-            var self = this;
             var key = e.key;
             
             // Handle shift+? for help
@@ -450,42 +511,16 @@
                 key = '?';
             }
             
-            // Clear existing combo timeout
-            if (this.comboTimeout) {
-                clearTimeout(this.comboTimeout);
+            // Check for conflicting shortcuts
+            if (this.conflictingShortcuts[key]) {
+                console.warn('Shortcut conflict detected:', key, this.conflictingShortcuts[key]);
+                // Could show user warning here
             }
             
-            // Add to buffer
-            this.comboBuffer.push(key.toLowerCase());
-            
-            // Check for match
-            var combo = this.comboBuffer.join(' ');
-            
-            // Check for exact match
-            if (this.shortcuts[combo]) {
+            // Simple single-key shortcuts only (removed combo support)
+            if (this.shortcuts[key] || this.shortcuts[key.toUpperCase()]) {
                 e.preventDefault();
-                this.executeShortcut(this.shortcuts[combo]);
-                this.comboBuffer = [];
-                return;
-            }
-            
-            // Check if this could be part of a combo
-            var possibleCombo = false;
-            for (var shortcut in this.shortcuts) {
-                if (shortcut.indexOf(combo) === 0 && shortcut !== combo) {
-                    possibleCombo = true;
-                    break;
-                }
-            }
-            
-            if (possibleCombo) {
-                // Wait for more keys
-                this.comboTimeout = setTimeout(function() {
-                    self.comboBuffer = [];
-                }, 500);
-            } else {
-                // Not a valid combo start, clear buffer
-                this.comboBuffer = [];
+                this.executeShortcut(this.shortcuts[key] || this.shortcuts[key.toUpperCase()]);
             }
         },
         
@@ -502,8 +537,8 @@
                 case 'editCurrentTask':
                     this.editCurrentTask();
                     break;
-                case 'deleteCurrentTask':
-                    this.deleteCurrentTask();
+                case 'markTaskDone':
+                    this.markTaskDone();
                     break;
                 case 'setTimerForCurrentTask':
                     this.setTimerForCurrentTask();
@@ -514,14 +549,11 @@
                 case 'showHelp':
                     this.showKeyboardHelp();
                     break;
-                case 'goHome':
-                    this.navigateTo('home-view');
+                case 'toggleFocusMode':
+                    this.toggleFocusMode();
                     break;
-                case 'goToTasks':
-                    this.navigateTo('tasks-view');
-                    break;
-                case 'goToSettings':
-                    this.navigateTo('settings-view');
+                case 'toggleCheckbox':
+                    this.toggleCheckbox();
                     break;
             }
         },
@@ -652,17 +684,19 @@
             var shortcuts = [
                 { key: '↓/j', description: 'Next task' },
                 { key: '↑/k', description: 'Previous task' },
-                { key: 'Enter/Space', description: 'Select task' },
-                { key: 'n', description: 'New task' },
-                { key: 'e', description: 'Edit task' },
-                { key: 'd', description: 'Delete task' },
+                { key: 'Home', description: 'First task' },
+                { key: 'End', description: 'Last task' },
+                { key: 'Enter/Space', description: 'Select/activate task' },
+                { key: 'T', description: 'Create new task' },
+                { key: 'e', description: 'Edit current task' },
+                { key: 'D', description: 'Mark task as done' },
                 { key: 't', description: 'Set timer' },
-                { key: '/', description: 'Search' },
-                { key: 'g h', description: 'Go home' },
-                { key: 'g t', description: 'Go to tasks' },
-                { key: 'g s', description: 'Go to settings' },
+                { key: 'F', description: 'Toggle focus mode' },
+                { key: '/', description: 'Search tasks' },
                 { key: '?', description: 'Show this help' },
-                { key: 'Esc', description: 'Close dialogs' }
+                { key: 'Ctrl+Z', description: 'Undo last action' },
+                { key: 'Esc×3', description: 'Disable all shortcuts' },
+                { key: 'Tab', description: 'Navigate sections' }
             ];
             
             var list = document.createElement('dl');
@@ -731,24 +765,397 @@
         },
         
         /**
+         * Detect potential shortcut conflicts
+         */
+        detectShortcutConflicts: function() {
+            var userAgent = navigator.userAgent.toLowerCase();
+            
+            // Firefox conflicts
+            if (userAgent.indexOf('firefox') > -1) {
+                this.conflictingShortcuts['/'] = 'Firefox Quick Find';
+            }
+            
+            // Browser find-as-you-type
+            if (userAgent.indexOf('chrome') > -1 || userAgent.indexOf('safari') > -1) {
+                // T might conflict with find-as-you-type in some configs
+                // But we'll use it anyway as it's not a default
+            }
+            
+            // Log detected conflicts
+            if (Object.keys(this.conflictingShortcuts).length > 0) {
+                console.log('KeyboardNav: Detected potential conflicts:', this.conflictingShortcuts);
+            }
+        },
+        
+        /**
+         * Add visual shortcut hints to buttons
+         */
+        addVisualShortcutHints: function() {
+            // Add data-shortcut attributes to buttons
+            var hints = [
+                { selector: '#add-task-button, .task-add-button', shortcut: 'T' },
+                { selector: '.task-timer-button', shortcut: 't' },
+                { selector: '[aria-label*="Edit"]', shortcut: 'e' },
+                { selector: '#search-input', shortcut: '/' }
+            ];
+            
+            hints.forEach(function(hint) {
+                var elements = document.querySelectorAll(hint.selector);
+                Array.prototype.forEach.call(elements, function(el) {
+                    el.setAttribute('data-shortcut', hint.shortcut);
+                    // Could add tooltip here
+                });
+            });
+        },
+        
+        /**
+         * Setup mobile keyboard detection
+         */
+        setupMobileKeyboardDetection: function() {
+            var self = this;
+            this.lastWindowHeight = window.innerHeight;
+            
+            // Detect virtual keyboard by window resize
+            window.addEventListener('resize', function() {
+                var currentHeight = window.innerHeight;
+                var threshold = 150; // px
+                
+                // Keyboard likely appeared
+                if (self.lastWindowHeight - currentHeight > threshold) {
+                    self.virtualKeyboardActive = true;
+                    console.log('Virtual keyboard detected');
+                }
+                // Keyboard likely hidden
+                else if (currentHeight - self.lastWindowHeight > threshold) {
+                    self.virtualKeyboardActive = false;
+                    console.log('Virtual keyboard hidden');
+                }
+                
+                self.lastWindowHeight = currentHeight;
+            });
+        },
+        
+        /**
+         * Handle emergency escape (3x ESC)
+         */
+        handleEmergencyEscape: function() {
+            var self = this;
+            
+            this.escapeCount++;
+            
+            // Clear previous timer
+            if (this.escapeTimer) {
+                clearTimeout(this.escapeTimer);
+            }
+            
+            // Check for triple escape
+            if (this.escapeCount >= 3) {
+                this.disableAllShortcuts();
+                this.escapeCount = 0;
+                return;
+            }
+            
+            // Reset count after 1 second
+            this.escapeTimer = setTimeout(function() {
+                self.escapeCount = 0;
+            }, 1000);
+        },
+        
+        /**
+         * Disable all shortcuts (emergency escape)
+         */
+        disableAllShortcuts: function() {
+            this.shortcutsDisabled = true;
+            this.announce('Keyboard shortcuts disabled. Refresh page to re-enable.');
+            
+            // Show visual indicator
+            var indicator = document.createElement('div');
+            indicator.className = 'shortcuts-disabled-indicator';
+            indicator.textContent = 'Keyboard shortcuts disabled';
+            indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:#ff0000;color:white;padding:10px;border-radius:5px;z-index:9999';
+            document.body.appendChild(indicator);
+        },
+        
+        /**
+         * Handle undo (Ctrl+Z)
+         */
+        handleUndo: function(e) {
+            e.preventDefault();
+            
+            // Check if the new undo system is available
+            if (window.UndoManager && window.UndoManager.canUndo()) {
+                // Use the new comprehensive undo system
+                window.UndoManager.undo();
+                return;
+            }
+            
+            // Fallback to simple keyboard nav undo
+            if (this.undoStack.length === 0) {
+                this.announce('Nothing to undo');
+                return;
+            }
+            
+            var lastAction = this.undoStack.pop();
+            console.log('Undoing action:', lastAction);
+            
+            // Execute undo based on action type
+            switch(lastAction.type) {
+                case 'delete':
+                    // Restore the deleted task
+                    if (lastAction.data && window.TaskDisplay) {
+                        window.TaskDisplay.restoreTaskDirect(lastAction.data);
+                        this.announce('Task restored');
+                    } else {
+                        this.announce('Cannot restore task');
+                    }
+                    break;
+                case 'edit':
+                    // Restore previous value
+                    if (lastAction.data && window.TaskDisplay) {
+                        window.TaskDisplay.updateTaskTextDirect(
+                            lastAction.data.taskId, 
+                            lastAction.data.oldText
+                        );
+                        this.announce('Edit undone');
+                    } else {
+                        this.announce('Cannot undo edit');
+                    }
+                    break;
+                case 'complete':
+                    // Toggle completion state back
+                    if (lastAction.data && window.TaskDisplay) {
+                        window.TaskDisplay.toggleTaskDirect(lastAction.data.taskId);
+                        this.announce('Completion undone');
+                    } else {
+                        this.announce('Cannot undo completion');
+                    }
+                    break;
+                default:
+                    this.announce('Unknown action type');
+            }
+            
+            // Refresh the view after undo
+            if (window.TaskDisplay) {
+                window.TaskDisplay.render();
+            }
+        },
+        
+        /**
+         * Add action to undo stack
+         */
+        addToUndoStack: function(action) {
+            this.undoStack.push(action);
+            
+            // Limit stack size
+            if (this.undoStack.length > this.MAX_UNDO) {
+                this.undoStack.shift();
+            }
+        },
+        
+        /**
+         * Preserve focus before virtual scroll update
+         */
+        beforeVirtualUpdate: function() {
+            var activeElement = document.activeElement;
+            if (activeElement && activeElement.hasAttribute('data-task-id')) {
+                this.preservedFocusId = activeElement.getAttribute('data-task-id');
+                // Also store scroll position
+                this.preservedScrollTop = this.container ? this.container.scrollTop : 0;
+                // Store the relative position of the element
+                var rect = activeElement.getBoundingClientRect();
+                this.preservedRelativeTop = rect.top;
+            }
+        },
+        
+        /**
+         * Restore focus after virtual scroll update
+         */
+        afterVirtualUpdate: function() {
+            var self = this;
+            
+            if (!this.preservedFocusId) return;
+            
+            // Use requestAnimationFrame for better timing
+            requestAnimationFrame(function() {
+                // Update focusable elements first
+                self.updateFocusableElements();
+                
+                // Sanitize the task ID to prevent injection
+                var safeId = self.preservedFocusId.replace(/[^\w\-]/g, '');
+                
+                try {
+                    var element = document.querySelector('[data-task-id="' + safeId + '"]');
+                    if (element) {
+                        // Find index in new focusable elements
+                        var index = Array.prototype.indexOf.call(self.focusableElements, element);
+                        if (index !== -1) {
+                            // Set focus without scrolling
+                            element.setAttribute('tabindex', '0');
+                            element.focus({ preventScroll: true });
+                            self.currentFocus = index;
+                            
+                            // Restore scroll position if needed
+                            if (self.container && self.preservedScrollTop !== undefined) {
+                                // Calculate new scroll position to maintain visual position
+                                var newRect = element.getBoundingClientRect();
+                                var scrollAdjustment = newRect.top - self.preservedRelativeTop;
+                                self.container.scrollTop = self.preservedScrollTop + scrollAdjustment;
+                            }
+                        } else {
+                            console.warn('Element found but not in focusable list');
+                        }
+                    } else {
+                        console.warn('Could not find element with task-id:', safeId);
+                    }
+                } catch (err) {
+                    console.error('Error restoring focus:', err);
+                }
+                
+                // Clear preserved state
+                self.preservedFocusId = null;
+                self.preservedScrollTop = null;
+                self.preservedRelativeTop = null;
+            });
+        },
+        
+        /**
+         * Mark current task as done (safer than delete)
+         */
+        markTaskDone: function() {
+            if (this.currentFocus < 0 || this.currentFocus >= this.focusableElements.length) {
+                this.announce('No task selected');
+                return;
+            }
+            
+            var element = this.focusableElements[this.currentFocus];
+            var checkbox = element.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.click();
+                this.announce('Task marked as done');
+            }
+        },
+        
+        /**
+         * Toggle focus mode (hide distractions)
+         */
+        toggleFocusMode: function() {
+            var self = this;
+            var isEnabled = document.body.classList.contains('focus-mode');
+            
+            if (!isEnabled) {
+                // Entering focus mode
+                document.body.classList.add('focus-mode');
+                
+                // Add exit instructions
+                var exitInstructions = document.createElement('div');
+                exitInstructions.id = 'focus-mode-exit';
+                exitInstructions.className = 'focus-mode-indicator';
+                exitInstructions.innerHTML = 'Focus Mode Active - Press F or ESC to exit';
+                exitInstructions.setAttribute('role', 'status');
+                exitInstructions.setAttribute('aria-live', 'polite');
+                document.body.appendChild(exitInstructions);
+                
+                this.announce('Focus mode enabled. Press F or Escape to exit.');
+            } else {
+                // Exiting focus mode
+                document.body.classList.remove('focus-mode');
+                
+                // Remove exit instructions
+                var exitIndicator = document.getElementById('focus-mode-exit');
+                if (exitIndicator) {
+                    exitIndicator.remove();
+                }
+                
+                this.announce('Focus mode disabled');
+            }
+        },
+        
+        /**
+         * Toggle checkbox with space key
+         */
+        toggleCheckbox: function() {
+            if (this.currentFocus < 0 || this.currentFocus >= this.focusableElements.length) {
+                return;
+            }
+            
+            var element = this.focusableElements[this.currentFocus];
+            var checkbox = element.querySelector('input[type="checkbox"]');
+            if (checkbox) {
+                checkbox.click();
+                this.announce('Task ' + (checkbox.checked ? 'completed' : 'uncompleted'));
+            }
+        },
+        
+        /**
          * Destroy and cleanup
          */
         destroy: function() {
+            var self = this;
+            
+            // Clear all timers
             if (this.debounceTimer) {
                 clearTimeout(this.debounceTimer);
+                this.debounceTimer = null;
             }
             
-            // Remove attributes
+            if (this.escapeTimer) {
+                clearTimeout(this.escapeTimer);
+                this.escapeTimer = null;
+            }
+            
+            // Remove all event listeners (store references during setup)
             if (this.container) {
+                // Remove container event listeners
+                this.container.removeEventListener('keydown', this._handleKeyDown);
+                this.container.removeEventListener('focusin', this._handleFocusIn);
+                this.container.removeEventListener('click', this._handleClick);
+                
+                // Remove attributes
                 this.container.removeAttribute('role');
                 this.container.removeAttribute('aria-label');
             }
             
-            // Reset state
+            // Remove document event listeners
+            document.removeEventListener('keydown', this._handleGlobalKeyDown);
+            document.removeEventListener('tasksUpdated', this._handleTasksUpdated);
+            
+            // Remove skip links
+            var skipNav = document.querySelector('.skip-links');
+            if (skipNav) {
+                skipNav.remove();
+            }
+            
+            // Remove focus mode indicator if exists
+            var focusModeIndicator = document.getElementById('focus-mode-exit');
+            if (focusModeIndicator) {
+                focusModeIndicator.remove();
+            }
+            
+            // Remove shortcuts disabled indicator if exists
+            var shortcutsIndicator = document.querySelector('.shortcuts-disabled-indicator');
+            if (shortcutsIndicator) {
+                shortcutsIndicator.remove();
+            }
+            
+            // Reset all state
             this.currentFocus = -1;
             this.focusableElements = [];
             this.container = null;
             this.isInitialized = false;
+            this.shortcutsDisabled = false;
+            this.escapeCount = 0;
+            this.preservedFocusId = null;
+            this.undoStack = [];
+            this.conflictingShortcuts = {};
+            
+            // Clear bound functions
+            this._handleKeyDown = null;
+            this._handleGlobalKeyDown = null;
+            this._handleFocusIn = null;
+            this._handleClick = null;
+            this._handleTasksUpdated = null;
+            
+            console.log('KeyboardNav: Destroyed and cleaned up');
         }
     };
     

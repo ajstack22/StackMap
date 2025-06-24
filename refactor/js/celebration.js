@@ -1,44 +1,15 @@
 /**
  * Celebration System for StackMap
- * Provides positive reinforcement when tasks are completed
- * CSS-only animations for performance on low-end devices
+ * Provides gentle, ADHD-friendly celebrations for task completion
+ * Respects sensory preferences and safe mode
  */
 
 (function() {
     'use strict';
     
     var CelebrationSystem = {
-        // Configuration
-        isEnabled: true,
-        showMessages: true,
-        showDailyCounter: true,
-        
-        // Messages array
-        messages: [
-            'Great job!',
-            'You did it!',
-            'Keep going!',
-            'Awesome work!',
-            'Well done!',
-            'Task complete!',
-            'Nice progress!',
-            'You rock!',
-            'Fantastic!',
-            'Amazing!',
-            'Excellent!',
-            'Keep it up!',
-            'Way to go!',
-            'Outstanding!'
-        ],
-        
-        // Milestone messages
-        milestoneMessages: {
-            5: "You're on a roll!",
-            10: 'Double digits! Amazing!',
-            20: 'Productivity champion!',
-            50: 'Incredible progress!',
-            100: 'Century club! 🎉'
-        },
+        isInitialized: false,
+        isCelebrating: false,
         
         /**
          * Initialize the celebration system
@@ -46,361 +17,264 @@
         init: function() {
             var self = this;
             
-            // Check if safe mode is active
-            if (window.StackMapSafeMode) {
-                self.isEnabled = false;
+            if (self.isInitialized) return;
+            self.isInitialized = true;
+            
+            // Create celebration container
+            self.createCelebrationContainer();
+            
+            // Listen for celebration events
+            document.addEventListener('celebrate', function(e) {
+                self.celebrate(e.detail);
+            });
+        },
+        
+        /**
+         * Create the celebration container
+         */
+        createCelebrationContainer: function() {
+            var container = document.createElement('div');
+            container.id = 'celebration-container';
+            container.className = 'celebration-container';
+            container.setAttribute('aria-live', 'polite');
+            container.setAttribute('aria-atomic', 'true');
+            document.body.appendChild(container);
+            this.container = container;
+        },
+        
+        /**
+         * Trigger a celebration
+         */
+        celebrate: function(options) {
+            var self = this;
+            
+            // Skip if already celebrating or in safe mode
+            if (self.isCelebrating) return;
+            if (document.body.classList.contains('safe-mode')) {
+                // In safe mode, just show a simple message
+                self.showSimpleMessage(options.message || 'Great job! ✨');
                 return;
             }
             
-            // Load user preferences
-            self.loadSettings();
+            self.isCelebrating = true;
             
-            // Setup daily counter
-            self.setupDailyCounter();
+            // Default options
+            options = options || {};
+            var type = options.type || 'small'; // small, medium, large
+            var message = options.message || 'Nice work!';
+            var duration = options.duration || 2000;
             
-            // Cleanup old counters
-            self.cleanupOldCounters();
-            
-            // Create screen reader announcement container
-            self.createAnnouncementContainer();
-        },
-        
-        /**
-         * Load settings from user preferences
-         */
-        loadSettings: function() {
-            var self = this;
-            
-            if (window.UserManager) {
-                var user = window.UserManager.getCurrentUser();
-                if (user && user.preferences) {
-                    self.isEnabled = user.preferences.celebrationsEnabled !== false;
-                    self.showMessages = user.preferences.showCelebrationMessages !== false;
-                    self.showDailyCounter = user.preferences.showDailyCounter !== false;
-                }
-            }
-        },
-        
-        /**
-         * Main celebration method - called when task is completed
-         */
-        celebrate: function(taskElement, isFirstCompletion) {
-            var self = this;
-            
-            // Only celebrate first completion
-            if (!isFirstCompletion || !self.isEnabled) {
-                return;
+            // Show celebration based on type
+            switch (type) {
+                case 'large':
+                    self.largeSuccess(message, duration);
+                    break;
+                case 'medium':
+                    self.mediumSuccess(message, duration);
+                    break;
+                default:
+                    self.smallSuccess(message, duration);
             }
             
-            // Check for reduced motion preference
-            if (self.prefersReducedMotion()) {
-                // Show message only, no animation
-                if (self.showMessages) {
-                    self.showMessage(taskElement);
-                }
-            } else {
-                // Full celebration with animation
-                self.animateCard(taskElement);
-                if (self.showMessages) {
-                    self.showMessage(taskElement);
-                }
-            }
-            
-            // Update daily counter
-            var count = self.incrementDailyCounter();
-            
-            // Check for milestones
-            if (self.milestoneMessages[count]) {
-                setTimeout(function() {
-                    self.showMilestoneMessage(self.milestoneMessages[count]);
-                }, 800);
-            }
-            
-            // Screen reader announcement
-            self.announceCompletion();
-        },
-        
-        /**
-         * Animate the task card
-         */
-        animateCard: function(taskElement) {
-            var self = this;
-            
-            // Add celebration class
-            taskElement.classList.add('task-card--celebrating');
-            
-            // Remove class after animation completes
+            // Reset flag after celebration
             setTimeout(function() {
-                taskElement.classList.remove('task-card--celebrating');
-            }, 600);
+                self.isCelebrating = false;
+            }, duration + 500);
         },
         
         /**
-         * Show celebration message
+         * Small celebration - single task complete
          */
-        showMessage: function(taskElement) {
+        smallSuccess: function(message, duration) {
             var self = this;
             
-            // Get personalized message
-            var message = self.getPersonalizedMessage();
+            // Create floating emoji
+            var emoji = document.createElement('div');
+            emoji.className = 'celebration-emoji small-celebration';
+            emoji.textContent = '✅';
+            emoji.style.left = Math.random() * 80 + 10 + '%';
             
-            // Create toast element
-            var toast = self.createToast(message);
+            self.container.appendChild(emoji);
             
-            // Position relative to task card
-            var rect = taskElement.getBoundingClientRect();
-            toast.style.position = 'fixed';
-            toast.style.left = '50%';
-            toast.style.transform = 'translateX(-50%)';
-            toast.style.top = (rect.top - 10) + 'px';
-            
-            // Add to DOM
-            document.body.appendChild(toast);
-            
-            // Trigger animation
+            // Animate and remove
             setTimeout(function() {
-                toast.classList.add('celebration-toast--visible');
+                emoji.classList.add('floating');
             }, 10);
             
-            // Remove after delay
             setTimeout(function() {
-                toast.classList.remove('celebration-toast--visible');
+                if (emoji.parentNode) {
+                    emoji.parentNode.removeChild(emoji);
+                }
+            }, duration);
+            
+            // Show message
+            self.showMessage(message, 'success', duration);
+        },
+        
+        /**
+         * Medium celebration - multiple tasks or milestone
+         */
+        mediumSuccess: function(message, duration) {
+            var self = this;
+            var emojis = ['🎉', '✨', '🌟', '💫', '⭐'];
+            var count = 5;
+            
+            // Create multiple floating elements
+            for (var i = 0; i < count; i++) {
+                (function(index) {
+                    setTimeout(function() {
+                        var emoji = document.createElement('div');
+                        emoji.className = 'celebration-emoji medium-celebration';
+                        emoji.textContent = emojis[index % emojis.length];
+                        emoji.style.left = Math.random() * 80 + 10 + '%';
+                        emoji.style.animationDelay = (index * 100) + 'ms';
+                        
+                        self.container.appendChild(emoji);
+                        
+                        setTimeout(function() {
+                            emoji.classList.add('floating');
+                        }, 10);
+                        
+                        setTimeout(function() {
+                            if (emoji.parentNode) {
+                                emoji.parentNode.removeChild(emoji);
+                            }
+                        }, duration + (index * 100));
+                    }, index * 100);
+                })(i);
+            }
+            
+            // Show message
+            self.showMessage(message, 'celebration', duration);
+        },
+        
+        /**
+         * Large celebration - all tasks complete
+         */
+        largeSuccess: function(message, duration) {
+            var self = this;
+            
+            // Create confetti effect (CSS-only for performance)
+            var confetti = document.createElement('div');
+            confetti.className = 'confetti-burst';
+            self.container.appendChild(confetti);
+            
+            // Add multiple confetti pieces
+            var colors = ['#FFD700', '#FF69B4', '#00CED1', '#98FB98', '#DDA0DD'];
+            for (var i = 0; i < 20; i++) {
+                var piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                piece.style.backgroundColor = colors[i % colors.length];
+                piece.style.left = Math.random() * 100 + '%';
+                piece.style.animationDelay = Math.random() * 0.5 + 's';
+                piece.style.animationDuration = (1.5 + Math.random() * 1) + 's';
+                confetti.appendChild(piece);
+            }
+            
+            // Pulse the whole interface gently
+            document.body.classList.add('celebration-pulse');
+            
+            // Show big message
+            self.showMessage(message, 'big-celebration', duration + 1000);
+            
+            // Cleanup
+            setTimeout(function() {
+                document.body.classList.remove('celebration-pulse');
+                if (confetti.parentNode) {
+                    confetti.parentNode.removeChild(confetti);
+                }
+            }, duration + 1500);
+        },
+        
+        /**
+         * Show a celebration message
+         */
+        showMessage: function(text, type, duration) {
+            var message = document.createElement('div');
+            message.className = 'celebration-message ' + type;
+            message.textContent = text;
+            message.setAttribute('role', 'status');
+            
+            this.container.appendChild(message);
+            
+            // Fade in
+            setTimeout(function() {
+                message.classList.add('visible');
+            }, 10);
+            
+            // Fade out and remove
+            setTimeout(function() {
+                message.classList.remove('visible');
                 setTimeout(function() {
-                    if (toast.parentNode) {
-                        toast.parentNode.removeChild(toast);
+                    if (message.parentNode) {
+                        message.parentNode.removeChild(message);
+                    }
+                }, 300);
+            }, duration - 300);
+        },
+        
+        /**
+         * Simple message for safe mode
+         */
+        showSimpleMessage: function(text) {
+            var self = this;
+            
+            var message = document.createElement('div');
+            message.className = 'celebration-message simple';
+            message.textContent = text;
+            message.setAttribute('role', 'status');
+            
+            self.container.appendChild(message);
+            
+            // Show briefly
+            setTimeout(function() {
+                message.classList.add('visible');
+            }, 10);
+            
+            setTimeout(function() {
+                message.classList.remove('visible');
+                setTimeout(function() {
+                    if (message.parentNode) {
+                        message.parentNode.removeChild(message);
                     }
                 }, 300);
             }, 2000);
         },
         
         /**
-         * Get personalized message with user name if available
+         * Test celebrations (for development)
          */
-        getPersonalizedMessage: function() {
+        test: function() {
             var self = this;
             
-            var message = self.messages[Math.floor(Math.random() * self.messages.length)];
+            console.log('Testing celebrations...');
             
-            // Add user name if available
-            if (window.UserManager) {
-                var user = window.UserManager.getCurrentUser();
-                if (user && user.name && user.name !== 'Me') {
-                    message = user.name + ', ' + message.toLowerCase();
-                }
-            }
-            
-            return message;
-        },
-        
-        /**
-         * Create toast element
-         */
-        createToast: function(message) {
-            var toast = document.createElement('div');
-            toast.className = 'celebration-toast';
-            toast.textContent = message;
-            toast.setAttribute('role', 'status');
-            toast.setAttribute('aria-live', 'polite');
-            
-            return toast;
-        },
-        
-        /**
-         * Show milestone message
-         */
-        showMilestoneMessage: function(message) {
-            var self = this;
-            
-            var milestone = self.createToast(message);
-            milestone.classList.add('celebration-toast--milestone');
-            
-            // Center on screen
-            milestone.style.position = 'fixed';
-            milestone.style.left = '50%';
-            milestone.style.top = '50%';
-            milestone.style.transform = 'translate(-50%, -50%)';
-            
-            document.body.appendChild(milestone);
+            // Test small
+            self.celebrate({ type: 'small', message: 'Task completed!' });
             
             setTimeout(function() {
-                milestone.classList.add('celebration-toast--visible');
-            }, 10);
-            
-            setTimeout(function() {
-                milestone.classList.remove('celebration-toast--visible');
-                setTimeout(function() {
-                    if (milestone.parentNode) {
-                        milestone.parentNode.removeChild(milestone);
-                    }
-                }, 300);
+                // Test medium
+                self.celebrate({ type: 'medium', message: '5 tasks done today! 🎉' });
             }, 3000);
-        },
-        
-        /**
-         * Setup daily counter display
-         */
-        setupDailyCounter: function() {
-            var self = this;
             
-            if (!self.showDailyCounter) {
-                return;
-            }
-            
-            // Create counter element if it doesn't exist
-            var counter = document.getElementById('daily-progress');
-            if (!counter) {
-                counter = document.createElement('div');
-                counter.id = 'daily-progress';
-                counter.className = 'daily-progress';
-                counter.innerHTML = 
-                    '<span class="daily-progress__icon">🌟</span>' +
-                    '<span class="daily-progress__count">0</span>' +
-                    '<span class="daily-progress__label">tasks today!</span>';
-                
-                // Add to header or appropriate location
-                var header = document.querySelector('.header-content');
-                if (header) {
-                    header.appendChild(counter);
-                }
-            }
-            
-            // Update count
-            self.updateDailyCounterDisplay();
-        },
-        
-        /**
-         * Increment daily counter
-         */
-        incrementDailyCounter: function() {
-            var self = this;
-            
-            var today = new Date().toDateString();
-            var key = 'stackmap_daily_count_' + today;
-            
-            try {
-                var count = parseInt(localStorage.getItem(key) || '0', 10);
-                count++;
-                localStorage.setItem(key, count.toString());
-                
-                // Update display
-                self.updateDailyCounterDisplay();
-                
-                return count;
-            } catch (error) {
-                console.warn('Failed to update daily counter:', error);
-                return 0;
-            }
-        },
-        
-        /**
-         * Update daily counter display
-         */
-        updateDailyCounterDisplay: function() {
-            var self = this;
-            
-            var counter = document.getElementById('daily-progress');
-            if (!counter) return;
-            
-            var today = new Date().toDateString();
-            var key = 'stackmap_daily_count_' + today;
-            
-            try {
-                var count = parseInt(localStorage.getItem(key) || '0', 10);
-                var countElement = counter.querySelector('.daily-progress__count');
-                if (countElement) {
-                    countElement.textContent = count;
-                }
-            } catch (error) {
-                console.warn('Failed to read daily counter:', error);
-            }
-        },
-        
-        /**
-         * Cleanup old daily counters (>7 days)
-         */
-        cleanupOldCounters: function() {
-            var self = this;
-            
-            try {
-                var cutoffDate = new Date();
-                cutoffDate.setDate(cutoffDate.getDate() - 7);
-                
-                // Get all localStorage keys
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
-                    if (key && key.startsWith('stackmap_daily_count_')) {
-                        var dateStr = key.replace('stackmap_daily_count_', '');
-                        var keyDate = new Date(dateStr);
-                        
-                        if (keyDate < cutoffDate) {
-                            localStorage.removeItem(key);
-                        }
-                    }
-                }
-            } catch (error) {
-                console.warn('Failed to cleanup old counters:', error);
-            }
-        },
-        
-        /**
-         * Check if user prefers reduced motion
-         */
-        prefersReducedMotion: function() {
-            return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        },
-        
-        /**
-         * Create screen reader announcement container
-         */
-        createAnnouncementContainer: function() {
-            var self = this;
-            
-            if (!document.getElementById('celebration-announcements')) {
-                var container = document.createElement('div');
-                container.id = 'celebration-announcements';
-                container.className = 'sr-only';
-                container.setAttribute('role', 'status');
-                container.setAttribute('aria-live', 'polite');
-                container.setAttribute('aria-atomic', 'true');
-                document.body.appendChild(container);
-            }
-        },
-        
-        /**
-         * Announce completion for screen readers
-         */
-        announceCompletion: function() {
-            var self = this;
-            
-            var container = document.getElementById('celebration-announcements');
-            if (container) {
-                container.textContent = 'Task completed! ' + self.getPersonalizedMessage();
-                
-                // Clear after delay
-                setTimeout(function() {
-                    container.textContent = '';
-                }, 3000);
-            }
-        },
-        
-        /**
-         * Check if celebrations are disabled
-         */
-        isDisabled: function() {
-            var self = this;
-            return !self.isEnabled || window.StackMapSafeMode;
+            setTimeout(function() {
+                // Test large
+                self.celebrate({ type: 'large', message: 'All tasks complete! Amazing work! 🌟' });
+            }, 6000);
         }
     };
     
-    // Export to global scope
+    // Expose to global scope
     window.CelebrationSystem = CelebrationSystem;
     
-    // Initialize when DOM is ready
+    // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
             CelebrationSystem.init();
         });
     } else {
-        CelebrationSystem.init();
+        setTimeout(function() {
+            CelebrationSystem.init();
+        }, 100);
     }
 })();

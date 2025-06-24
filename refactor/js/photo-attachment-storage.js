@@ -118,7 +118,8 @@
             }
             
             request.onerror = function(event) {
-                var error = new Error('Failed to open photo database: ' + (event.target.error || 'Unknown error'));
+                var errorMsg = event.target.error ? String(event.target.error.message || event.target.error) : 'Unknown error';
+                var error = new Error('Failed to open photo database: ' + errorMsg);
                 console.error('Database error:', error);
                 
                 // Retry with exponential backoff
@@ -309,14 +310,15 @@
                 
                 request.onerror = function(event) {
                     var error = event.target.error;
+                    var errorName = error && error.name ? String(error.name) : '';
                     var errorMessage = 'Failed to store photo';
                     
                     // Handle specific errors
-                    if (error && error.name === 'QuotaExceededError') {
+                    if (errorName === 'QuotaExceededError') {
                         errorMessage = 'Storage quota exceeded. Please free up space.';
                         console.error('Photo storage quota exceeded');
-                    } else if (error) {
-                        errorMessage = 'Storage error: ' + error.name;
+                    } else if (errorName) {
+                        errorMessage = 'Storage error: ' + errorName;
                     }
                     
                     callback({

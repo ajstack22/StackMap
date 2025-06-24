@@ -1,0 +1,244 @@
+/**
+ * Onboarding Styles
+ * Styles for first-time user experience
+ */
+
+/* Onboarding Tooltip */
+.onboarding-tooltip {
+    position: fixed;
+    background: white;
+    border-radius: 12px;
+    padding: 0;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+    max-width: 320px;
+    z-index: 1000;
+    opacity: 0;
+    transform: scale(0.9) translateY(10px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.onboarding-tooltip.show {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+}
+
+.tooltip-arrow {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 10px solid white;
+    filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.1));
+}
+
+.tooltip-arrow.bottom {
+    top: auto;
+    bottom: -10px;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: none;
+    border-top: 10px solid white;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.tooltip-content {
+    padding: 24px;
+}
+
+.tooltip-content h3 {
+    margin: 0 0 12px 0;
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.tooltip-content p {
+    margin: 0 0 20px 0;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--color-text-secondary);
+}
+
+.onboarding-action {
+    width: 100%;
+    padding: 12px 24px;
+    background: var(--primary-purple);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.onboarding-action:hover {
+    background: var(--primary-purple-dark);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.onboarding-skip {
+    display: block;
+    width: 100%;
+    padding: 8px;
+    margin-top: 12px;
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: none;
+    font-size: 14px;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.onboarding-skip:hover {
+    color: var(--color-text);
+    text-decoration: underline;
+}
+
+/* Progress Indicator */
+.onboarding-progress {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--card-border);
+}
+
+.progress-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--card-border);
+    transition: all 0.3s ease;
+}
+
+.progress-dot.active {
+    background: var(--primary-purple);
+    transform: scale(1.3);
+}
+
+/* Highlight Effect */
+.onboarding-highlight {
+    position: relative;
+    z-index: 999;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.5);
+    animation: pulse 2s infinite;
+    border-radius: 8px;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.5);
+    }
+    50% {
+        box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.2);
+    }
+    100% {
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.5);
+    }
+}
+
+/* Overlay for focused attention */
+.onboarding-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.onboarding-overlay.show {
+    opacity: 1;
+}
+
+/* Animation for tooltip entrance */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .onboarding-tooltip {
+        background: var(--card-bg);
+        box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+    }
+    
+    .tooltip-arrow {
+        border-bottom-color: var(--card-bg);
+    }
+    
+    .tooltip-arrow.bottom {
+        border-top-color: var(--card-bg);
+    }
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+    .onboarding-tooltip {
+        max-width: calc(100vw - 40px);
+        margin: 0 20px;
+    }
+    
+    .tooltip-content {
+        padding: 20px;
+    }
+    
+    .tooltip-content h3 {
+        font-size: 18px;
+    }
+    
+    .tooltip-content p {
+        font-size: 14px;
+    }
+    
+    .onboarding-action {
+        font-size: 15px;
+        padding: 10px 20px;
+    }
+}
+
+/* Accessibility improvements */
+.onboarding-tooltip:focus-within {
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 3px var(--primary-purple);
+}
+
+.onboarding-action:focus,
+.onboarding-skip:focus {
+    outline: 3px solid var(--primary-purple);
+    outline-offset: 2px;
+}
+
+/* Skip animation for reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+    .onboarding-tooltip,
+    .onboarding-highlight,
+    .progress-dot {
+        animation: none;
+        transition: none;
+    }
+    
+    .onboarding-tooltip.show {
+        opacity: 1;
+        transform: scale(1);
+    }
+}

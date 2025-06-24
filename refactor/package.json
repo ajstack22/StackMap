@@ -1,0 +1,25 @@
+{
+  "name": "stackmap-refactor",
+  "version": "1.0.0",
+  "description": "StackMap mobile-first refactor with SQLite storage",
+  "main": "index.html",
+  "scripts": {
+    "build": "./build.sh",
+    "sync": "npm run build && npx cap sync",
+    "ios": "npm run sync && npx cap open ios",
+    "android": "npm run sync && npx cap open android",
+    "serve": "npx serve www"
+  },
+  "keywords": ["adhd", "task-management", "mobile", "capacitor"],
+  "author": "StackMap Team",
+  "license": "MIT",
+  "dependencies": {
+    "@capacitor/core": "^5.5.1",
+    "@capacitor/ios": "^5.5.1",
+    "@capacitor/android": "^5.5.1",
+    "@capacitor-community/sqlite": "^5.4.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^5.5.1"
+  }
+}

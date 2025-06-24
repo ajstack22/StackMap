@@ -86,21 +86,18 @@ npm run lint
 
 ## Coding Standards
 
-### JavaScript (ES5 + Safe Features Only)
+### JavaScript (Modern JavaScript Standards)
 ```javascript
-// ✅ USE THESE
-var                   // NOT let/const (Android 5 fails!)
-function() {}         // NOT arrow functions
-`${template}`         // Template literals (safe)
-Promises              // Universally supported
+// ✅ USE THESE (Modern JavaScript)
+const/let             // Block-scoped variables
+() => {}              // Arrow functions for cleaner code
+`${template}`         // Template literals
+async/await           // Cleaner async code
+class                 // ES6 classes when appropriate
+[a, b] = array        // Destructuring for clarity
 
-// ❌ AVOID THESE (Will break on Android 5)
-const/let             // Use var instead
-() => {}              // Use function() {}
-async/await           // Use Promises
-class                 // Use constructor functions
-for...of              // 3-20x slower, use for loops
-[a, b] = array        // No destructuring
+// ⚠️ PERFORMANCE CONSIDERATIONS
+for...of              // Can be slower, use regular for loops for large datasets
 ```
 
 ### CSS Requirements

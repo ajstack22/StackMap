@@ -222,17 +222,29 @@
     <link rel="stylesheet" href="css/focus-indicators.css">
     <link rel="stylesheet" href="css/activity-library.css">
     <link rel="stylesheet" href="css/clusterize.css">
+    <link rel="stylesheet" href="css/undo-ui.css">
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 768px)">
     <link rel="stylesheet" href="css/tv.css" media="(min-width: 1920px)">
     <link rel="stylesheet" href="css/grownup-mode.css">
+    <link rel="stylesheet" href="css/edit-mode.css">
     <link rel="stylesheet" href="css/demo-mode.css">
     <link rel="stylesheet" href="css/onboarding.css">
     <link rel="stylesheet" href="css/themes.css">
     <link rel="stylesheet" href="css/timer.css">
     <link rel="stylesheet" href="css/photo-attachments.css">
+    <link rel="stylesheet" href="css/attachments.css">
+    <link rel="stylesheet" href="css/voice-recording.css">
+    <link rel="stylesheet" href="css/welcome.css">
     
     <!-- PWA manifest -->
     <link rel="manifest" href="manifest.json">
+    
+    <!-- Today/Tomorrow styles -->
+    <link rel="stylesheet" href="css/today-tomorrow.css">
+    <link rel="stylesheet" href="css/celebration.css">
+    
+    <!-- Undo system styles -->
+    <link rel="stylesheet" href="css/undo-ui.css">
     
     <!-- Preload critical resources -->
     <link rel="preload" href="js/app.js" as="script">
@@ -262,16 +274,46 @@
         <main id="main" class="content">
             <!-- Normal content wrapper -->
             <div class="component-normal">
-                <!-- User switcher -->
-                <div id="user-switcher-container"></div>
+                <!-- User switcher with fallback -->
+                <div id="user-switcher-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <div id="user-switcher-container"></div>
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Profile switching is temporarily unavailable</p>
+                        <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload to try again</button>
+                    </div>
+                </div>
                 
-                <!-- Task cards will be dynamically inserted here -->
-                <div id="tasks" role="region" aria-label="Task list">
-                    <div id="task-container"></div>
+                <!-- Task display with fallback -->
+                <div id="task-display-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <div id="tasks" role="region" aria-label="Task list">
+                            <div id="task-container"></div>
+                        </div>
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Taking a moment to load your tasks</p>
+                        <div class="fallback-actions">
+                            <button onclick="location.reload()" class="fallback-button fallback-button-primary">Try again</button>
+                            <a href="index.html?safe=true" class="fallback-button fallback-button-secondary">Use simple mode</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Edit mode with fallback -->
+                <div id="edit-mode-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <!-- Edit mode UI will be injected here -->
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Edit features are temporarily unavailable</p>
+                        <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload to restore</button>
+                    </div>
                 </div>
             </div>
             
-            <!-- Fallback UI (hidden by default, shown via CSS when .component-error-active is added) -->
+            <!-- Main view fallback UI (for complete failure) -->
             <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
                 <div class="fallback-message">Taking a moment to get things ready</div>
                 <div class="fallback-actions">
@@ -295,24 +337,56 @@
             <div style="width: 44px;"></div>
         </header>
         <main class="content">
-            <section>
-                <h2>Preferences</h2>
-                <!-- Settings content -->
-            </section>
-            <section>
-                <h2>Data Management</h2>
-                <div class="data-management-options">
-                    <button id="export-data-btn" class="btn-primary" style="width: 100%; margin-bottom: 16px;">
-                        📤 Export Data
-                    </button>
-                    <button id="import-data-btn" class="btn-secondary" style="width: 100%; margin-bottom: 8px;">
-                        📥 Import Data
-                    </button>
-                    <p class="form-helper" style="text-align: center; margin-top: 8px;">
-                        Backup your tasks or restore from a previous backup
-                    </p>
+            <!-- Theme settings with fallback -->
+            <section id="theme-settings-wrapper" class="component-wrapper">
+                <div class="component-normal">
+                    <h2>Preferences</h2>
+                    <!-- Theme settings content will be injected here -->
+                </div>
+                <div class="component-fallback" role="alert" aria-live="polite">
+                    <p class="fallback-message">Theme settings are temporarily unavailable</p>
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload page</button>
                 </div>
             </section>
+            
+            <!-- Data management with fallback -->
+            <section id="data-management-wrapper" class="component-wrapper">
+                <div class="component-normal">
+                    <h2>Data Management</h2>
+                    <div class="data-management-options">
+                        <button id="export-data-btn" class="btn-primary" style="width: 100%; margin-bottom: 16px;">
+                            📤 Export Data
+                        </button>
+                        <button id="import-data-btn" class="btn-secondary" style="width: 100%; margin-bottom: 8px;">
+                            📥 Import Data
+                        </button>
+                        <p class="form-helper" style="text-align: center; margin-top: 8px;">
+                            Backup your tasks or restore from a previous backup
+                        </p>
+                    </div>
+                </div>
+                <div class="component-fallback" role="alert" aria-live="polite">
+                    <p class="fallback-message">Backup features are temporarily unavailable</p>
+                    <p class="fallback-message" style="font-size: 14px; opacity: 0.8; margin-top: 8px;">Your data is safe and will be available when you reload</p>
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload page</button>
+                </div>
+            </section>
+            
+            <!-- Help & Tutorial -->
+            <section id="help-tutorial-wrapper" class="component-wrapper">
+                <div class="component-normal">
+                    <h2>Help & Tutorial</h2>
+                    <div style="margin-bottom: 24px;">
+                        <button id="view-tutorial-btn" class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="if(window.StackMapWelcomeManager) window.StackMapWelcomeManager.restart()">
+                            👋 View Tutorial Again
+                        </button>
+                        <p class="form-helper" style="text-align: center; margin-top: 8px;">
+                            See the welcome screens and setup options again
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
             <section>
                 <h2>About</h2>
                 <nav>
@@ -459,14 +533,31 @@
     <script src="js/feature-flags.js" defer></script>
     <!-- Theme manager (load early for instant theme) -->
     <script src="js/theme-manager.js"></script>
+    <!-- Welcome manager -->
+    <script src="js/welcome-manager.js" defer></script>
     <!-- Messaging system -->
     <script src="js/messaging.js" defer></script>
+    <!-- Component error handler (load early) -->
+    <script src="js/component-error-handler.js" defer></script>
     <!-- SQLite storage -->
     <script src="js/task-sqlite.js" defer></script>
     <!-- Timer management for memory optimization -->
     <script src="js/timer-manager.js" defer></script>
     <!-- Default activities -->
     <script src="js/default-activities.js" defer></script>
+    <!-- Storage System (load before other modules) -->
+    <script src="js/task-sqlite.js" defer></script>
+    <script src="js/storage-error-handler.js" defer></script>
+    <script src="js/migration-manager.js" defer></script>
+    <script src="js/migration-safety.js" defer></script>
+    <script src="js/enhanced-migration-safety.js" defer></script>
+    <script src="js/migration-orchestrator.js" defer></script>
+    <script src="js/shadow-table-migrator.js" defer></script>
+    <script src="js/migration-ui-controller.js" defer></script>
+    <script src="js/safe-migration-controller.js" defer></script>
+    <script src="js/migration-orchestrator-fixes.js" defer></script>
+    <script src="js/migration-integration-fixes.js" defer></script>
+    <script src="js/storage-adapter.js" defer></script>
     <!-- Edit mode system -->
     <script src="js/edit-mode.js" defer></script>
     <!-- Modal system -->
@@ -493,6 +584,14 @@
     <script src="js/task-timer.js" defer></script>
     <!-- Task display -->
     <script src="js/task-display.js" defer></script>
+    <!-- Undo system (must load after task-display) -->
+    <script src="js/undo-manager.js" defer></script>
+    <script src="js/commands/task-commands.js" defer></script>
+    <script src="js/undo-ui.js" defer></script>
+    <!-- Today/Tomorrow view -->
+    <script src="js/today-tomorrow.js" defer></script>
+    <!-- Rollover manager -->
+    <script src="js/rollover-manager.js" defer></script>
     <!-- Celebration system -->
     <script src="js/celebration.js" defer></script>
     <!-- Task reordering -->
@@ -506,11 +605,26 @@
     <!-- Photo attachments -->
     <script src="js/photo-attachment-storage.js" defer></script>
     <script src="js/photo-attachment-ui.js" defer></script>
+    <!-- Mobile Attachment System -->
+    <script src="js/sqlite-attachment-schema.js" defer></script>
+    <script src="js/attachment-manager.js" defer></script>
+    <!-- Voice Recording System -->
+    <script src="js/voice-recorder.js" defer></script>
+    <script src="js/voice-waveform.js" defer></script>
+    <script src="js/voice-player.js" defer></script>
+    <script src="js/voice-attachment.js" defer></script>
+    <script src="js/voice-recovery.js" defer></script>
+    <script src="js/voice-attachment-handler.js" defer></script>
+    <!-- Photo Upload Memory Fixes -->
+    <script src="js/photo-upload-memory-fixes.js" defer></script>
     <!-- Keyboard navigation -->
     <script src="js/keyboard-nav.js" defer></script>
     <!-- Activity library -->
     <script src="js/activity-library.js" defer></script>
     <!-- Theme Settings UI -->
     <script src="js/theme-settings-ui.js" defer></script>
+    <!-- Settings System -->
+    <script src="js/settings-manager.js" defer></script>
+    <script src="js/settings-ui.js" defer></script>
 </body>
 </html>

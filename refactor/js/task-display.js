@@ -7,6 +7,13 @@
 (function() {
     'use strict';
     
+    // Today/Tomorrow constants
+    var TASK_TIMEFRAMES = {
+        TODAY: 'today',
+        TOMORROW: 'tomorrow',
+        SOMEDAY: 'someday'
+    };
+    
     var TaskDisplay = {
         container: null,
         tasks: [],
@@ -150,11 +157,20 @@
          */
         render: function() {
             var self = this;
+            var startTime = performance.now();
             
-            // Clear container
-            self.container.innerHTML = '';
+            // Show skeleton screens immediately
+            if (self.tasks.length > 0 && window.StackMapFeatureFlags && 
+                window.StackMapFeatureFlags.isEnabled('skeleton-screens')) {
+                self.showSkeletonTasks(self.container, Math.min(self.tasks.length, 5));
+            }
             
-            // Clear timer button cache when re-rendering
+            // Use requestAnimationFrame for smooth rendering
+            requestAnimationFrame(function() {
+                // Clear container
+                self.container.innerHTML = '';
+                
+                // Clear timer button cache when re-rendering
             if (window.TaskTimer && window.TaskTimer.clearButtonCache) {
                 window.TaskTimer.clearButtonCache();
             }
@@ -212,6 +228,12 @@
             
             // Notify keyboard navigation that tasks have been updated
             document.dispatchEvent(new CustomEvent('tasksUpdated'));
+            
+            // Track render performance
+            if (window.StackMapPerformanceMonitor) {
+                window.StackMapPerformanceMonitor.trackInteraction('render-tasks', startTime);
+            }
+            }); // End requestAnimationFrame
         },
         
         /**
@@ -257,9 +279,17 @@
                 'cursor: pointer;' +
                 'transition: ' + (self.safeMode ? 'none' : 'all 0.2s ease;');
             
-            button.onclick = function() {
-                self.addTask();
-            };
+            // Use optimized button response if available
+            if (self.optimizeButtonResponse) {
+                self.optimizeButtonResponse(button, function() {
+                    self.addTask();
+                });
+            } else {
+                // Fallback to regular onclick
+                button.onclick = function() {
+                    self.addTask();
+                };
+            }
             
             return button;
         },
@@ -289,13 +319,20 @@
                 'cursor: pointer;' +
                 'transition: ' + (self.safeMode ? 'none' : 'all 0.2s ease;');
             
-            button.onclick = function() {
+            // Use optimized button response if available
+            var browseHandler = function() {
                 if (window.ActivityLibrary) {
                     window.ActivityLibrary.show();
                 } else {
                     console.error('Activity Library not loaded');
                 }
             };
+            
+            if (self.optimizeButtonResponse) {
+                self.optimizeButtonResponse(button, browseHandler);
+            } else {
+                button.onclick = browseHandler;
+            }
             
             return button;
         },
@@ -538,7 +575,7 @@
         },
         
         /**
-         * Add new task
+         * Add new task (with undo support)
          */
         addTask: function() {
             var self = this;
@@ -550,30 +587,65 @@
                 userId = currentUser ? currentUser.id : null;
             }
             
-            var newTask = {
-                id: 'task_' + Date.now(),
+            var taskData = {
                 title: '',
                 description: '',
                 icon: '✓',  // Default checkmark icon
                 category: '',
                 priority: 'medium',  // low, medium, high
                 completed: false,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
                 user_id: userId,
                 // Optional fields
                 due_date: null,
                 reminder: null,
                 tags: [],
                 order: Date.now(),  // For manual sorting
-                attachments: []  // Array of attachment IDs
+                attachments: [],  // Array of attachment IDs
+                // Today/Tomorrow support
+                timeframe: 'today',  // 'today', 'tomorrow', 'someday'
+                originalDate: new Date().toISOString(),  // When first assigned timeframe
+                rolloverCount: 0,  // Number of times task rolled forward
+                lastRolloverDate: null  // Last time task was rolled over
             };
+            
+            // Use command pattern if available
+            if (window.UndoManager && window.TaskCommands) {
+                var command = window.TaskCommands.createAddCommand(taskData);
+                window.UndoManager.execute(command).then(function(success) {
+                    if (success && command.data.generatedId) {
+                        // Start editing the newly created task
+                        var newTask = self.getTaskById(command.data.generatedId);
+                        if (newTask) {
+                            self.startEditing(newTask);
+                        }
+                    }
+                });
+            } else {
+                // Fallback to direct method
+                var generatedId = self.addTaskDirect(taskData);
+                var newTask = self.getTaskById(generatedId);
+                if (newTask) {
+                    self.startEditing(newTask);
+                }
+            }
+        },
+        
+        /**
+         * Add task directly (for undo system)
+         */
+        addTaskDirect: function(taskData) {
+            var self = this;
+            
+            var newTask = Object.assign({
+                id: 'task_' + Date.now(),
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+            }, taskData);
             
             self.tasks.unshift(newTask);
             self.render();
             
-            // Start editing immediately
-            self.startEditing(newTask);
+            return newTask.id;
         },
         
         /**
@@ -682,10 +754,47 @@
             html += '</div>';
             html += '</div>';
             
+            // Timeframe selection (Today/Tomorrow)
+            html += '<div class="form-field">';
+            html += '<label>When</label>';
+            html += '<div class="timeframe-options">';
+            var timeframes = [
+                { value: TASK_TIMEFRAMES.TODAY, label: 'Today', icon: '☀️' },
+                { value: TASK_TIMEFRAMES.TOMORROW, label: 'Tomorrow', icon: '🌙' },
+                { value: TASK_TIMEFRAMES.SOMEDAY, label: 'Someday', icon: '📅' }
+            ];
+            for (var t = 0; t < timeframes.length; t++) {
+                var tf = timeframes[t];
+                var tfChecked = task.timeframe === tf.value ? ' checked' : '';
+                html += '<label class="timeframe-option">';
+                html += '<input type="radio" name="timeframe" value="' + tf.value + '"' + tfChecked + '>';
+                html += '<span>' + tf.icon + ' ' + tf.label + '</span>';
+                html += '</label>';
+            }
+            html += '</div>';
+            html += '</div>';
+            
             // Description
             html += '<div class="form-field">';
             html += '<label for="task-description">Description</label>';
             html += '<textarea id="task-description" name="description" rows="4">' + (task.description || '') + '</textarea>';
+            html += '</div>';
+            
+            // Attachments section
+            html += '<div class="form-field attachments-section">';
+            html += '<label>Attachments</label>';
+            html += '<div id="attachment-container" class="attachment-container">';
+            html += '<div id="attachment-list" class="attachment-list"></div>';
+            html += '<div class="attachment-actions">';
+            html += '<button type="button" class="add-attachment-btn photo-btn" data-type="photo">';
+            html += '<span>📷 Photo</span>';
+            html += '</button>';
+            html += '<button type="button" class="add-attachment-btn voice-btn" data-type="voice">';
+            html += '<span>🎤 Voice</span>';
+            html += '</button>';
+            html += '</div>';
+            html += '<div id="attachment-hint" class="attachment-hint"></div>';
+            html += '</div>';
             html += '</div>';
             
             // Form actions
@@ -759,6 +868,9 @@
                 self.trackEventListener(cancelBtn, 'click', cancelHandler);
             }
             
+            // Initialize attachment UI
+            self.initializeAttachmentUI(modal, task);
+            
             // Form submit
             var submitHandler = function(e) {
                 e.preventDefault();
@@ -779,6 +891,12 @@
                 task.category = formData.category;
                 task.priority = formData.priority;
                 task.updated_at = new Date().toISOString();
+                
+                // Get timeframe if present
+                var timeframeInput = form.querySelector('input[name="timeframe"]:checked');
+                if (timeframeInput) {
+                    task.timeframe = timeframeInput.value;
+                }
                 
                 // Save and close
                 self.saveTasks();
@@ -921,35 +1039,43 @@
         updateTask: function(task) {
             var self = this;
             var wasCompleted = task.completed_at ? true : false;
-            var isFirstCompletion = !wasCompleted && task.completed;
             
-            task.updated_at = new Date().toISOString();
-            if (task.completed) {
-                task.completed_at = new Date().toISOString();
+            // Use command pattern if available for completion toggling
+            if (window.UndoManager && window.TaskCommands) {
+                var command = window.TaskCommands.createCompleteCommand(task.id, wasCompleted);
+                window.UndoManager.execute(command);
             } else {
-                task.completed_at = null;
-            }
-            
-            // Save first to ensure data persistence
-            self.saveTasks();
-            
-            // Trigger celebration for first-time completion
-            if (isFirstCompletion && window.CelebrationSystem) {
-                // Find the task element in DOM before re-render
-                var taskElement = document.querySelector('[data-task-id="' + task.id + '"]');
-                if (taskElement) {
-                    window.CelebrationSystem.celebrate(taskElement, true);
+                // Fallback to direct method
+                var isFirstCompletion = !wasCompleted && task.completed;
+                
+                task.updated_at = new Date().toISOString();
+                if (task.completed) {
+                    task.completed_at = new Date().toISOString();
+                } else {
+                    task.completed_at = null;
                 }
-            }
-            
-            // Check if virtual scrolling is active
-            if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
-                // Update virtual scrolling without full re-render
-                var userTasks = self.getUserTasks();
-                window.VirtualScrollAdapter.update(userTasks);
-            } else {
-                // Full re-render for traditional view
-                self.render();
+                
+                // Save first to ensure data persistence
+                self.saveTasks();
+                
+                // Trigger celebration for first-time completion
+                if (isFirstCompletion && window.CelebrationSystem) {
+                    // Find the task element in DOM before re-render
+                    var taskElement = document.querySelector('[data-task-id="' + task.id + '"]');
+                    if (taskElement) {
+                        window.CelebrationSystem.celebrate(taskElement, true);
+                    }
+                }
+                
+                // Check if virtual scrolling is active
+                if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
+                    // Update virtual scrolling without full re-render
+                    var userTasks = self.getUserTasks();
+                    window.VirtualScrollAdapter.update(userTasks);
+                } else {
+                    // Full re-render for traditional view
+                    self.render();
+                }
             }
         },
         
@@ -959,16 +1085,13 @@
         deleteTask: function(task) {
             var self = this;
             
-            var index = self.tasks.indexOf(task);
-            if (index > -1) {
-                // Clean up any active timer for this task
-                if (window.TaskTimer && window.TaskTimer.cancelTimer) {
-                    window.TaskTimer.cancelTimer(task.id);
-                }
-                
-                self.tasks.splice(index, 1);
-                self.saveTasks();
-                self.render();
+            // Use command pattern if available
+            if (window.UndoManager && window.TaskCommands) {
+                var command = window.TaskCommands.createDeleteCommand(task.id);
+                window.UndoManager.execute(command);
+            } else {
+                // Fallback to direct method
+                self.deleteTaskDirect(task.id);
             }
         },
         
@@ -1151,6 +1274,254 @@
         },
         
         /**
+         * Initialize attachment UI in the edit modal
+         */
+        initializeAttachmentUI: function(modal, task) {
+            var self = this;
+            
+            // Initialize attachment manager if not already done
+            if (window.AttachmentManager && !window.AttachmentManager.photoStorage) {
+                window.AttachmentManager.init();
+            }
+            
+            var attachmentList = modal.querySelector('#attachment-list');
+            var attachmentHint = modal.querySelector('#attachment-hint');
+            var photoBtn = modal.querySelector('.photo-btn');
+            var voiceBtn = modal.querySelector('.voice-btn');
+            
+            if (!attachmentList || !window.AttachmentManager) return;
+            
+            // Load existing attachments
+            self.loadAttachments(task, attachmentList);
+            
+            // Update hint
+            self.updateAttachmentHint(task, attachmentHint);
+            
+            // Photo button handler
+            if (photoBtn) {
+                var photoHandler = function(e) {
+                    e.preventDefault();
+                    self.handleAddPhoto(task, attachmentList, attachmentHint);
+                };
+                photoBtn.addEventListener('click', photoHandler);
+                self.trackEventListener(photoBtn, 'click', photoHandler);
+            }
+            
+            // Voice button handler
+            if (voiceBtn) {
+                var voiceHandler = function(e) {
+                    e.preventDefault();
+                    self.handleAddVoice(task, attachmentList, attachmentHint, voiceBtn);
+                };
+                voiceBtn.addEventListener('click', voiceHandler);
+                self.trackEventListener(voiceBtn, 'click', voiceHandler);
+            }
+        },
+        
+        /**
+         * Load and display existing attachments
+         */
+        loadAttachments: function(task, container) {
+            var self = this;
+            
+            if (!window.AttachmentManager) return;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Get attachments
+            window.AttachmentManager.getAttachments(task.id, function(attachments) {
+                attachments.forEach(function(attachment) {
+                    var el = self.createAttachmentElement(attachment, task);
+                    container.appendChild(el);
+                });
+            });
+        },
+        
+        /**
+         * Create attachment element
+         */
+        createAttachmentElement: function(attachment, task) {
+            var self = this;
+            var div = document.createElement('div');
+            div.className = 'attachment-item ' + attachment.type;
+            div.setAttribute('data-attachment-id', attachment.id);
+            
+            // Icon
+            var icon = document.createElement('span');
+            icon.className = 'attachment-icon';
+            icon.textContent = attachment.type === 'photo' ? '📷' : '🎤';
+            div.appendChild(icon);
+            
+            // Info
+            var info = document.createElement('span');
+            info.className = 'attachment-info';
+            if (attachment.type === 'photo') {
+                info.textContent = 'Photo';
+            } else {
+                var duration = Math.round(attachment.data.duration || 0);
+                info.textContent = 'Voice (' + duration + 's)';
+            }
+            div.appendChild(info);
+            
+            // Delete button
+            var deleteBtn = document.createElement('button');
+            deleteBtn.className = 'attachment-delete';
+            deleteBtn.textContent = '×';
+            deleteBtn.onclick = function(e) {
+                e.preventDefault();
+                self.deleteAttachment(attachment, task, div);
+            };
+            div.appendChild(deleteBtn);
+            
+            return div;
+        },
+        
+        /**
+         * Update attachment hint
+         */
+        updateAttachmentHint: function(task, hintElement) {
+            if (!window.AttachmentManager || !hintElement) return;
+            
+            window.AttachmentManager.getAttachments(task.id, function(attachments) {
+                var hint = window.AttachmentManager.getAttachmentHint(attachments.length);
+                hintElement.textContent = hint;
+            });
+        },
+        
+        /**
+         * Handle add photo
+         */
+        handleAddPhoto: function(task, listContainer, hintElement) {
+            var self = this;
+            
+            // Create file input
+            var input = document.createElement('input');
+            input.type = 'file';
+            input.accept = 'image/*';
+            input.capture = 'environment'; // Prefer rear camera
+            
+            input.onchange = function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+                
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Please select an image file');
+                    return;
+                }
+                
+                // Add photo
+                window.AttachmentManager.addAttachment(task.id, 'photo', {
+                    uri: URL.createObjectURL(file),
+                    size: file.size,
+                    mimeType: file.type,
+                    filename: file.name
+                }, function(result) {
+                    if (result.success) {
+                        // Reload attachments
+                        self.loadAttachments(task, listContainer);
+                        self.updateAttachmentHint(task, hintElement);
+                        
+                        // Update task
+                        if (!task.attachments) task.attachments = [];
+                        task.attachments.push(result.photo.id);
+                        self.saveTasks();
+                    } else {
+                        alert(result.error || 'Failed to add photo');
+                    }
+                });
+            };
+            
+            input.click();
+        },
+        
+        /**
+         * Handle add voice memo
+         */
+        handleAddVoice: function(task, listContainer, hintElement, button) {
+            var self = this;
+            
+            if (!window.VoiceAttachmentHandler || !window.VoiceAttachmentHandler.isInitialized) {
+                alert('Voice recording is not available');
+                return;
+            }
+            
+            // Create voice recording UI in a modal or inline
+            var container = document.createElement('div');
+            container.className = 'voice-recording-modal-content';
+            
+            // Create recording UI
+            window.VoiceAttachmentHandler.createRecordingUI(container, task.id);
+            
+            // Show in modal if available
+            if (window.Modal) {
+                var modal = window.Modal.show({
+                    title: 'Record Voice Memo',
+                    content: container,
+                    className: 'voice-recording-modal',
+                    onClose: function() {
+                        // Clean up
+                        window.VoiceAttachmentHandler.destroy();
+                    }
+                });
+                
+                // Listen for attachment added
+                var attachmentHandler = function(e) {
+                    if (e.detail.taskId === task.id && e.detail.type === 'voice') {
+                        // Reload attachments
+                        self.loadAttachments(task, listContainer);
+                        self.updateAttachmentHint(task, hintElement);
+                        
+                        // Update task
+                        if (!task.attachments) task.attachments = [];
+                        task.attachments.push(e.detail.attachment.id);
+                        self.saveTasks();
+                        
+                        // Close modal
+                        window.Modal.close();
+                    }
+                };
+                
+                document.addEventListener('attachmentAdded', attachmentHandler);
+                self.trackEventListener(document, 'attachmentAdded', attachmentHandler);
+            } else {
+                // Fallback: append to button's parent
+                button.parentElement.appendChild(container);
+            }
+        },
+        
+        
+        /**
+         * Delete attachment
+         */
+        deleteAttachment: function(attachment, task, element) {
+            var self = this;
+            
+            if (!confirm('Delete this ' + attachment.type + '?')) return;
+            
+            window.AttachmentManager.deleteAttachment(attachment.id, attachment.type, function(result) {
+                if (result.success) {
+                    // Remove from DOM
+                    element.remove();
+                    
+                    // Update task
+                    if (task.attachments) {
+                        var index = task.attachments.indexOf(attachment.id);
+                        if (index > -1) {
+                            task.attachments.splice(index, 1);
+                            self.saveTasks();
+                        }
+                    }
+                    
+                    // Update hint
+                    var hintElement = document.querySelector('#attachment-hint');
+                    self.updateAttachmentHint(task, hintElement);
+                }
+            });
+        },
+        
+        /**
          * Cleanup modal-specific event listeners
          */
         cleanupModalListeners: function() {
@@ -1172,6 +1543,355 @@
                     self.eventListeners.splice(index, 1);
                 }
             });
+        },
+        
+        // Optimize button response for ADHD users (sub-200ms target)
+        optimizeButtonResponse: function(button, handler) {
+            var self = this;
+            var startTime;
+            
+            // Remove any existing onclick handler
+            button.onclick = null;
+            
+            // Add optimized event listener
+            var optimizedHandler = function(e) {
+                startTime = performance.now();
+                
+                // Immediate visual feedback (<100ms requirement)
+                button.classList.add('button-pressed');
+                
+                // Haptic feedback if available
+                if (window.StackMapHapticFeedback) {
+                    window.StackMapHapticFeedback.trigger('buttonPress');
+                }
+                
+                // Use requestAnimationFrame for optimal timing
+                if (window.requestAnimationFrame) {
+                    requestAnimationFrame(function() {
+                        // Execute the actual handler
+                        handler.call(button, e);
+                        
+                        // Remove visual feedback after a short delay
+                        setTimeout(function() {
+                            button.classList.remove('button-pressed');
+                        }, 150);
+                        
+                        // Track performance
+                        if (window.StackMapPerformanceMonitor) {
+                            window.StackMapPerformanceMonitor.trackInteraction(
+                                'button-' + (button.id || button.className), 
+                                startTime
+                            );
+                        }
+                    });
+                } else {
+                    // Fallback for older browsers
+                    setTimeout(function() {
+                        handler.call(button, e);
+                        button.classList.remove('button-pressed');
+                        
+                        if (window.StackMapPerformanceMonitor) {
+                            window.StackMapPerformanceMonitor.trackInteraction(
+                                'button-' + (button.id || button.className), 
+                                startTime
+                            );
+                        }
+                    }, 0);
+                }
+            };
+            
+            button.addEventListener('click', optimizedHandler);
+            
+            // Track this listener for cleanup
+            this.eventListeners.push({
+                element: button,
+                event: 'click',
+                handler: optimizedHandler
+            });
+        },
+        
+        // Show skeleton screens while loading
+        showSkeletonTasks: function(container, count) {
+            // Check if skeleton screens are enabled
+            if (window.StackMapFeatureFlags && 
+                window.StackMapFeatureFlags.isDisabled('skeleton-screens')) {
+                return;
+            }
+            
+            // Clear existing content
+            container.innerHTML = '';
+            
+            // Create skeleton container
+            var skeletonContainer = document.createElement('div');
+            skeletonContainer.className = 'skeleton-container';
+            
+            // Add skeleton tasks
+            for (var i = 0; i < count; i++) {
+                var skeleton = document.createElement('div');
+                skeleton.className = 'skeleton skeleton-task';
+                skeletonContainer.appendChild(skeleton);
+            }
+            
+            container.appendChild(skeletonContainer);
+        },
+        
+        // Apply optimization to all buttons
+        optimizeAllButtons: function() {
+            var self = this;
+            
+            // Optimize add task button
+            var addButton = document.querySelector('.add-task-button');
+            if (addButton && addButton.onclick) {
+                var addHandler = addButton.onclick;
+                this.optimizeButtonResponse(addButton, addHandler);
+            }
+            
+            // Optimize browse activities button
+            var browseButton = document.querySelector('.browse-activities-button');
+            if (browseButton && browseButton.onclick) {
+                var browseHandler = browseButton.onclick;
+                this.optimizeButtonResponse(browseButton, browseHandler);
+            }
+            
+            // Optimize all task buttons
+            document.querySelectorAll('.edit-button, .delete-button, .timer-button').forEach(function(btn) {
+                if (btn.onclick) {
+                    var handler = btn.onclick;
+                    self.optimizeButtonResponse(btn, handler);
+                }
+            });
+        },
+        
+        /**
+         * Direct methods for undo system - bypass command pattern
+         */
+        
+        // Get task by ID
+        getTaskById: function(taskId) {
+            var self = this;
+            return self.tasks.find(function(task) {
+                return task.id === taskId;
+            });
+        },
+        
+        // Remove task without command pattern
+        removeTaskDirect: function(taskId) {
+            var self = this;
+            var index = self.tasks.findIndex(function(task) {
+                return task.id === taskId;
+            });
+            
+            if (index > -1) {
+                self.tasks.splice(index, 1);
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Toggle task completion without command pattern
+        toggleTaskDirect: function(taskId) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task) {
+                task.completed = !task.completed;
+                task.updated_at = new Date().toISOString();
+                
+                if (task.completed) {
+                    task.completed_at = new Date().toISOString();
+                } else {
+                    task.completed_at = null;
+                }
+                
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Update task text without command pattern
+        updateTaskTextDirect: function(taskId, newText) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task) {
+                task.text = newText;
+                task.title = newText; // Some tasks use title instead of text
+                task.updated_at = new Date().toISOString();
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Delete task permanently without command pattern
+        deleteTaskDirect: function(taskId) {
+            var self = this;
+            var index = self.tasks.findIndex(function(task) {
+                return task.id === taskId;
+            });
+            
+            if (index > -1) {
+                // Clean up any active timer
+                if (window.TaskTimer && window.TaskTimer.cancelTimer) {
+                    window.TaskTimer.cancelTimer(taskId);
+                }
+                
+                self.tasks.splice(index, 1);
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Restore task without command pattern
+        restoreTaskDirect: function(taskData) {
+            var self = this;
+            var restoredTask = Object.assign({}, taskData);
+            
+            // Ensure task has proper timestamps
+            if (!restoredTask.created_at) {
+                restoredTask.created_at = new Date().toISOString();
+            }
+            restoredTask.updated_at = new Date().toISOString();
+            
+            // Insert at original position if possible
+            var originalIndex = self.tasks.findIndex(function(task) {
+                return task.created_at > restoredTask.created_at;
+            });
+            
+            if (originalIndex === -1) {
+                self.tasks.push(restoredTask);
+            } else {
+                self.tasks.splice(originalIndex, 0, restoredTask);
+            }
+            
+            self.saveTasks();
+            self.render();
+        },
+        
+        // Toggle task completion without command pattern
+        toggleTaskDirect: function(taskId) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task) {
+                task.completed = !task.completed;
+                task.updated_at = new Date().toISOString();
+                
+                if (task.completed) {
+                    task.completed_at = new Date().toISOString();
+                } else {
+                    task.completed_at = null;
+                }
+                
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Complete task without command pattern
+        completeTaskDirect: function(taskId) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task && !task.completed) {
+                task.completed = true;
+                task.completed_at = new Date().toISOString();
+                task.updated_at = new Date().toISOString();
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Set task completion state without command pattern
+        setTaskCompleteDirect: function(taskId, completed) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task) {
+                task.completed = completed;
+                task.updated_at = new Date().toISOString();
+                
+                if (completed) {
+                    task.completed_at = new Date().toISOString();
+                } else {
+                    task.completed_at = null;
+                }
+                
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Move task to new position without command pattern
+        moveTaskDirect: function(taskId, newIndex) {
+            var self = this;
+            var currentIndex = self.tasks.findIndex(function(task) {
+                return task.id === taskId;
+            });
+            
+            if (currentIndex > -1 && currentIndex !== newIndex) {
+                var task = self.tasks.splice(currentIndex, 1)[0];
+                self.tasks.splice(newIndex, 0, task);
+                task.updated_at = new Date().toISOString();
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Update specific field without command pattern
+        updateTaskFieldDirect: function(taskId, field, value) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task) {
+                task[field] = value;
+                task.updated_at = new Date().toISOString();
+                self.saveTasks();
+                self.render();
+            }
+        },
+        
+        // Add attachment without command pattern
+        addAttachmentDirect: function(taskId, attachmentData) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task) {
+                if (!task.attachments) {
+                    task.attachments = [];
+                }
+                
+                var attachmentId = 'attach_' + Date.now();
+                var attachment = Object.assign({
+                    id: attachmentId,
+                    created_at: new Date().toISOString()
+                }, attachmentData);
+                
+                task.attachments.push(attachment);
+                task.updated_at = new Date().toISOString();
+                self.saveTasks();
+                self.render();
+                
+                return attachmentId;
+            }
+        },
+        
+        // Remove attachment without command pattern
+        removeAttachmentDirect: function(taskId, attachmentId) {
+            var self = this;
+            var task = self.getTaskById(taskId);
+            
+            if (task && task.attachments) {
+                var index = task.attachments.findIndex(function(attach) {
+                    return attach.id === attachmentId;
+                });
+                
+                if (index > -1) {
+                    task.attachments.splice(index, 1);
+                    task.updated_at = new Date().toISOString();
+                    self.saveTasks();
+                    self.render();
+                }
+            }
         }
     };
     

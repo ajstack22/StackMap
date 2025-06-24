@@ -593,6 +593,281 @@
         };
     })();
     
+    // Phase 4: Performance Monitor System
+    (function() {
+        'use strict';
+        
+        // ADHD-optimized performance thresholds
+        var ADHD_THRESHOLDS = {
+            immediate: 100,      // Feels instant
+            noticeable: 500,     // Timing perception issues begin
+            critical: 1000,      // High abandonment risk
+            abandon: 2000        // 70-85% will leave
+        };
+        
+        // Performance state
+        var performanceState = {
+            interactions: [],
+            reducedMode: false,
+            sessionStart: Date.now()
+        };
+        
+        // Track interaction performance
+        function trackInteraction(name, startTime) {
+            if (performanceState.reducedMode) return;
+            
+            var duration = performance.now() - startTime;
+            performanceState.interactions.push({
+                name: name,
+                duration: duration,
+                timestamp: Date.now()
+            });
+            
+            // Warn if exceeding ADHD thresholds
+            if (duration > ADHD_THRESHOLDS.noticeable) {
+                console.warn('[PERF] ' + name + ' took ' + duration + 'ms - exceeds ADHD threshold');
+                
+                // Send to analytics if enabled
+                if (window.StackMapAnalytics && window.StackMapFeatureFlags && 
+                    window.StackMapFeatureFlags.isEnabled('performance-tracking')) {
+                    window.StackMapAnalytics.track('slow-interaction', {
+                        name: name,
+                        duration: duration,
+                        threshold: ADHD_THRESHOLDS.noticeable
+                    });
+                }
+                
+                // Auto-trigger safe mode for extremely slow interactions
+                if (duration > ADHD_THRESHOLDS.abandon * 1.5) {
+                    console.error('[PERF] Critical performance issue - triggering safe mode');
+                    window.location.href = window.location.pathname + '?safe=true&reason=performance';
+                }
+            }
+        }
+        
+        // Monitor overall performance
+        function checkPerformanceBudget() {
+            if (!window.performance || !window.performance.timing) return;
+            
+            var timing = window.performance.timing;
+            var interactiveTime = timing.domInteractive - timing.navigationStart;
+            
+            if (interactiveTime > ADHD_THRESHOLDS.critical) {
+                console.error('[PERF] Interactive time budget exceeded: ' + interactiveTime + 'ms');
+                
+                // Consider triggering safe mode
+                if (interactiveTime > ADHD_THRESHOLDS.abandon) {
+                    var shouldTriggerSafeMode = confirm(
+                        'The app is running slowly. Would you like to switch to simple mode for better performance?'
+                    );
+                    if (shouldTriggerSafeMode) {
+                        window.location.href = window.location.pathname + '?safe=true&reason=performance';
+                    }
+                }
+            }
+        }
+        
+        // Public API
+        window.StackMapPerformanceMonitor = {
+            ADHD_THRESHOLDS: ADHD_THRESHOLDS,
+            trackInteraction: trackInteraction,
+            checkBudget: checkPerformanceBudget,
+            setReducedMode: function(enabled) {
+                performanceState.reducedMode = enabled;
+            },
+            getSessionMetrics: function() {
+                var totalInteractions = performanceState.interactions.length;
+                var slowInteractions = performanceState.interactions.filter(function(i) {
+                    return i.duration > ADHD_THRESHOLDS.noticeable;
+                }).length;
+                
+                return {
+                    sessionDuration: Date.now() - performanceState.sessionStart,
+                    totalInteractions: totalInteractions,
+                    slowInteractions: slowInteractions,
+                    slowPercentage: totalInteractions > 0 ? (slowInteractions / totalInteractions * 100) : 0
+                };
+            }
+        };
+    })();
+    
+    // Phase 4: Feature Flags System
+    (function() {
+        'use strict';
+        
+        // Feature flag configuration
+        var flags = {
+            'performance-tracking': { enabled: true, rolloutPercentage: 100 },
+            'haptic-feedback': { enabled: true, rolloutPercentage: 50 },
+            'skeleton-screens': { enabled: true, rolloutPercentage: 100 },
+            'auto-recovery': { enabled: true, rolloutPercentage: 100 },
+            'memory-monitoring': { enabled: false, rolloutPercentage: 10 }, // Start cautiously
+            'progressive-loading': { enabled: true, rolloutPercentage: 100 }
+        };
+        
+        // Check localStorage for overrides
+        function loadOverrides() {
+            try {
+                for (var flagName in flags) {
+                    var override = localStorage.getItem('stackmap-ff-override-' + flagName);
+                    if (override === 'disabled') {
+                        flags[flagName].enabled = false;
+                    } else if (override === 'enabled') {
+                        flags[flagName].enabled = true;
+                    }
+                }
+            } catch (e) {
+                console.log('Could not load feature flag overrides:', e);
+            }
+        }
+        
+        // Get consistent user hash for A/B testing
+        function getUserHash() {
+            var userId = localStorage.getItem('stackmap-user-id') || 'anonymous';
+            var hash = 0;
+            for (var i = 0; i < userId.length; i++) {
+                hash = ((hash << 5) - hash) + userId.charCodeAt(i);
+                hash = hash & hash; // Convert to 32bit integer
+            }
+            return Math.abs(hash);
+        }
+        
+        // Check if feature is enabled for user
+        function isEnabled(flagName) {
+            var flag = flags[flagName];
+            if (!flag || !flag.enabled) return false;
+            
+            // Check rollout percentage
+            var userHash = getUserHash();
+            return (userHash % 100) < flag.rolloutPercentage;
+        }
+        
+        // Emergency kill switch
+        function disableFeature(flagName) {
+            if (flags[flagName]) {
+                flags[flagName].enabled = false;
+                // Persist to localStorage for immediate effect
+                try {
+                    localStorage.setItem('stackmap-ff-override-' + flagName, 'disabled');
+                } catch (e) {
+                    console.error('Could not persist feature flag override:', e);
+                }
+            }
+        }
+        
+        // Enable feature (for testing)
+        function enableFeature(flagName) {
+            if (flags[flagName]) {
+                flags[flagName].enabled = true;
+                try {
+                    localStorage.setItem('stackmap-ff-override-' + flagName, 'enabled');
+                } catch (e) {
+                    console.error('Could not persist feature flag override:', e);
+                }
+            }
+        }
+        
+        // Public API
+        window.StackMapFeatureFlags = {
+            isEnabled: isEnabled,
+            isDisabled: function(flagName) { return !isEnabled(flagName); },
+            disableFeature: disableFeature,
+            enableFeature: enableFeature,
+            getAllFlags: function() { return JSON.parse(JSON.stringify(flags)); },
+            init: function() {
+                loadOverrides();
+            }
+        };
+    })();
+    
+    // Phase 4: Haptic Feedback System
+    (function() {
+        'use strict';
+        
+        // Haptic patterns for ADHD users (20-30% stronger)
+        var patterns = {
+            buttonPress: [30],      // 30% stronger than standard
+            success: [20, 50, 20],  // Success pattern
+            error: [10, 10, 10],    // Gentle error (no blame)
+            progress: [15],         // Progress tick
+            focus: [25]             // Focus change
+        };
+        
+        // Haptic state
+        var hapticState = {
+            hasUserInteracted: false,
+            supported: false
+        };
+        
+        // Check support on init
+        function checkSupport() {
+            hapticState.supported = window.navigator && 
+                                  typeof window.navigator.vibrate === 'function';
+        }
+        
+        // Trigger haptic feedback
+        function trigger(patternName) {
+            // Check if disabled by feature flag or user settings
+            if (window.StackMapFeatureFlags && 
+                window.StackMapFeatureFlags.isDisabled('haptic-feedback')) {
+                return;
+            }
+            
+            // Check user settings
+            if (window.StackMapApp && 
+                window.StackMapApp.settings && 
+                window.StackMapApp.settings.disableHaptics) {
+                return;
+            }
+            
+            // Check browser support
+            if (!hapticState.supported) {
+                return;
+            }
+            
+            // iOS requires user interaction first
+            if (!hapticState.hasUserInteracted) {
+                return;
+            }
+            
+            try {
+                var pattern = patterns[patternName] || patterns.buttonPress;
+                window.navigator.vibrate(pattern);
+            } catch (err) {
+                console.log('[Haptic] Feedback error:', err);
+                hapticState.supported = false; // Disable if it fails
+            }
+        }
+        
+        // Enable after user interaction (required for iOS)
+        function enableAfterInteraction() {
+            hapticState.hasUserInteracted = true;
+        }
+        
+        // Initialize listener for first interaction
+        function initInteractionListener() {
+            var onFirstInteraction = function() {
+                enableAfterInteraction();
+                document.removeEventListener('click', onFirstInteraction);
+                document.removeEventListener('touchstart', onFirstInteraction);
+            };
+            
+            document.addEventListener('click', onFirstInteraction);
+            document.addEventListener('touchstart', onFirstInteraction);
+        }
+        
+        // Public API
+        window.StackMapHapticFeedback = {
+            trigger: trigger,
+            patterns: patterns,
+            enableAfterInteraction: enableAfterInteraction,
+            init: function() {
+                checkSupport();
+                initInteractionListener();
+            }
+        };
+    })();
+    
     // Application state
     var App = {
         currentView: 'loading-view',
@@ -1978,33 +2253,104 @@
         // Detect platform
         Platform.detect();
         
+        // Register Service Worker for offline support
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('./js/service-worker.js')
+                .then(function(registration) {
+                    console.log('[App] Service Worker registered:', registration.scope);
+                    
+                    // Listen for online/offline events and notify service worker
+                    window.addEventListener('online', function() {
+                        if (registration.active) {
+                            registration.active.postMessage({
+                                type: 'online-status',
+                                online: true
+                            });
+                        }
+                    });
+                    
+                    window.addEventListener('offline', function() {
+                        if (registration.active) {
+                            registration.active.postMessage({
+                                type: 'online-status',
+                                online: false
+                            });
+                        }
+                    });
+                })
+                .catch(function(err) {
+                    console.error('[App] Service Worker registration failed:', err);
+                });
+        }
+        
         // Initialize modules
         ViewController.init();
         Navigation.init();
         Storage.init();
         Content.load();
         
-        // Initialize user manager
-        if (window.UserManager) {
+        // Initialize performance monitoring
+        if (window.StackMapFeatureFlags) {
+            window.StackMapFeatureFlags.init();
+        }
+        
+        if (window.StackMapPerformanceMonitor) {
+            // Check initial load performance
+            window.StackMapPerformanceMonitor.checkBudget();
+        }
+        
+        // Initialize haptic feedback
+        if (window.StackMapHapticFeedback) {
+            window.StackMapHapticFeedback.init();
+        }
+        
+        // Initialize user manager with error boundary
+        if (window.UserManager && window.StackMapComponentErrorHandler) {
+            window.StackMapComponentErrorHandler.wrapInit(
+                'UserManager',
+                'user-switcher-wrapper',
+                function() {
+                    window.UserManager.init(function() {
+                        // Migrate existing tasks to default user
+                        window.UserManager.migrateExistingTasks();
+                        
+                        // Render user switcher
+                        var switcherContainer = document.getElementById('user-switcher-container');
+                        if (switcherContainer) {
+                            window.UserManager.renderUserSwitcher(switcherContainer);
+                        }
+                        
+                        // Check for demo mode after UserManager is ready
+                        if (window.DemoMode) {
+                            window.DemoMode.init();
+                        }
+                    });
+                }
+            );
+        } else if (window.UserManager) {
+            // Fallback without error handler
             window.UserManager.init(function() {
-                // Migrate existing tasks to default user
                 window.UserManager.migrateExistingTasks();
-                
-                // Render user switcher
                 var switcherContainer = document.getElementById('user-switcher-container');
                 if (switcherContainer) {
                     window.UserManager.renderUserSwitcher(switcherContainer);
                 }
-                
-                // Check for demo mode after UserManager is ready
                 if (window.DemoMode) {
                     window.DemoMode.init();
                 }
             });
         }
         
-        // Initialize edit mode
-        if (window.EditMode) {
+        // Initialize edit mode with error boundary
+        if (window.EditMode && window.StackMapComponentErrorHandler) {
+            window.StackMapComponentErrorHandler.wrapInit(
+                'EditMode',
+                'edit-mode-wrapper',
+                window.EditMode.init,
+                window.EditMode
+            );
+        } else if (window.EditMode) {
+            // Fallback without error handler
             window.EditMode.init();
         }
         
@@ -2013,13 +2359,46 @@
             window.StackMapKeyboardNav.init();
         }
         
-        // Initialize drag & drop reordering
-        if (window.DragDropReorder) {
-            window.DragDropReorder.init();
+        // DragDropReorder is now initialized in initComponentsWithErrorBoundaries()
+        
+        // Initialize welcome manager for first-time users
+        if (window.StackMapWelcomeManager) {
+            window.StackMapWelcomeManager.init();
+        }
+        
+        // Initialize undo system with error boundary
+        if (window.UndoManager && window.StackMapComponentErrorHandler) {
+            window.StackMapComponentErrorHandler.wrapInit(
+                'UndoSystem',
+                'main-view', // Use main view as wrapper since undo is global
+                function() {
+                    window.UndoManager.init();
+                    console.log('[App] Undo system initialized');
+                    
+                    // Initialize undo UI after manager
+                    if (window.UndoUI) {
+                        window.UndoUI.init();
+                        console.log('[App] Undo UI initialized');
+                    }
+                },
+                window.UndoManager
+            );
+        } else if (window.UndoManager) {
+            // Fallback without error handler
+            window.UndoManager.init();
+            console.log('[App] Undo system initialized');
+            
+            if (window.UndoUI) {
+                window.UndoUI.init();
+                console.log('[App] Undo UI initialized');
+            }
         }
         
         // Initialize memory monitor
         initMemoryMonitor();
+        
+        // Initialize components with error boundaries
+        initComponentsWithErrorBoundaries();
         
         // Initialize activities progressively (non-blocking)
         if (window.StackMapDefaultActivities && window.StackMapDefaultActivities.loadProgressive) {
@@ -2293,6 +2672,68 @@
             }
         }
     };
+    
+    /**
+     * Initialize components with error boundaries
+     */
+    function initComponentsWithErrorBoundaries() {
+        // Wait for component error handler to be ready
+        var checkInterval = setInterval(function() {
+            if (window.StackMapComponentErrorHandler) {
+                clearInterval(checkInterval);
+                
+                // Initialize TaskDisplay with error boundary
+                if (window.TaskDisplay) {
+                    window.StackMapComponentErrorHandler.wrapInit(
+                        'TaskDisplay',
+                        'task-display-wrapper',
+                        window.TaskDisplay.init,
+                        window.TaskDisplay
+                    );
+                }
+                
+                // Initialize DragDropReorder with error boundary
+                if (window.DragDropReorder) {
+                    window.StackMapComponentErrorHandler.wrapInit(
+                        'DragDropReorder',
+                        'task-display-wrapper', // Uses same wrapper as TaskDisplay
+                        window.DragDropReorder.init,
+                        window.DragDropReorder
+                    );
+                }
+                
+                // Initialize ThemeManager settings UI with error boundary
+                if (window.ThemeSettingsUI) {
+                    window.StackMapComponentErrorHandler.wrapInit(
+                        'ThemeManager',
+                        'theme-settings-wrapper',
+                        window.ThemeSettingsUI.init,
+                        window.ThemeSettingsUI
+                    );
+                }
+                
+                // Initialize DataExport with error boundary
+                if (window.DataExport) {
+                    window.StackMapComponentErrorHandler.wrapInit(
+                        'DataExport',
+                        'data-management-wrapper',
+                        window.DataExport.init,
+                        window.DataExport
+                    );
+                }
+                
+                // Initialize DataImport with error boundary
+                if (window.DataImport) {
+                    window.StackMapComponentErrorHandler.wrapInit(
+                        'DataImport',
+                        'data-management-wrapper',
+                        window.DataImport.init,
+                        window.DataImport
+                    );
+                }
+            }
+        }, 100); // Check every 100ms
+    }
     
     /**
      * Initialize memory monitor
