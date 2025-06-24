@@ -249,7 +249,7 @@
             
             // Set message
             this.currentMessage.textContent = message;
-            this.currentMessage.className = 'rsd-message ' + (options.type || 'info');
+            this.currentMessage.className = `rsd-message ${options.type || 'info'}`;
             
             // Add icon if specified
             if (options.icon) {

@@ -7,16 +7,16 @@
 (function(window) {
     'use strict';
     
-    var DataIOUI = {
+    const DataIOUI = {
         init: function() {
             this.setupEventListeners();
         },
         
         setupEventListeners: function() {
-            var self = this;
+            const self = this;
             
             // Export button
-            var exportBtn = document.getElementById('export-data-btn');
+            const exportBtn = document.getElementById('export-data-btn');
             if (exportBtn) {
                 exportBtn.addEventListener('click', function() {
                     self.handleExport();
@@ -24,7 +24,7 @@
             }
             
             // Import button
-            var importBtn = document.getElementById('import-data-btn');
+            const importBtn = document.getElementById('import-data-btn');
             if (importBtn) {
                 importBtn.addEventListener('click', function() {
                     self.handleImport();
@@ -32,7 +32,7 @@
             }
             
             // Import confirmation button
-            var confirmImportBtn = document.getElementById('confirm-import-btn');
+            const confirmImportBtn = document.getElementById('confirm-import-btn');
             if (confirmImportBtn) {
                 confirmImportBtn.addEventListener('click', function() {
                     self.executeImport();
@@ -40,8 +40,8 @@
             }
             
             // Modal close handlers
-            var modalCloseElements = document.querySelectorAll('[data-close-modal]');
-            for (var i = 0; i < modalCloseElements.length; i++) {
+            const modalCloseElements = document.querySelectorAll('[data-close-modal]');
+            for (let i = 0; i < modalCloseElements.length; i++) {
                 modalCloseElements[i].addEventListener('click', function() {
                     self.closeImportModal();
                 });
@@ -58,8 +58,8 @@
             
             // Show export size estimate first
             window.DataExporter.getExportSize().then(function(size) {
-                var sizeInKB = (size / 1024).toFixed(2);
-                var confirmExport = confirm('Export will create a ' + sizeInKB + 'KB file. Continue?');
+                const sizeInKB = (size / 1024).toFixed(2);
+                const confirmExport = confirm(`Export will create a ${sizeInKB}KB file. Continue?`);
                 
                 if (confirmExport) {
                     // Try file download first
@@ -74,7 +74,7 @@
                 }
             }).catch(function(error) {
                 if (window.Messaging) {
-                    window.Messaging.showMessage('Export failed: ' + error.message, 'error');
+                    window.Messaging.showMessage(`Export failed: ${error.message}`, 'error');
                 }
             });
         },
@@ -87,7 +87,7 @@
                 return;
             }
             
-            var self = this;
+            const self = this;
             
             // Open file picker
             window.DataImporter.selectFile().then(function(preview) {
@@ -95,20 +95,20 @@
             }).catch(function(error) {
                 if (error.message !== 'No file selected') {
                     if (window.Messaging) {
-                        window.Messaging.showMessage('Import failed: ' + error.message, 'error');
+                        window.Messaging.showMessage(`Import failed: ${error.message}`, 'error');
                     }
                 }
             });
         },
         
         showImportPreview: function(preview) {
-            var modal = document.getElementById('import-preview-modal');
-            var content = document.getElementById('import-preview-content');
+            const modal = document.getElementById('import-preview-modal');
+            const content = document.getElementById('import-preview-content');
             
             if (!modal || !content) return;
             
             // Build preview HTML
-            var html = '<div class="import-preview">';
+            let html = '<div class="import-preview">';
             
             // Add progress bar (hidden initially)
             html += '<div id="import-progress-container" style="display: none; margin-bottom: 16px;">';
@@ -120,19 +120,19 @@
             
             // Source info
             html += '<div class="import-info" style="margin-bottom: 16px;">';
-            html += '<p><strong>Source:</strong> ' + this.escapeHtml(preview.source) + '</p>';
-            html += '<p><strong>Export Date:</strong> ' + this.formatDate(preview.exportDate) + '</p>';
-            html += '<p><strong>Version:</strong> ' + this.escapeHtml(preview.version) + '</p>';
+            html += `<p><strong>Source:</strong> ${this.escapeHtml(preview.source)}</p>`;
+            html += `<p><strong>Export Date:</strong> ${this.formatDate(preview.exportDate)}</p>`;
+            html += `<p><strong>Version:</strong> ${this.escapeHtml(preview.version)}</p>`;
             html += '</div>';
             
             // Counts
             html += '<div class="import-counts" style="margin-bottom: 16px;">';
             html += '<h3 style="font-size: 18px; margin-bottom: 8px;">Data Summary:</h3>';
             html += '<ul style="list-style: none; padding: 0;">';
-            html += '<li>👤 <strong>' + preview.counts.users + '</strong> users</li>';
-            html += '<li>📋 <strong>' + preview.counts.tasks + '</strong> tasks ';
-            html += '(' + preview.counts.completedTasks + ' completed)</li>';
-            html += '<li>⚙️ <strong>' + preview.counts.settings + '</strong> settings</li>';
+            html += `<li>👤 <strong>${preview.counts.users}</strong> users</li>`;
+            html += `<li>📋 <strong>${preview.counts.tasks}</strong> tasks `;
+            html += `(${preview.counts.completedTasks} completed)</li>`;
+            html += `<li>⚙️ <strong>${preview.counts.settings}</strong> settings</li>`;
             html += '</ul>';
             html += '</div>';
             
@@ -142,15 +142,14 @@
                 html += '<h3 style="font-size: 18px; margin-bottom: 8px;">Sample Tasks:</h3>';
                 html += '<ul style="list-style: none; padding: 0; font-size: 14px;">';
                 
-                for (var i = 0; i < preview.samples.tasks.length; i++) {
-                    var task = preview.samples.tasks[i];
-                    var icon = task.completed ? '✅' : '⬜';
-                    html += '<li style="margin-bottom: 4px;">' + icon + ' ' + this.escapeHtml(task.title) + '</li>';
+                for (let i = 0; i < preview.samples.tasks.length; i++) {
+                    const task = preview.samples.tasks[i];
+                    const icon = task.completed ? '✅' : '⬜';
+                    html += `<li style="margin-bottom: 4px;">${icon} ${this.escapeHtml(task.title)}</li>`;
                 }
                 
                 if (preview.counts.tasks > preview.samples.tasks.length) {
-                    html += '<li style="color: var(--color-text-secondary);">...and ' + 
-                           (preview.counts.tasks - preview.samples.tasks.length) + ' more</li>';
+                    html += `<li style="color: var(--color-text-secondary);">...and ${preview.counts.tasks - preview.samples.tasks.length} more</li>`;
                 }
                 
                 html += '</ul>';
@@ -167,12 +166,12 @@
             modal.classList.add('modal-active');
             
             // Focus on modal for accessibility
-            var firstButton = modal.querySelector('button');
+            const firstButton = modal.querySelector('button');
             if (firstButton) firstButton.focus();
         },
         
         closeImportModal: function() {
-            var modal = document.getElementById('import-preview-modal');
+            const modal = document.getElementById('import-preview-modal');
             if (modal) {
                 modal.classList.remove('modal-active');
                 setTimeout(function() {
@@ -190,7 +189,7 @@
             }
             
             // Get selected strategy
-            var strategyInput = document.querySelector('input[name="import-strategy"]:checked');
+            const strategyInput = document.querySelector('input[name="import-strategy"]:checked');
             if (!strategyInput) {
                 if (window.Messaging) {
                     window.Messaging.showMessage('Please select an import strategy', 'error');
@@ -198,11 +197,11 @@
                 return;
             }
             
-            var strategy = strategyInput.value;
-            var self = this;
+            const strategy = strategyInput.value;
+            const self = this;
             
             // Disable import button
-            var confirmBtn = document.getElementById('confirm-import-btn');
+            const confirmBtn = document.getElementById('confirm-import-btn');
             if (confirmBtn) {
                 confirmBtn.disabled = true;
                 confirmBtn.textContent = 'Importing...';
@@ -213,13 +212,13 @@
                 self.closeImportModal();
                 
                 // Show success summary
-                var message = 'Import successful! ';
+                let message = 'Import successful! ';
                 if (result.imported.users > 0) {
-                    message += result.imported.users + ' users, ';
+                    message += `${result.imported.users} users, `;
                 }
-                message += result.imported.tasks + ' tasks imported.';
+                message += `${result.imported.tasks} tasks imported.`;
                 if (result.imported.updated > 0) {
-                    message += ' ' + result.imported.updated + ' items updated.';
+                    message += ` ${result.imported.updated} items updated.`;
                 }
                 
                 if (window.Messaging) {
@@ -233,7 +232,7 @@
                 
             }).catch(function(error) {
                 if (window.Messaging) {
-                    window.Messaging.showMessage('Import failed: ' + error.message, 'error');
+                    window.Messaging.showMessage(`Import failed: ${error.message}`, 'error');
                 }
             }).finally(function() {
                 // Re-enable button
@@ -250,35 +249,35 @@
          * @param {number} total - Total count
          */
         updateImportProgress: function(current, total) {
-            var container = document.getElementById('import-progress-container');
-            var bar = document.getElementById('import-progress-bar');
-            var text = document.getElementById('import-progress-text');
+            const container = document.getElementById('import-progress-container');
+            const bar = document.getElementById('import-progress-bar');
+            const text = document.getElementById('import-progress-text');
             
             if (container && bar && text) {
                 // Show progress container
                 container.style.display = 'block';
                 
                 // Calculate percentage
-                var percent = Math.round((current / total) * 100);
+                const percent = Math.round((current / total) * 100);
                 
                 // Update bar
-                bar.style.width = percent + '%';
+                bar.style.width = `${percent}%`;
                 
                 // Update text
-                text.textContent = percent + '% (' + current + ' of ' + total + ' tasks)';
+                text.textContent = `${percent}% (${current} of ${total} tasks)`;
             }
         },
         
         escapeHtml: function(text) {
-            var div = document.createElement('div');
+            const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         },
         
         formatDate: function(dateString) {
             try {
-                var date = new Date(dateString);
-                return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                const date = new Date(dateString);
+                return `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
             } catch (e) {
                 return dateString;
             }

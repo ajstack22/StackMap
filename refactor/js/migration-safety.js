@@ -8,7 +8,7 @@
     'use strict';
     
     // Migration configuration
-    var MigrationSafety = {
+    const MigrationSafety = {
         // Configuration constants
         BACKUP_PREFIX: 'stackmap_backup_',
         VERIFY_DELAY_MS: 24 * 60 * 60 * 1000, // 24 hours
@@ -39,7 +39,7 @@
          * Ensures zero data loss through atomic operations
          */
         safeMigrate: function(callback) {
-            var self = this;
+            const self = this;
             
             // Prevent concurrent migrations
             if (self.state.inProgress) {
@@ -55,7 +55,7 @@
             
             // Get source data
             self.updateProgress(self.steps.BACKUP, 0);
-            var sourceData = self.getSourceData();
+            const sourceData = self.getSourceData();
             
             if (!sourceData) {
                 self.state.inProgress = false;
@@ -123,14 +123,14 @@
          */
         getSourceData: function() {
             try {
-                var data = {};
-                var hasData = false;
+                const data = {};
+                let hasData = false;
                 
                 // Collect all stackmap data
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
                     if (key && key.indexOf('stackmap-') === 0) {
-                        var value = localStorage.getItem(key);
+                        const value = localStorage.getItem(key);
                         if (value) {
                             data[key] = value;
                             hasData = true;
@@ -149,7 +149,7 @@
          * Validate data integrity before migration
          */
         validateData: function(data, callback) {
-            var validation = {
+            const validation = {
                 isValid: true,
                 errors: [],
                 itemCount: 0
@@ -157,12 +157,12 @@
             
             try {
                 // Check each data entry
-                for (var key in data) {
+                for (const key in data) {
                     if (data.hasOwnProperty(key)) {
                         validation.itemCount++;
                         
                         try {
-                            var parsed = JSON.parse(data[key]);
+                            const parsed = JSON.parse(data[key]);
                             
                             // Basic structure validation
                             if (key === 'stackmap-tasks' && !Array.isArray(parsed)) {
@@ -171,7 +171,7 @@
                             }
                         } catch (e) {
                             validation.isValid = false;
-                            validation.errors.push('Invalid JSON in ' + key);
+                            validation.errors.push(`Invalid JSON in ${key}`);
                         }
                     }
                 }
@@ -184,7 +184,7 @@
                 
             } catch (error) {
                 validation.isValid = false;
-                validation.errors.push('Validation error: ' + error.message);
+                validation.errors.push(`Validation error: ${error.message}`);
             }
             
             if (callback) callback(validation);
@@ -194,12 +194,12 @@
          * Migrate data with verification
          */
         migrateWithVerification: function(sourceData, callback) {
-            var self = this;
+            const self = this;
             
             // Convert localStorage data to SQLite format
-            var tasksData = null;
+            let tasksData = null;
             try {
-                var tasksKey = 'stackmap-tasks';
+                const tasksKey = 'stackmap-tasks';
                 if (sourceData[tasksKey]) {
                     tasksData = JSON.parse(sourceData[tasksKey]);
                 }
@@ -242,10 +242,10 @@
          * Perform the actual migration to SQLite
          */
         performMigration: function(tasksData, callback) {
-            var self = this;
-            var migratedCount = 0;
-            var totalTasks = tasksData.length;
-            var errors = [];
+            const self = this;
+            let migratedCount = 0;
+            const totalTasks = tasksData.length;
+            const errors = [];
             
             // Process tasks sequentially to avoid overwhelming the system
             function migrateNextTask(index) {
@@ -261,10 +261,10 @@
                     return;
                 }
                 
-                var task = tasksData[index];
+                const task = tasksData[index];
                 
                 // Convert to SQLite format
-                var sqliteTask = {
+                const sqliteTask = {
                     title: task.title || 'Untitled',
                     description: task.description || '',
                     completed: task.completed || false,
@@ -288,7 +288,7 @@
                     }
                     
                     // Update progress
-                    var progress = 40 + Math.round((index / totalTasks) * 20);
+                    const progress = 40 + Math.round((index / totalTasks) * 20);
                     self.updateProgress(self.steps.MIGRATE, progress);
                     
                     // Continue with next task
@@ -306,10 +306,10 @@
          * Schedule verification check after 24 hours
          */
         scheduleVerification: function(backupId) {
-            var self = this;
+            const self = this;
             
             // Store verification info
-            var verificationData = {
+            const verificationData = {
                 backupId: backupId,
                 migrationTime: Date.now(),
                 verificationTime: Date.now() + self.VERIFY_DELAY_MS,
@@ -331,10 +331,10 @@
          * Check if verification period has passed
          */
         checkVerification: function() {
-            var self = this;
+            const self = this;
             
             try {
-                var verificationData = localStorage.getItem('stackmap_migration_verification');
+                const verificationData = localStorage.getItem('stackmap_migration_verification');
                 if (!verificationData) {
                     // No verification pending
                     if (self.state.verificationTimer) {
@@ -344,7 +344,7 @@
                     return;
                 }
                 
-                var verification = JSON.parse(verificationData);
+                const verification = JSON.parse(verificationData);
                 
                 if (verification.status === 'pending' && Date.now() >= verification.verificationTime) {
                     // Time to verify
@@ -359,7 +359,7 @@
          * Perform verification after 24 hours
          */
         performVerification: function(backupId) {
-            var self = this;
+            const self = this;
             
             // Get current SQLite data count
             window.TaskSQLite.getStats(function(stats, error) {
@@ -384,7 +384,7 @@
                     }
                     
                     // Update verification status
-                    var verificationData = {
+                    const verificationData = {
                         backupId: backupId,
                         migrationTime: Date.now() - self.VERIFY_DELAY_MS,
                         verificationTime: Date.now(),
@@ -401,14 +401,14 @@
          * Clean up source data after successful verification
          */
         cleanupAfterVerification: function() {
-            var self = this;
+            const self = this;
             
             try {
                 // Only remove data marked for cleanup
-                var cleanupMarker = localStorage.getItem('stackmap_migration_cleanup_marker');
+                const cleanupMarker = localStorage.getItem('stackmap_migration_cleanup_marker');
                 if (!cleanupMarker) return;
                 
-                var marker = JSON.parse(cleanupMarker);
+                const marker = JSON.parse(cleanupMarker);
                 if (!marker.verified) {
                     // Double-check current data
                     window.TaskSQLite.getStats(function(stats, error) {
@@ -435,10 +435,10 @@
         removeSourceData: function() {
             try {
                 // Remove all stackmap- prefixed keys except backups and verification
-                var keysToRemove = [];
+                const keysToRemove = [];
                 
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
                     if (key && key.indexOf('stackmap-') === 0) {
                         keysToRemove.push(key);
                     }
@@ -459,7 +459,7 @@
          * Mark source data for cleanup (but don't delete yet!)
          */
         markSourceForCleanup: function() {
-            var marker = {
+            const marker = {
                 timestamp: Date.now(),
                 backupId: this.state.backupId,
                 verified: false
@@ -472,19 +472,19 @@
          * Schedule backup cleanup after retention period
          */
         scheduleBackupCleanup: function(backupId, days) {
-            var self = this;
-            var cleanupTime = Date.now() + (days * 24 * 60 * 60 * 1000);
+            const self = this;
+            const cleanupTime = Date.now() + (days * 24 * 60 * 60 * 1000);
             
-            var cleanupData = {
+            const cleanupData = {
                 backupId: backupId,
                 scheduledTime: cleanupTime,
                 retentionDays: days
             };
             
             // Store cleanup schedule
-            var schedules = [];
+            let schedules = [];
             try {
-                var existing = localStorage.getItem('stackmap_backup_cleanup_schedule');
+                const existing = localStorage.getItem('stackmap_backup_cleanup_schedule');
                 if (existing) {
                     schedules = JSON.parse(existing);
                 }
@@ -498,7 +498,7 @@
          * Handle migration errors with rollback
          */
         handleMigrationError: function(error, callback) {
-            var self = this;
+            const self = this;
             
             console.error('Migration error:', error);
             
@@ -536,7 +536,7 @@
                 }
                 
                 // Console log for debugging
-                console.log('Migration progress:', step, percent + '%');
+                console.log('Migration progress:', step, `${percent}%`);
             } catch (e) {
                 // Don't let UI errors stop migration
             }
@@ -559,7 +559,7 @@
          * Check verification on app load
          */
         checkVerificationOnLoad: function() {
-            var self = this;
+            const self = this;
             
             // Check immediately when app loads
             if (document.readyState === 'complete') {
@@ -575,9 +575,9 @@
          * Get migration status
          */
         getStatus: function() {
-            var verificationData = null;
+            let verificationData = null;
             try {
-                var data = localStorage.getItem('stackmap_migration_verification');
+                const data = localStorage.getItem('stackmap_migration_verification');
                 if (data) {
                     verificationData = JSON.parse(data);
                 }

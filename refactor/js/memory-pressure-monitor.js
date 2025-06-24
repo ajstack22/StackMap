@@ -99,9 +99,9 @@ class MemoryPressureMonitor {
         
         // Log for debugging
         console.debug('Memory usage (Performance API):', {
-            used: Math.round(used / 1024 / 1024) + 'MB',
-            total: Math.round(total / 1024 / 1024) + 'MB',
-            usage: Math.round(usage * 100) + '%'
+            used: `${Math.round(used / 1024 / 1024)}MB`,
+            total: `${Math.round(total / 1024 / 1024)}MB`,
+            usage: `${Math.round(usage * 100)}%`
         });
         
         return usage;
@@ -127,10 +127,10 @@ class MemoryPressureMonitor {
         const usage = totalMB / this.deviceMemoryLimit;
         
         console.debug('Memory usage (Photo estimate):', {
-            active: activeCount + ' photos (' + activeMB + 'MB)',
-            queued: queuedCount + ' photos (' + queuedMB + 'MB)',
-            total: totalMB + 'MB',
-            usage: Math.round(usage * 100) + '%'
+            active: `${activeCount} photos (${activeMB}MB)`,
+            queued: `${queuedCount} photos (${queuedMB}MB)`,
+            total: `${totalMB}MB`,
+            usage: `${Math.round(usage * 100)}%`
         });
         
         return usage;
@@ -168,9 +168,9 @@ class MemoryPressureMonitor {
         const usage = Math.min(estimatedMB / deviceMB, 1);
         
         console.debug('Memory usage (Device estimate):', {
-            device: deviceGB + 'GB',
-            estimated: estimatedMB + 'MB',
-            usage: Math.round(usage * 100) + '%'
+            device: `${deviceGB}GB`,
+            estimated: `${estimatedMB}MB`,
+            usage: `${Math.round(usage * 100)}%`
         });
         
         return usage;
@@ -252,8 +252,8 @@ class MemoryPressureMonitor {
     
     handlePressureDetected(usage) {
         console.warn('Memory pressure detected:', {
-            usage: Math.round(usage * 100) + '%',
-            threshold: Math.round(this.threshold * 100) + '%'
+            usage: `${Math.round(usage * 100)}%`,
+            threshold: `${Math.round(this.threshold * 100)}%`
         });
         
         // Call registered callback
@@ -274,8 +274,8 @@ class MemoryPressureMonitor {
     
     handlePressureRelieved(usage) {
         console.log('Memory pressure relieved:', {
-            usage: Math.round(usage * 100) + '%',
-            threshold: Math.round(this.threshold * 100) + '%'
+            usage: `${Math.round(usage * 100)}%`,
+            threshold: `${Math.round(this.threshold * 100)}%`
         });
         
         // Call registered callback

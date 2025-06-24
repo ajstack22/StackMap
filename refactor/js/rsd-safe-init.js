@@ -12,21 +12,21 @@
     if (window.__RSD_SAFE_INIT__) return;
     
     // Store original methods IMMEDIATELY (before any other code runs)
-    var originalConsoleError = console.error;
-    var originalConsoleWarn = console.warn;
-    var originalConsoleLog = console.log;
-    var originalAlert = window.alert;
-    var originalConfirm = window.confirm;
-    var originalPrompt = window.prompt;
-    var originalOnerror = window.onerror;
-    var originalOnunhandledrejection = window.onunhandledrejection;
+    const originalConsoleError = console.error;
+    const originalConsoleWarn = console.warn;
+    const originalConsoleLog = console.log;
+    const originalAlert = window.alert;
+    const originalConfirm = window.confirm;
+    const originalPrompt = window.prompt;
+    const originalOnerror = window.onerror;
+    const originalOnunhandledrejection = window.onunhandledrejection;
     
     // Override Error constructor to catch throw statements
-    var OriginalError = window.Error;
-    var OriginalTypeError = window.TypeError;
-    var OriginalReferenceError = window.ReferenceError;
-    var OriginalSyntaxError = window.SyntaxError;
-    var OriginalRangeError = window.RangeError;
+    const OriginalError = window.Error;
+    const OriginalTypeError = window.TypeError;
+    const OriginalReferenceError = window.ReferenceError;
+    const OriginalSyntaxError = window.SyntaxError;
+    const OriginalRangeError = window.RangeError;
     
     // CRITICAL: Set up error handlers IMMEDIATELY before any errors can occur
     window.onerror = function(message, source, lineno, colno, error) {
@@ -47,7 +47,7 @@
     // Also add capture phase listener immediately
     window.addEventListener('error', function(event) {
         if (event.message && typeof event.message === 'string') {
-            var transformed = event.message.replace(/error/gi, 'issue')
+            const transformed = event.message.replace(/error/gi, 'issue')
                                          .replace(/failed/gi, 'needs attention')
                                          .replace(/invalid/gi, 'needs adjustment');
             try {
@@ -60,7 +60,7 @@
     }, true); // Capture phase
     
     // User preferences (can be overridden later)
-    var preferences = {
+    const preferences = {
         mode: 'supportive', // direct, supportive, concise
         showTechnical: false,
         logOriginal: false // For debugging
@@ -68,9 +68,9 @@
     
     // Try to load saved preferences (fail silently)
     try {
-        var saved = localStorage.getItem('stackmap_rsd_preferences');
+        const saved = localStorage.getItem('stackmap_rsd_preferences');
         if (saved) {
-            var parsed = JSON.parse(saved);
+            const parsed = JSON.parse(saved);
             preferences.mode = parsed.mode || preferences.mode;
             preferences.showTechnical = parsed.showTechnical || false;
             preferences.logOriginal = parsed.logOriginal || false;
@@ -80,7 +80,7 @@
     }
     
     // Core trigger word replacements (minimal for performance)
-    var quickReplacements = {
+    const quickReplacements = {
         'error': 'issue',
         'Error': 'Issue',
         'ERROR': 'ISSUE',
@@ -104,7 +104,17 @@
         // Handle non-strings
         if (typeof input !== 'string') {
             if (input && input.message) {
-                input.message = transform(input.message);
+                // Don't try to modify error objects - they're often read-only
+                // Instead, create a new object with transformed message
+                if (input instanceof Error) {
+                    return input; // Return error as-is, transformation happens at display time
+                }
+                // For other objects, try to transform
+                try {
+                    input.message = transform(input.message);
+                } catch (e) {
+                    // If read-only, just return as-is
+                }
             }
             return input;
         }
@@ -115,8 +125,8 @@
         }
         
         // Apply quick replacements
-        var result = input;
-        for (var trigger in quickReplacements) {
+        let result = input;
+        for (const trigger in quickReplacements) {
             if (quickReplacements.hasOwnProperty(trigger)) {
                 // Use split/join for better performance than regex
                 result = result.split(trigger).join(quickReplacements[trigger]);
@@ -128,8 +138,8 @@
     
     // Transform array of arguments
     function transformArgs(args) {
-        var transformed = [];
-        for (var i = 0; i < args.length; i++) {
+        const transformed = [];
+        for (let i = 0; i < args.length; i++) {
             transformed.push(transform(args[i]));
         }
         return transformed;
@@ -137,7 +147,7 @@
     
     // Override console.error
     console.error = function() {
-        var args = Array.prototype.slice.call(arguments);
+        const args = Array.prototype.slice.call(arguments);
         
         // Log original if debugging
         if (preferences.logOriginal && originalConsoleError) {
@@ -145,32 +155,32 @@
         }
         
         // Transform and log
-        var transformed = transformArgs(args);
+        const transformed = transformArgs(args);
         originalConsoleError.apply(console, transformed);
     };
     
     // Override console.warn
     console.warn = function() {
-        var args = Array.prototype.slice.call(arguments);
+        const args = Array.prototype.slice.call(arguments);
         
         if (preferences.logOriginal && originalConsoleWarn) {
             originalConsoleWarn.apply(console, ['[ORIGINAL]'].concat(args));
         }
         
-        var transformed = transformArgs(args);
+        const transformed = transformArgs(args);
         originalConsoleWarn.apply(console, transformed);
     };
     
     // Override console.log (only transform if it contains trigger words)
     console.log = function() {
-        var args = Array.prototype.slice.call(arguments);
-        var needsTransform = false;
+        let args = Array.prototype.slice.call(arguments);
+        let needsTransform = false;
         
         // Check if any argument contains trigger words
-        for (var i = 0; i < args.length; i++) {
+        for (let i = 0; i < args.length; i++) {
             if (typeof args[i] === 'string') {
-                for (var trigger in quickReplacements) {
-                    if (args[i].indexOf(trigger) !== -1) {
+                for (const trigger in quickReplacements) {
+                    if (args[i].includes(trigger)) {
                         needsTransform = true;
                         break;
                     }
@@ -215,7 +225,7 @@
     window.addEventListener('error', function(event) {
         // Transform the error message
         if (event.message) {
-            var transformed = transform(event.message);
+            const transformed = transform(event.message);
             
             // Try to modify the event (may be read-only)
             try {
@@ -236,9 +246,18 @@
         // Transform the reason
         if (event.reason) {
             if (typeof event.reason === 'string') {
-                event.reason = transform(event.reason);
+                // For strings, we can safely transform
+                try {
+                    Object.defineProperty(event, 'reason', {
+                        value: transform(event.reason),
+                        configurable: true
+                    });
+                } catch (e) {
+                    // If read-only, leave as-is
+                }
             } else if (event.reason && event.reason.message) {
-                event.reason.message = transform(event.reason.message);
+                // For error objects, don't try to modify - they're often read-only
+                // The transform function will handle this appropriately
             }
         }
     }, true);
@@ -297,7 +316,7 @@
         if (message && preferences.mode !== 'direct') {
             message = transform(message);
         }
-        var error = new OriginalError(message);
+        const error = new OriginalError(message);
         // Preserve stack trace
         if (Error.captureStackTrace) {
             Error.captureStackTrace(error, window.Error);
@@ -310,7 +329,7 @@
         if (message && preferences.mode !== 'direct') {
             message = transform(message);
         }
-        var error = new OriginalTypeError(message);
+        const error = new OriginalTypeError(message);
         if (Error.captureStackTrace) {
             Error.captureStackTrace(error, window.TypeError);
         }
@@ -322,7 +341,7 @@
         if (message && preferences.mode !== 'direct') {
             message = transform(message);
         }
-        var error = new OriginalReferenceError(message);
+        const error = new OriginalReferenceError(message);
         if (Error.captureStackTrace) {
             Error.captureStackTrace(error, window.ReferenceError);
         }
@@ -332,7 +351,7 @@
     
     // Override HTMLElement validation methods
     if (typeof HTMLElement !== 'undefined' && HTMLElement.prototype.setCustomValidity) {
-        var originalSetCustomValidity = HTMLElement.prototype.setCustomValidity;
+        const originalSetCustomValidity = HTMLElement.prototype.setCustomValidity;
         HTMLElement.prototype.setCustomValidity = function(message) {
             if (message && preferences.mode !== 'direct') {
                 message = transform(message);
@@ -344,12 +363,12 @@
     // Override form validation message property
     if (typeof HTMLInputElement !== 'undefined') {
         try {
-            var validationMessageDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'validationMessage');
+            const validationMessageDescriptor = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'validationMessage');
             if (validationMessageDescriptor && validationMessageDescriptor.get) {
-                var originalGetter = validationMessageDescriptor.get;
+                const originalGetter = validationMessageDescriptor.get;
                 Object.defineProperty(HTMLInputElement.prototype, 'validationMessage', {
                     get: function() {
-                        var message = originalGetter.call(this);
+                        const message = originalGetter.call(this);
                         if (message && preferences.mode !== 'direct') {
                             return transform(message);
                         }

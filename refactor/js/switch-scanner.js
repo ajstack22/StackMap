@@ -331,7 +331,7 @@ class SwitchScanner {
             // Move within current group
             const group = this.scanGroups[this.currentGroup];
             const groupElements = this.scanElements.filter(el => 
-                el.closest('[data-scan-group="' + group.id + '"]')
+                el.closest(`[data-scan-group="${group.id}"]`)
             );
             
             this.currentIndex++;

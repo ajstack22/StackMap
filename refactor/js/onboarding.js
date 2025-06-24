@@ -6,7 +6,7 @@
 (function() {
     'use strict';
 
-    var Onboarding = {
+    const Onboarding = {
         eventListeners: [], // Track event listeners for cleanup
         steps: [
             {
@@ -29,7 +29,7 @@
                 content: 'StackMap celebrates your progress. Every task matters!',
                 action: 'Cool!',
                 skipCondition: function() {
-                    var prefs = window.App && window.App.getCurrentUserPreferences();
+                    const prefs = window.App && window.App.getCurrentUserPreferences();
                     return prefs && !prefs.celebrationsEnabled;
                 }
             },
@@ -52,10 +52,10 @@
         },
         
         bindEvents: function() {
-            var self = this;
+            const self = this;
             
             // Listen for task completion
-            var taskHandler = function(e) {
+            const taskHandler = function(e) {
                 if (self.isActive && self.steps[self.currentStep].waitForAction === 'task-complete') {
                     // Auto-advance after a short delay to show celebration
                     setTimeout(function() {
@@ -72,7 +72,7 @@
             });
             
             // Handle window resize
-            var resizeHandler = function() {
+            const resizeHandler = function() {
                 if (self.tooltipElement && self.highlightedElement) {
                     self.positionTooltip(self.tooltipElement, self.highlightedElement);
                 }
@@ -86,7 +86,7 @@
             });
             
             // Handle escape key
-            var keyHandler = function(e) {
+            const keyHandler = function(e) {
                 if (e.key === 'Escape' && self.isActive) {
                     self.skip();
                 }
@@ -107,8 +107,8 @@
         },
         
         showStep: function(index) {
-            var self = this;
-            var step = this.steps[index];
+            const self = this;
+            const step = this.steps[index];
             
             if (!step) {
                 this.complete();
@@ -126,13 +126,13 @@
             this.removeTooltip();
             
             // Create and show new tooltip
-            var tooltip = this.createTooltip(step);
+            const tooltip = this.createTooltip(step);
             this.tooltipElement = tooltip;
             document.body.appendChild(tooltip);
             
             // Highlight element if specified
             if (step.highlight) {
-                var element = document.querySelector(step.highlight);
+                const element = document.querySelector(step.highlight);
                 if (element) {
                     this.highlightedElement = element;
                     element.classList.add('onboarding-highlight');
@@ -166,7 +166,7 @@
             });
             
             // Handle action button
-            var actionBtn = tooltip.querySelector('.onboarding-action');
+            const actionBtn = tooltip.querySelector('.onboarding-action');
             if (actionBtn && !step.waitForAction) {
                 actionBtn.onclick = function() {
                     self.nextStep();
@@ -174,7 +174,7 @@
             }
             
             // Handle skip button
-            var skipBtn = tooltip.querySelector('.onboarding-skip');
+            const skipBtn = tooltip.querySelector('.onboarding-skip');
             if (skipBtn) {
                 skipBtn.onclick = function() {
                     self.skip();
@@ -183,18 +183,18 @@
         },
         
         createTooltip: function(step) {
-            var tooltip = document.createElement('div');
+            const tooltip = document.createElement('div');
             tooltip.className = 'onboarding-tooltip';
             tooltip.setAttribute('role', 'dialog');
             tooltip.setAttribute('aria-label', step.title);
             
-            var html = '<div class="tooltip-arrow"></div>';
+            let html = '<div class="tooltip-arrow"></div>';
             html += '<div class="tooltip-content">';
-            html += '<h3>' + step.title + '</h3>';
-            html += '<p>' + step.content + '</p>';
+            html += `<h3>${step.title}</h3>`;
+            html += `<p>${step.content}</p>`;
             
             if (!step.waitForAction) {
-                html += '<button class="onboarding-action btn-primary">' + step.action + '</button>';
+                html += `<button class="onboarding-action btn-primary">${step.action}</button>`;
             }
             
             // Skip option
@@ -204,8 +204,8 @@
             
             // Progress indicator
             html += '<div class="onboarding-progress">';
-            for (var i = 0; i < this.steps.length; i++) {
-                html += '<span class="progress-dot' + (i === this.currentStep ? ' active' : '') + '"></span>';
+            for (let i = 0; i < this.steps.length; i++) {
+                html += `<span class="progress-dot${i === this.currentStep ? ' active' : ''}"></span>`;
             }
             html += '</div>';
             
@@ -217,18 +217,18 @@
         
         positionTooltip: function(tooltip, targetElement) {
             try {
-                var rect = targetElement.getBoundingClientRect();
-                var tooltipRect = tooltip.getBoundingClientRect();
-                var arrow = tooltip.querySelector('.tooltip-arrow');
+                const rect = targetElement.getBoundingClientRect();
+                const tooltipRect = tooltip.getBoundingClientRect();
+                const arrow = tooltip.querySelector('.tooltip-arrow');
                 
                 // Mobile adjustments
-                var isMobile = window.innerWidth <= 768;
-                var margin = isMobile ? 10 : 20;
-                var gap = isMobile ? 10 : 20;
+                const isMobile = window.innerWidth <= 768;
+                const margin = isMobile ? 10 : 20;
+                const gap = isMobile ? 10 : 20;
                 
                 // Calculate position
-                var left = rect.left + (rect.width - tooltipRect.width) / 2;
-                var top = rect.bottom + gap;
+                let left = rect.left + (rect.width - tooltipRect.width) / 2;
+                let top = rect.bottom + gap;
                 
                 // Boundary detection - horizontal
                 if (left < margin) {
@@ -238,8 +238,8 @@
                 }
                 
                 // Boundary detection - vertical
-                var spaceBelow = window.innerHeight - rect.bottom - margin;
-                var spaceAbove = rect.top - margin;
+                const spaceBelow = window.innerHeight - rect.bottom - margin;
+                const spaceAbove = rect.top - margin;
                 
                 if (spaceBelow < tooltipRect.height && spaceAbove > tooltipRect.height) {
                     // Position above
@@ -256,12 +256,12 @@
                 }
                 
                 // Apply position
-                tooltip.style.left = left + 'px';
-                tooltip.style.top = top + 'px';
+                tooltip.style.left = `${left}px`;
+                tooltip.style.top = `${top}px`;
                 
                 // Position arrow
-                var arrowLeft = Math.max(10, Math.min(tooltipRect.width - 30, rect.left + rect.width / 2 - left - 10));
-                arrow.style.left = arrowLeft + 'px';
+                const arrowLeft = Math.max(10, Math.min(tooltipRect.width - 30, rect.left + rect.width / 2 - left - 10));
+                arrow.style.left = `${arrowLeft}px`;
             } catch (error) {
                 console.error('Onboarding: Error positioning tooltip', error);
                 this.centerTooltip(tooltip);
@@ -269,16 +269,16 @@
         },
         
         centerTooltip: function(tooltip) {
-            var tooltipRect = tooltip.getBoundingClientRect();
+            const tooltipRect = tooltip.getBoundingClientRect();
             
-            var left = (window.innerWidth - tooltipRect.width) / 2;
-            var top = (window.innerHeight - tooltipRect.height) / 2;
+            const left = (window.innerWidth - tooltipRect.width) / 2;
+            const top = (window.innerHeight - tooltipRect.height) / 2;
             
-            tooltip.style.left = left + 'px';
-            tooltip.style.top = top + 'px';
+            tooltip.style.left = `${left}px`;
+            tooltip.style.top = `${top}px`;
             
             // Hide arrow for centered tooltips
-            var arrow = tooltip.querySelector('.tooltip-arrow');
+            const arrow = tooltip.querySelector('.tooltip-arrow');
             if (arrow) {
                 arrow.style.display = 'none';
             }
@@ -290,7 +290,7 @@
         },
         
         skip: function() {
-            var self = this;
+            const self = this;
             
             // Confirm skip
             if (confirm('Skip the tour? You can always restart it from settings.')) {
@@ -319,7 +319,7 @@
             // Remove tooltip
             if (this.tooltipElement) {
                 this.tooltipElement.classList.remove('show');
-                var tooltip = this.tooltipElement;
+                const tooltip = this.tooltipElement;
                 setTimeout(function() {
                     if (tooltip.parentNode) {
                         tooltip.parentNode.removeChild(tooltip);

@@ -4,10 +4,10 @@
  * ES5 compatible for maximum device support
  */
 
-(function(window) {
+((window) => {
     'use strict';
     
-    var DataImporter = {
+    const DataImporter = {
         // Merge strategies
         MERGE_STRATEGY: {
             REPLACE: 'replace',
@@ -24,29 +24,27 @@
          * @returns {Promise<Object>} Import preview data
          */
         importTasks: function(jsonData) {
-            var self = this;
-            
-            return new Promise(function(resolve, reject) {
+            return new Promise((resolve, reject) => {
                 try {
                     // Parse JSON
-                    var data = JSON.parse(jsonData);
+                    const data = JSON.parse(jsonData);
                     
                     // Validate data structure
-                    var validation = self.validateImportData(data);
+                    const validation = this.validateImportData(data);
                     if (!validation.valid) {
                         throw new Error(validation.error || 'Invalid backup file format');
                     }
                     
                     // Store for later use
-                    self.currentImportData = data;
+                    this.currentImportData = data;
                     
                     // Generate preview
-                    var preview = self.generatePreview(data);
+                    const preview = this.generatePreview(data);
                     resolve(preview);
                     
                 } catch (error) {
                     if (window.Messaging) {
-                        window.Messaging.showMessage('Import failed: ' + error.message, 'error');
+                        window.Messaging.showMessage(`Import failed: ${error.message}`, 'error');
                     }
                     reject(error);
                 }
@@ -73,21 +71,21 @@
             }
             
             // Check version compatibility with range support
-            var version = parseFloat(data.version);
+            const version = parseFloat(data.version);
             if (isNaN(version) || version < 1.0 || version > 3.0) {
-                return { valid: false, error: 'Unsupported version: ' + data.version + '. Supported: 1.0-3.0' };
+                return { valid: false, error: `Unsupported version: ${data.version}. Supported: 1.0-3.0` };
             }
             
             // Validate and sanitize task structure
-            for (var i = 0; i < data.tasks.length; i++) {
-                var task = data.tasks[i];
+            for (let i = 0; i < data.tasks.length; i++) {
+                const task = data.tasks[i];
                 
                 // Required fields
                 if (!task.id || typeof task.id !== 'string') {
-                    return { valid: false, error: 'Invalid task ID at index ' + i };
+                    return { valid: false, error: `Invalid task ID at index ${i}` };
                 }
                 if (!task.title || typeof task.title !== 'string') {
-                    return { valid: false, error: 'Invalid task title at index ' + i };
+                    return { valid: false, error: `Invalid task title at index ${i}` };
                 }
                 
                 // Sanitize all string fields
@@ -97,7 +95,7 @@
                 
                 // Validate and fix data types
                 if (task.user_id && typeof task.user_id !== 'string') {
-                    return { valid: false, error: 'Invalid user_id at task ' + i };
+                    return { valid: false, error: `Invalid user_id at task ${i}` };
                 }
                 
                 // Ensure boolean fields
@@ -122,15 +120,15 @@
             
             // Validate users if present
             if (data.users && Array.isArray(data.users)) {
-                for (var j = 0; j < data.users.length; j++) {
-                    var user = data.users[j];
+                for (let j = 0; j < data.users.length; j++) {
+                    const user = data.users[j];
                     
                     // Required fields
                     if (!user.id || typeof user.id !== 'string') {
-                        return { valid: false, error: 'Invalid user ID at index ' + j };
+                        return { valid: false, error: `Invalid user ID at index ${j}` };
                     }
                     if (!user.name || typeof user.name !== 'string') {
-                        return { valid: false, error: 'Invalid user name at index ' + j };
+                        return { valid: false, error: `Invalid user name at index ${j}` };
                     }
                     
                     // Sanitize user data
@@ -165,7 +163,7 @@
             
             // Remove dangerous characters and tags
             str = str.replace(/[<>"'&]/g, function(char) {
-                var chars = {
+                const chars = {
                     '<': '&lt;',
                     '>': '&gt;',
                     '"': '&quot;',
@@ -207,17 +205,16 @@
          * @returns {boolean} True if valid date
          */
         isValidDate: function(dateStr) {
-            var date = new Date(dateStr);
+            const date = new Date(dateStr);
             return date instanceof Date && !isNaN(date.getTime()) && 
                    date.getFullYear() > 2000 && date.getFullYear() < 2100;
         },
         
         generatePreview: function(data) {
-            var self = this;
-            var preview = {
-                source: self.sanitizeString(data.app || 'Unknown', 100),
+            const preview = {
+                source: this.sanitizeString(data.app || 'Unknown', 100),
                 exportDate: data.exportDate || 'Unknown',
-                version: self.sanitizeString(String(data.version || ''), 10),
+                version: this.sanitizeString(String(data.version || ''), 10),
                 counts: {
                     users: (data.users || []).length,
                     tasks: (data.tasks || []).length,
@@ -232,19 +229,15 @@
             
             // Count completed tasks
             if (data.tasks) {
-                preview.counts.completedTasks = data.tasks.filter(function(task) {
-                    return task.completed;
-                }).length;
+                preview.counts.completedTasks = data.tasks.filter(task => task.completed).length;
             }
             
             // Get sample users (first 3) - sanitized
             if (data.users && data.users.length > 0) {
-                preview.samples.users = data.users.slice(0, 3).map(function(user) {
-                    return {
-                        name: self.sanitizeString(user.name || '', 50),
-                        emoji: self.validateEmoji(user.emoji) ? user.emoji : '🌟'
-                    };
-                });
+                preview.samples.users = data.users.slice(0, 3).map(user => ({
+                    name: this.sanitizeString(user.name || '', 50),
+                    emoji: this.validateEmoji(user.emoji) ? user.emoji : '🌟'
+                }));
             }
             
             // Get sample tasks (first 5) - sanitized
@@ -266,7 +259,7 @@
          * @returns {Promise<Object>} Import result
          */
         executeImport: function(strategy) {
-            var self = this;
+            const self = this;
             
             return new Promise(function(resolve, reject) {
                 if (!self.currentImportData) {
@@ -274,8 +267,8 @@
                     return;
                 }
                 
-                var data = self.currentImportData;
-                var promises = [];
+                const data = self.currentImportData;
+                const promises = [];
                 
                 // Import based on strategy
                 switch (strategy) {
@@ -308,7 +301,7 @@
                     });
                 }).catch(function(error) {
                     if (window.Messaging) {
-                        window.Messaging.showMessage('Import failed: ' + error.message, 'error');
+                        window.Messaging.showMessage(`Import failed: ${error.message}`, 'error');
                     }
                     reject(error);
                 });
@@ -321,9 +314,9 @@
          * @returns {Promise<Object>} Import counts
          */
         replaceAllData: function(data) {
-            var self = this;
+            const self = this;
             return new Promise(function(resolve, reject) {
-                var imported = {
+                const imported = {
                     users: 0,
                     tasks: 0,
                     settings: 0,
@@ -335,7 +328,7 @@
                     window.TaskSQLite ? window.TaskSQLite.clearAllTasks() : Promise.resolve(),
                     window.UserManager ? window.UserManager.clearAllUsers() : Promise.resolve()
                 ]).then(function() {
-                    var promises = [];
+                    const promises = [];
                     
                     // Import users
                     if (data.users && window.UserManager) {
@@ -354,14 +347,14 @@
                     // Import tasks in batches
                     if (data.tasks && window.TaskSQLite) {
                         // Process tasks in chunks of 50
-                        var chunks = self.chunkArray(data.tasks, 50);
-                        var processChunk = function(index) {
+                        const chunks = self.chunkArray(data.tasks, 50);
+                        const processChunk = function(index) {
                             if (index >= chunks.length) {
                                 return Promise.resolve();
                             }
                             
-                            var chunk = chunks[index];
-                            var chunkPromises = chunk.map(function(task) {
+                            const chunk = chunks[index];
+                            const chunkPromises = chunk.map(function(task) {
                                 return window.TaskSQLite.createTask(task).then(function() {
                                     imported.tasks++;
                                     self.updateProgress(imported.tasks, data.tasks.length);
@@ -390,7 +383,7 @@
                             try {
                                 // Filter sensitive settings
                                 if (self.isSafeSettingKey(key)) {
-                                    localStorage.setItem('stackmap_' + key, data.settings[key]);
+                                    localStorage.setItem(`stackmap_${key}`, data.settings[key]);
                                     imported.settings++;
                                 }
                             } catch (e) {
@@ -414,8 +407,8 @@
          * @returns {Array} Array of chunks
          */
         chunkArray: function(array, size) {
-            var chunks = [];
-            for (var i = 0; i < array.length; i += size) {
+            const chunks = [];
+            for (let i = 0; i < array.length; i += size) {
                 chunks.push(array.slice(i, i + size));
             }
             return chunks;
@@ -439,11 +432,11 @@
          */
         isSafeSettingKey: function(key) {
             // Whitelist of safe settings
-            var safeKeys = [
+            const safeKeys = [
                 'theme', 'celebrationsEnabled', 'soundsEnabled', 
                 'safeMode', 'lastExport', 'language', 'fontSize'
             ];
-            return safeKeys.indexOf(key) !== -1;
+            return safeKeys.includes(key);
         },
         
         /**
@@ -452,26 +445,26 @@
          * @returns {Promise<Object>} Import counts
          */
         mergeData: function(data) {
-            var self = this;
+            const self = this;
             return new Promise(function(resolve, reject) {
-                var imported = {
+                const imported = {
                     users: 0,
                     tasks: 0,
                     settings: 0,
                     failed: 0
                 };
                 
-                var userPromise = Promise.resolve();
-                var taskPromise = Promise.resolve();
+                let userPromise = Promise.resolve();
+                const taskPromise = Promise.resolve();
                 
                 // Import new users (skip existing by name)
                 if (data.users && window.UserManager) {
                     userPromise = window.UserManager.getAllUsers().then(function(existingUsers) {
-                        var existingNames = existingUsers.map(function(u) { return u.name; });
-                        var userPromises = [];
+                        const existingNames = existingUsers.map(function(u) { return u.name; });
+                        const userPromises = [];
                         
                         data.users.forEach(function(user) {
-                            if (existingNames.indexOf(user.name) === -1) {
+                            if (!existingNames.includes(user.name)) {
                                 userPromises.push(
                                     window.UserManager.createUser(user).then(function() {
                                         imported.users++;
@@ -489,17 +482,17 @@
                 
                 // Import all tasks in batches
                 if (data.tasks && window.TaskSQLite) {
-                    var chunks = self.chunkArray(data.tasks, 50);
-                    var processChunk = function(index) {
+                    const chunks = self.chunkArray(data.tasks, 50);
+                    const processChunk = function(index) {
                         if (index >= chunks.length) {
                             return Promise.resolve();
                         }
                         
-                        var chunk = chunks[index];
-                        var chunkPromises = chunk.map(function(task) {
+                        const chunk = chunks[index];
+                        const chunkPromises = chunk.map(function(task) {
                             // Generate new ID to avoid conflicts
-                            var newTask = Object.assign({}, task, {
-                                id: 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9)
+                            const newTask = Object.assign({}, task, {
+                                id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
                             });
                             
                             return window.TaskSQLite.createTask(newTask).then(function() {
@@ -528,7 +521,7 @@
                     Object.keys(data.settings).forEach(function(key) {
                         try {
                             if (self.isSafeSettingKey(key)) {
-                                localStorage.setItem('stackmap_' + key, data.settings[key]);
+                                localStorage.setItem(`stackmap_${key}`, data.settings[key]);
                                 imported.settings++;
                             }
                         } catch (e) {
@@ -551,9 +544,9 @@
          * @returns {Promise<Object>} Import counts
          */
         smartMergeData: function(data) {
-            var self = this;
+            const self = this;
             return new Promise(function(resolve, reject) {
-                var imported = {
+                const imported = {
                     users: 0,
                     tasks: 0,
                     settings: 0,
@@ -561,20 +554,20 @@
                     failed: 0
                 };
                 
-                var userPromise = Promise.resolve();
-                var taskPromise = Promise.resolve();
+                let userPromise = Promise.resolve();
+                let taskPromise = Promise.resolve();
                 
                 // Smart merge users
                 if (data.users && window.UserManager) {
                     userPromise = window.UserManager.getAllUsers().then(function(existingUsers) {
-                        var existingMap = {};
+                        const existingMap = {};
                         existingUsers.forEach(function(user) {
                             existingMap[user.id] = user;
                         });
                         
-                        var userPromises = [];
+                        const userPromises = [];
                         data.users.forEach(function(user) {
-                            var promise;
+                            let promise;
                             if (existingMap[user.id]) {
                                 // Check if updateUser method exists
                                 if (window.UserManager.updateUser) {
@@ -608,21 +601,21 @@
                 // Smart merge tasks in batches
                 if (data.tasks && window.TaskSQLite) {
                     taskPromise = window.TaskSQLite.getAllTasks().then(function(existingTasks) {
-                        var existingMap = {};
+                        const existingMap = {};
                         existingTasks.forEach(function(task) {
                             existingMap[task.id] = task;
                         });
                         
                         // Process in batches
-                        var chunks = self.chunkArray(data.tasks, 50);
-                        var processChunk = function(index) {
+                        const chunks = self.chunkArray(data.tasks, 50);
+                        const processChunk = function(index) {
                             if (index >= chunks.length) {
                                 return Promise.resolve();
                             }
                             
-                            var chunk = chunks[index];
-                            var chunkPromises = chunk.map(function(task) {
-                                var promise;
+                            const chunk = chunks[index];
+                            const chunkPromises = chunk.map(function(task) {
+                                let promise;
                                 if (existingMap[task.id]) {
                                     // Update existing task
                                     promise = window.TaskSQLite.updateTask(task.id, task).then(function() {
@@ -661,7 +654,7 @@
                     Object.keys(data.settings).forEach(function(key) {
                         try {
                             if (self.isSafeSettingKey(key)) {
-                                localStorage.setItem('stackmap_' + key, data.settings[key]);
+                                localStorage.setItem(`stackmap_${key}`, data.settings[key]);
                                 imported.settings++;
                             }
                         } catch (e) {
@@ -683,24 +676,24 @@
          * @returns {Promise<Object>} Import preview
          */
         selectFile: function() {
-            var self = this;
+            const self = this;
             
             return new Promise(function(resolve, reject) {
-                var fileInput = document.createElement('input');
+                const fileInput = document.createElement('input');
                 fileInput.type = 'file';
                 fileInput.accept = '.json,application/json';
                 fileInput.style.display = 'none';
                 
                 fileInput.addEventListener('change', function(e) {
-                    var file = e.target.files[0];
+                    const file = e.target.files[0];
                     if (!file) {
                         reject(new Error('No file selected'));
                         return;
                     }
                     
                     // Validate file type
-                    var validTypes = ['application/json', 'text/json', 'text/plain'];
-                    if (file.type && validTypes.indexOf(file.type) === -1) {
+                    const validTypes = ['application/json', 'text/json', 'text/plain'];
+                    if (file.type && !validTypes.includes(file.type)) {
                         // Check file extension as fallback
                         if (!file.name.toLowerCase().endsWith('.json')) {
                             reject(new Error('Invalid file type. Please select a JSON file.'));
@@ -714,7 +707,7 @@
                         return;
                     }
                     
-                    var reader = new FileReader();
+                    const reader = new FileReader();
                     
                     reader.onload = function(e) {
                         self.importTasks(e.target.result).then(resolve).catch(reject);

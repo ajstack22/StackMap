@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var Modal = {
+    const Modal = {
         activeModal: null,
         previousFocus: null,
         escapeHandler: null,
@@ -25,7 +25,7 @@
          * @param {string} options.className - Additional CSS class
          */
         show: function(options) {
-            var self = this;
+            const self = this;
             
             // Default options
             options = options || {};
@@ -41,7 +41,7 @@
             self.previousFocus = document.activeElement;
             
             // Create modal structure
-            var modal = self.createModalElement(options);
+            const modal = self.createModalElement(options);
             
             // Add to DOM
             document.body.appendChild(modal);
@@ -71,13 +71,13 @@
          * Create modal DOM element
          */
         createModalElement: function(options) {
-            var self = this;
+            const self = this;
             
             // Modal container
-            var modal = document.createElement('div');
+            const modal = document.createElement('div');
             modal.className = 'modal';
             if (options.className) {
-                modal.className += ' ' + options.className;
+                modal.className += ` ${options.className}`;
             }
             modal.setAttribute('role', 'dialog');
             modal.setAttribute('aria-modal', 'true');
@@ -86,20 +86,20 @@
             }
             
             // Backdrop
-            var backdrop = document.createElement('div');
+            const backdrop = document.createElement('div');
             backdrop.className = 'modal-backdrop';
             
             // Dialog
-            var dialog = document.createElement('div');
+            const dialog = document.createElement('div');
             dialog.className = 'modal-dialog';
             
             // Header
             if (options.title || options.showCloseButton) {
-                var header = document.createElement('div');
+                const header = document.createElement('div');
                 header.className = 'modal-header';
                 
                 if (options.title) {
-                    var title = document.createElement('h2');
+                    const title = document.createElement('h2');
                     title.id = 'modal-title';
                     title.className = 'modal-title';
                     title.textContent = options.title;
@@ -107,7 +107,7 @@
                 }
                 
                 if (options.showCloseButton) {
-                    var closeBtn = document.createElement('button');
+                    const closeBtn = document.createElement('button');
                     closeBtn.className = 'modal-close';
                     closeBtn.setAttribute('aria-label', 'Close modal');
                     closeBtn.innerHTML = '&times;';
@@ -121,7 +121,7 @@
             }
             
             // Content
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'modal-content';
             if (typeof options.content === 'string') {
                 content.innerHTML = options.content;
@@ -141,7 +141,7 @@
          * Setup event handlers
          */
         setupEventHandlers: function(options) {
-            var self = this;
+            const self = this;
             
             // Escape key handler
             self.escapeHandler = function(e) {
@@ -167,7 +167,7 @@
          * Close the active modal
          */
         close: function() {
-            var self = this;
+            const self = this;
             
             if (!self.activeModal) return;
             
@@ -209,14 +209,14 @@
          * Trap focus within modal
          */
         trapFocus: function(modal) {
-            var focusableElements = modal.querySelectorAll(
+            const focusableElements = modal.querySelectorAll(
                 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
             );
             
             if (focusableElements.length === 0) return;
             
-            var firstFocusable = focusableElements[0];
-            var lastFocusable = focusableElements[focusableElements.length - 1];
+            const firstFocusable = focusableElements[0];
+            const lastFocusable = focusableElements[focusableElements.length - 1];
             
             // Focus first element
             setTimeout(function() {
@@ -250,7 +250,7 @@
          * Announce modal to screen readers
          */
         announceModal: function(title) {
-            var announcer = document.getElementById('modal-announcer');
+            let announcer = document.getElementById('modal-announcer');
             if (!announcer) {
                 announcer = document.createElement('div');
                 announcer.id = 'modal-announcer';
@@ -261,7 +261,7 @@
                 document.body.appendChild(announcer);
             }
             
-            announcer.textContent = title ? title + ' dialog opened' : 'Dialog opened';
+            announcer.textContent = title ? `${title} dialog opened` : 'Dialog opened';
         }
     };
     

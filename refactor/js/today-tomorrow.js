@@ -8,14 +8,14 @@
     'use strict';
     
     // Constants
-    var TASK_TIMEFRAMES = {
+    const TASK_TIMEFRAMES = {
         TODAY: 'today',
         TOMORROW: 'tomorrow',
         SOMEDAY: 'someday'
     };
     
     // RSD-aware messages (positive and gentle)
-    var ROLLOVER_MESSAGES = {
+    const ROLLOVER_MESSAGES = {
         single: "Brought 1 task forward - fresh start! 🌅",
         multiple: "{count} tasks came along for today's journey",
         allDone: "Yesterday complete! Today is yours ✨",
@@ -25,7 +25,7 @@
     };
     
     // View sections configuration
-    var SECTIONS = {
+    const SECTIONS = {
         today: {
             id: 'today-section',
             title: 'Today',
@@ -42,7 +42,7 @@
         }
     };
     
-    var TodayTomorrowView = {
+    const TodayTomorrowView = {
         container: null,
         isInitialized: false,
         currentView: 'today', // 'today', 'tomorrow', 'all'
@@ -61,20 +61,20 @@
          * Initialize the view
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Find or create container
             self.container = document.getElementById('today-tomorrow-container');
             if (!self.container) {
                 // Create container if it doesn't exist
-                var mainView = document.getElementById('main-view');
+                const mainView = document.getElementById('main-view');
                 if (mainView) {
                     self.container = document.createElement('div');
                     self.container.id = 'today-tomorrow-container';
                     self.container.className = 'today-tomorrow-container';
                     
                     // Find task display wrapper or create one
-                    var taskWrapper = mainView.querySelector('.task-display-wrapper');
+                    const taskWrapper = mainView.querySelector('.task-display-wrapper');
                     if (taskWrapper) {
                         taskWrapper.appendChild(self.container);
                     } else {
@@ -108,7 +108,7 @@
          * Load tasks from storage
          */
         loadTasks: function(callback) {
-            var self = this;
+            const self = this;
             
             // Get tasks from TaskDisplay if available
             if (window.TaskDisplay && window.TaskDisplay.tasks) {
@@ -130,7 +130,7 @@
                 } else {
                     // Fallback to localStorage
                     try {
-                        var stored = localStorage.getItem('stackmap_tasks');
+                        const stored = localStorage.getItem('stackmap_tasks');
                         self.tasks = stored ? JSON.parse(stored) : [];
                     } catch (e) {
                         self.tasks = [];
@@ -145,8 +145,8 @@
          * Migrate existing tasks to have timeframe field
          */
         migrateTasksIfNeeded: function() {
-            var self = this;
-            var needsSave = false;
+            const self = this;
+            let needsSave = false;
             
             self.tasks.forEach(function(task) {
                 // Add timeframe if missing
@@ -171,7 +171,7 @@
          * Show rollover message (RSD-aware)
          */
         showRolloverMessage: function(count) {
-            var message;
+            let message;
             
             if (count === 0) {
                 message = ROLLOVER_MESSAGES.allDone;
@@ -190,8 +190,8 @@
          */
         showNotification: function(message, type) {
             try {
-                var notification = document.createElement('div');
-                notification.className = 'today-tomorrow-notification ' + (type || '');
+                const notification = document.createElement('div');
+                notification.className = `today-tomorrow-notification ${type || ''}`;
                 notification.textContent = message;
                 notification.setAttribute('role', 'status');
                 notification.setAttribute('aria-live', 'polite');
@@ -224,7 +224,7 @@
          * Render the view
          */
         render: function() {
-            var self = this;
+            const self = this;
             
             if (!self.container) return;
             
@@ -232,11 +232,11 @@
             self.container.innerHTML = '';
             
             // Create navigation tabs
-            var nav = self.createNavigation();
+            const nav = self.createNavigation();
             self.container.appendChild(nav);
             
             // Create sections container
-            var sectionsContainer = document.createElement('div');
+            const sectionsContainer = document.createElement('div');
             sectionsContainer.className = 'today-tomorrow-sections';
             
             // Render based on current view
@@ -254,7 +254,7 @@
             if (self.currentView === 'today') {
                 // Use cached today tasks
                 if (self.cachedFilters.today.length > 3) { // Only show if overwhelmed
-                    var panicButton = self.createPanicButton();
+                    const panicButton = self.createPanicButton();
                     self.container.appendChild(panicButton);
                 }
             }
@@ -264,32 +264,32 @@
          * Create navigation tabs
          */
         createNavigation: function() {
-            var self = this;
+            const self = this;
             
-            var nav = document.createElement('nav');
+            const nav = document.createElement('nav');
             nav.className = 'today-tomorrow-nav';
             nav.setAttribute('role', 'tablist');
             
             // Today tab
-            var todayTab = document.createElement('button');
-            todayTab.className = 'tab-btn' + (self.currentView === 'today' ? ' active' : '');
+            const todayTab = document.createElement('button');
+            todayTab.className = `tab-btn${self.currentView === 'today' ? ' active' : ''}`;
             todayTab.textContent = 'Today';
             todayTab.setAttribute('role', 'tab');
             todayTab.setAttribute('aria-selected', self.currentView === 'today');
             todayTab.setAttribute('data-view', 'today');
             
             // Tomorrow tab
-            var tomorrowTab = document.createElement('button');
-            tomorrowTab.className = 'tab-btn' + (self.currentView === 'tomorrow' ? ' active' : '');
+            const tomorrowTab = document.createElement('button');
+            tomorrowTab.className = `tab-btn${self.currentView === 'tomorrow' ? ' active' : ''}`;
             tomorrowTab.textContent = 'Tomorrow';
             tomorrowTab.setAttribute('role', 'tab');
             tomorrowTab.setAttribute('aria-selected', self.currentView === 'tomorrow');
             tomorrowTab.setAttribute('data-view', 'tomorrow');
             
             // All tasks tab (hidden by default per PM review)
-            var allTab = document.createElement('button');
-            allTab.className = 'tab-btn' + (self.currentView === 'all' ? ' active' : '');
-            allTab.textContent = 'All (' + self.getSomedayCount() + ')';
+            const allTab = document.createElement('button');
+            allTab.className = `tab-btn${self.currentView === 'all' ? ' active' : ''}`;
+            allTab.textContent = `All (${self.getSomedayCount()})`;
             allTab.setAttribute('role', 'tab');
             allTab.setAttribute('aria-selected', self.currentView === 'all');
             allTab.setAttribute('data-view', 'all');
@@ -316,7 +316,7 @@
          * Update cached filters
          */
         updateCachedFilters: function() {
-            var self = this;
+            const self = this;
             
             self.cachedFilters.today = self.tasks.filter(function(task) {
                 return !task.completed && task.timeframe === TASK_TIMEFRAMES.TODAY;
@@ -334,28 +334,28 @@
          * Render Today/Tomorrow view
          */
         renderTodayTomorrowView: function(container) {
-            var self = this;
+            const self = this;
             
             // Update cached filters if tasks have changed
             self.updateCachedFilters();
             
             // Use cached filters
-            var todayTasks = self.cachedFilters.today;
-            var tomorrowTasks = self.cachedFilters.tomorrow;
-            var completedTodayTasks = self.cachedFilters.completedToday;
+            const todayTasks = self.cachedFilters.today;
+            const tomorrowTasks = self.cachedFilters.tomorrow;
+            const completedTodayTasks = self.cachedFilters.completedToday;
             
             // Show appropriate section based on current view
             if (self.currentView === 'today') {
-                var todaySection = self.createSection(SECTIONS.today, todayTasks);
+                const todaySection = self.createSection(SECTIONS.today, todayTasks);
                 container.appendChild(todaySection);
                 
                 // Add Done Today section if there are completed tasks
                 if (completedTodayTasks.length > 0) {
-                    var doneSection = self.createDoneTodaySection(completedTodayTasks);
+                    const doneSection = self.createDoneTodaySection(completedTodayTasks);
                     container.appendChild(doneSection);
                 }
             } else if (self.currentView === 'tomorrow') {
-                var tomorrowSection = self.createSection(SECTIONS.tomorrow, tomorrowTasks);
+                const tomorrowSection = self.createSection(SECTIONS.tomorrow, tomorrowTasks);
                 container.appendChild(tomorrowSection);
             }
         },
@@ -364,14 +364,14 @@
          * Get tasks completed today
          */
         getCompletedTodayTasks: function() {
-            var self = this;
-            var today = new Date();
+            const self = this;
+            const today = new Date();
             today.setHours(0, 0, 0, 0);
             
             return self.tasks.filter(function(task) {
                 if (!task.completed || !task.completed_at) return false;
                 
-                var completedDate = new Date(task.completed_at);
+                const completedDate = new Date(task.completed_at);
                 completedDate.setHours(0, 0, 0, 0);
                 
                 return completedDate.getTime() === today.getTime();
@@ -382,27 +382,27 @@
          * Create Done Today section
          */
         createDoneTodaySection: function(tasks) {
-            var self = this;
+            const self = this;
             
-            var section = document.createElement('section');
+            const section = document.createElement('section');
             section.className = 'timeframe-section done-today-section';
             section.setAttribute('data-timeframe', 'done-today');
             
             // Header
-            var header = document.createElement('div');
+            const header = document.createElement('div');
             header.className = 'section-header done-header';
             
-            var icon = document.createElement('span');
+            const icon = document.createElement('span');
             icon.className = 'section-icon';
             icon.textContent = '✅';
             
-            var title = document.createElement('h2');
+            const title = document.createElement('h2');
             title.className = 'section-title';
-            title.textContent = 'Done Today (' + tasks.length + ')';
+            title.textContent = `Done Today (${tasks.length})`;
             
             // Celebration message if many tasks completed
             if (tasks.length >= 5) {
-                var celebrationMsg = document.createElement('span');
+                const celebrationMsg = document.createElement('span');
                 celebrationMsg.className = 'celebration-msg';
                 celebrationMsg.textContent = ' 🎉 Amazing progress!';
                 title.appendChild(celebrationMsg);
@@ -413,18 +413,18 @@
             section.appendChild(header);
             
             // Completed task list
-            var taskList = document.createElement('div');
+            const taskList = document.createElement('div');
             taskList.className = 'task-list completed-list';
             
             tasks.forEach(function(task) {
-                var taskElement = self.createCompletedTaskElement(task);
+                const taskElement = self.createCompletedTaskElement(task);
                 taskList.appendChild(taskElement);
             });
             
             section.appendChild(taskList);
             
             // Auto-hide after 24h message
-            var hideNote = document.createElement('div');
+            const hideNote = document.createElement('div');
             hideNote.className = 'done-today-note';
             hideNote.textContent = 'These will clear tomorrow morning';
             section.appendChild(hideNote);
@@ -436,35 +436,35 @@
          * Create completed task element
          */
         createCompletedTaskElement: function(task) {
-            var element = document.createElement('div');
+            const element = document.createElement('div');
             element.className = 'task-item completed-task';
             element.setAttribute('data-task-id', task.id);
             
             // Checkbox (checked and disabled)
-            var checkbox = document.createElement('input');
+            const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = true;
             checkbox.disabled = true;
             checkbox.className = 'task-checkbox';
             
             // Label with strikethrough
-            var label = document.createElement('label');
+            const label = document.createElement('label');
             label.className = 'task-label completed';
             label.textContent = task.title || 'Untitled task';
             
             // Time completed
             if (task.completed_at) {
-                var completedTime = new Date(task.completed_at);
-                var hours = completedTime.getHours();
-                var minutes = completedTime.getMinutes();
-                var ampm = hours >= 12 ? 'PM' : 'AM';
+                const completedTime = new Date(task.completed_at);
+                let hours = completedTime.getHours();
+                let minutes = completedTime.getMinutes();
+                const ampm = hours >= 12 ? 'PM' : 'AM';
                 hours = hours % 12;
                 hours = hours ? hours : 12; // 0 should be 12
-                minutes = minutes < 10 ? '0' + minutes : minutes;
+                minutes = minutes < 10 ? `0${minutes}` : minutes;
                 
-                var timeSpan = document.createElement('span');
+                const timeSpan = document.createElement('span');
                 timeSpan.className = 'completed-time';
-                timeSpan.textContent = ' at ' + hours + ':' + minutes + ' ' + ampm;
+                timeSpan.textContent = ` at ${hours}:${minutes} ${ampm}`;
                 label.appendChild(timeSpan);
             }
             
@@ -478,24 +478,24 @@
          * Create a section (Today or Tomorrow)
          */
         createSection: function(config, tasks) {
-            var self = this;
+            const self = this;
             
-            var section = document.createElement('section');
+            const section = document.createElement('section');
             section.id = config.id;
-            section.className = 'timeframe-section ' + config.className;
+            section.className = `timeframe-section ${config.className}`;
             section.setAttribute('data-timeframe', config.id.replace('-section', ''));
             
             // Header
-            var header = document.createElement('div');
+            const header = document.createElement('div');
             header.className = 'section-header';
             
-            var icon = document.createElement('span');
+            const icon = document.createElement('span');
             icon.className = 'section-icon';
             icon.textContent = config.icon;
             
-            var title = document.createElement('h2');
+            const title = document.createElement('h2');
             title.className = 'section-title';
-            title.textContent = config.title + ' (' + tasks.length + ')';
+            title.textContent = `${config.title} (${tasks.length})`;
             
             header.appendChild(icon);
             header.appendChild(title);
@@ -503,16 +503,16 @@
             
             // Task list or empty state
             if (tasks.length === 0) {
-                var emptyState = document.createElement('div');
+                const emptyState = document.createElement('div');
                 emptyState.className = 'empty-state';
                 emptyState.textContent = config.emptyMessage;
                 section.appendChild(emptyState);
             } else {
-                var taskList = document.createElement('div');
+                const taskList = document.createElement('div');
                 taskList.className = 'task-list';
                 
                 tasks.forEach(function(task) {
-                    var taskElement = self.createTaskElement(task);
+                    const taskElement = self.createTaskElement(task);
                     taskList.appendChild(taskElement);
                 });
                 
@@ -520,9 +520,9 @@
             }
             
             // Add task button
-            var addButton = document.createElement('button');
+            const addButton = document.createElement('button');
             addButton.className = 'add-task-btn';
-            addButton.textContent = '+ Add task for ' + config.title.toLowerCase();
+            addButton.textContent = `+ Add task for ${config.title.toLowerCase()}`;
             addButton.setAttribute('data-timeframe', config.id.replace('-section', ''));
             section.appendChild(addButton);
             
@@ -533,7 +533,7 @@
          * Create task element
          */
         createTaskElement: function(task) {
-            var element = document.createElement('div');
+            const element = document.createElement('div');
             element.className = 'task-item';
             element.setAttribute('data-task-id', task.id);
             element.setAttribute('draggable', 'true');
@@ -542,24 +542,23 @@
             element.setAttribute('aria-label', task.title || 'Untitled task');
             
             // Checkbox
-            var checkbox = document.createElement('input');
+            const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = task.completed;
             checkbox.className = 'task-checkbox';
-            checkbox.id = 'task-check-' + task.id;
+            checkbox.id = `task-check-${task.id}`;
             
             // Label
-            var label = document.createElement('label');
+            const label = document.createElement('label');
             label.className = 'task-label';
             label.setAttribute('for', checkbox.id);
             label.textContent = task.title || 'Untitled task';
             
             // Rollover indicator and visual aging
             if (task.rolloverCount > 0) {
-                var rolloverBadge = document.createElement('span');
+                const rolloverBadge = document.createElement('span');
                 rolloverBadge.className = 'rollover-badge';
-                rolloverBadge.title = 'Rolled over ' + task.rolloverCount + ' time' + 
-                                    (task.rolloverCount > 1 ? 's' : '');
+                rolloverBadge.title = `Rolled over ${task.rolloverCount} time${task.rolloverCount > 1 ? 's' : ''}`;
                 
                 // Visual aging (per PM review)
                 if (task.rolloverCount <= 3) {
@@ -593,7 +592,7 @@
         renderAllTasksView: function(container) {
             // This will show the existing task display
             // For now, just show a placeholder
-            var placeholder = document.createElement('div');
+            const placeholder = document.createElement('div');
             placeholder.className = 'all-tasks-placeholder';
             placeholder.textContent = 'All tasks view - to be implemented';
             container.appendChild(placeholder);
@@ -603,24 +602,24 @@
          * Setup event listeners
          */
         setupEventListeners: function() {
-            var self = this;
+            const self = this;
             
             // Tab navigation
             self.container.addEventListener('click', function(e) {
                 if (e.target.classList.contains('tab-btn')) {
-                    var view = e.target.getAttribute('data-view');
+                    const view = e.target.getAttribute('data-view');
                     self.switchView(view);
                 }
                 
                 // Add task button
                 if (e.target.classList.contains('add-task-btn')) {
-                    var timeframe = e.target.getAttribute('data-timeframe');
+                    const timeframe = e.target.getAttribute('data-timeframe');
                     self.addTask(timeframe);
                 }
                 
                 // Task checkbox
                 if (e.target.classList.contains('task-checkbox')) {
-                    var taskId = e.target.closest('.task-item').getAttribute('data-task-id');
+                    const taskId = e.target.closest('.task-item').getAttribute('data-task-id');
                     self.toggleTask(taskId);
                 }
             });
@@ -635,15 +634,15 @@
          * Switch view
          */
         switchView: function(view) {
-            var self = this;
+            const self = this;
             
             self.currentView = view;
             self.render();
             
             // Update active tab
-            var tabs = self.container.querySelectorAll('.tab-btn');
+            const tabs = self.container.querySelectorAll('.tab-btn');
             tabs.forEach(function(tab) {
-                var isActive = tab.getAttribute('data-view') === view;
+                const isActive = tab.getAttribute('data-view') === view;
                 tab.classList.toggle('active', isActive);
                 tab.setAttribute('aria-selected', isActive);
             });
@@ -653,7 +652,7 @@
          * Add new task with timeframe
          */
         addTask: function(timeframe) {
-            var self = this;
+            const self = this;
             
             // Create new task with appropriate timeframe
             if (window.TaskDisplay && window.TaskDisplay.addTask) {
@@ -663,7 +662,7 @@
                 // Find the newly created task and update its timeframe
                 setTimeout(function() {
                     if (window.TaskDisplay.tasks.length > 0) {
-                        var newTask = window.TaskDisplay.tasks[0];
+                        const newTask = window.TaskDisplay.tasks[0];
                         newTask.timeframe = timeframe;
                         self.saveTasks();
                     }
@@ -675,9 +674,9 @@
          * Toggle task completion
          */
         toggleTask: function(taskId) {
-            var self = this;
+            const self = this;
             
-            var task = self.tasks.find(function(t) {
+            const task = self.tasks.find(function(t) {
                 return t.id === taskId;
             });
             
@@ -690,13 +689,13 @@
                     task.completed_at = new Date().toISOString();
                     
                     // Count completed tasks today for milestone celebration
-                    var completedToday = self.getCompletedTodayTasks();
-                    var completedCount = completedToday.length + 1; // +1 for current task
+                    const completedToday = self.getCompletedTodayTasks();
+                    const completedCount = completedToday.length + 1; // +1 for current task
                     
                     // Celebration based on milestone
                     if (window.CelebrationSystem) {
-                        var celebrationType = 'small';
-                        var celebrationMessage = 'Task completed! ✅';
+                        let celebrationType = 'small';
+                        let celebrationMessage = 'Task completed! ✅';
                         
                         // Check for milestones
                         if (completedCount === 5) {
@@ -710,7 +709,7 @@
                             celebrationMessage = '15 tasks! Incredible focus! 💪';
                         }
                         
-                        var event;
+                        let event;
                         try {
                             event = new CustomEvent('celebrate', {
                                 detail: {
@@ -730,7 +729,7 @@
                     
                     // Check if all today tasks are complete
                     if (task.timeframe === TASK_TIMEFRAMES.TODAY) {
-                        var remainingToday = self.tasks.filter(function(t) {
+                        const remainingToday = self.tasks.filter(function(t) {
                             return !t.completed && t.timeframe === TASK_TIMEFRAMES.TODAY;
                         });
                         
@@ -756,7 +755,7 @@
          * Celebrate completing all today tasks
          */
         celebrateCompletion: function() {
-            var self = this;
+            const self = this;
             
             // Show notification
             self.showNotification(ROLLOVER_MESSAGES.allDone, 'celebration');
@@ -764,7 +763,7 @@
             // Trigger celebration system if available
             if (window.CelebrationSystem) {
                 // Dispatch celebration event
-                var event;
+                let event;
                 try {
                     event = new CustomEvent('celebrate', {
                         detail: {
@@ -796,7 +795,7 @@
          * Save tasks
          */
         saveTasks: function(callback) {
-            var self = this;
+            const self = this;
             
             // Update TaskDisplay if available
             if (window.TaskDisplay) {
@@ -825,9 +824,9 @@
          * Create panic button (Move all to tomorrow)
          */
         createPanicButton: function() {
-            var self = this;
+            const self = this;
             
-            var button = document.createElement('button');
+            const button = document.createElement('button');
             button.className = 'bulk-move-btn panic-button';
             button.innerHTML = '😰 Move all to tomorrow';
             button.title = 'Feeling overwhelmed? Move everything to tomorrow and start fresh';
@@ -843,17 +842,16 @@
          * Move all today tasks to tomorrow
          */
         moveAllToTomorrow: function() {
-            var self = this;
+            const self = this;
             
-            var todayTasks = self.tasks.filter(function(task) {
+            const todayTasks = self.tasks.filter(function(task) {
                 return !task.completed && task.timeframe === TASK_TIMEFRAMES.TODAY;
             });
             
             if (todayTasks.length === 0) return;
             
             // Confirm with gentle message
-            var message = 'Move all ' + todayTasks.length + ' tasks to tomorrow? ' +
-                         'No judgment - sometimes we need a fresh start! 💙';
+            const message = `Move all ${todayTasks.length} tasks to tomorrow? No judgment - sometimes we need a fresh start! 💙`;
             
             if (confirm(message)) {
                 // Move tasks
@@ -874,18 +872,18 @@
          * Setup drag and drop for task movement between sections
          */
         setupDragAndDrop: function() {
-            var self = this;
+            const self = this;
             
             // Touch support detection
-            var supportsTouch = 'ontouchstart' in window;
+            const supportsTouch = 'ontouchstart' in window;
             
             // Drag start handler
             self.container.addEventListener('dragstart', function(e) {
-                var taskItem = e.target.closest('.task-item');
+                const taskItem = e.target.closest('.task-item');
                 if (!taskItem || !taskItem.getAttribute('draggable')) return;
                 
-                var taskId = taskItem.getAttribute('data-task-id');
-                var task = self.tasks.find(function(t) {
+                const taskId = taskItem.getAttribute('data-task-id');
+                const task = self.tasks.find(function(t) {
                     return t.id === taskId;
                 });
                 
@@ -899,7 +897,7 @@
             
             // Drag end handler
             self.container.addEventListener('dragend', function(e) {
-                var taskItem = e.target.closest('.task-item');
+                const taskItem = e.target.closest('.task-item');
                 if (taskItem) {
                     taskItem.classList.remove('dragging');
                 }
@@ -910,7 +908,7 @@
             self.container.addEventListener('dragover', function(e) {
                 if (!self.draggedTask) return;
                 
-                var section = e.target.closest('.timeframe-section');
+                const section = e.target.closest('.timeframe-section');
                 if (section) {
                     e.preventDefault();
                     e.dataTransfer.dropEffect = 'move';
@@ -922,7 +920,7 @@
             
             // Drag leave handler
             self.container.addEventListener('dragleave', function(e) {
-                var section = e.target.closest('.timeframe-section');
+                const section = e.target.closest('.timeframe-section');
                 if (section && !section.contains(e.relatedTarget)) {
                     section.classList.remove('drag-over');
                 }
@@ -932,12 +930,12 @@
             self.container.addEventListener('drop', function(e) {
                 e.preventDefault();
                 
-                var section = e.target.closest('.timeframe-section');
+                const section = e.target.closest('.timeframe-section');
                 if (!section || !self.draggedTask) return;
                 
                 section.classList.remove('drag-over');
                 
-                var newTimeframe = section.getAttribute('data-timeframe');
+                const newTimeframe = section.getAttribute('data-timeframe');
                 if (newTimeframe && newTimeframe !== self.draggedTask.timeframe) {
                     // Update task timeframe
                     self.draggedTask.timeframe = newTimeframe;
@@ -948,7 +946,7 @@
                         self.render();
                         
                         // Show feedback
-                        var message = 'Task moved to ' + newTimeframe;
+                        const message = `Task moved to ${newTimeframe}`;
                         self.showNotification(message, 'success');
                     });
                 }
@@ -965,11 +963,11 @@
                 if (!window.EditMode || !window.EditMode.isActive()) return;
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
                 
-                var selectedTask = document.querySelector('.task-item:focus');
+                const selectedTask = document.querySelector('.task-item:focus');
                 if (!selectedTask) return;
                 
-                var taskId = selectedTask.getAttribute('data-task-id');
-                var task = self.tasks.find(function(t) {
+                const taskId = selectedTask.getAttribute('data-task-id');
+                const task = self.tasks.find(function(t) {
                     return t.id === taskId;
                 });
                 
@@ -992,20 +990,20 @@
          * Setup touch drag support
          */
         setupTouchDrag: function() {
-            var self = this;
-            var draggedElement = null;
-            var touchOffset = { x: 0, y: 0 };
-            var dragGhost = null;
+            const self = this;
+            let draggedElement = null;
+            const touchOffset = { x: 0, y: 0 };
+            let dragGhost = null;
             
             // Long press to start drag
-            var longPressTimer = null;
-            var longPressDuration = 500; // 500ms long press
+            let longPressTimer = null;
+            const longPressDuration = 500; // 500ms long press
             
             self.container.addEventListener('touchstart', function(e) {
-                var taskItem = e.target.closest('.task-item');
+                const taskItem = e.target.closest('.task-item');
                 if (!taskItem || !taskItem.getAttribute('draggable')) return;
                 
-                var touch = e.touches[0];
+                const touch = e.touches[0];
                 touchOffset.x = touch.clientX;
                 touchOffset.y = touch.clientY;
                 
@@ -1025,7 +1023,7 @@
                     dragGhost.style.zIndex = '9999';
                     dragGhost.style.opacity = '0.8';
                     dragGhost.style.pointerEvents = 'none';
-                    dragGhost.style.width = taskItem.offsetWidth + 'px';
+                    dragGhost.style.width = `${taskItem.offsetWidth}px`;
                     document.body.appendChild(dragGhost);
                     
                     self.updateDragGhostPosition(touch.clientX, touch.clientY, dragGhost);
@@ -1036,7 +1034,7 @@
                 if (longPressTimer && !draggedElement) {
                     // Cancel long press if moved too much
                     var touch = e.touches[0];
-                    var moveThreshold = 10;
+                    const moveThreshold = 10;
                     if (Math.abs(touch.clientX - touchOffset.x) > moveThreshold ||
                         Math.abs(touch.clientY - touchOffset.y) > moveThreshold) {
                         clearTimeout(longPressTimer);
@@ -1051,11 +1049,11 @@
                     self.updateDragGhostPosition(touch.clientX, touch.clientY, dragGhost);
                     
                     // Find drop target
-                    var dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-                    var section = dropTarget ? dropTarget.closest('.timeframe-section') : null;
+                    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const section = dropTarget ? dropTarget.closest('.timeframe-section') : null;
                     
                     // Update visual feedback
-                    var sections = self.container.querySelectorAll('.timeframe-section');
+                    const sections = self.container.querySelectorAll('.timeframe-section');
                     sections.forEach(function(s) {
                         s.classList.toggle('drag-over', s === section);
                     });
@@ -1067,17 +1065,17 @@
                 longPressTimer = null;
                 
                 if (draggedElement && dragGhost) {
-                    var touch = e.changedTouches[0];
-                    var dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
-                    var section = dropTarget ? dropTarget.closest('.timeframe-section') : null;
+                    const touch = e.changedTouches[0];
+                    const dropTarget = document.elementFromPoint(touch.clientX, touch.clientY);
+                    const section = dropTarget ? dropTarget.closest('.timeframe-section') : null;
                     
                     if (section) {
-                        var taskId = draggedElement.getAttribute('data-task-id');
-                        var task = self.tasks.find(function(t) {
+                        const taskId = draggedElement.getAttribute('data-task-id');
+                        const task = self.tasks.find(function(t) {
                             return t.id === taskId;
                         });
                         
-                        var newTimeframe = section.getAttribute('data-timeframe');
+                        const newTimeframe = section.getAttribute('data-timeframe');
                         if (task && newTimeframe && newTimeframe !== task.timeframe) {
                             self.moveTaskToTimeframe(task, newTimeframe);
                         }
@@ -1093,7 +1091,7 @@
                     dragGhost = null;
                     
                     // Remove all drag-over classes
-                    var sections = self.container.querySelectorAll('.timeframe-section');
+                    const sections = self.container.querySelectorAll('.timeframe-section');
                     sections.forEach(function(s) {
                         s.classList.remove('drag-over');
                     });
@@ -1123,15 +1121,15 @@
         updateDragGhostPosition: function(x, y, ghost) {
             if (!ghost) return;
             
-            ghost.style.left = (x - 20) + 'px';
-            ghost.style.top = (y - 20) + 'px';
+            ghost.style.left = `${x - 20}px`;
+            ghost.style.top = `${y - 20}px`;
         },
         
         /**
          * Move task to different timeframe
          */
         moveTaskToTimeframe: function(task, newTimeframe) {
-            var self = this;
+            const self = this;
             
             if (task.timeframe === newTimeframe) return;
             
@@ -1141,7 +1139,7 @@
             self.saveTasks(function() {
                 self.render();
                 
-                var message = 'Task moved to ' + newTimeframe;
+                const message = `Task moved to ${newTimeframe}`;
                 self.showNotification(message, 'success');
             });
         }

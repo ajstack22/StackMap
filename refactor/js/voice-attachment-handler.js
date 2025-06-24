@@ -6,7 +6,7 @@
 (function() {
   'use strict';
   
-  var VoiceAttachmentHandler = {
+  const VoiceAttachmentHandler = {
     // Core components
     recorder: null,
     waveform: null,
@@ -28,7 +28,7 @@
      * Initialize the voice attachment handler
      */
     init: function() {
-      var self = this;
+      const self = this;
       
       // Check browser support
       if (!VoiceRecorder.isSupported()) {
@@ -57,18 +57,18 @@
      * Create voice recording UI for task
      */
     createRecordingUI: function(container, taskId) {
-      var self = this;
+      const self = this;
       
       // Store current task ID
       this.currentTaskId = taskId;
       
       // Create recording container
-      var recordingDiv = document.createElement('div');
+      const recordingDiv = document.createElement('div');
       recordingDiv.className = 'voice-recording-container';
-      recordingDiv.id = 'voice-recording-' + taskId;
+      recordingDiv.id = `voice-recording-${taskId}`;
       
       // Mode selector
-      var modeSelector = this.createModeSelector();
+      const modeSelector = this.createModeSelector();
       recordingDiv.appendChild(modeSelector);
       
       // Record button
@@ -86,16 +86,16 @@
       recordingDiv.appendChild(this.waveformCanvas);
       
       // Recording info
-      var infoDiv = document.createElement('div');
+      const infoDiv = document.createElement('div');
       infoDiv.className = 'voice-recording-info';
       infoDiv.innerHTML = '<span class="recording-duration">0:00</span><span class="recording-size">0 KB</span>';
       recordingDiv.appendChild(infoDiv);
       
       // Controls
-      var controlsDiv = document.createElement('div');
+      const controlsDiv = document.createElement('div');
       controlsDiv.className = 'voice-recording-controls';
       
-      var pauseBtn = document.createElement('button');
+      const pauseBtn = document.createElement('button');
       pauseBtn.className = 'voice-control-button';
       pauseBtn.textContent = 'Pause';
       pauseBtn.onclick = function() {
@@ -103,7 +103,7 @@
       };
       controlsDiv.appendChild(pauseBtn);
       
-      var saveBtn = document.createElement('button');
+      const saveBtn = document.createElement('button');
       saveBtn.className = 'voice-control-button primary';
       saveBtn.textContent = 'Save';
       saveBtn.onclick = function() {
@@ -111,7 +111,7 @@
       };
       controlsDiv.appendChild(saveBtn);
       
-      var discardBtn = document.createElement('button');
+      const discardBtn = document.createElement('button');
       discardBtn.className = 'voice-control-button danger';
       discardBtn.textContent = 'Discard';
       discardBtn.onclick = function() {
@@ -143,24 +143,24 @@
      * Create mode selector
      */
     createModeSelector: function() {
-      var self = this;
+      const self = this;
       
-      var selector = document.createElement('div');
+      const selector = document.createElement('div');
       selector.className = 'voice-mode-selector';
       
-      var modes = [
+      const modes = [
         { id: 'quickThought', label: 'Quick', duration: '30s' },
         { id: 'taskExplanation', label: 'Task', duration: '45s' },
         { id: 'brainDump', label: 'Brain Dump', duration: '3min' }
       ];
       
       modes.forEach(function(mode) {
-        var button = document.createElement('button');
+        const button = document.createElement('button');
         button.className = 'voice-mode-button';
         if (mode.id === self.currentMode) {
           button.className += ' active';
         }
-        button.innerHTML = mode.label + '<span class="mode-duration">' + mode.duration + '</span>';
+        button.innerHTML = `${mode.label}<span class="mode-duration">${mode.duration}</span>`;
         button.onclick = function() {
           self.selectMode(mode.id);
           // Update active state
@@ -197,8 +197,8 @@
      * Start recording
      */
     startRecording: function() {
-      var self = this;
-      var startTime = performance.now();
+      const self = this;
+      const startTime = performance.now();
       
       // Create recorder with pre-warm
       this.recorder = new VoiceRecorder({
@@ -208,7 +208,7 @@
       
       // Set up event handlers
       this.recorder.on('start', function(data) {
-        console.log('Recording started with latency:', data.latency + 'ms');
+        console.log('Recording started with latency:', `${data.latency}ms`);
         self.onRecordingStarted(data);
       });
       
@@ -229,7 +229,7 @@
       });
       
       this.recorder.on('autostop', function(data) {
-        self.showNotification('Recording auto-stopped: ' + data.reason);
+        self.showNotification(`Recording auto-stopped: ${data.reason}`);
       });
       
       // Start recording
@@ -249,7 +249,7 @@
     pauseRecording: function() {
       if (!this.recorder || !this.isRecording) return;
       
-      var self = this;
+      const self = this;
       this.recorder.pause(function(err) {
         if (!err) {
           self.recordButton.classList.add('paused');
@@ -263,7 +263,7 @@
      * Stop recording
      */
     stopRecording: function(save) {
-      var self = this;
+      const self = this;
       
       if (!this.recorder || !this.isRecording) return;
       
@@ -290,7 +290,7 @@
       this.recordButton.classList.add('recording');
       this.recordButton.innerHTML = '<span class="recording-indicator"></span>Recording...';
       
-      var container = this.recordButton.closest('.voice-recording-container');
+      const container = this.recordButton.closest('.voice-recording-container');
       container.classList.add('active');
       
       // Connect waveform to stream
@@ -312,7 +312,7 @@
      * Handle recording stopped
      */
     onRecordingStopped: function(data) {
-      var self = this;
+      const self = this;
       
       this.isRecording = false;
       
@@ -320,7 +320,7 @@
       this.recordButton.classList.remove('recording', 'paused');
       this.recordButton.innerHTML = '<span class="recording-indicator"></span>Tap to Record';
       
-      var container = this.recordButton.closest('.voice-recording-container');
+      const container = this.recordButton.closest('.voice-recording-container');
       container.classList.remove('active');
       
       // Stop waveform
@@ -349,14 +349,14 @@
      * Save recording
      */
     saveRecording: function(data) {
-      var self = this;
+      const self = this;
       
       if (!this.storage) {
         console.error('Voice storage not initialized');
         return;
       }
       
-      var metadata = {
+      const metadata = {
         duration: data.duration,
         mode: this.currentMode,
         format: data.blob.type
@@ -416,16 +416,16 @@
      * Update recording duration
      */
     updateDuration: function() {
-      var self = this;
+      const self = this;
       
       if (!this.isRecording || !this.recorder) return;
       
-      var duration = this.recorder.getDuration();
-      var minutes = Math.floor(duration / 60);
-      var seconds = duration % 60;
-      var formatted = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+      const duration = this.recorder.getDuration();
+      const minutes = Math.floor(duration / 60);
+      const seconds = duration % 60;
+      const formatted = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
       
-      var durationEl = document.querySelector('.recording-duration');
+      const durationEl = document.querySelector('.recording-duration');
       if (durationEl) {
         durationEl.textContent = formatted;
       }
@@ -440,10 +440,10 @@
      * Update recording info
      */
     updateRecordingInfo: function(data) {
-      var sizeEl = document.querySelector('.recording-size');
+      const sizeEl = document.querySelector('.recording-size');
       if (sizeEl) {
-        var sizeKB = Math.round(data.size / 1024);
-        sizeEl.textContent = sizeKB + ' KB';
+        const sizeKB = Math.round(data.size / 1024);
+        sizeEl.textContent = `${sizeKB} KB`;
       }
     },
     
@@ -453,7 +453,7 @@
     handleRecordingError: function(error) {
       console.error('Recording error:', error);
       
-      var message = 'Recording failed';
+      let message = 'Recording failed';
       if (error.code === 'PERMISSION_DENIED') {
         message = 'Microphone access denied. Please check your browser settings.';
       } else if (error.code === 'NOT_SUPPORTED') {
@@ -472,7 +472,7 @@
      * Show recovery prompt
      */
     showRecoveryPrompt: function(recovery) {
-      var self = this;
+      const self = this;
       
       VoiceRecovery.instance.showRecoveryPrompt(recovery, {
         onKeep: function(data) {
@@ -495,7 +495,7 @@
      */
     announceAudioLevel: function(level) {
       // Create or update live region
-      var announcer = document.getElementById('voice-level-announcer');
+      let announcer = document.getElementById('voice-level-announcer');
       if (!announcer) {
         announcer = document.createElement('div');
         announcer.id = 'voice-level-announcer';
@@ -506,7 +506,7 @@
         document.body.appendChild(announcer);
       }
       
-      announcer.textContent = 'Audio level: ' + level;
+      announcer.textContent = `Audio level: ${level}`;
     },
     
     /**

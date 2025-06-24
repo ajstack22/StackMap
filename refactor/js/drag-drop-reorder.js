@@ -8,7 +8,7 @@
 (function() {
     'use strict';
     
-    var DragDropReorder = {
+    const DragDropReorder = {
         // State
         isDragging: false,
         draggedElement: null,
@@ -60,7 +60,7 @@
          * Setup event listeners using delegation
          */
         setupEventListeners: function() {
-            var self = this;
+            const self = this;
             
             // Store bound functions for removal later
             this.boundHandlers = {
@@ -99,13 +99,13 @@
             if (!window.EditMode || !window.EditMode.isActive()) return;
             
             // Don't start drag on interactive elements
-            var target = e.target;
-            var tagName = target.tagName.toLowerCase();
+            const target = e.target;
+            const tagName = target.tagName.toLowerCase();
             if (tagName === 'button' || tagName === 'input' || tagName === 'a' || tagName === 'select') {
                 return;
             }
             
-            var card = e.target.closest('.task-card');
+            const card = e.target.closest('.task-card');
             if (!card || card.classList.contains('add-task-card')) return;
             
             // Multiple touches - cancel any drag
@@ -125,7 +125,7 @@
             // Add preparing class for visual feedback
             card.classList.add('task-card--preparing-drag');
             
-            var self = this;
+            const self = this;
             
             // Long press timer
             this.touchTimer = setTimeout(function() {
@@ -161,12 +161,12 @@
                 return;
             }
             
-            var touch = e.touches[0];
+            const touch = e.touches[0];
             this.currentTouchX = touch.clientX;
             this.currentTouchY = touch.clientY;
             
-            var deltaX = Math.abs(touch.clientX - this.touchStartX);
-            var deltaY = Math.abs(touch.clientY - this.touchStartY);
+            const deltaX = Math.abs(touch.clientX - this.touchStartX);
+            const deltaY = Math.abs(touch.clientY - this.touchStartY);
             
             // Check if user has moved beyond threshold
             if (!this.hasMoved && (deltaX > this.DRAG_THRESHOLD || deltaY > this.DRAG_THRESHOLD)) {
@@ -213,7 +213,7 @@
             // Skip on mobile devices - they use touch events
             if (this.isMobile) return;
             
-            var card = e.target.closest('.task-card');
+            const card = e.target.closest('.task-card');
             if (!card || card.classList.contains('add-task-card')) return;
             
             // Don't start drag on buttons
@@ -253,7 +253,7 @@
             this.draggedElement = card;
             
             // Get task data
-            var taskId = card.getAttribute('data-task-id');
+            const taskId = card.getAttribute('data-task-id');
             this.draggedTask = this.getTaskById(taskId);
             
             if (!this.draggedTask) {
@@ -278,7 +278,7 @@
             
             // Announce to screen readers
             if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                window.StackMapKeyboardNav.announce('Started dragging ' + this.draggedTask.title);
+                window.StackMapKeyboardNav.announce(`Started dragging ${this.draggedTask.title}`);
             }
             
             // Change cursor for desktop
@@ -293,7 +293,7 @@
         createPlaceholder: function() {
             this.placeholder = document.createElement('div');
             this.placeholder.className = 'drag-placeholder';
-            this.placeholder.style.height = this.draggedElement.offsetHeight + 'px';
+            this.placeholder.style.height = `${this.draggedElement.offsetHeight}px`;
         },
         
         /**
@@ -304,8 +304,8 @@
             
             // Make element follow cursor
             this.draggedElement.style.position = 'fixed';
-            this.draggedElement.style.left = (x - this.draggedElement.offsetWidth / 2) + 'px';
-            this.draggedElement.style.top = (y - 20) + 'px'; // Offset so finger doesn't cover it
+            this.draggedElement.style.left = `${x - this.draggedElement.offsetWidth / 2}px`;
+            this.draggedElement.style.top = `${y - 20}px`; // Offset so finger doesn't cover it
             this.draggedElement.style.zIndex = '9999';
             this.draggedElement.style.pointerEvents = 'none'; // Prevent interference
         },
@@ -314,12 +314,10 @@
          * Update drop target
          */
         updateDropTarget: function(x, y) {
-            var self = this;
+            const self = this;
             
             // Get all task cards
-            var cards = Array.prototype.slice.call(
-                this.container.querySelectorAll('.task-card:not(.task-card--dragging):not(.add-task-card)')
-            );
+            const cards = [...this.container.querySelectorAll('.task-card:not(.task-card--dragging):not(.add-task-card)')];
             
             // Remove old drop indicators
             cards.forEach(function(card) {
@@ -327,14 +325,14 @@
             });
             
             // Find closest card
-            var closestCard = null;
-            var closestDistance = Infinity;
-            var insertBefore = true;
+            let closestCard = null;
+            let closestDistance = Infinity;
+            let insertBefore = true;
             
             cards.forEach(function(card) {
-                var rect = card.getBoundingClientRect();
-                var cardMidY = rect.top + rect.height / 2;
-                var distance = Math.abs(y - cardMidY);
+                const rect = card.getBoundingClientRect();
+                const cardMidY = rect.top + rect.height / 2;
+                const distance = Math.abs(y - cardMidY);
                 
                 if (distance < closestDistance) {
                     closestDistance = distance;
@@ -350,7 +348,7 @@
                     closestCard.parentNode.insertBefore(this.placeholder, closestCard);
                 } else {
                     closestCard.classList.add('task-card--drop-below');
-                    var nextSibling = closestCard.nextSibling;
+                    const nextSibling = closestCard.nextSibling;
                     if (nextSibling) {
                         closestCard.parentNode.insertBefore(this.placeholder, nextSibling);
                     } else {
@@ -364,13 +362,13 @@
          * Check and perform auto-scroll
          */
         checkAutoScroll: function(y) {
-            var self = this;
-            var scrollContainer = this.getScrollContainer();
+            const self = this;
+            const scrollContainer = this.getScrollContainer();
             if (!scrollContainer) return;
             
-            var rect = scrollContainer.getBoundingClientRect();
-            var shouldScroll = false;
-            var scrollDirection = 0;
+            const rect = scrollContainer.getBoundingClientRect();
+            let shouldScroll = false;
+            let scrollDirection = 0;
             
             // Near top
             if (y < rect.top + this.AUTO_SCROLL_ZONE) {
@@ -434,7 +432,7 @@
             
             // Announce completion
             if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                window.StackMapKeyboardNav.announce('Moved ' + this.draggedTask.title);
+                window.StackMapKeyboardNav.announce(`Moved ${this.draggedTask.title}`);
             }
             
             // Cleanup
@@ -501,8 +499,8 @@
             }
             
             // Remove all drag-related classes
-            var cards = this.container.querySelectorAll('.task-card--drop-above, .task-card--drop-below, .task-card--preparing-drag, .task-card--ready-to-drag');
-            Array.prototype.forEach.call(cards, function(card) {
+            const cards = this.container.querySelectorAll('.task-card--drop-above, .task-card--drop-below, .task-card--preparing-drag, .task-card--ready-to-drag');
+            [...cards].forEach(function(card) {
                 card.classList.remove('task-card--drop-above', 'task-card--drop-below', 'task-card--preparing-drag', 'task-card--ready-to-drag');
             });
         },
@@ -511,14 +509,14 @@
          * Save the new task order
          */
         saveNewOrder: function() {
-            var self = this;
-            var cards = this.container.querySelectorAll('.task-card:not(.add-task-card)');
-            var tasks = [];
+            const self = this;
+            const cards = this.container.querySelectorAll('.task-card:not(.add-task-card)');
+            const tasks = [];
             
             // Build new order
-            Array.prototype.forEach.call(cards, function(card, index) {
-                var taskId = card.getAttribute('data-task-id');
-                var task = self.getTaskById(taskId);
+            [...cards].forEach(function(card, index) {
+                const taskId = card.getAttribute('data-task-id');
+                const task = self.getTaskById(taskId);
                 if (task) {
                     // Higher order values appear first, multiply by 10 to avoid duplicates
                     task.order = (cards.length - index) * 10;
@@ -539,8 +537,8 @@
         getTaskById: function(taskId) {
             if (!window.TaskDisplay || !window.TaskDisplay.tasks) return null;
             
-            var tasks = window.TaskDisplay.tasks;
-            for (var i = 0; i < tasks.length; i++) {
+            const tasks = window.TaskDisplay.tasks;
+            for (let i = 0; i < tasks.length; i++) {
                 if (tasks[i].id === taskId) {
                     return tasks[i];
                 }
@@ -553,11 +551,11 @@
          */
         getScrollContainer: function() {
             // Check for virtual scroll container first
-            var virtualContainer = this.container.querySelector('.task-scroll-area');
+            const virtualContainer = this.container.querySelector('.task-scroll-area');
             if (virtualContainer) return virtualContainer;
             
             // Check for clusterize scroll area
-            var clusterizeScroll = this.container.querySelector('.clusterize-scroll');
+            const clusterizeScroll = this.container.querySelector('.clusterize-scroll');
             if (clusterizeScroll) return clusterizeScroll;
             
             // Fallback to main container

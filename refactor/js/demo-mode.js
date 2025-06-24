@@ -313,10 +313,13 @@
                 }
                 
                 var modal = window.Modal.show({
-                title: 'Ready to Start?',
-                content: self.createExitContent(),
-                className: 'demo-exit-modal'
-            });
+                    title: 'Ready to Start?',
+                    content: self.createExitContent(),
+                    className: 'demo-exit-modal'
+                });
+            } catch (error) {
+                console.error('DemoMode: Error showing exit modal', error);
+            }
         },
         
         createExitContent: function() {

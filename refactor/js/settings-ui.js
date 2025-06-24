@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var SettingsUI = {
+    const SettingsUI = {
         initialized: false,
         container: null,
         
@@ -17,7 +17,7 @@
             // Wait for dependencies
             if (!window.StackMapSettingsManager) {
                 console.warn('SettingsManager not found, deferring initialization');
-                var self = this;
+                const self = this;
                 setTimeout(function() {
                     self.init();
                 }, 100);
@@ -32,11 +32,11 @@
         
         initSettingsSection: function() {
             // Check if we're on the settings page
-            var preferencesSection = document.querySelector('#settings-view .content section:first-child');
+            const preferencesSection = document.querySelector('#settings-view .content section:first-child');
             if (!preferencesSection || !preferencesSection.querySelector('h2')) return;
             
             // Only initialize if the section contains "Preferences"
-            var heading = preferencesSection.querySelector('h2');
+            const heading = preferencesSection.querySelector('h2');
             if (heading && heading.textContent.includes('Preferences')) {
                 this.container = preferencesSection;
                 this.render();
@@ -46,7 +46,7 @@
         render: function() {
             if (!this.container) return;
             
-            var settings = window.StackMapSettingsManager.getAll();
+            const settings = window.StackMapSettingsManager.getAll();
             
             // Update the content of the Preferences section
             this.container.innerHTML = `
@@ -200,10 +200,10 @@
         },
         
         addStyles: function() {
-            var styleId = 'settings-ui-styles';
+            const styleId = 'settings-ui-styles';
             if (document.getElementById(styleId)) return;
             
-            var style = document.createElement('style');
+            const style = document.createElement('style');
             style.id = styleId;
             style.textContent = `
                 .settings-group {
@@ -356,19 +356,19 @@
         },
         
         attachHandlers: function() {
-            var self = this;
+            const self = this;
             
             // Safe mode toggle
-            var safeModeToggle = document.getElementById('safe-mode-toggle');
+            const safeModeToggle = document.getElementById('safe-mode-toggle');
             if (safeModeToggle) {
                 safeModeToggle.addEventListener('change', function() {
-                    var isEnabling = this.checked;
-                    var isCurrentlySafeMode = window.StackMapSafeMode;
+                    const isEnabling = this.checked;
+                    const isCurrentlySafeMode = window.StackMapSafeMode;
                     
                     // Check if we need to change the URL
                     if ((isEnabling && !isCurrentlySafeMode) || (!isEnabling && isCurrentlySafeMode)) {
                         // Show confirmation dialog
-                        var message = isEnabling ? 
+                        const message = isEnabling ? 
                             'Enabling Safe Mode will reload the page with a simplified interface. Continue?' :
                             'Disabling Safe Mode will reload the page. Continue?';
                         
@@ -377,7 +377,7 @@
                             window.StackMapSettingsManager.set('safeModeEnabled', isEnabling);
                             
                             // Redirect with appropriate URL
-                            var url = new URL(window.location.href);
+                            const url = new URL(window.location.href);
                             if (isEnabling) {
                                 url.searchParams.set('safe', 'true');
                                 url.searchParams.set('persist', 'true');
@@ -398,7 +398,7 @@
             }
             
             // Auto-save frequency
-            var autoSaveSelect = document.getElementById('auto-save-select');
+            const autoSaveSelect = document.getElementById('auto-save-select');
             if (autoSaveSelect) {
                 autoSaveSelect.addEventListener('change', function() {
                     window.StackMapSettingsManager.set('autoSaveInterval', parseInt(this.value, 10));
@@ -406,7 +406,7 @@
             }
             
             // Confirm delete toggle
-            var confirmDeleteToggle = document.getElementById('confirm-delete-toggle');
+            const confirmDeleteToggle = document.getElementById('confirm-delete-toggle');
             if (confirmDeleteToggle) {
                 confirmDeleteToggle.addEventListener('change', function() {
                     window.StackMapSettingsManager.set('confirmDelete', this.checked);
@@ -414,7 +414,7 @@
             }
             
             // Default view
-            var defaultViewSelect = document.getElementById('default-view-select');
+            const defaultViewSelect = document.getElementById('default-view-select');
             if (defaultViewSelect) {
                 defaultViewSelect.addEventListener('change', function() {
                     window.StackMapSettingsManager.set('defaultView', this.value);
@@ -422,7 +422,7 @@
             }
             
             // Font size
-            var fontSizeSelect = document.getElementById('font-size-select');
+            const fontSizeSelect = document.getElementById('font-size-select');
             if (fontSizeSelect) {
                 fontSizeSelect.addEventListener('change', function() {
                     window.StackMapSettingsManager.set('fontSize', this.value);
@@ -430,7 +430,7 @@
             }
             
             // Touch target size
-            var touchTargetSelect = document.getElementById('touch-target-select');
+            const touchTargetSelect = document.getElementById('touch-target-select');
             if (touchTargetSelect) {
                 touchTargetSelect.addEventListener('change', function() {
                     window.StackMapSettingsManager.set('touchTargetSize', this.value);
@@ -438,7 +438,7 @@
             }
             
             // Keyboard hints
-            var keyboardHintsToggle = document.getElementById('keyboard-hints-toggle');
+            const keyboardHintsToggle = document.getElementById('keyboard-hints-toggle');
             if (keyboardHintsToggle) {
                 keyboardHintsToggle.addEventListener('change', function() {
                     window.StackMapSettingsManager.set('keyboardHints', this.checked);
@@ -446,7 +446,7 @@
             }
             
             // Screen reader verbosity
-            var screenReaderSelect = document.getElementById('screen-reader-select');
+            const screenReaderSelect = document.getElementById('screen-reader-select');
             if (screenReaderSelect) {
                 screenReaderSelect.addEventListener('change', function() {
                     window.StackMapSettingsManager.set('screenReaderVerbosity', this.value);
@@ -455,7 +455,7 @@
             }
             
             // Reset settings button
-            var resetButton = document.getElementById('reset-settings-btn');
+            const resetButton = document.getElementById('reset-settings-btn');
             if (resetButton) {
                 resetButton.addEventListener('click', function() {
                     if (window.StackMapSettingsManager.get('confirmDelete')) {

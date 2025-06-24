@@ -24,14 +24,17 @@ class UndoUI {
             return;
         }
         
-        // Create container
-        this.container = document.createElement('div');
-        this.container.id = 'undo-container';
-        this.container.className = 'undo-container';
-        this.container.setAttribute('aria-live', 'polite');
-        this.container.setAttribute('aria-label', 'Undo notifications');
-        this.container.setAttribute('role', 'region');
-        document.body.appendChild(this.container);
+        // Use existing container from HTML or create one
+        this.container = document.getElementById('undo-toast-container');
+        if (!this.container) {
+            this.container = document.createElement('div');
+            this.container.id = 'undo-toast-container';
+            this.container.className = 'undo-toast-container';
+            this.container.setAttribute('aria-live', 'polite');
+            this.container.setAttribute('aria-label', 'Undo notifications');
+            this.container.setAttribute('role', 'region');
+            document.body.appendChild(this.container);
+        }
         
         // Create screen reader announcer
         const announcer = document.createElement('div');
@@ -51,6 +54,12 @@ class UndoUI {
      * Show undo toast notification
      */
     showUndoToast(command) {
+        // Ensure UI is initialized
+        if (!this.container) {
+            console.warn('[UndoUI] Not initialized, initializing now...');
+            this.init();
+        }
+        
         const isGoldenWindow = (Date.now() - command.timestamp) < window.UndoManager.goldenWindow;
         
         // Create toast element

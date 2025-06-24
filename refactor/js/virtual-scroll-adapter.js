@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var VirtualScrollAdapter = {
+    const VirtualScrollAdapter = {
         clusterize: null,
         container: null,
         scrollArea: null,
@@ -30,9 +30,9 @@
          */
         shouldEnable: function(taskCount) {
             // Check URL parameter for feature flag
-            var urlParams = new URLSearchParams(window.location.search);
-            var forceEnable = urlParams.get('virtual-scroll') === 'true';
-            var forceDisable = urlParams.get('virtual-scroll') === 'false';
+            const urlParams = new URLSearchParams(window.location.search);
+            const forceEnable = urlParams.get('virtual-scroll') === 'true';
+            const forceDisable = urlParams.get('virtual-scroll') === 'false';
             
             if (forceDisable) return false;
             if (forceEnable) return true;
@@ -45,7 +45,7 @@
          * Initialize virtual scrolling for task container
          */
         init: function(container, tasks) {
-            var self = this;
+            const self = this;
             
             // Check if we should enable
             if (!self.shouldEnable(tasks.length)) {
@@ -69,7 +69,7 @@
             self.createScrollStructure();
             
             // Generate task rows
-            var rows = self.generateTaskRows(tasks);
+            const rows = self.generateTaskRows(tasks);
             
             // Initialize Clusterize
             try {
@@ -97,7 +97,7 @@
                 // Update accessibility
                 self.updateAccessibility();
                 
-                console.log('VirtualScrollAdapter: Initialized with ' + tasks.length + ' tasks');
+                console.log(`VirtualScrollAdapter: Initialized with ${tasks.length} tasks`);
                 return true;
                 
             } catch (error) {
@@ -111,7 +111,7 @@
          * Create the scroll structure required by Clusterize
          */
         createScrollStructure: function() {
-            var self = this;
+            const self = this;
             
             // Clear container
             self.container.innerHTML = '';
@@ -140,7 +140,7 @@
             self.container.appendChild(self.scrollArea);
             
             // Add scroll progress indicator
-            var progressBar = document.createElement('div');
+            const progressBar = document.createElement('div');
             progressBar.className = 'scroll-progress-bar';
             progressBar.style.cssText = 'position: absolute; top: 0; left: 0; height: 2px; background: #4a90e2; width: 0%; transition: width 0.1s ease; z-index: 10;';
             self.container.insertBefore(progressBar, self.scrollArea);
@@ -150,12 +150,12 @@
          * Generate HTML rows for tasks
          */
         generateTaskRows: function(tasks) {
-            var self = this;
-            var rows = [];
+            const self = this;
+            const rows = [];
             
-            for (var i = 0; i < tasks.length; i++) {
-                var task = tasks[i];
-                var row = self.taskToHTML(task);
+            for (let i = 0; i < tasks.length; i++) {
+                const task = tasks[i];
+                const row = self.taskToHTML(task);
                 rows.push(row);
                 
                 // Store task in ID map
@@ -171,18 +171,18 @@
          * Convert task object to HTML string
          */
         taskToHTML: function(task) {
-            var self = this;
-            var isEditMode = window.EditMode && window.EditMode.isActive();
-            var touchTargetSize = window.StackMapSafeMode ? 60 : 44;
+            const self = this;
+            const isEditMode = window.EditMode && window.EditMode.isActive();
+            const touchTargetSize = window.StackMapSafeMode ? 60 : 44;
             
             // Build HTML string (matching task-display.js structure)
-            var html = '<div class="task-item" role="listitem" data-task-id="' + task.id + '" ';
+            let html = `<div class="task-item" role="listitem" data-task-id="${task.id}" `;
             html += 'style="background: #2a2a2a; border-radius: 8px; padding: 16px; margin-bottom: 12px; ';
-            html += 'min-height: ' + touchTargetSize + 'px; display: flex; align-items: center; gap: 12px;">';
+            html += `min-height: ${touchTargetSize}px; display: flex; align-items: center; gap: 12px;">`;
             
             // Checkbox
             html += '<input type="checkbox" class="task-checkbox" ';
-            html += 'aria-label="Mark task as ' + (task.completed ? 'incomplete' : 'complete') + '" ';
+            html += `aria-label="Mark task as ${task.completed ? 'incomplete' : 'complete'}" `;
             html += task.completed ? 'checked ' : '';
             html += 'style="width: 24px; height: 24px; flex-shrink: 0; cursor: pointer;">';
             
@@ -192,7 +192,7 @@
             
             // Icon
             if (task.icon) {
-                html += '<span class="task-icon" style="font-size: 20px; flex-shrink: 0;">' + task.icon + '</span>';
+                html += `<span class="task-icon" style="font-size: 20px; flex-shrink: 0;">${task.icon}</span>`;
             }
             
             // Title
@@ -223,13 +223,13 @@
                 
                 // Edit button
                 html += '<button class="task-edit" aria-label="Edit task" ';
-                html += 'style="width: ' + touchTargetSize + 'px; height: ' + touchTargetSize + 'px; ';
+                html += `style="width: ${touchTargetSize}px; height: ${touchTargetSize}px; `;
                 html += 'background: #444; border: none; border-radius: 50%; color: #fff; font-size: 20px; ';
                 html += 'cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">✏️</button>';
                 
                 // Delete button
                 html += '<button class="task-delete" aria-label="Delete task" ';
-                html += 'style="width: ' + touchTargetSize + 'px; height: ' + touchTargetSize + 'px; ';
+                html += `style="width: ${touchTargetSize}px; height: ${touchTargetSize}px; `;
                 html += 'background: #444; border: none; border-radius: 50%; color: #fff; font-size: 24px; ';
                 html += 'cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center;">×</button>';
                 
@@ -245,7 +245,7 @@
          * Escape HTML for safe rendering
          */
         escapeHtml: function(text) {
-            var div = document.createElement('div');
+            const div = document.createElement('div');
             div.textContent = text;
             return div.innerHTML;
         },
@@ -254,7 +254,7 @@
          * Setup event delegation for recycled elements
          */
         setupEventDelegation: function() {
-            var self = this;
+            const self = this;
             
             // Remove any existing listeners
             if (self.contentArea._delegatedClick) {
@@ -263,14 +263,14 @@
             
             // Create delegated click handler
             self.contentArea._delegatedClick = function(event) {
-                var target = event.target;
+                const target = event.target;
                 
                 // Find task element
-                var taskElement = target.closest('.task-item');
+                const taskElement = target.closest('.task-item');
                 if (!taskElement) return;
                 
-                var taskId = taskElement.getAttribute('data-task-id');
-                var task = self.taskIdMap[taskId];
+                const taskId = taskElement.getAttribute('data-task-id');
+                const task = self.taskIdMap[taskId];
                 if (!task) return;
                 
                 // Handle checkbox
@@ -320,7 +320,7 @@
          * Handle cluster change
          */
         onClusterChanged: function() {
-            var self = this;
+            const self = this;
             
             // Notify keyboard navigation before cluster change
             if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.beforeVirtualUpdate) {
@@ -348,9 +348,9 @@
          * Update scroll progress indicator
          */
         updateScrollProgress: function(progress) {
-            var progressBar = this.container.querySelector('.scroll-progress-bar');
+            const progressBar = this.container.querySelector('.scroll-progress-bar');
             if (progressBar) {
-                progressBar.style.width = (progress * 100) + '%';
+                progressBar.style.width = `${progress * 100}%`;
             }
         },
         
@@ -358,26 +358,26 @@
          * Update accessibility attributes
          */
         updateAccessibility: function() {
-            var self = this;
-            var visibleTasks = self.contentArea.querySelectorAll('.task-item');
-            var totalTasks = Object.keys(self.taskIdMap).length;
+            const self = this;
+            const visibleTasks = self.contentArea.querySelectorAll('.task-item');
+            const totalTasks = Object.keys(self.taskIdMap).length;
             
             // Update ARIA attributes on visible items
-            for (var i = 0; i < visibleTasks.length; i++) {
-                var taskElement = visibleTasks[i];
-                var taskId = taskElement.getAttribute('data-task-id');
+            for (let i = 0; i < visibleTasks.length; i++) {
+                const taskElement = visibleTasks[i];
+                const taskId = taskElement.getAttribute('data-task-id');
                 
                 // Use optimized index map for position lookup
-                var position = self.taskIndexMap[taskId] || 0;
+                const position = self.taskIndexMap[taskId] || 0;
                 
                 taskElement.setAttribute('aria-posinset', position);
                 taskElement.setAttribute('aria-setsize', totalTasks);
             }
             
             // Update live region with current position
-            var firstVisible = visibleTasks[0];
+            const firstVisible = visibleTasks[0];
             if (firstVisible) {
-                var firstPos = firstVisible.getAttribute('aria-posinset');
+                const firstPos = firstVisible.getAttribute('aria-posinset');
                 self.announcePosition(firstPos, totalTasks);
             }
         },
@@ -386,7 +386,7 @@
          * Announce current position for screen readers
          */
         announcePosition: function(position, total) {
-            var liveRegion = document.getElementById('virtual-scroll-live-region');
+            let liveRegion = document.getElementById('virtual-scroll-live-region');
             if (!liveRegion) {
                 liveRegion = document.createElement('div');
                 liveRegion.id = 'virtual-scroll-live-region';
@@ -402,7 +402,7 @@
             }
             
             this._announceTimer = setTimeout(function() {
-                liveRegion.textContent = 'Showing tasks starting from ' + position + ' of ' + total;
+                liveRegion.textContent = `Showing tasks starting from ${position} of ${total}`;
             }, 300);
         },
         
@@ -410,7 +410,7 @@
          * Update with new tasks
          */
         update: function(tasks) {
-            var self = this;
+            const self = this;
             
             if (!self.isEnabled || !self.clusterize) {
                 return false;
@@ -426,7 +426,7 @@
             self.taskIndexMap = {};
             
             // Generate new rows
-            var rows = self.generateTaskRows(tasks);
+            const rows = self.generateTaskRows(tasks);
             
             // Update Clusterize
             self.clusterize.update(rows);
@@ -448,7 +448,7 @@
          * Destroy virtual scrolling and cleanup
          */
         destroy: function() {
-            var self = this;
+            const self = this;
             
             // Destroy Clusterize instance
             if (self.clusterize) {

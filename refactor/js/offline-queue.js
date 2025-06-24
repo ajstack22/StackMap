@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var OfflineQueue = {
+    const OfflineQueue = {
         queue: [],
         isOnline: navigator.onLine,
         syncInProgress: false,
@@ -18,7 +18,7 @@
          * Initialize offline queue
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Listen for online/offline events
             window.addEventListener('online', function() {
@@ -54,10 +54,10 @@
          * Add operation to queue
          */
         queueOperation: function(operation) {
-            var self = this;
+            const self = this;
             
-            var queueItem = {
-                id: 'op_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            const queueItem = {
+                id: `op_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 type: operation.type,
                 method: operation.method,
                 endpoint: operation.endpoint,
@@ -85,7 +85,7 @@
          * Process queued operations
          */
         processQueue: function() {
-            var self = this;
+            const self = this;
             
             if (!self.isOnline || self.syncInProgress || self.queue.length === 0) {
                 return;
@@ -94,9 +94,9 @@
             self.syncInProgress = true;
             self.showSyncProgress(true);
             
-            var processed = 0;
-            var failed = 0;
-            var total = self.queue.length;
+            let processed = 0;
+            let failed = 0;
+            const total = self.queue.length;
             
             // Process each item
             self.queue.forEach(function(item) {
@@ -128,7 +128,7 @@
          * Process individual queue item
          */
         processQueueItem: function(item) {
-            var self = this;
+            const self = this;
             
             return new Promise(function(resolve, reject) {
                 // Map operation type to actual function
@@ -164,14 +164,14 @@
             // For now, just save to SQLite
             return new Promise(function(resolve, reject) {
                 if (window.TaskSQLite && window.TaskSQLite.isReady) {
-                    window.TaskSQLite.setItem('task_' + item.data.id, item.data, function(error) {
+                    window.TaskSQLite.setItem(`task_${item.data.id}`, item.data, function(error) {
                         if (error) reject(error);
                         else resolve();
                     });
                 } else {
                     // Fallback to localStorage
                     try {
-                        localStorage.setItem('stackmap-task_' + item.data.id, JSON.stringify(item.data));
+                        localStorage.setItem(`stackmap-task_${item.data.id}`, JSON.stringify(item.data));
                         resolve();
                     } catch(e) {
                         reject(e);
@@ -186,13 +186,13 @@
         syncDeleteTask: function(item) {
             return new Promise(function(resolve, reject) {
                 if (window.TaskSQLite && window.TaskSQLite.isReady) {
-                    window.TaskSQLite.removeItem('task_' + item.data.id, function(error) {
+                    window.TaskSQLite.removeItem(`task_${item.data.id}`, function(error) {
                         if (error) reject(error);
                         else resolve();
                     });
                 } else {
                     try {
-                        localStorage.removeItem('stackmap-task_' + item.data.id);
+                        localStorage.removeItem(`stackmap-task_${item.data.id}`);
                         resolve();
                     } catch(e) {
                         reject(e);
@@ -242,7 +242,7 @@
                 body: JSON.stringify(item.data)
             }).then(function(response) {
                 if (!response.ok) {
-                    throw new Error('Sync failed: ' + response.status);
+                    throw new Error(`Sync failed: ${response.status}`);
                 }
                 return response.json();
             });
@@ -252,7 +252,7 @@
          * Handle queue processing completion
          */
         onQueueProcessed: function(processed, failed) {
-            var self = this;
+            const self = this;
             
             self.syncInProgress = false;
             self.showSyncProgress(false);
@@ -266,9 +266,9 @@
             
             // Show summary
             if (processed > 0 || failed > 0) {
-                var message = 'Sync complete: ' + processed + ' synced';
+                let message = `Sync complete: ${processed} synced`;
                 if (failed > 0) {
-                    message += ', ' + failed + ' failed';
+                    message += `, ${failed} failed`;
                 }
                 self.showStatus(message, failed > 0 ? 'warning' : 'success');
             }
@@ -280,7 +280,7 @@
          * Persist queue to storage
          */
         persistQueue: function() {
-            var self = this;
+            const self = this;
             
             try {
                 localStorage.setItem('stackmap-offline-queue', JSON.stringify(self.queue));
@@ -293,10 +293,10 @@
          * Load queue from storage
          */
         loadQueue: function() {
-            var self = this;
+            const self = this;
             
             try {
-                var stored = localStorage.getItem('stackmap-offline-queue');
+                const stored = localStorage.getItem('stackmap-offline-queue');
                 if (stored) {
                     self.queue = JSON.parse(stored);
                     self.updateQueueIndicator();
@@ -311,8 +311,8 @@
          * Show queue indicator
          */
         showQueueIndicator: function() {
-            var self = this;
-            var indicator = document.getElementById('offline-queue-indicator');
+            const self = this;
+            let indicator = document.getElementById('offline-queue-indicator');
             
             if (!indicator) {
                 indicator = document.createElement('div');
@@ -332,12 +332,12 @@
          * Update queue indicator
          */
         updateQueueIndicator: function() {
-            var self = this;
-            var indicator = document.getElementById('offline-queue-indicator');
+            const self = this;
+            const indicator = document.getElementById('offline-queue-indicator');
             
             if (!indicator) return;
             
-            var pendingCount = self.queue.filter(function(item) {
+            const pendingCount = self.queue.filter(function(item) {
                 return item.status === 'pending';
             }).length;
             
@@ -345,8 +345,7 @@
                 indicator.style.display = 'none';
             } else {
                 indicator.style.display = 'flex';
-                indicator.innerHTML = '<span class="spinner"></span>' +
-                    pendingCount + ' waiting to sync';
+                indicator.innerHTML = `<span class="spinner"></span>${pendingCount} waiting to sync`;
             }
         },
         
@@ -354,7 +353,7 @@
          * Show sync progress
          */
         showSyncProgress: function(show) {
-            var progress = document.getElementById('sync-progress');
+            let progress = document.getElementById('sync-progress');
             
             if (!progress) {
                 progress = document.createElement('div');
@@ -373,10 +372,10 @@
          * Update sync progress
          */
         updateProgress: function(processed, failed, total) {
-            var progress = document.getElementById('sync-progress');
+            const progress = document.getElementById('sync-progress');
             if (progress) {
-                var percent = ((processed + failed) / total) * 100;
-                progress.style.transform = 'scaleX(' + (percent / 100) + ')';
+                const percent = ((processed + failed) / total) * 100;
+                progress.style.transform = `scaleX(${percent / 100})`;
             }
         },
         
@@ -395,7 +394,7 @@
          * Handle service worker messages
          */
         handleServiceWorkerMessage: function(data) {
-            var self = this;
+            const self = this;
             
             switch(data.type) {
                 case 'queued':
@@ -413,7 +412,7 @@
          * Get queue status
          */
         getStatus: function() {
-            var self = this;
+            const self = this;
             
             return {
                 isOnline: self.isOnline,

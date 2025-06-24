@@ -10,9 +10,9 @@
     'use strict';
     
     // Check if running in Capacitor environment
-    var isCapacitor = window.Capacitor && window.Capacitor.isNativePlatform();
+    const isCapacitor = window.Capacitor && window.Capacitor.isNativePlatform();
     
-    var TaskSQLite = {
+    const TaskSQLite = {
         db: null,
         dbName: 'stackmap_tasks.db',
         dbVersion: 1,
@@ -25,7 +25,7 @@
          * Initialize SQLite database
          */
         init: function(callback) {
-            var self = this;
+            const self = this;
             
             // Skip if not in Capacitor environment
             if (!isCapacitor) {
@@ -88,7 +88,7 @@
          * Create database connection
          */
         createConnection: function(callback) {
-            var self = this;
+            const self = this;
             
             try {
                 // Create connection with correct parameters
@@ -121,7 +121,7 @@
          * Create database tables
          */
         createTables: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.db) {
                 if (callback) callback(false, 'No database connection');
@@ -129,7 +129,7 @@
             }
             
             // For Phase 1, we only need the storage table for key-value pairs
-            var createStorageTable = 
+            const createStorageTable = 
                 'CREATE TABLE IF NOT EXISTS storage (' +
                 '  key TEXT PRIMARY KEY,' +
                 '  value TEXT NOT NULL,' +
@@ -167,7 +167,7 @@
          * Execute operation with queue management
          */
         _executeOperation: function(operation) {
-            var self = this;
+            const self = this;
             
             if (self.isBusy) {
                 // Queue the operation
@@ -180,7 +180,7 @@
                 self.isBusy = false;
                 // Process next queued operation
                 if (self.operationQueue.length > 0) {
-                    var next = self.operationQueue.shift();
+                    const next = self.operationQueue.shift();
                     self._executeOperation(next);
                 }
             });
@@ -190,20 +190,20 @@
          * Create indexes for performance
          */
         createIndexes: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.db) {
                 if (callback) callback(false, 'No database connection');
                 return;
             }
             
-            var indexes = [
+            const indexes = [
                 'CREATE INDEX IF NOT EXISTS idx_storage_updated ON storage(updated_at)',
                 'CREATE INDEX IF NOT EXISTS idx_storage_key ON storage(key)'
             ];
             
-            var completed = 0;
-            var errors = [];
+            let completed = 0;
+            const errors = [];
             
             indexes.forEach(function(indexSql) {
                 self.db.execute(indexSql, [], false).then(function() {
@@ -227,7 +227,7 @@
          * Optimize database (VACUUM, ANALYZE)
          */
         optimizeDatabase: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(false, 'Database not ready');
@@ -256,14 +256,14 @@
          * Set pragma values for performance
          */
         setPragmas: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.db) {
                 if (callback) callback(false, 'No database connection');
                 return;
             }
             
-            var pragmas = [
+            const pragmas = [
                 'PRAGMA cache_size = -2048',      // 2MB cache
                 'PRAGMA temp_store = MEMORY',     // Use memory for temp storage
                 'PRAGMA journal_mode = WAL',      // Write-ahead logging
@@ -271,7 +271,7 @@
                 'PRAGMA mmap_size = 30000000'     // 30MB memory map
             ];
             
-            var completed = 0;
+            let completed = 0;
             pragmas.forEach(function(pragma) {
                 self.db.execute(pragma, [], false).then(function() {
                     completed++;
@@ -293,7 +293,7 @@
          * Create a new task
          */
         createTask: function(task, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -301,23 +301,23 @@
             }
             
             // Prepare task data
-            var title = task.title || 'Untitled';
-            var description = task.description || '';
-            var priority = task.priority || 1;
-            var parentId = task.parentId || null;
-            var tags = task.tags ? JSON.stringify(task.tags) : '[]';
-            var metadata = task.metadata ? JSON.stringify(task.metadata) : '{}';
+            const title = task.title || 'Untitled';
+            const description = task.description || '';
+            const priority = task.priority || 1;
+            const parentId = task.parentId || null;
+            const tags = task.tags ? JSON.stringify(task.tags) : '[]';
+            const metadata = task.metadata ? JSON.stringify(task.metadata) : '{}';
             
-            var statement = 'INSERT INTO tasks (title, description, priority, parent_id, tags, metadata) ' +
+            const statement = 'INSERT INTO tasks (title, description, priority, parent_id, tags, metadata) ' +
                            'VALUES (?, ?, ?, ?, ?, ?)';
-            var values = [title, description, priority, parentId, tags, metadata];
+            const values = [title, description, priority, parentId, tags, metadata];
             
             self.sqlite.run({
                 database: self.dbName,
                 statement: statement,
                 values: values
             }).then(function(result) {
-                var taskId = result.changes.lastId;
+                const taskId = result.changes.lastId;
                 if (callback) callback({ id: taskId }, null);
             }).catch(function(error) {
                 console.error('SQLite: Failed to create task', error);
@@ -329,7 +329,7 @@
          * Get tasks with pagination
          */
         getTasks: function(options, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback([], null);
@@ -337,12 +337,12 @@
             }
             
             options = options || {};
-            var limit = options.limit || 50;
-            var offset = options.offset || 0;
-            var status = options.status; // 'pending', 'completed', or null for all
+            const limit = options.limit || 50;
+            const offset = options.offset || 0;
+            const status = options.status; // 'pending', 'completed', or null for all
             
-            var statement = 'SELECT * FROM tasks';
-            var values = [];
+            let statement = 'SELECT * FROM tasks';
+            const values = [];
             
             if (status === 'pending') {
                 statement += ' WHERE completed = 0';
@@ -358,7 +358,7 @@
                 statement: statement,
                 values: values
             }).then(function(result) {
-                var tasks = (result.values || []).map(function(row) {
+                const tasks = (result.values || []).map(function(row) {
                     return self.parseTaskRow(row);
                 });
                 if (callback) callback(tasks, null);
@@ -372,7 +372,7 @@
          * Get a single task with attachments
          */
         getTask: function(taskId, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -390,7 +390,7 @@
                     return;
                 }
                 
-                var task = self.parseTaskRow(result.values[0]);
+                const task = self.parseTaskRow(result.values[0]);
                 
                 // Get attachments
                 return self.sqlite.query({
@@ -411,15 +411,15 @@
          * Update a task
          */
         updateTask: function(taskId, updates, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(false, new Error('Database not ready'));
                 return;
             }
             
-            var fields = [];
-            var values = [];
+            const fields = [];
+            const values = [];
             
             // Build dynamic update statement
             if (updates.title !== undefined) {
@@ -459,14 +459,14 @@
             }
             
             values.push(taskId);
-            var statement = 'UPDATE tasks SET ' + fields.join(', ') + ' WHERE id = ?';
+            const statement = `UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`;
             
             self.sqlite.run({
                 database: self.dbName,
                 statement: statement,
                 values: values
             }).then(function(result) {
-                var success = result.changes.changes > 0;
+                const success = result.changes.changes > 0;
                 if (callback) callback(success, null);
             }).catch(function(error) {
                 console.error('SQLite: Failed to update task', error);
@@ -478,7 +478,7 @@
          * Delete a task
          */
         deleteTask: function(taskId, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(false, new Error('Database not ready'));
@@ -490,7 +490,7 @@
                 statement: 'DELETE FROM tasks WHERE id = ?',
                 values: [taskId]
             }).then(function(result) {
-                var success = result.changes.changes > 0;
+                const success = result.changes.changes > 0;
                 if (callback) callback(success, null);
             }).catch(function(error) {
                 console.error('SQLite: Failed to delete task', error);
@@ -502,14 +502,14 @@
          * Search tasks by text
          */
         searchTasks: function(query, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback([], null);
                 return;
             }
             
-            var searchPattern = '%' + query + '%';
+            const searchPattern = `%${query}%`;
             
             self.sqlite.query({
                 database: self.dbName,
@@ -517,7 +517,7 @@
                           'ORDER BY completed ASC, created_at DESC LIMIT 50',
                 values: [searchPattern, searchPattern]
             }).then(function(result) {
-                var tasks = (result.values || []).map(function(row) {
+                const tasks = (result.values || []).map(function(row) {
                     return self.parseTaskRow(row);
                 });
                 if (callback) callback(tasks, null);
@@ -531,7 +531,7 @@
          * Add image attachment to a task
          */
         addImageAttachment: function(taskId, imageData, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -540,11 +540,11 @@
             
             // Import Filesystem plugin
             Capacitor.Plugins.Filesystem.then(function(filesystemPlugin) {
-                var Filesystem = filesystemPlugin.Filesystem;
-                var Directory = filesystemPlugin.Directory;
+                const Filesystem = filesystemPlugin.Filesystem;
+                const Directory = filesystemPlugin.Directory;
                 
-                var filename = 'task_' + taskId + '_' + Date.now() + '.jpg';
-                var filePath = 'attachments/' + filename;
+                const filename = `task_${taskId}_${Date.now()}.jpg`;
+                const filePath = `attachments/${filename}`;
                 
                 // Save image to filesystem
                 Filesystem.writeFile({
@@ -582,7 +582,7 @@
          * Returns a URL that can be used in img src, not the raw data
          */
         getImageAttachmentUrl: function(attachmentId, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -600,12 +600,12 @@
                     return;
                 }
                 
-                var attachment = result.values[0];
+                const attachment = result.values[0];
                 
                 // Get filesystem URL instead of loading data
                 Capacitor.Plugins.Filesystem.then(function(filesystemPlugin) {
-                    var Filesystem = filesystemPlugin.Filesystem;
-                    var Directory = filesystemPlugin.Directory;
+                    const Filesystem = filesystemPlugin.Filesystem;
+                    const Directory = filesystemPlugin.Directory;
                     
                     // Get URI for the file
                     Filesystem.getUri({
@@ -613,7 +613,7 @@
                         directory: Directory.Data
                     }).then(function(result) {
                         // Convert to displayable URL
-                        var displayUrl = Capacitor.convertFileSrc(result.uri);
+                        const displayUrl = Capacitor.convertFileSrc(result.uri);
                         
                         attachment.url = displayUrl;
                         attachment.data = null; // Don't include raw data
@@ -635,7 +635,7 @@
          * WARNING: This loads full image data into memory
          */
         getImageAttachmentData: function(attachmentId, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -655,12 +655,12 @@
                     return;
                 }
                 
-                var attachment = result.values[0];
+                const attachment = result.values[0];
                 
                 // Read image from filesystem
                 Capacitor.Plugins.Filesystem.then(function(filesystemPlugin) {
-                    var Filesystem = filesystemPlugin.Filesystem;
-                    var Directory = filesystemPlugin.Directory;
+                    const Filesystem = filesystemPlugin.Filesystem;
+                    const Directory = filesystemPlugin.Directory;
                     
                     Filesystem.readFile({
                         path: attachment.file_path,
@@ -690,7 +690,7 @@
          * Get thumbnail for image (memory-efficient)
          */
         getImageThumbnail: function(attachmentId, maxSize, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -718,7 +718,7 @@
          * Delete image attachment
          */
         deleteImageAttachment: function(attachmentId, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(false, new Error('Database not ready'));
@@ -736,12 +736,12 @@
                     return;
                 }
                 
-                var attachment = result.values[0];
+                const attachment = result.values[0];
                 
                 // Delete from filesystem
                 Capacitor.Plugins.Filesystem.then(function(filesystemPlugin) {
-                    var Filesystem = filesystemPlugin.Filesystem;
-                    var Directory = filesystemPlugin.Directory;
+                    const Filesystem = filesystemPlugin.Filesystem;
+                    const Directory = filesystemPlugin.Directory;
                     
                     Filesystem.deleteFile({
                         path: attachment.file_path,
@@ -771,7 +771,7 @@
          * Get database statistics
          */
         getStats: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -795,7 +795,7 @@
                     values: []
                 })
             ]).then(function(results) {
-                var stats = {
+                const stats = {
                     totalTasks: results[0].values[0].total,
                     completedTasks: results[1].values[0].completed,
                     pendingTasks: results[0].values[0].total - results[1].values[0].completed,
@@ -812,7 +812,7 @@
          * Verify database integrity
          */
         verifyIntegrity: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(false, new Error('Database not ready'));
@@ -824,7 +824,7 @@
                 statement: 'PRAGMA integrity_check',
                 values: []
             }).then(function(result) {
-                var isValid = result.values && result.values.length > 0 && 
+                const isValid = result.values && result.values.length > 0 && 
                              result.values[0].integrity_check === 'ok';
                 
                 if (callback) callback(isValid, null);
@@ -838,7 +838,7 @@
          * Begin migration transaction
          */
         beginMigration: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(false, new Error('Database not ready'));
@@ -861,7 +861,7 @@
          * Commit migration transaction
          */
         commitMigration: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(false, new Error('Database not ready'));
@@ -884,7 +884,7 @@
          * Rollback migration transaction
          */
         rollbackMigration: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(false, new Error('Database not ready'));
@@ -907,7 +907,7 @@
          * Get migration status
          */
         getMigrationStatus: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -920,7 +920,7 @@
                 statement: 'SELECT COUNT(*) as migrated FROM tasks WHERE metadata LIKE ?',
                 values: ['%migrationTimestamp%']
             }).then(function(result) {
-                var migratedCount = result.values[0].migrated;
+                const migratedCount = result.values[0].migrated;
                 
                 self.getStats(function(stats, error) {
                     if (error) {
@@ -928,7 +928,7 @@
                         return;
                     }
                     
-                    var status = {
+                    const status = {
                         hasMigratedData: migratedCount > 0,
                         migratedTaskCount: migratedCount,
                         totalTaskCount: stats.totalTasks,
@@ -966,7 +966,7 @@
          * Export database to JSON (for backup)
          */
         exportToJSON: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady) {
                 if (callback) callback(null, new Error('Database not ready'));
@@ -977,7 +977,7 @@
                 database: self.dbName,
                 exportMode: 'full'
             }).then(function(result) {
-                var backup = {
+                const backup = {
                     database: result.export,
                     version: self.dbVersion,
                     timestamp: new Date().toISOString()
@@ -993,7 +993,7 @@
          * Get item from key-value storage
          */
         getItem: function(key, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(new Error('Database not ready'), null);
@@ -1005,7 +1005,7 @@
                 self.db.query('SELECT value FROM storage WHERE key = ?', [key]).then(function(result) {
                     if (result.values && result.values.length > 0) {
                         try {
-                            var parsed = JSON.parse(result.values[0].value);
+                            const parsed = JSON.parse(result.values[0].value);
                             if (callback) callback(null, parsed);
                         } catch (e) {
                             if (callback) callback(e, null);
@@ -1027,14 +1027,14 @@
          * Set item in key-value storage
          */
         setItem: function(key, value, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(new Error('Database not ready'));
                 return;
             }
             
-            var jsonValue = JSON.stringify(value);
+            const jsonValue = JSON.stringify(value);
             
             try {
                 // Use run method on the connection object with transaction
@@ -1059,7 +1059,7 @@
          * Remove item from key-value storage
          */
         removeItem: function(key, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(new Error('Database not ready'));
@@ -1089,7 +1089,7 @@
          * Clear all key-value storage
          */
         clearStorage: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(new Error('Database not ready'));
@@ -1119,7 +1119,7 @@
          * Batch set multiple items in a single transaction
          */
         setItems: function(items, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(new Error('Database not ready'));
@@ -1134,13 +1134,13 @@
             try {
                 // Start transaction
                 self.db.execute('BEGIN TRANSACTION', [], false).then(function() {
-                    console.log('SQLite: Batch operation started for ' + items.length + ' items');
+                    console.log(`SQLite: Batch operation started for ${items.length} items`);
                     
                     // Create promises for all inserts
-                    var promises = [];
-                    for (var i = 0; i < items.length; i++) {
-                        var item = items[i];
-                        var promise = self.db.run(
+                    const promises = [];
+                    for (let i = 0; i < items.length; i++) {
+                        const item = items[i];
+                        const promise = self.db.run(
                             'INSERT OR REPLACE INTO storage (key, value, updated_at) VALUES (?, ?, datetime("now"))',
                             [item.key, JSON.stringify(item.value)],
                             false  // no individual transactions
@@ -1176,7 +1176,7 @@
          * Batch get multiple items
          */
         getItems: function(keys, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(new Error('Database not ready'), null);
@@ -1190,14 +1190,14 @@
             
             try {
                 // Build query with placeholders
-                var placeholders = keys.map(function() { return '?'; }).join(',');
-                var query = 'SELECT key, value FROM storage WHERE key IN (' + placeholders + ')';
+                const placeholders = keys.map(function() { return '?'; }).join(',');
+                const query = `SELECT key, value FROM storage WHERE key IN (${placeholders})`;
                 
                 self.db.query(query, keys).then(function(result) {
-                    var items = {};
+                    const items = {};
                     if (result.values && result.values.length > 0) {
-                        for (var i = 0; i < result.values.length; i++) {
-                            var row = result.values[i];
+                        for (let i = 0; i < result.values.length; i++) {
+                            const row = result.values[i];
                             try {
                                 items[row.key] = JSON.parse(row.value);
                             } catch (e) {
@@ -1220,7 +1220,7 @@
          * Get migration progress - count of items in storage
          */
         getMigrationProgress: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(0, new Error('Database not ready'));
@@ -1229,11 +1229,11 @@
             
             try {
                 self.db.query('SELECT COUNT(*) as count FROM storage', []).then(function(result) {
-                    var count = 0;
+                    let count = 0;
                     if (result.values && result.values.length > 0) {
                         count = result.values[0].count || 0;
                     }
-                    console.log('SQLite: Migration progress - ' + count + ' items');
+                    console.log(`SQLite: Migration progress - ${count} items`);
                     if (callback) callback(count, null);
                 }).catch(function(error) {
                     console.error('SQLite: Failed to get migration progress', error);
@@ -1249,7 +1249,7 @@
          * Get all keys from storage (for migration verification)
          */
         getAllKeys: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback([], new Error('Database not ready'));
@@ -1258,7 +1258,7 @@
             
             try {
                 self.db.query('SELECT key FROM storage ORDER BY key', []).then(function(result) {
-                    var keys = [];
+                    let keys = [];
                     if (result.values && result.values.length > 0) {
                         keys = result.values.map(function(row) {
                             return row.key;
@@ -1279,7 +1279,7 @@
          * Close database connection
          */
         closeConnection: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isReady || !self.db) {
                 if (callback) callback(true);

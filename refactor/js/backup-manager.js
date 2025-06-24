@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var BackupManager = {
+    const BackupManager = {
         // Configuration
         BACKUP_PREFIX: 'stackmap_backup_',
         INDEXEDDB_NAME: 'StackMapBackups',
@@ -22,12 +22,12 @@
          * Initialize backup manager
          */
         init: function(callback) {
-            var self = this;
+            const self = this;
             
             // Try to initialize IndexedDB for secondary backup location
             if (window.indexedDB) {
                 try {
-                    var request = indexedDB.open(self.INDEXEDDB_NAME, self.INDEXEDDB_VERSION);
+                    const request = indexedDB.open(self.INDEXEDDB_NAME, self.INDEXEDDB_VERSION);
                     
                     request.onerror = function() {
                         console.warn('IndexedDB not available for backups, using localStorage only');
@@ -42,11 +42,11 @@
                     };
                     
                     request.onupgradeneeded = function(event) {
-                        var db = event.target.result;
+                        const db = event.target.result;
                         
                         // Create backup store
                         if (!db.objectStoreNames.contains('backups')) {
-                            var store = db.createObjectStore('backups', { keyPath: 'id' });
+                            const store = db.createObjectStore('backups', { keyPath: 'id' });
                             store.createIndex('timestamp', 'timestamp', { unique: false });
                             store.createIndex('checksum', 'checksum', { unique: false });
                         }
@@ -64,11 +64,11 @@
          * Create a backup with checksums and multi-location storage
          */
         create: function(data, callback) {
-            var self = this;
+            const self = this;
             
             try {
-                var backup = {
-                    id: self.BACKUP_PREFIX + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                const backup = {
+                    id: `${self.BACKUP_PREFIX + Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                     timestamp: new Date().toISOString(),
                     created: Date.now(),
                     version: '1.0',
@@ -82,7 +82,7 @@
                 backup.checksum = self.calculateChecksum(data);
                 
                 // Check size and compress if needed
-                var dataString = JSON.stringify(data);
+                const dataString = JSON.stringify(data);
                 backup.size = dataString.length;
                 
                 if (backup.size > self.COMPRESSION_THRESHOLD) {
@@ -122,7 +122,7 @@
         storeInLocalStorage: function(backup, callback) {
             try {
                 // Create a storage-friendly version
-                var storageBackup = {
+                const storageBackup = {
                     id: backup.id,
                     timestamp: backup.timestamp,
                     created: backup.created,
@@ -136,8 +136,8 @@
                 localStorage.setItem(backup.id, JSON.stringify(storageBackup));
                 
                 // Verify write
-                var verification = localStorage.getItem(backup.id);
-                var success = verification === JSON.stringify(storageBackup);
+                const verification = localStorage.getItem(backup.id);
+                const success = verification === JSON.stringify(storageBackup);
                 
                 if (callback) callback(success);
             } catch (error) {
@@ -150,7 +150,7 @@
          * Store backup in IndexedDB
          */
         storeInIndexedDB: function(backup, callback) {
-            var self = this;
+            const self = this;
             
             if (!self.isIndexedDBReady || !self.db) {
                 if (callback) callback(false);
@@ -158,10 +158,10 @@
             }
             
             try {
-                var transaction = self.db.transaction(['backups'], 'readwrite');
-                var store = transaction.objectStore('backups');
+                const transaction = self.db.transaction(['backups'], 'readwrite');
+                const store = transaction.objectStore('backups');
                 
-                var request = store.put(backup);
+                const request = store.put(backup);
                 
                 request.onsuccess = function() {
                     if (callback) callback(true);
@@ -181,13 +181,13 @@
          * Retrieve a backup by ID
          */
         retrieve: function(backupId, callback) {
-            var self = this;
+            const self = this;
             
             // Try localStorage first
             try {
-                var localBackup = localStorage.getItem(backupId);
+                const localBackup = localStorage.getItem(backupId);
                 if (localBackup) {
-                    var backup = JSON.parse(localBackup);
+                    const backup = JSON.parse(localBackup);
                     
                     // Decompress if needed
                     if (backup.compressed) {
@@ -206,12 +206,12 @@
             // Try IndexedDB if localStorage failed
             if (self.isIndexedDBReady && self.db) {
                 try {
-                    var transaction = self.db.transaction(['backups'], 'readonly');
-                    var store = transaction.objectStore('backups');
-                    var request = store.get(backupId);
+                    const transaction = self.db.transaction(['backups'], 'readonly');
+                    const store = transaction.objectStore('backups');
+                    const request = store.get(backupId);
                     
                     request.onsuccess = function(event) {
-                        var backup = event.target.result;
+                        const backup = event.target.result;
                         if (backup) {
                             // Decompress if needed
                             if (backup.compressed) {
@@ -238,7 +238,7 @@
          * Verify backup integrity
          */
         verify: function(backupId, currentStats, callback) {
-            var self = this;
+            const self = this;
             
             self.retrieve(backupId, function(backup, error) {
                 if (error || !backup) {
@@ -250,21 +250,21 @@
                 }
                 
                 // Verify checksum
-                var calculatedChecksum = self.calculateChecksum(backup.data);
-                var checksumValid = calculatedChecksum === backup.checksum;
+                const calculatedChecksum = self.calculateChecksum(backup.data);
+                const checksumValid = calculatedChecksum === backup.checksum;
                 
                 // Count items in backup
-                var backupTaskCount = 0;
+                let backupTaskCount = 0;
                 try {
                     if (backup.data['stackmap-tasks']) {
-                        var tasks = JSON.parse(backup.data['stackmap-tasks']);
+                        const tasks = JSON.parse(backup.data['stackmap-tasks']);
                         backupTaskCount = Array.isArray(tasks) ? tasks.length : 0;
                     }
                 } catch (e) {
                     console.error('Failed to count backup tasks:', e);
                 }
                 
-                var verification = {
+                const verification = {
                     isValid: checksumValid && backupTaskCount > 0,
                     checksumValid: checksumValid,
                     itemCount: {
@@ -283,7 +283,7 @@
          * Rollback to a backup
          */
         rollback: function(backupId, callback) {
-            var self = this;
+            const self = this;
             
             self.retrieve(backupId, function(backup, error) {
                 if (error || !backup) {
@@ -293,7 +293,7 @@
                 
                 try {
                     // Restore each key from backup
-                    for (var key in backup.data) {
+                    for (const key in backup.data) {
                         if (backup.data.hasOwnProperty(key)) {
                             localStorage.setItem(key, backup.data[key]);
                         }
@@ -313,16 +313,16 @@
          * List all backups
          */
         list: function(callback) {
-            var self = this;
-            var backups = [];
+            const self = this;
+            const backups = [];
             
             // Get from localStorage
             try {
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
                     if (key && key.indexOf(self.BACKUP_PREFIX) === 0) {
                         try {
-                            var backup = JSON.parse(localStorage.getItem(key));
+                            const backup = JSON.parse(localStorage.getItem(key));
                             backups.push({
                                 id: backup.id,
                                 timestamp: backup.timestamp,
@@ -343,15 +343,15 @@
             // Get from IndexedDB
             if (self.isIndexedDBReady && self.db) {
                 try {
-                    var transaction = self.db.transaction(['backups'], 'readonly');
-                    var store = transaction.objectStore('backups');
-                    var request = store.openCursor();
+                    const transaction = self.db.transaction(['backups'], 'readonly');
+                    const store = transaction.objectStore('backups');
+                    const request = store.openCursor();
                     
                     request.onsuccess = function(event) {
-                        var cursor = event.target.result;
+                        const cursor = event.target.result;
                         if (cursor) {
                             // Check if we already have this backup from localStorage
-                            var exists = backups.some(function(b) {
+                            const exists = backups.some(function(b) {
                                 return b.id === cursor.value.id;
                             });
                             
@@ -393,8 +393,8 @@
          * Delete a backup
          */
         delete: function(backupId, callback) {
-            var self = this;
-            var deleted = false;
+            const self = this;
+            let deleted = false;
             
             // Delete from localStorage
             try {
@@ -409,9 +409,9 @@
             // Delete from IndexedDB
             if (self.isIndexedDBReady && self.db) {
                 try {
-                    var transaction = self.db.transaction(['backups'], 'readwrite');
-                    var store = transaction.objectStore('backups');
-                    var request = store.delete(backupId);
+                    const transaction = self.db.transaction(['backups'], 'readwrite');
+                    const store = transaction.objectStore('backups');
+                    const request = store.delete(backupId);
                     
                     request.onsuccess = function() {
                         deleted = true;
@@ -433,12 +433,12 @@
          * Clean up old backups based on retention policy
          */
         cleanup: function(retentionDays, callback) {
-            var self = this;
-            var cutoffTime = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
-            var deletedCount = 0;
+            const self = this;
+            const cutoffTime = Date.now() - (retentionDays * 24 * 60 * 60 * 1000);
+            let deletedCount = 0;
             
             self.list(function(backups) {
-                var toDelete = backups.filter(function(backup) {
+                const toDelete = backups.filter(function(backup) {
                     return backup.created < cutoffTime;
                 });
                 
@@ -447,7 +447,7 @@
                     return;
                 }
                 
-                var deleteNext = function(index) {
+                const deleteNext = function(index) {
                     if (index >= toDelete.length) {
                         if (callback) callback(deletedCount);
                         return;
@@ -468,7 +468,7 @@
          */
         exists: function(backupId, callback) {
             try {
-                var exists = localStorage.getItem(backupId) !== null;
+                const exists = localStorage.getItem(backupId) !== null;
                 if (callback) callback(exists);
                 return exists;
             } catch (error) {
@@ -481,13 +481,13 @@
          * Calculate checksum for data integrity
          */
         calculateChecksum: function(data) {
-            var str = JSON.stringify(data);
-            var hash = 0;
+            const str = JSON.stringify(data);
+            let hash = 0;
             
             if (str.length === 0) return '0';
             
-            for (var i = 0; i < str.length; i++) {
-                var char = str.charCodeAt(i);
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
                 hash = hash & hash; // Convert to 32-bit integer
             }
@@ -518,10 +518,10 @@
          * Get backup storage statistics
          */
         getStats: function(callback) {
-            var self = this;
+            const self = this;
             
             self.list(function(backups) {
-                var stats = {
+                const stats = {
                     totalBackups: backups.length,
                     totalSize: 0,
                     oldestBackup: null,

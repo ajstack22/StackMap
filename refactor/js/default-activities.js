@@ -8,7 +8,7 @@
     'use strict';
     
     // Activity Categories
-    var ACTIVITY_CATEGORIES = {
+    const ACTIVITY_CATEGORIES = {
         DAILY_CARE: 'Daily Care',
         SCHOOL: 'School & Learning',
         THERAPY: 'Therapy & Health',
@@ -23,7 +23,7 @@
     };
     
     // Default activities (18 total, 3 visible by default)
-    var DEFAULT_ACTIVITIES = [
+    const DEFAULT_ACTIVITIES = [
         // First 3 visible by default
         {
             title: 'Morning Stretch',
@@ -156,7 +156,7 @@
     ];
     
     // Extended activity library (93 activities)
-    var ACTIVITY_LIBRARY = [
+    const ACTIVITY_LIBRARY = [
         // Morning Routine
         {
             key: 'wake_up',
@@ -699,7 +699,7 @@
      */
     function initializeDefaultActivities(callback) {
         // Check if we're using SQLite or localStorage
-        var usingSQLite = window.TaskSQLite && window.TaskSQLite.isReady;
+        const usingSQLite = window.TaskSQLite && window.TaskSQLite.isReady;
         
         if (!usingSQLite) {
             // Try localStorage fallback
@@ -734,13 +734,13 @@
             
             // Initialize with default activities
             console.log('Initializing default activities...');
-            var initialized = 0;
-            var errors = 0;
-            var totalToInit = DEFAULT_ACTIVITIES.length;
+            let initialized = 0;
+            let errors = 0;
+            const totalToInit = DEFAULT_ACTIVITIES.length;
             
             // Process each default activity
             DEFAULT_ACTIVITIES.forEach(function(activity, index) {
-                var task = {
+                const task = {
                     title: activity.title,
                     description: activity.description,
                     metadata: {
@@ -786,7 +786,7 @@
     function initializeInLocalStorage(callback) {
         try {
             // Check if already initialized
-            var initialized = localStorage.getItem('stackmap-activities-initialized');
+            const initialized = localStorage.getItem('stackmap-activities-initialized');
             if (initialized) {
                 console.log('Activities already initialized in localStorage');
                 if (callback) callback(true, 'Already initialized');
@@ -794,11 +794,11 @@
             }
             
             // Get existing tasks or create empty array
-            var existingTasks = localStorage.getItem('stackmap-tasks');
-            var tasks = existingTasks ? JSON.parse(existingTasks) : [];
+            const existingTasks = localStorage.getItem('stackmap-tasks');
+            const tasks = existingTasks ? JSON.parse(existingTasks) : [];
             
             // Add default activities as tasks
-            var activitiesToAdd = getVisibleActivities(); // Start with visible ones
+            const activitiesToAdd = getVisibleActivities(); // Start with visible ones
             
             activitiesToAdd.forEach(function(activity, index) {
                 tasks.push({
@@ -836,7 +836,7 @@
      * Get all activities (both default and library)
      */
     function getAllActivities() {
-        var allActivities = [];
+        const allActivities = [];
         
         // Add default activities
         DEFAULT_ACTIVITIES.forEach(function(activity) {
@@ -880,7 +880,7 @@
      * Progressive Activity Loader
      * Loads activities in tiers to prevent blocking
      */
-    var ActivityLoader = {
+    const ActivityLoader = {
         isLoading: false,
         loadedCount: 0,
         callbacks: [],
@@ -892,7 +892,7 @@
         initTiers: function() {
             if (this.tieredActivities) return;
             
-            var allActivities = DEFAULT_ACTIVITIES.concat(ACTIVITY_LIBRARY);
+            const allActivities = DEFAULT_ACTIVITIES.concat(ACTIVITY_LIBRARY);
             
             // Split into 3 tiers
             this.tieredActivities = {
@@ -906,7 +906,7 @@
          * Load activities progressively
          */
         loadTiered: function(callback) {
-            var self = this;
+            const self = this;
             
             if (self.isLoading) {
                 // Queue callback if already loading
@@ -934,7 +934,7 @@
                     
                     // Call all queued callbacks
                     while (self.callbacks.length > 0) {
-                        var cb = self.callbacks.shift();
+                        const cb = self.callbacks.shift();
                         if (cb) cb(getAllActivities());
                     }
                 }, 500);

@@ -9,23 +9,23 @@
     'use strict';
     
     // Message modes
-    var MESSAGE_MODES = {
+    const MESSAGE_MODES = {
         PROFESSIONAL: 'professional', // Default, minimal emotional content
         SUPPORTIVE: 'supportive',     // High RSD sensitivity, extra encouragement
         CONCISE: 'concise'            // Ultra-minimal, just facts
     };
     
     // Current mode (can be changed via settings)
-    var currentMode = MESSAGE_MODES.PROFESSIONAL;
+    let currentMode = MESSAGE_MODES.PROFESSIONAL;
     
     // Performance cache
-    var transformCache = {};
-    var cacheSize = 0;
-    var MAX_CACHE_SIZE = 100;
+    let transformCache = {};
+    let cacheSize = 0;
+    const MAX_CACHE_SIZE = 100;
     
     // Core message transformations
     // Format: original -> { professional, supportive, concise }
-    var messageTransforms = {
+    const messageTransforms = {
         // Array/Type errors
         'Array.from requires an array-like object - not null or undefined': {
             professional: 'The system needs different data format here',
@@ -185,7 +185,7 @@
     // Helper to get current mode from storage
     function getCurrentMode() {
         try {
-            var saved = localStorage.getItem('stackmap_message_mode');
+            const saved = localStorage.getItem('stackmap_message_mode');
             if (saved && MESSAGE_MODES[saved.toUpperCase()]) {
                 return saved;
             }
@@ -200,12 +200,12 @@
         if (!message) return message;
         
         // Check cache first
-        var cacheKey = message + ':' + getCurrentMode();
+        const cacheKey = `${message}:${getCurrentMode()}`;
         if (transformCache[cacheKey]) {
             return transformCache[cacheKey];
         }
         
-        var mode = getCurrentMode();
+        const mode = getCurrentMode();
         
         // Try exact match first
         if (messageTransforms[message]) {
@@ -213,11 +213,11 @@
         }
         
         // Try partial matches for common patterns
-        var searchTerms = ['Error', 'Failed', 'Invalid', 'Wrong', 'error', 'failed', 'invalid', 'wrong'];
-        for (var i = 0; i < searchTerms.length; i++) {
-            var term = searchTerms[i];
-            if (message.indexOf(term) !== -1) {
-                var replacement = messageTransforms[term] || messageTransforms[term.charAt(0).toUpperCase() + term.slice(1)];
+        const searchTerms = ['Error', 'Failed', 'Invalid', 'Wrong', 'error', 'failed', 'invalid', 'wrong'];
+        for (let i = 0; i < searchTerms.length; i++) {
+            const term = searchTerms[i];
+            if (message.includes(term)) {
+                const replacement = messageTransforms[term] || messageTransforms[term.charAt(0).toUpperCase() + term.slice(1)];
                 if (replacement) {
                     return replacement[mode] || replacement.professional;
                 }
@@ -225,7 +225,7 @@
         }
         
         // If no transform found, at least remove trigger words
-        var result = sanitize(message);
+        const result = sanitize(message);
         
         // Cache the result
         if (cacheSize < MAX_CACHE_SIZE) {
@@ -246,7 +246,7 @@
     function sanitize(message) {
         if (!message) return message;
         
-        var triggerWords = {
+        const triggerWords = {
             'Error': 'Issue',
             'error': 'issue',
             'Failed': 'Incomplete',
@@ -261,8 +261,8 @@
             'incorrect': 'needs correction'
         };
         
-        var sanitized = message;
-        for (var trigger in triggerWords) {
+        let sanitized = message;
+        for (const trigger in triggerWords) {
             sanitized = sanitized.split(trigger).join(triggerWords[trigger]);
         }
         
@@ -296,24 +296,24 @@
     
     // Create a message using the three-part structure
     function createMessage(acknowledgment, guidance, encouragement) {
-        var mode = getCurrentMode();
+        const mode = getCurrentMode();
         
         if (mode === MESSAGE_MODES.CONCISE) {
             // Concise mode: only guidance
             return guidance;
         } else if (mode === MESSAGE_MODES.SUPPORTIVE) {
             // Supportive mode: all three parts
-            return acknowledgment + ' ' + guidance + ' ' + encouragement;
+            return `${acknowledgment} ${guidance} ${encouragement}`;
         } else {
             // Professional mode: acknowledgment + guidance
-            return acknowledgment + ' ' + guidance;
+            return `${acknowledgment} ${guidance}`;
         }
     }
     
     // Integration with rsd-safe-init.js if available
     if (window.RSDSafeInit) {
         // Sync preferences
-        var initPrefs = window.RSDSafeInit.getPreferences();
+        const initPrefs = window.RSDSafeInit.getPreferences();
         if (initPrefs.mode === 'direct') {
             currentMode = MESSAGE_MODES.CONCISE;
         } else if (initPrefs.mode === 'supportive') {
@@ -329,7 +329,7 @@
             setMode(mode);
             // Also update rsd-safe-init if available
             if (window.RSDSafeInit) {
-                var rsdMode = mode;
+                let rsdMode = mode;
                 if (mode === MESSAGE_MODES.CONCISE) {
                     rsdMode = 'direct';
                 }
@@ -349,20 +349,20 @@
         },
         
         loadError: function(what) {
-            var mode = getCurrentMode();
+            const mode = getCurrentMode();
             if (mode === MESSAGE_MODES.CONCISE) {
-                return 'Loading ' + what + '...';
+                return `Loading ${what}...`;
             } else if (mode === MESSAGE_MODES.SUPPORTIVE) {
-                return 'Working on loading your ' + what + ' - almost there!';
+                return `Working on loading your ${what} - almost there!`;
             } else {
-                return 'Loading ' + what + ' in progress';
+                return `Loading ${what} in progress`;
             }
         },
         
         validationError: function(field) {
             return createMessage(
                 'Thanks for that input.',
-                field + ' needs a different format.',
+                `${field} needs a different format.`,
                 'You\'ve got this!'
             );
         },

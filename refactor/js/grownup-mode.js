@@ -1,7 +1,7 @@
 (function() {
     'use strict';
     
-    var GrownupMode = {
+    const GrownupMode = {
         // Rate limiting properties
         lastAttemptTime: 0,
         COOLDOWN_MS: 3000, // 3 second cooldown between attempts
@@ -14,11 +14,11 @@
         // Generate a math challenge
         generateChallenge: function() {
             // Simple addition for accessibility
-            var a = Math.floor(Math.random() * 10) + 1;  // 1-10
-            var b = Math.floor(Math.random() * 10) + 1;  // 1-10
+            const a = Math.floor(Math.random() * 10) + 1;  // 1-10
+            const b = Math.floor(Math.random() * 10) + 1;  // 1-10
             
             return {
-                question: a + ' + ' + b + ' = ?',
+                question: `${a} + ${b} = ?`,
                 answer: a + b,
                 a: a,
                 b: b
@@ -27,21 +27,21 @@
         
         // Show the challenge modal
         showChallenge: function(onSuccess) {
-            var self = this;
+            const self = this;
             
             // Check rate limiting
-            var now = Date.now();
-            var timeSinceLastAttempt = now - self.lastAttemptTime;
+            const now = Date.now();
+            const timeSinceLastAttempt = now - self.lastAttemptTime;
             
             if (timeSinceLastAttempt < self.COOLDOWN_MS) {
-                var remainingTime = Math.ceil((self.COOLDOWN_MS - timeSinceLastAttempt) / 1000);
-                alert('Please wait ' + remainingTime + ' more second' + (remainingTime > 1 ? 's' : '') + ' before trying again.');
+                const remainingTime = Math.ceil((self.COOLDOWN_MS - timeSinceLastAttempt) / 1000);
+                alert(`Please wait ${remainingTime} more second${remainingTime > 1 ? 's' : ''} before trying again.`);
                 return;
             }
             
             self.lastAttemptTime = now;
             
-            var challenge = this.generateChallenge();
+            const challenge = this.generateChallenge();
             
             // Check if Modal system is available
             if (!window.Modal || !window.Modal.show) {
@@ -51,9 +51,9 @@
             }
             
             // Use existing Modal system
-            var html = this.createChallengeForm(challenge);
+            const html = this.createChallengeForm(challenge);
             
-            var modal = window.Modal.show({
+            const modal = window.Modal.show({
                 title: '🔒 Grown-up Mode',
                 content: html,
                 className: 'grownup-modal',
@@ -67,14 +67,14 @@
         
         // Create the challenge form HTML
         createChallengeForm: function(challenge) {
-            var html = '<form id="grownup-form" class="grownup-form">';
+            let html = '<form id="grownup-form" class="grownup-form">';
             
             // Friendly message
             html += '<p class="grownup-message">Please solve this math problem to enter edit mode:</p>';
             
             // Math question
             html += '<div class="math-question">';
-            html += '<span class="math-text">' + challenge.question + '</span>';
+            html += `<span class="math-text">${challenge.question}</span>`;
             html += '</div>';
             
             // Answer input
@@ -96,17 +96,17 @@
         
         // Setup event handlers for the challenge
         setupChallengeHandlers: function(modal, challenge, onSuccess) {
-            var self = this;
-            var form = modal.querySelector('#grownup-form');
-            var input = modal.querySelector('#math-answer');
-            var errorDiv = modal.querySelector('#math-error');
-            var attempts = 0;
-            var maxAttempts = 5;
+            const self = this;
+            const form = modal.querySelector('#grownup-form');
+            const input = modal.querySelector('#math-answer');
+            const errorDiv = modal.querySelector('#math-error');
+            let attempts = 0;
+            const maxAttempts = 5;
             
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
                 
-                var userAnswer = parseInt(input.value, 10);
+                const userAnswer = parseInt(input.value, 10);
                 
                 // Clear previous error
                 errorDiv.textContent = '';
@@ -163,7 +163,7 @@
         // Show success toast
         showSuccessToast: function() {
             // Create toast element
-            var toast = document.createElement('div');
+            const toast = document.createElement('div');
             toast.className = 'toast success-toast';
             toast.textContent = '✓ Edit mode unlocked!';
             toast.setAttribute('role', 'status');
@@ -187,19 +187,19 @@
         
         // Fallback challenge using native prompt
         showChallengeFallback: function(challenge, onSuccess) {
-            var self = this;
-            var maxAttempts = 5;
-            var attempts = 0;
+            const self = this;
+            const maxAttempts = 5;
+            let attempts = 0;
             
             while (attempts < maxAttempts) {
-                var answer = prompt('Grown-up Mode\n\nPlease solve this math problem to enter edit mode:\n\n' + challenge.question);
+                const answer = prompt(`Grown-up Mode\n\nPlease solve this math problem to enter edit mode:\n\n${challenge.question}`);
                 
                 // User cancelled
                 if (answer === null) {
                     return;
                 }
                 
-                var userAnswer = parseInt(answer, 10);
+                const userAnswer = parseInt(answer, 10);
                 
                 if (userAnswer === challenge.answer) {
                     // Correct!
@@ -211,7 +211,7 @@
                     if (attempts >= maxAttempts) {
                         // Generate new challenge
                         challenge = self.generateChallenge();
-                        alert('Too many incorrect attempts. Try this new problem:\n\n' + challenge.question);
+                        alert(`Too many incorrect attempts. Try this new problem:\n\n${challenge.question}`);
                         attempts = 0;
                     } else {
                         alert('Incorrect. Please try again.');
@@ -223,7 +223,7 @@
         // Check if Grown-up Mode is enabled
         isEnabled: function() {
             // Get current user settings
-            var currentUser = window.UserManager ? window.UserManager.getCurrentUser() : null;
+            const currentUser = window.UserManager ? window.UserManager.getCurrentUser() : null;
             if (!currentUser || !currentUser.preferences) {
                 // Default to enabled for safety
                 return true;

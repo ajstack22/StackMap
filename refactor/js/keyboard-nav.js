@@ -8,7 +8,7 @@
 (function() {
     'use strict';
     
-    var KeyboardNav = {
+    const KeyboardNav = {
         // Configuration - optimized for ADHD users
         NAVIGATION_DEBOUNCE: 16,  // ms - one frame for instant response
         ACTION_DEBOUNCE: 50,      // ms - reduced from 100ms for better feel
@@ -73,7 +73,7 @@
             this.addVisualShortcutHints();
             
             this.isInitialized = true;
-            console.log('KeyboardNav: Initialized with ' + this.focusableElements.length + ' focusable elements');
+            console.log(`KeyboardNav: Initialized with ${this.focusableElements.length} focusable elements`);
         },
         
         /**
@@ -81,8 +81,8 @@
          */
         updateFocusableElements: function() {
             // Find all task cards that can receive focus
-            var cards = this.container.querySelectorAll('.task-card:not(.task-placeholder)');
-            this.focusableElements = Array.prototype.slice.call(cards);
+            const cards = this.container.querySelectorAll('.task-card:not(.task-placeholder)');
+            this.focusableElements = [...cards];
             
             // Reset focus if current element no longer exists
             if (this.currentFocus >= this.focusableElements.length) {
@@ -94,7 +94,7 @@
          * Initialize tabindex on elements
          */
         initializeTabindex: function() {
-            var self = this;
+            const self = this;
             
             this.focusableElements.forEach(function(element, index) {
                 // Only the first element or currently focused element should be in tab order
@@ -115,7 +115,7 @@
             this.container.setAttribute('aria-label', 'Task list');
             
             // Task card attributes
-            var self = this;
+            const self = this;
             this.focusableElements.forEach(function(element, index) {
                 element.setAttribute('role', 'option');
                 element.setAttribute('aria-posinset', index + 1);
@@ -133,11 +133,11 @@
                 return;
             }
             
-            var skipNav = document.createElement('nav');
+            const skipNav = document.createElement('nav');
             skipNav.className = 'skip-links';
             skipNav.setAttribute('aria-label', 'Skip links');
             
-            var links = [
+            const links = [
                 { href: '#main', text: 'Skip to main content' },
                 { href: '#task-container', text: 'Skip to tasks' },
                 { href: '#add-task', text: 'Skip to add task' },
@@ -145,7 +145,7 @@
             ];
             
             links.forEach(function(link) {
-                var a = document.createElement('a');
+                const a = document.createElement('a');
                 a.href = link.href;
                 a.className = 'skip-link';
                 a.textContent = link.text;
@@ -154,14 +154,14 @@
                 a.addEventListener('click', function(e) {
                     e.preventDefault();
                     // Sanitize the selector to prevent XSS
-                    var targetId = link.href.replace(/[^\w\-#]/g, '');
+                    const targetId = link.href.replace(/[^\w\-#]/g, '');
                     if (!targetId.startsWith('#')) {
                         console.warn('Invalid skip link target:', link.href);
                         return;
                     }
                     
                     try {
-                        var target = document.querySelector(targetId);
+                        const target = document.querySelector(targetId);
                         if (target) {
                             target.setAttribute('tabindex', '-1');
                             target.focus();
@@ -183,7 +183,7 @@
          * Setup event listeners using event delegation
          */
         setupEventListeners: function() {
-            var self = this;
+            const self = this;
             
             // Create bound functions for cleanup
             this._handleKeyDown = function(e) {
@@ -192,7 +192,7 @@
             
             this._handleGlobalKeyDown = function(e) {
                 // Skip if user is typing in an input field
-                var tagName = e.target.tagName.toLowerCase();
+                const tagName = e.target.tagName.toLowerCase();
                 if (tagName === 'input' || tagName === 'textarea' || tagName === 'select') {
                     return;
                 }
@@ -233,8 +233,8 @@
             };
             
             this._handleClick = function(e) {
-                var card = e.target.closest('.task-card');
-                if (card && self.focusableElements.indexOf(card) !== -1) {
+                const card = e.target.closest('.task-card');
+                if (card && self.focusableElements.includes(card)) {
                     self.setFocus(self.focusableElements.indexOf(card));
                 }
             };
@@ -255,7 +255,7 @@
          * Handle keydown events with debouncing
          */
         handleKeyDown: function(e) {
-            var self = this;
+            const self = this;
             
             // Clear existing timer
             if (this.debounceTimer) {
@@ -263,15 +263,15 @@
             }
             
             // Keys that should work immediately (no debounce)
-            var immediateKeys = ['Tab', 'Escape'];
-            if (immediateKeys.indexOf(e.key) !== -1) {
+            const immediateKeys = ['Tab', 'Escape'];
+            if (immediateKeys.includes(e.key)) {
                 return; // Let default behavior handle these
             }
             
             // Navigation keys get faster debounce
-            var navigationKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'j', 'k', 'h', 'l'];
-            var isNavigationKey = navigationKeys.indexOf(e.key) !== -1;
-            var debounceTime = isNavigationKey ? this.NAVIGATION_DEBOUNCE : this.ACTION_DEBOUNCE;
+            const navigationKeys = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'j', 'k', 'h', 'l'];
+            const isNavigationKey = navigationKeys.includes(e.key);
+            const debounceTime = isNavigationKey ? this.NAVIGATION_DEBOUNCE : this.ACTION_DEBOUNCE;
             
             // Debounce with appropriate timing
             this.debounceTimer = setTimeout(function() {
@@ -283,7 +283,7 @@
          * Process keyboard input
          */
         processKeyPress: function(e) {
-            var handled = false;
+            let handled = false;
             
             switch(e.key) {
                 case 'ArrowDown':
@@ -325,8 +325,8 @@
          * Handle focus entering the container
          */
         handleFocusIn: function(e) {
-            var card = e.target.closest('.task-card');
-            if (card && this.focusableElements.indexOf(card) !== -1) {
+            const card = e.target.closest('.task-card');
+            if (card && this.focusableElements.includes(card)) {
                 this.currentFocus = this.focusableElements.indexOf(card);
                 this.updateRovingTabindex();
                 this.updateAriaSelected();
@@ -383,7 +383,7 @@
             this.updateAriaSelected();
             
             // Focus the element
-            var element = this.focusableElements[index];
+            const element = this.focusableElements[index];
             if (element) {
                 element.focus();
                 
@@ -400,7 +400,7 @@
          * Update roving tabindex pattern
          */
         updateRovingTabindex: function() {
-            var self = this;
+            const self = this;
             
             this.focusableElements.forEach(function(element, index) {
                 if (index === self.currentFocus) {
@@ -415,10 +415,10 @@
          * Update ARIA selected state
          */
         updateAriaSelected: function() {
-            var self = this;
+            const self = this;
             
             this.focusableElements.forEach(function(element, index) {
-                var isSelected = index === self.currentFocus;
+                const isSelected = index === self.currentFocus;
                 element.setAttribute('aria-selected', isSelected ? 'true' : 'false');
                 
                 // Announce position for selected item
@@ -432,7 +432,7 @@
          * Announce position to screen readers
          */
         announcePosition: function(current, total) {
-            var announcement = 'Task ' + current + ' of ' + total;
+            const announcement = `Task ${current} of ${total}`;
             this.announce(announcement);
         },
         
@@ -440,7 +440,7 @@
          * Create or get ARIA live region for announcements
          */
         getAnnouncementRegion: function() {
-            var announcer = document.getElementById('keyboard-nav-announcer');
+            let announcer = document.getElementById('keyboard-nav-announcer');
             if (!announcer) {
                 announcer = document.createElement('div');
                 announcer.id = 'keyboard-nav-announcer';
@@ -457,7 +457,7 @@
          * Announce message to screen readers
          */
         announce: function(message) {
-            var announcer = this.getAnnouncementRegion();
+            const announcer = this.getAnnouncementRegion();
             
             // Clear and set new message
             announcer.textContent = '';
@@ -481,21 +481,21 @@
                 return;
             }
             
-            var element = this.focusableElements[this.currentFocus];
+            const element = this.focusableElements[this.currentFocus];
             if (element) {
                 // Get task title for announcement
-                var taskTitle = element.querySelector('h3, .task-title');
-                var taskName = taskTitle ? taskTitle.textContent : 'Task';
+                const taskTitle = element.querySelector('h3, .task-title');
+                const taskName = taskTitle ? taskTitle.textContent : 'Task';
                 
                 // Find and click the first interactive element (button, link, etc.)
-                var interactive = element.querySelector('button, a, input, [role="button"]');
+                const interactive = element.querySelector('button, a, input, [role="button"]');
                 if (interactive) {
                     interactive.click();
-                    this.announce('Activated: ' + taskName);
+                    this.announce(`Activated: ${taskName}`);
                 } else {
                     // Fallback: click the card itself
                     element.click();
-                    this.announce('Selected: ' + taskName);
+                    this.announce(`Selected: ${taskName}`);
                 }
             }
         },
@@ -504,7 +504,7 @@
          * Handle global keyboard shortcuts
          */
         handleGlobalShortcut: function(e) {
-            var key = e.key;
+            let key = e.key;
             
             // Handle shift+? for help
             if (key === '?' && e.shiftKey) {
@@ -562,7 +562,7 @@
          * Shortcut: Add new task
          */
         addNewTask: function() {
-            var addButton = document.getElementById('add-task-button');
+            const addButton = document.getElementById('add-task-button');
             if (addButton) {
                 addButton.click();
                 this.announce('Adding new task');
@@ -578,8 +578,8 @@
                 return;
             }
             
-            var element = this.focusableElements[this.currentFocus];
-            var editButton = element.querySelector('.edit-button, [aria-label*="Edit"]');
+            const element = this.focusableElements[this.currentFocus];
+            const editButton = element.querySelector('.edit-button, [aria-label*="Edit"]');
             if (editButton) {
                 editButton.click();
                 this.announce('Editing task');
@@ -597,8 +597,8 @@
             
             // Confirm before deleting
             if (confirm('Are you sure you want to delete this task?')) {
-                var element = this.focusableElements[this.currentFocus];
-                var deleteButton = element.querySelector('.delete-button, [aria-label*="Delete"]');
+                const element = this.focusableElements[this.currentFocus];
+                const deleteButton = element.querySelector('.delete-button, [aria-label*="Delete"]');
                 if (deleteButton) {
                     deleteButton.click();
                     this.announce('Task deleted');
@@ -615,11 +615,11 @@
                 return;
             }
             
-            var element = this.focusableElements[this.currentFocus];
-            var taskId = element.getAttribute('data-task-id');
+            const element = this.focusableElements[this.currentFocus];
+            const taskId = element.getAttribute('data-task-id');
             
             if (taskId && window.TaskTimer) {
-                var timerButton = element.querySelector('.task-timer-button');
+                const timerButton = element.querySelector('.task-timer-button');
                 if (timerButton) {
                     timerButton.click();
                     this.announce('Opening timer menu');
@@ -633,7 +633,7 @@
          * Shortcut: Focus search
          */
         focusSearch: function() {
-            var searchInput = document.querySelector('#search-input, [type="search"], [role="searchbox"]');
+            const searchInput = document.querySelector('#search-input, [type="search"], [role="searchbox"]');
             if (searchInput) {
                 searchInput.focus();
                 this.announce('Search focused');
@@ -654,7 +654,7 @@
             // Use StackMapApp's view controller if available
             if (window.StackMapApp && window.StackMapApp.ViewController) {
                 window.StackMapApp.ViewController.show(viewId);
-                this.announce('Navigated to ' + viewId.replace('-view', ''));
+                this.announce(`Navigated to ${viewId.replace('-view', '')}`);
             }
         },
         
@@ -663,25 +663,25 @@
          */
         createHelpOverlay: function() {
             // Check if help already exists
-            var existingHelp = document.getElementById('keyboard-help-overlay');
+            const existingHelp = document.getElementById('keyboard-help-overlay');
             if (existingHelp) {
                 existingHelp.remove();
             }
             
-            var overlay = document.createElement('div');
+            const overlay = document.createElement('div');
             overlay.id = 'keyboard-help-overlay';
             overlay.className = 'modal-overlay active';
             overlay.setAttribute('role', 'dialog');
             overlay.setAttribute('aria-label', 'Keyboard shortcuts help');
             
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'modal-content keyboard-help';
             
-            var header = document.createElement('h2');
+            const header = document.createElement('h2');
             header.textContent = 'Keyboard Shortcuts';
             content.appendChild(header);
             
-            var shortcuts = [
+            const shortcuts = [
                 { key: '↓/j', description: 'Next task' },
                 { key: '↑/k', description: 'Previous task' },
                 { key: 'Home', description: 'First task' },
@@ -699,15 +699,15 @@
                 { key: 'Tab', description: 'Navigate sections' }
             ];
             
-            var list = document.createElement('dl');
+            const list = document.createElement('dl');
             list.className = 'keyboard-shortcuts-list';
             
             shortcuts.forEach(function(shortcut) {
-                var dt = document.createElement('dt');
+                const dt = document.createElement('dt');
                 dt.className = 'shortcut-key';
                 dt.textContent = shortcut.key;
                 
-                var dd = document.createElement('dd');
+                const dd = document.createElement('dd');
                 dd.className = 'shortcut-description';
                 dd.textContent = shortcut.description;
                 
@@ -717,7 +717,7 @@
             
             content.appendChild(list);
             
-            var closeButton = document.createElement('button');
+            const closeButton = document.createElement('button');
             closeButton.className = 'modal-close';
             closeButton.textContent = 'Close';
             closeButton.onclick = function() {
@@ -732,7 +732,7 @@
             closeButton.focus();
             
             // Close on Escape
-            var self = this;
+            const self = this;
             overlay.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     overlay.remove();
@@ -745,7 +745,7 @@
          * Refresh navigation after content changes
          */
         refresh: function() {
-            var previousCount = this.focusableElements.length;
+            const previousCount = this.focusableElements.length;
             this.updateFocusableElements();
             
             // Only reinitialize if elements changed
@@ -768,15 +768,15 @@
          * Detect potential shortcut conflicts
          */
         detectShortcutConflicts: function() {
-            var userAgent = navigator.userAgent.toLowerCase();
+            const userAgent = navigator.userAgent.toLowerCase();
             
             // Firefox conflicts
-            if (userAgent.indexOf('firefox') > -1) {
+            if (userAgent.includes('firefox')) {
                 this.conflictingShortcuts['/'] = 'Firefox Quick Find';
             }
             
             // Browser find-as-you-type
-            if (userAgent.indexOf('chrome') > -1 || userAgent.indexOf('safari') > -1) {
+            if (userAgent.includes('chrome') || userAgent.includes('safari')) {
                 // T might conflict with find-as-you-type in some configs
                 // But we'll use it anyway as it's not a default
             }
@@ -792,7 +792,7 @@
          */
         addVisualShortcutHints: function() {
             // Add data-shortcut attributes to buttons
-            var hints = [
+            const hints = [
                 { selector: '#add-task-button, .task-add-button', shortcut: 'T' },
                 { selector: '.task-timer-button', shortcut: 't' },
                 { selector: '[aria-label*="Edit"]', shortcut: 'e' },
@@ -800,8 +800,8 @@
             ];
             
             hints.forEach(function(hint) {
-                var elements = document.querySelectorAll(hint.selector);
-                Array.prototype.forEach.call(elements, function(el) {
+                const elements = document.querySelectorAll(hint.selector);
+                [...elements].forEach(function(el) {
                     el.setAttribute('data-shortcut', hint.shortcut);
                     // Could add tooltip here
                 });
@@ -812,13 +812,13 @@
          * Setup mobile keyboard detection
          */
         setupMobileKeyboardDetection: function() {
-            var self = this;
+            const self = this;
             this.lastWindowHeight = window.innerHeight;
             
             // Detect virtual keyboard by window resize
             window.addEventListener('resize', function() {
-                var currentHeight = window.innerHeight;
-                var threshold = 150; // px
+                const currentHeight = window.innerHeight;
+                const threshold = 150; // px
                 
                 // Keyboard likely appeared
                 if (self.lastWindowHeight - currentHeight > threshold) {
@@ -839,7 +839,7 @@
          * Handle emergency escape (3x ESC)
          */
         handleEmergencyEscape: function() {
-            var self = this;
+            const self = this;
             
             this.escapeCount++;
             
@@ -869,7 +869,7 @@
             this.announce('Keyboard shortcuts disabled. Refresh page to re-enable.');
             
             // Show visual indicator
-            var indicator = document.createElement('div');
+            const indicator = document.createElement('div');
             indicator.className = 'shortcuts-disabled-indicator';
             indicator.textContent = 'Keyboard shortcuts disabled';
             indicator.style.cssText = 'position:fixed;top:10px;right:10px;background:#ff0000;color:white;padding:10px;border-radius:5px;z-index:9999';
@@ -895,7 +895,7 @@
                 return;
             }
             
-            var lastAction = this.undoStack.pop();
+            const lastAction = this.undoStack.pop();
             console.log('Undoing action:', lastAction);
             
             // Execute undo based on action type
@@ -956,13 +956,13 @@
          * Preserve focus before virtual scroll update
          */
         beforeVirtualUpdate: function() {
-            var activeElement = document.activeElement;
+            const activeElement = document.activeElement;
             if (activeElement && activeElement.hasAttribute('data-task-id')) {
                 this.preservedFocusId = activeElement.getAttribute('data-task-id');
                 // Also store scroll position
                 this.preservedScrollTop = this.container ? this.container.scrollTop : 0;
                 // Store the relative position of the element
-                var rect = activeElement.getBoundingClientRect();
+                const rect = activeElement.getBoundingClientRect();
                 this.preservedRelativeTop = rect.top;
             }
         },
@@ -971,7 +971,7 @@
          * Restore focus after virtual scroll update
          */
         afterVirtualUpdate: function() {
-            var self = this;
+            const self = this;
             
             if (!this.preservedFocusId) return;
             
@@ -981,13 +981,13 @@
                 self.updateFocusableElements();
                 
                 // Sanitize the task ID to prevent injection
-                var safeId = self.preservedFocusId.replace(/[^\w\-]/g, '');
+                const safeId = self.preservedFocusId.replace(/[^\w\-]/g, '');
                 
                 try {
-                    var element = document.querySelector('[data-task-id="' + safeId + '"]');
+                    const element = document.querySelector(`[data-task-id="${safeId}"]`);
                     if (element) {
                         // Find index in new focusable elements
-                        var index = Array.prototype.indexOf.call(self.focusableElements, element);
+                        const index = [...self.focusableElements].indexOf(element);
                         if (index !== -1) {
                             // Set focus without scrolling
                             element.setAttribute('tabindex', '0');
@@ -997,8 +997,8 @@
                             // Restore scroll position if needed
                             if (self.container && self.preservedScrollTop !== undefined) {
                                 // Calculate new scroll position to maintain visual position
-                                var newRect = element.getBoundingClientRect();
-                                var scrollAdjustment = newRect.top - self.preservedRelativeTop;
+                                const newRect = element.getBoundingClientRect();
+                                const scrollAdjustment = newRect.top - self.preservedRelativeTop;
                                 self.container.scrollTop = self.preservedScrollTop + scrollAdjustment;
                             }
                         } else {
@@ -1027,8 +1027,8 @@
                 return;
             }
             
-            var element = this.focusableElements[this.currentFocus];
-            var checkbox = element.querySelector('input[type="checkbox"]');
+            const element = this.focusableElements[this.currentFocus];
+            const checkbox = element.querySelector('input[type="checkbox"]');
             if (checkbox) {
                 checkbox.click();
                 this.announce('Task marked as done');
@@ -1039,15 +1039,15 @@
          * Toggle focus mode (hide distractions)
          */
         toggleFocusMode: function() {
-            var self = this;
-            var isEnabled = document.body.classList.contains('focus-mode');
+            const self = this;
+            const isEnabled = document.body.classList.contains('focus-mode');
             
             if (!isEnabled) {
                 // Entering focus mode
                 document.body.classList.add('focus-mode');
                 
                 // Add exit instructions
-                var exitInstructions = document.createElement('div');
+                const exitInstructions = document.createElement('div');
                 exitInstructions.id = 'focus-mode-exit';
                 exitInstructions.className = 'focus-mode-indicator';
                 exitInstructions.innerHTML = 'Focus Mode Active - Press F or ESC to exit';
@@ -1061,7 +1061,7 @@
                 document.body.classList.remove('focus-mode');
                 
                 // Remove exit instructions
-                var exitIndicator = document.getElementById('focus-mode-exit');
+                const exitIndicator = document.getElementById('focus-mode-exit');
                 if (exitIndicator) {
                     exitIndicator.remove();
                 }
@@ -1078,11 +1078,11 @@
                 return;
             }
             
-            var element = this.focusableElements[this.currentFocus];
-            var checkbox = element.querySelector('input[type="checkbox"]');
+            const element = this.focusableElements[this.currentFocus];
+            const checkbox = element.querySelector('input[type="checkbox"]');
             if (checkbox) {
                 checkbox.click();
-                this.announce('Task ' + (checkbox.checked ? 'completed' : 'uncompleted'));
+                this.announce(`Task ${checkbox.checked ? 'completed' : 'uncompleted'}`);
             }
         },
         
@@ -1090,7 +1090,7 @@
          * Destroy and cleanup
          */
         destroy: function() {
-            var self = this;
+            const self = this;
             
             // Clear all timers
             if (this.debounceTimer) {
@@ -1120,19 +1120,19 @@
             document.removeEventListener('tasksUpdated', this._handleTasksUpdated);
             
             // Remove skip links
-            var skipNav = document.querySelector('.skip-links');
+            const skipNav = document.querySelector('.skip-links');
             if (skipNav) {
                 skipNav.remove();
             }
             
             // Remove focus mode indicator if exists
-            var focusModeIndicator = document.getElementById('focus-mode-exit');
+            const focusModeIndicator = document.getElementById('focus-mode-exit');
             if (focusModeIndicator) {
                 focusModeIndicator.remove();
             }
             
             // Remove shortcuts disabled indicator if exists
-            var shortcutsIndicator = document.querySelector('.shortcuts-disabled-indicator');
+            const shortcutsIndicator = document.querySelector('.shortcuts-disabled-indicator');
             if (shortcutsIndicator) {
                 shortcutsIndicator.remove();
             }

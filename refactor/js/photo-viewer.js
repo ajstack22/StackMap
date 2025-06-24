@@ -8,7 +8,7 @@
     'use strict';
     
     // Configuration
-    var VIEWER_CONFIG = {
+    const VIEWER_CONFIG = {
         ZOOM_LEVELS: [1, 1.5, 2, 3],
         ZOOM_BUTTON_SIZE: 48,
         CLOSE_BUTTON_SIZE: 60,
@@ -17,7 +17,7 @@
     };
     
     // Photo Viewer Constructor
-    var PhotoViewer = function(options) {
+    const PhotoViewer = function(options) {
         this.options = options || {};
         this.photos = [];
         this.currentIndex = 0;
@@ -84,7 +84,7 @@
         
         // Create viewer DOM structure
         _createViewer: function() {
-            var self = this;
+            const self = this;
             
             // Main container
             this.viewer = document.createElement('div');
@@ -106,12 +106,12 @@
             
             // Navigation dots (if multiple photos)
             if (this.photos.length > 1) {
-                var dots = this._createNavigationDots();
+                const dots = this._createNavigationDots();
                 this.imageContainer.appendChild(dots);
             }
             
             // Zoom controls
-            var zoomControls = this._createZoomControls();
+            const zoomControls = this._createZoomControls();
             this.imageContainer.appendChild(zoomControls);
             
             this.viewer.appendChild(this.imageContainer);
@@ -122,7 +122,7 @@
             this.viewer.appendChild(this.captionDisplay);
             
             // Close button
-            var closeBtn = document.createElement('button');
+            const closeBtn = document.createElement('button');
             closeBtn.className = 'photo-viewer-close';
             closeBtn.setAttribute('aria-label', 'Close viewer');
             closeBtn.innerHTML = '×';
@@ -153,18 +153,18 @@
         
         // Create zoom controls
         _createZoomControls: function() {
-            var self = this;
-            var controls = document.createElement('div');
+            const self = this;
+            const controls = document.createElement('div');
             controls.className = 'zoom-controls';
             
             // Zoom in button
-            var zoomIn = document.createElement('button');
+            const zoomIn = document.createElement('button');
             zoomIn.className = 'zoom-in';
             zoomIn.setAttribute('aria-label', 'Zoom in');
             zoomIn.innerHTML = '+';
             
             // Zoom out button
-            var zoomOut = document.createElement('button');
+            const zoomOut = document.createElement('button');
             zoomOut.className = 'zoom-out';
             zoomOut.setAttribute('aria-label', 'Zoom out');
             zoomOut.innerHTML = '−';
@@ -196,14 +196,14 @@
         
         // Create navigation dots
         _createNavigationDots: function() {
-            var self = this;
-            var dotsContainer = document.createElement('div');
+            const self = this;
+            const dotsContainer = document.createElement('div');
             dotsContainer.className = 'photo-viewer-dots';
             
-            for (var i = 0; i < this.photos.length; i++) {
-                var dot = document.createElement('button');
+            for (let i = 0; i < this.photos.length; i++) {
+                const dot = document.createElement('button');
                 dot.className = 'photo-viewer-dot';
-                dot.setAttribute('aria-label', 'Go to photo ' + (i + 1));
+                dot.setAttribute('aria-label', `Go to photo ${i + 1}`);
                 dot.setAttribute('data-index', i);
                 
                 if (i === this.currentIndex) {
@@ -230,10 +230,10 @@
         
         // Create navigation buttons
         _createNavigationButtons: function() {
-            var self = this;
+            const self = this;
             
             // Previous button
-            var prevBtn = document.createElement('button');
+            const prevBtn = document.createElement('button');
             prevBtn.className = 'photo-viewer-nav photo-viewer-prev';
             prevBtn.setAttribute('aria-label', 'Previous photo');
             prevBtn.innerHTML = '‹';
@@ -249,7 +249,7 @@
             }
             
             // Next button
-            var nextBtn = document.createElement('button');
+            const nextBtn = document.createElement('button');
             nextBtn.className = 'photo-viewer-nav photo-viewer-next';
             nextBtn.setAttribute('aria-label', 'Next photo');
             nextBtn.innerHTML = '›';
@@ -270,26 +270,26 @@
         
         // Setup swipe navigation
         _setupSwipeNavigation: function() {
-            var self = this;
-            var startX = 0;
-            var startY = 0;
-            var startTime = 0;
+            const self = this;
+            let startX = 0;
+            let startY = 0;
+            let startTime = 0;
             
             this.imageContainer.addEventListener('touchstart', function(e) {
-                var touch = e.changedTouches[0];
+                const touch = e.changedTouches[0];
                 startX = touch.pageX;
                 startY = touch.pageY;
                 startTime = Date.now();
             });
             
             this.imageContainer.addEventListener('touchend', function(e) {
-                var touch = e.changedTouches[0];
-                var deltaX = touch.pageX - startX;
-                var deltaY = touch.pageY - startY;
-                var deltaTime = Date.now() - startTime;
+                const touch = e.changedTouches[0];
+                const deltaX = touch.pageX - startX;
+                const deltaY = touch.pageY - startY;
+                const deltaTime = Date.now() - startTime;
                 
                 // Quick swipe or long swipe
-                var threshold = deltaTime < 300 ? 30 : VIEWER_CONFIG.SWIPE_THRESHOLD;
+                const threshold = deltaTime < 300 ? 30 : VIEWER_CONFIG.SWIPE_THRESHOLD;
                 
                 // Horizontal swipe detection
                 if (Math.abs(deltaX) > threshold && Math.abs(deltaY) < threshold) {
@@ -306,8 +306,8 @@
         _loadPhoto: function(index) {
             if (index < 0 || index >= this.photos.length) return;
             
-            var self = this;
-            var photo = this.photos[index];
+            const self = this;
+            const photo = this.photos[index];
             
             // Update current index
             this.currentIndex = index;
@@ -321,12 +321,12 @@
             this.imageContainer.classList.add('photo-skeleton');
             
             // Update image source
-            var sources = [];
+            const sources = [];
             if (photo.fullUrl) sources.push(photo.fullUrl);
             if (photo.mediumUrl) sources.push(photo.mediumUrl);
             if (photo.localUri) sources.push(photo.localUri);
             
-            var currentSourceIndex = 0;
+            let currentSourceIndex = 0;
             
             function tryNextSource() {
                 if (currentSourceIndex >= sources.length) {
@@ -415,8 +415,8 @@
         
         // Update zoom level
         _updateZoom: function() {
-            var scale = VIEWER_CONFIG.ZOOM_LEVELS[this.currentZoomIndex];
-            this.currentImage.style.transform = 'scale(' + scale + ')';
+            const scale = VIEWER_CONFIG.ZOOM_LEVELS[this.currentZoomIndex];
+            this.currentImage.style.transform = `scale(${scale})`;
         },
         
         // Update caption display
@@ -431,8 +431,8 @@
         
         // Update navigation dots
         _updateNavigationDots: function() {
-            var dots = this.viewer.querySelectorAll('.photo-viewer-dot');
-            for (var i = 0; i < dots.length; i++) {
+            const dots = this.viewer.querySelectorAll('.photo-viewer-dot');
+            for (let i = 0; i < dots.length; i++) {
                 if (i === this.currentIndex) {
                     dots[i].classList.add('active');
                 } else {
@@ -443,7 +443,7 @@
         
         // Preload adjacent photos
         _preloadAdjacent: function() {
-            var self = this;
+            const self = this;
             
             // Preload next photo
             if (this.currentIndex < this.photos.length - 1) {
@@ -460,8 +460,8 @@
         _preloadPhoto: function(index) {
             if (index < 0 || index >= this.photos.length) return;
             
-            var photo = this.photos[index];
-            var img = new Image();
+            const photo = this.photos[index];
+            const img = new Image();
             
             // Try to preload best quality available
             if (photo.fullUrl) {
@@ -475,11 +475,11 @@
         
         // Get photo description
         _getPhotoDescription: function(photo) {
-            var parts = [];
+            const parts = [];
             
             // Category
             if (photo.category && window.PHOTO_CATEGORIES) {
-                var category = window.PHOTO_CATEGORIES[photo.category];
+                const category = window.PHOTO_CATEGORIES[photo.category];
                 if (category) parts.push(category.label);
             } else {
                 parts.push('Photo');
@@ -491,7 +491,7 @@
             }
             
             // Position in set
-            parts.push((this.currentIndex + 1) + ' of ' + this.photos.length);
+            parts.push(`${this.currentIndex + 1} of ${this.photos.length}`);
             
             return parts.join(', ');
         },

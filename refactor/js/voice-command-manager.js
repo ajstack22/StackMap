@@ -545,7 +545,7 @@
                 'showing-tasks': `Showing ${data || 'today\'s'} tasks...`,
                 'showing-next': "Here's what's next...",
                 'low-confidence': `I heard "${data}" but I'm not sure. Try saying it again?`,
-                'unknown-command': "I'm still learning that command. " + (data && data.length ? data[0] : "Try 'Add task' or 'Show today'"),
+                'unknown-command': `I'm still learning that command. ${data && data.length ? data[0] : "Try 'Add task' or 'Show today'"}`,
                 'no-speech': "I didn't hear anything. Take your time and try again when ready.",
                 'no-permission': "I need microphone access to hear you. You can also type tasks instead.",
                 'network-error': "Voice commands work best with internet. You can still type tasks!",

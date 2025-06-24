@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var ActivityLibrary = {
+    const ActivityLibrary = {
         // State
         isInitialized: false,
         activities: [],
@@ -20,7 +20,7 @@
          * Initialize the activity library
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             if (self.isInitialized) return;
             
@@ -37,7 +37,7 @@
          * Load activities from default activities
          */
         loadActivities: function() {
-            var self = this;
+            const self = this;
             
             // Get categories
             self.categories = window.StackMapDefaultActivities.CATEGORIES;
@@ -47,7 +47,7 @@
                 // Load activities progressively
                 window.StackMapDefaultActivities.loadProgressive(function(activities) {
                     self.activities = activities;
-                    console.log('ActivityLibrary: Loaded ' + self.activities.length + ' activities progressively');
+                    console.log(`ActivityLibrary: Loaded ${self.activities.length} activities progressively`);
                     
                     // Re-render if modal is open
                     if (document.querySelector('.activity-library-modal')) {
@@ -60,7 +60,7 @@
             } else {
                 // Fallback to loading all at once
                 self.activities = window.StackMapDefaultActivities.getAllActivities();
-                console.log('ActivityLibrary: Loaded ' + self.activities.length + ' activities');
+                console.log(`ActivityLibrary: Loaded ${self.activities.length} activities`);
             }
         },
         
@@ -68,7 +68,7 @@
          * Show the activity library modal
          */
         show: function() {
-            var self = this;
+            const self = this;
             
             // Initialize if needed
             if (!self.isInitialized) {
@@ -82,7 +82,7 @@
             }
             
             // Build modal content
-            var content = self.buildLibraryUI();
+            const content = self.buildLibraryUI();
             
             // Show modal
             window.Modal.show({
@@ -104,9 +104,9 @@
          * Build the library UI structure
          */
         buildLibraryUI: function() {
-            var self = this;
+            const self = this;
             
-            var html = '';
+            let html = '';
             
             // Search bar
             html += '<div class="activity-search-container">';
@@ -132,10 +132,10 @@
          * Setup event handlers
          */
         setupEventHandlers: function() {
-            var self = this;
+            const self = this;
             
             // Search input
-            var searchInput = document.getElementById('activity-search');
+            const searchInput = document.getElementById('activity-search');
             if (searchInput) {
                 searchInput.addEventListener('input', function(e) {
                     self.handleSearch(e.target.value);
@@ -143,7 +143,7 @@
             }
             
             // Search clear button
-            var clearButton = document.getElementById('activity-search-clear');
+            const clearButton = document.getElementById('activity-search-clear');
             if (clearButton) {
                 clearButton.addEventListener('click', function() {
                     self.clearSearch();
@@ -158,28 +158,28 @@
          * Render category tabs
          */
         renderCategories: function() {
-            var self = this;
+            const self = this;
             
-            var container = document.getElementById('activity-categories');
+            const container = document.getElementById('activity-categories');
             if (!container) return;
             
-            var html = '';
+            let html = '';
             
             // Add "All" category first
-            var allCount = self.activities.length;
-            html += '<button type="button" class="activity-category' + (self.currentCategory === 'all' ? ' active' : '') + '" data-category="all">';
-            html += 'All <span class="category-count">' + allCount + '</span>';
+            const allCount = self.activities.length;
+            html += `<button type="button" class="activity-category${self.currentCategory === 'all' ? ' active' : ''}" data-category="all">`;
+            html += `All <span class="category-count">${allCount}</span>`;
             html += '</button>';
             
             // Add other categories
-            for (var key in self.categories) {
+            for (const key in self.categories) {
                 if (self.categories.hasOwnProperty(key)) {
-                    var categoryName = self.categories[key];
-                    var count = self.getActivityCountByCategory(categoryName);
+                    const categoryName = self.categories[key];
+                    const count = self.getActivityCountByCategory(categoryName);
                     
                     if (count > 0) {
-                        html += '<button type="button" class="activity-category' + (self.currentCategory === categoryName ? ' active' : '') + '" data-category="' + categoryName + '">';
-                        html += categoryName + ' <span class="category-count">' + count + '</span>';
+                        html += `<button type="button" class="activity-category${self.currentCategory === categoryName ? ' active' : ''}" data-category="${categoryName}">`;
+                        html += `${categoryName} <span class="category-count">${count}</span>`;
                         html += '</button>';
                     }
                 }
@@ -188,10 +188,10 @@
             container.innerHTML = html;
             
             // Add click handlers to category buttons
-            var categoryButtons = container.querySelectorAll('.activity-category');
-            for (var i = 0; i < categoryButtons.length; i++) {
+            const categoryButtons = container.querySelectorAll('.activity-category');
+            for (let i = 0; i < categoryButtons.length; i++) {
                 categoryButtons[i].addEventListener('click', function(e) {
-                    var category = this.getAttribute('data-category');
+                    const category = this.getAttribute('data-category');
                     self.selectCategory(category);
                 });
             }
@@ -201,10 +201,10 @@
          * Get activity count for a category
          */
         getActivityCountByCategory: function(category) {
-            var self = this;
-            var count = 0;
+            const self = this;
+            let count = 0;
             
-            for (var i = 0; i < self.activities.length; i++) {
+            for (let i = 0; i < self.activities.length; i++) {
                 if (self.activities[i].category === category) {
                     count++;
                 }
@@ -217,14 +217,14 @@
          * Select a category
          */
         selectCategory: function(category) {
-            var self = this;
+            const self = this;
             
             self.currentCategory = category;
             
             // Update active state
-            var buttons = document.querySelectorAll('.activity-category');
-            for (var i = 0; i < buttons.length; i++) {
-                var btn = buttons[i];
+            const buttons = document.querySelectorAll('.activity-category');
+            for (let i = 0; i < buttons.length; i++) {
+                const btn = buttons[i];
                 if (btn.getAttribute('data-category') === category) {
                     btn.classList.add('active');
                 } else {
@@ -240,13 +240,13 @@
          * Render activities grid
          */
         renderActivities: function(category) {
-            var self = this;
+            const self = this;
             
-            var container = document.getElementById('activity-grid');
+            const container = document.getElementById('activity-grid');
             if (!container) return;
             
             // Filter activities
-            var filtered = self.filterActivities(category);
+            const filtered = self.filterActivities(category);
             
             if (filtered.length === 0) {
                 container.innerHTML = '<div class="activity-empty">No activities found</div>';
@@ -254,22 +254,22 @@
             }
             
             // Build activity cards
-            var html = '';
-            for (var i = 0; i < filtered.length; i++) {
-                var activity = filtered[i];
+            let html = '';
+            for (let i = 0; i < filtered.length; i++) {
+                const activity = filtered[i];
                 html += self.createActivityCard(activity);
             }
             
             container.innerHTML = html;
             
             // Add click handlers to add buttons
-            var addButtons = container.querySelectorAll('.activity-add-btn');
-            for (var j = 0; j < addButtons.length; j++) {
+            const addButtons = container.querySelectorAll('.activity-add-btn');
+            for (let j = 0; j < addButtons.length; j++) {
                 (function(index) {
                     addButtons[index].addEventListener('click', function(e) {
                         e.preventDefault();
                         e.stopPropagation();
-                        var activityIndex = parseInt(this.getAttribute('data-index'), 10);
+                        const activityIndex = parseInt(this.getAttribute('data-index'), 10);
                         self.addActivity(filtered[activityIndex]);
                     });
                 })(j);
@@ -280,11 +280,11 @@
          * Filter activities by category and search query
          */
         filterActivities: function(category) {
-            var self = this;
-            var filtered = [];
+            const self = this;
+            const filtered = [];
             
-            for (var i = 0; i < self.activities.length; i++) {
-                var activity = self.activities[i];
+            for (let i = 0; i < self.activities.length; i++) {
+                const activity = self.activities[i];
                 
                 // Check category
                 if (category !== 'all' && activity.category !== category) {
@@ -293,11 +293,11 @@
                 
                 // Check search query
                 if (self.searchQuery) {
-                    var query = self.searchQuery.toLowerCase();
-                    var title = (activity.title || '').toLowerCase();
-                    var description = (activity.description || '').toLowerCase();
+                    const query = self.searchQuery.toLowerCase();
+                    const title = (activity.title || '').toLowerCase();
+                    const description = (activity.description || '').toLowerCase();
                     
-                    if (title.indexOf(query) === -1 && description.indexOf(query) === -1) {
+                    if (!title.includes(query) && !description.includes(query)) {
                         continue;
                     }
                 }
@@ -312,19 +312,19 @@
          * Create activity card HTML
          */
         createActivityCard: function(activity) {
-            var html = '<div class="activity-card">';
+            let html = '<div class="activity-card">';
             
             // Icon
-            html += '<div class="activity-icon">' + (activity.icon || '✓') + '</div>';
+            html += `<div class="activity-icon">${activity.icon || '✓'}</div>`;
             
             // Content
             html += '<div class="activity-content">';
-            html += '<div class="activity-title">' + this.escapeHtml(activity.title) + '</div>';
-            html += '<div class="activity-description">' + this.escapeHtml(activity.description) + '</div>';
+            html += `<div class="activity-title">${this.escapeHtml(activity.title)}</div>`;
+            html += `<div class="activity-description">${this.escapeHtml(activity.description)}</div>`;
             html += '</div>';
             
             // Add button
-            html += '<button type="button" class="activity-add-btn" data-index="' + this.activities.indexOf(activity) + '" aria-label="Add ' + this.escapeHtml(activity.title) + '">';
+            html += `<button type="button" class="activity-add-btn" data-index="${this.activities.indexOf(activity)}" aria-label="Add ${this.escapeHtml(activity.title)}">`;
             html += '+';
             html += '</button>';
             
@@ -337,7 +337,7 @@
          * Handle search input with debounce
          */
         handleSearch: function(query) {
-            var self = this;
+            const self = this;
             
             // Clear existing timer
             if (self.searchTimer) {
@@ -350,7 +350,7 @@
                 self.renderActivities(self.currentCategory);
                 
                 // Show/hide clear button
-                var clearButton = document.getElementById('activity-search-clear');
+                const clearButton = document.getElementById('activity-search-clear');
                 if (clearButton) {
                     clearButton.style.display = self.searchQuery ? 'block' : 'none';
                 }
@@ -361,17 +361,17 @@
          * Clear search
          */
         clearSearch: function() {
-            var self = this;
+            const self = this;
             
             self.searchQuery = '';
             
-            var searchInput = document.getElementById('activity-search');
+            const searchInput = document.getElementById('activity-search');
             if (searchInput) {
                 searchInput.value = '';
                 searchInput.focus();
             }
             
-            var clearButton = document.getElementById('activity-search-clear');
+            const clearButton = document.getElementById('activity-search-clear');
             if (clearButton) {
                 clearButton.style.display = 'none';
             }
@@ -383,7 +383,7 @@
          * Add activity to task list
          */
         addActivity: function(activity) {
-            var self = this;
+            const self = this;
             
             // Check if in edit mode
             if (!window.EditMode || !window.EditMode.isActive()) {
@@ -398,21 +398,21 @@
             }
             
             // Check for exact duplicates in current user's tasks
-            var userTasks = window.TaskDisplay.getUserTasks();
-            for (var i = 0; i < userTasks.length; i++) {
-                var existingTask = userTasks[i];
+            const userTasks = window.TaskDisplay.getUserTasks();
+            for (let i = 0; i < userTasks.length; i++) {
+                const existingTask = userTasks[i];
                 if (existingTask.title === activity.title && 
                     existingTask.description === activity.description &&
                     !existingTask.completed) {
                     // Found duplicate - show message and don't add
-                    self.showDuplicateMessage('Task "' + activity.title + '" already exists');
+                    self.showDuplicateMessage(`Task "${activity.title}" already exists`);
                     return;
                 }
             }
             
             // Create new task from activity
-            var newTask = {
-                id: 'task_' + Date.now(),
+            const newTask = {
+                id: `task_${Date.now()}`,
                 title: activity.title,
                 description: activity.description,
                 icon: activity.icon || '✓',
@@ -430,7 +430,7 @@
             
             // Get current user if available
             if (window.UserManager) {
-                var currentUser = window.UserManager.getCurrentUser();
+                const currentUser = window.UserManager.getCurrentUser();
                 if (currentUser) {
                     newTask.user_id = currentUser.id;
                 }
@@ -445,14 +445,14 @@
             window.Modal.close();
             
             // Show success message
-            self.showSuccessMessage('Added "' + activity.title + '" to your tasks');
+            self.showSuccessMessage(`Added "${activity.title}" to your tasks`);
         },
         
         /**
          * Show success message
          */
         showSuccessMessage: function(message) {
-            var notification = document.createElement('div');
+            const notification = document.createElement('div');
             notification.className = 'activity-success-message';
             notification.setAttribute('role', 'status');
             notification.textContent = message;
@@ -471,7 +471,7 @@
          * Show duplicate message
          */
         showDuplicateMessage: function(message) {
-            var notification = document.createElement('div');
+            const notification = document.createElement('div');
             notification.className = 'activity-duplicate-message';
             notification.setAttribute('role', 'alert');
             notification.textContent = message;
@@ -490,7 +490,7 @@
          * Escape HTML for safe display
          */
         escapeHtml: function(text) {
-            var div = document.createElement('div');
+            const div = document.createElement('div');
             div.textContent = text || '';
             return div.innerHTML;
         }

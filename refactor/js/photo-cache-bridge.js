@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var PhotoCacheBridge = {
+    const PhotoCacheBridge = {
         // State
         serviceWorkerReady: false,
         pendingCacheRequests: [],
@@ -16,7 +16,7 @@
          * Initialize the bridge
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Wait for service worker
             if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
@@ -41,12 +41,12 @@
          * Setup hooks for PhotoOptimizer
          */
         setupPhotoOptimizerHooks: function() {
-            var self = this;
+            const self = this;
             
             if (!window.PhotoOptimizer) return;
             
             // Store original processImage function
-            var originalProcessImage = window.PhotoOptimizer.processImage;
+            const originalProcessImage = window.PhotoOptimizer.processImage;
             
             // Override with cache-aware version
             window.PhotoOptimizer.processImage = function(file, callback) {
@@ -66,7 +66,7 @@
          * Setup hooks for PhotoLazyLoader
          */
         setupLazyLoaderHooks: function() {
-            var self = this;
+            const self = this;
             
             if (!window.PhotoLazyLoader) return;
             
@@ -81,34 +81,34 @@
          * Cache photo versions in service worker
          */
         cachePhotoVersions: function(result, filename) {
-            var self = this;
+            const self = this;
             
             if (!self.serviceWorkerReady) {
                 self.pendingCacheRequests.push({ result: result, filename: filename });
                 return;
             }
             
-            var urls = {};
+            const urls = {};
             
             // Convert blobs to object URLs for caching
             if (result.thumbnail && window.PhotoOptimizer) {
                 urls.thumbnail = window.PhotoOptimizer.createObjectUrl(
                     result.thumbnail, 
-                    'cache_thumb_' + filename
+                    `cache_thumb_${filename}`
                 );
             }
             
             if (result.medium && window.PhotoOptimizer) {
                 urls.medium = window.PhotoOptimizer.createObjectUrl(
                     result.medium,
-                    'cache_medium_' + filename
+                    `cache_medium_${filename}`
                 );
             }
             
             if (result.original && window.PhotoOptimizer) {
                 urls.full = window.PhotoOptimizer.createObjectUrl(
                     result.original,
-                    'cache_full_' + filename
+                    `cache_full_${filename}`
                 );
             }
             
@@ -125,7 +125,7 @@
          * Process pending cache requests
          */
         processPendingRequests: function() {
-            var self = this;
+            const self = this;
             
             if (!self.serviceWorkerReady) return;
             
@@ -140,20 +140,20 @@
          * Predictive caching based on viewport
          */
         predictiveCache: function(loadedImage) {
-            var self = this;
+            const self = this;
             
             // Find nearby images that might be viewed next
-            var container = loadedImage.closest('.photo-grid');
+            const container = loadedImage.closest('.photo-grid');
             if (!container) return;
             
-            var allImages = container.querySelectorAll('[data-lazy-src]');
-            var loadedIndex = Array.prototype.indexOf.call(allImages, loadedImage);
+            const allImages = container.querySelectorAll('[data-lazy-src]');
+            const loadedIndex = Array.prototype.indexOf.call(allImages, loadedImage);
             
             // Pre-cache next 3 images
-            for (var i = 1; i <= 3; i++) {
-                var nextIndex = loadedIndex + i;
+            for (let i = 1; i <= 3; i++) {
+                const nextIndex = loadedIndex + i;
                 if (nextIndex < allImages.length) {
-                    var nextImage = allImages[nextIndex];
+                    const nextImage = allImages[nextIndex];
                     self.warmCache(nextImage);
                 }
             }
@@ -163,11 +163,11 @@
          * Warm cache for specific image
          */
         warmCache: function(image) {
-            var self = this;
+            const self = this;
             
             if (!navigator.serviceWorker.controller) return;
             
-            var urls = {
+            const urls = {
                 thumbnail: image.getAttribute('data-lazy-thumbnail'),
                 medium: image.getAttribute('data-lazy-medium'),
                 full: image.getAttribute('data-lazy-src')
@@ -191,7 +191,7 @@
                 return;
             }
             
-            var channel = new MessageChannel();
+            const channel = new MessageChannel();
             channel.port1.onmessage = function(event) {
                 callback(event.data);
             };
@@ -222,16 +222,16 @@
          * Preload critical photos
          */
         preloadCriticalPhotos: function(photoIds) {
-            var self = this;
+            const self = this;
             
             // This would be called when viewing a task
             // to preload its photos for offline access
             photoIds.forEach(function(photoId) {
                 // Construct URLs based on your photo storage pattern
-                var urls = {
-                    thumbnail: '/api/photos/' + photoId + '?size=thumbnail',
-                    medium: '/api/photos/' + photoId + '?size=medium',
-                    full: '/api/photos/' + photoId
+                const urls = {
+                    thumbnail: `/api/photos/${photoId}?size=thumbnail`,
+                    medium: `/api/photos/${photoId}?size=medium`,
+                    full: `/api/photos/${photoId}`
                 };
                 
                 if (navigator.serviceWorker.controller) {

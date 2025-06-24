@@ -8,11 +8,11 @@
     'use strict';
     
     // Constants
-    var ROLLOVER_HOUR = 4; // 4 AM as per PM review
-    var STORAGE_KEY = 'stackmap_rollover_state';
+    const ROLLOVER_HOUR = 4; // 4 AM as per PM review
+    const STORAGE_KEY = 'stackmap_rollover_state';
     
     // RSD-aware messages
-    var MESSAGES = {
+    const MESSAGES = {
         single: "Brought 1 task forward - fresh start! 🌅",
         multiple: "{count} tasks came along for today's journey",
         allDone: "Yesterday complete! Today is yours ✨",
@@ -22,7 +22,7 @@
         error: "Had a small hiccup organizing tasks, but they're all safe"
     };
     
-    var RolloverManager = {
+    const RolloverManager = {
         isInitialized: false,
         lastCheck: null,
         
@@ -30,7 +30,7 @@
          * Initialize the rollover manager
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             if (self.isInitialized) return;
             
@@ -56,18 +56,18 @@
          * Check if rollover is needed and perform it
          */
         checkAndPerformRollover: function(callback) {
-            var self = this;
+            const self = this;
             
             // Get rollover state
             self.getRolloverState(function(state) {
-                var now = new Date();
-                var today = new Date(now);
+                const now = new Date();
+                const today = new Date(now);
                 today.setHours(ROLLOVER_HOUR, 0, 0, 0);
                 
                 // Check if we've already done today's rollover
                 if (state.lastRollover) {
-                    var lastRollover = new Date(state.lastRollover);
-                    var lastRolloverDay = new Date(lastRollover);
+                    const lastRollover = new Date(state.lastRollover);
+                    const lastRolloverDay = new Date(lastRollover);
                     lastRolloverDay.setHours(ROLLOVER_HOUR, 0, 0, 0);
                     
                     // If we've already rolled over after today's rollover time, skip
@@ -83,7 +83,7 @@
                     console.log('Rollover: Time to perform daily rollover');
                     self.performRollover(callback);
                 } else {
-                    console.log('Rollover: Too early (before ' + ROLLOVER_HOUR + ' AM)');
+                    console.log(`Rollover: Too early (before ${ROLLOVER_HOUR} AM)`);
                     if (callback) callback(false);
                 }
             });
@@ -93,7 +93,7 @@
          * Perform the actual rollover
          */
         performRollover: function(callback) {
-            var self = this;
+            const self = this;
             
             console.log('Rollover: Starting daily rollover process');
             
@@ -109,10 +109,10 @@
                     return;
                 }
                 
-                var updates = [];
-                var rolloverCount = 0;
-                var completedCount = 0;
-                var now = new Date();
+                const updates = [];
+                let rolloverCount = 0;
+                let completedCount = 0;
+                const now = new Date();
                 
                 // Process each task
                 tasks.forEach(function(task) {
@@ -219,7 +219,7 @@
             } else {
                 // Fallback to localStorage
                 try {
-                    var stored = localStorage.getItem('stackmap_tasks');
+                    const stored = localStorage.getItem('stackmap_tasks');
                     callback(stored ? JSON.parse(stored) : []);
                 } catch (e) {
                     callback([]);
@@ -231,13 +231,13 @@
          * Apply task updates
          */
         applyUpdates: function(updates, callback) {
-            var self = this;
+            const self = this;
             
             // Get current tasks
             self.getTasks(function(tasks) {
                 // Apply updates
                 updates.forEach(function(update) {
-                    var task = tasks.find(function(t) {
+                    const task = tasks.find(function(t) {
                         return t.id === update.task.id;
                     });
                     
@@ -304,7 +304,7 @@
                 });
             } else {
                 try {
-                    var stored = localStorage.getItem(STORAGE_KEY);
+                    const stored = localStorage.getItem(STORAGE_KEY);
                     callback(stored ? JSON.parse(stored) : {});
                 } catch (e) {
                     callback({});
@@ -332,7 +332,7 @@
          * Show rollover message
          */
         showRolloverMessage: function(rolloverCount, completedCount) {
-            var message;
+            let message;
             
             if (rolloverCount === 0 && completedCount > 0) {
                 message = MESSAGES.allDone;
@@ -359,29 +359,15 @@
             
             // Fallback to custom notification
             try {
-                var notification = document.createElement('div');
-                notification.className = 'rollover-notification ' + (type || '');
+                const notification = document.createElement('div');
+                notification.className = `rollover-notification ${type || ''}`;
                 notification.textContent = message;
                 notification.setAttribute('role', 'status');
                 notification.setAttribute('aria-live', 'polite');
                 
                 // Style it
                 notification.style.cssText = 
-                    'position: fixed;' +
-                    'top: 80px;' +
-                    'left: 50%;' +
-                    'transform: translateX(-50%);' +
-                    'background: ' + (type === 'error' ? '#f44336' : '#4CAF50') + ';' +
-                    'color: white;' +
-                    'padding: 1rem 1.5rem;' +
-                    'border-radius: 2rem;' +
-                    'box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);' +
-                    'font-size: 1rem;' +
-                    'opacity: 0;' +
-                    'transition: opacity 0.3s ease;' +
-                    'z-index: 1000;' +
-                    'max-width: 90%;' +
-                    'text-align: center;';
+                    `position: fixed;top: 80px;left: 50%;transform: translateX(-50%);background: ${type === 'error' ? '#f44336' : '#4CAF50'};color: white;padding: 1rem 1.5rem;border-radius: 2rem;box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);font-size: 1rem;opacity: 0;transition: opacity 0.3s ease;z-index: 1000;max-width: 90%;text-align: center;`;
                 
                 document.body.appendChild(notification);
                 
@@ -447,11 +433,11 @@
          * Get rollover statistics
          */
         getStats: function(callback) {
-            var self = this;
+            const self = this;
             
             self.getRolloverState(function(state) {
                 self.getTasks(function(tasks) {
-                    var stats = {
+                    const stats = {
                         lastRollover: state.lastRollover,
                         tasksRolledToday: state.rolloverCount || 0,
                         completedYesterday: state.completedCount || 0,

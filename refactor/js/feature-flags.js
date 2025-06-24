@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var FeatureFlags = {
+    const FeatureFlags = {
         // Default feature flags
         defaultFlags: {
             // Memory optimizations
@@ -46,7 +46,7 @@
          * Initialize feature flags
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Get or generate user ID
             self.userId = self.getUserId();
@@ -68,10 +68,10 @@
          * Get or generate user ID for consistent rollout
          */
         getUserId: function() {
-            var userId = localStorage.getItem('stackmap_feature_user_id');
+            let userId = localStorage.getItem('stackmap_feature_user_id');
             
             if (!userId) {
-                userId = 'user_' + Math.random().toString(36).substr(2, 9);
+                userId = `user_${Math.random().toString(36).substr(2, 9)}`;
                 try {
                     localStorage.setItem('stackmap_feature_user_id', userId);
                 } catch (e) {
@@ -86,14 +86,14 @@
          * Load flags from storage
          */
         loadFlags: function() {
-            var self = this;
+            const self = this;
             
             try {
-                var stored = localStorage.getItem('stackmap_feature_flags');
+                const stored = localStorage.getItem('stackmap_feature_flags');
                 if (stored) {
-                    var parsed = JSON.parse(stored);
+                    const parsed = JSON.parse(stored);
                     // Merge with defaults
-                    for (var key in self.defaultFlags) {
+                    for (const key in self.defaultFlags) {
                         if (self.defaultFlags.hasOwnProperty(key)) {
                             self.flags[key] = parsed.hasOwnProperty(key) ? 
                                 parsed[key] : self.defaultFlags[key];
@@ -113,7 +113,7 @@
          * Save flags to storage
          */
         saveFlags: function() {
-            var self = this;
+            const self = this;
             
             try {
                 localStorage.setItem('stackmap_feature_flags', JSON.stringify(self.flags));
@@ -126,13 +126,13 @@
          * Check for URL parameter overrides
          */
         checkUrlOverrides: function() {
-            var self = this;
-            var params = new URLSearchParams(window.location.search);
+            const self = this;
+            const params = new URLSearchParams(window.location.search);
             
             // Check each flag for URL override
-            for (var flag in self.flags) {
-                if (self.flags.hasOwnProperty(flag) && params.has('ff_' + flag)) {
-                    var value = params.get('ff_' + flag);
+            for (const flag in self.flags) {
+                if (self.flags.hasOwnProperty(flag) && params.has(`ff_${flag}`)) {
+                    const value = params.get(`ff_${flag}`);
                     self.flags[flag] = value === 'true' || value === '1';
                     console.log('FeatureFlags: Override', flag, '=', self.flags[flag]);
                 }
@@ -149,19 +149,19 @@
          * Apply rollout percentages
          */
         applyRolloutPercentages: function() {
-            var self = this;
+            const self = this;
             
             if (!self.flags.rolloutPercentages) return;
             
-            var percentages = self.flags.rolloutPercentages;
+            const percentages = self.flags.rolloutPercentages;
             
-            for (var flag in percentages) {
+            for (const flag in percentages) {
                 if (percentages.hasOwnProperty(flag)) {
-                    var percentage = percentages[flag];
+                    const percentage = percentages[flag];
                     
                     // Use consistent hash for user
-                    var hash = self.hashCode(self.userId + flag);
-                    var bucket = Math.abs(hash) % 100;
+                    const hash = self.hashCode(self.userId + flag);
+                    const bucket = Math.abs(hash) % 100;
                     
                     // Enable if user is in rollout percentage
                     if (bucket < percentage) {
@@ -176,9 +176,9 @@
          * Simple hash function for consistent bucketing
          */
         hashCode: function(str) {
-            var hash = 0;
-            for (var i = 0; i < str.length; i++) {
-                var char = str.charCodeAt(i);
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
                 hash = hash & hash; // Convert to 32-bit integer
             }
@@ -189,7 +189,7 @@
          * Check if feature is enabled
          */
         isEnabled: function(flagName) {
-            var self = this;
+            const self = this;
             return self.flags[flagName] === true;
         },
         
@@ -197,7 +197,7 @@
          * Enable a feature
          */
         enable: function(flagName) {
-            var self = this;
+            const self = this;
             
             if (self.flags.hasOwnProperty(flagName)) {
                 self.flags[flagName] = true;
@@ -213,7 +213,7 @@
          * Disable a feature
          */
         disable: function(flagName) {
-            var self = this;
+            const self = this;
             
             if (self.flags.hasOwnProperty(flagName)) {
                 self.flags[flagName] = false;
@@ -229,10 +229,10 @@
          * Get all active features
          */
         getActiveFeatures: function() {
-            var self = this;
-            var active = [];
+            const self = this;
+            const active = [];
             
-            for (var flag in self.flags) {
+            for (const flag in self.flags) {
                 if (self.flags.hasOwnProperty(flag) && 
                     self.flags[flag] === true && 
                     flag !== 'rolloutPercentages') {
@@ -247,8 +247,8 @@
          * Log active features
          */
         logActiveFeatures: function() {
-            var self = this;
-            var active = self.getActiveFeatures();
+            const self = this;
+            const active = self.getActiveFeatures();
             
             if (active.length > 0) {
                 console.log('FeatureFlags: Active features:', active.join(', '));
@@ -259,12 +259,12 @@
          * Send telemetry about feature usage
          */
         sendTelemetry: function() {
-            var self = this;
+            const self = this;
             
             // Only send if performance metrics enabled
             if (!self.flags.performanceMetrics) return;
             
-            var telemetry = {
+            const telemetry = {
                 userId: self.userId,
                 features: self.getActiveFeatures(),
                 memory: window.MemoryMonitor ? window.MemoryMonitor.getStats() : null,
@@ -277,7 +277,7 @@
             
             // Store locally for debugging
             try {
-                var history = JSON.parse(localStorage.getItem('stackmap_telemetry') || '[]');
+                let history = JSON.parse(localStorage.getItem('stackmap_telemetry') || '[]');
                 history.push(telemetry);
                 
                 // Keep only last 10 entries

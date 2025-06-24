@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var BLOB_CONFIG = {
+    const BLOB_CONFIG = {
         MAX_MEMORY_USAGE: 50 * 1024 * 1024, // 50MB max in memory
         MAX_OBJECT_URLS: 20, // Max concurrent object URLs
         CLEANUP_INTERVAL: 60000, // 1 minute
@@ -14,7 +14,7 @@
         SAFARI_LIMIT: 50 * 1024 * 1024 // Safari 50MB total limit
     };
     
-    var BlobManager = {
+    const BlobManager = {
         // Track active object URLs
         objectUrls: {},
         
@@ -37,7 +37,7 @@
          * Initialize blob manager
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Start cleanup interval
             this.cleanupInterval = setInterval(function() {
@@ -64,7 +64,7 @@
             }
             
             // Check memory limits
-            var blobSize = blob.size || 0;
+            const blobSize = blob.size || 0;
             if (this.totalMemoryUsage + blobSize > BLOB_CONFIG.MAX_MEMORY_USAGE) {
                 // Trigger cleanup before creating new URL
                 this.cleanup(true); // Force cleanup
@@ -76,7 +76,7 @@
             }
             
             // Check object URL limit
-            var urlCount = Object.keys(this.objectUrls).length;
+            const urlCount = Object.keys(this.objectUrls).length;
             if (urlCount >= BLOB_CONFIG.MAX_OBJECT_URLS) {
                 // Revoke least recently used
                 this.revokeLeastRecentlyUsed();
@@ -89,7 +89,7 @@
             
             try {
                 // Create new object URL
-                var url = URL.createObjectURL(blob);
+                const url = URL.createObjectURL(blob);
                 
                 // Track it
                 this.objectUrls[attachmentId] = url;
@@ -117,7 +117,7 @@
             }
             
             // Need to load blob
-            var self = this;
+            const self = this;
             return blobProvider().then(function(blob) {
                 return self.createObjectURL(blob, attachmentId);
             });
@@ -142,7 +142,7 @@
          * Revoke object URL and clean up
          */
         revokeObjectURL: function(attachmentId) {
-            var url = this.objectUrls[attachmentId];
+            const url = this.objectUrls[attachmentId];
             if (!url) return;
             
             try {
@@ -152,7 +152,7 @@
             }
             
             // Update memory usage
-            var size = this.blobSizes[attachmentId] || 0;
+            const size = this.blobSizes[attachmentId] || 0;
             this.totalMemoryUsage = Math.max(0, this.totalMemoryUsage - size);
             
             // Clean up tracking
@@ -166,7 +166,7 @@
          * Revoke all object URLs
          */
         revokeAll: function() {
-            for (var attachmentId in this.objectUrls) {
+            for (const attachmentId in this.objectUrls) {
                 this.revokeObjectURL(attachmentId);
             }
             
@@ -181,15 +181,15 @@
          * Cleanup unused object URLs
          */
         cleanup: function(force) {
-            var now = Date.now();
-            var revokeList = [];
+            const now = Date.now();
+            const revokeList = [];
             
-            for (var attachmentId in this.objectUrls) {
-                var shouldRevoke = false;
+            for (const attachmentId in this.objectUrls) {
+                let shouldRevoke = false;
                 
                 // No references and timeout exceeded
                 if (this.refCounts[attachmentId] === 0) {
-                    var lastAccess = this.lastAccess[attachmentId] || 0;
+                    const lastAccess = this.lastAccess[attachmentId] || 0;
                     if (force || (now - lastAccess > BLOB_CONFIG.ACCESS_TIMEOUT)) {
                         shouldRevoke = true;
                     }
@@ -201,14 +201,13 @@
             }
             
             // Revoke collected URLs
-            for (var i = 0; i < revokeList.length; i++) {
+            for (let i = 0; i < revokeList.length; i++) {
                 this.revokeObjectURL(revokeList[i]);
             }
             
             // Log cleanup stats
             if (revokeList.length > 0) {
-                console.log('Blob cleanup: Revoked ' + revokeList.length + ' URLs, ' +
-                    'memory usage: ' + this.formatBytes(this.totalMemoryUsage));
+                console.log(`Blob cleanup: Revoked ${revokeList.length} URLs, memory usage: ${this.formatBytes(this.totalMemoryUsage)}`);
             }
         },
         
@@ -216,13 +215,13 @@
          * Revoke least recently used URL
          */
         revokeLeastRecentlyUsed: function() {
-            var oldestId = null;
-            var oldestTime = Date.now();
+            let oldestId = null;
+            let oldestTime = Date.now();
             
-            for (var attachmentId in this.objectUrls) {
+            for (const attachmentId in this.objectUrls) {
                 // Only consider URLs with no references
                 if (this.refCounts[attachmentId] === 0) {
-                    var lastAccess = this.lastAccess[attachmentId] || 0;
+                    const lastAccess = this.lastAccess[attachmentId] || 0;
                     if (lastAccess < oldestTime) {
                         oldestTime = lastAccess;
                         oldestId = attachmentId;
@@ -239,21 +238,21 @@
          * Check if Safari
          */
         isSafari: function() {
-            var ua = navigator.userAgent.toLowerCase();
-            return ua.indexOf('safari') > -1 && ua.indexOf('chrome') === -1;
+            const ua = navigator.userAgent.toLowerCase();
+            return ua.includes('safari') && !ua.includes('chrome');
         },
         
         /**
          * Monitor Safari quota
          */
         monitorSafariQuota: function() {
-            var self = this;
+            const self = this;
             
             // Safari-specific quota monitoring
             if (navigator.storage && navigator.storage.estimate) {
                 navigator.storage.estimate().then(function(estimate) {
-                    var usage = estimate.usage || 0;
-                    var quota = estimate.quota || BLOB_CONFIG.SAFARI_LIMIT;
+                    const usage = estimate.usage || 0;
+                    const quota = estimate.quota || BLOB_CONFIG.SAFARI_LIMIT;
                     
                     if (usage > quota * 0.8) {
                         // Aggressive cleanup on Safari
@@ -261,7 +260,7 @@
                         
                         // Warn user
                         if (window.StackMapMessaging) {
-                            var msg = window.StackMapMessaging.safariQuotaWarning();
+                            const msg = window.StackMapMessaging.safariQuotaWarning();
                             self.showMemoryWarning(msg);
                         }
                     }
@@ -274,7 +273,7 @@
          */
         showMemoryWarning: function(message) {
             try {
-                var warning = document.getElementById('memory-warning');
+                let warning = document.getElementById('memory-warning');
                 if (!warning) {
                     warning = document.createElement('div');
                     warning.id = 'memory-warning';
@@ -302,11 +301,11 @@
         formatBytes: function(bytes) {
             if (bytes === 0) return '0 Bytes';
             
-            var k = 1024;
-            var sizes = ['Bytes', 'KB', 'MB', 'GB'];
-            var i = Math.floor(Math.log(bytes) / Math.log(k));
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
             
-            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
         },
         
         /**

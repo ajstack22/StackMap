@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var UserManager = {
+    const UserManager = {
         currentUserId: null,
         users: [],
         defaultEmojis: ['👤', '😊', '🦁', '🐻', '🦊', '🐯', '🐸', '🦋', '🌟', '🎨', '🎮', '⚽'],
@@ -16,7 +16,7 @@
          * Initialize user manager
          */
         init: function(callback) {
-            var self = this;
+            const self = this;
             
             // Load users from storage
             self.loadUsers(function() {
@@ -31,10 +31,10 @@
          * Load users from storage
          */
         loadUsers: function(callback) {
-            var self = this;
+            const self = this;
             
             try {
-                var stored = localStorage.getItem('stackmap_users');
+                const stored = localStorage.getItem('stackmap_users');
                 if (stored) {
                     self.users = JSON.parse(stored);
                 } else {
@@ -53,7 +53,7 @@
          * Save users to storage
          */
         saveUsers: function(callback) {
-            var self = this;
+            const self = this;
             
             try {
                 localStorage.setItem('stackmap_users', JSON.stringify(self.users));
@@ -68,10 +68,10 @@
          * Create default user for first time
          */
         createDefaultUser: function() {
-            var self = this;
+            const self = this;
             
-            var defaultUser = {
-                id: 'user_' + Date.now(),
+            const defaultUser = {
+                id: `user_${Date.now()}`,
                 name: 'Me',
                 emoji: '👤',
                 isDefault: true,
@@ -95,11 +95,11 @@
          * Initialize current user
          */
         initializeCurrentUser: function() {
-            var self = this;
+            const self = this;
             
             // Check for saved current user
             try {
-                var savedUserId = localStorage.getItem('stackmap_current_user');
+                const savedUserId = localStorage.getItem('stackmap_current_user');
                 if (savedUserId && self.getUserById(savedUserId)) {
                     self.currentUserId = savedUserId;
                 } else {
@@ -118,9 +118,9 @@
          * Get user by ID
          */
         getUserById: function(userId) {
-            var self = this;
+            const self = this;
             
-            for (var i = 0; i < self.users.length; i++) {
+            for (let i = 0; i < self.users.length; i++) {
                 if (self.users[i].id === userId) {
                     return self.users[i];
                 }
@@ -132,7 +132,7 @@
          * Get current user
          */
         getCurrentUser: function() {
-            var self = this;
+            const self = this;
             return self.getUserById(self.currentUserId);
         },
         
@@ -140,9 +140,9 @@
          * Switch to different user
          */
         switchUser: function(userId, callback) {
-            var self = this;
+            const self = this;
             
-            var user = self.getUserById(userId);
+            const user = self.getUserById(userId);
             if (!user) {
                 console.error('UserManager: User not found', userId);
                 if (callback) callback(false);
@@ -176,8 +176,8 @@
          * Apply current user's settings
          */
         applyUserSettings: function() {
-            var self = this;
-            var user = self.getCurrentUser();
+            const self = this;
+            const user = self.getCurrentUser();
             
             if (user && user.safeMode) {
                 // Enable safe mode for this user
@@ -212,7 +212,7 @@
          * Create new user profile
          */
         createUser: function(userData, callback) {
-            var self = this;
+            const self = this;
             
             // Validate input
             if (!userData.name || userData.name.trim() === '') {
@@ -221,8 +221,8 @@
             }
             
             // Create user object
-            var newUser = {
-                id: 'user_' + Date.now(),
+            const newUser = {
+                id: `user_${Date.now()}`,
                 name: userData.name.trim(),
                 emoji: userData.emoji || self.getRandomEmoji(),
                 safeMode: userData.safeMode || false,
@@ -246,7 +246,7 @@
                     if (callback) callback(newUser);
                 } else {
                     // Rollback
-                    var index = self.users.indexOf(newUser);
+                    const index = self.users.indexOf(newUser);
                     if (index > -1) {
                         self.users.splice(index, 1);
                     }
@@ -259,9 +259,9 @@
          * Update user profile
          */
         updateUser: function(userId, updates, callback) {
-            var self = this;
+            const self = this;
             
-            var user = self.getUserById(userId);
+            const user = self.getUserById(userId);
             if (!user) {
                 if (callback) callback(false, 'User not found');
                 return;
@@ -275,7 +275,7 @@
             // Apply preference updates
             if (updates.preferences) {
                 user.preferences = user.preferences || {};
-                for (var key in updates.preferences) {
+                for (const key in updates.preferences) {
                     if (updates.preferences.hasOwnProperty(key)) {
                         user.preferences[key] = updates.preferences[key];
                     }
@@ -298,18 +298,18 @@
          * Delete user profile
          */
         deleteUser: function(userId, callback) {
-            var self = this;
+            const self = this;
             
             // Can't delete default user or current user
-            var user = self.getUserById(userId);
+            const user = self.getUserById(userId);
             if (!user || user.isDefault || userId === self.currentUserId) {
                 if (callback) callback(false, 'Cannot delete this user');
                 return;
             }
             
             // Remove user
-            var index = -1;
-            for (var i = 0; i < self.users.length; i++) {
+            let index = -1;
+            for (let i = 0; i < self.users.length; i++) {
                 if (self.users[i].id === userId) {
                     index = i;
                     break;
@@ -330,9 +330,9 @@
          * Create guest user
          */
         createGuestUser: function(callback) {
-            var self = this;
+            const self = this;
             
-            var guestData = {
+            const guestData = {
                 name: 'Guest',
                 emoji: '👋',
                 isGuest: true,
@@ -346,8 +346,8 @@
          * Get random emoji for new users
          */
         getRandomEmoji: function() {
-            var self = this;
-            var index = Math.floor(Math.random() * self.defaultEmojis.length);
+            const self = this;
+            const index = Math.floor(Math.random() * self.defaultEmojis.length);
             return self.defaultEmojis[index];
         },
         
@@ -355,16 +355,16 @@
          * Get next suggested emoji (not used by existing users)
          */
         getNextAvailableEmoji: function() {
-            var self = this;
+            const self = this;
             
             // Get used emojis
-            var usedEmojis = {};
-            for (var i = 0; i < self.users.length; i++) {
+            const usedEmojis = {};
+            for (let i = 0; i < self.users.length; i++) {
                 usedEmojis[self.users[i].emoji] = true;
             }
             
             // Find first available
-            for (var j = 0; j < self.defaultEmojis.length; j++) {
+            for (let j = 0; j < self.defaultEmojis.length; j++) {
                 if (!usedEmojis[self.defaultEmojis[j]]) {
                     return self.defaultEmojis[j];
                 }
@@ -378,7 +378,7 @@
          * Announce user switch for accessibility
          */
         announceUserSwitch: function(user) {
-            var announcer = document.getElementById('user-switch-announcer');
+            let announcer = document.getElementById('user-switch-announcer');
             if (!announcer) {
                 announcer = document.createElement('div');
                 announcer.id = 'user-switch-announcer';
@@ -389,14 +389,14 @@
                 document.body.appendChild(announcer);
             }
             
-            announcer.textContent = 'Switched to ' + user.name;
+            announcer.textContent = `Switched to ${user.name}`;
         },
         
         /**
          * Render user switcher UI
          */
         renderUserSwitcher: function(container) {
-            var self = this;
+            const self = this;
             
             if (!container) return;
             
@@ -404,7 +404,7 @@
             container.innerHTML = '';
             
             // Create user switcher
-            var switcher = document.createElement('div');
+            const switcher = document.createElement('div');
             switcher.className = 'user-switcher';
             switcher.style.cssText = 
                 'display: flex;' +
@@ -416,9 +416,9 @@
                 'margin-bottom: 16px;';
             
             // Current user display
-            var currentUser = self.getCurrentUser();
+            const currentUser = self.getCurrentUser();
             if (currentUser) {
-                var userDisplay = document.createElement('div');
+                const userDisplay = document.createElement('div');
                 userDisplay.className = 'current-user';
                 userDisplay.style.cssText = 
                     'display: flex;' +
@@ -427,11 +427,11 @@
                     'font-size: 18px;' +
                     'flex: 1;';
                 
-                var emoji = document.createElement('span');
+                const emoji = document.createElement('span');
                 emoji.textContent = currentUser.emoji;
                 emoji.style.fontSize = '24px';
                 
-                var name = document.createElement('span');
+                const name = document.createElement('span');
                 name.textContent = currentUser.name;
                 
                 userDisplay.appendChild(emoji);
@@ -440,18 +440,11 @@
             }
             
             // Switch user button
-            var switchBtn = document.createElement('button');
+            const switchBtn = document.createElement('button');
             switchBtn.textContent = 'Switch User';
             switchBtn.className = 'switch-user-btn';
             switchBtn.style.cssText = 
-                'padding: 8px 16px;' +
-                'background: #5a6c40;' +
-                'color: white;' +
-                'border: none;' +
-                'border-radius: 6px;' +
-                'font-size: 16px;' +
-                'cursor: pointer;' +
-                'min-height: ' + (window.StackMapSafeMode ? '60px' : '44px') + ';';
+                `padding: 8px 16px;background: #5a6c40;color: white;border: none;border-radius: 6px;font-size: 16px;cursor: pointer;min-height: ${window.StackMapSafeMode ? '60px' : '44px'};`;
             
             switchBtn.onclick = function() {
                 if (window.StackMapApp && window.StackMapApp.ViewController) {
@@ -467,10 +460,10 @@
          * Migrate existing tasks to default user
          */
         migrateExistingTasks: function(callback) {
-            var self = this;
+            const self = this;
             
             // Only migrate if we have a default user
-            var defaultUser = self.users.find(function(u) { return u.isDefault; });
+            const defaultUser = self.users.find(function(u) { return u.isDefault; });
             if (!defaultUser) {
                 if (callback) callback(false);
                 return;
@@ -478,7 +471,7 @@
             
             // Check if migration already done
             try {
-                var migrated = localStorage.getItem('stackmap_user_migration_done');
+                const migrated = localStorage.getItem('stackmap_user_migration_done');
                 if (migrated) {
                     if (callback) callback(true);
                     return;
@@ -489,12 +482,12 @@
             
             // Add user_id to existing tasks
             try {
-                var tasks = localStorage.getItem('stackmap_tasks');
+                const tasks = localStorage.getItem('stackmap_tasks');
                 if (tasks) {
-                    var taskList = JSON.parse(tasks);
-                    var updated = false;
+                    const taskList = JSON.parse(tasks);
+                    let updated = false;
                     
-                    for (var i = 0; i < taskList.length; i++) {
+                    for (let i = 0; i < taskList.length; i++) {
                         if (!taskList[i].user_id) {
                             taskList[i].user_id = defaultUser.id;
                             updated = true;

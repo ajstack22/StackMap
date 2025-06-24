@@ -6,7 +6,7 @@
 (function(exports) {
     'use strict';
     
-    var PhotoLoader = {
+    const PhotoLoader = {
         // Configuration
         config: {
             MAX_CONCURRENT_LOADS: 2,
@@ -26,7 +26,7 @@
         
         // Initialize
         init: function() {
-            var self = this;
+            const self = this;
             
             // Start memory monitoring
             this.startMemoryMonitoring();
@@ -43,11 +43,11 @@
         
         // Load image with progressive enhancement
         loadImage: function(element, photo, options) {
-            var self = this;
+            const self = this;
             options = options || {};
             
             // Create load task
-            var task = {
+            const task = {
                 element: element,
                 photo: photo,
                 priority: options.priority || 'normal',
@@ -69,7 +69,7 @@
         
         // Process load queue
         processQueue: function() {
-            var self = this;
+            const self = this;
             
             // Check if we can load more
             if (this.activeLoads >= this.config.MAX_CONCURRENT_LOADS) {
@@ -82,7 +82,7 @@
             }
             
             // Get next task
-            var task = this.loadQueue.shift();
+            const task = this.loadQueue.shift();
             if (!task) return;
             
             this.activeLoads++;
@@ -93,11 +93,11 @@
         
         // Perform actual image load
         performLoad: function(task) {
-            var self = this;
-            var startTime = performance.now();
+            const self = this;
+            const startTime = performance.now();
             
             // Check if already loaded
-            var cached = this.loadedImages.get(task.photo.id);
+            const cached = this.loadedImages.get(task.photo.id);
             if (cached && cached.blob) {
                 task.element.src = cached.url;
                 this.activeLoads--;
@@ -107,8 +107,8 @@
             }
             
             // Determine best source
-            var sources = this.getImageSources(task.photo);
-            var currentIndex = 0;
+            const sources = this.getImageSources(task.photo);
+            let currentIndex = 0;
             
             function tryNextSource() {
                 if (currentIndex >= sources.length) {
@@ -119,14 +119,14 @@
                     return;
                 }
                 
-                var source = sources[currentIndex];
+                const source = sources[currentIndex];
                 currentIndex++;
                 
                 // Create new image
-                var img = new Image();
+                const img = new Image();
                 
                 img.onload = function() {
-                    var loadTime = performance.now() - startTime;
+                    const loadTime = performance.now() - startTime;
                     
                     // Apply to element
                     task.element.src = source.url;
@@ -166,7 +166,7 @@
         
         // Get image sources in priority order
         getImageSources: function(photo) {
-            var sources = [];
+            const sources = [];
             
             // In low memory mode, prefer smaller images
             if (this.memoryPressure) {
@@ -212,7 +212,7 @@
         
         // Cleanup cache based on memory pressure
         cleanupCache: function() {
-            var maxSize = this.memoryPressure ? 
+            const maxSize = this.memoryPressure ? 
                 this.config.CACHE_SIZE_LOW_MEMORY : 
                 this.config.CACHE_SIZE_NORMAL;
             
@@ -221,13 +221,13 @@
             }
             
             // Sort by last access time
-            var entries = Array.from(this.loadedImages.entries());
+            const entries = Array.from(this.loadedImages.entries());
             entries.sort(function(a, b) {
                 return a[1].lastAccess - b[1].lastAccess;
             });
             
             // Remove oldest entries
-            var toRemove = entries.slice(0, entries.length - maxSize);
+            const toRemove = entries.slice(0, entries.length - maxSize);
             toRemove.forEach(function(entry) {
                 this.loadedImages.delete(entry[0]);
             }, this);
@@ -235,19 +235,19 @@
         
         // Start memory monitoring
         startMemoryMonitoring: function() {
-            var self = this;
+            const self = this;
             
             function checkMemory() {
-                var now = Date.now();
+                const now = Date.now();
                 if (now - self.lastMemoryCheck < self.config.MEMORY_CHECK_INTERVAL) {
                     return;
                 }
                 
                 self.lastMemoryCheck = now;
-                var usage = self.estimateMemoryUsage();
+                const usage = self.estimateMemoryUsage();
                 
                 // Update memory pressure state
-                var wasUnderPressure = self.memoryPressure;
+                const wasUnderPressure = self.memoryPressure;
                 self.memoryPressure = usage.totalMB > self.config.LOW_MEMORY_THRESHOLD;
                 
                 // If memory pressure changed, adjust behavior
@@ -271,11 +271,11 @@
         
         // Estimate memory usage
         estimateMemoryUsage: function() {
-            var images = document.querySelectorAll('img');
-            var loadedImages = 0;
-            var estimatedBytes = 0;
+            const images = document.querySelectorAll('img');
+            let loadedImages = 0;
+            let estimatedBytes = 0;
             
-            for (var i = 0; i < images.length; i++) {
+            for (let i = 0; i < images.length; i++) {
                 if (images[i].complete && images[i].naturalHeight !== 0) {
                     loadedImages++;
                     // Rough estimate: width * height * 4 bytes per pixel
@@ -326,11 +326,11 @@
         
         // Preload images with low priority
         preloadImages: function(photos) {
-            var self = this;
+            const self = this;
             
             photos.forEach(function(photo) {
                 // Create dummy element for preloading
-                var img = new Image();
+                const img = new Image();
                 
                 self.loadImage(img, photo, {
                     priority: 'low',
@@ -346,7 +346,7 @@
         
         // Get cache statistics
         getCacheStats: function() {
-            var usage = this.estimateMemoryUsage();
+            const usage = this.estimateMemoryUsage();
             
             return {
                 cacheSize: this.loadedImages.size,

@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var SettingsManager = {
+    const SettingsManager = {
         initialized: false,
         storageKey: 'stackmap_settings',
         
@@ -44,9 +44,9 @@
         
         loadSettings: function() {
             try {
-                var stored = localStorage.getItem(this.storageKey);
+                const stored = localStorage.getItem(this.storageKey);
                 if (stored) {
-                    var parsed = JSON.parse(stored);
+                    const parsed = JSON.parse(stored);
                     // Merge with defaults to ensure all keys exist
                     this.settings = Object.assign({}, this.defaults, parsed);
                 } else {
@@ -75,7 +75,7 @@
         set: function(key, value) {
             if (!this.settings) this.loadSettings();
             
-            var oldValue = this.settings[key];
+            const oldValue = this.settings[key];
             this.settings[key] = value;
             
             // Apply setting immediately if it has a visual impact
@@ -104,7 +104,7 @@
             // Apply safe mode if persisted
             if (this.settings.safeModeEnabled && !window.StackMapSafeMode) {
                 // Redirect to safe mode
-                var url = new URL(window.location.href);
+                const url = new URL(window.location.href);
                 url.searchParams.set('safe', 'true');
                 url.searchParams.set('persist', 'true');
                 window.location.href = url.toString();
@@ -129,7 +129,7 @@
         },
         
         applyFontSize: function(size) {
-            var body = document.body;
+            const body = document.body;
             // Remove existing font size classes
             body.classList.remove('font-size-normal', 'font-size-large', 'font-size-extra-large');
             
@@ -146,12 +146,12 @@
         },
         
         applyTouchTargetSize: function(size) {
-            var body = document.body;
+            const body = document.body;
             body.classList.toggle('large-touch-targets', size === 'large');
         },
         
         applyKeyboardHints: function(enabled) {
-            var body = document.body;
+            const body = document.body;
             body.classList.toggle('show-keyboard-hints', enabled);
         },
         
@@ -163,7 +163,7 @@
         },
         
         notifyListeners: function() {
-            var self = this;
+            const self = this;
             this.changeListeners.forEach(function(callback) {
                 try {
                     callback(self.settings);

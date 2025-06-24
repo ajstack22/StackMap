@@ -3,11 +3,11 @@
  * Designed for ADHD users with simple, clear controls
  */
 
-var VoicePlayer = (function() {
+const VoicePlayer = (function() {
   'use strict';
   
   // Speed presets
-  var SPEED_PRESETS = [
+  const SPEED_PRESETS = [
     { value: 0.75, label: '0.75x' },
     { value: 1, label: '1x' },
     { value: 1.5, label: '1.5x' },
@@ -45,14 +45,14 @@ var VoicePlayer = (function() {
   
   // Create player UI
   VoicePlayer.prototype.createUI = function() {
-    var self = this;
+    const self = this;
     
     // Clear container
     this.container.innerHTML = '';
     this.container.className = 'voice-player';
     
     // Player controls container
-    var controls = document.createElement('div');
+    const controls = document.createElement('div');
     controls.className = 'voice-player-controls';
     
     // Play/Pause button
@@ -66,7 +66,7 @@ var VoicePlayer = (function() {
     controls.appendChild(this.playButton);
     
     // Progress bar
-    var progressContainer = document.createElement('div');
+    const progressContainer = document.createElement('div');
     progressContainer.className = 'voice-progress-bar';
     progressContainer.onclick = function(e) {
       self.seek(e);
@@ -86,12 +86,12 @@ var VoicePlayer = (function() {
     this.container.appendChild(controls);
     
     // Speed controls
-    var speedControls = document.createElement('div');
+    const speedControls = document.createElement('div');
     speedControls.className = 'voice-speed-controls';
     
-    for (var i = 0; i < SPEED_PRESETS.length; i++) {
-      var preset = SPEED_PRESETS[i];
-      var button = document.createElement('button');
+    for (let i = 0; i < SPEED_PRESETS.length; i++) {
+      const preset = SPEED_PRESETS[i];
+      const button = document.createElement('button');
       button.className = 'voice-speed-button';
       if (preset.value === this.currentSpeed) {
         button.className += ' active';
@@ -113,7 +113,7 @@ var VoicePlayer = (function() {
   
   // Load audio blob
   VoicePlayer.prototype.load = function(blob, callback) {
-    var self = this;
+    const self = this;
     
     if (this.audio) {
       this.stop();
@@ -126,7 +126,7 @@ var VoicePlayer = (function() {
       this.currentBlob = blob;
       
       // Convert blob to URL
-      var url = URL.createObjectURL(blob);
+      const url = URL.createObjectURL(blob);
       this.audio.src = url;
       
       // Set up event handlers
@@ -145,7 +145,7 @@ var VoicePlayer = (function() {
       };
       
       this.audio.onerror = function(e) {
-        var error = new Error('Failed to load audio');
+        const error = new Error('Failed to load audio');
         if (self.onError) self.onError(error);
         if (callback) callback(error);
       };
@@ -171,7 +171,7 @@ var VoicePlayer = (function() {
   
   // Play audio
   VoicePlayer.prototype.play = function() {
-    var self = this;
+    const self = this;
     
     if (!this.audio) return;
     
@@ -210,11 +210,11 @@ var VoicePlayer = (function() {
   VoicePlayer.prototype.seek = function(event) {
     if (!this.audio || !this.duration) return;
     
-    var progressBar = event.currentTarget;
-    var rect = progressBar.getBoundingClientRect();
-    var x = event.clientX - rect.left;
-    var percentage = x / rect.width;
-    var time = percentage * this.duration;
+    const progressBar = event.currentTarget;
+    const rect = progressBar.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const percentage = x / rect.width;
+    const time = percentage * this.duration;
     
     this.audio.currentTime = Math.max(0, Math.min(time, this.duration));
     this.updateProgress();
@@ -229,10 +229,10 @@ var VoicePlayer = (function() {
     }
     
     // Update button states
-    for (var key in this.speedButtons) {
+    for (const key in this.speedButtons) {
       if (this.speedButtons.hasOwnProperty(key)) {
-        var button = this.speedButtons[key];
-        var buttonSpeed = parseFloat(button.getAttribute('data-speed'));
+        const button = this.speedButtons[key];
+        const buttonSpeed = parseFloat(button.getAttribute('data-speed'));
         if (buttonSpeed === speed) {
           button.classList.add('active');
         } else {
@@ -246,26 +246,26 @@ var VoicePlayer = (function() {
   VoicePlayer.prototype.updateProgress = function() {
     if (!this.audio || !this.duration) return;
     
-    var percentage = (this.audio.currentTime / this.duration) * 100;
-    this.progressFill.style.width = percentage + '%';
+    const percentage = (this.audio.currentTime / this.duration) * 100;
+    this.progressFill.style.width = `${percentage}%`;
     
     this.updateTimeDisplay();
   };
   
   // Update time display
   VoicePlayer.prototype.updateTimeDisplay = function() {
-    var current = this.audio ? this.audio.currentTime : 0;
-    var duration = this.duration || 0;
+    const current = this.audio ? this.audio.currentTime : 0;
+    const duration = this.duration || 0;
     
     this.timeDisplay.textContent = 
-      this.formatTime(current) + ' / ' + this.formatTime(duration);
+      `${this.formatTime(current)} / ${this.formatTime(duration)}`;
   };
   
   // Format time in MM:SS
   VoicePlayer.prototype.formatTime = function(seconds) {
-    var minutes = Math.floor(seconds / 60);
-    var secs = Math.floor(seconds % 60);
-    return minutes + ':' + (secs < 10 ? '0' : '') + secs;
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
   
   // Handle playback ended

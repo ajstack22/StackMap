@@ -7,10 +7,10 @@
     'use strict';
     
     // Schema version for migrations
-    var SCHEMA_VERSION = 1;
+    const SCHEMA_VERSION = 1;
     
     // Data structure definitions with validation
-    var DataSchema = {
+    const DataSchema = {
         /**
          * Task structure with validation rules
          */
@@ -46,15 +46,15 @@
             },
             
             validateFields: function(data, schema) {
-                var errors = [];
+                let errors = [];
                 
-                for (var field in schema) {
-                    var rule = schema[field];
-                    var value = data[field];
+                for (const field in schema) {
+                    const rule = schema[field];
+                    const value = data[field];
                     
                     // Required field check
                     if (rule.required && value === undefined) {
-                        errors.push(field + ' is required');
+                        errors.push(`${field} is required`);
                         continue;
                     }
                     
@@ -65,45 +65,45 @@
                     
                     // Null check
                     if (value === null && !rule.nullable) {
-                        errors.push(field + ' cannot be null');
+                        errors.push(`${field} cannot be null`);
                         continue;
                     }
                     
                     // Type validation
                     if (value !== null && value !== undefined) {
                         if (rule.type === 'string' && typeof value !== 'string') {
-                            errors.push(field + ' must be a string');
+                            errors.push(`${field} must be a string`);
                         } else if (rule.type === 'number' && typeof value !== 'number') {
-                            errors.push(field + ' must be a number');
+                            errors.push(`${field} must be a number`);
                         } else if (rule.type === 'timestamp' && typeof value !== 'number') {
-                            errors.push(field + ' must be a timestamp');
+                            errors.push(`${field} must be a timestamp`);
                         } else if (rule.type === 'array' && !Array.isArray(value)) {
-                            errors.push(field + ' must be an array');
+                            errors.push(`${field} must be an array`);
                         } else if (rule.type === 'object' && typeof value !== 'object') {
-                            errors.push(field + ' must be an object');
-                        } else if (rule.type === 'enum' && rule.values.indexOf(value) === -1) {
-                            errors.push(field + ' must be one of: ' + rule.values.join(', '));
+                            errors.push(`${field} must be an object`);
+                        } else if (rule.type === 'enum' && !rule.values.includes(value)) {
+                            errors.push(`${field} must be one of: ${rule.values.join(', ')}`);
                         }
                         
                         // Additional validations
                         if (rule.maxLength && value.length > rule.maxLength) {
-                            errors.push(field + ' exceeds max length of ' + rule.maxLength);
+                            errors.push(`${field} exceeds max length of ${rule.maxLength}`);
                         }
                         if (rule.maxItems && value.length > rule.maxItems) {
-                            errors.push(field + ' exceeds max items of ' + rule.maxItems);
+                            errors.push(`${field} exceeds max items of ${rule.maxItems}`);
                         }
                         if (rule.min !== undefined && value < rule.min) {
-                            errors.push(field + ' must be at least ' + rule.min);
+                            errors.push(`${field} must be at least ${rule.min}`);
                         }
                         if (rule.max !== undefined && value > rule.max) {
-                            errors.push(field + ' must be at most ' + rule.max);
+                            errors.push(`${field} must be at most ${rule.max}`);
                         }
                         
                         // Nested object validation
                         if (rule.type === 'object' && rule.fields) {
-                            var nestedErrors = this.validateFields(value, rule.fields);
+                            const nestedErrors = this.validateFields(value, rule.fields);
                             errors = errors.concat(nestedErrors.map(function(e) {
-                                return field + '.' + e;
+                                return `${field}.${e}`;
                             }));
                         }
                     }
@@ -114,8 +114,8 @@
             
             // Create new task with defaults
             create: function(data) {
-                var now = Date.now();
-                var task = {
+                const now = Date.now();
+                const task = {
                     title: data.title || '',
                     description: data.description || '',
                     status: data.status || 'pending',
@@ -136,9 +136,9 @@
                     lastModifiedBy: this.getDeviceId()
                 };
                 
-                var errors = this.validate(task);
+                const errors = this.validate(task);
                 if (errors.length > 0) {
-                    throw new Error('Validation failed: ' + errors.join(', '));
+                    throw new Error(`Validation failed: ${errors.join(', ')}`);
                 }
                 
                 return task;
@@ -146,14 +146,14 @@
             
             // Generate unique sync ID
             generateSyncId: function() {
-                return 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             },
             
             // Get device ID for conflict resolution
             getDeviceId: function() {
-                var deviceId = localStorage.getItem('stackmap_device_id');
+                let deviceId = localStorage.getItem('stackmap_device_id');
                 if (!deviceId) {
-                    deviceId = 'device_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
                     localStorage.setItem('stackmap_device_id', deviceId);
                 }
                 return deviceId;
@@ -210,7 +210,7 @@
     /**
      * IndexedDB Schema Definition
      */
-    var IndexedDBSchema = {
+    const IndexedDBSchema = {
         version: SCHEMA_VERSION,
         stores: {
             tasks: {
@@ -252,7 +252,7 @@
     /**
      * Dexie Schema Definition (when we add Dexie)
      */
-    var DexieSchema = {
+    const DexieSchema = {
         version: SCHEMA_VERSION,
         stores: {
             tasks: '++id, parentId, status, created, modified, [status+modified], syncId',

@@ -5,21 +5,21 @@
  */
 
 // Version management
-var VERSION = '1.0.0';
-var BUILD_DATE = new Date().toISOString();
+const VERSION = '1.0.0';
+const BUILD_DATE = new Date().toISOString();
 
 // Cache configuration - increment CACHE_VERSION to force refresh
-var CACHE_VERSION = 1;
-var CACHE_NAME = 'stackmap-v' + CACHE_VERSION;
-var RUNTIME_CACHE = 'stackmap-runtime-v' + CACHE_VERSION;
-var PHOTO_CACHE = 'stackmap-photos-v' + CACHE_VERSION;
-var MAX_CACHE_SIZE = 50 * 1024 * 1024; // 50MB limit
-var MAX_PHOTO_CACHE_SIZE = 30 * 1024 * 1024; // 30MB for photos
+const CACHE_VERSION = 1;
+const CACHE_NAME = `stackmap-v${CACHE_VERSION}`;
+const RUNTIME_CACHE = `stackmap-runtime-v${CACHE_VERSION}`;
+const PHOTO_CACHE = `stackmap-photos-v${CACHE_VERSION}`;
+const MAX_CACHE_SIZE = 50 * 1024 * 1024; // 50MB limit
+const MAX_PHOTO_CACHE_SIZE = 30 * 1024 * 1024; // 30MB for photos
 
 // Critical assets to cache immediately
 // TODO: In production, move service-worker.js to root directory for proper scope
 // Current location in /js/ limits scope - will only intercept requests to /js/*
-var urlsToCache = [
+const urlsToCache = [
     '/',
     '/index.html',
     '/emergency-static.html',
@@ -104,8 +104,8 @@ var urlsToCache = [
 ];
 
 // Offline operation queue
-var offlineQueue = [];
-var isOnline = true;
+let offlineQueue = [];
+let isOnline = true;
 
 // Check online status periodically
 setInterval(function() {
@@ -168,8 +168,8 @@ self.addEventListener('activate', function(event) {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', function(event) {
-    var request = event.request;
-    var url = new URL(request.url);
+    const request = event.request;
+    const url = new URL(request.url);
     
     // Skip cross-origin requests
     if (url.origin !== location.origin) {
@@ -200,7 +200,7 @@ self.addEventListener('fetch', function(event) {
             return fetch(request).then(function(networkResponse) {
                 // Cache successful responses
                 if (networkResponse && networkResponse.status === 200) {
-                    var responseToCache = networkResponse.clone();
+                    const responseToCache = networkResponse.clone();
                     
                     caches.open(RUNTIME_CACHE).then(function(cache) {
                         cache.put(request, responseToCache);
@@ -238,11 +238,11 @@ function handleDataRequest(request) {
 
 // Handle photo requests with intelligent caching
 function handlePhotoRequest(request) {
-    var url = new URL(request.url);
+    const url = new URL(request.url);
     
     // Determine photo type from URL patterns
-    var isThumbnail = url.pathname.includes('thumb') || url.searchParams.get('size') === 'thumbnail';
-    var isMedium = url.pathname.includes('medium') || url.searchParams.get('size') === 'medium';
+    const isThumbnail = url.pathname.includes('thumb') || url.searchParams.get('size') === 'thumbnail';
+    const isMedium = url.pathname.includes('medium') || url.searchParams.get('size') === 'medium';
     
     return caches.open(PHOTO_CACHE).then(function(cache) {
         return cache.match(request).then(function(cachedResponse) {
@@ -268,7 +268,7 @@ function handlePhotoRequest(request) {
             return fetch(request).then(function(networkResponse) {
                 if (networkResponse && networkResponse.status === 200) {
                     // Prioritize caching based on size
-                    var priority = isThumbnail ? 3 : (isMedium ? 2 : 1);
+                    const priority = isThumbnail ? 3 : (isMedium ? 2 : 1);
                     
                     // Check cache size before adding
                     checkPhotoCacheSize(priority).then(function() {
@@ -278,7 +278,7 @@ function handlePhotoRequest(request) {
                 return networkResponse;
             }).catch(function() {
                 // Return size-appropriate placeholder
-                var size = isThumbnail ? 150 : (isMedium ? 400 : 800);
+                const size = isThumbnail ? 150 : (isMedium ? 400 : 800);
                 return new Response(createPlaceholderImage(size), {
                     headers: { 'Content-Type': 'image/svg+xml' }
                 });
@@ -290,7 +290,7 @@ function handlePhotoRequest(request) {
 // Queue offline requests
 function queueOfflineRequest(request) {
     return request.text().then(function(body) {
-        var queueItem = {
+        const queueItem = {
             url: request.url,
             method: request.method,
             headers: {},
@@ -329,8 +329,8 @@ function processOfflineQueue() {
     
     console.log('[ServiceWorker] Processing offline queue:', offlineQueue.length, 'items');
     
-    var processed = 0;
-    var failed = 0;
+    let processed = 0;
+    let failed = 0;
     
     offlineQueue.forEach(function(item) {
         fetch(item.url, {
@@ -367,14 +367,14 @@ function checkPhotoCacheSize(priority) {
     return caches.open(PHOTO_CACHE).then(function(cache) {
         return cache.keys().then(function(keys) {
             // Estimate cache size (rough calculation)
-            var estimatedSize = keys.length * 200 * 1024; // Assume avg 200KB per image
+            const estimatedSize = keys.length * 200 * 1024; // Assume avg 200KB per image
             
             if (estimatedSize > MAX_CACHE_SIZE || keys.length > 200) {
                 // Sort keys by access time and type
-                var keysWithMetadata = keys.map(function(request) {
-                    var url = new URL(request.url);
-                    var isThumbnail = url.pathname.includes('thumb') || url.searchParams.get('size') === 'thumbnail';
-                    var isMedium = url.pathname.includes('medium') || url.searchParams.get('size') === 'medium';
+                const keysWithMetadata = keys.map(function(request) {
+                    const url = new URL(request.url);
+                    const isThumbnail = url.pathname.includes('thumb') || url.searchParams.get('size') === 'thumbnail';
+                    const isMedium = url.pathname.includes('medium') || url.searchParams.get('size') === 'medium';
                     
                     return {
                         request: request,
@@ -389,7 +389,7 @@ function checkPhotoCacheSize(priority) {
                 });
                 
                 // Remove 25% of cache, prioritizing large images
-                var toDelete = keysWithMetadata.slice(0, Math.floor(keys.length * 0.25));
+                const toDelete = keysWithMetadata.slice(0, Math.floor(keys.length * 0.25));
                 
                 return Promise.all(toDelete.map(function(item) {
                     return cache.delete(item.request);
@@ -400,18 +400,11 @@ function checkPhotoCacheSize(priority) {
 }
 
 // Create placeholder image for offline photos
-function createPlaceholderImage(size) {
-    size = size || 150;
-    var center = size / 2;
-    var fontSize = Math.max(12, size / 10);
-    
-    return '<svg width="' + size + '" height="' + size + '" xmlns="http://www.w3.org/2000/svg">' +
-           '<rect width="' + size + '" height="' + size + '" fill="#e5e7eb"/>' +
-           '<text x="' + center + '" y="' + center + '" text-anchor="middle" fill="#9ca3af" ' +
-           'font-family="sans-serif" font-size="' + fontSize + '">' +
-           'Offline' +
-           '</text>' +
-           '</svg>';
+function createPlaceholderImage(size = 150) {
+    const center = size / 2;
+    const fontSize = Math.max(12, size / 10);
+
+    return `<svg width="${size}" height="${size}" xmlns="http://www.w3.org/2000/svg"><rect width="${size}" height="${size}" fill="#e5e7eb"/><text x="${center}" y="${center}" text-anchor="middle" fill="#9ca3af" font-family="sans-serif" font-size="${fontSize}">Offline</text></svg>`;
 }
 
 // Check online status (service workers don't have online/offline events)
@@ -440,7 +433,7 @@ function checkOnlineStatus() {
 
 // Handle messages from clients
 self.addEventListener('message', function(event) {
-    var data = event.data;
+    const data = event.data;
     
     switch(data.type) {
         case 'skipWaiting':
@@ -508,7 +501,7 @@ function broadcastMessage(message) {
 // Cache photo versions from PhotoOptimizer
 function cachePhotoVersions(urls) {
     return caches.open(PHOTO_CACHE).then(function(cache) {
-        var promises = [];
+        const promises = [];
         
         // Cache each version with appropriate headers
         if (urls.thumbnail) {
@@ -541,7 +534,7 @@ function cachePhotoVersions(urls) {
 
 // Get cache statistics
 function getCacheStatistics() {
-    var stats = {
+    const stats = {
         photos: { count: 0, estimatedSize: 0 },
         assets: { count: 0 },
         runtime: { count: 0 },
@@ -554,14 +547,14 @@ function getCacheStatistics() {
     return caches.keys().then(function(cacheNames) {
         stats.total.names = cacheNames;
         
-        var promises = cacheNames.map(function(name) {
+        const promises = cacheNames.map(function(name) {
             return caches.open(name).then(function(cache) {
                 return cache.keys().then(function(keys) {
                     if (name === PHOTO_CACHE) {
                         stats.photos.count = keys.length;
                         // Estimate photo cache size
                         stats.photos.estimatedSize = keys.reduce(function(total, request) {
-                            var url = new URL(request.url);
+                            const url = new URL(request.url);
                             if (url.pathname.includes('thumb')) return total + 50 * 1024;
                             if (url.pathname.includes('medium')) return total + 200 * 1024;
                             return total + 500 * 1024;

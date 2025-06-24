@@ -8,7 +8,7 @@
     'use strict';
     
     // Configuration
-    var GRID_CONFIG = {
+    const GRID_CONFIG = {
         MAX_VISIBLE: 6,        // Maximum photos shown
         COLUMNS: 3,            // Grid columns
         ROWS: 2,              // Grid rows
@@ -18,9 +18,9 @@
     };
     
     // Touch handler for cross-browser compatibility
-    var TouchHandler = {
+    const TouchHandler = {
         addTapHandler: function(element, handler) {
-            var touched = false;
+            let touched = false;
             
             // Touch events
             element.addEventListener('touchstart', function(e) {
@@ -55,10 +55,10 @@
     };
     
     // Photo states helper
-    var PhotoStates = {
+    const PhotoStates = {
         // Create loading placeholder
         createLoadingElement: function() {
-            var element = document.createElement('div');
+            const element = document.createElement('div');
             element.className = 'photo-item photo-skeleton';
             element.innerHTML = '<div class="photo-loading-text">Loading...</div>';
             return element;
@@ -66,17 +66,17 @@
         
         // Create error placeholder
         createErrorElement: function(error) {
-            var element = document.createElement('div');
+            const element = document.createElement('div');
             element.className = 'photo-item photo-error';
             element.setAttribute('role', 'img');
             element.setAttribute('aria-label', 'Failed to load photo');
             
-            var errorText = document.createElement('div');
+            const errorText = document.createElement('div');
             errorText.textContent = 'Failed';
             element.appendChild(errorText);
             
             // Retry button
-            var retryBtn = document.createElement('button');
+            const retryBtn = document.createElement('button');
             retryBtn.className = 'photo-retry-button';
             retryBtn.textContent = 'Retry';
             retryBtn.setAttribute('aria-label', 'Retry loading photo');
@@ -88,9 +88,9 @@
         
         // Handle image load errors with retry logic
         handleImageError: function(img, photo, onRetry) {
-            var self = this;
-            var retryCount = 0;
-            var maxRetries = 3;
+            const self = this;
+            let retryCount = 0;
+            const maxRetries = 3;
             
             function attemptLoad() {
                 retryCount++;
@@ -105,11 +105,11 @@
                 }
                 // Show error state
                 else if (retryCount >= maxRetries) {
-                    var errorElement = self.createErrorElement();
+                    const errorElement = self.createErrorElement();
                     img.parentNode.replaceChild(errorElement, img);
                     
                     // Setup retry handler
-                    var retryBtn = errorElement.querySelector('.photo-retry-button');
+                    const retryBtn = errorElement.querySelector('.photo-retry-button');
                     TouchHandler.addTapHandler(retryBtn, function() {
                         if (onRetry) onRetry();
                     });
@@ -120,7 +120,7 @@
                 image.onerror = attemptLoad;
                 image.onload = function() {
                     // Success - remove skeleton
-                    var container = image.parentNode;
+                    const container = image.parentNode;
                     if (container && container.classList.contains('photo-skeleton')) {
                         container.classList.remove('photo-skeleton');
                     }
@@ -133,7 +133,7 @@
     };
     
     // Photo Thumbnail Grid Constructor
-    var PhotoThumbnailGrid = function(container, options) {
+    const PhotoThumbnailGrid = function(container, options) {
         this.container = container;
         this.options = options || {};
         this.photos = [];
@@ -145,7 +145,7 @@
     PhotoThumbnailGrid.prototype = {
         // Create the grid with photos
         createGrid: function(photos, maxPhotos) {
-            var self = this;
+            const self = this;
             maxPhotos = maxPhotos || GRID_CONFIG.MAX_VISIBLE;
             
             // Clear existing content
@@ -156,8 +156,8 @@
             this.photos = photos || [];
             
             // Check if we should use progressive disclosure
-            var useProgressive = false;
-            var visibleLimit = maxPhotos;
+            let useProgressive = false;
+            let visibleLimit = maxPhotos;
             
             if (window.PhotoDensityControl) {
                 visibleLimit = window.PhotoDensityControl.getVisibleLimit();
@@ -169,26 +169,26 @@
             }
             
             // Render visible photos
-            var visiblePhotos = this.photos.slice(0, maxPhotos);
+            const visiblePhotos = this.photos.slice(0, maxPhotos);
             visiblePhotos.forEach(function(photo, index) {
-                var element = self.createThumbnail(photo, index);
+                const element = self.createThumbnail(photo, index);
                 self.container.appendChild(element);
             });
             
             // Add placeholders for empty slots (only if not using progressive)
             if (!useProgressive) {
-                var emptySlots = Math.min(maxPhotos - visiblePhotos.length, 
+                const emptySlots = Math.min(maxPhotos - visiblePhotos.length, 
                                          GRID_CONFIG.MAX_VISIBLE - visiblePhotos.length);
                 
-                for (var i = 0; i < emptySlots; i++) {
-                    var placeholder = self.createPlaceholder();
+                for (let i = 0; i < emptySlots; i++) {
+                    const placeholder = self.createPlaceholder();
                     self.container.appendChild(placeholder);
                 }
             }
             
             // Add progressive disclosure controls if needed
             if (useProgressive && window.PhotoDensityControl) {
-                var progressiveUI = window.PhotoDensityControl.createProgressiveUI(
+                const progressiveUI = window.PhotoDensityControl.createProgressiveUI(
                     this.container.parentNode,
                     this.photos,
                     this
@@ -199,7 +199,7 @@
                 }
             } else if (this.photos.length > maxPhotos) {
                 // Show simple overflow indicator
-                var overflow = this.createOverflowIndicator(this.photos.length - maxPhotos);
+                const overflow = this.createOverflowIndicator(this.photos.length - maxPhotos);
                 self.container.appendChild(overflow);
             }
             
@@ -208,24 +208,24 @@
         
         // Create individual thumbnail
         createThumbnail: function(photo, index) {
-            var self = this;
-            var isPrimary = index === 0;
+            const self = this;
+            const isPrimary = index === 0;
             
             // Container
-            var element = document.createElement('div');
-            element.className = 'photo-item' + (isPrimary ? ' photo-primary' : '');
+            const element = document.createElement('div');
+            element.className = `photo-item${isPrimary ? ' photo-primary' : ''}`;
             element.setAttribute('data-photo-id', photo.id);
             
             // Initially show skeleton
             element.classList.add('photo-skeleton');
             
             // Thumbnail container
-            var thumbnailContainer = document.createElement('div');
+            const thumbnailContainer = document.createElement('div');
             thumbnailContainer.className = 'photo-thumbnail-container';
             
             // Apply category color
             if (photo.category && window.PHOTO_CATEGORIES) {
-                var category = window.PHOTO_CATEGORIES[photo.category];
+                const category = window.PHOTO_CATEGORIES[photo.category];
                 if (category) {
                     thumbnailContainer.style.borderColor = category.color;
                     thumbnailContainer.setAttribute('data-category', photo.category);
@@ -233,17 +233,17 @@
             }
             
             // Thumbnail image
-            var thumbnail = document.createElement('img');
+            const thumbnail = document.createElement('img');
             thumbnail.className = 'photo-thumbnail';
             thumbnail.alt = this._getPhotoDescription(photo);
             thumbnail.setAttribute('role', 'img');
             
             // Touch target overlay
-            var touchTarget = document.createElement('div');
+            const touchTarget = document.createElement('div');
             touchTarget.className = 'photo-touch-target';
             touchTarget.setAttribute('role', 'button');
             touchTarget.setAttribute('tabindex', '0');
-            touchTarget.setAttribute('aria-label', 'View ' + thumbnail.alt);
+            touchTarget.setAttribute('aria-label', `View ${thumbnail.alt}`);
             
             // Add tap handler
             TouchHandler.addTapHandler(touchTarget, function() {
@@ -267,14 +267,14 @@
             
             // Caption if exists
             if (photo.caption) {
-                var caption = document.createElement('div');
+                const caption = document.createElement('div');
                 caption.className = 'photo-caption-display';
                 caption.textContent = photo.caption;
                 element.appendChild(caption);
             }
             
             // Action buttons
-            var actions = this._createActions(photo);
+            const actions = this._createActions(photo);
             element.appendChild(actions);
             
             return element;
@@ -282,11 +282,11 @@
         
         // Create placeholder for empty slot
         createPlaceholder: function() {
-            var self = this;
-            var placeholder = document.createElement('div');
+            const self = this;
+            const placeholder = document.createElement('div');
             placeholder.className = 'photo-placeholder';
             
-            var addButton = document.createElement('button');
+            const addButton = document.createElement('button');
             addButton.className = 'photo-add-button';
             addButton.setAttribute('aria-label', 'Add photo');
             addButton.innerHTML = '<span class="photo-add-icon">+</span>';
@@ -298,7 +298,7 @@
             placeholder.appendChild(addButton);
             
             // Hint text
-            var hint = document.createElement('div');
+            const hint = document.createElement('div');
             hint.className = 'photo-hint';
             hint.textContent = this._getUploadHint();
             placeholder.appendChild(hint);
@@ -308,15 +308,15 @@
         
         // Create overflow indicator
         createOverflowIndicator: function(count) {
-            var overflow = document.createElement('div');
+            const overflow = document.createElement('div');
             overflow.className = 'photo-overflow-indicator';
-            overflow.textContent = '+' + count + ' more';
+            overflow.textContent = `+${count} more`;
             return overflow;
         },
         
         // Load thumbnail with progressive enhancement
         _loadThumbnail: function(img, photo, container) {
-            var self = this;
+            const self = this;
             
             // Use PhotoLoader if available for better memory management
             if (window.PhotoLoader) {
@@ -328,19 +328,19 @@
                         
                         // Log performance
                         if (stats && stats.loadTime < 500) {
-                            console.log('Photo loaded within target: ' + Math.round(stats.loadTime) + 'ms');
+                            console.log(`Photo loaded within target: ${Math.round(stats.loadTime)}ms`);
                         }
                     },
                     onError: function(error) {
                         // Show error state
                         container.classList.remove('photo-skeleton');
-                        var errorElement = PhotoStates.createErrorElement();
+                        const errorElement = PhotoStates.createErrorElement();
                         
                         // Add retry handler
-                        var retryBtn = errorElement.querySelector('.photo-retry-button');
+                        const retryBtn = errorElement.querySelector('.photo-retry-button');
                         TouchHandler.addTapHandler(retryBtn, function() {
                             // Replace error with new thumbnail and retry
-                            var newContainer = self.createThumbnail(photo, 0);
+                            const newContainer = self.createThumbnail(photo, 0);
                             errorElement.parentNode.replaceChild(newContainer, errorElement);
                         });
                         
@@ -349,7 +349,7 @@
                 });
             } else {
                 // Fallback to simple loading
-                var sources = [];
+                const sources = [];
                 if (photo.thumbnailUrl) sources.push(photo.thumbnailUrl);
                 if (photo.mediumUrl) sources.push(photo.mediumUrl);
                 if (photo.fullUrl) sources.push(photo.fullUrl);
@@ -358,25 +358,25 @@
                 if (sources.length === 0) {
                     // No source available
                     container.classList.remove('photo-skeleton');
-                    var errorElement = PhotoStates.createErrorElement();
+                    const errorElement = PhotoStates.createErrorElement();
                     container.parentNode.replaceChild(errorElement, container);
                     return;
                 }
                 
                 // Try loading from best source
-                var currentIndex = 0;
+                let currentIndex = 0;
                 
                 function tryNextSource() {
                     if (currentIndex >= sources.length) {
                         // All sources failed
                         container.classList.remove('photo-skeleton');
-                        var errorElement = PhotoStates.createErrorElement();
+                        const errorElement = PhotoStates.createErrorElement();
                         
                         // Add retry handler
-                        var retryBtn = errorElement.querySelector('.photo-retry-button');
+                        const retryBtn = errorElement.querySelector('.photo-retry-button');
                         TouchHandler.addTapHandler(retryBtn, function() {
                             // Replace error with new thumbnail and retry
-                            var newContainer = self.createThumbnail(photo, 0);
+                            const newContainer = self.createThumbnail(photo, 0);
                             errorElement.parentNode.replaceChild(newContainer, errorElement);
                         });
                         
@@ -405,26 +405,26 @@
         
         // Create action buttons
         _createActions: function(photo) {
-            var self = this;
-            var actions = document.createElement('div');
+            const self = this;
+            const actions = document.createElement('div');
             actions.className = 'photo-actions';
             
             // View button
-            var viewBtn = this._createActionButton('view', 'View full size');
+            const viewBtn = this._createActionButton('view', 'View full size');
             TouchHandler.addTapHandler(viewBtn, function() {
                 self.onPhotoAction('view', photo);
             });
             actions.appendChild(viewBtn);
             
             // Edit button
-            var editBtn = this._createActionButton('edit', 'Edit caption');
+            const editBtn = this._createActionButton('edit', 'Edit caption');
             TouchHandler.addTapHandler(editBtn, function() {
                 self.onPhotoAction('edit', photo);
             });
             actions.appendChild(editBtn);
             
             // Delete button
-            var deleteBtn = this._createActionButton('delete', 'Delete photo');
+            const deleteBtn = this._createActionButton('delete', 'Delete photo');
             TouchHandler.addTapHandler(deleteBtn, function() {
                 self.onPhotoAction('delete', photo);
             });
@@ -435,8 +435,8 @@
         
         // Create action button
         _createActionButton: function(type, label) {
-            var button = document.createElement('button');
-            button.className = 'photo-action-button photo-action-' + type;
+            const button = document.createElement('button');
+            button.className = `photo-action-button photo-action-${type}`;
             button.setAttribute('aria-label', label);
             
             // Add icon based on type
@@ -457,11 +457,11 @@
         
         // Get photo description for accessibility
         _getPhotoDescription: function(photo) {
-            var parts = [];
+            const parts = [];
             
             // Category
             if (photo.category && window.PHOTO_CATEGORIES) {
-                var category = window.PHOTO_CATEGORIES[photo.category];
+                const category = window.PHOTO_CATEGORIES[photo.category];
                 if (category) parts.push(category.label);
             } else {
                 parts.push('Photo');
@@ -482,19 +482,19 @@
         
         // Get upload hint based on photo count
         _getUploadHint: function() {
-            var remaining = GRID_CONFIG.MAX_VISIBLE - this.photos.length;
+            const remaining = GRID_CONFIG.MAX_VISIBLE - this.photos.length;
             if (remaining <= 0) return 'Grid full';
             
-            return 'Add up to ' + remaining + ' more';
+            return `Add up to ${remaining} more`;
         },
         
         // Update a single photo in the grid
         updatePhoto: function(photoId, updates) {
-            var photoElement = this.container.querySelector('[data-photo-id="' + photoId + '"]');
+            const photoElement = this.container.querySelector(`[data-photo-id="${photoId}"]`);
             if (!photoElement) return;
             
             // Find photo data
-            var photo = this.photos.find(function(p) { return p.id === photoId; });
+            const photo = this.photos.find(function(p) { return p.id === photoId; });
             if (!photo) return;
             
             // Apply updates
@@ -504,7 +504,7 @@
             
             // Update caption if changed
             if (updates.caption !== undefined) {
-                var captionEl = photoElement.querySelector('.photo-caption-display');
+                let captionEl = photoElement.querySelector('.photo-caption-display');
                 if (updates.caption) {
                     if (!captionEl) {
                         captionEl = document.createElement('div');
@@ -519,9 +519,9 @@
             
             // Update category color if changed
             if (updates.category !== undefined) {
-                var container = photoElement.querySelector('.photo-thumbnail-container');
+                const container = photoElement.querySelector('.photo-thumbnail-container');
                 if (container && window.PHOTO_CATEGORIES) {
-                    var category = window.PHOTO_CATEGORIES[updates.category];
+                    const category = window.PHOTO_CATEGORIES[updates.category];
                     if (category) {
                         container.style.borderColor = category.color;
                         container.setAttribute('data-category', updates.category);

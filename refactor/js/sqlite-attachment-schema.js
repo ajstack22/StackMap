@@ -9,12 +9,12 @@
 (function() {
     'use strict';
     
-    var SQLiteAttachmentSchema = {
+    const SQLiteAttachmentSchema = {
         /**
          * Create attachments table in SQLite
          */
         createAttachmentsTable: function(db, callback) {
-            var createTable = 
+            const createTable = 
                 'CREATE TABLE IF NOT EXISTS attachments (' +
                 '  id TEXT PRIMARY KEY,' +
                 '  task_id TEXT NOT NULL,' +
@@ -36,13 +36,13 @@
                 console.log('SQLite: Attachments table created');
                 
                 // Create indexes for performance
-                var indexes = [
+                const indexes = [
                     'CREATE INDEX IF NOT EXISTS idx_attachments_task ON attachments(task_id)',
                     'CREATE INDEX IF NOT EXISTS idx_attachments_type ON attachments(type)',
                     'CREATE INDEX IF NOT EXISTS idx_attachments_created ON attachments(created_at)'
                 ];
                 
-                var completed = 0;
+                let completed = 0;
                 indexes.forEach(function(indexSql) {
                     db.execute(indexSql, [], false).then(function() {
                         completed++;
@@ -68,7 +68,7 @@
          * (Only for small voice memos, larger ones use filesystem)
          */
         createVoiceDataTable: function(db, callback) {
-            var createTable = 
+            const createTable = 
                 'CREATE TABLE IF NOT EXISTS voice_data (' +
                 '  attachment_id TEXT PRIMARY KEY,' +
                 '  audio_data BLOB NOT NULL,' +
@@ -98,7 +98,7 @@
          * Initialize attachment schema
          */
         init: function(db, callback) {
-            var self = this;
+            const self = this;
             
             // Create attachments table
             self.createAttachmentsTable(db, function(success, error) {
@@ -123,16 +123,16 @@
     /**
      * Attachment operations for SQLite
      */
-    var SQLiteAttachmentOps = {
+    const SQLiteAttachmentOps = {
         /**
          * Add attachment metadata to SQLite
          */
         addAttachment: function(db, attachment, callback) {
-            var sql = 'INSERT INTO attachments (id, task_id, type, filename, size, mime_type, ' +
+            const sql = 'INSERT INTO attachments (id, task_id, type, filename, size, mime_type, ' +
                      'duration, waveform, storage_type, storage_path, thumbnail_data, metadata) ' +
                      'VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
             
-            var values = [
+            const values = [
                 attachment.id,
                 attachment.taskId,
                 attachment.type,
@@ -159,13 +159,13 @@
          * Get attachments for a task
          */
         getAttachmentsByTask: function(db, taskId, callback) {
-            var sql = 'SELECT * FROM attachments WHERE task_id = ? ORDER BY created_at DESC';
+            const sql = 'SELECT * FROM attachments WHERE task_id = ? ORDER BY created_at DESC';
             
             db.query(sql, [taskId]).then(function(result) {
-                var attachments = [];
+                const attachments = [];
                 if (result && result.values) {
-                    for (var i = 0; i < result.values.length; i++) {
-                        var row = result.values[i];
+                    for (let i = 0; i < result.values.length; i++) {
+                        const row = result.values[i];
                         attachments.push({
                             id: row[0],
                             taskId: row[1],
@@ -195,11 +195,11 @@
          * Delete attachment
          */
         deleteAttachment: function(db, attachmentId, callback) {
-            var sql = 'DELETE FROM attachments WHERE id = ?';
+            const sql = 'DELETE FROM attachments WHERE id = ?';
             
             db.execute(sql, [attachmentId], false).then(function() {
                 // Also delete from voice_data if it exists
-                var deleteVoice = 'DELETE FROM voice_data WHERE attachment_id = ?';
+                const deleteVoice = 'DELETE FROM voice_data WHERE attachment_id = ?';
                 return db.execute(deleteVoice, [attachmentId], false);
             }).then(function() {
                 if (callback) callback({ success: true });
@@ -214,7 +214,7 @@
          */
         deleteTaskAttachments: function(db, taskId, callback) {
             // First get all attachment IDs
-            var selectSql = 'SELECT id FROM attachments WHERE task_id = ?';
+            const selectSql = 'SELECT id FROM attachments WHERE task_id = ?';
             
             db.query(selectSql, [taskId]).then(function(result) {
                 if (!result || !result.values || result.values.length === 0) {
@@ -223,9 +223,9 @@
                 }
                 
                 // Delete each attachment
-                var deletePromises = [];
-                for (var i = 0; i < result.values.length; i++) {
-                    var attachmentId = result.values[i][0];
+                const deletePromises = [];
+                for (let i = 0; i < result.values.length; i++) {
+                    const attachmentId = result.values[i][0];
                     deletePromises.push(db.execute('DELETE FROM attachments WHERE id = ?', [attachmentId], false));
                     deletePromises.push(db.execute('DELETE FROM voice_data WHERE attachment_id = ?', [attachmentId], false));
                 }
@@ -244,10 +244,10 @@
          */
         storeVoiceData: function(db, attachmentId, audioBlob, callback) {
             // Convert blob to base64 for SQLite storage
-            var reader = new FileReader();
+            const reader = new FileReader();
             reader.onloadend = function() {
-                var base64 = reader.result.split(',')[1]; // Remove data:audio/webm;base64,
-                var sql = 'INSERT INTO voice_data (attachment_id, audio_data) VALUES (?, ?)';
+                const base64 = reader.result.split(',')[1]; // Remove data:audio/webm;base64,
+                const sql = 'INSERT INTO voice_data (attachment_id, audio_data) VALUES (?, ?)';
                 
                 db.execute(sql, [attachmentId, base64], false).then(function() {
                     if (callback) callback({ success: true });
@@ -263,20 +263,20 @@
          * Get voice memo data from SQLite
          */
         getVoiceData: function(db, attachmentId, callback) {
-            var sql = 'SELECT audio_data FROM voice_data WHERE attachment_id = ?';
+            const sql = 'SELECT audio_data FROM voice_data WHERE attachment_id = ?';
             
             db.query(sql, [attachmentId]).then(function(result) {
                 if (result && result.values && result.values.length > 0) {
-                    var base64 = result.values[0][0];
+                    const base64 = result.values[0][0];
                     // Convert base64 back to blob
-                    var mimeType = 'audio/webm';
-                    var byteCharacters = atob(base64);
-                    var byteNumbers = new Array(byteCharacters.length);
-                    for (var i = 0; i < byteCharacters.length; i++) {
+                    const mimeType = 'audio/webm';
+                    const byteCharacters = atob(base64);
+                    const byteNumbers = new Array(byteCharacters.length);
+                    for (let i = 0; i < byteCharacters.length; i++) {
                         byteNumbers[i] = byteCharacters.charCodeAt(i);
                     }
-                    var byteArray = new Uint8Array(byteNumbers);
-                    var blob = new Blob([byteArray], { type: mimeType });
+                    const byteArray = new Uint8Array(byteNumbers);
+                    const blob = new Blob([byteArray], { type: mimeType });
                     
                     if (callback) callback({ success: true, blob: blob });
                 } else {

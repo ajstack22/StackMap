@@ -3,15 +3,15 @@
  * Ensures no voice recordings are lost due to app crashes or interruptions
  */
 
-var VoiceRecovery = (function() {
+const VoiceRecovery = (function() {
   'use strict';
   
   // Recovery storage keys
-  var RECOVERY_KEY = 'voice_recovery';
-  var RECOVERY_METADATA_KEY = 'voice_recovery_meta';
+  const RECOVERY_KEY = 'voice_recovery';
+  const RECOVERY_METADATA_KEY = 'voice_recovery_meta';
   
   // Recovery check interval (5 seconds during recording)
-  var AUTO_SAVE_INTERVAL = 5000;
+  const AUTO_SAVE_INTERVAL = 5000;
   
   // Constructor
   function VoiceRecovery() {
@@ -23,8 +23,8 @@ var VoiceRecovery = (function() {
   // Check for recoverable recordings on startup
   VoiceRecovery.prototype.checkForRecovery = function(callback) {
     try {
-      var recoveryData = localStorage.getItem(RECOVERY_KEY);
-      var metadata = localStorage.getItem(RECOVERY_METADATA_KEY);
+      const recoveryData = localStorage.getItem(RECOVERY_KEY);
+      const metadata = localStorage.getItem(RECOVERY_METADATA_KEY);
       
       if (!recoveryData || !metadata) {
         if (callback) callback(null, null);
@@ -32,10 +32,10 @@ var VoiceRecovery = (function() {
       }
       
       // Parse metadata
-      var meta = JSON.parse(metadata);
+      const meta = JSON.parse(metadata);
       
       // Check if recovery is too old (> 24 hours)
-      var age = Date.now() - meta.timestamp;
+      const age = Date.now() - meta.timestamp;
       if (age > 86400000) {
         this.clearRecovery();
         if (callback) callback(null, null);
@@ -43,9 +43,9 @@ var VoiceRecovery = (function() {
       }
       
       // Convert base64 back to blob
-      var blob = this.base64ToBlob(recoveryData, meta.mimeType);
+      const blob = this.base64ToBlob(recoveryData, meta.mimeType);
       
-      var recovery = {
+      const recovery = {
         blob: blob,
         taskId: meta.taskId,
         timestamp: meta.timestamp,
@@ -67,7 +67,7 @@ var VoiceRecovery = (function() {
   
   // Start auto-save for recording
   VoiceRecovery.prototype.startAutoSave = function(recorder, taskId, mode) {
-    var self = this;
+    const self = this;
     
     // Clear any existing timer
     this.stopAutoSave();
@@ -103,7 +103,7 @@ var VoiceRecovery = (function() {
     if (!this.currentRecording) return;
     
     try {
-      var recorder = this.currentRecording.recorder;
+      const recorder = this.currentRecording.recorder;
       
       // Request current data from recorder
       if (recorder.mediaRecorder && recorder.mediaRecorder.state === 'recording') {
@@ -111,7 +111,7 @@ var VoiceRecovery = (function() {
       }
       
       // Wait a bit for data to be available
-      var self = this;
+      const self = this;
       setTimeout(function() {
         self.saveChunks();
       }, 100);
@@ -124,14 +124,14 @@ var VoiceRecovery = (function() {
   VoiceRecovery.prototype.saveChunks = function() {
     if (!this.currentRecording) return;
     
-    var recorder = this.currentRecording.recorder;
-    var chunks = recorder.chunks;
+    const recorder = this.currentRecording.recorder;
+    const chunks = recorder.chunks;
     
     if (!chunks || chunks.length === 0) return;
     
     try {
       // Create blob from chunks
-      var blob = new Blob(chunks, { 
+      const blob = new Blob(chunks, { 
         type: recorder.mediaRecorder.mimeType 
       });
       
@@ -142,14 +142,14 @@ var VoiceRecovery = (function() {
       }
       
       // Convert to base64
-      var self = this;
+      const self = this;
       this.blobToBase64(blob, function(base64) {
         try {
           // Save to localStorage
           localStorage.setItem(RECOVERY_KEY, base64);
           
           // Save metadata
-          var metadata = {
+          const metadata = {
             taskId: self.currentRecording.taskId,
             mode: self.currentRecording.mode,
             timestamp: self.currentRecording.startTime,
@@ -174,38 +174,21 @@ var VoiceRecovery = (function() {
   
   // Show recovery prompt to user
   VoiceRecovery.prototype.showRecoveryPrompt = function(recoveryData, callbacks) {
-    var self = this;
+    const self = this;
     this.isRecovering = true;
     
     // Format duration for display
-    var duration = recoveryData.duration || 0;
-    var minutes = Math.floor(duration / 60);
-    var seconds = duration % 60;
-    var durationText = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+    const duration = recoveryData.duration || 0;
+    const minutes = Math.floor(duration / 60);
+    const seconds = duration % 60;
+    const durationText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
     
     // Create recovery UI
-    var promptHtml = 
-      '<div class="voice-recovery-prompt" role="dialog" aria-labelledby="recovery-title">' +
-        '<div class="recovery-content">' +
-          '<h3 id="recovery-title">Recover Recording?</h3>' +
-          '<p>Found an unsaved recording (' + durationText + ')</p>' +
-          '<div class="recovery-info">' +
-            '<span class="recovery-size">' + this.formatSize(recoveryData.size) + '</span>' +
-            '<span class="recovery-time">' + this.formatTime(recoveryData.timestamp) + '</span>' +
-          '</div>' +
-          '<div class="recovery-actions">' +
-            '<button class="btn-keep" onclick="VoiceRecovery.handleKeep()">' +
-              'Keep Recording' +
-            '</button>' +
-            '<button class="btn-discard" onclick="VoiceRecovery.handleDiscard()">' +
-              'Discard' +
-            '</button>' +
-          '</div>' +
-        '</div>' +
-      '</div>';
+    const promptHtml = 
+      `<div class="voice-recovery-prompt" role="dialog" aria-labelledby="recovery-title"><div class="recovery-content"><h3 id="recovery-title">Recover Recording?</h3><p>Found an unsaved recording (${durationText})</p><div class="recovery-info"><span class="recovery-size">${this.formatSize(recoveryData.size)}</span><span class="recovery-time">${this.formatTime(recoveryData.timestamp)}</span></div><div class="recovery-actions"><button class="btn-keep" onclick="VoiceRecovery.handleKeep()">Keep Recording</button><button class="btn-discard" onclick="VoiceRecovery.handleDiscard()">Discard</button></div></div></div>`;
     
     // Add to DOM
-    var container = document.createElement('div');
+    const container = document.createElement('div');
     container.innerHTML = promptHtml;
     document.body.appendChild(container.firstElementChild);
     
@@ -214,14 +197,14 @@ var VoiceRecovery = (function() {
     
     // Focus on keep button
     setTimeout(function() {
-      var keepBtn = document.querySelector('.btn-keep');
+      const keepBtn = document.querySelector('.btn-keep');
       if (keepBtn) keepBtn.focus();
     }, 100);
   };
   
   // Handle keep recovery
   VoiceRecovery.handleKeep = function() {
-    var instance = VoiceRecovery.instance;
+    const instance = VoiceRecovery.instance;
     if (!instance) return;
     
     instance.checkForRecovery(function(err, recovery) {
@@ -243,7 +226,7 @@ var VoiceRecovery = (function() {
   
   // Handle discard recovery
   VoiceRecovery.handleDiscard = function() {
-    var instance = VoiceRecovery.instance;
+    const instance = VoiceRecovery.instance;
     if (!instance) return;
     
     // Clear recovery storage
@@ -258,7 +241,7 @@ var VoiceRecovery = (function() {
   
   // Hide recovery prompt
   VoiceRecovery.prototype.hideRecoveryPrompt = function() {
-    var prompt = document.querySelector('.voice-recovery-prompt');
+    const prompt = document.querySelector('.voice-recovery-prompt');
     if (prompt) {
       prompt.remove();
     }
@@ -277,11 +260,11 @@ var VoiceRecovery = (function() {
   
   // Convert blob to base64
   VoiceRecovery.prototype.blobToBase64 = function(blob, callback) {
-    var reader = new FileReader();
+    const reader = new FileReader();
     
     reader.onload = function() {
-      var dataUrl = reader.result;
-      var base64 = dataUrl.split(',')[1];
+      const dataUrl = reader.result;
+      const base64 = dataUrl.split(',')[1];
       callback(base64);
     };
     
@@ -294,36 +277,36 @@ var VoiceRecovery = (function() {
   
   // Convert base64 to blob
   VoiceRecovery.prototype.base64ToBlob = function(base64, mimeType) {
-    var byteCharacters = atob(base64);
-    var byteNumbers = new Array(byteCharacters.length);
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
     
-    for (var i = 0; i < byteCharacters.length; i++) {
+    for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.charCodeAt(i);
     }
     
-    var byteArray = new Uint8Array(byteNumbers);
+    const byteArray = new Uint8Array(byteNumbers);
     return new Blob([byteArray], { type: mimeType });
   };
   
   // Format file size for display
   VoiceRecovery.prototype.formatSize = function(bytes) {
-    if (bytes < 1024) return bytes + ' B';
-    if (bytes < 1048576) return Math.round(bytes / 1024) + ' KB';
-    return (bytes / 1048576).toFixed(1) + ' MB';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1048576) return `${Math.round(bytes / 1024)} KB`;
+    return `${(bytes / 1048576).toFixed(1)} MB`;
   };
   
   // Format timestamp for display
   VoiceRecovery.prototype.formatTime = function(timestamp) {
-    var date = new Date(timestamp);
-    var now = new Date();
-    var diff = now - date;
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diff = now - date;
     
     if (diff < 3600000) { // Less than 1 hour
-      var minutes = Math.floor(diff / 60000);
-      return minutes + ' minutes ago';
+      const minutes = Math.floor(diff / 60000);
+      return `${minutes} minutes ago`;
     } else if (diff < 86400000) { // Less than 24 hours
-      var hours = Math.floor(diff / 3600000);
-      return hours + ' hours ago';
+      const hours = Math.floor(diff / 3600000);
+      return `${hours} hours ago`;
     } else {
       return date.toLocaleDateString();
     }

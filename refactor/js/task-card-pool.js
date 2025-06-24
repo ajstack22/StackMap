@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var TaskCardPool = {
+    const TaskCardPool = {
         // Pool configuration
         POOL_SIZE: 20,
         MIN_POOL_SIZE: 5,
@@ -22,7 +22,7 @@
          * Initialize the object pool
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             if (self.initialized) return;
             
@@ -54,7 +54,7 @@
          * Acquire a task card from the pool
          */
         acquire: function() {
-            var self = this;
+            const self = this;
             
             // Initialize if needed
             if (!self.initialized) {
@@ -62,7 +62,7 @@
             }
             
             // Get card from pool or create new one
-            var card = self.pool.pop();
+            let card = self.pool.pop();
             
             if (!card) {
                 // Pool empty - create new card
@@ -90,7 +90,7 @@
          * Release a task card back to the pool
          */
         release: function(card) {
-            var self = this;
+            const self = this;
             
             if (!card || !self.activeCards.has(card)) {
                 console.warn('TaskCardPool: Attempted to release invalid card');
@@ -116,23 +116,23 @@
          * Create a new task card element
          */
         createCard: function() {
-            var card = document.createElement('div');
+            const card = document.createElement('div');
             card.className = 'task-card';
             card.setAttribute('data-pooled', 'true');
             
             // Create card structure
-            var cardInner = document.createElement('div');
+            const cardInner = document.createElement('div');
             cardInner.className = 'task-card-inner';
             
             // Header
-            var header = document.createElement('div');
+            const header = document.createElement('div');
             header.className = 'task-card-header';
             
             // Checkbox container
-            var checkboxContainer = document.createElement('div');
+            const checkboxContainer = document.createElement('div');
             checkboxContainer.className = 'task-checkbox-container';
             
-            var checkbox = document.createElement('input');
+            const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.className = 'task-checkbox';
             checkbox.setAttribute('aria-label', 'Mark task as complete');
@@ -141,26 +141,26 @@
             header.appendChild(checkboxContainer);
             
             // Content
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'task-content';
             
-            var title = document.createElement('h3');
+            const title = document.createElement('h3');
             title.className = 'task-title';
             
-            var description = document.createElement('p');
+            const description = document.createElement('p');
             description.className = 'task-description';
             
             content.appendChild(title);
             content.appendChild(description);
             
             // Footer
-            var footer = document.createElement('div');
+            const footer = document.createElement('div');
             footer.className = 'task-card-footer';
             
-            var category = document.createElement('span');
+            const category = document.createElement('span');
             category.className = 'task-category';
             
-            var priority = document.createElement('span');
+            const priority = document.createElement('span');
             priority.className = 'task-priority';
             
             footer.appendChild(category);
@@ -179,7 +179,7 @@
          * Reset a card for reuse
          */
         resetCard: function(card) {
-            var self = this;
+            const self = this;
             
             // Remove all event listeners (handled by cleanup system)
             if (card._cleanup) {
@@ -194,26 +194,26 @@
             card.removeAttribute('style');
             
             // Reset checkbox
-            var checkbox = card.querySelector('.task-checkbox');
+            const checkbox = card.querySelector('.task-checkbox');
             if (checkbox) {
                 checkbox.checked = false;
                 checkbox.disabled = false;
             }
             
             // Clear content
-            var title = card.querySelector('.task-title');
+            const title = card.querySelector('.task-title');
             if (title) title.textContent = '';
             
-            var description = card.querySelector('.task-description');
+            const description = card.querySelector('.task-description');
             if (description) description.textContent = '';
             
-            var category = card.querySelector('.task-category');
+            const category = card.querySelector('.task-category');
             if (category) {
                 category.textContent = '';
                 category.className = 'task-category';
             }
             
-            var priority = card.querySelector('.task-priority');
+            const priority = card.querySelector('.task-priority');
             if (priority) {
                 priority.textContent = '';
                 priority.className = 'task-priority';
@@ -227,7 +227,7 @@
          * Clean a card before returning to pool
          */
         cleanCard: function(card) {
-            var self = this;
+            const self = this;
             
             // Call reset to clean the card
             self.resetCard(card);
@@ -240,12 +240,12 @@
          * Expand the pool
          */
         expandPool: function(count) {
-            var self = this;
+            const self = this;
             
             count = Math.min(count, self.MAX_POOL_SIZE - self.pool.length);
             
-            for (var i = 0; i < count; i++) {
-                var card = self.createCard();
+            for (let i = 0; i < count; i++) {
+                const card = self.createCard();
                 card.style.display = 'none';
                 self.pool.push(card);
             }
@@ -259,14 +259,14 @@
          * Shrink the pool under memory pressure
          */
         shrinkPool: function() {
-            var self = this;
+            const self = this;
             
-            var targetSize = Math.max(self.MIN_POOL_SIZE, Math.floor(self.pool.length / 2));
-            var toRemove = self.pool.length - targetSize;
+            const targetSize = Math.max(self.MIN_POOL_SIZE, Math.floor(self.pool.length / 2));
+            const toRemove = self.pool.length - targetSize;
             
             if (toRemove > 0) {
-                for (var i = 0; i < toRemove; i++) {
-                    var card = self.pool.pop();
+                for (let i = 0; i < toRemove; i++) {
+                    const card = self.pool.pop();
                     if (card && card.parentNode) {
                         card.remove();
                     }
@@ -279,11 +279,11 @@
          * Emergency shrink under critical memory
          */
         emergencyShrink: function() {
-            var self = this;
+            const self = this;
             
             // Keep only minimum cards
             while (self.pool.length > self.MIN_POOL_SIZE) {
-                var card = self.pool.pop();
+                const card = self.pool.pop();
                 if (card && card.parentNode) {
                     card.remove();
                 }
@@ -296,7 +296,7 @@
          * Get pool statistics
          */
         getStats: function() {
-            var self = this;
+            const self = this;
             
             return {
                 poolSize: self.pool.length,
@@ -310,11 +310,11 @@
          * Destroy the pool
          */
         destroy: function() {
-            var self = this;
+            const self = this;
             
             // Remove all pooled cards
             while (self.pool.length > 0) {
-                var card = self.pool.pop();
+                const card = self.pool.pop();
                 if (card && card.parentNode) {
                     card.remove();
                 }

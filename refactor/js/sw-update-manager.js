@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var SWUpdateManager = {
+    const SWUpdateManager = {
         // Configuration
         config: {
             checkInterval: 3600000, // Check every hour
@@ -27,7 +27,7 @@
          * Initialize update manager
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             if (!('serviceWorker' in navigator)) {
                 console.warn('Service Worker not supported');
@@ -59,11 +59,11 @@
          * Setup update detection
          */
         setupUpdateDetection: function(registration) {
-            var self = this;
+            const self = this;
             
             // Listen for update found
             registration.addEventListener('updatefound', function() {
-                var newWorker = registration.installing;
+                const newWorker = registration.installing;
                 
                 newWorker.addEventListener('statechange', function() {
                     if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
@@ -78,7 +78,7 @@
          * Handle update available
          */
         onUpdateAvailable: function(newWorker) {
-            var self = this;
+            const self = this;
             
             self.updateAvailable = true;
             self.newWorker = newWorker;
@@ -108,10 +108,10 @@
          * Show update notification
          */
         showUpdateNotification: function() {
-            var self = this;
+            const self = this;
             
             // Create notification element
-            var notification = document.createElement('div');
+            const notification = document.createElement('div');
             notification.className = 'sw-update-notification';
             notification.innerHTML = 
                 '<div class="sw-update-content">' +
@@ -159,7 +159,7 @@
          * Apply update
          */
         applyUpdate: function() {
-            var self = this;
+            const self = this;
             
             if (!self.newWorker) {
                 console.error('No new worker to activate');
@@ -177,7 +177,7 @@
          * Postpone update
          */
         postponeUpdate: function() {
-            var self = this;
+            const self = this;
             
             self.userPostponed = true;
             localStorage.setItem('sw-update-postponed', Date.now());
@@ -207,7 +207,7 @@
          * Show updating message
          */
         showUpdatingMessage: function() {
-            var message = document.createElement('div');
+            const message = document.createElement('div');
             message.className = 'sw-updating-message';
             message.innerHTML = 
                 '<div class="sw-updating-content">' +
@@ -229,7 +229,7 @@
          * Handle controller change (update applied)
          */
         handleControllerChange: function() {
-            var self = this;
+            const self = this;
             
             navigator.serviceWorker.addEventListener('controllerchange', function() {
                 // Only reload if user initiated update
@@ -258,7 +258,7 @@
             sessionStorage.setItem('sw-update-scroll', window.scrollY);
             
             // Save active view
-            var activeView = document.querySelector('.view.active');
+            const activeView = document.querySelector('.view.active');
             if (activeView) {
                 sessionStorage.setItem('sw-update-view', activeView.id);
             }
@@ -269,14 +269,14 @@
          */
         restoreState: function() {
             // Restore scroll position
-            var scrollPos = sessionStorage.getItem('sw-update-scroll');
+            const scrollPos = sessionStorage.getItem('sw-update-scroll');
             if (scrollPos) {
                 window.scrollTo(0, parseInt(scrollPos));
                 sessionStorage.removeItem('sw-update-scroll');
             }
             
             // Show success message
-            var updated = sessionStorage.getItem('sw-just-updated');
+            const updated = sessionStorage.getItem('sw-just-updated');
             if (updated) {
                 self.showUpdateSuccess();
                 sessionStorage.removeItem('sw-just-updated');
@@ -287,7 +287,7 @@
          * Show update success message
          */
         showUpdateSuccess: function() {
-            var success = document.createElement('div');
+            const success = document.createElement('div');
             success.className = 'sw-update-success';
             success.textContent = 'StackMap has been updated successfully';
             
@@ -311,7 +311,7 @@
          * Check for update manually
          */
         checkForUpdate: function() {
-            var self = this;
+            const self = this;
             
             if (!self.registration) return;
             
@@ -325,7 +325,7 @@
          * Setup periodic update checks
          */
         setupPeriodicChecks: function() {
-            var self = this;
+            const self = this;
             
             // Check periodically
             setInterval(function() {
@@ -344,9 +344,9 @@
          * Check if in quiet hours
          */
         isQuietHours: function() {
-            var self = this;
-            var now = new Date();
-            var hour = now.getHours();
+            const self = this;
+            const now = new Date();
+            const hour = now.getHours();
             
             if (self.config.quietHours.start > self.config.quietHours.end) {
                 // Crosses midnight
@@ -362,7 +362,7 @@
         addNotificationStyles: function() {
             if (document.getElementById('sw-update-styles')) return;
             
-            var styles = document.createElement('style');
+            const styles = document.createElement('style');
             styles.id = 'sw-update-styles';
             styles.innerHTML = 
                 '.sw-update-notification {' +
@@ -467,7 +467,7 @@
          * Get update status
          */
         getStatus: function() {
-            var self = this;
+            const self = this;
             
             return {
                 updateAvailable: self.updateAvailable,

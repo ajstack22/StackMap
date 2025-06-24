@@ -4,17 +4,17 @@
  * Mobile-first design with ADHD/autism accommodations
  */
 
-(function() {
+(() => {
     'use strict';
     
     // Today/Tomorrow constants
-    var TASK_TIMEFRAMES = {
+    const TASK_TIMEFRAMES = {
         TODAY: 'today',
         TOMORROW: 'tomorrow',
         SOMEDAY: 'someday'
     };
     
-    var TaskDisplay = {
+    const TaskDisplay = {
         container: null,
         tasks: [],
         editingTaskId: null,
@@ -33,30 +33,28 @@
          * Initialize the task display
          */
         init: function() {
-            var self = this;
-            
             // Find container
-            self.container = document.getElementById('task-container');
-            if (!self.container) {
+            this.container = document.getElementById('task-container');
+            if (!this.container) {
                 console.error('TaskDisplay: Container not found');
                 return;
             }
             
             // Load tasks from storage
-            self.loadTasks(function(success) {
+            this.loadTasks((success) => {
                 if (success) {
-                    self.render();
-                    self.setupEventListeners();
-                    self.isInitialized = true;
+                    this.render();
+                    this.setupEventListeners();
+                    this.isInitialized = true;
                     
                     // Listen for edit mode changes
                     if (window.EditMode) {
-                        window.EditMode.on('change', function() {
-                            self.render();
+                        window.EditMode.on('change', () => {
+                            this.render();
                         });
                     }
                 } else {
-                    self.showError('Unable to load tasks');
+                    this.showError('Unable to load tasks');
                 }
             });
         },
@@ -65,22 +63,20 @@
          * Load tasks from storage (SQLite or localStorage)
          */
         loadTasks: function(callback) {
-            var self = this;
-            
             // Try SQLite first if available
             if (window.TaskSQLite && window.TaskSQLite.isReady) {
-                window.TaskSQLite.getTasks(function(tasks, error) {
+                window.TaskSQLite.getTasks((tasks, error) => {
                     if (error) {
                         console.warn('TaskDisplay: SQLite error, falling back to localStorage', error);
-                        self.loadFromLocalStorage(callback);
+                        this.loadFromLocalStorage(callback);
                     } else {
-                        self.tasks = tasks || [];
+                        this.tasks = tasks || [];
                         if (callback) callback(true);
                     }
                 });
             } else {
                 // Fallback to localStorage
-                self.loadFromLocalStorage(callback);
+                this.loadFromLocalStorage(callback);
             }
         },
         
@@ -88,19 +84,18 @@
          * Load tasks from localStorage fallback
          */
         loadFromLocalStorage: function(callback) {
-            var self = this;
             
             try {
-                var stored = localStorage.getItem('stackmap_tasks');
-                var allTasks = stored ? JSON.parse(stored) : [];
+                const stored = localStorage.getItem('stackmap_tasks');
+                const allTasks = stored ? JSON.parse(stored) : [];
                 
                 // Filter tasks by current user
-                self.tasks = self.filterTasksByUser(allTasks);
+                this.tasks = this.filterTasksByUser(allTasks);
                 
                 if (callback) callback(true);
             } catch (error) {
                 console.error('TaskDisplay: localStorage error', error);
-                self.tasks = [];
+                this.tasks = [];
                 if (callback) callback(false);
             }
         },
@@ -109,16 +104,14 @@
          * Save tasks to storage
          */
         saveTasks: function(callback) {
-            var self = this;
-            
             // Clear any existing auto-save timer
-            if (self.autoSaveTimer) {
-                clearTimeout(self.autoSaveTimer);
+            if (this.autoSaveTimer) {
+                clearTimeout(this.autoSaveTimer);
             }
             
             // Set new auto-save timer (2 seconds)
-            self.autoSaveTimer = setTimeout(function() {
-                self.performSave(callback);
+            this.autoSaveTimer = setTimeout(() => {
+                this.performSave(callback);
             }, 2000);
         },
         
@@ -126,14 +119,12 @@
          * Perform the actual save operation
          */
         performSave: function(callback) {
-            var self = this;
-            
             // Try SQLite first if available
             if (window.TaskSQLite && window.TaskSQLite.isReady) {
                 // For now, save to localStorage as SQLite implementation needs the full CRUD
-                self.saveToLocalStorage(callback);
+                this.saveToLocalStorage(callback);
             } else {
-                self.saveToLocalStorage(callback);
+                this.saveToLocalStorage(callback);
             }
         },
         
@@ -141,10 +132,8 @@
          * Save to localStorage
          */
         saveToLocalStorage: function(callback) {
-            var self = this;
-            
             try {
-                localStorage.setItem('stackmap_tasks', JSON.stringify(self.tasks));
+                localStorage.setItem('stackmap_tasks', JSON.stringify(this.tasks));
                 if (callback) callback(true);
             } catch (error) {
                 console.error('TaskDisplay: Save failed', error);
@@ -156,8 +145,8 @@
          * Render all tasks
          */
         render: function() {
-            var self = this;
-            var startTime = performance.now();
+            const self = this;
+            const startTime = performance.now();
             
             // Show skeleton screens immediately
             if (self.tasks.length > 0 && window.StackMapFeatureFlags && 
@@ -177,28 +166,28 @@
             
             // Add new task button and browse activities button (only in edit mode)
             if (window.EditMode && window.EditMode.isActive()) {
-                var editButtonsContainer = document.createElement('div');
+                const editButtonsContainer = document.createElement('div');
                 editButtonsContainer.className = 'edit-buttons-container';
                 editButtonsContainer.style.cssText = 'display: flex; gap: 12px; margin-bottom: 16px;';
                 
                 // Add Task button
-                var addButton = self.createAddButton();
+                const addButton = self.createAddButton();
                 addButton.style.marginBottom = '0';
                 editButtonsContainer.appendChild(addButton);
                 
                 // Browse Activities button
-                var browseButton = self.createBrowseActivitiesButton();
+                const browseButton = self.createBrowseActivitiesButton();
                 editButtonsContainer.appendChild(browseButton);
                 
                 self.container.appendChild(editButtonsContainer);
             }
             
             // Filter tasks for current user
-            var userTasks = self.getUserTasks();
+            const userTasks = self.getUserTasks();
             
             // Render tasks
             if (userTasks.length === 0) {
-                var emptyMessage = document.createElement('div');
+                const emptyMessage = document.createElement('div');
                 emptyMessage.className = 'task-empty-message';
                 emptyMessage.textContent = 'No tasks yet. Tap + to add one.';
                 emptyMessage.style.cssText = 'text-align: center; padding: 40px 20px; color: #999;';
@@ -207,13 +196,13 @@
                 // Try virtual scrolling for large task lists
                 if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.shouldEnable(userTasks.length)) {
                     // Create a wrapper div for virtual scrolling
-                    var virtualContainer = document.createElement('div');
+                    const virtualContainer = document.createElement('div');
                     virtualContainer.className = 'virtual-scroll-container';
                     virtualContainer.style.cssText = 'height: 100%; position: relative;';
                     self.container.appendChild(virtualContainer);
                     
                     // Initialize virtual scrolling
-                    var initialized = window.VirtualScrollAdapter.init(virtualContainer, userTasks);
+                    const initialized = window.VirtualScrollAdapter.init(virtualContainer, userTasks);
                     
                     if (!initialized) {
                         // Fallback to traditional rendering if virtual scrolling fails
@@ -240,13 +229,13 @@
          * Traditional rendering for small task lists
          */
         renderTraditional: function(userTasks) {
-            var self = this;
+            const self = this;
             
             // Use DocumentFragment for batch DOM operations
-            var fragment = document.createDocumentFragment();
+            const fragment = document.createDocumentFragment();
             
             userTasks.forEach(function(task) {
-                var taskElement = self.createTaskElement(task);
+                const taskElement = self.createTaskElement(task);
                 fragment.appendChild(taskElement);
             });
             
@@ -258,26 +247,16 @@
          * Create add task button
          */
         createAddButton: function() {
-            var self = this;
+            const self = this;
             
-            var button = document.createElement('button');
+            const button = document.createElement('button');
             button.className = 'task-add-button';
             button.setAttribute('aria-label', 'Add new task');
             button.textContent = '+ Add Task';
             
             // Apply safe mode styles
             button.style.cssText = 
-                'width: 100%;' +
-                'min-height: ' + self.touchTargetSize + 'px;' +
-                'padding: 16px;' +
-                'margin-bottom: 16px;' +
-                'background: #333;' +
-                'border: 2px dashed #666;' +
-                'border-radius: 8px;' +
-                'color: #fff;' +
-                'font-size: 16px;' +
-                'cursor: pointer;' +
-                'transition: ' + (self.safeMode ? 'none' : 'all 0.2s ease;');
+                `width: 100%;min-height: ${self.touchTargetSize}px;padding: 16px;margin-bottom: 16px;background: #333;border: 2px dashed #666;border-radius: 8px;color: #fff;font-size: 16px;cursor: pointer;transition: ${self.safeMode ? 'none' : 'all 0.2s ease;'}`;
             
             // Use optimized button response if available
             if (self.optimizeButtonResponse) {
@@ -298,29 +277,19 @@
          * Create browse activities button
          */
         createBrowseActivitiesButton: function() {
-            var self = this;
+            const self = this;
             
-            var button = document.createElement('button');
+            const button = document.createElement('button');
             button.className = 'browse-activities-button';
             button.setAttribute('aria-label', 'Browse activity library');
             button.textContent = '📚 Browse Activities';
             
             // Apply safe mode styles
             button.style.cssText = 
-                'width: 100%;' +
-                'min-height: ' + self.touchTargetSize + 'px;' +
-                'padding: 16px;' +
-                'margin-bottom: 16px;' +
-                'background: #4a90e2;' +
-                'border: none;' +
-                'border-radius: 8px;' +
-                'color: #fff;' +
-                'font-size: 16px;' +
-                'cursor: pointer;' +
-                'transition: ' + (self.safeMode ? 'none' : 'all 0.2s ease;');
+                `width: 100%;min-height: ${self.touchTargetSize}px;padding: 16px;margin-bottom: 16px;background: #4a90e2;border: none;border-radius: 8px;color: #fff;font-size: 16px;cursor: pointer;transition: ${self.safeMode ? 'none' : 'all 0.2s ease;'}`;
             
             // Use optimized button response if available
-            var browseHandler = function() {
+            const browseHandler = function() {
                 if (window.ActivityLibrary) {
                     window.ActivityLibrary.show();
                 } else {
@@ -341,28 +310,21 @@
          * Create task element
          */
         createTaskElement: function(task) {
-            var self = this;
+            const self = this;
             
-            var taskEl = document.createElement('div');
+            const taskEl = document.createElement('div');
             taskEl.className = 'task-item';
             taskEl.setAttribute('data-task-id', task.id);
             
             // Apply safe mode styles
             taskEl.style.cssText = 
-                'background: #2a2a2a;' +
-                'border-radius: 8px;' +
-                'padding: 16px;' +
-                'margin-bottom: 12px;' +
-                'min-height: ' + self.touchTargetSize + 'px;' +
-                'display: flex;' +
-                'align-items: center;' +
-                'gap: 12px;';
+                `background: #2a2a2a;border-radius: 8px;padding: 16px;margin-bottom: 12px;min-height: ${self.touchTargetSize}px;display: flex;align-items: center;gap: 12px;`;
             
             // Checkbox
-            var checkbox = document.createElement('input');
+            const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = task.completed;
-            checkbox.setAttribute('aria-label', 'Mark task as ' + (task.completed ? 'incomplete' : 'complete'));
+            checkbox.setAttribute('aria-label', `Mark task as ${task.completed ? 'incomplete' : 'complete'}`);
             checkbox.style.cssText = 
                 'width: 24px;' +
                 'height: 24px;' +
@@ -375,13 +337,13 @@
             };
             
             // Task content
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'task-content';
             content.style.cssText = 'flex: 1; min-width: 0;';
             
             if (self.editingTaskId === task.id) {
                 // Edit mode
-                var input = document.createElement('input');
+                const input = document.createElement('input');
                 input.type = 'text';
                 input.value = task.title;
                 input.className = 'task-edit-input';
@@ -415,28 +377,23 @@
                 }, 0);
             } else {
                 // View mode - show icon and title
-                var titleContainer = document.createElement('div');
+                const titleContainer = document.createElement('div');
                 titleContainer.style.cssText = 'display: flex; align-items: center; gap: 8px;';
                 
                 // Task icon
                 if (task.icon) {
-                    var icon = document.createElement('span');
+                    const icon = document.createElement('span');
                     icon.className = 'task-icon';
                     icon.textContent = task.icon;
                     icon.style.cssText = 'font-size: 20px; flex-shrink: 0;';
                     titleContainer.appendChild(icon);
                 }
                 
-                var title = document.createElement('div');
+                const title = document.createElement('div');
                 title.className = 'task-title';
                 title.textContent = task.title;
                 title.style.cssText = 
-                    'font-size: 16px;' +
-                    'color: ' + (task.completed ? '#666' : '#fff') + ';' +
-                    'text-decoration: ' + (task.completed ? 'line-through' : 'none') + ';' +
-                    'cursor: pointer;' +
-                    'word-break: break-word;' +
-                    'flex: 1;';
+                    `font-size: 16px;color: ${task.completed ? '#666' : '#fff'};text-decoration: ${task.completed ? 'line-through' : 'none'};cursor: pointer;word-break: break-word;flex: 1;`;
                 
                 title.onclick = function() {
                     // Only allow editing in edit mode
@@ -450,7 +407,7 @@
                 
                 // Show priority indicator if high priority
                 if (task.priority === 'high') {
-                    var priority = document.createElement('div');
+                    const priority = document.createElement('div');
                     priority.className = 'task-priority';
                     priority.style.cssText = 
                         'font-size: 12px;' +
@@ -463,19 +420,19 @@
             }
             
             // Task actions container (delete, edit, reorder, timer)
-            var actionsContainer = document.createElement('div');
+            const actionsContainer = document.createElement('div');
             actionsContainer.className = 'task-actions';
             actionsContainer.style.cssText = 'display: flex; align-items: center; gap: 8px;';
             
             // Add timer button (always visible, not just in edit mode)
             if (window.TaskTimer) {
-                var timerButton = document.createElement('button');
+                const timerButton = document.createElement('button');
                 timerButton.className = 'task-timer-button';
                 timerButton.setAttribute('data-task-id', task.id);
                 
-                var existingTimer = window.TaskTimer.getTimer(task.id);
+                const existingTimer = window.TaskTimer.getTimer(task.id);
                 if (existingTimer) {
-                    timerButton.innerHTML = '⏱️ ' + window.TaskTimer.formatTime(existingTimer.remaining);
+                    timerButton.innerHTML = `⏱️ ${window.TaskTimer.formatTime(existingTimer.remaining)}`;
                     timerButton.classList.add('active');
                     if (existingTimer.remaining === 0) {
                         timerButton.classList.add('complete');
@@ -500,7 +457,7 @@
             // Only show edit/delete actions in edit mode
             if (window.EditMode && window.EditMode.isActive()) {
                 // Reorder handle
-                var reorderHandle = document.createElement('div');
+                const reorderHandle = document.createElement('div');
                 reorderHandle.className = 'reorder-handle';
                 reorderHandle.innerHTML = '≡';
                 reorderHandle.setAttribute('aria-label', 'Reorder task');
@@ -517,23 +474,12 @@
                 actionsContainer.appendChild(reorderHandle);
                 
                 // Edit button
-                var editBtn = document.createElement('button');
+                const editBtn = document.createElement('button');
                 editBtn.className = 'task-edit';
                 editBtn.setAttribute('aria-label', 'Edit task');
                 editBtn.innerHTML = '✏️';
                 editBtn.style.cssText = 
-                    'width: ' + self.touchTargetSize + 'px;' +
-                    'height: ' + self.touchTargetSize + 'px;' +
-                    'background: #444;' +
-                    'border: none;' +
-                    'border-radius: 50%;' +
-                    'color: #fff;' +
-                    'font-size: 20px;' +
-                    'cursor: pointer;' +
-                    'flex-shrink: 0;' +
-                    'display: flex;' +
-                    'align-items: center;' +
-                    'justify-content: center;';
+                    `width: ${self.touchTargetSize}px;height: ${self.touchTargetSize}px;background: #444;border: none;border-radius: 50%;color: #fff;font-size: 20px;cursor: pointer;flex-shrink: 0;display: flex;align-items: center;justify-content: center;`;
                 
                 editBtn.onclick = function() {
                     self.startEditing(task);
@@ -542,23 +488,12 @@
                 actionsContainer.appendChild(editBtn);
                 
                 // Delete button
-                var deleteBtn = document.createElement('button');
+                const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'task-delete';
                 deleteBtn.setAttribute('aria-label', 'Delete task');
                 deleteBtn.textContent = '×';
                 deleteBtn.style.cssText = 
-                    'width: ' + self.touchTargetSize + 'px;' +
-                    'height: ' + self.touchTargetSize + 'px;' +
-                    'background: #444;' +
-                    'border: none;' +
-                    'border-radius: 50%;' +
-                    'color: #fff;' +
-                    'font-size: 24px;' +
-                    'cursor: pointer;' +
-                    'flex-shrink: 0;' +
-                    'display: flex;' +
-                    'align-items: center;' +
-                    'justify-content: center;';
+                    `width: ${self.touchTargetSize}px;height: ${self.touchTargetSize}px;background: #444;border: none;border-radius: 50%;color: #fff;font-size: 24px;cursor: pointer;flex-shrink: 0;display: flex;align-items: center;justify-content: center;`;
                 
                 deleteBtn.onclick = function() {
                     self.deleteTask(task);
@@ -578,16 +513,16 @@
          * Add new task (with undo support)
          */
         addTask: function() {
-            var self = this;
+            const self = this;
             
             // Get current user ID
-            var userId = null;
+            let userId = null;
             if (window.UserManager) {
-                var currentUser = window.UserManager.getCurrentUser();
+                const currentUser = window.UserManager.getCurrentUser();
                 userId = currentUser ? currentUser.id : null;
             }
             
-            var taskData = {
+            const taskData = {
                 title: '',
                 description: '',
                 icon: '✓',  // Default checkmark icon
@@ -610,11 +545,11 @@
             
             // Use command pattern if available
             if (window.UndoManager && window.TaskCommands) {
-                var command = window.TaskCommands.createAddCommand(taskData);
+                const command = window.TaskCommands.createAddCommand(taskData);
                 window.UndoManager.execute(command).then(function(success) {
                     if (success && command.data.generatedId) {
                         // Start editing the newly created task
-                        var newTask = self.getTaskById(command.data.generatedId);
+                        const newTask = self.getTaskById(command.data.generatedId);
                         if (newTask) {
                             self.startEditing(newTask);
                         }
@@ -622,8 +557,8 @@
                 });
             } else {
                 // Fallback to direct method
-                var generatedId = self.addTaskDirect(taskData);
-                var newTask = self.getTaskById(generatedId);
+                const generatedId = self.addTaskDirect(taskData);
+                const newTask = self.getTaskById(generatedId);
                 if (newTask) {
                     self.startEditing(newTask);
                 }
@@ -634,10 +569,10 @@
          * Add task directly (for undo system)
          */
         addTaskDirect: function(taskData) {
-            var self = this;
+            const self = this;
             
-            var newTask = Object.assign({
-                id: 'task_' + Date.now(),
+            const newTask = Object.assign({
+                id: `task_${Date.now()}`,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
             }, taskData);
@@ -652,7 +587,7 @@
          * Start editing a task
          */
         startEditing: function(task) {
-            var self = this;
+            const self = this;
             
             // Use modal for full edit form
             if (window.Modal) {
@@ -668,13 +603,13 @@
          * Show edit modal with full form
          */
         showEditModal: function(task) {
-            var self = this;
+            const self = this;
             
             // Create form content
-            var formHtml = self.createEditForm(task);
+            const formHtml = self.createEditForm(task);
             
             // Show modal
-            var modal = window.Modal.show({
+            const modal = window.Modal.show({
                 title: task.title ? 'Edit Task' : 'New Task',
                 content: formHtml,
                 className: 'task-edit-modal',
@@ -697,24 +632,24 @@
          * Create edit form HTML
          */
         createEditForm: function(task) {
-            var self = this;
+            const self = this;
             
-            var html = '<form id="task-edit-form" class="task-edit-form">';
+            let html = '<form id="task-edit-form" class="task-edit-form">';
             
             // Title field
             html += '<div class="form-field">';
             html += '<label for="task-title">Title <span class="required">*</span></label>';
-            html += '<input type="text" id="task-title" name="title" value="' + (task.title || '') + '" required>';
+            html += `<input type="text" id="task-title" name="title" value="${task.title || ''}" required>`;
             html += '</div>';
             
             // Icon picker
             html += '<div class="form-field">';
             html += '<label>Icon</label>';
             html += '<div class="icon-picker" id="icon-picker">';
-            var icons = ['✓', '🌅', '☕', '🚿', '🪥', '🍳', '💊', '🏃', '📚', '🎮', '📱', '💻', '🛏️', '🍽️', '📝', '🎯', '⏰', '💤', '🧘'];
-            for (var i = 0; i < icons.length; i++) {
-                var selected = icons[i] === task.icon ? ' selected' : '';
-                html += '<button type="button" class="icon-option' + selected + '" data-icon="' + icons[i] + '">' + icons[i] + '</button>';
+            const icons = ['✓', '🌅', '☕', '🚿', '🪥', '🍳', '💊', '🏃', '📚', '🎮', '📱', '💻', '🛏️', '🍽️', '📝', '🎯', '⏰', '💤', '🧘'];
+            for (let i = 0; i < icons.length; i++) {
+                const selected = icons[i] === task.icon ? ' selected' : '';
+                html += `<button type="button" class="icon-option${selected}" data-icon="${icons[i]}">${icons[i]}</button>`;
             }
             html += '</div>';
             html += '</div>';
@@ -725,10 +660,10 @@
             html += '<select id="task-category" name="category">';
             html += '<option value="">No category</option>';
             if (window.defaultActivities && window.defaultActivities.categories) {
-                for (var j = 0; j < window.defaultActivities.categories.length; j++) {
-                    var cat = window.defaultActivities.categories[j];
-                    var catSelected = cat.id === task.category ? ' selected' : '';
-                    html += '<option value="' + cat.id + '"' + catSelected + '>' + cat.name + '</option>';
+                for (let j = 0; j < window.defaultActivities.categories.length; j++) {
+                    const cat = window.defaultActivities.categories[j];
+                    const catSelected = cat.id === task.category ? ' selected' : '';
+                    html += `<option value="${cat.id}"${catSelected}>${cat.name}</option>`;
                 }
             }
             html += '</select>';
@@ -738,17 +673,17 @@
             html += '<div class="form-field">';
             html += '<label>Priority</label>';
             html += '<div class="priority-options">';
-            var priorities = [
+            const priorities = [
                 { value: 'high', label: 'High', color: '#e53e3e' },
                 { value: 'medium', label: 'Medium', color: '#ed8936' },
                 { value: 'low', label: 'Low', color: '#48bb78' }
             ];
-            for (var k = 0; k < priorities.length; k++) {
-                var p = priorities[k];
-                var pChecked = task.priority === p.value ? ' checked' : '';
+            for (let k = 0; k < priorities.length; k++) {
+                const p = priorities[k];
+                const pChecked = task.priority === p.value ? ' checked' : '';
                 html += '<label class="priority-option">';
-                html += '<input type="radio" name="priority" value="' + p.value + '"' + pChecked + '>';
-                html += '<span style="color: ' + p.color + '">' + p.label + '</span>';
+                html += `<input type="radio" name="priority" value="${p.value}"${pChecked}>`;
+                html += `<span style="color: ${p.color}">${p.label}</span>`;
                 html += '</label>';
             }
             html += '</div>';
@@ -758,17 +693,17 @@
             html += '<div class="form-field">';
             html += '<label>When</label>';
             html += '<div class="timeframe-options">';
-            var timeframes = [
+            const timeframes = [
                 { value: TASK_TIMEFRAMES.TODAY, label: 'Today', icon: '☀️' },
                 { value: TASK_TIMEFRAMES.TOMORROW, label: 'Tomorrow', icon: '🌙' },
                 { value: TASK_TIMEFRAMES.SOMEDAY, label: 'Someday', icon: '📅' }
             ];
-            for (var t = 0; t < timeframes.length; t++) {
-                var tf = timeframes[t];
-                var tfChecked = task.timeframe === tf.value ? ' checked' : '';
+            for (let t = 0; t < timeframes.length; t++) {
+                const tf = timeframes[t];
+                const tfChecked = task.timeframe === tf.value ? ' checked' : '';
                 html += '<label class="timeframe-option">';
-                html += '<input type="radio" name="timeframe" value="' + tf.value + '"' + tfChecked + '>';
-                html += '<span>' + tf.icon + ' ' + tf.label + '</span>';
+                html += `<input type="radio" name="timeframe" value="${tf.value}"${tfChecked}>`;
+                html += `<span>${tf.icon} ${tf.label}</span>`;
                 html += '</label>';
             }
             html += '</div>';
@@ -777,7 +712,7 @@
             // Description
             html += '<div class="form-field">';
             html += '<label for="task-description">Description</label>';
-            html += '<textarea id="task-description" name="description" rows="4">' + (task.description || '') + '</textarea>';
+            html += `<textarea id="task-description" name="description" rows="4">${task.description || ''}</textarea>`;
             html += '</div>';
             
             // Attachments section
@@ -812,29 +747,29 @@
          * Setup edit form handlers
          */
         setupEditFormHandlers: function(modal, task) {
-            var self = this;
+            const self = this;
             
             // Get form element
-            var form = modal.querySelector('#task-edit-form');
+            const form = modal.querySelector('#task-edit-form');
             if (!form) return;
             
             // Auto-save on input
-            var autoSaveInputs = form.querySelectorAll('input, textarea, select');
-            var autoSaveHandler = function() {
+            const autoSaveInputs = form.querySelectorAll('input, textarea, select');
+            const autoSaveHandler = function() {
                 self.saveDraft(task.id, form);
             };
             
-            for (var i = 0; i < autoSaveInputs.length; i++) {
+            for (let i = 0; i < autoSaveInputs.length; i++) {
                 autoSaveInputs[i].addEventListener('input', autoSaveHandler);
                 self.trackEventListener(autoSaveInputs[i], 'input', autoSaveHandler);
             }
             
             // Icon picker
-            var iconButtons = form.querySelectorAll('.icon-option');
-            var iconClickHandler = function(e) {
+            const iconButtons = form.querySelectorAll('.icon-option');
+            const iconClickHandler = function(e) {
                 e.preventDefault();
                 // Remove selected from all
-                for (var k = 0; k < iconButtons.length; k++) {
+                for (let k = 0; k < iconButtons.length; k++) {
                     iconButtons[k].classList.remove('selected');
                 }
                 // Add selected to this one
@@ -843,19 +778,19 @@
                 self.saveDraft(task.id, form);
             };
             
-            for (var j = 0; j < iconButtons.length; j++) {
+            for (let j = 0; j < iconButtons.length; j++) {
                 iconButtons[j].addEventListener('click', iconClickHandler);
                 self.trackEventListener(iconButtons[j], 'click', iconClickHandler);
             }
             
             // Cancel button
-            var cancelBtn = form.querySelector('#cancel-btn');
+            const cancelBtn = form.querySelector('#cancel-btn');
             if (cancelBtn) {
-                var cancelHandler = function() {
+                const cancelHandler = function() {
                     // Check if new task without title
                     if (!task.title && !form.title.value.trim()) {
                         // Remove the task
-                        var index = self.tasks.indexOf(task);
+                        const index = self.tasks.indexOf(task);
                         if (index > -1) {
                             self.tasks.splice(index, 1);
                         }
@@ -872,11 +807,11 @@
             self.initializeAttachmentUI(modal, task);
             
             // Form submit
-            var submitHandler = function(e) {
+            const submitHandler = function(e) {
                 e.preventDefault();
                 
                 // Get form data
-                var formData = self.getFormData(form);
+                const formData = self.getFormData(form);
                 
                 // Validate
                 if (!formData.title.trim()) {
@@ -893,7 +828,7 @@
                 task.updated_at = new Date().toISOString();
                 
                 // Get timeframe if present
-                var timeframeInput = form.querySelector('input[name="timeframe"]:checked');
+                const timeframeInput = form.querySelector('input[name="timeframe"]:checked');
                 if (timeframeInput) {
                     task.timeframe = timeframeInput.value;
                 }
@@ -913,7 +848,7 @@
          * Get form data
          */
         getFormData: function(form) {
-            var data = {
+            const data = {
                 title: form.title.value || '',
                 description: form.description.value || '',
                 category: form.category.value || '',
@@ -922,7 +857,7 @@
             };
             
             // Get selected icon
-            var selectedIcon = form.querySelector('.icon-option.selected');
+            const selectedIcon = form.querySelector('.icon-option.selected');
             if (selectedIcon) {
                 data.icon = selectedIcon.getAttribute('data-icon');
             }
@@ -934,11 +869,11 @@
          * Save draft to localStorage
          */
         saveDraft: function(taskId, form) {
-            var self = this;
-            var draftKey = 'stackmap_task_draft_' + taskId;
+            const self = this;
+            const draftKey = `stackmap_task_draft_${taskId}`;
             
             try {
-                var draftData = self.getFormData(form);
+                const draftData = self.getFormData(form);
                 localStorage.setItem(draftKey, JSON.stringify(draftData));
             } catch (error) {
                 console.warn('Failed to save draft:', error);
@@ -949,14 +884,14 @@
          * Load draft from localStorage
          */
         loadDraft: function(taskId) {
-            var self = this;
-            var draftKey = 'stackmap_task_draft_' + taskId;
+            const self = this;
+            const draftKey = `stackmap_task_draft_${taskId}`;
             
             try {
-                var draftData = localStorage.getItem(draftKey);
+                const draftData = localStorage.getItem(draftKey);
                 if (draftData) {
-                    var draft = JSON.parse(draftData);
-                    var form = document.getElementById('task-edit-form');
+                    const draft = JSON.parse(draftData);
+                    const form = document.getElementById('task-edit-form');
                     if (form && draft) {
                         // Restore form values
                         if (draft.title) form.title.value = draft.title;
@@ -966,8 +901,8 @@
                         
                         // Restore icon selection
                         if (draft.icon) {
-                            var iconButtons = form.querySelectorAll('.icon-option');
-                            for (var i = 0; i < iconButtons.length; i++) {
+                            const iconButtons = form.querySelectorAll('.icon-option');
+                            for (let i = 0; i < iconButtons.length; i++) {
                                 if (iconButtons[i].getAttribute('data-icon') === draft.icon) {
                                     iconButtons[i].classList.add('selected');
                                 } else {
@@ -986,7 +921,7 @@
          * Clear draft
          */
         clearDraft: function(taskId) {
-            var draftKey = 'stackmap_task_draft_' + taskId;
+            const draftKey = `stackmap_task_draft_${taskId}`;
             try {
                 localStorage.removeItem(draftKey);
             } catch (error) {
@@ -998,7 +933,7 @@
          * Finish editing (inline mode)
          */
         finishEditing: function(task, newTitle) {
-            var self = this;
+            const self = this;
             
             newTitle = newTitle.trim();
             
@@ -1008,7 +943,7 @@
                 self.saveTasks();
             } else if (!task.title) {
                 // Remove empty new task
-                var index = self.tasks.indexOf(task);
+                const index = self.tasks.indexOf(task);
                 if (index > -1) {
                     self.tasks.splice(index, 1);
                 }
@@ -1022,7 +957,7 @@
          * Cancel editing
          */
         cancelEditing: function() {
-            var self = this;
+            const self = this;
             
             // Remove empty new tasks
             self.tasks = self.tasks.filter(function(task) {
@@ -1037,16 +972,16 @@
          * Update task
          */
         updateTask: function(task) {
-            var self = this;
-            var wasCompleted = task.completed_at ? true : false;
+            const self = this;
+            const wasCompleted = task.completed_at ? true : false;
             
             // Use command pattern if available for completion toggling
             if (window.UndoManager && window.TaskCommands) {
-                var command = window.TaskCommands.createCompleteCommand(task.id, wasCompleted);
+                const command = window.TaskCommands.createCompleteCommand(task.id, wasCompleted);
                 window.UndoManager.execute(command);
             } else {
                 // Fallback to direct method
-                var isFirstCompletion = !wasCompleted && task.completed;
+                const isFirstCompletion = !wasCompleted && task.completed;
                 
                 task.updated_at = new Date().toISOString();
                 if (task.completed) {
@@ -1061,7 +996,7 @@
                 // Trigger celebration for first-time completion
                 if (isFirstCompletion && window.CelebrationSystem) {
                     // Find the task element in DOM before re-render
-                    var taskElement = document.querySelector('[data-task-id="' + task.id + '"]');
+                    const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
                     if (taskElement) {
                         window.CelebrationSystem.celebrate(taskElement, true);
                     }
@@ -1070,7 +1005,7 @@
                 // Check if virtual scrolling is active
                 if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
                     // Update virtual scrolling without full re-render
-                    var userTasks = self.getUserTasks();
+                    const userTasks = self.getUserTasks();
                     window.VirtualScrollAdapter.update(userTasks);
                 } else {
                     // Full re-render for traditional view
@@ -1083,11 +1018,11 @@
          * Delete task
          */
         deleteTask: function(task) {
-            var self = this;
+            const self = this;
             
             // Use command pattern if available
             if (window.UndoManager && window.TaskCommands) {
-                var command = window.TaskCommands.createDeleteCommand(task.id);
+                const command = window.TaskCommands.createDeleteCommand(task.id);
                 window.UndoManager.execute(command);
             } else {
                 // Fallback to direct method
@@ -1099,7 +1034,7 @@
          * Setup event listeners
          */
         setupEventListeners: function() {
-            var self = this;
+            const self = this;
             
             // Create and store global key handler
             self.globalKeyHandler = function(e) {
@@ -1128,7 +1063,7 @@
          * Remove all tracked event listeners
          */
         removeAllEventListeners: function() {
-            var self = this;
+            const self = this;
             
             // Remove all tracked listeners
             self.eventListeners.forEach(function(listener) {
@@ -1146,7 +1081,7 @@
          * Destroy the module and clean up
          */
         destroy: function() {
-            var self = this;
+            const self = this;
             
             // Clear any pending timers
             if (self.autoSaveTimer) {
@@ -1174,9 +1109,9 @@
          * Show error message
          */
         showError: function(message) {
-            var self = this;
+            const self = this;
             
-            var error = document.createElement('div');
+            const error = document.createElement('div');
             error.className = 'task-error';
             error.textContent = message;
             error.style.cssText = 
@@ -1201,13 +1136,13 @@
          * Filter tasks by current user
          */
         filterTasksByUser: function(tasks) {
-            var self = this;
+            const self = this;
             
             if (!window.UserManager) {
                 return tasks;
             }
             
-            var currentUser = window.UserManager.getCurrentUser();
+            const currentUser = window.UserManager.getCurrentUser();
             if (!currentUser) {
                 return tasks;
             }
@@ -1242,8 +1177,8 @@
          * Get tasks for current user
          */
         getUserTasks: function() {
-            var self = this;
-            var userTasks = self.filterTasksByUser(self.tasks);
+            const self = this;
+            const userTasks = self.filterTasksByUser(self.tasks);
             
             // Sort by order field (higher values first)
             userTasks.sort(function(a, b) {
@@ -1252,8 +1187,8 @@
                     return b.order - a.order;
                 }
                 // Fallback to created_at
-                var aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-                var bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+                const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+                const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
                 return bTime - aTime;
             });
             
@@ -1264,8 +1199,8 @@
          * Get task by ID
          */
         getTaskById: function(taskId) {
-            var self = this;
-            for (var i = 0; i < self.tasks.length; i++) {
+            const self = this;
+            for (let i = 0; i < self.tasks.length; i++) {
                 if (self.tasks[i].id === taskId) {
                     return self.tasks[i];
                 }
@@ -1277,17 +1212,17 @@
          * Initialize attachment UI in the edit modal
          */
         initializeAttachmentUI: function(modal, task) {
-            var self = this;
+            const self = this;
             
             // Initialize attachment manager if not already done
             if (window.AttachmentManager && !window.AttachmentManager.photoStorage) {
                 window.AttachmentManager.init();
             }
             
-            var attachmentList = modal.querySelector('#attachment-list');
-            var attachmentHint = modal.querySelector('#attachment-hint');
-            var photoBtn = modal.querySelector('.photo-btn');
-            var voiceBtn = modal.querySelector('.voice-btn');
+            const attachmentList = modal.querySelector('#attachment-list');
+            const attachmentHint = modal.querySelector('#attachment-hint');
+            const photoBtn = modal.querySelector('.photo-btn');
+            const voiceBtn = modal.querySelector('.voice-btn');
             
             if (!attachmentList || !window.AttachmentManager) return;
             
@@ -1299,7 +1234,7 @@
             
             // Photo button handler
             if (photoBtn) {
-                var photoHandler = function(e) {
+                const photoHandler = function(e) {
                     e.preventDefault();
                     self.handleAddPhoto(task, attachmentList, attachmentHint);
                 };
@@ -1309,7 +1244,7 @@
             
             // Voice button handler
             if (voiceBtn) {
-                var voiceHandler = function(e) {
+                const voiceHandler = function(e) {
                     e.preventDefault();
                     self.handleAddVoice(task, attachmentList, attachmentHint, voiceBtn);
                 };
@@ -1322,7 +1257,7 @@
          * Load and display existing attachments
          */
         loadAttachments: function(task, container) {
-            var self = this;
+            const self = this;
             
             if (!window.AttachmentManager) return;
             
@@ -1332,7 +1267,7 @@
             // Get attachments
             window.AttachmentManager.getAttachments(task.id, function(attachments) {
                 attachments.forEach(function(attachment) {
-                    var el = self.createAttachmentElement(attachment, task);
+                    const el = self.createAttachmentElement(attachment, task);
                     container.appendChild(el);
                 });
             });
@@ -1342,30 +1277,30 @@
          * Create attachment element
          */
         createAttachmentElement: function(attachment, task) {
-            var self = this;
-            var div = document.createElement('div');
-            div.className = 'attachment-item ' + attachment.type;
+            const self = this;
+            const div = document.createElement('div');
+            div.className = `attachment-item ${attachment.type}`;
             div.setAttribute('data-attachment-id', attachment.id);
             
             // Icon
-            var icon = document.createElement('span');
+            const icon = document.createElement('span');
             icon.className = 'attachment-icon';
             icon.textContent = attachment.type === 'photo' ? '📷' : '🎤';
             div.appendChild(icon);
             
             // Info
-            var info = document.createElement('span');
+            const info = document.createElement('span');
             info.className = 'attachment-info';
             if (attachment.type === 'photo') {
                 info.textContent = 'Photo';
             } else {
-                var duration = Math.round(attachment.data.duration || 0);
-                info.textContent = 'Voice (' + duration + 's)';
+                const duration = Math.round(attachment.data.duration || 0);
+                info.textContent = `Voice (${duration}s)`;
             }
             div.appendChild(info);
             
             // Delete button
-            var deleteBtn = document.createElement('button');
+            const deleteBtn = document.createElement('button');
             deleteBtn.className = 'attachment-delete';
             deleteBtn.textContent = '×';
             deleteBtn.onclick = function(e) {
@@ -1384,7 +1319,7 @@
             if (!window.AttachmentManager || !hintElement) return;
             
             window.AttachmentManager.getAttachments(task.id, function(attachments) {
-                var hint = window.AttachmentManager.getAttachmentHint(attachments.length);
+                const hint = window.AttachmentManager.getAttachmentHint(attachments.length);
                 hintElement.textContent = hint;
             });
         },
@@ -1393,16 +1328,16 @@
          * Handle add photo
          */
         handleAddPhoto: function(task, listContainer, hintElement) {
-            var self = this;
+            const self = this;
             
             // Create file input
-            var input = document.createElement('input');
+            const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
             input.capture = 'environment'; // Prefer rear camera
             
             input.onchange = function(e) {
-                var file = e.target.files[0];
+                const file = e.target.files[0];
                 if (!file) return;
                 
                 // Validate file type
@@ -1440,7 +1375,7 @@
          * Handle add voice memo
          */
         handleAddVoice: function(task, listContainer, hintElement, button) {
-            var self = this;
+            const self = this;
             
             if (!window.VoiceAttachmentHandler || !window.VoiceAttachmentHandler.isInitialized) {
                 alert('Voice recording is not available');
@@ -1448,7 +1383,7 @@
             }
             
             // Create voice recording UI in a modal or inline
-            var container = document.createElement('div');
+            const container = document.createElement('div');
             container.className = 'voice-recording-modal-content';
             
             // Create recording UI
@@ -1456,7 +1391,7 @@
             
             // Show in modal if available
             if (window.Modal) {
-                var modal = window.Modal.show({
+                const modal = window.Modal.show({
                     title: 'Record Voice Memo',
                     content: container,
                     className: 'voice-recording-modal',
@@ -1467,7 +1402,7 @@
                 });
                 
                 // Listen for attachment added
-                var attachmentHandler = function(e) {
+                const attachmentHandler = function(e) {
                     if (e.detail.taskId === task.id && e.detail.type === 'voice') {
                         // Reload attachments
                         self.loadAttachments(task, listContainer);
@@ -1496,9 +1431,9 @@
          * Delete attachment
          */
         deleteAttachment: function(attachment, task, element) {
-            var self = this;
+            const self = this;
             
-            if (!confirm('Delete this ' + attachment.type + '?')) return;
+            if (!confirm(`Delete this ${attachment.type}?`)) return;
             
             window.AttachmentManager.deleteAttachment(attachment.id, attachment.type, function(result) {
                 if (result.success) {
@@ -1507,7 +1442,7 @@
                     
                     // Update task
                     if (task.attachments) {
-                        var index = task.attachments.indexOf(attachment.id);
+                        const index = task.attachments.indexOf(attachment.id);
                         if (index > -1) {
                             task.attachments.splice(index, 1);
                             self.saveTasks();
@@ -1515,7 +1450,7 @@
                     }
                     
                     // Update hint
-                    var hintElement = document.querySelector('#attachment-hint');
+                    const hintElement = document.querySelector('#attachment-hint');
                     self.updateAttachmentHint(task, hintElement);
                 }
             });
@@ -1525,12 +1460,12 @@
          * Cleanup modal-specific event listeners
          */
         cleanupModalListeners: function() {
-            var self = this;
+            const self = this;
             
             // Remove listeners that were added to modal elements
-            var modalListeners = self.eventListeners.filter(function(listener) {
+            const modalListeners = self.eventListeners.filter(function(listener) {
                 // Check if element is inside a modal
-                var modal = listener.element.closest('.modal');
+                const modal = listener.element.closest('.modal');
                 return modal !== null;
             });
             
@@ -1538,7 +1473,7 @@
             modalListeners.forEach(function(listener) {
                 listener.element.removeEventListener(listener.event, listener.handler);
                 // Remove from tracking array
-                var index = self.eventListeners.indexOf(listener);
+                const index = self.eventListeners.indexOf(listener);
                 if (index > -1) {
                     self.eventListeners.splice(index, 1);
                 }
@@ -1547,14 +1482,14 @@
         
         // Optimize button response for ADHD users (sub-200ms target)
         optimizeButtonResponse: function(button, handler) {
-            var self = this;
-            var startTime;
+            const self = this;
+            let startTime;
             
             // Remove any existing onclick handler
             button.onclick = null;
             
             // Add optimized event listener
-            var optimizedHandler = function(e) {
+            const optimizedHandler = function(e) {
                 startTime = performance.now();
                 
                 // Immediate visual feedback (<100ms requirement)
@@ -1579,7 +1514,7 @@
                         // Track performance
                         if (window.StackMapPerformanceMonitor) {
                             window.StackMapPerformanceMonitor.trackInteraction(
-                                'button-' + (button.id || button.className), 
+                                `button-${button.id || button.className}`, 
                                 startTime
                             );
                         }
@@ -1592,7 +1527,7 @@
                         
                         if (window.StackMapPerformanceMonitor) {
                             window.StackMapPerformanceMonitor.trackInteraction(
-                                'button-' + (button.id || button.className), 
+                                `button-${button.id || button.className}`, 
                                 startTime
                             );
                         }
@@ -1622,12 +1557,12 @@
             container.innerHTML = '';
             
             // Create skeleton container
-            var skeletonContainer = document.createElement('div');
+            const skeletonContainer = document.createElement('div');
             skeletonContainer.className = 'skeleton-container';
             
             // Add skeleton tasks
-            for (var i = 0; i < count; i++) {
-                var skeleton = document.createElement('div');
+            for (let i = 0; i < count; i++) {
+                const skeleton = document.createElement('div');
                 skeleton.className = 'skeleton skeleton-task';
                 skeletonContainer.appendChild(skeleton);
             }
@@ -1637,26 +1572,26 @@
         
         // Apply optimization to all buttons
         optimizeAllButtons: function() {
-            var self = this;
+            const self = this;
             
             // Optimize add task button
-            var addButton = document.querySelector('.add-task-button');
+            const addButton = document.querySelector('.add-task-button');
             if (addButton && addButton.onclick) {
-                var addHandler = addButton.onclick;
+                const addHandler = addButton.onclick;
                 this.optimizeButtonResponse(addButton, addHandler);
             }
             
             // Optimize browse activities button
-            var browseButton = document.querySelector('.browse-activities-button');
+            const browseButton = document.querySelector('.browse-activities-button');
             if (browseButton && browseButton.onclick) {
-                var browseHandler = browseButton.onclick;
+                const browseHandler = browseButton.onclick;
                 this.optimizeButtonResponse(browseButton, browseHandler);
             }
             
             // Optimize all task buttons
             document.querySelectorAll('.edit-button, .delete-button, .timer-button').forEach(function(btn) {
                 if (btn.onclick) {
-                    var handler = btn.onclick;
+                    const handler = btn.onclick;
                     self.optimizeButtonResponse(btn, handler);
                 }
             });
@@ -1668,7 +1603,7 @@
         
         // Get task by ID
         getTaskById: function(taskId) {
-            var self = this;
+            const self = this;
             return self.tasks.find(function(task) {
                 return task.id === taskId;
             });
@@ -1676,8 +1611,8 @@
         
         // Remove task without command pattern
         removeTaskDirect: function(taskId) {
-            var self = this;
-            var index = self.tasks.findIndex(function(task) {
+            const self = this;
+            const index = self.tasks.findIndex(function(task) {
                 return task.id === taskId;
             });
             
@@ -1690,8 +1625,8 @@
         
         // Toggle task completion without command pattern
         toggleTaskDirect: function(taskId) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task) {
                 task.completed = !task.completed;
@@ -1710,8 +1645,8 @@
         
         // Update task text without command pattern
         updateTaskTextDirect: function(taskId, newText) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task) {
                 task.text = newText;
@@ -1724,8 +1659,8 @@
         
         // Delete task permanently without command pattern
         deleteTaskDirect: function(taskId) {
-            var self = this;
-            var index = self.tasks.findIndex(function(task) {
+            const self = this;
+            const index = self.tasks.findIndex(function(task) {
                 return task.id === taskId;
             });
             
@@ -1743,8 +1678,8 @@
         
         // Restore task without command pattern
         restoreTaskDirect: function(taskData) {
-            var self = this;
-            var restoredTask = Object.assign({}, taskData);
+            const self = this;
+            const restoredTask = Object.assign({}, taskData);
             
             // Ensure task has proper timestamps
             if (!restoredTask.created_at) {
@@ -1753,7 +1688,7 @@
             restoredTask.updated_at = new Date().toISOString();
             
             // Insert at original position if possible
-            var originalIndex = self.tasks.findIndex(function(task) {
+            const originalIndex = self.tasks.findIndex(function(task) {
                 return task.created_at > restoredTask.created_at;
             });
             
@@ -1769,8 +1704,8 @@
         
         // Toggle task completion without command pattern
         toggleTaskDirect: function(taskId) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task) {
                 task.completed = !task.completed;
@@ -1789,8 +1724,8 @@
         
         // Complete task without command pattern
         completeTaskDirect: function(taskId) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task && !task.completed) {
                 task.completed = true;
@@ -1803,8 +1738,8 @@
         
         // Set task completion state without command pattern
         setTaskCompleteDirect: function(taskId, completed) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task) {
                 task.completed = completed;
@@ -1823,13 +1758,13 @@
         
         // Move task to new position without command pattern
         moveTaskDirect: function(taskId, newIndex) {
-            var self = this;
-            var currentIndex = self.tasks.findIndex(function(task) {
+            const self = this;
+            const currentIndex = self.tasks.findIndex(function(task) {
                 return task.id === taskId;
             });
             
             if (currentIndex > -1 && currentIndex !== newIndex) {
-                var task = self.tasks.splice(currentIndex, 1)[0];
+                const task = self.tasks.splice(currentIndex, 1)[0];
                 self.tasks.splice(newIndex, 0, task);
                 task.updated_at = new Date().toISOString();
                 self.saveTasks();
@@ -1839,8 +1774,8 @@
         
         // Update specific field without command pattern
         updateTaskFieldDirect: function(taskId, field, value) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task) {
                 task[field] = value;
@@ -1852,16 +1787,16 @@
         
         // Add attachment without command pattern
         addAttachmentDirect: function(taskId, attachmentData) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task) {
                 if (!task.attachments) {
                     task.attachments = [];
                 }
                 
-                var attachmentId = 'attach_' + Date.now();
-                var attachment = Object.assign({
+                const attachmentId = `attach_${Date.now()}`;
+                const attachment = Object.assign({
                     id: attachmentId,
                     created_at: new Date().toISOString()
                 }, attachmentData);
@@ -1877,11 +1812,11 @@
         
         // Remove attachment without command pattern
         removeAttachmentDirect: function(taskId, attachmentId) {
-            var self = this;
-            var task = self.getTaskById(taskId);
+            const self = this;
+            const task = self.getTaskById(taskId);
             
             if (task && task.attachments) {
-                var index = task.attachments.findIndex(function(attach) {
+                const index = task.attachments.findIndex(function(attach) {
                     return attach.id === attachmentId;
                 });
                 

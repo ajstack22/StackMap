@@ -3,11 +3,11 @@
  * Optimized for sub-200ms start latency for ADHD users
  */
 
-var VoiceRecorder = (function() {
+const VoiceRecorder = (function() {
   'use strict';
   
   // Recording modes configuration
-  var RECORDING_MODES = {
+  const RECORDING_MODES = {
     quickThought: { 
       maxDuration: 30,
       autoStop: true,
@@ -26,7 +26,7 @@ var VoiceRecorder = (function() {
   };
   
   // Supported audio formats in priority order
-  var SUPPORTED_FORMATS = [
+  const SUPPORTED_FORMATS = [
     'audio/webm;codecs=opus',
     'audio/mp4',
     'audio/ogg',
@@ -34,7 +34,7 @@ var VoiceRecorder = (function() {
   ];
   
   // Format-specific bitrates for size estimation
-  var BITRATES = {
+  const BITRATES = {
     'audio/webm;codecs=opus': 64000,  // ~480KB/min
     'audio/mp4': 96000,                // ~720KB/min
     'audio/ogg': 80000,                // ~600KB/min
@@ -68,7 +68,7 @@ var VoiceRecorder = (function() {
   VoiceRecorder.prototype.getSupportedFormat = function() {
     if (!window.MediaRecorder) return null;
     
-    for (var i = 0; i < SUPPORTED_FORMATS.length; i++) {
+    for (let i = 0; i < SUPPORTED_FORMATS.length; i++) {
       if (MediaRecorder.isTypeSupported && 
           MediaRecorder.isTypeSupported(SUPPORTED_FORMATS[i])) {
         return SUPPORTED_FORMATS[i];
@@ -81,20 +81,20 @@ var VoiceRecorder = (function() {
   
   // Initialize recorder (pre-warm for fast start)
   VoiceRecorder.prototype.initialize = function(callback) {
-    var self = this;
+    const self = this;
     
     // Check browser support
     if (!navigator.mediaDevices || !window.MediaRecorder) {
-      var error = new Error('Voice recording not supported');
+      const error = new Error('Voice recording not supported');
       error.code = 'NOT_SUPPORTED';
       if (callback) callback(error);
       return Promise.reject(error);
     }
     
     // Get supported format
-    var format = this.getSupportedFormat();
+    const format = this.getSupportedFormat();
     if (!format) {
-      var formatError = new Error('No supported audio format');
+      const formatError = new Error('No supported audio format');
       formatError.code = 'NO_FORMAT';
       if (callback) callback(formatError);
       return Promise.reject(formatError);
@@ -139,7 +139,7 @@ var VoiceRecorder = (function() {
   
   // Set up MediaRecorder event handlers
   VoiceRecorder.prototype.setupEventHandlers = function() {
-    var self = this;
+    const self = this;
     
     // Collect audio chunks
     this.mediaRecorder.ondataavailable = function(event) {
@@ -173,7 +173,7 @@ var VoiceRecorder = (function() {
       self.clearTimers();
       
       // Create blob from chunks
-      var blob = new Blob(self.chunks, { 
+      const blob = new Blob(self.chunks, { 
         type: self.mediaRecorder.mimeType 
       });
       
@@ -192,8 +192,8 @@ var VoiceRecorder = (function() {
   
   // Start recording
   VoiceRecorder.prototype.start = function(callback) {
-    var self = this;
-    var startMark = Date.now(); // Mark for latency measurement
+    const self = this;
+    const startMark = Date.now(); // Mark for latency measurement
     
     // Initialize if not ready
     if (!this.mediaRecorder) {
@@ -227,8 +227,8 @@ var VoiceRecorder = (function() {
       }
       
       // Measure and report latency
-      var latency = Date.now() - startMark;
-      console.log('Recording start latency:', latency + 'ms');
+      const latency = Date.now() - startMark;
+      console.log('Recording start latency:', `${latency}ms`);
       
       this.trigger('start', {
         mode: this.mode,
@@ -301,7 +301,7 @@ var VoiceRecorder = (function() {
   VoiceRecorder.prototype.getDuration = function() {
     if (!this.startTime) return 0;
     
-    var elapsed = Date.now() - this.startTime - this.pausedDuration;
+    let elapsed = Date.now() - this.startTime - this.pausedDuration;
     if (this.isPaused && this.lastPauseTime) {
       elapsed -= (Date.now() - this.lastPauseTime);
     }
@@ -311,17 +311,17 @@ var VoiceRecorder = (function() {
   
   // Get remaining time based on current size and format
   VoiceRecorder.prototype.getRemainingTime = function() {
-    var format = this.mediaRecorder ? this.mediaRecorder.mimeType : null;
-    var bitrate = BITRATES[format] || 96000;
-    var bytesPerSecond = bitrate / 8;
-    var remainingBytes = 10485760 - this.currentSize; // 10MB limit
+    const format = this.mediaRecorder ? this.mediaRecorder.mimeType : null;
+    const bitrate = BITRATES[format] || 96000;
+    const bytesPerSecond = bitrate / 8;
+    const remainingBytes = 10485760 - this.currentSize; // 10MB limit
     return Math.floor(remainingBytes / bytesPerSecond);
   };
   
   // Set up duration timer for auto-stop
   VoiceRecorder.prototype.setupDurationTimer = function() {
-    var self = this;
-    var maxDuration = RECORDING_MODES[this.mode].maxDuration;
+    const self = this;
+    const maxDuration = RECORDING_MODES[this.mode].maxDuration;
     
     if (!maxDuration || !RECORDING_MODES[this.mode].autoStop) return;
     
@@ -400,8 +400,8 @@ var VoiceRecorder = (function() {
   VoiceRecorder.getSupportedFormats = function() {
     if (!window.MediaRecorder) return [];
     
-    var supported = [];
-    for (var i = 0; i < SUPPORTED_FORMATS.length; i++) {
+    const supported = [];
+    for (let i = 0; i < SUPPORTED_FORMATS.length; i++) {
       if (MediaRecorder.isTypeSupported && 
           MediaRecorder.isTypeSupported(SUPPORTED_FORMATS[i])) {
         supported.push(SUPPORTED_FORMATS[i]);

@@ -13,7 +13,7 @@
     'use strict';
 
     // Configuration
-    var CONFIG = {
+    const CONFIG = {
         MAX_ATTACHMENTS_PER_TASK: 5,      // Total photos + voice memos
         MAX_VOICE_DURATION: 120,           // 2 minutes in seconds
         MAX_VOICE_SIZE: 5 * 1024 * 1024,   // 5MB
@@ -23,7 +23,7 @@
     };
 
     // Attachment types
-    var AttachmentTypes = {
+    const AttachmentTypes = {
         PHOTO: {
             type: 'photo',
             icon: '📷',
@@ -40,7 +40,7 @@
     };
 
     // Main attachment manager
-    var AttachmentManager = {
+    const AttachmentManager = {
         photoStorage: null,
         voiceRecorder: null,
         handlers: {},
@@ -49,7 +49,7 @@
          * Initialize the attachment manager
          */
         init: function(callback) {
-            var self = this;
+            const self = this;
             
             // Get photo storage instance
             if (window.PhotoAttachmentStorage) {
@@ -71,8 +71,8 @@
          * Check if voice recording is available
          */
         checkVoiceCapability: function(callback) {
-            var hasMediaRecorder = typeof MediaRecorder !== 'undefined';
-            var hasGetUserMedia = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
+            const hasMediaRecorder = typeof MediaRecorder !== 'undefined';
+            const hasGetUserMedia = navigator.mediaDevices && navigator.mediaDevices.getUserMedia;
             
             callback(hasMediaRecorder && hasGetUserMedia);
         },
@@ -81,8 +81,8 @@
          * Get all attachments for a task (photos + voice)
          */
         getAttachments: function(taskId, callback) {
-            var self = this;
-            var attachments = [];
+            const self = this;
+            const attachments = [];
             
             // Get photos from existing storage
             if (self.photoStorage) {
@@ -127,24 +127,24 @@
          * Add attachment with validation
          */
         addAttachment: function(taskId, type, data, callback) {
-            var self = this;
+            const self = this;
             
             // Get current count
             self.getAttachments(taskId, function(existing) {
                 if (existing.length >= CONFIG.MAX_ATTACHMENTS_PER_TASK) {
                     callback({
                         success: false,
-                        error: 'Attachment limit reached. Maximum ' + CONFIG.MAX_ATTACHMENTS_PER_TASK + ' attachments per task.'
+                        error: `Attachment limit reached. Maximum ${CONFIG.MAX_ATTACHMENTS_PER_TASK} attachments per task.`
                     });
                     return;
                 }
                 
                 // Route to appropriate handler
-                var handler = self.handlers[type];
+                const handler = self.handlers[type];
                 if (!handler) {
                     callback({
                         success: false,
-                        error: 'Unsupported attachment type: ' + type
+                        error: `Unsupported attachment type: ${type}`
                     });
                     return;
                 }
@@ -162,8 +162,8 @@
          * Delete attachment
          */
         deleteAttachment: function(attachmentId, type, callback) {
-            var self = this;
-            var handler = self.handlers[type];
+            const self = this;
+            const handler = self.handlers[type];
             
             if (!handler) {
                 callback({ success: false, error: 'Unknown attachment type' });
@@ -181,7 +181,7 @@
             if (window.TaskSQLite && window.TaskSQLite.isReady && window.SQLiteAttachmentOps) {
                 window.SQLiteAttachmentOps.getAttachmentsByTask(window.TaskSQLite.db, taskId, function(attachments) {
                     // Filter for voice type
-                    var voiceMemos = attachments.filter(function(att) {
+                    const voiceMemos = attachments.filter(function(att) {
                         return att.type === 'voice';
                     });
                     callback(voiceMemos);
@@ -200,7 +200,7 @@
                 return 'Add photos or voice memos';
             }
             if (currentCount < CONFIG.MAX_ATTACHMENTS_PER_TASK) {
-                return 'Add ' + (CONFIG.MAX_ATTACHMENTS_PER_TASK - currentCount) + ' more';
+                return `Add ${CONFIG.MAX_ATTACHMENTS_PER_TASK - currentCount} more`;
             }
             return 'Attachment limit reached';
         }
@@ -249,7 +249,7 @@
          * Start recording voice memo
          */
         startRecording: function(onProgress, callback) {
-            var self = this;
+            const self = this;
             
             // Request microphone permission
             navigator.mediaDevices.getUserMedia({ 
@@ -261,7 +261,7 @@
                 } 
             }).then(function(stream) {
                 // Create media recorder with compression
-                var options = {
+                const options = {
                     mimeType: 'audio/webm;codecs=opus',
                     audioBitsPerSecond: CONFIG.VOICE_BIT_RATE
                 };
@@ -290,7 +290,7 @@
                 
                 // Duration timer
                 self.durationTimer = setInterval(function() {
-                    var duration = (Date.now() - self.recordingStartTime) / 1000;
+                    const duration = (Date.now() - self.recordingStartTime) / 1000;
                     
                     if (duration >= CONFIG.MAX_VOICE_DURATION) {
                         // Auto-stop at max duration
@@ -303,7 +303,7 @@
                         });
                     } else if (onProgress) {
                         // Update progress
-                        var waveform = self.getWaveformData();
+                        const waveform = self.getWaveformData();
                         onProgress({ 
                             duration: duration,
                             waveform: waveform,
@@ -327,7 +327,7 @@
          * Stop recording and return audio blob
          */
         stopRecording: function(callback) {
-            var self = this;
+            const self = this;
             
             if (!self.mediaRecorder || self.mediaRecorder.state === 'inactive') {
                 callback({ success: false, error: 'No active recording' });
@@ -342,8 +342,8 @@
             
             // Stop recording
             self.mediaRecorder.onstop = function() {
-                var duration = (Date.now() - self.recordingStartTime) / 1000;
-                var blob = new Blob(self.recordingChunks, { 
+                const duration = (Date.now() - self.recordingStartTime) / 1000;
+                const blob = new Blob(self.recordingChunks, { 
                     type: self.mediaRecorder.mimeType 
                 });
                 
@@ -353,7 +353,7 @@
                 });
                 
                 // Get final waveform
-                var waveform = self.getWaveformData();
+                const waveform = self.getWaveformData();
                 
                 // Check size and compress if needed
                 if (blob.size > CONFIG.MAX_VOICE_SIZE) {
@@ -384,8 +384,8 @@
          * Set up audio analyser for waveform visualization
          */
         setupAudioAnalyser: function(stream) {
-            var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            var source = audioContext.createMediaStreamSource(stream);
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const source = audioContext.createMediaStreamSource(stream);
             this.analyser = audioContext.createAnalyser();
             this.analyser.fftSize = 256;
             source.connect(this.analyser);
@@ -397,17 +397,17 @@
         getWaveformData: function() {
             if (!this.analyser) return [];
             
-            var bufferLength = this.analyser.frequencyBinCount;
-            var dataArray = new Uint8Array(bufferLength);
+            const bufferLength = this.analyser.frequencyBinCount;
+            const dataArray = new Uint8Array(bufferLength);
             this.analyser.getByteTimeDomainData(dataArray);
             
             // Downsample to CONFIG.WAVEFORM_SAMPLES points
-            var samples = [];
-            var step = Math.floor(bufferLength / CONFIG.WAVEFORM_SAMPLES);
+            const samples = [];
+            const step = Math.floor(bufferLength / CONFIG.WAVEFORM_SAMPLES);
             
-            for (var i = 0; i < CONFIG.WAVEFORM_SAMPLES; i++) {
-                var index = i * step;
-                var value = dataArray[index] / 255.0; // Normalize to 0-1
+            for (let i = 0; i < CONFIG.WAVEFORM_SAMPLES; i++) {
+                const index = i * step;
+                const value = dataArray[index] / 255.0; // Normalize to 0-1
                 samples.push(value);
             }
             
@@ -428,11 +428,11 @@
          * Add voice memo to storage
          */
         add: function(taskId, data, callback) {
-            var voiceMemo = {
-                id: 'voice_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+            const voiceMemo = {
+                id: `voice_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
                 taskId: taskId,
                 type: 'voice',
-                filename: 'voice_memo_' + new Date().toISOString().replace(/[:.]/g, '-') + '.webm',
+                filename: `voice_memo_${new Date().toISOString().replace(/[:.]/g, '-')}.webm`,
                 size: data.blob.size,
                 mimeType: data.blob.type || 'audio/webm',
                 duration: data.duration,

@@ -5,7 +5,7 @@
     'use strict';
 
     // UI Configuration
-    var UI_CONFIG = {
+    const UI_CONFIG = {
         TOUCH_TARGET_MIN: 48,      // Minimum touch target size
         TOUCH_TARGET_CRITICAL: 60, // Critical control size
         GRID_COLUMNS: 3,           // Mobile grid columns
@@ -36,107 +36,99 @@
     }
 
     // Photo Attachment UI Manager
-    var PhotoAttachmentUI = function(storage) {
-        this.storage = storage;
-        this.currentTask = null;
-        this.photos = [];
-        this.selectedPhoto = null;
-        this.stressDetector = new StressDetector();
-        this.settings = this._loadSettings();
-        this.thumbnailGrid = null;
-        this.photoViewer = null;
-        this.init();
-    };
-
-    PhotoAttachmentUI.prototype = {
+    class PhotoAttachmentUI {
+        constructor(storage) {
+            this.storage = storage;
+            this.currentTask = null;
+            this.photos = [];
+            this.selectedPhoto = null;
+            this.stressDetector = new StressDetector();
+            this.settings = this._loadSettings();
+            this.thumbnailGrid = null;
+            this.photoViewer = null;
+            this.init();
+        }
         // Initialize UI components
-        init: function() {
+        init() {
             this._createStyles();
             this._setupEventListeners();
             this._applySettings();
             this._setupLazyLoading();
             this._initializeCacheBridge();
-        },
+        }
 
         // Setup global event listeners
-        _setupEventListeners: function() {
-            var self = this;
-            
+        _setupEventListeners() {
             // Re-setup lazy loading when view changes
-            document.addEventListener('viewchange', function() {
-                self._setupLazyLoading();
+            document.addEventListener('viewchange', () => {
+                this._setupLazyLoading();
             });
             
             // Handle orientation changes
-            window.addEventListener('orientationchange', function() {
-                setTimeout(function() {
-                    self._refreshPhotoDisplay();
+            window.addEventListener('orientationchange', () => {
+                setTimeout(() => {
+                    this._refreshPhotoDisplay();
                 }, 100);
             });
             
             // Listen for offline queue updates
             if (window.OfflineQueue) {
-                window.addEventListener('online', function() {
-                    self._syncPendingPhotos();
+                window.addEventListener('online', () => {
+                    this._syncPendingPhotos();
                 });
             }
-        },
+        }
 
         // Create photo attachment UI for a task
-        createAttachmentUI: function(taskId, container) {
-            var self = this;
+        createAttachmentUI(taskId, container) {
             this.currentTask = taskId;
             this.container = container;
             
             // Load existing photos
-            this.storage.getPhotosForTask(taskId, function(photos) {
-                self.photos = photos;
-                self._renderUI(container);
+            this.storage.getPhotosForTask(taskId, (photos) => {
+                this.photos = photos;
+                this._renderUI(container);
                 
                 // Preload photos for offline access
                 if (window.PhotoCacheBridge && photos.length > 0) {
-                    var photoIds = photos.map(function(photo) {
-                        return photo.id;
-                    }).filter(Boolean);
+                    const photoIds = photos.map(photo => photo.id).filter(Boolean);
                     
                     if (photoIds.length > 0) {
                         window.PhotoCacheBridge.preloadCriticalPhotos(photoIds);
                     }
                 }
             });
-        },
+        }
 
         // Render the complete UI
-        _renderUI: function(container) {
-            var self = this;
-            
+        _renderUI(container) {
             // Clear container
             container.innerHTML = '';
             container.className = 'photo-attachment-container';
             
             // Create grid container
-            var gridContainer = document.createElement('div');
+            const gridContainer = document.createElement('div');
             container.appendChild(gridContainer);
             
             // Initialize thumbnail grid with new component
             if (window.PhotoThumbnailGrid) {
                 this.thumbnailGrid = new window.PhotoThumbnailGrid(gridContainer, {
-                    onPhotoTap: function(photo, index) {
-                        self._viewPhoto(photo, index);
+                    onPhotoTap: (photo, index) => {
+                        this._viewPhoto(photo, index);
                     },
-                    onAddPhoto: function() {
-                        self._triggerPhotoSelection();
+                    onAddPhoto: () => {
+                        this._triggerPhotoSelection();
                     },
-                    onPhotoAction: function(action, photo) {
+                    onPhotoAction: (action, photo) => {
                         switch(action) {
                             case 'view':
-                                self._viewPhoto(photo);
+                                this._viewPhoto(photo);
                                 break;
                             case 'edit':
-                                self._editPhoto(photo);
+                                this._editPhoto(photo);
                                 break;
                             case 'delete':
-                                self._deletePhoto(photo.id);
+                                this._deletePhoto(photo.id);
                                 break;
                         }
                     }
@@ -146,65 +138,63 @@
                 this.thumbnailGrid.createGrid(this.photos, window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS);
             } else {
                 // Fallback to old implementation
-                var grid = this._createPhotoGrid();
+                const grid = this._createPhotoGrid();
                 container.appendChild(grid);
             }
             
             // Add controls
-            var controls = this._createControls();
+            const controls = this._createControls();
             container.appendChild(controls);
             
             // Apply stress mode if active
             if (this.stressDetector.isStressMode) {
                 container.classList.add('stress-mode');
             }
-        },
+        }
 
         // Create photo grid
-        _createPhotoGrid: function() {
-            var self = this;
-            var grid = document.createElement('div');
+        _createPhotoGrid() {
+            const grid = document.createElement('div');
             grid.className = 'photo-grid';
             
             // Render existing photos
-            this.photos.forEach(function(photo, index) {
+            this.photos.forEach((photo, index) => {
                 if (index < window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS) {
-                    var photoElement = self._createPhotoElement(photo, index === 0);
+                    const photoElement = this._createPhotoElement(photo, index === 0);
                     grid.appendChild(photoElement);
                 }
             });
             
             // Add placeholder slots
-            var emptySlots = window.PHOTO_CONFIG.MAX_PHOTOS_PER_TASK - this.photos.length;
-            for (var i = 0; i < emptySlots && this.photos.length + i < window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS; i++) {
-                var placeholder = this._createPlaceholder();
+            const emptySlots = window.PHOTO_CONFIG.MAX_PHOTOS_PER_TASK - this.photos.length;
+            for (let i = 0; i < emptySlots && this.photos.length + i < window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS; i++) {
+                const placeholder = this._createPlaceholder();
                 grid.appendChild(placeholder);
             }
             
             // Show overflow indicator
             if (this.photos.length > window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS) {
-                var overflow = document.createElement('div');
+                const overflow = document.createElement('div');
                 overflow.className = 'photo-overflow-indicator';
-                overflow.textContent = '+' + (this.photos.length - window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS) + ' more';
+                overflow.textContent = `+${this.photos.length - window.PHOTO_CONFIG.MAX_VISIBLE_PHOTOS} more`;
                 grid.appendChild(overflow);
             }
             
             return grid;
-        },
+        }
 
         // Create individual photo element
-        _createPhotoElement: function(photo, isPrimary) {
-            var self = this;
-            var element = document.createElement('div');
-            element.className = 'photo-item' + (isPrimary ? ' photo-primary' : '');
+        _createPhotoElement(photo, isPrimary) {
+            const element = document.createElement('div');
+            element.className = `photo-item${isPrimary ? ' photo-primary' : ''}`;
             element.setAttribute('data-photo-id', photo.id);
             
             // Thumbnail container
-            var thumbnailContainer = document.createElement('div');
+            const thumbnailContainer = document.createElement('div');
             thumbnailContainer.className = 'photo-thumbnail-container';
             
             // Thumbnail image
-            var thumbnail = document.createElement('img');
+            const thumbnail = document.createElement('img');
             thumbnail.className = 'photo-thumbnail';
             thumbnail.alt = this._getPhotoDescription(photo);
             thumbnail.setAttribute('role', 'img');
@@ -218,13 +208,13 @@
                 
                 // Show blur placeholder immediately
                 if (photo.thumbnailUrl) {
-                    thumbnailContainer.style.backgroundImage = 'url(' + photo.thumbnailUrl + ')';
+                    thumbnailContainer.style.backgroundImage = `url(${photo.thumbnailUrl})`;
                     thumbnailContainer.style.backgroundSize = 'cover';
                     thumbnailContainer.style.filter = 'blur(5px)';
                 }
             } else {
                 // Fallback: Load thumbnail with lazy loading
-                this._loadThumbnail(photo.id, function(thumbnailData) {
+                this._loadThumbnail(photo.id, (thumbnailData) => {
                     if (thumbnailData) {
                         thumbnail.setAttribute('data-lazy-src', thumbnailData);
                     } else {
@@ -234,7 +224,7 @@
             }
             
             // Category border
-            var category = window.PHOTO_CATEGORIES[photo.category];
+            const category = window.PHOTO_CATEGORIES[photo.category];
             if (category) {
                 thumbnailContainer.style.borderColor = category.color;
                 thumbnailContainer.setAttribute('data-category', photo.category);
@@ -245,31 +235,31 @@
             
             // Caption
             if (photo.caption) {
-                var caption = document.createElement('div');
+                const caption = document.createElement('div');
                 caption.className = 'photo-caption-display';
                 caption.textContent = photo.caption;
                 element.appendChild(caption);
             }
             
             // Action buttons
-            var actions = document.createElement('div');
+            const actions = document.createElement('div');
             actions.className = 'photo-actions';
             
             // View button
-            var viewBtn = this._createActionButton('view', 'View', function() {
-                self._viewPhoto(photo);
+            const viewBtn = this._createActionButton('view', 'View', () => {
+                this._viewPhoto(photo);
             });
             actions.appendChild(viewBtn);
             
             // Edit button
-            var editBtn = this._createActionButton('edit', 'Edit', function() {
-                self._editPhoto(photo);
+            const editBtn = this._createActionButton('edit', 'Edit', () => {
+                this._editPhoto(photo);
             });
             actions.appendChild(editBtn);
             
             // Delete button
-            var deleteBtn = this._createActionButton('delete', 'Delete', function() {
-                self._deletePhoto(photo.id);
+            const deleteBtn = this._createActionButton('delete', 'Delete', () => {
+                this._deletePhoto(photo.id);
             });
             actions.appendChild(deleteBtn);
             
@@ -279,139 +269,134 @@
             this._setupPhotoInteractions(element, photo);
             
             return element;
-        },
+        }
 
         // Create placeholder for empty photo slot
-        _createPlaceholder: function() {
-            var self = this;
-            var placeholder = document.createElement('div');
+        _createPlaceholder() {
+            const placeholder = document.createElement('div');
             placeholder.className = 'photo-placeholder';
             
-            var addButton = document.createElement('button');
+            const addButton = document.createElement('button');
             addButton.className = 'photo-add-button';
             addButton.setAttribute('aria-label', 'Add photo');
             addButton.innerHTML = '<span class="photo-add-icon">+</span>';
             
-            addButton.addEventListener('click', function() {
-                self._triggerPhotoSelection();
+            addButton.addEventListener('click', () => {
+                this._triggerPhotoSelection();
             });
             
             placeholder.appendChild(addButton);
             
             // Hint text
-            var hint = document.createElement('div');
+            const hint = document.createElement('div');
             hint.className = 'photo-hint';
             hint.textContent = this.storage.getUploadHint(this.photos.length);
             placeholder.appendChild(hint);
             
             return placeholder;
-        },
+        }
 
         // Create action button
-        _createActionButton: function(type, label, onClick) {
-            var button = document.createElement('button');
-            button.className = 'photo-action-button photo-action-' + type;
+        _createActionButton(type, label, onClick) {
+            const button = document.createElement('button');
+            button.className = `photo-action-button photo-action-${type}`;
             button.setAttribute('aria-label', label);
             button.addEventListener('click', onClick);
             
             // Track interactions for stress detection
-            var self = this;
-            button.addEventListener('click', function() {
-                self.stressDetector.recordInteraction();
+            button.addEventListener('click', () => {
+                this.stressDetector.recordInteraction();
             });
             
             return button;
-        },
+        }
 
         // Create control panel
-        _createControls: function() {
-            var controls = document.createElement('div');
+        _createControls() {
+            const controls = document.createElement('div');
             controls.className = 'photo-controls';
             
             // Upload status
-            var status = document.createElement('div');
+            const status = document.createElement('div');
             status.className = 'photo-upload-status';
             status.textContent = this._getUploadStatus();
             controls.appendChild(status);
             
             return controls;
-        },
+        }
 
         // Setup photo touch interactions
-        _setupPhotoInteractions: function(element, photo) {
-            var self = this;
-            var lastTap = 0;
+        _setupPhotoInteractions(element, photo) {
+            let lastTap = 0;
             
             // Double-tap for zoom
-            element.addEventListener('click', function(e) {
-                var currentTime = Date.now();
-                var tapDelay = currentTime - lastTap;
+            element.addEventListener('click', (e) => {
+                const currentTime = Date.now();
+                const tapDelay = currentTime - lastTap;
                 
                 // Track tap delays for stress detection
-                self.stressDetector.recordTapDelay(tapDelay);
+                this.stressDetector.recordTapDelay(tapDelay);
                 
                 if (tapDelay < 300) {
                     // Double tap detected
                     e.preventDefault();
-                    self._toggleZoom(photo);
+                    this._toggleZoom(photo);
                 }
                 
                 lastTap = currentTime;
             });
             
             // Long press for options
-            var pressTimer;
-            element.addEventListener('touchstart', function(e) {
-                pressTimer = setTimeout(function() {
-                    self._showPhotoOptions(photo);
+            let pressTimer;
+            element.addEventListener('touchstart', (e) => {
+                pressTimer = setTimeout(() => {
+                    this._showPhotoOptions(photo);
                 }, 500);
             });
             
-            element.addEventListener('touchend', function() {
+            element.addEventListener('touchend', () => {
                 clearTimeout(pressTimer);
             });
             
-            element.addEventListener('touchmove', function() {
+            element.addEventListener('touchmove', () => {
                 clearTimeout(pressTimer);
             });
-        },
+        }
 
         // Toggle zoom on photo
-        _toggleZoom: function(photo) {
+        _toggleZoom(photo) {
             // Open photo viewer with zoom capability
             this._viewPhoto(photo);
-        },
+        }
 
         // View photo in full screen
-        _viewPhoto: function(photo, index) {
-            var self = this;
-            
+        _viewPhoto(photo, index) {
             // Use new PhotoViewer component if available
             if (window.PhotoViewer) {
                 if (!this.photoViewer) {
                     this.photoViewer = new window.PhotoViewer({
-                        onClose: function() {
+                        onClose: () => {
                             // Viewer closed
                         },
-                        onPhotoChange: function(photo, index) {
+                        onPhotoChange: (photo, index) => {
                             // Photo changed
                         }
                     });
                 }
                 
                 // Open viewer with all photos, starting at specified index
-                var startIndex = typeof index === 'number' ? index : this.photos.indexOf(photo);
+                const startIndex = typeof index === 'number' ? index : this.photos.indexOf(photo);
                 this.photoViewer.open(this.photos, startIndex);
             } else {
                 // Fallback to old implementation
-                var viewer = document.createElement('div');
+                const viewer = document.createElement('div');
                 viewer.className = 'photo-viewer';
                 
                 // Image container
-                var imageContainer = document.createElement('div');
+                const imageContainer = document.createElement('div');
                 imageContainer.className = 'photo-viewer-image-container';
                 
-                var image = document.createElement('img');
+                const image = document.createElement('img');
                 
                 // Use optimized version if available
                 if (photo.optimized && photo.fullUrl) {
@@ -424,7 +409,7 @@
                 
                 // Show loading state
                 image.style.opacity = '0';
-                image.onload = function() {
+                image.onload = () => {
                     image.style.transition = 'opacity 300ms ease-in';
                     image.style.opacity = '1';
                 };
@@ -432,31 +417,31 @@
                 imageContainer.appendChild(image);
                 
                 // Zoom controls
-                var zoomControls = this._createZoomControls(image);
+                const zoomControls = this._createZoomControls(image);
                 imageContainer.appendChild(zoomControls);
                 
                 viewer.appendChild(imageContainer);
                 
                 // Caption display
                 if (photo.caption) {
-                    var captionDisplay = document.createElement('div');
+                    const captionDisplay = document.createElement('div');
                     captionDisplay.className = 'photo-viewer-caption';
                     captionDisplay.textContent = photo.caption;
                     viewer.appendChild(captionDisplay);
                 }
                 
                 // Close button
-                var closeBtn = document.createElement('button');
+                const closeBtn = document.createElement('button');
                 closeBtn.className = 'photo-viewer-close';
                 closeBtn.setAttribute('aria-label', 'Close viewer');
                 closeBtn.textContent = '×';
-                closeBtn.addEventListener('click', function() {
+                closeBtn.addEventListener('click', () => {
                     document.body.removeChild(viewer);
                 });
                 viewer.appendChild(closeBtn);
                 
                 // Keyboard navigation
-                viewer.addEventListener('keydown', function(e) {
+                viewer.addEventListener('keydown', (e) => {
                     if (e.key === 'Escape') {
                         document.body.removeChild(viewer);
                     }
@@ -467,65 +452,64 @@
                 // Focus for keyboard events
                 viewer.focus();
             }
-        },
+        }
 
         // Create zoom controls
-        _createZoomControls: function(image) {
-            var controls = document.createElement('div');
+        _createZoomControls(image) {
+            const controls = document.createElement('div');
             controls.className = 'zoom-controls';
             
-            var currentZoom = 1;
+            let currentZoom = 1;
             
             // Zoom in button
-            var zoomIn = document.createElement('button');
+            const zoomIn = document.createElement('button');
             zoomIn.className = 'zoom-in';
             zoomIn.setAttribute('aria-label', 'Zoom in');
             zoomIn.textContent = '+';
-            zoomIn.addEventListener('click', function() {
+            zoomIn.addEventListener('click', () => {
                 currentZoom = Math.min(currentZoom * 1.5, 3);
-                image.style.transform = 'scale(' + currentZoom + ')';
+                image.style.transform = `scale(${currentZoom})`;
             });
             
             // Zoom out button
-            var zoomOut = document.createElement('button');
+            const zoomOut = document.createElement('button');
             zoomOut.className = 'zoom-out';
             zoomOut.setAttribute('aria-label', 'Zoom out');
             zoomOut.textContent = '−';
-            zoomOut.addEventListener('click', function() {
+            zoomOut.addEventListener('click', () => {
                 currentZoom = Math.max(currentZoom / 1.5, 1);
-                image.style.transform = 'scale(' + currentZoom + ')';
+                image.style.transform = `scale(${currentZoom})`;
             });
             
             controls.appendChild(zoomIn);
             controls.appendChild(zoomOut);
             
             return controls;
-        },
+        }
 
         // Edit photo caption
-        _editPhoto: function(photo) {
-            var self = this;
-            var modal = document.createElement('div');
+        _editPhoto(photo) {
+            const modal = document.createElement('div');
             modal.className = 'photo-edit-modal';
             
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'photo-edit-content';
             
             // Title
-            var title = document.createElement('h3');
+            const title = document.createElement('h3');
             title.textContent = 'Edit Photo';
             content.appendChild(title);
             
             // Caption input
-            var captionGroup = document.createElement('div');
+            const captionGroup = document.createElement('div');
             captionGroup.className = 'photo-caption-group';
             
-            var captionLabel = document.createElement('label');
+            const captionLabel = document.createElement('label');
             captionLabel.textContent = 'Caption:';
             captionLabel.setAttribute('for', 'photo-caption-input');
             captionGroup.appendChild(captionLabel);
             
-            var captionInput = document.createElement('input');
+            const captionInput = document.createElement('input');
             captionInput.type = 'text';
             captionInput.id = 'photo-caption-input';
             captionInput.className = 'photo-caption-input';
@@ -534,37 +518,37 @@
             captionInput.value = photo.caption || '';
             captionGroup.appendChild(captionInput);
             
-            var captionHint = document.createElement('span');
+            const captionHint = document.createElement('span');
             captionHint.className = 'caption-hint';
-            captionHint.textContent = captionInput.value.length + '/' + window.PHOTO_CONFIG.MAX_CAPTION_LENGTH;
+            captionHint.textContent = `${captionInput.value.length}/${window.PHOTO_CONFIG.MAX_CAPTION_LENGTH}`;
             captionGroup.appendChild(captionHint);
             
-            captionInput.addEventListener('input', function() {
-                captionHint.textContent = this.value.length + '/' + window.PHOTO_CONFIG.MAX_CAPTION_LENGTH;
+            captionInput.addEventListener('input', (e) => {
+                captionHint.textContent = `${e.target.value.length}/${window.PHOTO_CONFIG.MAX_CAPTION_LENGTH}`;
             });
             
             content.appendChild(captionGroup);
             
             // Category selection
-            var categoryGroup = document.createElement('div');
+            const categoryGroup = document.createElement('div');
             categoryGroup.className = 'photo-category-group';
             
-            var categoryLabel = document.createElement('label');
+            const categoryLabel = document.createElement('label');
             categoryLabel.textContent = 'Category:';
             categoryGroup.appendChild(categoryLabel);
             
-            var categorySelect = document.createElement('div');
+            const categorySelect = document.createElement('div');
             categorySelect.className = 'photo-category-select';
             
-            Object.keys(window.PHOTO_CATEGORIES).forEach(function(key) {
-                var option = document.createElement('button');
-                option.className = 'photo-category-option' + (photo.category === key ? ' selected' : '');
+            Object.keys(window.PHOTO_CATEGORIES).forEach(key => {
+                const option = document.createElement('button');
+                option.className = `photo-category-option${photo.category === key ? ' selected' : ''}`;
                 option.setAttribute('data-category', key);
                 option.style.borderColor = window.PHOTO_CATEGORIES[key].color;
                 option.textContent = window.PHOTO_CATEGORIES[key].label;
                 
-                option.addEventListener('click', function() {
-                    categorySelect.querySelectorAll('.selected').forEach(function(el) {
+                option.addEventListener('click', () => {
+                    categorySelect.querySelectorAll('.selected').forEach(el => {
                         el.classList.remove('selected');
                     });
                     option.classList.add('selected');
@@ -577,33 +561,33 @@
             content.appendChild(categoryGroup);
             
             // Action buttons
-            var actions = document.createElement('div');
+            const actions = document.createElement('div');
             actions.className = 'photo-edit-actions';
             
-            var saveBtn = document.createElement('button');
+            const saveBtn = document.createElement('button');
             saveBtn.className = 'photo-save-button';
             saveBtn.textContent = 'Save';
-            saveBtn.addEventListener('click', function() {
-                var newCaption = captionInput.value;
-                var selectedCategory = categorySelect.querySelector('.selected');
+            saveBtn.addEventListener('click', () => {
+                const newCaption = captionInput.value;
+                const selectedCategory = categorySelect.querySelector('.selected');
                 
                 if (selectedCategory) {
                     photo.category = selectedCategory.getAttribute('data-category');
                 }
                 
-                self.storage.updateCaption(photo.id, newCaption, function(result) {
+                this.storage.updateCaption(photo.id, newCaption, (result) => {
                     if (result.success) {
                         photo.caption = newCaption;
                         document.body.removeChild(modal);
-                        self._refreshUI();
+                        this._refreshUI();
                     }
                 });
             });
             
-            var cancelBtn = document.createElement('button');
+            const cancelBtn = document.createElement('button');
             cancelBtn.className = 'photo-cancel-button';
             cancelBtn.textContent = 'Cancel';
-            cancelBtn.addEventListener('click', function() {
+            cancelBtn.addEventListener('click', () => {
                 document.body.removeChild(modal);
             });
             
@@ -616,150 +600,169 @@
             
             // Focus caption input
             captionInput.focus();
-        },
+        }
 
         // Delete photo
-        _deletePhoto: function(photoId) {
-            var self = this;
-            
+        _deletePhoto(photoId) {
             if (confirm('Delete this photo?')) {
                 // Clean up memory if using PhotoOptimizer
                 if (window.PhotoOptimizer) {
-                    window.PhotoOptimizer.revokeObjectUrl('photo_' + photoId);
-                    window.PhotoOptimizer.revokeObjectUrl('thumb_' + photoId);
-                    window.PhotoOptimizer.revokeObjectUrl('medium_' + photoId);
+                    window.PhotoOptimizer.revokeObjectUrl(`photo_${photoId}`);
+                    window.PhotoOptimizer.revokeObjectUrl(`thumb_${photoId}`);
+                    window.PhotoOptimizer.revokeObjectUrl(`medium_${photoId}`);
                 }
                 
-                this.storage.deletePhoto(photoId, function(result) {
+                this.storage.deletePhoto(photoId, (result) => {
                     if (result.success) {
-                        self._refreshUI();
+                        this._refreshUI();
                     } else if (window.OfflineQueue) {
                         // Queue deletion for offline sync
                         window.OfflineQueue.queueOperation({
                             type: 'deletePhoto',
                             method: 'DELETE',
-                            endpoint: '/api/photos/' + photoId,
+                            endpoint: `/api/photos/${photoId}`,
                             data: { photoId: photoId }
                         });
                         
                         // Still remove from UI optimistically
-                        self.photos = self.photos.filter(function(p) {
-                            return p.id !== photoId;
-                        });
-                        self._refreshUI();
+                        this.photos = this.photos.filter(p => p.id !== photoId);
+                        this._refreshUI();
                     }
                 });
             }
-        },
+        }
 
         // Trigger photo selection
-        _triggerPhotoSelection: function() {
-            var self = this;
-            var input = document.createElement('input');
+        _triggerPhotoSelection() {
+            const input = document.createElement('input');
             input.type = 'file';
             input.accept = 'image/*';
             input.multiple = true;
             
-            input.addEventListener('change', function(e) {
-                var files = Array.from(e.target.files);
-                self._handlePhotoSelection(files);
+            input.addEventListener('change', (e) => {
+                const files = Array.from(e.target.files);
+                this._handlePhotoSelection(files);
             });
             
             input.click();
-        },
+        }
 
         // Handle photo selection
-        _handlePhotoSelection: function(files) {
-            var self = this;
-            var remaining = window.PHOTO_CONFIG.MAX_PHOTOS_PER_TASK - this.photos.length;
+        _handlePhotoSelection(files) {
+            const remaining = window.PHOTO_CONFIG.MAX_PHOTOS_PER_TASK - this.photos.length;
             
             if (files.length > remaining) {
-                alert('You can only add ' + remaining + ' more photo(s)');
+                alert(`You can only add ${remaining} more photo(s)`);
                 files = files.slice(0, remaining);
             }
             
             // Show processing indicator
-            self._showProcessingIndicator(true);
-            var processed = 0;
-            var errors = [];
+            this._showProcessingIndicator(true);
+            let processed = 0;
+            const errors = [];
             
-            files.forEach(function(file) {
-                // Validate image first
-                if (window.PhotoOptimizer) {
-                    var validation = window.PhotoOptimizer.validateImage(file);
-                    if (!validation.valid) {
-                        errors.push(file.name + ': ' + validation.errors.join(', '));
+            // Use PhotoUploadManager for non-blocking uploads
+            if (window.photoUploadManager) {
+                files.forEach(async file => {
+                    try {
+                        // Add photo through upload manager (non-blocking)
+                        await window.photoUploadManager.addPhoto(file, {
+                            taskId: this.currentTask,
+                            source: 'user-selection'
+                        });
+                        
                         processed++;
                         if (processed === files.length) {
-                            self._handlePhotoProcessingComplete(errors);
+                            this._handlePhotoProcessingComplete(errors);
                         }
-                        return;
+                    } catch (error) {
+                        errors.push(`${file.name}: ${error.message || 'Upload failed'}`);
+                        processed++;
+                        if (processed === files.length) {
+                            this._handlePhotoProcessingComplete(errors);
+                        }
                     }
-                }
-                
-                // Process with PhotoOptimizer if available
-                if (window.PhotoOptimizer) {
-                    window.PhotoOptimizer.processImage(file, function(error, result) {
-                        if (error) {
-                            errors.push(file.name + ': ' + error.message);
-                        } else {
-                            // Create photo data with optimized versions
-                            var photoData = {
-                                filename: file.name,
-                                size: file.size,
-                                mimeType: file.type,
-                                optimized: true,
-                                originalBlob: result.original,
-                                mediumBlob: result.medium,
-                                thumbnailBlob: result.thumbnail,
-                                metadata: result.metadata
-                            };
-                            
-                            // Save to storage with offline queue support
-                            self._savePhotoWithQueue(photoData);
+                });
+            } else {
+                // Fallback to PhotoOptimizer or basic processing
+                files.forEach(file => {
+                    // Validate image first
+                    if (window.PhotoOptimizer) {
+                        const validation = window.PhotoOptimizer.validateImage(file);
+                        if (!validation.valid) {
+                            errors.push(`${file.name}: ${validation.errors.join(', ')}`);
+                            processed++;
+                            if (processed === files.length) {
+                                this._handlePhotoProcessingComplete(errors);
+                            }
+                            return;
                         }
-                        
-                        processed++;
-                        if (processed === files.length) {
-                            self._handlePhotoProcessingComplete(errors);
-                        }
-                    });
-                } else {
-                    // Fallback: Read as data URL without optimization
-                    var reader = new FileReader();
-                    reader.onload = function(e) {
-                        var photoData = {
-                            uri: e.target.result,
-                            filename: file.name,
-                            size: file.size,
-                            mimeType: file.type
-                        };
-                        
-                        self.storage.addPhoto(self.currentTask, photoData, function(result) {
-                            if (!result.success) {
-                                errors.push(file.name + ': ' + result.error);
-                                self.stressDetector.recordError();
+                    }
+                    
+                    // Process with PhotoOptimizer if available
+                    if (window.PhotoOptimizer) {
+                        window.PhotoOptimizer.processImage(file, (error, result) => {
+                            if (error) {
+                                errors.push(`${file.name}: ${error.message}`);
+                            } else {
+                                // Create photo data with optimized versions
+                                const photoData = {
+                                    filename: file.name,
+                                    size: file.size,
+                                    mimeType: file.type,
+                                    optimized: true,
+                                    originalBlob: result.original,
+                                    mediumBlob: result.medium,
+                                    thumbnailBlob: result.thumbnail,
+                                    metadata: result.metadata
+                                };
+                                
+                                // Save to storage with offline queue support
+                                this._savePhotoWithQueue(photoData);
                             }
                             
                             processed++;
                             if (processed === files.length) {
-                                self._handlePhotoProcessingComplete(errors);
+                                this._handlePhotoProcessingComplete(errors);
                             }
                         });
-                    };
-                    reader.readAsDataURL(file);
-                }
-            });
-        },
+                    } else {
+                        // LAST RESORT: Read as data URL without optimization
+                        // This can freeze the browser with large images!
+                        console.warn('[PhotoAttachmentUI] Using blocking FileReader as last resort');
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            const photoData = {
+                                uri: e.target.result,
+                                filename: file.name,
+                                size: file.size,
+                                mimeType: file.type
+                            };
+                            
+                            this.storage.addPhoto(this.currentTask, photoData, (result) => {
+                                if (!result.success) {
+                                    errors.push(`${file.name}: ${result.error}`);
+                                    this.stressDetector.recordError();
+                                }
+                                
+                                processed++;
+                                if (processed === files.length) {
+                                    this._handlePhotoProcessingComplete(errors);
+                                }
+                            });
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                });
+            }
+        }
         
         // Save photo with offline queue support
-        _savePhotoWithQueue: function(photoData) {
-            var self = this;
-            
+        _savePhotoWithQueue(photoData) {
             // Convert blobs to data URLs for storage
-            self._convertBlobsToDataUrls(photoData, function(convertedData) {
+            this._convertBlobsToDataUrls(photoData, (convertedData) => {
                 // Try to save immediately
-                self.storage.addPhoto(self.currentTask, convertedData, function(result) {
+                this.storage.addPhoto(this.currentTask, convertedData, (result) => {
                     if (result.success) {
                         // Update photo with server ID if returned
                         if (result.photoId) {
@@ -772,20 +775,20 @@
                             method: 'POST',
                             endpoint: '/api/photos',
                             data: {
-                                taskId: self.currentTask,
+                                taskId: this.currentTask,
                                 photo: convertedData
                             }
                         });
                     } else {
-                        self.stressDetector.recordError();
+                        this.stressDetector.recordError();
                     }
                 });
             });
-        },
+        }
         
         // Convert blobs to data URLs for storage
-        _convertBlobsToDataUrls: function(photoData, callback) {
-            var converted = {
+        _convertBlobsToDataUrls(photoData, callback) {
+            const converted = {
                 filename: photoData.filename,
                 size: photoData.size,
                 mimeType: photoData.mimeType,
@@ -793,8 +796,8 @@
                 metadata: photoData.metadata
             };
             
-            var conversions = 0;
-            var toConvert = 0;
+            let conversions = 0;
+            let toConvert = 0;
             
             // Count conversions needed
             if (photoData.originalBlob) toConvert++;
@@ -803,7 +806,7 @@
             
             // Convert each blob
             if (photoData.thumbnailBlob && window.PhotoOptimizer) {
-                window.PhotoOptimizer.blobToDataUrl(photoData.thumbnailBlob, function(error, dataUrl) {
+                window.PhotoOptimizer.blobToDataUrl(photoData.thumbnailBlob, (error, dataUrl) => {
                     if (!error) converted.thumbnailUrl = dataUrl;
                     conversions++;
                     if (conversions === toConvert) callback(converted);
@@ -811,7 +814,7 @@
             }
             
             if (photoData.mediumBlob && window.PhotoOptimizer) {
-                window.PhotoOptimizer.blobToDataUrl(photoData.mediumBlob, function(error, dataUrl) {
+                window.PhotoOptimizer.blobToDataUrl(photoData.mediumBlob, (error, dataUrl) => {
                     if (!error) converted.mediumUrl = dataUrl;
                     conversions++;
                     if (conversions === toConvert) callback(converted);
@@ -819,7 +822,7 @@
             }
             
             if (photoData.originalBlob && window.PhotoOptimizer) {
-                window.PhotoOptimizer.blobToDataUrl(photoData.originalBlob, function(error, dataUrl) {
+                window.PhotoOptimizer.blobToDataUrl(photoData.originalBlob, (error, dataUrl) => {
                     if (!error) converted.fullUrl = dataUrl;
                     conversions++;
                     if (conversions === toConvert) callback(converted);
@@ -830,82 +833,78 @@
             if (toConvert === 0) {
                 callback(converted);
             }
-        },
+        }
         
         // Handle photo processing completion
-        _handlePhotoProcessingComplete: function(errors) {
-            var self = this;
-            
-            self._showProcessingIndicator(false);
+        _handlePhotoProcessingComplete(errors) {
+            this._showProcessingIndicator(false);
             
             if (errors.length > 0) {
-                alert('Some photos could not be added:\n' + errors.join('\n'));
+                alert(`Some photos could not be added:\n${errors.join('\n')}`);
             }
             
-            self._refreshUI();
-        },
+            this._refreshUI();
+        }
         
         // Show/hide processing indicator
-        _showProcessingIndicator: function(show) {
-            var indicator = document.querySelector('.photo-processing-indicator');
+        _showProcessingIndicator(show) {
+            const indicator = document.querySelector('.photo-processing-indicator');
             if (indicator) {
                 indicator.style.display = show ? 'block' : 'none';
             }
-        },
+        }
 
         // Load thumbnail from cache
-        _loadThumbnail: function(photoId, callback) {
-            var transaction = this.storage.db.transaction(['thumbnails'], 'readonly');
-            var store = transaction.objectStore('thumbnails');
-            var request = store.get(photoId);
+        _loadThumbnail(photoId, callback) {
+            const transaction = this.storage.db.transaction(['thumbnails'], 'readonly');
+            const store = transaction.objectStore('thumbnails');
+            const request = store.get(photoId);
             
-            request.onsuccess = function() {
-                var thumbnail = request.result;
+            request.onsuccess = () => {
+                const thumbnail = request.result;
                 callback(thumbnail ? thumbnail.data : null);
             };
             
-            request.onerror = function() {
+            request.onerror = () => {
                 callback(null);
             };
-        },
+        }
 
         // Get photo description for accessibility
-        _getPhotoDescription: function(photo) {
-            var status = photo.uploadStatus === 'uploaded' ? 'uploaded' : 'pending upload';
-            var category = window.PHOTO_CATEGORIES[photo.category]?.label || 'photo';
-            return category + ', ' + (photo.caption || 'no description') + ', ' + status;
-        },
+        _getPhotoDescription(photo) {
+            const status = photo.uploadStatus === 'uploaded' ? 'uploaded' : 'pending upload';
+            const category = window.PHOTO_CATEGORIES[photo.category]?.label || 'photo';
+            return `${category}, ${photo.caption || 'no description'}, ${status}`;
+        }
 
         // Get upload status summary
-        _getUploadStatus: function() {
-            var pending = this.photos.filter(function(p) {
-                return p.uploadStatus === 'pending';
-            }).length;
+        _getUploadStatus() {
+            const pending = this.photos.filter(p => p.uploadStatus === 'pending').length;
             
             if (pending === 0) {
                 return 'All photos uploaded';
             }
             
-            return pending + ' photo(s) waiting to upload';
-        },
+            return `${pending} photo(s) waiting to upload`;
+        }
 
         // Refresh UI
-        _refreshUI: function() {
+        _refreshUI() {
             if (this.thumbnailGrid) {
                 // Use new grid refresh method
                 this.thumbnailGrid.refresh(this.photos);
             } else {
                 // Fallback to full re-render
-                var container = document.querySelector('.photo-attachment-container');
+                const container = document.querySelector('.photo-attachment-container');
                 if (container && this.currentTask) {
                     this.createAttachmentUI(this.currentTask, container);
                 }
             }
-        },
+        }
 
         // Load user settings
-        _loadSettings: function() {
-            var saved = localStorage.getItem('photoSettings');
+        _loadSettings() {
+            const saved = localStorage.getItem('photoSettings');
             if (saved) {
                 return JSON.parse(saved);
             }
@@ -915,11 +914,11 @@
                 animations: !this._prefersReducedMotion(),
                 highContrast: false
             };
-        },
+        }
 
         // Apply user settings
-        _applySettings: function() {
-            var body = document.body;
+        _applySettings() {
+            const body = document.body;
             
             // Density
             body.setAttribute('data-photo-density', this.settings.density);
@@ -933,62 +932,57 @@
             if (this.settings.highContrast) {
                 body.classList.add('photo-high-contrast');
             }
-        },
+        }
 
         // Check for reduced motion preference
-        _prefersReducedMotion: function() {
+        _prefersReducedMotion() {
             return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        },
+        }
 
         // Create dynamic styles
-        _createStyles: function() {
+        _createStyles() {
             // Styles are defined in photo-attachments.css
             // This method can be used for dynamic style adjustments
-        },
+        }
 
         // Lazy load thumbnails as they come into view
-        _lazyLoadThumbnails: function() {
-            var self = this;
-            var thumbnails = this.container ? this.container.querySelectorAll('.photo-thumbnail[data-src]') : [];
+        _lazyLoadThumbnails() {
+            const thumbnails = this.container ? this.container.querySelectorAll('.photo-thumbnail[data-src]') : [];
             
-            thumbnails.forEach(function(thumb) {
-                if (self._isInViewport(thumb)) {
-                    var src = thumb.getAttribute('data-src');
+            thumbnails.forEach(thumb => {
+                if (this._isInViewport(thumb)) {
+                    const src = thumb.getAttribute('data-src');
                     thumb.src = src;
                     thumb.removeAttribute('data-src');
                 }
             });
-        },
+        }
 
         // Check if element is in viewport
-        _isInViewport: function(element) {
-            var rect = element.getBoundingClientRect();
+        _isInViewport(element) {
+            const rect = element.getBoundingClientRect();
             return (
                 rect.top >= 0 &&
                 rect.left >= 0 &&
                 rect.bottom <= window.innerHeight &&
                 rect.right <= window.innerWidth
             );
-        },
+        }
         
         // Initialize cache bridge for photo optimization
-        _initializeCacheBridge: function() {
+        _initializeCacheBridge() {
             // PhotoCacheBridge auto-initializes, but we can preload critical photos
             if (window.PhotoCacheBridge && this.currentTask && this.photos.length > 0) {
-                var photoIds = this.photos.map(function(photo) {
-                    return photo.id;
-                }).filter(Boolean);
+                const photoIds = this.photos.map(photo => photo.id).filter(Boolean);
                 
                 if (photoIds.length > 0) {
                     window.PhotoCacheBridge.preloadCriticalPhotos(photoIds);
                 }
             }
-        },
+        }
 
         // Setup lazy loading observers
-        _setupLazyLoading: function() {
-            var self = this;
-            
+        _setupLazyLoading() {
             // Use PhotoLazyLoader if available
             if (window.PhotoLazyLoader) {
                 // PhotoLazyLoader auto-initializes and observes images
@@ -996,11 +990,11 @@
                 window.PhotoLazyLoader.observeImages();
             } else if ('IntersectionObserver' in window) {
                 // Fallback to basic implementation
-                var observer = new IntersectionObserver(function(entries) {
-                    entries.forEach(function(entry) {
+                const observer = new IntersectionObserver(entries => {
+                    entries.forEach(entry => {
                         if (entry.isIntersecting) {
-                            var thumb = entry.target;
-                            var src = thumb.getAttribute('data-src');
+                            const thumb = entry.target;
+                            const src = thumb.getAttribute('data-src');
                             if (src) {
                                 thumb.src = src;
                                 thumb.removeAttribute('data-src');
@@ -1013,102 +1007,94 @@
                 });
                 
                 // Observe all thumbnails
-                var thumbnails = document.querySelectorAll('.photo-thumbnail[data-src]');
-                thumbnails.forEach(function(thumb) {
+                const thumbnails = document.querySelectorAll('.photo-thumbnail[data-src]');
+                thumbnails.forEach(thumb => {
                     observer.observe(thumb);
                 });
             } else {
                 // Fallback for older browsers
-                window.addEventListener('scroll', function() {
-                    self._lazyLoadThumbnails();
+                window.addEventListener('scroll', () => {
+                    this._lazyLoadThumbnails();
                 });
-                window.addEventListener('resize', function() {
-                    self._lazyLoadThumbnails();
+                window.addEventListener('resize', () => {
+                    this._lazyLoadThumbnails();
                 });
                 
                 // Initial load
-                self._lazyLoadThumbnails();
+                this._lazyLoadThumbnails();
             }
-        },
+        }
         
         // Sync pending photos when coming online
-        _syncPendingPhotos: function() {
-            var self = this;
-            
+        _syncPendingPhotos() {
             if (window.OfflineQueue) {
-                var status = window.OfflineQueue.getStatus();
+                const status = window.OfflineQueue.getStatus();
                 if (status.pending > 0) {
-                    console.log('Syncing ' + status.pending + ' pending photos...');
+                    console.log(`Syncing ${status.pending} pending photos...`);
                     window.OfflineQueue.processQueue();
                 }
             }
-        },
+        }
         
         // Refresh photo display without full UI refresh
-        _refreshPhotoDisplay: function() {
-            var self = this;
-            
+        _refreshPhotoDisplay() {
             // Update only the photo grid
-            var grid = document.querySelector('.photo-grid');
-            if (grid && self.currentTask) {
-                self.storage.getPhotosForTask(self.currentTask, function(photos) {
-                    self.photos = photos;
-                    var newGrid = self._createPhotoGrid();
+            const grid = document.querySelector('.photo-grid');
+            if (grid && this.currentTask) {
+                this.storage.getPhotosForTask(this.currentTask, (photos) => {
+                    this.photos = photos;
+                    const newGrid = this._createPhotoGrid();
                     grid.parentNode.replaceChild(newGrid, grid);
                     
                     // Re-setup lazy loading for new images
-                    self._setupLazyLoading();
+                    this._setupLazyLoading();
                 });
             }
         }
-    };
+    }
 
     // Stress Detector
-    var StressDetector = function() {
-        this.metrics = {
-            errors: [],
-            tapDelays: [],
-            lastReset: Date.now()
-        };
-        this.isStressMode = false;
-    };
+    class StressDetector {
+        constructor() {
+            this.metrics = {
+                errors: [],
+                tapDelays: [],
+                lastReset: Date.now()
+            };
+            this.isStressMode = false;
+        }
 
-    StressDetector.prototype = {
-        recordError: function() {
+        recordError() {
             this.metrics.errors.push(Date.now());
             this._checkStressLevel();
-        },
+        }
 
-        recordTapDelay: function(delay) {
+        recordTapDelay(delay) {
             this.metrics.tapDelays.push(delay);
             if (this.metrics.tapDelays.length > 10) {
                 this.metrics.tapDelays.shift();
             }
             this._checkStressLevel();
-        },
+        }
 
-        recordInteraction: function() {
+        recordInteraction() {
             // Reset timer on successful interaction
             this.metrics.lastReset = Date.now();
-        },
+        }
 
-        _checkStressLevel: function() {
+        _checkStressLevel() {
             // Check recent errors
-            var recentErrors = this.metrics.errors.filter(function(e) {
-                return e > Date.now() - 30000;
-            }).length;
+            const recentErrors = this.metrics.errors.filter(e => e > Date.now() - 30000).length;
             
             // Calculate average hesitation
-            var avgHesitation = 0;
+            let avgHesitation = 0;
             if (this.metrics.tapDelays.length > 0) {
-                var sum = this.metrics.tapDelays.reduce(function(a, b) {
-                    return a + b;
-                }, 0);
+                const sum = this.metrics.tapDelays.reduce((a, b) => a + b, 0);
                 avgHesitation = sum / this.metrics.tapDelays.length;
             }
             
             // Determine if stressed
-            var wasStressed = this.isStressMode;
+            const wasStressed = this.isStressMode;
             this.isStressMode = recentErrors >= UI_CONFIG.ERROR_THRESHOLD || 
                                avgHesitation > UI_CONFIG.HESITATION_THRESHOLD;
             
@@ -1118,18 +1104,18 @@
             } else if (!this.isStressMode && wasStressed) {
                 this._deactivateStressMode();
             }
-        },
+        }
 
-        _activateStressMode: function() {
+        _activateStressMode() {
             document.body.classList.add('photo-stress-mode');
             console.log('Photo stress mode activated');
-        },
+        }
 
-        _deactivateStressMode: function() {
+        _deactivateStressMode() {
             document.body.classList.remove('photo-stress-mode');
             console.log('Photo stress mode deactivated');
         }
-    };
+    }
 
     // Export
     exports.PhotoAttachmentUI = PhotoAttachmentUI;

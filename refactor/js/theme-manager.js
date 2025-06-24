@@ -9,11 +9,11 @@
  * - Manages color temperature for different times of day
  */
 
-(function() {
+(() => {
     'use strict';
     
     // Theme definitions with sensory considerations
-    var THEMES = {
+    const THEMES = {
         purpleDream: {
             name: 'Purple Dream',
             description: 'Default theme with calming purple hues',
@@ -250,7 +250,7 @@
     };
     
     // Sensory preferences
-    var SENSORY_SETTINGS = {
+    const SENSORY_SETTINGS = {
         animations: {
             name: 'Animations',
             description: 'Visual transitions and movements',
@@ -278,12 +278,14 @@
         }
     };
     
-    var ThemeManager = {
-        currentTheme: 'purpleDream',
-        sensoryPrefs: {},
-        initialized: false,
+    class ThemeManager {
+        constructor() {
+            this.currentTheme = 'purpleDream';
+            this.sensoryPrefs = {};
+            this.initialized = false;
+        }
         
-        init: function() {
+        init() {
             if (this.initialized) return;
             this.initialized = true;
             
@@ -303,12 +305,12 @@
             this.initSettingsUI();
             
             console.log('ThemeManager initialized with theme:', this.currentTheme);
-        },
+        }
         
-        loadPreferences: function() {
+        loadPreferences() {
             try {
                 // Load theme
-                var savedTheme = localStorage.getItem('stackmap-theme');
+                const savedTheme = localStorage.getItem('stackmap-theme');
                 if (savedTheme && THEMES[savedTheme]) {
                     this.currentTheme = savedTheme;
                 } else if (this.prefersColorScheme('dark')) {
@@ -316,7 +318,7 @@
                 }
                 
                 // Load sensory preferences
-                var savedSensory = localStorage.getItem('stackmap-sensory-prefs');
+                const savedSensory = localStorage.getItem('stackmap-sensory-prefs');
                 if (savedSensory) {
                     this.sensoryPrefs = JSON.parse(savedSensory);
                 } else {
@@ -330,19 +332,19 @@
             } catch (e) {
                 console.warn('Could not load theme preferences:', e);
             }
-        },
+        }
         
-        savePreferences: function() {
+        savePreferences() {
             try {
                 localStorage.setItem('stackmap-theme', this.currentTheme);
                 localStorage.setItem('stackmap-sensory-prefs', JSON.stringify(this.sensoryPrefs));
             } catch (e) {
                 console.warn('Could not save theme preferences:', e);
             }
-        },
+        }
         
-        applyTheme: function(themeName) {
-            var theme = THEMES[themeName];
+        applyTheme(themeName) {
+            const theme = THEMES[themeName];
             if (!theme) {
                 console.warn('Unknown theme:', themeName);
                 return;
@@ -351,18 +353,18 @@
             this.currentTheme = themeName;
             
             // Apply CSS properties
-            var root = document.documentElement;
-            for (var prop in theme.properties) {
+            const root = document.documentElement;
+            for (const prop in theme.properties) {
                 root.style.setProperty(prop, theme.properties[prop]);
             }
             
             // Update body classes
-            document.body.className = document.body.className
-                .replace(/theme-\w+/g, '')
-                .trim() + ' theme-' + themeName;
+            document.body.className = `${document.body.className
+    .replace(/theme-\w+/g, '')
+    .trim()} theme-${themeName}`;
             
             // Update meta theme-color for mobile browsers
-            var metaTheme = document.querySelector('meta[name="theme-color"]');
+            let metaTheme = document.querySelector('meta[name="theme-color"]');
             if (!metaTheme) {
                 metaTheme = document.createElement('meta');
                 metaTheme.name = 'theme-color';
@@ -383,18 +385,18 @@
             document.dispatchEvent(new CustomEvent('themechange', {
                 detail: { theme: themeName }
             }));
-        },
+        }
         
-        applyInlineOverrides: function(theme) {
+        applyInlineOverrides(theme) {
             // Update loading view
-            var loadingView = document.getElementById('loading-view');
+            const loadingView = document.getElementById('loading-view');
             if (loadingView) {
                 loadingView.style.background = theme.properties['--loading-bg'] || theme.properties['--color-bg'];
                 loadingView.style.color = theme.properties['--loading-text'] || theme.properties['--color-text'];
             }
             
             // Update critical inline styles in header
-            var style = document.getElementById('theme-overrides');
+            let style = document.getElementById('theme-overrides');
             if (!style) {
                 style = document.createElement('style');
                 style.id = 'theme-overrides';
@@ -411,10 +413,10 @@
                     color: ${theme.properties['--header-text'] || '#ffffff'};
                 }
             `;
-        },
+        }
         
-        applySensoryPreferences: function() {
-            var root = document.documentElement;
+        applySensoryPreferences() {
+            const root = document.documentElement;
             
             // Animations
             if (!this.sensoryPrefs.animations) {
@@ -426,143 +428,140 @@
             // Color vibrancy
             root.className = root.className.replace(/color-vibrancy-\w+/g, '');
             if (this.sensoryPrefs.colorVibrancy && this.sensoryPrefs.colorVibrancy !== 'normal') {
-                root.classList.add('color-vibrancy-' + this.sensoryPrefs.colorVibrancy);
+                root.classList.add(`color-vibrancy-${this.sensoryPrefs.colorVibrancy}`);
             }
             
             // Contrast
             root.className = root.className.replace(/contrast-\w+/g, '');
             if (this.sensoryPrefs.contrast && this.sensoryPrefs.contrast !== 'normal') {
-                root.classList.add('contrast-' + this.sensoryPrefs.contrast);
+                root.classList.add(`contrast-${this.sensoryPrefs.contrast}`);
             }
             
             this.savePreferences();
-        },
+        }
         
-        setTheme: function(themeName) {
+        setTheme(themeName) {
             if (!THEMES[themeName]) {
                 console.warn('Invalid theme:', themeName);
                 return;
             }
             
             this.applyTheme(themeName);
-        },
+        }
         
-        previewTheme: function(themeName) {
+        previewTheme(themeName) {
             // Temporarily apply theme without saving
-            var theme = THEMES[themeName];
+            const theme = THEMES[themeName];
             if (!theme) {
                 console.warn('Unknown theme:', themeName);
                 return;
             }
             
             // Apply CSS properties
-            var root = document.documentElement;
-            for (var prop in theme.properties) {
+            const root = document.documentElement;
+            for (const prop in theme.properties) {
                 root.style.setProperty(prop, theme.properties[prop]);
             }
             
             // Update body classes
-            document.body.className = document.body.className
-                .replace(/theme-\w+/g, '')
-                .trim() + ' theme-' + themeName;
+            document.body.className = `${document.body.className
+    .replace(/theme-\w+/g, '')
+    .trim()} theme-${themeName}`;
             
             // Apply inline overrides
             this.applyInlineOverrides(theme);
             
             // Don't save preferences or show toast for preview
-        },
+        }
         
-        setSensoryPreference: function(key, value) {
+        setSensoryPreference(key, value) {
             this.sensoryPrefs[key] = value;
             this.applySensoryPreferences();
-        },
+        }
         
-        toggleTheme: function() {
+        toggleTheme() {
             // Cycle through themes
-            var themeKeys = Object.keys(THEMES);
-            var currentIndex = themeKeys.indexOf(this.currentTheme);
-            var nextIndex = (currentIndex + 1) % themeKeys.length;
+            const themeKeys = Object.keys(THEMES);
+            const currentIndex = themeKeys.indexOf(this.currentTheme);
+            const nextIndex = (currentIndex + 1) % themeKeys.length;
             this.setTheme(themeKeys[nextIndex]);
-        },
+        }
         
-        prefersColorScheme: function(scheme) {
-            return window.matchMedia && window.matchMedia('(prefers-color-scheme: ' + scheme + ')').matches;
-        },
+        prefersColorScheme(scheme) {
+            return window.matchMedia && window.matchMedia(`(prefers-color-scheme: ${scheme})`).matches;
+        }
         
-        prefersReducedMotion: function() {
+        prefersReducedMotion() {
             return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        },
+        }
         
-        watchSystemPreferences: function() {
-            var self = this;
-            
+        watchSystemPreferences() {
             // Watch for system dark mode changes
             if (window.matchMedia) {
-                var darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+                const darkModeQuery = window.matchMedia('(prefers-color-scheme: dark)');
                 if (darkModeQuery.addEventListener) {
-                    darkModeQuery.addEventListener('change', function(e) {
+                    darkModeQuery.addEventListener('change', (e) => {
                         // Only auto-switch if user hasn't manually set a theme
-                        var savedTheme = localStorage.getItem('stackmap-theme');
+                        const savedTheme = localStorage.getItem('stackmap-theme');
                         if (!savedTheme) {
-                            self.setTheme(e.matches ? 'dark' : 'purpleDream');
+                            this.setTheme(e.matches ? 'dark' : 'purpleDream');
                         }
                         
                         // Update theme toggle icon if it exists
-                        self.updateThemeToggleIcon();
+                        this.updateThemeToggleIcon();
                     });
                 }
                 
                 // Watch for reduced motion preference
-                var motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
+                const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
                 if (motionQuery.addEventListener) {
-                    motionQuery.addEventListener('change', function(e) {
-                        self.setSensoryPreference('animations', !e.matches);
+                    motionQuery.addEventListener('change', (e) => {
+                        this.setSensoryPreference('animations', !e.matches);
                     });
                 }
             }
-        },
+        }
         
-        updateThemeToggleIcon: function() {
-            var toggleBtn = document.querySelector('.theme-toggle-btn');
+        updateThemeToggleIcon() {
+            const toggleBtn = document.querySelector('.theme-toggle-btn');
             if (toggleBtn) {
-                var isDark = this.currentTheme === 'dark' || 
+                const isDark = this.currentTheme === 'dark' || 
                             this.currentTheme === 'highContrast';
                 toggleBtn.innerHTML = isDark ? '☀️' : '🌙';
                 toggleBtn.setAttribute('aria-label', isDark ? 'Switch to light theme' : 'Switch to dark theme');
             }
-        },
+        }
         
-        initSettingsUI: function() {
+        initSettingsUI() {
             // This will be called from the settings view
             // We'll implement the UI integration separately
-        },
+        }
         
         // Public API
-        getThemes: function() {
+        getThemes() {
             return THEMES;
-        },
+        }
         
-        getCurrentTheme: function() {
+        getCurrentTheme() {
             return this.currentTheme;
-        },
+        }
         
-        getSensorySettings: function() {
+        getSensorySettings() {
             return SENSORY_SETTINGS;
-        },
+        }
         
-        getSensoryPreferences: function() {
+        getSensoryPreferences() {
             return this.sensoryPrefs;
-        },
+        }
         
-        showThemeToast: function(themeName) {
-            var theme = THEMES[themeName];
+        showThemeToast(themeName) {
+            const theme = THEMES[themeName];
             if (!theme) return;
             
             // Create toast element
-            var toast = document.createElement('div');
+            const toast = document.createElement('div');
             toast.className = 'theme-toast';
-            toast.innerHTML = '<span class="theme-toast-icon">' + theme.icon + '</span>' +
-                             '<span class="theme-toast-text">Theme changed to ' + theme.name + '</span>';
+            toast.innerHTML = `<span class="theme-toast-icon">${theme.icon}</span><span class="theme-toast-text">Theme changed to ${theme.name}</span>`;
             
             document.body.appendChild(toast);
             
@@ -572,26 +571,29 @@
             }, 10);
             
             // Remove after delay
-            setTimeout(function() {
+            setTimeout(() => {
                 toast.classList.remove('show');
-                setTimeout(function() {
+                setTimeout(() => {
                     if (toast.parentNode) {
                         toast.parentNode.removeChild(toast);
                     }
                 }, 300);
             }, 2000);
         }
-    };
+    }
+    
+    // Create singleton instance
+    const themeManager = new ThemeManager();
     
     // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function() {
-            ThemeManager.init();
+        document.addEventListener('DOMContentLoaded', () => {
+            themeManager.init();
         });
     } else {
-        ThemeManager.init();
+        themeManager.init();
     }
     
     // Export for use in other modules
-    window.StackMapThemeManager = ThemeManager;
+    window.StackMapThemeManager = themeManager;
 })();

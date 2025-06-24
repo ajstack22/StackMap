@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var WelcomeManager = {
+    const WelcomeManager = {
         currentStep: 0,
         totalSteps: 4,
         hasSeenWelcome: false,
@@ -65,7 +65,7 @@
          * Initialize the welcome manager
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Check if user has seen welcome
             try {
@@ -88,7 +88,7 @@
          * Show the welcome flow
          */
         show: function() {
-            var self = this;
+            const self = this;
             
             if (self.isActive) return;
             
@@ -101,7 +101,7 @@
             }
             
             // Create welcome container
-            var container = self.createContainer();
+            const container = self.createContainer();
             document.body.appendChild(container);
             
             // Render first step
@@ -120,7 +120,7 @@
          * Create the welcome container
          */
         createContainer: function() {
-            var container = document.createElement('div');
+            const container = document.createElement('div');
             container.id = 'welcome-container';
             container.className = 'welcome-container';
             container.setAttribute('role', 'dialog');
@@ -128,12 +128,12 @@
             container.setAttribute('aria-label', 'Welcome tutorial');
             
             // Backdrop
-            var backdrop = document.createElement('div');
+            const backdrop = document.createElement('div');
             backdrop.className = 'welcome-backdrop';
             container.appendChild(backdrop);
             
             // Content wrapper
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'welcome-content';
             content.id = 'welcome-content';
             container.appendChild(content);
@@ -145,9 +145,9 @@
          * Render a specific step
          */
         renderStep: function(stepIndex) {
-            var self = this;
-            var step = self.steps[stepIndex];
-            var content = document.getElementById('welcome-content');
+            const self = this;
+            const step = self.steps[stepIndex];
+            const content = document.getElementById('welcome-content');
             
             if (!content || !step) return;
             
@@ -155,21 +155,21 @@
             content.innerHTML = '';
             
             // Create step container
-            var stepEl = document.createElement('div');
-            stepEl.className = 'welcome-step welcome-step-' + step.id;
+            const stepEl = document.createElement('div');
+            stepEl.className = `welcome-step welcome-step-${step.id}`;
             stepEl.setAttribute('data-step', stepIndex);
             
             // Progress dots
-            var progress = document.createElement('div');
+            const progress = document.createElement('div');
             progress.className = 'welcome-progress';
             progress.setAttribute('role', 'progressbar');
             progress.setAttribute('aria-valuemin', '1');
             progress.setAttribute('aria-valuemax', self.totalSteps);
             progress.setAttribute('aria-valuenow', stepIndex + 1);
-            progress.setAttribute('aria-label', 'Step ' + (stepIndex + 1) + ' of ' + self.totalSteps);
+            progress.setAttribute('aria-label', `Step ${stepIndex + 1} of ${self.totalSteps}`);
             
-            for (var i = 0; i < self.totalSteps; i++) {
-                var dot = document.createElement('span');
+            for (let i = 0; i < self.totalSteps; i++) {
+                const dot = document.createElement('span');
                 dot.className = 'welcome-progress-dot';
                 if (i === stepIndex) {
                     dot.classList.add('active');
@@ -180,20 +180,20 @@
             stepEl.appendChild(progress);
             
             // Title
-            var title = document.createElement('h2');
+            const title = document.createElement('h2');
             title.className = 'welcome-title';
             title.textContent = step.title;
-            title.id = 'welcome-title-' + stepIndex;
+            title.id = `welcome-title-${stepIndex}`;
             stepEl.appendChild(title);
             
             // Content
-            var contentDiv = document.createElement('div');
+            const contentDiv = document.createElement('div');
             contentDiv.className = 'welcome-text';
             
             if (step.customContent && step.id === 'theme') {
                 // Theme picker
-                contentDiv.innerHTML = '<p>' + step.content + '</p>';
-                var themePicker = self.createThemePicker();
+                contentDiv.innerHTML = `<p>${step.content}</p>`;
+                const themePicker = self.createThemePicker();
                 contentDiv.appendChild(themePicker);
             } else {
                 contentDiv.innerHTML = step.content;
@@ -202,12 +202,12 @@
             stepEl.appendChild(contentDiv);
             
             // Buttons
-            var buttons = document.createElement('div');
+            const buttons = document.createElement('div');
             buttons.className = 'welcome-buttons';
             
             step.buttons.forEach(function(btn) {
-                var button = document.createElement('button');
-                button.className = 'welcome-button ' + btn.class;
+                const button = document.createElement('button');
+                button.className = `welcome-button ${btn.class}`;
                 button.textContent = btn.text;
                 button.setAttribute('data-action', btn.action);
                 
@@ -225,48 +225,48 @@
             content.appendChild(stepEl);
             
             // Update ARIA
-            stepEl.setAttribute('aria-labelledby', 'welcome-title-' + stepIndex);
+            stepEl.setAttribute('aria-labelledby', `welcome-title-${stepIndex}`);
             
             // Announce step change
-            self.announce('Step ' + (stepIndex + 1) + ' of ' + self.totalSteps + ': ' + step.title);
+            self.announce(`Step ${stepIndex + 1} of ${self.totalSteps}: ${step.title}`);
         },
         
         /**
          * Create theme picker for step 3
          */
         createThemePicker: function() {
-            var self = this;
-            var picker = document.createElement('div');
+            const self = this;
+            const picker = document.createElement('div');
             picker.className = 'welcome-theme-picker';
             
             // Get popular themes
-            var popularThemes = ['purpleDream', 'oceanBreeze', 'dark'];
+            const popularThemes = ['purpleDream', 'oceanBreeze', 'dark'];
             
             if (window.StackMapThemeManager) {
-                var themes = window.StackMapThemeManager.getThemes();
+                const themes = window.StackMapThemeManager.getThemes();
                 
                 popularThemes.forEach(function(themeId) {
-                    var theme = themes[themeId];
+                    const theme = themes[themeId];
                     if (!theme) return;
                     
-                    var option = document.createElement('button');
+                    const option = document.createElement('button');
                     option.className = 'welcome-theme-option';
                     option.setAttribute('data-theme', themeId);
-                    option.setAttribute('aria-label', 'Select ' + theme.name + ' theme');
+                    option.setAttribute('aria-label', `Select ${theme.name} theme`);
                     
                     // Add visual preview
-                    var preview = document.createElement('div');
+                    const preview = document.createElement('div');
                     preview.className = 'welcome-theme-preview';
                     preview.style.background = theme.properties['--gradient-bg'] || theme.properties['--color-bg'];
                     
-                    var icon = document.createElement('span');
+                    const icon = document.createElement('span');
                     icon.className = 'welcome-theme-icon';
                     icon.textContent = theme.icon;
                     preview.appendChild(icon);
                     
                     option.appendChild(preview);
                     
-                    var name = document.createElement('span');
+                    const name = document.createElement('span');
                     name.className = 'welcome-theme-name';
                     name.textContent = theme.name;
                     option.appendChild(name);
@@ -298,7 +298,7 @@
          * Handle button actions
          */
         handleAction: function(action) {
-            var self = this;
+            const self = this;
             
             switch (action) {
                 case 'skip':
@@ -332,7 +332,7 @@
          * Finish the welcome flow
          */
         finish: function() {
-            var self = this;
+            const self = this;
             
             // Mark as seen
             try {
@@ -342,7 +342,7 @@
             }
             
             // Remove container
-            var container = document.getElementById('welcome-container');
+            const container = document.getElementById('welcome-container');
             if (container) {
                 container.classList.add('welcome-closing');
                 
@@ -366,7 +366,7 @@
          * Restart the welcome flow (called from settings)
          */
         restart: function() {
-            var self = this;
+            const self = this;
             
             // Reset state
             self.hasSeenWelcome = false;
@@ -379,7 +379,7 @@
          * Focus management
          */
         focusFirstButton: function() {
-            var firstButton = document.querySelector('.welcome-button');
+            const firstButton = document.querySelector('.welcome-button');
             if (firstButton) {
                 firstButton.focus();
             }
@@ -390,7 +390,7 @@
          */
         announce: function(message) {
             // Use existing announcement region if available
-            var announcer = document.getElementById('welcome-announcer');
+            let announcer = document.getElementById('welcome-announcer');
             
             if (!announcer) {
                 announcer = document.createElement('div');
@@ -408,7 +408,7 @@
          * Keyboard navigation
          */
         setupKeyboardNav: function() {
-            var self = this;
+            const self = this;
             
             document.addEventListener('keydown', function(e) {
                 if (!self.isActive) return;
@@ -421,12 +421,12 @@
                 
                 // Arrow keys for theme selection
                 if (self.currentStep === 2 && (e.key === 'ArrowLeft' || e.key === 'ArrowRight')) {
-                    var options = document.querySelectorAll('.welcome-theme-option');
-                    var selected = document.querySelector('.welcome-theme-option.selected');
+                    const options = document.querySelectorAll('.welcome-theme-option');
+                    const selected = document.querySelector('.welcome-theme-option.selected');
                     
                     if (options.length > 0) {
-                        var currentIndex = Array.from(options).indexOf(selected);
-                        var newIndex = currentIndex;
+                        const currentIndex = Array.from(options).indexOf(selected);
+                        let newIndex = currentIndex;
                         
                         if (e.key === 'ArrowLeft') {
                             newIndex = Math.max(0, currentIndex - 1);

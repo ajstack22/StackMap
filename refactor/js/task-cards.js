@@ -6,12 +6,12 @@
 (function() {
     'use strict';
     
-    var TaskCards = {
+    const TaskCards = {
         /**
          * Enable card view in TaskDisplay
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Override TaskDisplay render method
             if (window.TaskDisplay) {
@@ -41,8 +41,8 @@
         releaseAllCards: function(container) {
             if (!window.TaskCardPool || !window.TaskCardPool.initialized) return;
             
-            var cards = container.querySelectorAll('.task-card[data-pooled="true"]');
-            for (var i = 0; i < cards.length; i++) {
+            const cards = container.querySelectorAll('.task-card[data-pooled="true"]');
+            for (let i = 0; i < cards.length; i++) {
                 window.TaskCardPool.release(cards[i]);
             }
         },
@@ -52,8 +52,8 @@
          */
         renderCards: function() {
             var self = this;
-            var taskDisplay = window.TaskDisplay;
-            var container = taskDisplay.container;
+            const taskDisplay = window.TaskDisplay;
+            const container = taskDisplay.container;
             
             // Clear container and release cards to pool
             self.releaseAllCards(container);
@@ -65,29 +65,29 @@
             }
             
             // Create cards grid container
-            var cardsGrid = document.createElement('div');
+            const cardsGrid = document.createElement('div');
             cardsGrid.className = 'cards-grid';
             
             // Filter tasks for current user
-            var userTasks = taskDisplay.getUserTasks();
+            const userTasks = taskDisplay.getUserTasks();
             
             // Add new task card (only in edit mode)
             if (window.EditMode && window.EditMode.isActive()) {
-                var addCard = this.createAddTaskCard();
+                const addCard = this.createAddTaskCard();
                 cardsGrid.appendChild(addCard);
             }
             
             // Render tasks or empty state
             if (userTasks.length === 0 && (!window.EditMode || !window.EditMode.isActive())) {
-                var emptyState = this.createEmptyState();
+                const emptyState = this.createEmptyState();
                 container.appendChild(emptyState);
             } else {
                 // Add task cards using DocumentFragment for better performance
                 var self = this;
-                var fragment = document.createDocumentFragment();
+                const fragment = document.createDocumentFragment();
                 
                 userTasks.forEach(function(task, index) {
-                    var taskCard = self.createTaskCard(task, index + 1);
+                    const taskCard = self.createTaskCard(task, index + 1);
                     fragment.appendChild(taskCard);
                 });
                 
@@ -109,11 +109,11 @@
          * Create task card element
          */
         createTaskCard: function(task, number) {
-            var taskDisplay = window.TaskDisplay;
-            var self = this;
+            const taskDisplay = window.TaskDisplay;
+            const self = this;
             
             // Determine card state
-            var cardState = '';
+            let cardState = '';
             if (task.completed) {
                 cardState = 'task-card--completed';
             } else if (task.in_progress) {
@@ -123,31 +123,31 @@
             }
             
             // Get card from pool if available
-            var card;
+            let card;
             if (window.TaskCardPool && window.TaskCardPool.initialized) {
                 card = window.TaskCardPool.acquire();
-                card.className = 'task-card ' + cardState;
+                card.className = `task-card ${cardState}`;
             } else {
                 // Fallback to creating new card
                 card = document.createElement('div');
-                card.className = 'task-card ' + cardState;
+                card.className = `task-card ${cardState}`;
             }
             
             card.setAttribute('data-task-id', task.id);
             
             // ARIA attributes for screen readers
             card.setAttribute('role', 'option');
-            card.setAttribute('aria-label', (task.title || 'Untitled Task') + ', ' + (task.completed ? 'completed' : 'not completed'));
+            card.setAttribute('aria-label', `${task.title || 'Untitled Task'}, ${task.completed ? 'completed' : 'not completed'}`);
             
             // Check if using pooled card
-            var isPooled = card.getAttribute('data-pooled') === 'true';
+            const isPooled = card.getAttribute('data-pooled') === 'true';
             
             if (isPooled) {
                 // Update existing elements in pooled card
                 var checkbox = card.querySelector('.task-checkbox');
                 if (checkbox) {
                     checkbox.checked = task.completed;
-                    checkbox.setAttribute('aria-label', 'Mark ' + (task.title || 'task') + ' as ' + (task.completed ? 'incomplete' : 'complete'));
+                    checkbox.setAttribute('aria-label', `Mark ${task.title || 'task'} as ${task.completed ? 'incomplete' : 'complete'}`);
                     
                     // Remove old listener if exists
                     if (checkbox._taskHandler) {
@@ -160,11 +160,11 @@
                         taskDisplay.updateTask(task);
                         
                         // Update card ARIA label
-                        card.setAttribute('aria-label', (task.title || 'Untitled Task') + ', ' + (task.completed ? 'completed' : 'not completed'));
+                        card.setAttribute('aria-label', `${task.title || 'Untitled Task'}, ${task.completed ? 'completed' : 'not completed'}`);
                         
                         // Announce state change
                         if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                            window.StackMapKeyboardNav.announce(task.title + ' marked as ' + (task.completed ? 'complete' : 'incomplete'));
+                            window.StackMapKeyboardNav.announce(`${task.title} marked as ${task.completed ? 'complete' : 'incomplete'}`);
                         }
                     };
                     checkbox.addEventListener('change', checkbox._taskHandler);
@@ -190,41 +190,41 @@
                 var category = card.querySelector('.task-category');
                 if (category && task.activity_name) {
                     category.textContent = task.activity_name;
-                    category.className = 'task-category category-' + (task.category || 'general').toLowerCase();
+                    category.className = `task-category category-${(task.category || 'general').toLowerCase()}`;
                 }
                 
                 // Update priority
-                var priority = card.querySelector('.task-priority');
+                const priority = card.querySelector('.task-priority');
                 if (priority && task.priority) {
                     priority.textContent = task.priority;
-                    priority.className = 'task-priority priority-' + task.priority.toLowerCase();
+                    priority.className = `task-priority priority-${task.priority.toLowerCase()}`;
                 }
             } else {
                 // Create new structure for non-pooled cards
                 // Completion indicator
-                var completion = document.createElement('div');
+                const completion = document.createElement('div');
                 completion.className = 'task-card__completion';
                 
                 var checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = task.completed;
-                checkbox.setAttribute('aria-label', 'Mark ' + (task.title || 'task') + ' as ' + (task.completed ? 'incomplete' : 'complete'));
+                checkbox.setAttribute('aria-label', `Mark ${task.title || 'task'} as ${task.completed ? 'incomplete' : 'complete'}`);
                 checkbox.onchange = function() {
                     task.completed = checkbox.checked;
                     taskDisplay.updateTask(task);
                     
                     // Update card ARIA label
-                    card.setAttribute('aria-label', (task.title || 'Untitled Task') + ', ' + (task.completed ? 'completed' : 'not completed'));
+                    card.setAttribute('aria-label', `${task.title || 'Untitled Task'}, ${task.completed ? 'completed' : 'not completed'}`);
                     
                     // Announce state change
                     if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                        window.StackMapKeyboardNav.announce(task.title + ' marked as ' + (task.completed ? 'complete' : 'incomplete'));
+                        window.StackMapKeyboardNav.announce(`${task.title} marked as ${task.completed ? 'complete' : 'incomplete'}`);
                     }
                 };
                 
                 completion.appendChild(checkbox);
                 
-                var checkIcon = document.createElement('span');
+                const checkIcon = document.createElement('span');
                 checkIcon.className = 'task-card__completion-icon';
                 checkIcon.textContent = '✓';
                 checkIcon.setAttribute('aria-hidden', 'true');
@@ -235,17 +235,17 @@
             
             // Number badge (if provided)
             if (number) {
-                var numberBadge = document.createElement('div');
+                const numberBadge = document.createElement('div');
                 numberBadge.className = 'task-card__number';
                 numberBadge.textContent = number;
                 card.appendChild(numberBadge);
             }
             
             // Card header with icon
-            var header = document.createElement('div');
+            const header = document.createElement('div');
             header.className = 'task-card__header';
             
-            var icon = document.createElement('div');
+            const icon = document.createElement('div');
             icon.className = 'task-card__icon';
             icon.textContent = task.icon || '✓';
             header.appendChild(icon);
@@ -253,7 +253,7 @@
             card.appendChild(header);
             
             // Card content
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'task-card__content';
             
             var title = document.createElement('h3');
@@ -270,7 +270,7 @@
             
             // Progress indicator for subtasks
             if (task.subtasks && task.subtasks.length > 0) {
-                var progress = this.createProgressIndicator(task);
+                const progress = this.createProgressIndicator(task);
                 content.appendChild(progress);
             }
             
@@ -278,40 +278,40 @@
             
             // Photo attachments section
             if (window.PhotoAttachmentUI && window.PhotoAttachmentStorage) {
-                var photoSection = document.createElement('div');
+                const photoSection = document.createElement('div');
                 photoSection.className = 'task-card__photos';
                 
                 // Use singleton instance of photo storage
-                var photoStorage = window.PhotoAttachmentStorage.getInstance();
-                var photoUI = new window.PhotoAttachmentUI(photoStorage);
+                const photoStorage = window.PhotoAttachmentStorage.getInstance();
+                const photoUI = new window.PhotoAttachmentUI(photoStorage);
                 photoUI.createAttachmentUI(task.id, photoSection);
                 
                 card.appendChild(photoSection);
             }
             
             // Card footer with metadata
-            var footer = document.createElement('div');
+            const footer = document.createElement('div');
             footer.className = 'task-card__footer';
             
             // Time estimate
             if (task.time_estimate) {
-                var time = document.createElement('div');
+                const time = document.createElement('div');
                 time.className = 'task-card__time';
-                time.innerHTML = '⏱ ' + task.time_estimate + ' min';
+                time.innerHTML = `⏱ ${task.time_estimate} min`;
                 footer.appendChild(time);
             }
             
             // Timer button
             if (window.TaskTimer) {
-                var timerBtn = document.createElement('button');
+                const timerBtn = document.createElement('button');
                 timerBtn.className = 'task-timer-button';
                 timerBtn.setAttribute('aria-label', 'Set timer for task');
                 timerBtn.setAttribute('data-task-id', task.id);
                 
                 // Check if there's an active timer
-                var existingTimer = window.TaskTimer.getTimer(task.id);
+                const existingTimer = window.TaskTimer.getTimer(task.id);
                 if (existingTimer) {
-                    timerBtn.innerHTML = '⏱️ ' + window.TaskTimer.formatTime(existingTimer.remaining);
+                    timerBtn.innerHTML = `⏱️ ${window.TaskTimer.formatTime(existingTimer.remaining)}`;
                     timerBtn.classList.add('active');
                     if (existingTimer.remaining === 0) {
                         timerBtn.classList.add('complete');
@@ -347,7 +347,7 @@
             
             // Edit mode buttons
             if (window.EditMode && window.EditMode.isActive()) {
-                var editButtons = this.createEditButtons(task);
+                const editButtons = this.createEditButtons(task);
                 card.appendChild(editButtons);
             }
             
@@ -370,29 +370,29 @@
          * Create progress indicator
          */
         createProgressIndicator: function(task) {
-            var completed = 0;
-            var total = task.subtasks.length;
+            let completed = 0;
+            const total = task.subtasks.length;
             
             task.subtasks.forEach(function(subtask) {
                 if (subtask.completed) completed++;
             });
             
-            var progress = document.createElement('div');
+            const progress = document.createElement('div');
             progress.className = 'task-card__progress';
             
-            var progressBar = document.createElement('div');
+            const progressBar = document.createElement('div');
             progressBar.className = 'task-card__progress-bar';
             
-            var progressFill = document.createElement('div');
+            const progressFill = document.createElement('div');
             progressFill.className = 'task-card__progress-fill';
-            progressFill.style.width = (completed / total * 100) + '%';
+            progressFill.style.width = `${completed / total * 100}%`;
             
             progressBar.appendChild(progressFill);
             progress.appendChild(progressBar);
             
-            var progressText = document.createElement('div');
+            const progressText = document.createElement('div');
             progressText.className = 'task-card__progress-text';
-            progressText.textContent = completed + ' of ' + total + ' steps complete';
+            progressText.textContent = `${completed} of ${total} steps complete`;
             progress.appendChild(progressText);
             
             return progress;
@@ -402,18 +402,18 @@
          * Create edit mode buttons
          */
         createEditButtons: function(task) {
-            var taskDisplay = window.TaskDisplay;
-            var self = this;
+            const taskDisplay = window.TaskDisplay;
+            const self = this;
             
-            var container = document.createElement('div');
+            const container = document.createElement('div');
             container.className = 'task-card__edit-buttons';
             
             // Create arrow buttons container
-            var arrowContainer = document.createElement('div');
+            const arrowContainer = document.createElement('div');
             arrowContainer.className = 'task-arrows';
             
             // Up arrow button
-            var upBtn = document.createElement('button');
+            const upBtn = document.createElement('button');
             upBtn.className = 'task-arrow-up';
             upBtn.innerHTML = '↑';
             upBtn.setAttribute('aria-label', 'Move task up');
@@ -430,7 +430,7 @@
             }
             
             // Down arrow button
-            var downBtn = document.createElement('button');
+            const downBtn = document.createElement('button');
             downBtn.className = 'task-arrow-down';
             downBtn.innerHTML = '↓';
             downBtn.setAttribute('aria-label', 'Move task down');
@@ -451,7 +451,7 @@
             container.appendChild(arrowContainer);
             
             // Delete button
-            var deleteBtn = document.createElement('button');
+            const deleteBtn = document.createElement('button');
             deleteBtn.className = 'task-card__delete-btn';
             deleteBtn.innerHTML = '🗑';
             deleteBtn.setAttribute('aria-label', 'Delete task');
@@ -464,7 +464,7 @@
             container.appendChild(deleteBtn);
             
             // Menu button
-            var menuBtn = document.createElement('button');
+            const menuBtn = document.createElement('button');
             menuBtn.className = 'task-card__menu-btn';
             menuBtn.innerHTML = '⋯';
             menuBtn.setAttribute('aria-label', 'Task options');
@@ -481,20 +481,20 @@
          * Create add task card
          */
         createAddTaskCard: function() {
-            var taskDisplay = window.TaskDisplay;
+            const taskDisplay = window.TaskDisplay;
             
-            var card = document.createElement('div');
+            const card = document.createElement('div');
             card.className = 'task-card add-task-card';
             card.setAttribute('aria-label', 'Add new task');
             
-            var content = document.createElement('div');
+            const content = document.createElement('div');
             content.className = 'add-task-card__content';
             
-            var icon = document.createElement('div');
+            const icon = document.createElement('div');
             icon.className = 'add-task-card__icon';
             icon.textContent = '+';
             
-            var text = document.createElement('div');
+            const text = document.createElement('div');
             text.className = 'add-task-card__text';
             text.textContent = 'Add Task';
             
@@ -513,18 +513,18 @@
          * Create empty state
          */
         createEmptyState: function() {
-            var container = document.createElement('div');
+            const container = document.createElement('div');
             container.className = 'tasks-empty';
             
-            var icon = document.createElement('div');
+            const icon = document.createElement('div');
             icon.className = 'tasks-empty__icon';
             icon.textContent = '📝';
             
-            var text = document.createElement('div');
+            const text = document.createElement('div');
             text.className = 'tasks-empty__text';
             text.textContent = 'No tasks yet. Get started by adding your first task!';
             
-            var button = document.createElement('button');
+            const button = document.createElement('button');
             button.className = 'tasks-empty__button';
             button.innerHTML = '<span>+</span> Add Your First Task';
             button.onclick = function() {
@@ -552,7 +552,7 @@
                 return categoryId;
             }
             
-            for (var i = 0; i < window.defaultActivities.categories.length; i++) {
+            for (let i = 0; i < window.defaultActivities.categories.length; i++) {
                 if (window.defaultActivities.categories[i].id === categoryId) {
                     return window.defaultActivities.categories[i].name;
                 }

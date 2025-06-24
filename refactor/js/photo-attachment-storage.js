@@ -5,7 +5,7 @@
     'use strict';
 
     // Configuration based on research findings
-    var CONFIG = {
+    const CONFIG = {
         MAX_PHOTOS_PER_TASK: 3,  // Working memory limit
         MAX_VISIBLE_PHOTOS: 6,   // 3x2 grid
         THUMBNAIL_SIZE: 64,      // Standard thumbnail
@@ -20,7 +20,7 @@
     };
 
     // Photo categories with color coding
-    var PHOTO_CATEGORIES = {
+    const PHOTO_CATEGORIES = {
         memory_aid: { color: '#4A90E2', label: 'Reference' },
         before: { color: '#7ED321', label: 'Before' },
         after: { color: '#9013FE', label: 'After' },
@@ -28,7 +28,7 @@
     };
 
     // Database schema for offline storage
-    var PHOTO_SCHEMA = {
+    const PHOTO_SCHEMA = {
         name: 'stackmap_photos',
         version: 1,
         stores: {
@@ -47,7 +47,7 @@
     };
 
     // Photo attachment storage manager - Singleton pattern
-    var PhotoAttachmentStorage = function() {
+    const PhotoAttachmentStorage = function() {
         this.db = null;
         this.syncQueue = [];
         this.syncInProgress = false;
@@ -75,7 +75,7 @@
     PhotoAttachmentStorage.prototype = {
         // Initialize the storage system
         init: function() {
-            var self = this;
+            const self = this;
             
             // Create ready promise for modern browsers
             if (typeof Promise !== 'undefined') {
@@ -90,7 +90,7 @@
         
         // Initialize the database
         _initDatabase: function(resolve, reject, retryCount) {
-            var self = this;
+            const self = this;
             retryCount = retryCount || 0;
             
             // Check for private browsing or unsupported
@@ -104,12 +104,12 @@
             }
             
             // Open IndexedDB
-            var request;
+            let request;
             try {
                 request = indexedDB.open(PHOTO_SCHEMA.name, PHOTO_SCHEMA.version);
             } catch (e) {
                 // Handle private browsing mode
-                var error = new Error('Failed to open database: ' + e.message);
+                var error = new Error(`Failed to open database: ${e.message}`);
                 self.initError = error;
                 self.isReady = false;
                 if (reject) reject(error);
@@ -118,14 +118,14 @@
             }
             
             request.onerror = function(event) {
-                var errorMsg = event.target.error ? String(event.target.error.message || event.target.error) : 'Unknown error';
-                var error = new Error('Failed to open photo database: ' + errorMsg);
+                const errorMsg = event.target.error ? String(event.target.error.message || event.target.error) : 'Unknown error';
+                const error = new Error(`Failed to open photo database: ${errorMsg}`);
                 console.error('Database error:', error);
                 
                 // Retry with exponential backoff
                 if (retryCount < self.maxRetries) {
-                    var delay = 1000 * Math.pow(2, retryCount); // 1s, 2s, 4s
-                    console.log('Retrying database connection in ' + delay + 'ms...');
+                    const delay = 1000 * Math.pow(2, retryCount); // 1s, 2s, 4s
+                    console.log(`Retrying database connection in ${delay}ms...`);
                     setTimeout(function() {
                         self._initDatabase(resolve, reject, retryCount + 1);
                     }, delay);
@@ -158,11 +158,11 @@
             };
             
             request.onupgradeneeded = function(event) {
-                var db = event.target.result;
+                const db = event.target.result;
                 
                 // Create photo store
                 if (!db.objectStoreNames.contains('photos')) {
-                    var photoStore = db.createObjectStore('photos', { 
+                    const photoStore = db.createObjectStore('photos', { 
                         keyPath: 'id' 
                     });
                     
@@ -185,7 +185,7 @@
 
         // Execute ready callbacks
         _executeReadyCallbacks: function(success, error) {
-            var callbacks = this.readyCallbacks;
+            const callbacks = this.readyCallbacks;
             this.readyCallbacks = []; // Clear to prevent memory leak
             callbacks.forEach(function(callback) {
                 try {
@@ -198,7 +198,7 @@
         
         // Reconnect to database after unexpected close
         _reconnectDatabase: function() {
-            var self = this;
+            const self = this;
             console.log('Attempting to reconnect to database...');
             
             // Reset state
@@ -241,19 +241,19 @@
         // Calculate cache size based on device memory
         _calculateCacheSize: function() {
             // Estimate available memory (fallback for older browsers)
-            var totalMemory = 512; // Default 512MB
+            let totalMemory = 512; // Default 512MB
             
             if ('deviceMemory' in navigator) {
                 totalMemory = navigator.deviceMemory * 1024; // Convert GB to MB
             }
             
-            var cacheSize = Math.floor(totalMemory * CONFIG.CACHE_PERCENT);
+            const cacheSize = Math.floor(totalMemory * CONFIG.CACHE_PERCENT);
             return Math.max(CONFIG.MIN_CACHE_MB, Math.min(CONFIG.MAX_CACHE_MB, cacheSize));
         },
 
         // Add photo to task
         addPhoto: function(taskId, photoData, callback) {
-            var self = this;
+            const self = this;
             
             // Wait for database to be ready
             this.whenReady(function(error, ready) {
@@ -270,13 +270,13 @@
                 if (existingPhotos.length >= CONFIG.MAX_PHOTOS_PER_TASK) {
                     callback({
                         success: false,
-                        error: 'Photo limit reached. Maximum ' + CONFIG.MAX_PHOTOS_PER_TASK + ' photos per task.'
+                        error: `Photo limit reached. Maximum ${CONFIG.MAX_PHOTOS_PER_TASK} photos per task.`
                     });
                     return;
                 }
                 
                 // Create photo record
-                var photo = {
+                const photo = {
                     id: self._generateId(),
                     taskId: taskId,
                     localUri: photoData.uri,
@@ -290,9 +290,9 @@
                 };
                 
                 // Store photo
-                var transaction = self.db.transaction(['photos'], 'readwrite');
-                var store = transaction.objectStore('photos');
-                var request = store.add(photo);
+                const transaction = self.db.transaction(['photos'], 'readwrite');
+                const store = transaction.objectStore('photos');
+                const request = store.add(photo);
                 
                 request.onsuccess = function() {
                     // Generate thumbnail asynchronously
@@ -309,16 +309,16 @@
                 };
                 
                 request.onerror = function(event) {
-                    var error = event.target.error;
-                    var errorName = error && error.name ? String(error.name) : '';
-                    var errorMessage = 'Failed to store photo';
+                    const error = event.target.error;
+                    const errorName = error && error.name ? String(error.name) : '';
+                    let errorMessage = 'Failed to store photo';
                     
                     // Handle specific errors
                     if (errorName === 'QuotaExceededError') {
                         errorMessage = 'Storage quota exceeded. Please free up space.';
                         console.error('Photo storage quota exceeded');
                     } else if (errorName) {
-                        errorMessage = 'Storage error: ' + errorName;
+                        errorMessage = `Storage error: ${errorName}`;
                     }
                     
                     callback({
@@ -332,7 +332,7 @@
 
         // Get photos for a specific task
         getPhotosForTask: function(taskId, callback) {
-            var self = this;
+            const self = this;
             
             // Wait for database to be ready
             this.whenReady(function(error, ready) {
@@ -343,13 +343,13 @@
                     return;
                 }
                 
-                var transaction = self.db.transaction(['photos'], 'readonly');
-                var store = transaction.objectStore('photos');
-                var index = store.index('taskId');
-                var request = index.getAll(taskId);
+                const transaction = self.db.transaction(['photos'], 'readonly');
+                const store = transaction.objectStore('photos');
+                const index = store.index('taskId');
+                const request = index.getAll(taskId);
                 
                 request.onsuccess = function() {
-                    var photos = request.result || [];
+                    const photos = request.result || [];
                     
                     // Sort by timestamp
                     photos.sort(function(a, b) {
@@ -367,7 +367,7 @@
 
         // Delete photo
         deletePhoto: function(photoId, callback) {
-            var self = this;
+            const self = this;
             
             // Wait for database to be ready
             this.whenReady(function(error, ready) {
@@ -379,19 +379,19 @@
                     return;
                 }
                 
-                var transaction = self.db.transaction(['photos', 'thumbnails'], 'readwrite');
+                const transaction = self.db.transaction(['photos', 'thumbnails'], 'readwrite');
             
             // Delete photo record
-            var photoStore = transaction.objectStore('photos');
+            const photoStore = transaction.objectStore('photos');
             photoStore.delete(photoId);
             
             // Delete thumbnail
-            var thumbnailStore = transaction.objectStore('thumbnails');
+            const thumbnailStore = transaction.objectStore('thumbnails');
             thumbnailStore.delete(photoId);
             
             transaction.oncomplete = function() {
                 // Remove from sync queue if present
-                var index = self.syncQueue.indexOf(photoId);
+                const index = self.syncQueue.indexOf(photoId);
                 if (index > -1) {
                     self.syncQueue.splice(index, 1);
                 }
@@ -407,7 +407,7 @@
 
         // Update photo caption
         updateCaption: function(photoId, caption, callback) {
-            var self = this;
+            const self = this;
             
             // Validate caption length
             if (caption.length > CONFIG.MAX_CAPTION_LENGTH) {
@@ -424,12 +424,12 @@
                     return;
                 }
                 
-                var transaction = self.db.transaction(['photos'], 'readwrite');
-            var store = transaction.objectStore('photos');
-            var request = store.get(photoId);
+                const transaction = self.db.transaction(['photos'], 'readwrite');
+            const store = transaction.objectStore('photos');
+            const request = store.get(photoId);
             
             request.onsuccess = function() {
-                var photo = request.result;
+                const photo = request.result;
                 if (photo) {
                     photo.caption = caption;
                     photo.uploadStatus = 'pending'; // Mark for re-sync
@@ -445,19 +445,19 @@
 
         // Generate thumbnail for photo
         _generateThumbnail: function(photoId, imageUri) {
-            var self = this;
-            var startTime = performance.now();
+            const self = this;
+            const startTime = performance.now();
             
             // Create image element
-            var img = new Image();
+            const img = new Image();
             img.onload = function() {
                 // Create canvas for thumbnail
-                var canvas = document.createElement('canvas');
+                const canvas = document.createElement('canvas');
                 canvas.width = CONFIG.THUMBNAIL_SIZE;
                 canvas.height = CONFIG.THUMBNAIL_SIZE;
                 
                 // Get context with memory optimization hints
-                var ctx = canvas.getContext('2d', {
+                const ctx = canvas.getContext('2d', {
                     // Hint for memory optimization
                     alpha: false,
                     desynchronized: true
@@ -467,9 +467,9 @@
                 ctx.imageSmoothingEnabled = false;
                 
                 // Calculate crop dimensions to maintain aspect ratio
-                var sourceSize = Math.min(img.width, img.height);
-                var sourceX = (img.width - sourceSize) / 2;
-                var sourceY = (img.height - sourceSize) / 2;
+                const sourceSize = Math.min(img.width, img.height);
+                const sourceX = (img.width - sourceSize) / 2;
+                const sourceY = (img.height - sourceSize) / 2;
                 
                 // Draw thumbnail
                 ctx.drawImage(img, sourceX, sourceY, sourceSize, sourceSize,
@@ -478,10 +478,10 @@
                 // Convert to blob with aggressive compression
                 canvas.toBlob(function(blob) {
                     // Create blob URL for immediate use
-                    var blobUrl = URL.createObjectURL(blob);
+                    const blobUrl = URL.createObjectURL(blob);
                     
                     // Store thumbnail
-                    var reader = new FileReader();
+                    const reader = new FileReader();
                     reader.onloadend = function() {
                         // Ensure database is still ready before accessing
                         self.whenReady(function(error, ready) {
@@ -492,8 +492,8 @@
                             }
                             
                             try {
-                                var transaction = self.db.transaction(['thumbnails'], 'readwrite');
-                                var store = transaction.objectStore('thumbnails');
+                                const transaction = self.db.transaction(['thumbnails'], 'readwrite');
+                                const store = transaction.objectStore('thumbnails');
                                 
                                 store.put({
                                     photoId: photoId,
@@ -508,9 +508,9 @@
                                 }, 1000);
                                 
                                 // Log performance
-                                var loadTime = performance.now() - startTime;
+                                const loadTime = performance.now() - startTime;
                                 if (loadTime > 100) {
-                                    console.warn('Slow thumbnail generation:', loadTime + 'ms');
+                                    console.warn('Slow thumbnail generation:', `${loadTime}ms`);
                                 }
                             } catch (e) {
                                 console.error('Error saving thumbnail:', e);
@@ -528,8 +528,8 @@
         // Detect photo category based on content/context
         _detectCategory: function(photoData) {
             // Simple heuristic - can be enhanced with ML later
-            var filename = photoData.filename || '';
-            var lowerName = filename.toLowerCase();
+            const filename = photoData.filename || '';
+            const lowerName = filename.toLowerCase();
             
             if (lowerName.includes('before')) return 'before';
             if (lowerName.includes('after')) return 'after';
@@ -540,7 +540,7 @@
 
         // Schedule background sync
         _scheduleSyncTask: function() {
-            var self = this;
+            const self = this;
             
             // Use periodic sync if available
             if ('serviceWorker' in navigator && 'SyncManager' in window) {
@@ -578,7 +578,7 @@
 
         // Sync photos to server
         _syncPhotos: function() {
-            var self = this;
+            const self = this;
             
             if (self.syncInProgress || !navigator.onLine) {
                 return;
@@ -595,13 +595,13 @@
                 
                 try {
                     // Get pending photos
-                    var transaction = self.db.transaction(['photos'], 'readonly');
-                    var store = transaction.objectStore('photos');
-                    var index = store.index('uploadStatus');
-                    var request = index.getAll('pending');
+                    const transaction = self.db.transaction(['photos'], 'readonly');
+                    const store = transaction.objectStore('photos');
+                    const index = store.index('uploadStatus');
+                    const request = index.getAll('pending');
                     
                     request.onsuccess = function() {
-                        var pendingPhotos = request.result || [];
+                        const pendingPhotos = request.result || [];
                         
                         if (pendingPhotos.length === 0) {
                             self.syncInProgress = false;
@@ -609,8 +609,8 @@
                         }
                         
                         // Process in batches
-                        var batches = [];
-                        for (var i = 0; i < pendingPhotos.length; i += CONFIG.BATCH_SIZE) {
+                        const batches = [];
+                        for (let i = 0; i < pendingPhotos.length; i += CONFIG.BATCH_SIZE) {
                             batches.push(pendingPhotos.slice(i, i + CONFIG.BATCH_SIZE));
                         }
                         
@@ -630,15 +630,15 @@
 
         // Process sync batches
         _processSyncBatches: function(batches, index) {
-            var self = this;
+            const self = this;
             
             if (index >= batches.length) {
                 self.syncInProgress = false;
                 return;
             }
             
-            var batch = batches[index];
-            var completed = 0;
+            const batch = batches[index];
+            let completed = 0;
             
             batch.forEach(function(photo) {
                 self._uploadPhoto(photo, function(success) {
@@ -656,7 +656,7 @@
 
         // Upload individual photo
         _uploadPhoto: function(photo, callback) {
-            var self = this;
+            const self = this;
             
             // Placeholder for actual upload logic
             // In production, this would upload to your server
@@ -674,8 +674,8 @@
                     
                     try {
                         // Update status
-                        var transaction = self.db.transaction(['photos'], 'readwrite');
-                        var store = transaction.objectStore('photos');
+                        const transaction = self.db.transaction(['photos'], 'readwrite');
+                        const store = transaction.objectStore('photos');
                         
                         photo.uploadStatus = 'uploaded';
                         store.put(photo);
@@ -691,16 +691,16 @@
 
         // Generate unique ID
         _generateId: function() {
-            return 'photo_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            return `photo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
         },
 
         // Get upload hint based on current photo count
         getUploadHint: function(currentCount) {
             if (currentCount === 0) {
-                return 'Add up to ' + CONFIG.MAX_PHOTOS_PER_TASK + ' photos';
+                return `Add up to ${CONFIG.MAX_PHOTOS_PER_TASK} photos`;
             }
             if (currentCount < CONFIG.MAX_PHOTOS_PER_TASK) {
-                return 'Add ' + (CONFIG.MAX_PHOTOS_PER_TASK - currentCount) + ' more';
+                return `Add ${CONFIG.MAX_PHOTOS_PER_TASK - currentCount} more`;
             }
             return 'Photo limit reached';
         }

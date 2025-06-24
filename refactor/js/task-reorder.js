@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var TaskReorder = {
+    const TaskReorder = {
         // Debounce state
         moveDebounceTimer: null,
         isMoving: false,
@@ -16,7 +16,7 @@
          * Move task up in the list
          */
         moveUp: function(task) {
-            var self = this;
+            const self = this;
             
             // Debounce rapid clicks
             if (self.isMoving) return;
@@ -27,7 +27,7 @@
             }
             
             try {
-                var tasks = window.TaskDisplay.getUserTasks();
+                const tasks = window.TaskDisplay.getUserTasks();
                 
                 // Handle empty or single task case
                 if (!tasks || tasks.length <= 1) {
@@ -35,10 +35,10 @@
                     return;
                 }
                 
-                var index = -1;
+                let index = -1;
                 
                 // Find task index
-                for (var i = 0; i < tasks.length; i++) {
+                for (let i = 0; i < tasks.length; i++) {
                     if (tasks[i].id === task.id) {
                         index = i;
                         break;
@@ -56,7 +56,7 @@
                 self.isMoving = true;
                 
                 // Simple array swap - no sorting needed
-                var temp = tasks[index - 1];
+                const temp = tasks[index - 1];
                 tasks[index - 1] = tasks[index];
                 tasks[index] = temp;
                 
@@ -81,7 +81,7 @@
          * Move task down in the list
          */
         moveDown: function(task) {
-            var self = this;
+            const self = this;
             
             // Debounce rapid clicks
             if (self.isMoving) return;
@@ -92,7 +92,7 @@
             }
             
             try {
-                var tasks = window.TaskDisplay.getUserTasks();
+                const tasks = window.TaskDisplay.getUserTasks();
                 
                 // Handle empty or single task case
                 if (!tasks || tasks.length <= 1) {
@@ -100,10 +100,10 @@
                     return;
                 }
                 
-                var index = -1;
+                let index = -1;
                 
                 // Find task index
-                for (var i = 0; i < tasks.length; i++) {
+                for (let i = 0; i < tasks.length; i++) {
                     if (tasks[i].id === task.id) {
                         index = i;
                         break;
@@ -121,7 +121,7 @@
                 self.isMoving = true;
                 
                 // Simple array swap - no sorting needed
-                var temp = tasks[index + 1];
+                const temp = tasks[index + 1];
                 tasks[index + 1] = tasks[index];
                 tasks[index] = temp;
                 
@@ -146,11 +146,11 @@
          * Update order fields based on position
          */
         updateOrderFields: function(tasks) {
-            var baseTime = Date.now();
+            const baseTime = Date.now();
             
             // Update order based on position
             // Higher order values appear first
-            for (var i = 0; i < tasks.length; i++) {
+            for (let i = 0; i < tasks.length; i++) {
                 tasks[i].order = baseTime - (i * 1000);
             }
         },
@@ -159,7 +159,7 @@
          * Save tasks and update DOM efficiently
          */
         saveAndUpdateDOM: function(taskId, newIndex, direction) {
-            var self = this;
+            const self = this;
             
             try {
                 // Save tasks with error handling
@@ -173,7 +173,7 @@
                 });
                 
                 // For better performance, swap DOM elements instead of full re-render
-                var taskElement = document.querySelector('[data-task-id="' + taskId + '"]');
+                const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
                 if (!taskElement) {
                     // Fallback to full render if element not found
                     window.TaskDisplay.render();
@@ -181,11 +181,11 @@
                 }
                 
                 // Add moving class for animation
-                taskElement.classList.add('task-moving-' + direction);
+                taskElement.classList.add(`task-moving-${direction}`);
                 
                 // Get all task elements
-                var container = taskElement.parentNode;
-                var allTasks = container.querySelectorAll('.task-item');
+                const container = taskElement.parentNode;
+                const allTasks = container.querySelectorAll('.task-item');
                 
                 // Perform DOM swap
                 if (direction === 'up' && newIndex >= 0) {
@@ -200,7 +200,7 @@
                 
                 // Remove animation class after transition
                 setTimeout(function() {
-                    taskElement.classList.remove('task-moving-' + direction);
+                    taskElement.classList.remove(`task-moving-${direction}`);
                     // Announce to screen readers
                     self.announceMove(direction);
                 }, 200);
@@ -219,11 +219,11 @@
          * Announce move to screen readers
          */
         announceMove: function(direction) {
-            var announcement = document.createElement('div');
+            const announcement = document.createElement('div');
             announcement.setAttribute('role', 'status');
             announcement.setAttribute('aria-live', 'polite');
             announcement.className = 'sr-only';
-            announcement.textContent = 'Task moved ' + direction;
+            announcement.textContent = `Task moved ${direction}`;
             
             document.body.appendChild(announcement);
             
@@ -239,11 +239,11 @@
          */
         scrollToTask: function(taskId) {
             setTimeout(function() {
-                var taskElement = document.querySelector('[data-task-id="' + taskId + '"]');
+                const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
                 if (taskElement) {
                     // Check if task is out of viewport
-                    var rect = taskElement.getBoundingClientRect();
-                    var viewHeight = window.innerHeight || document.documentElement.clientHeight;
+                    const rect = taskElement.getBoundingClientRect();
+                    const viewHeight = window.innerHeight || document.documentElement.clientHeight;
                     
                     if (rect.top < 100 || rect.bottom > viewHeight - 100) {
                         taskElement.scrollIntoView({
@@ -259,10 +259,10 @@
          * Check if task can move up
          */
         canMoveUp: function(task) {
-            var tasks = window.TaskDisplay.getUserTasks();
-            var index = -1;
+            const tasks = window.TaskDisplay.getUserTasks();
+            let index = -1;
             
-            for (var i = 0; i < tasks.length; i++) {
+            for (let i = 0; i < tasks.length; i++) {
                 if (tasks[i].id === task.id) {
                     index = i;
                     break;
@@ -276,10 +276,10 @@
          * Check if task can move down
          */
         canMoveDown: function(task) {
-            var tasks = window.TaskDisplay.getUserTasks();
-            var index = -1;
+            const tasks = window.TaskDisplay.getUserTasks();
+            let index = -1;
             
-            for (var i = 0; i < tasks.length; i++) {
+            for (let i = 0; i < tasks.length; i++) {
                 if (tasks[i].id === task.id) {
                     index = i;
                     break;

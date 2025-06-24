@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var StorageErrorHandler = {
+    const StorageErrorHandler = {
         // Error type mapping
         ErrorTypes: {
             MIGRATION_FAILED: 'MIGRATION_FAILED',
@@ -72,22 +72,22 @@
         
         // Get legacy message format for backward compatibility
         getLegacyMessage: function(errorType) {
-            var messageObj = this.messages[errorType] || this.messages.UNKNOWN_ERROR;
-            return messageObj.title + " " + messageObj.message + " " + messageObj.icon;
+            const messageObj = this.messages[errorType] || this.messages.UNKNOWN_ERROR;
+            return `${messageObj.title} ${messageObj.message} ${messageObj.icon}`;
         },
         
         /**
          * Handle storage error with RSD-aware response
          */
         handle: function(error, context) {
-            var self = this;
-            var errorType = self.identifyErrorType(error);
-            var messageObj = self.messages[errorType] || self.messages.UNKNOWN_ERROR;
+            const self = this;
+            const errorType = self.identifyErrorType(error);
+            const messageObj = self.messages[errorType] || self.messages.UNKNOWN_ERROR;
             
-            console.error('[Storage Error]', context + ':', error);
+            console.error('[Storage Error]', `${context}:`, error);
             
             // Create error response
-            var errorResponse = {
+            const errorResponse = {
                 type: errorType,
                 title: messageObj.title,
                 message: messageObj.message,
@@ -119,8 +119,8 @@
         identifyErrorType: function(error) {
             if (!error) return this.ErrorTypes.UNKNOWN_ERROR;
             
-            var message = (error.message || '').toLowerCase();
-            var code = (error.code || '').toLowerCase();
+            const message = (error.message || '').toLowerCase();
+            const code = (error.code || '').toLowerCase();
             
             // SQLite specific errors
             if (message.includes('database is locked') || code === 'sqlite_busy') {
@@ -168,27 +168,27 @@
          * Check if error is recoverable
          */
         isRecoverable: function(errorType) {
-            var recoverableErrors = [
+            const recoverableErrors = [
                 this.ErrorTypes.DB_LOCKED,
                 this.ErrorTypes.NETWORK_ERROR,
                 this.ErrorTypes.CONNECTION_FAILED
             ];
             
-            return recoverableErrors.indexOf(errorType) !== -1;
+            return recoverableErrors.includes(errorType);
         },
         
         /**
          * Check if operation can be retried
          */
         isRetryable: function(errorType) {
-            var retryableErrors = [
+            const retryableErrors = [
                 this.ErrorTypes.DB_LOCKED,
                 this.ErrorTypes.NETWORK_ERROR,
                 this.ErrorTypes.CONNECTION_FAILED,
                 this.ErrorTypes.MIGRATION_FAILED
             ];
             
-            return retryableErrors.indexOf(errorType) !== -1;
+            return retryableErrors.includes(errorType);
         },
         
         /**
@@ -196,16 +196,16 @@
          */
         showNotification: function(messageObj, errorType) {
             // Only show critical errors to user
-            var criticalErrors = [
+            const criticalErrors = [
                 this.ErrorTypes.QUOTA_EXCEEDED,
                 this.ErrorTypes.PERMISSION_DENIED
             ];
             
-            if (criticalErrors.indexOf(errorType) !== -1) {
+            if (criticalErrors.includes(errorType)) {
                 // If notification system exists, use it
                 if (window.showUserNotification) {
                     // Use 'info' type instead of 'error' to avoid red/negative colors
-                    window.showUserNotification(messageObj.title + ': ' + messageObj.message, 'info');
+                    window.showUserNotification(`${messageObj.title}: ${messageObj.message}`, 'info');
                 } else if (window.StackMapMessaging && window.StackMapMessaging.showToast) {
                     // Use the messaging system with RSD-safe styling
                     window.StackMapMessaging.showToast({
@@ -217,7 +217,7 @@
                     });
                 } else {
                     // Simple fallback
-                    console.log('[User Notification]', messageObj.title + ': ' + messageObj.message);
+                    console.log('[User Notification]', `${messageObj.title}: ${messageObj.message}`);
                 }
             }
         },
@@ -243,18 +243,16 @@
          * Create retry handler with exponential backoff
          */
         createRetryHandler: function(operation, maxRetries) {
-            var self = this;
+            const self = this;
             maxRetries = maxRetries || 3;
             
-            return function retryOperation(attempt) {
-                attempt = attempt || 1;
-                
+            return function retryOperation(attempt = 1) {
                 return operation().catch(function(error) {
-                    var errorResponse = self.handle(error, 'Retry attempt ' + attempt);
+                    const errorResponse = self.handle(error, `Retry attempt ${attempt}`);
                     
                     if (errorResponse.retryable && attempt < maxRetries) {
                         // Exponential backoff: 100ms, 200ms, 400ms
-                        var delay = Math.min(100 * Math.pow(2, attempt - 1), 2000);
+                        const delay = Math.min(100 * Math.pow(2, attempt - 1), 2000);
                         
                         return new Promise(function(resolve) {
                             setTimeout(resolve, delay);
@@ -273,19 +271,19 @@
          * Implements Phase 4 auto-recovery without user intervention
          */
         autoRecover: function(operation, error, context) {
-            var self = this;
-            var errorType = self.identifyErrorType(error);
+            const self = this;
+            const errorType = self.identifyErrorType(error);
             
             // Track recovery attempts
             if (!self.recoveryAttempts) {
                 self.recoveryAttempts = {};
             }
             
-            var operationKey = context || 'unknown';
+            const operationKey = context || 'unknown';
             self.recoveryAttempts[operationKey] = (self.recoveryAttempts[operationKey] || 0) + 1;
             
             // Show encouraging message immediately
-            var messageObj = self.messages[errorType] || self.messages.UNKNOWN_ERROR;
+            const messageObj = self.messages[errorType] || self.messages.UNKNOWN_ERROR;
             if (window.StackMapMessaging && window.StackMapMessaging.showToast) {
                 window.StackMapMessaging.showToast({
                     type: 'info',
@@ -334,7 +332,7 @@
          * Retry operation with exponential backoff
          */
         retryWithBackoff: function(operation, initialDelay, maxAttempts) {
-            var attempt = 0;
+            let attempt = 0;
             
             function tryOperation() {
                 return operation().catch(function(error) {
@@ -343,7 +341,7 @@
                         throw error;
                     }
                     
-                    var delay = initialDelay * Math.pow(2, attempt - 1);
+                    const delay = initialDelay * Math.pow(2, attempt - 1);
                     return new Promise(function(resolve) {
                         setTimeout(resolve, delay);
                     }).then(tryOperation);
@@ -406,7 +404,7 @@
          * Get friendly suggestions for error resolution
          */
         getSuggestions: function(errorType) {
-            var suggestions = {
+            const suggestions = {
                 MIGRATION_FAILED: [
                     'Your tasks are safe in a backup',
                     'Try closing other apps',

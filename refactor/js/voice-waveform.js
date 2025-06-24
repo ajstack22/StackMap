@@ -3,7 +3,7 @@
  * 60fps rendering with high contrast for ADHD users
  */
 
-var VoiceWaveform = (function() {
+const VoiceWaveform = (function() {
   'use strict';
   
   // Constructor
@@ -53,8 +53,8 @@ var VoiceWaveform = (function() {
   
   // Set up canvas for high DPI displays
   VoiceWaveform.prototype.setupCanvas = function() {
-    var dpr = window.devicePixelRatio || 1;
-    var rect = this.canvas.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const rect = this.canvas.getBoundingClientRect();
     
     // Set actual canvas size
     this.canvas.width = rect.width * dpr;
@@ -64,8 +64,8 @@ var VoiceWaveform = (function() {
     this.ctx.scale(dpr, dpr);
     
     // Set canvas CSS size
-    this.canvas.style.width = rect.width + 'px';
-    this.canvas.style.height = rect.height + 'px';
+    this.canvas.style.width = `${rect.width}px`;
+    this.canvas.style.height = `${rect.height}px`;
     
     // Recalculate bar count
     this.barCount = Math.floor(rect.width / (this.barWidth + this.barGap));
@@ -73,12 +73,12 @@ var VoiceWaveform = (function() {
   
   // Connect to audio stream for recording
   VoiceWaveform.prototype.connectStream = function(stream) {
-    var self = this;
+    const self = this;
     
     try {
       // Create audio context if needed
       if (!this.audioContext) {
-        var AudioContext = window.AudioContext || window.webkitAudioContext;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.audioContext = new AudioContext();
       }
       
@@ -88,11 +88,11 @@ var VoiceWaveform = (function() {
       this.analyser.smoothingTimeConstant = this.smoothing;
       
       // Connect stream to analyser
-      var source = this.audioContext.createMediaStreamSource(stream);
+      const source = this.audioContext.createMediaStreamSource(stream);
       source.connect(this.analyser);
       
       // Create data array for frequency data
-      var bufferLength = this.analyser.frequencyBinCount;
+      const bufferLength = this.analyser.frequencyBinCount;
       this.dataArray = new Uint8Array(bufferLength);
       
       return true;
@@ -104,12 +104,12 @@ var VoiceWaveform = (function() {
   
   // Connect to audio element for playback
   VoiceWaveform.prototype.connectAudio = function(audioElement) {
-    var self = this;
+    const self = this;
     
     try {
       // Create audio context if needed
       if (!this.audioContext) {
-        var AudioContext = window.AudioContext || window.webkitAudioContext;
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
         this.audioContext = new AudioContext();
       }
       
@@ -119,12 +119,12 @@ var VoiceWaveform = (function() {
       this.analyser.smoothingTimeConstant = this.smoothing;
       
       // Connect audio element to analyser
-      var source = this.audioContext.createMediaElementSource(audioElement);
+      const source = this.audioContext.createMediaElementSource(audioElement);
       source.connect(this.analyser);
       source.connect(this.audioContext.destination);
       
       // Create data array
-      var bufferLength = this.analyser.frequencyBinCount;
+      const bufferLength = this.analyser.frequencyBinCount;
       this.dataArray = new Uint8Array(bufferLength);
       
       return true;
@@ -168,9 +168,9 @@ var VoiceWaveform = (function() {
   
   // Main draw loop
   VoiceWaveform.prototype.draw = function() {
-    var self = this;
-    var now = Date.now();
-    var elapsed = now - this.lastDrawTime;
+    const self = this;
+    const now = Date.now();
+    const elapsed = now - this.lastDrawTime;
     
     // Request next frame
     if (this.isActive) {
@@ -188,7 +188,7 @@ var VoiceWaveform = (function() {
     this.clear();
     
     // Get audio data
-    var levels = this.getAudioLevels();
+    const levels = this.getAudioLevels();
     
     // Update accessibility audio level
     this.updateAudioLevel(levels);
@@ -199,34 +199,34 @@ var VoiceWaveform = (function() {
   
   // Get audio levels from analyser
   VoiceWaveform.prototype.getAudioLevels = function() {
-    var levels = [];
+    const levels = [];
     
     if (this.analyser && this.dataArray) {
       // Get frequency data
       this.analyser.getByteFrequencyData(this.dataArray);
       
       // Sample data points for visualization
-      var samplesPerBar = Math.floor(this.dataArray.length / this.barCount);
+      const samplesPerBar = Math.floor(this.dataArray.length / this.barCount);
       
-      for (var i = 0; i < this.barCount; i++) {
-        var sum = 0;
-        var start = i * samplesPerBar;
-        var end = start + samplesPerBar;
+      for (let i = 0; i < this.barCount; i++) {
+        let sum = 0;
+        const start = i * samplesPerBar;
+        const end = start + samplesPerBar;
         
         // Average the samples for this bar
-        for (var j = start; j < end && j < this.dataArray.length; j++) {
+        for (let j = start; j < end && j < this.dataArray.length; j++) {
           sum += this.dataArray[j];
         }
         
-        var average = sum / samplesPerBar;
-        var normalized = average / 255; // Normalize to 0-1
+        const average = sum / samplesPerBar;
+        const normalized = average / 255; // Normalize to 0-1
         levels.push(normalized);
       }
     } else {
       // Generate idle animation
-      for (var k = 0; k < this.barCount; k++) {
-        var phase = Date.now() / 1000 + k * 0.1;
-        var idle = (Math.sin(phase) + 1) / 2 * 0.1; // 0-0.1 range
+      for (let k = 0; k < this.barCount; k++) {
+        const phase = Date.now() / 1000 + k * 0.1;
+        const idle = (Math.sin(phase) + 1) / 2 * 0.1; // 0-0.1 range
         levels.push(idle);
       }
     }
@@ -236,17 +236,17 @@ var VoiceWaveform = (function() {
   
   // Draw visualization bars
   VoiceWaveform.prototype.drawBars = function(levels) {
-    var rect = this.canvas.getBoundingClientRect();
-    var centerY = rect.height / 2;
+    const rect = this.canvas.getBoundingClientRect();
+    const centerY = rect.height / 2;
     
     // Set color based on state
     this.ctx.fillStyle = this.colors[this.currentState];
     
     // Draw each bar
-    for (var i = 0; i < levels.length; i++) {
-      var x = i * (this.barWidth + this.barGap);
-      var height = Math.max(this.minHeight, levels[i] * this.maxHeight);
-      var y = centerY - height / 2;
+    for (let i = 0; i < levels.length; i++) {
+      const x = i * (this.barWidth + this.barGap);
+      const height = Math.max(this.minHeight, levels[i] * this.maxHeight);
+      const y = centerY - height / 2;
       
       // Draw bar with rounded corners
       this.roundRect(x, y, this.barWidth, height, 1);
@@ -271,13 +271,13 @@ var VoiceWaveform = (function() {
   
   // Clear canvas
   VoiceWaveform.prototype.clear = function() {
-    var rect = this.canvas.getBoundingClientRect();
+    const rect = this.canvas.getBoundingClientRect();
     this.ctx.clearRect(0, 0, rect.width, rect.height);
   };
   
   // Update audio level for accessibility
   VoiceWaveform.prototype.updateAudioLevel = function(levels) {
-    var now = Date.now();
+    const now = Date.now();
     
     if (now - this.lastAudioLevelUpdate < this.audioLevelUpdateInterval) {
       return;
@@ -286,14 +286,14 @@ var VoiceWaveform = (function() {
     this.lastAudioLevelUpdate = now;
     
     // Calculate average level
-    var sum = 0;
-    for (var i = 0; i < levels.length; i++) {
+    let sum = 0;
+    for (let i = 0; i < levels.length; i++) {
       sum += levels[i];
     }
-    var average = sum / levels.length;
+    const average = sum / levels.length;
     
     // Determine level category
-    var level;
+    let level;
     if (average < 0.1) {
       level = 'silent';
     } else if (average < 0.3) {

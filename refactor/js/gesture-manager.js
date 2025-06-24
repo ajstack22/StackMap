@@ -558,8 +558,8 @@
         showGestureStart: function(x, y) {
             const indicator = document.createElement('div');
             indicator.className = 'gesture-start-indicator';
-            indicator.style.left = x + 'px';
-            indicator.style.top = y + 'px';
+            indicator.style.left = `${x}px`;
+            indicator.style.top = `${y}px`;
             document.body.appendChild(indicator);
             
             setTimeout(() => indicator.remove(), 500);
@@ -568,8 +568,8 @@
         showGestureTrail: function(x, y) {
             const trail = document.createElement('div');
             trail.className = 'gesture-trail-point';
-            trail.style.left = x + 'px';
-            trail.style.top = y + 'px';
+            trail.style.left = `${x}px`;
+            trail.style.top = `${y}px`;
             
             const container = document.getElementById('gesture-trail') || 
                              this.createTrailContainer();

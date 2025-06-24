@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var TimerManager = {
+    const TimerManager = {
         // Registry of all active timers
         timers: {},
         timerCounter: 0,
@@ -16,15 +16,15 @@
          * Set a managed timeout
          */
         setTimeout: function(callback, delay, context) {
-            var self = this;
-            var timerId = ++self.timerCounter;
+            const self = this;
+            const timerId = ++self.timerCounter;
             
             // Wrap callback to clean up after execution
-            var wrappedCallback = function() {
+            const wrappedCallback = function() {
                 delete self.timers[timerId];
                 
                 // Extract minimal data to prevent closure retention
-                var minimalContext = context ? self.extractMinimalData(context) : null;
+                const minimalContext = context ? self.extractMinimalData(context) : null;
                 
                 try {
                     callback.call(null, minimalContext);
@@ -33,7 +33,7 @@
                 }
             };
             
-            var timeoutId = setTimeout(wrappedCallback, delay);
+            const timeoutId = setTimeout(wrappedCallback, delay);
             
             self.timers[timerId] = {
                 type: 'timeout',
@@ -49,13 +49,13 @@
          * Set a managed interval
          */
         setInterval: function(callback, delay, context) {
-            var self = this;
-            var timerId = ++self.timerCounter;
+            const self = this;
+            const timerId = ++self.timerCounter;
             
             // Wrap callback to minimize closure retention
-            var wrappedCallback = function() {
+            const wrappedCallback = function() {
                 // Extract minimal data to prevent closure retention
-                var minimalContext = context ? self.extractMinimalData(context) : null;
+                const minimalContext = context ? self.extractMinimalData(context) : null;
                 
                 try {
                     callback.call(null, minimalContext);
@@ -66,7 +66,7 @@
                 }
             };
             
-            var intervalId = setInterval(wrappedCallback, delay);
+            const intervalId = setInterval(wrappedCallback, delay);
             
             self.timers[timerId] = {
                 type: 'interval',
@@ -82,8 +82,8 @@
          * Clear a managed timeout
          */
         clearTimeout: function(timerId) {
-            var self = this;
-            var timer = self.timers[timerId];
+            const self = this;
+            const timer = self.timers[timerId];
             
             if (timer && timer.type === 'timeout') {
                 clearTimeout(timer.id);
@@ -98,8 +98,8 @@
          * Clear a managed interval
          */
         clearInterval: function(timerId) {
-            var self = this;
-            var timer = self.timers[timerId];
+            const self = this;
+            const timer = self.timers[timerId];
             
             if (timer && timer.type === 'interval') {
                 clearInterval(timer.id);
@@ -114,8 +114,8 @@
          * Clear a timer (works for both timeout and interval)
          */
         clear: function(timerId) {
-            var self = this;
-            var timer = self.timers[timerId];
+            const self = this;
+            const timer = self.timers[timerId];
             
             if (!timer) return false;
             
@@ -133,12 +133,12 @@
          * Clear all timers for a specific context
          */
         clearByContext: function(contextName) {
-            var self = this;
-            var cleared = 0;
+            const self = this;
+            let cleared = 0;
             
-            for (var timerId in self.timers) {
+            for (const timerId in self.timers) {
                 if (self.timers.hasOwnProperty(timerId)) {
-                    var timer = self.timers[timerId];
+                    const timer = self.timers[timerId];
                     if (timer.context === contextName) {
                         self.clear(timerId);
                         cleared++;
@@ -153,10 +153,10 @@
          * Clear all timers
          */
         clearAll: function() {
-            var self = this;
-            var cleared = 0;
+            const self = this;
+            let cleared = 0;
             
-            for (var timerId in self.timers) {
+            for (const timerId in self.timers) {
                 if (self.timers.hasOwnProperty(timerId)) {
                     self.clear(timerId);
                     cleared++;
@@ -179,7 +179,7 @@
             }
             
             // For objects, extract only essential data
-            var minimal = {};
+            const minimal = {};
             
             // Common task properties
             if (context.id) minimal.id = context.id;
@@ -187,10 +187,10 @@
             if (context.completed !== undefined) minimal.completed = context.completed;
             
             // Don't copy DOM references or functions
-            for (var key in context) {
+            for (const key in context) {
                 if (context.hasOwnProperty(key)) {
-                    var value = context[key];
-                    var type = typeof value;
+                    const value = context[key];
+                    const type = typeof value;
                     
                     // Skip DOM elements, functions, and large objects
                     if (type === 'string' || type === 'number' || type === 'boolean') {
@@ -206,19 +206,19 @@
          * Get timer statistics
          */
         getStats: function() {
-            var self = this;
-            var stats = {
+            const self = this;
+            const stats = {
                 total: 0,
                 timeouts: 0,
                 intervals: 0,
                 oldestAge: 0
             };
             
-            var now = Date.now();
+            const now = Date.now();
             
-            for (var timerId in self.timers) {
+            for (const timerId in self.timers) {
                 if (self.timers.hasOwnProperty(timerId)) {
-                    var timer = self.timers[timerId];
+                    const timer = self.timers[timerId];
                     stats.total++;
                     
                     if (timer.type === 'timeout') {
@@ -227,7 +227,7 @@
                         stats.intervals++;
                     }
                     
-                    var age = now - timer.created;
+                    const age = now - timer.created;
                     if (age > stats.oldestAge) {
                         stats.oldestAge = age;
                     }
@@ -241,13 +241,13 @@
          * Monitor for leaked timers
          */
         startMonitoring: function(interval) {
-            var self = this;
+            const self = this;
             
             // Default to 30 seconds
             interval = interval || 30000;
             
             self.monitoringInterval = setInterval(function() {
-                var stats = self.getStats();
+                const stats = self.getStats();
                 
                 if (stats.total > 50) {
                     console.warn('TimerManager: High timer count:', stats.total);
@@ -268,7 +268,7 @@
          * Stop monitoring
          */
         stopMonitoring: function() {
-            var self = this;
+            const self = this;
             
             if (self.monitoringInterval) {
                 clearInterval(self.monitoringInterval);

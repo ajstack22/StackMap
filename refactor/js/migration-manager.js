@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var MigrationManager = {
+    const MigrationManager = {
         BACKUP_PREFIX: 'stackmap_backup_',
         BACKUP_RETENTION_DAYS: 30,
         
@@ -14,11 +14,11 @@
          * Migrate data from localStorage to SQLite
          */
         migrateFromLocalStorage: function(sqliteAdapter, callback) {
-            var self = this;
+            const self = this;
             console.log('Migration: Starting localStorage to SQLite migration...');
             
             // Step 1: Create backup
-            var backup = self.createBackup();
+            const backup = self.createBackup();
             if (!backup) {
                 if (callback) callback(false, 'Failed to create backup');
                 return;
@@ -27,7 +27,7 @@
             console.log('Migration: Backup created with ID:', backup.id);
             
             // Step 2: Get all localStorage data
-            var data = self.getAllLocalStorageData();
+            const data = self.getAllLocalStorageData();
             console.log('Migration: Found data:', {
                 keys: Object.keys(data),
                 itemCount: Object.keys(data).length
@@ -75,16 +75,16 @@
          */
         createBackup: function() {
             try {
-                var backupId = Date.now().toString();
-                var backup = {
+                const backupId = Date.now().toString();
+                const backup = {
                     id: backupId,
                     createdAt: Date.now(),
                     data: {}
                 };
                 
                 // Backup all stackmap keys
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
                     if (key && key.startsWith('stackmap')) {
                         backup.data[key] = localStorage.getItem(key);
                     }
@@ -104,13 +104,13 @@
          * Get all localStorage data
          */
         getAllLocalStorageData: function() {
-            var data = {};
+            const data = {};
             
-            for (var i = 0; i < localStorage.length; i++) {
-                var key = localStorage.key(i);
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
                 if (key && key.startsWith('stackmap-') && !key.startsWith(this.BACKUP_PREFIX)) {
                     try {
-                        var value = localStorage.getItem(key);
+                        const value = localStorage.getItem(key);
                         data[key] = JSON.parse(value);
                     } catch (e) {
                         console.warn('Migration: Failed to parse data for key:', key);
@@ -131,8 +131,8 @@
             }
             
             // Check each item has required structure
-            for (var key in data) {
-                var item = data[key];
+            for (const key in data) {
+                const item = data[key];
                 if (!item || typeof item !== 'object') {
                     console.error('Migration: Invalid data structure for key:', key);
                     return false;
@@ -141,7 +141,7 @@
                 // Check for corruption
                 if (item.checksum && item.data) {
                     // Verify checksum if present
-                    var calculated = this.calculateChecksum(item.data);
+                    const calculated = this.calculateChecksum(item.data);
                     if (calculated !== item.checksum) {
                         console.error('Migration: Checksum mismatch for key:', key);
                         return false;
@@ -156,10 +156,10 @@
          * Calculate checksum (same as storage adapter)
          */
         calculateChecksum: function(data) {
-            var str = JSON.stringify(data);
-            var hash = 0;
-            for (var i = 0; i < str.length; i++) {
-                var char = str.charCodeAt(i);
+            const str = JSON.stringify(data);
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
                 hash = hash & hash;
             }
@@ -170,10 +170,10 @@
          * Migrate data to SQLite
          */
         migrateDataToSQLite: function(sqliteAdapter, data, callback) {
-            var self = this;
-            var keys = Object.keys(data);
-            var completed = 0;
-            var errors = [];
+            const self = this;
+            const keys = Object.keys(data);
+            let completed = 0;
+            const errors = [];
             
             if (keys.length === 0) {
                 if (callback) callback(true);
@@ -182,7 +182,7 @@
             
             // Migrate each key
             keys.forEach(function(key) {
-                var cleanKey = key.replace('stackmap-', '');
+                const cleanKey = key.replace('stackmap-', '');
                 sqliteAdapter.setItem(cleanKey, data[key], function(error) {
                     completed++;
                     
@@ -194,7 +194,7 @@
                     if (completed === keys.length) {
                         if (errors.length > 0) {
                             console.error('Migration: Errors occurred:', errors);
-                            if (callback) callback(false, 'Migration errors: ' + errors.length);
+                            if (callback) callback(false, `Migration errors: ${errors.length}`);
                         } else {
                             if (callback) callback(true);
                         }
@@ -207,10 +207,10 @@
          * Verify migration success
          */
         verifyMigration: function(sqliteAdapter, originalData, callback) {
-            var self = this;
-            var keys = Object.keys(originalData);
-            var verified = 0;
-            var failures = [];
+            const self = this;
+            const keys = Object.keys(originalData);
+            let verified = 0;
+            const failures = [];
             
             if (keys.length === 0) {
                 if (callback) callback(true);
@@ -218,7 +218,7 @@
             }
             
             keys.forEach(function(key) {
-                var cleanKey = key.replace('stackmap-', '');
+                const cleanKey = key.replace('stackmap-', '');
                 sqliteAdapter.getItem(cleanKey, function(error, data) {
                     verified++;
                     
@@ -226,7 +226,7 @@
                         failures.push(key);
                     } else {
                         // Verify data matches
-                        var original = originalData[key];
+                        const original = originalData[key];
                         if (JSON.stringify(original) !== JSON.stringify(data)) {
                             failures.push(key);
                         }
@@ -256,7 +256,7 @@
             }
             
             // Restore each key
-            for (var key in backup.data) {
+            for (const key in backup.data) {
                 try {
                     localStorage.setItem(key, backup.data[key]);
                 } catch (e) {
@@ -271,7 +271,7 @@
          * Schedule cleanup of old backups
          */
         scheduleBackupCleanup: function() {
-            var self = this;
+            const self = this;
             
             // Run cleanup on next tick
             setTimeout(function() {
@@ -283,18 +283,18 @@
          * Clean up backups older than retention period
          */
         cleanupOldBackups: function() {
-            var self = this;
-            var now = Date.now();
-            var retentionMs = this.BACKUP_RETENTION_DAYS * 24 * 60 * 60 * 1000;
-            var cleaned = 0;
+            const self = this;
+            const now = Date.now();
+            const retentionMs = this.BACKUP_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+            let cleaned = 0;
             
-            for (var i = localStorage.length - 1; i >= 0; i--) {
-                var key = localStorage.key(i);
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+                const key = localStorage.key(i);
                 if (key && key.startsWith(this.BACKUP_PREFIX)) {
                     try {
-                        var backup = JSON.parse(localStorage.getItem(key));
+                        const backup = JSON.parse(localStorage.getItem(key));
                         if (backup && backup.createdAt) {
-                            var age = now - backup.createdAt;
+                            const age = now - backup.createdAt;
                             if (age > retentionMs) {
                                 localStorage.removeItem(key);
                                 cleaned++;
@@ -324,12 +324,12 @@
          * Get migration status
          */
         getStatus: function() {
-            var migrated = this.hasMigrated();
-            var migrationDate = localStorage.getItem('stackmap_migration_date');
-            var backupCount = 0;
+            const migrated = this.hasMigrated();
+            const migrationDate = localStorage.getItem('stackmap_migration_date');
+            let backupCount = 0;
             
-            for (var i = 0; i < localStorage.length; i++) {
-                var key = localStorage.key(i);
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
                 if (key && key.startsWith(this.BACKUP_PREFIX)) {
                     backupCount++;
                 }

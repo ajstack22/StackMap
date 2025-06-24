@@ -8,12 +8,12 @@
     'use strict';
     
     // Configuration
-    var TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
-    var STORAGE_KEY = 'stackmap-edit-mode';
-    var STORAGE_TIMESTAMP_KEY = 'stackmap-edit-mode-timestamp';
+    const TIMEOUT_DURATION = 30 * 60 * 1000; // 30 minutes in milliseconds
+    const STORAGE_KEY = 'stackmap-edit-mode';
+    const STORAGE_TIMESTAMP_KEY = 'stackmap-edit-mode-timestamp';
     
     // State
-    var state = {
+    const state = {
         isActive: false,
         timeoutId: null,
         timerIntervalId: null,
@@ -61,11 +61,11 @@
      */
     function restoreState() {
         try {
-            var savedState = localStorage.getItem(STORAGE_KEY);
-            var savedTimestamp = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
+            const savedState = localStorage.getItem(STORAGE_KEY);
+            const savedTimestamp = localStorage.getItem(STORAGE_TIMESTAMP_KEY);
             
             if (savedState === 'true' && savedTimestamp) {
-                var elapsed = Date.now() - parseInt(savedTimestamp, 10);
+                const elapsed = Date.now() - parseInt(savedTimestamp, 10);
                 
                 // If less than timeout duration has passed, restore active state
                 if (elapsed < TIMEOUT_DURATION) {
@@ -114,7 +114,7 @@
      */
     function setupActivityTracking() {
         // Track clicks and touches as activity
-        var trackActivity = function() {
+        const trackActivity = function() {
             if (state.isActive) {
                 state.lastActivity = Date.now();
                 resetTimeout();
@@ -122,7 +122,7 @@
         };
         
         // Keyboard shortcut handler (Cmd/Ctrl + E)
-        var keyboardHandler = function(e) {
+        const keyboardHandler = function(e) {
             // Check for Cmd/Ctrl + E
             if ((e.metaKey || e.ctrlKey) && e.key === 'e') {
                 e.preventDefault();
@@ -130,7 +130,7 @@
                 
                 // Announce to screen readers
                 if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                    window.StackMapKeyboardNav.announce('Edit mode ' + (state.isActive ? 'enabled' : 'disabled'));
+                    window.StackMapKeyboardNav.announce(`Edit mode ${state.isActive ? 'enabled' : 'disabled'}`);
                 }
             } else if (state.isActive) {
                 // Track as activity only if edit mode is active
@@ -172,15 +172,15 @@
      */
     function setupUI() {
         // Add toggle button to header
-        var header = document.querySelector('#main-view .header');
+        const header = document.querySelector('#main-view .header');
         if (!header) return;
         
         // Find menu button to insert before it
-        var menuButton = document.getElementById('menu-button');
+        const menuButton = document.getElementById('menu-button');
         if (!menuButton) return;
         
         // Create toggle button
-        var toggleButton = document.createElement('button');
+        const toggleButton = document.createElement('button');
         toggleButton.id = 'edit-mode-toggle';
         toggleButton.className = 'edit-mode-toggle';
         toggleButton.setAttribute('aria-label', 'Toggle edit mode');
@@ -210,27 +210,27 @@
      * Create edit mode banner
      */
     function createEditModeBanner() {
-        var mainView = document.getElementById('main-view');
+        const mainView = document.getElementById('main-view');
         if (!mainView) return;
         
-        var banner = document.createElement('div');
+        const banner = document.createElement('div');
         banner.id = 'edit-mode-banner';
         banner.className = 'edit-mode-banner';
         banner.setAttribute('role', 'status');
         banner.setAttribute('aria-live', 'polite');
         
-        var text = document.createElement('span');
+        const text = document.createElement('span');
         text.textContent = 'Edit Mode Active';
         text.className = 'edit-mode-banner-text';
         banner.appendChild(text);
         
-        var timer = document.createElement('span');
+        const timer = document.createElement('span');
         timer.id = 'edit-mode-timer';
         timer.className = 'edit-mode-timer';
         banner.appendChild(timer);
         
         // Add Exit button
-        var exitButton = document.createElement('button');
+        const exitButton = document.createElement('button');
         exitButton.className = 'edit-mode-exit-button';
         exitButton.textContent = 'Exit Edit Mode';
         exitButton.setAttribute('aria-label', 'Exit edit mode');
@@ -240,7 +240,7 @@
         banner.appendChild(exitButton);
         
         // Insert after header
-        var header = mainView.querySelector('.header');
+        const header = mainView.querySelector('.header');
         if (header && header.nextSibling) {
             header.parentNode.insertBefore(banner, header.nextSibling);
         }
@@ -363,7 +363,7 @@
         }
         
         // Clear timer display
-        var timer = document.getElementById('edit-mode-timer');
+        const timer = document.getElementById('edit-mode-timer');
         if (timer) {
             timer.textContent = '';
         }
@@ -396,7 +396,7 @@
     function updateTimer() {
         if (!state.isActive) return;
         
-        var timer = document.getElementById('edit-mode-timer');
+        const timer = document.getElementById('edit-mode-timer');
         if (!timer) return;
         
         // Clear any existing timer interval
@@ -405,7 +405,7 @@
             state.timerIntervalId = null;
         }
         
-        var updateDisplay = function() {
+        const updateDisplay = function() {
             if (!state.isActive) {
                 if (state.timerIntervalId) {
                     clearInterval(state.timerIntervalId);
@@ -414,13 +414,13 @@
                 return;
             }
             
-            var elapsed = Date.now() - state.lastActivity;
-            var remaining = TIMEOUT_DURATION - elapsed;
+            const elapsed = Date.now() - state.lastActivity;
+            const remaining = TIMEOUT_DURATION - elapsed;
             
             if (remaining > 0) {
-                var minutes = Math.floor(remaining / 60000);
-                var seconds = Math.floor((remaining % 60000) / 1000);
-                timer.textContent = minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+                const minutes = Math.floor(remaining / 60000);
+                const seconds = Math.floor((remaining % 60000) / 1000);
+                timer.textContent = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
             } else {
                 // Clear interval if time is up
                 if (state.timerIntervalId) {
@@ -445,10 +445,10 @@
      * Update UI based on current state
      */
     function updateUI() {
-        var isEditMode = state.isActive;
+        const isEditMode = state.isActive;
         
         // Update toggle button
-        var toggleButton = document.getElementById('edit-mode-toggle');
+        const toggleButton = document.getElementById('edit-mode-toggle');
         if (toggleButton) {
             toggleButton.setAttribute('aria-pressed', isEditMode ? 'true' : 'false');
             toggleButton.classList.toggle('active', isEditMode);
@@ -458,7 +458,7 @@
         document.documentElement.classList.toggle('edit-mode', isEditMode);
         
         // Update banner visibility
-        var banner = document.getElementById('edit-mode-banner');
+        const banner = document.getElementById('edit-mode-banner');
         if (banner) {
             banner.style.display = isEditMode ? 'block' : 'none';
         }
@@ -473,7 +473,7 @@
      * Show timeout notification
      */
     function showTimeoutNotification() {
-        var notification = document.createElement('div');
+        const notification = document.createElement('div');
         notification.className = 'edit-mode-notification';
         notification.setAttribute('role', 'alert');
         notification.textContent = 'Edit mode disabled due to inactivity';
@@ -502,7 +502,7 @@
      */
     function off(event, callback) {
         if (state.listeners[event]) {
-            var index = state.listeners[event].indexOf(callback);
+            const index = state.listeners[event].indexOf(callback);
             if (index > -1) {
                 state.listeners[event].splice(index, 1);
             }
@@ -535,7 +535,7 @@
         removeActivityTracking();
         
         // Remove toggle button handler
-        var toggleButton = document.getElementById('edit-mode-toggle');
+        const toggleButton = document.getElementById('edit-mode-toggle');
         if (toggleButton && state.toggleButtonHandler) {
             toggleButton.removeEventListener('click', state.toggleButtonHandler);
             state.toggleButtonHandler = null;

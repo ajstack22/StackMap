@@ -427,7 +427,7 @@
          */
         async getDatabaseVersion() {
             if (window.StorageAdapter) {
-                return await window.StorageAdapter.getItem('db_version') || '1';
+                return (await window.StorageAdapter.getItem('db_version')) || '1';
             }
             return '1';
         }

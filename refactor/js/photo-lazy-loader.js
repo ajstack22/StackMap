@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var PhotoLazyLoader = {
+    const PhotoLazyLoader = {
         // Configuration
         config: {
             rootMargin: '50px', // Start loading 50px before visible
@@ -27,7 +27,7 @@
          * Initialize lazy loader
          */
         init: function() {
-            var self = this;
+            const self = this;
             
             // Check for IntersectionObserver support
             if (!('IntersectionObserver' in window)) {
@@ -59,8 +59,8 @@
          * Observe all lazy images
          */
         observeImages: function() {
-            var self = this;
-            var images = document.querySelectorAll('[data-lazy-src]');
+            const self = this;
+            const images = document.querySelectorAll('[data-lazy-src]');
             
             images.forEach(function(img) {
                 if (!self.loadedImages.has(img)) {
@@ -74,14 +74,14 @@
          * Setup placeholder with blur effect
          */
         setupPlaceholder: function(img) {
-            var self = this;
+            const self = this;
             
             // Get thumbnail source
-            var thumbnailSrc = img.getAttribute('data-lazy-thumbnail');
+            const thumbnailSrc = img.getAttribute('data-lazy-thumbnail');
             if (!thumbnailSrc) return;
             
             // Create wrapper if needed
-            var wrapper = img.parentElement;
+            let wrapper = img.parentElement;
             if (!wrapper.classList.contains('lazy-image-wrapper')) {
                 wrapper = document.createElement('div');
                 wrapper.className = 'lazy-image-wrapper';
@@ -93,21 +93,21 @@
             }
             
             // Set thumbnail as background with blur
-            wrapper.style.backgroundImage = 'url(' + thumbnailSrc + ')';
+            wrapper.style.backgroundImage = `url(${thumbnailSrc})`;
             wrapper.style.backgroundSize = 'cover';
             wrapper.style.backgroundPosition = 'center';
-            wrapper.style.filter = 'blur(' + self.config.blurRadius + 'px)';
+            wrapper.style.filter = `blur(${self.config.blurRadius}px)`;
             
             // Hide main image until loaded
             img.style.opacity = '0';
-            img.style.transition = 'opacity ' + self.config.fadeInDuration + 'ms ease-in-out';
+            img.style.transition = `opacity ${self.config.fadeInDuration}ms ease-in-out`;
         },
         
         /**
          * Queue image for loading
          */
         queueImageLoad: function(img) {
-            var self = this;
+            const self = this;
             
             // Skip if already loaded or queued
             if (self.loadedImages.has(img) || 
@@ -137,21 +137,21 @@
          * Calculate loading priority based on position
          */
         calculatePriority: function(img) {
-            var rect = img.getBoundingClientRect();
-            var viewportHeight = window.innerHeight;
-            var viewportWidth = window.innerWidth;
+            const rect = img.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            const viewportWidth = window.innerWidth;
             
             // Higher priority for images closer to viewport center
-            var centerY = viewportHeight / 2;
-            var centerX = viewportWidth / 2;
+            const centerY = viewportHeight / 2;
+            const centerX = viewportWidth / 2;
             
-            var distanceY = Math.abs(rect.top + rect.height / 2 - centerY);
-            var distanceX = Math.abs(rect.left + rect.width / 2 - centerX);
+            const distanceY = Math.abs(rect.top + rect.height / 2 - centerY);
+            const distanceX = Math.abs(rect.left + rect.width / 2 - centerX);
             
-            var distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
+            const distance = Math.sqrt(distanceX * distanceX + distanceY * distanceY);
             
             // Normalize to 0-100 scale (closer = higher priority)
-            var maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+            const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
             return Math.round((1 - distance / maxDistance) * 100);
         },
         
@@ -159,11 +159,11 @@
          * Process loading queue
          */
         processLoadingQueue: function() {
-            var self = this;
+            const self = this;
             
             while (self.activeLoads < self.config.maxConcurrentLoads && 
                    self.loadingQueue.length > 0) {
-                var item = self.loadingQueue.shift();
+                const item = self.loadingQueue.shift();
                 self.loadImage(item.img);
             }
         },
@@ -172,25 +172,25 @@
          * Load image progressively
          */
         loadImage: function(img) {
-            var self = this;
+            const self = this;
             self.activeLoads++;
             
-            var sources = {
+            const sources = {
                 thumbnail: img.getAttribute('data-lazy-thumbnail'),
                 medium: img.getAttribute('data-lazy-medium'),
                 full: img.getAttribute('data-lazy-src')
             };
             
             // Determine which size to load based on display size
-            var displayWidth = img.offsetWidth || parseInt(img.getAttribute('width')) || 300;
-            var srcToLoad = sources.full;
+            const displayWidth = img.offsetWidth || parseInt(img.getAttribute('width')) || 300;
+            let srcToLoad = sources.full;
             
             if (displayWidth <= 200 && sources.medium) {
                 srcToLoad = sources.medium;
             }
             
             // Load the image
-            var tempImg = new Image();
+            const tempImg = new Image();
             
             tempImg.onload = function() {
                 self.onImageLoaded(img, tempImg.src);
@@ -211,7 +211,7 @@
          * Handle successful image load
          */
         onImageLoaded: function(img, src) {
-            var self = this;
+            const self = this;
             
             // Set source
             img.src = src;
@@ -226,7 +226,7 @@
                 img.style.opacity = '1';
                 
                 // Remove blur from wrapper after fade
-                var wrapper = img.parentElement;
+                const wrapper = img.parentElement;
                 if (wrapper && wrapper.classList.contains('lazy-image-wrapper')) {
                     setTimeout(function() {
                         wrapper.style.filter = 'none';
@@ -248,16 +248,16 @@
          * Handle image load error
          */
         onImageError: function(img) {
-            var self = this;
+            const self = this;
             
             // Show error placeholder
-            img.src = 'data:image/svg+xml;base64,' + btoa(
-                '<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">' +
-                '<rect width="200" height="200" fill="#f3f4f6"/>' +
-                '<text x="100" y="100" text-anchor="middle" fill="#9ca3af" ' +
-                'font-family="sans-serif" font-size="14">Image unavailable</text>' +
-                '</svg>'
-            );
+            img.src = `data:image/svg+xml;base64,${btoa(
+    '<svg width="200" height="200" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect width="200" height="200" fill="#f3f4f6"/>' +
+    '<text x="100" y="100" text-anchor="middle" fill="#9ca3af" ' +
+    'font-family="sans-serif" font-size="14">Image unavailable</text>' +
+    '</svg>'
+)}`;
             
             // Fade in even for error
             img.style.opacity = '1';
@@ -273,12 +273,12 @@
          * Watch for dynamically added images
          */
         watchForNewImages: function() {
-            var self = this;
+            const self = this;
             
             // Use MutationObserver if available
             if ('MutationObserver' in window) {
-                var observer = new MutationObserver(function(mutations) {
-                    var hasNewImages = false;
+                const observer = new MutationObserver(function(mutations) {
+                    let hasNewImages = false;
                     
                     mutations.forEach(function(mutation) {
                         if (mutation.type === 'childList') {
@@ -309,11 +309,11 @@
          * Load all images (fallback for no IntersectionObserver)
          */
         loadAllImages: function() {
-            var self = this;
-            var images = document.querySelectorAll('[data-lazy-src]');
+            const self = this;
+            const images = document.querySelectorAll('[data-lazy-src]');
             
             images.forEach(function(img) {
-                var src = img.getAttribute('data-lazy-src');
+                const src = img.getAttribute('data-lazy-src');
                 if (src) {
                     img.src = src;
                     img.removeAttribute('data-lazy-src');
@@ -325,7 +325,7 @@
          * Force load specific image
          */
         loadImage: function(img) {
-            var self = this;
+            const self = this;
             
             if (img && img.hasAttribute('data-lazy-src')) {
                 self.queueImageLoad(img);
@@ -336,7 +336,7 @@
          * Update observer configuration
          */
         updateConfig: function(newConfig) {
-            var self = this;
+            const self = this;
             
             Object.assign(self.config, newConfig);
             
@@ -351,7 +351,7 @@
          * Get loading statistics
          */
         getStats: function() {
-            var self = this;
+            const self = this;
             
             return {
                 loaded: self.loadedImages.size,
@@ -365,7 +365,7 @@
          * Pause loading
          */
         pause: function() {
-            var self = this;
+            const self = this;
             
             if (self.observer) {
                 self.observer.disconnect();
@@ -376,7 +376,7 @@
          * Resume loading
          */
         resume: function() {
-            var self = this;
+            const self = this;
             
             self.observeImages();
             self.processLoadingQueue();

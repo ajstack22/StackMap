@@ -1,16 +1,16 @@
 // Task Timer Module - Lightweight timer feature for ADHD users
 // Provides visual countdown, notifications, and time-boxing for tasks
 
-var TaskTimer = (function() {
+const TaskTimer = (function() {
     'use strict';
     
-    var timers = {}; // Active timers by task ID
-    var buttonCache = {}; // Cache timer button references
-    var defaultDurations = [5, 10, 15, 20, 25, 30, 45, 60]; // minutes
-    var tickInterval = null;
-    var audioEnabled = true;
-    var volumeLevel = 0.5;
-    var warningTime = 60; // seconds
+    const timers = {}; // Active timers by task ID
+    let buttonCache = {}; // Cache timer button references
+    const defaultDurations = [5, 10, 15, 20, 25, 30, 45, 60]; // minutes
+    let tickInterval = null;
+    let audioEnabled = true;
+    let volumeLevel = 0.5;
+    let warningTime = 60; // seconds
     
     // Initialize the timer system
     function init() {
@@ -27,7 +27,7 @@ var TaskTimer = (function() {
             return null;
         }
         
-        var timer = {
+        const timer = {
             taskId: taskId,
             duration: durationMinutes * 60, // Convert to seconds
             remaining: durationMinutes * 60,
@@ -82,12 +82,12 @@ var TaskTimer = (function() {
     
     // Update all active timers
     function tick() {
-        var hasActiveTimers = false;
-        var activeTimerCount = 0;
+        let hasActiveTimers = false;
+        let activeTimerCount = 0;
         
-        for (var taskId in timers) {
+        for (const taskId in timers) {
             if (timers.hasOwnProperty(taskId)) {
-                var timer = timers[taskId];
+                const timer = timers[taskId];
                 if (!timer.isPaused && timer.remaining > 0) {
                     timer.remaining--;
                     hasActiveTimers = true;
@@ -120,19 +120,19 @@ var TaskTimer = (function() {
     
     // Update the timer display for a specific task
     function updateTimerDisplay(taskId) {
-        var timer = timers[taskId];
-        var button = buttonCache[taskId];
+        const timer = timers[taskId];
+        let button = buttonCache[taskId];
         
         // Try to get button from cache or DOM
         if (!button) {
-            button = document.querySelector('[data-task-id="' + taskId + '"] .task-timer-button');
+            button = document.querySelector(`[data-task-id="${taskId}"] .task-timer-button`);
             if (button) {
                 buttonCache[taskId] = button;
             }
         }
         
         if (button && timer) {
-            button.innerHTML = '⏱️ ' + formatTime(timer.remaining);
+            button.innerHTML = `⏱️ ${formatTime(timer.remaining)}`;
             button.classList.add('active');
             
             // Add visual states
@@ -153,14 +153,14 @@ var TaskTimer = (function() {
     
     // Format seconds to MM:SS
     function formatTime(seconds) {
-        var minutes = Math.floor(seconds / 60);
-        var secs = seconds % 60;
-        return minutes + ':' + (secs < 10 ? '0' : '') + secs;
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs < 10 ? '0' : ''}${secs}`;
     }
     
     // Announce for screen readers
     function announceForScreenReader(message) {
-        var announcement = document.createElement('div');
+        const announcement = document.createElement('div');
         announcement.setAttribute('role', 'status');
         announcement.setAttribute('aria-live', 'polite');
         announcement.className = 'sr-only';
@@ -179,18 +179,18 @@ var TaskTimer = (function() {
     function startTimer(taskId, duration) {
         createTimer(taskId, duration);
         closeTimerMenu();
-        announceForScreenReader('Timer started for ' + duration + ' minutes');
+        announceForScreenReader(`Timer started for ${duration} minutes`);
     }
     
     // Start a custom timer
     function startCustomTimer(taskId) {
-        var input = document.getElementById('custom-duration');
+        const input = document.getElementById('custom-duration');
         if (input) {
-            var duration = parseInt(input.value, 10);
+            const duration = parseInt(input.value, 10);
             if (duration && duration >= 1 && duration <= 180) {
                 createTimer(taskId, duration);
                 closeTimerMenu();
-                announceForScreenReader('Timer started for ' + duration + ' minutes');
+                announceForScreenReader(`Timer started for ${duration} minutes`);
             } else {
                 alert('Please enter a duration between 1 and 180 minutes');
                 input.focus();
@@ -200,7 +200,7 @@ var TaskTimer = (function() {
     
     // Toggle pause/resume
     function togglePause(taskId) {
-        var timer = timers[taskId];
+        const timer = timers[taskId];
         if (timer) {
             timer.isPaused = !timer.isPaused;
             updateTimerDisplay(taskId);
@@ -212,7 +212,7 @@ var TaskTimer = (function() {
     // Cancel a timer
     function cancelTimer(taskId) {
         // Get button reference before deleting from cache
-        var button = buttonCache[taskId] || document.querySelector('[data-task-id="' + taskId + '"] .task-timer-button');
+        const button = buttonCache[taskId] || document.querySelector(`[data-task-id="${taskId}"] .task-timer-button`);
         
         // Now safe to delete
         delete timers[taskId];
@@ -235,9 +235,9 @@ var TaskTimer = (function() {
     
     // Pre-warm button cache after render
     function prewarmButtonCache() {
-        for (var taskId in timers) {
+        for (const taskId in timers) {
             if (timers.hasOwnProperty(taskId) && !buttonCache[taskId]) {
-                var button = document.querySelector('[data-task-id="' + taskId + '"] .task-timer-button');
+                const button = document.querySelector(`[data-task-id="${taskId}"] .task-timer-button`);
                 if (button) {
                     buttonCache[taskId] = button;
                 }
@@ -249,18 +249,18 @@ var TaskTimer = (function() {
     function showTimerMenu(taskId, button) {
         closeTimerMenu(); // Close any existing menu
         
-        var existingTimer = timers[taskId];
-        var menu = document.createElement('div');
+        const existingTimer = timers[taskId];
+        const menu = document.createElement('div');
         menu.className = 'timer-menu';
         menu.setAttribute('role', 'menu');
         
         if (existingTimer) {
             // Timer controls
             var html = '<div class="timer-controls" role="group" aria-label="Timer controls">';
-            html += '<button role="menuitem" onclick="TaskTimer.togglePause(\'' + taskId + '\')">';
+            html += `<button role="menuitem" onclick="TaskTimer.togglePause('${taskId}')">`;
             html += existingTimer.isPaused ? '▶️ Resume' : '⏸️ Pause';
             html += '</button>';
-            html += '<button role="menuitem" onclick="TaskTimer.cancelTimer(\'' + taskId + '\')">❌ Cancel</button>';
+            html += `<button role="menuitem" onclick="TaskTimer.cancelTimer('${taskId}')">❌ Cancel</button>`;
             html += '</div>';
             menu.innerHTML = html;
         } else {
@@ -271,8 +271,8 @@ var TaskTimer = (function() {
             // Preset duration buttons
             defaultDurations.forEach(function(duration) {
                 html += '<button role="menuitem" class="duration-option" ';
-                html += 'onclick="TaskTimer.startTimer(\'' + taskId + '\', ' + duration + ')">';
-                html += duration + ' min</button>';
+                html += `onclick="TaskTimer.startTimer('${taskId}', ${duration})">`;
+                html += `${duration} min</button>`;
             });
             
             // Custom duration input
@@ -281,7 +281,7 @@ var TaskTimer = (function() {
             html += '<div style="display: flex; gap: 8px;">';
             html += '<input type="number" id="custom-duration" min="1" max="180" placeholder="1-180" ';
             html += 'style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 16px;">';
-            html += '<button onclick="TaskTimer.startCustomTimer(\'' + taskId + '\')" ';
+            html += `<button onclick="TaskTimer.startCustomTimer('${taskId}')" `;
             html += 'style="padding: 8px 16px; background: var(--primary-purple); color: white; border: none; border-radius: 4px; cursor: pointer;">Start</button>';
             html += '</div>';
             html += '</div>';
@@ -295,7 +295,7 @@ var TaskTimer = (function() {
         document.body.appendChild(menu);
         
         // Focus first button for accessibility
-        var firstButton = menu.querySelector('button');
+        const firstButton = menu.querySelector('button');
         if (firstButton) {
             firstButton.focus();
         }
@@ -309,14 +309,14 @@ var TaskTimer = (function() {
     
     // Close timer menu
     function closeTimerMenu() {
-        var menu = document.querySelector('.timer-menu');
+        const menu = document.querySelector('.timer-menu');
         if (menu) {
             menu.remove();
             document.removeEventListener('click', closeMenuHandler);
             document.removeEventListener('keydown', menuKeyHandler);
             
             // Remove mobile backdrop if exists
-            var backdrop = document.getElementById('timer-backdrop');
+            const backdrop = document.getElementById('timer-backdrop');
             if (backdrop) {
                 backdrop.remove();
             }
@@ -332,7 +332,7 @@ var TaskTimer = (function() {
     
     // Menu keyboard handler
     function menuKeyHandler(e) {
-        var menu = document.querySelector('.timer-menu');
+        const menu = document.querySelector('.timer-menu');
         if (!menu) return;
         
         if (e.key === 'Escape') {
@@ -341,27 +341,27 @@ var TaskTimer = (function() {
         }
         
         // Arrow key navigation
-        var focusableElements = menu.querySelectorAll('button:not([disabled]), input:not([disabled])');
-        var currentIndex = Array.prototype.indexOf.call(focusableElements, document.activeElement);
+        const focusableElements = menu.querySelectorAll('button:not([disabled]), input:not([disabled])');
+        const currentIndex = Array.prototype.indexOf.call(focusableElements, document.activeElement);
         
         switch(e.key) {
             case 'ArrowDown':
             case 'ArrowRight':
                 e.preventDefault();
-                var nextIndex = currentIndex + 1;
+                const nextIndex = currentIndex + 1;
                 if (nextIndex < focusableElements.length) {
                     focusableElements[nextIndex].focus();
-                    announceForScreenReader('Moved to ' + (focusableElements[nextIndex].textContent || 'input field'));
+                    announceForScreenReader(`Moved to ${focusableElements[nextIndex].textContent || 'input field'}`);
                 }
                 break;
                 
             case 'ArrowUp':
             case 'ArrowLeft':
                 e.preventDefault();
-                var prevIndex = currentIndex - 1;
+                const prevIndex = currentIndex - 1;
                 if (prevIndex >= 0) {
                     focusableElements[prevIndex].focus();
-                    announceForScreenReader('Moved to ' + (focusableElements[prevIndex].textContent || 'input field'));
+                    announceForScreenReader(`Moved to ${focusableElements[prevIndex].textContent || 'input field'}`);
                 }
                 break;
                 
@@ -402,7 +402,7 @@ var TaskTimer = (function() {
             menu.classList.add('timer-menu-mobile');
             
             // Add backdrop for mobile
-            var backdrop = document.createElement('div');
+            const backdrop = document.createElement('div');
             backdrop.className = 'timer-menu-backdrop';
             backdrop.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999;';
             backdrop.onclick = closeTimerMenu;
@@ -411,13 +411,13 @@ var TaskTimer = (function() {
             document.body.appendChild(backdrop);
         } else {
             // Desktop positioning
-            var rect = button.getBoundingClientRect();
-            var menuHeight = 200; // Approximate height
-            var menuWidth = 200; // Approximate width
+            const rect = button.getBoundingClientRect();
+            const menuHeight = 200; // Approximate height
+            const menuWidth = 200; // Approximate width
             
             // Default position below button
-            var top = rect.bottom + 5;
-            var left = rect.left;
+            let top = rect.bottom + 5;
+            let left = rect.left;
             
             // Adjust if menu would go off screen
             if (top + menuHeight > window.innerHeight) {
@@ -429,8 +429,8 @@ var TaskTimer = (function() {
             }
             
             menu.style.position = 'absolute';
-            menu.style.top = top + 'px';
-            menu.style.left = left + 'px';
+            menu.style.top = `${top}px`;
+            menu.style.left = `${left}px`;
         }
         
         menu.style.zIndex = '1000';
@@ -438,7 +438,7 @@ var TaskTimer = (function() {
     
     // Timer complete handler
     function timerComplete(taskId) {
-        var timer = timers[taskId];
+        const timer = timers[taskId];
         
         if (!timer.hasNotified) {
             timer.hasNotified = true;
@@ -477,8 +477,8 @@ var TaskTimer = (function() {
     
     // Show timer alert
     function showTimerAlert(taskId) {
-        var task = null;
-        var taskTitle = 'Task';
+        let task = null;
+        let taskTitle = 'Task';
         
         try {
             if (window.TaskDisplay && window.TaskDisplay.getTaskById) {
@@ -491,14 +491,14 @@ var TaskTimer = (function() {
             console.log('Could not get task details:', e);
         }
         
-        var message = 'Timer complete for: ' + taskTitle;
+        const message = `Timer complete for: ${taskTitle}`;
         
         // Show toast notification
-        var toast = document.createElement('div');
+        const toast = document.createElement('div');
         toast.className = 'timer-alert';
         toast.setAttribute('role', 'alert');
         toast.setAttribute('aria-live', 'assertive');
-        toast.innerHTML = '⏰ ' + message;
+        toast.innerHTML = `⏰ ${message}`;
         document.body.appendChild(toast);
         
         setTimeout(function() {
@@ -518,11 +518,11 @@ var TaskTimer = (function() {
         try {
             if (!audioEnabled) return;
             
-            var audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
             
             // First beep
-            var oscillator1 = audioContext.createOscillator();
-            var gainNode1 = audioContext.createGain();
+            const oscillator1 = audioContext.createOscillator();
+            const gainNode1 = audioContext.createGain();
             
             oscillator1.connect(gainNode1);
             gainNode1.connect(audioContext.destination);
@@ -535,8 +535,8 @@ var TaskTimer = (function() {
             
             // Second beep
             setTimeout(function() {
-                var oscillator2 = audioContext.createOscillator();
-                var gainNode2 = audioContext.createGain();
+                const oscillator2 = audioContext.createOscillator();
+                const gainNode2 = audioContext.createGain();
                 
                 oscillator2.connect(gainNode2);
                 gainNode2.connect(audioContext.destination);
@@ -555,9 +555,9 @@ var TaskTimer = (function() {
     // Play warning sound
     function playWarningSound() {
         try {
-            var audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            var oscillator = audioContext.createOscillator();
-            var gainNode = audioContext.createGain();
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
             
             oscillator.connect(gainNode);
             gainNode.connect(audioContext.destination);
@@ -574,10 +574,10 @@ var TaskTimer = (function() {
     
     // Save timers to localStorage
     function saveTimers() {
-        var activeTimers = {};
-        for (var taskId in timers) {
+        const activeTimers = {};
+        for (const taskId in timers) {
             if (timers.hasOwnProperty(taskId)) {
-                var timer = timers[taskId];
+                const timer = timers[taskId];
                 if (timer.remaining > 0) {
                     activeTimers[taskId] = {
                         duration: timer.duration,
@@ -600,22 +600,22 @@ var TaskTimer = (function() {
     // Load active timers from localStorage
     function loadActiveTimers() {
         try {
-            var saved = localStorage.getItem('stackmap_timers');
+            const saved = localStorage.getItem('stackmap_timers');
             if (saved) {
-                var savedTimers = JSON.parse(saved);
-                var hasActiveTimers = false;
+                const savedTimers = JSON.parse(saved);
+                let hasActiveTimers = false;
                 
-                for (var taskId in savedTimers) {
+                for (const taskId in savedTimers) {
                     if (savedTimers.hasOwnProperty(taskId)) {
-                        var timer = savedTimers[taskId];
+                        const timer = savedTimers[taskId];
                         
                         // Calculate elapsed time correctly
                         if (!timer.isPaused && timer.startTime) {
-                            var now = Date.now();
-                            var elapsed = Math.floor((now - timer.startTime) / 1000);
+                            const now = Date.now();
+                            const elapsed = Math.floor((now - timer.startTime) / 1000);
                             
                             // Calculate what the remaining time should be
-                            var actualRemaining = timer.duration - elapsed;
+                            const actualRemaining = timer.duration - elapsed;
                             
                             // If more time has passed than what was saved, use the calculated time
                             if (actualRemaining < timer.remaining) {
@@ -649,9 +649,9 @@ var TaskTimer = (function() {
     // Load settings
     function loadSettings() {
         try {
-            var settings = localStorage.getItem('stackmap_timer_settings');
+            const settings = localStorage.getItem('stackmap_timer_settings');
             if (settings) {
-                var parsed = JSON.parse(settings);
+                const parsed = JSON.parse(settings);
                 audioEnabled = parsed.audioEnabled !== false;
                 volumeLevel = parsed.volumeLevel || 0.5;
                 warningTime = parsed.warningTime || 60;
@@ -681,11 +681,11 @@ var TaskTimer = (function() {
     
     // Get all active timers
     function getActiveTimers() {
-        var activeTimers = [];
-        for (var taskId in timers) {
+        const activeTimers = [];
+        for (const taskId in timers) {
             if (timers.hasOwnProperty(taskId) && timers[taskId].remaining > 0) {
-                var timer = timers[taskId];
-                var task = null;
+                const timer = timers[taskId];
+                let task = null;
                 if (window.TaskDisplay && window.TaskDisplay.getTaskById) {
                     task = window.TaskDisplay.getTaskById(taskId);
                 }
@@ -703,29 +703,29 @@ var TaskTimer = (function() {
     
     // Show timer overview
     function showTimerOverview() {
-        var activeTimers = getActiveTimers();
+        const activeTimers = getActiveTimers();
         
         if (activeTimers.length === 0) {
             alert('No active timers');
             return;
         }
         
-        var modal = document.createElement('div');
+        const modal = document.createElement('div');
         modal.className = 'timer-overview-modal';
         modal.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--background-secondary); padding: 20px; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.2); z-index: 2000; max-width: 400px; width: 90%;';
         
-        var html = '<h2 style="margin-top: 0;">Active Timers (' + activeTimers.length + ')</h2>';
+        let html = `<h2 style="margin-top: 0;">Active Timers (${activeTimers.length})</h2>`;
         html += '<div class="timer-list" style="max-height: 300px; overflow-y: auto;">';
         
         activeTimers.forEach(function(timer) {
-            var percentage = Math.round((timer.remaining / timer.duration) * 100);
+            const percentage = Math.round((timer.remaining / timer.duration) * 100);
             html += '<div class="timer-overview-item" style="margin-bottom: 12px; padding: 12px; background: var(--background-primary); border-radius: 8px;">';
             html += '<div style="display: flex; justify-content: space-between; align-items: center;">';
-            html += '<span style="font-weight: bold;">' + timer.taskTitle + '</span>';
-            html += '<span style="font-size: 18px; color: var(--primary-purple);">' + formatTime(timer.remaining) + '</span>';
+            html += `<span style="font-weight: bold;">${timer.taskTitle}</span>`;
+            html += `<span style="font-size: 18px; color: var(--primary-purple);">${formatTime(timer.remaining)}</span>`;
             html += '</div>';
             html += '<div style="margin-top: 8px; height: 4px; background: var(--border-color); border-radius: 2px; overflow: hidden;">';
-            html += '<div style="height: 100%; width: ' + percentage + '%; background: var(--primary-purple); transition: width 0.3s;"></div>';
+            html += `<div style="height: 100%; width: ${percentage}%; background: var(--primary-purple); transition: width 0.3s;"></div>`;
             html += '</div>';
             if (timer.isPaused) {
                 html += '<span style="font-size: 12px; color: var(--text-secondary);">Paused</span>';
@@ -739,7 +739,7 @@ var TaskTimer = (function() {
         modal.innerHTML = html;
         
         // Add backdrop
-        var backdrop = document.createElement('div');
+        const backdrop = document.createElement('div');
         backdrop.className = 'timer-overview-backdrop';
         backdrop.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1999;';
         backdrop.onclick = closeTimerOverview;
@@ -748,14 +748,14 @@ var TaskTimer = (function() {
         document.body.appendChild(modal);
         
         // Focus close button
-        var closeBtn = modal.querySelector('button');
+        const closeBtn = modal.querySelector('button');
         if (closeBtn) closeBtn.focus();
     }
     
     // Close timer overview
     function closeTimerOverview() {
-        var modal = document.querySelector('.timer-overview-modal');
-        var backdrop = document.querySelector('.timer-overview-backdrop');
+        const modal = document.querySelector('.timer-overview-modal');
+        const backdrop = document.querySelector('.timer-overview-backdrop');
         if (modal) modal.remove();
         if (backdrop) backdrop.remove();
     }

@@ -7,7 +7,7 @@
     'use strict';
     
     // Storage health constants
-    var STORAGE_HEALTH = {
+    const STORAGE_HEALTH = {
         QUOTA_WARNING_THRESHOLD: 0.8,
         RETRY_ATTEMPTS: 3,
         RETRY_DELAY: 100,
@@ -16,7 +16,7 @@
     };
     
     // Storage state
-    var storageState = {
+    const storageState = {
         backend: 'localStorage', // 'localStorage', 'indexedDB', or 'sqlite'
         isHealthy: true,
         lastHealthCheck: 0,
@@ -30,12 +30,12 @@
     /**
      * Storage Adapter Factory
      */
-    var StorageAdapter = {
+    const StorageAdapter = {
         /**
          * Initialize storage with capability detection
          */
         init: function(callback) {
-            var self = this;
+            const self = this;
             
             // First check if we're in a native Capacitor environment
             if (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) {
@@ -79,7 +79,7 @@
          * Initialize web storage (localStorage or IndexedDB)
          */
         initWebStorage: function(callback) {
-            var self = this;
+            const self = this;
             
             // Detect IndexedDB capability and reliability
             this.detectCapabilities(function(capabilities) {
@@ -108,7 +108,7 @@
          * Detect storage capabilities and reliability
          */
         detectCapabilities: function(callback) {
-            var capabilities = {
+            const capabilities = {
                 hasIndexedDB: false,
                 indexedDBReliable: false,
                 localStorageAvailable: false,
@@ -117,7 +117,7 @@
             
             // Check localStorage
             try {
-                var testKey = 'stackmap_capability_test';
+                const testKey = 'stackmap_capability_test';
                 localStorage.setItem(testKey, 'test');
                 localStorage.removeItem(testKey);
                 capabilities.localStorageAvailable = true;
@@ -130,20 +130,20 @@
                 capabilities.hasIndexedDB = true;
                 
                 // Test IndexedDB reliability
-                var testDB = indexedDB.open('stackmap_capability_test', 1);
-                var timeout = setTimeout(function() {
+                const testDB = indexedDB.open('stackmap_capability_test', 1);
+                const timeout = setTimeout(function() {
                     capabilities.indexedDBReliable = false;
                     callback(capabilities);
                 }, 1000); // 1 second timeout
                 
                 testDB.onsuccess = function(event) {
                     clearTimeout(timeout);
-                    var db = event.target.result;
+                    const db = event.target.result;
                     
                     // Additional reliability checks for known issues
-                    var ua = navigator.userAgent.toLowerCase();
-                    var isAndroid5 = ua.indexOf('android 5') > -1;
-                    var isOldSafari = ua.indexOf('safari') > -1 && ua.indexOf('version/') > -1 && 
+                    const ua = navigator.userAgent.toLowerCase();
+                    const isAndroid5 = ua.includes('android 5');
+                    const isOldSafari = ua.includes('safari') && ua.includes('version/') && 
                                       parseInt(ua.split('version/')[1]) < 14;
                     
                     capabilities.indexedDBReliable = !isAndroid5 && !isOldSafari;
@@ -179,7 +179,7 @@
          * Initialize SQLite for native apps
          */
         initSQLite: function(callback) {
-            var self = this;
+            const self = this;
             
             // Check if TaskSQLite is available
             if (!window.TaskSQLite) {
@@ -214,8 +214,8 @@
          * Get data with corruption check and retry logic
          */
         get: function(key, callback) {
-            var self = this;
-            var attempts = 0;
+            const self = this;
+            let attempts = 0;
             
             function tryGet() {
                 attempts++;
@@ -238,10 +238,10 @@
                             }
                         });
                     } else if (storageState.backend === 'localStorage') {
-                        var data = localStorage.getItem('stackmap-' + key);
+                        const data = localStorage.getItem(`stackmap-${key}`);
                         if (data) {
                             try {
-                                var parsed = JSON.parse(data);
+                                const parsed = JSON.parse(data);
                                 // Verify data integrity
                                 if (self.verifyDataIntegrity(parsed)) {
                                     callback(null, parsed);
@@ -260,7 +260,7 @@
                     }
                 } catch (e) {
                     if (window.StorageErrorHandler) {
-                        var errorResponse = window.StorageErrorHandler.handle(e, 'Get data: ' + key);
+                        const errorResponse = window.StorageErrorHandler.handle(e, `Get data: ${key}`);
                         if (errorResponse.retryable && attempts < STORAGE_HEALTH.RETRY_ATTEMPTS) {
                             setTimeout(tryGet, STORAGE_HEALTH.RETRY_DELAY * attempts);
                         } else {
@@ -282,15 +282,15 @@
          * Save data with write verification
          */
         save: function(key, data, callback) {
-            var self = this;
-            var attempts = 0;
+            const self = this;
+            let attempts = 0;
             
             function trySave() {
                 attempts++;
                 
                 try {
                     // Add integrity checksum
-                    var dataWithChecksum = self.addDataChecksum(data);
+                    const dataWithChecksum = self.addDataChecksum(data);
                     
                     if (storageState.backend === 'sqlite') {
                         // Use SQLite adapter
@@ -309,10 +309,10 @@
                             }
                         });
                     } else if (storageState.backend === 'localStorage') {
-                        localStorage.setItem('stackmap-' + key, JSON.stringify(dataWithChecksum));
+                        localStorage.setItem(`stackmap-${key}`, JSON.stringify(dataWithChecksum));
                         
                         // Verify write
-                        var verification = localStorage.getItem('stackmap-' + key);
+                        const verification = localStorage.getItem(`stackmap-${key}`);
                         if (verification === JSON.stringify(dataWithChecksum)) {
                             if (callback) callback(null);
                         } else {
@@ -324,7 +324,7 @@
                     }
                 } catch (e) {
                     if (window.StorageErrorHandler) {
-                        var errorResponse = window.StorageErrorHandler.handle(e, 'Save data: ' + key);
+                        const errorResponse = window.StorageErrorHandler.handle(e, `Save data: ${key}`);
                         if (e.name === 'QuotaExceededError') {
                             self.handleQuotaExceeded();
                             if (callback) callback(e);
@@ -364,10 +364,10 @@
          * Calculate simple checksum
          */
         calculateChecksum: function(data) {
-            var str = JSON.stringify(data);
-            var hash = 0;
-            for (var i = 0; i < str.length; i++) {
-                var char = str.charCodeAt(i);
+            const str = JSON.stringify(data);
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
                 hash = ((hash << 5) - hash) + char;
                 hash = hash & hash; // Convert to 32-bit integer
             }
@@ -382,7 +382,7 @@
                 return false;
             }
             
-            var calculatedChecksum = this.calculateChecksum(dataWithChecksum.data);
+            const calculatedChecksum = this.calculateChecksum(dataWithChecksum.data);
             return calculatedChecksum === dataWithChecksum.checksum;
         },
         
@@ -390,7 +390,7 @@
          * Monitor storage health
          */
         startHealthMonitoring: function() {
-            var self = this;
+            const self = this;
             
             // Initial health check
             this.checkStorageHealth();
@@ -410,14 +410,14 @@
          * Check storage health and quota
          */
         checkStorageHealth: function() {
-            var self = this;
+            const self = this;
             
             if (navigator.storage && navigator.storage.estimate) {
                 navigator.storage.estimate().then(function(estimate) {
                     storageState.quotaUsed = estimate.usage || 0;
                     storageState.quotaAvailable = estimate.quota || 0;
                     
-                    var usageRatio = storageState.quotaUsed / storageState.quotaAvailable;
+                    const usageRatio = storageState.quotaUsed / storageState.quotaAvailable;
                     if (usageRatio > STORAGE_HEALTH.QUOTA_WARNING_THRESHOLD) {
                         self.showQuotaWarning(usageRatio);
                     }
@@ -434,7 +434,7 @@
          */
         detectCorruption: function() {
             // Sample check - verify a known good key
-            var self = this;
+            const self = this;
             this.get('health-check', function(err, data) {
                 if (!err && data === null) {
                     // First time - create health check entry
@@ -452,7 +452,7 @@
         handleQuotaExceeded: function() {
             // Show user-friendly message
             if (window.StackMapMessaging) {
-                var msg = window.StackMapMessaging.quotaExceeded();
+                const msg = window.StackMapMessaging.quotaExceeded();
                 this.showStorageAlert(msg);
             }
             
@@ -485,7 +485,7 @@
             
             // Switch to safe mode immediately
             if (!window.StackMapSafeMode) {
-                window.location.href = window.location.pathname + '?safe=true&persist=true';
+                window.location.href = `${window.location.pathname}?safe=true&persist=true`;
             }
         },
         
@@ -493,8 +493,8 @@
          * Show quota warning to user
          */
         showQuotaWarning: function(usageRatio) {
-            var percentage = Math.round(usageRatio * 100);
-            var message = 'Storage ' + percentage + '% full. Consider archiving old tasks.';
+            const percentage = Math.round(usageRatio * 100);
+            const message = `Storage ${percentage}% full. Consider archiving old tasks.`;
             this.showStorageAlert(message);
         },
         
@@ -503,7 +503,7 @@
          */
         showStorageAlert: function(message) {
             try {
-                var alert = document.getElementById('storage-alert');
+                let alert = document.getElementById('storage-alert');
                 if (!alert) {
                     alert = document.createElement('div');
                     alert.id = 'storage-alert';

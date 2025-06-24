@@ -7,17 +7,17 @@
 (function(window) {
     'use strict';
     
-    var DataExporter = {
+    const DataExporter = {
         /**
          * Export all user data to JSON
          * @returns {string} JSON string of exported data
          */
         exportTasks: function() {
-            var self = this;
+            const self = this;
             
             return new Promise(function(resolve, reject) {
                 try {
-                    var exportData = {
+                    const exportData = {
                         version: '2.0',
                         exportDate: new Date().toISOString(),
                         app: 'StackMap Mobile',
@@ -38,7 +38,7 @@
                         exportData.settings = results[2];
                         
                         // Pretty print for readability
-                        var jsonString = JSON.stringify(exportData, null, 2);
+                        const jsonString = JSON.stringify(exportData, null, 2);
                         resolve(jsonString);
                     }).catch(reject);
                     
@@ -57,7 +57,7 @@
                 if (window.UserManager && window.UserManager.getAllUsers) {
                     window.UserManager.getAllUsers().then(function(users) {
                         // Clean up user data for export
-                        var cleanUsers = users.map(function(user) {
+                        const cleanUsers = users.map(function(user) {
                             return {
                                 id: user.id,
                                 name: user.name,
@@ -85,7 +85,7 @@
                 if (window.TaskSQLite && window.TaskSQLite.getAllTasks) {
                     window.TaskSQLite.getAllTasks().then(function(tasks) {
                         // Clean up task data for export
-                        var cleanTasks = tasks.map(function(task) {
+                        const cleanTasks = tasks.map(function(task) {
                             return {
                                 id: task.id,
                                 title: task.title,
@@ -113,19 +113,19 @@
          * @returns {Promise<Object>} Settings object
          */
         getSettingsData: function() {
-            var self = this;
+            const self = this;
             return new Promise(function(resolve) {
                 try {
-                    var settings = {};
+                    const settings = {};
                     
                     // Only export safe settings
-                    var safeKeys = [
+                    const safeKeys = [
                         'theme', 'celebrationsEnabled', 'soundsEnabled',
                         'safeMode', 'language', 'fontSize', 'animations'
                     ];
                     
                     safeKeys.forEach(function(key) {
-                        var value = localStorage.getItem('stackmap_' + key);
+                        const value = localStorage.getItem(`stackmap_${key}`);
                         if (value !== null) {
                             // Convert boolean strings
                             if (value === 'true') {
@@ -153,18 +153,18 @@
          * @returns {Promise<void>}
          */
         downloadAsFile: function() {
-            var self = this;
+            const self = this;
             
             return new Promise(function(resolve, reject) {
                 self.exportTasks().then(function(jsonData) {
                     try {
                         // Generate filename with current date
-                        var date = new Date();
-                        var dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
-                        var filename = 'stackmap-backup-' + dateStr + '.json';
+                        const date = new Date();
+                        const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD
+                        const filename = `stackmap-backup-${dateStr}.json`;
                         
                         // Create blob
-                        var blob = new Blob([jsonData], { type: 'application/json' });
+                        const blob = new Blob([jsonData], { type: 'application/json' });
                         
                         // Check file size (max 10MB)
                         if (blob.size > 10 * 1024 * 1024) {
@@ -172,8 +172,8 @@
                         }
                         
                         // Create download link
-                        var url = URL.createObjectURL(blob);
-                        var link = document.createElement('a');
+                        const url = URL.createObjectURL(blob);
+                        const link = document.createElement('a');
                         link.href = url;
                         link.download = filename;
                         
@@ -205,7 +205,7 @@
          * @returns {Promise<void>}
          */
         copyToClipboard: function() {
-            var self = this;
+            const self = this;
             
             return new Promise(function(resolve, reject) {
                 self.exportTasks().then(function(jsonData) {
@@ -218,7 +218,7 @@
                         }).catch(reject);
                     } else {
                         // Fallback for older browsers
-                        var textArea = document.createElement('textarea');
+                        const textArea = document.createElement('textarea');
                         textArea.value = jsonData;
                         textArea.style.position = 'fixed';
                         textArea.style.left = '-9999px';
@@ -246,11 +246,11 @@
          * @returns {Promise<number>} Size in bytes
          */
         getExportSize: function() {
-            var self = this;
+            const self = this;
             
             return new Promise(function(resolve) {
                 self.exportTasks().then(function(jsonData) {
-                    var blob = new Blob([jsonData], { type: 'application/json' });
+                    const blob = new Blob([jsonData], { type: 'application/json' });
                     resolve(blob.size);
                 }).catch(function() {
                     resolve(0);

@@ -454,7 +454,7 @@ class PhotoUploadManager {
     
     updateUI(event, data) {
         // Emit custom event for UI updates
-        window.dispatchEvent(new CustomEvent('photo-upload-' + event, {
+        window.dispatchEvent(new CustomEvent(`photo-upload-${event}`, {
             detail: data
         }));
         
@@ -543,3 +543,13 @@ class PhotoUploadManager {
 
 // Export
 window.PhotoUploadManager = PhotoUploadManager;
+
+// Create global instance when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+        window.photoUploadManager = new PhotoUploadManager();
+    });
+} else {
+    // DOM already loaded
+    window.photoUploadManager = new PhotoUploadManager();
+}

@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    var MigrationUI = {
+    const MigrationUI = {
         // UI state
         modalElement: null,
         progressBar: null,
@@ -19,7 +19,7 @@
          * Show migration modal with progress
          */
         show: function() {
-            var self = this;
+            const self = this;
             
             // Create modal if not exists
             if (!self.modalElement) {
@@ -44,7 +44,7 @@
          * Create the migration modal UI
          */
         createModal: function() {
-            var self = this;
+            const self = this;
             
             // Create modal container
             self.modalElement = document.createElement('div');
@@ -93,10 +93,10 @@
             // Update elapsed time
             setInterval(function() {
                 if (self.modalElement.style.display === 'flex' && self.startTime) {
-                    var elapsed = Math.floor((Date.now() - self.startTime) / 1000);
-                    var elapsedElement = self.modalElement.querySelector('.elapsed-time');
+                    const elapsed = Math.floor((Date.now() - self.startTime) / 1000);
+                    const elapsedElement = self.modalElement.querySelector('.elapsed-time');
                     if (elapsedElement) {
-                        elapsedElement.textContent = 'Time elapsed: ' + elapsed + ' seconds';
+                        elapsedElement.textContent = `Time elapsed: ${elapsed} seconds`;
                     }
                 }
             }, 1000);
@@ -108,7 +108,7 @@
         addStyles: function() {
             if (document.getElementById('migration-styles')) return;
             
-            var style = document.createElement('style');
+            const style = document.createElement('style');
             style.id = 'migration-styles';
             style.textContent = [
                 '.migration-modal {',
@@ -284,7 +284,7 @@
          * Update migration progress
          */
         updateProgress: function(status, percent) {
-            var self = this;
+            const self = this;
             
             if (!self.modalElement) return;
             
@@ -295,7 +295,7 @@
             
             // Update progress bar
             if (self.progressBar) {
-                self.progressBar.style.width = percent + '%';
+                self.progressBar.style.width = `${percent}%`;
             }
             
             // Update details based on progress
@@ -320,7 +320,7 @@
          * Show completion state
          */
         showComplete: function(message) {
-            var self = this;
+            const self = this;
             
             if (!self.modalElement) return;
             
@@ -340,7 +340,7 @@
          * Show error state
          */
         showError: function(message) {
-            var self = this;
+            const self = this;
             
             if (!self.modalElement) return;
             
@@ -351,7 +351,7 @@
             self.updateProgress(message || "No worries! Your data is still safe.", 0);
             
             // Add retry button
-            var retryButton = document.createElement('button');
+            const retryButton = document.createElement('button');
             retryButton.textContent = 'Try Again';
             retryButton.className = 'retry-button';
             retryButton.style.cssText = 'margin-top: 20px; padding: 12px 24px; background: #3182ce; color: white; border: none; border-radius: 6px; font-size: 16px; cursor: pointer;';
@@ -363,7 +363,7 @@
                 }
             };
             
-            var content = self.modalElement.querySelector('.migration-content');
+            const content = self.modalElement.querySelector('.migration-content');
             if (content && !content.querySelector('.retry-button')) {
                 content.appendChild(retryButton);
             }
@@ -373,14 +373,14 @@
          * Hide modal
          */
         hide: function() {
-            var self = this;
+            const self = this;
             
             if (self.modalElement) {
                 self.modalElement.style.display = 'none';
                 self.modalElement.classList.remove('success', 'error');
                 
                 // Remove any retry buttons
-                var retryButton = self.modalElement.querySelector('.retry-button');
+                const retryButton = self.modalElement.querySelector('.retry-button');
                 if (retryButton) {
                     retryButton.remove();
                 }
@@ -391,13 +391,13 @@
          * Show alert for verification or other messages
          */
         showAlert: function(type, message) {
-            var alert = document.createElement('div');
-            alert.className = 'migration-alert ' + type;
+            const alert = document.createElement('div');
+            alert.className = `migration-alert ${type}`;
             alert.style.cssText = [
                 'position: fixed;',
                 'top: 20px;',
                 'right: 20px;',
-                'background: ' + (type === 'success' ? '#48bb78' : '#ed8936') + ';',
+                `background: ${type === 'success' ? '#48bb78' : '#ed8936'};`,
                 'color: white;',
                 'padding: 16px 24px;',
                 'border-radius: 8px;',
@@ -425,24 +425,24 @@
          * Show migration preview
          */
         showPreview: function(stats, callback) {
-            var self = this;
+            const self = this;
             
-            var preview = document.createElement('div');
+            const preview = document.createElement('div');
             preview.className = 'migration-preview';
             preview.innerHTML = [
                 '<div class="preview-content">',
                 '  <h2>Ready to Upgrade Your Storage?</h2>',
                 '  <div class="preview-stats">',
                 '    <div class="stat">',
-                '      <span class="stat-value">' + stats.taskCount + '</span>',
+                `      <span class="stat-value">${stats.taskCount}</span>`,
                 '      <span class="stat-label">Tasks</span>',
                 '    </div>',
                 '    <div class="stat">',
-                '      <span class="stat-value">' + stats.imageCount + '</span>',
+                `      <span class="stat-value">${stats.imageCount}</span>`,
                 '      <span class="stat-label">Images</span>',
                 '    </div>',
                 '    <div class="stat">',
-                '      <span class="stat-value">' + stats.estimatedTime + 's</span>',
+                `      <span class="stat-value">${stats.estimatedTime}s</span>`,
                 '      <span class="stat-label">Est. Time</span>',
                 '    </div>',
                 '  </div>',
@@ -455,7 +455,7 @@
             ].join('');
             
             // Add preview styles
-            var style = document.createElement('style');
+            const style = document.createElement('style');
             style.textContent = [
                 '.migration-preview { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); display: flex; align-items: center; justify-content: center; z-index: 10000; }',
                 '.preview-content { background: white; border-radius: 12px; padding: 32px; max-width: 400px; width: 90%; }',

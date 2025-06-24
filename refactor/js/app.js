@@ -10,7 +10,7 @@
     'use strict';
     
     // Safe Mode Constants
-    var SAFE_MODE_CONSTANTS = {
+    const SAFE_MODE_CONSTANTS = {
         BANNER_HEIGHT: 44,
         MAX_ANALYTICS_COUNT: 1000000,
         TIMEOUT_MULTIPLIER: 3.3,
@@ -27,11 +27,11 @@
                 throw new TypeError(window.StackMapMessaging ? window.StackMapMessaging.transform('Array.from requires an array-like object - not null or undefined') : 'The system needs different data format here');
             }
             
-            var items = Object(arrayLike);
-            var len = parseInt(items.length) || 0;
-            var result = [];
+            const items = Object(arrayLike);
+            const len = parseInt(items.length) || 0;
+            let result = [];
             
-            for (var i = 0; i < len; i++) {
+            for (let i = 0; i < len; i++) {
                 if (i in items) {
                     result.push(items[i]);
                 }
@@ -47,9 +47,8 @@
     
     // NodeList.forEach polyfill
     if (window.NodeList && !NodeList.prototype.forEach) {
-        NodeList.prototype.forEach = function(callback, thisArg) {
-            thisArg = thisArg || window;
-            for (var i = 0; i < this.length; i++) {
+        NodeList.prototype.forEach = function(callback, thisArg = window) {
+            for (let i = 0; i < this.length; i++) {
                 callback.call(thisArg, this[i], i, this);
             }
         };
@@ -60,9 +59,9 @@
         'use strict';
         
         // Parse URL parameters properly
-        var urlParams = window.location.search;
-        var isSafeMode = false;
-        var persistSafeMode = false;
+        const urlParams = window.location.search;
+        let isSafeMode = false;
+        let persistSafeMode = false;
         
         // Use proper parameter parsing to avoid false matches (case-insensitive)
         if (urlParams) {
@@ -72,15 +71,15 @@
         }
         
         // Check persistence first (wrapped in try-catch)
-        var enableSafeMode = false;
+        let enableSafeMode = false;
         try {
-            var safeUntil = localStorage.getItem('stackmap_safe_mode_until');
+            const safeUntil = localStorage.getItem('stackmap_safe_mode_until');
             if (safeUntil && parseInt(safeUntil, 10) > Date.now()) {
                 enableSafeMode = true;
             }
         } catch (e) {
             // Storage might be disabled - continue without persistence
-            var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Storage check failed') : 'Simple mode: Storage check in progress';
+            const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Storage check failed') : 'Simple mode: Storage check in progress';
             console.warn(msg, e);
         }
         
@@ -108,7 +107,7 @@
             // Store preference if persist=true and URL param is present
             if (isSafeMode && persistSafeMode) {
                 try {
-                    var tomorrow = new Date();
+                    const tomorrow = new Date();
                     // Validate date is valid
                     if (!isNaN(tomorrow.getTime())) {
                         tomorrow.setDate(tomorrow.getDate() + 1);
@@ -117,10 +116,10 @@
                 } catch (e) {
                     // Storage might be disabled or quota exceeded
                     if (e.name === 'QuotaExceededError') {
-                        var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Storage quota exceeded') : 'Simple mode: Storage is full';
+                        const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Storage quota exceeded') : 'Simple mode: Storage is full';
                         console.warn(msg);
                     } else {
-                        var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Could not persist preference') : 'Simple mode: Preference will apply to this session';
+                        const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Could not persist preference') : 'Simple mode: Preference will apply to this session';
                         console.warn(msg, e);
                     }
                 }
@@ -128,7 +127,7 @@
             
             // Analytics counter with overflow protection
             try {
-                var count = parseInt(localStorage.getItem('stackmap_safe_mode_count') || '0', 10);
+                let count = parseInt(localStorage.getItem('stackmap_safe_mode_count') || '0', 10);
                 // Reset at MAX_ANALYTICS_COUNT to continue tracking
                 if (count >= SAFE_MODE_CONSTANTS.MAX_ANALYTICS_COUNT) {
                     count = 0;
@@ -154,7 +153,7 @@
         'use strict';
         
         // Error state tracking
-        var errorState = {
+        const errorState = {
             hasError: false,
             errorCount: 0,
             lastError: null,
@@ -163,7 +162,7 @@
         };
         
         // Recursion guard
-        var errorHandlerActive = false;
+        let errorHandlerActive = false;
         
         // Helper to activate fallback UI
         function activateFallback() {
@@ -184,7 +183,7 @@
                 }
                 
                 // Find main view and activate fallback
-                var mainView = document.getElementById('main-view');
+                const mainView = document.getElementById('main-view');
                 if (mainView && !mainView.classList.contains('component-error-active')) {
                     mainView.classList.add('component-error-active');
                     // Note: Removed automatic focus - let users control focus
@@ -203,10 +202,10 @@
         
         // Circuit breaker check: configurable based on safe mode
         function checkCircuitBreaker() {
-            var now = Date.now();
-            var timeWindow = 10000; // 10 seconds
-            var errorThreshold = window.StackMapSafeMode ? 10 : 5; // More tolerant in safe mode
-            var windowStart = now - timeWindow;
+            const now = Date.now();
+            const timeWindow = 10000; // 10 seconds
+            const errorThreshold = window.StackMapSafeMode ? 10 : 5; // More tolerant in safe mode
+            const windowStart = now - timeWindow;
             
             // Remove old timestamps
             errorState.errorTimes = errorState.errorTimes.filter(function(time) {
@@ -234,10 +233,10 @@
         
         // Error deduplication helper
         function isDuplicateError(message) {
-            var key = (message || 'unknown').substring(0, 100); // Limit key size
+            const key = (message || 'unknown').substring(0, 100); // Limit key size
             
             // Memory cleanup: reset after 100 entries
-            var errorCount = Object.keys(errorState.seenErrors).length;
+            const errorCount = Object.keys(errorState.seenErrors).length;
             if (errorCount > 100) {
                 errorState.seenErrors = {};
             }
@@ -250,7 +249,7 @@
         }
         
         // Global error handler
-        var originalOnError = window.onerror;
+        const originalOnError = window.onerror;
         window.onerror = function(message, source, lineno, colno, error) {
             try {
                 // Error limit check
@@ -273,7 +272,7 @@
                 
                 // Log for debugging (fail silently if console is broken)
                 try {
-                    var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Runtime error:') : 'Something unexpected happened:';
+                    const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Runtime error:') : 'Something unexpected happened:';
                     console.error(msg, message, source, lineno);
                 } catch (e) {}
                 
@@ -309,8 +308,8 @@
                 }
                 
                 // Deduplication check
-                var prefix = window.StackMapMessaging ? window.StackMapMessaging.transform('Promise rejection:') : 'Processing didn\'t complete:';
-                var errorMsg = prefix + ' ' + (event.reason || 'unknown');
+                const prefix = window.StackMapMessaging ? window.StackMapMessaging.transform('Promise rejection:') : 'Processing didn\'t complete:';
+                const errorMsg = `${prefix} ${event.reason || 'unknown'}`;
                 if (isDuplicateError(errorMsg)) {
                     return;
                 }
@@ -325,7 +324,7 @@
                 
                 // Log for debugging
                 try {
-                    var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Unhandled rejection:') : 'Background process update:';
+                    const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Unhandled rejection:') : 'Background process update:';
                     console.error(msg, event.reason);
                 } catch (e) {}
                 
@@ -343,13 +342,13 @@
         });
         
         // App loading timeout (configurable based on safe mode)
-        var timeoutDuration = window.StackMapSafeMode ? 
+        const timeoutDuration = window.StackMapSafeMode ? 
             Math.round(10000 * SAFE_MODE_CONSTANTS.TIMEOUT_MULTIPLIER) : 10000;
             
-        var loadingTimeout = setTimeout(function() {
+        let loadingTimeout = setTimeout(function() {
             try {
                 // Check if app is still in loading state
-                var loadingView = document.getElementById('loading-view');
+                const loadingView = document.getElementById('loading-view');
                 
                 if (loadingView && !loadingView.classList.contains('hidden')) {
                     // Still loading after timeout - activate fallback
@@ -406,7 +405,7 @@
         'use strict';
         
         // Preservation state
-        var preservationState = {
+        const preservationState = {
             lastSave: 0,
             saveInterval: 1000, // Save every second
             maxFormFields: 5 // Limit hidden fields to prevent DOM bloat
@@ -414,7 +413,7 @@
         
         // Get or create hidden form for data preservation
         function getPreservationForm() {
-            var form = document.getElementById('data-preservation-form');
+            let form = document.getElementById('data-preservation-form');
             if (!form) {
                 form = document.createElement('form');
                 form.id = 'data-preservation-form';
@@ -431,8 +430,8 @@
             
             try {
                 // 1. Save to hidden form field
-                var form = getPreservationForm();
-                var field = form.querySelector('[name="' + key + '"]');
+                const form = getPreservationForm();
+                let field = form.querySelector(`[name="${key}"]`);
                 
                 if (!field) {
                     // Limit form fields to prevent memory issues
@@ -450,7 +449,7 @@
                 
                 // 2. Try localStorage (may fail)
                 try {
-                    localStorage.setItem('stackmap_preserve_' + key, field.value);
+                    localStorage.setItem(`stackmap_preserve_${key}`, field.value);
                 } catch (e) {
                     // Storage might be full or disabled - continue without it
                 }
@@ -464,7 +463,7 @@
                 // Preservation failed - show error indicator
                 showSaveIndicator(false);
                 try {
-                    var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Data preservation failed:') : 'Backup save needs attention:';
+                    const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Data preservation failed:') : 'Backup save needs attention:';
                     console.warn(msg, e);
                 } catch (e2) {}
             }
@@ -473,7 +472,7 @@
         // Visual save status indicator
         function showSaveIndicator(success) {
             try {
-                var indicator = document.getElementById('save-indicator');
+                let indicator = document.getElementById('save-indicator');
                 if (!indicator) {
                     indicator = document.createElement('div');
                     indicator.id = 'save-indicator';
@@ -502,9 +501,9 @@
             
             try {
                 // 1. Check form fields first (most reliable)
-                var form = document.getElementById('data-preservation-form');
+                const form = document.getElementById('data-preservation-form');
                 if (form) {
-                    var field = form.querySelector('[name="' + key + '"]');
+                    const field = form.querySelector(`[name="${key}"]`);
                     if (field && field.value) {
                         try {
                             return JSON.parse(field.value);
@@ -516,7 +515,7 @@
                 
                 // 2. Check localStorage
                 try {
-                    var stored = localStorage.getItem('stackmap_preserve_' + key);
+                    const stored = localStorage.getItem(`stackmap_preserve_${key}`);
                     if (stored) {
                         try {
                             return JSON.parse(stored);
@@ -528,15 +527,15 @@
                 
                 // 3. Check URL parameters (for last-task)
                 if (key === 'last-task') {
-                    var urlParams = new URLSearchParams(window.location.search);
-                    var lastTask = urlParams.get('last-task');
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const lastTask = urlParams.get('last-task');
                     if (lastTask) return lastTask;
                 }
                 
             } catch (e) {
                 // Recovery failed
                 try {
-                    var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Data recovery failed:') : 'Data recovery in progress:';
+                    const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Data recovery failed:') : 'Data recovery in progress:';
                     console.warn(msg, e);
                 } catch (e2) {}
             }
@@ -545,7 +544,7 @@
         }
         
         // Continuous save mechanism - debounced
-        var saveTimeout = null;
+        let saveTimeout = null;
         function scheduleSave(key, value) {
             if (saveTimeout) {
                 clearTimeout(saveTimeout);
@@ -577,7 +576,7 @@
                 
                 // Also update the hidden field in fallback UI
                 try {
-                    var field = document.getElementById('last-task');
+                    const field = document.getElementById('last-task');
                     if (field) field.value = location;
                 } catch (e) {}
             },
@@ -598,7 +597,7 @@
         'use strict';
         
         // ADHD-optimized performance thresholds
-        var ADHD_THRESHOLDS = {
+        const ADHD_THRESHOLDS = {
             immediate: 100,      // Feels instant
             noticeable: 500,     // Timing perception issues begin
             critical: 1000,      // High abandonment risk
@@ -606,7 +605,7 @@
         };
         
         // Performance state
-        var performanceState = {
+        const performanceState = {
             interactions: [],
             reducedMode: false,
             sessionStart: Date.now()
@@ -616,7 +615,7 @@
         function trackInteraction(name, startTime) {
             if (performanceState.reducedMode) return;
             
-            var duration = performance.now() - startTime;
+            const duration = performance.now() - startTime;
             performanceState.interactions.push({
                 name: name,
                 duration: duration,
@@ -625,7 +624,7 @@
             
             // Warn if exceeding ADHD thresholds
             if (duration > ADHD_THRESHOLDS.noticeable) {
-                console.warn('[PERF] ' + name + ' took ' + duration + 'ms - exceeds ADHD threshold');
+                console.warn(`[PERF] ${name} took ${duration}ms - exceeds ADHD threshold`);
                 
                 // Send to analytics if enabled
                 if (window.StackMapAnalytics && window.StackMapFeatureFlags && 
@@ -640,7 +639,7 @@
                 // Auto-trigger safe mode for extremely slow interactions
                 if (duration > ADHD_THRESHOLDS.abandon * 1.5) {
                     console.error('[PERF] Critical performance issue - triggering safe mode');
-                    window.location.href = window.location.pathname + '?safe=true&reason=performance';
+                    window.location.href = `${window.location.pathname}?safe=true&reason=performance`;
                 }
             }
         }
@@ -649,19 +648,19 @@
         function checkPerformanceBudget() {
             if (!window.performance || !window.performance.timing) return;
             
-            var timing = window.performance.timing;
-            var interactiveTime = timing.domInteractive - timing.navigationStart;
+            const timing = window.performance.timing;
+            const interactiveTime = timing.domInteractive - timing.navigationStart;
             
             if (interactiveTime > ADHD_THRESHOLDS.critical) {
-                console.error('[PERF] Interactive time budget exceeded: ' + interactiveTime + 'ms');
+                console.error(`[PERF] Interactive time budget exceeded: ${interactiveTime}ms`);
                 
                 // Consider triggering safe mode
                 if (interactiveTime > ADHD_THRESHOLDS.abandon) {
-                    var shouldTriggerSafeMode = confirm(
+                    const shouldTriggerSafeMode = confirm(
                         'The app is running slowly. Would you like to switch to simple mode for better performance?'
                     );
                     if (shouldTriggerSafeMode) {
-                        window.location.href = window.location.pathname + '?safe=true&reason=performance';
+                        window.location.href = `${window.location.pathname}?safe=true&reason=performance`;
                     }
                 }
             }
@@ -676,8 +675,8 @@
                 performanceState.reducedMode = enabled;
             },
             getSessionMetrics: function() {
-                var totalInteractions = performanceState.interactions.length;
-                var slowInteractions = performanceState.interactions.filter(function(i) {
+                const totalInteractions = performanceState.interactions.length;
+                const slowInteractions = performanceState.interactions.filter(function(i) {
                     return i.duration > ADHD_THRESHOLDS.noticeable;
                 }).length;
                 
@@ -696,7 +695,7 @@
         'use strict';
         
         // Feature flag configuration
-        var flags = {
+        const flags = {
             'performance-tracking': { enabled: true, rolloutPercentage: 100 },
             'haptic-feedback': { enabled: true, rolloutPercentage: 50 },
             'skeleton-screens': { enabled: true, rolloutPercentage: 100 },
@@ -708,8 +707,8 @@
         // Check localStorage for overrides
         function loadOverrides() {
             try {
-                for (var flagName in flags) {
-                    var override = localStorage.getItem('stackmap-ff-override-' + flagName);
+                for (const flagName in flags) {
+                    const override = localStorage.getItem(`stackmap-ff-override-${flagName}`);
                     if (override === 'disabled') {
                         flags[flagName].enabled = false;
                     } else if (override === 'enabled') {
@@ -723,9 +722,9 @@
         
         // Get consistent user hash for A/B testing
         function getUserHash() {
-            var userId = localStorage.getItem('stackmap-user-id') || 'anonymous';
-            var hash = 0;
-            for (var i = 0; i < userId.length; i++) {
+            const userId = localStorage.getItem('stackmap-user-id') || 'anonymous';
+            let hash = 0;
+            for (let i = 0; i < userId.length; i++) {
                 hash = ((hash << 5) - hash) + userId.charCodeAt(i);
                 hash = hash & hash; // Convert to 32bit integer
             }
@@ -734,11 +733,11 @@
         
         // Check if feature is enabled for user
         function isEnabled(flagName) {
-            var flag = flags[flagName];
+            const flag = flags[flagName];
             if (!flag || !flag.enabled) return false;
             
             // Check rollout percentage
-            var userHash = getUserHash();
+            const userHash = getUserHash();
             return (userHash % 100) < flag.rolloutPercentage;
         }
         
@@ -748,7 +747,7 @@
                 flags[flagName].enabled = false;
                 // Persist to localStorage for immediate effect
                 try {
-                    localStorage.setItem('stackmap-ff-override-' + flagName, 'disabled');
+                    localStorage.setItem(`stackmap-ff-override-${flagName}`, 'disabled');
                 } catch (e) {
                     console.error('Could not persist feature flag override:', e);
                 }
@@ -760,7 +759,7 @@
             if (flags[flagName]) {
                 flags[flagName].enabled = true;
                 try {
-                    localStorage.setItem('stackmap-ff-override-' + flagName, 'enabled');
+                    localStorage.setItem(`stackmap-ff-override-${flagName}`, 'enabled');
                 } catch (e) {
                     console.error('Could not persist feature flag override:', e);
                 }
@@ -785,7 +784,7 @@
         'use strict';
         
         // Haptic patterns for ADHD users (20-30% stronger)
-        var patterns = {
+        const patterns = {
             buttonPress: [30],      // 30% stronger than standard
             success: [20, 50, 20],  // Success pattern
             error: [10, 10, 10],    // Gentle error (no blame)
@@ -794,7 +793,7 @@
         };
         
         // Haptic state
-        var hapticState = {
+        const hapticState = {
             hasUserInteracted: false,
             supported: false
         };
@@ -831,7 +830,7 @@
             }
             
             try {
-                var pattern = patterns[patternName] || patterns.buttonPress;
+                const pattern = patterns[patternName] || patterns.buttonPress;
                 window.navigator.vibrate(pattern);
             } catch (err) {
                 console.log('[Haptic] Feedback error:', err);
@@ -846,7 +845,7 @@
         
         // Initialize listener for first interaction
         function initInteractionListener() {
-            var onFirstInteraction = function() {
+            const onFirstInteraction = function() {
                 enableAfterInteraction();
                 document.removeEventListener('click', onFirstInteraction);
                 document.removeEventListener('touchstart', onFirstInteraction);
@@ -869,7 +868,7 @@
     })();
     
     // Application state
-    var App = {
+    const App = {
         currentView: 'loading-view',
         platform: null,
         views: {},
@@ -894,13 +893,13 @@
         
         showNotification: function(message, type) {
             // Show a notification message
-            console.log('[Notification]', type + ':', message);
+            console.log('[Notification]', `${type}:`, message);
             // TODO: Implement visual notification system
         },
         
         getCurrentUserPreferences: function() {
             if (window.UserManager) {
-                var currentUser = window.UserManager.getCurrentUser();
+                const currentUser = window.UserManager.getCurrentUser();
                 return currentUser ? currentUser.preferences : null;
             }
             return null;
@@ -913,42 +912,40 @@
     };
     
     // View Controller
-    var ViewController = {
+    const ViewController = {
         init: function() {
             // Cache all view elements
-            var viewElements = document.querySelectorAll('.view');
+            const viewElements = document.querySelectorAll('.view');
             viewElements.forEach(function(view) {
                 App.views[view.id] = view;
             });
         },
         
-        show: function(viewId, options) {
-            options = options || {};
-            
+        show: function(viewId, options = {}) {
             // CRITICAL: Prevent concurrent transitions
             if (App.isTransitioning) {
-                var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Transition in progress, ignoring request') : 'Please wait for current action to complete';
+                const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Transition in progress, ignoring request') : 'Please wait for current action to complete';
                 console.warn(msg);
                 return false;
             }
-            
+
             // Set flag FIRST to prevent race conditions
             App.isTransitioning = true;
-            
+
             // Atomic transaction ID handling to prevent race condition
-            var transactionId;
+            let transactionId;
             if (App.transactionId >= SAFE_MODE_CONSTANTS.TRANSACTION_ID_MAX) {
                 transactionId = App.transactionId = 1;
             } else {
                 transactionId = ++App.transactionId;
             }
-            
+
             try {
-                var fromView = App.views[App.currentView];
-                var toView = App.views[viewId];
+                const fromView = App.views[App.currentView];
+                const toView = App.views[viewId];
                 
                 if (!toView) {
-                    var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('View not found:') : 'Looking for that screen:';
+                    const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('View not found:') : 'Looking for that screen:';
                     console.warn(msg, viewId);
                     App.isTransitioning = false; // CRITICAL: Always reset flag!
                     return false;
@@ -962,7 +959,7 @@
                 // Check navigation depth for ADHD users
                 if (!options.isBack && viewId !== 'main-view') {
                     if (App.navigationStack.length >= App.maxDepth) {
-                        var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Maximum navigation depth reached') : 'Please use the back button to return';
+                        const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Maximum navigation depth reached') : 'Please use the back button to return';
                         console.warn(msg);
                         this.showDepthWarning();
                         App.isTransitioning = false; // CRITICAL: Always reset flag!
@@ -972,7 +969,7 @@
                 
                 // Handle transition (skip animations in safe mode)
                 if (options.animate && fromView && !window.StackMapSafeMode) {
-                    var self = this;
+                    const self = this;
                     
                     // Cancel any previous animation
                     if (App.animationTimeoutId) {
@@ -1046,7 +1043,7 @@
                 
                 // Update history for web
                 if (Platform.isWeb() && options.updateHistory !== false && !options.isBack) {
-                    var path = viewId === 'main-view' ? '/' : '#' + viewId.replace('-view', '');
+                    const path = viewId === 'main-view' ? '/' : `#${viewId.replace('-view', '')}`;
                     history.pushState({ view: viewId, depth: App.navigationStack.length }, '', path);
                 }
                 
@@ -1066,18 +1063,18 @@
         
         manageFocus: function(view) {
             // Use cached focusables for Android 5 performance
-            var viewId = view.id;
-            var focusables = this.getCachedFocusables(viewId);
+            const viewId = view.id;
+            const focusables = this.getCachedFocusables(viewId);
             
             // If no focusables, try to focus heading or main element
             if (focusables.length === 0) {
-                var fallback = view.querySelector('h1, h2, main, [role="main"]');
+                const fallback = view.querySelector('h1, h2, main, [role="main"]');
                 if (fallback) {
                     fallback.tabIndex = -1;
                     try {
                         fallback.focus();
                     } catch (e) {
-                        var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not focus fallback element:') : 'Screen reader focus adjustment:';
+                        const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not focus fallback element:') : 'Screen reader focus adjustment:';
                         console.warn(msg, e);
                     }
                 }
@@ -1099,7 +1096,7 @@
                             App.focusTimeoutId = null; // Clear AFTER successful focus
                         } catch (e) {
                             App.focusTimeoutId = null; // Clear on failure too
-                            var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not focus element:') : 'Interface adjustment needed:';
+                            const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not focus element:') : 'Interface adjustment needed:';
                             console.warn(msg, e);
                         }
                     } else {
@@ -1112,15 +1109,15 @@
         getCachedFocusables: function(viewId) {
             // Cache focusables per view for Android 5 performance
             if (!App.focusableCache[viewId] || Date.now() - App.focusableCache[viewId].timestamp > 1000) {
-                var view = App.views[viewId];
+                const view = App.views[viewId];
                 if (!view) return [];
                 
                 // Limit cache size
                 if (App.focusableCacheSize >= SAFE_MODE_CONSTANTS.CACHE_MAX_SIZE) {
                     // Remove oldest cache entry
-                    var oldestId = null;
-                    var oldestTime = Date.now();
-                    for (var id in App.focusableCache) {
+                    let oldestId = null;
+                    let oldestTime = Date.now();
+                    for (const id in App.focusableCache) {
                         if (App.focusableCache[id].timestamp < oldestTime) {
                             oldestTime = App.focusableCache[id].timestamp;
                             oldestId = id;
@@ -1132,7 +1129,7 @@
                     }
                 }
                 
-                var elements = view.querySelectorAll(
+                const elements = view.querySelectorAll(
                     'button:not([disabled]), ' +
                     'a[href]:not([disabled]), ' +
                     'input:not([disabled]), ' +
@@ -1142,7 +1139,7 @@
                 );
                 
                 App.focusableCache[viewId] = {
-                    elements: Array.prototype.slice.call(elements),
+                    elements: [...elements],
                     timestamp: Date.now()
                 };
                 App.focusableCacheSize++;
@@ -1171,7 +1168,7 @@
         
         announceViewChange: function(view) {
             // Create or update ARIA live region
-            var announcer = document.getElementById('view-announcer');
+            let announcer = document.getElementById('view-announcer');
             if (!announcer) {
                 announcer = document.createElement('div');
                 announcer.id = 'view-announcer';
@@ -1183,14 +1180,14 @@
             }
             
             // Announce the view change
-            var viewTitle = view.querySelector('h1, h2');
-            var announcement = viewTitle ? viewTitle.textContent : 'New view loaded';
+            const viewTitle = view.querySelector('h1, h2');
+            const announcement = viewTitle ? viewTitle.textContent : 'New view loaded';
             announcer.textContent = announcement;
         },
         
         showDepthWarning: function() {
             // Show a gentle warning about navigation depth
-            var warning = document.createElement('div');
+            const warning = document.createElement('div');
             warning.className = 'depth-warning';
             warning.textContent = window.StackMapMessaging ? window.StackMapMessaging.transform('Please use the back button to return') : 'Please use the back button to return';
             warning.style.cssText = 'position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #333; color: white; padding: 10px 20px; border-radius: 4px; z-index: 9999;';
@@ -1205,9 +1202,9 @@
     };
     
     // Platform Detection and Adaptation
-    var Platform = {
+    const Platform = {
         detect: function() {
-            var ua = navigator.userAgent;
+            const ua = navigator.userAgent;
             App.platform = {
                 isCapacitor: typeof window.Capacitor !== 'undefined',
                 isAndroid: false,
@@ -1218,7 +1215,7 @@
             };
             
             if (App.platform.isCapacitor) {
-                var platform = window.Capacitor.getPlatform();
+                const platform = window.Capacitor.getPlatform();
                 App.platform.isAndroid = platform === 'android';
                 App.platform.isIOS = platform === 'ios';
             } else if (!App.platform.isPWA) {
@@ -1242,7 +1239,7 @@
     };
     
     // Navigation Handler
-    var Navigation = {
+    const Navigation = {
         boundHandlers: {},
         
         init: function() {
@@ -1276,17 +1273,17 @@
         },
         
         handleClick: function(e) {
-            var link = e.target.closest('a');
+            const link = e.target.closest('a');
             if (!link) return;
             
-            var href = link.getAttribute('href');
+            const href = link.getAttribute('href');
             if (!href || href === '#') return;
             
             e.preventDefault();
             
             // Internal navigation
             if (href.startsWith('#')) {
-                var viewId = href.substring(1) + '-view';
+                const viewId = `${href.substring(1)}-view`;
                 ViewController.show(viewId, { animate: true });
             }
             // External links - explicitly check for http:// or https://
@@ -1298,7 +1295,7 @@
         handlePopState: function(e) {
             if (e.state && e.state.view) {
                 // Determine if this is a back navigation
-                var isBack = e.state.depth < App.navigationStack.length;
+                const isBack = e.state.depth < App.navigationStack.length;
                 ViewController.show(e.state.view, { animate: true, updateHistory: false, isBack: isBack });
             } else {
                 // No state, go to main view
@@ -1308,7 +1305,7 @@
         
         setupViewButtons: function() {
             // Menu button
-            var menuBtn = document.getElementById('menu-button');
+            const menuBtn = document.getElementById('menu-button');
             if (menuBtn) {
                 menuBtn.addEventListener('click', function() {
                     ViewController.show('settings-view', { animate: true });
@@ -1316,7 +1313,7 @@
             }
             
             // Back buttons
-            var backButtons = document.querySelectorAll('[id$="-back"]');
+            const backButtons = document.querySelectorAll('[id$="-back"]');
             backButtons.forEach(function(btn) {
                 btn.addEventListener('click', function() {
                     if (Platform.isWeb()) {
@@ -1324,7 +1321,7 @@
                     } else {
                         // Navigate back in the stack
                         if (App.navigationStack.length > 1) {
-                            var previousView = App.navigationStack[App.navigationStack.length - 2];
+                            const previousView = App.navigationStack[App.navigationStack.length - 2];
                             ViewController.show(previousView, { animate: true, isBack: true });
                         } else {
                             ViewController.show('main-view', { animate: true, isBack: true });
@@ -1352,7 +1349,7 @@
                 try {
                     if (window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.Browser) {
                         // iOS-specific options
-                        var options = { url: url };
+                        const options = { url: url };
                         if (App.platform.isIOS) {
                             options.presentationStyle = 'popover';
                             options.toolbarColor = '#1a1a1a';
@@ -1380,7 +1377,7 @@
             // Handle web/PWA platforms
             else {
                 try {
-                    var newWindow = window.open(url, '_blank', 'noopener,noreferrer');
+                    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
                     if (!newWindow) {
                         // Popup blocked
                         console.warn('Popup blocked, showing message to user');
@@ -1398,7 +1395,7 @@
     };
     
     // TV Navigation Support
-    var TVNavigation = {
+    const TVNavigation = {
         boundHandlers: {},
         
         init: function() {
@@ -1431,7 +1428,7 @@
                 case 'Escape':
                     e.preventDefault();
                     // Go back
-                    var backBtn = document.querySelector('[id$="-back"]:not(.hidden [id$="-back"])');
+                    const backBtn = document.querySelector('[id$="-back"]:not(.hidden [id$="-back"])');
                     if (backBtn) backBtn.click();
                     break;
             }
@@ -1439,7 +1436,7 @@
         
         ensureFocusable: function() {
             // Make all interactive elements focusable
-            var elements = document.querySelectorAll('button, a, input, select, textarea');
+            const elements = document.querySelectorAll('button, a, input, select, textarea');
             elements.forEach(function(el) {
                 if (!el.hasAttribute('tabindex')) {
                     el.setAttribute('tabindex', '0');
@@ -1450,7 +1447,7 @@
         moveFocus: function(direction) {
             // Simple spatial navigation
             // TODO: Implement proper spatial navigation algorithm
-            var focusable = Array.from(document.querySelectorAll(
+            const focusable = Array.from(document.querySelectorAll(
                 ':not(.hidden) button:not([disabled]), ' +
                 ':not(.hidden) a[href], ' +
                 ':not(.hidden) input:not([disabled]), ' +
@@ -1459,10 +1456,10 @@
                 ':not(.hidden) [tabindex="0"]'
             ));
             
-            var current = document.activeElement;
-            var currentIndex = focusable.indexOf(current);
+            const current = document.activeElement;
+            const currentIndex = focusable.indexOf(current);
             
-            var nextIndex;
+            let nextIndex;
             if (direction === 'ArrowDown' || direction === 'ArrowRight') {
                 nextIndex = (currentIndex + 1) % focusable.length;
             } else {
@@ -1477,11 +1474,11 @@
     };
     
     // Storage Manager (SQLite + localStorage hybrid)
-    var Storage = {
+    const Storage = {
         sqliteReady: false,
         
         init: function() {
-            var self = this;
+            const self = this;
             
             // Initialize SQLite if available
             if (window.TaskSQLite && window.Capacitor && window.Capacitor.isNativePlatform()) {
@@ -1533,22 +1530,22 @@
         
         loadSettings: function() {
             try {
-                var settings = localStorage.getItem('stackmap-settings');
+                const settings = localStorage.getItem('stackmap-settings');
                 if (settings) {
                     // Apply settings
                     console.log('Settings loaded');
                 }
             } catch (e) {
-                var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not load settings:') : 'Settings will use defaults:';
+                const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not load settings:') : 'Settings will use defaults:';
                 console.warn(msg, e);
             }
         },
         
         loadTasks: function(callback) {
-            var self = this;
+            const self = this;
             
             // IMPORTANT: Always check for backup data first
-            var hasBackup = this.hasBackupData();
+            const hasBackup = this.hasBackupData();
             
             if (this.sqliteReady) {
                 // Load from SQLite
@@ -1601,9 +1598,9 @@
         
         loadTasksFromLocalStorage: function(callback) {
             try {
-                var tasks = localStorage.getItem('stackmap-tasks');
+                const tasks = localStorage.getItem('stackmap-tasks');
                 if (tasks) {
-                    var parsed = JSON.parse(tasks);
+                    const parsed = JSON.parse(tasks);
                     console.log('Tasks loaded from localStorage:', parsed.length);
                     if (callback) callback(parsed, null);
                 } else {
@@ -1619,7 +1616,7 @@
                     });
                 }
             } catch (e) {
-                var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not load tasks:') : 'Tasks are being retrieved:';
+                const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not load tasks:') : 'Tasks are being retrieved:';
                 console.warn(msg, e);
                 
                 // Try backup before giving up
@@ -1631,25 +1628,25 @@
         
         loadTasksFromBackup: function(callback) {
             try {
-                var backupKey = localStorage.getItem('stackmap-last-backup-key');
+                const backupKey = localStorage.getItem('stackmap-last-backup-key');
                 if (backupKey) {
-                    var backupData = localStorage.getItem(backupKey);
+                    const backupData = localStorage.getItem(backupKey);
                     if (backupData) {
-                        var tasks = JSON.parse(backupData);
-                        console.log('Loaded ' + tasks.length + ' tasks from backup');
+                        const tasks = JSON.parse(backupData);
+                        console.log(`Loaded ${tasks.length} tasks from backup`);
                         if (callback) callback(tasks);
                         return;
                     }
                 }
                 
                 // Check for any other backups
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
                     if (key && key.indexOf('stackmap-tasks-backup-') === 0) {
-                        var data = localStorage.getItem(key);
+                        const data = localStorage.getItem(key);
                         if (data) {
-                            var tasks = JSON.parse(data);
-                            console.log('Found alternative backup with ' + tasks.length + ' tasks');
+                            const tasks = JSON.parse(data);
+                            console.log(`Found alternative backup with ${tasks.length} tasks`);
                             if (callback) callback(tasks);
                             return;
                         }
@@ -1666,14 +1663,14 @@
         hasBackupData: function() {
             try {
                 // Check for any backup keys
-                var backupKey = localStorage.getItem('stackmap-last-backup-key');
+                const backupKey = localStorage.getItem('stackmap-last-backup-key');
                 if (backupKey && localStorage.getItem(backupKey)) {
                     return true;
                 }
                 
                 // Check for any backup files
-                for (var i = 0; i < localStorage.length; i++) {
-                    var key = localStorage.key(i);
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
                     if (key && key.indexOf('stackmap-tasks-backup-') === 0) {
                         return true;
                     }
@@ -1705,8 +1702,8 @@
         
         saveTaskToLocalStorage: function(task, callback) {
             try {
-                var tasks = localStorage.getItem('stackmap-tasks');
-                var taskList = tasks ? JSON.parse(tasks) : [];
+                const tasks = localStorage.getItem('stackmap-tasks');
+                const taskList = tasks ? JSON.parse(tasks) : [];
                 
                 // Add ID if not present
                 if (!task.id) {
@@ -1735,14 +1732,14 @@
         
         updateTaskInLocalStorage: function(taskId, updates, callback) {
             try {
-                var tasks = localStorage.getItem('stackmap-tasks');
-                var taskList = tasks ? JSON.parse(tasks) : [];
+                const tasks = localStorage.getItem('stackmap-tasks');
+                const taskList = tasks ? JSON.parse(tasks) : [];
                 
-                var found = false;
-                for (var i = 0; i < taskList.length; i++) {
+                let found = false;
+                for (let i = 0; i < taskList.length; i++) {
                     if (taskList[i].id === taskId) {
                         // Apply updates
-                        for (var key in updates) {
+                        for (const key in updates) {
                             if (updates.hasOwnProperty(key)) {
                                 taskList[i][key] = updates[key];
                             }
@@ -1775,10 +1772,10 @@
         
         deleteTaskFromLocalStorage: function(taskId, callback) {
             try {
-                var tasks = localStorage.getItem('stackmap-tasks');
-                var taskList = tasks ? JSON.parse(tasks) : [];
+                const tasks = localStorage.getItem('stackmap-tasks');
+                const taskList = tasks ? JSON.parse(tasks) : [];
                 
-                var filtered = taskList.filter(function(task) {
+                const filtered = taskList.filter(function(task) {
                     return task.id !== taskId;
                 });
                 
@@ -1792,54 +1789,54 @@
         },
         
         migrateTasksIfNeeded: function() {
-            var self = this;
+            const self = this;
             
             try {
                 // Check migration status
-                var migrationStatus = localStorage.getItem('stackmap-sqlite-migration-status');
-                var lastVerification = localStorage.getItem('stackmap-sqlite-last-verification');
+                const migrationStatus = localStorage.getItem('stackmap-sqlite-migration-status');
+                const lastVerification = localStorage.getItem('stackmap-sqlite-last-verification');
                 
                 // Skip if already fully migrated and verified
                 if (migrationStatus === 'verified' && lastVerification) {
-                    var daysSinceVerification = (Date.now() - parseInt(lastVerification)) / (1000 * 60 * 60 * 24);
+                    const daysSinceVerification = (Date.now() - parseInt(lastVerification)) / (1000 * 60 * 60 * 24);
                     if (daysSinceVerification < 30) {
                         return; // Still in verification period
                     }
                 }
                 
                 // Get tasks from localStorage
-                var tasks = localStorage.getItem('stackmap-tasks');
+                const tasks = localStorage.getItem('stackmap-tasks');
                 if (!tasks) {
                     // No tasks to migrate
                     return;
                 }
                 
-                var taskList = JSON.parse(tasks);
+                const taskList = JSON.parse(tasks);
                 if (taskList.length === 0) {
                     return;
                 }
                 
                 // Show migration progress to user
                 if (self.onMigrationProgress) {
-                    self.onMigrationProgress('Starting migration of ' + taskList.length + ' tasks...');
+                    self.onMigrationProgress(`Starting migration of ${taskList.length} tasks...`);
                 }
                 
-                console.log('Starting safe migration of ' + taskList.length + ' tasks to SQLite...');
+                console.log(`Starting safe migration of ${taskList.length} tasks to SQLite...`);
                 
                 // IMPORTANT: Create backup first
-                var backupKey = 'stackmap-tasks-backup-' + Date.now();
+                const backupKey = `stackmap-tasks-backup-${Date.now()}`;
                 localStorage.setItem(backupKey, JSON.stringify(taskList));
                 localStorage.setItem('stackmap-last-backup-key', backupKey);
                 
                 // Track migration progress
-                var migrated = 0;
-                var errors = 0;
-                var migratedIds = [];
+                let migrated = 0;
+                let errors = 0;
+                const migratedIds = [];
                 
                 function migrateNext(index) {
                     if (index >= taskList.length) {
                         // Migration attempt complete
-                        console.log('Migration attempt complete: ' + migrated + ' succeeded, ' + errors + ' failed');
+                        console.log(`Migration attempt complete: ${migrated} succeeded, ${errors} failed`);
                         
                         if (errors === 0 && migrated === taskList.length) {
                             // All tasks migrated successfully
@@ -1858,7 +1855,7 @@
                             self.scheduleVerification();
                         } else {
                             // Migration had errors - rollback
-                            console.error('Migration failed with ' + errors + ' errors. Rolling back...');
+                            console.error(`Migration failed with ${errors} errors. Rolling back...`);
                             
                             if (self.onMigrationProgress) {
                                 self.onMigrationProgress('Migration failed. Your data is safe in backup.');
@@ -1870,12 +1867,12 @@
                         return;
                     }
                     
-                    var task = taskList[index];
+                    const task = taskList[index];
                     
                     // Update progress
                     if (self.onMigrationProgress && index % 10 === 0) {
-                        var percent = Math.round((index / taskList.length) * 100);
-                        self.onMigrationProgress('Migrating... ' + percent + '%');
+                        const percent = Math.round((index / taskList.length) * 100);
+                        self.onMigrationProgress(`Migrating... ${percent}%`);
                     }
                     
                     window.TaskSQLite.createTask(task, function(result, error) {
@@ -1905,7 +1902,7 @@
         },
         
         scheduleVerification: function() {
-            var self = this;
+            const self = this;
             
             // Check SQLite is working after 24 hours
             setTimeout(function() {
@@ -1914,7 +1911,7 @@
         },
         
         verifyMigration: function() {
-            var self = this;
+            const self = this;
             
             console.log('Verifying SQLite migration...');
             
@@ -1926,7 +1923,7 @@
                         return;
                     }
                     
-                    var expectedCount = parseInt(localStorage.getItem('stackmap-sqlite-migrated-count') || '0');
+                    const expectedCount = parseInt(localStorage.getItem('stackmap-sqlite-migrated-count') || '0');
                     
                     if (stats.totalTasks >= expectedCount) {
                         // Verification successful
@@ -1949,7 +1946,7 @@
         scheduleBackupCleanup: function() {
             // Clean up backup after 30 days
             setTimeout(function() {
-                var backupKey = localStorage.getItem('stackmap-last-backup-key');
+                const backupKey = localStorage.getItem('stackmap-last-backup-key');
                 if (backupKey) {
                     localStorage.removeItem(backupKey);
                     localStorage.removeItem('stackmap-last-backup-key');
@@ -1970,10 +1967,10 @@
         save: function(key, data) {
             // Generic save for non-task data (settings, etc)
             try {
-                localStorage.setItem('stackmap-' + key, JSON.stringify(data));
+                localStorage.setItem(`stackmap-${key}`, JSON.stringify(data));
                 return true;
             } catch (e) {
-                var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Storage error:') : 'Storage needs adjustment:';
+                const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Storage error:') : 'Storage needs adjustment:';
                 console.error(msg, e);
                 return false;
             }
@@ -1981,11 +1978,11 @@
         
         // Image attachment methods (memory-efficient)
         addImageToTask: function(taskId, imageData, callback) {
-            var self = this;
+            const self = this;
             
             // Check memory before adding image
             if (!this.checkMemoryForImage(imageData)) {
-                var msg = 'Not enough memory to add image. Try closing other apps.';
+                const msg = 'Not enough memory to add image. Try closing other apps.';
                 console.error(msg);
                 if (callback) callback(null, new Error(msg));
                 return;
@@ -2000,12 +1997,12 @@
             } else {
                 // In localStorage mode, be extra careful with memory
                 try {
-                    var attachmentId = 'img_' + Date.now();
+                    const attachmentId = `img_${Date.now()}`;
                     
                     // Compress/resize if needed for localStorage
-                    var processedData = this.processImageForStorage(imageData);
+                    let processedData = this.processImageForStorage(imageData);
                     
-                    localStorage.setItem('stackmap-attachment-' + attachmentId, processedData);
+                    localStorage.setItem(`stackmap-attachment-${attachmentId}`, processedData);
                     
                     // Clear from memory
                     imageData = null;
@@ -2031,11 +2028,11 @@
             } else {
                 // For localStorage, create object URL
                 try {
-                    var imageData = localStorage.getItem('stackmap-attachment-' + attachmentId);
+                    const imageData = localStorage.getItem(`stackmap-attachment-${attachmentId}`);
                     if (imageData) {
                         // Convert to blob URL to save memory
-                        var blob = this.base64ToBlob(imageData);
-                        var url = URL.createObjectURL(blob);
+                        const blob = this.base64ToBlob(imageData);
+                        const url = URL.createObjectURL(blob);
                         
                         // Track URL for cleanup
                         this.trackObjectUrl(url);
@@ -2077,7 +2074,7 @@
             } else {
                 // Get from localStorage
                 try {
-                    var imageData = localStorage.getItem('stackmap-attachment-' + attachmentId);
+                    const imageData = localStorage.getItem(`stackmap-attachment-${attachmentId}`);
                     if (callback) {
                         callback(imageData ? { data: imageData, id: attachmentId } : null);
                         if (imageData) {
@@ -2092,14 +2089,14 @@
         },
         
         deleteImageFromTask: function(attachmentId, callback) {
-            var self = this;
+            const self = this;
             
             if (this.sqliteReady) {
                 window.TaskSQLite.deleteImageAttachment(attachmentId, callback);
             } else {
                 // Delete from localStorage
                 try {
-                    localStorage.removeItem('stackmap-attachment-' + attachmentId);
+                    localStorage.removeItem(`stackmap-attachment-${attachmentId}`);
                     
                     // Clean up any object URLs
                     this.cleanupObjectUrls();
@@ -2116,20 +2113,20 @@
         checkMemoryForImage: function(imageData) {
             try {
                 // Rough estimate: base64 is ~1.33x the binary size
-                var estimatedSize = (imageData.length * 0.75) / 1024 / 1024; // MB
+                const estimatedSize = (imageData.length * 0.75) / 1024 / 1024; // MB
                 
                 // Conservative limit for low-memory devices
-                var maxImageSize = 5; // 5MB max per image
+                const maxImageSize = 5; // 5MB max per image
                 
                 if (estimatedSize > maxImageSize) {
-                    console.error('Image too large:', estimatedSize.toFixed(2) + 'MB');
+                    console.error('Image too large:', `${estimatedSize.toFixed(2)}MB`);
                     return false;
                 }
                 
                 // Check localStorage quota if using localStorage
                 if (!this.sqliteReady) {
-                    var used = new Blob(Object.values(localStorage)).size;
-                    var estimatedTotal = used + imageData.length;
+                    const used = new Blob(Object.values(localStorage)).size;
+                    const estimatedTotal = used + imageData.length;
                     
                     // localStorage typically has 5-10MB limit
                     if (estimatedTotal > 4 * 1024 * 1024) { // 4MB safety limit
@@ -2148,14 +2145,14 @@
         processImageForStorage: function(imageData) {
             // TODO: Implement image resizing/compression if needed
             // For now, return as-is but log size
-            console.log('Storing image of size:', (imageData.length / 1024).toFixed(2) + 'KB');
+            console.log('Storing image of size:', `${(imageData.length / 1024).toFixed(2)}KB`);
             return imageData;
         },
         
         base64ToBlob: function(base64) {
-            var binary = atob(base64.split(',')[1] || base64);
-            var array = [];
-            for (var i = 0; i < binary.length; i++) {
+            const binary = atob(base64.split(',')[1] || base64);
+            const array = [];
+            for (let i = 0; i < binary.length; i++) {
                 array.push(binary.charCodeAt(i));
             }
             return new Blob([new Uint8Array(array)], { type: 'image/jpeg' });
@@ -2174,11 +2171,11 @@
         
         cleanupObjectUrls: function() {
             // Revoke old object URLs to free memory
-            var urlsToKeep = [];
+            const urlsToKeep = [];
             
             this.objectUrls.forEach(function(url) {
                 // Check if URL is still in use in DOM
-                var inUse = document.querySelector('img[src="' + url + '"]');
+                const inUse = document.querySelector(`img[src="${url}"]`);
                 if (inUse) {
                     urlsToKeep.push(url);
                 } else {
@@ -2192,7 +2189,7 @@
     };
     
     // Content Manager
-    var Content = {
+    const Content = {
         load: function() {
             // Load content for views that need it
             this.loadPrivacy();
@@ -2201,7 +2198,7 @@
         },
         
         loadPrivacy: function() {
-            var container = document.querySelector('#privacy-view .content');
+            const container = document.querySelector('#privacy-view .content');
             if (container) {
                 container.innerHTML = 
                     '<h2>Privacy Policy</h2>' +
@@ -2216,7 +2213,7 @@
         },
         
         loadTerms: function() {
-            var container = document.querySelector('#terms-view .content');
+            const container = document.querySelector('#terms-view .content');
             if (container) {
                 container.innerHTML = 
                     '<h2>Terms of Service</h2>' +
@@ -2229,7 +2226,7 @@
         },
         
         loadSupport: function() {
-            var container = document.querySelector('#support-view .content');
+            const container = document.querySelector('#support-view .content');
             if (container) {
                 container.innerHTML = 
                     '<h2>Support StackMap</h2>' +
@@ -2315,7 +2312,7 @@
                         window.UserManager.migrateExistingTasks();
                         
                         // Render user switcher
-                        var switcherContainer = document.getElementById('user-switcher-container');
+                        const switcherContainer = document.getElementById('user-switcher-container');
                         if (switcherContainer) {
                             window.UserManager.renderUserSwitcher(switcherContainer);
                         }
@@ -2331,7 +2328,7 @@
             // Fallback without error handler
             window.UserManager.init(function() {
                 window.UserManager.migrateExistingTasks();
-                var switcherContainer = document.getElementById('user-switcher-container');
+                const switcherContainer = document.getElementById('user-switcher-container');
                 if (switcherContainer) {
                     window.UserManager.renderUserSwitcher(switcherContainer);
                 }
@@ -2403,14 +2400,14 @@
         // Initialize activities progressively (non-blocking)
         if (window.StackMapDefaultActivities && window.StackMapDefaultActivities.loadProgressive) {
             window.StackMapDefaultActivities.loadProgressive(function(activities) {
-                console.log('Activities loaded progressively: ' + activities.length);
+                console.log(`Activities loaded progressively: ${activities.length}`);
             });
         }
         
         // Recover preserved data
         if (window.StackMapDataPreservation) {
             try {
-                var recovered = window.StackMapDataPreservation.recoverSession();
+                const recovered = window.StackMapDataPreservation.recoverSession();
                 if (recovered.currentTask) {
                     console.log('Recovered task data:', recovered.currentTask);
                     // TODO: Restore task to UI when task system is implemented
@@ -2427,14 +2424,14 @@
         // Show safe mode banner if in safe mode
         if (window.StackMapSafeMode) {
             try {
-                var banner = document.createElement('div');
+                const banner = document.createElement('div');
                 banner.className = 'safe-mode-banner';
                 
                 // Create text and link safely without innerHTML
-                var textNode = document.createTextNode('Simple Mode Active - ');
+                const textNode = document.createTextNode('Simple Mode Active - ');
                 banner.appendChild(textNode);
                 
-                var exitLink = document.createElement('a');
+                const exitLink = document.createElement('a');
                 exitLink.href = window.location.pathname; // Use current path, not hardcoded root
                 exitLink.style.color = 'white';
                 exitLink.style.textDecoration = 'underline';
@@ -2460,14 +2457,14 @@
                 
                 // Only adjust padding after successful banner insertion
                 document.body.insertBefore(banner, document.body.firstChild);
-                document.body.style.paddingTop = SAFE_MODE_CONSTANTS.BANNER_HEIGHT + 'px';
+                document.body.style.paddingTop = `${SAFE_MODE_CONSTANTS.BANNER_HEIGHT}px`;
                 
                 // Add ARIA announcement for screen readers
                 banner.setAttribute('role', 'status');
                 banner.setAttribute('aria-live', 'polite');
             } catch (e) {
                 // Banner creation failed - continue without banner
-                var msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Could not create banner') : 'Simple mode is active';
+                const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Safe mode: Could not create banner') : 'Simple mode is active';
                 console.warn(msg, e);
             }
         }
@@ -2507,20 +2504,20 @@
         
         // Clean up safe mode banner if present
         if (window.StackMapSafeModeExitHandler) {
-            var exitLink = document.querySelector('.safe-mode-banner a');
+            const exitLink = document.querySelector('.safe-mode-banner a');
             if (exitLink) {
                 exitLink.removeEventListener('click', window.StackMapSafeModeExitHandler);
             }
             window.StackMapSafeModeExitHandler = null;
         }
-        var banner = document.querySelector('.safe-mode-banner');
+        const banner = document.querySelector('.safe-mode-banner');
         if (banner && banner.parentNode) {
             banner.parentNode.removeChild(banner);
             document.body.style.paddingTop = ''; // Reset padding
         }
         
         // Clear focusable cache (but don't hold DOM references)
-        for (var viewId in App.focusableCache) {
+        for (const viewId in App.focusableCache) {
             if (App.focusableCache[viewId]) {
                 // Clear array references properly
                 if (App.focusableCache[viewId].elements) {
@@ -2542,7 +2539,7 @@
         App.transactionId = 0;
         
         // Remove view announcer
-        var announcer = document.getElementById('view-announcer');
+        const announcer = document.getElementById('view-announcer');
         if (announcer && announcer.parentNode) {
             announcer.parentNode.removeChild(announcer);
         }
@@ -2552,7 +2549,7 @@
      * Memory Monitor System
      * Tracks memory usage and warns when approaching limits
      */
-    var MemoryMonitor = {
+    const MemoryMonitor = {
         intervalId: null,
         warningThreshold: 45, // MB
         criticalThreshold: 60, // MB
@@ -2563,27 +2560,27 @@
             // Only works in Chrome/Edge with performance.memory API
             if (!performance.memory) return;
             
-            var usedMB = Math.round(performance.memory.usedJSHeapSize / 1048576);
-            var limitMB = Math.round(performance.memory.jsHeapSizeLimit / 1048576);
+            const usedMB = Math.round(performance.memory.usedJSHeapSize / 1048576);
+            const limitMB = Math.round(performance.memory.jsHeapSizeLimit / 1048576);
             
             // Log memory usage periodically
             if (Date.now() % 10 === 0) { // Log every 10th check
-                console.log('Memory: ' + usedMB + 'MB / ' + limitMB + 'MB');
+                console.log(`Memory: ${usedMB}MB / ${limitMB}MB`);
             }
             
             // Check if we should warn
-            var now = Date.now();
+            const now = Date.now();
             if (usedMB > this.criticalThreshold && now - this.lastWarningTime > this.warningCooldown) {
                 this.lastWarningTime = now;
-                console.error('CRITICAL: Memory usage at ' + usedMB + 'MB - app may crash soon!');
-                this.showWarning('Critical memory usage: ' + usedMB + 'MB', 'critical');
+                console.error(`CRITICAL: Memory usage at ${usedMB}MB - app may crash soon!`);
+                this.showWarning(`Critical memory usage: ${usedMB}MB`, 'critical');
                 
                 // Trigger emergency cleanup
                 this.emergencyCleanup();
             } else if (usedMB > this.warningThreshold && now - this.lastWarningTime > this.warningCooldown) {
                 this.lastWarningTime = now;
-                console.warn('Memory warning: ' + usedMB + 'MB used');
-                this.showWarning('High memory usage: ' + usedMB + 'MB', 'warning');
+                console.warn(`Memory warning: ${usedMB}MB used`);
+                this.showWarning(`High memory usage: ${usedMB}MB`, 'warning');
             }
             
             return usedMB;
@@ -2591,7 +2588,7 @@
         
         showWarning: function(message, level) {
             // Create or update memory warning banner
-            var banner = document.getElementById('memory-warning-banner');
+            let banner = document.getElementById('memory-warning-banner');
             if (!banner) {
                 banner = document.createElement('div');
                 banner.id = 'memory-warning-banner';
@@ -2633,7 +2630,7 @@
             
             // Clear any stored drafts older than 1 hour
             try {
-                for (var key in localStorage) {
+                for (const key in localStorage) {
                     if (key.indexOf('stackmap_task_draft_') === 0) {
                         localStorage.removeItem(key);
                     }
@@ -2654,7 +2651,7 @@
         },
         
         start: function() {
-            var self = this;
+            const self = this;
             
             // Check immediately
             this.check();
@@ -2678,7 +2675,7 @@
      */
     function initComponentsWithErrorBoundaries() {
         // Wait for component error handler to be ready
-        var checkInterval = setInterval(function() {
+        const checkInterval = setInterval(function() {
             if (window.StackMapComponentErrorHandler) {
                 clearInterval(checkInterval);
                 

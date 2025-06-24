@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var ThemeSettingsUI = {
+    const ThemeSettingsUI = {
         initialized: false,
         container: null,
         eventHandlers: [],
@@ -18,7 +18,7 @@
             // Wait for theme manager to be ready
             if (!window.StackMapThemeManager) {
                 console.warn('ThemeManager not found, deferring initialization');
-                var self = this;
+                const self = this;
                 setTimeout(function() {
                     self.init();
                 }, 100);
@@ -36,10 +36,10 @@
         
         addThemeToggle: function() {
             // Add quick theme toggle to main header
-            var menuButton = document.getElementById('menu-button');
+            const menuButton = document.getElementById('menu-button');
             if (!menuButton) return;
             
-            var themeButton = document.createElement('button');
+            const themeButton = document.createElement('button');
             themeButton.id = 'theme-toggle';
             themeButton.className = 'icon theme-toggle-btn';
             themeButton.setAttribute('aria-label', 'Toggle theme');
@@ -55,7 +55,7 @@
             menuButton.parentNode.insertBefore(themeButton, menuButton);
             
             // Add click handler
-            var self = this;
+            const self = this;
             themeButton.addEventListener('click', function() {
                 window.StackMapThemeManager.toggleTheme();
                 themeButton.innerHTML = self.getThemeIcon(window.StackMapThemeManager.getCurrentTheme());
@@ -66,23 +66,23 @@
         },
         
         getThemeIcon: function(themeName) {
-            var themes = window.StackMapThemeManager.getThemes();
+            const themes = window.StackMapThemeManager.getThemes();
             return themes[themeName] ? themes[themeName].icon : '🎨';
         },
         
         initSettingsSection: function() {
             // Check if we're on the settings page
-            var settingsContent = document.querySelector('#settings-view .content');
+            const settingsContent = document.querySelector('#settings-view .content');
             if (!settingsContent) return;
             
             // Find or create appearance section
-            var appearanceSection = settingsContent.querySelector('.appearance-section');
+            let appearanceSection = settingsContent.querySelector('.appearance-section');
             if (!appearanceSection) {
                 // Create new section before Data Management
                 appearanceSection = document.createElement('section');
                 appearanceSection.className = 'appearance-section';
                 
-                var dataSection = settingsContent.querySelector('section:nth-child(2)');
+                const dataSection = settingsContent.querySelector('section:nth-child(2)');
                 if (dataSection) {
                     settingsContent.insertBefore(appearanceSection, dataSection);
                 } else {
@@ -97,10 +97,10 @@
         render: function() {
             if (!this.container) return;
             
-            var themes = window.StackMapThemeManager.getThemes();
-            var currentTheme = window.StackMapThemeManager.getCurrentTheme();
-            var sensorySettings = window.StackMapThemeManager.getSensorySettings();
-            var sensoryPrefs = window.StackMapThemeManager.getSensoryPreferences();
+            const themes = window.StackMapThemeManager.getThemes();
+            const currentTheme = window.StackMapThemeManager.getCurrentTheme();
+            const sensorySettings = window.StackMapThemeManager.getSensorySettings();
+            const sensoryPrefs = window.StackMapThemeManager.getSensoryPreferences();
             
             this.container.innerHTML = `
                 <h2>Appearance & Accessibility</h2>
@@ -109,8 +109,8 @@
                     <h3>Choose Your Theme</h3>
                     <div class="theme-grid">
                         ${Object.keys(themes).map(function(key) {
-                            var theme = themes[key];
-                            var isActive = key === currentTheme;
+                            const theme = themes[key];
+                            const isActive = key === currentTheme;
                             return `
                                 <button class="theme-option ${isActive ? 'active' : ''}" 
                                         data-theme="${key}"
@@ -201,10 +201,10 @@
         },
         
         addStyles: function() {
-            var styleId = 'theme-settings-styles';
+            const styleId = 'theme-settings-styles';
             if (document.getElementById(styleId)) return;
             
-            var style = document.createElement('style');
+            const style = document.createElement('style');
             style.id = styleId;
             style.textContent = `
                 .appearance-section {
@@ -402,21 +402,21 @@
         },
         
         attachHandlers: function() {
-            var self = this;
+            const self = this;
             
             // Clean up any existing handlers first
             this.cleanup();
             
             // Store original theme for preview restoration
-            var originalTheme = window.StackMapThemeManager.getCurrentTheme();
-            var previewTimeout = null;
+            let originalTheme = window.StackMapThemeManager.getCurrentTheme();
+            let previewTimeout = null;
             
             // Theme selection
-            var themeButtons = this.container.querySelectorAll('.theme-option');
+            const themeButtons = this.container.querySelectorAll('.theme-option');
             themeButtons.forEach(function(button) {
                 // Create named functions for handlers to allow removal
-                var clickHandler = function() {
-                    var theme = button.dataset.theme;
+                const clickHandler = function() {
+                    const theme = button.dataset.theme;
                     
                     // Clear any preview timeout
                     if (previewTimeout) {
@@ -433,8 +433,8 @@
                     });
                 };
                 
-                var mouseenterHandler = function() {
-                    var theme = button.dataset.theme;
+                const mouseenterHandler = function() {
+                    const theme = button.dataset.theme;
                     if (theme !== originalTheme) {
                         // Clear any existing timeout
                         if (previewTimeout) {
@@ -445,8 +445,8 @@
                     }
                 };
                 
-                var mouseleaveHandler = function() {
-                    var currentTheme = window.StackMapThemeManager.getCurrentTheme();
+                const mouseleaveHandler = function() {
+                    const currentTheme = window.StackMapThemeManager.getCurrentTheme();
                     if (currentTheme !== originalTheme) {
                         // Delay restoration to handle quick hovers between buttons
                         previewTimeout = setTimeout(function() {
@@ -480,9 +480,9 @@
             });
             
             // Animations toggle
-            var animationsToggle = document.getElementById('animations-toggle');
+            const animationsToggle = document.getElementById('animations-toggle');
             if (animationsToggle) {
-                var animationsHandler = function() {
+                const animationsHandler = function() {
                     window.StackMapThemeManager.setSensoryPreference('animations', this.checked);
                 };
                 animationsToggle.addEventListener('change', animationsHandler);
@@ -494,9 +494,9 @@
             }
             
             // Color vibrancy
-            var vibrancySelect = document.getElementById('vibrancy-select');
+            const vibrancySelect = document.getElementById('vibrancy-select');
             if (vibrancySelect) {
-                var vibrancyHandler = function() {
+                const vibrancyHandler = function() {
                     window.StackMapThemeManager.setSensoryPreference('colorVibrancy', this.value);
                 };
                 vibrancySelect.addEventListener('change', vibrancyHandler);
@@ -508,9 +508,9 @@
             }
             
             // Contrast level
-            var contrastSelect = document.getElementById('contrast-select');
+            const contrastSelect = document.getElementById('contrast-select');
             if (contrastSelect) {
-                var contrastHandler = function() {
+                const contrastHandler = function() {
                     window.StackMapThemeManager.setSensoryPreference('contrast', this.value);
                 };
                 contrastSelect.addEventListener('change', contrastHandler);
@@ -533,18 +533,18 @@
         },
         
         showThemeToast: function(themeName) {
-            var themes = window.StackMapThemeManager.getThemes();
-            var theme = themes[themeName];
+            const themes = window.StackMapThemeManager.getThemes();
+            const theme = themes[themeName];
             if (!theme) return;
             
             // Remove existing toast
-            var existingToast = document.querySelector('.theme-toast');
+            const existingToast = document.querySelector('.theme-toast');
             if (existingToast) {
                 existingToast.remove();
             }
             
             // Create new toast
-            var toast = document.createElement('div');
+            const toast = document.createElement('div');
             toast.className = 'theme-toast';
             toast.innerHTML = `
                 <span class="toast-icon">${theme.icon}</span>
