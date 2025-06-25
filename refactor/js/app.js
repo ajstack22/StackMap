@@ -2329,6 +2329,12 @@
             window.EditMode.init();
         }
         
+        // Initialize EditModeMenu after EditMode
+        if (window.EditModeMenu) {
+            console.log('[App] Initializing EditModeMenu');
+            window.EditModeMenu.init();
+        }
+        
         // Initialize QuickAddUI after EditMode
         if (window.QuickAddUI) {
             console.log('[App] Initializing QuickAddUI');

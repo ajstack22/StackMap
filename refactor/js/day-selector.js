@@ -55,8 +55,8 @@
             // Load initial counts
             self.updateActivityCounts();
             
-            // Listen for task changes
-            self.setupTaskListeners();
+            // Listen for activity changes
+            self.setupActivityListeners();
             
             self.isInitialized = true;
             console.log('DaySelector: Initialized with day:', self.currentDay);
@@ -257,28 +257,28 @@
         },
         
         /**
-         * Setup task-related event listeners
+         * Setup activity-related event listeners
          */
-        setupTaskListeners: function() {
+        setupActivityListeners: function() {
             const self = this;
             
-            // Listen for task changes
-            document.addEventListener('tasksChanged', function() {
+            // Listen for activity changes
+            document.addEventListener('activitiesChanged', function() {
                 self.updateActivityCounts();
             });
             
-            // Listen for task added
-            document.addEventListener('taskAdded', function() {
+            // Listen for activity added
+            document.addEventListener('activityAdded', function() {
                 self.updateActivityCounts();
             });
             
-            // Listen for task completed
-            document.addEventListener('taskCompleted', function() {
+            // Listen for activity completed
+            document.addEventListener('activityCompleted', function() {
                 self.updateActivityCounts();
             });
             
-            // Listen for task deleted
-            document.addEventListener('taskDeleted', function() {
+            // Listen for activity deleted
+            document.addEventListener('activityDeleted', function() {
                 self.updateActivityCounts();
             });
         },
@@ -299,23 +299,23 @@
                     self.activityCounts.today = 0;
                     self.activityCounts.tomorrow = 0;
                     
-                    // Get tasks from appropriate source
-                    let tasks = [];
+                    // Get activities from appropriate source
+                    let activities = [];
                     
-                    // Try different sources for tasks
-                    if (window.TaskDisplay && window.TaskDisplay.tasks) {
-                        tasks = window.TaskDisplay.tasks;
-                    } else if (window.TodayTomorrowView && window.TodayTomorrowView.tasks) {
-                        tasks = window.TodayTomorrowView.tasks;
+                    // Try different sources for activities
+                    if (window.ActivityDisplay && window.ActivityDisplay.activities) {
+                        activities = window.ActivityDisplay.activities;
+                    } else if (window.TodayTomorrowView && window.TodayTomorrowView.activities) {
+                        activities = window.TodayTomorrowView.activities;
                     } else {
                         // Try to load from storage
                         try {
-                            const stored = localStorage.getItem('stackmap_tasks');
+                            const stored = localStorage.getItem('stackmap_activities');
                             if (stored) {
-                                tasks = JSON.parse(stored);
+                                activities = JSON.parse(stored);
                             }
                         } catch (e) {
-                            console.warn('DaySelector: Could not load tasks for counts', e);
+                            console.warn('DaySelector: Could not load activities for counts', e);
                             self.showCountError();
                             self.hideLoadingState();
                             self.provideHapticFeedback('error');
@@ -323,13 +323,13 @@
                         }
                     }
                     
-                    // Count tasks by day
+                    // Count activities by day
                     const counts = { today: 0, tomorrow: 0 };
-                    tasks.forEach(function(task) {
-                        if (task.completed) return; // Skip completed tasks
+                    activities.forEach(function(activity) {
+                        if (activity.completed) return; // Skip completed activities
                         
                         // Handle both 'day' and 'timeframe' fields for compatibility
-                        const day = task.day || task.timeframe || 'someday';
+                        const day = activity.day || activity.timeframe || 'someday';
                         
                         if (day === 'today') {
                             counts.today++;
@@ -680,6 +680,33 @@
             
             // Log warning
             console.warn('DaySelector: Activity counts could not be verified and may be inaccurate');
+        },
+        
+        /**
+         * Get current activity counts
+         */
+        getCounts: function() {
+            const self = this;
+            return {
+                today: self.activityCounts.today || 0,
+                tomorrow: self.activityCounts.tomorrow || 0
+            };
+        },
+        
+        /**
+         * Get current day
+         */
+        getCurrentDay: function() {
+            const self = this;
+            return self.currentDay;
+        },
+        
+        /**
+         * Check if ready
+         */
+        isReady: function() {
+            const self = this;
+            return self.isInitialized;
         },
         
         /**

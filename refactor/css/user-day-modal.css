@@ -1,0 +1,385 @@
+/**
+ * User/Day Modal Styles
+ * Mobile-first modal for switching between users and days
+ */
+
+/* Modal container */
+.user-day-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.2s ease, visibility 0.2s ease;
+}
+
+/* Modal open state */
+.user-day-modal.modal-open {
+    visibility: visible;
+    opacity: 1;
+}
+
+/* Modal backdrop */
+.user-day-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Modal content - slide up from bottom on mobile */
+.user-day-modal-content {
+    position: relative;
+    background: var(--bg-primary);
+    width: 100%;
+    max-height: 85vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    border-radius: 20px 20px 0 0;
+    transform: translateY(100%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+}
+
+.modal-open .user-day-modal-content {
+    transform: translateY(0);
+}
+
+/* Modal handle for swipe gesture */
+.modal-handle {
+    width: 40px;
+    height: 4px;
+    background: rgba(128, 128, 128, 0.3);
+    border-radius: 2px;
+    margin: 12px auto;
+    cursor: grab;
+}
+
+.modal-handle:active {
+    cursor: grabbing;
+}
+
+/* Modal header */
+.user-day-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.user-day-modal-header h2 {
+    font-size: 20px;
+    font-weight: 600;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+/* Close button */
+.user-day-modal-close {
+    background: none;
+    border: none;
+    font-size: 28px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+
+.user-day-modal-close:hover {
+    background-color: var(--hover-bg);
+}
+
+.user-day-modal-close:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Modal body */
+.user-day-modal-body {
+    padding: 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+/* Selector sections */
+.selector-section {
+    margin-bottom: 32px;
+}
+
+.selector-section:last-child {
+    margin-bottom: 0;
+}
+
+.selector-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin: 0 0 16px 0;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Error message styles */
+.modal-error {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.modal-error p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+.error-close-btn {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 24px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: opacity 0.2s ease;
+}
+
+.error-close-btn:hover {
+    opacity: 0.9;
+}
+
+/* Single user message */
+.single-user-message {
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.single-user-message p {
+    color: var(--text-secondary);
+    margin: 0 0 20px 0;
+}
+
+.current-user-display {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.current-user-display .user-emoji {
+    font-size: 48px;
+}
+
+.current-user-display .user-name {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.add-user-hint {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* User grid */
+.user-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 12px;
+}
+
+.user-option {
+    background: var(--bg-secondary);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 16px 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    min-height: 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.user-option:hover {
+    background: var(--hover-bg);
+    border-color: var(--primary-color);
+    transform: translateY(-2px);
+}
+
+.user-option:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.user-option.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: white;
+}
+
+.user-emoji {
+    font-size: 28px;
+    display: block;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 500;
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+/* Tablet and desktop adjustments */
+@media (min-width: 768px) {
+    .user-day-modal {
+        align-items: center;
+        padding: 20px;
+    }
+    
+    .user-day-modal-content {
+        width: auto;
+        min-width: 400px;
+        max-width: 600px;
+        max-height: 80vh;
+        border-radius: 16px;
+        transform: scale(0.9);
+        opacity: 0;
+    }
+    
+    .modal-open .user-day-modal-content {
+        transform: scale(1);
+        opacity: 1;
+    }
+    
+    .modal-handle {
+        display: none;
+    }
+    
+    .user-day-modal-header {
+        padding: 24px 24px 20px;
+    }
+    
+    .user-day-modal-body {
+        padding: 24px;
+        padding-bottom: 24px;
+    }
+    
+    .day-options {
+        gap: 16px;
+    }
+    
+    .user-grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 16px;
+    }
+}
+
+/* Safe mode adjustments */
+.safe-mode .user-day-modal {
+    transition: none;
+}
+
+.safe-mode .user-day-modal-content {
+    transition: none;
+    animation: none;
+}
+
+.safe-mode .user-option {
+    transition: none;
+    min-height: 60px;
+    min-width: 60px;
+    padding: 20px 16px;
+}
+
+.safe-mode .user-day-modal-close {
+    min-width: 60px;
+    min-height: 60px;
+    font-size: 32px;
+}
+
+.safe-mode .error-close-btn {
+    min-height: 60px;
+    padding: 16px 32px;
+    font-size: 18px;
+}
+
+.safe-mode .user-option:hover {
+    transform: none;
+}
+
+/* Edit mode specific styles */
+.edit-mode .user-option {
+    border-color: var(--edit-mode-border);
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .user-day-modal,
+    .user-day-modal-content,
+    .day-option,
+    .user-option {
+        transition: none;
+        animation: none;
+    }
+    
+    .day-option:hover,
+    .user-option:hover {
+        transform: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .day-option,
+    .user-option {
+        border-width: 3px;
+    }
+    
+    .day-option.active,
+    .user-option.active {
+        outline: 3px solid currentColor;
+        outline-offset: -6px;
+    }
+}
+
+/* Dark theme adjustments */
+.theme-dark .user-day-modal-backdrop {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.theme-dark .modal-handle {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Focus visible for keyboard navigation */
+.day-option:focus-visible,
+.user-option:focus-visible,
+.user-day-modal-close:focus-visible {
+    outline: 3px solid var(--primary-color);
+    outline-offset: 3px;
+}
+
+/* Loading state for counts */
+.day-count.loading {
+    opacity: 0.5;
+    animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}

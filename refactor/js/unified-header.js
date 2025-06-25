@@ -83,7 +83,6 @@
             self.userDayPill.setAttribute('aria-label', 'Switch user or day');
             self.userDayPill.innerHTML = `
                 <span class="user-emoji">👤</span>
-                <span class="user-name">Loading...</span>
                 <span class="day-indicator">Today</span>
             `;
             
@@ -189,15 +188,10 @@
             
             // Update display
             const emojiEl = self.userDayPill.querySelector('.user-emoji');
-            const nameEl = self.userDayPill.querySelector('.user-name');
             const dayEl = self.userDayPill.querySelector('.day-indicator');
             
             if (emojiEl && self.currentUser) {
                 emojiEl.textContent = self.currentUser.emoji || '👤';
-            }
-            
-            if (nameEl && self.currentUser) {
-                nameEl.textContent = self.currentUser.name || 'Me';
             }
             
             if (dayEl) {
@@ -270,8 +264,16 @@
             // Add pressed state
             self.userDayPill.classList.add('pressed');
             
-            // Show combined user/day switcher modal
-            self.showUserDaySwitcher();
+            // Open the user modal selector
+            if (window.UserDayModal && window.UserDayModal.open) {
+                window.UserDayModal.open();
+            } else {
+                console.warn('UnifiedHeader: UserDayModal not available, falling back to left menu');
+                // Fallback to left menu
+                if (window.LeftMenu && window.LeftMenu.open) {
+                    window.LeftMenu.open();
+                }
+            }
             
             // Remove pressed state after animation
             setTimeout(() => {

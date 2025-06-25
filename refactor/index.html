@@ -231,6 +231,7 @@
     <link rel="stylesheet" href="css/tv.css" media="(min-width: 1920px)">
     <link rel="stylesheet" href="css/grownup-mode.css">
     <link rel="stylesheet" href="css/edit-mode.css">
+    <link rel="stylesheet" href="css/edit-mode-menu.css">
     <link rel="stylesheet" href="css/demo-mode.css">
     <link rel="stylesheet" href="css/onboarding.css">
     <link rel="stylesheet" href="css/themes.css">
@@ -258,6 +259,7 @@
     <link rel="stylesheet" href="css/unified-header.css">
     <link rel="stylesheet" href="css/left-menu.css">
     <link rel="stylesheet" href="css/settings-dropdown.css">
+    <link rel="stylesheet" href="css/user-day-modal.css">
     
     <!-- Preload critical resources -->
     <link rel="preload" href="js/app.js" as="script">
@@ -323,6 +325,31 @@
                         <span class="menu-icon">📋</span>
                         <span class="menu-label">Copy to Tomorrow</span>
                     </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User/Day Selector Modal -->
+    <div id="user-day-modal" class="user-day-modal" role="dialog" aria-modal="true" aria-labelledby="user-day-modal-title" aria-hidden="true">
+        <div class="user-day-modal-backdrop" data-action="close"></div>
+        <div class="user-day-modal-content">
+            <!-- Handle for swipe down -->
+            <div class="modal-handle" aria-hidden="true"></div>
+            
+            <div class="user-day-modal-header">
+                <h2 id="user-day-modal-title">Switch User</h2>
+                <button class="user-day-modal-close" aria-label="Close" data-action="close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            
+            <div class="user-day-modal-body">
+                <!-- User selector section -->
+                <div class="selector-section user-section" id="user-section">
+                    <div class="user-grid" id="user-grid" role="group" aria-label="Select a user">
+                        <!-- User buttons will be rendered here dynamically -->
+                    </div>
                 </div>
             </div>
         </div>
@@ -672,6 +699,7 @@
     <script src="js/storage-adapter.js" defer></script>
     <!-- Edit mode system -->
     <script src="js/edit-mode.js" defer></script>
+    <script src="js/edit-mode-menu.js" defer></script>
     <!-- Modal system -->
     <script src="js/modal.js" defer></script>
     <!-- Grown-up Mode Protection -->
@@ -757,5 +785,6 @@
     <!-- Menu Systems -->
     <script src="js/left-menu.js" defer></script>
     <script src="js/settings-dropdown.js" defer></script>
+    <script src="js/user-day-modal.js" defer></script>
 </body>
 </html>
