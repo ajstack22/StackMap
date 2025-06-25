@@ -23,6 +23,7 @@
         hasMoved: false,
         potentialDragCard: null,
         isMobile: false,
+        disabled: true, // Start disabled, enabled by CardEditControls when edit mode activates
         
         // Configuration
         LONG_PRESS_DURATION: 400, // ms - increased for better mobile UX
@@ -95,8 +96,8 @@
          * Handle touch start
          */
         handleTouchStart: function(e) {
-            // Only work in edit mode
-            if (!window.EditMode || !window.EditMode.isActive()) return;
+            // Only work in edit mode and when enabled
+            if (!window.EditMode || !window.EditMode.isActive() || this.disabled) return;
             
             // Don't start drag on interactive elements
             const target = e.target;
@@ -105,8 +106,8 @@
                 return;
             }
             
-            const card = e.target.closest('.task-card');
-            if (!card || card.classList.contains('add-task-card')) return;
+            const card = e.target.closest('.task-card, .activity-card');
+            if (!card || card.classList.contains('add-task-card') || card.classList.contains('add-activity-card')) return;
             
             // Multiple touches - cancel any drag
             if (e.touches.length > 1) {
@@ -204,8 +205,8 @@
          * Handle mouse down (desktop)
          */
         handleMouseDown: function(e) {
-            // Only work in edit mode
-            if (!window.EditMode || !window.EditMode.isActive()) return;
+            // Only work in edit mode and when enabled
+            if (!window.EditMode || !window.EditMode.isActive() || this.disabled) return;
             
             // Only left click
             if (e.button !== 0) return;
@@ -213,8 +214,8 @@
             // Skip on mobile devices - they use touch events
             if (this.isMobile) return;
             
-            const card = e.target.closest('.task-card');
-            if (!card || card.classList.contains('add-task-card')) return;
+            const card = e.target.closest('.task-card, .activity-card');
+            if (!card || card.classList.contains('add-task-card') || card.classList.contains('add-activity-card')) return;
             
             // Don't start drag on buttons
             if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') return;
@@ -252,9 +253,9 @@
             this.isDragging = true;
             this.draggedElement = card;
             
-            // Get task data
-            const taskId = card.getAttribute('data-task-id');
-            this.draggedTask = this.getTaskById(taskId);
+            // Get task or activity data
+            const taskId = card.getAttribute('data-task-id') || card.getAttribute('data-activity-id');
+            this.draggedTask = this.getTaskById(taskId) || this.getActivityById(taskId);
             
             if (!this.draggedTask) {
                 this.cancelDrag();
@@ -549,6 +550,23 @@
         },
         
         /**
+         * Get activity by ID
+         */
+        getActivityById: function(activityId) {
+            if (window.ActivityDisplay && window.ActivityDisplay.getActivityById) {
+                return window.ActivityDisplay.getActivityById(activityId);
+            } else if (window.ActivityDisplay && window.ActivityDisplay.activities) {
+                const activities = window.ActivityDisplay.activities;
+                for (let i = 0; i < activities.length; i++) {
+                    if (activities[i].id === activityId) {
+                        return activities[i];
+                    }
+                }
+            }
+            return null;
+        },
+        
+        /**
          * Get scroll container
          */
         getScrollContainer: function() {
@@ -562,6 +580,30 @@
             
             // Fallback to main container
             return this.container;
+        },
+        
+        /**
+         * Enable drag and drop functionality
+         */
+        enable: function() {
+            this.disabled = false;
+            console.log('DragDropReorder: Enabled');
+        },
+        
+        /**
+         * Disable drag and drop functionality
+         */
+        disable: function() {
+            this.disabled = true;
+            this.cancelDrag();
+            console.log('DragDropReorder: Disabled');
+        },
+        
+        /**
+         * Check if drag and drop is enabled
+         */
+        isEnabled: function() {
+            return !this.disabled;
         },
         
         /**

@@ -3,23 +3,57 @@
  * ADHD-friendly sequential numbering system
  */
 
-/* Base activity number styling */
-.activity-number {
+/* Activity badge styling - positioned in top-right corner */
+.activity-badge {
     position: absolute;
-    top: 50%;
-    left: 12px;
-    transform: translateY(-50%);
-    width: 36px;
-    height: 36px;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 24px;
+    font-weight: bold;
+    border-radius: 50%;
+    z-index: 2;
+    user-select: none;
+    pointer-events: none;
+    transition: all 0.2s ease;
+}
+
+/* Number mode styling */
+.activity-badge.activity-numbers {
+    font-size: 16px;
+    color: var(--primary-color, #667eea);
+    background: rgba(102, 126, 234, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.2);
+}
+
+/* Time mode styling */
+.activity-badge.activity-time {
+    font-size: 12px;
+    min-width: 44px;
+    width: auto;
+    padding: 0 8px;
+}
+
+/* Legacy support - redirect old class to new system */
+.activity-number {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
     font-weight: bold;
     color: var(--primary-color, #667eea);
     background: rgba(102, 126, 234, 0.1);
+    border: 2px solid rgba(102, 126, 234, 0.2);
     border-radius: 50%;
-    z-index: 1;
+    z-index: 2;
     user-select: none;
     pointer-events: none;
 }
@@ -41,57 +75,65 @@
     }
 }
 
-/* Completed activities - subdued numbers */
+/* Completed activities - subdued badges */
+.activity-item.completed .activity-badge,
 .activity-item.completed .activity-number {
     opacity: 0.5;
-    color: #666;
-    background: rgba(0, 0, 0, 0.1);
 }
 
-/* Safe mode - larger numbers */
+/* Safe mode - larger badges */
+.safe-mode .activity-badge,
 .safe-mode .activity-number {
-    width: 44px;
-    height: 44px;
-    font-size: 28px;
-    left: 8px;
+    width: 60px;
+    height: 60px;
+}
+
+.safe-mode .activity-badge.activity-numbers,
+.safe-mode .activity-number {
+    font-size: 18px;
+}
+
+.safe-mode .activity-badge.activity-time {
+    font-size: 14px;
+    min-width: 60px;
+    padding: 0 12px;
 }
 
 /* RTL language support */
+html[dir="rtl"] .activity-badge,
 html[dir="rtl"] .activity-number {
-    left: auto;
-    right: 12px;
+    right: auto;
+    left: 8px;
 }
 
-html[dir="rtl"] .safe-mode .activity-number {
-    right: 8px;
-}
-
-/* Adjust task item padding when numbers are shown */
-.activity-item[data-display-number] {
-    padding-left: 60px;
-}
-
-html[dir="rtl"] .activity-item[data-display-number] {
-    padding-left: 16px;
-    padding-right: 60px;
-}
+/* No padding adjustments needed since badges are in top-right corner */
+/* Activities maintain standard padding regardless of badge display */
 
 /* Mobile adjustments */
 @media (max-width: 768px) {
+    .activity-badge,
     .activity-number {
-        width: 32px;
-        height: 32px;
-        font-size: 20px;
-        left: 8px;
+        width: 36px;
+        height: 36px;
+        top: 6px;
+        right: 6px;
     }
     
-    .activity-item[data-display-number] {
-        padding-left: 52px;
+    .activity-badge.activity-numbers,
+    .activity-number {
+        font-size: 14px;
     }
     
-    html[dir="rtl"] .activity-item[data-display-number] {
-        padding-left: 16px;
-        padding-right: 52px;
+    .activity-badge.activity-time {
+        font-size: 10px;
+        min-width: 36px;
+        padding: 0 6px;
+    }
+    
+    html[dir="rtl"] .activity-badge,
+    html[dir="rtl"] .activity-number {
+        right: auto;
+        left: 6px;
     }
 }
 
@@ -117,70 +159,108 @@ html[dir="rtl"] .activity-item[data-display-number] {
     box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
 }
 
-/* Display mode toggle button */
+/* Display mode toggle button - integrated in header */
 .display-mode-toggle {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 56px;
-    height: 56px;
-    border-radius: 50%;
-    background: var(--primary-color, #667eea);
+    background: transparent;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
     color: white;
-    border: none;
-    font-size: 24px;
+    font-size: 14px;
+    font-weight: bold;
+    padding: 8px 12px;
     cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     transition: all 0.2s ease;
-    z-index: 100;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    margin: 0 8px;
 }
 
 .display-mode-toggle:hover {
-    transform: scale(1.05);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.3);
 }
 
 .display-mode-toggle:active {
     transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.15);
 }
 
-/* RTL support for toggle button */
-html[dir="rtl"] .display-mode-toggle {
-    right: auto;
-    left: 20px;
+.display-mode-toggle:focus {
+    outline: 3px solid rgba(255, 255, 255, 0.5);
+    outline-offset: 2px;
 }
 
-/* Hide toggle in edit mode to avoid clutter */
-.edit-mode .display-mode-toggle {
-    display: none;
+/* Safe mode button sizing */
+.safe-mode .display-mode-toggle {
+    min-width: 60px;
+    height: 60px;
+    font-size: 16px;
+    padding: 12px 16px;
 }
 
-/* Time display mode (alternative to numbers) */
-.activity-time {
-    position: absolute;
-    top: 50%;
-    left: 12px;
-    transform: translateY(-50%);
-    min-width: 36px;
-    height: 36px;
-    padding: 0 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--primary-color, #667eea);
-    background: rgba(102, 126, 234, 0.1);
-    border-radius: 18px;
-    white-space: nowrap;
-}
+/* Header toggle doesn't need special RTL positioning since it's in header flow */
+
+/* Time display colors are handled in JavaScript for dynamic color coding */
 
 /* Accessibility - ensure numbers are announced */
 .activity-number[aria-label] {
     speak: always;
+}
+
+/* Time estimate form styling */
+.time-estimate-input {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.time-estimate-input input {
+    width: 80px;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+.time-unit {
+    color: #666;
+    font-size: 14px;
+}
+
+.time-estimate-hints {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.time-preset {
+    background: #f0f0f0;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.time-preset:hover {
+    background: #e0e0e0;
+    border-color: #ccc;
+}
+
+.time-preset:active {
+    background: #d0d0d0;
+    transform: scale(0.95);
+}
+
+.safe-mode .time-preset {
+    min-height: 44px;
+    padding: 12px 16px;
+    font-size: 16px;
 }
 
 /* Print styles */

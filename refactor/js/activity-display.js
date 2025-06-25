@@ -56,7 +56,6 @@
                     
                     // Listen for day view changes
                     document.addEventListener('dayViewChanged', (e) => {
-                        console.log('ActivityDisplay: Day view changed, re-rendering');
                         this.render();
                     });
                 } else {
@@ -378,30 +377,14 @@
             
             // Apply safe mode styles
             activityEl.style.cssText = 
-                `position: relative;background: #2a2a2a;border-radius: 8px;padding: 16px;padding-left: 60px;margin-bottom: 12px;min-height: ${self.touchTargetSize}px;display: flex;align-items: center;gap: 12px;`;
+                `position: relative;background: #2a2a2a;border-radius: 8px;padding: 16px;margin-bottom: 12px;min-height: ${self.touchTargetSize}px;display: flex;align-items: center;gap: 12px;`;
             
-            // Add activity number if provided and display mode is set to numbers
-            if (displayNumber && self.getDisplayMode() === 'numbers') {
-                const numberEl = document.createElement('div');
-                numberEl.className = 'activity-number';
-                numberEl.textContent = displayNumber;
-                numberEl.setAttribute('aria-label', `Activity number ${displayNumber}`);
-                numberEl.style.cssText = 
-                    'position: absolute;' +
-                    'top: 50%;' +
-                    'left: 12px;' +
-                    'transform: translateY(-50%);' +
-                    'width: 36px;' +
-                    'height: 36px;' +
-                    'display: flex;' +
-                    'align-items: center;' +
-                    'justify-content: center;' +
-                    'font-size: 24px;' +
-                    'font-weight: bold;' +
-                    'color: #667eea;' +
-                    'background: rgba(102, 126, 234, 0.1);' +
-                    'border-radius: 50%;';
-                activityEl.appendChild(numberEl);
+            // Add activity badge (number or time) if provided
+            if (displayNumber) {
+                const badge = self.createActivityBadge(activity, displayNumber);
+                if (badge) {
+                    activityEl.appendChild(badge);
+                }
             }
             
             // Checkbox
@@ -591,6 +574,163 @@
             activityEl.appendChild(actionsContainer);
             
             return activityEl;
+        },
+        
+        /**
+         * Create activity badge (number or time estimate)
+         */
+        createActivityBadge: function(activity, displayNumber) {
+            const self = this;
+            
+            // Validate inputs
+            if (!activity || (!displayNumber && displayNumber !== 0)) {
+                return null;
+            }
+            
+            try {
+                // Performance monitoring start
+                if (window.PerformanceMonitor) {
+                    document.dispatchEvent(new CustomEvent('badgeCreationStart', {
+                        detail: { activityId: activity.id }
+                    }));
+                }
+                
+                const displayMode = self.getDisplayMode();
+                const timeEstimate = activity.timeEstimate || activity.estimatedMinutes || 0;
+                const pinned = activity.pinned || false;
+                const completed = activity.completed || false;
+                
+                // Try to get badge from cache first
+                if (window.BadgeCache) {
+                    const cachedBadge = window.BadgeCache.get(
+                        activity.id, displayMode, timeEstimate, pinned, completed, self.safeMode
+                    );
+                    
+                    if (cachedBadge) {
+                        // Performance monitoring end (cache hit)
+                        if (window.PerformanceMonitor) {
+                            document.dispatchEvent(new CustomEvent('badgeCreationEnd', {
+                                detail: { activityId: activity.id, cached: true }
+                            }));
+                        }
+                        return cachedBadge;
+                    }
+                }
+                
+                // Create new badge
+                const badge = document.createElement('div');
+                badge.className = `activity-badge activity-${displayMode}`;
+            
+                // Safe mode sizing
+                const badgeSize = self.safeMode ? 60 : 44;
+                
+                // Base styling for top-right positioning
+                badge.style.cssText = 
+                    'position: absolute;' +
+                    'top: 8px;' +
+                    'right: 8px;' +
+                    `width: ${badgeSize}px;` +
+                    `height: ${badgeSize}px;` +
+                    'display: flex;' +
+                    'align-items: center;' +
+                    'justify-content: center;' +
+                    'border-radius: 50%;' +
+                    'font-weight: bold;' +
+                    'z-index: 2;' +
+                    'user-select: none;' +
+                    'pointer-events: none;';
+                
+                if (displayMode === 'numbers') {
+                    // Number badge
+                    badge.textContent = displayNumber;
+                    badge.setAttribute('aria-label', `Activity number ${displayNumber}`);
+                    badge.style.fontSize = self.safeMode ? '18px' : '16px';
+                    badge.style.color = '#667eea';
+                    badge.style.background = 'rgba(102, 126, 234, 0.1)';
+                    badge.style.border = '2px solid rgba(102, 126, 234, 0.2)';
+                } else if (displayMode === 'time') {
+                    // Time estimate badge
+                    const timeText = self.formatTimeEstimate(timeEstimate);
+                    badge.textContent = timeText;
+                    badge.setAttribute('aria-label', `Estimated ${timeText}`);
+                    badge.style.fontSize = self.safeMode ? '14px' : '12px';
+                    
+                    // Color coding based on duration
+                    if (timeEstimate <= 30) {
+                        // Green for short tasks
+                        badge.style.color = '#22c55e';
+                        badge.style.background = 'rgba(34, 197, 94, 0.1)';
+                        badge.style.border = '2px solid rgba(34, 197, 94, 0.2)';
+                    } else if (timeEstimate <= 120) {
+                        // Yellow for medium tasks
+                        badge.style.color = '#eab308';
+                        badge.style.background = 'rgba(234, 179, 8, 0.1)';
+                        badge.style.border = '2px solid rgba(234, 179, 8, 0.2)';
+                    } else {
+                        // Orange for long tasks
+                        badge.style.color = '#f97316';
+                        badge.style.background = 'rgba(249, 115, 22, 0.1)';
+                        badge.style.border = '2px solid rgba(249, 115, 22, 0.2)';
+                    }
+                }
+                
+                // Accessibility enhancements
+                badge.setAttribute('role', 'img');
+                
+                // Handle completed activities
+                if (completed) {
+                    badge.style.opacity = '0.5';
+                }
+                
+                // Cache the badge for future use
+                if (window.BadgeCache) {
+                    window.BadgeCache.set(
+                        activity.id, displayMode, timeEstimate, pinned, completed, self.safeMode, badge
+                    );
+                }
+                
+                // Performance monitoring end
+                if (window.PerformanceMonitor) {
+                    document.dispatchEvent(new CustomEvent('badgeCreationEnd', {
+                        detail: { activityId: activity.id, cached: false }
+                    }));
+                }
+                
+                return badge;
+                
+            } catch (error) {
+                console.warn('Error creating activity badge:', error);
+                return null;
+            }
+        },
+        
+        /**
+         * Format time estimate for display
+         */
+        formatTimeEstimate: function(minutes) {
+            if (!minutes || minutes <= 0) {
+                return '?';
+            }
+            
+            if (minutes < 60) {
+                return `${minutes}m`;
+            } else if (minutes < 120) {
+                const hours = Math.floor(minutes / 60);
+                const remainingMinutes = minutes % 60;
+                if (remainingMinutes === 0) {
+                    return `${hours}h`;
+                } else {
+                    return `${hours}h${remainingMinutes}m`;
+                }
+            } else {
+                const hours = Math.floor(minutes / 60);
+                const remainingMinutes = minutes % 60;
+                if (remainingMinutes === 0) {
+                    return `${hours}h`;
+                } else {
+                    return `${hours}h${remainingMinutes}m`;
+                }
+            }
         },
         
         /**
@@ -800,6 +940,21 @@
             html += '</div>';
             html += '</div>';
             
+            // Time estimate
+            html += '<div class="form-field">';
+            html += '<label for="activity-time-estimate">Time Estimate</label>';
+            html += '<div class="time-estimate-input">';
+            html += `<input type="number" id="activity-time-estimate" name="timeEstimate" min="0" max="480" value="${activity.timeEstimate || activity.estimatedMinutes || ''}" placeholder="0">`;
+            html += '<span class="time-unit">minutes</span>';
+            html += '</div>';
+            html += '<div class="time-estimate-hints">';
+            html += '<button type="button" class="time-preset" data-minutes="15">15m</button>';
+            html += '<button type="button" class="time-preset" data-minutes="30">30m</button>';
+            html += '<button type="button" class="time-preset" data-minutes="60">1h</button>';
+            html += '<button type="button" class="time-preset" data-minutes="120">2h</button>';
+            html += '</div>';
+            html += '</div>';
+            
             // Description
             html += '<div class="form-field">';
             html += '<label for="activity-description">Description</label>';
@@ -874,6 +1029,23 @@
                 self.trackEventListener(iconButtons[j], 'click', iconClickHandler);
             }
             
+            // Time estimate preset buttons
+            const timePresetButtons = form.querySelectorAll('.time-preset');
+            const timePresetHandler = function(e) {
+                e.preventDefault();
+                const minutes = parseInt(this.getAttribute('data-minutes'));
+                const timeInput = form.querySelector('#activity-time-estimate');
+                if (timeInput) {
+                    timeInput.value = minutes;
+                    self.saveDraft(activity.id, form);
+                }
+            };
+            
+            for (let p = 0; p < timePresetButtons.length; p++) {
+                timePresetButtons[p].addEventListener('click', timePresetHandler);
+                self.trackEventListener(timePresetButtons[p], 'click', timePresetHandler);
+            }
+            
             // Cancel button
             const cancelBtn = form.querySelector('#cancel-btn');
             if (cancelBtn) {
@@ -918,6 +1090,12 @@
                 activity.priority = formData.priority;
                 activity.updated_at = new Date().toISOString();
                 
+                // Save time estimate
+                if (formData.timeEstimate !== undefined) {
+                    activity.timeEstimate = formData.timeEstimate;
+                    activity.estimatedMinutes = formData.timeEstimate; // Backward compatibility
+                }
+                
                 // Get timeframe if present
                 const timeframeInput = form.querySelector('input[name="timeframe"]:checked');
                 if (timeframeInput) {
@@ -946,6 +1124,13 @@
                 priority: form.priority.value || 'medium',
                 icon: '✓'
             };
+            
+            // Get time estimate
+            const timeEstimateInput = form.querySelector('#activity-time-estimate');
+            if (timeEstimateInput) {
+                const timeValue = parseInt(timeEstimateInput.value) || 0;
+                data.timeEstimate = timeValue > 0 ? timeValue : null;
+            }
             
             // Get selected icon
             const selectedIcon = form.querySelector('.icon-option.selected');
@@ -1131,12 +1316,76 @@
             self.globalKeyHandler = function(e) {
                 if (e.key === 'Escape' && self.editingActivityId) {
                     self.cancelEditing();
+                } else if (e.key === 'M' || e.key === 'm') {
+                    // Toggle display mode with 'M' key
+                    if (!e.target.matches('input, textarea, [contenteditable]')) {
+                        e.preventDefault();
+                        self.toggleDisplayMode();
+                    }
                 }
             };
             
             // Add with tracking
             document.addEventListener('keydown', self.globalKeyHandler);
             self.trackEventListener(document, 'keydown', self.globalKeyHandler);
+            
+            // Setup display mode toggle button
+            self.setupDisplayModeToggle();
+        },
+        
+        /**
+         * Setup display mode toggle button
+         */
+        setupDisplayModeToggle: function() {
+            const self = this;
+            
+            try {
+                const toggleButton = document.getElementById('display-mode-toggle');
+                if (!toggleButton) {
+                    console.warn('Display mode toggle button not found in DOM');
+                    return;
+                }
+            
+            // Update button text based on current mode
+            self.updateToggleButtonText(toggleButton);
+            
+            // Add click handler
+            const toggleHandler = function(e) {
+                e.preventDefault();
+                self.toggleDisplayMode();
+                self.updateToggleButtonText(toggleButton);
+            };
+            
+            toggleButton.addEventListener('click', toggleHandler);
+            self.trackEventListener(toggleButton, 'click', toggleHandler);
+            
+            // Listen for display mode changes from other sources
+            const modeChangeHandler = function(e) {
+                self.updateToggleButtonText(toggleButton);
+            };
+            
+            document.addEventListener('displayModeChanged', modeChangeHandler);
+            self.trackEventListener(document, 'displayModeChanged', modeChangeHandler);
+            
+            } catch (error) {
+                console.warn('Error setting up display mode toggle:', error);
+            }
+        },
+        
+        /**
+         * Update toggle button text based on current mode
+         */
+        updateToggleButtonText: function(button) {
+            const currentMode = this.getDisplayMode();
+            if (currentMode === 'numbers') {
+                button.textContent = '123';
+                button.setAttribute('title', 'Switch to time display');
+                button.setAttribute('aria-label', 'Currently showing numbers, click to switch to time display');
+            } else {
+                button.textContent = '⏱️';
+                button.setAttribute('title', 'Switch to number display');
+                button.setAttribute('aria-label', 'Currently showing time estimates, click to switch to number display');
+            }
         },
         
         /**

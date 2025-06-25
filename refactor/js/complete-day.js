@@ -293,8 +293,26 @@
                 activity.updated_at = new Date().toISOString();
             });
             
-            // Step 2: Copy pinned activities to create new tomorrow activities
-            const newTomorrowActivities = pinnedActivities.map(function(activity) {
+            // Step 2: Copy pinned activities and recurring activities to create new tomorrow activities
+            const activitiesToCopy = [];
+            
+            // Add pinned activities
+            activitiesToCopy.push(...pinnedActivities);
+            
+            // Add recurring activities (even if not pinned)
+            if (window.ActivityTypes) {
+                const recurringActivities = todayActivities.filter(function(activity) {
+                    return activity.type && activity.type.category === 'recurring';
+                });
+                // Add recurring activities that aren't already pinned
+                recurringActivities.forEach(function(activity) {
+                    if (!activity.pinned) {
+                        activitiesToCopy.push(activity);
+                    }
+                });
+            }
+            
+            const newTomorrowActivities = activitiesToCopy.map(function(activity) {
                 const newActivity = Object.assign({}, activity);
                 newActivity.id = 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
                 newActivity.timeframe = 'tomorrow';
@@ -303,17 +321,41 @@
                 newActivity.updated_at = new Date().toISOString();
                 newActivity.status = 'pending'; // Reset status for tomorrow
                 newActivity.completed = false;
+                
+                // Preserve type information
+                if (activity.type) {
+                    newActivity.type = Object.assign({}, activity.type);
+                    newActivity.type.assignedAt = new Date().toISOString();
+                    newActivity.type.usageCount = 0; // Reset usage for new day
+                }
+                
                 return newActivity;
             });
             
-            // Step 3: Remove completed unpinned activities from today
+            // Step 3: Remove completed activities based on type and pin status
             const activitiesToKeep = activities.filter(function(activity) {
                 const isToday = activity.timeframe === 'today' || activity.day === 'today';
-                const isUnpinned = !activity.pinned;
                 const isCompleted = activity.completed || activity.status === 'completed';
                 
-                // Keep if: not today, or pinned, or not completed
-                return !isToday || !isUnpinned || !isCompleted;
+                // Not today activities are always kept
+                if (!isToday) return true;
+                
+                // Pinned activities are kept (unless single-use and completed)
+                if (activity.pinned) {
+                    // Single-use activities are archived even if pinned
+                    if (window.ActivityTypes && activity.type && activity.type.category === 'single-use' && isCompleted) {
+                        return false;
+                    }
+                    return true;
+                }
+                
+                // Unpinned completed activities are removed
+                if (isCompleted) {
+                    return false;
+                }
+                
+                // Keep uncompleted activities
+                return true;
             });
             
             // Step 4: Add new tomorrow activities

@@ -269,6 +269,14 @@
     <!-- Bulk Operations -->
     <link rel="stylesheet" href="css/bulk-operations.css">
     
+    <!-- Activity Types System -->
+    <link rel="stylesheet" href="css/activity-types.css">
+    
+    <!-- Direct Card Edit Controls (Story #96) -->
+    <link rel="stylesheet" href="css/inline-edit.css">
+    <link rel="stylesheet" href="css/drag-drop.css">
+    <link rel="stylesheet" href="css/context-menu.css">
+    
     <!-- Preload critical resources -->
     <link rel="preload" href="js/app.js" as="script">
 </head>
@@ -376,6 +384,7 @@
         <header class="header">
             <button id="left-menu-button" class="left-menu-button edit-mode-only" aria-label="Activity Management">☰</button>
             <h1>StackMap</h1>
+            <button id="display-mode-toggle" class="display-mode-toggle" aria-label="Toggle between numbers and time display" title="Switch display mode">123</button>
             <button id="menu-button" aria-label="Menu">☰</button>
         </header>
         <main id="main" class="content">
@@ -733,6 +742,9 @@
     <script src="js/virtual-scroll-adapter.js" defer></script>
     <!-- Activity timer system (must load before activity-display) -->
     <script src="js/activity-timer.js" defer></script>
+    <!-- Performance optimization system (must load before activity-display) -->
+    <script src="js/performance-monitor.js" defer></script>
+    <script src="js/badge-cache.js" defer></script>
     <!-- Activity display -->
     <script src="js/activity-display.js" defer></script>
     <!-- Undo system (must load after activity-display) -->
@@ -804,5 +816,13 @@
     <script src="js/bulk-operations.js" defer></script>
     <script src="js/bulk-delete.js" defer></script>
     <script src="js/copy-tomorrow.js" defer></script>
+    
+    <!-- Activity Types System -->
+    <script src="js/activity-types.js" defer></script>
+    
+    <!-- Direct Card Edit Controls (Story #96) -->
+    <script src="js/inline-card-edit.js" defer></script>
+    <script src="js/context-menu.js" defer></script>
+    <script src="js/card-edit-controls.js" defer></script>
 </body>
 </html>

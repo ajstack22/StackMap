@@ -7,7 +7,7 @@
     'use strict';
     
     // Schema version for migrations
-    const SCHEMA_VERSION = 3; // Updated for pin activities feature
+    const SCHEMA_VERSION = 4; // Updated for activity types system
     
     // Data structure definitions with validation
     const DataSchema = {
@@ -28,6 +28,19 @@
                 attachmentIds: { type: 'array', itemType: 'number', maxItems: 10 },
                 day: { type: 'enum', values: ['today', 'tomorrow', 'someday'], default: 'today' },
                 pinned: { type: 'boolean', default: false, required: false }, // Pin for daily routines
+                type: {
+                    type: 'object',
+                    required: false,
+                    fields: {
+                        category: { type: 'enum', values: ['recurring', 'frequent', 'single-use'], default: 'frequent' },
+                        assignedAt: { type: 'timestamp', required: false },
+                        confidence: { type: 'number', min: 0, max: 1, default: 1.0 },
+                        assignedBy: { type: 'enum', values: ['user', 'auto', 'suggested'], default: 'auto' },
+                        lastUsed: { type: 'timestamp', nullable: true },
+                        usageCount: { type: 'number', default: 0 },
+                        patternScore: { type: 'number', min: 0, max: 1, default: 0 }
+                    }
+                },
                 metadata: {
                     type: 'object',
                     fields: {

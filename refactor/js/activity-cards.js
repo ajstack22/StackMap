@@ -126,8 +126,8 @@
                 cardsGrid.appendChild(addCard);
             }
             
-            // Render tasks or empty state
-            if (userTasks.length === 0 && (!window.EditMode || !window.EditMode.isActive())) {
+            // Render activities or empty state
+            if (userActivities.length === 0 && (!window.EditMode || !window.EditMode.isActive())) {
                 const emptyState = this.createEmptyState();
                 container.appendChild(emptyState);
             } else {
@@ -296,9 +296,9 @@
                 
                 // Update priority
                 const priority = card.querySelector('.task-priority');
-                if (priority && task.priority) {
-                    priority.textContent = task.priority;
-                    priority.className = `task-priority priority-${task.priority.toLowerCase()}`;
+                if (priority && activity.priority) {
+                    priority.textContent = activity.priority;
+                    priority.className = `task-priority priority-${activity.priority.toLowerCase()}`;
                 }
             } else {
                 // Create new structure for non-pooled cards
@@ -308,18 +308,18 @@
                 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
-                checkbox.checked = task.completed;
-                checkbox.setAttribute('aria-label', `Mark ${task.title || 'task'} as ${task.completed ? 'incomplete' : 'complete'}`);
+                checkbox.checked = activity.completed;
+                checkbox.setAttribute('aria-label', `Mark ${activity.title || 'activity'} as ${activity.completed ? 'incomplete' : 'complete'}`);
                 checkbox.onchange = function() {
-                    task.completed = checkbox.checked;
-                    taskDisplay.updateTask(task);
+                    activity.completed = checkbox.checked;
+                    activityDisplay.updateActivity ? activityDisplay.updateActivity(activity) : activityDisplay.updateTask(activity);
                     
                     // Update card ARIA label
                     card.setAttribute('aria-label', `${activity.title || 'Untitled Activity'}, ${activity.completed ? 'completed' : 'not completed'}`);
                     
                     // Announce state change
                     if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                        window.StackMapKeyboardNav.announce(`${task.title} marked as ${task.completed ? 'complete' : 'incomplete'}`);
+                        window.StackMapKeyboardNav.announce(`${activity.title} marked as ${activity.completed ? 'complete' : 'incomplete'}`);
                     }
                 };
                 
@@ -348,7 +348,7 @@
             
             const icon = document.createElement('div');
             icon.className = 'task-card__icon';
-            icon.textContent = task.icon || '✓';
+            icon.textContent = activity.icon || '✓';
             header.appendChild(icon);
             
             card.appendChild(header);
@@ -362,16 +362,16 @@
             title.textContent = activity.title || 'Untitled Activity';
             content.appendChild(title);
             
-            if (task.description) {
+            if (activity.description || activity.notes) {
                 const description = document.createElement('p');
                 description.className = 'task-card__description';
-                description.textContent = task.description;
+                description.textContent = activity.description || activity.notes;
                 content.appendChild(description);
             }
             
             // Progress indicator for subtasks
-            if (task.subtasks && task.subtasks.length > 0) {
-                const progress = this.createProgressIndicator(task);
+            if (activity.subtasks && activity.subtasks.length > 0) {
+                const progress = this.createProgressIndicator(activity);
                 content.appendChild(progress);
             }
             
@@ -385,7 +385,7 @@
                 // Use singleton instance of photo storage
                 const photoStorage = window.PhotoAttachmentStorage.getInstance();
                 const photoUI = new window.PhotoAttachmentUI(photoStorage);
-                photoUI.createAttachmentUI(task.id, photoSection);
+                photoUI.createAttachmentUI(activity.id, photoSection);
                 
                 card.appendChild(photoSection);
             }
@@ -395,10 +395,11 @@
             footer.className = 'task-card__footer';
             
             // Time estimate
-            if (task.time_estimate) {
+            if (activity.time_estimate || activity.estimatedMinutes) {
                 const time = document.createElement('div');
                 time.className = 'task-card__time';
-                time.innerHTML = `⏱ ${task.time_estimate} min`;
+                const estimate = activity.time_estimate || activity.estimatedMinutes;
+                time.innerHTML = `⏱ ${estimate} min`;
                 footer.appendChild(time);
             }
             
@@ -407,10 +408,10 @@
                 const timerBtn = document.createElement('button');
                 timerBtn.className = 'task-timer-button';
                 timerBtn.setAttribute('aria-label', 'Set timer for activity');
-                timerBtn.setAttribute('data-task-id', task.id);
+                timerBtn.setAttribute('data-task-id', activity.id);
                 
                 // Check if there's an active timer
-                const existingTimer = window.TaskTimer.getTimer(task.id);
+                const existingTimer = window.TaskTimer.getTimer(activity.id);
                 if (existingTimer) {
                     timerBtn.innerHTML = `⏱️ ${window.TaskTimer.formatTime(existingTimer.remaining)}`;
                     timerBtn.classList.add('active');
@@ -428,17 +429,17 @@
                 
                 timerBtn.onclick = function(e) {
                     e.stopPropagation();
-                    window.TaskTimer.showTimerMenu(task.id, timerBtn);
+                    window.TaskTimer.showTimerMenu(activity.id, timerBtn);
                 };
                 
                 footer.appendChild(timerBtn);
             }
             
             // Category
-            if (task.category) {
+            if (activity.category) {
                 const category = document.createElement('div');
                 category.className = 'task-card__category';
-                category.textContent = this.getCategoryName(task.category);
+                category.textContent = this.getCategoryName(activity.category);
                 footer.appendChild(category);
             }
             
@@ -446,21 +447,37 @@
                 card.appendChild(footer);
             }
             
-            // Edit mode buttons
-            if (window.EditMode && window.EditMode.isActive()) {
-                const editButtons = this.createEditButtons(task);
-                card.appendChild(editButtons);
+            // Card edit controls (always create, visibility controlled by CardEditControls integration)
+            const editControls = this.createCardEditControls(activity);
+            card.appendChild(editControls);
+            
+            // Type indicator (if activity has type and ActivityTypes is available)
+            if (window.ActivityTypes && activity.type && activity.type.category) {
+                const typeIndicator = window.ActivityTypes.createTypeIndicator(activity);
+                if (typeIndicator) {
+                    card.appendChild(typeIndicator);
+                    // Add type class to card for additional styling
+                    card.classList.add(window.ActivityTypes.getTypeClass(activity.type.category));
+                    card.setAttribute('data-activity-type', activity.type.category);
+                }
             }
             
-            // Card click handler (edit in modal)
+            // Card click handler (delegated to CardEditControls for edit mode gating)
             card.onclick = function(e) {
-                // Don't trigger on button clicks
-                if (e.target.tagName === 'BUTTON' || e.target.tagName === 'INPUT') {
+                // Don't trigger on button clicks or other interactive elements
+                if (e.target.tagName === 'BUTTON' || 
+                    e.target.tagName === 'INPUT' || 
+                    e.target.closest('button') ||
+                    e.target.closest('.card-edit-controls')) {
                     return;
                 }
                 
+                // CardEditControls integration will handle edit mode checks
+                // This provides fallback behavior when integration is not available
                 if (window.EditMode && window.EditMode.isActive()) {
-                    taskDisplay.startEditing(task);
+                    if (activityDisplay.startEditing) {
+                        activityDisplay.startEditing(activity);
+                    }
                 }
             };
             
@@ -470,11 +487,11 @@
         /**
          * Create progress indicator
          */
-        createProgressIndicator: function(task) {
+        createProgressIndicator: function(activity) {
             let completed = 0;
-            const total = task.subtasks.length;
+            const total = activity.subtasks.length;
             
-            task.subtasks.forEach(function(subtask) {
+            activity.subtasks.forEach(function(subtask) {
                 if (subtask.completed) completed++;
             });
             
@@ -500,82 +517,179 @@
         },
         
         /**
-         * Create edit mode buttons
+         * Create card edit controls (new direct manipulation system)
          */
-        createEditButtons: function(task) {
-            const taskDisplay = window.TaskDisplay;
+        createCardEditControls: function(activity) {
             const self = this;
+            const targetSize = window.StackMapSafeMode ? 60 : 44;
             
             const container = document.createElement('div');
-            container.className = 'task-card__edit-buttons';
+            container.className = 'card-edit-controls';
+            container.style.display = 'none'; // Hidden by default, shown in edit mode
             
-            // Create arrow buttons container
-            const arrowContainer = document.createElement('div');
-            arrowContainer.className = 'task-arrows';
-            
-            // Up arrow button
-            const upBtn = document.createElement('button');
-            upBtn.className = 'task-arrow-up';
-            upBtn.innerHTML = '↑';
-            upBtn.setAttribute('aria-label', 'Move activity up');
-            
-            // Check if task can move up
-            if (window.TaskReorder && window.TaskReorder.canMoveUp(task)) {
-                upBtn.onclick = function(e) {
-                    e.stopPropagation();
-                    window.TaskReorder.moveUp(task);
-                };
-            } else {
-                upBtn.disabled = true;
-                upBtn.classList.add('disabled');
-            }
-            
-            // Down arrow button
-            const downBtn = document.createElement('button');
-            downBtn.className = 'task-arrow-down';
-            downBtn.innerHTML = '↓';
-            downBtn.setAttribute('aria-label', 'Move activity down');
-            
-            // Check if task can move down
-            if (window.TaskReorder && window.TaskReorder.canMoveDown(task)) {
-                downBtn.onclick = function(e) {
-                    e.stopPropagation();
-                    window.TaskReorder.moveDown(task);
-                };
-            } else {
-                downBtn.disabled = true;
-                downBtn.classList.add('disabled');
-            }
-            
-            arrowContainer.appendChild(upBtn);
-            arrowContainer.appendChild(downBtn);
-            container.appendChild(arrowContainer);
+            // Edit button
+            const editBtn = document.createElement('button');
+            editBtn.className = 'card-edit-btn card-action-btn';
+            editBtn.innerHTML = '✏️';
+            editBtn.setAttribute('aria-label', 'Edit activity');
+            editBtn.style.minWidth = targetSize + 'px';
+            editBtn.style.minHeight = targetSize + 'px';
+            editBtn.onclick = function(e) {
+                e.stopPropagation();
+                self.handleCardEdit(activity);
+            };
+            container.appendChild(editBtn);
             
             // Delete button
             const deleteBtn = document.createElement('button');
-            deleteBtn.className = 'task-card__delete-btn';
-            deleteBtn.innerHTML = '🗑';
+            deleteBtn.className = 'card-delete-btn card-action-btn';
+            deleteBtn.innerHTML = '🗑️';
             deleteBtn.setAttribute('aria-label', 'Delete activity');
+            deleteBtn.style.minWidth = targetSize + 'px';
+            deleteBtn.style.minHeight = targetSize + 'px';
             deleteBtn.onclick = function(e) {
                 e.stopPropagation();
-                if (confirm('Delete this task?')) {
-                    taskDisplay.deleteTask(task);
-                }
+                self.handleCardDelete(activity);
             };
             container.appendChild(deleteBtn);
             
-            // Menu button
-            const menuBtn = document.createElement('button');
-            menuBtn.className = 'task-card__menu-btn';
-            menuBtn.innerHTML = '⋯';
-            menuBtn.setAttribute('aria-label', 'Activity options');
-            menuBtn.onclick = function(e) {
+            // Duplicate button
+            const duplicateBtn = document.createElement('button');
+            duplicateBtn.className = 'card-duplicate-btn card-action-btn';
+            duplicateBtn.innerHTML = '📋';
+            duplicateBtn.setAttribute('aria-label', 'Duplicate activity');
+            duplicateBtn.style.minWidth = targetSize + 'px';
+            duplicateBtn.style.minHeight = targetSize + 'px';
+            duplicateBtn.onclick = function(e) {
                 e.stopPropagation();
-                // TODO: Show task options menu
+                self.handleCardDuplicate(activity);
             };
-            container.appendChild(menuBtn);
+            container.appendChild(duplicateBtn);
+            
+            // Move button (quick day switcher)
+            const moveBtn = document.createElement('button');
+            moveBtn.className = 'card-move-btn card-action-btn';
+            moveBtn.innerHTML = activity.timeframe === 'today' ? '🌙' : '☀️';
+            moveBtn.setAttribute('aria-label', activity.timeframe === 'today' ? 'Move to tomorrow' : 'Move to today');
+            moveBtn.style.minWidth = targetSize + 'px';
+            moveBtn.style.minHeight = targetSize + 'px';
+            moveBtn.onclick = function(e) {
+                e.stopPropagation();
+                self.handleCardMove(activity);
+            };
+            container.appendChild(moveBtn);
             
             return container;
+        },
+        
+        /**
+         * Handle card edit action
+         */
+        handleCardEdit: function(activity) {
+            // Start inline editing or show edit modal
+            if (window.InlineCardEdit) {
+                window.InlineCardEdit.startEdit(activity);
+            } else {
+                // Fallback to existing edit functionality
+                const display = window.ActivityDisplay || window.TaskDisplay;
+                if (display.startEditing) {
+                    display.startEditing(activity);
+                } else if (display.showEditModal) {
+                    display.showEditModal(activity);
+                }
+            }
+        },
+        
+        /**
+         * Handle card delete action
+         */
+        handleCardDelete: function(activity) {
+            // Show confirmation dialog
+            const confirmed = confirm(`Delete "${activity.title || 'Untitled Activity'}"?`);
+            if (confirmed) {
+                const display = window.ActivityDisplay || window.TaskDisplay;
+                if (display.deleteActivity) {
+                    display.deleteActivity(activity);
+                } else if (display.deleteTask) {
+                    display.deleteTask(activity);
+                }
+                
+                // Show undo option if undo system is available
+                if (window.UndoManager) {
+                    window.UndoManager.showUndoToast('Activity deleted');
+                }
+            }
+        },
+        
+        /**
+         * Handle card duplicate action
+         */
+        handleCardDuplicate: function(activity) {
+            // Create a copy of the activity
+            const duplicate = Object.assign({}, activity);
+            duplicate.id = 'activity_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            duplicate.title = (duplicate.title || 'Untitled Activity') + ' (Copy)';
+            duplicate.created_at = new Date().toISOString();
+            duplicate.updated_at = new Date().toISOString();
+            duplicate.completed = false;
+            duplicate.status = 'pending';
+            
+            // Auto-assign type to duplicate if ActivityTypes is available
+            if (window.ActivityTypes) {
+                window.ActivityTypes.autoAssignType(duplicate);
+            }
+            
+            const display = window.ActivityDisplay || window.TaskDisplay;
+            if (display.addActivity) {
+                display.addActivity(duplicate);
+            } else if (display.addTask) {
+                display.addTask(duplicate);
+            }
+            
+            console.log('Activity duplicated:', duplicate.title);
+        },
+        
+        /**
+         * Handle card move action (today/tomorrow toggle)
+         */
+        handleCardMove: function(activity) {
+            const newTimeframe = activity.timeframe === 'today' ? 'tomorrow' : 'today';
+            activity.timeframe = newTimeframe;
+            activity.day = newTimeframe;
+            activity.updated_at = new Date().toISOString();
+            
+            const display = window.ActivityDisplay || window.TaskDisplay;
+            if (display.updateActivity) {
+                display.updateActivity(activity);
+            } else if (display.updateTask) {
+                display.updateTask(activity);
+            }
+            
+            // Re-render to reflect changes
+            if (display.render) {
+                display.render();
+            }
+            
+            console.log(`Activity moved to ${newTimeframe}:`, activity.title);
+        },
+        
+        /**
+         * Edit mode change handler
+         */
+        onEditModeChange: function(isEditMode) {
+            // Update all card edit controls visibility
+            const editControls = document.querySelectorAll('.card-edit-controls');
+            editControls.forEach(function(controls) {
+                controls.style.display = isEditMode ? 'flex' : 'none';
+            });
+        },
+        
+        /**
+         * Legacy edit buttons (kept for backward compatibility)
+         */
+        createEditButtons: function(task) {
+            // Use new createCardEditControls instead
+            return this.createCardEditControls(task);
         },
         
         /**

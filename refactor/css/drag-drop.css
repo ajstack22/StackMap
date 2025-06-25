@@ -1,0 +1,318 @@
+/**
+ * Drag & Drop Styling
+ * Visual styles for drag and drop reordering system
+ * Story #96 - Round 5 Dev2
+ */
+
+/* Drag state classes */
+.drag-active {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Card states during drag */
+.task-card--preparing-drag,
+.activity-card--preparing-drag {
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px dashed #3b82f6;
+    transform: scale(1.02);
+    transition: all 0.2s ease;
+}
+
+.task-card--ready-to-drag,
+.activity-card--ready-to-drag {
+    background: rgba(59, 130, 246, 0.2);
+    border: 2px solid #3b82f6;
+    transform: scale(1.05);
+    box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
+}
+
+.task-card--dragging,
+.activity-card--dragging {
+    background: rgba(255, 255, 255, 0.95);
+    border: 2px solid #3b82f6;
+    transform: rotate(3deg) scale(1.05);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+    z-index: 9999;
+    cursor: grabbing;
+}
+
+/* Drop target indicators */
+.task-card--drop-above,
+.activity-card--drop-above {
+    border-top: 4px solid #10b981;
+    margin-top: 8px;
+}
+
+.task-card--drop-below,
+.activity-card--drop-below {
+    border-bottom: 4px solid #10b981;
+    margin-bottom: 8px;
+}
+
+/* Drag placeholder */
+.drag-placeholder {
+    background: linear-gradient(45deg, transparent 25%, rgba(59, 130, 246, 0.1) 25%, rgba(59, 130, 246, 0.1) 50%, transparent 50%, transparent 75%, rgba(59, 130, 246, 0.1) 75%);
+    background-size: 20px 20px;
+    border: 2px dashed #3b82f6;
+    border-radius: 8px;
+    margin: 8px 0;
+    animation: pulse 1s ease-in-out infinite alternate;
+    position: relative;
+    min-height: 80px;
+}
+
+.drag-placeholder::before {
+    content: 'Drop here';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: #3b82f6;
+    font-weight: 600;
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Drag ghost (visual feedback during drag) */
+.drag-ghost {
+    opacity: 0.8 !important;
+    transform: rotate(5deg) !important;
+    pointer-events: none !important;
+    z-index: 1000 !important;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3) !important;
+    border: 2px solid #3b82f6 !important;
+}
+
+/* Show drop zones when dragging */
+.showing-drop-zones .activity-card,
+.showing-drop-zones .task-card {
+    position: relative;
+}
+
+.showing-drop-zones .activity-card:not(.dragging)::before,
+.showing-drop-zones .task-card:not(.dragging)::before {
+    content: '';
+    position: absolute;
+    top: -4px;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: rgba(16, 185, 129, 0.3);
+    border-radius: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.showing-drop-zones .activity-card:not(.dragging):hover::before,
+.showing-drop-zones .task-card:not(.dragging):hover::before {
+    opacity: 1;
+}
+
+/* Keyboard reordering */
+.keyboard-selected {
+    border: 3px solid #f59e0b !important;
+    background: rgba(245, 158, 11, 0.1) !important;
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.2) !important;
+}
+
+.keyboard-selected::after {
+    content: '↕️ Use arrow keys to move';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #f59e0b;
+    color: white;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+    z-index: 20;
+}
+
+/* Animations */
+@keyframes pulse {
+    from {
+        opacity: 0.6;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    .task-card--preparing-drag,
+    .activity-card--preparing-drag {
+        transform: scale(1.03);
+    }
+    
+    .task-card--ready-to-drag,
+    .activity-card--ready-to-drag {
+        transform: scale(1.06);
+        box-shadow: 0 6px 24px rgba(59, 130, 246, 0.4);
+    }
+    
+    .task-card--dragging,
+    .activity-card--dragging {
+        transform: rotate(2deg) scale(1.04);
+    }
+    
+    .drag-placeholder {
+        min-height: 60px;
+        margin: 12px 0;
+    }
+    
+    .drag-placeholder::before {
+        font-size: 12px;
+    }
+}
+
+/* TV mode adjustments */
+.platform-tv .task-card--preparing-drag,
+.platform-tv .activity-card--preparing-drag,
+.platform-tv .task-card--ready-to-drag,
+.platform-tv .activity-card--ready-to-drag,
+.platform-tv .task-card--dragging,
+.platform-tv .activity-card--dragging {
+    transform: none; /* Disable transforms on TV for better visibility */
+}
+
+.platform-tv .drag-placeholder {
+    min-height: 100px;
+    border-width: 4px;
+}
+
+.platform-tv .drag-placeholder::before {
+    font-size: 18px;
+}
+
+.platform-tv .keyboard-selected::after {
+    font-size: 16px;
+    padding: 8px 16px;
+    top: -40px;
+}
+
+/* Safe mode overrides */
+.safe-mode .task-card--preparing-drag,
+.safe-mode .activity-card--preparing-drag,
+.safe-mode .task-card--ready-to-drag,
+.safe-mode .activity-card--ready-to-drag,
+.safe-mode .task-card--dragging,
+.safe-mode .activity-card--dragging {
+    transition: none;
+    animation: none;
+    transform: none;
+}
+
+.safe-mode .drag-placeholder {
+    animation: none;
+    background: rgba(59, 130, 246, 0.2);
+}
+
+.safe-mode .showing-drop-zones .activity-card::before,
+.safe-mode .showing-drop-zones .task-card::before {
+    transition: none;
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+    .task-card--preparing-drag,
+    .activity-card--preparing-drag,
+    .task-card--ready-to-drag,
+    .activity-card--ready-to-drag,
+    .task-card--dragging,
+    .activity-card--dragging,
+    .drag-placeholder,
+    .showing-drop-zones .activity-card::before,
+    .showing-drop-zones .task-card::before {
+        transition: none;
+        animation: none;
+        transform: none;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .task-card--preparing-drag,
+    .activity-card--preparing-drag,
+    .task-card--ready-to-drag,
+    .activity-card--ready-to-drag {
+        border-color: #000000;
+        background: rgba(255, 255, 0, 0.3);
+    }
+    
+    .task-card--dragging,
+    .activity-card--dragging {
+        border-color: #000000;
+        background: #ffffff;
+        box-shadow: 0 0 0 4px #000000;
+    }
+    
+    .drag-placeholder {
+        border-color: #000000;
+        background: repeating-linear-gradient(
+            45deg,
+            transparent,
+            transparent 10px,
+            rgba(0, 0, 0, 0.2) 10px,
+            rgba(0, 0, 0, 0.2) 20px
+        );
+    }
+    
+    .task-card--drop-above,
+    .activity-card--drop-above {
+        border-top-color: #000000;
+    }
+    
+    .task-card--drop-below,
+    .activity-card--drop-below {
+        border-bottom-color: #000000;
+    }
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    .task-card--preparing-drag,
+    .activity-card--preparing-drag {
+        background: rgba(96, 165, 250, 0.2);
+        border-color: #60a5fa;
+    }
+    
+    .task-card--ready-to-drag,
+    .activity-card--ready-to-drag {
+        background: rgba(96, 165, 250, 0.3);
+        border-color: #60a5fa;
+        box-shadow: 0 8px 32px rgba(96, 165, 250, 0.4);
+    }
+    
+    .task-card--dragging,
+    .activity-card--dragging {
+        background: rgba(31, 41, 55, 0.95);
+        border-color: #60a5fa;
+        box-shadow: 0 12px 40px rgba(96, 165, 250, 0.3);
+    }
+    
+    .drag-placeholder {
+        border-color: #60a5fa;
+        background: linear-gradient(45deg, transparent 25%, rgba(96, 165, 250, 0.1) 25%, rgba(96, 165, 250, 0.1) 50%, transparent 50%, transparent 75%, rgba(96, 165, 250, 0.1) 75%);
+    }
+    
+    .drag-placeholder::before {
+        color: #60a5fa;
+    }
+    
+    .task-card--drop-above,
+    .activity-card--drop-above {
+        border-top-color: #34d399;
+    }
+    
+    .task-card--drop-below,
+    .activity-card--drop-below {
+        border-bottom-color: #34d399;
+    }
+}

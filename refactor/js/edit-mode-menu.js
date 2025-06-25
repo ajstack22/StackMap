@@ -83,6 +83,7 @@
                 { type: 'divider' },
                 { icon: '🔄', label: 'Reorder Mode', action: 'reorder', shortcut: 'R', showCount: true, countType: 'current' },
                 { icon: '📌', label: 'Pin Activities', action: 'pin-mode', shortcut: 'P', showCount: true, countType: 'pinned' },
+                { icon: '🏷️', label: 'Manage Types', action: 'manage-types', shortcut: 'Y', showCount: true, countType: 'current' },
                 { icon: '🗑️', label: 'Bulk Delete', action: 'bulk-delete', shortcut: 'D', showCount: true, countType: 'current' },
                 { type: 'divider' },
                 { icon: '✅', label: 'Complete Day', action: 'complete-day', shortcut: 'C', showCount: true, countType: 'today' },
@@ -387,6 +388,14 @@
                     }
                     break;
                     
+                case 'manage-types':
+                    if (window.ActivityTypes) {
+                        this.showTypeManagementModal();
+                    } else {
+                        this.showNotification('Activity types not available');
+                    }
+                    break;
+                    
                 case 'bulk-delete':
                     if (window.BulkOperations && window.BulkOperations.start) {
                         window.BulkOperations.start('delete');
@@ -685,6 +694,32 @@
             
             // Reset state
             self.isInitialized = false;
+        },
+        
+        /**
+         * Show type management modal
+         */
+        showTypeManagementModal: function() {
+            const self = this;
+            
+            if (!window.ActivityTypes) {
+                self.showNotification('Activity types system not available');
+                return;
+            }
+            
+            // Simple type management for now - trigger auto-migration
+            const confirmed = confirm('Auto-assign types to all activities based on their content?\n\nThis will analyze activity titles and descriptions to suggest appropriate types (recurring, frequent, single-use).');
+            
+            if (confirmed) {
+                window.ActivityTypes.migrateExistingActivities();
+                self.showNotification('Auto-assigned types to activities');
+                
+                // Refresh display to show type indicators
+                const display = window.ActivityDisplay || window.TaskDisplay;
+                if (display && display.render) {
+                    display.render();
+                }
+            }
         }
     };
     

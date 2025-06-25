@@ -84,6 +84,17 @@
                 return;
             }
             
+            // Check if single-use activities should be pinned
+            if (window.ActivityTypes && activity.type && activity.type.category === 'single-use') {
+                if (!activity.pinned) {
+                    // Warn user about pinning single-use activities
+                    const shouldPin = confirm('Single-use activities are typically not pinned since they archive after completion. Pin anyway?');
+                    if (!shouldPin) {
+                        return;
+                    }
+                }
+            }
+            
             // Toggle pin state
             const newPinState = !activity.pinned;
             activity.pinned = newPinState;

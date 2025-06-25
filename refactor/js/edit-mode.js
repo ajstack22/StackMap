@@ -467,6 +467,128 @@
         if (isEditMode) {
             updateTimer();
         }
+        
+        // Update card edit controls
+        updateCardEditControls(isEditMode);
+    }
+    
+    /**
+     * Update card edit controls visibility and state
+     */
+    function updateCardEditControls(isEditMode) {
+        // Find all activity cards
+        const cards = document.querySelectorAll('.activity-card, .task-card, .visual-card');
+        
+        cards.forEach(function(card) {
+            if (isEditMode) {
+                enableCardEditMode(card);
+            } else {
+                disableCardEditMode(card);
+            }
+        });
+        
+        // Notify card systems of edit mode change
+        if (window.ActivityCards && window.ActivityCards.onEditModeChange) {
+            window.ActivityCards.onEditModeChange(isEditMode);
+        }
+        
+        // Re-render cards to show/hide edit controls
+        if (isEditMode && window.ActivityDisplay && window.ActivityDisplay.render) {
+            // Small delay to ensure UI updates are complete
+            setTimeout(function() {
+                window.ActivityDisplay.render();
+            }, 50);
+        }
+    }
+    
+    /**
+     * Enable edit mode for a specific card
+     */
+    function enableCardEditMode(card) {
+        card.classList.add('card-edit-mode');
+        card.setAttribute('aria-selected', 'false');
+        
+        // Add drag handle if drag-drop is available
+        if (window.DragDropReorder && !card.querySelector('.card-drag-handle')) {
+            const dragHandle = createDragHandle();
+            card.appendChild(dragHandle);
+        }
+        
+        // Show edit controls if they exist
+        const editControls = card.querySelector('.card-edit-controls');
+        if (editControls) {
+            editControls.style.display = 'flex';
+        }
+        
+        // Add visual edit indicators
+        if (!card.querySelector('.card-edit-indicator')) {
+            const indicator = document.createElement('div');
+            indicator.className = 'card-edit-indicator';
+            indicator.setAttribute('aria-hidden', 'true');
+            card.appendChild(indicator);
+        }
+    }
+    
+    /**
+     * Disable edit mode for a specific card
+     */
+    function disableCardEditMode(card) {
+        card.classList.remove('card-edit-mode');
+        card.removeAttribute('aria-selected');
+        
+        // Remove drag handle
+        const dragHandle = card.querySelector('.card-drag-handle');
+        if (dragHandle) {
+            dragHandle.remove();
+        }
+        
+        // Hide edit controls
+        const editControls = card.querySelector('.card-edit-controls');
+        if (editControls) {
+            editControls.style.display = 'none';
+        }
+        
+        // Remove edit indicator
+        const indicator = card.querySelector('.card-edit-indicator');
+        if (indicator) {
+            indicator.remove();
+        }
+    }
+    
+    /**
+     * Create drag handle for card reordering
+     */
+    function createDragHandle() {
+        const handle = document.createElement('div');
+        handle.className = 'card-drag-handle';
+        handle.setAttribute('aria-label', 'Drag to reorder');
+        handle.setAttribute('role', 'button');
+        handle.setAttribute('tabindex', '0');
+        
+        // Touch target sizing
+        const targetSize = window.StackMapSafeMode ? 60 : 44;
+        handle.style.minWidth = targetSize + 'px';
+        handle.style.minHeight = targetSize + 'px';
+        
+        // Drag icon
+        const icon = document.createElement('span');
+        icon.className = 'drag-icon';
+        icon.textContent = '⋮⋮';
+        icon.setAttribute('aria-hidden', 'true');
+        handle.appendChild(icon);
+        
+        // Keyboard support for drag handle
+        handle.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                // Start keyboard-based reordering
+                if (window.DragDropReorder && window.DragDropReorder.startKeyboardReorder) {
+                    window.DragDropReorder.startKeyboardReorder(handle.closest('.activity-card, .task-card'));
+                }
+            }
+        });
+        
+        return handle;
     }
     
     /**

@@ -58,22 +58,43 @@
         toggleMode: function() {
             const self = this;
             
-            if (!window.TaskDisplay) {
-                console.error('DisplayModeToggle: TaskDisplay not available');
+            // Use ActivityDisplay instead of TaskDisplay (migration compatibility)
+            const displayManager = window.ActivityDisplay || window.TaskDisplay;
+            if (!displayManager) {
+                console.error('DisplayModeToggle: Display manager not available');
                 return;
             }
+            
+            // Performance monitoring start
+            if (window.PerformanceMonitor) {
+                document.dispatchEvent(new CustomEvent('modeToggleStart'));
+            }
+            
+            // Get current mode for cache invalidation
+            const currentMode = displayManager.getDisplayMode();
             
             // Animate button
             self.button.classList.add('animating');
             
-            // Toggle mode
-            window.TaskDisplay.toggleDisplayMode();
+            // Invalidate badge cache for current mode
+            if (window.BadgeCache) {
+                const invalidated = window.BadgeCache.invalidateDisplayMode(currentMode);
+                console.log(`DisplayModeToggle: Invalidated ${invalidated} cached badges for mode: ${currentMode}`);
+            }
             
-            // Update button after animation
+            // Toggle mode
+            displayManager.toggleDisplayMode();
+            
+            // Update button after shorter animation for better perceived performance
             setTimeout(function() {
                 self.updateButtonState();
                 self.button.classList.remove('animating');
-            }, 300);
+                
+                // Performance monitoring end
+                if (window.PerformanceMonitor) {
+                    document.dispatchEvent(new CustomEvent('modeToggleEnd'));
+                }
+            }, 150); // Reduced from 300ms for better performance
         },
         
         /**
@@ -82,9 +103,11 @@
         updateButtonState: function() {
             const self = this;
             
-            if (!self.icon || !window.TaskDisplay) return;
+            // Use ActivityDisplay instead of TaskDisplay (migration compatibility)
+            const displayManager = window.ActivityDisplay || window.TaskDisplay;
+            if (!self.icon || !displayManager) return;
             
-            const currentMode = window.TaskDisplay.getDisplayMode();
+            const currentMode = displayManager.getDisplayMode();
             
             if (currentMode === 'time') {
                 self.icon.textContent = '🕐';

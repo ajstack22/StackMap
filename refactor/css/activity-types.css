@@ -1,0 +1,458 @@
+/**
+ * Activity Types Styles for StackMap
+ * Visual styling for the card type system (recurring, frequent, single-use)
+ * Mobile-first design with ADHD/autism accommodations
+ */
+
+/* Type Indicator Positioning */
+.activity-card {
+    position: relative;
+    padding-bottom: 60px; /* Space for type indicator */
+}
+
+/* Type Indicator Base Styles */
+.activity-type-indicator {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    border: 2px solid;
+    background: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 18px;
+    font-weight: bold;
+    
+    /* Ensure proper touch targets */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    
+    /* Accessibility */
+    outline: none;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Safe mode sizing */
+.safe-mode .activity-type-indicator {
+    width: 60px;
+    height: 60px;
+    font-size: 24px;
+    bottom: 16px;
+}
+
+/* Type indicator hover effects (not in safe mode) */
+.activity-type-indicator:hover:not(.safe-mode .activity-type-indicator) {
+    transform: translateX(-50%) scale(1.1);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Focus indicator for keyboard navigation */
+.activity-type-indicator:focus {
+    outline: 3px solid var(--focus-color, #667eea);
+    outline-offset: 2px;
+}
+
+/* Type-specific styling */
+.activity-type-indicator[data-type="recurring"] {
+    border-color: #8b5cf6;
+    color: #8b5cf6;
+    background: rgba(139, 92, 246, 0.1);
+}
+
+.activity-type-indicator[data-type="frequent"] {
+    border-color: #7c3aed;
+    color: #7c3aed;
+    background: rgba(124, 58, 237, 0.1);
+}
+
+.activity-type-indicator[data-type="single-use"] {
+    border-color: #6d28d9;
+    color: #6d28d9;
+    background: rgba(109, 40, 217, 0.1);
+}
+
+/* Type icon styling */
+.activity-type-icon {
+    display: block;
+    line-height: 1;
+}
+
+/* Card type classes for additional styling */
+.activity-card.activity-type--recurring {
+    border-left: 4px solid #8b5cf6;
+}
+
+.activity-card.activity-type--frequent {
+    border-left: 4px solid #7c3aed;
+}
+
+.activity-card.activity-type--single-use {
+    border-left: 4px solid #6d28d9;
+}
+
+/* Type Selector Menu */
+.activity-type-selector {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 8px;
+    z-index: 1000;
+    max-width: 250px;
+    
+    /* Backdrop blur for modern browsers */
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.type-selector-option {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    color: var(--text-primary, #1f2937);
+    transition: background-color 0.2s ease;
+    
+    /* Touch targets */
+    min-height: 44px;
+    touch-action: manipulation;
+}
+
+.safe-mode .type-selector-option {
+    min-height: 60px;
+    padding: 16px;
+    font-size: 16px;
+}
+
+.type-selector-option:hover {
+    background: var(--hover-bg, rgba(139, 92, 246, 0.1));
+}
+
+.type-selector-option:focus {
+    outline: 2px solid var(--focus-color, #667eea);
+    outline-offset: -2px;
+}
+
+.type-selector-option.selected {
+    background: var(--selected-bg, rgba(139, 92, 246, 0.15));
+    border: 2px solid var(--primary-color, #8b5cf6);
+}
+
+.type-option-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.safe-mode .type-option-icon {
+    font-size: 24px;
+    width: 32px;
+}
+
+.type-option-label {
+    font-weight: 500;
+    flex: 1;
+}
+
+/* Coordination with Pin Indicators */
+.activity-card .activity-pin-button {
+    top: 12px;
+    right: 12px;
+}
+
+/* Ensure proper spacing when both pin and type indicators are present */
+.activity-card:has(.activity-pin-button) {
+    padding-bottom: 60px; /* Maintain space for type indicator */
+}
+
+/* Type-based card states */
+.activity-card[data-activity-type="recurring"] .activity-type-indicator {
+    animation: pulseRecurring 2s infinite;
+}
+
+@keyframes pulseRecurring {
+    0%, 100% { 
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4);
+    }
+    50% { 
+        box-shadow: 0 0 0 8px rgba(139, 92, 246, 0);
+    }
+}
+
+/* Disable animations in safe mode */
+.safe-mode .activity-card[data-activity-type="recurring"] .activity-type-indicator {
+    animation: none;
+}
+
+/* Type Statistics Display */
+.type-statistics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+}
+
+.type-stat-item {
+    background: var(--card-bg, #ffffff);
+    border: 1px solid var(--border-color, #e5e7eb);
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+}
+
+.type-stat-icon {
+    font-size: 24px;
+    margin-bottom: 8px;
+}
+
+.type-stat-label {
+    font-weight: 600;
+    color: var(--text-primary, #1f2937);
+    margin-bottom: 4px;
+}
+
+.type-stat-count {
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color, #8b5cf6);
+}
+
+/* Mobile Responsive */
+@media (max-width: 768px) {
+    .activity-type-indicator {
+        width: 40px;
+        height: 40px;
+        font-size: 16px;
+        bottom: 8px;
+    }
+    
+    .safe-mode .activity-type-indicator {
+        width: 56px;
+        height: 56px;
+        font-size: 20px;
+        bottom: 12px;
+    }
+    
+    .activity-card {
+        padding-bottom: 52px;
+    }
+    
+    .activity-type-selector {
+        max-width: calc(100vw - 32px);
+        left: 16px !important;
+        right: 16px;
+        width: auto;
+    }
+    
+    .type-statistics {
+        grid-template-columns: 1fr;
+        gap: 12px;
+    }
+}
+
+/* Small mobile devices */
+@media (max-width: 480px) {
+    .activity-type-indicator {
+        width: 36px;
+        height: 36px;
+        font-size: 14px;
+    }
+    
+    .safe-mode .activity-type-indicator {
+        width: 52px;
+        height: 52px;
+        font-size: 18px;
+    }
+}
+
+/* Dark Theme Support */
+@media (prefers-color-scheme: dark) {
+    .activity-type-selector {
+        background: var(--card-bg-dark, #2a2a2a);
+        border-color: var(--border-color-dark, #4a4a4a);
+    }
+    
+    .type-selector-option {
+        color: var(--text-primary-dark, #f9fafb);
+    }
+    
+    .type-selector-option:hover {
+        background: rgba(139, 92, 246, 0.2);
+    }
+    
+    .type-stat-item {
+        background: var(--card-bg-dark, #2a2a2a);
+        border-color: var(--border-color-dark, #4a4a4a);
+    }
+    
+    .type-stat-label {
+        color: var(--text-primary-dark, #f9fafb);
+    }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+    .activity-type-indicator {
+        border-width: 3px;
+        box-shadow: 0 0 0 1px var(--contrast-bg, #000000);
+    }
+    
+    .activity-type-indicator[data-type="recurring"] {
+        background: #8b5cf6;
+        color: #ffffff;
+    }
+    
+    .activity-type-indicator[data-type="frequent"] {
+        background: #7c3aed;
+        color: #ffffff;
+    }
+    
+    .activity-type-indicator[data-type="single-use"] {
+        background: #6d28d9;
+        color: #ffffff;
+    }
+    
+    .type-selector-option.selected {
+        background: var(--primary-color, #8b5cf6);
+        color: #ffffff;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .activity-type-indicator {
+        transition: none;
+    }
+    
+    .activity-type-indicator:hover {
+        transform: translateX(-50%);
+    }
+    
+    .activity-card[data-activity-type="recurring"] .activity-type-indicator {
+        animation: none;
+    }
+    
+    .type-selector-option {
+        transition: none;
+    }
+}
+
+/* Print Styles */
+@media print {
+    .activity-type-indicator {
+        position: static;
+        display: inline-flex;
+        transform: none;
+        margin: 0 4px;
+        width: auto;
+        height: auto;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 12px;
+    }
+    
+    .activity-type-selector {
+        display: none;
+    }
+}
+
+/* Integration with Edit Mode */
+.edit-mode .activity-type-indicator {
+    cursor: pointer;
+    z-index: 10;
+}
+
+.edit-mode .activity-type-indicator:hover {
+    transform: translateX(-50%) scale(1.15);
+}
+
+/* Bulk Operations Mode - Hide type indicators during bulk selection */
+.bulk-operations-active .activity-type-indicator {
+    opacity: 0.5;
+    pointer-events: none;
+}
+
+/* Type Filter Controls */
+.type-filter-controls {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0;
+    flex-wrap: wrap;
+}
+
+.type-filter-button {
+    padding: 8px 16px;
+    border: 2px solid;
+    border-radius: 20px;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    
+    /* Touch targets */
+    min-height: 44px;
+    touch-action: manipulation;
+}
+
+.safe-mode .type-filter-button {
+    min-height: 60px;
+    padding: 12px 20px;
+    font-size: 16px;
+}
+
+.type-filter-button.active {
+    background: var(--primary-color, #8b5cf6);
+    color: #ffffff;
+    border-color: var(--primary-color, #8b5cf6);
+}
+
+.type-filter-button:not(.active) {
+    border-color: var(--border-color, #e5e7eb);
+    color: var(--text-secondary, #6b7280);
+}
+
+.type-filter-button:hover:not(.active) {
+    border-color: var(--primary-color, #8b5cf6);
+    color: var(--primary-color, #8b5cf6);
+}
+
+/* Type Badge for Lists */
+.activity-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1.2;
+}
+
+.activity-type-badge.type-recurring {
+    background: rgba(139, 92, 246, 0.1);
+    color: #8b5cf6;
+}
+
+.activity-type-badge.type-frequent {
+    background: rgba(124, 58, 237, 0.1);
+    color: #7c3aed;
+}
+
+.activity-type-badge.type-single-use {
+    background: rgba(109, 40, 217, 0.1);
+    color: #6d28d9;
+}
