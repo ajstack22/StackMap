@@ -162,7 +162,9 @@
             self.applyUserSettings();
             
             // Trigger UI refresh
-            if (window.TaskDisplay && window.TaskDisplay.isInitialized) {
+            if (window.ActivityDisplay && window.ActivityDisplay.isInitialized) {
+                window.ActivityDisplay.render();
+            } else if (window.TaskDisplay && window.TaskDisplay.isInitialized) {
                 window.TaskDisplay.render();
             }
             
@@ -454,6 +456,14 @@
             
             switcher.appendChild(switchBtn);
             container.appendChild(switcher);
+        },
+        
+        /**
+         * Get all users
+         */
+        getAllUsers: function() {
+            const self = this;
+            return self.users || [];
         },
         
         /**

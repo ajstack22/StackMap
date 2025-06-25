@@ -138,6 +138,10 @@
                     document.dispatchEvent(new CustomEvent('activitiesChanged', {
                         detail: { activities: self.activities }
                     }));
+                    // Also dispatch old event for backward compatibility
+                    document.dispatchEvent(new CustomEvent('tasksChanged', {
+                        detail: { tasks: self.activities }
+                    }));
                 }
                 if (callback) callback(error);
             };
@@ -165,6 +169,32 @@
             } catch (error) {
                 console.error('ActivityDisplay: Save failed', error);
                 if (callback) callback(false);
+            }
+        },
+        
+        /**
+         * Show skeleton loading screens
+         */
+        showSkeletonActivities: function(container, count) {
+            const self = this;
+            
+            // Clear container
+            container.innerHTML = '';
+            
+            // Create skeleton items
+            for (let i = 0; i < count; i++) {
+                const skeleton = document.createElement('div');
+                skeleton.className = 'activity-card skeleton-loading';
+                skeleton.setAttribute('aria-hidden', 'true');
+                skeleton.innerHTML = 
+                    '<div class="skeleton-avatar"></div>' +
+                    '<div class="skeleton-content">' +
+                        '<div class="skeleton-title"></div>' +
+                        '<div class="skeleton-subtitle"></div>' +
+                    '</div>' +
+                    '<div class="skeleton-action"></div>';
+                
+                container.appendChild(skeleton);
             }
         },
         
@@ -209,19 +239,19 @@
                 self.container.appendChild(editButtonsContainer);
             }
             
-            // Filter tasks for current user
-            const userTasks = self.getUserTasks();
+            // Filter activities for current user
+            const userActivities = self.getUserActivities();
             
-            // Render tasks
-            if (userTasks.length === 0) {
+            // Render activities
+            if (userActivities.length === 0) {
                 const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'task-empty-message';
+                emptyMessage.className = 'activity-empty-message';
                 emptyMessage.textContent = 'No activities yet. Tap + to add one.';
                 emptyMessage.style.cssText = 'text-align: center; padding: 40px 20px; color: #999;';
                 self.container.appendChild(emptyMessage);
             } else {
-                // Try virtual scrolling for large task lists
-                if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.shouldEnable(userTasks.length)) {
+                // Try virtual scrolling for large activity lists
+                if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.shouldEnable(userActivities.length)) {
                     // Create a wrapper div for virtual scrolling
                     const virtualContainer = document.createElement('div');
                     virtualContainer.className = 'virtual-scroll-container';
@@ -229,41 +259,43 @@
                     self.container.appendChild(virtualContainer);
                     
                     // Initialize virtual scrolling
-                    const initialized = window.VirtualScrollAdapter.init(virtualContainer, userTasks);
+                    const initialized = window.VirtualScrollAdapter.init(virtualContainer, userActivities);
                     
                     if (!initialized) {
                         // Fallback to traditional rendering if virtual scrolling fails
                         self.container.removeChild(virtualContainer);
-                        self.renderTraditional(userTasks);
+                        self.renderTraditional(userActivities);
                     }
                 } else {
                     // Use traditional rendering for small lists
-                    self.renderTraditional(userTasks);
+                    self.renderTraditional(userActivities);
                 }
             }
             
-            // Notify keyboard navigation that tasks have been updated
+            // Notify keyboard navigation that activities have been updated
+            document.dispatchEvent(new CustomEvent('activitiesUpdated'));
+            // Also dispatch old event for backward compatibility
             document.dispatchEvent(new CustomEvent('tasksUpdated'));
             
             // Track render performance
             if (window.StackMapPerformanceMonitor) {
-                window.StackMapPerformanceMonitor.trackInteraction('render-tasks', startTime);
+                window.StackMapPerformanceMonitor.trackInteraction('render-activities', startTime);
             }
             }); // End requestAnimationFrame
         },
         
         /**
-         * Traditional rendering for small task lists
+         * Traditional rendering for small activity lists
          */
-        renderTraditional: function(userTasks) {
+        renderTraditional: function(userActivities) {
             const self = this;
             
             // Use DocumentFragment for batch DOM operations
             const fragment = document.createDocumentFragment();
             
-            userTasks.forEach(function(task, index) {
-                const taskElement = self.createTaskElement(task, index + 1);
-                fragment.appendChild(taskElement);
+            userActivities.forEach(function(activity, index) {
+                const activityElement = self.createActivityElement(activity, index + 1);
+                fragment.appendChild(activityElement);
             });
             
             // Single DOM operation instead of N operations
@@ -271,13 +303,13 @@
         },
         
         /**
-         * Create add task button
+         * Create add activity button
          */
         createAddButton: function() {
             const self = this;
             
             const button = document.createElement('button');
-            button.className = 'task-add-button';
+            button.className = 'activity-add-button';
             button.setAttribute('aria-label', 'Add new activity');
             button.textContent = '+ Add Activity';
             
@@ -288,12 +320,12 @@
             // Use optimized button response if available
             if (self.optimizeButtonResponse) {
                 self.optimizeButtonResponse(button, function() {
-                    self.addTask();
+                    self.addActivity();
                 });
             } else {
                 // Fallback to regular onclick
                 button.onclick = function() {
-                    self.addTask();
+                    self.addActivity();
                 };
             }
             
@@ -334,18 +366,18 @@
         },
         
         /**
-         * Create task element
+         * Create activity element
          */
-        createTaskElement: function(task, displayNumber) {
+        createActivityElement: function(activity, displayNumber) {
             const self = this;
             
-            const taskEl = document.createElement('div');
-            taskEl.className = 'task-item';
-            taskEl.setAttribute('data-task-id', task.id);
-            taskEl.setAttribute('data-display-number', displayNumber || '');
+            const activityEl = document.createElement('div');
+            activityEl.className = 'activity-item';
+            activityEl.setAttribute('data-activity-id', activity.id);
+            activityEl.setAttribute('data-display-number', displayNumber || '');
             
             // Apply safe mode styles
-            taskEl.style.cssText = 
+            activityEl.style.cssText = 
                 `position: relative;background: #2a2a2a;border-radius: 8px;padding: 16px;padding-left: 60px;margin-bottom: 12px;min-height: ${self.touchTargetSize}px;display: flex;align-items: center;gap: 12px;`;
             
             // Add activity number if provided and display mode is set to numbers
@@ -369,14 +401,14 @@
                     'color: #667eea;' +
                     'background: rgba(102, 126, 234, 0.1);' +
                     'border-radius: 50%;';
-                taskEl.appendChild(numberEl);
+                activityEl.appendChild(numberEl);
             }
             
             // Checkbox
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
-            checkbox.checked = task.completed;
-            checkbox.setAttribute('aria-label', `Mark activity as ${task.completed ? 'incomplete' : 'complete'}`);
+            checkbox.checked = activity.completed;
+            checkbox.setAttribute('aria-label', `Mark activity as ${activity.completed ? 'incomplete' : 'complete'}`);
             checkbox.style.cssText = 
                 'width: 24px;' +
                 'height: 24px;' +
@@ -384,21 +416,21 @@
                 'cursor: pointer;';
             
             checkbox.onchange = function() {
-                task.completed = checkbox.checked;
-                self.updateTask(task);
+                activity.completed = checkbox.checked;
+                self.updateActivity(activity);
             };
             
-            // Task content
+            // Activity content
             const content = document.createElement('div');
-            content.className = 'task-content';
+            content.className = 'activity-content';
             content.style.cssText = 'flex: 1; min-width: 0;';
             
-            if (self.editingTaskId === task.id) {
+            if (self.editingActivityId === activity.id) {
                 // Edit mode
                 const input = document.createElement('input');
                 input.type = 'text';
-                input.value = task.title;
-                input.className = 'task-edit-input';
+                input.value = activity.title;
+                input.className = 'activity-edit-input';
                 input.style.cssText = 
                     'width: 100%;' +
                     'padding: 8px;' +
@@ -409,12 +441,12 @@
                     'font-size: 16px;';
                 
                 input.onblur = function() {
-                    self.finishEditing(task, input.value);
+                    self.finishEditing(activity, input.value);
                 };
                 
                 input.onkeydown = function(e) {
                     if (e.key === 'Enter') {
-                        self.finishEditing(task, input.value);
+                        self.finishEditing(activity, input.value);
                     } else if (e.key === 'Escape') {
                         self.cancelEditing();
                     }
@@ -432,25 +464,25 @@
                 const titleContainer = document.createElement('div');
                 titleContainer.style.cssText = 'display: flex; align-items: center; gap: 8px;';
                 
-                // Task icon
-                if (task.icon) {
+                // Activity icon
+                if (activity.icon) {
                     const icon = document.createElement('span');
-                    icon.className = 'task-icon';
-                    icon.textContent = task.icon;
+                    icon.className = 'activity-icon';
+                    icon.textContent = activity.icon;
                     icon.style.cssText = 'font-size: 20px; flex-shrink: 0;';
                     titleContainer.appendChild(icon);
                 }
                 
                 const title = document.createElement('div');
-                title.className = 'task-title';
-                title.textContent = task.title;
+                title.className = 'activity-title';
+                title.textContent = activity.title;
                 title.style.cssText = 
-                    `font-size: 16px;color: ${task.completed ? '#666' : '#fff'};text-decoration: ${task.completed ? 'line-through' : 'none'};cursor: pointer;word-break: break-word;flex: 1;`;
+                    `font-size: 16px;color: ${activity.completed ? '#666' : '#fff'};text-decoration: ${activity.completed ? 'line-through' : 'none'};cursor: pointer;word-break: break-word;flex: 1;`;
                 
                 title.onclick = function() {
                     // Only allow editing in edit mode
                     if (window.EditMode && window.EditMode.isActive()) {
-                        self.startEditing(task);
+                        self.startEditing(activity);
                     }
                 };
                 
@@ -458,9 +490,9 @@
                 content.appendChild(titleContainer);
                 
                 // Show priority indicator if high priority
-                if (task.priority === 'high') {
+                if (activity.priority === 'high') {
                     const priority = document.createElement('div');
-                    priority.className = 'task-priority';
+                    priority.className = 'activity-priority';
                     priority.style.cssText = 
                         'font-size: 12px;' +
                         'color: #e53e3e;' +
@@ -471,20 +503,20 @@
                 }
             }
             
-            // Task actions container (delete, edit, reorder, timer)
+            // Activity actions container (delete, edit, reorder, timer)
             const actionsContainer = document.createElement('div');
-            actionsContainer.className = 'task-actions';
+            actionsContainer.className = 'activity-actions';
             actionsContainer.style.cssText = 'display: flex; align-items: center; gap: 8px;';
             
             // Add timer button (always visible, not just in edit mode)
-            if (window.TaskTimer) {
+            if (window.ActivityTimer) {
                 const timerButton = document.createElement('button');
-                timerButton.className = 'task-timer-button';
-                timerButton.setAttribute('data-task-id', task.id);
+                timerButton.className = 'activity-timer-button';
+                timerButton.setAttribute('data-activity-id', activity.id);
                 
-                const existingTimer = window.TaskTimer.getTimer(task.id);
+                const existingTimer = window.ActivityTimer.getTimer(activity.id);
                 if (existingTimer) {
-                    timerButton.innerHTML = `⏱️ ${window.TaskTimer.formatTime(existingTimer.remaining)}`;
+                    timerButton.innerHTML = `⏱️ ${window.ActivityTimer.formatTime(existingTimer.remaining)}`;
                     timerButton.classList.add('active');
                     if (existingTimer.remaining === 0) {
                         timerButton.classList.add('complete');
@@ -500,7 +532,7 @@
                 
                 timerButton.onclick = function(e) {
                     e.stopPropagation();
-                    window.TaskTimer.showTimerMenu(task.id, timerButton);
+                    window.ActivityTimer.showTimerMenu(activity.id, timerButton);
                 };
                 
                 actionsContainer.appendChild(timerButton);
@@ -527,44 +559,44 @@
                 
                 // Edit button
                 const editBtn = document.createElement('button');
-                editBtn.className = 'task-edit';
+                editBtn.className = 'activity-edit';
                 editBtn.setAttribute('aria-label', 'Edit activity');
                 editBtn.innerHTML = '✏️';
                 editBtn.style.cssText = 
                     `width: ${self.touchTargetSize}px;height: ${self.touchTargetSize}px;background: #444;border: none;border-radius: 50%;color: #fff;font-size: 20px;cursor: pointer;flex-shrink: 0;display: flex;align-items: center;justify-content: center;`;
                 
                 editBtn.onclick = function() {
-                    self.startEditing(task);
+                    self.startEditing(activity);
                 };
                 
                 actionsContainer.appendChild(editBtn);
                 
                 // Delete button
                 const deleteBtn = document.createElement('button');
-                deleteBtn.className = 'task-delete';
+                deleteBtn.className = 'activity-delete';
                 deleteBtn.setAttribute('aria-label', 'Delete activity');
                 deleteBtn.textContent = '×';
                 deleteBtn.style.cssText = 
                     `width: ${self.touchTargetSize}px;height: ${self.touchTargetSize}px;background: #444;border: none;border-radius: 50%;color: #fff;font-size: 24px;cursor: pointer;flex-shrink: 0;display: flex;align-items: center;justify-content: center;`;
                 
                 deleteBtn.onclick = function() {
-                    self.deleteTask(task);
+                    self.deleteActivity(activity);
                 };
                 
                 actionsContainer.appendChild(deleteBtn);
             }
             
-            taskEl.appendChild(checkbox);
-            taskEl.appendChild(content);
-            taskEl.appendChild(actionsContainer);
+            activityEl.appendChild(checkbox);
+            activityEl.appendChild(content);
+            activityEl.appendChild(actionsContainer);
             
-            return taskEl;
+            return activityEl;
         },
         
         /**
-         * Add new task (with undo support)
+         * Add new activity (with undo support)
          */
-        addTask: function() {
+        addActivity: function() {
             const self = this;
             
             // Get current user ID
@@ -580,7 +612,7 @@
                 selectedDay = window.DaySelector.getCurrentDay();
             }
             
-            const taskData = {
+            const activityData = {
                 title: '',
                 description: '',
                 icon: '✓',  // Default checkmark icon
@@ -603,57 +635,57 @@
             };
             
             // Use command pattern if available
-            if (window.UndoManager && window.TaskCommands) {
-                const command = window.TaskCommands.createAddCommand(taskData);
+            if (window.UndoManager && window.ActivityCommands) {
+                const command = window.ActivityCommands.createAddCommand(activityData);
                 window.UndoManager.execute(command).then(function(success) {
                     if (success && command.data.generatedId) {
-                        // Start editing the newly created task
-                        const newTask = self.getTaskById(command.data.generatedId);
-                        if (newTask) {
-                            self.startEditing(newTask);
+                        // Start editing the newly created activity
+                        const newActivity = self.getActivityById(command.data.generatedId);
+                        if (newActivity) {
+                            self.startEditing(newActivity);
                         }
                     }
                 });
             } else {
                 // Fallback to direct method
-                const generatedId = self.addTaskDirect(taskData);
-                const newTask = self.getTaskById(generatedId);
-                if (newTask) {
-                    self.startEditing(newTask);
+                const generatedId = self.addActivityDirect(activityData);
+                const newActivity = self.getActivityById(generatedId);
+                if (newActivity) {
+                    self.startEditing(newActivity);
                 }
             }
         },
         
         /**
-         * Add task directly (for undo system)
+         * Add activity directly (for undo system)
          */
-        addTaskDirect: function(taskData) {
+        addActivityDirect: function(activityData) {
             const self = this;
             
-            const newTask = Object.assign({
-                id: `task_${Date.now()}`,
+            const newActivity = Object.assign({
+                id: `activity_${Date.now()}`,
                 created_at: new Date().toISOString(),
                 updated_at: new Date().toISOString()
-            }, taskData);
+            }, activityData);
             
-            self.tasks.unshift(newTask);
+            self.activities.unshift(newActivity);
             self.render();
             
-            return newTask.id;
+            return newActivity.id;
         },
         
         /**
-         * Start editing a task
+         * Start editing an activity
          */
-        startEditing: function(task) {
+        startEditing: function(activity) {
             const self = this;
             
             // Use modal for full edit form
             if (window.Modal) {
-                self.showEditModal(task);
+                self.showEditModal(activity);
             } else {
                 // Fallback to inline editing
-                self.editingTaskId = task.id;
+                self.editingActivityId = activity.id;
                 self.render();
             }
         },
@@ -661,44 +693,44 @@
         /**
          * Show edit modal with full form
          */
-        showEditModal: function(task) {
+        showEditModal: function(activity) {
             const self = this;
             
             // Create form content
-            const formHtml = self.createEditForm(task);
+            const formHtml = self.createEditForm(activity);
             
             // Show modal
             const modal = window.Modal.show({
-                title: task.title ? 'Edit Activity' : 'New Activity',
+                title: activity.title ? 'Edit Activity' : 'New Activity',
                 content: formHtml,
-                className: 'task-edit-modal',
+                className: 'activity-edit-modal',
                 onClose: function() {
                     // Clean up auto-save draft
-                    self.clearDraft(task.id);
+                    self.clearDraft(activity.id);
                     // Clean up modal-specific event listeners
                     self.cleanupModalListeners();
                 }
             });
             
             // Setup form handlers
-            self.setupEditFormHandlers(modal, task);
+            self.setupEditFormHandlers(modal, activity);
             
             // Load draft if exists
-            self.loadDraft(task.id);
+            self.loadDraft(activity.id);
         },
         
         /**
          * Create edit form HTML
          */
-        createEditForm: function(task) {
+        createEditForm: function(activity) {
             const self = this;
             
-            let html = '<form id="task-edit-form" class="task-edit-form">';
+            let html = '<form id="activity-edit-form" class="activity-edit-form">';
             
             // Title field
             html += '<div class="form-field">';
-            html += '<label for="task-title">Title <span class="required">*</span></label>';
-            html += `<input type="text" id="task-title" name="title" value="${task.title || ''}" required>`;
+            html += '<label for="activity-title">Title <span class="required">*</span></label>';
+            html += `<input type="text" id="activity-title" name="title" value="${activity.title || ''}" required>`;
             html += '</div>';
             
             // Icon picker
@@ -707,7 +739,7 @@
             html += '<div class="icon-picker" id="icon-picker">';
             const icons = ['✓', '🌅', '☕', '🚿', '🪥', '🍳', '💊', '🏃', '📚', '🎮', '📱', '💻', '🛏️', '🍽️', '📝', '🎯', '⏰', '💤', '🧘'];
             for (let i = 0; i < icons.length; i++) {
-                const selected = icons[i] === task.icon ? ' selected' : '';
+                const selected = icons[i] === activity.icon ? ' selected' : '';
                 html += `<button type="button" class="icon-option${selected}" data-icon="${icons[i]}">${icons[i]}</button>`;
             }
             html += '</div>';
@@ -715,13 +747,13 @@
             
             // Category dropdown
             html += '<div class="form-field">';
-            html += '<label for="task-category">Category</label>';
-            html += '<select id="task-category" name="category">';
+            html += '<label for="activity-category">Category</label>';
+            html += '<select id="activity-category" name="category">';
             html += '<option value="">No category</option>';
             if (window.defaultActivities && window.defaultActivities.categories) {
                 for (let j = 0; j < window.defaultActivities.categories.length; j++) {
                     const cat = window.defaultActivities.categories[j];
-                    const catSelected = cat.id === task.category ? ' selected' : '';
+                    const catSelected = cat.id === activity.category ? ' selected' : '';
                     html += `<option value="${cat.id}"${catSelected}>${cat.name}</option>`;
                 }
             }
@@ -739,7 +771,7 @@
             ];
             for (let k = 0; k < priorities.length; k++) {
                 const p = priorities[k];
-                const pChecked = task.priority === p.value ? ' checked' : '';
+                const pChecked = activity.priority === p.value ? ' checked' : '';
                 html += '<label class="priority-option">';
                 html += `<input type="radio" name="priority" value="${p.value}"${pChecked}>`;
                 html += `<span style="color: ${p.color}">${p.label}</span>`;
@@ -753,13 +785,13 @@
             html += '<label>When</label>';
             html += '<div class="timeframe-options">';
             const timeframes = [
-                { value: TASK_TIMEFRAMES.TODAY, label: 'Today', icon: '☀️' },
-                { value: TASK_TIMEFRAMES.TOMORROW, label: 'Tomorrow', icon: '🌙' },
-                { value: TASK_TIMEFRAMES.SOMEDAY, label: 'Someday', icon: '📅' }
+                { value: ACTIVITY_TIMEFRAMES.TODAY, label: 'Today', icon: '☀️' },
+                { value: ACTIVITY_TIMEFRAMES.TOMORROW, label: 'Tomorrow', icon: '🌙' },
+                { value: ACTIVITY_TIMEFRAMES.SOMEDAY, label: 'Someday', icon: '📅' }
             ];
             for (let t = 0; t < timeframes.length; t++) {
                 const tf = timeframes[t];
-                const tfChecked = task.timeframe === tf.value ? ' checked' : '';
+                const tfChecked = activity.timeframe === tf.value ? ' checked' : '';
                 html += '<label class="timeframe-option">';
                 html += `<input type="radio" name="timeframe" value="${tf.value}"${tfChecked}>`;
                 html += `<span>${tf.icon} ${tf.label}</span>`;
@@ -770,8 +802,8 @@
             
             // Description
             html += '<div class="form-field">';
-            html += '<label for="task-description">Description</label>';
-            html += `<textarea id="task-description" name="description" rows="4">${task.description || ''}</textarea>`;
+            html += '<label for="activity-description">Description</label>';
+            html += `<textarea id="activity-description" name="description" rows="4">${activity.description || ''}</textarea>`;
             html += '</div>';
             
             // Attachments section
@@ -805,17 +837,17 @@
         /**
          * Setup edit form handlers
          */
-        setupEditFormHandlers: function(modal, task) {
+        setupEditFormHandlers: function(modal, activity) {
             const self = this;
             
             // Get form element
-            const form = modal.querySelector('#task-edit-form');
+            const form = modal.querySelector('#activity-edit-form');
             if (!form) return;
             
             // Auto-save on input
             const autoSaveInputs = form.querySelectorAll('input, textarea, select');
             const autoSaveHandler = function() {
-                self.saveDraft(task.id, form);
+                self.saveDraft(activity.id, form);
             };
             
             for (let i = 0; i < autoSaveInputs.length; i++) {
@@ -834,7 +866,7 @@
                 // Add selected to this one
                 this.classList.add('selected');
                 // Save draft
-                self.saveDraft(task.id, form);
+                self.saveDraft(activity.id, form);
             };
             
             for (let j = 0; j < iconButtons.length; j++) {
@@ -846,12 +878,12 @@
             const cancelBtn = form.querySelector('#cancel-btn');
             if (cancelBtn) {
                 const cancelHandler = function() {
-                    // Check if new task without title
-                    if (!task.title && !form.title.value.trim()) {
-                        // Remove the task
-                        const index = self.tasks.indexOf(task);
+                    // Check if new activity without title
+                    if (!activity.title && !form.title.value.trim()) {
+                        // Remove the activity
+                        const index = self.activities.indexOf(activity);
                         if (index > -1) {
-                            self.tasks.splice(index, 1);
+                            self.activities.splice(index, 1);
                         }
                     }
                     window.Modal.close();
@@ -863,7 +895,7 @@
             }
             
             // Initialize attachment UI
-            self.initializeAttachmentUI(modal, task);
+            self.initializeAttachmentUI(modal, activity);
             
             // Form submit
             const submitHandler = function(e) {
@@ -878,23 +910,23 @@
                     return;
                 }
                 
-                // Update task
-                task.title = formData.title.trim();
-                task.description = formData.description;
-                task.icon = formData.icon;
-                task.category = formData.category;
-                task.priority = formData.priority;
-                task.updated_at = new Date().toISOString();
+                // Update activity
+                activity.title = formData.title.trim();
+                activity.description = formData.description;
+                activity.icon = formData.icon;
+                activity.category = formData.category;
+                activity.priority = formData.priority;
+                activity.updated_at = new Date().toISOString();
                 
                 // Get timeframe if present
                 const timeframeInput = form.querySelector('input[name="timeframe"]:checked');
                 if (timeframeInput) {
-                    task.timeframe = timeframeInput.value;
+                    activity.timeframe = timeframeInput.value;
                 }
                 
                 // Save and close
-                self.saveTasks();
-                self.clearDraft(task.id);
+                self.saveActivities();
+                self.clearDraft(activity.id);
                 window.Modal.close();
                 self.render();
             };
@@ -927,9 +959,9 @@
         /**
          * Save draft to localStorage
          */
-        saveDraft: function(taskId, form) {
+        saveDraft: function(activityId, form) {
             const self = this;
-            const draftKey = `stackmap_task_draft_${taskId}`;
+            const draftKey = `stackmap_activity_draft_${activityId}`;
             
             try {
                 const draftData = self.getFormData(form);
@@ -942,15 +974,15 @@
         /**
          * Load draft from localStorage
          */
-        loadDraft: function(taskId) {
+        loadDraft: function(activityId) {
             const self = this;
-            const draftKey = `stackmap_task_draft_${taskId}`;
+            const draftKey = `stackmap_activity_draft_${activityId}`;
             
             try {
                 const draftData = localStorage.getItem(draftKey);
                 if (draftData) {
                     const draft = JSON.parse(draftData);
-                    const form = document.getElementById('task-edit-form');
+                    const form = document.getElementById('activity-edit-form');
                     if (form && draft) {
                         // Restore form values
                         if (draft.title) form.title.value = draft.title;
@@ -979,8 +1011,8 @@
         /**
          * Clear draft
          */
-        clearDraft: function(taskId) {
-            const draftKey = `stackmap_task_draft_${taskId}`;
+        clearDraft: function(activityId) {
+            const draftKey = `stackmap_activity_draft_${activityId}`;
             try {
                 localStorage.removeItem(draftKey);
             } catch (error) {
@@ -991,24 +1023,24 @@
         /**
          * Finish editing (inline mode)
          */
-        finishEditing: function(task, newTitle) {
+        finishEditing: function(activity, newTitle) {
             const self = this;
             
             newTitle = newTitle.trim();
             
             if (newTitle) {
-                task.title = newTitle;
-                task.updated_at = new Date().toISOString();
-                self.saveTasks();
-            } else if (!task.title) {
-                // Remove empty new task
-                const index = self.tasks.indexOf(task);
+                activity.title = newTitle;
+                activity.updated_at = new Date().toISOString();
+                self.saveActivities();
+            } else if (!activity.title) {
+                // Remove empty new activity
+                const index = self.activities.indexOf(activity);
                 if (index > -1) {
-                    self.tasks.splice(index, 1);
+                    self.activities.splice(index, 1);
                 }
             }
             
-            self.editingTaskId = null;
+            self.editingActivityId = null;
             self.render();
         },
         
@@ -1018,54 +1050,54 @@
         cancelEditing: function() {
             const self = this;
             
-            // Remove empty new tasks
-            self.tasks = self.tasks.filter(function(task) {
-                return task.title || task.id !== self.editingTaskId;
+            // Remove empty new activities
+            self.activities = self.activities.filter(function(activity) {
+                return activity.title || activity.id !== self.editingActivityId;
             });
             
-            self.editingTaskId = null;
+            self.editingActivityId = null;
             self.render();
         },
         
         /**
-         * Update task
+         * Update activity
          */
-        updateTask: function(task) {
+        updateActivity: function(activity) {
             const self = this;
-            const wasCompleted = task.completed_at ? true : false;
+            const wasCompleted = activity.completed_at ? true : false;
             
             // Use command pattern if available for completion toggling
-            if (window.UndoManager && window.TaskCommands) {
-                const command = window.TaskCommands.createCompleteCommand(task.id, wasCompleted);
+            if (window.UndoManager && window.ActivityCommands) {
+                const command = window.ActivityCommands.createCompleteCommand(activity.id, wasCompleted);
                 window.UndoManager.execute(command);
             } else {
                 // Fallback to direct method
-                const isFirstCompletion = !wasCompleted && task.completed;
+                const isFirstCompletion = !wasCompleted && activity.completed;
                 
-                task.updated_at = new Date().toISOString();
-                if (task.completed) {
-                    task.completed_at = new Date().toISOString();
+                activity.updated_at = new Date().toISOString();
+                if (activity.completed) {
+                    activity.completed_at = new Date().toISOString();
                 } else {
-                    task.completed_at = null;
+                    activity.completed_at = null;
                 }
                 
                 // Save first to ensure data persistence
-                self.saveTasks();
+                self.saveActivities();
                 
                 // Trigger celebration for first-time completion
                 if (isFirstCompletion && window.CelebrationSystem) {
-                    // Find the task element in DOM before re-render
-                    const taskElement = document.querySelector(`[data-task-id="${task.id}"]`);
-                    if (taskElement) {
-                        window.CelebrationSystem.celebrate(taskElement, true);
+                    // Find the activity element in DOM before re-render
+                    const activityElement = document.querySelector(`[data-activity-id="${activity.id}"]`);
+                    if (activityElement) {
+                        window.CelebrationSystem.celebrate(activityElement, true);
                     }
                 }
                 
                 // Check if virtual scrolling is active
                 if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
                     // Update virtual scrolling without full re-render
-                    const userTasks = self.getUserTasks();
-                    window.VirtualScrollAdapter.update(userTasks);
+                    const userActivities = self.getUserActivities();
+                    window.VirtualScrollAdapter.update(userActivities);
                 } else {
                     // Full re-render for traditional view
                     self.render();
@@ -1074,18 +1106,18 @@
         },
         
         /**
-         * Delete task
+         * Delete activity
          */
-        deleteTask: function(task) {
+        deleteActivity: function(activity) {
             const self = this;
             
             // Use command pattern if available
-            if (window.UndoManager && window.TaskCommands) {
-                const command = window.TaskCommands.createDeleteCommand(task.id);
+            if (window.UndoManager && window.ActivityCommands) {
+                const command = window.ActivityCommands.createDeleteCommand(activity.id);
                 window.UndoManager.execute(command);
             } else {
                 // Fallback to direct method
-                self.deleteTaskDirect(task.id);
+                self.deleteActivityDirect(activity.id);
             }
         },
         
@@ -1097,7 +1129,7 @@
             
             // Create and store global key handler
             self.globalKeyHandler = function(e) {
-                if (e.key === 'Escape' && self.editingTaskId) {
+                if (e.key === 'Escape' && self.editingActivityId) {
                     self.cancelEditing();
                 }
             };
@@ -1161,7 +1193,7 @@
             
             // Reset state
             self.isInitialized = false;
-            self.editingTaskId = null;
+            self.editingActivityId = null;
         },
         
         /**
@@ -1192,66 +1224,67 @@
         },
         
         /**
-         * Filter tasks by current user
+         * Filter activities by current user
          */
-        filterTasksByUser: function(tasks) {
+        filterActivitiesByUser: function(activities) {
             const self = this;
             
             if (!window.UserManager) {
-                return tasks;
+                return activities;
             }
             
             const currentUser = window.UserManager.getCurrentUser();
             if (!currentUser) {
-                return tasks;
+                return activities;
             }
             
-            return tasks.filter(function(task) {
+            return activities.filter(function(activity) {
                 // Ensure backward compatibility - add missing fields
-                self.ensureTaskFields(task);
-                // Show tasks that belong to current user or have no user_id (legacy tasks)
-                return task.user_id === currentUser.id || !task.user_id;
+                self.ensureActivityFields(activity);
+                // Show activities that belong to current user or have no user_id (legacy activities)
+                return activity.user_id === currentUser.id || !activity.user_id;
             });
         },
         
         /**
-         * Ensure task has all required fields (backward compatibility)
+         * Ensure activity has all required fields (backward compatibility)
          */
-        ensureTaskFields: function(task) {
+        ensureActivityFields: function(activity) {
             // Add missing fields with defaults
-            if (!task.icon) task.icon = '✓';
-            if (!task.description) task.description = '';
-            if (!task.category) task.category = '';
-            if (!task.priority) task.priority = 'medium';
-            if (!task.order) task.order = task.created_at ? new Date(task.created_at).getTime() : Date.now();
-            if (!task.tags) task.tags = [];
-            if (!task.due_date) task.due_date = null;
-            if (!task.reminder) task.reminder = null;
-            if (!task.attachments) task.attachments = [];
+            if (!activity.icon) activity.icon = '✓';
+            if (!activity.description) activity.description = '';
+            if (!activity.category) activity.category = '';
+            if (!activity.priority) activity.priority = 'medium';
+            if (!activity.order) activity.order = activity.created_at ? new Date(activity.created_at).getTime() : Date.now();
+            if (!activity.tags) activity.tags = [];
+            if (!activity.due_date) activity.due_date = null;
+            if (!activity.reminder) activity.reminder = null;
+            if (!activity.attachments) activity.attachments = [];
+            if (activity.pinned === undefined) activity.pinned = false;
             
-            return task;
+            return activity;
         },
         
         /**
-         * Get tasks for current user
+         * Get activities for current user
          */
-        getUserTasks: function() {
+        getUserActivities: function() {
             const self = this;
-            let userTasks = self.filterTasksByUser(self.tasks);
+            let userActivities = self.filterActivitiesByUser(self.activities);
             
             // Filter by selected day if DaySelector is available
             if (window.DaySelector && window.DaySelector.isReady()) {
                 const selectedDay = window.DaySelector.getCurrentDay();
-                userTasks = userTasks.filter(function(task) {
-                    // Show tasks for the selected day
+                userActivities = userActivities.filter(function(activity) {
+                    // Show activities for the selected day
                     // Check both 'day' and 'timeframe' fields for compatibility
-                    const taskDay = task.day || task.timeframe || 'today';
-                    return taskDay === selectedDay;
+                    const activityDay = activity.day || activity.timeframe || 'today';
+                    return activityDay === selectedDay;
                 });
             }
             
             // Sort by order field (higher values first)
-            userTasks.sort(function(a, b) {
+            userActivities.sort(function(a, b) {
                 // If order fields exist, use them
                 if (a.order !== undefined && b.order !== undefined) {
                     return b.order - a.order;
@@ -1262,17 +1295,17 @@
                 return bTime - aTime;
             });
             
-            return userTasks;
+            return userActivities;
         },
         
         /**
-         * Get task by ID
+         * Get activity by ID
          */
-        getTaskById: function(taskId) {
+        getActivityById: function(activityId) {
             const self = this;
-            for (let i = 0; i < self.tasks.length; i++) {
-                if (self.tasks[i].id === taskId) {
-                    return self.tasks[i];
+            for (let i = 0; i < self.activities.length; i++) {
+                if (self.activities[i].id === activityId) {
+                    return self.activities[i];
                 }
             }
             return null;
@@ -1281,7 +1314,7 @@
         /**
          * Initialize attachment UI in the edit modal
          */
-        initializeAttachmentUI: function(modal, task) {
+        initializeAttachmentUI: function(modal, activity) {
             const self = this;
             
             // Initialize attachment manager if not already done
@@ -1297,16 +1330,16 @@
             if (!attachmentList || !window.AttachmentManager) return;
             
             // Load existing attachments
-            self.loadAttachments(task, attachmentList);
+            self.loadAttachments(activity, attachmentList);
             
             // Update hint
-            self.updateAttachmentHint(task, attachmentHint);
+            self.updateAttachmentHint(activity, attachmentHint);
             
             // Photo button handler
             if (photoBtn) {
                 const photoHandler = function(e) {
                     e.preventDefault();
-                    self.handleAddPhoto(task, attachmentList, attachmentHint);
+                    self.handleAddPhoto(activity, attachmentList, attachmentHint);
                 };
                 photoBtn.addEventListener('click', photoHandler);
                 self.trackEventListener(photoBtn, 'click', photoHandler);
@@ -1316,7 +1349,7 @@
             if (voiceBtn) {
                 const voiceHandler = function(e) {
                     e.preventDefault();
-                    self.handleAddVoice(task, attachmentList, attachmentHint, voiceBtn);
+                    self.handleAddVoice(activity, attachmentList, attachmentHint, voiceBtn);
                 };
                 voiceBtn.addEventListener('click', voiceHandler);
                 self.trackEventListener(voiceBtn, 'click', voiceHandler);
@@ -1326,7 +1359,7 @@
         /**
          * Load and display existing attachments
          */
-        loadAttachments: function(task, container) {
+        loadAttachments: function(activity, container) {
             const self = this;
             
             if (!window.AttachmentManager) return;
@@ -1335,9 +1368,9 @@
             container.innerHTML = '';
             
             // Get attachments
-            window.AttachmentManager.getAttachments(task.id, function(attachments) {
+            window.AttachmentManager.getAttachments(activity.id, function(attachments) {
                 attachments.forEach(function(attachment) {
-                    const el = self.createAttachmentElement(attachment, task);
+                    const el = self.createAttachmentElement(attachment, activity);
                     container.appendChild(el);
                 });
             });
@@ -1346,7 +1379,7 @@
         /**
          * Create attachment element
          */
-        createAttachmentElement: function(attachment, task) {
+        createAttachmentElement: function(attachment, activity) {
             const self = this;
             const div = document.createElement('div');
             div.className = `attachment-item ${attachment.type}`;
@@ -1375,7 +1408,7 @@
             deleteBtn.textContent = '×';
             deleteBtn.onclick = function(e) {
                 e.preventDefault();
-                self.deleteAttachment(attachment, task, div);
+                self.deleteAttachment(attachment, activity, div);
             };
             div.appendChild(deleteBtn);
             
@@ -1385,10 +1418,10 @@
         /**
          * Update attachment hint
          */
-        updateAttachmentHint: function(task, hintElement) {
+        updateAttachmentHint: function(activity, hintElement) {
             if (!window.AttachmentManager || !hintElement) return;
             
-            window.AttachmentManager.getAttachments(task.id, function(attachments) {
+            window.AttachmentManager.getAttachments(activity.id, function(attachments) {
                 const hint = window.AttachmentManager.getAttachmentHint(attachments.length);
                 hintElement.textContent = hint;
             });
@@ -1397,7 +1430,7 @@
         /**
          * Handle add photo
          */
-        handleAddPhoto: function(task, listContainer, hintElement) {
+        handleAddPhoto: function(activity, listContainer, hintElement) {
             const self = this;
             
             // Create file input
@@ -1417,7 +1450,7 @@
                 }
                 
                 // Add photo
-                window.AttachmentManager.addAttachment(task.id, 'photo', {
+                window.AttachmentManager.addAttachment(activity.id, 'photo', {
                     uri: URL.createObjectURL(file),
                     size: file.size,
                     mimeType: file.type,
@@ -1425,13 +1458,13 @@
                 }, function(result) {
                     if (result.success) {
                         // Reload attachments
-                        self.loadAttachments(task, listContainer);
-                        self.updateAttachmentHint(task, hintElement);
+                        self.loadAttachments(activity, listContainer);
+                        self.updateAttachmentHint(activity, hintElement);
                         
-                        // Update task
-                        if (!task.attachments) task.attachments = [];
-                        task.attachments.push(result.photo.id);
-                        self.saveTasks();
+                        // Update activity
+                        if (!activity.attachments) activity.attachments = [];
+                        activity.attachments.push(result.photo.id);
+                        self.saveActivities();
                     } else {
                         alert(result.error || 'Failed to add photo');
                     }
@@ -1444,7 +1477,7 @@
         /**
          * Handle add voice memo
          */
-        handleAddVoice: function(task, listContainer, hintElement, button) {
+        handleAddVoice: function(activity, listContainer, hintElement, button) {
             const self = this;
             
             if (!window.VoiceAttachmentHandler || !window.VoiceAttachmentHandler.isInitialized) {
@@ -1457,7 +1490,7 @@
             container.className = 'voice-recording-modal-content';
             
             // Create recording UI
-            window.VoiceAttachmentHandler.createRecordingUI(container, task.id);
+            window.VoiceAttachmentHandler.createRecordingUI(container, activity.id);
             
             // Show in modal if available
             if (window.Modal) {
@@ -1473,15 +1506,15 @@
                 
                 // Listen for attachment added
                 const attachmentHandler = function(e) {
-                    if (e.detail.taskId === task.id && e.detail.type === 'voice') {
+                    if (e.detail.activityId === activity.id && e.detail.type === 'voice') {
                         // Reload attachments
-                        self.loadAttachments(task, listContainer);
-                        self.updateAttachmentHint(task, hintElement);
+                        self.loadAttachments(activity, listContainer);
+                        self.updateAttachmentHint(activity, hintElement);
                         
-                        // Update task
-                        if (!task.attachments) task.attachments = [];
-                        task.attachments.push(e.detail.attachment.id);
-                        self.saveTasks();
+                        // Update activity
+                        if (!activity.attachments) activity.attachments = [];
+                        activity.attachments.push(e.detail.attachment.id);
+                        self.saveActivities();
                         
                         // Close modal
                         window.Modal.close();
@@ -1500,7 +1533,7 @@
         /**
          * Delete attachment
          */
-        deleteAttachment: function(attachment, task, element) {
+        deleteAttachment: function(attachment, activity, element) {
             const self = this;
             
             if (!confirm(`Delete this ${attachment.type}?`)) return;
@@ -1510,18 +1543,18 @@
                     // Remove from DOM
                     element.remove();
                     
-                    // Update task
-                    if (task.attachments) {
-                        const index = task.attachments.indexOf(attachment.id);
+                    // Update activity
+                    if (activity.attachments) {
+                        const index = activity.attachments.indexOf(attachment.id);
                         if (index > -1) {
-                            task.attachments.splice(index, 1);
-                            self.saveTasks();
+                            activity.attachments.splice(index, 1);
+                            self.saveActivities();
                         }
                     }
                     
                     // Update hint
                     const hintElement = document.querySelector('#attachment-hint');
-                    self.updateAttachmentHint(task, hintElement);
+                    self.updateAttachmentHint(activity, hintElement);
                 }
             });
         },
@@ -1688,7 +1721,7 @@
             
             if (index > -1) {
                 self.tasks.splice(index, 1);
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1708,7 +1741,7 @@
                     task.completed_at = null;
                 }
                 
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1722,26 +1755,26 @@
                 task.text = newText;
                 task.title = newText; // Some tasks use title instead of text
                 task.updated_at = new Date().toISOString();
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
         
-        // Delete task permanently without command pattern
-        deleteTaskDirect: function(taskId) {
+        // Delete activity permanently without command pattern
+        deleteActivityDirect: function(activityId) {
             const self = this;
-            const index = self.tasks.findIndex(function(task) {
-                return task.id === taskId;
+            const index = self.activities.findIndex(function(activity) {
+                return activity.id === activityId;
             });
             
             if (index > -1) {
                 // Clean up any active timer
-                if (window.TaskTimer && window.TaskTimer.cancelTimer) {
-                    window.TaskTimer.cancelTimer(taskId);
+                if (window.ActivityTimer && window.ActivityTimer.cancelTimer) {
+                    window.ActivityTimer.cancelTimer(activityId);
                 }
                 
-                self.tasks.splice(index, 1);
-                self.saveTasks();
+                self.activities.splice(index, 1);
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1768,7 +1801,7 @@
                 self.tasks.splice(originalIndex, 0, restoredTask);
             }
             
-            self.saveTasks();
+            self.saveActivities();
             self.render();
         },
         
@@ -1787,7 +1820,7 @@
                     task.completed_at = null;
                 }
                 
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1801,7 +1834,7 @@
                 task.completed = true;
                 task.completed_at = new Date().toISOString();
                 task.updated_at = new Date().toISOString();
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1821,7 +1854,7 @@
                     task.completed_at = null;
                 }
                 
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1837,7 +1870,7 @@
                 const task = self.tasks.splice(currentIndex, 1)[0];
                 self.tasks.splice(newIndex, 0, task);
                 task.updated_at = new Date().toISOString();
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1850,7 +1883,7 @@
             if (task) {
                 task[field] = value;
                 task.updated_at = new Date().toISOString();
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
             }
         },
@@ -1873,7 +1906,7 @@
                 
                 task.attachments.push(attachment);
                 task.updated_at = new Date().toISOString();
-                self.saveTasks();
+                self.saveActivities();
                 self.render();
                 
                 return attachmentId;
@@ -1893,7 +1926,7 @@
                 if (index > -1) {
                     task.attachments.splice(index, 1);
                     task.updated_at = new Date().toISOString();
-                    self.saveTasks();
+                    self.saveActivities();
                     self.render();
                 }
             }
@@ -1945,7 +1978,21 @@
             document.dispatchEvent(new CustomEvent('displayModeChanged', {
                 detail: { mode: newMode }
             }));
-        }
+        },
+        
+        // BACKWARD COMPATIBILITY ALIASES
+        // These ensure old code continues to work during transition
+        addTask: function() { return this.addActivity.apply(this, arguments); },
+        createTaskElement: function() { return this.createActivityElement.apply(this, arguments); },
+        addTaskDirect: function() { return this.addActivityDirect.apply(this, arguments); },
+        getUserTasks: function() { return this.getUserActivities.apply(this, arguments); },
+        filterTasksByUser: function() { return this.filterActivitiesByUser.apply(this, arguments); },
+        ensureTaskFields: function() { return this.ensureActivityFields.apply(this, arguments); },
+        getTaskById: function() { return this.getActivityById.apply(this, arguments); },
+        updateTask: function() { return this.updateActivity.apply(this, arguments); },
+        deleteTask: function() { return this.deleteActivity.apply(this, arguments); },
+        deleteTaskDirect: function() { return this.deleteActivityDirect.apply(this, arguments); },
+        saveTasks: function() { return this.saveActivities.apply(this, arguments); }
     };
     
     // Export to global scope

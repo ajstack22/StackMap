@@ -24,11 +24,19 @@
         init: function() {
             var self = this;
             
-            // Check dependencies
+            // Check dependencies with max retries to prevent infinite loops
             if (!self.checkDependencies()) {
-                // Retry in 100ms
-                setTimeout(function() { self.init(); }, 100);
-                return;
+                if (!self.initRetryCount) self.initRetryCount = 0;
+                self.initRetryCount++;
+                
+                if (self.initRetryCount < 50) { // Max 5 seconds of retries
+                    setTimeout(function() { self.init(); }, 100);
+                    return;
+                } else {
+                    console.error('UserDayModal: Failed to initialize after max retries - UserManager dependencies not available');
+                    self.initWithoutUserManager();
+                    return;
+                }
             }
             
             // Get modal elements
@@ -49,11 +57,39 @@
         },
         
         /**
+         * Initialize without UserManager (fallback mode)
+         */
+        initWithoutUserManager: function() {
+            var self = this;
+            
+            console.warn('UserDayModal: Initializing in fallback mode without UserManager');
+            
+            // Get modal elements
+            self.modal = document.getElementById('user-day-modal');
+            if (!self.modal) {
+                console.error('UserDayModal: Modal element not found');
+                return;
+            }
+            
+            self.backdrop = self.modal.querySelector('.user-day-modal-backdrop');
+            self.userGrid = document.getElementById('user-grid');
+            self.userSection = document.getElementById('user-section');
+            
+            // Setup basic event listeners (close functionality only)
+            self.setupBasicEventListeners();
+            
+            console.log('UserDayModal initialized in fallback mode');
+        },
+        
+        /**
          * Check if required dependencies are available
          */
         checkDependencies: function() {
             if (!window.UserManager) {
-                console.warn('UserDayModal: Waiting for UserManager');
+                if (!this.lastWarningTime || Date.now() - this.lastWarningTime > 1000) {
+                    console.warn('UserDayModal: Waiting for UserManager');
+                    this.lastWarningTime = Date.now();
+                }
                 return false;
             }
             
@@ -61,7 +97,10 @@
             if (typeof window.UserManager.getAllUsers !== 'function' ||
                 typeof window.UserManager.getCurrentUser !== 'function' ||
                 typeof window.UserManager.switchUser !== 'function') {
-                console.error('UserDayModal: UserManager missing required methods');
+                if (!this.lastErrorTime || Date.now() - this.lastErrorTime > 1000) {
+                    console.error('UserDayModal: UserManager missing required methods');
+                    this.lastErrorTime = Date.now();
+                }
                 return false;
             }
             
@@ -399,6 +438,30 @@
             
             // Touch gesture support for swipe down to close
             self.setupSwipeGestures();
+        },
+        
+        /**
+         * Setup basic event listeners (fallback mode)
+         */
+        setupBasicEventListeners: function() {
+            var self = this;
+            
+            // Close button and backdrop clicks
+            var closeElements = self.modal.querySelectorAll('[data-action="close"]');
+            for (var i = 0; i < closeElements.length; i++) {
+                closeElements[i].addEventListener('click', function(e) {
+                    e.preventDefault();
+                    self.close();
+                });
+            }
+            
+            // Escape key handler
+            document.addEventListener('keydown', function(e) {
+                if (self.isOpen && (e.key === 'Escape' || e.keyCode === 27)) {
+                    e.preventDefault();
+                    self.close();
+                }
+            });
         },
         
         /**

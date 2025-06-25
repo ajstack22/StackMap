@@ -292,9 +292,9 @@
             try {
                 // Transform main activities data
                 const activitiesData = localStorage.getItem('stackmap_activities');
+                let transformCount = 0;
                 if (activitiesData) {
                     const activities = JSON.parse(activitiesData);
-                    let transformCount = 0;
                     
                     // Transform each activity object
                     activities.forEach(function(item) {
