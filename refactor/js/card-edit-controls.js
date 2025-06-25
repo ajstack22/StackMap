@@ -360,6 +360,166 @@
                     }, 100);
                 }
             });
+            
+            // Setup keyboard reordering (Ctrl+Up/Down)
+            self.setupKeyboardReordering();
+        },
+        
+        /**
+         * Setup keyboard reordering alternative
+         */
+        setupKeyboardReordering: function() {
+            const self = this;
+            
+            document.addEventListener('keydown', function(e) {
+                // Only in edit mode
+                if (!self.editModeActive) return;
+                
+                // Ctrl+Up or Ctrl+Down on focused card
+                if ((e.ctrlKey || e.metaKey) && (e.key === 'ArrowUp' || e.key === 'ArrowDown')) {
+                    const focusedCard = document.activeElement.closest('.activity-card, .task-card');
+                    if (focusedCard && !focusedCard.classList.contains('add-activity-card')) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        const direction = e.key === 'ArrowUp' ? -1 : 1;
+                        self.keyboardReorderCard(focusedCard, direction);
+                    }
+                }
+                
+                // Tab navigation for cards in edit mode
+                if (e.key === 'Tab' && !e.ctrlKey && !e.metaKey) {
+                    const cards = document.querySelectorAll('.activity-card, .task-card');
+                    const focusedCard = document.activeElement.closest('.activity-card, .task-card');
+                    
+                    if (focusedCard && cards.length > 1) {
+                        const currentIndex = Array.from(cards).indexOf(focusedCard);
+                        if (currentIndex !== -1) {
+                            const nextIndex = e.shiftKey ? 
+                                (currentIndex - 1 + cards.length) % cards.length :
+                                (currentIndex + 1) % cards.length;
+                            
+                            const nextCard = cards[nextIndex];
+                            if (nextCard) {
+                                e.preventDefault();
+                                nextCard.focus();
+                                nextCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }
+                    }
+                }
+            });
+        },
+        
+        /**
+         * Keyboard reorder a card
+         */
+        keyboardReorderCard: function(card, direction) {
+            const self = this;
+            
+            // Get activity ID
+            const activityId = card.getAttribute('data-activity-id') || card.getAttribute('data-task-id');
+            if (!activityId) return;
+            
+            // Get all cards
+            const allCards = Array.from(document.querySelectorAll('.activity-card, .task-card'))
+                .filter(c => !c.classList.contains('add-activity-card') && !c.classList.contains('add-task-card'));
+            
+            const currentIndex = allCards.indexOf(card);
+            const newIndex = currentIndex + direction;
+            
+            // Check bounds
+            if (newIndex < 0 || newIndex >= allCards.length) {
+                // Announce boundary
+                if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
+                    const boundary = direction < 0 ? 'top' : 'bottom';
+                    window.StackMapKeyboardNav.announce(`Already at ${boundary} of list`);
+                }
+                return;
+            }
+            
+            // Get activity data
+            let activity = null;
+            if (window.ActivityDisplay && window.ActivityDisplay.getActivityById) {
+                activity = window.ActivityDisplay.getActivityById(activityId);
+            } else if (window.TaskDisplay && window.TaskDisplay.getTaskById) {
+                activity = window.TaskDisplay.getTaskById(activityId);
+            }
+            
+            if (!activity) return;
+            
+            // Perform reorder through drag-drop system if available
+            if (window.DragDropReorder && window.DragDropReorder.performReorder) {
+                window.DragDropReorder.performReorder(currentIndex, newIndex);
+            } else {
+                // Fallback: manual reorder
+                self.manualReorder(activity, currentIndex, newIndex);
+            }
+            
+            // Visual feedback
+            card.style.transform = 'scale(1.05)';
+            card.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.3)';
+            
+            setTimeout(function() {
+                card.style.transform = '';
+                card.style.boxShadow = '';
+                
+                // Refocus the card after reorder
+                setTimeout(function() {
+                    const newCard = document.querySelector(`[data-activity-id="${activityId}"], [data-task-id="${activityId}"]`);
+                    if (newCard) {
+                        newCard.focus();
+                        newCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }, 200);
+            
+            // Announce action
+            if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
+                const directionText = direction < 0 ? 'up' : 'down';
+                window.StackMapKeyboardNav.announce(`Moved ${activity.title} ${directionText}`);
+            }
+            
+            console.log(`Keyboard reordered: ${activity.title} from ${currentIndex} to ${newIndex}`);
+        },
+        
+        /**
+         * Manual reorder fallback
+         */
+        manualReorder: function(activity, fromIndex, toIndex) {
+            // Get all activities
+            const display = window.ActivityDisplay || window.TaskDisplay;
+            const activities = display.getActivities ? display.getActivities() : display.getTasks();
+            
+            // Filter to current day/timeframe
+            const currentActivities = activities.filter(a => 
+                (a.timeframe || a.day) === (activity.timeframe || activity.day));
+            
+            // Remove and reinsert
+            const activityToMove = currentActivities.splice(fromIndex, 1)[0];
+            currentActivities.splice(toIndex, 0, activityToMove);
+            
+            // Update order field
+            currentActivities.forEach((act, index) => {
+                act.order = index;
+                act.updated_at = new Date().toISOString();
+            });
+            
+            // Save and re-render
+            if (display.setActivities) {
+                display.setActivities(activities);
+            } else if (display.setTasks) {
+                display.setTasks(activities);
+            }
+            
+            if (display.render) {
+                display.render();
+            }
+            
+            // Dispatch change event
+            document.dispatchEvent(new CustomEvent('activitiesChanged', {
+                detail: { source: 'keyboard-reorder' }
+            }));
         },
         
         /**

@@ -7,7 +7,7 @@
     'use strict';
     
     // Schema version for migrations
-    const SCHEMA_VERSION = 4; // Updated for activity types system
+    const SCHEMA_VERSION = 5; // Updated for template library system
     
     // Data structure definitions with validation
     const DataSchema = {
@@ -194,6 +194,124 @@
             
             validate: function(data) {
                 return DataSchema.activity.validateFields(data, this.fields);
+            }
+        },
+        
+        /**
+         * Template structure for activity library system
+         */
+        template: {
+            fields: {
+                id: { type: 'string', required: true },
+                title: { type: 'string', required: true, maxLength: 200 },
+                description: { type: 'string', required: false, maxLength: 1000 },
+                category: { type: 'string', required: true, maxLength: 50 },
+                icon: { type: 'string', default: '📝', maxLength: 10 },
+                timeEstimate: { type: 'number', min: 0, max: 1440, nullable: true },
+                
+                // Activity type integration
+                type: {
+                    type: 'object',
+                    required: false,
+                    fields: {
+                        category: { type: 'enum', values: ['recurring', 'frequent', 'single-use'], default: 'frequent' },
+                        confidence: { type: 'number', min: 0, max: 1, default: 1.0 }
+                    }
+                },
+                
+                // Template configuration
+                template: {
+                    type: 'object',
+                    required: true,
+                    fields: {
+                        title: { type: 'string', required: true, maxLength: 500 },
+                        description: { type: 'string', required: false, maxLength: 5000 },
+                        placeholders: { type: 'array', itemType: 'string', maxItems: 10 },
+                        defaultValues: { type: 'object', required: false }
+                    }
+                },
+                
+                // Metadata and tracking
+                metadata: {
+                    type: 'object',
+                    required: true,
+                    fields: {
+                        created: { type: 'timestamp', required: true, autoSet: true },
+                        modified: { type: 'timestamp', required: true, autoUpdate: true },
+                        usageCount: { type: 'number', default: 0, min: 0 },
+                        lastUsed: { type: 'timestamp', nullable: true },
+                        createdBy: { type: 'enum', values: ['user', 'system'], default: 'user' },
+                        version: { type: 'number', default: 1, min: 1 },
+                        tags: { type: 'array', itemType: 'string', maxItems: 10 }
+                    }
+                },
+                
+                // Future-ready sharing fields
+                sharing: {
+                    type: 'object',
+                    required: false,
+                    fields: {
+                        isPublic: { type: 'boolean', default: false },
+                        sharedWith: { type: 'array', itemType: 'string', maxItems: 50 },
+                        permissions: { type: 'enum', values: ['read', 'edit'], default: 'read' }
+                    }
+                }
+            },
+            
+            validate: function(data) {
+                return DataSchema.activity.validateFields(data, this.fields);
+            },
+            
+            /**
+             * Create a new template from template data
+             */
+            create: function(templateData) {
+                const template = {
+                    id: templateData.id || this.generateTemplateId(),
+                    title: templateData.title,
+                    description: templateData.description || '',
+                    category: templateData.category || 'general',
+                    icon: templateData.icon || '📝',
+                    timeEstimate: templateData.timeEstimate || null,
+                    type: {
+                        category: (templateData.type && templateData.type.category) || 'frequent',
+                        confidence: (templateData.type && templateData.type.confidence) || 1.0
+                    },
+                    template: {
+                        title: templateData.template.title,
+                        description: templateData.template.description || '',
+                        placeholders: templateData.template.placeholders || [],
+                        defaultValues: templateData.template.defaultValues || {}
+                    },
+                    metadata: {
+                        created: new Date().toISOString(),
+                        modified: new Date().toISOString(),
+                        usageCount: 0,
+                        lastUsed: null,
+                        createdBy: templateData.metadata ? templateData.metadata.createdBy : 'user',
+                        version: 1,
+                        tags: templateData.metadata ? templateData.metadata.tags : []
+                    },
+                    sharing: {
+                        isPublic: false,
+                        sharedWith: [],
+                        permissions: 'read'
+                    }
+                };
+                
+                const errors = this.validate(template);
+                if (errors.length > 0) {
+                    throw new Error(`Template validation failed: ${errors.join(', ')}`);
+                }
+                
+                return template;
+            },
+            
+            /**
+             * Generate unique template ID
+             */
+            generateTemplateId: function() {
+                return `template_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             }
         },
         

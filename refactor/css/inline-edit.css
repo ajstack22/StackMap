@@ -299,176 +299,136 @@
 }
 
 .time-input {
-    width: 80px !important;
-    text-align: center !important;
-    background: rgba(255, 255, 255, 0.9) !important;
-    border: 2px solid #3b82f6 !important;
-    border-radius: 4px !important;
-    padding: 4px !important;
+    width: 60px !important;
+    padding: 2px 4px !important;
+    border: 1px solid #3b82f6 !important;
+    border-radius: 3px !important;
     font-size: 14px !important;
-    margin: 0 !important;
+    text-align: center !important;
 }
 
-.time-input:focus {
-    outline: none !important;
-    border-color: #1d4ed8 !important;
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+.time-unit {
+    font-size: 12px !important;
+    color: #6b7280 !important;
 }
 
-/* Remove spinner arrows from number input */
-.time-input::-webkit-outer-spin-button,
-.time-input::-webkit-inner-spin-button {
-    -webkit-appearance: none !important;
-    margin: 0 !important;
-}
-
-.time-input[type=number] {
-    -moz-appearance: textfield !important;
-}
-
-/* Inline edit notification */
+/* Notification styling */
 .inline-edit-notification {
     position: fixed;
-    top: 80px;
+    bottom: 20px;
     right: 20px;
     background: #10b981;
     color: white;
-    padding: 12px 16px;
+    padding: 12px 20px;
     border-radius: 6px;
     font-size: 14px;
     font-weight: 500;
-    z-index: 1000;
-    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+    z-index: 10000;
+    animation: fadeInUp 0.3s ease;
 }
 
-/* Animation keyframes */
-@keyframes slideInRight {
+.inline-edit-notification.success {
+    background: #10b981;
+}
+
+.inline-edit-notification.error {
+    background: #ef4444;
+}
+
+@keyframes fadeInUp {
     from {
-        transform: translateX(100%);
         opacity: 0;
+        transform: translateY(10px);
     }
     to {
-        transform: translateX(0);
         opacity: 1;
+        transform: translateY(0);
     }
 }
 
-@keyframes slideOutRight {
-    from {
-        transform: translateX(0);
-        opacity: 1;
+/* Card edit controls styling */
+.card-edit-controls {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    gap: 4px;
+    z-index: 100;
+}
+
+.edit-mode-active .card-edit-controls {
+    display: flex !important;
+}
+
+.card-action-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn:hover {
+    background: #ffffff;
+    border-color: #3b82f6;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-action-btn:active {
+    transform: scale(0.95);
+}
+
+/* Mobile enhancements */
+@media (max-width: 768px) {
+    .card-action-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
     }
-    to {
-        transform: translateX(100%);
-        opacity: 0;
-    }
 }
 
-/* Safe mode overrides */
-.safe-mode .inline-edit-input,
-.safe-mode .time-input {
-    transition: none !important;
-    animation: none !important;
+/* Safe mode enhancements */
+.safe-mode .card-action-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 20px;
+    border-width: 2px;
 }
 
-.safe-mode .inline-editing {
-    transition: none !important;
-    animation: none !important;
-}
-
-.safe-mode .inline-edit-notification {
-    animation: none !important;
-}
-
-/* Accessibility improvements */
+/* Accessibility */
 @media (prefers-reduced-motion: reduce) {
-    .inline-edit-input,
-    .time-input,
-    .inline-editing,
+    .edit-mode-active .activity-card,
+    .edit-mode-active .task-card,
+    .card-action-btn,
     .inline-edit-notification {
         transition: none !important;
         animation: none !important;
     }
 }
 
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-    .inline-edit-input {
-        font-size: 16px !important; /* Prevent zoom on iOS */
-        padding: 8px !important;
-        border-width: 3px !important; /* Easier to see on small screens */
-    }
-    
-    .time-input {
-        width: 100px !important;
-        font-size: 16px !important;
-        padding: 6px !important;
-    }
-    
-    .inline-edit-notification {
-        top: 60px;
-        right: 10px;
-        left: 10px;
-        text-align: center;
-    }
-}
-
-/* TV mode adjustments */
-.platform-tv .inline-edit-input {
-    font-size: 18px !important;
-    padding: 12px 16px !important;
-    border-width: 3px !important;
-}
-
-.platform-tv .time-input {
-    font-size: 18px !important;
-    width: 120px !important;
-    padding: 8px !important;
-}
-
-.platform-tv .inline-edit-notification {
-    font-size: 18px !important;
-    padding: 16px 24px !important;
-}
-
-/* High contrast mode support */
+/* High contrast mode */
 @media (prefers-contrast: high) {
-    .inline-edit-input,
-    .time-input {
-        border-width: 3px !important;
-        border-color: #000000 !important;
+    .edit-mode-active .activity-card,
+    .edit-mode-active .task-card {
+        border: 3px solid #000000;
+        background: #ffffff;
     }
     
-    .inline-edit-input:focus,
-    .time-input:focus {
-        border-color: #000000 !important;
-        box-shadow: 0 0 0 3px #ffff00 !important;
+    .inline-edit-input {
+        border: 3px solid #000000 !important;
+        background: #ffffff !important;
     }
     
-    .inline-editing {
-        border-color: #000000 !important;
-        background: rgba(255, 255, 0, 0.1) !important;
-    }
-}
-
-/* Dark theme support */
-@media (prefers-color-scheme: dark) {
-    .inline-edit-input,
-    .time-input {
-        background: rgba(0, 0, 0, 0.8) !important;
-        color: #ffffff !important;
-        border-color: #60a5fa !important;
-    }
-    
-    .inline-edit-input:focus,
-    .time-input:focus {
-        border-color: #93c5fd !important;
-        box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.3) !important;
-    }
-    
-    .inline-editing {
-        border-color: #60a5fa !important;
-        background: rgba(96, 165, 250, 0.1) !important;
-        box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.2) !important;
+    .card-action-btn {
+        border: 2px solid #000000;
+        background: #ffffff;
     }
 }

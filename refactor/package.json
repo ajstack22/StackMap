@@ -10,17 +10,27 @@
     "android": "npm run sync && npx cap open android",
     "serve": "npx serve www"
   },
-  "keywords": ["adhd", "task-management", "mobile", "capacitor"],
+  "keywords": [
+    "adhd",
+    "task-management",
+    "mobile",
+    "capacitor"
+  ],
   "author": "StackMap Team",
   "license": "MIT",
   "dependencies": {
-    "@capacitor/core": "^5.5.1",
-    "@capacitor/ios": "^5.5.1",
-    "@capacitor/android": "^5.5.1",
-    "@capacitor-community/sqlite": "^5.4.2"
+    "@capacitor-community/sqlite": "^7.0.0",
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/app": "^7.0.1",
+    "@capacitor/core": "^7.4.0",
+    "@capacitor/filesystem": "^7.1.1",
+    "@capacitor/ios": "^7.4.0",
+    "@capacitor/splash-screen": "^7.0.1",
+    "@capacitor/status-bar": "^7.0.1",
+    "chokidar": "^4.0.3"
   },
   "devDependencies": {
-    "@capacitor/cli": "^5.5.1"
+    "@capacitor/cli": "^7.4.0"
   },
   "browserslist": [
     "Android >= 6",

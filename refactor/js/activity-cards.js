@@ -239,6 +239,15 @@
             // ARIA attributes for screen readers
             card.setAttribute('role', 'option');
             card.setAttribute('aria-label', `${activity.title || 'Untitled Activity'}, ${activity.completed ? 'completed' : 'not completed'}`);
+            card.setAttribute('tabindex', '0'); // Make focusable for keyboard navigation
+            
+            // Add drag handle for enhanced drag & drop (only visible in edit mode)
+            const dragHandle = document.createElement('div');
+            dragHandle.className = 'card-drag-handle';
+            dragHandle.setAttribute('aria-label', 'Drag to reorder');
+            dragHandle.setAttribute('tabindex', '-1');
+            dragHandle.style.display = 'none'; // Hidden by default, shown by CardEditControls
+            card.appendChild(dragHandle);
             
             // Check if using pooled card
             const isPooled = card.getAttribute('data-pooled') === 'true';

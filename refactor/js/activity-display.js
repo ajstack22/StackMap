@@ -58,6 +58,21 @@
                     document.addEventListener('dayViewChanged', (e) => {
                         this.render();
                     });
+                    
+                    // Initialize Day Management System
+                    if (window.DayManager) {
+                        window.DayManager.init();
+                        
+                        // Listen for day changes
+                        window.DayManager.on('dayChanged', () => {
+                            this.render();
+                        });
+                    }
+                    
+                    // Initialize Day Selector UI
+                    if (window.DaySelectorUI) {
+                        window.DaySelectorUI.init();
+                    }
                 } else {
                     this.showError('Unable to load activities');
                 }
@@ -244,9 +259,29 @@
             // Render activities
             if (userActivities.length === 0) {
                 const emptyMessage = document.createElement('div');
-                emptyMessage.className = 'activity-empty-message';
-                emptyMessage.textContent = 'No activities yet. Tap + to add one.';
-                emptyMessage.style.cssText = 'text-align: center; padding: 40px 20px; color: #999;';
+                emptyMessage.className = 'activity-empty-message day-empty-state';
+                
+                // Get current day for context
+                let currentDay = 'today';
+                if (window.DayManager && window.DayManager.isInitialized) {
+                    currentDay = window.DayManager.getCurrentDay();
+                }
+                
+                // Create day-specific empty message
+                if (currentDay === 'tomorrow') {
+                    emptyMessage.innerHTML = `
+                        <div class="empty-state-icon">🌙</div>
+                        <h3>No activities planned for tomorrow</h3>
+                        <p>Plan ahead by adding activities for tomorrow.</p>
+                    `;
+                } else {
+                    emptyMessage.innerHTML = `
+                        <div class="empty-state-icon">☀️</div>
+                        <h3>No activities for today</h3>
+                        <p>Tap + to add your first activity.</p>
+                    `;
+                }
+                
                 self.container.appendChild(emptyMessage);
             } else {
                 // Try virtual scrolling for large activity lists
@@ -746,10 +781,10 @@
                 userId = currentUser ? currentUser.id : null;
             }
             
-            // Get selected day from DaySelector
+            // Get selected day from DayManager
             let selectedDay = 'today';
-            if (window.DaySelector && window.DaySelector.isReady()) {
-                selectedDay = window.DaySelector.getCurrentDay();
+            if (window.DayManager && window.DayManager.isInitialized) {
+                selectedDay = window.DayManager.getCurrentDay();
             }
             
             const activityData = {
@@ -1521,9 +1556,9 @@
             const self = this;
             let userActivities = self.filterActivitiesByUser(self.activities);
             
-            // Filter by selected day if DaySelector is available
-            if (window.DaySelector && window.DaySelector.isReady()) {
-                const selectedDay = window.DaySelector.getCurrentDay();
+            // Filter by selected day if DayManager is available
+            if (window.DayManager && window.DayManager.isInitialized) {
+                const selectedDay = window.DayManager.getCurrentDay();
                 userActivities = userActivities.filter(function(activity) {
                     // Show activities for the selected day
                     // Check both 'day' and 'timeframe' fields for compatibility

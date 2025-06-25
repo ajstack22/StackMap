@@ -225,6 +225,7 @@
     <link rel="stylesheet" href="css/focus-indicators.css">
     <link rel="stylesheet" href="css/activity-library.css">
     <link rel="stylesheet" href="css/activity-templates.css">
+    <link rel="stylesheet" href="css/template-browser.css">
     <link rel="stylesheet" href="css/clusterize.css">
     <link rel="stylesheet" href="css/undo-ui.css">
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 768px)">
@@ -247,6 +248,7 @@
     <!-- Today/Tomorrow styles -->
     <link rel="stylesheet" href="css/today-tomorrow.css">
     <link rel="stylesheet" href="css/day-selector.css">
+    <link rel="stylesheet" href="css/day-management.css">
     <link rel="stylesheet" href="css/celebration.css">
     
     <!-- Quick Add styles -->
@@ -276,6 +278,10 @@
     <link rel="stylesheet" href="css/inline-edit.css">
     <link rel="stylesheet" href="css/drag-drop.css">
     <link rel="stylesheet" href="css/context-menu.css">
+    
+    <!-- Enhanced Edit Mode UX (Story #98) -->
+    <link rel="stylesheet" href="css/visual-keyboard.css">
+    <link rel="stylesheet" href="css/confirmation-dialogs.css">
     
     <!-- Preload critical resources -->
     <link rel="preload" href="js/app.js" as="script">
@@ -745,6 +751,9 @@
     <!-- Performance optimization system (must load before activity-display) -->
     <script src="js/performance-monitor.js" defer></script>
     <script src="js/badge-cache.js" defer></script>
+    <script src="js/virtual-scroll-optimizer.js" defer></script>
+    <script src="js/memory-manager.js" defer></script>
+    <script src="js/performance-test-suite.js" defer></script>
     <!-- Activity display -->
     <script src="js/activity-display.js" defer></script>
     <!-- Undo system (must load after activity-display) -->
@@ -754,6 +763,9 @@
     <!-- Today/Tomorrow view -->
     <script src="js/day-selector.js" defer></script>
     <script src="js/today-tomorrow.js" defer></script>
+    <!-- Day Management System (Story #108) -->
+    <script src="js/day-manager.js" defer></script>
+    <script src="js/day-selector-ui.js" defer></script>
     <!-- Display Mode Toggle -->
     <script src="js/display-mode-toggle.js" defer></script>
     <!-- Rollover manager -->
@@ -797,6 +809,9 @@
     <script src="js/activity-library.js" defer></script>
     <script src="js/activity-templates.js" defer></script>
     <script src="js/quick-add-ui.js" defer></script>
+    <!-- Template system (Story #99) -->
+    <script src="js/template-manager.js" defer></script>
+    <script src="js/library-browser.js" defer></script>
     <!-- Theme Settings UI -->
     <script src="js/theme-settings-ui.js" defer></script>
     <!-- Settings System -->
@@ -824,5 +839,9 @@
     <script src="js/inline-card-edit.js" defer></script>
     <script src="js/context-menu.js" defer></script>
     <script src="js/card-edit-controls.js" defer></script>
+    
+    <!-- Enhanced Edit Mode UX (Story #98) -->
+    <script src="js/visual-keyboard.js" defer></script>
+    <script src="js/confirmation-dialogs.js" defer></script>
 </body>
 </html>
