@@ -320,5 +320,3 @@ class VoiceAttachment {
 if (typeof module !== 'undefined' && module.exports) {
   module.exports = VoiceAttachment;
 }
-
-export default VoiceAttachment;

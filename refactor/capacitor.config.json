@@ -6,6 +6,12 @@
     "androidScheme": "https",
     "iosScheme": "capacitor"
   },
+  "android": {
+    "minSdkVersion": 23
+  },
+  "ios": {
+    "minVersion": "10.0"
+  },
   "plugins": {
     "CapacitorSQLite": {
       "iosDatabaseLocation": "Library/CapacitorDatabase",

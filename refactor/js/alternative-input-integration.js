@@ -354,7 +354,7 @@ class AlternativeInputIntegration {
         this.addTaskToUI(task);
         
         // Show feedback
-        this.showFeedback(`Task "${title}" added!`, 'success');
+        this.showFeedback(`Activity "${title}" added!`, 'success');
         
         // Clear input if configured
         if (this.config.clearAfterCreate && this.taskInput) {
@@ -373,9 +373,9 @@ class AlternativeInputIntegration {
         taskElement.className = 'task';
         taskElement.dataset.taskId = task.id;
         taskElement.innerHTML = `
-            <input type="checkbox" id="task-${task.id}" ${task.completed ? 'checked' : ''}>
-            <label for="task-${task.id}">${this.escapeHtml(task.title)}</label>
-            <button class="task-action" data-action="delete" aria-label="Delete task">
+            <input type="checkbox" id="activity-${task.id}" ${task.completed ? 'checked' : ''}>
+            <label for="activity-${task.id}">${this.escapeHtml(task.title)}</label>
+            <button class="task-action" data-action="delete" aria-label="Delete activity">
                 <span aria-hidden="true">×</span>
             </button>
         `;

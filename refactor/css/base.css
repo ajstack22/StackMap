@@ -257,7 +257,7 @@ button.icon:hover {
 }
 
 /* Task container */
-.task-container {
+.activity-container {
     display: grid;
     grid-gap: 20px;
     padding: 20px;
@@ -266,7 +266,7 @@ button.icon:hover {
 }
 
 /* Task card styles - StackMap signature design */
-.task-card {
+.activity-card {
     background: var(--card-bg);
     border: 3px solid var(--card-border);
     border-radius: var(--radius-lg);
@@ -282,30 +282,30 @@ button.icon:hover {
     overflow: hidden;
 }
 
-.task-card:hover {
+.activity-card:hover {
     transform: translateY(-2px);
     box-shadow: var(--shadow-lg);
 }
 
-.task-card:active {
+.activity-card:active {
     transform: scale(0.98);
 }
 
-.task-card.completed {
+.activity-card.completed {
     background: var(--gradient-bg);
     color: white;
     border-color: var(--primary-purple-dark);
     box-shadow: var(--shadow-purple);
 }
 
-.task-card.completed .task-title {
+.activity-card.completed .activity-title {
     color: white;
     text-decoration: line-through;
     opacity: 0.9;
 }
 
 /* Task card content */
-.task-title {
+.activity-title {
     font-size: var(--font-size-lg);
     font-weight: 600;
     color: inherit;
@@ -313,7 +313,7 @@ button.icon:hover {
     flex: 1;
 }
 
-.task-checkbox {
+.activity-checkbox {
     width: 44px;
     height: 44px;
     border-radius: var(--radius-round);
@@ -326,12 +326,12 @@ button.icon:hover {
     transition: all 0.2s ease;
 }
 
-.task-checkbox:checked {
+.activity-checkbox:checked {
     background: var(--color-success);
     border-color: var(--color-success);
 }
 
-.task-checkbox:checked::after {
+.activity-checkbox:checked::after {
     content: '\2713';
     color: white;
     font-size: 24px;
@@ -804,7 +804,7 @@ input:checked + .toggle-slider:before {
     100% { transform: scale(1); }
 }
 
-.task-card.completing {
+.activity-card.completing {
     animation: cardComplete 0.6s ease;
 }
 
@@ -952,13 +952,13 @@ input:checked + .toggle-slider:before {
 }
 
 /* Simplified task cards in safe mode */
-.safe-mode .task-card {
+.safe-mode .activity-card {
     box-shadow: none !important;
     transition: none !important;
     border-width: 2px;
 }
 
-.safe-mode .task-card:hover {
+.safe-mode .activity-card:hover {
     transform: none !important;
 }
 
@@ -995,17 +995,17 @@ input:checked + .toggle-slider:before {
 }
 
 /* High contrast adjustments */
-.safe-mode .task-card {
+.safe-mode .activity-card {
     border-color: #333;
 }
 
-.safe-mode .task-card.completed {
+.safe-mode .activity-card.completed {
     background: #667eea;
     border-color: #5a67d8;
 }
 
 /* Disable all celebration effects */
-.safe-mode .task-card.completing,
+.safe-mode .activity-card.completing,
 .safe-mode .celebrating {
     animation: none !important;
 }
@@ -1199,19 +1199,19 @@ input:checked + .toggle-slider:before {
 }
 
 /* Task controls visibility based on edit mode */
-.task-card .task-actions {
+.activity-card .activity-actions {
     display: none;
 }
 
-.edit-mode .task-card .task-actions {
+.edit-mode .activity-card .activity-actions {
     display: flex;
 }
 
-.task-card .reorder-handle {
+.activity-card .reorder-handle {
     display: none;
 }
 
-.edit-mode .task-card .reorder-handle {
+.edit-mode .activity-card .reorder-handle {
     display: block;
     cursor: move;
     padding: var(--spacing-sm);
@@ -1220,7 +1220,7 @@ input:checked + .toggle-slider:before {
 }
 
 /* Add task button visibility */
-.add-task-container {
+.add-activity-container {
     display: block;
 }
 
@@ -1262,12 +1262,12 @@ input:checked + .toggle-slider:before {
 }
 
 /* Task card celebrating state */
-.task-card--celebrating {
+.activity-card--celebrating {
     animation: celebration-burst 0.6s ease-out;
 }
 
-.task-card--celebrating .task-checkbox,
-.task-card--celebrating input[type="checkbox"] {
+.activity-card--celebrating .activity-checkbox,
+.activity-card--celebrating input[type="checkbox"] {
     animation: checkmark-burst 0.4s ease-out;
 }
 
@@ -1330,13 +1330,13 @@ input:checked + .toggle-slider:before {
 
 /* Reduced motion support */
 @media (prefers-reduced-motion: reduce) {
-    .task-card--celebrating {
+    .activity-card--celebrating {
         animation: none;
         box-shadow: 0 0 0 3px var(--color-success);
     }
     
-    .task-card--celebrating .task-checkbox,
-    .task-card--celebrating input[type="checkbox"] {
+    .activity-card--celebrating .activity-checkbox,
+    .activity-card--celebrating input[type="checkbox"] {
         animation: none;
     }
     
@@ -1347,7 +1347,7 @@ input:checked + .toggle-slider:before {
 }
 
 /* Safe mode overrides for celebrations */
-.safe-mode .task-card--celebrating {
+.safe-mode .activity-card--celebrating {
     animation: none !important;
     box-shadow: none !important;
 }
@@ -1399,7 +1399,7 @@ input:checked + .toggle-slider:before {
     height: 100%;
 }
 
-.task-scroll-area {
+.activity-scroll-area {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -1407,17 +1407,17 @@ input:checked + .toggle-slider:before {
 }
 
 /* Safe mode: disable smooth scrolling */
-.safe-mode .task-scroll-area {
+.safe-mode .activity-scroll-area {
     scroll-behavior: auto !important;
 }
 
 /* Clusterize content area */
-.task-content-area {
+.activity-content-area {
     position: relative;
 }
 
 /* Task container for virtual scrolling */
-#task-container .virtual-scroll-container {
+#activity-container .virtual-scroll-container {
     margin: 0 -16px; /* Compensate for parent padding */
     padding: 0 16px;
 }
@@ -1567,7 +1567,7 @@ input:checked + .toggle-slider:before {
 }
 
 /* Skeleton task items */
-.skeleton-task {
+.skeleton-activity {
     height: 72px;
     margin-bottom: 12px;
     border-radius: var(--radius-md);
@@ -1578,7 +1578,7 @@ input:checked + .toggle-slider:before {
     box-shadow: var(--shadow-sm);
 }
 
-.skeleton-task::before {
+.skeleton-activity::before {
     content: '';
     width: 32px;
     height: 32px;
@@ -1588,7 +1588,7 @@ input:checked + .toggle-slider:before {
     flex-shrink: 0;
 }
 
-.skeleton-task::after {
+.skeleton-activity::after {
     content: '';
     flex: 1;
     height: 20px;
@@ -1664,26 +1664,26 @@ button {
 }
 
 /* Simplify task cards in focus mode */
-.focus-mode .task-card {
+.focus-mode .activity-card {
     background: var(--card-bg);
     border: 2px solid var(--card-border);
     box-shadow: none;
     margin-bottom: var(--spacing-sm);
 }
 
-.focus-mode .task-card:hover {
+.focus-mode .activity-card:hover {
     transform: none;
     box-shadow: none;
 }
 
 /* Larger text in focus mode */
-.focus-mode .task-title {
+.focus-mode .activity-title {
     font-size: calc(var(--font-size-lg) * 1.2);
     color: var(--color-text);
 }
 
 /* Center content in focus mode */
-.focus-mode .task-container {
+.focus-mode .activity-container {
     max-width: 800px;
     margin: 0 auto;
     padding-top: var(--spacing-xl);
@@ -1726,7 +1726,7 @@ button {
     --gradient-bg: #1a1a1a;
 }
 
-.safe-mode.focus-mode .task-card {
+.safe-mode.focus-mode .activity-card {
     transition: none !important;
 }
 

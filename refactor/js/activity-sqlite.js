@@ -12,9 +12,9 @@
     // Check if running in Capacitor environment
     const isCapacitor = window.Capacitor && window.Capacitor.isNativePlatform();
     
-    const TaskSQLite = {
+    const ActivitySQLite = {
         db: null,
-        dbName: 'stackmap_tasks.db',
+        dbName: 'stackmap_activities.db',
         dbVersion: 1,
         isReady: false,
         sqlite: null,
@@ -290,9 +290,9 @@
         },
         
         /**
-         * Create a new task
+         * Create a new activity
          */
-        createTask: function(task, callback) {
+        createActivity: function(activity, callback) {
             const self = this;
             
             if (!self.isReady) {
@@ -300,15 +300,15 @@
                 return;
             }
             
-            // Prepare task data
-            const title = task.title || 'Untitled';
-            const description = task.description || '';
-            const priority = task.priority || 1;
-            const parentId = task.parentId || null;
-            const tags = task.tags ? JSON.stringify(task.tags) : '[]';
-            const metadata = task.metadata ? JSON.stringify(task.metadata) : '{}';
+            // Prepare activity data
+            const title = activity.title || 'Untitled';
+            const description = activity.description || '';
+            const priority = activity.priority || 1;
+            const parentId = activity.parentId || null;
+            const tags = activity.tags ? JSON.stringify(activity.tags) : '[]';
+            const metadata = activity.metadata ? JSON.stringify(activity.metadata) : '{}';
             
-            const statement = 'INSERT INTO tasks (title, description, priority, parent_id, tags, metadata) ' +
+            const statement = 'INSERT INTO activities (title, description, priority, parent_id, tags, metadata) ' +
                            'VALUES (?, ?, ?, ?, ?, ?)';
             const values = [title, description, priority, parentId, tags, metadata];
             
@@ -317,18 +317,18 @@
                 statement: statement,
                 values: values
             }).then(function(result) {
-                const taskId = result.changes.lastId;
-                if (callback) callback({ id: taskId }, null);
+                const activityId = result.changes.lastId;
+                if (callback) callback({ id: activityId }, null);
             }).catch(function(error) {
-                console.error('SQLite: Failed to create task', error);
+                console.error('SQLite: Failed to create activity', error);
                 if (callback) callback(null, error);
             });
         },
         
         /**
-         * Get tasks with pagination
+         * Get activities with pagination
          */
-        getTasks: function(options, callback) {
+        getActivities: function(options, callback) {
             const self = this;
             
             if (!self.isReady) {
@@ -341,7 +341,7 @@
             const offset = options.offset || 0;
             const status = options.status; // 'pending', 'completed', or null for all
             
-            let statement = 'SELECT * FROM tasks';
+            let statement = 'SELECT * FROM activities';
             const values = [];
             
             if (status === 'pending') {
@@ -358,20 +358,20 @@
                 statement: statement,
                 values: values
             }).then(function(result) {
-                const tasks = (result.values || []).map(function(row) {
-                    return self.parseTaskRow(row);
+                const activities = (result.values || []).map(function(row) {
+                    return self.parseActivityRow(row);
                 });
-                if (callback) callback(tasks, null);
+                if (callback) callback(activities, null);
             }).catch(function(error) {
-                console.error('SQLite: Failed to get tasks', error);
+                console.error('SQLite: Failed to get activities', error);
                 if (callback) callback([], error);
             });
         },
         
         /**
-         * Get a single task with attachments
+         * Get a single activity with attachments
          */
-        getTask: function(taskId, callback) {
+        getActivity: function(activityId, callback) {
             const self = this;
             
             if (!self.isReady) {
@@ -379,38 +379,38 @@
                 return;
             }
             
-            // Get task
+            // Get activity
             self.sqlite.query({
                 database: self.dbName,
-                statement: 'SELECT * FROM tasks WHERE id = ?',
-                values: [taskId]
+                statement: 'SELECT * FROM activities WHERE id = ?',
+                values: [activityId]
             }).then(function(result) {
                 if (!result.values || result.values.length === 0) {
-                    if (callback) callback(null, new Error('Task not found'));
+                    if (callback) callback(null, new Error('Activity not found'));
                     return;
                 }
                 
-                const task = self.parseTaskRow(result.values[0]);
+                const activity = self.parseActivityRow(result.values[0]);
                 
                 // Get attachments
                 return self.sqlite.query({
                     database: self.dbName,
-                    statement: 'SELECT * FROM attachments WHERE task_id = ?',
-                    values: [taskId]
+                    statement: 'SELECT * FROM attachments WHERE activity_id = ?',
+                    values: [activityId]
                 }).then(function(attachmentResult) {
-                    task.attachments = attachmentResult.values || [];
-                    if (callback) callback(task, null);
+                    activity.attachments = attachmentResult.values || [];
+                    if (callback) callback(activity, null);
                 });
             }).catch(function(error) {
-                console.error('SQLite: Failed to get task', error);
+                console.error('SQLite: Failed to get activity', error);
                 if (callback) callback(null, error);
             });
         },
         
         /**
-         * Update a task
+         * Update an activity
          */
-        updateTask: function(taskId, updates, callback) {
+        updateActivity: function(activityId, updates, callback) {
             const self = this;
             
             if (!self.isReady) {
@@ -458,8 +458,8 @@
                 return;
             }
             
-            values.push(taskId);
-            const statement = `UPDATE tasks SET ${fields.join(', ')} WHERE id = ?`;
+            values.push(activityId);
+            const statement = `UPDATE activities SET ${fields.join(', ')} WHERE id = ?`;
             
             self.sqlite.run({
                 database: self.dbName,
@@ -469,15 +469,15 @@
                 const success = result.changes.changes > 0;
                 if (callback) callback(success, null);
             }).catch(function(error) {
-                console.error('SQLite: Failed to update task', error);
+                console.error('SQLite: Failed to update activity', error);
                 if (callback) callback(false, error);
             });
         },
         
         /**
-         * Delete a task
+         * Delete an activity
          */
-        deleteTask: function(taskId, callback) {
+        deleteActivity: function(activityId, callback) {
             const self = this;
             
             if (!self.isReady) {
@@ -487,21 +487,21 @@
             
             self.sqlite.run({
                 database: self.dbName,
-                statement: 'DELETE FROM tasks WHERE id = ?',
-                values: [taskId]
+                statement: 'DELETE FROM activities WHERE id = ?',
+                values: [activityId]
             }).then(function(result) {
                 const success = result.changes.changes > 0;
                 if (callback) callback(success, null);
             }).catch(function(error) {
-                console.error('SQLite: Failed to delete task', error);
+                console.error('SQLite: Failed to delete activity', error);
                 if (callback) callback(false, error);
             });
         },
         
         /**
-         * Search tasks by text
+         * Search activities by text
          */
-        searchTasks: function(query, callback) {
+        searchActivities: function(query, callback) {
             const self = this;
             
             if (!self.isReady) {
@@ -513,24 +513,24 @@
             
             self.sqlite.query({
                 database: self.dbName,
-                statement: 'SELECT * FROM tasks WHERE title LIKE ? OR description LIKE ? ' +
+                statement: 'SELECT * FROM activities WHERE title LIKE ? OR description LIKE ? ' +
                           'ORDER BY completed ASC, created_at DESC LIMIT 50',
                 values: [searchPattern, searchPattern]
             }).then(function(result) {
-                const tasks = (result.values || []).map(function(row) {
-                    return self.parseTaskRow(row);
+                const activities = (result.values || []).map(function(row) {
+                    return self.parseActivityRow(row);
                 });
-                if (callback) callback(tasks, null);
+                if (callback) callback(activities, null);
             }).catch(function(error) {
-                console.error('SQLite: Failed to search tasks', error);
+                console.error('SQLite: Failed to search activities', error);
                 if (callback) callback([], error);
             });
         },
         
         /**
-         * Add image attachment to a task
+         * Add image attachment to an activity
          */
-        addImageAttachment: function(taskId, imageData, callback) {
+        addImageAttachment: function(activityId, imageData, callback) {
             const self = this;
             
             if (!self.isReady) {
@@ -543,7 +543,7 @@
                 const Filesystem = filesystemPlugin.Filesystem;
                 const Directory = filesystemPlugin.Directory;
                 
-                const filename = `task_${taskId}_${Date.now()}.jpg`;
+                const filename = `activity_${activityId}_${Date.now()}.jpg`;
                 const filePath = `attachments/${filename}`;
                 
                 // Save image to filesystem
@@ -561,8 +561,8 @@
                     // Save reference in database
                     return self.sqlite.run({
                         database: self.dbName,
-                        statement: 'INSERT INTO attachments (task_id, filename, file_path, file_size) VALUES (?, ?, ?, ?)',
-                        values: [taskId, filename, filePath, statResult.size || 0]
+                        statement: 'INSERT INTO attachments (activity_id, filename, file_path, file_size) VALUES (?, ?, ?, ?)',
+                        values: [activityId, filename, filePath, statResult.size || 0]
                     });
                 }).then(function(dbResult) {
                     console.log('Image attachment saved:', filePath);
@@ -781,12 +781,12 @@
             Promise.all([
                 self.sqlite.query({
                     database: self.dbName,
-                    statement: 'SELECT COUNT(*) as total FROM tasks',
+                    statement: 'SELECT COUNT(*) as total FROM activities',
                     values: []
                 }),
                 self.sqlite.query({
                     database: self.dbName,
-                    statement: 'SELECT COUNT(*) as completed FROM tasks WHERE completed = 1',
+                    statement: 'SELECT COUNT(*) as completed FROM activities WHERE completed = 1',
                     values: []
                 }),
                 self.sqlite.query({
@@ -796,9 +796,9 @@
                 })
             ]).then(function(results) {
                 const stats = {
-                    totalTasks: results[0].values[0].total,
-                    completedTasks: results[1].values[0].completed,
-                    pendingTasks: results[0].values[0].total - results[1].values[0].completed,
+                    totalActivities: results[0].values[0].total,
+                    completedActivities: results[1].values[0].completed,
+                    pendingActivities: results[0].values[0].total - results[1].values[0].completed,
                     totalAttachments: results[2].values[0].attachments
                 };
                 if (callback) callback(stats, null);
@@ -917,7 +917,7 @@
             // Check for migration metadata
             self.sqlite.query({
                 database: self.dbName,
-                statement: 'SELECT COUNT(*) as migrated FROM tasks WHERE metadata LIKE ?',
+                statement: 'SELECT COUNT(*) as migrated FROM activities WHERE metadata LIKE ?',
                 values: ['%migrationTimestamp%']
             }).then(function(result) {
                 const migratedCount = result.values[0].migrated;
@@ -930,9 +930,9 @@
                     
                     const status = {
                         hasMigratedData: migratedCount > 0,
-                        migratedTaskCount: migratedCount,
-                        totalTaskCount: stats.totalTasks,
-                        isComplete: migratedCount === stats.totalTasks && stats.totalTasks > 0
+                        migratedActivityCount: migratedCount,
+                        totalActivityCount: stats.totalActivities,
+                        isComplete: migratedCount === stats.totalActivities && stats.totalActivities > 0
                     };
                     
                     if (callback) callback(status, null);
@@ -944,9 +944,9 @@
         },
         
         /**
-         * Parse task row from database
+         * Parse activity row from database
          */
-        parseTaskRow: function(row) {
+        parseActivityRow: function(row) {
             return {
                 id: row.id,
                 title: row.title,
@@ -1276,6 +1276,145 @@
         },
         
         /**
+         * Save a visual card
+         */
+        saveCard: function(card, callback) {
+            const self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(false, new Error('Database not ready'));
+                return;
+            }
+            
+            const sql = `
+                INSERT OR REPLACE INTO cards (
+                    id, activityId, emoji, title, color, type, position, 
+                    state, completedAt, completedCount, created, modified, ariaLabel
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `;
+            
+            const values = [
+                card.id,
+                card.activityId,
+                card.emoji,
+                card.title || '',
+                card.color,
+                card.type,
+                card.position,
+                card.state,
+                card.completedAt,
+                card.completedCount || 0,
+                card.created,
+                card.modified,
+                card.ariaLabel || ''
+            ];
+            
+            self._executeOperation(function(done) {
+                self.db.run(sql, values).then(function(result) {
+                    console.log('SQLite: Card saved', card.id);
+                    done();
+                    if (callback) callback(true, null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to save card', error);
+                    done();
+                    if (callback) callback(false, error);
+                });
+            });
+        },
+        
+        /**
+         * Get all cards
+         */
+        getCards: function(callback) {
+            const self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback([], new Error('Database not ready'));
+                return;
+            }
+            
+            const sql = 'SELECT * FROM cards ORDER BY position ASC';
+            
+            self._executeOperation(function(done) {
+                self.db.query(sql, []).then(function(result) {
+                    const cards = result.values || [];
+                    console.log('SQLite: Retrieved ' + cards.length + ' cards');
+                    done();
+                    if (callback) callback(cards, null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to get cards', error);
+                    done();
+                    if (callback) callback([], error);
+                });
+            });
+        },
+        
+        /**
+         * Delete a card
+         */
+        deleteCard: function(cardId, callback) {
+            const self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(false, new Error('Database not ready'));
+                return;
+            }
+            
+            const sql = 'DELETE FROM cards WHERE id = ?';
+            
+            self._executeOperation(function(done) {
+                self.db.run(sql, [cardId]).then(function(result) {
+                    console.log('SQLite: Card deleted', cardId);
+                    done();
+                    if (callback) callback(true, null);
+                }).catch(function(error) {
+                    console.error('SQLite: Failed to delete card', error);
+                    done();
+                    if (callback) callback(false, error);
+                });
+            });
+        },
+        
+        /**
+         * Update card positions (for reordering)
+         */
+        updateCardPositions: function(cards, callback) {
+            const self = this;
+            
+            if (!self.isReady) {
+                if (callback) callback(false, new Error('Database not ready'));
+                return;
+            }
+            
+            self._executeOperation(function(done) {
+                // Start transaction
+                self.db.execute('BEGIN TRANSACTION', [], false).then(function() {
+                    // Update each card position
+                    const promises = cards.map(function(card, index) {
+                        const sql = 'UPDATE cards SET position = ? WHERE id = ?';
+                        return self.db.run(sql, [index, card.id]);
+                    });
+                    
+                    return Promise.all(promises);
+                }).then(function() {
+                    // Commit transaction
+                    return self.db.execute('COMMIT', [], false);
+                }).then(function() {
+                    console.log('SQLite: Card positions updated');
+                    done();
+                    if (callback) callback(true, null);
+                }).catch(function(error) {
+                    // Rollback on error
+                    self.db.execute('ROLLBACK', [], false).then(function() {
+                        console.error('SQLite: Failed to update positions', error);
+                        done();
+                        if (callback) callback(false, error);
+                    });
+                });
+            });
+        },
+        
+        /**
          * Close database connection
          */
         closeConnection: function(callback) {
@@ -1305,5 +1444,8 @@
     };
     
     // Expose to global scope
-    window.TaskSQLite = TaskSQLite;
+    window.ActivitySQLite = ActivitySQLite;
+    
+    // BACKWARD COMPATIBILITY - Keep old name working
+    window.TaskSQLite = ActivitySQLite;
 })();

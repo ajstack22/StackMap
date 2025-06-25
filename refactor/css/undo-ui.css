@@ -27,7 +27,18 @@
     --undo-text-secondary: var(--undo-text-secondary-dark);
 }
 
-/* Undo container */
+/* Undo toast container - holds all toasts */
+.undo-toast-container {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000;
+    pointer-events: none;
+    max-width: 90vw;
+}
+
+/* Undo container (deprecated - use undo-toast-container) */
 .undo-container {
     position: fixed;
     bottom: 20px;

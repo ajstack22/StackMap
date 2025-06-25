@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    const TaskCardPool = {
+    const ActivityCardPool = {
         // Pool configuration
         POOL_SIZE: 20,
         MIN_POOL_SIZE: 5,
@@ -27,7 +27,7 @@
             if (self.initialized) return;
             
             // Check if feature is enabled
-            if (window.FeatureFlags && !window.FeatureFlags.isEnabled('taskCardPool')) {
+            if (window.FeatureFlags && !window.FeatureFlags.isEnabled('activityCardPool')) {
                 console.log('TaskCardPool: Feature disabled by flags');
                 return;
             }
@@ -329,5 +329,8 @@
     };
     
     // Expose to global scope
-    window.TaskCardPool = TaskCardPool;
+    window.ActivityCardPool = ActivityCardPool;
+    
+    // BACKWARD COMPATIBILITY - Keep old name working
+    window.TaskCardPool = ActivityCardPool;
 })();

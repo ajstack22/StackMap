@@ -21,5 +21,12 @@
   },
   "devDependencies": {
     "@capacitor/cli": "^5.5.1"
-  }
+  },
+  "browserslist": [
+    "Android >= 6",
+    "iOS >= 10",
+    "Chrome >= 51",
+    "Safari >= 10",
+    "Firefox >= 54"
+  ]
 }

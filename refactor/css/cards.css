@@ -20,7 +20,7 @@
 }
 
 /* Task Card Base */
-.task-card {
+.activity-card {
     position: relative;
     background: rgba(255, 255, 255, 0.95);
     border-radius: 12px;
@@ -36,51 +36,51 @@
 
 /* Dark theme support */
 @media (prefers-color-scheme: dark) {
-    .task-card {
+    .activity-card {
         background: rgba(42, 42, 42, 0.95);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 }
 
 /* Card hover effect (not in safe mode) */
-.task-card:hover:not(.safe-mode .task-card) {
+.activity-card:hover:not(.safe-mode .activity-card) {
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
 }
 
 /* Card States */
-.task-card--completed {
+.activity-card--completed {
     background: var(--color-accent, #667eea);
     color: white;
     transform: scale(1.02);
     animation: cardComplete 0.5s ease;
 }
 
-.task-card--completed * {
+.activity-card--completed * {
     color: white !important;
 }
 
-.task-card--in-progress {
+.activity-card--in-progress {
     border-left: 4px solid var(--color-warning, #fbbf24);
 }
 
-.task-card--pending {
+.activity-card--pending {
     opacity: 0.9;
 }
 
 /* Safe mode adjustments */
-.safe-mode .task-card {
+.safe-mode .activity-card {
     min-height: 320px;
     transition: none;
     animation: none;
 }
 
-.safe-mode .task-card:hover {
+.safe-mode .activity-card:hover {
     transform: none;
 }
 
 /* Card Header */
-.task-card__header {
+.activity-card__header {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
@@ -88,7 +88,7 @@
 }
 
 /* Task Icon */
-.task-card__icon {
+.activity-card__icon {
     width: 48px;
     height: 48px;
     background: var(--color-bg-secondary, #2a2a2a);
@@ -100,12 +100,12 @@
     flex-shrink: 0;
 }
 
-.task-card--completed .task-card__icon {
+.activity-card--completed .activity-card__icon {
     background: rgba(255, 255, 255, 0.2);
 }
 
 /* Task Number Badge */
-.task-card__number {
+.activity-card__number {
     position: absolute;
     top: 16px;
     right: 16px;
@@ -122,7 +122,7 @@
 }
 
 /* Completion Indicator */
-.task-card__completion {
+.activity-card__completion {
     position: absolute;
     top: 16px;
     left: 16px;
@@ -138,42 +138,42 @@
     transition: all 0.2s ease;
 }
 
-.task-card__completion:hover {
+.activity-card__completion:hover {
     background: rgba(0, 0, 0, 0.05);
 }
 
-.task-card__completion input[type="checkbox"] {
+.activity-card__completion input[type="checkbox"] {
     opacity: 0;
     position: absolute;
 }
 
-.task-card__completion-icon {
+.activity-card__completion-icon {
     font-size: 20px;
     opacity: 0;
     transform: scale(0);
     transition: all 0.2s ease;
 }
 
-.task-card--completed .task-card__completion {
+.activity-card--completed .activity-card__completion {
     background: white;
     border-color: white;
 }
 
-.task-card--completed .task-card__completion-icon {
+.activity-card--completed .activity-card__completion-icon {
     opacity: 1;
     transform: scale(1);
     color: var(--color-accent, #667eea);
 }
 
 /* Card Content */
-.task-card__content {
+.activity-card__content {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 12px;
 }
 
-.task-card__title {
+.activity-card__title {
     font-size: 18px;
     font-weight: 600;
     line-height: 1.3;
@@ -182,7 +182,7 @@
     word-break: break-word;
 }
 
-.task-card__description {
+.activity-card__description {
     font-size: 14px;
     line-height: 1.5;
     color: var(--color-text-secondary, rgba(0, 0, 0, 0.7));
@@ -195,12 +195,12 @@
 }
 
 /* Progress Indicator */
-.task-card__progress {
+.activity-card__progress {
     margin-top: auto;
     padding-top: 16px;
 }
 
-.task-card__progress-bar {
+.activity-card__progress-bar {
     height: 8px;
     background: rgba(0, 0, 0, 0.1);
     border-radius: 4px;
@@ -208,29 +208,29 @@
     margin-bottom: 8px;
 }
 
-.task-card__progress-fill {
+.activity-card__progress-fill {
     height: 100%;
     background: var(--color-success, #4ade80);
     border-radius: 4px;
     transition: width 0.3s ease;
 }
 
-.task-card--completed .task-card__progress-bar {
+.activity-card--completed .activity-card__progress-bar {
     background: rgba(255, 255, 255, 0.2);
 }
 
-.task-card--completed .task-card__progress-fill {
+.activity-card--completed .activity-card__progress-fill {
     background: white;
 }
 
-.task-card__progress-text {
+.activity-card__progress-text {
     font-size: 12px;
     color: var(--color-text-secondary);
     text-align: center;
 }
 
 /* Card Footer (for metadata) */
-.task-card__footer {
+.activity-card__footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -239,11 +239,11 @@
     border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-.task-card--completed .task-card__footer {
+.activity-card--completed .activity-card__footer {
     border-color: rgba(255, 255, 255, 0.2);
 }
 
-.task-card__time {
+.activity-card__time {
     font-size: 12px;
     color: var(--color-text-secondary);
     display: flex;
@@ -251,7 +251,7 @@
     gap: 4px;
 }
 
-.task-card__category {
+.activity-card__category {
     font-size: 12px;
     padding: 4px 12px;
     background: rgba(0, 0, 0, 0.05);
@@ -259,13 +259,13 @@
     color: var(--color-text-secondary);
 }
 
-.task-card--completed .task-card__category {
+.activity-card--completed .activity-card__category {
     background: rgba(255, 255, 255, 0.2);
     color: white;
 }
 
 /* Edit Mode Buttons */
-.edit-mode .task-card__edit-buttons {
+.edit-mode .activity-card__edit-buttons {
     position: absolute;
     top: 0;
     left: 0;
@@ -274,7 +274,7 @@
     pointer-events: none;
 }
 
-.edit-mode .task-card__edit-buttons button {
+.edit-mode .activity-card__edit-buttons button {
     position: absolute;
     width: 44px;
     height: 44px;
@@ -291,12 +291,12 @@
     justify-content: center;
 }
 
-.edit-mode .task-card__edit-buttons button:hover {
+.edit-mode .activity-card__edit-buttons button:hover {
     transform: scale(1.1);
 }
 
 /* Arrow buttons container */
-.task-arrows {
+.activity-arrows {
     position: absolute;
     right: 16px;
     top: 50%;
@@ -308,8 +308,8 @@
 }
 
 /* Arrow buttons */
-.task-arrow-up,
-.task-arrow-down {
+.activity-arrow-up,
+.activity-arrow-down {
     width: 44px;
     height: 44px;
     background: #444;
@@ -326,38 +326,38 @@
     position: static !important;
 }
 
-.task-arrow-up:hover:not(:disabled),
-.task-arrow-down:hover:not(:disabled) {
+.activity-arrow-up:hover:not(:disabled),
+.activity-arrow-down:hover:not(:disabled) {
     background: #555;
     transform: scale(1.1);
 }
 
-.task-arrow-up:active:not(:disabled),
-.task-arrow-down:active:not(:disabled) {
+.activity-arrow-up:active:not(:disabled),
+.activity-arrow-down:active:not(:disabled) {
     transform: scale(0.9);
 }
 
 /* Disabled state */
-.task-arrow-up:disabled,
-.task-arrow-down:disabled,
-.task-arrow-up.disabled,
-.task-arrow-down.disabled {
+.activity-arrow-up:disabled,
+.activity-arrow-down:disabled,
+.activity-arrow-up.disabled,
+.activity-arrow-down.disabled {
     opacity: 0.3;
     cursor: not-allowed;
     background: #333;
 }
 
-.task-arrow-up:disabled:hover,
-.task-arrow-down:disabled:hover {
+.activity-arrow-up:disabled:hover,
+.activity-arrow-down:disabled:hover {
     transform: none;
 }
 
 /* Task moving animations */
-.task-moving-up {
+.activity-moving-up {
     animation: moveUp 0.2s ease;
 }
 
-.task-moving-down {
+.activity-moving-down {
     animation: moveDown 0.2s ease;
 }
 
@@ -385,18 +385,18 @@
     }
 }
 
-.task-card__delete-btn {
+.activity-card__delete-btn {
     bottom: 16px;
     left: 16px;
     background: #d32f2f !important;
 }
 
-.task-card__menu-btn {
+.activity-card__menu-btn {
     bottom: 16px;
     right: 16px;
 }
 
-.task-card__visibility-btn {
+.activity-card__visibility-btn {
     top: 16px;
     right: 16px;
 }
@@ -415,7 +415,7 @@
 }
 
 /* Add Task Card */
-.add-task-card {
+.add-activity-card {
     min-height: 280px;
     background: transparent;
     border: 2px dashed var(--color-bg-secondary, #666);
@@ -427,52 +427,52 @@
     transition: all 0.2s ease;
 }
 
-.add-task-card:hover {
+.add-activity-card:hover {
     border-color: var(--color-accent);
     background: rgba(102, 126, 234, 0.05);
 }
 
-.add-task-card__content {
+.add-activity-card__content {
     text-align: center;
 }
 
-.add-task-card__icon {
+.add-activity-card__icon {
     font-size: 48px;
     color: var(--color-bg-secondary);
     margin-bottom: 16px;
 }
 
-.add-task-card__text {
+.add-activity-card__text {
     font-size: 16px;
     color: var(--color-text-secondary);
 }
 
 /* Safe mode - larger touch targets */
-.safe-mode .task-card__completion,
-.safe-mode .task-card__number,
-.safe-mode .task-card__edit-buttons button,
-.safe-mode .task-arrow-up,
-.safe-mode .task-arrow-down {
+.safe-mode .activity-card__completion,
+.safe-mode .activity-card__number,
+.safe-mode .activity-card__edit-buttons button,
+.safe-mode .activity-arrow-up,
+.safe-mode .activity-arrow-down {
     width: 60px;
     height: 60px;
 }
 
-.safe-mode .task-arrows {
+.safe-mode .activity-arrows {
     gap: 12px;
 }
 
 /* Disable animations in safe mode */
-.safe-mode .task-moving-up,
-.safe-mode .task-moving-down {
+.safe-mode .activity-moving-up,
+.safe-mode .activity-moving-down {
     animation: none;
 }
 
 /* Loading skeleton */
-.task-card--loading {
+.activity-card--loading {
     pointer-events: none;
 }
 
-.task-card--loading .skeleton {
+.activity-card--loading .skeleton {
     background: linear-gradient(90deg, rgba(0,0,0,0.1) 25%, rgba(0,0,0,0.05) 50%, rgba(0,0,0,0.1) 75%);
     background-size: 200% 100%;
     animation: loading 1.5s ease-in-out infinite;
@@ -526,7 +526,7 @@
 }
 
 /* Task Form Styles (keep existing form styles) */
-.task-edit-form {
+.activity-edit-form {
     display: flex;
     flex-direction: column;
     gap: var(--spacing-lg);
@@ -679,20 +679,20 @@
 /* ===== Drag & Drop Styles ===== */
 
 /* Long-press visual feedback states */
-.task-card--preparing-drag {
+.activity-card--preparing-drag {
     transition: transform 0.4s ease, box-shadow 0.4s ease;
     transform: scale(0.98);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-.task-card--ready-to-drag {
+.activity-card--ready-to-drag {
     transform: scale(1.05);
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
     z-index: 999;
 }
 
 /* Dragging state */
-.task-card--dragging {
+.activity-card--dragging {
     opacity: 0.5;
     transform: scale(0.95);
     z-index: 1000;
@@ -701,11 +701,11 @@
 }
 
 /* Drop indicators */
-.task-card--drop-above {
+.activity-card--drop-above {
     border-top: 3px solid var(--primary-purple);
 }
 
-.task-card--drop-below {
+.activity-card--drop-below {
     border-bottom: 3px solid var(--primary-purple);
 }
 
@@ -720,16 +720,16 @@
 }
 
 /* Cursor states for desktop */
-.edit-mode .task-card {
+.edit-mode .activity-card {
     cursor: grab;
 }
 
-.edit-mode .task-card:active {
+.edit-mode .activity-card:active {
     cursor: grabbing;
 }
 
 /* Prevent selection during drag */
-.task-card--dragging * {
+.activity-card--dragging * {
     -webkit-user-select: none;
     -moz-user-select: none;
     -ms-user-select: none;
@@ -737,19 +737,19 @@
 }
 
 /* Touch action for mobile */
-.task-card {
+.activity-card {
     touch-action: pan-y; /* Allow vertical scroll, prevent horizontal */
 }
 
 /* IMPORTANT: Allow scrolling in edit mode - drag requires long press */
-.edit-mode .task-card {
+.edit-mode .activity-card {
     touch-action: pan-y; /* Allow vertical scrolling even in edit mode */
 }
 
 /* Disable drag styles in safe mode */
-.safe-mode .task-card--dragging,
-.safe-mode .task-card--preparing-drag,
-.safe-mode .task-card--ready-to-drag {
+.safe-mode .activity-card--dragging,
+.safe-mode .activity-card--preparing-drag,
+.safe-mode .activity-card--ready-to-drag {
     opacity: 1;
     transform: none;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);

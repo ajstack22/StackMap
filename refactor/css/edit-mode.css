@@ -101,30 +101,30 @@
 }
 
 /* Task card edit mode styles */
-.edit-mode .task-card {
+.edit-mode .activity-card {
     border: 2px dashed var(--edit-mode-card-border);
     background: var(--edit-mode-card-bg);
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
-.edit-mode .task-card:hover {
+.edit-mode .activity-card:hover {
     border-style: solid;
     transform: translateY(-2px);
     box-shadow: 0 4px 12px rgba(255, 193, 7, 0.2);
 }
 
 /* Edit buttons visibility */
-.task-card__edit-buttons {
+.activity-card__edit-buttons {
     display: none;
 }
 
-.edit-mode .task-card__edit-buttons {
+.edit-mode .activity-card__edit-buttons {
     display: flex;
 }
 
 /* Add task card in edit mode */
-.add-task-card {
+.add-activity-card {
     border: 2px dashed var(--border-color);
     background: transparent;
     cursor: pointer;
@@ -135,7 +135,7 @@
     justify-content: center;
 }
 
-.add-task-card:hover {
+.add-activity-card:hover {
     border-color: var(--primary-color);
     background: var(--hover-bg);
 }
@@ -174,8 +174,8 @@
 
 .safe-mode .edit-mode-toggle,
 .safe-mode .edit-mode-exit-button,
-.safe-mode .task-card,
-.safe-mode .add-task-card {
+.safe-mode .activity-card,
+.safe-mode .add-activity-card {
     transition: none;
 }
 
@@ -187,8 +187,8 @@
 @media (prefers-reduced-motion: reduce) {
     .edit-mode-toggle,
     .edit-mode-exit-button,
-    .task-card,
-    .add-task-card,
+    .activity-card,
+    .add-activity-card,
     .edit-mode-notification {
         transition: none;
         animation: none;

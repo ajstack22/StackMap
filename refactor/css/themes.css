@@ -20,7 +20,7 @@ body {
     color: var(--header-text);
 }
 
-.card, .task-card {
+.card, .activity-card {
     /* Fallback for cards */
     background: #ffffff;
     background: var(--card-bg);
@@ -41,7 +41,7 @@ body {
 }
 
 /* Shadow fallbacks */
-.card, .task-card {
+.card, .activity-card {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     box-shadow: var(--shadow-sm);
 }
@@ -52,7 +52,7 @@ body {
 }
 
 /* Text color fallbacks */
-.text-secondary, .task-description {
+.text-secondary, .activity-description {
     color: rgba(51, 51, 51, 0.7);
     color: var(--color-text-secondary);
 }

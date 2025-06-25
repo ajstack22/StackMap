@@ -112,7 +112,7 @@
         setupAriaAttributes: function() {
             // Container attributes
             this.container.setAttribute('role', 'listbox');
-            this.container.setAttribute('aria-label', 'Task list');
+            this.container.setAttribute('aria-label', 'Activity list');
             
             // Task card attributes
             const self = this;
@@ -140,7 +140,7 @@
             const links = [
                 { href: '#main', text: 'Skip to main content' },
                 { href: '#task-container', text: 'Skip to tasks' },
-                { href: '#add-task', text: 'Skip to add task' },
+                { href: '#add-activity', text: 'Skip to add activity' },
                 { href: '#settings', text: 'Skip to settings' }
             ];
             
@@ -485,7 +485,7 @@
             if (element) {
                 // Get task title for announcement
                 const taskTitle = element.querySelector('h3, .task-title');
-                const taskName = taskTitle ? taskTitle.textContent : 'Task';
+                const activityName = activityTitle ? activityTitle.textContent : 'Activity';
                 
                 // Find and click the first interactive element (button, link, etc.)
                 const interactive = element.querySelector('button, a, input, [role="button"]');

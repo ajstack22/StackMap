@@ -7,14 +7,14 @@
     'use strict';
     
     // Schema version for migrations
-    const SCHEMA_VERSION = 1;
+    const SCHEMA_VERSION = 2; // Updated for visual cards
     
     // Data structure definitions with validation
     const DataSchema = {
         /**
-         * Task structure with validation rules
+         * Activity structure with validation rules
          */
-        task: {
+        activity: {
             fields: {
                 id: { type: 'number', required: false }, // Auto-generated
                 title: { type: 'string', required: true, maxLength: 500 },
@@ -26,6 +26,7 @@
                 order: { type: 'number', required: false, default: 0 },
                 tags: { type: 'array', itemType: 'string', maxItems: 20 },
                 attachmentIds: { type: 'array', itemType: 'number', maxItems: 10 },
+                day: { type: 'enum', values: ['today', 'tomorrow', 'someday'], default: 'today' },
                 metadata: {
                     type: 'object',
                     fields: {
@@ -112,10 +113,10 @@
                 return errors;
             },
             
-            // Create new task with defaults
+            // Create new activity with defaults
             create: function(data) {
                 const now = Date.now();
-                const task = {
+                const activity = {
                     title: data.title || '',
                     description: data.description || '',
                     status: data.status || 'pending',
@@ -125,6 +126,7 @@
                     order: data.order || 0,
                     tags: data.tags || [],
                     attachmentIds: data.attachmentIds || [],
+                    day: data.day || 'today',
                     metadata: {
                         completedAt: null,
                         reminderAt: data.reminderAt || null,
@@ -136,17 +138,17 @@
                     lastModifiedBy: this.getDeviceId()
                 };
                 
-                const errors = this.validate(task);
+                const errors = this.validate(activity);
                 if (errors.length > 0) {
                     throw new Error(`Validation failed: ${errors.join(', ')}`);
                 }
                 
-                return task;
+                return activity;
             },
             
             // Generate unique sync ID
             generateSyncId: function() {
-                return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                return `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
             },
             
             // Get device ID for conflict resolution
@@ -166,7 +168,7 @@
         attachment: {
             fields: {
                 id: { type: 'number', required: false }, // Auto-generated
-                taskId: { type: 'number', required: true },
+                activityId: { type: 'number', required: true },
                 name: { type: 'string', required: true, maxLength: 255 },
                 type: { type: 'string', required: true }, // MIME type
                 size: { type: 'number', required: true, max: 10485760 }, // 10MB limit
@@ -177,7 +179,7 @@
             },
             
             validate: function(data) {
-                return DataSchema.task.validateFields(data, this.fields);
+                return DataSchema.activity.validateFields(data, this.fields);
             }
         },
         
@@ -204,6 +206,57 @@
                 timestamp: { type: 'timestamp', required: true },
                 status: { type: 'enum', values: ['pending', 'in_progress', 'completed', 'failed'] }
             }
+        },
+        
+        /**
+         * Visual card structure for activity cards
+         */
+        card: {
+            fields: {
+                id: { type: 'string', required: true }, // card_timestamp_random
+                activityId: { type: 'string', required: false, nullable: true }, // Link to activity
+                emoji: { type: 'string', required: true, maxLength: 10 }, // Primary identifier
+                title: { type: 'string', required: false, maxLength: 13 }, // Short title
+                color: { type: 'string', required: true, pattern: /^#[0-9A-F]{6}$/i }, // Hex color
+                type: { type: 'enum', values: ['single', 'recurring', 'frequent'], default: 'single' },
+                position: { type: 'number', required: true, min: 0 }, // Display order
+                state: { type: 'enum', values: ['active', 'completed', 'disabled', 'in-progress'], default: 'active' },
+                completedAt: { type: 'timestamp', required: false, nullable: true },
+                completedCount: { type: 'number', required: false, default: 0 },
+                created: { type: 'timestamp', required: true, autoSet: true },
+                modified: { type: 'timestamp', required: true, autoUpdate: true },
+                ariaLabel: { type: 'string', required: false, maxLength: 100 } // Accessibility
+            },
+            
+            validate: function(data) {
+                return DataSchema.activity.validateFields(data, this.fields);
+            },
+            
+            create: function(data) {
+                const now = Date.now();
+                const card = {
+                    id: data.id || `card_${now}_${Math.random().toString(36).substr(2, 9)}`,
+                    activityId: data.activityId || null,
+                    emoji: data.emoji,
+                    title: data.title || '',
+                    color: data.color || '#667eea',
+                    type: data.type || 'single',
+                    position: data.position || 0,
+                    state: data.state || 'active',
+                    completedAt: null,
+                    completedCount: 0,
+                    created: now,
+                    modified: now,
+                    ariaLabel: data.ariaLabel || `${data.emoji} ${data.title || ''}`
+                };
+                
+                const errors = this.validate(card);
+                if (errors.length > 0) {
+                    throw new Error(`Card validation failed: ${errors.join(', ')}`);
+                }
+                
+                return card;
+            }
         }
     };
     
@@ -213,7 +266,7 @@
     const IndexedDBSchema = {
         version: SCHEMA_VERSION,
         stores: {
-            tasks: {
+            activities: {
                 keyPath: 'id',
                 autoIncrement: true,
                 indexes: [
@@ -229,7 +282,7 @@
                 keyPath: 'id',
                 autoIncrement: true,
                 indexes: [
-                    { name: 'taskId', keyPath: 'taskId', unique: false },
+                    { name: 'activityId', keyPath: 'activityId', unique: false },
                     { name: 'created', keyPath: 'created', unique: false },
                     { name: 'lastAccessed', keyPath: 'lastAccessed', unique: false }
                 ]
@@ -245,6 +298,17 @@
                     { name: 'timestamp', keyPath: 'timestamp', unique: false },
                     { name: 'status', keyPath: 'status', unique: false }
                 ]
+            },
+            cards: {
+                keyPath: 'id',
+                autoIncrement: false,
+                indexes: [
+                    { name: 'activityId', keyPath: 'activityId', unique: false },
+                    { name: 'type', keyPath: 'type', unique: false },
+                    { name: 'state', keyPath: 'state', unique: false },
+                    { name: 'position', keyPath: 'position', unique: false },
+                    { name: 'created', keyPath: 'created', unique: false }
+                ]
             }
         }
     };
@@ -255,10 +319,11 @@
     const DexieSchema = {
         version: SCHEMA_VERSION,
         stores: {
-            tasks: '++id, parentId, status, created, modified, [status+modified], syncId',
-            attachments: '++id, taskId, created, lastAccessed',
+            activities: '++id, parentId, status, created, modified, [status+modified], syncId',
+            attachments: '++id, activityId, created, lastAccessed',
             settings: 'key',
-            migrationCheckpoints: 'id, timestamp, status'
+            migrationCheckpoints: 'id, timestamp, status',
+            cards: 'id, activityId, type, state, position, created'
         }
     };
     

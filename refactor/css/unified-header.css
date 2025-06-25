@@ -1,0 +1,392 @@
+/**
+ * Unified Header Styles
+ * Mobile-first responsive header with ADHD-friendly design
+ */
+
+/* Base header styles */
+.unified-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px;
+    padding-top: calc(12px + env(safe-area-inset-top));
+    background: #2a2a2a;
+    border-bottom: 1px solid #3a3a3a;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+/* Safe mode adjustments */
+.safe-mode .unified-header {
+    padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+}
+
+/* Menu buttons */
+.menu-left,
+.menu-right {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+/* Safe mode larger touch targets */
+.safe-mode .menu-left,
+.safe-mode .menu-right {
+    min-width: 60px;
+    min-height: 60px;
+}
+
+.menu-left:hover,
+.menu-right:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+
+.menu-left:active,
+.menu-right:active,
+.menu-left.pressed,
+.menu-right.pressed {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.95);
+}
+
+/* Menu icons */
+.menu-icon {
+    font-size: 24px;
+    line-height: 1;
+}
+
+.safe-mode .menu-icon {
+    font-size: 28px;
+}
+
+/* User-day pill */
+.user-day-pill {
+    flex: 1;
+    max-width: 300px;
+    min-height: 44px;
+    padding: 8px 16px;
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 22px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.safe-mode .user-day-pill {
+    min-height: 60px;
+    padding: 12px 20px;
+    font-size: 18px;
+}
+
+.user-day-pill:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.user-day-pill:active,
+.user-day-pill.pressed {
+    background: rgba(255, 255, 255, 0.2);
+    transform: scale(0.98);
+}
+
+/* Pill content */
+.user-emoji {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.user-name {
+    font-weight: 500;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.day-indicator {
+    font-size: 14px;
+    opacity: 0.8;
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    flex-shrink: 0;
+}
+
+.day-indicator.tomorrow {
+    background: rgba(102, 126, 234, 0.2);
+    color: #a5b4fc;
+}
+
+.safe-mode .user-emoji {
+    font-size: 24px;
+}
+
+.safe-mode .user-name {
+    font-size: 18px;
+}
+
+.safe-mode .day-indicator {
+    font-size: 16px;
+    padding: 4px 10px;
+}
+
+/* Focus styles */
+.menu-left:focus,
+.menu-right:focus,
+.user-day-pill:focus {
+    outline: 3px solid #4a90e2;
+    outline-offset: 2px;
+}
+
+/* Settings view variant */
+.unified-header.settings-variant {
+    /* Settings has back button instead of left menu */
+}
+
+.unified-header.settings-variant .menu-left {
+    display: none;
+}
+
+/* User/Day Switcher Modal */
+.user-day-switcher-modal .modal-content {
+    max-width: 400px;
+}
+
+.user-day-switcher {
+    padding: 20px;
+}
+
+.switcher-section {
+    margin-bottom: 24px;
+}
+
+.switcher-section:last-child {
+    margin-bottom: 0;
+}
+
+.switcher-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #ccc;
+    margin-bottom: 12px;
+}
+
+/* Day options */
+.day-options {
+    display: flex;
+    gap: 12px;
+}
+
+.day-option {
+    flex: 1;
+    padding: 16px;
+    background: #2a2a2a;
+    border: 2px solid #3a3a3a;
+    border-radius: 12px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.day-option:hover {
+    background: #333;
+    border-color: #4a4a4a;
+}
+
+.day-option.active {
+    background: #4a90e2;
+    border-color: #4a90e2;
+}
+
+.day-option .day-icon {
+    font-size: 32px;
+}
+
+.day-option .day-label {
+    font-size: 16px;
+    font-weight: 500;
+}
+
+/* User options */
+.user-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 12px;
+}
+
+.user-option {
+    padding: 16px;
+    background: #2a2a2a;
+    border: 2px solid #3a3a3a;
+    border-radius: 12px;
+    color: #fff;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+    min-height: 100px;
+    justify-content: center;
+}
+
+.user-option:hover {
+    background: #333;
+    border-color: #4a4a4a;
+}
+
+.user-option.active {
+    background: #4a90e2;
+    border-color: #4a90e2;
+}
+
+.user-option.add-user {
+    border-style: dashed;
+    opacity: 0.8;
+}
+
+.user-option.add-user:hover {
+    opacity: 1;
+}
+
+.user-option .user-emoji {
+    font-size: 32px;
+}
+
+.user-option .user-name {
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+    max-width: 100%;
+}
+
+/* Safe mode modal adjustments */
+.safe-mode .day-option,
+.safe-mode .user-option {
+    min-height: 120px;
+    padding: 20px;
+}
+
+.safe-mode .day-option .day-icon,
+.safe-mode .user-option .user-emoji {
+    font-size: 36px;
+}
+
+.safe-mode .day-option .day-label,
+.safe-mode .user-option .user-name {
+    font-size: 16px;
+}
+
+/* Transitions disabled in safe mode */
+.safe-mode .menu-left,
+.safe-mode .menu-right,
+.safe-mode .user-day-pill,
+.safe-mode .day-option,
+.safe-mode .user-option {
+    transition: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 380px) {
+    .unified-header {
+        gap: 8px;
+        padding: 8px;
+        padding-top: calc(8px + env(safe-area-inset-top));
+    }
+    
+    .user-day-pill {
+        padding: 6px 12px;
+        font-size: 14px;
+    }
+    
+    .user-name {
+        max-width: 80px;
+    }
+    
+    .day-indicator {
+        font-size: 12px;
+        padding: 2px 6px;
+    }
+}
+
+/* Tablet and larger */
+@media (min-width: 768px) {
+    .unified-header {
+        padding: 16px 24px;
+        padding-top: calc(16px + env(safe-area-inset-top));
+    }
+    
+    .user-day-pill {
+        max-width: 400px;
+        padding: 10px 20px;
+    }
+    
+    .user-name {
+        max-width: 160px;
+    }
+}
+
+/* Animations */
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.unified-header {
+    animation: slideDown 0.3s ease-out;
+}
+
+/* Dark mode adjustments (future) */
+@media (prefers-color-scheme: dark) {
+    /* Already dark by default */
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .unified-header {
+        border-bottom-width: 2px;
+    }
+    
+    .user-day-pill {
+        border-width: 2px;
+    }
+    
+    .menu-left:focus,
+    .menu-right:focus,
+    .user-day-pill:focus {
+        outline-width: 4px;
+    }
+}

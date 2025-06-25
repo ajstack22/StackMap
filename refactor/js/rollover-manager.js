@@ -396,7 +396,7 @@
         notifyRollover: function(rolloverCount) {
             // Dispatch custom event
             try {
-                var event = new CustomEvent('tasksRolledOver', {
+                let event = new CustomEvent('tasksRolledOver', {
                     detail: {
                         rolloverCount: rolloverCount,
                         timestamp: new Date().toISOString()
@@ -405,7 +405,7 @@
                 document.dispatchEvent(event);
             } catch (e) {
                 // Fallback for older browsers
-                var event = document.createEvent('CustomEvent');
+                const event = document.createEvent('CustomEvent');
                 event.initCustomEvent('tasksRolledOver', true, true, {
                     rolloverCount: rolloverCount,
                     timestamp: new Date().toISOString()

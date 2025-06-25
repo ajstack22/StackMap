@@ -18,41 +18,7 @@
         TRANSACTION_ID_MAX: 2147483647
     };
     
-    // Polyfills for Android 5 compatibility
-    
-    // Array.from polyfill
-    if (!Array.from) {
-        Array.from = function(arrayLike, mapFn, thisArg) {
-            if (arrayLike == null) {
-                throw new TypeError(window.StackMapMessaging ? window.StackMapMessaging.transform('Array.from requires an array-like object - not null or undefined') : 'The system needs different data format here');
-            }
-            
-            const items = Object(arrayLike);
-            const len = parseInt(items.length) || 0;
-            let result = [];
-            
-            for (let i = 0; i < len; i++) {
-                if (i in items) {
-                    result.push(items[i]);
-                }
-            }
-            
-            if (mapFn) {
-                result = result.map(mapFn, thisArg);
-            }
-            
-            return result;
-        };
-    }
-    
-    // NodeList.forEach polyfill
-    if (window.NodeList && !NodeList.prototype.forEach) {
-        NodeList.prototype.forEach = function(callback, thisArg = window) {
-            for (let i = 0; i < this.length; i++) {
-                callback.call(thisArg, this[i], i, this);
-            }
-        };
-    }
+    // Modern ES6+ - No polyfills needed for Android 6+
     
     // Safe mode detection - must be early in initialization
     (function() {
@@ -1616,7 +1582,7 @@
                     });
                 }
             } catch (e) {
-                const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not load tasks:') : 'Tasks are being retrieved:';
+                const msg = window.StackMapMessaging ? window.StackMapMessaging.transform('Could not load activities:') : 'Activities are being retrieved:';
                 console.warn(msg, e);
                 
                 // Try backup before giving up
@@ -2286,6 +2252,18 @@
         Storage.init();
         Content.load();
         
+        // Run migration from tasks to activities if needed
+        if (window.TaskToActivityMigration && !localStorage.getItem('stackmap_migration_tasks_to_activities')) {
+            console.log('[App] Running tasks to activities migration');
+            window.TaskToActivityMigration.migrate(function(success, error) {
+                if (!success) {
+                    console.error('[App] Migration failed:', error);
+                } else {
+                    console.log('[App] Migration completed successfully');
+                }
+            });
+        }
+        
         // Initialize performance monitoring
         if (window.StackMapFeatureFlags) {
             window.StackMapFeatureFlags.init();
@@ -2349,6 +2327,12 @@
         } else if (window.EditMode) {
             // Fallback without error handler
             window.EditMode.init();
+        }
+        
+        // Initialize QuickAddUI after EditMode
+        if (window.QuickAddUI) {
+            console.log('[App] Initializing QuickAddUI');
+            window.QuickAddUI.init();
         }
         
         // Initialize keyboard navigation
@@ -2679,8 +2663,15 @@
             if (window.StackMapComponentErrorHandler) {
                 clearInterval(checkInterval);
                 
-                // Initialize TaskDisplay with error boundary
-                if (window.TaskDisplay) {
+                // Initialize ActivityDisplay/TaskDisplay with error boundary
+                if (window.ActivityDisplay) {
+                    window.StackMapComponentErrorHandler.wrapInit(
+                        'ActivityDisplay',
+                        'activity-display-wrapper',
+                        window.ActivityDisplay.init,
+                        window.ActivityDisplay
+                    );
+                } else if (window.TaskDisplay) {
                     window.StackMapComponentErrorHandler.wrapInit(
                         'TaskDisplay',
                         'task-display-wrapper',

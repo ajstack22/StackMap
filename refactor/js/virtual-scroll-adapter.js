@@ -121,7 +121,7 @@
             self.scrollArea.id = 'task-scroll-area';
             self.scrollArea.className = 'clusterize-scroll task-scroll-area';
             self.scrollArea.setAttribute('role', 'region');
-            self.scrollArea.setAttribute('aria-label', 'Task list');
+            self.scrollArea.setAttribute('aria-label', 'Activity list');
             self.scrollArea.setAttribute('tabindex', '0');
             
             // Apply safe mode styles if needed

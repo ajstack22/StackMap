@@ -185,6 +185,46 @@
                     </div>
                 </div>
                 
+                <div class="settings-group">
+                    <h3>Celebrations</h3>
+                    
+                    <div class="setting-item">
+                        <label for="celebration-theme-select">
+                            <strong>Celebration Theme</strong>
+                            <small>Choose your celebration style</small>
+                        </label>
+                        <select id="celebration-theme-select" class="setting-select">
+                            ${this.renderCelebrationThemeOptions()}
+                        </select>
+                        <div id="theme-preview" class="theme-preview"></div>
+                    </div>
+                    
+                    <div class="setting-item" id="custom-color-item" style="display: none;">
+                        <label for="custom-color-input">
+                            <strong>Custom Color</strong>
+                            <small>Choose your celebration color</small>
+                        </label>
+                        <div class="color-input-wrapper">
+                            <input type="color" 
+                                   id="custom-color-input" 
+                                   class="color-input"
+                                   value="#4CAF50">
+                            <input type="text" 
+                                   id="custom-color-text" 
+                                   class="color-text"
+                                   value="#4CAF50"
+                                   pattern="^#[0-9A-Fa-f]{6}$"
+                                   maxlength="7">
+                        </div>
+                    </div>
+                    
+                    <div class="setting-item">
+                        <button id="test-celebration-btn" class="button">
+                            Test Celebration
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="settings-actions">
                     <button id="reset-settings-btn" class="button secondary">
                         Reset All Settings
@@ -350,6 +390,65 @@
                     height: 1px;
                     overflow: hidden;
                 }
+                
+                /* Celebration theme styles */
+                .theme-preview {
+                    margin-top: 12px;
+                    padding: 12px;
+                    background: var(--surface-bg);
+                    border-radius: 6px;
+                    text-align: center;
+                }
+                
+                .theme-preview-content {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    gap: 8px;
+                }
+                
+                .theme-preview-emoji {
+                    font-size: 24px;
+                    letter-spacing: 4px;
+                }
+                
+                .theme-preview small {
+                    font-size: 12px;
+                    opacity: 0.7;
+                }
+                
+                .color-input-wrapper {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                }
+                
+                .color-input {
+                    width: 60px;
+                    height: 40px;
+                    border: 1px solid var(--card-border);
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+                
+                .color-text {
+                    flex: 1;
+                    padding: 8px 12px;
+                    border: 1px solid var(--card-border);
+                    border-radius: 4px;
+                    font-family: monospace;
+                    font-size: 14px;
+                    text-transform: uppercase;
+                }
+                
+                #test-celebration-btn {
+                    background: var(--success-green);
+                    color: white;
+                }
+                
+                #test-celebration-btn:hover {
+                    opacity: 0.9;
+                }
             `;
             
             document.head.appendChild(style);
@@ -454,6 +553,84 @@
                 });
             }
             
+            // Celebration theme
+            const celebrationThemeSelect = document.getElementById('celebration-theme-select');
+            if (celebrationThemeSelect) {
+                celebrationThemeSelect.addEventListener('change', function() {
+                    const theme = this.value;
+                    if (window.CelebrationSystem) {
+                        window.CelebrationSystem.setTheme(theme);
+                        self.updateThemePreview(theme);
+                        
+                        // Show/hide custom color input
+                        const customColorItem = document.getElementById('custom-color-item');
+                        if (customColorItem) {
+                            customColorItem.style.display = theme === 'custom' ? 'block' : 'none';
+                        }
+                    }
+                });
+                
+                // Initialize preview
+                const currentTheme = window.CelebrationSystem ? window.CelebrationSystem.currentTheme : 'ocean';
+                self.updateThemePreview(currentTheme);
+                
+                // Show/hide custom color input based on current theme
+                const customColorItem = document.getElementById('custom-color-item');
+                if (customColorItem) {
+                    customColorItem.style.display = currentTheme === 'custom' ? 'block' : 'none';
+                }
+            }
+            
+            // Custom color inputs
+            const customColorInput = document.getElementById('custom-color-input');
+            const customColorText = document.getElementById('custom-color-text');
+            
+            if (customColorInput && customColorText) {
+                // Sync color input with text input
+                customColorInput.addEventListener('change', function() {
+                    customColorText.value = this.value.toUpperCase();
+                    if (window.CelebrationSystem) {
+                        window.CelebrationSystem.setCustomColor(this.value);
+                        self.updateThemePreview('custom');
+                    }
+                });
+                
+                customColorText.addEventListener('input', function() {
+                    if (/^#[0-9A-F]{6}$/i.test(this.value)) {
+                        customColorInput.value = this.value;
+                        if (window.CelebrationSystem) {
+                            window.CelebrationSystem.setCustomColor(this.value);
+                            self.updateThemePreview('custom');
+                        }
+                    }
+                });
+                
+                // Load saved custom color
+                try {
+                    const savedColor = localStorage.getItem('celebrationCustomColor');
+                    if (savedColor) {
+                        customColorInput.value = savedColor;
+                        customColorText.value = savedColor.toUpperCase();
+                    }
+                } catch (e) {
+                    // Ignore storage errors
+                }
+            }
+            
+            // Test celebration button
+            const testCelebrationBtn = document.getElementById('test-celebration-btn');
+            if (testCelebrationBtn) {
+                testCelebrationBtn.addEventListener('click', function() {
+                    if (window.CelebrationSystem) {
+                        window.CelebrationSystem.celebrate({
+                            type: 'medium',
+                            message: 'Looking great! 🎉',
+                            duration: 2000
+                        });
+                    }
+                });
+            }
+            
             // Reset settings button
             const resetButton = document.getElementById('reset-settings-btn');
             if (resetButton) {
@@ -470,6 +647,37 @@
                         alert('Settings have been reset to defaults');
                     }
                 });
+            }
+        },
+        
+        renderCelebrationThemeOptions: function() {
+            if (!window.CelebrationSystem) return '<option value="ocean">Ocean</option>';
+            
+            const themes = window.CelebrationSystem.getThemes();
+            const currentTheme = window.CelebrationSystem.currentTheme;
+            
+            return themes.map(theme => {
+                const selected = theme.id === currentTheme ? 'selected' : '';
+                const label = theme.adhd ? `${theme.name} ⭐` : theme.name;
+                const description = theme.description ? ` - ${theme.description}` : '';
+                return `<option value="${theme.id}" ${selected}>${label}</option>`;
+            }).join('');
+        },
+        
+        updateThemePreview: function(themeId) {
+            const preview = document.getElementById('theme-preview');
+            if (!preview || !window.CelebrationSystem) return;
+            
+            const themes = window.CelebrationSystem.getThemes();
+            const theme = themes.find(t => t.id === themeId);
+            
+            if (theme) {
+                preview.innerHTML = `
+                    <div class="theme-preview-content">
+                        <span class="theme-preview-emoji">${theme.preview}</span>
+                        ${theme.description ? `<small>${theme.description}</small>` : ''}
+                    </div>
+                `;
             }
         }
     };

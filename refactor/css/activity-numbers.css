@@ -1,0 +1,195 @@
+/**
+ * Activity Card Numbering Styles
+ * ADHD-friendly sequential numbering system
+ */
+
+/* Base activity number styling */
+.activity-number {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    color: var(--primary-color, #667eea);
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 50%;
+    z-index: 1;
+    user-select: none;
+    pointer-events: none;
+}
+
+/* High contrast for outdoor visibility */
+@media (prefers-contrast: high) {
+    .activity-number {
+        background: var(--primary-color, #667eea);
+        color: white;
+        font-weight: 900;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .activity-number {
+        background: rgba(102, 126, 234, 0.2);
+        color: #a5b4fc;
+    }
+}
+
+/* Completed activities - subdued numbers */
+.activity-item.completed .activity-number {
+    opacity: 0.5;
+    color: #666;
+    background: rgba(0, 0, 0, 0.1);
+}
+
+/* Safe mode - larger numbers */
+.safe-mode .activity-number {
+    width: 44px;
+    height: 44px;
+    font-size: 28px;
+    left: 8px;
+}
+
+/* RTL language support */
+html[dir="rtl"] .activity-number {
+    left: auto;
+    right: 12px;
+}
+
+html[dir="rtl"] .safe-mode .activity-number {
+    right: 8px;
+}
+
+/* Adjust task item padding when numbers are shown */
+.activity-item[data-display-number] {
+    padding-left: 60px;
+}
+
+html[dir="rtl"] .activity-item[data-display-number] {
+    padding-left: 16px;
+    padding-right: 60px;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .activity-number {
+        width: 32px;
+        height: 32px;
+        font-size: 20px;
+        left: 8px;
+    }
+    
+    .activity-item[data-display-number] {
+        padding-left: 52px;
+    }
+    
+    html[dir="rtl"] .activity-item[data-display-number] {
+        padding-left: 16px;
+        padding-right: 52px;
+    }
+}
+
+/* Animation for number changes */
+@keyframes numberChange {
+    0% {
+        transform: translateY(-50%) scale(1);
+    }
+    50% {
+        transform: translateY(-50%) scale(1.2);
+    }
+    100% {
+        transform: translateY(-50%) scale(1);
+    }
+}
+
+.activity-number.updating {
+    animation: numberChange 0.3s ease;
+}
+
+/* Focus indicator for accessibility */
+.activity-item:focus-within .activity-number {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+/* Display mode toggle button */
+.display-mode-toggle {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--primary-color, #667eea);
+    color: white;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    transition: all 0.2s ease;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.display-mode-toggle:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.display-mode-toggle:active {
+    transform: scale(0.95);
+}
+
+/* RTL support for toggle button */
+html[dir="rtl"] .display-mode-toggle {
+    right: auto;
+    left: 20px;
+}
+
+/* Hide toggle in edit mode to avoid clutter */
+.edit-mode .display-mode-toggle {
+    display: none;
+}
+
+/* Time display mode (alternative to numbers) */
+.activity-time {
+    position: absolute;
+    top: 50%;
+    left: 12px;
+    transform: translateY(-50%);
+    min-width: 36px;
+    height: 36px;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary-color, #667eea);
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 18px;
+    white-space: nowrap;
+}
+
+/* Accessibility - ensure numbers are announced */
+.activity-number[aria-label] {
+    speak: always;
+}
+
+/* Print styles */
+@media print {
+    .activity-number {
+        background: white !important;
+        border: 2px solid var(--primary-color, #667eea) !important;
+        color: var(--primary-color, #667eea) !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}

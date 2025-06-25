@@ -1,7 +1,7 @@
 // Task Timer Module - Lightweight timer feature for ADHD users
 // Provides visual countdown, notifications, and time-boxing for tasks
 
-const TaskTimer = (function() {
+const ActivityTimer = (function() {
     'use strict';
     
     const timers = {}; // Active timers by task ID
@@ -256,7 +256,7 @@ const TaskTimer = (function() {
         
         if (existingTimer) {
             // Timer controls
-            var html = '<div class="timer-controls" role="group" aria-label="Timer controls">';
+            let html = '<div class="timer-controls" role="group" aria-label="Timer controls">';
             html += `<button role="menuitem" onclick="TaskTimer.togglePause('${taskId}')">`;
             html += existingTimer.isPaused ? '▶️ Resume' : '⏸️ Pause';
             html += '</button>';
@@ -265,7 +265,7 @@ const TaskTimer = (function() {
             menu.innerHTML = html;
         } else {
             // Duration options
-            var html = '<div class="timer-durations" role="group" aria-label="Timer duration options">';
+            let html = '<div class="timer-durations" role="group" aria-label="Timer duration options">';
             html += '<div class="timer-label">Set Timer:</div>';
             
             // Preset duration buttons
@@ -481,8 +481,8 @@ const TaskTimer = (function() {
         let taskTitle = 'Task';
         
         try {
-            if (window.TaskDisplay && window.TaskDisplay.getTaskById) {
-                task = window.TaskDisplay.getTaskById(taskId);
+            if (window.ActivityDisplay && window.ActivityDisplay.getTaskById) {
+                task = window.ActivityDisplay.getTaskById(taskId);
                 if (task && task.title) {
                     taskTitle = task.title;
                 }
@@ -686,12 +686,12 @@ const TaskTimer = (function() {
             if (timers.hasOwnProperty(taskId) && timers[taskId].remaining > 0) {
                 const timer = timers[taskId];
                 let task = null;
-                if (window.TaskDisplay && window.TaskDisplay.getTaskById) {
-                    task = window.TaskDisplay.getTaskById(taskId);
+                if (window.ActivityDisplay && window.ActivityDisplay.getTaskById) {
+                    task = window.ActivityDisplay.getTaskById(taskId);
                 }
                 activeTimers.push({
                     taskId: taskId,
-                    taskTitle: task ? task.title : 'Unknown Task',
+                    activityTitle: activity ? activity.title : 'Unknown Activity',
                     remaining: timer.remaining,
                     duration: timer.duration,
                     isPaused: timer.isPaused
@@ -788,7 +788,10 @@ const TaskTimer = (function() {
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', TaskTimer.init);
+    document.addEventListener('DOMContentLoaded', ActivityTimer.init);
 } else {
-    TaskTimer.init();
+    ActivityTimer.init();
 }
+
+// BACKWARD COMPATIBILITY - Keep old name working
+window.TaskTimer = ActivityTimer;

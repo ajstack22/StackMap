@@ -7,7 +7,7 @@
 (function() {
     'use strict';
     
-    const TaskReorder = {
+    const ActivityReorder = {
         // Debounce state
         moveDebounceTimer: null,
         isMoving: false,
@@ -21,13 +21,13 @@
             // Debounce rapid clicks
             if (self.isMoving) return;
             
-            if (!window.TaskDisplay) {
+            if (!window.ActivityDisplay) {
                 console.error('TaskReorder: TaskDisplay not found');
                 return;
             }
             
             try {
-                const tasks = window.TaskDisplay.getUserTasks();
+                const tasks = window.ActivityDisplay.getUserTasks();
                 
                 // Handle empty or single task case
                 if (!tasks || tasks.length <= 1) {
@@ -86,13 +86,13 @@
             // Debounce rapid clicks
             if (self.isMoving) return;
             
-            if (!window.TaskDisplay) {
+            if (!window.ActivityDisplay) {
                 console.error('TaskReorder: TaskDisplay not found');
                 return;
             }
             
             try {
-                const tasks = window.TaskDisplay.getUserTasks();
+                const tasks = window.ActivityDisplay.getUserTasks();
                 
                 // Handle empty or single task case
                 if (!tasks || tasks.length <= 1) {
@@ -163,11 +163,11 @@
             
             try {
                 // Save tasks with error handling
-                window.TaskDisplay.saveTasks(function(success) {
+                window.ActivityDisplay.saveTasks(function(success) {
                     if (!success) {
                         console.error('TaskReorder: Failed to save task order');
                         // Revert the change by re-rendering
-                        window.TaskDisplay.render();
+                        window.ActivityDisplay.render();
                         return;
                     }
                 });
@@ -176,7 +176,7 @@
                 const taskElement = document.querySelector(`[data-task-id="${taskId}"]`);
                 if (!taskElement) {
                     // Fallback to full render if element not found
-                    window.TaskDisplay.render();
+                    window.ActivityDisplay.render();
                     return;
                 }
                 
@@ -211,7 +211,7 @@
             } catch (error) {
                 console.error('TaskReorder: DOM update failed', error);
                 // Fallback to full re-render
-                window.TaskDisplay.render();
+                window.ActivityDisplay.render();
             }
         },
         
@@ -223,7 +223,7 @@
             announcement.setAttribute('role', 'status');
             announcement.setAttribute('aria-live', 'polite');
             announcement.className = 'sr-only';
-            announcement.textContent = `Task moved ${direction}`;
+            announcement.textContent = `Activity moved ${direction}`;
             
             document.body.appendChild(announcement);
             
@@ -259,7 +259,7 @@
          * Check if task can move up
          */
         canMoveUp: function(task) {
-            const tasks = window.TaskDisplay.getUserTasks();
+            const tasks = window.ActivityDisplay.getUserTasks();
             let index = -1;
             
             for (let i = 0; i < tasks.length; i++) {
@@ -276,7 +276,7 @@
          * Check if task can move down
          */
         canMoveDown: function(task) {
-            const tasks = window.TaskDisplay.getUserTasks();
+            const tasks = window.ActivityDisplay.getUserTasks();
             let index = -1;
             
             for (let i = 0; i < tasks.length; i++) {
@@ -311,6 +311,9 @@
     };
     
     // Export to global scope
-    window.TaskReorder = TaskReorder;
+    window.ActivityReorder = ActivityReorder;
+    
+    // BACKWARD COMPATIBILITY - Keep old name working
+    window.TaskReorder = ActivityReorder;
     
 })();

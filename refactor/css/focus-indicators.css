@@ -41,7 +41,7 @@
 }
 
 /* Task cards focus styles */
-.task-card:focus-visible {
+.activity-card:focus-visible {
     outline: var(--focus-width) solid var(--focus-color);
     outline-offset: var(--focus-offset);
     box-shadow: var(--focus-shadow);
@@ -50,7 +50,7 @@
 }
 
 /* Selected task card (roving tabindex) */
-.task-card[aria-selected="true"] {
+.activity-card[aria-selected="true"] {
     background: rgba(91, 155, 213, 0.1);
     border-left: 4px solid var(--focus-color);
 }
@@ -111,13 +111,13 @@ textarea:focus-visible {
         transition: none;
     }
     
-    .task-card:focus-visible {
+    .activity-card:focus-visible {
         transform: none;
     }
 }
 
 /* Focus within containers */
-.task-container:focus-within {
+.activity-container:focus-within {
     background: rgba(91, 155, 213, 0.05);
 }
 
@@ -174,13 +174,13 @@ textarea:focus-visible {
 }
 
 /* Edit mode focus styles */
-.edit-mode .task-card:focus-visible {
+.edit-mode .activity-card:focus-visible {
     outline-color: var(--color-warning);
     box-shadow: 0 0 0 4px rgba(251, 191, 36, 0.2);
 }
 
 /* Celebration focus (after task completion) */
-.celebrating .task-card:focus-visible {
+.celebrating .activity-card:focus-visible {
     outline-color: var(--color-success);
     box-shadow: 0 0 0 4px rgba(74, 222, 128, 0.2);
 }

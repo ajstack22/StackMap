@@ -41,9 +41,9 @@
                 return;
             }
             
-            this.container = document.getElementById('task-container');
+            this.container = document.getElementById('activity-container') || document.getElementById('task-container');
             if (!this.container) {
-                console.warn('DragDropReorder: task-container not found');
+                console.warn('DragDropReorder: activity-container not found');
                 return;
             }
             
@@ -528,6 +528,8 @@
             if (window.TaskDisplay && window.TaskDisplay.saveTasks) {
                 console.log('DragDropReorder: Saving new order');
                 window.TaskDisplay.saveTasks();
+                // Re-render to update numbers
+                window.TaskDisplay.render();
             }
         },
         

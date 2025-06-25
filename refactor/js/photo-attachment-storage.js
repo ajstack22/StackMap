@@ -95,7 +95,7 @@
             
             // Check for private browsing or unsupported
             if (!window.indexedDB) {
-                var error = new Error('IndexedDB not supported');
+                let error = new Error('IndexedDB not supported');
                 self.initError = error;
                 self.isReady = false;
                 if (reject) reject(error);
@@ -109,7 +109,7 @@
                 request = indexedDB.open(PHOTO_SCHEMA.name, PHOTO_SCHEMA.version);
             } catch (e) {
                 // Handle private browsing mode
-                var error = new Error(`Failed to open database: ${e.message}`);
+                let error = new Error(`Failed to open database: ${e.message}`);
                 self.initError = error;
                 self.isReady = false;
                 if (reject) reject(error);

@@ -2,7 +2,7 @@
 /* Provides visual countdown, notifications, and time-boxing for ADHD users */
 
 /* Timer Button on Task Cards */
-.task-timer-button {
+.activity-timer-button {
     background: transparent;
     border: 2px solid var(--primary-purple, #6b46c1);
     border-radius: 20px;
@@ -23,7 +23,7 @@
 }
 
 /* Safe mode adjustments */
-.safe-mode .task-timer-button {
+.safe-mode .activity-timer-button {
     min-width: 60px;
     min-height: 60px;
     font-size: 16px;
@@ -32,56 +32,56 @@
 }
 
 /* Active timer state */
-.task-timer-button.active {
+.activity-timer-button.active {
     background: var(--primary-purple, #6b46c1);
     color: white;
 }
 
 /* Warning state (last minute) */
-.task-timer-button.warning {
+.activity-timer-button.warning {
     background: var(--color-warning, #fbbf24);
     border-color: var(--color-warning, #fbbf24);
     color: var(--text-dark, #1a202c);
     animation: pulse 1s infinite;
 }
 
-.safe-mode .task-timer-button.warning {
+.safe-mode .activity-timer-button.warning {
     animation: none;
     box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.3);
 }
 
 /* Complete state */
-.task-timer-button.complete {
+.activity-timer-button.complete {
     background: var(--color-error, #ef4444);
     border-color: var(--color-error, #ef4444);
     color: white;
     animation: pulse-urgent 0.5s infinite;
 }
 
-.safe-mode .task-timer-button.complete {
+.safe-mode .activity-timer-button.complete {
     animation: none;
     box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.5);
 }
 
 /* Paused state */
-.task-timer-button.paused {
+.activity-timer-button.paused {
     opacity: 0.7;
 }
 
 /* Focus states */
-.task-timer-button:focus {
+.activity-timer-button:focus {
     outline: 3px solid var(--focus-color, #2563eb);
     outline-offset: 2px;
 }
 
 /* Hover state (desktop) */
 @media (hover: hover) {
-    .task-timer-button:hover:not(:disabled) {
+    .activity-timer-button:hover:not(:disabled) {
         transform: translateY(-1px);
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
     
-    .safe-mode .task-timer-button:hover:not(:disabled) {
+    .safe-mode .activity-timer-button:hover:not(:disabled) {
         transform: none;
         box-shadow: none;
         background: var(--primary-purple, #6b46c1);
@@ -301,7 +301,7 @@
 
 /* TV/Large screen optimizations */
 @media (min-width: 1920px) {
-    .task-timer-button {
+    .activity-timer-button {
         font-size: 18px;
         padding: 8px 20px;
         min-height: 48px;
@@ -332,8 +332,8 @@
 
 /* Accessibility - Reduced Motion */
 @media (prefers-reduced-motion: reduce) {
-    .task-timer-button.warning,
-    .task-timer-button.complete {
+    .activity-timer-button.warning,
+    .activity-timer-button.complete {
         animation: none;
     }
     
@@ -348,7 +348,7 @@
 
 /* Print styles */
 @media print {
-    .task-timer-button,
+    .activity-timer-button,
     .timer-menu,
     .timer-alert {
         display: none !important;

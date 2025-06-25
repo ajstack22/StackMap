@@ -3,6 +3,152 @@
  * Mobile-first, ADHD-friendly design
  */
 
+/* Day Selector Component */
+.day-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin: 1rem;
+    padding: 0.25rem;
+    background: var(--surface-color, #f5f5f5);
+    border-radius: 0.75rem;
+    position: sticky;
+    top: 60px; /* Below header */
+    z-index: 100;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .day-selector {
+        background: rgba(255, 255, 255, 0.05);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+}
+
+/* Day selector buttons */
+.day-selector-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    border: none;
+    background: transparent;
+    color: var(--text-secondary, #666);
+    font-size: 1rem;
+    font-weight: 500;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 60px; /* Mobile touch target */
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Active state */
+.day-selector-btn.active {
+    background: var(--bg-color, white);
+    color: var(--text-primary, #000);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+    transform: scale(1.02);
+}
+
+/* Dark mode active state */
+@media (prefers-color-scheme: dark) {
+    .day-selector-btn.active {
+        background: var(--bg-secondary, #2a2a2a);
+        color: white;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+    }
+}
+
+/* Hover state (desktop) */
+@media (hover: hover) {
+    .day-selector-btn:hover:not(.active) {
+        background: rgba(0, 0, 0, 0.05);
+        transform: translateY(-1px);
+    }
+}
+
+/* Active/pressed state */
+.day-selector-btn:active {
+    transform: scale(0.98);
+}
+
+/* Icons */
+.day-icon {
+    font-size: 1.5rem;
+    line-height: 1;
+}
+
+/* Labels */
+.day-label {
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+/* Safe mode adjustments */
+.safe-mode .day-selector-btn {
+    min-height: 80px;
+    font-size: 1.125rem;
+    transition: none;
+}
+
+.safe-mode .day-icon {
+    font-size: 1.75rem;
+}
+
+.safe-mode .day-selector-btn:hover {
+    transform: none;
+}
+
+.safe-mode .day-selector-btn:active {
+    transform: none;
+}
+
+/* Mobile landscape - reduce height */
+@media (max-height: 500px) and (orientation: landscape) {
+    .day-selector {
+        margin: 0.5rem;
+        top: 50px;
+    }
+    
+    .day-selector-btn {
+        min-height: 50px;
+        padding: 0.5rem 1rem;
+    }
+    
+    .day-icon {
+        font-size: 1.25rem;
+    }
+}
+
+/* Focus indicators for accessibility */
+.day-selector-btn:focus {
+    outline: 3px solid var(--focus-color, #667eea);
+    outline-offset: 2px;
+}
+
+.day-selector-btn:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* Loading state */
+.day-selector-btn.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.day-selector-btn.loading .day-icon {
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
 /* Container */
 .today-tomorrow-container {
     padding: 1rem;
@@ -83,13 +229,13 @@
 }
 
 /* Task list */
-.task-list {
+.activity-list {
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
 }
 
-.task-item {
+.activity-item {
     display: flex;
     align-items: center;
     gap: 0.75rem;
@@ -102,21 +248,21 @@
 }
 
 /* Safe mode touch targets */
-.safe-mode .task-item {
+.safe-mode .activity-item {
     min-height: 60px;
     padding: 1rem;
 }
 
-.task-item:hover {
+.activity-item:hover {
     background: var(--surface-hover, #f0f0f0);
 }
 
 /* Drag states */
-.task-item[draggable="true"] {
+.activity-item[draggable="true"] {
     cursor: move;
 }
 
-.task-item.dragging {
+.activity-item.dragging {
     opacity: 0.5;
 }
 
@@ -132,19 +278,19 @@
 }
 
 /* Task checkbox */
-.task-checkbox {
+.activity-checkbox {
     width: 20px;
     height: 20px;
     cursor: pointer;
     flex-shrink: 0;
 }
 
-.safe-mode .task-checkbox {
+.safe-mode .activity-checkbox {
     width: 24px;
     height: 24px;
 }
 
-.task-label {
+.activity-label {
     flex: 1;
     font-size: 1rem;
     color: var(--text-primary, #000);
@@ -152,7 +298,7 @@
     user-select: none;
 }
 
-.task-checkbox:checked + .task-label {
+.activity-checkbox:checked + .activity-label {
     text-decoration: line-through;
     color: var(--text-secondary, #666);
 }
@@ -181,21 +327,21 @@
 }
 
 /* Visual aging for tasks */
-.task-item.task-aging {
+.activity-item.activity-aging {
     border-left: 3px solid #FFC107;
 }
 
-.task-item.task-old {
+.activity-item.activity-old {
     border-left: 3px solid #F44336;
     background: rgba(244, 67, 54, 0.05);
 }
 
 /* Safe mode - more obvious aging */
-.safe-mode .task-item.task-aging {
+.safe-mode .activity-item.activity-aging {
     border-left-width: 5px;
 }
 
-.safe-mode .task-item.task-old {
+.safe-mode .activity-item.activity-old {
     border-left-width: 5px;
     background: rgba(244, 67, 54, 0.1);
 }
@@ -227,7 +373,7 @@
     padding: 0.5rem 0.75rem;
 }
 
-.task-label.completed {
+.activity-label.completed {
     text-decoration: line-through;
     color: var(--text-muted, #666);
 }
@@ -265,7 +411,7 @@
 }
 
 /* Smooth animations for task appearance */
-.task-item {
+.activity-item {
     animation: slideIn 0.3s ease-out;
     transform-origin: center top;
 }
@@ -282,12 +428,12 @@
 }
 
 /* Stagger animation for multiple tasks */
-.task-list .task-item:nth-child(1) { animation-delay: 0ms; }
-.task-list .task-item:nth-child(2) { animation-delay: 50ms; }
-.task-list .task-item:nth-child(3) { animation-delay: 100ms; }
-.task-list .task-item:nth-child(4) { animation-delay: 150ms; }
-.task-list .task-item:nth-child(5) { animation-delay: 200ms; }
-.task-list .task-item:nth-child(n+6) { animation-delay: 250ms; }
+.activity-list .activity-item:nth-child(1) { animation-delay: 0ms; }
+.activity-list .activity-item:nth-child(2) { animation-delay: 50ms; }
+.activity-list .activity-item:nth-child(3) { animation-delay: 100ms; }
+.activity-list .activity-item:nth-child(4) { animation-delay: 150ms; }
+.activity-list .activity-item:nth-child(5) { animation-delay: 200ms; }
+.activity-list .activity-item:nth-child(n+6) { animation-delay: 250ms; }
 
 /* Section transitions */
 .timeframe-section {
@@ -312,17 +458,17 @@
 }
 
 /* Loading states */
-.task-item.loading {
+.activity-item.loading {
     opacity: 0.5;
     pointer-events: none;
 }
 
-.task-checkbox:disabled {
+.activity-checkbox:disabled {
     cursor: not-allowed;
 }
 
 /* Success feedback */
-.task-item.just-completed {
+.activity-item.just-completed {
     animation: completeTask 0.5s ease-out;
 }
 
@@ -340,24 +486,24 @@
 }
 
 /* Safe mode - disable animations */
-.safe-mode .task-item,
+.safe-mode .activity-item,
 .safe-mode .timeframe-section {
     animation: none !important;
 }
 
-.safe-mode .task-item.just-completed {
+.safe-mode .activity-item.just-completed {
     background: var(--success-bg, #e8f5e9);
 }
 
 /* Reduce motion preference */
 @media (prefers-reduced-motion: reduce) {
-    .task-item,
+    .activity-item,
     .timeframe-section,
-    .task-item.just-completed {
+    .activity-item.just-completed {
         animation: none !important;
     }
     
-    .task-item {
+    .activity-item {
         opacity: 1;
         transform: none;
     }
@@ -372,7 +518,7 @@
 }
 
 /* Add task button */
-.add-task-btn {
+.add-activity-btn {
     width: 100%;
     padding: 0.75rem;
     margin-top: 1rem;
@@ -386,12 +532,12 @@
     min-height: 44px;
 }
 
-.safe-mode .add-task-btn {
+.safe-mode .add-activity-btn {
     min-height: 60px;
     transition: none;
 }
 
-.add-task-btn:hover {
+.add-activity-btn:hover {
     border-color: var(--primary-color, #2196F3);
     color: var(--primary-color, #2196F3);
     background: var(--surface-color, #f9f9f9);
@@ -484,32 +630,40 @@
         color: white;
     }
     
-    .task-item {
+    .activity-item {
         background: #2a2a2a;
     }
     
-    .task-item:hover {
+    .activity-item:hover {
         background: #333;
     }
     
-    .add-task-btn {
+    .add-activity-btn {
         border-color: #444;
         color: #aaa;
     }
     
-    .add-task-btn:hover {
+    .add-activity-btn:hover {
         border-color: #2196F3;
         background: #2a2a2a;
     }
 }
 
-/* Bulk operations button (per PM review) */
-.bulk-move-btn {
+/* Bulk action buttons wrapper */
+.bulk-action-buttons {
     position: fixed;
     bottom: 20px;
     right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-end;
+    z-index: 100;
+}
+
+/* Bulk operations button (per PM review) */
+.bulk-move-btn {
     padding: 0.75rem 1.5rem;
-    background: var(--warning-color, #FF9800);
     color: white;
     border: none;
     border-radius: 2rem;
@@ -517,7 +671,18 @@
     font-weight: 500;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     cursor: pointer;
-    z-index: 100;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+/* Panic button - move to tomorrow */
+.bulk-move-btn.panic-button {
+    background: var(--warning-color, #FF9800);
+}
+
+/* Complete day button - positive action */
+.bulk-move-btn.complete-day-button {
+    background: var(--success-color, #4CAF50);
 }
 
 .bulk-move-btn:hover {
@@ -530,19 +695,32 @@
     transform: none;
 }
 
+/* Mobile adjustments */
+@media (max-width: 600px) {
+    .bulk-action-buttons {
+        bottom: 10px;
+        right: 10px;
+    }
+    
+    .bulk-move-btn {
+        font-size: 0.8125rem;
+        padding: 0.625rem 1.25rem;
+    }
+}
+
 /* Keyboard focus styles */
-.task-item:focus {
+.activity-item:focus {
     outline: 3px solid var(--primary-color, #2196F3);
     outline-offset: 2px;
 }
 
-.task-item:focus-visible {
+.activity-item:focus-visible {
     outline: 3px solid var(--primary-color, #2196F3);
     outline-offset: 2px;
 }
 
 /* Touch drag visual feedback */
-.task-item.long-press-ready {
+.activity-item.long-press-ready {
     transform: scale(1.02);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }

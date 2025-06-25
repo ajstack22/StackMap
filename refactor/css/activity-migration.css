@@ -1,0 +1,105 @@
+/**
+ * CSS Migration: Tasks to Activities
+ * This file provides compatibility during the migration from task to activity terminology
+ * It creates aliases for all task-related CSS classes to their activity equivalents
+ */
+
+/* ID selectors migration */
+#tasks {
+    /* Inherits all styles from #activities */
+}
+
+#task-container {
+    /* Inherits all styles from #activity-container */
+}
+
+/* Class selectors migration - create aliases from task to activity */
+
+/* Container classes */
+.task-container { /* Alias for .activity-container */ }
+.task-scroll-area { /* Alias for .activity-scroll-area */ }
+.task-content-area { /* Alias for .activity-content-area */ }
+.add-task-container { /* Alias for .add-activity-container */ }
+
+/* Card classes */
+.task-card { /* Alias for .activity-card */ }
+.task-card--celebrating { /* Alias for .activity-card--celebrating */ }
+.task-card-checkbox { /* Alias for .activity-card-checkbox */ }
+.task-card-content { /* Alias for .activity-card-content */ }
+.task-card-title { /* Alias for .activity-card-title */ }
+.task-card-description { /* Alias for .activity-card-description */ }
+.task-card-metadata { /* Alias for .activity-card-metadata */ }
+.task-card-actions { /* Alias for .activity-card-actions */ }
+.task-card-timer { /* Alias for .activity-card-timer */ }
+.task-card__number { /* Alias for .activity-card__number */ }
+.task-card__completion { /* Alias for .activity-card__completion */ }
+.task-card__edit-buttons { /* Alias for .activity-card__edit-buttons */ }
+
+/* Item classes */
+.task-item { /* Alias for .activity-item */ }
+.task-item--completed { /* Alias for .activity-item--completed */ }
+.task-item--editing { /* Alias for .activity-item--editing */ }
+.task-item--reordering { /* Alias for .activity-item--reordering */ }
+.task-item--skeleton { /* Alias for .activity-item--skeleton */ }
+
+/* Number display classes */
+.task-number { /* Alias for .activity-number */ }
+.task-number--completed { /* Alias for .activity-number--completed */ }
+.task-number.updating { /* Alias for .activity-number.updating */ }
+
+/* Actions and controls */
+.task-actions { /* Alias for .activity-actions */ }
+.task-action-btn { /* Alias for .activity-action-btn */ }
+.task-delete-btn { /* Alias for .activity-delete-btn */ }
+.task-edit-btn { /* Alias for .activity-edit-btn */ }
+.task-complete-btn { /* Alias for .activity-complete-btn */ }
+
+/* Input and form elements */
+.task-input { /* Alias for .activity-input */ }
+.task-textarea { /* Alias for .activity-textarea */ }
+.task-form { /* Alias for .activity-form */ }
+.task-form-actions { /* Alias for .activity-form-actions */ }
+
+/* Edit mode classes */
+.edit-mode .task-card { /* Alias for .edit-mode .activity-card */ }
+.edit-mode .task-actions { /* Alias for .edit-mode .activity-actions */ }
+
+/* Today/Tomorrow specific classes */
+.today-tomorrow-task { /* Alias for .today-tomorrow-activity */ }
+.tasks-section { /* Alias for .activities-section */ }
+.tasks-empty { /* Alias for .activities-empty */ }
+.add-task-btn { /* Alias for .add-activity-btn */ }
+
+/* Timer related classes */
+.task-timer-running { /* Alias for .activity-timer-running */ }
+.task-timer-controls { /* Alias for .activity-timer-controls */ }
+
+/**
+ * IMPORTANT: This is a temporary compatibility layer.
+ * Once all JavaScript and HTML references are updated,
+ * this file can be removed.
+ * 
+ * Note: The actual styling is done in the activity-* classes.
+ * These task-* classes are empty aliases that rely on CSS cascade
+ * and the fact that elements will have both classes during migration.
+ */
+
+/* Copy all activity styles to task classes for backward compatibility */
+@import url('cards.css');
+@import url('activity-numbers.css');
+
+/* Explicit mappings for critical classes */
+.task-card {
+    /* Copy all properties from .activity-card */
+    composes: activity-card;
+}
+
+.task-item {
+    /* Copy all properties from .activity-item */
+    composes: activity-item;
+}
+
+.task-number {
+    /* Copy all properties from .activity-number */
+    composes: activity-number;
+}

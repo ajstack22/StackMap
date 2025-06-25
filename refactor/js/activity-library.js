@@ -405,7 +405,7 @@
                     existingTask.description === activity.description &&
                     !existingTask.completed) {
                     // Found duplicate - show message and don't add
-                    self.showDuplicateMessage(`Task "${activity.title}" already exists`);
+                    self.showDuplicateMessage(`Activity "${activity.title}" already exists`);
                     return;
                 }
             }
@@ -445,7 +445,7 @@
             window.Modal.close();
             
             // Show success message
-            self.showSuccessMessage(`Added "${activity.title}" to your tasks`);
+            self.showSuccessMessage(`Added "${activity.title}" to your activities`);
         },
         
         /**

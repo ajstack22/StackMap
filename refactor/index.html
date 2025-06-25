@@ -218,9 +218,13 @@
     
     <!-- External styles loaded async -->
     <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/activity-migration.css">
+    <link rel="stylesheet" href="css/activity-numbers.css">
     <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/visual-cards.css">
     <link rel="stylesheet" href="css/focus-indicators.css">
     <link rel="stylesheet" href="css/activity-library.css">
+    <link rel="stylesheet" href="css/activity-templates.css">
     <link rel="stylesheet" href="css/clusterize.css">
     <link rel="stylesheet" href="css/undo-ui.css">
     <link rel="stylesheet" href="css/mobile.css" media="(max-width: 768px)">
@@ -241,10 +245,19 @@
     
     <!-- Today/Tomorrow styles -->
     <link rel="stylesheet" href="css/today-tomorrow.css">
+    <link rel="stylesheet" href="css/day-selector.css">
     <link rel="stylesheet" href="css/celebration.css">
+    
+    <!-- Quick Add styles -->
+    <link rel="stylesheet" href="css/quick-add.css">
     
     <!-- Undo system styles -->
     <link rel="stylesheet" href="css/undo-ui.css">
+    
+    <!-- Header and Menu styles -->
+    <link rel="stylesheet" href="css/unified-header.css">
+    <link rel="stylesheet" href="css/left-menu.css">
+    <link rel="stylesheet" href="css/settings-dropdown.css">
     
     <!-- Preload critical resources -->
     <link rel="preload" href="js/app.js" as="script">
@@ -253,9 +266,67 @@
     <!-- Skip Links for Keyboard Navigation -->
     <nav class="skip-links" aria-label="Skip links">
         <a href="#main" class="skip-link">Skip to main content</a>
-        <a href="#tasks" class="skip-link">Skip to tasks</a>
-        <a href="#add-task" class="skip-link">Skip to add task</a>
+        <a href="#activities" class="skip-link">Skip to activities</a>
+        <a href="#add-activity" class="skip-link">Skip to add activity</a>
     </nav>
+    
+    <!-- Left Sliding Menu (Edit Mode Activities) -->
+    <div id="left-menu-overlay" class="menu-overlay" aria-hidden="true">
+        <div id="left-menu" class="sliding-menu left-menu" role="dialog" aria-label="Activity Management Menu">
+            <div class="menu-header">
+                <h2>Manage Activities</h2>
+                <button id="left-menu-close" class="menu-close" aria-label="Close menu">×</button>
+            </div>
+            <div class="menu-content">
+                <!-- Add Activities Section -->
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Add Activities</h3>
+                    <button class="menu-item" data-action="add-activity">
+                        <span class="menu-icon">➕</span>
+                        <span class="menu-label">Add Activity</span>
+                    </button>
+                    <button class="menu-item" data-action="quick-templates">
+                        <span class="menu-icon">⚡</span>
+                        <span class="menu-label">Quick Add</span>
+                    </button>
+                    <button class="menu-item" data-action="activity-library">
+                        <span class="menu-icon">📚</span>
+                        <span class="menu-label">Browse Library</span>
+                    </button>
+                </div>
+                
+                <!-- Organize Section -->
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Organize</h3>
+                    <button class="menu-item" data-action="reorder">
+                        <span class="menu-icon">🔄</span>
+                        <span class="menu-label">Reorder Mode</span>
+                    </button>
+                    <button class="menu-item" data-action="pin-mode">
+                        <span class="menu-icon">📌</span>
+                        <span class="menu-label">Pin Activities</span>
+                    </button>
+                    <button class="menu-item" data-action="bulk-delete">
+                        <span class="menu-icon">🗑️</span>
+                        <span class="menu-label">Bulk Delete</span>
+                    </button>
+                </div>
+                
+                <!-- Day Planning Section -->
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Day Planning</h3>
+                    <button class="menu-item" data-action="complete-day">
+                        <span class="menu-icon">✅</span>
+                        <span class="menu-label">Complete Day</span>
+                    </button>
+                    <button class="menu-item" data-action="copy-tomorrow">
+                        <span class="menu-icon">📋</span>
+                        <span class="menu-label">Copy to Tomorrow</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     <!-- Loading State -->
     <div id="loading-view" class="view">
@@ -268,6 +339,7 @@
     <!-- Main App View -->
     <div id="main-view" class="view hidden">
         <header class="header">
+            <button id="left-menu-button" class="left-menu-button edit-mode-only" aria-label="Activity Management">☰</button>
             <h1>StackMap</h1>
             <button id="menu-button" aria-label="Menu">☰</button>
         </header>
@@ -285,15 +357,42 @@
                     </div>
                 </div>
                 
-                <!-- Task display with fallback -->
-                <div id="task-display-wrapper" class="component-wrapper">
+                <!-- Day Selector -->
+                <div id="day-selector-wrapper" class="component-wrapper">
                     <div class="component-normal">
-                        <div id="tasks" role="region" aria-label="Task list">
-                            <div id="task-container"></div>
+                        <div class="day-selector" role="tablist" aria-label="Select day view">
+                            <button class="day-selector-btn active" 
+                                    role="tab" 
+                                    aria-selected="true" 
+                                    aria-controls="activities" 
+                                    data-day="today">
+                                <span class="day-icon">☀️</span>
+                                <span class="day-label">Today</span>
+                            </button>
+                            <button class="day-selector-btn" 
+                                    role="tab" 
+                                    aria-selected="false" 
+                                    aria-controls="activities" 
+                                    data-day="tomorrow">
+                                <span class="day-icon">🌙</span>
+                                <span class="day-label">Tomorrow</span>
+                            </button>
                         </div>
                     </div>
                     <div class="component-fallback" role="alert" aria-live="polite">
-                        <p class="fallback-message">Taking a moment to load your tasks</p>
+                        <p class="fallback-message">Day selection temporarily unavailable - showing all activities</p>
+                    </div>
+                </div>
+                
+                <!-- Task display with fallback -->
+                <div id="activity-display-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <div id="activities" role="region" aria-label="Activity list">
+                            <div id="activity-container"></div>
+                        </div>
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Taking a moment to load your activities</p>
                         <div class="fallback-actions">
                             <button onclick="location.reload()" class="fallback-button fallback-button-primary">Try again</button>
                             <a href="index.html?safe=true" class="fallback-button fallback-button-secondary">Use simple mode</a>
@@ -313,13 +412,21 @@
                 </div>
             </div>
             
+            <!-- Display Mode Toggle Button -->
+            <button id="display-mode-toggle" 
+                    class="display-mode-toggle" 
+                    aria-label="Toggle between numbers and time display"
+                    title="Switch display mode">
+                <span class="toggle-icon">123</span>
+            </button>
+            
             <!-- Main view fallback UI (for complete failure) -->
             <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
                 <div class="fallback-message">Taking a moment to get things ready</div>
                 <div class="fallback-actions">
                     <!-- Form-based try again for zero-JS functionality -->
                     <form method="get" action="index.html" style="margin: 0;">
-                        <input type="hidden" name="last-task" id="last-task" value="">
+                        <input type="hidden" name="last-activity" id="last-activity" value="">
                         <button type="submit" class="fallback-button fallback-button-primary">Try again</button>
                     </form>
                     <!-- Simple anchor link for safe mode -->
@@ -361,7 +468,7 @@
                             📥 Import Data
                         </button>
                         <p class="form-helper" style="text-align: center; margin-top: 8px;">
-                            Backup your tasks or restore from a previous backup
+                            Backup your activities or restore from a previous backup
                         </p>
                     </div>
                 </div>
@@ -504,6 +611,9 @@
         </div>
     </div>
     
+    <!-- Undo Toast Container -->
+    <div id="undo-toast-container" class="undo-toast-container" aria-live="polite"></div>
+    
     <!-- Core Scripts -->
     <script>
         // Immediate platform detection for styling
@@ -540,13 +650,15 @@
     <!-- Component error handler (load early) -->
     <script src="js/component-error-handler.js" defer></script>
     <!-- SQLite storage -->
-    <script src="js/task-sqlite.js" defer></script>
+    <script src="js/activity-sqlite.js" defer></script>
+    <!-- Migration: Tasks to Activities -->
+    <script src="js/migration-tasks-to-activities.js" defer></script>
     <!-- Timer management for memory optimization -->
     <script src="js/timer-manager.js" defer></script>
     <!-- Default activities -->
     <script src="js/default-activities.js" defer></script>
     <!-- Storage System (load before other modules) -->
-    <script src="js/task-sqlite.js" defer></script>
+    <script src="js/activity-sqlite.js" defer></script>
     <script src="js/storage-error-handler.js" defer></script>
     <script src="js/migration-manager.js" defer></script>
     <script src="js/migration-safety.js" defer></script>
@@ -573,37 +685,51 @@
     <script src="js/user-manager.js" defer></script>
     <!-- Profile UI -->
     <script src="js/profile-ui.js" defer></script>
+    <!-- Unified Header -->
+    <script src="js/unified-header.js" defer></script>
     <!-- Data Import/Export -->
     <script src="js/data-export.js" defer></script>
     <script src="js/data-import.js" defer></script>
     <script src="js/data-io-ui.js" defer></script>
     <!-- Virtual scrolling (must load before task-display) -->
+    <script src="js/clusterize-fix.js" defer></script>
     <script src="js/clusterize.min.js" defer></script>
     <script src="js/virtual-scroll-adapter.js" defer></script>
     <!-- Task timer system (must load before task-display) -->
-    <script src="js/task-timer.js" defer></script>
+    <script src="js/activity-timer.js" defer></script>
     <!-- Task display -->
-    <script src="js/task-display.js" defer></script>
+    <script src="js/activity-display.js" defer></script>
     <!-- Undo system (must load after task-display) -->
     <script src="js/undo-manager.js" defer></script>
-    <script src="js/commands/task-commands.js" defer></script>
+    <script src="js/commands/activity-commands.js" defer></script>
     <script src="js/undo-ui.js" defer></script>
     <!-- Today/Tomorrow view -->
+    <script src="js/day-selector.js" defer></script>
     <script src="js/today-tomorrow.js" defer></script>
+    <!-- Display Mode Toggle -->
+    <script src="js/display-mode-toggle.js" defer></script>
     <!-- Rollover manager -->
     <script src="js/rollover-manager.js" defer></script>
     <!-- Celebration system -->
     <script src="js/celebration.js" defer></script>
     <!-- Task reordering -->
-    <script src="js/task-reorder.js" defer></script>
+    <script src="js/activity-reorder.js" defer></script>
     <!-- Drag & Drop reordering -->
     <script src="js/drag-drop-reorder.js" defer></script>
     <!-- Task cards UI -->
     <!-- Task Card Pool (Memory Optimization) -->
-    <script src="js/task-card-pool.js" defer></script>
-    <script src="js/task-cards.js" defer></script>
+    <script src="js/activity-card-pool.js" defer></script>
+    <script src="js/activity-cards.js" defer></script>
+    <!-- Visual Activity Cards System -->
+    <script src="js/visual-card-manager.js" defer></script>
+    <script src="js/card-creation-ui.js" defer></script>
     <!-- Photo attachments -->
     <script src="js/photo-attachment-storage.js" defer></script>
+    <script src="js/photo-optimizer.js" defer></script>
+    <script src="js/memory-pressure-monitor.js" defer></script>
+    <script src="js/hybrid-storage-manager.js" defer></script>
+    <script src="js/upload-retry-manager.js" defer></script>
+    <script src="js/photo-upload-manager.js" defer></script>
     <script src="js/photo-attachment-ui.js" defer></script>
     <!-- Mobile Attachment System -->
     <script src="js/sqlite-attachment-schema.js" defer></script>
@@ -621,10 +747,15 @@
     <script src="js/keyboard-nav.js" defer></script>
     <!-- Activity library -->
     <script src="js/activity-library.js" defer></script>
+    <script src="js/activity-templates.js" defer></script>
+    <script src="js/quick-add-ui.js" defer></script>
     <!-- Theme Settings UI -->
     <script src="js/theme-settings-ui.js" defer></script>
     <!-- Settings System -->
     <script src="js/settings-manager.js" defer></script>
     <script src="js/settings-ui.js" defer></script>
+    <!-- Menu Systems -->
+    <script src="js/left-menu.js" defer></script>
+    <script src="js/settings-dropdown.js" defer></script>
 </body>
 </html>

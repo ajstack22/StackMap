@@ -6,7 +6,7 @@
 (function() {
     'use strict';
     
-    var DemoMode = {
+    let DemoMode = {
         isDemoMode: false,
         demoUserId: 'demo_user',
         onboardingInstance: null,
@@ -26,12 +26,12 @@
         
         checkFirstTime: function() {
             try {
-                var hasSeenApp = localStorage.getItem('stackmap_seen');
+                const hasSeenApp = localStorage.getItem('stackmap_seen');
                 
                 // Safe check for UserManager
-                var hasUsers = false;
+                let hasUsers = false;
                 if (window.UserManager && typeof window.UserManager.getUsers === 'function') {
-                    var users = window.UserManager.getUsers();
+                    const users = window.UserManager.getUsers();
                     hasUsers = users && users.length > 0;
                 }
                 
@@ -51,7 +51,7 @@
                     return;
                 }
                 
-                var modal = window.Modal.show({
+                let modal = window.Modal.show({
                     title: 'Welcome to StackMap! 🌟',
                     content: this.createWelcomeContent(),
                     className: 'welcome-modal',
@@ -63,7 +63,7 @@
         },
         
         createWelcomeContent: function() {
-            var html = '<div class="welcome-content">';
+            let html = '<div class="welcome-content">';
             html += '<p>StackMap helps you manage daily tasks with ease.</p>';
             html += '<p>Perfect for building routines and staying organized!</p>';
             html += '<div class="welcome-actions">';
@@ -76,7 +76,7 @@
         },
         
         startDemo: function() {
-            var self = this;
+            let self = this;
             
             // Close welcome modal
             if (window.Modal && typeof window.Modal.close === 'function') {
@@ -87,7 +87,7 @@
             this.isDemoMode = true;
             
             // Create demo data
-            var demoData = this.createDemoData();
+            const demoData = this.createDemoData();
             
             // Save demo user
             if (window.UserManager) {
@@ -96,7 +96,7 @@
             }
             
             // Save demo tasks
-            var saveSuccess = true;
+            let saveSuccess = true;
             demoData.tasks.forEach(function(task) {
                 if (!self.saveDemoTask(task)) {
                     saveSuccess = false;
@@ -150,10 +150,10 @@
         },
         
         createDemoData: function() {
-            var self = this;
+            let self = this;
             
             // Create demo user
-            var demoUser = {
+            let demoUser = {
                 id: self.demoUserId,
                 name: 'Demo User',
                 emoji: '🌟',
@@ -165,7 +165,7 @@
             };
             
             // Sample tasks for different times of day
-            var demoTasks = [
+            let demoTasks = [
                 // Morning routine
                 {
                     id: 'demo_1',
@@ -260,8 +260,8 @@
         saveDemoTask: function(task) {
             try {
                 // Load existing tasks array
-                var tasksJson = localStorage.getItem('stackmap_tasks');
-                var tasks = tasksJson ? JSON.parse(tasksJson) : [];
+                const tasksJson = localStorage.getItem('stackmap_tasks');
+                const tasks = tasksJson ? JSON.parse(tasksJson) : [];
                 
                 // Add the demo task
                 tasks.push(task);
@@ -278,19 +278,19 @@
         
         showDemoBanner: function() {
             // Remove existing banner if any
-            var existingBanner = document.querySelector('.demo-mode-banner');
+            const existingBanner = document.querySelector('.demo-mode-banner');
             if (existingBanner) {
                 existingBanner.remove();
             }
             
-            var banner = document.createElement('div');
+            let banner = document.createElement('div');
             banner.className = 'demo-mode-banner';
             
-            var bannerContent = document.createElement('div');
+            const bannerContent = document.createElement('div');
             bannerContent.className = 'banner-content';
             bannerContent.innerHTML = '👋 <strong>Demo Mode</strong> - Exploring StackMap? ';
             
-            var exitBtn = document.createElement('button');
+            const exitBtn = document.createElement('button');
             exitBtn.className = 'demo-exit-btn';
             exitBtn.textContent = 'Start Fresh';
             exitBtn.onclick = function() {
@@ -304,7 +304,7 @@
         },
         
         exitDemo: function() {
-            var self = this;
+            let self = this;
             
             try {
                 if (!window.Modal || typeof window.Modal.show !== 'function') {
@@ -312,7 +312,7 @@
                     return;
                 }
                 
-                var modal = window.Modal.show({
+                const modal = window.Modal.show({
                     title: 'Ready to Start?',
                     content: self.createExitContent(),
                     className: 'demo-exit-modal'
@@ -323,7 +323,7 @@
         },
         
         createExitContent: function() {
-            var html = '<div class="demo-exit-content">';
+            let html = '<div class="demo-exit-content">';
             html += '<p>Would you like to:</p>';
             html += '<div class="demo-exit-options">';
             
@@ -346,7 +346,7 @@
         },
         
         startFresh: function() {
-            var self = this;
+            let self = this;
             
             // Close modal
             window.Modal.close();
@@ -355,7 +355,7 @@
             this.clearDemoData();
             
             // Remove demo banner
-            var banner = document.querySelector('.demo-mode-banner');
+            let banner = document.querySelector('.demo-mode-banner');
             if (banner) {
                 banner.remove();
             }
@@ -370,7 +370,7 @@
         },
         
         keepDemoTasks: function() {
-            var self = this;
+            let self = this;
             
             // Close modal
             if (window.Modal && typeof window.Modal.close === 'function') {
@@ -378,7 +378,7 @@
             }
             
             // Convert demo user to real user
-            var demoUser = window.UserManager.getUser(this.demoUserId);
+            const demoUser = window.UserManager.getUser(this.demoUserId);
             if (demoUser) {
                 // Remove demo flag
                 delete demoUser.isDemo;
@@ -393,7 +393,7 @@
         },
         
         createProfileCustomizationContent: function(user) {
-            var html = '<div class="profile-customization">';
+            const html = '<div class="profile-customization">';
             html += '<p>Let\'s make this profile yours!</p>';
             html += '<div class="form-group">';
             html += '<label for="user-name">Your Name:</label>';
@@ -403,7 +403,7 @@
             html += '<label for="user-emoji">Choose Your Emoji:</label>';
             html += '<div class="emoji-picker">';
             
-            var emojis = ['😊', '🌟', '🚀', '🎨', '🌈', '💪', '🧠', '❤️', '🎯', '🌱'];
+            const emojis = ['😊', '🌟', '🚀', '🎨', '🌈', '💪', '🧠', '❤️', '🎯', '🌱'];
             emojis.forEach(function(emoji) {
                 html += '<button class="emoji-option' + (emoji === user.emoji ? ' selected' : '') + '" data-emoji="' + emoji + '">' + emoji + '</button>';
             });
@@ -419,9 +419,9 @@
         },
         
         saveProfileCustomization: function() {
-            var name = document.getElementById('user-name').value.trim();
-            var selectedEmoji = document.querySelector('.emoji-option.selected');
-            var emoji = selectedEmoji ? selectedEmoji.getAttribute('data-emoji') : '🌟';
+            const name = document.getElementById('user-name').value.trim();
+            const selectedEmoji = document.querySelector('.emoji-option.selected');
+            const emoji = selectedEmoji ? selectedEmoji.getAttribute('data-emoji') : '🌟';
             
             if (!name) {
                 alert('Please enter your name');
@@ -429,10 +429,10 @@
             }
             
             // Update user
-            var user = window.UserManager.getUser(this.demoUserId);
+            const user = window.UserManager.getUser(this.demoUserId);
             if (user) {
                 // Create new user with new ID
-                var newUser = {
+                const newUser = {
                     id: 'user_' + Date.now(),
                     name: name,
                     emoji: emoji,
@@ -456,7 +456,7 @@
             }
             
             // Remove demo banner
-            var banner = document.querySelector('.demo-mode-banner');
+            let banner = document.querySelector('.demo-mode-banner');
             if (banner) {
                 banner.remove();
             }
@@ -471,19 +471,19 @@
         },
         
         migrateDemoTasks: function(oldUserId, newUserId) {
-            var keys = Object.keys(localStorage);
-            var taskPrefix = 'task_' + oldUserId + '_';
+            let keys = Object.keys(localStorage);
+            let taskPrefix = 'task_' + oldUserId + '_';
             
             keys.forEach(function(key) {
                 if (key.startsWith(taskPrefix)) {
-                    var taskData = localStorage.getItem(key);
+                    const taskData = localStorage.getItem(key);
                     if (taskData) {
                         try {
-                            var task = JSON.parse(taskData);
+                            const task = JSON.parse(taskData);
                             task.user_id = newUserId;
                             
                             // Save with new key
-                            var newKey = 'task_' + newUserId + '_' + task.id;
+                            const newKey = 'task_' + newUserId + '_' + task.id;
                             localStorage.setItem(newKey, JSON.stringify(task));
                             
                             // Remove old key
@@ -503,8 +503,8 @@
             }
             
             // Remove demo tasks
-            var keys = Object.keys(localStorage);
-            var taskPrefix = 'task_' + this.demoUserId + '_';
+            const keys = Object.keys(localStorage);
+            const taskPrefix = 'task_' + this.demoUserId + '_';
             
             keys.forEach(function(key) {
                 if (key.startsWith(taskPrefix)) {
@@ -518,13 +518,13 @@
         },
         
         setupDemoEventListeners: function() {
-            var self = this;
+            const self = this;
             
             // Listen for task completion in demo mode
             document.addEventListener('change', function(e) {
                 if (self.isDemoMode && e.target && e.target.classList.contains('task-checkbox')) {
                     // Dispatch custom event for onboarding
-                    var event = new CustomEvent('taskCompleted', {
+                    const event = new CustomEvent('taskCompleted', {
                         detail: {
                             taskId: e.target.closest('.task-card').getAttribute('data-task-id'),
                             isDemo: true
@@ -555,7 +555,7 @@
         this.eventListeners = [];
         
         // Remove demo banner
-        var banner = document.querySelector('.demo-mode-banner');
+        const banner = document.querySelector('.demo-mode-banner');
         if (banner) {
             banner.remove();
         }
@@ -566,10 +566,10 @@
     };
     
     // Handle emoji picker events
-    var emojiClickHandler = function(e) {
+    const emojiClickHandler = function(e) {
         if (e.target.classList.contains('emoji-option')) {
             // Remove selected class from all emojis
-            var allEmojis = document.querySelectorAll('.emoji-option');
+            const allEmojis = document.querySelectorAll('.emoji-option');
             allEmojis.forEach(function(emoji) {
                 emoji.classList.remove('selected');
             });

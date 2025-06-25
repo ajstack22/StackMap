@@ -21,10 +21,10 @@
             noMatch: "I'm still learning that command. Try 'add', 'done', or 'show' to start.",
             lowConfidence: "I think I heard '{transcript}' - is that right?",
             noSpeech: "I didn't hear anything. Take your time and try again when ready.",
-            noPermission: "I need microphone access to hear you. You can also type tasks instead.",
-            networkError: "Voice commands work best with internet. You can still type tasks!",
+            noPermission: "I need microphone access to hear you. You can also type activities instead.",
+            networkError: "Voice commands work best with internet. You can still type activities!",
             recognitionError: "Something went wrong. Let's try again!",
-            permissionDenied: "No problem! You can type tasks instead of using voice."
+            permissionDenied: "No problem! You can type activities instead of using voice."
         },
         
         gestures: {

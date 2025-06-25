@@ -7,14 +7,14 @@
 }
 
 /* StackMap specific styles for task virtual scrolling */
-.task-scroll-area {
+.activity-scroll-area {
   height: 100%;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch; /* iOS momentum scrolling */
   position: relative;
 }
 
-.task-content-area {
+.activity-content-area {
   position: relative;
   min-height: 100%;
 }
@@ -32,7 +32,7 @@
 }
 
 /* Ensure smooth scrolling unless in safe mode */
-body:not(.safe-mode) .task-scroll-area {
+body:not(.safe-mode) .activity-scroll-area {
   scroll-behavior: smooth;
 }
 
@@ -75,7 +75,7 @@ body:not(.safe-mode) .task-scroll-area {
 }
 
 /* Additional StackMap task list styles */
-.task-scroll-area.clusterize-scroll {
+.activity-scroll-area.clusterize-scroll {
   max-height: none; /* Override default */
   height: 100%;
   background: transparent;
@@ -84,7 +84,7 @@ body:not(.safe-mode) .task-scroll-area {
 }
 
 /* Safe mode adjustments */
-.safe-mode .task-scroll-area {
+.safe-mode .activity-scroll-area {
   scroll-behavior: auto !important;
 }
 
@@ -94,7 +94,7 @@ body:not(.safe-mode) .task-scroll-area {
 }
 
 /* Focus styles for keyboard navigation */
-.task-scroll-area:focus {
+.activity-scroll-area:focus {
   outline: 2px solid #4a90e2;
   outline-offset: -2px;
 }

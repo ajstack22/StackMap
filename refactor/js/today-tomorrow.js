@@ -101,6 +101,15 @@
                         self.render();
                     });
                 });
+                
+                // Listen for day selector changes
+                document.addEventListener('dayViewChanged', function(e) {
+                    if (e.detail && e.detail.day) {
+                        console.log('TodayTomorrow: Day view changed to', e.detail.day);
+                        self.currentView = e.detail.day;
+                        self.render();
+                    }
+                });
             });
         },
         
@@ -231,9 +240,12 @@
             // Clear container
             self.container.innerHTML = '';
             
-            // Create navigation tabs
-            const nav = self.createNavigation();
-            self.container.appendChild(nav);
+            // Only create navigation if day selector is not available
+            if (!window.DaySelector || !window.DaySelector.isReady()) {
+                // Create navigation tabs
+                const nav = self.createNavigation();
+                self.container.appendChild(nav);
+            }
             
             // Create sections container
             const sectionsContainer = document.createElement('div');
@@ -522,7 +534,7 @@
             // Add task button
             const addButton = document.createElement('button');
             addButton.className = 'add-task-btn';
-            addButton.textContent = `+ Add task for ${config.title.toLowerCase()}`;
+            addButton.textContent = `+ Add activity for ${config.title.toLowerCase()}`;
             addButton.setAttribute('data-timeframe', config.id.replace('-section', ''));
             section.appendChild(addButton);
             
@@ -594,7 +606,7 @@
             // For now, just show a placeholder
             const placeholder = document.createElement('div');
             placeholder.className = 'all-tasks-placeholder';
-            placeholder.textContent = 'All tasks view - to be implemented';
+            placeholder.textContent = 'All activities view - to be implemented';
             container.appendChild(placeholder);
         },
         
@@ -768,7 +780,7 @@
                     event = new CustomEvent('celebrate', {
                         detail: {
                             type: 'large',
-                            message: 'All tasks complete! Amazing work! 🌟'
+                            message: 'All activities complete! Amazing work! 🌟'
                         }
                     });
                 } catch (e) {
@@ -776,7 +788,7 @@
                     event = document.createEvent('CustomEvent');
                     event.initCustomEvent('celebrate', true, true, {
                         type: 'large',
-                        message: 'All tasks complete! Amazing work! 🌟'
+                        message: 'All activities complete! Amazing work! 🌟'
                     });
                 }
                 document.dispatchEvent(event);
@@ -826,16 +838,37 @@
         createPanicButton: function() {
             const self = this;
             
-            const button = document.createElement('button');
-            button.className = 'bulk-move-btn panic-button';
-            button.innerHTML = '😰 Move all to tomorrow';
-            button.title = 'Feeling overwhelmed? Move everything to tomorrow and start fresh';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'bulk-action-buttons';
             
-            button.onclick = function() {
+            // Move all to tomorrow button
+            const panicButton = document.createElement('button');
+            panicButton.className = 'bulk-move-btn panic-button';
+            panicButton.innerHTML = '😰 Move all to tomorrow';
+            panicButton.title = 'Feeling overwhelmed? Move everything to tomorrow and start fresh';
+            
+            panicButton.onclick = function() {
                 self.moveAllToTomorrow();
             };
             
-            return button;
+            // Complete day button (if tasks exist)
+            const todayTasks = self.cachedFilters.today;
+            if (todayTasks.length > 0) {
+                const completeButton = document.createElement('button');
+                completeButton.className = 'bulk-move-btn complete-day-button';
+                completeButton.innerHTML = '✅ Complete all remaining';
+                completeButton.title = 'Mark all remaining activities as done';
+                
+                completeButton.onclick = function() {
+                    self.completeAllToday();
+                };
+                
+                wrapper.appendChild(completeButton);
+            }
+            
+            wrapper.appendChild(panicButton);
+            
+            return wrapper;
         },
         
         /**
@@ -864,6 +897,61 @@
                 self.saveTasks(function() {
                     self.render();
                     self.showNotification('All tasks moved to tomorrow. Today is yours! 🌅', 'success');
+                });
+            }
+        },
+        
+        /**
+         * Complete all remaining today tasks
+         */
+        completeAllToday: function() {
+            const self = this;
+            
+            const todayTasks = self.tasks.filter(function(task) {
+                return !task.completed && task.timeframe === TASK_TIMEFRAMES.TODAY;
+            });
+            
+            if (todayTasks.length === 0) return;
+            
+            // Confirm with encouraging message
+            const message = `Complete all ${todayTasks.length} remaining tasks? What an accomplishment! 🎉`;
+            
+            if (confirm(message)) {
+                const now = new Date().toISOString();
+                
+                // Complete all tasks
+                todayTasks.forEach(function(task) {
+                    task.completed = true;
+                    task.completed_at = now;
+                    task.updated_at = now;
+                });
+                
+                // Save and refresh
+                self.saveTasks(function() {
+                    self.render();
+                    
+                    // Big celebration for completing the day!
+                    self.showNotification('Day complete! You did it! 🌟', 'celebration');
+                    
+                    // Trigger major celebration
+                    if (window.CelebrationSystem) {
+                        let event;
+                        try {
+                            event = new CustomEvent('celebrate', {
+                                detail: {
+                                    type: 'large',
+                                    message: `${todayTasks.length} tasks completed! Incredible day! 🎊`
+                                }
+                            });
+                        } catch (e) {
+                            event = document.createEvent('CustomEvent');
+                            event.initCustomEvent('celebrate', true, true, {
+                                type: 'large',
+                                message: `${todayTasks.length} tasks completed! Incredible day! 🎊`
+                            });
+                        }
+                        document.dispatchEvent(event);
+                    }
                 });
             }
         },
@@ -1033,7 +1121,7 @@
             self.container.addEventListener('touchmove', function(e) {
                 if (longPressTimer && !draggedElement) {
                     // Cancel long press if moved too much
-                    var touch = e.touches[0];
+                    let touch = e.touches[0];
                     const moveThreshold = 10;
                     if (Math.abs(touch.clientX - touchOffset.x) > moveThreshold ||
                         Math.abs(touch.clientY - touchOffset.y) > moveThreshold) {
@@ -1044,7 +1132,7 @@
                 
                 if (draggedElement && dragGhost) {
                     e.preventDefault();
-                    var touch = e.touches[0];
+                    let touch = e.touches[0];
                     
                     self.updateDragGhostPosition(touch.clientX, touch.clientY, dragGhost);
                     

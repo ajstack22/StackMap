@@ -1,6 +1,6 @@
 /**
- * Task Display Module for StackMap
- * Handles rendering and CRUD operations for tasks
+ * Activity Display Module for StackMap
+ * Handles rendering and CRUD operations for activities
  * Mobile-first design with ADHD/autism accommodations
  */
 
@@ -8,16 +8,16 @@
     'use strict';
     
     // Today/Tomorrow constants
-    const TASK_TIMEFRAMES = {
+    const ACTIVITY_TIMEFRAMES = {
         TODAY: 'today',
         TOMORROW: 'tomorrow',
         SOMEDAY: 'someday'
     };
     
-    const TaskDisplay = {
+    const ActivityDisplay = {
         container: null,
-        tasks: [],
-        editingTaskId: null,
+        activities: [],
+        editingActivityId: null,
         autoSaveTimer: null,
         isInitialized: false,
         
@@ -30,18 +30,18 @@
         globalKeyHandler: null,
         
         /**
-         * Initialize the task display
+         * Initialize the activity display
          */
         init: function() {
-            // Find container
-            this.container = document.getElementById('task-container');
+            // Find container (check both old and new IDs for compatibility)
+            this.container = document.getElementById('activity-container') || document.getElementById('task-container'); // Keep task-container for backwards compatibility
             if (!this.container) {
-                console.error('TaskDisplay: Container not found');
+                console.error('ActivityDisplay: Container not found');
                 return;
             }
             
-            // Load tasks from storage
-            this.loadTasks((success) => {
+            // Load activities from storage
+            this.loadActivities((success) => {
                 if (success) {
                     this.render();
                     this.setupEventListeners();
@@ -53,24 +53,30 @@
                             this.render();
                         });
                     }
+                    
+                    // Listen for day view changes
+                    document.addEventListener('dayViewChanged', (e) => {
+                        console.log('ActivityDisplay: Day view changed, re-rendering');
+                        this.render();
+                    });
                 } else {
-                    this.showError('Unable to load tasks');
+                    this.showError('Unable to load activities');
                 }
             });
         },
         
         /**
-         * Load tasks from storage (SQLite or localStorage)
+         * Load activities from storage (SQLite or localStorage)
          */
-        loadTasks: function(callback) {
+        loadActivities: function(callback) {
             // Try SQLite first if available
-            if (window.TaskSQLite && window.TaskSQLite.isReady) {
-                window.TaskSQLite.getTasks((tasks, error) => {
+            if (window.ActivitySQLite && window.ActivitySQLite.isReady) {
+                window.ActivitySQLite.getActivities((activities, error) => {
                     if (error) {
-                        console.warn('TaskDisplay: SQLite error, falling back to localStorage', error);
+                        console.warn('ActivityDisplay: SQLite error, falling back to localStorage', error);
                         this.loadFromLocalStorage(callback);
                     } else {
-                        this.tasks = tasks || [];
+                        this.activities = activities || [];
                         if (callback) callback(true);
                     }
                 });
@@ -81,29 +87,33 @@
         },
         
         /**
-         * Load tasks from localStorage fallback
+         * Load activities from localStorage fallback
          */
         loadFromLocalStorage: function(callback) {
             
             try {
-                const stored = localStorage.getItem('stackmap_tasks');
-                const allTasks = stored ? JSON.parse(stored) : [];
+                // Check new key first, then fall back to old key for compatibility
+                let stored = localStorage.getItem('stackmap_activities');
+                if (!stored) {
+                    stored = localStorage.getItem('stackmap_tasks');
+                }
+                const allActivities = stored ? JSON.parse(stored) : [];
                 
-                // Filter tasks by current user
-                this.tasks = this.filterTasksByUser(allTasks);
+                // Filter activities by current user
+                this.activities = this.filterActivitiesByUser(allActivities);
                 
                 if (callback) callback(true);
             } catch (error) {
-                console.error('TaskDisplay: localStorage error', error);
-                this.tasks = [];
+                console.error('ActivityDisplay: localStorage error', error);
+                this.activities = [];
                 if (callback) callback(false);
             }
         },
         
         /**
-         * Save tasks to storage
+         * Save activities to storage
          */
-        saveTasks: function(callback) {
+        saveActivities: function(callback) {
             // Clear any existing auto-save timer
             if (this.autoSaveTimer) {
                 clearTimeout(this.autoSaveTimer);
@@ -119,12 +129,25 @@
          * Perform the actual save operation
          */
         performSave: function(callback) {
+            const self = this;
+            
+            // Save callback wrapper to dispatch event after save
+            const saveCallback = function(error) {
+                if (!error) {
+                    // Dispatch activitiesChanged event for other components
+                    document.dispatchEvent(new CustomEvent('activitiesChanged', {
+                        detail: { activities: self.activities }
+                    }));
+                }
+                if (callback) callback(error);
+            };
+            
             // Try SQLite first if available
-            if (window.TaskSQLite && window.TaskSQLite.isReady) {
+            if (window.ActivitySQLite && window.ActivitySQLite.isReady) {
                 // For now, save to localStorage as SQLite implementation needs the full CRUD
-                this.saveToLocalStorage(callback);
+                this.saveToLocalStorage(saveCallback);
             } else {
-                this.saveToLocalStorage(callback);
+                this.saveToLocalStorage(saveCallback);
             }
         },
         
@@ -133,25 +156,29 @@
          */
         saveToLocalStorage: function(callback) {
             try {
-                localStorage.setItem('stackmap_tasks', JSON.stringify(this.tasks));
+                // Save to both keys during transition period
+                const dataStr = JSON.stringify(this.activities);
+                localStorage.setItem('stackmap_activities', dataStr);
+                // Also save to old key for backward compatibility
+                localStorage.setItem('stackmap_tasks', dataStr);
                 if (callback) callback(true);
             } catch (error) {
-                console.error('TaskDisplay: Save failed', error);
+                console.error('ActivityDisplay: Save failed', error);
                 if (callback) callback(false);
             }
         },
         
         /**
-         * Render all tasks
+         * Render all activities
          */
         render: function() {
             const self = this;
             const startTime = performance.now();
             
             // Show skeleton screens immediately
-            if (self.tasks.length > 0 && window.StackMapFeatureFlags && 
+            if (self.activities.length > 0 && window.StackMapFeatureFlags && 
                 window.StackMapFeatureFlags.isEnabled('skeleton-screens')) {
-                self.showSkeletonTasks(self.container, Math.min(self.tasks.length, 5));
+                self.showSkeletonActivities(self.container, Math.min(self.activities.length, 5));
             }
             
             // Use requestAnimationFrame for smooth rendering
@@ -160,24 +187,24 @@
                 self.container.innerHTML = '';
                 
                 // Clear timer button cache when re-rendering
-            if (window.TaskTimer && window.TaskTimer.clearButtonCache) {
-                window.TaskTimer.clearButtonCache();
+            if (window.ActivityTimer && window.ActivityTimer.clearButtonCache) {
+                window.ActivityTimer.clearButtonCache();
             }
             
-            // Add new task button and browse activities button (only in edit mode)
+            // Add new activity button and browse activities button (only in edit mode)
             if (window.EditMode && window.EditMode.isActive()) {
                 const editButtonsContainer = document.createElement('div');
                 editButtonsContainer.className = 'edit-buttons-container';
                 editButtonsContainer.style.cssText = 'display: flex; gap: 12px; margin-bottom: 16px;';
                 
-                // Add Task button
+                // Add Activity button
                 const addButton = self.createAddButton();
                 addButton.style.marginBottom = '0';
                 editButtonsContainer.appendChild(addButton);
                 
-                // Browse Activities button
-                const browseButton = self.createBrowseActivitiesButton();
-                editButtonsContainer.appendChild(browseButton);
+                // Quick Add button (replaces Browse Activities)
+                const quickAddButton = self.createQuickAddButton();
+                editButtonsContainer.appendChild(quickAddButton);
                 
                 self.container.appendChild(editButtonsContainer);
             }
@@ -189,7 +216,7 @@
             if (userTasks.length === 0) {
                 const emptyMessage = document.createElement('div');
                 emptyMessage.className = 'task-empty-message';
-                emptyMessage.textContent = 'No tasks yet. Tap + to add one.';
+                emptyMessage.textContent = 'No activities yet. Tap + to add one.';
                 emptyMessage.style.cssText = 'text-align: center; padding: 40px 20px; color: #999;';
                 self.container.appendChild(emptyMessage);
             } else {
@@ -234,8 +261,8 @@
             // Use DocumentFragment for batch DOM operations
             const fragment = document.createDocumentFragment();
             
-            userTasks.forEach(function(task) {
-                const taskElement = self.createTaskElement(task);
+            userTasks.forEach(function(task, index) {
+                const taskElement = self.createTaskElement(task, index + 1);
                 fragment.appendChild(taskElement);
             });
             
@@ -251,8 +278,8 @@
             
             const button = document.createElement('button');
             button.className = 'task-add-button';
-            button.setAttribute('aria-label', 'Add new task');
-            button.textContent = '+ Add Task';
+            button.setAttribute('aria-label', 'Add new activity');
+            button.textContent = '+ Add Activity';
             
             // Apply safe mode styles
             button.style.cssText = 
@@ -274,33 +301,33 @@
         },
         
         /**
-         * Create browse activities button
+         * Create quick add button
          */
-        createBrowseActivitiesButton: function() {
+        createQuickAddButton: function() {
             const self = this;
             
             const button = document.createElement('button');
-            button.className = 'browse-activities-button';
-            button.setAttribute('aria-label', 'Browse activity library');
-            button.textContent = '📚 Browse Activities';
+            button.className = 'quick-add-button';
+            button.setAttribute('aria-label', 'Quick add activity from templates');
+            button.textContent = '⚡ Quick Add';
             
             // Apply safe mode styles
             button.style.cssText = 
                 `width: 100%;min-height: ${self.touchTargetSize}px;padding: 16px;margin-bottom: 16px;background: #4a90e2;border: none;border-radius: 8px;color: #fff;font-size: 16px;cursor: pointer;transition: ${self.safeMode ? 'none' : 'all 0.2s ease;'}`;
             
             // Use optimized button response if available
-            const browseHandler = function() {
-                if (window.ActivityLibrary) {
-                    window.ActivityLibrary.show();
+            const quickAddHandler = function() {
+                if (window.ActivityTemplates) {
+                    window.ActivityTemplates.show();
                 } else {
-                    console.error('Activity Library not loaded');
+                    console.error('Activity Templates not loaded');
                 }
             };
             
             if (self.optimizeButtonResponse) {
-                self.optimizeButtonResponse(button, browseHandler);
+                self.optimizeButtonResponse(button, quickAddHandler);
             } else {
-                button.onclick = browseHandler;
+                button.onclick = quickAddHandler;
             }
             
             return button;
@@ -309,22 +336,47 @@
         /**
          * Create task element
          */
-        createTaskElement: function(task) {
+        createTaskElement: function(task, displayNumber) {
             const self = this;
             
             const taskEl = document.createElement('div');
             taskEl.className = 'task-item';
             taskEl.setAttribute('data-task-id', task.id);
+            taskEl.setAttribute('data-display-number', displayNumber || '');
             
             // Apply safe mode styles
             taskEl.style.cssText = 
-                `background: #2a2a2a;border-radius: 8px;padding: 16px;margin-bottom: 12px;min-height: ${self.touchTargetSize}px;display: flex;align-items: center;gap: 12px;`;
+                `position: relative;background: #2a2a2a;border-radius: 8px;padding: 16px;padding-left: 60px;margin-bottom: 12px;min-height: ${self.touchTargetSize}px;display: flex;align-items: center;gap: 12px;`;
+            
+            // Add activity number if provided and display mode is set to numbers
+            if (displayNumber && self.getDisplayMode() === 'numbers') {
+                const numberEl = document.createElement('div');
+                numberEl.className = 'activity-number';
+                numberEl.textContent = displayNumber;
+                numberEl.setAttribute('aria-label', `Activity number ${displayNumber}`);
+                numberEl.style.cssText = 
+                    'position: absolute;' +
+                    'top: 50%;' +
+                    'left: 12px;' +
+                    'transform: translateY(-50%);' +
+                    'width: 36px;' +
+                    'height: 36px;' +
+                    'display: flex;' +
+                    'align-items: center;' +
+                    'justify-content: center;' +
+                    'font-size: 24px;' +
+                    'font-weight: bold;' +
+                    'color: #667eea;' +
+                    'background: rgba(102, 126, 234, 0.1);' +
+                    'border-radius: 50%;';
+                taskEl.appendChild(numberEl);
+            }
             
             // Checkbox
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = task.completed;
-            checkbox.setAttribute('aria-label', `Mark task as ${task.completed ? 'incomplete' : 'complete'}`);
+            checkbox.setAttribute('aria-label', `Mark activity as ${task.completed ? 'incomplete' : 'complete'}`);
             checkbox.style.cssText = 
                 'width: 24px;' +
                 'height: 24px;' +
@@ -460,7 +512,7 @@
                 const reorderHandle = document.createElement('div');
                 reorderHandle.className = 'reorder-handle';
                 reorderHandle.innerHTML = '≡';
-                reorderHandle.setAttribute('aria-label', 'Reorder task');
+                reorderHandle.setAttribute('aria-label', 'Reorder activity');
                 reorderHandle.style.cssText = 
                     'width: 32px;' +
                     'height: 32px;' +
@@ -476,7 +528,7 @@
                 // Edit button
                 const editBtn = document.createElement('button');
                 editBtn.className = 'task-edit';
-                editBtn.setAttribute('aria-label', 'Edit task');
+                editBtn.setAttribute('aria-label', 'Edit activity');
                 editBtn.innerHTML = '✏️';
                 editBtn.style.cssText = 
                     `width: ${self.touchTargetSize}px;height: ${self.touchTargetSize}px;background: #444;border: none;border-radius: 50%;color: #fff;font-size: 20px;cursor: pointer;flex-shrink: 0;display: flex;align-items: center;justify-content: center;`;
@@ -490,7 +542,7 @@
                 // Delete button
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = 'task-delete';
-                deleteBtn.setAttribute('aria-label', 'Delete task');
+                deleteBtn.setAttribute('aria-label', 'Delete activity');
                 deleteBtn.textContent = '×';
                 deleteBtn.style.cssText = 
                     `width: ${self.touchTargetSize}px;height: ${self.touchTargetSize}px;background: #444;border: none;border-radius: 50%;color: #fff;font-size: 24px;cursor: pointer;flex-shrink: 0;display: flex;align-items: center;justify-content: center;`;
@@ -522,6 +574,12 @@
                 userId = currentUser ? currentUser.id : null;
             }
             
+            // Get selected day from DaySelector
+            let selectedDay = 'today';
+            if (window.DaySelector && window.DaySelector.isReady()) {
+                selectedDay = window.DaySelector.getCurrentDay();
+            }
+            
             const taskData = {
                 title: '',
                 description: '',
@@ -537,7 +595,8 @@
                 order: Date.now(),  // For manual sorting
                 attachments: [],  // Array of attachment IDs
                 // Today/Tomorrow support
-                timeframe: 'today',  // 'today', 'tomorrow', 'someday'
+                timeframe: selectedDay,  // 'today', 'tomorrow', 'someday'
+                day: selectedDay,  // New field for consistency with schema
                 originalDate: new Date().toISOString(),  // When first assigned timeframe
                 rolloverCount: 0,  // Number of times task rolled forward
                 lastRolloverDate: null  // Last time task was rolled over
@@ -610,7 +669,7 @@
             
             // Show modal
             const modal = window.Modal.show({
-                title: task.title ? 'Edit Task' : 'New Task',
+                title: task.title ? 'Edit Activity' : 'New Activity',
                 content: formHtml,
                 className: 'task-edit-modal',
                 onClose: function() {
@@ -1178,7 +1237,18 @@
          */
         getUserTasks: function() {
             const self = this;
-            const userTasks = self.filterTasksByUser(self.tasks);
+            let userTasks = self.filterTasksByUser(self.tasks);
+            
+            // Filter by selected day if DaySelector is available
+            if (window.DaySelector && window.DaySelector.isReady()) {
+                const selectedDay = window.DaySelector.getCurrentDay();
+                userTasks = userTasks.filter(function(task) {
+                    // Show tasks for the selected day
+                    // Check both 'day' and 'timeframe' fields for compatibility
+                    const taskDay = task.day || task.timeframe || 'today';
+                    return taskDay === selectedDay;
+                });
+            }
             
             // Sort by order field (higher values first)
             userTasks.sort(function(a, b) {
@@ -1827,19 +1897,70 @@
                     self.render();
                 }
             }
+        },
+        
+        /**
+         * Get current display mode (numbers or time)
+         */
+        getDisplayMode: function() {
+            try {
+                const mode = localStorage.getItem('stackmap_display_mode');
+                return mode === 'time' ? 'time' : 'numbers'; // Default to numbers
+            } catch (e) {
+                console.warn('Could not load display mode preference', e);
+                return 'numbers';
+            }
+        },
+        
+        /**
+         * Set display mode preference
+         */
+        setDisplayMode: function(mode) {
+            const self = this;
+            
+            if (mode !== 'numbers' && mode !== 'time') {
+                console.warn('Invalid display mode:', mode);
+                return;
+            }
+            
+            try {
+                localStorage.setItem('stackmap_display_mode', mode);
+                // Re-render to apply new display mode
+                self.render();
+            } catch (e) {
+                console.warn('Could not save display mode preference', e);
+            }
+        },
+        
+        /**
+         * Toggle between display modes
+         */
+        toggleDisplayMode: function() {
+            const self = this;
+            const currentMode = self.getDisplayMode();
+            const newMode = currentMode === 'numbers' ? 'time' : 'numbers';
+            self.setDisplayMode(newMode);
+            
+            // Dispatch event for other components
+            document.dispatchEvent(new CustomEvent('displayModeChanged', {
+                detail: { mode: newMode }
+            }));
         }
     };
     
     // Export to global scope
-    window.TaskDisplay = TaskDisplay;
+    window.ActivityDisplay = ActivityDisplay;
+    
+    // BACKWARD COMPATIBILITY - Keep old name working
+    window.TaskDisplay = ActivityDisplay;
     
     // Auto-initialize when DOM is ready
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', function() {
-            TaskDisplay.init();
+            ActivityDisplay.init();
         });
     } else {
         // DOM already loaded
-        TaskDisplay.init();
+        ActivityDisplay.init();
     }
 })();
