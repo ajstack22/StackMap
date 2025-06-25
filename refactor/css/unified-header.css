@@ -112,7 +112,45 @@
     transform: scale(0.98);
 }
 
-/* Pill content */
+/* Enhanced pill layout - flex properties added to existing .user-day-pill above */
+
+/* Pill content components */
+.pill-emoji {
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.pill-name {
+    font-weight: 500;
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.pill-separator {
+    opacity: 0.5;
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.pill-day {
+    opacity: 0.9;
+    flex-shrink: 0;
+}
+
+/* Hide name on very small screens */
+@media (max-width: 360px) {
+    .pill-name {
+        display: none;
+    }
+    
+    .pill-separator {
+        display: none;
+    }
+}
+
+/* Legacy styles for backward compatibility */
 .user-emoji {
     font-size: 20px;
     flex-shrink: 0;
@@ -140,8 +178,17 @@
     color: #a5b4fc;
 }
 
-.safe-mode .user-emoji {
+.safe-mode .user-emoji,
+.safe-mode .pill-emoji {
     font-size: 24px;
+}
+
+.safe-mode .pill-name {
+    font-size: 18px;
+}
+
+.safe-mode .pill-day {
+    font-size: 16px;
 }
 
 .safe-mode .user-name {

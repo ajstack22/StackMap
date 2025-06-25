@@ -7,7 +7,7 @@
     'use strict';
     
     // Schema version for migrations
-    const SCHEMA_VERSION = 2; // Updated for visual cards
+    const SCHEMA_VERSION = 3; // Updated for pin activities feature
     
     // Data structure definitions with validation
     const DataSchema = {
@@ -27,6 +27,7 @@
                 tags: { type: 'array', itemType: 'string', maxItems: 20 },
                 attachmentIds: { type: 'array', itemType: 'number', maxItems: 10 },
                 day: { type: 'enum', values: ['today', 'tomorrow', 'someday'], default: 'today' },
+                pinned: { type: 'boolean', default: false, required: false }, // Pin for daily routines
                 metadata: {
                     type: 'object',
                     fields: {

@@ -444,7 +444,7 @@
                 }
                 
                 // Update StorageAdapter if available
-                if (window.StorageAdapter) {
+                if (window.StorageAdapter && window.StorageAdapter.KEYS) {
                     window.StorageAdapter.KEYS.TASKS = 'stackmap_activities';
                     window.StorageAdapter.KEYS.TASKS_BACKUP = 'stackmap_activities_backup';
                 }
@@ -624,7 +624,7 @@
                     window.Storage.BACKUP_KEY = 'stackmap_tasks_backup';
                 }
                 
-                if (window.StorageAdapter) {
+                if (window.StorageAdapter && window.StorageAdapter.KEYS) {
                     window.StorageAdapter.KEYS.TASKS = 'stackmap_tasks';
                     window.StorageAdapter.KEYS.TASKS_BACKUP = 'stackmap_tasks_backup';
                 }

@@ -260,6 +260,14 @@
     <link rel="stylesheet" href="css/left-menu.css">
     <link rel="stylesheet" href="css/settings-dropdown.css">
     <link rel="stylesheet" href="css/user-day-modal.css">
+    <!-- Pin Activities System -->
+    <link rel="stylesheet" href="css/activity-pin.css">
+    
+    <!-- Complete Day Workflow -->
+    <link rel="stylesheet" href="css/complete-day.css">
+    
+    <!-- Bulk Operations -->
+    <link rel="stylesheet" href="css/bulk-operations.css">
     
     <!-- Preload critical resources -->
     <link rel="preload" href="js/app.js" as="script">
@@ -411,7 +419,7 @@
                     </div>
                 </div>
                 
-                <!-- Task display with fallback -->
+                <!-- Activity display with fallback -->
                 <div id="activity-display-wrapper" class="component-wrapper">
                     <div class="component-normal">
                         <div id="activities" role="region" aria-label="Activity list">
@@ -719,15 +727,15 @@
     <script src="js/data-export.js" defer></script>
     <script src="js/data-import.js" defer></script>
     <script src="js/data-io-ui.js" defer></script>
-    <!-- Virtual scrolling (must load before task-display) -->
+    <!-- Virtual scrolling (must load before activity-display) -->
     <script src="js/clusterize-fix.js" defer></script>
     <script src="js/clusterize.min.js" defer></script>
     <script src="js/virtual-scroll-adapter.js" defer></script>
-    <!-- Task timer system (must load before task-display) -->
+    <!-- Activity timer system (must load before activity-display) -->
     <script src="js/activity-timer.js" defer></script>
-    <!-- Task display -->
+    <!-- Activity display -->
     <script src="js/activity-display.js" defer></script>
-    <!-- Undo system (must load after task-display) -->
+    <!-- Undo system (must load after activity-display) -->
     <script src="js/undo-manager.js" defer></script>
     <script src="js/commands/activity-commands.js" defer></script>
     <script src="js/undo-ui.js" defer></script>
@@ -740,12 +748,12 @@
     <script src="js/rollover-manager.js" defer></script>
     <!-- Celebration system -->
     <script src="js/celebration.js" defer></script>
-    <!-- Task reordering -->
+    <!-- Activity reordering -->
     <script src="js/activity-reorder.js" defer></script>
     <!-- Drag & Drop reordering -->
     <script src="js/drag-drop-reorder.js" defer></script>
-    <!-- Task cards UI -->
-    <!-- Task Card Pool (Memory Optimization) -->
+    <!-- Activity cards UI -->
+    <!-- Activity Card Pool (Memory Optimization) -->
     <script src="js/activity-card-pool.js" defer></script>
     <script src="js/activity-cards.js" defer></script>
     <!-- Visual Activity Cards System -->
@@ -786,5 +794,15 @@
     <script src="js/left-menu.js" defer></script>
     <script src="js/settings-dropdown.js" defer></script>
     <script src="js/user-day-modal.js" defer></script>
+    <!-- Pin Activities System -->
+    <script src="js/activity-pin.js" defer></script>
+    
+    <!-- Complete Day Workflow -->
+    <script src="js/complete-day.js" defer></script>
+    
+    <!-- Bulk Operations -->
+    <script src="js/bulk-operations.js" defer></script>
+    <script src="js/bulk-delete.js" defer></script>
+    <script src="js/copy-tomorrow.js" defer></script>
 </body>
 </html>

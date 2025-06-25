@@ -2216,17 +2216,18 @@
         // Detect platform
         Platform.detect();
         
-        // Register Service Worker for offline support
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./js/service-worker.js')
-                .then(function(registration) {
-                    console.log('[App] Service Worker registered:', registration.scope);
-                    
-                    // Listen for online/offline events and notify service worker
-                    window.addEventListener('online', function() {
-                        if (registration.active) {
-                            registration.active.postMessage({
-                                type: 'online-status',
+        // Register Service Worker for offline support (only on supported protocols)
+        if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.protocol === 'http:')) {
+            try {
+                navigator.serviceWorker.register('./js/service-worker.js')
+                    .then(function(registration) {
+                        console.log('[App] Service Worker registered:', registration.scope);
+                        
+                        // Listen for online/offline events and notify service worker
+                        window.addEventListener('online', function() {
+                            if (registration.active) {
+                                registration.active.postMessage({
+                                    type: 'online-status',
                                 online: true
                             });
                         }
@@ -2244,6 +2245,11 @@
                 .catch(function(err) {
                     console.error('[App] Service Worker registration failed:', err);
                 });
+            } catch (error) {
+                console.error('[App] Service Worker registration needs attention:', error);
+            }
+        } else if ('serviceWorker' in navigator) {
+            console.log('[App] Service Worker not supported on this protocol (file://). Use http:// or https:// for full functionality.');
         }
         
         // Initialize modules

@@ -1,10 +1,10 @@
-// Task Timer Module - Lightweight timer feature for ADHD users
-// Provides visual countdown, notifications, and time-boxing for tasks
+// Activity Timer Module - Lightweight timer feature for ADHD users
+// Provides visual countdown, notifications, and time-boxing for activities
 
 const ActivityTimer = (function() {
     'use strict';
     
-    const timers = {}; // Active timers by task ID
+    const timers = {}; // Active timers by activity ID
     let buttonCache = {}; // Cache timer button references
     const defaultDurations = [5, 10, 15, 20, 25, 30, 45, 60]; // minutes
     let tickInterval = null;
@@ -19,16 +19,16 @@ const ActivityTimer = (function() {
         loadSettings();
     }
     
-    // Create a new timer for a task
-    function createTimer(taskId, durationMinutes) {
+    // Create a new timer for an activity
+    function createTimer(activityId, durationMinutes) {
         // Validate input
-        if (!taskId || !durationMinutes || durationMinutes <= 0) {
+        if (!activityId || !durationMinutes || durationMinutes <= 0) {
             console.error('Invalid timer parameters');
             return null;
         }
         
         const timer = {
-            taskId: taskId,
+            activityId: activityId,
             duration: durationMinutes * 60, // Convert to seconds
             remaining: durationMinutes * 60,
             startTime: Date.now(),
@@ -37,9 +37,9 @@ const ActivityTimer = (function() {
             hasWarned: false
         };
         
-        timers[taskId] = timer;
+        timers[activityId] = timer;
         saveTimers();
-        updateTimerDisplay(taskId);
+        updateTimerDisplay(activityId);
         
         // Restart tick loop if it was stopped
         if (!tickInterval) {
@@ -85,24 +85,24 @@ const ActivityTimer = (function() {
         let hasActiveTimers = false;
         let activeTimerCount = 0;
         
-        for (const taskId in timers) {
-            if (timers.hasOwnProperty(taskId)) {
-                const timer = timers[taskId];
+        for (const activityId in timers) {
+            if (timers.hasOwnProperty(activityId)) {
+                const timer = timers[activityId];
                 if (!timer.isPaused && timer.remaining > 0) {
                     timer.remaining--;
                     hasActiveTimers = true;
                     activeTimerCount++;
-                    updateTimerDisplay(taskId);
+                    updateTimerDisplay(activityId);
                     
                     // Check for warning time
                     if (!timer.hasWarned && timer.remaining === warningTime) {
-                        showWarning(taskId);
+                        showWarning(activityId);
                         timer.hasWarned = true;
                     }
                     
                     // Check for completion
                     if (timer.remaining === 0) {
-                        timerComplete(taskId);
+                        timerComplete(activityId);
                     }
                 }
             }
@@ -118,16 +118,16 @@ const ActivityTimer = (function() {
         }
     }
     
-    // Update the timer display for a specific task
-    function updateTimerDisplay(taskId) {
-        const timer = timers[taskId];
-        let button = buttonCache[taskId];
+    // Update the timer display for a specific activity
+    function updateTimerDisplay(activityId) {
+        const timer = timers[activityId];
+        let button = buttonCache[activityId];
         
         // Try to get button from cache or DOM
         if (!button) {
-            button = document.querySelector(`[data-task-id="${taskId}"] .task-timer-button`);
+            button = document.querySelector(`[data-activity-id="${activityId}"] .activity-timer-button, [data-task-id="${activityId}"] .task-timer-button`);
             if (button) {
-                buttonCache[taskId] = button;
+                buttonCache[activityId] = button;
             }
         }
         
@@ -175,20 +175,20 @@ const ActivityTimer = (function() {
         }, 1000);
     }
     
-    // Start a timer for a task
-    function startTimer(taskId, duration) {
-        createTimer(taskId, duration);
+    // Start a timer for an activity
+    function startTimer(activityId, duration) {
+        createTimer(activityId, duration);
         closeTimerMenu();
         announceForScreenReader(`Timer started for ${duration} minutes`);
     }
     
     // Start a custom timer
-    function startCustomTimer(taskId) {
+    function startCustomTimer(activityId) {
         const input = document.getElementById('custom-duration');
         if (input) {
             const duration = parseInt(input.value, 10);
             if (duration && duration >= 1 && duration <= 180) {
-                createTimer(taskId, duration);
+                createTimer(activityId, duration);
                 closeTimerMenu();
                 announceForScreenReader(`Timer started for ${duration} minutes`);
             } else {
@@ -199,24 +199,24 @@ const ActivityTimer = (function() {
     }
     
     // Toggle pause/resume
-    function togglePause(taskId) {
-        const timer = timers[taskId];
+    function togglePause(activityId) {
+        const timer = timers[activityId];
         if (timer) {
             timer.isPaused = !timer.isPaused;
-            updateTimerDisplay(taskId);
+            updateTimerDisplay(activityId);
             saveTimers();
         }
         closeTimerMenu();
     }
     
     // Cancel a timer
-    function cancelTimer(taskId) {
+    function cancelTimer(activityId) {
         // Get button reference before deleting from cache
-        const button = buttonCache[taskId] || document.querySelector(`[data-task-id="${taskId}"] .task-timer-button`);
+        const button = buttonCache[activityId] || document.querySelector(`[data-activity-id="${activityId}"] .activity-timer-button, [data-task-id="${activityId}"] .task-timer-button`);
         
         // Now safe to delete
-        delete timers[taskId];
-        delete buttonCache[taskId];
+        delete timers[activityId];
+        delete buttonCache[activityId];
         saveTimers();
         
         // Update button display
@@ -228,28 +228,28 @@ const ActivityTimer = (function() {
         closeTimerMenu();
     }
     
-    // Clear button cache (called when tasks are re-rendered)
+    // Clear button cache (called when activities are re-rendered)
     function clearButtonCache() {
         buttonCache = {};
     }
     
     // Pre-warm button cache after render
     function prewarmButtonCache() {
-        for (const taskId in timers) {
-            if (timers.hasOwnProperty(taskId) && !buttonCache[taskId]) {
-                const button = document.querySelector(`[data-task-id="${taskId}"] .task-timer-button`);
+        for (const activityId in timers) {
+            if (timers.hasOwnProperty(activityId) && !buttonCache[activityId]) {
+                const button = document.querySelector(`[data-activity-id="${activityId}"] .activity-timer-button, [data-task-id="${activityId}"] .task-timer-button`);
                 if (button) {
-                    buttonCache[taskId] = button;
+                    buttonCache[activityId] = button;
                 }
             }
         }
     }
     
     // Show timer menu
-    function showTimerMenu(taskId, button) {
+    function showTimerMenu(activityId, button) {
         closeTimerMenu(); // Close any existing menu
         
-        const existingTimer = timers[taskId];
+        const existingTimer = timers[activityId];
         const menu = document.createElement('div');
         menu.className = 'timer-menu';
         menu.setAttribute('role', 'menu');
@@ -257,10 +257,10 @@ const ActivityTimer = (function() {
         if (existingTimer) {
             // Timer controls
             let html = '<div class="timer-controls" role="group" aria-label="Timer controls">';
-            html += `<button role="menuitem" onclick="TaskTimer.togglePause('${taskId}')">`;
+            html += `<button role="menuitem" onclick="ActivityTimer.togglePause('${activityId}')">`;
             html += existingTimer.isPaused ? '▶️ Resume' : '⏸️ Pause';
             html += '</button>';
-            html += `<button role="menuitem" onclick="TaskTimer.cancelTimer('${taskId}')">❌ Cancel</button>`;
+            html += `<button role="menuitem" onclick="ActivityTimer.cancelTimer('${activityId}')">❌ Cancel</button>`;
             html += '</div>';
             menu.innerHTML = html;
         } else {
@@ -271,7 +271,7 @@ const ActivityTimer = (function() {
             // Preset duration buttons
             defaultDurations.forEach(function(duration) {
                 html += '<button role="menuitem" class="duration-option" ';
-                html += `onclick="TaskTimer.startTimer('${taskId}', ${duration})">`;
+                html += `onclick="ActivityTimer.startTimer('${activityId}', ${duration})">`;
                 html += `${duration} min</button>`;
             });
             
@@ -281,7 +281,7 @@ const ActivityTimer = (function() {
             html += '<div style="display: flex; gap: 8px;">';
             html += '<input type="number" id="custom-duration" min="1" max="180" placeholder="1-180" ';
             html += 'style="flex: 1; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 16px;">';
-            html += `<button onclick="TaskTimer.startCustomTimer('${taskId}')" `;
+            html += `<button onclick="ActivityTimer.startCustomTimer('${activityId}')" `;
             html += 'style="padding: 8px 16px; background: var(--primary-purple); color: white; border: none; border-radius: 4px; cursor: pointer;">Start</button>';
             html += '</div>';
             html += '</div>';
@@ -325,7 +325,7 @@ const ActivityTimer = (function() {
     
     // Menu close handler
     function closeMenuHandler(e) {
-        if (!e.target.closest('.timer-menu') && !e.target.closest('.task-timer-button')) {
+        if (!e.target.closest('.timer-menu') && !e.target.closest('.activity-timer-button') && !e.target.closest('.task-timer-button')) {
             closeTimerMenu();
         }
     }
@@ -437,14 +437,14 @@ const ActivityTimer = (function() {
     }
     
     // Timer complete handler
-    function timerComplete(taskId) {
-        const timer = timers[taskId];
+    function timerComplete(activityId) {
+        const timer = timers[activityId];
         
         if (!timer.hasNotified) {
             timer.hasNotified = true;
             
             // Visual notification
-            showTimerAlert(taskId);
+            showTimerAlert(activityId);
             
             // Audio notification
             if (audioEnabled) {
@@ -461,13 +461,13 @@ const ActivityTimer = (function() {
             }
             
             // Update display
-            updateTimerDisplay(taskId);
+            updateTimerDisplay(activityId);
         }
     }
     
     // Show warning
-    function showWarning(taskId) {
-        updateTimerDisplay(taskId);
+    function showWarning(activityId) {
+        updateTimerDisplay(activityId);
         
         // Subtle audio warning
         if (audioEnabled) {
@@ -476,22 +476,22 @@ const ActivityTimer = (function() {
     }
     
     // Show timer alert
-    function showTimerAlert(taskId) {
-        let task = null;
-        let taskTitle = 'Task';
+    function showTimerAlert(activityId) {
+        let activity = null;
+        let activityTitle = 'Activity';
         
         try {
-            if (window.ActivityDisplay && window.ActivityDisplay.getTaskById) {
-                task = window.ActivityDisplay.getTaskById(taskId);
-                if (task && task.title) {
-                    taskTitle = task.title;
+            if (window.ActivityDisplay && (window.ActivityDisplay.getActivityById || window.ActivityDisplay.getTaskById)) {
+                activity = window.ActivityDisplay.getActivityById ? window.ActivityDisplay.getActivityById(activityId) : window.ActivityDisplay.getTaskById(activityId);
+                if (activity && activity.title) {
+                    activityTitle = activity.title;
                 }
             }
         } catch (e) {
-            console.log('Could not get task details:', e);
+            console.log('Could not get activity details:', e);
         }
         
-        const message = `Timer complete for: ${taskTitle}`;
+        const message = `Timer complete for: ${activityTitle}`;
         
         // Show toast notification
         const toast = document.createElement('div');
@@ -575,11 +575,11 @@ const ActivityTimer = (function() {
     // Save timers to localStorage
     function saveTimers() {
         const activeTimers = {};
-        for (const taskId in timers) {
-            if (timers.hasOwnProperty(taskId)) {
-                const timer = timers[taskId];
+        for (const activityId in timers) {
+            if (timers.hasOwnProperty(activityId)) {
+                const timer = timers[activityId];
                 if (timer.remaining > 0) {
-                    activeTimers[taskId] = {
+                    activeTimers[activityId] = {
                         duration: timer.duration,
                         remaining: timer.remaining,
                         isPaused: timer.isPaused,
@@ -605,9 +605,9 @@ const ActivityTimer = (function() {
                 const savedTimers = JSON.parse(saved);
                 let hasActiveTimers = false;
                 
-                for (const taskId in savedTimers) {
-                    if (savedTimers.hasOwnProperty(taskId)) {
-                        const timer = savedTimers[taskId];
+                for (const activityId in savedTimers) {
+                    if (savedTimers.hasOwnProperty(activityId)) {
+                        const timer = savedTimers[activityId];
                         
                         // Calculate elapsed time correctly
                         if (!timer.isPaused && timer.startTime) {
@@ -625,13 +625,13 @@ const ActivityTimer = (function() {
                         
                         // Only restore timers that have time remaining
                         if (timer.remaining > 0) {
-                            timer.taskId = taskId;
+                            timer.activityId = activityId;
                             timer.hasNotified = false;
-                            timers[taskId] = timer;
+                            timers[activityId] = timer;
                             hasActiveTimers = true;
                             
                             // Update display immediately
-                            updateTimerDisplay(taskId);
+                            updateTimerDisplay(activityId);
                         }
                     }
                 }
@@ -674,23 +674,23 @@ const ActivityTimer = (function() {
         }
     }
     
-    // Get timer for task
-    function getTimer(taskId) {
-        return timers[taskId];
+    // Get timer for activity
+    function getTimer(activityId) {
+        return timers[activityId];
     }
     
     // Get all active timers
     function getActiveTimers() {
         const activeTimers = [];
-        for (const taskId in timers) {
-            if (timers.hasOwnProperty(taskId) && timers[taskId].remaining > 0) {
-                const timer = timers[taskId];
-                let task = null;
-                if (window.ActivityDisplay && window.ActivityDisplay.getTaskById) {
-                    task = window.ActivityDisplay.getTaskById(taskId);
+        for (const activityId in timers) {
+            if (timers.hasOwnProperty(activityId) && timers[activityId].remaining > 0) {
+                const timer = timers[activityId];
+                let activity = null;
+                if (window.ActivityDisplay && (window.ActivityDisplay.getActivityById || window.ActivityDisplay.getTaskById)) {
+                    activity = window.ActivityDisplay.getActivityById ? window.ActivityDisplay.getActivityById(activityId) : window.ActivityDisplay.getTaskById(activityId);
                 }
                 activeTimers.push({
-                    taskId: taskId,
+                    activityId: activityId,
                     activityTitle: activity ? activity.title : 'Unknown Activity',
                     remaining: timer.remaining,
                     duration: timer.duration,

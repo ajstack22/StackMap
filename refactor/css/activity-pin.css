@@ -1,0 +1,386 @@
+/**
+ * Activity Pin Styles
+ * Visual styling for pin functionality and bulk pin mode
+ * Mobile-first design with ADHD/autism accommodations
+ */
+
+/* Pin Button Styles */
+.activity-pin-button {
+    position: relative;
+    background: transparent;
+    border: 2px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    margin: 4px;
+    padding: 8px;
+    min-width: 44px;
+    min-height: 44px;
+    
+    /* Ensure proper touch targets */
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Safe mode sizing */
+.safe-mode .activity-pin-button {
+    min-width: 60px;
+    min-height: 60px;
+    padding: 12px;
+}
+
+.pin-icon {
+    font-size: 18px;
+    transition: all 0.2s ease;
+    pointer-events: none;
+}
+
+/* Unpinned state (default) */
+.activity-pin-button:not(.pinned) {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.activity-pin-button:not(.pinned) .pin-icon {
+    color: #999;
+    opacity: 0.6;
+}
+
+.activity-pin-button:not(.pinned):hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.3);
+}
+
+.activity-pin-button:not(.pinned):hover .pin-icon {
+    color: #ccc;
+    opacity: 0.8;
+}
+
+/* Pinned state */
+.activity-pin-button.pinned {
+    background: linear-gradient(135deg, #FFD700, #FFA500);
+    border-color: #B8860B;
+    box-shadow: 0 2px 8px rgba(255, 215, 0, 0.3);
+}
+
+.activity-pin-button.pinned .pin-icon {
+    color: #8B4513;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transform: rotate(-15deg);
+}
+
+.activity-pin-button.pinned:hover {
+    background: linear-gradient(135deg, #FFE55C, #FFB347);
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+
+/* Press/active states */
+.activity-pin-button:active {
+    transform: scale(0.95);
+}
+
+.activity-pin-button.pinned:active {
+    background: linear-gradient(135deg, #DAA520, #FF8C00);
+}
+
+/* Focus states for accessibility */
+.activity-pin-button:focus {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Pinned Activity Visual States */
+.activity-item.pinned,
+.task-item.pinned,
+.activity-card.pinned,
+.task-card.pinned {
+    border: 2px solid #FFD700;
+    background: linear-gradient(135deg, rgba(255, 249, 230, 0.8), rgba(255, 250, 205, 0.6));
+    position: relative;
+}
+
+/* Subtle golden glow for pinned activities */
+.activity-item.pinned::before,
+.task-item.pinned::before,
+.activity-card.pinned::before,
+.task-card.pinned::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    bottom: -2px;
+    background: linear-gradient(45deg, #FFD700, #FFA500, #FFD700);
+    border-radius: inherit;
+    z-index: -1;
+    opacity: 0.3;
+    animation: gentle-glow 3s ease-in-out infinite alternate;
+}
+
+@keyframes gentle-glow {
+    from { opacity: 0.2; }
+    to { opacity: 0.4; }
+}
+
+/* Disable animations in safe mode */
+.safe-mode .activity-item.pinned::before,
+.safe-mode .task-item.pinned::before,
+.safe-mode .activity-card.pinned::before,
+.safe-mode .task-card.pinned::before {
+    animation: none;
+    opacity: 0.3;
+}
+
+/* Activity Actions Container */
+.activity-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+}
+
+/* Bulk Pin Mode Styles */
+.bulk-pin-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.bulk-pin-header {
+    background: #2a2a2a;
+    padding: 16px;
+    padding-top: calc(16px + env(safe-area-inset-top));
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #444;
+    flex-shrink: 0;
+}
+
+.bulk-pin-title {
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.bulk-pin-done {
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    min-width: 44px;
+    min-height: 44px;
+    transition: background 0.2s ease;
+    touch-action: manipulation;
+}
+
+.safe-mode .bulk-pin-done {
+    min-width: 60px;
+    min-height: 60px;
+    padding: 16px 24px;
+}
+
+.bulk-pin-done:hover {
+    background: #5a67d8;
+}
+
+.bulk-pin-done:active {
+    background: #4c51bf;
+    transform: scale(0.98);
+}
+
+.bulk-pin-done:focus {
+    outline: 3px solid #ffffff;
+    outline-offset: 2px;
+}
+
+/* Activity List in Bulk Mode */
+.bulk-pin-activities {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px;
+    padding-bottom: calc(16px + env(safe-area-inset-bottom));
+}
+
+.bulk-pin-count {
+    background: #333;
+    color: #fff;
+    padding: 12px 16px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 16px;
+    font-size: 16px;
+}
+
+.bulk-pin-activity {
+    display: flex;
+    align-items: center;
+    background: #2a2a2a;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 44px;
+    width: 100%;
+    text-align: left;
+    color: #ffffff;
+    font-size: 16px;
+    touch-action: manipulation;
+}
+
+.safe-mode .bulk-pin-activity {
+    min-height: 60px;
+    padding: 20px;
+}
+
+.bulk-pin-activity:hover {
+    background: #333;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.bulk-pin-activity:active {
+    transform: scale(0.98);
+}
+
+.bulk-pin-activity:focus {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Bulk mode pin states */
+.bulk-pin-activity:not(.pinned) .bulk-pin-icon {
+    color: #666;
+    opacity: 0.5;
+}
+
+.bulk-pin-activity.pinned {
+    background: linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(255, 165, 0, 0.1));
+    border-color: #FFD700;
+}
+
+.bulk-pin-activity.pinned .bulk-pin-icon {
+    color: #FFD700;
+    opacity: 1;
+    transform: rotate(-15deg);
+}
+
+.bulk-pin-icon {
+    font-size: 20px;
+    margin-right: 12px;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.bulk-pin-title {
+    flex: 1;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+/* High Contrast and Accessibility */
+@media (prefers-contrast: high) {
+    .activity-item.pinned,
+    .task-item.pinned {
+        border-color: #000000;
+        background: #FFFF00;
+        color: #000000;
+    }
+    
+    .activity-pin-button.pinned {
+        background: #FFFF00;
+        border-color: #000000;
+        color: #000000;
+    }
+    
+    .bulk-pin-activity.pinned {
+        background: #FFFF00;
+        border-color: #000000;
+        color: #000000;
+    }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+    .activity-pin-button,
+    .pin-icon,
+    .bulk-pin-activity,
+    .bulk-pin-done {
+        transition: none;
+    }
+    
+    .activity-item.pinned::before,
+    .task-item.pinned::before {
+        animation: none;
+    }
+    
+    .activity-pin-button:active,
+    .bulk-pin-activity:active,
+    .bulk-pin-done:active {
+        transform: none;
+    }
+}
+
+/* Dark theme adjustments */
+@media (prefers-color-scheme: dark) {
+    .bulk-pin-count {
+        background: #444;
+    }
+    
+    .bulk-pin-activity {
+        background: #1a1a1a;
+    }
+    
+    .bulk-pin-activity:hover {
+        background: #2a2a2a;
+    }
+}
+
+/* Mobile-specific optimizations */
+@media (max-width: 768px) {
+    .bulk-pin-header {
+        padding: 12px 16px;
+    }
+    
+    .bulk-pin-title {
+        font-size: 18px;
+    }
+    
+    .bulk-pin-activities {
+        padding: 12px;
+    }
+    
+    .bulk-pin-activity {
+        padding: 14px;
+        margin-bottom: 8px;
+    }
+}
+
+/* Large screen optimizations */
+@media (min-width: 1200px) {
+    .bulk-pin-activities {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 24px;
+    }
+}

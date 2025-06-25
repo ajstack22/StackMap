@@ -8,10 +8,10 @@
     'use strict';
     
     const ActivityCards = {
-        visualMode: false, // Toggle between visual cards and task cards
+        visualMode: false, // Toggle between visual cards and activity cards
         
         /**
-         * Enable card view in TaskDisplay
+         * Enable card view in ActivityDisplay
          */
         init: function() {
             const self = this;
@@ -22,25 +22,29 @@
                 this.visualMode = true;
             }
             
-            // Override TaskDisplay render method
-            if (window.TaskDisplay) {
+            // Override ActivityDisplay render method
+            if (window.ActivityDisplay || window.TaskDisplay) {
                 // Store original methods
-                window.TaskDisplay._originalRender = window.TaskDisplay.render;
-                window.TaskDisplay._originalCreateTaskElement = window.TaskDisplay.createTaskElement;
+                const display = window.ActivityDisplay || window.TaskDisplay;
+                display._originalRender = display.render;
+                display._originalCreateActivityElement = display.createActivityElement || display.createTaskElement;
                 
                 // Replace with card versions
-                window.TaskDisplay.render = self.renderCards.bind(self);
-                window.TaskDisplay.createTaskElement = self.createTaskCard.bind(self);
-                window.TaskDisplay.createTaskCard = self.createTaskCard.bind(self);
+                display.render = self.renderCards.bind(self);
+                display.createActivityElement = self.createActivityCard.bind(self);
+                display.createTaskElement = self.createActivityCard.bind(self); // Backward compatibility
+                display.createActivityCard = self.createActivityCard.bind(self);
                 
                 // Add helper methods
-                window.TaskDisplay.createAddTaskCard = self.createAddTaskCard.bind(self);
-                window.TaskDisplay.createEmptyState = self.createEmptyState.bind(self);
-                window.TaskDisplay.createVisualCard = self.createVisualCard.bind(self);
+                display.createAddActivityCard = self.createAddActivityCard.bind(self);
+                display.createAddTaskCard = self.createAddActivityCard.bind(self); // Backward compatibility
+                display.createEmptyState = self.createEmptyState.bind(self);
+                display.createVisualCard = self.createVisualCard.bind(self);
                 
-                // Initialize task card pool if available
-                if (window.TaskCardPool) {
-                    window.TaskCardPool.init();
+                // Initialize activity card pool if available
+                if (window.ActivityCardPool || window.TaskCardPool) {
+                    const pool = window.ActivityCardPool || window.TaskCardPool;
+                    pool.init();
                 }
             }
             
@@ -49,12 +53,12 @@
         },
         
         /**
-         * Release all task cards back to pool
+         * Release all activity cards back to pool
          */
         releaseAllCards: function(container) {
             if (!window.TaskCardPool || !window.TaskCardPool.initialized) return;
             
-            const cards = container.querySelectorAll('.task-card[data-pooled="true"]');
+            const cards = container.querySelectorAll('.activity-card[data-pooled="true"], .task-card[data-pooled="true"]');
             for (let i = 0; i < cards.length; i++) {
                 window.TaskCardPool.release(cards[i]);
             }
@@ -85,19 +89,21 @@
         },
         
         /**
-         * Render tasks as cards
+         * Render activities as cards
          */
         renderCards: function() {
             let self = this;
-            const taskDisplay = window.TaskDisplay;
-            const container = taskDisplay.container;
+            const activityDisplay = window.ActivityDisplay || window.TaskDisplay;
+            const container = activityDisplay.container;
             
             // Clear container and release cards to pool
             self.releaseAllCards(container);
             container.innerHTML = '';
             
             // Clear timer button cache when re-rendering
-            if (window.TaskTimer && window.TaskTimer.clearButtonCache) {
+            if (window.ActivityTimer && window.ActivityTimer.clearButtonCache) {
+                window.ActivityTimer.clearButtonCache();
+            } else if (window.TaskTimer && window.TaskTimer.clearButtonCache) {
                 window.TaskTimer.clearButtonCache();
             }
             
@@ -111,12 +117,12 @@
             const cardsGrid = document.createElement('div');
             cardsGrid.className = 'cards-grid';
             
-            // Filter tasks for current user
-            const userTasks = taskDisplay.getUserTasks();
+            // Filter activities for current user
+            const userActivities = activityDisplay.getUserActivities ? activityDisplay.getUserActivities() : activityDisplay.getUserTasks();
             
-            // Add new task card (only in edit mode)
+            // Add new activity card (only in edit mode)
             if (window.EditMode && window.EditMode.isActive()) {
-                const addCard = this.createAddTaskCard();
+                const addCard = this.createAddActivityCard();
                 cardsGrid.appendChild(addCard);
             }
             
@@ -125,13 +131,13 @@
                 const emptyState = this.createEmptyState();
                 container.appendChild(emptyState);
             } else {
-                // Add task cards using DocumentFragment for better performance
+                // Add activity cards using DocumentFragment for better performance
                 let self = this;
                 const fragment = document.createDocumentFragment();
                 
-                userTasks.forEach(function(task, index) {
-                    const taskCard = self.createTaskCard(task, index + 1);
-                    fragment.appendChild(taskCard);
+                userActivities.forEach(function(activity, index) {
+                    const activityCard = self.createActivityCard(activity, index + 1);
+                    fragment.appendChild(activityCard);
                 });
                 
                 // Batch append all cards at once
@@ -162,7 +168,7 @@
             // Add view toggle button
             const viewToggle = document.createElement('button');
             viewToggle.className = 'view-toggle-btn';
-            viewToggle.innerHTML = '📝 Switch to Task View';
+            viewToggle.innerHTML = '📝 Switch to Activity View';
             viewToggle.onclick = function() {
                 self.visualMode = false;
                 window.TaskDisplay.render();
@@ -200,88 +206,89 @@
         },
         
         /**
-         * Create task card element
+         * Create activity card element
          */
-        createTaskCard: function(task, number) {
-            const taskDisplay = window.TaskDisplay;
+        createActivityCard: function(activity, number) {
+            const activityDisplay = window.ActivityDisplay || window.TaskDisplay;
             const self = this;
             
             // Determine card state
             let cardState = '';
-            if (task.completed) {
-                cardState = 'task-card--completed';
-            } else if (task.in_progress) {
-                cardState = 'task-card--in-progress';
+            if (activity.completed) {
+                cardState = 'activity-card--completed';
+            } else if (activity.in_progress) {
+                cardState = 'activity-card--in-progress';
             } else {
-                cardState = 'task-card--pending';
+                cardState = 'activity-card--pending';
             }
             
             // Get card from pool if available
             let card;
-            if (window.TaskCardPool && window.TaskCardPool.initialized) {
-                card = window.TaskCardPool.acquire();
-                card.className = `task-card ${cardState}`;
+            const cardPool = window.ActivityCardPool || window.TaskCardPool;
+            if (cardPool && cardPool.initialized) {
+                card = cardPool.acquire();
+                card.className = `activity-card ${cardState}`;
             } else {
                 // Fallback to creating new card
                 card = document.createElement('div');
-                card.className = `task-card ${cardState}`;
+                card.className = `activity-card ${cardState}`;
             }
             
-            card.setAttribute('data-task-id', task.id);
+            card.setAttribute('data-activity-id', activity.id);
             
             // ARIA attributes for screen readers
             card.setAttribute('role', 'option');
-            card.setAttribute('aria-label', `${task.title || 'Untitled Activity'}, ${task.completed ? 'completed' : 'not completed'}`);
+            card.setAttribute('aria-label', `${activity.title || 'Untitled Activity'}, ${activity.completed ? 'completed' : 'not completed'}`);
             
             // Check if using pooled card
             const isPooled = card.getAttribute('data-pooled') === 'true';
             
             if (isPooled) {
                 // Update existing elements in pooled card
-                let checkbox = card.querySelector('.task-checkbox');
+                let checkbox = card.querySelector('.activity-checkbox');
                 if (checkbox) {
-                    checkbox.checked = task.completed;
-                    checkbox.setAttribute('aria-label', `Mark ${task.title || 'activity'} as ${task.completed ? 'incomplete' : 'complete'}`);
+                    checkbox.checked = activity.completed;
+                    checkbox.setAttribute('aria-label', `Mark ${activity.title || 'activity'} as ${activity.completed ? 'incomplete' : 'complete'}`);
                     
                     // Remove old listener if exists
-                    if (checkbox._taskHandler) {
-                        checkbox.removeEventListener('change', checkbox._taskHandler);
+                    if (checkbox._activityHandler) {
+                        checkbox.removeEventListener('change', checkbox._activityHandler);
                     }
                     
                     // Add new listener
-                    checkbox._taskHandler = function() {
-                        task.completed = checkbox.checked;
-                        taskDisplay.updateTask(task);
+                    checkbox._activityHandler = function() {
+                        activity.completed = checkbox.checked;
+                        activityDisplay.updateActivity ? activityDisplay.updateActivity(activity) : activityDisplay.updateTask(activity);
                         
                         // Update card ARIA label
-                        card.setAttribute('aria-label', `${task.title || 'Untitled Activity'}, ${task.completed ? 'completed' : 'not completed'}`);
+                        card.setAttribute('aria-label', `${activity.title || 'Untitled Activity'}, ${activity.completed ? 'completed' : 'not completed'}`);
                         
                         // Announce state change
                         if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                            window.StackMapKeyboardNav.announce(`${task.title} marked as ${task.completed ? 'complete' : 'incomplete'}`);
+                            window.StackMapKeyboardNav.announce(`${activity.title} marked as ${activity.completed ? 'complete' : 'incomplete'}`);
                         }
                     };
-                    checkbox.addEventListener('change', checkbox._taskHandler);
+                    checkbox.addEventListener('change', checkbox._activityHandler);
                     
                     // Store cleanup function
                     card._cleanup = function() {
-                        if (checkbox._taskHandler) {
-                            checkbox.removeEventListener('change', checkbox._taskHandler);
-                            delete checkbox._taskHandler;
+                        if (checkbox._activityHandler) {
+                            checkbox.removeEventListener('change', checkbox._activityHandler);
+                            delete checkbox._activityHandler;
                         }
                     };
                 }
                 
                 // Update title
-                let title = card.querySelector('.task-title');
+                let title = card.querySelector('.activity-title');
                 if (title) title.textContent = activity.title || 'Untitled Activity';
                 
                 // Update description
-                let description = card.querySelector('.task-description');
+                let description = card.querySelector('.activity-description');
                 if (description) description.textContent = activity.notes || '';
                 
                 // Update category
-                let category = card.querySelector('.task-category');
+                let category = card.querySelector('.activity-category');
                 if (category && activity.activity_name) {
                     category.textContent = activity.activity_name;
                     category.className = `task-category category-${(activity.category || 'general').toLowerCase()}`;
@@ -308,7 +315,7 @@
                     taskDisplay.updateTask(task);
                     
                     // Update card ARIA label
-                    card.setAttribute('aria-label', `${task.title || 'Untitled Activity'}, ${task.completed ? 'completed' : 'not completed'}`);
+                    card.setAttribute('aria-label', `${activity.title || 'Untitled Activity'}, ${activity.completed ? 'completed' : 'not completed'}`);
                     
                     // Announce state change
                     if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
@@ -572,9 +579,9 @@
         },
         
         /**
-         * Create add task card
+         * Create add activity card
          */
-        createAddTaskCard: function() {
+        createAddActivityCard: function() {
             const taskDisplay = window.TaskDisplay;
             
             const card = document.createElement('div');
@@ -597,7 +604,12 @@
             card.appendChild(content);
             
             card.onclick = function() {
-                taskDisplay.addTask();
+                const display = window.ActivityDisplay || window.TaskDisplay;
+                if (display.addActivity) {
+                    display.addActivity();
+                } else {
+                    display.addTask();
+                }
             };
             
             return card;
@@ -608,7 +620,7 @@
          */
         createEmptyState: function() {
             const container = document.createElement('div');
-            container.className = 'tasks-empty';
+            container.className = 'activities-empty';
             
             const icon = document.createElement('div');
             icon.className = 'tasks-empty__icon';
@@ -900,7 +912,11 @@
                     }
                 });
             }, 0);
-        }
+        },
+        
+        // BACKWARD COMPATIBILITY ALIASES
+        createTaskCard: function() { return this.createActivityCard.apply(this, arguments); },
+        createAddTaskCard: function() { return this.createAddActivityCard.apply(this, arguments); }
     };
     
     // Export to global scope

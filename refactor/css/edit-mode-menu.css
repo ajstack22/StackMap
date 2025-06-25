@@ -29,13 +29,40 @@
 }
 
 /* Hide label on small screens */
-@media (max-width: 400px) {
+@media (max-width: 480px) {
     .edit-mode-menu-button .menu-label {
         display: none;
     }
     
     .edit-mode-menu-button {
-        padding: 8px;
+        padding: 10px;
+        min-width: 48px;
+        min-height: 48px;
+    }
+    
+    /* Ensure dropdown fits in viewport */
+    .edit-mode-dropdown {
+        max-width: calc(100vw - 32px);
+        max-height: calc(100vh - 100px);
+        overflow-y: auto;
+    }
+    
+    /* Larger touch targets on mobile */
+    .edit-mode-menu-item {
+        min-height: 48px;
+        padding: 14px 16px;
+    }
+    
+    /* Stack shortcut below label on mobile */
+    .menu-item-label {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .menu-item-shortcut {
+        display: block;
+        margin-left: 0;
+        margin-top: 2px;
     }
 }
 
@@ -73,6 +100,7 @@
     cursor: pointer;
     transition: background 0.2s ease;
     outline: none;
+    position: relative;
 }
 
 .edit-mode-menu-item:first-child {
@@ -102,6 +130,48 @@
     flex: 1;
 }
 
+/* Keyboard shortcut in label */
+.menu-item-label strong {
+    font-weight: 700;
+    color: var(--primary-color, #667eea);
+}
+
+.menu-item-shortcut {
+    font-size: 12px;
+    opacity: 0.7;
+    margin-left: 4px;
+}
+
+/* Count badges */
+.menu-item-count {
+    background: var(--primary-color, #667eea);
+    color: white;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 6px;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+    margin-left: auto;
+}
+
+/* Disabled state */
+.edit-mode-menu-item[disabled],
+.edit-mode-menu-item[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.edit-mode-menu-item[disabled]:hover,
+.edit-mode-menu-item[aria-disabled="true"]:hover {
+    background: none;
+}
+
+.edit-mode-menu-item[disabled] .menu-item-icon,
+.edit-mode-menu-item[aria-disabled="true"] .menu-item-icon {
+    filter: grayscale(100%);
+}
+
 /* Divider */
 .edit-mode-menu-divider {
     margin: 4px 16px;
@@ -111,18 +181,37 @@
 
 /* Safe mode adjustments */
 .safe-mode .edit-mode-menu-button {
-    min-height: 44px;
+    min-height: 60px;
+    padding: 20px;
+    font-size: 16px;
     transition: none;
 }
 
 .safe-mode .edit-mode-menu-item {
     min-height: 60px;
-    padding: 16px;
+    padding: 20px;
+    font-size: 16px;
     transition: none;
 }
 
 .safe-mode .edit-mode-dropdown {
     transition: none;
+    opacity: 1;
+    transform: none;
+}
+
+.safe-mode .edit-mode-dropdown.open {
+    opacity: 1;
+    transform: none;
+}
+
+.safe-mode .menu-item-icon {
+    font-size: 20px;
+}
+
+.safe-mode .menu-item-count {
+    font-size: 14px;
+    padding: 4px 8px;
 }
 
 /* Accessibility */

@@ -12,6 +12,22 @@
         dropdown: null,
         isOpen: false,
         
+        // State management
+        activityCounts: {
+            today: 0,
+            tomorrow: 0,
+            total: 0,
+            library: 0
+        },
+        countCache: {
+            data: null,
+            timestamp: 0,
+            ttl: 30000 // 30 seconds
+        },
+        updateTimer: null,
+        eventHandlers: {},
+        keyboardHandler: null,
+        
         /**
          * Initialize the edit mode menu
          */
@@ -28,6 +44,12 @@
             
             // Watch for edit mode changes
             self.watchEditMode();
+            
+            // Subscribe to activity events
+            self.subscribeToEvents();
+            
+            // Initial state update
+            self.updateMenuState();
             
             self.isInitialized = true;
             console.log('EditModeMenu: Initialized');
@@ -53,18 +75,18 @@
             self.dropdown.setAttribute('role', 'menu');
             self.dropdown.style.display = 'none';
             
-            // Build menu items
+            // Build menu items with keyboard shortcuts
             const menuItems = [
-                { icon: '➕', label: 'Add Activity', action: 'add-activity' },
-                { icon: '⚡', label: 'Quick Add', action: 'quick-add' },
-                { icon: '📚', label: 'Activity Library', action: 'activity-library' },
+                { icon: '➕', label: 'Add Activity', action: 'add-activity', shortcut: 'A', showCount: false },
+                { icon: '⚡', label: 'Quick Add', action: 'quick-add', shortcut: 'Q', showCount: false },
+                { icon: '📚', label: 'Activity Library', action: 'activity-library', shortcut: 'L', showCount: true, countType: 'library' },
                 { type: 'divider' },
-                { icon: '🔄', label: 'Reorder Mode', action: 'reorder' },
-                { icon: '📌', label: 'Pin Activities', action: 'pin-mode' },
-                { icon: '🗑️', label: 'Bulk Delete', action: 'bulk-delete' },
+                { icon: '🔄', label: 'Reorder Mode', action: 'reorder', shortcut: 'R', showCount: true, countType: 'current' },
+                { icon: '📌', label: 'Pin Activities', action: 'pin-mode', shortcut: 'P', showCount: true, countType: 'pinned' },
+                { icon: '🗑️', label: 'Bulk Delete', action: 'bulk-delete', shortcut: 'D', showCount: true, countType: 'current' },
                 { type: 'divider' },
-                { icon: '✅', label: 'Complete Day', action: 'complete-day' },
-                { icon: '📋', label: 'Copy to Tomorrow', action: 'copy-tomorrow' }
+                { icon: '✅', label: 'Complete Day', action: 'complete-day', shortcut: 'C', showCount: true, countType: 'today' },
+                { icon: '📋', label: 'Copy to Tomorrow', action: 'copy-tomorrow', shortcut: 'T', showCount: true, countType: 'today' }
             ];
             
             menuItems.forEach(function(item) {
@@ -77,9 +99,27 @@
                     menuItem.className = 'edit-mode-menu-item';
                     menuItem.setAttribute('role', 'menuitem');
                     menuItem.setAttribute('data-action', item.action);
+                    menuItem.setAttribute('data-shortcut', item.shortcut || '');
+                    menuItem.setAttribute('data-count-type', item.countType || '');
+                    
+                    // Build label with shortcut
+                    let labelHtml = item.label;
+                    if (item.shortcut) {
+                        // Bold the shortcut letter in the label
+                        const shortcutIndex = item.label.toUpperCase().indexOf(item.shortcut);
+                        if (shortcutIndex >= 0) {
+                            labelHtml = item.label.substring(0, shortcutIndex) + 
+                                       '<strong>' + item.label[shortcutIndex] + '</strong>' + 
+                                       item.label.substring(shortcutIndex + 1);
+                        }
+                        labelHtml += ' <span class="menu-item-shortcut">(' + item.shortcut + ')</span>';
+                    }
+                    
                     menuItem.innerHTML = 
                         '<span class="menu-item-icon">' + item.icon + '</span>' +
-                        '<span class="menu-item-label">' + item.label + '</span>';
+                        '<span class="menu-item-label">' + labelHtml + '</span>' +
+                        (item.showCount ? '<span class="menu-item-count" data-count-type="' + item.countType + '"></span>' : '');
+                    
                     self.dropdown.appendChild(menuItem);
                 }
             });
@@ -118,15 +158,45 @@
                 }
             });
             
-            // Keyboard navigation
-            self.dropdown.addEventListener('keydown', function(e) {
+            // Keyboard navigation and shortcuts
+            self.keyboardHandler = function(e) {
+                // Handle escape
                 if (e.key === 'Escape') {
                     self.closeDropdown();
-                } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+                    return;
+                }
+                
+                // Handle arrow navigation
+                if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
                     e.preventDefault();
                     self.navigateMenu(e.key === 'ArrowDown' ? 1 : -1);
+                    return;
                 }
-            });
+                
+                // Handle single letter shortcuts (only when menu is open)
+                if (self.isOpen && e.key.length === 1) {
+                    const upperKey = e.key.toUpperCase();
+                    const menuItem = self.dropdown.querySelector('[data-shortcut="' + upperKey + '"]');
+                    
+                    if (menuItem) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        
+                        // Check if item is disabled
+                        if (menuItem.disabled) {
+                            self.showNotification('This action is currently unavailable');
+                            return;
+                        }
+                        
+                        // Trigger the action
+                        const action = menuItem.getAttribute('data-action');
+                        self.handleAction(action);
+                        self.closeDropdown();
+                    }
+                }
+            };
+            
+            self.dropdown.addEventListener('keydown', self.keyboardHandler);
         },
         
         /**
@@ -207,6 +277,9 @@
         openDropdown: function() {
             const self = this;
             
+            // Update state before showing
+            self.updateMenuState();
+            
             // Position dropdown
             const rect = self.menuButton.getBoundingClientRect();
             self.dropdown.style.position = 'fixed';
@@ -214,16 +287,20 @@
             self.dropdown.style.right = (window.innerWidth - rect.right) + 'px';
             self.dropdown.style.display = 'block';
             
-            // Add open class for animation
-            requestAnimationFrame(function() {
+            // Add open class for animation (skip in safe mode)
+            if (!window.StackMapSafeMode) {
+                requestAnimationFrame(function() {
+                    self.dropdown.classList.add('open');
+                });
+            } else {
                 self.dropdown.classList.add('open');
-            });
+            }
             
             self.menuButton.setAttribute('aria-expanded', 'true');
             self.isOpen = true;
             
-            // Focus first item
-            const firstItem = self.dropdown.querySelector('.edit-mode-menu-item');
+            // Focus first enabled item
+            const firstItem = self.dropdown.querySelector('.edit-mode-menu-item:not([disabled])');
             if (firstItem) {
                 firstItem.focus();
             }
@@ -303,26 +380,38 @@
                     break;
                     
                 case 'pin-mode':
-                    this.showNotification('Pin mode coming soon!');
+                    if (window.ActivityPin && window.ActivityPin.enterBulkMode) {
+                        window.ActivityPin.enterBulkMode();
+                    } else {
+                        this.showNotification('Pin feature not available');
+                    }
                     break;
                     
                 case 'bulk-delete':
-                    this.showNotification('Bulk delete coming soon!');
+                    if (window.BulkOperations && window.BulkOperations.start) {
+                        window.BulkOperations.start('delete');
+                    } else {
+                        this.showNotification('Bulk delete not available');
+                    }
                     break;
                     
                 case 'complete-day':
-                    if (window.TodayTomorrowView && window.TodayTomorrowView.completeDay) {
+                    if (window.CompleteDayWorkflow && window.CompleteDayWorkflow.completeDay) {
+                        window.CompleteDayWorkflow.completeDay();
+                    } else if (window.TodayTomorrowView && window.TodayTomorrowView.completeDay) {
                         window.TodayTomorrowView.completeDay();
                     } else {
-                        this.showNotification('Complete day coming soon!');
+                        this.showNotification('Complete day workflow not available');
                     }
                     break;
                     
                 case 'copy-tomorrow':
-                    if (window.TodayTomorrowView && window.TodayTomorrowView.copyToTomorrow) {
+                    if (window.BulkOperations && window.BulkOperations.start) {
+                        window.BulkOperations.start('copy');
+                    } else if (window.TodayTomorrowView && window.TodayTomorrowView.copyToTomorrow) {
                         window.TodayTomorrowView.copyToTomorrow();
                     } else {
-                        this.showNotification('Copy to tomorrow coming soon!');
+                        this.showNotification('Copy to tomorrow not available');
                     }
                     break;
             }
@@ -354,6 +443,248 @@
                     toast.parentNode.removeChild(toast);
                 }
             }, 3000);
+        },
+        
+        /**
+         * Subscribe to events for real-time updates
+         */
+        subscribeToEvents: function() {
+            const self = this;
+            
+            // Activities changed event
+            self.eventHandlers.activitiesChanged = function() {
+                self.scheduleUpdate();
+            };
+            document.addEventListener('activitiesChanged', self.eventHandlers.activitiesChanged);
+            
+            // Day view changed event
+            self.eventHandlers.dayViewChanged = function() {
+                self.scheduleUpdate();
+            };
+            document.addEventListener('dayViewChanged', self.eventHandlers.dayViewChanged);
+            
+            // Also listen for old task events for compatibility
+            self.eventHandlers.tasksChanged = function() {
+                self.scheduleUpdate();
+            };
+            document.addEventListener('tasksChanged', self.eventHandlers.tasksChanged);
+        },
+        
+        /**
+         * Schedule a debounced update
+         */
+        scheduleUpdate: function() {
+            const self = this;
+            
+            // Clear existing timer
+            if (self.updateTimer) {
+                clearTimeout(self.updateTimer);
+            }
+            
+            // Schedule new update with 100ms debounce
+            self.updateTimer = setTimeout(function() {
+                self.updateMenuState();
+            }, 100);
+        },
+        
+        /**
+         * Update menu state (counts, disabled states)
+         */
+        updateMenuState: function() {
+            const self = this;
+            
+            // Update activity counts
+            self.updateActivityCounts();
+            
+            // Update disabled states
+            self.updateDisabledStates();
+            
+            // Update count badges
+            self.updateCountBadges();
+        },
+        
+        /**
+         * Update activity counts from data source
+         */
+        updateActivityCounts: function() {
+            const self = this;
+            
+            try {
+                // Check cache first
+                const now = Date.now();
+                if (self.countCache.data && (now - self.countCache.timestamp) < self.countCache.ttl) {
+                    self.activityCounts = self.countCache.data;
+                    return;
+                }
+                
+                // Get current day
+                const currentDay = window.DaySelector && window.DaySelector.getCurrentDay ? 
+                    window.DaySelector.getCurrentDay() : 'today';
+                
+                // Get activities for today
+                let todayActivities = [];
+                let tomorrowActivities = [];
+                
+                if (window.ActivityDisplay && window.ActivityDisplay.getActivities) {
+                    const allActivities = window.ActivityDisplay.getActivities();
+                    todayActivities = allActivities.filter(a => a.timeframe === 'today');
+                    tomorrowActivities = allActivities.filter(a => a.timeframe === 'tomorrow');
+                } else if (window.TaskDisplay && window.TaskDisplay.getTasks) {
+                    const allTasks = window.TaskDisplay.getTasks();
+                    todayActivities = allTasks.filter(t => t.timeframe === 'today');
+                    tomorrowActivities = allTasks.filter(t => t.timeframe === 'tomorrow');
+                }
+                
+                // Count pinned activities
+                const allActivities = [...todayActivities, ...tomorrowActivities];
+                const pinnedCount = allActivities.filter(a => a.pinned === true).length;
+                
+                // Update counts
+                self.activityCounts = {
+                    today: todayActivities.length,
+                    tomorrow: tomorrowActivities.length,
+                    total: todayActivities.length + tomorrowActivities.length,
+                    current: currentDay === 'today' ? todayActivities.length : tomorrowActivities.length,
+                    library: 50, // Placeholder - would get from ActivityLibrary
+                    pinned: pinnedCount
+                };
+                
+                // Update cache
+                self.countCache = {
+                    data: self.activityCounts,
+                    timestamp: now,
+                    ttl: self.countCache.ttl
+                };
+                
+            } catch (error) {
+                console.error('Failed to update activity counts:', error);
+                // Use cached data if available, otherwise show question marks
+            }
+        },
+        
+        /**
+         * Update disabled states based on context
+         */
+        updateDisabledStates: function() {
+            const self = this;
+            const counts = self.activityCounts;
+            
+            // Get all menu items
+            const menuItems = self.dropdown.querySelectorAll('.edit-mode-menu-item');
+            
+            menuItems.forEach(function(item) {
+                const action = item.getAttribute('data-action');
+                let shouldDisable = false;
+                let disableReason = '';
+                
+                switch (action) {
+                    case 'reorder':
+                        shouldDisable = counts.current < 2;
+                        disableReason = 'Need at least 2 activities to reorder';
+                        break;
+                        
+                    case 'bulk-delete':
+                        shouldDisable = counts.current === 0;
+                        disableReason = 'No activities to delete';
+                        break;
+                        
+                    case 'complete-day':
+                        shouldDisable = counts.today === 0;
+                        disableReason = 'No activities for today';
+                        break;
+                        
+                    case 'copy-tomorrow':
+                        shouldDisable = counts.today === 0;
+                        disableReason = 'No activities to copy';
+                        break;
+                        
+                    case 'pin-mode':
+                        shouldDisable = counts.current === 0;
+                        disableReason = 'No activities to pin';
+                        break;
+                }
+                
+                // Update disabled state
+                if (shouldDisable) {
+                    item.disabled = true;
+                    item.setAttribute('aria-disabled', 'true');
+                    item.setAttribute('title', disableReason);
+                } else {
+                    item.disabled = false;
+                    item.removeAttribute('aria-disabled');
+                    item.removeAttribute('title');
+                }
+            });
+        },
+        
+        /**
+         * Update count badges
+         */
+        updateCountBadges: function() {
+            const self = this;
+            const counts = self.activityCounts;
+            
+            // Update all count badges
+            const badges = self.dropdown.querySelectorAll('.menu-item-count');
+            badges.forEach(function(badge) {
+                const countType = badge.getAttribute('data-count-type');
+                let count = 0;
+                
+                switch (countType) {
+                    case 'today':
+                        count = counts.today;
+                        break;
+                    case 'tomorrow':
+                        count = counts.tomorrow;
+                        break;
+                    case 'current':
+                        count = counts.current;
+                        break;
+                    case 'library':
+                        count = counts.library;
+                        break;
+                    case 'pinned':
+                        count = counts.pinned;
+                        break;
+                }
+                
+                // Update badge text
+                if (count > 0) {
+                    badge.textContent = count > 99 ? '99+' : count.toString();
+                    badge.style.display = '';
+                } else {
+                    badge.style.display = 'none';
+                }
+            });
+        },
+        
+        /**
+         * Clean up event listeners and timers
+         */
+        destroy: function() {
+            const self = this;
+            
+            // Remove event listeners
+            if (self.eventHandlers.activitiesChanged) {
+                document.removeEventListener('activitiesChanged', self.eventHandlers.activitiesChanged);
+            }
+            if (self.eventHandlers.dayViewChanged) {
+                document.removeEventListener('dayViewChanged', self.eventHandlers.dayViewChanged);
+            }
+            if (self.eventHandlers.tasksChanged) {
+                document.removeEventListener('tasksChanged', self.eventHandlers.tasksChanged);
+            }
+            if (self.keyboardHandler) {
+                self.dropdown.removeEventListener('keydown', self.keyboardHandler);
+            }
+            
+            // Clear timers
+            if (self.updateTimer) {
+                clearTimeout(self.updateTimer);
+            }
+            
+            // Reset state
+            self.isInitialized = false;
         }
     };
     

@@ -290,32 +290,49 @@
     
     function handleBulkDelete() {
         // Enable bulk delete mode
-        // TODO: Implement bulk delete functionality
-        console.log('Bulk delete not yet implemented');
-        const event = new CustomEvent('notification:show', {
-            detail: { message: 'Bulk delete coming soon!' }
-        });
-        document.dispatchEvent(event);
+        if (window.BulkOperations && window.BulkOperations.start) {
+            window.BulkOperations.start('delete');
+            // Close the menu when starting bulk mode
+            if (window.LeftMenu && window.LeftMenu.close) {
+                window.LeftMenu.close();
+            }
+        } else {
+            console.log('Bulk delete not available');
+            const event = new CustomEvent('notification:show', {
+                detail: { message: 'Bulk delete not available' }
+            });
+            document.dispatchEvent(event);
+        }
     }
     
     function handleCompleteDay() {
         // Complete day workflow
-        // TODO: Implement complete day functionality
-        console.log('Complete day not yet implemented');
-        const event = new CustomEvent('notification:show', {
-            detail: { message: 'Complete day coming soon!' }
-        });
-        document.dispatchEvent(event);
+        if (window.CompleteDayWorkflow && window.CompleteDayWorkflow.completeDay) {
+            window.CompleteDayWorkflow.completeDay();
+        } else {
+            console.log('Complete day workflow not available');
+            const event = new CustomEvent('notification:show', {
+                detail: { message: 'Complete day workflow not available' }
+            });
+            document.dispatchEvent(event);
+        }
     }
     
     function handleCopyToTomorrow() {
         // Copy to tomorrow
-        // TODO: Implement copy to tomorrow functionality
-        console.log('Copy to tomorrow not yet implemented');
-        const event = new CustomEvent('notification:show', {
-            detail: { message: 'Copy to tomorrow coming soon!' }
-        });
-        document.dispatchEvent(event);
+        if (window.BulkOperations && window.BulkOperations.start) {
+            window.BulkOperations.start('copy');
+            // Close the menu when starting bulk mode
+            if (window.LeftMenu && window.LeftMenu.close) {
+                window.LeftMenu.close();
+            }
+        } else {
+            console.log('Copy to tomorrow not available');
+            const event = new CustomEvent('notification:show', {
+                detail: { message: 'Copy to tomorrow not available' }
+            });
+            document.dispatchEvent(event);
+        }
     }
     
     /**

@@ -47,7 +47,6 @@
             self.updateUserDayPill();
             
             self.isInitialized = true;
-            console.log('UnifiedHeader: Initialized');
         },
         
         /**
@@ -80,11 +79,13 @@
             // Create user-day pill
             self.userDayPill = document.createElement('button');
             self.userDayPill.className = 'user-day-pill';
-            self.userDayPill.setAttribute('aria-label', 'Switch user or day');
-            self.userDayPill.innerHTML = `
-                <span class="user-emoji">👤</span>
-                <span class="day-indicator">Today</span>
-            `;
+            self.userDayPill.setAttribute('aria-label', 'Loading user information...');
+            // Initial placeholder content - will be updated by updateUserDayPill()
+            self.userDayPill.innerHTML = 
+                '<span class="pill-emoji">👤</span>' +
+                '<span class="pill-name">Loading...</span>' +
+                '<span class="pill-separator">•</span>' +
+                '<span class="pill-day">Today</span>';
             
             // Create right menu button
             self.rightMenuBtn = document.createElement('button');
@@ -157,13 +158,13 @@
             
             // Listen for user changes
             document.addEventListener('userChanged', function(e) {
-                self.currentUser = e.detail.user;
+                // Just trigger update - let updateUserDayPill get fresh data
                 self.updateUserDayPill();
             });
             
             // Listen for day changes
             document.addEventListener('dayViewChanged', function(e) {
-                self.currentDay = e.detail.day;
+                // Just trigger update - let updateUserDayPill get fresh data
                 self.updateUserDayPill();
             });
         },
@@ -177,36 +178,40 @@
             if (!self.userDayPill) return;
             
             // Get current user
-            if (!self.currentUser && window.UserManager) {
-                self.currentUser = window.UserManager.getCurrentUser();
-            }
+            const user = window.UserManager ? window.UserManager.getCurrentUser() : null;
             
             // Get current day
-            if (window.DaySelector && window.DaySelector.isReady()) {
-                self.currentDay = window.DaySelector.getCurrentDay();
+            const currentDay = window.DaySelector && window.DaySelector.getCurrentDay 
+                ? window.DaySelector.getCurrentDay() 
+                : 'today';
+            
+            // Build the pill content with clear separation
+            if (user) {
+                const dayText = currentDay === 'tomorrow' ? 'Tomorrow' : 'Today';
+                
+                self.userDayPill.innerHTML = 
+                    '<span class="pill-emoji">' + (user.emoji || '👤') + '</span>' +
+                    '<span class="pill-name">' + user.name + '</span>' +
+                    '<span class="pill-separator">•</span>' +
+                    '<span class="pill-day">' + dayText + '</span>';
+                
+                // Update aria-label for accessibility
+                const label = 'Current user: ' + user.name + ', viewing ' + dayText.toLowerCase() + '. Click to switch user.';
+                self.userDayPill.setAttribute('aria-label', label);
+            } else {
+                // Fallback if no user
+                self.userDayPill.innerHTML = 
+                    '<span class="pill-emoji">👤</span>' +
+                    '<span class="pill-name">Guest</span>' +
+                    '<span class="pill-separator">•</span>' +
+                    '<span class="pill-day">Today</span>';
+                
+                self.userDayPill.setAttribute('aria-label', 'No user selected. Click to select user.');
             }
             
-            // Update display
-            const emojiEl = self.userDayPill.querySelector('.user-emoji');
-            const dayEl = self.userDayPill.querySelector('.day-indicator');
-            
-            if (emojiEl && self.currentUser) {
-                emojiEl.textContent = self.currentUser.emoji || '👤';
-            }
-            
-            if (dayEl) {
-                dayEl.textContent = self.currentDay === 'tomorrow' ? 'Tomorrow' : 'Today';
-                // Add visual indicator for tomorrow
-                if (self.currentDay === 'tomorrow') {
-                    dayEl.classList.add('tomorrow');
-                } else {
-                    dayEl.classList.remove('tomorrow');
-                }
-            }
-            
-            // Update aria-label
-            const label = `Current user: ${self.currentUser?.name || 'Me'}, viewing ${self.currentDay === 'tomorrow' ? 'tomorrow' : 'today'}. Tap to switch.`;
-            self.userDayPill.setAttribute('aria-label', label);
+            // Store current values for future reference
+            self.currentUser = user;
+            self.currentDay = currentDay;
         },
         
         /**
