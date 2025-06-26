@@ -8,8 +8,11 @@
     'use strict';
     
     const DayManager = {
+        // Constants
+        TIMEFRAMES: ['today', 'tomorrow', 'someday'],
+        
         // State
-        currentDay: 'today', // 'today' | 'tomorrow'
+        currentDay: 'today', // 'today' | 'tomorrow' | 'someday'
         listeners: {},
         isInitialized: false,
         
@@ -47,7 +50,7 @@
         setDay: function(day, silent) {
             const self = this;
             
-            if (day !== 'today' && day !== 'tomorrow') {
+            if (!self.TIMEFRAMES.includes(day)) {
                 console.warn('DayManager: Invalid day', day);
                 return false;
             }
@@ -90,6 +93,13 @@
         },
         
         /**
+         * Check if current day is someday
+         */
+        isSomeday: function() {
+            return this.currentDay === 'someday';
+        },
+        
+        /**
          * Switch to today
          */
         switchToToday: function() {
@@ -104,10 +114,38 @@
         },
         
         /**
+         * Switch to someday
+         */
+        switchToSomeday: function() {
+            return this.setDay('someday');
+        },
+        
+        /**
          * Toggle between today and tomorrow
          */
         toggle: function() {
             return this.setDay(this.isToday() ? 'tomorrow' : 'today');
+        },
+        
+        /**
+         * Move activity between timeframes
+         */
+        moveTo: function(activityId, timeframe) {
+            const self = this;
+            
+            if (!self.TIMEFRAMES.includes(timeframe)) {
+                console.warn('DayManager: Invalid timeframe for move', timeframe);
+                return false;
+            }
+            
+            // Emit move event for other systems to handle
+            self.emit('activityMoved', {
+                activityId: activityId,
+                fromTimeframe: self.currentDay,
+                toTimeframe: timeframe
+            });
+            
+            return true;
         },
         
         /**
@@ -163,10 +201,10 @@
             try {
                 const url = new URL(window.location);
                 
-                if (self.currentDay === 'tomorrow') {
-                    url.searchParams.set('day', 'tomorrow');
-                } else {
+                if (self.currentDay === 'today') {
                     url.searchParams.delete('day');
+                } else {
+                    url.searchParams.set('day', self.currentDay);
                 }
                 
                 // Update URL without page reload
@@ -186,11 +224,8 @@
                 const url = new URL(window.location);
                 const dayParam = url.searchParams.get('day');
                 
-                if (dayParam === 'tomorrow') {
-                    self.currentDay = 'tomorrow';
-                    return true;
-                } else if (dayParam === 'today') {
-                    self.currentDay = 'today';
+                if (self.TIMEFRAMES.includes(dayParam)) {
+                    self.currentDay = dayParam;
                     return true;
                 }
             } catch (error) {
@@ -221,7 +256,7 @@
             
             try {
                 const storedDay = localStorage.getItem('stackmap_current_day');
-                if (storedDay === 'today' || storedDay === 'tomorrow') {
+                if (self.TIMEFRAMES.includes(storedDay)) {
                     self.currentDay = storedDay;
                     return true;
                 }
@@ -286,6 +321,13 @@
                             self.switchToTomorrow();
                         }
                         break;
+                        
+                    case 's':
+                        if (self.currentDay !== 'someday') {
+                            event.preventDefault();
+                            self.switchToSomeday();
+                        }
+                        break;
                 }
             });
         },
@@ -294,7 +336,12 @@
          * Get display name for current day
          */
         getCurrentDayDisplayName: function() {
-            return this.currentDay === 'today' ? 'Today' : 'Tomorrow';
+            const displayNames = {
+                'today': 'Today',
+                'tomorrow': 'Tomorrow',
+                'someday': 'Someday'
+            };
+            return displayNames[this.currentDay] || this.currentDay;
         },
         
         /**
@@ -361,15 +408,36 @@
         setActivityDay: function(activity, day) {
             if (!activity) return false;
             
-            if (day !== 'today' && day !== 'tomorrow') {
+            if (!this.TIMEFRAMES.includes(day)) {
                 console.warn('DayManager: Invalid day for activity', day);
                 return false;
             }
             
             activity.day = day;
+            activity.timeframe = day; // Support both day and timeframe properties
             activity.updated_at = new Date().toISOString();
             
             return true;
+        },
+        
+        /**
+         * Get all activities for a specific timeframe
+         */
+        getActivitiesForTimeframe: function(activities, timeframe) {
+            if (!activities || !Array.isArray(activities)) {
+                return [];
+            }
+            
+            return activities.filter(function(activity) {
+                return activity.day === timeframe || activity.timeframe === timeframe;
+            });
+        },
+        
+        /**
+         * Get someday activities
+         */
+        getSomedayActivities: function(activities) {
+            return this.getActivitiesForTimeframe(activities, 'someday');
         }
     };
     

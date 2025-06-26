@@ -309,6 +309,37 @@
                     priority.textContent = activity.priority;
                     priority.className = `task-priority priority-${activity.priority.toLowerCase()}`;
                 }
+                
+                // Update time display (Story #109)
+                let timeDisplay = card.querySelector('.task-card__time-display');
+                if (activity.time && window.TimeFormatter) {
+                    if (!timeDisplay) {
+                        // Create time display if it doesn't exist
+                        timeDisplay = document.createElement('div');
+                        timeDisplay.className = 'task-card__time-display';
+                        const footer = card.querySelector('.task-card__footer');
+                        if (footer) {
+                            footer.insertBefore(timeDisplay, footer.firstChild);
+                        }
+                    }
+                    
+                    // Get user's preferred format (default to 12h for now)
+                    const format = '12h'; // TODO: Get from user preferences
+                    
+                    // Format time for display with icon
+                    const formattedTime = window.TimeFormatter.formatWithContext(activity.time, {
+                        format: format,
+                        showIcon: true,
+                        compact: true,
+                        showRelative: false
+                    });
+                    
+                    timeDisplay.innerHTML = formattedTime;
+                    timeDisplay.title = `Scheduled for ${formattedTime}`;
+                } else if (timeDisplay) {
+                    // Remove time display if no time is set
+                    timeDisplay.remove();
+                }
             } else {
                 // Create new structure for non-pooled cards
                 // Completion indicator
@@ -402,6 +433,27 @@
             // Card footer with metadata
             const footer = document.createElement('div');
             footer.className = 'task-card__footer';
+            
+            // Time display (Story #109)
+            if (activity.time && window.TimeFormatter) {
+                const timeDisplay = document.createElement('div');
+                timeDisplay.className = 'task-card__time-display';
+                
+                // Get user's preferred format (default to 12h for now)
+                const format = '12h'; // TODO: Get from user preferences
+                
+                // Format time for display with icon
+                const formattedTime = window.TimeFormatter.formatWithContext(activity.time, {
+                    format: format,
+                    showIcon: true,
+                    compact: true,
+                    showRelative: false
+                });
+                
+                timeDisplay.innerHTML = formattedTime;
+                timeDisplay.title = `Scheduled for ${formattedTime}`;
+                footer.appendChild(timeDisplay);
+            }
             
             // Time estimate
             if (activity.time_estimate || activity.estimatedMinutes) {

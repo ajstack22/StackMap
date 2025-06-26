@@ -837,16 +837,59 @@
         addActivityDirect: function(activityData) {
             const self = this;
             
-            const newActivity = Object.assign({
-                id: `activity_${Date.now()}`,
-                created_at: new Date().toISOString(),
-                updated_at: new Date().toISOString()
-            }, activityData);
+            // Get current user ID from UserContext
+            const userId = window.UserContext ? window.UserContext.getCurrentUserId() : null;
+            if (!userId) {
+                console.error('ActivityDisplay: Cannot add activity - no current user');
+                return null;
+            }
             
-            self.activities.unshift(newActivity);
-            self.render();
-            
-            return newActivity.id;
+            try {
+                // Create new activity with user association
+                const newActivity = Object.assign({
+                    id: `activity_${Date.now()}`,
+                    userId: userId,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                }, activityData);
+                
+                // Determine timeframe
+                const timeframe = newActivity.timeframe || newActivity.day || 'today';
+                
+                // Add activity using UserDataManager
+                if (window.UserDataManager) {
+                    const success = window.UserDataManager.addActivity(userId, newActivity, timeframe);
+                    if (success) {
+                        // Clear badge cache for this activity
+                        if (window.BadgeCache) {
+                            window.BadgeCache.invalidateActivity(newActivity.id);
+                        }
+                        
+                        // Re-render display
+                        self.render();
+                        
+                        // Dispatch event
+                        document.dispatchEvent(new CustomEvent('activityAdded', {
+                            detail: { activity: newActivity, userId: userId }
+                        }));
+                        
+                        return newActivity.id;
+                    } else {
+                        console.error('ActivityDisplay: Failed to add activity to UserDataManager');
+                        return null;
+                    }
+                } else {
+                    // Fallback to legacy method
+                    console.warn('ActivityDisplay: UserDataManager not available, using legacy add');
+                    self.activities.unshift(newActivity);
+                    self.render();
+                    return newActivity.id;
+                }
+                
+            } catch (error) {
+                console.error('ActivityDisplay: Failed to add activity:', error);
+                return null;
+            }
         },
         
         /**
@@ -975,6 +1018,13 @@
             html += '</div>';
             html += '</div>';
             
+            // Time input field (new for Story #109)
+            html += '<div class="form-field">';
+            html += '<label for="activity-time">Time (optional)</label>';
+            html += '<div id="activity-time-container" class="time-input-container"></div>';
+            html += '<div class="time-input-help">Examples: "3pm", "15:30", "noon"</div>';
+            html += '</div>';
+            
             // Time estimate
             html += '<div class="form-field">';
             html += '<label for="activity-time-estimate">Time Estimate</label>';
@@ -1062,6 +1112,26 @@
             for (let j = 0; j < iconButtons.length; j++) {
                 iconButtons[j].addEventListener('click', iconClickHandler);
                 self.trackEventListener(iconButtons[j], 'click', iconClickHandler);
+            }
+            
+            // Initialize Time Input component (Story #109)
+            const timeContainer = form.querySelector('#activity-time-container');
+            if (timeContainer && window.TimeInput) {
+                const timeInput = window.TimeInput.create({
+                    container: timeContainer,
+                    value: activity.time || null,
+                    format: '12h', // TODO: Get from user preferences
+                    onChange: function(value) {
+                        // Auto-save when time changes
+                        self.saveDraft(activity.id, form);
+                    }
+                });
+                
+                // Store reference for cleanup
+                form._timeInputInstance = timeInput;
+                
+                // Render the time input
+                timeInput.render();
             }
             
             // Time estimate preset buttons
@@ -1165,6 +1235,11 @@
             if (timeEstimateInput) {
                 const timeValue = parseInt(timeEstimateInput.value) || 0;
                 data.timeEstimate = timeValue > 0 ? timeValue : null;
+            }
+            
+            // Get time value from TimeInput component (Story #109)
+            if (form._timeInputInstance) {
+                data.time = form._timeInputInstance.getValue();
             }
             
             // Get selected icon
@@ -1291,36 +1366,102 @@
                 const command = window.ActivityCommands.createCompleteCommand(activity.id, wasCompleted);
                 window.UndoManager.execute(command);
             } else {
-                // Fallback to direct method
-                const isFirstCompletion = !wasCompleted && activity.completed;
-                
-                activity.updated_at = new Date().toISOString();
-                if (activity.completed) {
-                    activity.completed_at = new Date().toISOString();
-                } else {
-                    activity.completed_at = null;
+                // Get current user ID
+                const userId = window.UserContext ? window.UserContext.getCurrentUserId() : null;
+                if (!userId) {
+                    console.error('ActivityDisplay: No user ID available for update operation');
+                    return;
                 }
                 
-                // Save first to ensure data persistence
-                self.saveActivities();
-                
-                // Trigger celebration for first-time completion
-                if (isFirstCompletion && window.CelebrationSystem) {
-                    // Find the activity element in DOM before re-render
-                    const activityElement = document.querySelector(`[data-activity-id="${activity.id}"]`);
-                    if (activityElement) {
-                        window.CelebrationSystem.celebrate(activityElement, true);
+                try {
+                    // Fallback to direct method
+                    const isFirstCompletion = !wasCompleted && activity.completed;
+                    
+                    // Prepare updates
+                    const updates = {
+                        updated_at: new Date().toISOString()
+                    };
+                    
+                    if (activity.completed) {
+                        updates.completed_at = new Date().toISOString();
+                    } else {
+                        updates.completed_at = null;
                     }
-                }
-                
-                // Check if virtual scrolling is active
-                if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
-                    // Update virtual scrolling without full re-render
-                    const userActivities = self.getUserActivities();
-                    window.VirtualScrollAdapter.update(userActivities);
-                } else {
-                    // Full re-render for traditional view
-                    self.render();
+                    
+                    // Copy any other changes from activity object
+                    Object.keys(activity).forEach(key => {
+                        if (key !== 'id' && key !== 'userId' && key !== 'created_at') {
+                            updates[key] = activity[key];
+                        }
+                    });
+                    
+                    // Use UserDataManager for user-aware update
+                    if (window.UserDataManager) {
+                        const updated = window.UserDataManager.updateActivity(userId, activity.id, updates);
+                        
+                        if (updated) {
+                            // Clear badge cache for this activity
+                            if (window.BadgeCache) {
+                                window.BadgeCache.invalidateActivity(activity.id);
+                            }
+                            
+                            // Trigger celebration for first-time completion
+                            if (isFirstCompletion && window.CelebrationSystem) {
+                                // Find the activity element in DOM before re-render
+                                const activityElement = document.querySelector(`[data-activity-id="${activity.id}"]`);
+                                if (activityElement) {
+                                    window.CelebrationSystem.celebrate(activityElement, true);
+                                }
+                            }
+                            
+                            // Check if virtual scrolling is active
+                            if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
+                                // Update virtual scrolling without full re-render
+                                const userActivities = self.getUserActivities();
+                                window.VirtualScrollAdapter.update(userActivities);
+                            } else {
+                                // Full re-render for traditional view
+                                self.render();
+                            }
+                            
+                            // Dispatch event
+                            document.dispatchEvent(new CustomEvent('activityUpdated', {
+                                detail: { userId, activityId: activity.id, updates }
+                            }));
+                        } else {
+                            console.warn('ActivityDisplay: Failed to update activity', activity.id);
+                        }
+                    } else {
+                        // Fallback to legacy method
+                        activity.updated_at = updates.updated_at;
+                        if (updates.completed_at !== undefined) {
+                            activity.completed_at = updates.completed_at;
+                        }
+                        
+                        // Save using legacy method
+                        self.saveActivities();
+                        
+                        // Trigger celebration for first-time completion
+                        if (isFirstCompletion && window.CelebrationSystem) {
+                            const activityElement = document.querySelector(`[data-activity-id="${activity.id}"]`);
+                            if (activityElement) {
+                                window.CelebrationSystem.celebrate(activityElement, true);
+                            }
+                        }
+                        
+                        // Check if virtual scrolling is active
+                        if (window.VirtualScrollAdapter && window.VirtualScrollAdapter.isActive()) {
+                            const userActivities = self.getUserActivities();
+                            window.VirtualScrollAdapter.update(userActivities);
+                        } else {
+                            self.render();
+                        }
+                    }
+                } catch (error) {
+                    console.error('ActivityDisplay: Error in updateActivity:', error);
+                    if (window.showErrorMessage) {
+                        window.showErrorMessage('Failed to update activity');
+                    }
                 }
             }
         },
@@ -1550,36 +1691,65 @@
         },
         
         /**
-         * Get activities for current user
+         * Get activities for current user (User Data Separation - Story #107)
          */
         getUserActivities: function() {
             const self = this;
-            let userActivities = self.filterActivitiesByUser(self.activities);
             
-            // Filter by selected day if DayManager is available
-            if (window.DayManager && window.DayManager.isInitialized) {
-                const selectedDay = window.DayManager.getCurrentDay();
-                userActivities = userActivities.filter(function(activity) {
-                    // Show activities for the selected day
-                    // Check both 'day' and 'timeframe' fields for compatibility
-                    const activityDay = activity.day || activity.timeframe || 'today';
-                    return activityDay === selectedDay;
-                });
+            // Get current user ID from UserContext
+            const userId = window.UserContext ? window.UserContext.getCurrentUserId() : null;
+            if (!userId) {
+                console.warn('ActivityDisplay: No current user ID available, using legacy activities');
+                // Fallback to legacy activities array when UserContext not ready
+                return self.activities || [];
             }
             
-            // Sort by order field (higher values first)
-            userActivities.sort(function(a, b) {
-                // If order fields exist, use them
-                if (a.order !== undefined && b.order !== undefined) {
-                    return b.order - a.order;
+            try {
+                // Get selected day/timeframe
+                let selectedDay = 'today';
+                if (window.DayManager && window.DayManager.isInitialized) {
+                    selectedDay = window.DayManager.getCurrentDay();
                 }
-                // Fallback to created_at
-                const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
-                const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
-                return bTime - aTime;
-            });
-            
-            return userActivities;
+                
+                // Get user activities from UserDataManager
+                let userActivities = [];
+                if (window.UserDataManager) {
+                    userActivities = window.UserDataManager.getUserActivities(userId, selectedDay);
+                } else {
+                    // Fallback to legacy filtering
+                    console.warn('ActivityDisplay: UserDataManager not available, using legacy filtering');
+                    userActivities = self.filterActivitiesByUser(self.activities);
+                    
+                    // Filter by selected day
+                    userActivities = userActivities.filter(function(activity) {
+                        const activityDay = activity.day || activity.timeframe || 'today';
+                        return activityDay === selectedDay;
+                    });
+                }
+                
+                // Ensure backward compatibility for all activities
+                userActivities.forEach(function(activity) {
+                    self.ensureActivityFields(activity);
+                });
+                
+                // Sort by order field (higher values first)
+                userActivities.sort(function(a, b) {
+                    // If order fields exist, use them
+                    if (a.order !== undefined && b.order !== undefined) {
+                        return b.order - a.order;
+                    }
+                    // Fallback to created_at
+                    const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+                    const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+                    return bTime - aTime;
+                });
+                
+                return userActivities;
+                
+            } catch (error) {
+                console.error('ActivityDisplay: Failed to get user activities:', error);
+                return [];
+            }
         },
         
         /**
@@ -1865,6 +2035,15 @@
                     self.eventListeners.splice(index, 1);
                 }
             });
+            
+            // Clean up TimeInput instances (Story #109)
+            const activeForms = document.querySelectorAll('.modal .activity-edit-form');
+            activeForms.forEach(function(form) {
+                if (form._timeInputInstance) {
+                    form._timeInputInstance.destroy();
+                    delete form._timeInputInstance;
+                }
+            });
         },
         
         // Optimize button response for ADHD users (sub-200ms target)
@@ -2047,19 +2226,63 @@
         // Delete activity permanently without command pattern
         deleteActivityDirect: function(activityId) {
             const self = this;
-            const index = self.activities.findIndex(function(activity) {
-                return activity.id === activityId;
-            });
             
-            if (index > -1) {
-                // Clean up any active timer
-                if (window.ActivityTimer && window.ActivityTimer.cancelTimer) {
-                    window.ActivityTimer.cancelTimer(activityId);
+            try {
+                // Get current user ID
+                const userId = window.UserContext ? window.UserContext.getCurrentUserId() : null;
+                if (!userId) {
+                    console.error('ActivityDisplay: No user ID available for delete operation');
+                    return;
                 }
                 
-                self.activities.splice(index, 1);
-                self.saveActivities();
-                self.render();
+                // Use UserDataManager for user-aware deletion
+                if (window.UserDataManager) {
+                    const deleted = window.UserDataManager.removeActivity(userId, activityId);
+                    
+                    if (deleted) {
+                        // Clean up any active timer
+                        if (window.ActivityTimer && window.ActivityTimer.cancelTimer) {
+                            window.ActivityTimer.cancelTimer(activityId);
+                        }
+                        
+                        // Clear badge cache for this activity
+                        if (window.BadgeCache) {
+                            window.BadgeCache.invalidateActivity(activityId);
+                        }
+                        
+                        // Refresh display
+                        self.render();
+                        
+                        // Dispatch event for other components
+                        document.dispatchEvent(new CustomEvent('activityDeleted', {
+                            detail: { userId, activityId }
+                        }));
+                    } else {
+                        console.warn('ActivityDisplay: Failed to delete activity', activityId);
+                    }
+                } else {
+                    // Fallback to legacy method if UserDataManager not available
+                    const index = self.activities.findIndex(function(activity) {
+                        return activity.id === activityId;
+                    });
+                    
+                    if (index > -1) {
+                        // Clean up any active timer
+                        if (window.ActivityTimer && window.ActivityTimer.cancelTimer) {
+                            window.ActivityTimer.cancelTimer(activityId);
+                        }
+                        
+                        self.activities.splice(index, 1);
+                        self.saveActivities();
+                        self.render();
+                    }
+                }
+            } catch (error) {
+                console.error('ActivityDisplay: Error in deleteActivityDirect:', error);
+                // Don't fail silently - show user feedback
+                if (window.showErrorMessage) {
+                    window.showErrorMessage('Failed to delete activity');
+                }
             }
         },
         

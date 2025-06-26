@@ -5,42 +5,8 @@
     <!-- RSD-Safe Error Interception - MUST load first -->
     <script src="js/rsd-safe-init.js"></script>
     <script>
-    // Pre-boot safety check - redirects to static fallback if JS environment is broken
-    (function() {
-        var timeout = setTimeout(function() {
-            window.location.replace('emergency-static.html');
-        }, 50);
-        
-        try {
-            // Test basic JavaScript
-            var test = function() { return true; };
-            if (!test()) throw new Error();
-            
-            // Test DOM APIs
-            if (!document.querySelector) throw new Error();
-            if (!window.addEventListener) throw new Error();
-            
-            // Test Array methods
-            if (!Array.prototype.forEach) throw new Error();
-            if (!Array.prototype.slice) throw new Error();
-            if (!Array.from) throw new Error();
-            
-            // Test JSON
-            if (!window.JSON || !JSON.parse || !JSON.stringify) throw new Error();
-            
-            // Test localStorage last (most likely to fail)
-            var storage = window.localStorage;
-            var testKey = '__sm_test_' + new Date().getTime();
-            storage.setItem(testKey, '1');
-            storage.removeItem(testKey);
-            
-            clearTimeout(timeout);
-            
-        } catch (e) {
-            clearTimeout(timeout);
-            window.location.replace('emergency-static.html');
-        }
-    })();
+    // Force redirect to fallback mode for debugging
+    window.location.replace('emergency-static.html');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -217,62 +183,20 @@
     </style>
     
     <!-- External styles loaded async -->
-    <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/activity-migration.css">
-    <link rel="stylesheet" href="css/activity-numbers.css">
-    <link rel="stylesheet" href="css/cards.css">
-    <link rel="stylesheet" href="css/visual-cards.css">
-    <link rel="stylesheet" href="css/focus-indicators.css">
-    <link rel="stylesheet" href="css/activity-library.css">
-    <link rel="stylesheet" href="css/activity-templates.css">
+    <!-- Only include CSS files that actually exist -->
+    <!-- Template browser -->
     <link rel="stylesheet" href="css/template-browser.css">
-    <link rel="stylesheet" href="css/clusterize.css">
-    <link rel="stylesheet" href="css/undo-ui.css">
-    <link rel="stylesheet" href="css/mobile.css" media="(max-width: 768px)">
-    <link rel="stylesheet" href="css/tv.css" media="(min-width: 1920px)">
-    <link rel="stylesheet" href="css/grownup-mode.css">
-    <link rel="stylesheet" href="css/edit-mode.css">
-    <link rel="stylesheet" href="css/edit-mode-menu.css">
-    <link rel="stylesheet" href="css/demo-mode.css">
-    <link rel="stylesheet" href="css/onboarding.css">
-    <link rel="stylesheet" href="css/themes.css">
-    <link rel="stylesheet" href="css/timer.css">
-    <link rel="stylesheet" href="css/photo-attachments.css">
-    <link rel="stylesheet" href="css/attachments.css">
-    <link rel="stylesheet" href="css/voice-recording.css">
-    <link rel="stylesheet" href="css/welcome.css">
     
     <!-- PWA manifest -->
     <link rel="manifest" href="manifest.json">
     
-    <!-- Today/Tomorrow styles -->
-    <link rel="stylesheet" href="css/today-tomorrow.css">
+    <!-- Day management -->
     <link rel="stylesheet" href="css/day-selector.css">
     <link rel="stylesheet" href="css/day-management.css">
-    <link rel="stylesheet" href="css/celebration.css">
+    <link rel="stylesheet" href="css/someday.css">
     
-    <!-- Quick Add styles -->
-    <link rel="stylesheet" href="css/quick-add.css">
-    
-    <!-- Undo system styles -->
-    <link rel="stylesheet" href="css/undo-ui.css">
-    
-    <!-- Header and Menu styles -->
-    <link rel="stylesheet" href="css/unified-header.css">
-    <link rel="stylesheet" href="css/left-menu.css">
-    <link rel="stylesheet" href="css/settings-dropdown.css">
-    <link rel="stylesheet" href="css/user-day-modal.css">
-    <!-- Pin Activities System -->
-    <link rel="stylesheet" href="css/activity-pin.css">
-    
-    <!-- Complete Day Workflow -->
-    <link rel="stylesheet" href="css/complete-day.css">
-    
-    <!-- Bulk Operations -->
-    <link rel="stylesheet" href="css/bulk-operations.css">
-    
-    <!-- Activity Types System -->
-    <link rel="stylesheet" href="css/activity-types.css">
+    <!-- Time Field Implementation (Story #109) -->
+    <link rel="stylesheet" href="css/time-input.css">
     
     <!-- Direct Card Edit Controls (Story #96) -->
     <link rel="stylesheet" href="css/inline-edit.css">
@@ -283,8 +207,12 @@
     <link rel="stylesheet" href="css/visual-keyboard.css">
     <link rel="stylesheet" href="css/confirmation-dialogs.css">
     
+    <!-- Analytics Dashboard System (Story #106) -->
+    <link rel="stylesheet" href="css/analytics-dashboard.css">
+    <link rel="stylesheet" href="css/achievement-notifications.css">
+    
     <!-- Preload critical resources -->
-    <link rel="preload" href="js/app.js" as="script">
+    <!-- app.js removed - does not exist -->
 </head>
 <body>
     <!-- Skip Links for Keyboard Navigation -->
@@ -426,6 +354,14 @@
                                     data-day="tomorrow">
                                 <span class="day-icon">🌙</span>
                                 <span class="day-label">Tomorrow</span>
+                            </button>
+                            <button class="day-selector-btn" 
+                                    role="tab" 
+                                    aria-selected="false" 
+                                    aria-controls="activities" 
+                                    data-day="someday">
+                                <span class="day-icon">💭</span>
+                                <span class="day-label">Someday</span>
                             </button>
                         </div>
                     </div>
@@ -591,6 +527,26 @@
         </main>
     </div>
     
+    <!-- Analytics View -->
+    <div id="analytics-view" class="view hidden">
+        <header class="header">
+            <button id="analytics-back" aria-label="Back">←</button>
+            <h1>Analytics</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <div class="component-normal">
+                <div id="analytics-dashboard-container"></div>
+            </div>
+            <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
+                <div class="fallback-message">Analytics are temporarily unavailable</div>
+                <div class="fallback-actions">
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Try again</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
     <!-- Profiles View -->
     <div id="profiles-view" class="view hidden">
         <header class="header">
@@ -730,8 +686,7 @@
     <!-- Demo mode and onboarding -->
     <script src="js/demo-mode.js" defer></script>
     <script src="js/onboarding.js" defer></script>
-    <!-- Main application -->
-    <script src="js/app.js" defer></script>
+    <!-- Main application (app.js does not exist - initialization handled by rsd-safe-init.js) -->
     <!-- User management -->
     <script src="js/user-manager.js" defer></script>
     <!-- Profile UI -->
@@ -754,6 +709,15 @@
     <script src="js/virtual-scroll-optimizer.js" defer></script>
     <script src="js/memory-manager.js" defer></script>
     <script src="js/performance-test-suite.js" defer></script>
+    <!-- User data separation system (must load before activity-display) -->
+    <script src="js/user-context.js" defer></script>
+    <script src="js/user-data-manager.js" defer></script>
+    <script src="js/data-migration.js" defer></script>
+    <!-- Database schema and time components (Story #109 - must load before activity-display) -->
+    <script src="js/db-schema.js" defer></script>
+    <script src="js/time-parser.js" defer></script>
+    <script src="js/time-formatter.js" defer></script>
+    <script src="js/time-input.js" defer></script>
     <!-- Activity display -->
     <script src="js/activity-display.js" defer></script>
     <!-- Undo system (must load after activity-display) -->
@@ -766,6 +730,9 @@
     <!-- Day Management System (Story #108) -->
     <script src="js/day-manager.js" defer></script>
     <script src="js/day-selector-ui.js" defer></script>
+    
+    <!-- Someday Support (Story #111) -->
+    <script src="js/someday-manager.js" defer></script>
     <!-- Display Mode Toggle -->
     <script src="js/display-mode-toggle.js" defer></script>
     <!-- Rollover manager -->
@@ -843,5 +810,13 @@
     <!-- Enhanced Edit Mode UX (Story #98) -->
     <script src="js/visual-keyboard.js" defer></script>
     <script src="js/confirmation-dialogs.js" defer></script>
+    
+    <!-- Analytics Dashboard System (Story #106) -->
+    <script src="js/analytics-data-model.js" defer></script>
+    <script src="js/progress-analytics.js" defer></script>
+    <script src="js/achievement-system.js" defer></script>
+    <script src="js/data-visualizer.js" defer></script>
+    <script src="js/analytics-dashboard.js" defer></script>
+    <script src="js/analytics-integration.js" defer></script>
 </body>
 </html>

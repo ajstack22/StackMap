@@ -1,0 +1,583 @@
+/**
+ * Time Input Component Styling for StackMap
+ * Mobile-first design with ADHD/autism accommodations
+ * Story #109 - Time Field Implementation
+ */
+
+/* Time Input Container */
+.time-input-container {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    min-height: 48px; /* Adequate touch target */
+}
+
+/* Safe mode - larger touch targets */
+.safe-mode .time-input-container {
+    min-height: 60px;
+}
+
+/* Time Input Field */
+.time-input {
+    flex: 1;
+    padding: 12px 16px;
+    border: none;
+    outline: none;
+    font-size: 16px;
+    font-family: inherit;
+    background: transparent;
+    color: #1a202c;
+    font-variant-numeric: tabular-nums; /* Consistent number spacing */
+}
+
+/* Safe mode - larger font */
+.safe-mode .time-input {
+    font-size: 18px;
+    padding: 16px 20px;
+}
+
+/* Input placeholder */
+.time-input::placeholder {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* Focus state */
+.time-input-container:focus-within {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.1);
+}
+
+/* Valid state */
+.time-input-valid {
+    border-color: #48bb78;
+}
+
+.time-input-valid:focus-within {
+    border-color: #48bb78;
+    box-shadow: 0 0 0 3px rgba(72, 187, 120, 0.1);
+}
+
+/* Invalid state */
+.time-input-invalid {
+    border-color: #f56565;
+}
+
+.time-input-invalid:focus-within {
+    border-color: #f56565;
+    box-shadow: 0 0 0 3px rgba(245, 101, 101, 0.1);
+}
+
+/* Time Picker Button */
+.time-picker-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    min-width: 48px;
+    background: #f7fafc;
+    border: none;
+    border-left: 1px solid #e2e8f0;
+    cursor: pointer;
+    font-size: 18px;
+    color: #4a5568;
+    transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Safe mode - larger picker button */
+.safe-mode .time-picker-button {
+    width: 60px;
+    min-width: 60px;
+    font-size: 20px;
+}
+
+.time-picker-button:hover {
+    background: #edf2f7;
+    color: #2d3748;
+}
+
+.time-picker-button:focus {
+    outline: none;
+    background: #e2e8f0;
+    box-shadow: inset 0 0 0 2px #4299e1;
+}
+
+/* Time Suggestions Container */
+.time-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-top: none;
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    max-height: 200px;
+    overflow-y: auto;
+}
+
+.time-suggestions.hidden {
+    display: none;
+}
+
+/* Individual Time Suggestion */
+.time-suggestion {
+    display: block;
+    width: 100%;
+    padding: 12px 16px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    font-size: 14px;
+    color: #4a5568;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f7fafc;
+}
+
+/* Safe mode - larger suggestions */
+.safe-mode .time-suggestion {
+    padding: 16px 20px;
+    font-size: 16px;
+}
+
+.time-suggestion:hover {
+    background: #f7fafc;
+}
+
+.time-suggestion:focus {
+    outline: none;
+    background: #edf2f7;
+    box-shadow: inset 3px 0 0 #4299e1;
+}
+
+.time-suggestion:last-child {
+    border-bottom: none;
+}
+
+/* Suggestion Types */
+.time-suggestion-parsed {
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.time-suggestion-contextual {
+    color: #718096;
+    font-style: italic;
+}
+
+.time-suggestion-quick {
+    color: #4299e1;
+    font-weight: 500;
+}
+
+/* Time Picker Modal */
+.time-picker {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    min-width: 280px;
+}
+
+/* Safe mode - larger picker */
+.safe-mode .time-picker {
+    min-width: 320px;
+}
+
+/* Picker Header */
+.time-picker-header {
+    display: flex;
+    justify-content: flex-end;
+    padding: 8px;
+    background: #f7fafc;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.time-picker-close {
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 18px;
+    color: #718096;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+}
+
+/* Safe mode - larger close button */
+.safe-mode .time-picker-close {
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+}
+
+.time-picker-close:hover {
+    background: #e2e8f0;
+    color: #4a5568;
+}
+
+/* Picker Content */
+.time-picker-content {
+    display: flex;
+    gap: 16px;
+    padding: 20px;
+    align-items: end;
+}
+
+/* Safe mode - larger content padding */
+.safe-mode .time-picker-content {
+    gap: 20px;
+    padding: 24px;
+}
+
+.time-picker-section {
+    flex: 1;
+    min-width: 0;
+}
+
+.time-picker-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: #4a5568;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+/* Safe mode - larger labels */
+.safe-mode .time-picker-label {
+    font-size: 14px;
+    margin-bottom: 12px;
+}
+
+.time-picker-hour,
+.time-picker-minute {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 16px;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.2s ease;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Safe mode - larger inputs */
+.safe-mode .time-picker-hour,
+.safe-mode .time-picker-minute {
+    padding: 12px 16px;
+    font-size: 18px;
+}
+
+.time-picker-hour:focus,
+.time-picker-minute:focus {
+    border-color: #4299e1;
+}
+
+.time-picker-period {
+    width: 100%;
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 16px;
+    background: #ffffff;
+    outline: none;
+    transition: border-color 0.2s ease;
+}
+
+/* Safe mode - larger select */
+.safe-mode .time-picker-period {
+    padding: 12px 16px;
+    font-size: 18px;
+}
+
+.time-picker-period:focus {
+    border-color: #4299e1;
+}
+
+/* Picker Actions */
+.time-picker-actions {
+    display: flex;
+    gap: 8px;
+    padding: 16px 20px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Safe mode - larger action padding */
+.safe-mode .time-picker-actions {
+    gap: 12px;
+    padding: 20px 24px;
+}
+
+.time-picker-clear,
+.time-picker-now,
+.time-picker-apply {
+    flex: 1;
+    padding: 8px 16px;
+    border: 2px solid transparent;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 40px;
+}
+
+/* Safe mode - larger action buttons */
+.safe-mode .time-picker-clear,
+.safe-mode .time-picker-now,
+.safe-mode .time-picker-apply {
+    padding: 12px 20px;
+    font-size: 16px;
+    min-height: 48px;
+}
+
+.time-picker-clear {
+    background: #fed7d7;
+    color: #c53030;
+}
+
+.time-picker-clear:hover {
+    background: #feb2b2;
+}
+
+.time-picker-now {
+    background: #bee3f8;
+    color: #2b6cb0;
+}
+
+.time-picker-now:hover {
+    background: #90cdf4;
+}
+
+.time-picker-apply {
+    background: #4299e1;
+    color: #ffffff;
+}
+
+.time-picker-apply:hover {
+    background: #3182ce;
+}
+
+/* Validation Message */
+.time-validation-message {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    padding: 8px 12px;
+    background: #fed7d7;
+    color: #c53030;
+    font-size: 12px;
+    border-radius: 0 0 6px 6px;
+    border: 2px solid #f56565;
+    border-top: none;
+    z-index: 999;
+}
+
+/* Safe mode - larger validation message */
+.safe-mode .time-validation-message {
+    padding: 12px 16px;
+    font-size: 14px;
+}
+
+.time-validation-message.hidden {
+    display: none;
+}
+
+/* Time Input Help Text */
+.time-input-help {
+    margin-top: 4px;
+    font-size: 12px;
+    color: #718096;
+    font-style: italic;
+}
+
+/* Safe mode - larger help text */
+.safe-mode .time-input-help {
+    margin-top: 8px;
+    font-size: 14px;
+}
+
+/* Time Display on Activity Cards */
+.task-card__time-display {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 4px 8px;
+    background: rgba(66, 153, 225, 0.1);
+    color: #2b6cb0;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Safe mode - larger time display */
+.safe-mode .task-card__time-display {
+    padding: 6px 12px;
+    font-size: 14px;
+    gap: 6px;
+}
+
+/* Time of day color variations */
+.task-card__time-display.time-early-morning {
+    background: rgba(245, 158, 11, 0.1);
+    color: #92400e;
+}
+
+.task-card__time-display.time-morning {
+    background: rgba(234, 179, 8, 0.1);
+    color: #a16207;
+}
+
+.task-card__time-display.time-afternoon {
+    background: rgba(249, 115, 22, 0.1);
+    color: #c2410c;
+}
+
+.task-card__time-display.time-evening {
+    background: rgba(220, 38, 38, 0.1);
+    color: #b91c1c;
+}
+
+.task-card__time-display.time-night {
+    background: rgba(67, 56, 202, 0.1);
+    color: #5b21b6;
+}
+
+/* Edit Form Time Field */
+.activity-edit-form .form-field .time-input-container {
+    margin-top: 4px;
+}
+
+/* Safe mode - larger form field spacing */
+.safe-mode .activity-edit-form .form-field .time-input-container {
+    margin-top: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .time-picker {
+        left: -16px;
+        right: -16px;
+        border-radius: 12px 12px 0 0;
+        position: fixed;
+        top: auto;
+        bottom: 0;
+        max-height: 60vh;
+        overflow-y: auto;
+    }
+    
+    .time-picker-content {
+        flex-direction: column;
+        gap: 16px;
+    }
+    
+    .time-picker-section {
+        width: 100%;
+    }
+    
+    .time-suggestions {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        top: auto;
+        bottom: 0;
+        border-radius: 12px 12px 0 0;
+        max-height: 50vh;
+    }
+}
+
+/* Dark mode support (when implemented) */
+@media (prefers-color-scheme: dark) {
+    .time-input-container {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .time-input {
+        color: #e2e8f0;
+    }
+    
+    .time-input::placeholder {
+        color: #718096;
+    }
+    
+    .time-picker-button {
+        background: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+    
+    .time-picker {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .time-suggestions {
+        background: #2d3748;
+        border-color: #4a5568;
+    }
+    
+    .time-suggestion {
+        color: #e2e8f0;
+    }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+    .time-input-container {
+        border-width: 3px;
+    }
+    
+    .time-input-container:focus-within {
+        box-shadow: 0 0 0 4px rgba(66, 153, 225, 0.3);
+    }
+    
+    .time-picker-button {
+        border-left-width: 2px;
+    }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+    .time-input-container,
+    .time-picker-button,
+    .time-suggestion,
+    .time-picker-clear,
+    .time-picker-now,
+    .time-picker-apply {
+        transition: none;
+    }
+}
+
+/* Print styles */
+@media print {
+    .time-picker,
+    .time-suggestions {
+        display: none !important;
+    }
+    
+    .time-input-container {
+        border: 1px solid #000;
+        background: transparent;
+    }
+}

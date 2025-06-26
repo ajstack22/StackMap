@@ -13,6 +13,7 @@
         container: null,
         todayButton: null,
         tomorrowButton: null,
+        somedayButton: null,
         isTransitioning: false,
         
         /**
@@ -33,8 +34,9 @@
             // Find buttons
             self.todayButton = self.container.querySelector('[data-day="today"]');
             self.tomorrowButton = self.container.querySelector('[data-day="tomorrow"]');
+            self.somedayButton = self.container.querySelector('[data-day="someday"]');
             
-            if (!self.todayButton || !self.tomorrowButton) {
+            if (!self.todayButton || !self.tomorrowButton || !self.somedayButton) {
                 console.error('DaySelectorUI: Day selector buttons not found');
                 return false;
             }
@@ -77,6 +79,12 @@
                 self.handleDayClick('tomorrow');
             });
             
+            // Someday button
+            self.somedayButton.addEventListener('click', function(event) {
+                event.preventDefault();
+                self.handleDayClick('someday');
+            });
+            
             // Keyboard navigation
             self.container.addEventListener('keydown', function(event) {
                 self.handleKeydown(event);
@@ -113,15 +121,25 @@
         handleKeydown: function(event) {
             const self = this;
             
+            const currentDay = window.DayManager ? window.DayManager.getCurrentDay() : 'today';
+            
             switch (event.key) {
                 case 'ArrowLeft':
                     event.preventDefault();
-                    self.handleDayClick('today');
+                    if (currentDay === 'tomorrow') {
+                        self.handleDayClick('today');
+                    } else if (currentDay === 'someday') {
+                        self.handleDayClick('tomorrow');
+                    }
                     break;
                     
                 case 'ArrowRight':
                     event.preventDefault();
-                    self.handleDayClick('tomorrow');
+                    if (currentDay === 'today') {
+                        self.handleDayClick('tomorrow');
+                    } else if (currentDay === 'tomorrow') {
+                        self.handleDayClick('someday');
+                    }
                     break;
                     
                 case 'Home':
@@ -131,7 +149,7 @@
                     
                 case 'End':
                     event.preventDefault();
-                    self.handleDayClick('tomorrow');
+                    self.handleDayClick('someday');
                     break;
                     
                 case 'Enter':
@@ -142,6 +160,8 @@
                         self.handleDayClick('today');
                     } else if (focused === self.tomorrowButton) {
                         self.handleDayClick('tomorrow');
+                    } else if (focused === self.somedayButton) {
+                        self.handleDayClick('someday');
                     }
                     break;
             }
@@ -153,18 +173,24 @@
         updateActiveDay: function(day, skipTransition) {
             const self = this;
             
-            // Update ARIA states
-            if (day === 'today') {
-                self.todayButton.setAttribute('aria-selected', 'true');
-                self.tomorrowButton.setAttribute('aria-selected', 'false');
-                self.todayButton.classList.add('active');
-                self.tomorrowButton.classList.remove('active');
-            } else {
-                self.todayButton.setAttribute('aria-selected', 'false');
-                self.tomorrowButton.setAttribute('aria-selected', 'true');
-                self.todayButton.classList.remove('active');
-                self.tomorrowButton.classList.add('active');
-            }
+            // Update ARIA states and active classes
+            const buttons = [
+                { button: self.todayButton, day: 'today' },
+                { button: self.tomorrowButton, day: 'tomorrow' },
+                { button: self.somedayButton, day: 'someday' }
+            ];
+            
+            buttons.forEach(function(item) {
+                if (item.button) {
+                    const isActive = item.day === day;
+                    item.button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    if (isActive) {
+                        item.button.classList.add('active');
+                    } else {
+                        item.button.classList.remove('active');
+                    }
+                }
+            });
             
             // Update container state
             self.container.setAttribute('data-current-day', day);
@@ -185,9 +211,12 @@
          * Announce day change to screen readers
          */
         announceToScreenReader: function(day) {
-            const message = day === 'today' ? 
-                'Viewing today\\'s activities' : 
-                'Viewing tomorrow\\'s activities';
+            const messages = {
+                'today': 'Viewing today\'s activities',
+                'tomorrow': 'Viewing tomorrow\'s activities',
+                'someday': 'Viewing someday activities'
+            };
+            const message = messages[day] || `Viewing ${day} activities`;
             
             // Create or update live region
             let liveRegion = document.getElementById('day-change-announcement');
@@ -293,10 +322,12 @@
             // Count activities for each day
             const todayCount = window.DayManager.getActivityCountForDay(activities, 'today');
             const tomorrowCount = window.DayManager.getActivityCountForDay(activities, 'tomorrow');
+            const somedayCount = window.DayManager.getActivityCountForDay(activities, 'someday');
             
             // Update count badges
             self.updateCountBadge(self.todayButton, todayCount);
             self.updateCountBadge(self.tomorrowButton, tomorrowCount);
+            self.updateCountBadge(self.somedayButton, somedayCount);
         },
         
         /**
@@ -354,12 +385,22 @@
                 if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > threshold) {
                     event.preventDefault();
                     
+                    const currentDay = window.DayManager ? window.DayManager.getCurrentDay() : 'today';
+                    
                     if (diffX > 0) {
-                        // Swipe right - go to today
-                        self.handleDayClick('today');
+                        // Swipe right - go to previous timeframe
+                        if (currentDay === 'tomorrow') {
+                            self.handleDayClick('today');
+                        } else if (currentDay === 'someday') {
+                            self.handleDayClick('tomorrow');
+                        }
                     } else {
-                        // Swipe left - go to tomorrow
-                        self.handleDayClick('tomorrow');
+                        // Swipe left - go to next timeframe
+                        if (currentDay === 'today') {
+                            self.handleDayClick('tomorrow');
+                        } else if (currentDay === 'tomorrow') {
+                            self.handleDayClick('someday');
+                        }
                     }
                 }
             }, { passive: false });
@@ -372,7 +413,13 @@
             if (this.todayButton && this.todayButton.classList.contains('active')) {
                 return 'today';
             }
-            return 'tomorrow';
+            if (this.tomorrowButton && this.tomorrowButton.classList.contains('active')) {
+                return 'tomorrow';
+            }
+            if (this.somedayButton && this.somedayButton.classList.contains('active')) {
+                return 'someday';
+            }
+            return 'today'; // Default fallback
         },
         
         /**
@@ -383,6 +430,7 @@
             
             if (self.todayButton) self.todayButton.disabled = true;
             if (self.tomorrowButton) self.tomorrowButton.disabled = true;
+            if (self.somedayButton) self.somedayButton.disabled = true;
             
             if (self.container) {
                 self.container.classList.add('loading');
@@ -397,6 +445,7 @@
             
             if (self.todayButton) self.todayButton.disabled = false;
             if (self.tomorrowButton) self.tomorrowButton.disabled = false;
+            if (self.somedayButton) self.somedayButton.disabled = false;
             
             if (self.container) {
                 self.container.classList.remove('loading');

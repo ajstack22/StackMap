@@ -67,9 +67,9 @@
         },
         
         /**
-         * Toggle pin state for an activity
+         * Toggle pin state for an activity with pin type selection
          */
-        togglePin: function(activityId) {
+        togglePin: function(activityId, specificPinType = null) {
             const self = this;
             
             if (!activityId) {
@@ -84,23 +84,128 @@
                 return;
             }
             
+            // Check current pin state
+            const currentlyPinned = activity.pinned || false;
+            
+            if (!currentlyPinned) {
+                // Pinning activity - show pin type selection
+                self.showPinTypeSelector(activity, specificPinType);
+            } else {
+                // Unpinning activity
+                self.unpinActivity(activity);
+            }
+        },
+        
+        /**
+         * Show pin type selector for new pins
+         */
+        showPinTypeSelector: function(activity, specificPinType = null) {
+            const self = this;
+            
+            // If specific type provided, use it directly
+            if (specificPinType) {
+                self.pinActivity(activity, specificPinType);
+                return;
+            }
+            
             // Check if single-use activities should be pinned
             if (window.ActivityTypes && activity.type && activity.type.category === 'single-use') {
-                if (!activity.pinned) {
-                    // Warn user about pinning single-use activities
-                    const shouldPin = confirm('Single-use activities are typically not pinned since they archive after completion. Pin anyway?');
-                    if (!shouldPin) {
-                        return;
-                    }
+                const shouldPin = confirm('Single-use activities are typically not pinned since they archive after completion. Pin anyway?');
+                if (!shouldPin) {
+                    return;
                 }
             }
             
-            // Toggle pin state
-            const newPinState = !activity.pinned;
-            activity.pinned = newPinState;
+            // Create pin type selection modal
+            self.createPinTypeModal(activity);
+        },
+        
+        /**
+         * Create pin type selection modal
+         */
+        createPinTypeModal: function(activity) {
+            const self = this;
+            
+            // Create modal container
+            const modal = document.createElement('div');
+            modal.className = 'pin-type-modal-overlay';
+            modal.innerHTML = `
+                <div class="pin-type-modal" role="dialog" aria-labelledby="pin-type-title" aria-modal="true">
+                    <div class="pin-type-header">
+                        <h3 id="pin-type-title">Choose Pin Type</h3>
+                        <button class="pin-type-close" aria-label="Close">&times;</button>
+                    </div>
+                    <div class="pin-type-content">
+                        <p class="pin-type-description">How should "${activity.title}" behave when pinned?</p>
+                        <div class="pin-type-options">
+                            <button class="pin-type-option" data-type="daily">
+                                <span class="pin-type-icon">📌</span>
+                                <div class="pin-type-info">
+                                    <strong>Daily Pin</strong>
+                                    <p>Stays in same timeframe after completion</p>
+                                </div>
+                            </button>
+                            <button class="pin-type-option" data-type="carry-forward">
+                                <span class="pin-type-icon">➡️</span>
+                                <div class="pin-type-info">
+                                    <strong>Carry Forward</strong>
+                                    <p>Moves to tomorrow when today completes</p>
+                                </div>
+                            </button>
+                            <button class="pin-type-option" data-type="permanent">
+                                <span class="pin-type-icon">📍</span>
+                                <div class="pin-type-info">
+                                    <strong>Permanent Pin</strong>
+                                    <p>Never completes, always visible</p>
+                                </div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add modal to DOM
+            document.body.appendChild(modal);
+            
+            // Setup event listeners
+            const closeButton = modal.querySelector('.pin-type-close');
+            const typeButtons = modal.querySelectorAll('.pin-type-option');
+            
+            const closeModal = function() {
+                document.body.removeChild(modal);
+            };
+            
+            closeButton.addEventListener('click', closeModal);
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+            
+            typeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const pinType = this.getAttribute('data-type');
+                    self.pinActivity(activity, pinType);
+                    closeModal();
+                });
+            });
+            
+            // Focus first option for accessibility
+            typeButtons[0].focus();
+        },
+        
+        /**
+         * Pin activity with specific type
+         */
+        pinActivity: function(activity, pinType) {
+            const self = this;
+            
+            // Set pin properties
+            activity.pinned = true;
+            activity.pinType = pinType || 'daily'; // Default to daily pin
             activity.updated_at = new Date().toISOString();
             
-            console.log(`ActivityPin: ${newPinState ? 'Pinned' : 'Unpinned'} activity:`, activity.title);
+            console.log(`ActivityPin: Pinned activity "${activity.title}" as ${pinType} pin`);
             
             // Save the change
             self.saveActivity(activity);

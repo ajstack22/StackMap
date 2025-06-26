@@ -7,7 +7,7 @@
     'use strict';
     
     // Schema version for migrations
-    const SCHEMA_VERSION = 5; // Updated for template library system
+    const SCHEMA_VERSION = 6; // Updated for user data separation
     
     // Data structure definitions with validation
     const DataSchema = {
@@ -17,6 +17,7 @@
         activity: {
             fields: {
                 id: { type: 'number', required: false }, // Auto-generated
+                userId: { type: 'string', required: true }, // NEW: User association
                 title: { type: 'string', required: true, maxLength: 500 },
                 description: { type: 'string', required: false, maxLength: 5000 },
                 status: { type: 'enum', values: ['pending', 'completed', 'archived'], default: 'pending' },
@@ -28,6 +29,18 @@
                 attachmentIds: { type: 'array', itemType: 'number', maxItems: 10 },
                 day: { type: 'enum', values: ['today', 'tomorrow', 'someday'], default: 'today' },
                 pinned: { type: 'boolean', default: false, required: false }, // Pin for daily routines
+                time: { 
+                    type: 'string', 
+                    required: false, 
+                    nullable: true, 
+                    pattern: /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/ // HH:mm format validation
+                },
+                timeZone: { 
+                    type: 'string', 
+                    required: false, 
+                    nullable: true, 
+                    default: null // Future-ready for timezone support
+                },
                 type: {
                     type: 'object',
                     required: false,
@@ -141,6 +154,8 @@
                     tags: data.tags || [],
                     attachmentIds: data.attachmentIds || [],
                     day: data.day || 'today',
+                    time: data.time || null,
+                    timeZone: data.timeZone || null,
                     metadata: {
                         completedAt: null,
                         reminderAt: data.reminderAt || null,
@@ -441,7 +456,57 @@
                     { name: 'position', keyPath: 'position', unique: false },
                     { name: 'created', keyPath: 'created', unique: false }
                 ]
+            },
+            userData: {
+                keyPath: 'userId',
+                autoIncrement: false,
+                indexes: [
+                    { name: 'lastActive', keyPath: 'lastActive', unique: false },
+                    { name: 'created', keyPath: 'created', unique: false }
+                ]
             }
+        }
+    };
+    
+    /**
+     * User data structure with validation rules
+     */
+    DataSchema.userData = {
+        fields: {
+            userId: { type: 'string', required: true },
+            activities: {
+                type: 'object',
+                required: true,
+                fields: {
+                    today: { type: 'array', itemType: 'object', maxItems: 50 },
+                    tomorrow: { type: 'array', itemType: 'object', maxItems: 50 }
+                }
+            },
+            customTitle: { type: 'string', required: false, maxLength: 100, default: 'StackMap' },
+            activityCount: {
+                type: 'object',
+                required: true,
+                fields: {
+                    today: { type: 'number', min: 0, max: 50, default: 0 },
+                    tomorrow: { type: 'number', min: 0, max: 50, default: 0 },
+                    total: { type: 'number', min: 0, max: 100, default: 0 }
+                }
+            },
+            lastActive: { type: 'timestamp', required: true },
+            created: { type: 'timestamp', required: true },
+            migrationStatus: {
+                type: 'object',
+                required: false,
+                fields: {
+                    migrated: { type: 'boolean', default: false },
+                    migratedFrom: { type: 'string', required: false },
+                    migratedAt: { type: 'timestamp', required: false }
+                }
+            }
+        },
+        validation: {
+            maxActivityCount: 50,
+            maxUsers: 20
         }
     };
     
@@ -451,11 +516,12 @@
     const DexieSchema = {
         version: SCHEMA_VERSION,
         stores: {
-            activities: '++id, parentId, status, created, modified, [status+modified], syncId',
+            activities: '++id, userId, parentId, status, created, modified, [status+modified], [userId+day], syncId',
             attachments: '++id, activityId, created, lastAccessed',
             settings: 'key',
             migrationCheckpoints: 'id, timestamp, status',
-            cards: 'id, activityId, type, state, position, created'
+            cards: 'id, activityId, type, state, position, created',
+            userData: 'userId, lastActive, created'
         }
     };
     

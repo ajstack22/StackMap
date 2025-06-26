@@ -317,8 +317,49 @@
         updateDropTarget: function(x, y) {
             const self = this;
             
-            // Get all task cards
-            const cards = [...this.container.querySelectorAll('.task-card:not(.task-card--dragging):not(.add-task-card)')];
+            // Store current position for cross-timeframe detection
+            this.currentTouchX = x;
+            this.currentTouchY = y;
+            
+            // Clear previous drop target highlights (day buttons and sections)
+            const prevDropTargets = document.querySelectorAll('.drop-target');
+            prevDropTargets.forEach(function(target) {
+                target.classList.remove('drop-target');
+            });
+            
+            // Check if we're over a day selector button (cross-timeframe drop)
+            const dayButtons = document.querySelectorAll('.day-selector-btn');
+            let overTimeframeButton = false;
+            
+            for (let i = 0; i < dayButtons.length; i++) {
+                const button = dayButtons[i];
+                const rect = button.getBoundingClientRect();
+                
+                if (x >= rect.left && x <= rect.right && y >= rect.top && y <= rect.bottom) {
+                    const targetTimeframe = button.getAttribute('data-day');
+                    const currentTimeframe = window.DayManager ? window.DayManager.getCurrentDay() : 'today';
+                    
+                    // Only highlight if it's a different timeframe
+                    if (targetTimeframe !== currentTimeframe) {
+                        button.classList.add('drop-target');
+                        overTimeframeButton = true;
+                    }
+                    break;
+                }
+            }
+            
+            // If over a timeframe button, don't show in-list drop indicators
+            if (overTimeframeButton) {
+                // Remove in-list drop indicators
+                const cards = this.container.querySelectorAll('.task-card, .activity-card');
+                cards.forEach(function(card) {
+                    card.classList.remove('task-card--drop-above', 'task-card--drop-below');
+                });
+                return;
+            }
+            
+            // Normal in-list drop handling
+            const cards = [...this.container.querySelectorAll('.task-card:not(.task-card--dragging):not(.add-task-card), .activity-card:not(.task-card--dragging):not(.add-activity-card)')];
             
             // Remove old drop indicators
             cards.forEach(function(card) {
@@ -415,6 +456,26 @@
                 return;
             }
             
+            // Check if we're dropping over a different timeframe
+            const dropTimeframe = this.getDropTimeframe();
+            const currentTimeframe = window.DayManager ? window.DayManager.getCurrentDay() : 'today';
+            
+            if (dropTimeframe && dropTimeframe !== currentTimeframe) {
+                // Cross-timeframe move
+                this.handleCrossTimeframeDrop(dropTimeframe);
+            } else {
+                // Same timeframe reorder
+                this.handleSameTimeframeReorder();
+            }
+            
+            // Cleanup
+            this.cleanup();
+        },
+        
+        /**
+         * Handle same timeframe reordering
+         */
+        handleSameTimeframeReorder: function() {
             // Reset element styles
             this.draggedElement.style.position = '';
             this.draggedElement.style.left = '';
@@ -433,11 +494,131 @@
             
             // Announce completion
             if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
-                window.StackMapKeyboardNav.announce(`Moved ${this.draggedTask.title}`);
+                window.StackMapKeyboardNav.announce(`Reordered ${this.draggedTask.title}`);
+            }
+        },
+        
+        /**
+         * Handle cross-timeframe drop
+         */
+        handleCrossTimeframeDrop: function(targetTimeframe) {
+            // Reset element styles first
+            this.draggedElement.style.position = '';
+            this.draggedElement.style.left = '';
+            this.draggedElement.style.top = '';
+            this.draggedElement.style.zIndex = '';
+            this.draggedElement.style.pointerEvents = '';
+            this.draggedElement.classList.remove('task-card--dragging');
+            
+            // Move activity to target timeframe
+            if (window.DayManager && this.draggedTask) {
+                // Update the activity data
+                window.DayManager.setActivityDay(this.draggedTask, targetTimeframe);
+                
+                // Save the activity
+                if (window.ActivityDisplay && window.ActivityDisplay.saveActivity) {
+                    window.ActivityDisplay.saveActivity(this.draggedTask);
+                } else if (window.TaskDisplay && window.TaskDisplay.saveTask) {
+                    window.TaskDisplay.saveTask(this.draggedTask);
+                }
+                
+                // Remove the card from current view
+                if (this.draggedElement.parentNode) {
+                    this.draggedElement.parentNode.removeChild(this.draggedElement);
+                }
+                
+                // Refresh the display
+                if (window.ActivityDisplay && window.ActivityDisplay.render) {
+                    window.ActivityDisplay.render();
+                } else if (window.TaskDisplay && window.TaskDisplay.render) {
+                    window.TaskDisplay.render();
+                }
+                
+                // Update day selector counts
+                if (window.DaySelectorUI && window.DaySelectorUI.updateActivityCounts) {
+                    window.DaySelectorUI.updateActivityCounts();
+                }
+                
+                // Announce completion
+                const timeframeNames = {
+                    'today': 'Today',
+                    'tomorrow': 'Tomorrow', 
+                    'someday': 'Someday'
+                };
+                const targetName = timeframeNames[targetTimeframe] || targetTimeframe;
+                
+                if (window.StackMapKeyboardNav && window.StackMapKeyboardNav.announce) {
+                    window.StackMapKeyboardNav.announce(`Moved ${this.draggedTask.title} to ${targetName}`);
+                }
+                
+                // Show success notification
+                this.showMoveNotification(this.draggedTask.title, targetName);
             }
             
-            // Cleanup
-            this.cleanup();
+            // Remove placeholder
+            if (this.placeholder && this.placeholder.parentNode) {
+                this.placeholder.parentNode.removeChild(this.placeholder);
+            }
+        },
+        
+        /**
+         * Get the timeframe being dropped over
+         */
+        getDropTimeframe: function() {
+            // Check if we're over a day selector button
+            const dayButtons = document.querySelectorAll('.day-selector-btn');
+            for (let i = 0; i < dayButtons.length; i++) {
+                const button = dayButtons[i];
+                const rect = button.getBoundingClientRect();
+                
+                if (this.currentTouchX >= rect.left && this.currentTouchX <= rect.right &&
+                    this.currentTouchY >= rect.top && this.currentTouchY <= rect.bottom) {
+                    return button.getAttribute('data-day');
+                }
+            }
+            
+            // Check if we're over a timeframe section
+            const timeframeSections = document.querySelectorAll('[data-timeframe]');
+            for (let i = 0; i < timeframeSections.length; i++) {
+                const section = timeframeSections[i];
+                const rect = section.getBoundingClientRect();
+                
+                if (this.currentTouchX >= rect.left && this.currentTouchX <= rect.right &&
+                    this.currentTouchY >= rect.top && this.currentTouchY <= rect.bottom) {
+                    return section.getAttribute('data-timeframe');
+                }
+            }
+            
+            return null;
+        },
+        
+        /**
+         * Show move notification
+         */
+        showMoveNotification: function(activityTitle, targetTimeframe) {
+            const notification = document.createElement('div');
+            notification.className = 'move-notification';
+            notification.innerHTML = `
+                <span class="move-icon">✓</span>
+                <span class="move-message">Moved "${activityTitle}" to ${targetTimeframe}</span>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Show with animation
+            setTimeout(function() {
+                notification.classList.add('visible');
+            }, 10);
+            
+            // Auto-dismiss after 3 seconds
+            setTimeout(function() {
+                notification.classList.remove('visible');
+                setTimeout(function() {
+                    if (notification.parentNode) {
+                        notification.parentNode.removeChild(notification);
+                    }
+                }, 300);
+            }, 3000);
         },
         
         /**

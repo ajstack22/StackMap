@@ -18,11 +18,11 @@
 /* Day Selector Buttons */
 .day-selector-btn {
     flex: 1;
-    padding: 12px 20px;
+    padding: 12px 16px;
     border: none;
     background: transparent;
     color: rgba(255, 255, 255, 0.6);
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
     border-radius: 8px;
     cursor: pointer;
@@ -32,7 +32,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 6px;
     touch-action: manipulation;
 }
 
@@ -46,6 +46,11 @@
 .day-selector-btn[data-day="tomorrow"].active {
     background: var(--secondary-color, #8b5cf6);
     box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.day-selector-btn[data-day="someday"].active {
+    background: var(--someday-color, #6b7280);
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
 }
 
 /* Hover States */
