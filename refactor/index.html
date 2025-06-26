@@ -188,7 +188,7 @@
     <link rel="stylesheet" href="css/template-browser.css">
     
     <!-- Card Library System (Story #118) -->
-    <link rel="stylesheet" href="css/card-library.css">
+    <!-- <link rel="stylesheet" href="css/card-library.css"> -->
     
     <!-- PWA manifest -->
     <link rel="manifest" href="manifest.json">
@@ -692,13 +692,14 @@
     <script src="js/edit-mode.js" defer></script>
     <script src="js/edit-mode-menu.js" defer></script>
     <!-- Modal system -->
-    <script src="js/modal.js" defer></script>
+    <!-- <script src="js/modal.js" defer></script> -->
     <!-- Grown-up Mode Protection -->
     <script src="js/grownup-mode.js" defer></script>
     <!-- Demo mode and onboarding -->
     <script src="js/demo-mode.js" defer></script>
     <script src="js/onboarding.js" defer></script>
-    <!-- Main application (app.js does not exist - initialization handled by rsd-safe-init.js) -->
+    <!-- Main application initialization -->
+    <script src="js/app-init.js" defer></script>
     <!-- User management -->
     <script src="js/user-manager.js" defer></script>
     <!-- Profile UI -->
@@ -716,11 +717,12 @@
     <!-- Activity timer system (must load before activity-display) -->
     <script src="js/activity-timer.js" defer></script>
     <!-- Performance optimization system (must load before activity-display) -->
-    <script src="js/performance-monitor.js" defer></script>
+    <!-- <script src="js/performance-monitor.js" defer></script> -->
     <script src="js/badge-cache.js" defer></script>
     <script src="js/virtual-scroll-optimizer.js" defer></script>
-    <script src="js/memory-manager.js" defer></script>
-    <script src="js/performance-test-suite.js" defer></script>
+    <!-- <script src="js/memory-manager.js" defer></script> -->
+    <!-- DISABLED: Performance test suite causing performance issues -->
+    <!-- <script src="js/performance-test-suite.js" defer></script> -->
     <!-- User data separation system (must load before activity-display) -->
     <script src="js/user-context.js" defer></script>
     <script src="js/user-data-manager.js" defer></script>
@@ -757,15 +759,16 @@
     <script src="js/drag-drop-reorder.js" defer></script>
     <!-- Activity cards UI -->
     <!-- Activity Card Pool (Memory Optimization) -->
-    <script src="js/activity-card-pool.js" defer></script>
-    <script src="js/activity-cards.js" defer></script>
+    <!-- <script src="js/activity-card-pool.js" defer></script> -->
+    <!-- <script src="js/activity-cards.js" defer></script> -->
     <!-- Visual Activity Cards System -->
-    <script src="js/visual-card-manager.js" defer></script>
-    <script src="js/card-creation-ui.js" defer></script>
+    <!-- <script src="js/visual-card-manager.js" defer></script>
+    <script src="js/card-creation-ui.js" defer></script> -->
     <!-- Photo attachments -->
     <script src="js/photo-attachment-storage.js" defer></script>
     <script src="js/photo-optimizer.js" defer></script>
-    <script src="js/memory-pressure-monitor.js" defer></script>
+    <!-- DISABLED: Memory pressure monitor causing performance issues -->
+    <!-- <script src="js/memory-pressure-monitor.js" defer></script> -->
     <script src="js/hybrid-storage-manager.js" defer></script>
     <script src="js/upload-retry-manager.js" defer></script>
     <script src="js/photo-upload-manager.js" defer></script>
@@ -789,8 +792,8 @@
     <script src="js/activity-templates.js" defer></script>
     <script src="js/quick-add-ui.js" defer></script>
     <!-- Card Library System (Story #118) -->
-    <script src="js/library-templates.js" defer></script>
-    <script src="js/card-library.js" defer></script>
+    <!-- <script src="js/library-templates.js" defer></script>
+    <script src="js/card-library.js" defer></script> -->
     <!-- Template system (Story #99) -->
     <script src="js/template-manager.js" defer></script>
     <script src="js/library-browser.js" defer></script>
