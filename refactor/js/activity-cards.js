@@ -86,29 +86,6 @@
             document.addEventListener('card-toggled', function(e) {
                 self.renderCards();
             });
-            
-            // Listen for selection mode changes
-            document.addEventListener('selectionModeChanged', function(e) {
-                self.renderCards();
-            });
-            
-            // Listen for selection changes
-            document.addEventListener('selectionChanged', function(e) {
-                // Update individual card without full re-render
-                if (e.detail.id) {
-                    const card = document.querySelector(`.activity-card[data-activity-id="${e.detail.id}"]`);
-                    if (card) {
-                        card.classList.toggle('selected', e.detail.selected);
-                        const checkbox = card.querySelector('.selection-checkbox');
-                        if (checkbox) {
-                            checkbox.checked = e.detail.selected;
-                        }
-                    }
-                } else {
-                    // Full re-render for bulk changes
-                    self.renderCards();
-                }
-            });
         },
         
         /**
@@ -264,25 +241,6 @@
             card.setAttribute('aria-label', `${activity.title || 'Untitled Activity'}, ${activity.completed ? 'completed' : 'not completed'}`);
             card.setAttribute('tabindex', '0'); // Make focusable for keyboard navigation
             
-            // Add selection checkbox if in selection mode
-            if (window.SelectionManager && document.body.classList.contains('selection-mode')) {
-                const selectionCheckbox = document.createElement('input');
-                selectionCheckbox.type = 'checkbox';
-                selectionCheckbox.className = 'selection-checkbox';
-                selectionCheckbox.checked = window.SelectionManager.isSelected(activity.id);
-                selectionCheckbox.setAttribute('aria-label', `Select ${activity.title || 'activity'}`);
-                selectionCheckbox.onclick = function(e) {
-                    e.stopPropagation();
-                    window.SelectionManager.selectItem(activity.id, card, e.shiftKey);
-                };
-                card.appendChild(selectionCheckbox);
-                
-                // Mark card as selected if needed
-                if (window.SelectionManager.isSelected(activity.id)) {
-                    card.classList.add('selected');
-                }
-            }
-            
             // Add drag handle for enhanced drag & drop (only visible in edit mode)
             const dragHandle = document.createElement('div');
             dragHandle.className = 'card-drag-handle';
@@ -381,29 +339,6 @@
                 } else if (timeDisplay) {
                     // Remove time display if no time is set
                     timeDisplay.remove();
-                }
-                
-                // Update pin button state for pooled cards
-                if (window.ActivityPin) {
-                    let pinButton = card.querySelector('.activity-pin-button');
-                    if (pinButton) {
-                        // Update existing pin button
-                        pinButton.classList.toggle('pinned', activity.pinned);
-                        pinButton.setAttribute('title', activity.pinned ? 'Unpin activity' : 'Pin activity');
-                        
-                        // Update pin type class
-                        pinButton.classList.remove('pin-daily', 'pin-carry-forward', 'pin-permanent');
-                        if (activity.pinned && activity.pinType) {
-                            pinButton.classList.add(`pin-${activity.pinType}`);
-                        }
-                    } else if (activity.pinned || window.EditMode?.isActive?.()) {
-                        // Create pin button if it doesn't exist and activity is pinned or in edit mode
-                        pinButton = window.ActivityPin.createPinButton(activity);
-                        const footer = card.querySelector('.task-card__footer');
-                        if (footer) {
-                            footer.appendChild(pinButton);
-                        }
-                    }
                 }
             } else {
                 // Create new structure for non-pooled cards
@@ -559,12 +494,6 @@
                 };
                 
                 footer.appendChild(timerBtn);
-            }
-            
-            // Pin button
-            if (window.ActivityPin) {
-                const pinBtn = window.ActivityPin.createPinButton(activity);
-                footer.appendChild(pinBtn);
             }
             
             // Category
