@@ -28,7 +28,10 @@
             touchstart: null,
             keydown: null
         },
-        toggleButtonHandler: null
+        toggleButtonHandler: null,
+        // Bulk operations support
+        selectionManager: null,
+        bulkOperationsManager: null
     };
     
     /**
@@ -647,6 +650,64 @@
     }
     
     /**
+     * Enable bulk operations
+     */
+    function enableBulkOperations() {
+        if (!state.selectionManager && window.SelectionManager) {
+            state.selectionManager = new window.SelectionManager();
+            state.selectionManager.init();
+        }
+        
+        if (!state.bulkOperationsManager && window.BulkOperationsManager && state.selectionManager) {
+            state.bulkOperationsManager = new window.BulkOperationsManager(state.selectionManager);
+        }
+        
+        // Initialize bulk action bar
+        if (window.BulkActionBar && state.selectionManager && state.bulkOperationsManager) {
+            window.BulkActionBar.init(state.selectionManager, state.bulkOperationsManager);
+        }
+        
+        return {
+            selectionManager: state.selectionManager,
+            bulkOperationsManager: state.bulkOperationsManager
+        };
+    }
+    
+    /**
+     * Toggle selection mode
+     */
+    function toggleSelectionMode() {
+        if (!state.isActive) {
+            console.warn('Edit mode must be active to use selection mode');
+            return false;
+        }
+        
+        if (!state.selectionManager) {
+            enableBulkOperations();
+        }
+        
+        if (state.selectionManager) {
+            return state.selectionManager.toggleSelectionMode();
+        }
+        
+        return false;
+    }
+    
+    /**
+     * Get selection manager
+     */
+    function getSelectionManager() {
+        return state.selectionManager;
+    }
+    
+    /**
+     * Get bulk operations manager
+     */
+    function getBulkOperationsManager() {
+        return state.bulkOperationsManager;
+    }
+    
+    /**
      * Destroy and clean up the module
      */
     function destroy() {
@@ -661,6 +722,17 @@
         if (toggleButton && state.toggleButtonHandler) {
             toggleButton.removeEventListener('click', state.toggleButtonHandler);
             state.toggleButtonHandler = null;
+        }
+        
+        // Clean up bulk operations
+        if (state.selectionManager) {
+            state.selectionManager.destroy();
+            state.selectionManager = null;
+        }
+        
+        if (state.bulkOperationsManager) {
+            state.bulkOperationsManager.destroy();
+            state.bulkOperationsManager = null;
         }
         
         // Clear all listeners
@@ -681,7 +753,12 @@
         isActive: isActive,
         on: on,
         off: off,
-        destroy: destroy
+        destroy: destroy,
+        // Bulk operations
+        enableBulkOperations: enableBulkOperations,
+        toggleSelectionMode: toggleSelectionMode,
+        getSelectionManager: getSelectionManager,
+        getBulkOperationsManager: getBulkOperationsManager
     };
     
 })();

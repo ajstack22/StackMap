@@ -6,7 +6,7 @@
     <script src="js/rsd-safe-init.js"></script>
     <script>
     // Force redirect to fallback mode for debugging
-    window.location.replace('emergency-static.html');
+    // window.location.replace('emergency-static.html');
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -187,6 +187,9 @@
     <!-- Template browser -->
     <link rel="stylesheet" href="css/template-browser.css">
     
+    <!-- Card Library System (Story #118) -->
+    <link rel="stylesheet" href="css/card-library.css">
+    
     <!-- PWA manifest -->
     <link rel="manifest" href="manifest.json">
     
@@ -210,6 +213,9 @@
     <!-- Analytics Dashboard System (Story #106) -->
     <link rel="stylesheet" href="css/analytics-dashboard.css">
     <link rel="stylesheet" href="css/achievement-notifications.css">
+    
+    <!-- Bulk Operations (Story #120) -->
+    <link rel="stylesheet" href="css/bulk-operations.css">
     
     <!-- Preload critical resources -->
     <!-- app.js removed - does not exist -->
@@ -257,6 +263,10 @@
                     <button class="menu-item" data-action="pin-mode">
                         <span class="menu-icon">📌</span>
                         <span class="menu-label">Pin Activities</span>
+                    </button>
+                    <button class="menu-item" data-action="bulk-select">
+                        <span class="menu-icon">☑️</span>
+                        <span class="menu-label">Bulk Select</span>
                     </button>
                     <button class="menu-item" data-action="bulk-delete">
                         <span class="menu-icon">🗑️</span>
@@ -651,6 +661,8 @@
     <script src="js/theme-manager.js"></script>
     <!-- Welcome manager -->
     <script src="js/welcome-manager.js" defer></script>
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/search-filter.css">
     <!-- Messaging system -->
     <script src="js/messaging.js" defer></script>
     <!-- Component error handler (load early) -->
@@ -776,6 +788,9 @@
     <script src="js/activity-library.js" defer></script>
     <script src="js/activity-templates.js" defer></script>
     <script src="js/quick-add-ui.js" defer></script>
+    <!-- Card Library System (Story #118) -->
+    <script src="js/library-templates.js" defer></script>
+    <script src="js/card-library.js" defer></script>
     <!-- Template system (Story #99) -->
     <script src="js/template-manager.js" defer></script>
     <script src="js/library-browser.js" defer></script>
@@ -794,8 +809,10 @@
     <!-- Complete Day Workflow -->
     <script src="js/complete-day.js" defer></script>
     
-    <!-- Bulk Operations -->
+    <!-- Bulk Operations (Story #120) -->
+    <script src="js/selection-manager.js" defer></script>
     <script src="js/bulk-operations.js" defer></script>
+    <script src="js/bulk-action-bar.js" defer></script>
     <script src="js/bulk-delete.js" defer></script>
     <script src="js/copy-tomorrow.js" defer></script>
     
@@ -810,6 +827,13 @@
     <!-- Enhanced Edit Mode UX (Story #98) -->
     <script src="js/visual-keyboard.js" defer></script>
     <script src="js/confirmation-dialogs.js" defer></script>
+    
+    <!-- Enhanced Filtering & Search (Story #119) -->
+    <script src="js/search-filter.js" defer></script>
+    <script src="js/filter-manager.js" defer></script>
+    <script src="js/search-ui.js" defer></script>
+    <script src="js/filter-ui.js" defer></script>
+    <script src="js/edit-mode-search.js" defer></script>
     
     <!-- Analytics Dashboard System (Story #106) -->
     <script src="js/analytics-data-model.js" defer></script>

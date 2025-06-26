@@ -1,0 +1,470 @@
+/**
+ * Card Library Styles
+ * Mobile-first, ADHD-friendly design
+ */
+
+/* Modal customization for library */
+.card-library-modal .modal-dialog {
+    max-width: 90vw;
+    width: 1000px;
+}
+
+.card-library-modal .modal-content {
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.card-library-modal .modal-body {
+    padding: 0;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Library header */
+.library-header {
+    padding: 1rem;
+    background: var(--surface-color, #f5f5f5);
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.library-quick-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.quick-filter-btn {
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color, #e0e0e0);
+    background: white;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 44px;
+}
+
+.safe-mode .quick-filter-btn {
+    min-height: 60px;
+    font-size: 1rem;
+}
+
+.quick-filter-btn:hover {
+    background: var(--hover-bg, #f5f5f5);
+}
+
+.quick-filter-btn.active {
+    background: var(--primary-color, #4CAF50);
+    color: white;
+    border-color: var(--primary-color, #4CAF50);
+}
+
+/* Search container */
+.library-search-container {
+    padding: 1rem;
+    position: relative;
+    background: white;
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+}
+
+.library-search {
+    width: 100%;
+    padding: 0.75rem 2.5rem 0.75rem 1rem;
+    border: 2px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    font-size: 1rem;
+    min-height: 44px;
+}
+
+.safe-mode .library-search {
+    min-height: 60px;
+    font-size: 1.125rem;
+}
+
+.library-search:focus {
+    outline: none;
+    border-color: var(--primary-color, #4CAF50);
+}
+
+.library-search-clear {
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: none;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.safe-mode .library-search-clear {
+    min-width: 60px;
+    min-height: 60px;
+    font-size: 2rem;
+}
+
+/* Categories */
+.library-categories-wrapper {
+    background: var(--surface-color, #f5f5f5);
+    border-bottom: 1px solid var(--border-color, #e0e0e0);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.library-categories {
+    display: flex;
+    gap: 0.5rem;
+    padding: 1rem;
+    min-width: max-content;
+}
+
+.library-category {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+    min-height: 44px;
+}
+
+.safe-mode .library-category {
+    min-height: 60px;
+    padding: 0.75rem 1.25rem;
+    font-size: 1.125rem;
+}
+
+.library-category:hover {
+    background: var(--hover-bg, #f5f5f5);
+}
+
+.library-category.active {
+    background: var(--primary-color, #4CAF50);
+    color: white;
+    border-color: var(--primary-color, #4CAF50);
+}
+
+.category-icon {
+    font-size: 1.25rem;
+}
+
+.category-count {
+    background: rgba(0, 0, 0, 0.1);
+    padding: 0.125rem 0.5rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.library-category.active .category-count {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+/* Grid layout */
+.library-grid {
+    padding: 1rem;
+    overflow-y: auto;
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+    align-content: start;
+}
+
+/* Mobile grid */
+@media (max-width: 768px) {
+    .library-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Card design */
+.library-card {
+    background: white;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 12px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    cursor: pointer;
+}
+
+.library-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.card-icon {
+    font-size: 2rem;
+    width: 3rem;
+    height: 3rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--surface-color, #f5f5f5);
+    border-radius: 8px;
+}
+
+.card-favorite-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+    color: #ccc;
+    transition: color 0.2s ease;
+    min-width: 44px;
+    min-height: 44px;
+}
+
+.safe-mode .card-favorite-btn {
+    min-width: 60px;
+    min-height: 60px;
+    font-size: 2rem;
+}
+
+.card-favorite-btn:hover {
+    color: #ffc107;
+}
+
+.card-favorite-btn.active {
+    color: #ffc107;
+}
+
+/* Card content */
+.card-content {
+    flex: 1;
+    margin-bottom: 1rem;
+}
+
+.card-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary, #333);
+}
+
+.card-description {
+    font-size: 0.875rem;
+    color: var(--text-secondary, #666);
+    margin: 0 0 0.75rem 0;
+    line-height: 1.4;
+}
+
+.card-tags {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+}
+
+.card-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    background: var(--surface-color, #f5f5f5);
+    border-radius: 4px;
+    color: var(--text-secondary, #666);
+}
+
+/* Card actions */
+.card-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.card-preview-btn,
+.card-add-btn {
+    flex: 1;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 44px;
+}
+
+.safe-mode .card-preview-btn,
+.safe-mode .card-add-btn {
+    min-height: 60px;
+    font-size: 1rem;
+}
+
+.card-preview-btn {
+    background: white;
+    color: var(--text-primary, #333);
+}
+
+.card-preview-btn:hover {
+    background: var(--hover-bg, #f5f5f5);
+}
+
+.card-add-btn {
+    background: var(--primary-color, #4CAF50);
+    color: white;
+    border-color: var(--primary-color, #4CAF50);
+    font-weight: 500;
+}
+
+.card-add-btn:hover {
+    background: var(--primary-dark, #45a049);
+}
+
+/* Empty state */
+.library-empty {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary, #666);
+}
+
+.library-empty button {
+    margin-top: 1rem;
+    padding: 0.5rem 1.5rem;
+    background: var(--primary-color, #4CAF50);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+/* Loading state */
+.library-loading {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--text-secondary, #666);
+}
+
+/* Template preview modal */
+.template-preview {
+    padding: 1rem;
+    text-align: center;
+}
+
+.preview-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+
+.preview-fields {
+    margin-top: 1.5rem;
+    text-align: left;
+    background: var(--surface-color, #f5f5f5);
+    padding: 1rem;
+    border-radius: 8px;
+}
+
+.preview-fields h4 {
+    margin: 0 0 0.5rem 0;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    color: var(--text-secondary, #666);
+}
+
+.preview-fields ul {
+    margin: 0;
+    padding-left: 1.5rem;
+}
+
+/* Customization form */
+.template-customize {
+    padding: 1rem;
+}
+
+.template-customize .form-group {
+    margin-bottom: 1rem;
+}
+
+.template-customize label {
+    display: block;
+    margin-bottom: 0.25rem;
+    font-weight: 500;
+    color: var(--text-primary, #333);
+}
+
+.template-customize .form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color, #e0e0e0);
+    border-radius: 4px;
+    font-size: 1rem;
+    min-height: 44px;
+}
+
+.safe-mode .template-customize .form-control {
+    min-height: 60px;
+    font-size: 1.125rem;
+}
+
+/* Success message */
+.library-success-message {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--success-color, #4CAF50);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 10000;
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateX(-50%) translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Safe mode adjustments */
+.safe-mode .library-grid {
+    gap: 1.5rem;
+}
+
+.safe-mode .card-title {
+    font-size: 1.25rem;
+}
+
+.safe-mode .card-description {
+    font-size: 1rem;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .library-card,
+    .quick-filter-btn,
+    .library-category,
+    .card-favorite-btn,
+    .card-preview-btn,
+    .card-add-btn {
+        transition: none;
+    }
+    
+    .library-success-message {
+        animation: none;
+    }
+}

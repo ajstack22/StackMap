@@ -59,6 +59,11 @@
                         this.render();
                     });
                     
+                    // Listen for display mode changes (Story #117)
+                    document.addEventListener('displayModeChanged', (e) => {
+                        this.render();
+                    });
+                    
                     // Initialize Day Management System
                     if (window.DayManager) {
                         window.DayManager.init();
@@ -250,6 +255,10 @@
                 const quickAddButton = self.createQuickAddButton();
                 editButtonsContainer.appendChild(quickAddButton);
                 
+                // Library button
+                const libraryButton = self.createLibraryButton();
+                editButtonsContainer.appendChild(libraryButton);
+                
                 self.container.appendChild(editButtonsContainer);
             }
             
@@ -400,6 +409,42 @@
         },
         
         /**
+         * Create library button
+         */
+        createLibraryButton: function() {
+            const self = this;
+            
+            const button = document.createElement('button');
+            button.className = 'library-button';
+            button.setAttribute('aria-label', 'Browse activity library');
+            button.textContent = '📚 Library';
+            
+            // Apply safe mode styles
+            button.style.cssText = 
+                `width: 100%;min-height: ${self.touchTargetSize}px;padding: 16px;margin-bottom: 16px;background: #8b5cf6;border: none;border-radius: 8px;color: #fff;font-size: 16px;cursor: pointer;transition: ${self.safeMode ? 'none' : 'all 0.2s ease;'}`;
+            
+            // Use optimized button response if available
+            const libraryHandler = function() {
+                if (window.CardLibrary) {
+                    window.CardLibrary.show();
+                } else if (window.ActivityLibrary) {
+                    // Fallback to existing ActivityLibrary if available
+                    window.ActivityLibrary.show();
+                } else {
+                    console.error('Card Library not loaded');
+                }
+            };
+            
+            if (self.optimizeButtonResponse) {
+                self.optimizeButtonResponse(button, libraryHandler);
+            } else {
+                button.onclick = libraryHandler;
+            }
+            
+            return button;
+        },
+        
+        /**
          * Create activity element
          */
         createActivityElement: function(activity, displayNumber) {
@@ -518,6 +563,32 @@
                         'font-weight: 600;';
                     priority.textContent = 'High Priority';
                     content.appendChild(priority);
+                }
+                
+                // Show type and category indicators (Story #116)
+                const indicatorsContainer = document.createElement('div');
+                indicatorsContainer.className = 'activity-indicators';
+                indicatorsContainer.style.cssText = 'display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap;';
+                
+                // Type indicator
+                if (activity.type && window.ActivityTypes) {
+                    const typeIndicator = window.ActivityTypes.createTypeIndicator(activity);
+                    if (typeIndicator) {
+                        indicatorsContainer.appendChild(typeIndicator);
+                    }
+                }
+                
+                // Category indicator
+                if (activity.category && window.ActivityCategories) {
+                    const categoryIndicator = window.ActivityCategories.createCategoryIndicator(activity);
+                    if (categoryIndicator) {
+                        indicatorsContainer.appendChild(categoryIndicator);
+                    }
+                }
+                
+                // Add indicators container if it has children
+                if (indicatorsContainer.children.length > 0) {
+                    content.appendChild(indicatorsContainer);
                 }
             }
             
@@ -676,36 +747,103 @@
                     'pointer-events: none;';
                 
                 if (displayMode === 'numbers') {
-                    // Number badge
-                    badge.textContent = displayNumber;
-                    badge.setAttribute('aria-label', `Activity number ${displayNumber}`);
-                    badge.style.fontSize = self.safeMode ? '18px' : '16px';
-                    badge.style.color = '#667eea';
-                    badge.style.background = 'rgba(102, 126, 234, 0.1)';
-                    badge.style.border = '2px solid rgba(102, 126, 234, 0.2)';
-                } else if (displayMode === 'time') {
-                    // Time estimate badge
-                    const timeText = self.formatTimeEstimate(timeEstimate);
-                    badge.textContent = timeText;
-                    badge.setAttribute('aria-label', `Estimated ${timeText}`);
-                    badge.style.fontSize = self.safeMode ? '14px' : '12px';
-                    
-                    // Color coding based on duration
-                    if (timeEstimate <= 30) {
-                        // Green for short tasks
-                        badge.style.color = '#22c55e';
-                        badge.style.background = 'rgba(34, 197, 94, 0.1)';
-                        badge.style.border = '2px solid rgba(34, 197, 94, 0.2)';
-                    } else if (timeEstimate <= 120) {
-                        // Yellow for medium tasks
-                        badge.style.color = '#eab308';
-                        badge.style.background = 'rgba(234, 179, 8, 0.1)';
-                        badge.style.border = '2px solid rgba(234, 179, 8, 0.2)';
+                    // Numbers Mode: Show duration estimates or activity numbers
+                    if (window.DisplayModeManager && window.DisplayModeManager.getCurrentMode() === 'numbers') {
+                        // New Numbers Mode: Show duration
+                        const duration = activity.duration || activity.timeEstimate || activity.estimatedMinutes || 0;
+                        if (duration > 0) {
+                            const durationText = window.DisplayModeManager.formatDuration(duration);
+                            badge.textContent = durationText;
+                            badge.setAttribute('aria-label', `Duration: ${durationText}`);
+                            badge.style.fontSize = self.safeMode ? '14px' : '12px';
+                            
+                            // Duration-based color coding
+                            if (duration <= 15) {
+                                badge.style.color = '#10b981'; // Quick tasks - green
+                                badge.style.background = 'rgba(16, 185, 129, 0.1)';
+                                badge.style.border = '2px solid rgba(16, 185, 129, 0.2)';
+                            } else if (duration <= 60) {
+                                badge.style.color = '#3b82f6'; // Short tasks - blue
+                                badge.style.background = 'rgba(59, 130, 246, 0.1)';
+                                badge.style.border = '2px solid rgba(59, 130, 246, 0.2)';
+                            } else if (duration <= 120) {
+                                badge.style.color = '#f59e0b'; // Medium tasks - yellow
+                                badge.style.background = 'rgba(245, 158, 11, 0.1)';
+                                badge.style.border = '2px solid rgba(245, 158, 11, 0.2)';
+                            } else {
+                                badge.style.color = '#ef4444'; // Long tasks - red
+                                badge.style.background = 'rgba(239, 68, 68, 0.1)';
+                                badge.style.border = '2px solid rgba(239, 68, 68, 0.2)';
+                            }
+                        } else {
+                            // Fallback to activity number if no duration
+                            badge.textContent = displayNumber;
+                            badge.setAttribute('aria-label', `Activity number ${displayNumber}`);
+                            badge.style.fontSize = self.safeMode ? '18px' : '16px';
+                            badge.style.color = '#3b82f6';
+                            badge.style.background = 'rgba(59, 130, 246, 0.1)';
+                            badge.style.border = '2px solid rgba(59, 130, 246, 0.2)';
+                        }
                     } else {
-                        // Orange for long tasks
-                        badge.style.color = '#f97316';
-                        badge.style.background = 'rgba(249, 115, 22, 0.1)';
-                        badge.style.border = '2px solid rgba(249, 115, 22, 0.2)';
+                        // Legacy numbers mode: Activity numbers
+                        badge.textContent = displayNumber;
+                        badge.setAttribute('aria-label', `Activity number ${displayNumber}`);
+                        badge.style.fontSize = self.safeMode ? '18px' : '16px';
+                        badge.style.color = '#667eea';
+                        badge.style.background = 'rgba(102, 126, 234, 0.1)';
+                        badge.style.border = '2px solid rgba(102, 126, 234, 0.2)';
+                    }
+                } else if (displayMode === 'time') {
+                    // Times Mode: Show scheduled times or legacy time estimates
+                    if (window.DisplayModeManager && window.DisplayModeManager.getCurrentMode() === 'times') {
+                        // New Times Mode: Show scheduled time
+                        const scheduledTime = activity.scheduledTime || activity.time;
+                        if (scheduledTime && window.DisplayModeManager) {
+                            const timeText = window.DisplayModeManager.formatScheduledTime(scheduledTime);
+                            badge.textContent = timeText;
+                            badge.setAttribute('aria-label', `Scheduled: ${timeText}`);
+                            badge.style.fontSize = self.safeMode ? '14px' : '12px';
+                            badge.style.color = '#10b981';
+                            badge.style.background = 'rgba(16, 185, 129, 0.1)';
+                            badge.style.border = '2px solid rgba(16, 185, 129, 0.2)';
+                            
+                            // Add time context class for CSS styling
+                            const timeContext = window.DisplayModeManager.getTimeContext(scheduledTime);
+                            badge.classList.add(`time-${timeContext.period.replace(' ', '-')}`);
+                        } else {
+                            // Fallback to duration if no scheduled time
+                            const duration = activity.duration || activity.timeEstimate || activity.estimatedMinutes || 0;
+                            const durationText = window.DisplayModeManager ? 
+                                window.DisplayModeManager.formatDuration(duration) : 
+                                self.formatTimeEstimate(duration);
+                            badge.textContent = durationText;
+                            badge.setAttribute('aria-label', `Duration: ${durationText}`);
+                            badge.style.fontSize = self.safeMode ? '14px' : '12px';
+                            badge.style.color = '#10b981';
+                            badge.style.background = 'rgba(16, 185, 129, 0.1)';
+                            badge.style.border = '2px solid rgba(16, 185, 129, 0.2)';
+                        }
+                    } else {
+                        // Legacy time mode: Time estimates with color coding
+                        const timeText = self.formatTimeEstimate(timeEstimate);
+                        badge.textContent = timeText;
+                        badge.setAttribute('aria-label', `Estimated ${timeText}`);
+                        badge.style.fontSize = self.safeMode ? '14px' : '12px';
+                        
+                        // Color coding based on duration
+                        if (timeEstimate <= 30) {
+                            badge.style.color = '#22c55e';
+                            badge.style.background = 'rgba(34, 197, 94, 0.1)';
+                            badge.style.border = '2px solid rgba(34, 197, 94, 0.2)';
+                        } else if (timeEstimate <= 120) {
+                            badge.style.color = '#eab308';
+                            badge.style.background = 'rgba(234, 179, 8, 0.1)';
+                            badge.style.border = '2px solid rgba(234, 179, 8, 0.2)';
+                        } else {
+                            badge.style.color = '#f97316';
+                            badge.style.background = 'rgba(249, 115, 22, 0.1)';
+                            badge.style.border = '2px solid rgba(249, 115, 22, 0.2)';
+                        }
                     }
                 }
                 
@@ -765,6 +903,45 @@
                 } else {
                     return `${hours}h${remainingMinutes}m`;
                 }
+            }
+        },
+        
+        /**
+         * Format scheduled time for Times Mode (Story #117)
+         */
+        formatScheduledTime: function(time, format) {
+            if (!time) return '';
+            
+            // Delegate to DisplayModeManager if available
+            if (window.DisplayModeManager) {
+                return window.DisplayModeManager.formatScheduledTime(time, format);
+            }
+            
+            // Fallback to TimeFormatter if available
+            if (window.TimeFormatter) {
+                return window.TimeFormatter.formatForDisplay(time, format || '12h', {
+                    compact: true,
+                    showIcon: false
+                });
+            }
+            
+            // Basic fallback formatting
+            try {
+                const [hours, minutes] = time.split(':').map(Number);
+                const is12h = !format || format === '12h';
+                
+                if (is12h) {
+                    const displayHours = hours === 0 ? 12 : hours > 12 ? hours - 12 : hours;
+                    const period = hours >= 12 ? 'PM' : 'AM';
+                    const minutesStr = minutes.toString().padStart(2, '0');
+                    return `${displayHours}:${minutesStr} ${period}`;
+                } else {
+                    const hoursStr = hours.toString().padStart(2, '0');
+                    const minutesStr = minutes.toString().padStart(2, '0');
+                    return `${hoursStr}:${minutesStr}`;
+                }
+            } catch (e) {
+                return time; // Return as-is if parsing fails
             }
         },
         
@@ -860,6 +1037,11 @@
                 if (window.UserDataManager) {
                     const success = window.UserDataManager.addActivity(userId, newActivity, timeframe);
                     if (success) {
+                        // Dispatch activity created event for type and category systems
+                        document.dispatchEvent(new CustomEvent('activityCreated', {
+                            detail: { activity: newActivity }
+                        }));
+                        
                         // Clear badge cache for this activity
                         if (window.BadgeCache) {
                             window.BadgeCache.invalidateActivity(newActivity.id);
@@ -1507,6 +1689,18 @@
             
             // Setup display mode toggle button
             self.setupDisplayModeToggle();
+            
+            // Setup Activity Types & Categories event listeners (Story #116)
+            self.setupActivityTypeListeners();
+            
+            // Listen for addActivity events from Card Library (Story #118)
+            const addActivityHandler = function(e) {
+                if (e.detail && e.detail.activity) {
+                    self.addActivityDirect(e.detail.activity);
+                }
+            };
+            document.addEventListener('addActivity', addActivityHandler);
+            self.trackEventListener(document, 'addActivity', addActivityHandler);
         },
         
         /**
@@ -1591,6 +1785,183 @@
             
             // Clear stored references
             self.globalKeyHandler = null;
+        },
+        
+        /**
+         * Setup Activity Types & Categories event listeners
+         * Story #116 - Round 8 Dev2
+         */
+        setupActivityTypeListeners: function() {
+            const self = this;
+            
+            // Listen for template creation events
+            const templateCreatedHandler = function(e) {
+                if (e.detail && e.detail.template) {
+                    const template = e.detail.template;
+                    // Update template count in UI
+                    self.updateTemplateCount();
+                    // Show success notification
+                    self.showNotification(`Template "${template.title}" created`, 'success');
+                }
+            };
+            document.addEventListener('templateCreated', templateCreatedHandler);
+            self.trackEventListener(document, 'templateCreated', templateCreatedHandler);
+            
+            // Listen for template instantiation events
+            const templateInstantiatedHandler = function(e) {
+                if (e.detail && e.detail.activity) {
+                    const activity = e.detail.activity;
+                    // Add the new activity and refresh display
+                    self.activities.push(activity);
+                    self.render();
+                    // Show success notification
+                    self.showNotification(`Activity created from template`, 'success');
+                }
+            };
+            document.addEventListener('templateInstantiated', templateInstantiatedHandler);
+            self.trackEventListener(document, 'templateInstantiated', templateInstantiatedHandler);
+            
+            // Listen for project creation events
+            const projectCreatedHandler = function(e) {
+                if (e.detail && e.detail.project) {
+                    const project = e.detail.project;
+                    // Add the project and refresh display
+                    self.activities.push(project);
+                    self.render();
+                    // Show success notification
+                    self.showNotification(`Project "${project.title}" created`, 'success');
+                }
+            };
+            document.addEventListener('projectCreated', projectCreatedHandler);
+            self.trackEventListener(document, 'projectCreated', projectCreatedHandler);
+            
+            // Listen for sub-activity added events
+            const subActivityAddedHandler = function(e) {
+                if (e.detail && e.detail.subActivity && e.detail.projectId) {
+                    const subActivity = e.detail.subActivity;
+                    const projectId = e.detail.projectId;
+                    // Add sub-activity to activities list
+                    self.activities.push(subActivity);
+                    // Update project display
+                    self.updateProjectDisplay(projectId);
+                    // Show success notification
+                    self.showNotification(`Sub-activity added to project`, 'success');
+                }
+            };
+            document.addEventListener('subActivityAdded', subActivityAddedHandler);
+            self.trackEventListener(document, 'subActivityAdded', subActivityAddedHandler);
+            
+            // Listen for category assignment events
+            const categoryAssignedHandler = function(e) {
+                if (e.detail && e.detail.activity && e.detail.category) {
+                    // Update activity display to show new category
+                    self.updateActivityDisplay(e.detail.activity.id);
+                }
+            };
+            document.addEventListener('activityCategoryAssigned', categoryAssignedHandler);
+            self.trackEventListener(document, 'activityCategoryAssigned', categoryAssignedHandler);
+            
+            // Listen for bulk type assignment events
+            const bulkTypeAssignedHandler = function(e) {
+                if (e.detail) {
+                    const { typeId, successCount, failureCount } = e.detail;
+                    // Refresh display to show new types
+                    self.render();
+                    // Show result notification
+                    if (successCount > 0) {
+                        self.showNotification(`Type "${typeId}" assigned to ${successCount} activities`, 'success');
+                    }
+                    if (failureCount > 0) {
+                        self.showNotification(`Failed to assign type to ${failureCount} activities`, 'error');
+                    }
+                }
+            };
+            document.addEventListener('bulkTypeAssigned', bulkTypeAssignedHandler);
+            self.trackEventListener(document, 'bulkTypeAssigned', bulkTypeAssignedHandler);
+            
+            // Listen for bulk category assignment events
+            const bulkCategoryAssignedHandler = function(e) {
+                if (e.detail) {
+                    const { categoryId, successCount, failureCount } = e.detail;
+                    // Refresh display to show new categories
+                    self.render();
+                    // Show result notification
+                    if (successCount > 0) {
+                        self.showNotification(`Category assigned to ${successCount} activities`, 'success');
+                    }
+                    if (failureCount > 0) {
+                        self.showNotification(`Failed to assign category to ${failureCount} activities`, 'error');
+                    }
+                }
+            };
+            document.addEventListener('bulkCategoryAssigned', bulkCategoryAssignedHandler);
+            self.trackEventListener(document, 'bulkCategoryAssigned', bulkCategoryAssignedHandler);
+        },
+        
+        /**
+         * Update template count in UI
+         */
+        updateTemplateCount: function() {
+            // This would update a template count badge if displayed in the UI
+            const templates = window.ActivityTypes ? window.ActivityTypes.getStoredTemplates() : {};
+            const count = Object.keys(templates).length;
+            console.log(`ActivityDisplay: ${count} templates available`);
+        },
+        
+        /**
+         * Update project display
+         */
+        updateProjectDisplay: function(projectId) {
+            // Find and re-render the specific project card
+            const projectCard = document.querySelector(`[data-activity-id="${projectId}"]`);
+            if (projectCard) {
+                // Re-render just this project
+                const project = this.getActivityById(projectId);
+                if (project) {
+                    const newCard = this.createActivityCard(project);
+                    projectCard.replaceWith(newCard);
+                }
+            }
+        },
+        
+        /**
+         * Update single activity display
+         */
+        updateActivityDisplay: function(activityId) {
+            // Find and re-render the specific activity card
+            const activityCard = document.querySelector(`[data-activity-id="${activityId}"]`);
+            if (activityCard) {
+                const activity = this.getActivityById(activityId);
+                if (activity) {
+                    const newCard = this.createActivityCard(activity);
+                    activityCard.replaceWith(newCard);
+                }
+            }
+        },
+        
+        /**
+         * Show notification message
+         */
+        showNotification: function(message, type = 'info') {
+            // Use existing notification system if available
+            if (window.NotificationManager) {
+                window.NotificationManager.show(message, type);
+            } else {
+                // Fallback to console
+                console.log(`[${type.toUpperCase()}] ${message}`);
+            }
+        },
+        
+        /**
+         * Create activity card (alias for createActivityElement)
+         * Used by the update methods for consistency
+         */
+        createActivityCard: function(activity) {
+            // Get display number based on activity's position in list
+            const userActivities = this.getUserActivities();
+            const index = userActivities.findIndex(a => a.id === activity.id);
+            const displayNumber = index >= 0 ? index + 1 : null;
+            return this.createActivityElement(activity, displayNumber);
         },
         
         /**
@@ -2440,12 +2811,18 @@
         },
         
         /**
-         * Get current display mode (numbers or time)
+         * Get current display mode (delegate to DisplayModeManager)
          */
         getDisplayMode: function() {
+            if (window.DisplayModeManager) {
+                const mode = window.DisplayModeManager.getCurrentMode();
+                // Map new modes to old format for compatibility
+                return mode === 'times' ? 'time' : 'numbers';
+            }
+            // Fallback to old behavior
             try {
                 const mode = localStorage.getItem('stackmap_display_mode');
-                return mode === 'time' ? 'time' : 'numbers'; // Default to numbers
+                return mode === 'time' ? 'time' : 'numbers';
             } catch (e) {
                 console.warn('Could not load display mode preference', e);
                 return 'numbers';
@@ -2453,7 +2830,7 @@
         },
         
         /**
-         * Set display mode preference
+         * Set display mode preference (delegate to DisplayModeManager)
          */
         setDisplayMode: function(mode) {
             const self = this;
@@ -2463,28 +2840,41 @@
                 return;
             }
             
-            try {
-                localStorage.setItem('stackmap_display_mode', mode);
-                // Re-render to apply new display mode
-                self.render();
-            } catch (e) {
-                console.warn('Could not save display mode preference', e);
+            if (window.DisplayModeManager) {
+                // Map old format to new modes
+                const newMode = mode === 'time' ? 'times' : 'numbers';
+                window.DisplayModeManager.setMode(newMode);
+                self.render(); // Re-render to apply changes
+            } else {
+                // Fallback to old behavior
+                try {
+                    localStorage.setItem('stackmap_display_mode', mode);
+                    self.render();
+                } catch (e) {
+                    console.warn('Could not save display mode preference', e);
+                }
             }
         },
         
         /**
-         * Toggle between display modes
+         * Toggle between display modes (delegate to DisplayModeManager)
          */
         toggleDisplayMode: function() {
             const self = this;
-            const currentMode = self.getDisplayMode();
-            const newMode = currentMode === 'numbers' ? 'time' : 'numbers';
-            self.setDisplayMode(newMode);
             
-            // Dispatch event for other components
-            document.dispatchEvent(new CustomEvent('displayModeChanged', {
-                detail: { mode: newMode }
-            }));
+            if (window.DisplayModeManager) {
+                window.DisplayModeManager.toggleMode();
+                self.render(); // Re-render to apply changes
+            } else {
+                // Fallback to old behavior
+                const currentMode = self.getDisplayMode();
+                const newMode = currentMode === 'numbers' ? 'time' : 'numbers';
+                self.setDisplayMode(newMode);
+                
+                document.dispatchEvent(new CustomEvent('displayModeChanged', {
+                    detail: { mode: newMode }
+                }));
+            }
         },
         
         // BACKWARD COMPATIBILITY ALIASES

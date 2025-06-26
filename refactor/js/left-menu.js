@@ -221,6 +221,9 @@
             case 'pin-mode':
                 handlePinMode();
                 break;
+            case 'bulk-select':
+                handleBulkSelect();
+                break;
             case 'bulk-delete':
                 handleBulkDelete();
                 break;
@@ -286,6 +289,15 @@
             detail: { message: 'Pin mode coming soon!' }
         });
         document.dispatchEvent(event);
+    }
+    
+    function handleBulkSelect() {
+        // Enable bulk selection mode
+        if (window.EditMode && window.EditMode.toggleSelectionMode) {
+            window.EditMode.toggleSelectionMode();
+        } else {
+            console.warn('Bulk selection not available - EditMode not found');
+        }
     }
     
     function handleBulkDelete() {
