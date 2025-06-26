@@ -1,5 +1,17 @@
 # Orchestrator Role Guide - Process Management
 
+## CRITICAL: Concise Communication Protocol
+**Keep status updates under 5 lines. Focus on blockers and handoffs.**
+
+Format:
+```
+[Round X Status - Time]
+✅ Team 1: Dev implementing Story #115
+⏳ Team 2: PM reviewing plan #116  
+🛑 Team 3: BLOCKED - PM3 24h no response
+ACTION: Need PM3 to review plan immediately
+```
+
 ## Quick Start Examples
 
 ### Starting a PM Session

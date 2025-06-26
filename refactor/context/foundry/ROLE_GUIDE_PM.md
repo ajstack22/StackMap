@@ -1,5 +1,22 @@
 # PM Role Guide - Complete Process Reference
 
+## CRITICAL: Concise Communication Protocol
+**EVERY response must end with the exact prompt for the next person.**
+
+Format:
+```
+[Your decision/action - MAX 3 sentences]
+
+[Role] prompt: [Exact prompt for next person to copy/paste]
+```
+
+Example:
+```
+Plan approved. Note about error handling added.
+
+Dev1 prompt: Implement Story #115 per plan at 4-PlanReview/r8_dev1_story_115_plan.md with focus on error handling
+```
+
 ## PM Team Structure
 - **PM1** - Reviews Dev1 work (You as Primary PM also coordinate overall)
 - **PM2** - Reviews Dev2 work

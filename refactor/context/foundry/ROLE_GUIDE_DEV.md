@@ -1,5 +1,22 @@
 # Developer Role Guide - Complete Process Reference
 
+## CRITICAL: Concise Communication Protocol
+**EVERY response must end with the exact prompt for the next person.**
+
+Format:
+```
+[Your work completed - MAX 3 sentences]
+
+[Role] prompt: [Exact prompt for next person to copy/paste]
+```
+
+Example:
+```
+Plan created at 4-PlanReview/r8_dev1_story_115_plan.md. Found existing activity-pin.js that may be relevant.
+
+PM1 prompt: Review and approve plan at 4-PlanReview/r8_dev1_story_115_plan.md for Story #115 Pin/Keep System
+```
+
 ## Quick Start
 When you join as Developer, state: "I'm Dev [1/2/3] for Round [X], Step [Y]"
 
