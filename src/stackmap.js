@@ -32,6 +32,211 @@
                 
                 // Load data and initialize
                 this.loadData();
+                
+                // Check if this is first time use
+                if (!this.hasCompletedSetup()) {
+                    this.showSetupWizard();
+                } else {
+                    this.initializeElements();
+                    this.setupEventListeners();
+                    this.setupDragAndDrop();
+                    this.loadCustomTitle();
+                    this.initializeCelebrations();
+                    this.initializeCapacitor();
+                    this.render();
+                }
+            }
+            
+            // ===== SETUP WIZARD =====
+            hasCompletedSetup() {
+                // Check if we have at least one user with a non-default name
+                const users = Object.values(this.data.users || {});
+                return users.length > 0 && users.some(u => u.name !== 'Default User' && u.name !== 'My Tasks');
+            }
+            
+            showSetupWizard() {
+                const wizard = document.createElement('div');
+                wizard.className = 'setup-wizard';
+                wizard.innerHTML = `
+                    <div class="setup-content">
+                        <h1>
+                            <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="15" fill="${getComputedStyle(document.documentElement).getPropertyValue('--primary-color')}" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--primary-dark')}" stroke-width="1"/>
+                                <rect x="7" y="10" width="18" height="2.5" fill="white" rx="1.25"/>
+                                <rect x="7" y="14.5" width="18" height="2.5" fill="white" rx="1.25"/>
+                                <rect x="7" y="19" width="18" height="5" fill="rgba(255,255,255,0.9)" rx="2.5"/>
+                            </svg>
+                            Welcome to StackMap!
+                        </h1>
+                        
+                        <div class="setup-progress">
+                            <div class="progress-dot active"></div>
+                            <div class="progress-dot"></div>
+                            <div class="progress-dot"></div>
+                        </div>
+                        
+                        <!-- Step 1: Welcome -->
+                        <div class="setup-step active" data-step="1">
+                            <p>Let's set up your daily routine tracker in just a minute!</p>
+                            <div class="setup-buttons">
+                                <button class="setup-btn setup-btn-primary" onclick="app.nextSetupStep()">
+                                    Get Started
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 2: Name -->
+                        <div class="setup-step" data-step="2">
+                            <p>What's your name?</p>
+                            <div class="setup-form">
+                                <input type="text" id="setupUserName" placeholder="Enter your name" 
+                                       onkeypress="if(event.key === 'Enter') app.nextSetupStep()">
+                            </div>
+                            <div class="setup-buttons">
+                                <button class="setup-btn setup-btn-secondary" onclick="app.prevSetupStep()">
+                                    Back
+                                </button>
+                                <button class="setup-btn setup-btn-primary" onclick="app.nextSetupStep()">
+                                    Next
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Step 3: Emoji -->
+                        <div class="setup-step" data-step="3">
+                            <p>Choose an emoji that represents you!</p>
+                            <div class="emoji-picker-grid" id="setupEmojiPicker">
+                                ${this.getSetupEmojis()}
+                            </div>
+                            <div class="setup-buttons">
+                                <button class="setup-btn setup-btn-secondary" onclick="app.prevSetupStep()">
+                                    Back
+                                </button>
+                                <button class="setup-btn setup-btn-primary" onclick="app.completeSetup()">
+                                    Start Using StackMap
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                document.body.appendChild(wizard);
+                
+                // Focus on name input when reaching step 2
+                wizard.addEventListener('transitionend', () => {
+                    const nameInput = document.getElementById('setupUserName');
+                    if (nameInput && nameInput.closest('.setup-step.active')) {
+                        nameInput.focus();
+                    }
+                });
+                
+                this.currentSetupStep = 1;
+                this.selectedEmoji = '😊';
+            }
+            
+            getSetupEmojis() {
+                const emojis = ['😊', '😎', '🤓', '😇', '🥰', '😍', '🤩', '😏', 
+                                '🧐', '🤠', '🥳', '😴', '🤗', '🤔', '😋', '😛',
+                                '🦸', '🦹', '🧙', '🧚', '🧛', '🧜', '🧝', '🧞',
+                                '👨', '👩', '👦', '👧', '👶', '🧑', '👴', '👵',
+                                '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+                                '🦁', '🐯', '🐨', '🐵', '🦄', '🐝', '🦋', '🐢'];
+                
+                return emojis.map(emoji => `
+                    <div class="emoji-option" onclick="app.selectSetupEmoji('${emoji}')">
+                        ${emoji}
+                    </div>
+                `).join('');
+            }
+            
+            selectSetupEmoji(emoji) {
+                this.selectedEmoji = emoji;
+                
+                // Update UI
+                document.querySelectorAll('.emoji-option').forEach(el => {
+                    el.classList.remove('selected');
+                    if (el.textContent.trim() === emoji) {
+                        el.classList.add('selected');
+                    }
+                });
+            }
+            
+            nextSetupStep() {
+                if (this.currentSetupStep === 2) {
+                    // Validate name
+                    const name = document.getElementById('setupUserName').value.trim();
+                    if (!name) {
+                        document.getElementById('setupUserName').style.borderColor = '#ff5252';
+                        return;
+                    }
+                }
+                
+                if (this.currentSetupStep < 3) {
+                    this.currentSetupStep++;
+                    this.updateSetupStep();
+                }
+            }
+            
+            prevSetupStep() {
+                if (this.currentSetupStep > 1) {
+                    this.currentSetupStep--;
+                    this.updateSetupStep();
+                }
+            }
+            
+            updateSetupStep() {
+                const steps = document.querySelectorAll('.setup-step');
+                const dots = document.querySelectorAll('.progress-dot');
+                
+                steps.forEach((step, index) => {
+                    step.classList.toggle('active', index + 1 === this.currentSetupStep);
+                });
+                
+                dots.forEach((dot, index) => {
+                    dot.classList.toggle('active', index < this.currentSetupStep);
+                });
+            }
+            
+            completeSetup() {
+                const name = document.getElementById('setupUserName').value.trim();
+                if (!name) return;
+                
+                // Create the user
+                this.createUser(name, this.selectedEmoji);
+                
+                // Add some starter activities
+                const user = this.getCurrentUser();
+                user.days.today.activities = [
+                    {
+                        id: 'activity_' + Date.now() + '_1',
+                        text: 'Welcome to StackMap!',
+                        emoji: '👋',
+                        description: 'Tap the checkmark when done',
+                        time: null,
+                        completed: false,
+                        pinned: false,
+                        activityType: 'normal',
+                        createdAt: new Date().toISOString()
+                    },
+                    {
+                        id: 'activity_' + Date.now() + '_2',
+                        text: 'Try Edit Mode',
+                        emoji: '✏️',
+                        description: 'Use the edit button to add activities',
+                        time: null,
+                        completed: false,
+                        pinned: false,
+                        activityType: 'normal',
+                        createdAt: new Date().toISOString()
+                    }
+                ];
+                
+                this.saveData();
+                
+                // Remove wizard
+                document.querySelector('.setup-wizard').remove();
+                
+                // Initialize app
                 this.initializeElements();
                 this.setupEventListeners();
                 this.setupDragAndDrop();
@@ -39,6 +244,11 @@
                 this.initializeCelebrations();
                 this.initializeCapacitor();
                 this.render();
+                
+                // Show a quick welcome message
+                setTimeout(() => {
+                    alert(`Welcome, ${name}! 🎉\n\nTap activities to mark them complete.\nUse the Edit button to customize your routine.`);
+                }, 500);
             }
             
             // ===== USER MANAGEMENT =====
@@ -1372,6 +1582,18 @@
                         </button>
                     </div>
                     
+                    <!-- Info Links -->
+                    <div class="info-links">
+                        <button class="btn-link" onclick="app.showPrivacyPolicy()">
+                            <span class="material-icons">privacy_tip</span>
+                            <span>Privacy Policy</span>
+                        </button>
+                        <button class="btn-link" onclick="app.showSupport()">
+                            <span class="material-icons">help</span>
+                            <span>Support</span>
+                        </button>
+                    </div>
+                    
                     <!-- Day Toggle -->
                     <div class="day-toggle-section">
                         <label class="day-toggle-label">Day Management</label>
@@ -2386,6 +2608,183 @@
                         modal.remove();
                     }
                 }, 10000);
+            }
+            
+            showPrivacyPolicy() {
+                // Create a modal for privacy policy
+                const modal = document.createElement('div');
+                modal.className = 'info-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    overflow-y: auto;
+                `;
+                
+                modal.innerHTML = `
+                    <div class="info-content" style="
+                        background: rgba(255, 255, 255, 0.95);
+                        border-radius: 12px;
+                        padding: 24px;
+                        max-width: 600px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        color: #333;
+                    ">
+                        <button onclick="this.closest('.info-modal').remove()" style="
+                            float: right;
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: #666;
+                        ">×</button>
+                        
+                        <h2 style="color: var(--primary-color); margin: 0 0 16px 0;">Privacy Policy</h2>
+                        <p style="color: #666; font-style: italic; margin-bottom: 20px;">Last updated: January 2025</p>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Overview</h3>
+                        <p>StackMap is designed with privacy as a core principle. We believe families deserve tools that respect their privacy and give them control over their data.</p>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Data Collection</h3>
+                        <p><strong>We collect NO personal data.</strong> StackMap works entirely offline on your device.</p>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Data Storage</h3>
+                        <ul style="line-height: 1.6;">
+                            <li>All routine data is stored locally on your device</li>
+                            <li>No data is sent to our servers</li>
+                            <li>Your routines, progress, and settings stay on your device</li>
+                        </ul>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Data Sharing</h3>
+                        <p>You can export and share your data using your device's native sharing features. This data goes directly where you send it - we never see it.</p>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Third-Party Services</h3>
+                        <p>StackMap uses Google Fonts for typography. No personal data is shared with Google.</p>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Children's Privacy</h3>
+                        <p>StackMap is designed to be safe for children. Since we don't collect any data, there's no risk to children's privacy.</p>
+                        
+                        <button onclick="this.closest('.info-modal').remove()" style="
+                            background: var(--primary-color);
+                            color: white;
+                            border: none;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            margin-top: 20px;
+                            width: 100%;
+                        ">Close</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Close on backdrop click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
+            }
+            
+            showSupport() {
+                // Create a modal for support
+                const modal = document.createElement('div');
+                modal.className = 'info-modal';
+                modal.style.cssText = `
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 10000;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 20px;
+                    overflow-y: auto;
+                `;
+                
+                modal.innerHTML = `
+                    <div class="info-content" style="
+                        background: rgba(255, 255, 255, 0.95);
+                        border-radius: 12px;
+                        padding: 24px;
+                        max-width: 600px;
+                        max-height: 80vh;
+                        overflow-y: auto;
+                        color: #333;
+                    ">
+                        <button onclick="this.closest('.info-modal').remove()" style="
+                            float: right;
+                            background: none;
+                            border: none;
+                            font-size: 24px;
+                            cursor: pointer;
+                            color: #666;
+                        ">×</button>
+                        
+                        <h2 style="color: var(--primary-color); margin: 0 0 16px 0;">Support StackMap</h2>
+                        
+                        <p style="margin-bottom: 20px;">StackMap is a free, open-source tool designed to help families manage daily routines. If you find it helpful, here are ways you can support the project:</p>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Get Help</h3>
+                        <p>Having trouble? Try these resources:</p>
+                        <ul style="line-height: 1.8;">
+                            <li><strong>Quick Reset:</strong> If things aren't working, try refreshing the page</li>
+                            <li><strong>Emergency Reset:</strong> Open browser console and type: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">emergencyCacheClear()</code></li>
+                            <li><strong>Report Issues:</strong> Email adamcstack@gmail.com</li>
+                        </ul>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Share StackMap</h3>
+                        <p>The best way to support us is to share StackMap with others who might benefit:</p>
+                        <ul style="line-height: 1.8;">
+                            <li>Tell other families about StackMap</li>
+                            <li>Share in support groups and forums</li>
+                            <li>Leave a review if you downloaded from an app store</li>
+                        </ul>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Contribute</h3>
+                        <p>StackMap is open source! Developers can contribute on GitHub.</p>
+                        
+                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">About the Creator</h3>
+                        <p>StackMap was created by a parent who needed a better way to manage family routines. It's built with love for the special needs community.</p>
+                        
+                        <button onclick="this.closest('.info-modal').remove()" style="
+                            background: var(--primary-color);
+                            color: white;
+                            border: none;
+                            padding: 12px 24px;
+                            border-radius: 8px;
+                            font-size: 16px;
+                            cursor: pointer;
+                            font-weight: 500;
+                            margin-top: 20px;
+                            width: 100%;
+                        ">Close</button>
+                    </div>
+                `;
+                
+                document.body.appendChild(modal);
+                
+                // Close on backdrop click
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                    }
+                });
             }
             
             importData() {
