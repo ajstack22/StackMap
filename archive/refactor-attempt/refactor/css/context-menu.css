@@ -1,0 +1,352 @@
+/**
+ * Context Menu Styles
+ * Positioning, animations, and styling for context menu system
+ * Story #96 - Round 5 Dev2, Enhanced for Story #98 - Round 6 Dev2
+ */
+
+/* Context menu container */
+.context-menu {
+    position: fixed;
+    z-index: 10000;
+    background: #ffffff;
+    border-radius: 8px;
+    box-shadow: 
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(0, 0, 0, 0.05);
+    padding: 4px 0;
+    min-width: 200px;
+    max-width: 280px;
+    font-size: 14px;
+    opacity: 0;
+    transform: scale(0.95) translateY(-5px);
+    transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
+}
+
+.context-menu.visible {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    pointer-events: auto;
+}
+
+/* Menu sections */
+.context-menu-section {
+    padding: 4px 0;
+}
+
+.context-menu-section + .context-menu-section {
+    border-top: 1px solid #e5e7eb;
+}
+
+/* Menu items */
+.context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+    min-height: 40px;
+    color: #374151;
+    text-decoration: none;
+    background: transparent;
+    border: none;
+    width: 100%;
+    text-align: left;
+    font-family: inherit;
+}
+
+.context-menu-item:hover {
+    background: #f3f4f6;
+    color: #111827;
+}
+
+.context-menu-item:active {
+    background: #e5e7eb;
+    transform: scale(0.98);
+}
+
+.context-menu-item.focused {
+    background: #3b82f6;
+    color: #ffffff;
+    outline: none;
+}
+
+.context-menu-item.focused .context-menu-icon {
+    color: #ffffff;
+}
+
+/* Icons */
+.context-menu-icon {
+    font-size: 18px;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    color: #6b7280;
+    transition: color 0.15s ease;
+}
+
+.context-menu-item:hover .context-menu-icon {
+    color: #374151;
+}
+
+/* Labels */
+.context-menu-label {
+    flex: 1;
+    font-weight: 500;
+    line-height: 1.3;
+}
+
+/* Shortcuts */
+.context-menu-shortcut {
+    font-size: 12px;
+    color: #9ca3af;
+    font-family: monospace;
+    margin-left: 8px;
+}
+
+.context-menu-item.focused .context-menu-shortcut {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+/* Destructive actions */
+.context-menu-item.destructive {
+    color: #dc2626;
+}
+
+.context-menu-item.destructive:hover {
+    background: #fef2f2;
+    color: #b91c1c;
+}
+
+.context-menu-item.destructive .context-menu-icon {
+    color: #ef4444;
+}
+
+.context-menu-item.destructive:hover .context-menu-icon {
+    color: #dc2626;
+}
+
+/* Disabled items */
+.context-menu-item.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Timer state indicator */
+.timer-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    background: #e0e7ff;
+    color: #4338ca;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 8px;
+}
+
+.timer-state.running {
+    background: #dcfce7;
+    color: #16a34a;
+}
+
+.timer-state.paused {
+    background: #fef3c7;
+    color: #d97706;
+}
+
+/* Position adjustments for edge cases */
+.context-menu.position-top {
+    transform-origin: bottom center;
+}
+
+.context-menu.position-bottom {
+    transform-origin: top center;
+}
+
+.context-menu.position-left {
+    transform-origin: right center;
+}
+
+.context-menu.position-right {
+    transform-origin: left center;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .context-menu {
+        font-size: 15px;
+        min-width: 240px;
+        max-width: calc(100vw - 32px);
+    }
+    
+    .context-menu-item {
+        padding: 12px 16px;
+        min-height: 44px;
+    }
+    
+    .context-menu-icon {
+        font-size: 20px;
+        width: 28px;
+    }
+    
+    .context-menu-label {
+        font-size: 15px;
+    }
+    
+    .context-menu-shortcut {
+        display: none;
+    }
+}
+
+/* Safe mode adjustments */
+.safe-mode .context-menu {
+    font-size: 16px;
+}
+
+.safe-mode .context-menu-item {
+    padding: 16px 20px;
+    min-height: 60px;
+}
+
+.safe-mode .context-menu-icon {
+    font-size: 24px;
+    width: 32px;
+}
+
+.safe-mode .context-menu-label {
+    font-size: 16px;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+    .context-menu {
+        background: #1f2937;
+        box-shadow: 
+            0 10px 25px -5px rgba(0, 0, 0, 0.3),
+            0 10px 10px -5px rgba(0, 0, 0, 0.2),
+            0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+    
+    .context-menu-section + .context-menu-section {
+        border-top-color: #374151;
+    }
+    
+    .context-menu-item {
+        color: #e5e7eb;
+    }
+    
+    .context-menu-item:hover {
+        background: #374151;
+        color: #ffffff;
+    }
+    
+    .context-menu-item:active {
+        background: #4b5563;
+    }
+    
+    .context-menu-icon {
+        color: #9ca3af;
+    }
+    
+    .context-menu-item:hover .context-menu-icon {
+        color: #e5e7eb;
+    }
+    
+    .context-menu-shortcut {
+        color: #6b7280;
+    }
+    
+    .context-menu-item.destructive {
+        color: #ef4444;
+    }
+    
+    .context-menu-item.destructive:hover {
+        background: rgba(239, 68, 68, 0.1);
+        color: #f87171;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .context-menu {
+        transition: none;
+    }
+    
+    .context-menu-item {
+        transition: none;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .context-menu {
+        border: 2px solid #000000;
+        box-shadow: none;
+    }
+    
+    .context-menu-item.focused {
+        background: #000000;
+        color: #ffffff;
+        outline: 2px solid #ffffff;
+        outline-offset: -2px;
+    }
+    
+    .context-menu-item.destructive {
+        color: #ff0000;
+    }
+}
+
+/* Animation for menu appearance */
+@keyframes contextMenuFadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.context-menu.animating-in {
+    animation: contextMenuFadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Backdrop for mobile */
+@media (max-width: 768px) {
+    .context-menu-backdrop {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.2);
+        z-index: 9999;
+        opacity: 0;
+        transition: opacity 0.2s ease;
+        pointer-events: none;
+    }
+    
+    .context-menu-backdrop.visible {
+        opacity: 1;
+        pointer-events: auto;
+    }
+}
+
+/* Focus trap indicator */
+.context-menu:focus {
+    outline: none;
+}
+
+.context-menu:focus-visible {
+    box-shadow: 
+        0 10px 25px -5px rgba(0, 0, 0, 0.1),
+        0 10px 10px -5px rgba(0, 0, 0, 0.04),
+        0 0 0 1px rgba(0, 0, 0, 0.05),
+        0 0 0 3px rgba(59, 130, 246, 0.3);
+}

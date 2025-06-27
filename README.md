@@ -4,6 +4,21 @@ A visual routine builder designed to help families create and follow daily sched
 
 ![StackMap Logo](icon-192.png)
 
+## 🚀 New Modular Architecture
+
+As of June 26, 2025, StackMap has been migrated to a clean modular structure for better maintainability.
+
+### File Structure
+```
+StackMap/
+├── index.html          # Main application
+├── manifest.json       # PWA configuration  
+├── src/
+│   ├── stackmap.css   # All styles (1,506 lines)
+│   └── stackmap.js    # All JavaScript (2,206 lines)
+└── archive/           # Legacy monolithic version
+```
+
 ## Features
 
 - **Visual Activity Cards**: Create colorful cards with emojis and descriptions for daily activities

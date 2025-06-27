@@ -1,0 +1,31 @@
+{
+  "appId": "com.stackmap.refactor",
+  "appName": "StackMap",
+  "webDir": "www",
+  "server": {
+    "androidScheme": "https",
+    "iosScheme": "capacitor"
+  },
+  "android": {
+    "minSdkVersion": 23
+  },
+  "ios": {
+    "minVersion": "10.0"
+  },
+  "plugins": {
+    "CapacitorSQLite": {
+      "iosDatabaseLocation": "Library/CapacitorDatabase",
+      "iosIsEncryption": false,
+      "iosKeychainPrefix": "stackmap",
+      "iosBiometric": {
+        "biometricAuth": false,
+        "biometricTitle": "Biometric login for StackMap"
+      },
+      "androidIsEncryption": false,
+      "androidBiometric": {
+        "biometricAuth": false,
+        "biometricTitle": "Biometric login for StackMap"
+      }
+    }
+  }
+}

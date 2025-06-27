@@ -1,0 +1,434 @@
+/**
+ * Inline Card Edit Styles
+ * Visual styling for direct card editing system
+ * Story #96 - Round 5 Dev2, Enhanced for Story #98 - Round 6 Dev2
+ */
+
+/* Enhanced edit mode visual transformation */
+.edit-mode-active .activity-card,
+.edit-mode-active .task-card {
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 2px solid rgba(59, 130, 246, 0.3);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.02), rgba(59, 130, 246, 0.05));
+    box-shadow: 
+        0 4px 6px -1px rgba(0, 0, 0, 0.1),
+        0 2px 4px -1px rgba(0, 0, 0, 0.06),
+        0 0 0 1px rgba(59, 130, 246, 0.1);
+    transform: translateY(-1px);
+}
+
+.edit-mode-active .activity-card:hover,
+.edit-mode-active .task-card:hover {
+    border-color: rgba(59, 130, 246, 0.5);
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.03), rgba(59, 130, 246, 0.08));
+    box-shadow: 
+        0 10px 15px -3px rgba(0, 0, 0, 0.1),
+        0 4px 6px -2px rgba(0, 0, 0, 0.05),
+        0 0 0 2px rgba(59, 130, 246, 0.15);
+    transform: translateY(-2px);
+}
+
+/* Edit state indicator */
+.edit-mode-active .activity-card::before,
+.edit-mode-active .task-card::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    right: -2px;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #06b6d4, #10b981);
+    border-radius: 8px 8px 0 0;
+    opacity: 0.8;
+}
+
+/* Quick edit controls container */
+.quick-edit-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+    padding: 16px;
+    background: rgba(59, 130, 246, 0.02);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.quick-selector-label {
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Priority selector */
+.priority-quick-selector {
+    display: flex;
+    flex-direction: column;
+}
+
+.quick-selector-buttons {
+    display: flex;
+    gap: 6px;
+}
+
+.priority-btn {
+    flex: 1;
+    padding: 8px 12px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 36px;
+}
+
+.priority-btn:hover {
+    border-color: #3b82f6;
+    background: #f3f4f6;
+}
+
+.priority-btn.active {
+    border-color: #3b82f6;
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.priority-btn:focus {
+    outline: none;
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Time adjustment */
+.time-quick-adjustment {
+    display: flex;
+    flex-direction: column;
+}
+
+.time-display-container {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.current-time {
+    font-weight: 600;
+    color: #1f2937;
+    min-width: 60px;
+}
+
+.time-adjustment-buttons {
+    display: flex;
+    gap: 4px;
+    flex: 1;
+}
+
+.time-btn {
+    padding: 6px 10px;
+    border: 2px solid #e5e7eb;
+    border-radius: 4px;
+    background: #ffffff;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 32px;
+    min-width: 40px;
+}
+
+.time-btn:hover {
+    border-color: #3b82f6;
+    background: #f3f4f6;
+}
+
+.time-btn-add:hover {
+    border-color: #10b981;
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.time-btn-subtract:hover {
+    border-color: #ef4444;
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+.time-btn:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Day toggle */
+.day-quick-toggle {
+    display: flex;
+    flex-direction: column;
+}
+
+.day-toggle-container {
+    display: flex;
+    gap: 8px;
+}
+
+.day-toggle-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 10px 16px;
+    border: 2px solid #e5e7eb;
+    border-radius: 6px;
+    background: #ffffff;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 40px;
+}
+
+.day-toggle-btn:hover {
+    border-color: #3b82f6;
+    background: #f3f4f6;
+}
+
+.day-toggle-btn.active {
+    border-color: #3b82f6;
+    background: #3b82f6;
+    color: #ffffff;
+}
+
+.day-toggle-btn .day-icon {
+    font-size: 16px;
+}
+
+.day-toggle-btn:focus {
+    outline: none;
+    border-color: #1d4ed8;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+    .quick-edit-controls {
+        gap: 16px;
+        padding: 20px;
+    }
+    
+    .priority-btn,
+    .day-toggle-btn {
+        min-height: 44px;
+        font-size: 14px;
+    }
+    
+    .time-btn {
+        min-height: 40px;
+        min-width: 48px;
+        font-size: 13px;
+    }
+    
+    .quick-selector-label {
+        font-size: 15px;
+    }
+}
+
+/* Safe mode adjustments */
+.safe-mode .priority-btn,
+.safe-mode .day-toggle-btn {
+    min-height: 60px;
+    font-size: 16px;
+    padding: 16px 20px;
+}
+
+.safe-mode .time-btn {
+    min-height: 56px;
+    min-width: 60px;
+    font-size: 14px;
+    padding: 12px 16px;
+}
+
+.safe-mode .quick-edit-controls {
+    gap: 20px;
+    padding: 24px;
+}
+
+/* Card in inline editing state */
+.inline-editing {
+    border: 2px solid #3b82f6 !important;
+    background: rgba(59, 130, 246, 0.05) !important;
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1) !important;
+}
+
+/* Inline edit inputs */
+.inline-edit-input {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 2px solid #3b82f6 !important;
+    border-radius: 4px !important;
+    padding: 4px 8px !important;
+    margin: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    font-family: inherit !important;
+    transition: all 0.2s ease !important;
+}
+
+.inline-edit-input:focus {
+    outline: none !important;
+    border-color: #1d4ed8 !important;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* Textarea specific styling */
+.inline-edit-input[data-field="description"] {
+    resize: vertical !important;
+    min-height: 40px !important;
+    max-height: 100px !important;
+    line-height: 1.4 !important;
+}
+
+/* Time input styling */
+.time-edit-container {
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    font-size: 14px !important;
+    color: inherit !important;
+}
+
+.time-input {
+    width: 60px !important;
+    padding: 2px 4px !important;
+    border: 1px solid #3b82f6 !important;
+    border-radius: 3px !important;
+    font-size: 14px !important;
+    text-align: center !important;
+}
+
+.time-unit {
+    font-size: 12px !important;
+    color: #6b7280 !important;
+}
+
+/* Notification styling */
+.inline-edit-notification {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #10b981;
+    color: white;
+    padding: 12px 20px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    z-index: 10000;
+    animation: fadeInUp 0.3s ease;
+}
+
+.inline-edit-notification.success {
+    background: #10b981;
+}
+
+.inline-edit-notification.error {
+    background: #ef4444;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Card edit controls styling */
+.card-edit-controls {
+    display: none;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    gap: 4px;
+    z-index: 100;
+}
+
+.edit-mode-active .card-edit-controls {
+    display: flex !important;
+}
+
+.card-action-btn {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.card-action-btn:hover {
+    background: #ffffff;
+    border-color: #3b82f6;
+    transform: scale(1.1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-action-btn:active {
+    transform: scale(0.95);
+}
+
+/* Mobile enhancements */
+@media (max-width: 768px) {
+    .card-action-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 18px;
+    }
+}
+
+/* Safe mode enhancements */
+.safe-mode .card-action-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 20px;
+    border-width: 2px;
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .edit-mode-active .activity-card,
+    .edit-mode-active .task-card,
+    .card-action-btn,
+    .inline-edit-notification {
+        transition: none !important;
+        animation: none !important;
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .edit-mode-active .activity-card,
+    .edit-mode-active .task-card {
+        border: 3px solid #000000;
+        background: #ffffff;
+    }
+    
+    .inline-edit-input {
+        border: 3px solid #000000 !important;
+        background: #ffffff !important;
+    }
+    
+    .card-action-btn {
+        border: 2px solid #000000;
+        background: #ffffff;
+    }
+}

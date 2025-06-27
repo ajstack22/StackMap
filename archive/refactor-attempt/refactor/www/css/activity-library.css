@@ -1,0 +1,390 @@
+/**
+ * Activity Library Styles for StackMap
+ * Mobile-first, accessible design
+ * Supports safe mode with larger touch targets
+ */
+
+/* Modal overrides for activity library */
+.activity-library-modal .modal-dialog {
+    max-width: 100%;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    border-radius: 0;
+}
+
+.activity-library-modal .modal-content {
+    display: flex;
+    flex-direction: column;
+    height: calc(100% - 60px); /* Account for header */
+    padding: 0;
+}
+
+/* Search container */
+.activity-search-container {
+    position: relative;
+    padding: 16px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+}
+
+.activity-search {
+    width: 100%;
+    padding: 12px 40px 12px 16px;
+    background: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+.activity-search:focus {
+    border-color: #666;
+    background: #333;
+}
+
+.activity-search-clear {
+    position: absolute;
+    right: 24px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 32px;
+    height: 32px;
+    background: transparent;
+    border: none;
+    color: #999;
+    font-size: 24px;
+    cursor: pointer;
+    display: none;
+    padding: 0;
+    line-height: 1;
+}
+
+.activity-search-clear:hover {
+    color: #fff;
+}
+
+/* Category tabs */
+.activity-categories-wrapper {
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+    position: relative;
+    overflow: hidden;
+}
+
+.activity-categories {
+    display: flex;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 8px;
+}
+
+.activity-categories::-webkit-scrollbar {
+    display: none;
+}
+
+.activity-category {
+    flex-shrink: 0;
+    padding: 12px 16px;
+    margin: 8px 4px;
+    background: transparent;
+    border: 1px solid #444;
+    border-radius: 20px;
+    color: #999;
+    font-size: 14px;
+    white-space: nowrap;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+/* Safe mode adjustments */
+.safe-mode .activity-category {
+    min-height: 60px;
+    padding: 16px 20px;
+    font-size: 16px;
+}
+
+.activity-category:hover {
+    background: #2a2a2a;
+    color: #fff;
+}
+
+.activity-category.active {
+    background: #4a90e2;
+    border-color: #4a90e2;
+    color: #fff;
+}
+
+.category-count {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+}
+
+.activity-category.active .category-count {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+/* Activities grid */
+.activity-grid {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 16px;
+    background: #0a0a0a;
+}
+
+.activity-loading,
+.activity-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 16px;
+}
+
+/* Activity cards */
+.activity-card {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 60px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.safe-mode .activity-card {
+    min-height: 80px;
+    padding: 20px;
+}
+
+.activity-card:hover {
+    background: #2a2a2a;
+    border-color: #444;
+    transform: translateY(-1px);
+}
+
+.activity-icon {
+    font-size: 24px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+}
+
+.safe-mode .activity-icon {
+    width: 48px;
+    height: 48px;
+    font-size: 28px;
+}
+
+.activity-content {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 4px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.activity-description {
+    font-size: 14px;
+    color: #999;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.safe-mode .activity-title {
+    font-size: 18px;
+}
+
+.safe-mode .activity-description {
+    font-size: 16px;
+}
+
+/* Add button */
+.activity-add-btn {
+    width: 44px;
+    height: 44px;
+    background: #4a90e2;
+    border: none;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 300;
+    cursor: pointer;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+}
+
+.safe-mode .activity-add-btn {
+    width: 60px;
+    height: 60px;
+    font-size: 32px;
+}
+
+.activity-add-btn:hover {
+    background: #357abd;
+    transform: scale(1.1);
+}
+
+.activity-add-btn:active {
+    transform: scale(0.95);
+}
+
+/* Success message */
+.activity-success-message {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4caf50;
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+/* Duplicate message */
+.activity-duplicate-message {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #ff9800;
+    color: #fff;
+    padding: 16px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateX(-50%) translateY(100px);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(-50%) translateY(0);
+        opacity: 1;
+    }
+}
+
+/* Responsive adjustments */
+@media (min-width: 768px) {
+    .activity-library-modal .modal-dialog {
+        max-width: 90%;
+        width: 90%;
+        height: 90%;
+        margin: 5% auto;
+        border-radius: 12px;
+    }
+    
+    .activity-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 16px;
+    }
+    
+    .activity-card {
+        margin-bottom: 0;
+    }
+}
+
+@media (min-width: 1024px) {
+    .activity-library-modal .modal-dialog {
+        max-width: 1000px;
+        width: 80%;
+    }
+    
+    .activity-grid {
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    }
+}
+
+/* TV mode adjustments */
+.platform-tv .activity-category {
+    min-height: 60px;
+    padding: 16px 24px;
+    font-size: 18px;
+}
+
+.platform-tv .activity-card {
+    min-height: 80px;
+    padding: 20px;
+}
+
+.platform-tv .activity-add-btn {
+    width: 60px;
+    height: 60px;
+}
+
+/* Focus styles for keyboard navigation */
+.activity-category:focus,
+.activity-add-btn:focus,
+.activity-search:focus {
+    outline: 2px solid #4a90e2;
+    outline-offset: 2px;
+}
+
+/* Disable animations in safe mode */
+.safe-mode .activity-card,
+.safe-mode .activity-add-btn,
+.safe-mode .activity-category {
+    transition: none;
+}
+
+/* Scroll indicators for categories */
+.activity-categories-wrapper::before,
+.activity-categories-wrapper::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 20px;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.activity-categories-wrapper::before {
+    left: 0;
+    background: linear-gradient(to right, #1a1a1a, transparent);
+}
+
+.activity-categories-wrapper::after {
+    right: 0;
+    background: linear-gradient(to left, #1a1a1a, transparent);
+}

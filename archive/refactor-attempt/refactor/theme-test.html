@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Theme System Test - StackMap</title>
+    
+    <!-- Base styles -->
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/themes.css">
+    <link rel="stylesheet" href="css/focus-indicators.css">
+    
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .test-section {
+            margin: 32px 0;
+            padding: 20px;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .color-sample {
+            display: inline-block;
+            width: 60px;
+            height: 60px;
+            border-radius: 8px;
+            margin: 4px;
+            border: 2px solid var(--card-border);
+        }
+        
+        .theme-buttons {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>StackMap Theme System Test</h1>
+        
+        <div class="test-section">
+            <h2>Theme Selector</h2>
+            <div class="theme-buttons" id="theme-buttons">
+                <!-- Buttons will be added by JavaScript -->
+            </div>
+            
+            <p>Current theme: <strong id="current-theme">light</strong></p>
+        </div>
+        
+        <div class="test-section">
+            <h2>Color Palette</h2>
+            <div>
+                <span class="color-sample" style="background: var(--color-bg)"></span>
+                <span class="color-sample" style="background: var(--color-bg-secondary)"></span>
+                <span class="color-sample" style="background: var(--card-bg)"></span>
+                <span class="color-sample" style="background: var(--primary-purple)"></span>
+                <span class="color-sample" style="background: var(--color-success)"></span>
+                <span class="color-sample" style="background: var(--color-warning)"></span>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Typography</h2>
+            <h1>Heading 1</h1>
+            <h2>Heading 2</h2>
+            <h3>Heading 3</h3>
+            <p>This is a paragraph with some <a href="#">linked text</a> and <strong>bold text</strong>.</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>Buttons</h2>
+            <button class="btn-primary">Primary Button</button>
+            <button class="btn-secondary">Secondary Button</button>
+            <button>Default Button</button>
+            <button disabled>Disabled Button</button>
+        </div>
+        
+        <div class="test-section">
+            <h2>Form Elements</h2>
+            <div style="margin: 12px 0">
+                <input type="text" placeholder="Text input" style="width: 100%; padding: 8px; border-radius: 8px;">
+            </div>
+            <div style="margin: 12px 0">
+                <select style="width: 100%; padding: 8px; border-radius: 8px;">
+                    <option>Select option</option>
+                    <option>Option 1</option>
+                    <option>Option 2</option>
+                </select>
+            </div>
+            <div style="margin: 12px 0">
+                <textarea placeholder="Textarea" style="width: 100%; padding: 8px; border-radius: 8px;" rows="3"></textarea>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Sensory Preferences</h2>
+            <div>
+                <label>
+                    <input type="checkbox" id="animations-toggle">
+                    Enable animations
+                </label>
+            </div>
+            <div style="margin-top: 12px">
+                <label>Color vibrancy:
+                    <select id="vibrancy-select">
+                        <option value="muted">Muted</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="vibrant">Vibrant</option>
+                    </select>
+                </label>
+            </div>
+            <div style="margin-top: 12px">
+                <label>Contrast:
+                    <select id="contrast-select">
+                        <option value="low">Low</option>
+                        <option value="normal" selected>Normal</option>
+                        <option value="high">High</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Theme Manager -->
+    <script src="js/theme-manager.js"></script>
+    
+    <script>
+        // Test script
+        document.addEventListener('DOMContentLoaded', function() {
+            // Create theme buttons
+            var themes = window.StackMapThemeManager.getThemes();
+            var buttonsContainer = document.getElementById('theme-buttons');
+            
+            Object.keys(themes).forEach(function(key) {
+                var theme = themes[key];
+                var button = document.createElement('button');
+                button.className = 'btn-primary';
+                button.textContent = theme.icon + ' ' + theme.name;
+                button.onclick = function() {
+                    window.StackMapThemeManager.setTheme(key);
+                    document.getElementById('current-theme').textContent = key;
+                };
+                buttonsContainer.appendChild(button);
+            });
+            
+            // Update current theme display
+            document.getElementById('current-theme').textContent = window.StackMapThemeManager.getCurrentTheme();
+            
+            // Hook up sensory controls
+            document.getElementById('animations-toggle').checked = window.StackMapThemeManager.getSensoryPreferences().animations;
+            document.getElementById('animations-toggle').onchange = function() {
+                window.StackMapThemeManager.setSensoryPreference('animations', this.checked);
+            };
+            
+            document.getElementById('vibrancy-select').value = window.StackMapThemeManager.getSensoryPreferences().colorVibrancy;
+            document.getElementById('vibrancy-select').onchange = function() {
+                window.StackMapThemeManager.setSensoryPreference('colorVibrancy', this.value);
+            };
+            
+            document.getElementById('contrast-select').value = window.StackMapThemeManager.getSensoryPreferences().contrast;
+            document.getElementById('contrast-select').onchange = function() {
+                window.StackMapThemeManager.setSensoryPreference('contrast', this.value);
+            };
+            
+            // Listen for theme changes
+            document.addEventListener('themechange', function(e) {
+                document.getElementById('current-theme').textContent = e.detail.theme;
+            });
+        });
+    </script>
+</body>
+</html>

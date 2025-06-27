@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Foundry Orchestrator Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0e27;
+            color: #e0e6ed;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #64d9ff;
+            margin-bottom: 30px;
+            text-align: center;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(100, 217, 255, 0.5);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: #151a36;
+            border: 1px solid #2a3050;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.5);
+        }
+        
+        .card h2 {
+            color: #64d9ff;
+            margin-bottom: 15px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .team-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+        }
+        
+        .team-card {
+            background: #1e2440;
+            border: 1px solid #3a4060;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .team-card h3 {
+            color: #a8b9ff;
+            margin-bottom: 10px;
+        }
+        
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-active { background: #4ade80; }
+        .status-review { background: #fbbf24; }
+        .status-blocked { background: #f87171; }
+        .status-idle { background: #60a5fa; }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .alert-list {
+            list-style: none;
+        }
+        
+        .alert-item {
+            background: #2a1f1f;
+            border-left: 4px solid #f87171;
+            padding: 10px 15px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .alert-icon {
+            font-size: 1.2em;
+        }
+        
+        .review-item {
+            background: #1e2440;
+            border: 1px solid #3a4060;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .review-age {
+            color: #9ca3af;
+            font-size: 0.9em;
+        }
+        
+        .review-age.overdue {
+            color: #f87171;
+            font-weight: bold;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #1e2440;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4ade80 0%, #22c55e 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-weight: bold;
+            position: relative;
+        }
+        
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+        
+        .metric {
+            background: #1e2440;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .metric-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #64d9ff;
+        }
+        
+        .metric-label {
+            color: #9ca3af;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        
+        .auto-refresh {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #1e2440;
+            border: 1px solid #3a4060;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .refresh-indicator {
+            width: 8px;
+            height: 8px;
+            background: #4ade80;
+            border-radius: 50%;
+            animation: blink 1s infinite;
+        }
+        
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background 0.2s;
+        }
+        
+        .btn:hover {
+            background: #1d4ed8;
+        }
+        
+        .btn-secondary {
+            background: #475569;
+        }
+        
+        .btn-secondary:hover {
+            background: #334155;
+        }
+        
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .team-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .metric-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Foundry Orchestrator Dashboard</h1>
+        
+        <div class="auto-refresh">
+            <span class="refresh-indicator"></span>
+            <span>Auto-refresh: <span id="refresh-timer">30</span>s</span>
+        </div>
+        
+        <div class="grid">
+            <!-- Team Status Card -->
+            <div class="card">
+                <h2>
+                    <span class="status-indicator status-active"></span>
+                    Team Status Overview
+                </h2>
+                <div class="team-grid" id="team-status">
+                    <!-- Team status will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Critical Alerts Card -->
+            <div class="card">
+                <h2>
+                    <span class="status-indicator status-blocked"></span>
+                    Critical Alerts
+                </h2>
+                <ul class="alert-list" id="alerts">
+                    <!-- Alerts will be populated here -->
+                </ul>
+            </div>
+            
+            <!-- Review Queue Card -->
+            <div class="card">
+                <h2>
+                    <span class="status-indicator status-review"></span>
+                    Review Queue
+                </h2>
+                <div id="review-queue">
+                    <!-- Review items will be populated here -->
+                </div>
+            </div>
+            
+            <!-- Round Progress Card -->
+            <div class="card">
+                <h2>
+                    <span class="status-indicator status-active"></span>
+                    Round Progress
+                </h2>
+                <div id="round-progress">
+                    <h3>Round <span id="current-round">-</span></h3>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progress-fill">
+                            <span id="progress-text">0%</span>
+                        </div>
+                    </div>
+                    <div class="metric-grid">
+                        <div class="metric">
+                            <div class="metric-value" id="stories-total">0</div>
+                            <div class="metric-label">Total Stories</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-value" id="stories-complete">0</div>
+                            <div class="metric-label">Completed</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn" onclick="processReviewQueue()">Process Review Queue</button>
+            <button class="btn" onclick="autoAdvance()">Auto-Advance Ready</button>
+            <button class="btn btn-secondary" onclick="runConflictDetection()">Check Conflicts</button>
+            <button class="btn btn-secondary" onclick="exportMetrics()">Export Metrics</button>
+        </div>
+    </div>
+    
+    <script>
+        // Mock data generator (in real implementation, would fetch from actual data)
+        function generateMockData() {
+            const teams = [
+                { id: 1, status: 'active', inProgress: 3, pending: 1, blocked: 0 },
+                { id: 2, status: 'review', inProgress: 2, pending: 2, blocked: 1 },
+                { id: 3, status: 'idle', inProgress: 0, pending: 0, blocked: 0 }
+            ];
+            
+            const alerts = [
+                { team: 2, file: 'r8_dev2_story_116_activity_types.md', hours: 28 },
+                { team: 1, file: 'r8_dev1_story_115_pin_keep.md', hours: 25 }
+            ];
+            
+            const reviewQueue = [
+                { file: 'r8_dev2_story_116_plan.md', team: 2, hours: 5, priority: 'high' },
+                { file: 'r8_dev1_story_115_plan.md', team: 1, hours: 2, priority: 'normal' },
+                { file: 'r8_dev3_story_117_plan.md', team: 3, hours: 1, priority: 'normal' }
+            ];
+            
+            const roundProgress = {
+                current: 8,
+                total: 9,
+                completed: 6
+            };
+            
+            return { teams, alerts, reviewQueue, roundProgress };
+        }
+        
+        // Update dashboard with data
+        function updateDashboard() {
+            const data = generateMockData();
+            
+            // Update team status
+            const teamStatusEl = document.getElementById('team-status');
+            teamStatusEl.innerHTML = data.teams.map(team => {
+                let statusClass = 'status-idle';
+                let statusText = 'Idle';
+                
+                if (team.blocked > 0) {
+                    statusClass = 'status-blocked';
+                    statusText = `Blocked (${team.blocked})`;
+                } else if (team.pending > 0) {
+                    statusClass = 'status-review';
+                    statusText = `Review (${team.pending})`;
+                } else if (team.inProgress > 0) {
+                    statusClass = 'status-active';
+                    statusText = `Active (${team.inProgress})`;
+                }
+                
+                return `
+                    <div class="team-card">
+                        <h3>Team ${team.id}</h3>
+                        <div>
+                            <span class="status-indicator ${statusClass}"></span>
+                            <span>${statusText}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            // Update alerts
+            const alertsEl = document.getElementById('alerts');
+            if (data.alerts.length > 0) {
+                alertsEl.innerHTML = data.alerts.map(alert => `
+                    <li class="alert-item">
+                        <span class="alert-icon">⚠️</span>
+                        <div>
+                            <strong>Team ${alert.team}</strong>: ${alert.file}
+                            <br>
+                            <small>Overdue ${alert.hours}h</small>
+                        </div>
+                    </li>
+                `).join('');
+            } else {
+                alertsEl.innerHTML = '<li style="color: #4ade80;">✓ No critical alerts</li>';
+            }
+            
+            // Update review queue
+            const reviewQueueEl = document.getElementById('review-queue');
+            reviewQueueEl.innerHTML = data.reviewQueue.map(review => `
+                <div class="review-item">
+                    <div>
+                        <strong>${review.file}</strong>
+                        <br>
+                        <small>Team ${review.team} • Priority: ${review.priority}</small>
+                    </div>
+                    <span class="review-age ${review.hours > 24 ? 'overdue' : ''}">${review.hours}h ago</span>
+                </div>
+            `).join('');
+            
+            // Update round progress
+            document.getElementById('current-round').textContent = data.roundProgress.current;
+            document.getElementById('stories-total').textContent = data.roundProgress.total;
+            document.getElementById('stories-complete').textContent = data.roundProgress.completed;
+            
+            const progress = Math.round((data.roundProgress.completed / data.roundProgress.total) * 100);
+            document.getElementById('progress-fill').style.width = progress + '%';
+            document.getElementById('progress-text').textContent = progress + '%';
+        }
+        
+        // Action button handlers
+        function processReviewQueue() {
+            alert('Processing review queue... (In real implementation, would trigger workflow.sh)');
+        }
+        
+        function autoAdvance() {
+            alert('Auto-advancing completed reviews... (In real implementation, would trigger workflow.sh)');
+        }
+        
+        function runConflictDetection() {
+            alert('Running conflict detection... (In real implementation, would trigger workflow.sh)');
+        }
+        
+        function exportMetrics() {
+            alert('Exporting metrics... (In real implementation, would download metrics file)');
+        }
+        
+        // Auto-refresh timer
+        let refreshTimer = 30;
+        setInterval(() => {
+            refreshTimer--;
+            document.getElementById('refresh-timer').textContent = refreshTimer;
+            
+            if (refreshTimer <= 0) {
+                updateDashboard();
+                refreshTimer = 30;
+            }
+        }, 1000);
+        
+        // Initial load
+        updateDashboard();
+    </script>
+</body>
+</html>

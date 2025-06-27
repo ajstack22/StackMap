@@ -1,0 +1,464 @@
+/**
+ * Drag & Drop Styles
+ * Visual drag handles, drop zones, and drag state styling
+ * Story #96 - Round 5 Dev2, Enhanced for Story #98 - Round 6 Dev2
+ */
+
+/* Drag handle styling */
+.drag-handle {
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 40px;
+    cursor: grab;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    z-index: 10;
+    display: none;
+}
+
+/* Show drag handles only in edit mode */
+.edit-mode-active .drag-handle {
+    display: block;
+}
+
+.edit-mode-active .activity-card:hover .drag-handle,
+.edit-mode-active .task-card:hover .drag-handle {
+    opacity: 0.6;
+}
+
+.drag-handle:hover {
+    opacity: 1 !important;
+}
+
+/* Drag handle visual */
+.drag-handle::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 4px;
+    height: 24px;
+    background: repeating-linear-gradient(
+        to bottom,
+        #9ca3af 0px,
+        #9ca3af 2px,
+        transparent 2px,
+        transparent 6px
+    );
+    border-radius: 2px;
+}
+
+.drag-handle:hover::before {
+    background: repeating-linear-gradient(
+        to bottom,
+        #3b82f6 0px,
+        #3b82f6 2px,
+        transparent 2px,
+        transparent 6px
+    );
+}
+
+/* Card adjustments for drag handle */
+.edit-mode-active .activity-card,
+.edit-mode-active .task-card {
+    padding-left: 40px;
+    position: relative;
+}
+
+/* Dragging state */
+.dragging {
+    opacity: 0.5;
+    cursor: grabbing !important;
+}
+
+.dragging * {
+    cursor: grabbing !important;
+}
+
+/* Drag preview (ghost element) */
+.drag-preview {
+    position: fixed;
+    pointer-events: none;
+    z-index: 10000;
+    transform: rotate(2deg) scale(1.05);
+    box-shadow: 
+        0 20px 25px -5px rgba(0, 0, 0, 0.2),
+        0 10px 10px -5px rgba(0, 0, 0, 0.1);
+    opacity: 0.9;
+    animation: dragPulse 1s ease-in-out infinite;
+}
+
+@keyframes dragPulse {
+    0%, 100% {
+        transform: rotate(2deg) scale(1.05);
+    }
+    50% {
+        transform: rotate(2deg) scale(1.08);
+    }
+}
+
+/* Drop zone indicators */
+.drop-zone {
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+.drop-zone::before {
+    content: '';
+    position: absolute;
+    top: -2px;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: transparent;
+    transition: all 0.3s ease;
+    pointer-events: none;
+}
+
+.drop-zone.drag-over::before {
+    background: linear-gradient(90deg, 
+        #3b82f6 0%, 
+        #06b6d4 50%, 
+        #10b981 100%
+    );
+    animation: dropZoneGlow 1.5s ease-in-out infinite;
+    box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+}
+
+@keyframes dropZoneGlow {
+    0%, 100% {
+        opacity: 0.6;
+        transform: scaleX(0.95);
+    }
+    50% {
+        opacity: 1;
+        transform: scaleX(1);
+    }
+}
+
+/* Drop target highlighting */
+.drop-target {
+    background: rgba(59, 130, 246, 0.05) !important;
+    border: 2px dashed rgba(59, 130, 246, 0.3) !important;
+}
+
+.drop-target::after {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: inherit;
+    pointer-events: none;
+    animation: dropTargetPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes dropTargetPulse {
+    0%, 100% {
+        opacity: 0;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 1;
+        transform: scale(1.02);
+    }
+}
+
+/* Sortable placeholder */
+.sortable-placeholder {
+    background: rgba(59, 130, 246, 0.1);
+    border: 2px dashed rgba(59, 130, 246, 0.3);
+    border-radius: 8px;
+    margin: 8px 0;
+    transition: all 0.2s ease;
+}
+
+/* Drag feedback states */
+.can-drop {
+    cursor: copy;
+}
+
+.cannot-drop {
+    cursor: no-drop;
+}
+
+/* Mobile drag adjustments */
+@media (max-width: 768px) {
+    .drag-handle {
+        width: 32px;
+        height: 48px;
+        left: 4px;
+    }
+    
+    .drag-handle::before {
+        width: 6px;
+        height: 28px;
+        background: repeating-linear-gradient(
+            to bottom,
+            #9ca3af 0px,
+            #9ca3af 3px,
+            transparent 3px,
+            transparent 8px
+        );
+    }
+    
+    .edit-mode-active .activity-card,
+    .edit-mode-active .task-card {
+        padding-left: 44px;
+    }
+    
+    /* Larger drop zones on mobile */
+    .drop-zone.drag-over::before {
+        height: 8px;
+        top: -4px;
+    }
+}
+
+/* Safe mode adjustments */
+.safe-mode .drag-handle {
+    width: 40px;
+    height: 60px;
+    left: 8px;
+}
+
+.safe-mode .drag-handle::before {
+    width: 8px;
+    height: 36px;
+    background: repeating-linear-gradient(
+        to bottom,
+        #9ca3af 0px,
+        #9ca3af 4px,
+        transparent 4px,
+        transparent 10px
+    );
+}
+
+.safe-mode.edit-mode-active .activity-card,
+.safe-mode.edit-mode-active .task-card {
+    padding-left: 56px;
+}
+
+/* Touch feedback */
+@media (pointer: coarse) {
+    .drag-handle:active {
+        transform: translateY(-50%) scale(1.2);
+        opacity: 1;
+    }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+    .drag-preview {
+        animation: none;
+        transform: rotate(1deg) scale(1.02);
+    }
+    
+    .drop-zone::before,
+    .drop-zone.drag-over::before {
+        transition: none;
+        animation: none;
+    }
+    
+    .drop-target::after {
+        animation: none;
+    }
+    
+    @keyframes dragPulse { 
+        to { transform: none; }
+    }
+    
+    @keyframes dropZoneGlow {
+        to { opacity: 1; }
+    }
+    
+    @keyframes dropTargetPulse {
+        to { opacity: 0; }
+    }
+}
+
+/* High contrast mode */
+@media (prefers-contrast: high) {
+    .drag-handle::before {
+        background: repeating-linear-gradient(
+            to bottom,
+            #000000 0px,
+            #000000 2px,
+            transparent 2px,
+            transparent 6px
+        );
+    }
+    
+    .drop-zone.drag-over::before {
+        background: #000000;
+        height: 6px;
+    }
+    
+    .drop-target {
+        background: transparent !important;
+        border: 3px solid #000000 !important;
+    }
+}
+
+/* Drag handle focus state for keyboard */
+.drag-handle:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    opacity: 1;
+}
+
+/* Reorder mode indicator */
+.reorder-mode .activity-card,
+.reorder-mode .task-card {
+    cursor: move;
+}
+
+.reorder-mode .drag-handle {
+    opacity: 1;
+    cursor: move;
+}
+
+/* Manual reorder controls */
+.reorder-controls {
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: none;
+    gap: 4px;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.reorder-mode .reorder-controls {
+    display: flex;
+}
+
+.reorder-mode .activity-card:hover .reorder-controls,
+.reorder-mode .task-card:hover .reorder-controls {
+    opacity: 1;
+}
+
+.reorder-btn {
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    transition: all 0.2s ease;
+}
+
+.reorder-btn:hover {
+    background: #ffffff;
+    border-color: #3b82f6;
+    transform: scale(1.1);
+}
+
+.reorder-btn:active {
+    transform: scale(0.95);
+}
+
+.reorder-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+}
+
+/* Keyboard reorder feedback */
+.keyboard-reordering {
+    animation: keyboardReorder 0.3s ease;
+}
+
+@keyframes keyboardReorder {
+    0% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-10px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* Cross-timeframe move notification */
+.move-notification {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: #10b981;
+    color: #ffffff;
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 10001;
+    max-width: calc(100vw - 48px);
+}
+
+.move-notification.visible {
+    transform: translateX(-50%) translateY(0);
+}
+
+.move-notification .move-icon {
+    font-size: 16px;
+    flex-shrink: 0;
+}
+
+.move-notification .move-message {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Day selector drop zones */
+.day-selector-btn.drop-target {
+    background: rgba(59, 130, 246, 0.1) !important;
+    border-color: rgba(59, 130, 246, 0.5) !important;
+    transform: scale(1.05);
+}
+
+.day-selector-btn[data-day="today"].drop-target {
+    background: rgba(251, 191, 36, 0.1) !important;
+    border-color: rgba(251, 191, 36, 0.5) !important;
+}
+
+.day-selector-btn[data-day="tomorrow"].drop-target {
+    background: rgba(96, 165, 250, 0.1) !important;
+    border-color: rgba(96, 165, 250, 0.5) !important;
+}
+
+.day-selector-btn[data-day="someday"].drop-target {
+    background: rgba(107, 114, 128, 0.1) !important;
+    border-color: rgba(107, 114, 128, 0.5) !important;
+}
+
+/* Mobile adjustments for notifications */
+@media (max-width: 768px) {
+    .move-notification {
+        left: 16px;
+        right: 16px;
+        transform: translateY(100px);
+        max-width: none;
+    }
+    
+    .move-notification.visible {
+        transform: translateY(0);
+    }
+}

@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visual Cards Demo - StackMap</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/cards.css">
+    <link rel="stylesheet" href="css/visual-cards.css">
+    <style>
+        body {
+            background: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+        .demo-header {
+            background: white;
+            padding: 1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .demo-header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+        }
+        .demo-controls {
+            display: flex;
+            gap: 10px;
+        }
+        .demo-button {
+            padding: 8px 16px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .demo-button:hover {
+            background: #5a67d8;
+        }
+        .demo-button.secondary {
+            background: white;
+            color: #667eea;
+            border: 1px solid #667eea;
+        }
+        .demo-button.secondary:hover {
+            background: #f3f4f6;
+        }
+        #task-container {
+            padding: 1rem;
+            min-height: calc(100vh - 80px);
+        }
+        .status-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 10px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-header">
+        <h1>StackMap Visual Cards Demo</h1>
+        <div class="demo-controls">
+            <button class="demo-button secondary" onclick="toggleEditMode()">
+                <span id="edit-mode-text">Enter Edit Mode</span>
+            </button>
+            <button class="demo-button" onclick="resetDemo()">Reset Demo</button>
+        </div>
+    </div>
+    
+    <div id="task-container"></div>
+    
+    <div class="status-bar" id="status">Initializing...</div>
+    
+    <script>
+        // Status logging
+        function updateStatus(message) {
+            document.getElementById('status').textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            console.log(message);
+        }
+        
+        // Mock TaskDisplay
+        window.TaskDisplay = {
+            container: document.getElementById('task-container'),
+            isInitialized: true,
+            getUserTasks: () => [],
+            render: function() { 
+                updateStatus('Rendering cards...');
+                if (window.TaskCards) {
+                    window.TaskCards.renderCards();
+                }
+            }
+        };
+        
+        // Mock EditMode
+        window.EditMode = {
+            _active: false,
+            isActive: function() { return this._active; },
+            toggle: function() { 
+                this._active = !this._active; 
+                document.getElementById('edit-mode-text').textContent = 
+                    this._active ? 'Exit Edit Mode' : 'Enter Edit Mode';
+                updateStatus('Edit mode: ' + (this._active ? 'ON' : 'OFF'));
+                window.TaskDisplay.render();
+            }
+        };
+        
+        // Toggle edit mode
+        function toggleEditMode() {
+            window.EditMode.toggle();
+        }
+        
+        // Reset demo
+        function resetDemo() {
+            if (confirm('Reset all cards to defaults?')) {
+                localStorage.removeItem('stackmap_visual_cards');
+                localStorage.removeItem('stackmap_visual_cards_initialized');
+                location.reload();
+            }
+        }
+        
+        // Initialize the demo
+        async function initializeDemo() {
+            updateStatus('Loading visual cards system...');
+            
+            // Wait for scripts to load
+            let attempts = 0;
+            while ((!window.VisualCardManager || !window.TaskCards) && attempts < 20) {
+                await new Promise(resolve => setTimeout(resolve, 100));
+                attempts++;
+            }
+            
+            if (!window.VisualCardManager || !window.TaskCards) {
+                updateStatus('ERROR: Failed to load visual cards system');
+                return;
+            }
+            
+            updateStatus('Initializing visual card manager...');
+            
+            // Initialize the visual card manager
+            await window.VisualCardManager.init();
+            
+            // Enable visual mode
+            window.TaskCards.visualMode = true;
+            
+            // Initialize task cards
+            window.TaskCards.init();
+            
+            updateStatus(`Loaded ${window.VisualCardManager.cards.size} cards. Edit mode: OFF`);
+            
+            // Initial render
+            window.TaskDisplay.render();
+        }
+    </script>
+    
+    <!-- Load the visual cards system -->
+    <script src="js/visual-card-manager.js" defer></script>
+    <script src="js/card-creation-ui.js" defer></script>
+    <script src="js/task-cards.js" defer></script>
+    
+    <script>
+        // Start initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initializeDemo);
+        } else {
+            initializeDemo();
+        }
+    </script>
+</body>
+</html>

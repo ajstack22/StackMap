@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Visual Cards - StackMap</title>
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/visual-cards.css">
+    <style>
+        body {
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+        .debug-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #f3f4f6;
+            border-radius: 8px;
+        }
+        .debug-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        #debug-log {
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 300px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+        .component-fallback {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Visual Cards System</h1>
+    
+    <div class="debug-section">
+        <h2>Quick Actions</h2>
+        <div class="debug-controls">
+            <button onclick="forceInitialize()">Force Initialize System</button>
+            <button onclick="showMainView()">Show Main View</button>
+            <button onclick="createTestCards()">Create Test Cards</button>
+            <button onclick="clearAllData()">Clear All Data</button>
+            <button onclick="toggleEditMode()">Toggle Edit Mode</button>
+            <button onclick="openCardCreator()">Open Card Creator</button>
+        </div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Visual Cards Display</h2>
+        <div id="task-container"></div>
+    </div>
+    
+    <div class="debug-section">
+        <h2>Debug Log</h2>
+        <div id="debug-log"></div>
+    </div>
+    
+    <script>
+        // Debug logging
+        function log(message, data = null) {
+            const logEl = document.getElementById('debug-log');
+            const time = new Date().toLocaleTimeString();
+            let logMessage = `[${time}] ${message}`;
+            if (data) {
+                logMessage += '\n' + JSON.stringify(data, null, 2);
+            }
+            logEl.textContent = logMessage + '\n\n' + logEl.textContent;
+            console.log(message, data);
+        }
+        
+        // Mock dependencies
+        window.TaskDisplay = {
+            container: document.getElementById('task-container'),
+            isInitialized: true,
+            getUserTasks: () => [],
+            render: function() { 
+                log('TaskDisplay.render() called');
+                if (window.TaskCards) {
+                    window.TaskCards.renderCards();
+                }
+            }
+        };
+        
+        window.EditMode = {
+            _active: false,
+            isActive: function() { return this._active; },
+            toggle: function() { 
+                this._active = !this._active; 
+                log('Edit mode: ' + (this._active ? 'ON' : 'OFF'));
+                window.TaskDisplay.render();
+            }
+        };
+        
+        // Force initialize the system
+        function forceInitialize() {
+            log('Force initializing visual cards system...');
+            
+            // Initialize managers
+            if (window.VisualCardManager) {
+                window.VisualCardManager.init().then(() => {
+                    log('VisualCardManager initialized');
+                    
+                    // Enable visual mode
+                    if (window.TaskCards) {
+                        window.TaskCards.visualMode = true;
+                        log('Visual mode enabled');
+                        
+                        // Render
+                        window.TaskDisplay.render();
+                        log('Initial render complete');
+                    }
+                });
+            } else {
+                log('ERROR: VisualCardManager not loaded');
+            }
+        }
+        
+        // Show main view
+        function showMainView() {
+            log('Attempting to show main view...');
+            
+            // Hide loading view
+            const loadingView = document.getElementById('loading-view');
+            if (loadingView) {
+                loadingView.classList.add('hidden');
+                log('Loading view hidden');
+            }
+            
+            // Show main view
+            const mainView = document.getElementById('main-view');
+            if (mainView) {
+                mainView.classList.remove('hidden');
+                log('Main view shown');
+            }
+            
+            // Hide fallback UI
+            const fallbacks = document.querySelectorAll('.component-fallback');
+            fallbacks.forEach(el => {
+                el.style.display = 'none';
+            });
+            log('Fallback UI hidden');
+            
+            // Show normal components
+            const normals = document.querySelectorAll('.component-normal');
+            normals.forEach(el => {
+                el.style.display = 'block';
+            });
+            log('Normal components shown');
+        }
+        
+        // Create test cards
+        function createTestCards() {
+            log('Creating test cards...');
+            
+            const testCards = [
+                { emoji: '💊', title: 'Medicine', color: '#4a90e2', type: 'recurring' },
+                { emoji: '🪥', title: 'Brush Teeth', color: '#4ade80', type: 'recurring' },
+                { emoji: '💧', title: 'Drink Water', color: '#667eea', type: 'frequent' },
+                { emoji: '🧘', title: 'Deep Breath', color: '#f97316', type: 'frequent' },
+                { emoji: '📱', title: 'Check Phone', color: '#ef4444', type: 'single' }
+            ];
+            
+            testCards.forEach(cardData => {
+                if (window.VisualCardManager) {
+                    const card = window.VisualCardManager.createCard(cardData);
+                    log(`Created card: ${card.emoji} ${card.title}`);
+                }
+            });
+            
+            // Render
+            window.TaskDisplay.render();
+        }
+        
+        // Clear all data
+        function clearAllData() {
+            if (confirm('Clear all visual cards data?')) {
+                localStorage.removeItem('stackmap_visual_cards');
+                localStorage.removeItem('stackmap_visual_cards_initialized');
+                log('All visual cards data cleared');
+                location.reload();
+            }
+        }
+        
+        // Toggle edit mode
+        function toggleEditMode() {
+            window.EditMode.toggle();
+        }
+        
+        // Open card creator
+        function openCardCreator() {
+            if (window.CardCreationUI) {
+                window.CardCreationUI.open();
+                log('Card creator opened');
+            } else {
+                log('ERROR: CardCreationUI not loaded');
+            }
+        }
+        
+        // Check system status
+        function checkStatus() {
+            log('=== System Status ===');
+            log('VisualCardManager loaded:', !!window.VisualCardManager);
+            log('CardCreationUI loaded:', !!window.CardCreationUI);
+            log('TaskCards loaded:', !!window.TaskCards);
+            
+            if (window.VisualCardManager) {
+                const cards = window.VisualCardManager.getAllCards();
+                log('Cards in memory:', cards.length);
+                
+                const stored = localStorage.getItem('stackmap_visual_cards');
+                log('Cards in localStorage:', stored ? JSON.parse(stored).length : 0);
+            }
+        }
+        
+        // Listen for events
+        document.addEventListener('card-created', (e) => {
+            log('Event: card-created', e.detail);
+        });
+        
+        document.addEventListener('card-updated', (e) => {
+            log('Event: card-updated', e.detail);
+        });
+        
+        document.addEventListener('card-deleted', (e) => {
+            log('Event: card-deleted', e.detail);
+        });
+        
+        document.addEventListener('card-toggled', (e) => {
+            log('Event: card-toggled', e.detail);
+        });
+    </script>
+    
+    <!-- Load the visual cards system -->
+    <script src="js/visual-card-manager.js"></script>
+    <script src="js/card-creation-ui.js"></script>
+    <script src="js/task-cards.js"></script>
+    
+    <script>
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            log('Page loaded');
+            checkStatus();
+            
+            // Auto-initialize after a short delay
+            setTimeout(() => {
+                forceInitialize();
+            }, 500);
+        });
+    </script>
+</body>
+</html>
