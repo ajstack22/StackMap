@@ -2060,11 +2060,22 @@
             text-align: center;
             font-size: 2rem;
             line-height: 1.3;
+            /* Prevent breaking in middle of "Welcome to StackMap" */
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .setup-title-welcome {
+            white-space: nowrap;
         }
         
         .logo-text-wrapper {
             white-space: nowrap;
-            display: inline-block;
+            display: inline-flex;
+            align-items: center;
         }
         
         @media (max-width: 768px) {
@@ -2076,6 +2087,13 @@
                 width: 24px;
                 height: 24px;
                 top: -2px;
+            }
+            
+            /* On very small screens, allow breaking after "to" */
+            @media (max-width: 360px) {
+                .setup-title {
+                    font-size: 1.3rem;
+                }
             }
         }
         

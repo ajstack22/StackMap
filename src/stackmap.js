@@ -63,12 +63,15 @@
                 wizard.innerHTML = `
                     <div class="setup-content">
                         <h1 class="setup-title">
-                            Welcome to <span class="logo-text-wrapper"><svg class="setup-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <circle cx="16" cy="16" r="15" fill="var(--primary-color)" stroke="var(--primary-dark)" stroke-width="1"/>
-                                <rect x="7" y="10" width="18" height="2.5" fill="white" rx="1.25"/>
-                                <rect x="7" y="14.5" width="18" height="2.5" fill="white" rx="1.25"/>
-                                <rect x="7" y="19" width="18" height="5" fill="rgba(255,255,255,0.9)" rx="2.5"/>
-                            </svg>StackMap!</span>
+                            <span class="setup-title-welcome">Welcome to</span>
+                            <span class="logo-text-wrapper">
+                                <svg class="setup-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                    <circle cx="16" cy="16" r="15" fill="var(--primary-color)" stroke="var(--primary-dark)" stroke-width="1"/>
+                                    <rect x="7" y="10" width="18" height="2.5" fill="white" rx="1.25"/>
+                                    <rect x="7" y="14.5" width="18" height="2.5" fill="white" rx="1.25"/>
+                                    <rect x="7" y="19" width="18" height="5" fill="rgba(255,255,255,0.9)" rx="2.5"/>
+                                </svg>StackMap!
+                            </span>
                         </h1>
                         
                         <div class="setup-progress">
