@@ -30,6 +30,9 @@
                 this.lastClickTimes = new Map(); // Track last click time per activity
                 this.clickCooldown = 300; // 300ms cooldown between clicks
                 
+                // PWA install prompt
+                this.deferredPrompt = null;
+                
                 // Load data and initialize
                 this.loadData();
                 
@@ -59,14 +62,13 @@
                 wizard.className = 'setup-wizard';
                 wizard.innerHTML = `
                     <div class="setup-content">
-                        <h1>
-                            <svg class="logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-                                <circle cx="16" cy="16" r="15" fill="${getComputedStyle(document.documentElement).getPropertyValue('--primary-color')}" stroke="${getComputedStyle(document.documentElement).getPropertyValue('--primary-dark')}" stroke-width="1"/>
+                        <h1 class="setup-title">
+                            Welcome to <span class="logo-text-wrapper"><svg class="setup-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+                                <circle cx="16" cy="16" r="15" fill="var(--primary-color)" stroke="var(--primary-dark)" stroke-width="1"/>
                                 <rect x="7" y="10" width="18" height="2.5" fill="white" rx="1.25"/>
                                 <rect x="7" y="14.5" width="18" height="2.5" fill="white" rx="1.25"/>
                                 <rect x="7" y="19" width="18" height="5" fill="rgba(255,255,255,0.9)" rx="2.5"/>
-                            </svg>
-                            Welcome to StackMap!
+                            </svg>StackMap!</span>
                         </h1>
                         
                         <div class="setup-progress">
@@ -87,11 +89,12 @@
                         
                         <!-- Step 2: Name -->
                         <div class="setup-step" data-step="2">
-                            <p>What's your name?</p>
+                            <p>What's the user's name?</p>
                             <div class="setup-form">
-                                <input type="text" id="setupUserName" placeholder="Enter your name" 
+                                <input type="text" id="setupUserName" placeholder="Enter user's name" 
                                        onkeypress="if(event.key === 'Enter') app.nextSetupStep()">
                             </div>
+                            <p class="setup-hint">You can add more users later in Edit Mode</p>
                             <div class="setup-buttons">
                                 <button class="setup-btn setup-btn-secondary" onclick="app.prevSetupStep()">
                                     Back
@@ -104,16 +107,20 @@
                         
                         <!-- Step 3: Emoji -->
                         <div class="setup-step" data-step="3">
-                            <p>Choose an emoji that represents you!</p>
-                            <div class="emoji-picker-grid" id="setupEmojiPicker">
-                                ${this.getSetupEmojis()}
+                            <p>Choose an emoji for <span id="setupUserNameDisplay"></span></p>
+                            <div class="emoji-grid emoji-grid-compact" id="emojiGrid">
+                                ${['😊', '😎', '🤓', '😇', '🥰', '🤗',
+                                   '👦', '👧', '👨', '👩', '🧑', '👶',
+                                   '🐶', '🐱', '🐻', '🦊', '🐼', '🦄'].map(emoji => 
+                                    `<button class="emoji-option" onclick="app.selectEmoji('${emoji}')">${emoji}</button>`
+                                ).join('')}
                             </div>
                             <div class="setup-buttons">
                                 <button class="setup-btn setup-btn-secondary" onclick="app.prevSetupStep()">
                                     Back
                                 </button>
                                 <button class="setup-btn setup-btn-primary" onclick="app.completeSetup()">
-                                    Start Using StackMap
+                                    Finish Setup
                                 </button>
                             </div>
                         </div>
@@ -131,44 +138,30 @@
                 });
                 
                 this.currentSetupStep = 1;
-                this.selectedEmoji = '😊';
+                this.setupUserName = '';
+                this.setupUserEmoji = '😊';
             }
             
-            getSetupEmojis() {
-                const emojis = ['😊', '😎', '🤓', '😇', '🥰', '😍', '🤩', '😏', 
-                                '🧐', '🤠', '🥳', '😴', '🤗', '🤔', '😋', '😛',
-                                '🦸', '🦹', '🧙', '🧚', '🧛', '🧜', '🧝', '🧞',
-                                '👨', '👩', '👦', '👧', '👶', '🧑', '👴', '👵',
-                                '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
-                                '🦁', '🐯', '🐨', '🐵', '🦄', '🐝', '🦋', '🐢'];
+            selectEmoji(emoji) {
+                this.setupUserEmoji = emoji;
                 
-                return emojis.map(emoji => `
-                    <div class="emoji-option" onclick="app.selectSetupEmoji('${emoji}')">
-                        ${emoji}
-                    </div>
-                `).join('');
-            }
-            
-            selectSetupEmoji(emoji) {
-                this.selectedEmoji = emoji;
-                
-                // Update UI
-                document.querySelectorAll('.emoji-option').forEach(el => {
-                    el.classList.remove('selected');
-                    if (el.textContent.trim() === emoji) {
-                        el.classList.add('selected');
-                    }
+                // Update emoji grid to show selection
+                const buttons = document.querySelectorAll('.emoji-option');
+                buttons.forEach(btn => {
+                    btn.classList.toggle('selected', btn.textContent === emoji);
                 });
             }
             
             nextSetupStep() {
                 if (this.currentSetupStep === 2) {
-                    // Validate name
-                    const name = document.getElementById('setupUserName').value.trim();
+                    // Store the name
+                    const nameInput = document.getElementById('setupUserName');
+                    const name = nameInput.value.trim();
                     if (!name) {
-                        document.getElementById('setupUserName').style.borderColor = '#ff5252';
+                        nameInput.style.borderColor = '#ff5252';
                         return;
                     }
+                    this.setupUserName = name;
                 }
                 
                 if (this.currentSetupStep < 3) {
@@ -195,16 +188,24 @@
                 dots.forEach((dot, index) => {
                     dot.classList.toggle('active', index < this.currentSetupStep);
                 });
+                
+                // Update name display when on emoji step
+                if (this.currentSetupStep === 3 && this.setupUserName) {
+                    const nameDisplay = document.getElementById('setupUserNameDisplay');
+                    if (nameDisplay) {
+                        nameDisplay.textContent = this.setupUserName;
+                    }
+                }
             }
             
             completeSetup() {
-                const name = document.getElementById('setupUserName').value.trim();
-                if (!name) return;
-                
                 // Create the user
-                this.createUser(name, this.selectedEmoji);
+                this.createUser(this.setupUserName, this.setupUserEmoji);
                 
-                // Add some starter activities
+                // Set as current user
+                this.data.currentUserId = Object.keys(this.data.users)[0];
+                
+                // Add starter activities
                 const user = this.getCurrentUser();
                 user.days.today.activities = [
                     {
@@ -247,7 +248,7 @@
                 
                 // Show a quick welcome message
                 setTimeout(() => {
-                    alert(`Welcome, ${name}! 🎉\n\nTap activities to mark them complete.\nUse the Edit button to customize your routine.`);
+                    alert(`Welcome to StackMap! 🎉\n\nTap activities to mark them complete.\nUse the Edit button to customize your routine.`);
                 }, 500);
             }
             
@@ -438,7 +439,7 @@
                 const now = Date.now();
                 const lastClick = this.lastClickTimes.get(activityId) || 0;
                 if (now - lastClick < this.clickCooldown) {
-                    console.log('Click rate limited for activity:', activityId);
+                    // console.log('Click rate limited for activity:', activityId);
                     return; // Too soon, ignore this click
                 }
                 this.lastClickTimes.set(activityId, now);
@@ -478,12 +479,12 @@
                             this.render();
                             setTimeout(() => {
                                 const cardElement = document.querySelector(`[data-activity-id="${activityId}"]`);
-                                console.log('Looking for card with id:', activityId, 'Found:', cardElement);
+                                // console.log('Looking for card with id:', activityId, 'Found:', cardElement);
                                 if (cardElement && this.celebrationManager) {
-                                    console.log('Triggering task celebration for:', activity.text);
+                                    // console.log('Triggering task celebration for:', activity.text);
                                     this.celebrationManager.celebrateTask(cardElement, user.id);
                                 } else if (!cardElement) {
-                                    console.log('Could not find card element for activity:', activityId);
+                                    // console.log('Could not find card element for activity:', activityId);
                                     // Fallback: use body element
                                     if (this.celebrationManager) {
                                         this.celebrationManager.celebrateTask(document.body, user.id);
@@ -509,7 +510,7 @@
                 const now = Date.now();
                 const lastClick = this.lastClickTimes.get(`pin-${activityId}`) || 0;
                 if (now - lastClick < this.clickCooldown) {
-                    console.log('Click rate limited for pin:', activityId);
+                    // console.log('Click rate limited for pin:', activityId);
                     return; // Too soon, ignore this click
                 }
                 this.lastClickTimes.set(`pin-${activityId}`, now);
@@ -590,7 +591,7 @@
                     oscillator.start(audioContext.currentTime);
                     oscillator.stop(audioContext.currentTime + 0.2);
                 } catch (e) {
-                    console.log('Audio not available');
+                    // console.log('Audio not available');
                 }
             }
             
@@ -615,7 +616,7 @@
                         oscillator.stop(audioContext.currentTime + index * 0.1 + 0.3);
                     });
                 } catch (e) {
-                    console.log('Audio not available');
+                    // console.log('Audio not available');
                 }
             }
             
@@ -756,6 +757,7 @@
             }
             
             triggerHaptic(style = 'light') {
+                // Try Capacitor haptics first (for native mobile apps)
                 if (this.Haptics && this.ImpactStyle && typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
                     let impactStyle;
                     switch(style) {
@@ -772,6 +774,11 @@
                     this.Haptics.impact({ style: impactStyle }).catch(() => {
                         // Haptics not available
                     });
+                } 
+                // Fallback to Web Vibration API for mobile browsers
+                else if ('vibrate' in navigator) {
+                    const duration = style === 'heavy' ? 50 : style === 'medium' ? 30 : 10;
+                    navigator.vibrate(duration);
                 }
             }
             
@@ -797,6 +804,22 @@
                     if (e.key === 'Escape' && this.activePanel) {
                         this.closePanel();
                     }
+                });
+                
+                // PWA install prompt
+                window.addEventListener('beforeinstallprompt', (e) => {
+                    // Prevent Chrome 67 and earlier from automatically showing the prompt
+                    e.preventDefault();
+                    // Stash the event so it can be triggered later
+                    this.deferredPrompt = e;
+                    // Show install button if not already installed
+                    this.checkAndShowInstallOption();
+                });
+                
+                // Listen for successful install
+                window.addEventListener('appinstalled', () => {
+                    // Hide install prompt
+                    this.deferredPrompt = null;
                 });
             }
             
@@ -981,6 +1004,40 @@
                 this.elements.backdrop.classList.remove('active');
             }
             
+            // ===== PWA INSTALLATION =====
+            checkAndShowInstallOption() {
+                // Check if PWA can be installed and update preferences panel if it's open
+                if (this.deferredPrompt && this.activePanel === 'preferences') {
+                    this.renderPreferencesContent();
+                }
+            }
+            
+            showInstallPrompt() {
+                if (!this.deferredPrompt) {
+                    return;
+                }
+                
+                // Show the install prompt
+                this.deferredPrompt.prompt();
+                
+                // Wait for the user to respond to the prompt
+                this.deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        console.log('User accepted the install prompt');
+                    } else {
+                        console.log('User dismissed the install prompt');
+                    }
+                    
+                    // Clear the deferred prompt
+                    this.deferredPrompt = null;
+                    
+                    // Update the preferences panel if it's open
+                    if (this.activePanel === 'preferences') {
+                        this.renderPreferencesContent();
+                    }
+                });
+            }
+            
             // ===== CONTENT RENDERING =====
             renderPreferencesContent() {
                 this.elements.preferencesContent.innerHTML = `
@@ -1038,6 +1095,19 @@
                             </div>
                         </div>
                     </div>
+                    
+                    ${this.deferredPrompt ? `
+                        <div class="form-group">
+                            <label class="form-label">Install App</label>
+                            <button class="btn btn-primary" onclick="app.showInstallPrompt()" style="width: 100%;">
+                                <span class="material-icons" style="vertical-align: middle; margin-right: 0.5rem;">download</span>
+                                Install StackMap
+                            </button>
+                            <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; margin-bottom: 0;">
+                                Install StackMap as an app for easier access and offline use.
+                            </p>
+                        </div>
+                    ` : ''}
                 `;
                 this.setupColorPicker();
             }
@@ -1517,7 +1587,7 @@
             
             renderEditContent() {
                 if (!this.isEditMode) {
-                    // Show validation
+                    // Show question validation
                     this.elements.editContent.innerHTML = this.getValidationHTML();
                     this.setupValidation();
                 } else {
@@ -1541,6 +1611,18 @@
                     <button class="btn btn-primary" id="validationSubmit" style="width: 100%;">
                         <span class="material-icons">check</span> Submit
                     </button>
+                    
+                    <!-- Info Links Available Without Verification -->
+                    <div class="info-links" style="margin-top: 30px;">
+                        <button class="btn-link" onclick="app.showPrivacyPolicy()">
+                            <span class="material-icons">privacy_tip</span>
+                            <span>Privacy Policy</span>
+                        </button>
+                        <button class="btn-link" onclick="app.showSupportUs()">
+                            <span class="material-icons">favorite</span>
+                            <span>Support Us</span>
+                        </button>
+                    </div>
                 `;
             }
             
@@ -1582,18 +1664,6 @@
                         </button>
                     </div>
                     
-                    <!-- Info Links -->
-                    <div class="info-links">
-                        <button class="btn-link" onclick="app.showPrivacyPolicy()">
-                            <span class="material-icons">privacy_tip</span>
-                            <span>Privacy Policy</span>
-                        </button>
-                        <button class="btn-link" onclick="app.showSupport()">
-                            <span class="material-icons">help</span>
-                            <span>Support</span>
-                        </button>
-                    </div>
-                    
                     <!-- Day Toggle -->
                     <div class="day-toggle-section">
                         <label class="day-toggle-label">Day Management</label>
@@ -1607,6 +1677,18 @@
                                 <span>Today + Tomorrow</span>
                             </button>
                         </div>
+                    </div>
+                    
+                    <!-- Info Links -->
+                    <div class="info-links">
+                        <button class="btn-link" onclick="app.showPrivacyPolicy()">
+                            <span class="material-icons">privacy_tip</span>
+                            <span>Privacy Policy</span>
+                        </button>
+                        <button class="btn-link" onclick="app.showSupportUs()">
+                            <span class="material-icons">favorite</span>
+                            <span>Support Us</span>
+                        </button>
                     </div>
                 `;
             }
@@ -1716,7 +1798,7 @@
                         files: [file]
                     }).catch(err => {
                         // Fallback to download if share fails
-                        console.log('Share failed, falling back to download:', err);
+                        // console.log('Share failed, falling back to download:', err);
                         this.downloadBackup(dataStr, filename);
                     });
                 } else {
@@ -1778,7 +1860,7 @@
                 const now = Date.now();
                 const lastClick = this.lastClickTimes.get('complete-day') || 0;
                 if (now - lastClick < 1000) { // 1 second cooldown for Complete Day
-                    console.log('Click rate limited for Complete Day');
+                    // console.log('Click rate limited for Complete Day');
                     return; // Too soon, ignore this click
                 }
                 this.lastClickTimes.set('complete-day', now);
@@ -2368,7 +2450,7 @@
                 const body = document.getElementById('activityLibraryBody');
                 const templates = this.data.templates || [];
                 
-                console.log('Templates in data:', templates); // Debug log
+                // console.log('Templates in data:', templates); // Debug log
                 
                 if (templates.length === 0) {
                     body.innerHTML = `
@@ -2447,12 +2529,12 @@
                 if (activities.length === 0) return;
                 
                 const allCompleted = activities.every(a => a.completed);
-                console.log('Checking all activities completed:', allCompleted, 'Total:', activities.length, 'Completed:', activities.filter(a => a.completed).length);
+                // console.log('Checking all activities completed:', allCompleted, 'Total:', activities.length, 'Completed:', activities.filter(a => a.completed).length);
                 if (allCompleted && this.celebrationManager) {
                     // Trigger routine celebration
                     const container = document.querySelector('.main-content') || document.body;
                     const user = this.getCurrentUser();
-                    console.log('Triggering routine celebration, preference:', user.settings?.routineCelebration);
+                    // console.log('Triggering routine celebration, preference:', user.settings?.routineCelebration);
                     this.celebrationManager.celebrateRoutine(container, user.id);
                 }
             }
@@ -2682,7 +2764,7 @@
                         background: rgba(255, 255, 255, 0.95);
                         border-radius: 12px;
                         padding: 24px;
-                        max-width: 600px;
+                        max-width: 800px;
                         max-height: 80vh;
                         overflow-y: auto;
                         color: #333;
@@ -2696,30 +2778,61 @@
                             color: #666;
                         ">×</button>
                         
-                        <h2 style="color: var(--primary-color); margin: 0 0 16px 0;">Privacy Policy</h2>
-                        <p style="color: #666; font-style: italic; margin-bottom: 20px;">Last updated: January 2025</p>
+                        <h1 style="color: var(--primary-color); margin: 0 0 10px 0; font-size: 2rem;">Privacy Policy</h1>
+                        <p style="color: #666; font-style: italic; margin-bottom: 30px;">Last updated: June 18, 2025</p>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Overview</h3>
-                        <p>StackMap is designed with privacy as a core principle. We believe families deserve tools that respect their privacy and give them control over their data.</p>
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Overview</h2>
+                        <p>StackMap is designed with privacy as a core principle. We believe families, especially those with special needs children, deserve tools that respect their privacy and give them control over their data.</p>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Data Collection</h3>
-                        <p><strong>We collect NO personal data.</strong> StackMap works entirely offline on your device.</p>
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Data Collection</h2>
+                        <p><strong>We collect NO personal data by default.</strong> StackMap works entirely offline on your device.</p>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Data Storage</h3>
-                        <ul style="line-height: 1.6;">
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Data Storage</h2>
+                        <ul style="line-height: 1.8;">
                             <li>All routine data is stored locally on your device</li>
                             <li>No data is sent to our servers</li>
                             <li>Your routines, progress, and settings stay on your device</li>
                         </ul>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Data Sharing</h3>
-                        <p>You can export and share your data using your device's native sharing features. This data goes directly where you send it - we never see it.</p>
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Children's Privacy</h2>
+                        <p>StackMap is designed for use by children with adult supervision:</p>
+                        <ul style="line-height: 1.8;">
+                            <li>We don't collect any information from children</li>
+                            <li>No accounts or sign-ups required</li>
+                            <li>No social features or communication between users</li>
+                            <li>No behavioral tracking or analytics</li>
+                        </ul>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Third-Party Services</h3>
-                        <p>StackMap uses Google Fonts for typography. No personal data is shared with Google.</p>
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Third-Party Services</h2>
+                        <p>StackMap uses minimal third-party services:</p>
+                        <ul style="line-height: 1.8;">
+                            <li><strong>No analytics</strong> - We don't track usage</li>
+                            <li><strong>No advertising</strong> - We don't show ads</li>
+                            <li><strong>No external APIs</strong> - Everything runs locally</li>
+                        </ul>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Children's Privacy</h3>
-                        <p>StackMap is designed to be safe for children. Since we don't collect any data, there's no risk to children's privacy.</p>
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Your Rights</h2>
+                        <p>You have complete control:</p>
+                        <ul style="line-height: 1.8;">
+                            <li>Export your data anytime</li>
+                            <li>Delete your data anytime</li>
+                            <li>Use the app without any account</li>
+                            <li>Sync is always optional</li>
+                        </ul>
+                        
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Future Changes</h2>
+                        <p>If we ever need to update this policy, we will:</p>
+                        <ul style="line-height: 1.8;">
+                            <li>Notify you in the app</li>
+                            <li>Give you time to review changes</li>
+                            <li>Allow you to export your data if you disagree</li>
+                        </ul>
+                        
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Contact</h2>
+                        <p>Questions about privacy? Email: <a href="mailto:privacy@stackmap.app" style="color: var(--primary-color);">privacy@stackmap.app</a></p>
+                        
+                        <h2 style="color: var(--primary-color); margin: 30px 0 15px 0;">Open Source</h2>
+                        <p>StackMap's code is open source. You can verify our privacy practices at: <a href="https://github.com/ajstack22/StackMap" target="_blank" style="color: var(--primary-color);">github.com/ajstack22/StackMap</a></p>
                         
                         <button onclick="this.closest('.info-modal').remove()" style="
                             background: var(--primary-color);
@@ -2730,7 +2843,7 @@
                             font-size: 16px;
                             cursor: pointer;
                             font-weight: 500;
-                            margin-top: 20px;
+                            margin-top: 30px;
                             width: 100%;
                         ">Close</button>
                     </div>
@@ -2746,7 +2859,7 @@
                 });
             }
             
-            showSupport() {
+            showSupportUs() {
                 // Create a modal for support
                 const modal = document.createElement('div');
                 modal.className = 'info-modal';
@@ -2784,31 +2897,114 @@
                             color: #666;
                         ">×</button>
                         
-                        <h2 style="color: var(--primary-color); margin: 0 0 16px 0;">Support StackMap</h2>
+                        <h1 style="color: var(--primary-color); margin: 0 0 16px 0; font-size: 2rem;">Support Us</h1>
                         
-                        <p style="margin-bottom: 20px;">StackMap is a free, open-source tool designed to help families manage daily routines. If you find it helpful, here are ways you can support the project:</p>
+                        <p style="margin-bottom: 20px;">StackMap is a free tool designed to help families manage daily routines. If you find it helpful, here are ways you can support the project:</p>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Get Help</h3>
-                        <p>Having trouble? Try these resources:</p>
-                        <ul style="line-height: 1.8;">
-                            <li><strong>Quick Reset:</strong> If things aren't working, try refreshing the page</li>
-                            <li><strong>Emergency Reset:</strong> Open browser console and type: <code style="background: #f0f0f0; padding: 2px 6px; border-radius: 3px;">emergencyCacheClear()</code></li>
-                            <li><strong>Report Issues:</strong> Email adamcstack@gmail.com</li>
-                        </ul>
+                        <h2 style="color: var(--primary-color); margin: 20px 0 10px 0;">Contact</h2>
+                        <p>Need help or have questions? Email us at: <a href="mailto:support@stackmap.app" style="color: var(--primary-color);">support@stackmap.app</a></p>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Share StackMap</h3>
-                        <p>The best way to support us is to share StackMap with others who might benefit:</p>
+                        <h2 style="color: var(--primary-color); margin: 20px 0 10px 0;">Ways to Support</h2>
+                        <p>If you'd like to support StackMap's mission, here are some ways you can help:</p>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 15px; margin: 20px 0;">
+                            <a href="https://paypal.me/stackadamj" target="_blank" style="
+                                display: flex;
+                                align-items: center;
+                                gap: 15px;
+                                padding: 15px;
+                                background: white;
+                                border: 2px solid #e0e0e0;
+                                border-radius: 8px;
+                                text-decoration: none;
+                                color: #333;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.borderColor='var(--primary-color)'" onmouseout="this.style.borderColor='#e0e0e0'">
+                                <div style="
+                                    width: 40px;
+                                    height: 40px;
+                                    background: var(--primary-color);
+                                    color: white;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 20px;
+                                ">💳</div>
+                                <div>
+                                    <h3 style="margin: 0 0 5px 0; color: var(--primary-color);">PayPal</h3>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #666;">Quick and secure contributions</p>
+                                </div>
+                            </a>
+                            
+                            <a href="https://www.venmo.com/u/stackadamj" target="_blank" style="
+                                display: flex;
+                                align-items: center;
+                                gap: 15px;
+                                padding: 15px;
+                                background: white;
+                                border: 2px solid #e0e0e0;
+                                border-radius: 8px;
+                                text-decoration: none;
+                                color: #333;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.borderColor='var(--primary-color)'" onmouseout="this.style.borderColor='#e0e0e0'">
+                                <div style="
+                                    width: 40px;
+                                    height: 40px;
+                                    background: var(--primary-color);
+                                    color: white;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 20px;
+                                ">📱</div>
+                                <div>
+                                    <h3 style="margin: 0 0 5px 0; color: var(--primary-color);">Venmo</h3>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #666;">Easy mobile contributions</p>
+                                </div>
+                            </a>
+                            
+                            <a href="https://patreon.com/StackMap" target="_blank" style="
+                                display: flex;
+                                align-items: center;
+                                gap: 15px;
+                                padding: 15px;
+                                background: white;
+                                border: 2px solid #e0e0e0;
+                                border-radius: 8px;
+                                text-decoration: none;
+                                color: #333;
+                                transition: all 0.3s ease;
+                            " onmouseover="this.style.borderColor='var(--primary-color)'" onmouseout="this.style.borderColor='#e0e0e0'">
+                                <div style="
+                                    width: 40px;
+                                    height: 40px;
+                                    background: var(--primary-color);
+                                    color: white;
+                                    border-radius: 50%;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    font-size: 20px;
+                                ">🎁</div>
+                                <div>
+                                    <h3 style="margin: 0 0 5px 0; color: var(--primary-color);">Patreon</h3>
+                                    <p style="margin: 0; font-size: 0.9rem; color: #666;">Join our community of supporters</p>
+                                </div>
+                            </a>
+                        </div>
+                        
+                        <h2 style="color: var(--primary-color); margin: 20px 0 10px 0;">Other Ways to Help</h2>
                         <ul style="line-height: 1.8;">
                             <li>Tell other families about StackMap</li>
                             <li>Share in support groups and forums</li>
                             <li>Leave a review if you downloaded from an app store</li>
+                            <li>Provide feedback to help us improve</li>
                         </ul>
                         
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">Contribute</h3>
-                        <p>StackMap is open source! Developers can contribute on GitHub.</p>
-                        
-                        <h3 style="color: var(--primary-color); margin: 20px 0 10px 0;">About the Creator</h3>
-                        <p>StackMap was created by a parent who needed a better way to manage family routines. It's built with love for the special needs community.</p>
+                        <p style="margin-top: 20px;">Every contribution helps us continue our mission of supporting families with special needs children. Thank you for being part of the StackMap community!</p>
                         
                         <button onclick="this.closest('.info-modal').remove()" style="
                             background: var(--primary-color);
@@ -3139,7 +3335,7 @@
                             try {
                                 const data = JSON.parse(localStorage.getItem(key));
                                 if (data && data.version === "1.0" && data.users && data.users.profiles) {
-                                    console.log('Found old format data, migrating...');
+                                    // console.log('Found old format data, migrating...');
                                     
                                     // Backup the old data first
                                     localStorage.setItem('stackmap_backup_pre_migration', JSON.stringify(data));
@@ -3153,7 +3349,7 @@
                                     // Clean up old data to prevent confusion
                                     localStorage.removeItem(key);
                                     
-                                    console.log('Migration completed successfully');
+                                    // console.log('Migration completed successfully');
                                     
                                     // Show a brief notification
                                     this.showMigrationNotification();
@@ -3178,10 +3374,10 @@
                                 this.data.templates = [];
                             }
                             
-                            // Ensure we have valid data structure
-                            if (!this.data.users || Object.keys(this.data.users).length === 0) {
-                                this.createDefaultUser();
-                            }
+                            // Don't create default user - let setup wizard handle it
+                            // if (!this.data.users || Object.keys(this.data.users).length === 0) {
+                            //     this.createDefaultUser();
+                            // }
                         } else {
                             // Try v2
                             const savedV2 = localStorage.getItem('stackmap_data_v2');
@@ -3193,8 +3389,8 @@
                                 if (legacyActivities) {
                                     this.migrateFromLegacy({ activities: JSON.parse(legacyActivities) });
                                 } else {
-                                    // First time - create default user
-                                    this.createDefaultUser();
+                                    // First time - don't create default user, let setup wizard handle it
+                                    // this.createDefaultUser();
                                 }
                             }
                         }
@@ -3209,8 +3405,8 @@
                             if (legacyActivities) {
                                 this.migrateFromLegacy({ activities: JSON.parse(legacyActivities) });
                             } else {
-                                // First time - create default user
-                                this.createDefaultUser();
+                                // First time - don't create default user, let setup wizard handle it
+                                // this.createDefaultUser();
                             }
                         }
                     }
@@ -3222,10 +3418,10 @@
                 } catch (error) {
                     console.error('Error loading data:', error);
                     
-                    // Only create default user if we don't have any data at all
-                    if (!this.data.users || Object.keys(this.data.users).length === 0) {
-                        this.createDefaultUser();
-                    }
+                    // Don't create default user - let setup wizard handle it
+                    // if (!this.data.users || Object.keys(this.data.users).length === 0) {
+                    //     this.createDefaultUser();
+                    // }
                 }
             }
             
@@ -3354,13 +3550,13 @@
             
             // Emergency cache clear function for support
             emergencyCacheClear() {
-                console.log('Starting emergency cache clear...');
+                // console.log('Starting emergency cache clear...');
                 
                 // Clear all caches
                 if ('caches' in window) {
                     caches.keys().then(names => {
                         names.forEach(name => {
-                            console.log('Deleting cache:', name);
+                            // console.log('Deleting cache:', name);
                             caches.delete(name);
                         });
                     });
@@ -3378,7 +3574,7 @@
                 const allKeys = Object.keys(localStorage);
                 allKeys.forEach(key => {
                     if (!preserveKeys.includes(key)) {
-                        console.log('Removing localStorage key:', key);
+                        // console.log('Removing localStorage key:', key);
                         localStorage.removeItem(key);
                     }
                 });

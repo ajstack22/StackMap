@@ -127,7 +127,7 @@ class CelebrationManager {
     
     // Helper method to create confetti
     createConfetti(colors, count) {
-        console.log('Creating confetti:', count, 'pieces');
+        // console.log('Creating confetti:', count, 'pieces');
         
         // Check if banner is at top or bottom
         const headerWrapper = document.querySelector('.header-wrapper');
@@ -403,20 +403,20 @@ class CelebrationManager {
         const currentUser = this.app.getCurrentUser();
         const preference = currentUser.settings?.taskCelebration || 'rainbow';
         
-        console.log('CelebrationManager.celebrateTask called with preference:', preference);
+        // console.log('CelebrationManager.celebrateTask called with preference:', preference);
         
         if (this.shouldSkipAnimation()) {
-            console.log('Skipping animation due to prefers-reduced-motion');
+            // console.log('Skipping animation due to prefers-reduced-motion');
             this.noAnimation(element);
             return;
         }
 
         const animation = this.animations.task[preference];
         if (animation && animation.func) {
-            console.log('Calling animation function:', preference);
+            // console.log('Calling animation function:', preference);
             animation.func.call(this, element);
         } else {
-            console.log('No animation found for preference:', preference);
+            // console.log('No animation found for preference:', preference);
         }
     }
 

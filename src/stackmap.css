@@ -30,6 +30,8 @@
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
         }
         
         html {
@@ -44,6 +46,16 @@
             min-height: 100vh;
             position: relative;
             overflow-x: hidden;
+            -webkit-user-select: none;
+            user-select: none;
+            touch-action: pan-y;
+            overscroll-behavior-y: contain; /* Prevent pull-to-refresh on Chrome */
+        }
+        
+        /* Allow text selection in specific areas */
+        input, textarea, .activity-text, .activity-description {
+            -webkit-user-select: text;
+            user-select: text;
         }
         
         /* ===== STACKMAP HEADER ===== */
@@ -147,7 +159,7 @@
         /* Exit Edit Mode button in header */
         .header-exit-edit-mode {
             position: absolute;
-            bottom: 0;
+            bottom: -40px; /* Position below header to avoid subtitle overlap */
             left: 0;
             right: 0;
             background: rgba(255, 82, 82, 0.9);
@@ -163,6 +175,8 @@
             gap: 0.5rem;
             transition: all 0.2s ease;
             z-index: 1;
+            height: 40px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
         }
         
         .header-exit-edit-mode:hover {
@@ -176,17 +190,22 @@
         /* When banner is at bottom, exit button goes to top */
         .banner-bottom .header-exit-edit-mode {
             bottom: auto;
-            top: 0;
+            top: -40px; /* Position above header to avoid title overlap */
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.2);
         }
         
         /* Adjust header height when exit button is visible */
         body.edit-mode .header-wrapper {
-            height: 140px; /* 110px + 30px for button */
+            height: 110px; /* Keep original height */
+            overflow: visible; /* Allow button to extend outside */
         }
         
         /* ===== MAIN CONTENT AREA ===== */
         .main-content {
             padding: 130px 20px 20px; /* Account for fixed header */
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
             width: 100%;
             margin: 0 auto;
             min-height: calc(100vh - 130px);
@@ -194,12 +213,17 @@
         
         /* Adjust padding when in edit mode */
         body.edit-mode .main-content {
-            padding-top: 160px; /* 140px header + 20px padding */
+            padding-top: 170px; /* 110px header + 40px button + 20px padding */
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
+            padding-bottom: max(20px, env(safe-area-inset-bottom));
         }
         
         body.edit-mode.banner-bottom .main-content {
             padding-top: 20px;
-            padding-bottom: 160px; /* 140px header + 20px padding */
+            padding-bottom: max(170px, calc(150px + env(safe-area-inset-bottom))); /* 110px header + 40px button + safe area */
+            padding-left: max(20px, env(safe-area-inset-left));
+            padding-right: max(20px, env(safe-area-inset-right));
         }
         
         /* ===== ACTIVITY CARDS - AUTHENTIC STACKMAP DESIGN ===== */
@@ -675,17 +699,17 @@
         /* ===== FLOATING ACTION BUTTONS ===== */
         .fab-container {
             position: fixed;
-            bottom: 20px; /* Default position */
+            bottom: max(20px, env(safe-area-inset-bottom)); /* Default position with safe area */
             z-index: 1002; /* Above header */
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         
         .fab-container.left {
-            left: 20px;
+            left: max(20px, env(safe-area-inset-left));
         }
         
         .fab-container.right {
-            right: 20px;
+            right: max(20px, env(safe-area-inset-right));
         }
         
         .fab {
@@ -882,11 +906,11 @@
         /* ===== MOBILE RESPONSIVENESS ===== */
         @media (max-width: 768px) {
             .fab-container.left {
-                left: 15px;
+                left: max(15px, env(safe-area-inset-left));
             }
             
             .fab-container.right {
-                right: 15px;
+                right: max(15px, env(safe-area-inset-right));
             }
             
             .side-panel {
@@ -895,6 +919,9 @@
             
             .main-content {
                 padding: 60px 15px 20px;
+                padding-left: max(15px, env(safe-area-inset-left));
+                padding-right: max(15px, env(safe-area-inset-right));
+                padding-bottom: max(20px, env(safe-area-inset-bottom));
             }
             
             /* Adjust header padding for smaller screens */
@@ -1066,12 +1093,17 @@
         }
         
         .validation-error {
-            color: white;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
-            background: rgba(255, 82, 82, 0.3);
-            padding: 0.5rem;
+            color: #ffffff;
+            font-size: 0.95rem;
+            margin-top: 0.75rem;
+            background: rgba(220, 53, 69, 0.85);
+            padding: 0.75rem 1rem;
             border-radius: var(--border-radius-small);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            line-height: 1.4;
         }
         
         .validation-error.hidden {
@@ -1777,9 +1809,17 @@
         }
         
         .validation-error {
-            color: #ff6b6b;
-            font-size: 0.9rem;
-            margin-top: 0.5rem;
+            color: #ffffff;
+            font-size: 0.95rem;
+            margin-top: 0.75rem;
+            background: rgba(220, 53, 69, 0.85);
+            padding: 0.75rem 1rem;
+            border-radius: var(--border-radius-small);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            font-weight: 500;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            line-height: 1.4;
         }
         
         /* ===== DRAG & DROP STYLES ===== */
@@ -2015,6 +2055,40 @@
             height: 48px;
         }
         
+        /* Setup title with logo */
+        .setup-title {
+            text-align: center;
+            font-size: 2rem;
+            line-height: 1.3;
+        }
+        
+        .logo-text-wrapper {
+            white-space: nowrap;
+            display: inline-block;
+        }
+        
+        @media (max-width: 768px) {
+            .setup-title {
+                font-size: 1.5rem;
+            }
+            
+            .setup-logo {
+                width: 24px;
+                height: 24px;
+                top: -2px;
+            }
+        }
+        
+        .setup-logo {
+            width: 30px;
+            height: 30px;
+            display: inline-block;
+            vertical-align: middle;
+            margin: 0 2.5px 0 0;
+            position: relative;
+            top: -3px;
+        }
+        
         .setup-wizard p {
             color: #666;
             font-size: 18px;
@@ -2082,6 +2156,91 @@
             background: #e8eaf6;
         }
         
+        /* ===== COMPACT EMOJI GRID ===== */
+        .emoji-grid-compact {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr); /* 6 columns on desktop */
+            gap: 8px;
+            max-height: 300px; /* Limit overall height */
+            overflow-y: auto;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: var(--border-radius-standard);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        /* Mobile: 4 columns */
+        @media (max-width: 768px) {
+            .emoji-grid-compact {
+                grid-template-columns: repeat(4, 1fr);
+                max-height: 400px; /* Slightly taller on mobile for better scrolling */
+                gap: 6px;
+                padding: 10px;
+            }
+        }
+        
+        /* Update emoji-option for better sizing */
+        .emoji-grid-compact .emoji-option {
+            width: 60px;
+            height: 60px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 32px;
+            background: rgba(255, 255, 255, 0.95);
+            border: 2px solid transparent;
+            border-radius: var(--border-radius-small);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            /* Good tap target */
+            min-width: 44px;
+            min-height: 44px;
+        }
+        
+        /* Mobile sizing */
+        @media (max-width: 768px) {
+            .emoji-grid-compact .emoji-option {
+                width: 50px;
+                height: 50px;
+                font-size: 28px;
+            }
+        }
+        
+        .emoji-grid-compact .emoji-option:hover {
+            transform: scale(1.1);
+            background: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            z-index: 1;
+        }
+        
+        .emoji-grid-compact .emoji-option.selected {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-dark);
+            transform: scale(1.05);
+        }
+        
+        /* Custom scrollbar for emoji grid */
+        .emoji-grid-compact::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .emoji-grid-compact::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+        }
+        
+        .emoji-grid-compact::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 4px;
+        }
+        
+        .emoji-grid-compact::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
         .setup-buttons {
             display: flex;
             gap: 15px;
@@ -2140,6 +2299,15 @@
             transform: scale(1.3);
         }
         
+        .setup-hint {
+            color: #999;
+            font-size: 14px;
+            margin-top: 10px;
+            text-align: center;
+            font-style: italic;
+        }
+        
+
         /* ===== CELEBRATION ANIMATIONS ===== */
         @keyframes confetti-fall {
             0% {

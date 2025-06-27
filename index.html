@@ -5,11 +5,19 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="StackMap">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="msapplication-tap-highlight" content="no">
     <title>StackMap</title>
     
     <!-- PWA Meta -->
     <meta name="theme-color" content="#667eea">
     <link rel="manifest" href="manifest.json">
+    
+    <!-- iOS Splash Screens -->
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="apple-touch-startup-image" href="icon-512.png">
     
     <!-- Material Icons -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
@@ -162,7 +170,7 @@
     </div>
 
     <!-- Capacitor Core JS -->
-    <script src="https://unpkg.com/@capacitor/core@6.0.0/dist/index.js"></script>
+    <!-- Capacitor is loaded via the mobile app, not needed in web version -->
     
     <script src="src/CelebrationManager.js?v=2.0.0"></script>
     <script src="src/stackmap.js?v=2.0.0"></script>

@@ -10,61 +10,14 @@ const IMAGE_CACHE = 'stackmap-images';
 
 // Core files that should always be cached
 const CORE_ASSETS = [
-  '/',
-  '/index.html',
-  '/offline.html',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png'
-];
-
-// Additional assets to cache
-const STATIC_ASSETS = [
-  '/app/StackMapApp.js',
-  '/components.js',
-  '/state.js',
-  '/renderer.js',
-  '/drive-sync.js',
-  '/env-loader.js',
-  '/data/default-activities.js',
-  '/data/emoji-list.js',
-  '/data/emoji-names.js',
-  '/js/HybridPanelManager.js',
-  '/js/CelebrationManager.js',
-  '/components/DraggableDrawer.js',
-  '/components/ModernDaySelector.js',
-  '/components/ModernUserSelector.js',
-  '/config/constants.js',
-  '/config/index.js',
-  '/config/themes.js',
-  '/utils/security.js',
-  // All CSS modules
-  '/styles/index.css',
-  '/styles/animations.css',
-  '/styles/base.css',
-  '/styles/buttons.css',
-  '/styles/cards.css',
-  '/styles/celebrations.css',
-  // data-panel CSS removed - functionality in HybridPanelManager
-  '/styles/draggable-drawer.css',
-  '/styles/fab.css',
-  '/styles/forms.css',
-  '/styles/hybrid-panels.css',
-  '/styles/layout.css',
-  '/styles/modals.css',
-  '/styles/responsive.css',
-  '/styles/selectors.css',
-  '/styles/splash-screen.css',
-  '/styles/sync-modal.css',
-  '/styles/utilities.css',
-  '/styles/variables.css',
-  // All icons
-  '/icon-72.png',
-  '/icon-96.png',
-  '/icon-128.png',
-  '/icon-144.png',
-  '/icon-152.png',
-  '/icon-384.png'
+  './',
+  './index.html',
+  './manifest.json',
+  './src/stackmap.js',
+  './src/stackmap.css',
+  './src/CelebrationManager.js',
+  './icon-192.png',
+  './icon-512.png'
 ];
 
 // Install event - cache core assets
