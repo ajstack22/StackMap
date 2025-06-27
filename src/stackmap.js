@@ -2250,6 +2250,54 @@
                         { emoji: '📖', text: 'Bedtime Story', description: 'Read or listen to a story' },
                         { emoji: '🌙', text: 'Get Ready for Bed', description: 'Put on pajamas' },
                         { emoji: '😴', text: 'Lights Out', description: 'Time to sleep' }
+                    ],
+                    'Therapy & Support': [
+                        { emoji: '🏃', text: 'Physical Therapy (PT)', description: 'Exercises and movement therapy' },
+                        { emoji: '✋', text: 'Occupational Therapy (OT)', description: 'Fine motor and daily living skills' },
+                        { emoji: '🗣️', text: 'Speech Therapy', description: 'Communication and language practice' },
+                        { emoji: '🧘', text: 'Sensory Break', description: 'Time to regulate sensory needs' },
+                        { emoji: '🎨', text: 'Art Therapy', description: 'Creative expression time' },
+                        { emoji: '🎵', text: 'Music Therapy', description: 'Musical activities and listening' },
+                        { emoji: '🐴', text: 'Equine Therapy', description: 'Horse therapy session' },
+                        { emoji: '💆', text: 'Deep Pressure', description: 'Calming pressure input' },
+                        { emoji: '🏃‍♀️', text: 'Movement Break', description: 'Get the wiggles out' },
+                        { emoji: '🧩', text: 'Social Skills Practice', description: 'Practice social interactions' }
+                    ],
+                    'Sensory Activities': [
+                        { emoji: '🎧', text: 'Quiet Time', description: 'Noise-cancelling headphones time' },
+                        { emoji: '🕶️', text: 'Dim Lights', description: 'Reduce visual stimulation' },
+                        { emoji: '🧸', text: 'Weighted Blanket', description: 'Calming pressure input' },
+                        { emoji: '🏀', text: 'Therapy Ball', description: 'Bouncing or rolling exercises' },
+                        { emoji: '🎯', text: 'Heavy Work', description: 'Push, pull, or carry activities' },
+                        { emoji: '💨', text: 'Breathing Exercise', description: 'Deep breathing practice' },
+                        { emoji: '🛋️', text: 'Calm Corner', description: 'Quiet space to regulate' },
+                        { emoji: '🎪', text: 'Swing Time', description: 'Vestibular input on swing' },
+                        { emoji: '🖐️', text: 'Fidget Time', description: 'Use fidget tools' },
+                        { emoji: '🌊', text: 'Water Play', description: 'Calming water activities' }
+                    ],
+                    'Medical & Health': [
+                        { emoji: '💊', text: 'Morning Meds', description: 'Take morning medications' },
+                        { emoji: '💉', text: 'Medical Procedure', description: 'Doctor visit or treatment' },
+                        { emoji: '🩺', text: 'Doctor Appointment', description: 'Healthcare visit' },
+                        { emoji: '🦷', text: 'Dentist Visit', description: 'Dental appointment' },
+                        { emoji: '👁️', text: 'Vision Therapy', description: 'Eye exercises and therapy' },
+                        { emoji: '📊', text: 'Track Symptoms', description: 'Record how you\'re feeling' },
+                        { emoji: '🩹', text: 'Wound Care', description: 'Clean and dress wounds' },
+                        { emoji: '🌡️', text: 'Check Temperature', description: 'Monitor body temperature' },
+                        { emoji: '💧', text: 'Stay Hydrated', description: 'Drink water regularly' },
+                        { emoji: '🍎', text: 'Healthy Snack', description: 'Nutritious food break' }
+                    ],
+                    'Communication': [
+                        { emoji: '📱', text: 'AAC Device Time', description: 'Practice with communication device' },
+                        { emoji: '🤟', text: 'Sign Language', description: 'Practice signing' },
+                        { emoji: '📇', text: 'PECS Cards', description: 'Use picture exchange cards' },
+                        { emoji: '👆', text: 'Choice Board', description: 'Make choices from board' },
+                        { emoji: '🎯', text: 'Eye Gaze Practice', description: 'Communication with eye gaze' },
+                        { emoji: '📝', text: 'Visual Schedule', description: 'Review daily visual schedule' },
+                        { emoji: '🔤', text: 'Letter Board', description: 'Spell on letter board' },
+                        { emoji: '👍', text: 'Yes/No Questions', description: 'Practice responding' },
+                        { emoji: '🖼️', text: 'Social Story', description: 'Read social story together' },
+                        { emoji: '💬', text: 'Conversation Practice', description: 'Practice back-and-forth talking' }
                     ]
                 };
             }
