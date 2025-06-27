@@ -519,7 +519,12 @@
                 if (activity) {
                     activity.pinned = !activity.pinned;
                     this.saveData();
-                    this.render();
+                    
+                    // Just update the button visual state without full re-render
+                    const button = document.querySelector(`[data-activity-id="${activityId}"] .btn--keep`);
+                    if (button) {
+                        button.classList.toggle('pinned', activity.pinned);
+                    }
                 }
             }
             
