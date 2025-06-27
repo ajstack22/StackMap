@@ -25,32 +25,16 @@ jobs:
         
         # Copy only the essential app files
         cp -r index.html deploy-package/
-        cp -r offline.html deploy-package/
         cp -r manifest.json deploy-package/
         cp -r sw.js deploy-package/
-        cp -r state.js deploy-package/
-        cp -r components.js deploy-package/
-        cp -r renderer.js deploy-package/
-        cp -r env-loader.js deploy-package/
-        cp -r drive-sync.js deploy-package/
-        cp -r browserconfig.xml deploy-package/
         cp -r .htaccess deploy-package/
         cp -r *.png deploy-package/ 2>/dev/null || true
         
-        # Copy directories we need
-        cp -r app deploy-package/
-        cp -r components deploy-package/
-        cp -r config deploy-package/
-        cp -r data deploy-package/
-        cp -r js deploy-package/
-        cp -r styles deploy-package/
-        cp -r utils deploy-package/
-        cp -r timer deploy-package/
-        
-        # Copy specific files only
-        cp privacy.html deploy-package/
-        cp terms.html deploy-package/
-        cp support.html deploy-package/
+        # Copy src directory (new architecture)
+        mkdir -p deploy-package/src
+        cp -r src/stackmap.js deploy-package/src/
+        cp -r src/stackmap.css deploy-package/src/
+        cp -r src/CelebrationManager.js deploy-package/src/
         
         echo "📊 Deployment package created:"
         echo "Files: $(find deploy-package -type f | wc -l)"
@@ -64,9 +48,18 @@ jobs:
         password: ${{ secrets.FTP_PASSWORD }}
         server-dir: /public_html/
         local-dir: ./deploy-package/
+        dangerous-clean-slate: true
         exclude: |
           **/qual/**
           **/.well-known/**
+          **/.htaccess
+          **/cgi-bin/**
+          **/.cpanel/**
+          **/tmp/**
+          **/etc/**
+          **/mail/**
+          **/public_ftp/**
+          **/ssl/**
           
     - name: Success
       run: |

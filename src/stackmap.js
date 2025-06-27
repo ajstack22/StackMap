@@ -3138,12 +3138,6 @@
                              data-activity-id="${activity.id}"
                              ${!isEditMode ? `onclick="app.toggleActivityComplete('${activity.id}')"`  : ''}>
                             
-                            ${activity.pinned && !isEditMode ? `
-                                <div class="pin-indicator">
-                                    <span class="material-icons">push_pin</span>
-                                </div>
-                            ` : ''}
-                            
                             ${displayMode === 'numbers' ? `
                                 <div class="activity-number-badge" ${isEditMode ? `onclick="app.promptReorderActivity('${activity.id}', ${index + 1}, event)"` : ''}>
                                     ${index + 1}
