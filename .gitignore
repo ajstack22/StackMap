@@ -48,6 +48,7 @@ Desktop.ini
 
 # Local development files
 dev-tools.js
+# Local overrides - DO NOT COMMIT
 # Don't ignore UAT tests - they're part of the codebase
 # uat-*.js
 # test-*.js
