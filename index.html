@@ -191,9 +191,12 @@
                 // Listen for updates
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
+                    const hasExistingWorker = registration.active !== null;
+                    
                     newWorker.addEventListener('statechange', () => {
-                        if (newWorker.state === 'activated') {
-                            // Show update notification
+                        if (newWorker.state === 'activated' && hasExistingWorker) {
+                            // Only show update notification if there was a previous worker
+                            // This prevents showing the message on first visit
                             if (confirm('StackMap has been updated! Reload to see the latest version?')) {
                                 window.location.reload();
                             }
