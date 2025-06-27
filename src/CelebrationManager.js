@@ -19,26 +19,26 @@ class CelebrationManager {
     initializeAnimations() {
         return {
             task: {
-                'none': { name: '❌ No Celebration', func: this.noAnimation.bind(this) },
-                'random': { name: '🎲 Random', func: this.randomTaskCelebration.bind(this) },
-                'rainbow': { name: '🌈 Rainbow Confetti', func: this.rainbowConfetti.bind(this) },
-                'ocean': { name: '🌊 Ocean Blue Confetti', func: this.oceanConfetti.bind(this) },
-                'sunset': { name: '🌅 Sunset Orange Confetti', func: this.sunsetConfetti.bind(this) },
-                'spring': { name: '🌸 Spring Pastel Confetti', func: this.springConfetti.bind(this) },
-                'gold': { name: '⭐ Gold Star Confetti', func: this.goldConfetti.bind(this) },
-                'heart': { name: '💖 Pink Heart Confetti', func: this.heartConfetti.bind(this) },
-                'cosmic': { name: '🌌 Cosmic Purple Confetti', func: this.cosmicConfetti.bind(this) }
+                'none': { name: 'None', func: this.noAnimation.bind(this) },
+                'random': { name: 'Random', func: this.randomTaskCelebration.bind(this) },
+                'rainbow': { name: 'Rainbow', func: this.rainbowConfetti.bind(this) },
+                'blue': { name: 'Blue', func: this.oceanConfetti.bind(this) },
+                'orange': { name: 'Orange', func: this.sunsetConfetti.bind(this) },
+                'pink': { name: 'Pink', func: this.heartConfetti.bind(this) },
+                'purple': { name: 'Purple', func: this.cosmicConfetti.bind(this) },
+                'gold': { name: 'Gold', func: this.goldConfetti.bind(this) },
+                'green': { name: 'Green', func: this.springConfetti.bind(this) }
             },
             routine: {
-                'none': { name: '❌ No Celebration', func: this.noAnimation.bind(this) },
-                'random': { name: '🎲 Random', func: this.randomRoutineCelebration.bind(this) },
-                'rainbow': { name: '🌈 Rainbow Fireworks', func: this.rainbowFireworks.bind(this) },
-                'ocean': { name: '🌊 Ocean Blue Fireworks', func: this.oceanFireworks.bind(this) },
-                'sunset': { name: '🌅 Sunset Orange Fireworks', func: this.sunsetFireworks.bind(this) },
-                'spring': { name: '🌸 Spring Pastel Fireworks', func: this.springFireworks.bind(this) },
-                'gold': { name: '⭐ Gold Star Fireworks', func: this.goldFireworks.bind(this) },
-                'cosmic': { name: '🌌 Cosmic Purple Fireworks', func: this.cosmicFireworks.bind(this) },
-                'ultimate': { name: '🎆 Ultimate Fireworks', func: this.ultimateFireworks.bind(this) }
+                'none': { name: 'None', func: this.noAnimation.bind(this) },
+                'random': { name: 'Random', func: this.randomRoutineCelebration.bind(this) },
+                'rainbow': { name: 'Rainbow', func: this.rainbowFireworks.bind(this) },
+                'blue': { name: 'Blue', func: this.oceanFireworks.bind(this) },
+                'orange': { name: 'Orange', func: this.sunsetFireworks.bind(this) },
+                'pink': { name: 'Pink', func: this.heartFireworks.bind(this) },
+                'purple': { name: 'Purple', func: this.cosmicFireworks.bind(this) },
+                'gold': { name: 'Gold', func: this.goldFireworks.bind(this) },
+                'green': { name: 'Green', func: this.springFireworks.bind(this) }
             }
         };
     }
@@ -127,13 +127,34 @@ class CelebrationManager {
     
     // Helper method to create confetti
     createConfetti(colors, count) {
+        console.log('Creating confetti:', count, 'pieces');
+        
+        // Check if banner is at top or bottom
+        const headerWrapper = document.querySelector('.header-wrapper');
+        const isBannerAtBottom = document.body.classList.contains('banner-bottom');
+        let startPosition = '-20px';
+        let zIndex = '9999';
+        
+        if (!isBannerAtBottom && headerWrapper) {
+            // Banner is at top, start confetti from below it (110px is header height)
+            startPosition = '110px';
+        } else if (isBannerAtBottom) {
+            // Banner is at bottom, confetti goes behind it (header z-index is 1001)
+            zIndex = '1000';
+        }
+        
         for (let i = 0; i < count; i++) {
             const confetti = document.createElement('div');
             confetti.className = 'confetti';
+            confetti.style.position = 'fixed';
             confetti.style.left = Math.random() * 100 + 'vw';
+            confetti.style.top = startPosition;
             confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
             confetti.style.width = (12 + Math.random() * 8) + 'px';
             confetti.style.height = confetti.style.width;
+            confetti.style.borderRadius = '50%';
+            confetti.style.zIndex = zIndex;
+            confetti.style.pointerEvents = 'none';
             confetti.style.animationDelay = Math.random() * 2 + 's';
             confetti.style.animationDuration = (Math.random() * 2 + 2) + 's';
             confetti.style.animation = `confetti-fall ${confetti.style.animationDuration} linear forwards`;
@@ -187,6 +208,13 @@ class CelebrationManager {
     cosmicFireworks(element) {
         const colors = ['#9b59b6', '#8e44ad', '#bf55ec', '#dda0dd', '#da70d6', '#ba55d3',
                        '#9370db', '#8b7dd8', '#7b68ee', '#6a5acd'];
+        this.createFireworks(colors, 15);
+    }
+    
+    // 💖 Pink Heart Fireworks
+    heartFireworks(element) {
+        const colors = ['#ff6b9d', '#ff1744', '#e91e63', '#ff9ff3', '#ffb6c1', '#ff69b4',
+                       '#ff1493', '#ff6eb4', '#ff82ab', '#ff69b4'];
         this.createFireworks(colors, 15);
     }
     
@@ -372,22 +400,28 @@ class CelebrationManager {
      * Trigger celebration based on user preference
      */
     celebrateTask(element, userId) {
-        const currentUser = this.app.appState.getCurrentUser();
+        const currentUser = this.app.getCurrentUser();
         const preference = currentUser.settings?.taskCelebration || 'rainbow';
         
+        console.log('CelebrationManager.celebrateTask called with preference:', preference);
+        
         if (this.shouldSkipAnimation()) {
+            console.log('Skipping animation due to prefers-reduced-motion');
             this.noAnimation(element);
             return;
         }
 
         const animation = this.animations.task[preference];
         if (animation && animation.func) {
+            console.log('Calling animation function:', preference);
             animation.func.call(this, element);
+        } else {
+            console.log('No animation found for preference:', preference);
         }
     }
 
     celebrateRoutine(containerElement, userId) {
-        const currentUser = this.app.appState.getCurrentUser();
+        const currentUser = this.app.getCurrentUser();
         const preference = currentUser.settings?.routineCelebration || 'rainbow';
         
         if (this.shouldSkipAnimation()) {

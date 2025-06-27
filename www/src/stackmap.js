@@ -501,50 +501,6 @@
                 } : { r: 0, g: 0, b: 0 };
             }
             
-            showMigrationNotification() {
-                // Create a friendly notification
-                const notification = document.createElement('div');
-                notification.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(255, 255, 255, 0.95);
-                    color: #333;
-                    padding: 24px 32px;
-                    border-radius: 16px;
-                    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-                    z-index: 10000;
-                    text-align: center;
-                    max-width: 90%;
-                    width: 400px;
-                `;
-                
-                notification.innerHTML = `
-                    <h3 style="margin: 0 0 12px 0; color: #667eea;">Welcome to the New StackMap!</h3>
-                    <p style="margin: 0 0 16px 0; line-height: 1.5;">Your data has been automatically updated to work with the new version.</p>
-                    <p style="margin: 0 0 20px 0; font-size: 14px; color: #666;">All your activities and settings have been preserved.</p>
-                    <button onclick="this.parentElement.remove()" style="
-                        background: #667eea;
-                        color: white;
-                        border: none;
-                        padding: 10px 24px;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        cursor: pointer;
-                    ">Got it!</button>
-                `;
-                
-                document.body.appendChild(notification);
-                
-                // Auto-remove after 10 seconds
-                setTimeout(() => {
-                    if (notification.parentElement) {
-                        notification.remove();
-                    }
-                }, 10000);
-            }
-            
             triggerHaptic(style = 'light') {
                 if (this.Haptics && this.ImpactStyle && typeof Capacitor !== 'undefined' && Capacitor.isNativePlatform()) {
                     let impactStyle;
@@ -2342,52 +2298,6 @@
                 this.render();
             }
             
-            showMigrationNotification() {
-                // Create a friendly modal to inform user about the migration
-                const modal = document.createElement('div');
-                modal.className = 'migration-modal';
-                modal.style.cssText = `
-                    position: fixed;
-                    top: 50%;
-                    left: 50%;
-                    transform: translate(-50%, -50%);
-                    background: rgba(255, 255, 255, 0.95);
-                    border-radius: 12px;
-                    padding: 24px;
-                    max-width: 400px;
-                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-                    z-index: 10000;
-                    text-align: center;
-                `;
-                
-                modal.innerHTML = `
-                    <h2 style="color: #333; margin: 0 0 16px 0;">Welcome Back! 🎉</h2>
-                    <p style="color: #666; margin: 0 0 20px 0; line-height: 1.5;">
-                        Your data has been automatically updated to work with the new StackMap. 
-                        All your activities, settings, and templates have been preserved.
-                    </p>
-                    <button onclick="this.parentElement.remove()" style="
-                        background: var(--primary-color);
-                        color: white;
-                        border: none;
-                        padding: 12px 24px;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        cursor: pointer;
-                        font-weight: 500;
-                    ">Got it!</button>
-                `;
-                
-                document.body.appendChild(modal);
-                
-                // Auto-remove after 10 seconds
-                setTimeout(() => {
-                    if (modal.parentElement) {
-                        modal.remove();
-                    }
-                }, 10000);
-            }
-            
             importData() {
                 const input = document.createElement('input');
                 input.type = 'file';
@@ -2662,63 +2572,6 @@
             // ===== DATA PERSISTENCE =====
             loadData() {
                 try {
-                    // First check if we've already migrated
-                    const migrationFlag = localStorage.getItem('stackmap_migration_completed');
-                    
-                    // Check for old format data (version 1.0) from the previous app
-                    if (!migrationFlag) {
-                        // Look for common localStorage keys from the old app
-                        const possibleKeys = [
-                            'stackMapData',
-                            'stackmap_data',
-                            'stackmap-data',
-                            'stackMapUserData',
-                            'stackmap'
-                        ];
-                        
-                        // Also check all keys that might contain old data
-                        const allKeys = Object.keys(localStorage);
-                        const oldDataKeys = allKeys.filter(key => 
-                            (key.toLowerCase().includes('stackmap') || possibleKeys.includes(key)) && 
-                            !key.includes('_v3') && 
-                            !key.includes('migration') &&
-                            !key.includes('theme_color') &&
-                            !key.includes('custom_title') &&
-                            !key.includes('header_position')
-                        );
-                        
-                        // Look for the old format data structure
-                        for (const key of oldDataKeys) {
-                            try {
-                                const data = JSON.parse(localStorage.getItem(key));
-                                if (data && data.version === "1.0" && data.users && data.users.profiles) {
-                                    console.log('Found old format data, migrating...');
-                                    
-                                    // Backup the old data first
-                                    localStorage.setItem('stackmap_backup_pre_migration', JSON.stringify(data));
-                                    
-                                    // Perform migration
-                                    this.convertAndImportOldFormat(data);
-                                    
-                                    // Set migration flag
-                                    localStorage.setItem('stackmap_migration_completed', 'true');
-                                    
-                                    // Clean up old data to prevent confusion
-                                    localStorage.removeItem(key);
-                                    
-                                    console.log('Migration completed successfully');
-                                    
-                                    // Show a brief notification
-                                    this.showMigrationNotification();
-                                    
-                                    return; // Exit after successful migration
-                                }
-                            } catch (e) {
-                                // Skip invalid data
-                            }
-                        }
-                    }
-                    
                     const saved = localStorage.getItem('stackmap_data_v3');
                     if (saved) {
                         const loadedData = JSON.parse(saved);
@@ -2904,54 +2757,6 @@
                     console.error('Error saving data:', error);
                 }
             }
-            
-            // Emergency cache clear function for support
-            emergencyCacheClear() {
-                console.log('Starting emergency cache clear...');
-                
-                // Clear all caches
-                if ('caches' in window) {
-                    caches.keys().then(names => {
-                        names.forEach(name => {
-                            console.log('Deleting cache:', name);
-                            caches.delete(name);
-                        });
-                    });
-                }
-                
-                // Preserve critical data
-                const preserveKeys = [
-                    'stackmap_data_v3', 
-                    'stackmap_backup_pre_migration', 
-                    'stackmap_migration_completed',
-                    'stackmap_custom_title'
-                ];
-                
-                // Clear non-critical localStorage
-                const allKeys = Object.keys(localStorage);
-                allKeys.forEach(key => {
-                    if (!preserveKeys.includes(key)) {
-                        console.log('Removing localStorage key:', key);
-                        localStorage.removeItem(key);
-                    }
-                });
-                
-                // Unregister service worker
-                if ('serviceWorker' in navigator) {
-                    navigator.serviceWorker.getRegistrations().then(registrations => {
-                        registrations.forEach(registration => {
-                            registration.unregister();
-                        });
-                    });
-                }
-                
-                alert('Cache cleared! The page will now reload with the latest version.');
-                
-                // Force hard reload
-                setTimeout(() => {
-                    window.location.reload(true);
-                }, 500);
-            }
         }
         
         // Initialize app when DOM is loaded
@@ -2959,11 +2764,7 @@
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', () => {
                 app = new StackMapApp();
-                // Make emergency cache clear available globally
-                window.emergencyCacheClear = () => app.emergencyCacheClear();
             });
         } else {
             app = new StackMapApp();
-            // Make emergency cache clear available globally
-            window.emergencyCacheClear = () => app.emergencyCacheClear();
         }

@@ -1,3 +1,47 @@
+/* ===== SYNC STATUS INDICATOR ===== */
+.sync-status {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: rgba(0, 0, 0, 0.8);
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    z-index: 1500;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 0.3s ease;
+    pointer-events: none;
+    max-width: 300px;
+}
+
+.sync-status.show {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+}
+
+.sync-status .sync-icon {
+    font-family: 'Material Icons';
+    font-size: 18px;
+}
+
+.sync-status.success {
+    background: rgba(40, 167, 69, 0.9);
+}
+
+.sync-status.error {
+    background: rgba(220, 53, 69, 0.9);
+}
+
+.sync-status.info {
+    background: rgba(0, 123, 255, 0.9);
+}
+
 /* ===== SYNC CONFLICT MODAL STYLES ===== */
 
 /* ===== SYNC QUEUE INDICATOR STYLES ===== */

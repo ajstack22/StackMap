@@ -17,7 +17,12 @@
     <!-- Comic Relief Font -->
     <link href="https://fonts.googleapis.com/css2?family=Comic+Relief:wght@400;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="src/stackmap.css">
+    <!-- Cache Control Meta Tags -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <link rel="stylesheet" href="src/stackmap.css?v=2.0.0">
 </head>
 <body>
     <!-- Header Wrapper -->
@@ -40,6 +45,11 @@
                 </div>
             </div>
         </header>
+        <!-- Exit Edit Mode Button -->
+        <button class="header-exit-edit-mode" id="headerExitEditMode" style="display: none;">
+            <span class="material-icons">close</span>
+            <span>Exit Edit Mode</span>
+        </button>
     </div>
     
     <!-- Main Content -->
@@ -102,8 +112,8 @@
     <!-- Right Panel (Edit Mode) -->
     <div class="side-panel right" id="editPanel">
         <div class="panel-header">
-            <div class="panel-title">Edit Mode</div>
             <button class="panel-close" id="editClose" aria-label="Close edit panel">×</button>
+            <div class="panel-title">Edit Mode</div>
         </div>
         <div class="panel-content" id="editContent">
             <!-- Validation or edit content will be loaded here -->
@@ -113,16 +123,17 @@
     <!-- Backdrop -->
     <div class="backdrop" id="backdrop"></div>
     
+    
     <!-- Activity Library Panel -->
     <div class="side-panel right" id="activityLibraryPanel">
         <div class="panel-header">
-            <div class="panel-title">Activity Library</div>
             <button class="panel-close" id="activityLibraryClose" aria-label="Close activity library">×</button>
+            <div class="panel-title">Activity Library</div>
         </div>
         <div class="panel-content">
-            <div class="library-tabs" style="display: flex; gap: 10px; margin-bottom: 20px;">
-                <button class="library-tab active" id="defaultActivitiesTab" style="flex: 1; padding: 10px; background: white; color: var(--primary-color); border: none; border-radius: 8px; font-weight: 600; transition: all 0.2s;">Default</button>
-                <button class="library-tab" id="myTemplatesTab" style="flex: 1; padding: 10px; background: rgba(255,255,255,0.2); color: white; border: 1px solid rgba(255,255,255,0.3); border-radius: 8px; font-weight: 500; transition: all 0.2s;">My Templates</button>
+            <div class="library-tabs">
+                <button class="library-tab active" id="defaultActivitiesTab">Default</button>
+                <button class="library-tab" id="myTemplatesTab">My Templates</button>
             </div>
             <div id="activityLibraryBody">
                 <!-- Content will be rendered here -->
@@ -150,6 +161,40 @@
         </button>
     </div>
 
-    <script src="src/stackmap.js"></script>
+    <!-- Capacitor Core JS -->
+    <script src="https://unpkg.com/@capacitor/core@6.0.0/dist/index.js"></script>
+    
+    <script src="src/CelebrationManager.js?v=2.0.0"></script>
+    <script src="src/stackmap.js?v=2.0.0"></script>
+    
+    <!-- Service Worker Registration with Update Detection -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js')
+            .then(registration => {
+                // Check for updates immediately
+                registration.update();
+                
+                // Check for updates every 5 minutes
+                setInterval(() => {
+                    registration.update();
+                }, 5 * 60 * 1000);
+                
+                // Listen for updates
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'activated') {
+                            // Show update notification
+                            if (confirm('StackMap has been updated! Reload to see the latest version?')) {
+                                window.location.reload();
+                            }
+                        }
+                    });
+                });
+            })
+            .catch(err => console.log('Service Worker registration failed:', err));
+    }
+    </script>
 </body>
 </html>
