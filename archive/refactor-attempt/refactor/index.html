@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <!-- RSD-Safe Error Interception - MUST load first -->
+    <script src="js/rsd-safe-init.js"></script>
+    <script>
+    // Force redirect to fallback mode for debugging
+    // window.location.replace('emergency-static.html');
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>StackMap</title>
+    
+    <!-- Critical inline styles for instant render -->
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #1a1a1a;
+            color: #ffffff;
+            overflow: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+        }
+        
+        /* View system */
+        .view {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+            transform: translateX(0);
+            transition: opacity 0.3s ease, transform 0.3s ease;
+        }
+        
+        .view.hidden {
+            display: none;
+        }
+        
+        .view.sliding-out {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        
+        .view.sliding-in {
+            opacity: 0;
+            transform: translateX(20px);
+        }
+        
+        /* Header */
+        .header {
+            background: #2a2a2a;
+            padding: env(safe-area-inset-top) 16px 16px 16px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            min-height: 56px;
+        }
+        
+        /* Content area */
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+            padding-bottom: calc(16px + env(safe-area-inset-bottom));
+        }
+        
+        /* Loading state */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        
+        /* Platform-specific styles */
+        .platform-ios .header {
+            backdrop-filter: blur(10px);
+            background: rgba(42, 42, 42, 0.9);
+        }
+        
+        .platform-tv {
+            font-size: 125%;
+        }
+        
+        .platform-tv *:focus {
+            outline: 4px solid #667eea;
+            outline-offset: 2px;
+        }
+        
+        /* Phase 4: Error fallback styles */
+        .component-fallback {
+            display: none;
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .component-normal {
+            display: block;
+        }
+        
+        /* When error is active, swap visibility */
+        .component-error-active .component-normal {
+            display: none;
+        }
+        
+        .component-error-active .component-fallback {
+            display: block;
+        }
+        
+        /* Fallback UI styling */
+        .fallback-message {
+            font-size: 18px;
+            color: #ffffff;
+            margin-bottom: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fallback-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-width: 300px;
+            margin: 0 auto;
+        }
+        
+        .fallback-button {
+            min-height: 44px;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        .fallback-button-primary {
+            background: #5a6c40; /* Research-based calming green, 6.9:1 contrast */
+            color: #ffffff;
+        }
+        
+        .fallback-button-secondary {
+            background: #0c96e4; /* Research-based soft blue */
+            color: #ffffff;
+        }
+        
+        /* Link styling to match button appearance */
+        a.fallback-button {
+            text-decoration: none;
+            display: block;
+            text-align: center;
+        }
+        
+        /* Focus management for fallback */
+        .component-fallback:focus {
+            outline: none;
+        }
+        
+        .component-fallback:focus-within .fallback-button:focus {
+            outline: 3px solid #ffffff;
+            outline-offset: 2px;
+        }
+    </style>
+    
+    <!-- External styles loaded async -->
+    <!-- Only include CSS files that actually exist -->
+    <!-- Template browser -->
+    <link rel="stylesheet" href="css/template-browser.css">
+    
+    <!-- Card Library System (Story #118) -->
+    <!-- <link rel="stylesheet" href="css/card-library.css"> -->
+    
+    <!-- PWA manifest -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Day management -->
+    <link rel="stylesheet" href="css/day-selector.css">
+    <link rel="stylesheet" href="css/day-management.css">
+    <link rel="stylesheet" href="css/someday.css">
+    
+    <!-- Time Field Implementation (Story #109) -->
+    <link rel="stylesheet" href="css/time-input.css">
+    
+    <!-- Direct Card Edit Controls (Story #96) -->
+    <link rel="stylesheet" href="css/inline-edit.css">
+    <link rel="stylesheet" href="css/drag-drop.css">
+    <link rel="stylesheet" href="css/context-menu.css">
+    
+    <!-- Enhanced Edit Mode UX (Story #98) -->
+    <link rel="stylesheet" href="css/visual-keyboard.css">
+    <link rel="stylesheet" href="css/confirmation-dialogs.css">
+    
+    <!-- Analytics Dashboard System (Story #106) -->
+    <link rel="stylesheet" href="css/analytics-dashboard.css">
+    <link rel="stylesheet" href="css/achievement-notifications.css">
+    
+    <!-- Bulk Operations (Story #120) -->
+    <link rel="stylesheet" href="css/bulk-operations.css">
+    
+    <!-- Preload critical resources -->
+    <!-- app.js removed - does not exist -->
+</head>
+<body>
+    <!-- Skip Links for Keyboard Navigation -->
+    <nav class="skip-links" aria-label="Skip links">
+        <a href="#main" class="skip-link">Skip to main content</a>
+        <a href="#activities" class="skip-link">Skip to activities</a>
+        <a href="#add-activity" class="skip-link">Skip to add activity</a>
+    </nav>
+    
+    <!-- Left Sliding Menu (Edit Mode Activities) -->
+    <div id="left-menu-overlay" class="menu-overlay" aria-hidden="true">
+        <div id="left-menu" class="sliding-menu left-menu" role="dialog" aria-label="Activity Management Menu">
+            <div class="menu-header">
+                <h2>Manage Activities</h2>
+                <button id="left-menu-close" class="menu-close" aria-label="Close menu">×</button>
+            </div>
+            <div class="menu-content">
+                <!-- Add Activities Section -->
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Add Activities</h3>
+                    <button class="menu-item" data-action="add-activity">
+                        <span class="menu-icon">➕</span>
+                        <span class="menu-label">Add Activity</span>
+                    </button>
+                    <button class="menu-item" data-action="quick-templates">
+                        <span class="menu-icon">⚡</span>
+                        <span class="menu-label">Quick Add</span>
+                    </button>
+                    <button class="menu-item" data-action="activity-library">
+                        <span class="menu-icon">📚</span>
+                        <span class="menu-label">Browse Library</span>
+                    </button>
+                </div>
+                
+                <!-- Organize Section -->
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Organize</h3>
+                    <button class="menu-item" data-action="reorder">
+                        <span class="menu-icon">🔄</span>
+                        <span class="menu-label">Reorder Mode</span>
+                    </button>
+                    <button class="menu-item" data-action="pin-mode">
+                        <span class="menu-icon">📌</span>
+                        <span class="menu-label">Pin Activities</span>
+                    </button>
+                    <button class="menu-item" data-action="bulk-select">
+                        <span class="menu-icon">☑️</span>
+                        <span class="menu-label">Bulk Select</span>
+                    </button>
+                    <button class="menu-item" data-action="bulk-delete">
+                        <span class="menu-icon">🗑️</span>
+                        <span class="menu-label">Bulk Delete</span>
+                    </button>
+                </div>
+                
+                <!-- Day Planning Section -->
+                <div class="menu-section">
+                    <h3 class="menu-section-title">Day Planning</h3>
+                    <button class="menu-item" data-action="complete-day">
+                        <span class="menu-icon">✅</span>
+                        <span class="menu-label">Complete Day</span>
+                    </button>
+                    <button class="menu-item" data-action="copy-tomorrow">
+                        <span class="menu-icon">📋</span>
+                        <span class="menu-label">Copy to Tomorrow</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User/Day Selector Modal -->
+    <div id="user-day-modal" class="user-day-modal" role="dialog" aria-modal="true" aria-labelledby="user-day-modal-title" aria-hidden="true">
+        <div class="user-day-modal-backdrop" data-action="close"></div>
+        <div class="user-day-modal-content">
+            <!-- Handle for swipe down -->
+            <div class="modal-handle" aria-hidden="true"></div>
+            
+            <div class="user-day-modal-header">
+                <h2 id="user-day-modal-title">Switch User</h2>
+                <button class="user-day-modal-close" aria-label="Close" data-action="close">
+                    <span aria-hidden="true">×</span>
+                </button>
+            </div>
+            
+            <div class="user-day-modal-body">
+                <!-- User selector section -->
+                <div class="selector-section user-section" id="user-section">
+                    <div class="user-grid" id="user-grid" role="group" aria-label="Select a user">
+                        <!-- User buttons will be rendered here dynamically -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading State -->
+    <div id="loading-view" class="view">
+        <div class="loading">
+            <h1>StackMap</h1>
+            <p>Loading...</p>
+        </div>
+    </div>
+    
+    <!-- Main App View -->
+    <div id="main-view" class="view hidden">
+        <header class="header">
+            <button id="left-menu-button" class="left-menu-button edit-mode-only" aria-label="Activity Management">☰</button>
+            <h1>StackMap</h1>
+            <button id="display-mode-toggle" class="display-mode-toggle" aria-label="Toggle between numbers and time display" title="Switch display mode">123</button>
+            <button id="menu-button" aria-label="Menu">☰</button>
+        </header>
+        <main id="main" class="content">
+            <!-- Normal content wrapper -->
+            <div class="component-normal">
+                <!-- User switcher with fallback -->
+                <div id="user-switcher-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <div id="user-switcher-container"></div>
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Profile switching is temporarily unavailable</p>
+                        <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload to try again</button>
+                    </div>
+                </div>
+                
+                <!-- Day Selector -->
+                <div id="day-selector-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <div class="day-selector" role="tablist" aria-label="Select day view">
+                            <button class="day-selector-btn active" 
+                                    role="tab" 
+                                    aria-selected="true" 
+                                    aria-controls="activities" 
+                                    data-day="today">
+                                <span class="day-icon">☀️</span>
+                                <span class="day-label">Today</span>
+                            </button>
+                            <button class="day-selector-btn" 
+                                    role="tab" 
+                                    aria-selected="false" 
+                                    aria-controls="activities" 
+                                    data-day="tomorrow">
+                                <span class="day-icon">🌙</span>
+                                <span class="day-label">Tomorrow</span>
+                            </button>
+                            <button class="day-selector-btn" 
+                                    role="tab" 
+                                    aria-selected="false" 
+                                    aria-controls="activities" 
+                                    data-day="someday">
+                                <span class="day-icon">💭</span>
+                                <span class="day-label">Someday</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Day selection temporarily unavailable - showing all activities</p>
+                    </div>
+                </div>
+                
+                <!-- Activity display with fallback -->
+                <div id="activity-display-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <div id="activities" role="region" aria-label="Activity list">
+                            <div id="activity-container"></div>
+                        </div>
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Taking a moment to load your activities</p>
+                        <div class="fallback-actions">
+                            <button onclick="location.reload()" class="fallback-button fallback-button-primary">Try again</button>
+                            <a href="index.html?safe=true" class="fallback-button fallback-button-secondary">Use simple mode</a>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Edit mode with fallback -->
+                <div id="edit-mode-wrapper" class="component-wrapper">
+                    <div class="component-normal">
+                        <!-- Edit mode UI will be injected here -->
+                    </div>
+                    <div class="component-fallback" role="alert" aria-live="polite">
+                        <p class="fallback-message">Edit features are temporarily unavailable</p>
+                        <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload to restore</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Display Mode Toggle Button -->
+            <button id="display-mode-toggle" 
+                    class="display-mode-toggle" 
+                    aria-label="Toggle between numbers and time display"
+                    title="Switch display mode">
+                <span class="toggle-icon">123</span>
+            </button>
+            
+            <!-- Main view fallback UI (for complete failure) -->
+            <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
+                <div class="fallback-message">Taking a moment to get things ready</div>
+                <div class="fallback-actions">
+                    <!-- Form-based try again for zero-JS functionality -->
+                    <form method="get" action="index.html" style="margin: 0;">
+                        <input type="hidden" name="last-activity" id="last-activity" value="">
+                        <button type="submit" class="fallback-button fallback-button-primary">Try again</button>
+                    </form>
+                    <!-- Simple anchor link for safe mode -->
+                    <a href="index.html?safe=true" class="fallback-button fallback-button-secondary">Use simple mode</a>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Settings View -->
+    <div id="settings-view" class="view hidden">
+        <header class="header">
+            <button id="settings-back" aria-label="Back">←</button>
+            <h1>Settings</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <!-- Theme settings with fallback -->
+            <section id="theme-settings-wrapper" class="component-wrapper">
+                <div class="component-normal">
+                    <h2>Preferences</h2>
+                    <!-- Theme settings content will be injected here -->
+                </div>
+                <div class="component-fallback" role="alert" aria-live="polite">
+                    <p class="fallback-message">Theme settings are temporarily unavailable</p>
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload page</button>
+                </div>
+            </section>
+            
+            <!-- Data management with fallback -->
+            <section id="data-management-wrapper" class="component-wrapper">
+                <div class="component-normal">
+                    <h2>Data Management</h2>
+                    <div class="data-management-options">
+                        <button id="export-data-btn" class="btn-primary" style="width: 100%; margin-bottom: 16px;">
+                            📤 Export Data
+                        </button>
+                        <button id="import-data-btn" class="btn-secondary" style="width: 100%; margin-bottom: 8px;">
+                            📥 Import Data
+                        </button>
+                        <p class="form-helper" style="text-align: center; margin-top: 8px;">
+                            Backup your activities or restore from a previous backup
+                        </p>
+                    </div>
+                </div>
+                <div class="component-fallback" role="alert" aria-live="polite">
+                    <p class="fallback-message">Backup features are temporarily unavailable</p>
+                    <p class="fallback-message" style="font-size: 14px; opacity: 0.8; margin-top: 8px;">Your data is safe and will be available when you reload</p>
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Reload page</button>
+                </div>
+            </section>
+            
+            <!-- Help & Tutorial -->
+            <section id="help-tutorial-wrapper" class="component-wrapper">
+                <div class="component-normal">
+                    <h2>Help & Tutorial</h2>
+                    <div style="margin-bottom: 24px;">
+                        <button id="view-tutorial-btn" class="btn-secondary" style="width: 100%; margin-bottom: 8px;" onclick="if(window.StackMapWelcomeManager) window.StackMapWelcomeManager.restart()">
+                            👋 View Tutorial Again
+                        </button>
+                        <p class="form-helper" style="text-align: center; margin-top: 8px;">
+                            See the welcome screens and setup options again
+                        </p>
+                    </div>
+                </div>
+            </section>
+            
+            <section>
+                <h2>About</h2>
+                <nav>
+                    <a href="#privacy">Privacy Policy</a>
+                    <a href="#terms">Terms of Service</a>
+                    <a href="#support">Support StackMap</a>
+                </nav>
+            </section>
+        </main>
+    </div>
+    
+    <!-- Privacy View -->
+    <div id="privacy-view" class="view hidden">
+        <header class="header">
+            <button id="privacy-back" aria-label="Back">←</button>
+            <h1>Privacy Policy</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <!-- Privacy content will be loaded here -->
+        </main>
+    </div>
+    
+    <!-- Terms View -->
+    <div id="terms-view" class="view hidden">
+        <header class="header">
+            <button id="terms-back" aria-label="Back">←</button>
+            <h1>Terms of Service</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <!-- Terms content will be loaded here -->
+        </main>
+    </div>
+    
+    <!-- Support View -->
+    <div id="support-view" class="view hidden">
+        <header class="header">
+            <button id="support-back" aria-label="Back">←</button>
+            <h1>Support StackMap</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <!-- Support content will be loaded here -->
+        </main>
+    </div>
+    
+    <!-- Analytics View -->
+    <div id="analytics-view" class="view hidden">
+        <header class="header">
+            <button id="analytics-back" aria-label="Back">←</button>
+            <h1>Analytics</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <div class="component-normal">
+                <div id="analytics-dashboard-container"></div>
+            </div>
+            <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
+                <div class="fallback-message">Analytics are temporarily unavailable</div>
+                <div class="fallback-actions">
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Try again</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Profiles View -->
+    <div id="profiles-view" class="view hidden">
+        <header class="header">
+            <button id="profiles-back" aria-label="Back">←</button>
+            <h1>User Profiles</h1>
+            <div style="width: 44px;"></div>
+        </header>
+        <main class="content">
+            <div class="component-normal">
+                <!-- Profile list -->
+                <div id="profile-list"></div>
+                
+                <!-- Add new profile button -->
+                <button id="add-profile-btn" class="profile-add-button" aria-label="Add new profile">
+                    + Add Profile
+                </button>
+                
+                <!-- Guest mode button -->
+                <button id="guest-mode-btn" class="profile-guest-button" aria-label="Use guest mode">
+                    👋 Guest Mode
+                </button>
+            </div>
+            
+            <!-- Fallback UI -->
+            <div class="component-fallback" role="alert" aria-live="assertive" tabindex="-1">
+                <div class="fallback-message">Profile management is temporarily unavailable</div>
+                <div class="fallback-actions">
+                    <button onclick="location.reload()" class="fallback-button fallback-button-primary">Try again</button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Import Preview Modal -->
+    <div id="import-preview-modal" class="modal hidden" role="dialog" aria-labelledby="import-preview-title">
+        <div class="modal-backdrop" data-close-modal></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h2 id="import-preview-title" class="modal-title">Import Preview</h2>
+                <button class="modal-close" aria-label="Close" data-close-modal>&times;</button>
+            </div>
+            <div class="modal-content">
+                <div id="import-preview-content">
+                    <!-- Preview content will be dynamically inserted here -->
+                </div>
+                <div class="import-options" style="margin-top: 24px;">
+                    <h3 style="font-size: 18px; margin-bottom: 16px;">Import Strategy:</h3>
+                    <div class="radio-group">
+                        <label class="radio-label">
+                            <input type="radio" name="import-strategy" value="replace" checked>
+                            <strong>Replace All</strong> - Clear existing data and import new
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="import-strategy" value="merge">
+                            <strong>Merge</strong> - Keep existing data and add imported
+                        </label>
+                        <label class="radio-label">
+                            <input type="radio" name="import-strategy" value="smart">
+                            <strong>Smart Merge</strong> - Update existing, add new
+                        </label>
+                    </div>
+                </div>
+                <div class="modal-actions" style="margin-top: 24px; display: flex; gap: 12px; justify-content: flex-end;">
+                    <button class="btn-secondary" data-close-modal>Cancel</button>
+                    <button id="confirm-import-btn" class="btn-primary">Import</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Undo Toast Container -->
+    <div id="undo-toast-container" class="undo-toast-container" aria-live="polite"></div>
+    
+    <!-- Core Scripts -->
+    <script>
+        // Immediate platform detection for styling
+        (function() {
+            var ua = navigator.userAgent;
+            var classes = [];
+            
+            if (window.Capacitor) {
+                classes.push('platform-capacitor');
+                var platform = Capacitor.getPlatform();
+                if (platform) classes.push('platform-' + platform);
+            } else if (window.matchMedia('(display-mode: standalone)').matches) {
+                classes.push('platform-pwa');
+            } else {
+                classes.push('platform-web');
+            }
+            
+            if (ua.includes('TV') || window.innerWidth > 1920) {
+                classes.push('platform-tv');
+            }
+            
+            document.body.className = classes.join(' ');
+        })();
+    </script>
+    
+    <!-- Feature flags for safe rollout -->
+    <script src="js/feature-flags.js" defer></script>
+    <!-- Theme manager (load early for instant theme) -->
+    <script src="js/theme-manager.js"></script>
+    <!-- Welcome manager -->
+    <script src="js/welcome-manager.js" defer></script>
+    <!-- CSS Files -->
+    <link rel="stylesheet" href="css/search-filter.css">
+    <!-- Messaging system -->
+    <script src="js/messaging.js" defer></script>
+    <!-- Component error handler (load early) -->
+    <script src="js/component-error-handler.js" defer></script>
+    <!-- SQLite storage -->
+    <script src="js/activity-sqlite.js" defer></script>
+    <!-- Migration: Tasks to Activities -->
+    <script src="js/migration-tasks-to-activities.js" defer></script>
+    <!-- Timer management for memory optimization -->
+    <script src="js/timer-manager.js" defer></script>
+    <!-- Default activities -->
+    <script src="js/default-activities.js" defer></script>
+    <!-- Storage System (load before other modules) -->
+    <script src="js/activity-sqlite.js" defer></script>
+    <script src="js/storage-error-handler.js" defer></script>
+    <script src="js/migration-manager.js" defer></script>
+    <script src="js/migration-safety.js" defer></script>
+    <script src="js/enhanced-migration-safety.js" defer></script>
+    <script src="js/migration-orchestrator.js" defer></script>
+    <script src="js/shadow-table-migrator.js" defer></script>
+    <script src="js/migration-ui-controller.js" defer></script>
+    <script src="js/safe-migration-controller.js" defer></script>
+    <script src="js/migration-orchestrator-fixes.js" defer></script>
+    <script src="js/migration-integration-fixes.js" defer></script>
+    <script src="js/storage-adapter.js" defer></script>
+    <!-- Edit mode system -->
+    <script src="js/edit-mode.js" defer></script>
+    <script src="js/edit-mode-menu.js" defer></script>
+    <!-- Modal system -->
+    <!-- <script src="js/modal.js" defer></script> -->
+    <!-- Grown-up Mode Protection -->
+    <script src="js/grownup-mode.js" defer></script>
+    <!-- Demo mode and onboarding -->
+    <script src="js/demo-mode.js" defer></script>
+    <script src="js/onboarding.js" defer></script>
+    <!-- Main application initialization -->
+    <script src="js/app-init.js" defer></script>
+    <!-- User management -->
+    <script src="js/user-manager.js" defer></script>
+    <!-- Profile UI -->
+    <script src="js/profile-ui.js" defer></script>
+    <!-- Unified Header -->
+    <script src="js/unified-header.js" defer></script>
+    <!-- Data Import/Export -->
+    <script src="js/data-export.js" defer></script>
+    <script src="js/data-import.js" defer></script>
+    <script src="js/data-io-ui.js" defer></script>
+    <!-- Virtual scrolling (must load before activity-display) -->
+    <script src="js/clusterize-fix.js" defer></script>
+    <script src="js/clusterize.min.js" defer></script>
+    <script src="js/virtual-scroll-adapter.js" defer></script>
+    <!-- Activity timer system (must load before activity-display) -->
+    <script src="js/activity-timer.js" defer></script>
+    <!-- Performance optimization system (must load before activity-display) -->
+    <!-- <script src="js/performance-monitor.js" defer></script> -->
+    <script src="js/badge-cache.js" defer></script>
+    <script src="js/virtual-scroll-optimizer.js" defer></script>
+    <!-- <script src="js/memory-manager.js" defer></script> -->
+    <!-- DISABLED: Performance test suite causing performance issues -->
+    <!-- <script src="js/performance-test-suite.js" defer></script> -->
+    <!-- User data separation system (must load before activity-display) -->
+    <script src="js/user-context.js" defer></script>
+    <script src="js/user-data-manager.js" defer></script>
+    <script src="js/data-migration.js" defer></script>
+    <!-- Database schema and time components (Story #109 - must load before activity-display) -->
+    <script src="js/db-schema.js" defer></script>
+    <script src="js/time-parser.js" defer></script>
+    <script src="js/time-formatter.js" defer></script>
+    <script src="js/time-input.js" defer></script>
+    <!-- Activity display -->
+    <script src="js/activity-display.js" defer></script>
+    <!-- Undo system (must load after activity-display) -->
+    <script src="js/undo-manager.js" defer></script>
+    <script src="js/commands/activity-commands.js" defer></script>
+    <script src="js/undo-ui.js" defer></script>
+    <!-- Today/Tomorrow view -->
+    <script src="js/day-selector.js" defer></script>
+    <script src="js/today-tomorrow.js" defer></script>
+    <!-- Day Management System (Story #108) -->
+    <script src="js/day-manager.js" defer></script>
+    <script src="js/day-selector-ui.js" defer></script>
+    
+    <!-- Someday Support (Story #111) -->
+    <script src="js/someday-manager.js" defer></script>
+    <!-- Display Mode Toggle -->
+    <script src="js/display-mode-toggle.js" defer></script>
+    <!-- Rollover manager -->
+    <script src="js/rollover-manager.js" defer></script>
+    <!-- Celebration system -->
+    <script src="js/celebration.js" defer></script>
+    <!-- Activity reordering -->
+    <script src="js/activity-reorder.js" defer></script>
+    <!-- Drag & Drop reordering -->
+    <script src="js/drag-drop-reorder.js" defer></script>
+    <!-- Activity cards UI -->
+    <!-- Activity Card Pool (Memory Optimization) -->
+    <!-- <script src="js/activity-card-pool.js" defer></script> -->
+    <!-- <script src="js/activity-cards.js" defer></script> -->
+    <!-- Visual Activity Cards System -->
+    <!-- <script src="js/visual-card-manager.js" defer></script>
+    <script src="js/card-creation-ui.js" defer></script> -->
+    <!-- Photo attachments -->
+    <script src="js/photo-attachment-storage.js" defer></script>
+    <script src="js/photo-optimizer.js" defer></script>
+    <!-- DISABLED: Memory pressure monitor causing performance issues -->
+    <!-- <script src="js/memory-pressure-monitor.js" defer></script> -->
+    <script src="js/hybrid-storage-manager.js" defer></script>
+    <script src="js/upload-retry-manager.js" defer></script>
+    <script src="js/photo-upload-manager.js" defer></script>
+    <script src="js/photo-attachment-ui.js" defer></script>
+    <!-- Mobile Attachment System -->
+    <script src="js/sqlite-attachment-schema.js" defer></script>
+    <script src="js/attachment-manager.js" defer></script>
+    <!-- Voice Recording System -->
+    <script src="js/voice-recorder.js" defer></script>
+    <script src="js/voice-waveform.js" defer></script>
+    <script src="js/voice-player.js" defer></script>
+    <script src="js/voice-attachment.js" defer></script>
+    <script src="js/voice-recovery.js" defer></script>
+    <script src="js/voice-attachment-handler.js" defer></script>
+    <!-- Photo Upload Memory Fixes -->
+    <script src="js/photo-upload-memory-fixes.js" defer></script>
+    <!-- Keyboard navigation -->
+    <script src="js/keyboard-nav.js" defer></script>
+    <!-- Activity library -->
+    <script src="js/activity-library.js" defer></script>
+    <script src="js/activity-templates.js" defer></script>
+    <script src="js/quick-add-ui.js" defer></script>
+    <!-- Card Library System (Story #118) -->
+    <!-- <script src="js/library-templates.js" defer></script>
+    <script src="js/card-library.js" defer></script> -->
+    <!-- Template system (Story #99) -->
+    <script src="js/template-manager.js" defer></script>
+    <script src="js/library-browser.js" defer></script>
+    <!-- Theme Settings UI -->
+    <script src="js/theme-settings-ui.js" defer></script>
+    <!-- Settings System -->
+    <script src="js/settings-manager.js" defer></script>
+    <script src="js/settings-ui.js" defer></script>
+    <!-- Menu Systems -->
+    <script src="js/left-menu.js" defer></script>
+    <script src="js/settings-dropdown.js" defer></script>
+    <script src="js/user-day-modal.js" defer></script>
+    <!-- Pin Activities System -->
+    <script src="js/activity-pin.js" defer></script>
+    
+    <!-- Complete Day Workflow -->
+    <script src="js/complete-day.js" defer></script>
+    
+    <!-- Bulk Operations (Story #120) -->
+    <script src="js/selection-manager.js" defer></script>
+    <script src="js/bulk-operations.js" defer></script>
+    <script src="js/bulk-action-bar.js" defer></script>
+    <script src="js/bulk-delete.js" defer></script>
+    <script src="js/copy-tomorrow.js" defer></script>
+    
+    <!-- Activity Types System -->
+    <script src="js/activity-types.js" defer></script>
+    
+    <!-- Direct Card Edit Controls (Story #96) -->
+    <script src="js/inline-card-edit.js" defer></script>
+    <script src="js/context-menu.js" defer></script>
+    <script src="js/card-edit-controls.js" defer></script>
+    
+    <!-- Enhanced Edit Mode UX (Story #98) -->
+    <script src="js/visual-keyboard.js" defer></script>
+    <script src="js/confirmation-dialogs.js" defer></script>
+    
+    <!-- Enhanced Filtering & Search (Story #119) -->
+    <script src="js/search-filter.js" defer></script>
+    <script src="js/filter-manager.js" defer></script>
+    <script src="js/search-ui.js" defer></script>
+    <script src="js/filter-ui.js" defer></script>
+    <script src="js/edit-mode-search.js" defer></script>
+    
+    <!-- Analytics Dashboard System (Story #106) -->
+    <script src="js/analytics-data-model.js" defer></script>
+    <script src="js/progress-analytics.js" defer></script>
+    <script src="js/achievement-system.js" defer></script>
+    <script src="js/data-visualizer.js" defer></script>
+    <script src="js/analytics-dashboard.js" defer></script>
+    <script src="js/analytics-integration.js" defer></script>
+</body>
+</html>
