@@ -143,6 +143,19 @@
                 <button class="library-tab active" id="defaultActivitiesTab">Default</button>
                 <button class="library-tab" id="myTemplatesTab">My Templates</button>
             </div>
+            <div class="library-controls">
+                <input type="text" 
+                       id="librarySearchInput" 
+                       class="library-search" 
+                       placeholder="Type to filter activities..."
+                       autocomplete="off">
+                <div class="library-batch-controls" id="libraryBatchControls" style="display: none;">
+                    <button class="btn-batch-cancel" onclick="app.clearSelection()">Cancel</button>
+                    <button class="btn-batch-add" onclick="app.addSelectedActivities()">
+                        Add <span class="selected-count">0</span> Selected
+                    </button>
+                </div>
+            </div>
             <div id="activityLibraryBody">
                 <!-- Content will be rendered here -->
             </div>
@@ -207,5 +220,8 @@
             .catch(err => console.log('Service Worker registration failed:', err));
     }
     </script>
+    
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
 </body>
 </html>

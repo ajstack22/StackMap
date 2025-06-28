@@ -33,6 +33,20 @@
                 // PWA install prompt
                 this.deferredPrompt = null;
                 
+                // Undo functionality
+                this.lastDeletedActivity = null;
+                this.lastDeletedActivityDay = null;
+                this.toastTimeout = null;
+                
+                // Activity library selection
+                this.selectedActivities = new Map();
+                this.currentLibraryTab = 'default';
+                this.librarySearchTerm = '';
+                
+                // Category preferences
+                this.categoryOrder = this.loadCategoryOrder();
+                this.collapsedCategories = this.loadCollapsedCategories();
+                
                 // Load data and initialize
                 this.loadData();
                 
@@ -319,6 +333,18 @@
             }
             
             deleteUser(userId) {
+                const users = Object.values(this.data.users);
+                if (users.length <= 1) {
+                    this.showToast('Cannot delete the last user!');
+                    return;
+                }
+                
+                const user = this.data.users[userId];
+                if (!user) return;
+                
+                // Store for undo
+                const deletedUserName = user.name;
+                
                 if (userId === this.data.currentUserId) {
                     // Find another user to switch to
                     const userIds = Object.keys(this.data.users).filter(id => id !== userId);
@@ -327,7 +353,10 @@
                 
                 delete this.data.users[userId];
                 this.saveData();
+                this.renderEditContent();
                 this.render();
+                
+                this.showToast(`User "${deletedUserName}" deleted`);
             }
             
             // ===== DAY MANAGEMENT =====
@@ -426,9 +455,20 @@
                 const activities = user.days[day]?.activities || [];
                 const index = activities.findIndex(a => a.id === activityId);
                 if (index > -1) {
+                    // Store the deleted activity for undo
+                    this.lastDeletedActivity = activities[index];
+                    this.lastDeletedActivityDay = day;
+                    
+                    // Delete the activity
                     activities.splice(index, 1);
                     this.saveData();
                     this.render();
+                    
+                    // Show toast with undo option
+                    this.showToast(`Activity deleted`, 'UNDO', () => {
+                        this.undoDelete();
+                    });
+                    
                     return true;
                 }
                 return false;
@@ -902,8 +942,13 @@
                 const dropCard = e.target.closest('.activity-card');
                 if (!dropCard || dropCard === this.draggedElement) return false;
                 
+                // Make sure we have a dragged activity
+                if (!this.draggedActivity) return false;
+                
                 // Get the dropped position
                 const dropActivityId = this.getActivityIdFromCard(dropCard);
+                if (!dropActivityId) return false;
+                
                 const activities = this.getCurrentActivities();
                 const dragIndex = activities.findIndex(a => a.id === this.draggedActivity.id);
                 const dropIndex = activities.findIndex(a => a.id === dropActivityId);
@@ -928,14 +973,18 @@
             }
             
             getActivityIdFromCard(card) {
-                // Extract activity ID from onclick or other attributes
+                // First try to get ID from data attribute (most reliable)
+                const dataId = card.getAttribute('data-activity-id');
+                if (dataId) return dataId;
+                
+                // Fallback: Extract activity ID from onclick attribute
                 const onclickAttr = card.getAttribute('onclick');
                 if (onclickAttr) {
                     const match = onclickAttr.match(/['"]([^'"]*activity_[^'"]*)['"]/);
                     if (match) return match[1];
                 }
                 
-                // Check child elements for activity ID
+                // Last resort: Check child elements for activity ID
                 const cardHtml = card.innerHTML;
                 const match = cardHtml.match(/activity_\d+/);
                 return match ? match[0] : null;
@@ -1005,6 +1054,15 @@
                     this.elements.editPanel.classList.remove('open');
                     this.elements.userDayPanel.classList.remove('open');
                     this.elements.activityLibraryPanel.classList.remove('open');
+                    
+                    // Reset library state when closing
+                    if (this.activePanel === 'activityLibrary') {
+                        this.clearSelection();
+                        this.librarySearchTerm = '';
+                        const searchInput = document.getElementById('librarySearchInput');
+                        if (searchInput) searchInput.value = '';
+                    }
+                    
                     this.activePanel = null;
                 }
                 
@@ -1383,13 +1441,8 @@
             }
             
             confirmDeleteUser(userId) {
-                const user = this.data.users[userId];
-                if (!user) return;
-                
-                if (confirm(`Delete user "${user.name}"? This will remove all their activities.`)) {
-                    this.deleteUser(userId);
-                    this.renderPreferencesContent();
-                }
+                // No longer using confirmation - deleteUser handles it
+                this.deleteUser(userId);
             }
             
             editUser(userId) {
@@ -1405,35 +1458,57 @@
                     user.lastActive = new Date().toISOString();
                     
                     this.saveData();
-                    this.renderPreferencesContent();
+                    this.renderEditContent();
                     this.render(); // Update subtitle if this is current user
                 }
             }
             
-            showEditUsersDialog() {
+            renderUserList() {
                 const users = Object.values(this.data.users);
-                const usersList = users.map(user => {
-                    return `${user.icon} ${user.name}`;
-                }).join('\n');
+                return users.map(user => {
+                    const isCurrentUser = user.id === this.data.currentUserId;
+                    return `
+                        <div class="user-item ${isCurrentUser ? 'current' : ''}">
+                            <div class="user-info">
+                                <span class="user-emoji">${user.icon}</span>
+                                <span class="user-name">${user.name}</span>
+                            </div>
+                            <div class="user-actions">
+                                <button class="btn-icon" onclick="app.editUser('${user.id}')" title="Edit user">
+                                    <span class="material-icons">edit</span>
+                                </button>
+                                ${users.length > 1 ? `<button class="btn-icon" onclick="app.deleteUser('${user.id}')" title="Delete user">
+                                    <span class="material-icons">delete</span>
+                                </button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+            
+            editUserName(userId) {
+                const user = this.data.users[userId];
+                if (!user) return;
                 
-                const message = `Current users:\n${usersList}\n\nWhat would you like to do?`;
-                const action = prompt(message + '\n\nEnter user name to edit/delete, or leave blank to cancel:');
+                const newName = prompt('Enter new name:', user.name);
+                if (newName && newName.trim() && newName !== user.name) {
+                    user.name = newName.trim();
+                    this.saveData();
+                    this.renderEditContent();
+                    this.render();
+                }
+            }
+            
+            editUserEmoji(userId) {
+                const user = this.data.users[userId];
+                if (!user) return;
                 
-                if (action && action.trim()) {
-                    const targetUser = users.find(u => u.name.toLowerCase() === action.toLowerCase().trim());
-                    if (targetUser) {
-                        const choice = prompt(`Selected: ${targetUser.icon} ${targetUser.name}\n\n1 = Edit name/emoji\n2 = Delete user\nAnything else = Cancel`);
-                        
-                        if (choice === '1') {
-                            this.editUser(targetUser.id);
-                        } else if (choice === '2' && users.length > 1) {
-                            this.confirmDeleteUser(targetUser.id);
-                        } else if (choice === '2' && users.length === 1) {
-                            alert('Cannot delete the last user!');
-                        }
-                    } else {
-                        alert('User not found. Please enter exact name.');
-                    }
+                const newIcon = prompt('Enter new emoji:', user.icon);
+                if (newIcon && newIcon !== user.icon) {
+                    user.icon = newIcon;
+                    this.saveData();
+                    this.renderEditContent();
+                    this.render();
                 }
             }
             
@@ -1662,13 +1737,17 @@
                             <span class="material-icons">upload_file</span>
                             <span>Import</span>
                         </button>
-                        <button class="btn-grid-item" id="addUserBtn">
+                    </div>
+                    
+                    <!-- User Management -->
+                    <div class="user-management-section">
+                        <label class="day-toggle-label">Users</label>
+                        <div class="user-list" id="userList">
+                            ${this.renderUserList()}
+                        </div>
+                        <button class="btn-add-user" id="addUserBtn">
                             <span class="material-icons">person_add</span>
-                            <span>Add User</span>
-                        </button>
-                        <button class="btn-grid-item" id="editUsersBtn">
-                            <span class="material-icons">group</span>
-                            <span>Manage Users</span>
+                            <span>Add New User</span>
                         </button>
                     </div>
                     
@@ -1767,15 +1846,13 @@
                     
                     if (name) {
                         this.createUser(name, icon);
+                        this.renderEditContent();
                         this.render();
-                        alert(`User "${name}" created!`);
+                        this.showToast(`User "${name}" created!`);
                     }
                 });
                 
-                const editUsersBtn = document.getElementById('editUsersBtn');
-                editUsersBtn?.addEventListener('click', () => {
-                    this.showEditUsersDialog();
-                });
+                // No longer needed - user list is always visible
                 
                 // Setup data management buttons
                 const shareBtn = document.getElementById('shareBtn');
@@ -1912,6 +1989,11 @@
                             onclick="app.toggleActivityPin('${activity.id}')" 
                             title="${activity.pinned ? 'Card will be kept' : 'Card will be discarded'}">
                         <span class="material-icons">push_pin</span>
+                    </button>
+                    <button class="btn--round btn--delete" 
+                            onclick="app.deleteActivity('${activity.id}')" 
+                            title="Delete activity">
+                        <span class="material-icons">delete</span>
                     </button>
                     <button class="btn--round btn--menu" 
                             onclick="app.openCardMenu(event, '${activity.id}')" 
@@ -2203,9 +2285,8 @@
             }
             
             confirmDeleteActivity(activityId) {
-                if (confirm('Delete this activity?')) {
-                    this.deleteActivity(activityId);
-                }
+                // No longer using confirmation - delete directly with undo option
+                this.deleteActivity(activityId);
             }
             
             duplicateActivity(activityId) {
@@ -2228,6 +2309,80 @@
                 user.days[day].activities.push(newActivity);
                 this.saveData();
                 this.render();
+            }
+            
+            // ===== TOAST NOTIFICATIONS =====
+            showToast(message, actionText, actionCallback) {
+                // Clear any existing toast timeout
+                if (this.toastTimeout) {
+                    clearTimeout(this.toastTimeout);
+                }
+                
+                const container = document.getElementById('toastContainer');
+                
+                // Remove any existing toasts
+                container.innerHTML = '';
+                
+                // Create new toast element
+                const toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerHTML = `
+                    <span class="toast-message">${message}</span>
+                    ${actionText ? `<button class="toast-action">${actionText}</button>` : ''}
+                `;
+                
+                // Add action handler if provided
+                if (actionText && actionCallback) {
+                    const actionBtn = toast.querySelector('.toast-action');
+                    actionBtn.addEventListener('click', () => {
+                        actionCallback();
+                        this.hideToast();
+                    });
+                }
+                
+                container.appendChild(toast);
+                
+                // Auto-dismiss after 3 seconds
+                this.toastTimeout = setTimeout(() => {
+                    this.hideToast();
+                }, 3000);
+            }
+            
+            hideToast() {
+                const container = document.getElementById('toastContainer');
+                const toast = container.querySelector('.toast');
+                if (toast) {
+                    toast.style.animation = 'fadeOut 0.3s ease-out';
+                    setTimeout(() => {
+                        container.innerHTML = '';
+                    }, 300);
+                }
+                if (this.toastTimeout) {
+                    clearTimeout(this.toastTimeout);
+                    this.toastTimeout = null;
+                }
+            }
+            
+            undoDelete() {
+                if (!this.lastDeletedActivity || !this.lastDeletedActivityDay) return;
+                
+                const user = this.getCurrentUser();
+                if (!user) return;
+                
+                // Re-add the activity to the appropriate day
+                const activities = user.days[this.lastDeletedActivityDay].activities;
+                activities.push(this.lastDeletedActivity);
+                
+                // Clear the stored deleted activity
+                this.lastDeletedActivity = null;
+                this.lastDeletedActivityDay = null;
+                
+                // Save and render
+                this.saveData();
+                this.render();
+                
+                // Show confirmation
+                this.showToast('Activity restored', null, null);
             }
             
             // ===== CARD MENU =====
@@ -2396,8 +2551,18 @@
                 // Set up the activity library content when panel opens
                 const defaultTab = document.getElementById('defaultActivitiesTab');
                 const templatesTab = document.getElementById('myTemplatesTab');
+                const searchInput = document.getElementById('librarySearchInput');
                 
                 if (!defaultTab || !templatesTab) return;
+                
+                // Set up search functionality
+                if (searchInput) {
+                    searchInput.value = this.librarySearchTerm;
+                    searchInput.addEventListener('input', (e) => {
+                        this.librarySearchTerm = e.target.value;
+                        this.renderCurrentLibraryTab();
+                    });
+                }
                 
                 defaultTab.onclick = () => {
                     // Update active styles
@@ -2411,6 +2576,8 @@
                     templatesTab.style.border = '1px solid rgba(255,255,255,0.3)';
                     templatesTab.style.fontWeight = '500';
                     
+                    this.currentLibraryTab = 'default';
+                    this.clearSelection();
                     this.renderDefaultActivities();
                 };
                 
@@ -2426,6 +2593,8 @@
                     defaultTab.style.border = '1px solid rgba(255,255,255,0.3)';
                     defaultTab.style.fontWeight = '500';
                     
+                    this.currentLibraryTab = 'templates';
+                    this.clearSelection();
                     this.renderMyTemplates();
                 };
                 
@@ -2438,35 +2607,105 @@
             renderDefaultActivities() {
                 const body = document.getElementById('activityLibraryBody');
                 const categories = this.getDefaultActivities();
+                const searchTerm = this.librarySearchTerm.toLowerCase();
                 
-                body.innerHTML = Object.entries(categories).map(([category, activities]) => `
-                    <div class="activity-category">
-                        <h3 class="activity-category-title">${category}</h3>
-                        <div class="library-activities">
-                            ${activities.map(activity => `
-                                <div class="library-activity" onclick="app.addActivityFromLibrary('${activity.emoji}', '${activity.text.replace(/'/g, "\\'")}', '${(activity.description || '').replace(/'/g, "\\'")}')">
-                                    <div class="library-activity-emoji">${activity.emoji}</div>
-                                    <div class="library-activity-title">${activity.text}</div>
+                let html = '';
+                let hasVisibleActivities = false;
+                
+                // Sort categories by user preference
+                const sortedCategories = this.sortCategoriesByOrder(categories);
+                
+                // Start HTML without container wrapper
+                html = '';
+                
+                sortedCategories.forEach(([category, activities]) => {
+                    // Filter activities based on search term
+                    const filteredActivities = activities.filter(activity => 
+                        searchTerm === '' || 
+                        activity.text.toLowerCase().includes(searchTerm) ||
+                        activity.emoji.includes(searchTerm) ||
+                        (activity.description && activity.description.toLowerCase().includes(searchTerm))
+                    );
+                    
+                    if (filteredActivities.length > 0) {
+                        hasVisibleActivities = true;
+                        const isCollapsed = this.collapsedCategories.has(category);
+                        const categoryId = category.replace(/[^a-zA-Z0-9]/g, '_');
+                        
+                        html += `
+                            <div class="activity-category" data-category="${category}" draggable="true" ondragstart="app.handleCategoryDragStart(event, '${category}')" ondragover="app.handleCategoryDragOver(event)" ondrop="app.handleCategoryDrop(event, '${category}')" ondragend="app.handleCategoryDragEnd(event)">
+                                <h3 class="activity-category-title">
+                                    <span class="category-drag-handle material-icons">drag_indicator</span>
+                                    <span class="category-name" onclick="app.toggleCategory('${category}')">${category}</span>
+                                    <span class="category-toggle material-icons" onclick="app.toggleCategory('${category}')">${isCollapsed ? 'expand_more' : 'expand_less'}</span>
+                                    <span class="category-checkbox" onclick="app.toggleCategorySelection('${category}', event)">
+                                        <span class="material-icons">${this.isCategorySelected(category) ? 'check_box' : 'check_box_outline_blank'}</span>
+                                    </span>
+                                </h3>
+                                <div class="library-activities ${isCollapsed ? 'collapsed' : ''}" id="category_${categoryId}">
+                                    ${filteredActivities.map(activity => {
+                                        const activityId = `default_${activity.emoji}_${activity.text}`;
+                                        const isSelected = this.selectedActivities.has(activityId);
+                                        return `
+                                            <div class="library-activity ${isSelected ? 'selected' : ''}" 
+                                                 onclick="app.toggleActivitySelection('${activityId}', '${activity.emoji}', '${activity.text.replace(/'/g, "\\'")}', '${(activity.description || '').replace(/'/g, "\\'")}')">
+                                                <div class="library-activity-checkbox">
+                                                    <span class="material-icons">${isSelected ? 'check_box' : 'check_box_outline_blank'}</span>
+                                                </div>
+                                                <div class="library-activity-emoji">${activity.emoji}</div>
+                                                <div class="library-activity-title">${activity.text}</div>
+                                            </div>
+                                        `;
+                                    }).join('')}
                                 </div>
-                            `).join('')}
+                            </div>
+                        `;
+                    }
+                });
+                
+                // No closing div needed
+                
+                if (!hasVisibleActivities) {
+                    html = `
+                        <div style="text-align: center; padding: 40px; color: white;">
+                            <p>No activities found matching "${searchTerm}"</p>
                         </div>
-                    </div>
-                `).join('');
+                    `;
+                }
+                
+                body.innerHTML = html;
+                this.updateBatchControls();
             }
             
             renderMyTemplates() {
                 const body = document.getElementById('activityLibraryBody');
                 const templates = this.data.templates || [];
+                const searchTerm = this.librarySearchTerm.toLowerCase();
                 
-                // console.log('Templates in data:', templates); // Debug log
+                // Filter templates based on search term
+                const filteredTemplates = templates.filter(template => 
+                    searchTerm === '' || 
+                    template.text.toLowerCase().includes(searchTerm) ||
+                    template.emoji.includes(searchTerm) ||
+                    (template.description && template.description.toLowerCase().includes(searchTerm))
+                );
                 
-                if (templates.length === 0) {
-                    body.innerHTML = `
-                        <div style="text-align: center; padding: 40px; color: white;">
-                            <p>No saved templates yet!</p>
-                            <p style="font-size: 0.9rem; margin-top: 10px; color: rgba(255,255,255,0.8);">Use the menu on any activity card to save it as a template.</p>
-                        </div>
-                    `;
+                if (filteredTemplates.length === 0) {
+                    if (templates.length === 0) {
+                        body.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: white;">
+                                <p>No saved templates yet!</p>
+                                <p style="font-size: 0.9rem; margin-top: 10px; color: rgba(255,255,255,0.8);">Use the menu on any activity card to save it as a template.</p>
+                            </div>
+                        `;
+                    } else {
+                        body.innerHTML = `
+                            <div style="text-align: center; padding: 40px; color: white;">
+                                <p>No templates found matching "${searchTerm}"</p>
+                            </div>
+                        `;
+                    }
+                    this.updateBatchControls();
                     return;
                 }
                 
@@ -2474,15 +2713,150 @@
                     <div class="activity-category">
                         <h3 class="activity-category-title">My Templates</h3>
                         <div class="library-activities">
-                            ${templates.map(template => `
-                                <div class="library-activity" onclick="app.addActivityFromLibrary('${template.emoji}', '${template.text.replace(/'/g, "\\'")}', '${(template.description || '').replace(/'/g, "\\'")}')">
-                                    <div class="library-activity-emoji">${template.emoji}</div>
-                                    <div class="library-activity-title">${template.text}</div>
-                                </div>
-                            `).join('')}
+                            ${filteredTemplates.map((template, index) => {
+                                const activityId = `template_${index}`;
+                                const isSelected = this.selectedActivities.has(activityId);
+                                return `
+                                    <div class="library-activity ${isSelected ? 'selected' : ''}" 
+                                         onclick="app.toggleActivitySelection('${activityId}', '${template.emoji}', '${template.text.replace(/'/g, "\\'")}', '${(template.description || '').replace(/'/g, "\\'")}')">
+                                        <div class="library-activity-checkbox">
+                                            <span class="material-icons">${isSelected ? 'check_box' : 'check_box_outline_blank'}</span>
+                                        </div>
+                                        <div class="library-activity-emoji">${template.emoji}</div>
+                                        <div class="library-activity-title">${template.text}</div>
+                                    </div>
+                                `;
+                            }).join('')}
                         </div>
                     </div>
                 `;
+                this.updateBatchControls();
+            }
+            
+            toggleActivitySelection(activityId, emoji, text, description) {
+                if (this.selectedActivities.has(activityId)) {
+                    this.selectedActivities.delete(activityId);
+                } else {
+                    this.selectedActivities.set(activityId, { emoji, text, description });
+                }
+                this.renderCurrentLibraryTab();
+            }
+            
+            updateBatchControls() {
+                const batchControls = document.getElementById('libraryBatchControls');
+                const selectedCount = document.querySelector('.selected-count');
+                
+                if (batchControls && selectedCount) {
+                    const count = this.selectedActivities.size;
+                    if (count > 0) {
+                        batchControls.style.display = 'flex';
+                        selectedCount.textContent = count;
+                    } else {
+                        batchControls.style.display = 'none';
+                    }
+                }
+            }
+            
+            selectAllActivities() {
+                const activities = document.querySelectorAll('.library-activity');
+                activities.forEach(activity => {
+                    const onclick = activity.getAttribute('onclick');
+                    if (onclick && !activity.classList.contains('selected')) {
+                        // Extract parameters from onclick and add to selection
+                        eval(onclick.replace('app.toggleActivitySelection', 'this.addToSelection'));
+                    }
+                });
+                this.renderCurrentLibraryTab();
+            }
+            
+            addToSelection(activityId, emoji, text, description) {
+                this.selectedActivities.set(activityId, { emoji, text, description });
+            }
+            
+            clearSelection() {
+                this.selectedActivities.clear();
+                this.renderCurrentLibraryTab();
+            }
+            
+            isCategorySelected(category) {
+                // Get all activities in this category
+                const categoryActivities = this.getDefaultActivities()[category] || [];
+                if (categoryActivities.length === 0) return false;
+                
+                // Check if all activities in the category are selected
+                return categoryActivities.every(activity => {
+                    const activityId = `default_${activity.emoji}_${activity.text}`;
+                    return this.selectedActivities.has(activityId);
+                });
+            }
+            
+            toggleCategorySelection(category, event) {
+                event.stopPropagation();
+                const categoryActivities = this.getDefaultActivities()[category] || [];
+                const isSelected = this.isCategorySelected(category);
+                
+                categoryActivities.forEach(activity => {
+                    const activityId = `default_${activity.emoji}_${activity.text}`;
+                    if (isSelected) {
+                        // Deselect all
+                        this.selectedActivities.delete(activityId);
+                    } else {
+                        // Select all
+                        this.selectedActivities.set(activityId, {
+                            emoji: activity.emoji,
+                            text: activity.text,
+                            description: activity.description || ''
+                        });
+                    }
+                });
+                
+                this.renderCurrentLibraryTab();
+            }
+            
+            addSelectedActivities() {
+                const activities = [];
+                this.selectedActivities.forEach((value, key) => {
+                    if (value && typeof value === 'object') {
+                        activities.push(value);
+                    }
+                });
+                
+                // Add all selected activities
+                activities.forEach(activity => {
+                    if (activity && activity.text) {
+                        this.addActivity(
+                            activity.text, 
+                            activity.emoji || '📝', 
+                            null, 
+                            'normal', 
+                            activity.description || ''
+                        );
+                    }
+                });
+                
+                // Clear selection and close panel
+                this.clearSelection();
+                this.closePanel();
+                
+                // Show toast
+                this.showToast(`Added ${activities.length} activities`);
+                
+                // Scroll to the last added activity
+                setTimeout(() => {
+                    const activityCards = document.querySelectorAll('.activity-card');
+                    const lastActivity = activityCards[activityCards.length - 1];
+                    if (lastActivity) {
+                        lastActivity.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                }, 100);
+            }
+            
+            renderCurrentLibraryTab() {
+                if (this.currentLibraryTab === 'templates') {
+                    this.renderMyTemplates();
+                } else {
+                    this.renderDefaultActivities();
+                }
             }
             
             addActivityFromLibrary(emoji, text, description) {
@@ -2495,6 +2869,137 @@
                         cards[cards.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
                     }
                 }, 100);
+            }
+            
+            // ===== CATEGORY MANAGEMENT =====
+            loadCategoryOrder() {
+                const saved = localStorage.getItem('stackmap_category_order');
+                return saved ? JSON.parse(saved) : [];
+            }
+            
+            saveCategoryOrder() {
+                localStorage.setItem('stackmap_category_order', JSON.stringify(this.categoryOrder));
+            }
+            
+            loadCollapsedCategories() {
+                const saved = localStorage.getItem('stackmap_collapsed_categories');
+                const hasVisited = localStorage.getItem('stackmap_library_visited');
+                
+                if (saved && hasVisited) {
+                    return new Set(JSON.parse(saved));
+                } else {
+                    // First time - all categories collapsed by default
+                    const allCategories = Object.keys(this.getDefaultActivities());
+                    const collapsedSet = new Set(allCategories);
+                    
+                    // Mark as visited
+                    localStorage.setItem('stackmap_library_visited', 'true');
+                    
+                    return collapsedSet;
+                }
+            }
+            
+            saveCollapsedCategories() {
+                localStorage.setItem('stackmap_collapsed_categories', JSON.stringify([...this.collapsedCategories]));
+            }
+            
+            sortCategoriesByOrder(categories) {
+                const entries = Object.entries(categories);
+                
+                // If no saved order, return default order
+                if (this.categoryOrder.length === 0) {
+                    return entries;
+                }
+                
+                // Sort by saved order
+                return entries.sort((a, b) => {
+                    const aIndex = this.categoryOrder.indexOf(a[0]);
+                    const bIndex = this.categoryOrder.indexOf(b[0]);
+                    
+                    // If both are in saved order, sort by that
+                    if (aIndex !== -1 && bIndex !== -1) {
+                        return aIndex - bIndex;
+                    }
+                    
+                    // If only one is in saved order, it comes first
+                    if (aIndex !== -1) return -1;
+                    if (bIndex !== -1) return 1;
+                    
+                    // Neither in saved order, maintain original order
+                    return 0;
+                });
+            }
+            
+            toggleCategory(category) {
+                if (this.collapsedCategories.has(category)) {
+                    this.collapsedCategories.delete(category);
+                } else {
+                    this.collapsedCategories.add(category);
+                }
+                this.saveCollapsedCategories();
+                
+                // Toggle the visual state
+                const categoryId = category.replace(/[^a-zA-Z0-9]/g, '_');
+                const activitiesDiv = document.getElementById(`category_${categoryId}`);
+                const toggleIcon = event.target.closest('.activity-category-title').querySelector('.category-toggle');
+                
+                if (activitiesDiv) {
+                    activitiesDiv.classList.toggle('collapsed');
+                }
+                if (toggleIcon) {
+                    toggleIcon.textContent = this.collapsedCategories.has(category) ? 'expand_more' : 'expand_less';
+                }
+            }
+            
+            // Drag and drop for categories
+            draggedCategory = null;
+            
+            handleCategoryDragStart(event, category) {
+                this.draggedCategory = category;
+                event.dataTransfer.effectAllowed = 'move';
+                event.target.closest('.activity-category').classList.add('dragging');
+            }
+            
+            handleCategoryDragOver(event) {
+                event.preventDefault();
+                event.dataTransfer.dropEffect = 'move';
+                
+                const draggedOver = event.target.closest('.activity-category');
+                if (draggedOver && !draggedOver.classList.contains('dragging')) {
+                    draggedOver.classList.add('drag-over');
+                }
+            }
+            
+            handleCategoryDrop(event, targetCategory) {
+                event.preventDefault();
+                
+                if (this.draggedCategory && this.draggedCategory !== targetCategory) {
+                    // Update category order
+                    const categories = Object.keys(this.getDefaultActivities());
+                    const newOrder = [];
+                    
+                    categories.forEach(cat => {
+                        if (cat === targetCategory) {
+                            newOrder.push(this.draggedCategory);
+                        }
+                        if (cat !== this.draggedCategory) {
+                            newOrder.push(cat);
+                        }
+                    });
+                    
+                    this.categoryOrder = newOrder;
+                    this.saveCategoryOrder();
+                    this.renderDefaultActivities();
+                }
+            }
+            
+            handleCategoryDragEnd(event) {
+                // Clean up
+                const categories = document.querySelectorAll('.activity-category');
+                categories.forEach(cat => {
+                    cat.classList.remove('dragging', 'drag-over');
+                });
+                this.draggedCategory = null;
             }
             
             saveActivityAsTemplate(activityId) {
@@ -3090,12 +3595,8 @@
                 const activities = this.getCurrentActivities();
                 const user = this.getCurrentUser();
                 
-                // Sort activities: pinned first, then by creation order
-                const sortedActivities = [...activities].sort((a, b) => {
-                    if (a.pinned && !b.pinned) return -1;
-                    if (!a.pinned && b.pinned) return 1;
-                    return 0; // Maintain original order for same pin status
-                });
+                // Use activities in their current order (respects drag and drop)
+                const sortedActivities = [...activities];
                 
                 // Update header with user info and day
                 const subtitle = document.getElementById('subtitle');
