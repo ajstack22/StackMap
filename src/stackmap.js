@@ -873,24 +873,50 @@
             
             // ===== DRAG & DROP FUNCTIONALITY =====
             setupDragAndDrop() {
-                // We'll set up drag and drop on the activity list container
-                // Event delegation will handle dynamically created cards
+                // Set up drag and drop using event delegation on the activity list container
+                const activityList = document.getElementById('activityList');
+                if (!activityList) return;
+                
+                // Use event delegation for all drag events
+                activityList.addEventListener('dragstart', (e) => {
+                    if (e.target.classList.contains('activity-card') && this.isEditMode) {
+                        this.handleDragStart(e);
+                    }
+                });
+                
+                activityList.addEventListener('dragover', (e) => {
+                    if (this.isEditMode) {
+                        this.handleDragOver(e);
+                    }
+                });
+                
+                activityList.addEventListener('drop', (e) => {
+                    if (e.target.closest('.activity-card') && this.isEditMode) {
+                        this.handleDrop(e);
+                    }
+                });
+                
+                activityList.addEventListener('dragend', (e) => {
+                    if (e.target.classList.contains('activity-card') && this.isEditMode) {
+                        this.handleDragEnd(e);
+                    }
+                });
+                
+                activityList.addEventListener('dragenter', (e) => {
+                    if (e.target.closest('.activity-card') && this.isEditMode) {
+                        this.handleDragEnter(e);
+                    }
+                });
+                
+                activityList.addEventListener('dragleave', (e) => {
+                    if (e.target.closest('.activity-card') && this.isEditMode) {
+                        this.handleDragLeave(e);
+                    }
+                });
             }
             
             enableDragAndDrop() {
-                if (!this.isEditMode) return;
-                
-                const cards = document.querySelectorAll('.activity-card');
-                cards.forEach(card => {
-                    card.draggable = true;
-                    
-                    card.addEventListener('dragstart', (e) => this.handleDragStart(e));
-                    card.addEventListener('dragover', (e) => this.handleDragOver(e));
-                    card.addEventListener('drop', (e) => this.handleDrop(e));
-                    card.addEventListener('dragend', (e) => this.handleDragEnd(e));
-                    card.addEventListener('dragenter', (e) => this.handleDragEnter(e));
-                    card.addEventListener('dragleave', (e) => this.handleDragLeave(e));
-                });
+                // No longer needed - using event delegation in setupDragAndDrop
             }
             
             handleDragStart(e) {
@@ -3645,6 +3671,7 @@
                     return `
                         <div class="activity-card ${activity.completed ? 'completed' : ''}" 
                              data-activity-id="${activity.id}"
+                             ${isEditMode ? 'draggable="true"' : ''}
                              ${!isEditMode ? `onclick="app.toggleActivityComplete('${activity.id}')"`  : ''}>
                             
                             ${displayMode === 'numbers' ? `
