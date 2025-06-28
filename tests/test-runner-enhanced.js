@@ -93,36 +93,10 @@ class TestRunner {
     async runUnitTests() {
         console.log('🔬 Running Unit Tests...\n');
         
-        // For now, check critical files exist (browser-based tests need different approach)
-        const criticalFiles = [
-            { file: 'state.js', tests: ['State management', 'Data persistence'] },
-            { file: 'components.js', tests: ['Component rendering', 'Event handling'] },
-            { file: 'drive-sync.js', tests: ['Drive sync logic', 'Offline handling'] }
-        ];
-        
-        criticalFiles.forEach(({ file, tests }) => {
-            const exists = fs.existsSync(file);
-            const result = {
-                name: `Unit: ${file}`,
-                file,
-                passed: exists,
-                tests: tests.map(test => ({
-                    name: test,
-                    passed: exists,
-                    message: exists ? 'File exists' : 'File missing'
-                }))
-            };
-            
-            this.results.unit.push(result);
-            this.updateSummary(result);
-            
-            console.log(`  ${exists ? '✅' : '❌'} ${file}`);
-            tests.forEach(test => {
-                console.log(`    ${exists ? '✓' : '✗'} ${test}`);
-            });
-        });
-        
-        console.log('');
+        // Note: Unit tests have been replaced with story-based integration tests
+        // The project uses Puppeteer-based story tests for comprehensive testing
+        console.log('  ℹ️  Unit tests are not implemented in this project');
+        console.log('  ℹ️  See tests/stories/ for story-based integration tests\n');
     }
 
     /**
