@@ -111,7 +111,7 @@ const ActivityRow = ({
           style={styles.iconButton}
           onPress={() => onEdit(activity)}
         >
-          <Icon name="edit" size={20} color={theme.primary} style={{ transform: [{ scaleY: -1 }] }} />
+          <Icon name="edit" size={20} color={theme.primary} style={{ transform: [{ scaleX: -1 }, { scaleY: -1 }] }} />
         </TouchableOpacity>
         
         <TouchableOpacity
@@ -350,7 +350,7 @@ const CategorySection = ({
                 style={styles.iconButton}
                 onPress={handleStartEditCategory}
               >
-                <Icon name="edit" size={20} color="white" style={{ transform: [{ scaleY: -1 }] }} />
+                <Icon name="edit" size={20} color="white" style={{ transform: [{ scaleX: -1 }, { scaleY: -1 }] }} />
               </TouchableOpacity>
               
               <TouchableOpacity
