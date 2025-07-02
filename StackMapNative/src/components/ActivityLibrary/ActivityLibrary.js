@@ -290,14 +290,16 @@ const CategorySection = ({
   }, [isExpanded]);
 
   return (
-    <View style={[styles.categorySection, isActive && styles.draggingCategory]}>
+    <TouchableOpacity
+      style={[styles.categorySection, isActive && styles.draggingCategory]}
+      onLongPress={handleDragStart}
+      delayLongPress={150}
+      activeOpacity={1}
+    >
       <View style={[styles.categoryHeader, { backgroundColor: theme.primary }]}>
-        <TouchableOpacity
-          style={styles.categoryDragHandle}
-          onLongPress={handleDragStart}
-        >
+        <View style={styles.categoryDragHandle}>
           <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
-        </TouchableOpacity>
+        </View>
         {isEditingCategory ? (
           <>
             <View style={styles.categoryEditContainer}>
@@ -432,7 +434,7 @@ const CategorySection = ({
           </>
         )}
       </Animated.View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
@@ -632,8 +634,10 @@ const ActivityLibrary = ({
           data={categories}
           onDragEnd={handleCategoryDragEnd}
           keyExtractor={(item) => item.id}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: SPACING.lg }}
           renderItem={({ item, drag, isActive }) => (
-            <ScaleDecorator>
+            <ScaleDecorator activeScale={0.95}>
               <CategorySection
                 category={item}
                 onEditCategory={handleEditCategory}
@@ -769,7 +773,8 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
   },
   categorySection: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.md,
+    backgroundColor: 'transparent',
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -866,7 +871,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   draggingCategory: {
-    opacity: 0.9,
+    opacity: 0.95,
+    elevation: 10,
+    zIndex: 1000,
   },
   emptyMessage: {
     textAlign: 'center',
