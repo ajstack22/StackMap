@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,9 @@ import {
   SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import DraggableFlatList, {
+  ScaleDecorator,
+} from 'react-native-draggable-flatlist';
 import {
   SHADOWS,
   TYPOGRAPHY,
@@ -137,11 +140,37 @@ const CategorySection = ({
   onDeleteActivity,
   onQuickAdd,
   onAddActivity,
+  onUpdateCategory,
   theme,
 }) => {
   const [isExpanded, setIsExpanded] = useState(true);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [editingCategoryName, setEditingCategoryName] = useState(category.name);
+  const [orderedActivities, setOrderedActivities] = useState(category.activities);
   const expandAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    setOrderedActivities(category.activities);
+  }, [category.activities]);
+
+  const handleStartEditCategory = () => {
+    setIsEditingCategory(true);
+    setEditingCategoryName(category.name);
+  };
+
+  const handleSaveCategory = () => {
+    if (editingCategoryName.trim()) {
+      onUpdateCategory(category.id, editingCategoryName.trim(), orderedActivities);
+      setIsEditingCategory(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingCategoryName(category.name);
+    setOrderedActivities(category.activities);
+    setIsEditingCategory(false);
+  };
 
   const toggleExpand = () => {
     const toValue = isExpanded ? 0 : 1;
@@ -202,43 +231,75 @@ const CategorySection = ({
   return (
     <View style={styles.categorySection}>
       <View style={[styles.categoryHeader, { backgroundColor: theme.primary }]}>
-        <TouchableOpacity
-          style={styles.categoryTitleContainer}
-          onPress={toggleExpand}
-        >
-          <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-            <Icon name="chevron-right" size={24} color="white" />
-          </Animated.View>
-          <Text style={styles.categoryTitle}>
-            {category.name}
-          </Text>
-          <Text style={styles.activityCount}>
-            ({category.activities.length})
-          </Text>
-        </TouchableOpacity>
-        
-        <View style={styles.categoryActions}>
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => onEditCategory(category)}
-          >
-            <Icon name="edit" size={20} color="white" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={handleDeleteCategory}
-          >
-            <Icon name="delete" size={20} color="white" />
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={styles.iconButton}
-            onPress={() => onAddActivity(category)}
-          >
-            <Icon name="add" size={20} color="white" />
-          </TouchableOpacity>
-        </View>
+        {isEditingCategory ? (
+          <>
+            <View style={styles.categoryEditContainer}>
+              <TextInput
+                style={styles.categoryEditInput}
+                value={editingCategoryName}
+                onChangeText={setEditingCategoryName}
+                autoFocus
+                onSubmitEditing={handleSaveCategory}
+              />
+            </View>
+            
+            <View style={styles.categoryActions}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleSaveCategory}
+              >
+                <Icon name="check" size={20} color="white" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleCancelEdit}
+              >
+                <Icon name="close" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+          </>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.categoryTitleContainer}
+              onPress={toggleExpand}
+            >
+              <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+                <Icon name="chevron-right" size={24} color="white" />
+              </Animated.View>
+              <Text style={styles.categoryTitle}>
+                {category.name}
+              </Text>
+              <Text style={styles.activityCount}>
+                ({category.activities.length})
+              </Text>
+            </TouchableOpacity>
+            
+            <View style={styles.categoryActions}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleStartEditCategory}
+              >
+                <Icon name="edit" size={20} color="white" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={handleDeleteCategory}
+              >
+                <Icon name="delete" size={20} color="white" />
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => onAddActivity(category)}
+              >
+                <Icon name="add" size={20} color="white" />
+              </TouchableOpacity>
+            </View>
+          </>
+        )}
       </View>
       
       <Animated.View style={[
@@ -251,21 +312,57 @@ const CategorySection = ({
           opacity: expandAnim,
         },
       ]}>
-        {category.activities.map((activity, index) => (
-          <ActivityRow
-            key={activity.id}
-            activity={activity}
-            onEdit={onEditActivity}
-            onDelete={(activity) => onDeleteActivity(category.id, activity)}
-            onQuickAdd={onQuickAdd}
-            theme={theme}
-            slideAnim={slideAnims[index] || new Animated.Value(0)}
-          />
-        ))}
-        {category.activities.length === 0 && (
-          <Text style={styles.emptyMessage}>
-            No activities yet. Tap + to add one.
-          </Text>
+        {isEditingCategory ? (
+          orderedActivities.length > 0 ? (
+            <DraggableFlatList
+              data={orderedActivities}
+              onDragEnd={({ data }) => setOrderedActivities(data)}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item, drag, isActive }) => (
+                <ScaleDecorator>
+                  <TouchableOpacity
+                    onLongPress={drag}
+                    disabled={isActive}
+                    style={[
+                      styles.activityRow,
+                      isActive && styles.draggingRow,
+                    ]}
+                  >
+                    <View style={styles.dragHandle}>
+                      <Icon name="drag-handle" size={24} color={COLORS.gray[400]} />
+                    </View>
+                    <View style={styles.activityInfo}>
+                      <Text style={styles.activityEmoji}>{item.emoji}</Text>
+                      <Text style={styles.activityName}>{item.name}</Text>
+                    </View>
+                  </TouchableOpacity>
+                </ScaleDecorator>
+              )}
+            />
+          ) : (
+            <Text style={styles.emptyMessage}>
+              No activities yet. Tap + to add one.
+            </Text>
+          )
+        ) : (
+          <>
+            {category.activities.map((activity, index) => (
+              <ActivityRow
+                key={activity.id}
+                activity={activity}
+                onEdit={onEditActivity}
+                onDelete={(activity) => onDeleteActivity(category.id, activity)}
+                onQuickAdd={onQuickAdd}
+                theme={theme}
+                slideAnim={slideAnims[index] || new Animated.Value(0)}
+              />
+            ))}
+            {category.activities.length === 0 && (
+              <Text style={styles.emptyMessage}>
+                No activities yet. Tap + to add one.
+              </Text>
+            )}
+          </>
         )}
       </Animated.View>
     </View>
@@ -404,6 +501,16 @@ const ActivityLibrary = ({
     }
   };
 
+  const handleUpdateCategory = (categoryId, newName, newActivities) => {
+    const newCategories = categories.map(cat =>
+      cat.id === categoryId
+        ? { ...cat, name: newName, activities: newActivities }
+        : cat
+    );
+    setCategories(newCategories);
+    if (onSaveCategories) onSaveCategories(newCategories);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.light }]}>
       <SafeAreaView style={{ backgroundColor: theme.primary }}>
@@ -427,6 +534,7 @@ const ActivityLibrary = ({
             onDeleteActivity={handleDeleteActivity}
             onQuickAdd={handleQuickAdd}
             onAddActivity={handleAddActivity}
+            onUpdateCategory={handleUpdateCategory}
             theme={theme}
           />
         ))}
@@ -608,6 +716,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: SPACING.xs,
+  },
+  categoryEditContainer: {
+    flex: 1,
+    marginRight: SPACING.sm,
+  },
+  categoryEditInput: {
+    fontSize: isTablet() ? 20 : 18,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: 'white',
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(255, 255, 255, 0.5)',
+    paddingVertical: SPACING.xs,
+  },
+  dragHandle: {
+    paddingHorizontal: SPACING.sm,
+    justifyContent: 'center',
+  },
+  draggingRow: {
+    backgroundColor: COLORS.gray[100],
+    opacity: 0.9,
   },
   emptyMessage: {
     textAlign: 'center',
