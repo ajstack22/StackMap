@@ -201,13 +201,13 @@ const CategorySection = ({
 
   return (
     <View style={styles.categorySection}>
-      <View style={styles.categoryHeader}>
+      <View style={[styles.categoryHeader, { backgroundColor: theme.primary }]}>
         <TouchableOpacity
           style={styles.categoryTitleContainer}
           onPress={toggleExpand}
         >
           <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-            <Icon name="chevron-right" size={24} color={theme.primary} />
+            <Icon name="chevron-right" size={24} color="white" />
           </Animated.View>
           <Text style={styles.categoryTitle}>
             {category.name}
@@ -222,21 +222,21 @@ const CategorySection = ({
             style={styles.iconButton}
             onPress={() => onEditCategory(category)}
           >
-            <Icon name="edit" size={20} color={theme.primary} />
+            <Icon name="edit" size={20} color="white" />
           </TouchableOpacity>
           
           <TouchableOpacity
             style={styles.iconButton}
             onPress={handleDeleteCategory}
           >
-            <Icon name="delete" size={20} color={COLORS.error} />
+            <Icon name="delete" size={20} color="white" />
           </TouchableOpacity>
           
           <TouchableOpacity
             style={styles.iconButton}
             onPress={() => onAddActivity(category)}
           >
-            <Icon name="add" size={20} color={theme.primary} />
+            <Icon name="add" size={20} color="white" />
           </TouchableOpacity>
         </View>
       </View>
@@ -547,6 +547,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     marginBottom: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.level1,
   },
   categoryTitleContainer: {
     flexDirection: 'row',
@@ -554,15 +557,15 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   categoryTitle: {
-    fontSize: isTablet() ? 18 : 16,
+    fontSize: isTablet() ? 20 : 18,
     fontWeight: '600',
     marginLeft: SPACING.xs,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.gray[700],
+    color: 'white',
   },
   activityCount: {
     fontSize: isTablet() ? 14 : 12,
-    color: COLORS.gray[500],
+    color: 'rgba(255, 255, 255, 0.8)',
     marginLeft: SPACING.xs,
   },
   categoryActions: {
