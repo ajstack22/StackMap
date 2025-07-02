@@ -28,6 +28,11 @@ import {
 // Default activity categories with starter activities
 const DEFAULT_CATEGORIES = [
   {
+    id: 'my-templates',
+    name: 'My Templates',
+    activities: [],
+  },
+  {
     id: 'daily-routines',
     name: 'Daily Routines',
     activities: [
@@ -63,11 +68,6 @@ const DEFAULT_CATEGORIES = [
       { id: 'music', name: 'Music', emoji: '🎵' },
       { id: 'art', name: 'Art & Crafts', emoji: '🎨' },
     ],
-  },
-  {
-    id: 'my-templates',
-    name: 'My Templates',
-    activities: [],
   },
 ];
 
@@ -147,33 +147,68 @@ const CategorySection = ({
   onEndEditCategory,
   drag,
   isActive,
+  isDraggingAnyCategory,
+  onDragStart,
+  onDragEnd,
+  expandedState,
+  onExpandedChange,
 }) => {
   const isEditingCategory = editingCategoryId === category.id;
-  const [isExpanded, setIsExpanded] = useState(true);
+  const [isExpanded, setIsExpanded] = useState(expandedState !== undefined ? expandedState : true);
   const [editingCategoryName, setEditingCategoryName] = useState(category.name);
   const [orderedActivities, setOrderedActivities] = useState(category.activities);
-  const [isDraggingThisCategory, setIsDraggingThisCategory] = useState(false);
-  const expandAnim = useRef(new Animated.Value(1)).current;
-  const rotateAnim = useRef(new Animated.Value(1)).current;
+  const expandAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+  const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
 
   useEffect(() => {
     setOrderedActivities(category.activities);
   }, [category.activities]);
 
-  // Auto-collapse when another category is being edited
+  // Update expanded state when it changes
   useEffect(() => {
-    if (editingCategoryId && editingCategoryId !== category.id && isExpanded) {
-      toggleExpand();
+    if (expandedState !== undefined) {
+      setIsExpanded(expandedState);
+      // Animate to the new state
+      const toValue = expandedState ? 1 : 0;
+      Animated.parallel([
+        Animated.timing(expandAnim, {
+          toValue,
+          duration: 200,
+          useNativeDriver: false,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start();
     }
-  }, [editingCategoryId]);
+  }, [expandedState]);
+
+  // Collapse when any category starts dragging
+  useEffect(() => {
+    if (isDraggingAnyCategory && isExpanded) {
+      // Animate collapse
+      Animated.parallel([
+        Animated.timing(expandAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: false,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setIsExpanded(false);
+      });
+    }
+  }, [isDraggingAnyCategory]);
 
   const handleStartEditCategory = () => {
     onStartEditCategory(category.id);
     setEditingCategoryName(category.name);
-    // Collapse if expanded when starting edit
-    if (isExpanded) {
-      toggleExpand();
-    }
   };
 
   const handleSaveCategory = () => {
@@ -190,7 +225,8 @@ const CategorySection = ({
   };
 
   const toggleExpand = () => {
-    const toValue = isExpanded ? 0 : 1;
+    const newExpanded = !isExpanded;
+    const toValue = newExpanded ? 1 : 0;
     Animated.parallel([
       Animated.timing(expandAnim, {
         toValue,
@@ -203,33 +239,15 @@ const CategorySection = ({
         useNativeDriver: true,
       }),
     ]).start();
-    setIsExpanded(!isExpanded);
+    setIsExpanded(newExpanded);
+    if (onExpandedChange) {
+      onExpandedChange(category.id, newExpanded);
+    }
   };
 
   const handleDragStart = () => {
-    setIsDraggingThisCategory(true);
-    if (isExpanded) {
-      // Animate collapse when starting to drag
-      Animated.parallel([
-        Animated.timing(expandAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: false,
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        setIsExpanded(false);
-      });
-    }
+    onDragStart();
     drag();
-  };
-
-  const handleDragEnd = () => {
-    setIsDraggingThisCategory(false);
   };
 
   const handleDeleteCategory = () => {
@@ -277,7 +295,6 @@ const CategorySection = ({
         <TouchableOpacity
           style={styles.categoryDragHandle}
           onLongPress={handleDragStart}
-          onPressOut={handleDragEnd}
         >
           <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
         </TouchableOpacity>
@@ -434,6 +451,8 @@ const ActivityLibrary = ({
   const [editEmoji, setEditEmoji] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [isDraggingAnyCategory, setIsDraggingAnyCategory] = useState(false);
+  const [categoryExpandedStates, setCategoryExpandedStates] = useState({});
 
   // Edit handlers
   const handleEditCategory = (category) => {
@@ -570,9 +589,31 @@ const ActivityLibrary = ({
     setEditingCategoryId(null);
   };
 
+  const handleCategoryDragStart = () => {
+    // Save current expanded states
+    const states = {};
+    categories.forEach(cat => {
+      // We'll get this from the children components
+      states[cat.id] = categoryExpandedStates[cat.id] ?? true;
+    });
+    setCategoryExpandedStates(states);
+    setIsDraggingAnyCategory(true);
+  };
+
   const handleCategoryDragEnd = ({ data }) => {
     setCategories(data);
     if (onSaveCategories) onSaveCategories(data);
+    // Restore expanded states after a short delay
+    setTimeout(() => {
+      setIsDraggingAnyCategory(false);
+    }, 300);
+  };
+
+  const handleExpandedChange = (categoryId, isExpanded) => {
+    setCategoryExpandedStates(prev => ({
+      ...prev,
+      [categoryId]: isExpanded
+    }));
   };
 
   return (
@@ -608,6 +649,11 @@ const ActivityLibrary = ({
                 onEndEditCategory={handleEndEditCategory}
                 drag={drag}
                 isActive={isActive}
+                isDraggingAnyCategory={isDraggingAnyCategory}
+                onDragStart={handleCategoryDragStart}
+                onDragEnd={() => {}}
+                expandedState={isDraggingAnyCategory ? false : categoryExpandedStates[item.id]}
+                onExpandedChange={handleExpandedChange}
               />
             </ScaleDecorator>
           )}
@@ -824,9 +870,10 @@ const styles = StyleSheet.create({
   },
   emptyMessage: {
     textAlign: 'center',
-    color: COLORS.gray[500],
+    color: 'white',
     fontStyle: 'italic',
     padding: SPACING.lg,
+    opacity: 0.8,
   },
   addCategoryButton: {
     flexDirection: 'row',
