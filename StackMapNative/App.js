@@ -58,6 +58,7 @@ import {
 
 // Import components
 import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary } from './src/components';
+import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 
 // Import hooks
 import { useToast } from './src/hooks';
@@ -531,6 +532,35 @@ const App = () => {
       }
     });
   };
+
+  const addActivityToLibrary = (activity) => {
+    // Initialize with default categories if none exist
+    const categories = activityCategories || DEFAULT_CATEGORIES;
+    const updatedCategories = [...categories];
+    
+    // Find My Templates category
+    const myTemplatesIndex = updatedCategories.findIndex(cat => cat.id === 'my-templates');
+    
+    if (myTemplatesIndex !== -1) {
+      // Create a template from the activity
+      const template = {
+        id: `template-${Date.now()}`,
+        name: activity.text || activity.title || 'Untitled',
+        emoji: activity.emoji || '🎯',
+      };
+      
+      // Add to My Templates
+      updatedCategories[myTemplatesIndex] = {
+        ...updatedCategories[myTemplatesIndex],
+        activities: [...updatedCategories[myTemplatesIndex].activities, template]
+      };
+      
+      setActivityCategories(updatedCategories);
+      showToast({ message: 'Added to My Templates' });
+    } else {
+      showToast({ message: 'Could not find My Templates category' });
+    }
+  };
   
   const addUser = () => {
     if (!newUserName.trim()) {
@@ -774,6 +804,23 @@ const App = () => {
             ]}
           >
             <Icon name="edit" size={20} color={theme.primary} />
+          </AnimatedTouchableOpacity>
+          <AnimatedTouchableOpacity
+            onPress={() => addActivityToLibrary(item)}
+            style={[
+              styles.editButton,
+              {
+                opacity: editIconsOpacity,
+                transform: [{
+                  translateY: editIconsTranslateY.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }]
+              }
+            ]}
+          >
+            <Icon name="library-add" size={20} color={theme.primary} />
           </AnimatedTouchableOpacity>
           <AnimatedTouchableOpacity
             onPress={() => deleteActivity(item.id)}
@@ -1984,7 +2031,7 @@ const styles = StyleSheet.create({
     right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 20,
+    gap: 15,
   },
   editButton: {
     width: 40,

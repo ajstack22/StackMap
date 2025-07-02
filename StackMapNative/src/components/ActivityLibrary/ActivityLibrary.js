@@ -976,3 +976,4 @@ const styles = StyleSheet.create({
 });
 
 export default ActivityLibrary;
+export { DEFAULT_CATEGORIES };
