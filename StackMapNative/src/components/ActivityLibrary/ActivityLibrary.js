@@ -145,7 +145,6 @@ const CategorySection = ({
   editingCategoryId,
   onStartEditCategory,
   onEndEditCategory,
-  isDragging,
   drag,
   isActive,
 }) => {
@@ -153,6 +152,7 @@ const CategorySection = ({
   const [isExpanded, setIsExpanded] = useState(true);
   const [editingCategoryName, setEditingCategoryName] = useState(category.name);
   const [orderedActivities, setOrderedActivities] = useState(category.activities);
+  const [isDraggingThisCategory, setIsDraggingThisCategory] = useState(false);
   const expandAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(1)).current;
 
@@ -206,6 +206,32 @@ const CategorySection = ({
     setIsExpanded(!isExpanded);
   };
 
+  const handleDragStart = () => {
+    setIsDraggingThisCategory(true);
+    if (isExpanded) {
+      // Animate collapse when starting to drag
+      Animated.parallel([
+        Animated.timing(expandAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: false,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        setIsExpanded(false);
+      });
+    }
+    drag();
+  };
+
+  const handleDragEnd = () => {
+    setIsDraggingThisCategory(false);
+  };
+
   const handleDeleteCategory = () => {
     Alert.alert(
       'Delete Category',
@@ -246,17 +272,15 @@ const CategorySection = ({
   }, [isExpanded]);
 
   return (
-    <TouchableOpacity
-      style={[styles.categorySection, isActive && styles.draggingCategory]}
-      onLongPress={isDragging ? drag : undefined}
-      disabled={!isDragging}
-    >
+    <View style={[styles.categorySection, isActive && styles.draggingCategory]}>
       <View style={[styles.categoryHeader, { backgroundColor: theme.primary }]}>
-        {isDragging && (
-          <View style={styles.categoryDragHandle}>
-            <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
-          </View>
-        )}
+        <TouchableOpacity
+          style={styles.categoryDragHandle}
+          onLongPress={handleDragStart}
+          onPressOut={handleDragEnd}
+        >
+          <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
+        </TouchableOpacity>
         {isEditingCategory ? (
           <>
             <View style={styles.categoryEditContainer}>
@@ -391,7 +415,7 @@ const CategorySection = ({
           </>
         )}
       </Animated.View>
-    </TouchableOpacity>
+    </View>
   );
 };
 
@@ -410,7 +434,6 @@ const ActivityLibrary = ({
   const [editEmoji, setEditEmoji] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
-  const [isDraggingCategories, setIsDraggingCategories] = useState(false);
 
   // Edit handlers
   const handleEditCategory = (category) => {
@@ -547,14 +570,9 @@ const ActivityLibrary = ({
     setEditingCategoryId(null);
   };
 
-  const handleStartDragCategories = () => {
-    setIsDraggingCategories(true);
-    setEditingCategoryId(null);
-  };
-
-  const handleEndDragCategories = () => {
-    setIsDraggingCategories(false);
-    if (onSaveCategories) onSaveCategories(categories);
+  const handleCategoryDragEnd = ({ data }) => {
+    setCategories(data);
+    if (onSaveCategories) onSaveCategories(data);
   };
 
   return (
@@ -562,65 +580,21 @@ const ActivityLibrary = ({
       <SafeAreaView style={{ backgroundColor: theme.primary }}>
         <View style={[styles.header, { backgroundColor: theme.primary }]}>
           <Text style={styles.headerTitle}>Activity Library</Text>
-          <View style={styles.headerActions}>
-            <TouchableOpacity 
-              onPress={isDraggingCategories ? handleEndDragCategories : handleStartDragCategories} 
-              style={styles.headerButton}
-            >
-              <Icon name={isDraggingCategories ? "check" : "reorder"} size={24} color="white" />
-            </TouchableOpacity>
-            <TouchableOpacity onPress={onClose} style={styles.headerButton}>
-              <Icon name="close" size={24} color="white" />
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Icon name="close" size={24} color="white" />
+          </TouchableOpacity>
         </View>
       </SafeAreaView>
 
       <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
-        {isDraggingCategories ? (
-          <DraggableFlatList
-            data={categories}
-            onDragEnd={({ data }) => setCategories(data)}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item, drag, isActive }) => (
-              <ScaleDecorator>
-                <CategorySection
-                  category={item}
-                  onEditCategory={handleEditCategory}
-                  onDeleteCategory={handleDeleteCategory}
-                  onEditActivity={handleEditActivity}
-                  onDeleteActivity={handleDeleteActivity}
-                  onQuickAdd={handleQuickAdd}
-                  onAddActivity={handleAddActivity}
-                  onUpdateCategory={handleUpdateCategory}
-                  theme={theme}
-                  editingCategoryId={editingCategoryId}
-                  onStartEditCategory={handleStartEditCategory}
-                  onEndEditCategory={handleEndEditCategory}
-                  isDragging={true}
-                  drag={drag}
-                  isActive={isActive}
-                />
-              </ScaleDecorator>
-            )}
-            ListFooterComponent={() => (
-              <TouchableOpacity
-                style={[styles.addCategoryButton, { borderColor: theme.primary }]}
-                onPress={handleAddCategory}
-              >
-                <Icon name="add" size={20} color={theme.primary} />
-                <Text style={[styles.addCategoryText, { color: theme.primary }]}>
-                  Add New Category
-                </Text>
-              </TouchableOpacity>
-            )}
-          />
-        ) : (
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {categories.map(category => (
+        <DraggableFlatList
+          data={categories}
+          onDragEnd={handleCategoryDragEnd}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item, drag, isActive }) => (
+            <ScaleDecorator>
               <CategorySection
-                key={category.id}
-                category={category}
+                category={item}
                 onEditCategory={handleEditCategory}
                 onDeleteCategory={handleDeleteCategory}
                 onEditActivity={handleEditActivity}
@@ -632,10 +606,12 @@ const ActivityLibrary = ({
                 editingCategoryId={editingCategoryId}
                 onStartEditCategory={handleStartEditCategory}
                 onEndEditCategory={handleEndEditCategory}
-                isDragging={false}
+                drag={drag}
+                isActive={isActive}
               />
-            ))}
-            
+            </ScaleDecorator>
+          )}
+          ListFooterComponent={() => (
             <TouchableOpacity
               style={[styles.addCategoryButton, { borderColor: theme.primary }]}
               onPress={handleAddCategory}
@@ -645,8 +621,8 @@ const ActivityLibrary = ({
                 Add New Category
               </Text>
             </TouchableOpacity>
-          </ScrollView>
-        )}
+          )}
+        />
       </View>
 
       {/* Edit Modal */}
@@ -724,6 +700,7 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
+    padding: SPACING.md,
   },
   header: {
     flexDirection: 'row',
@@ -738,11 +715,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
-  headerActions: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
-  },
-  headerButton: {
+  closeButton: {
     padding: SPACING.xs,
   },
   content: {
