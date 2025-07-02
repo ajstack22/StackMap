@@ -209,7 +209,7 @@ const CategorySection = ({
           <Animated.View style={{ transform: [{ rotate: rotation }] }}>
             <Icon name="chevron-right" size={24} color={theme.primary} />
           </Animated.View>
-          <Text style={[styles.categoryTitle, { color: theme.primary }]}>
+          <Text style={styles.categoryTitle}>
             {category.name}
           </Text>
           <Text style={styles.activityCount}>
@@ -558,6 +558,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: SPACING.xs,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.gray[700],
   },
   activityCount: {
     fontSize: isTablet() ? 14 : 12,

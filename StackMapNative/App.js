@@ -733,7 +733,7 @@ const App = () => {
         {/* Title */}
         <Text style={[
           styles.activityTitle,
-          item.completed && [styles.completedText, { color: theme.dark }]
+          item.completed && [styles.completedText, { color: 'white' }]
         ]}>
           {item.text || item.title || ''}
         </Text>
@@ -742,7 +742,7 @@ const App = () => {
         {item.description ? (
           <Text style={[
             styles.activityDescription,
-            item.completed && [styles.completedText, { color: theme.dark, opacity: 0.8 }]
+            item.completed && [styles.completedText, { color: 'white', opacity: 0.9 }]
           ]}>
             {item.description}
           </Text>
@@ -1953,7 +1953,7 @@ const styles = StyleSheet.create({
     fontFamily: 'ComicNeue-Regular',
   },
   completedText: {
-    color: '#4a5bc7', // Darker theme color for better contrast
+    color: 'white',
     fontWeight: '700',
   },
   emptyState: {
