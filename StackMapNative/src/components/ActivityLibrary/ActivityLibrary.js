@@ -104,24 +104,24 @@ const ActivityRow = ({
       
       <View style={styles.activityActions}>
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: theme.primary }]}
+          style={styles.iconButton}
           onPress={() => onEdit(activity)}
         >
-          <Icon name="edit" size={16} color="white" />
+          <Icon name="edit" size={20} color={theme.primary} />
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: COLORS.error }]}
+          style={styles.iconButton}
           onPress={handleDelete}
         >
-          <Icon name="delete" size={16} color="white" />
+          <Icon name="delete" size={20} color={COLORS.error} />
         </TouchableOpacity>
         
         <TouchableOpacity
-          style={[styles.actionButton, { backgroundColor: theme.primary }]}
+          style={styles.iconButton}
           onPress={() => onQuickAdd(activity)}
         >
-          <Icon name="add" size={16} color="white" />
+          <Icon name="add" size={20} color={theme.primary} />
         </TouchableOpacity>
       </View>
     </Animated.View>
@@ -218,24 +218,24 @@ const CategorySection = ({
         
         <View style={styles.categoryActions}>
           <TouchableOpacity
-            style={[styles.categoryActionButton, { borderColor: theme.primary }]}
+            style={styles.iconButton}
             onPress={() => onEditCategory(category)}
           >
-            <Icon name="edit" size={16} color={theme.primary} />
+            <Icon name="edit" size={20} color={theme.primary} />
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.categoryActionButton, { borderColor: COLORS.error }]}
+            style={styles.iconButton}
             onPress={handleDeleteCategory}
           >
-            <Icon name="delete" size={16} color={COLORS.error} />
+            <Icon name="delete" size={20} color={COLORS.error} />
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={[styles.categoryActionButton, { borderColor: theme.primary }]}
+            style={styles.iconButton}
             onPress={() => onAddActivity(category)}
           >
-            <Icon name="add" size={16} color={theme.primary} />
+            <Icon name="add" size={20} color={theme.primary} />
           </TouchableOpacity>
         </View>
       </View>
@@ -464,10 +464,10 @@ const ActivityLibrary = ({
                   showsHorizontalScrollIndicator={false}
                   style={styles.emojiPicker}
                 >
-                  {[DEFAULT_ACTIVITY_EMOJI, '🌅', '🛏️', '🦷', '🚿', '👔', '🥞', '🥪', 
+                  {['🎯', '🌅', '🛏️', '🦷', '🚿', '👔', '🥞', '🥪', 
                     '🍽️', '🍿', '👨‍🍳', '🎮', '🏃', '📚', '📱', '📝', '🧹', '💪', 
                     '🎵', '🎨', '🚗', '🛒', '🏥', '💊', '🎉', '🎁', '⚽', '🏀', 
-                    '🎾', '🏊', '🚴', '🧩', '🎲', '🎯', '🎪', '🎭'].map(emoji => (
+                    '🎾', '🏊', '🚴', '🧩', '🎲', '🎪', '🎭'].map((emoji, index) => (
                     <TouchableOpacity
                       key={emoji}
                       style={[
@@ -559,14 +559,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.xs,
   },
-  categoryActionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.md,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   activitiesList: {
     overflow: 'hidden',
   },
@@ -597,13 +589,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.xs,
   },
-  actionButton: {
-    width: 32,
-    height: 32,
-    borderRadius: RADIUS.md,
+  iconButton: {
+    width: 36,
+    height: 36,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.level1,
+    marginLeft: SPACING.xs,
   },
   emptyMessage: {
     textAlign: 'center',
