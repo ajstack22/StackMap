@@ -1923,8 +1923,8 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.01 }],
     // backgroundColor will be set dynamically with theme color
     borderWidth: 2,
-    ...SHADOWS.level2,
-    // Same shadow as incomplete cards
+    ...SHADOWS.level3, // Slightly stronger shadow for completed cards
+    elevation: 8, // Ensure Android shadow is visible
   },
   draggingCard: {
     opacity: 0.9,
