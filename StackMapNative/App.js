@@ -803,7 +803,7 @@ const App = () => {
               }
             ]}
           >
-            <Icon name="edit" size={20} color={theme.primary} style={{ transform: [{ scaleX: -1 }] }} />
+            <Icon name="edit" size={20} color={theme.primary} />
           </AnimatedTouchableOpacity>
           <AnimatedTouchableOpacity
             onPress={() => addActivityToLibrary(item)}
@@ -1012,7 +1012,7 @@ const App = () => {
         />
 
         <FAB
-          icon={isEditMode ? "close" : "edit"}
+          icon={isEditMode ? "edit-off" : "edit"}
           onPress={async () => {
             if (isEditMode) {
               setIsEditMode(false);
@@ -1201,7 +1201,7 @@ const App = () => {
                           setShowAddUserModal(true);
                         }}
                       >
-                        <Icon name="edit" size={18} color="#666" style={{ transform: [{ scaleX: -1 }] }} />
+                        <Icon name="edit" size={18} color="#666" />
                       </TouchableOpacity>
                     )}
                   </TouchableOpacity>
@@ -1348,7 +1348,7 @@ const App = () => {
                       }
                     }}
                   >
-                    <Icon name="edit" size={20} color={theme.primary} style={{ transform: [{ scaleX: -1 }] }} />
+                    <Icon name="edit" size={20} color={theme.primary} />
                     <Text style={[styles.editModePillText, { color: theme.primary }]}>Manage Users, Days, and PIN</Text>
                   </TouchableOpacity>
                 </View>
@@ -1523,7 +1523,7 @@ const App = () => {
                   }
                 }}
               >
-                <Icon name="edit" size={20} color="white" style={{ transform: [{ scaleX: -1 }] }} />
+                <Icon name="edit" size={20} color="white" />
                 <Text style={styles.buttonText}>Enter Edit Mode</Text>
               </TouchableOpacity>
             </View>

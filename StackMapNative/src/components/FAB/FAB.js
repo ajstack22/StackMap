@@ -20,12 +20,12 @@ const FAB = ({
   const previousIcon = useRef(icon);
   
   useEffect(() => {
-    // Only animate between edit and close icons
-    if ((previousIcon.current === 'edit' && icon === 'close') || 
-        (previousIcon.current === 'close' && icon === 'edit')) {
+    // Only animate between edit and edit-off icons
+    if ((previousIcon.current === 'edit' && icon === 'edit-off') || 
+        (previousIcon.current === 'edit-off' && icon === 'edit')) {
       
       // Determine rotation direction
-      const toValue = previousIcon.current === 'edit' && icon === 'close' ? 0.25 : -0.25;
+      const toValue = previousIcon.current === 'edit' && icon === 'edit-off' ? 0.25 : -0.25;
       
       Animated.timing(rotation, {
         toValue,
@@ -62,8 +62,7 @@ const FAB = ({
     >
       <Animated.View style={{ 
         transform: [
-          { rotate: spin },
-          { scaleX: icon === 'edit' ? -1 : 1 } // Flip edit icon horizontally only
+          { rotate: spin }
         ] 
       }}>
         <Icon 
