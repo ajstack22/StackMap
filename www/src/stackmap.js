@@ -470,7 +470,7 @@
                 user.days[day].activities.push(activity);
                 this.saveData();
                 this.render();
-                return activity;
+                return activity.id;
             }
             
             updateActivity(activityId, updates) {
@@ -773,20 +773,6 @@
                                 // (which might be to exit the app)
                             }
                         });
-                        
-                        // iOS: Force theme update when app resumes
-                        App.addListener('appStateChange', ({ isActive }) => {
-                            if (isActive && (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))) {
-                                // Reapply theme to force iOS safe area updates
-                                const currentColor = this.data.globalSettings.themeColor;
-                                if (currentColor) {
-                                    setTimeout(() => {
-                                        this.changeThemeColor(currentColor);
-                                    }, 100);
-                                }
-                            }
-                        });
                     }
                 }
             }
@@ -889,36 +875,6 @@
             }
             
             setupEventListeners() {
-                // iOS bounce prevention
-                const appContainer = document.querySelector('.app-container');
-                if (appContainer) {
-                    let startY = 0;
-                    let startScrollTop = 0;
-                    
-                    appContainer.addEventListener('touchstart', (e) => {
-                        startY = e.touches[0].pageY;
-                        startScrollTop = appContainer.scrollTop;
-                    }, { passive: false });
-                    
-                    appContainer.addEventListener('touchmove', (e) => {
-                        const y = e.touches[0].pageY;
-                        const scrollTop = appContainer.scrollTop;
-                        const scrollHeight = appContainer.scrollHeight;
-                        const offsetHeight = appContainer.offsetHeight;
-                        const isScrollingDown = y < startY;
-                        const isScrollingUp = y > startY;
-                        
-                        // At top and trying to scroll up (pull down)
-                        if (scrollTop <= 0 && isScrollingUp) {
-                            e.preventDefault();
-                        }
-                        // At bottom and trying to scroll down
-                        else if (scrollTop + offsetHeight >= scrollHeight && isScrollingDown) {
-                            e.preventDefault();
-                        }
-                    }, { passive: false });
-                }
-                
                 // FAB buttons
                 this.elements.preferencesBtn.addEventListener('click', () => this.openPanel('preferences'));
                 this.elements.editBtn.addEventListener('click', () => this.checkPinBeforeEdit());
@@ -1519,14 +1475,14 @@
                     if (leftFab) {
                         leftFab.style.position = 'fixed';
                         leftFab.style.bottom = 'auto';
-                        leftFab.style.top = '25px'; // Center in 110px header (25px + 60px + 25px)
+                        leftFab.style.top = '60px'; // Move FABs down below status bar area
                         leftFab.style.left = '20px';
                         leftFab.style.transform = 'none';
                     }
                     if (rightFab) {
                         rightFab.style.position = 'fixed';
                         rightFab.style.bottom = 'auto';
-                        rightFab.style.top = '25px'; // Center in 110px header (25px + 60px + 25px)
+                        rightFab.style.top = '60px'; // Move FABs down below status bar area
                         rightFab.style.right = '20px';
                         rightFab.style.transform = 'none';
                     }
@@ -1975,7 +1931,6 @@
                 });
                 
                 addBtn?.addEventListener('click', () => {
-                    this.closePanel();
                     this.showAddActivityDialog();
                 });
                 
@@ -2154,7 +2109,7 @@
                 const tempCard = document.createElement('div');
                 tempCard.className = 'activity-card activity-card--editing';
                 tempCard.innerHTML = `
-                    <div class="activity-emoji" style="cursor: pointer; pointer-events: auto;">📝</div>
+                    <div class="activity-emoji" style="cursor: pointer;">📝</div>
                     <input type="text" class="activity-title-input" value="New Activity" 
                            style="width: 100%; font-size: inherit; font-family: inherit; font-weight: inherit; 
                                   text-align: center; border: 2px solid var(--primary-color); 
@@ -2165,7 +2120,7 @@
                                      background: white; color: #666; resize: vertical; min-height: 50px; margin-top: 8px;"></textarea>
                     <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: center;">
                         <button class="btn btn-primary" style="padding: 8px 16px;">Save</button>
-                        <button class="btn btn-secondary" style="padding: 8px 16px; background: #f0f0f0; color: #666; border: 1px solid #ddd;">Cancel</button>
+                        <button class="btn btn-secondary" style="padding: 8px 16px;">Cancel</button>
                     </div>
                 `;
                 
@@ -2186,39 +2141,25 @@
                 titleInput.focus();
                 titleInput.select();
                 
-                // Initialize emoji picker if not already done
-                if (!this.emojiPicker) {
-                    this.emojiPicker = new EmojiPicker();
-                    this.emojiPicker.loadImages();
-                }
-                
                 // Emoji click handler
-                emojiDiv.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    // Store the emoji div reference for the picker
-                    this.emojiPicker.emojiTarget = emojiDiv;
-                    this.emojiPicker.open(emojiDiv);
+                emojiDiv.addEventListener('click', () => {
+                    const newEmoji = prompt('Enter emoji:', emojiDiv.textContent);
+                    if (newEmoji) {
+                        emojiDiv.textContent = newEmoji;
+                    }
                 });
                 
                 // Save handler
                 const save = () => {
                     const title = titleInput.value.trim();
                     if (title) {
-                        // Check if we have a custom image or regular emoji
-                        const emoji = emojiDiv.dataset.customImage ? '🖼️' : emojiDiv.textContent;
-                        const activity = this.addActivity(
+                        this.addActivity(
                             title,
-                            emoji,
+                            emojiDiv.textContent,
                             null,
                             'normal',
                             descInput.value.trim()
                         );
-                        
-                        // If it's a custom image, store the image path
-                        if (emojiDiv.dataset.customImage && activity) {
-                            activity.customImage = emojiDiv.dataset.customImage;
-                            this.saveData();
-                        }
                     }
                     tempCard.remove();
                 };
@@ -2343,26 +2284,11 @@
                 const activity = this.getCurrentActivities().find(a => a.id === activityId);
                 if (!activity) return;
                 
-                // Initialize emoji picker if not already done
-                if (!this.emojiPicker) {
-                    this.emojiPicker = new EmojiPicker();
-                    this.emojiPicker.loadImages();
+                // For now, use a simple prompt (can be replaced with emoji picker later)
+                const newEmoji = prompt('Enter emoji:', activity.emoji);
+                if (newEmoji && newEmoji !== activity.emoji) {
+                    this.updateActivity(activityId, { emoji: newEmoji });
                 }
-                
-                // Find the emoji element for this activity
-                const emojiElement = document.querySelector(`[data-activity-id="${activityId}"] .activity-emoji`);
-                if (!emojiElement) return;
-                
-                // Store activity ID for update after selection
-                this.emojiPicker.onSelect = (item) => {
-                    if (item.type === 'emoji') {
-                        this.updateActivity(activityId, { emoji: item.emoji, customImage: null });
-                    } else {
-                        this.updateActivity(activityId, { emoji: '🖼️', customImage: item.src });
-                    }
-                };
-                
-                this.emojiPicker.open(emojiElement);
             }
             
             editActivityTime(activityId, event) {
@@ -3825,11 +3751,7 @@
                                 </div>
                             ` : ''}
                             
-                            <div class="activity-emoji" ${isEditMode ? `onclick="app.editActivityEmoji('${activity.id}')" style="cursor: pointer;"` : ''}>
-                                ${activity.customImage ? 
-                                    `<img src="${activity.customImage}" alt="${activity.text}" style="width: 100%; height: 100%; object-fit: contain;">` : 
-                                    activity.emoji}
-                            </div>
+                            <div class="activity-emoji" ${isEditMode ? `onclick="app.editActivityEmoji('${activity.id}')" style="cursor: pointer;"` : ''}>${activity.emoji}</div>
                             <div class="activity-title" ${isEditMode ? `onclick="app.editActivityTitle('${activity.id}')" style="cursor: pointer;"` : ''}>${activity.text}</div>
                             ${activity.description ? 
                                 `<div class="activity-description" ${isEditMode ? `onclick="app.editActivityDescription('${activity.id}')" style="cursor: pointer;"` : ''}>${activity.description}</div>` : 
@@ -3870,40 +3792,6 @@
                 if (headerWrapper) {
                     headerWrapper.style.background = `linear-gradient(135deg, ${color} 0%, ${darkerColor} 100%)`;
                     headerWrapper.style.boxShadow = `0 8px 24px rgba(0, 0, 0, 0.2), 0 4px 8px ${darkerColor}66`;
-                }
-                
-                // iOS-specific: Force safe area elements to update
-                if (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-                    
-                    // Update body background for iOS safe areas
-                    document.body.style.backgroundColor = color;
-                    
-                    // Force repaint on complementary elements
-                    const complementaryHeader = document.querySelector('.complementary-header');
-                    const complementaryFooter = document.querySelector('.complementary-footer');
-                    
-                    // Method 1: Transform toggle
-                    [complementaryHeader, complementaryFooter].forEach(el => {
-                        if (el) {
-                            // Force style recalculation
-                            el.style.transform = 'translateZ(1px)';
-                            el.offsetHeight; // Force reflow
-                            el.style.transform = 'translateZ(0)';
-                        }
-                    });
-                    
-                    // Method 2: Display toggle for stubborn elements
-                    requestAnimationFrame(() => {
-                        [complementaryHeader, complementaryFooter].forEach(el => {
-                            if (el && el.style.display !== 'none') {
-                                const display = el.style.display || 'block';
-                                el.style.display = 'none';
-                                el.offsetHeight; // Force reflow
-                                el.style.display = display;
-                            }
-                        });
-                    });
                 }
                 
                 // Save to data structure

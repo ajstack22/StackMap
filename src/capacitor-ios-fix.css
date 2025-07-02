@@ -1,0 +1,100 @@
+/* 
+   Capacitor iOS-specific fixes
+   For native iOS apps using WKWebView
+*/
+
+/* Override previous HTML/body settings - SAME FIX AS DYNAMIC ISLAND */
+html {
+    /* Critical fix that worked for Dynamic Island */
+    min-height: calc(100% + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    position: relative;
+    overflow: hidden;
+    
+    /* Base background color */
+    background-color: var(--primary-color);
+}
+
+body {
+    /* Same approach as Dynamic Island fix */
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    
+    /* Use all three for maximum compatibility */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: calc(100vh + env(safe-area-inset-top));
+    
+    position: relative;
+    overflow: hidden;
+    
+    /* Ensure padding at bottom for home bar */
+    padding-bottom: env(safe-area-inset-bottom);
+    box-sizing: border-box;
+    
+    /* Background gradient */
+    background: linear-gradient(to bottom, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background-attachment: fixed;
+}
+
+/* Create a full-screen background container */
+.ios-background {
+    position: fixed;
+    top: -100px;
+    left: 0;
+    right: 0;
+    bottom: -100px;
+    background: linear-gradient(to bottom, var(--primary-color) 0%, var(--primary-dark) 100%);
+    z-index: -1;
+}
+
+/* Ensure app container fills viewport */
+.app-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: transparent;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    /* Remove overscroll behavior to prevent bounce */
+    overscroll-behavior: none;
+}
+
+/* Specific fixes for home indicator area */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+    /* Extend background beyond safe areas */
+    body {
+        /* Use viewport units to ensure full coverage */
+        min-height: 100vh;
+        min-height: -webkit-fill-available;
+    }
+    
+    /* Add colored element that extends into safe area */
+    body::after {
+        content: '';
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: calc(env(safe-area-inset-bottom) + 50px);
+        background: var(--primary-dark);
+        z-index: -1;
+        pointer-events: none;
+    }
+}
+
+/* Alternative approach: Set WebView background in Capacitor config */
+/* This requires adding to capacitor.config.json:
+{
+  "ios": {
+    "backgroundColor": "#667eea"
+  }
+}
+*/

@@ -20,7 +20,9 @@
     }
   },
   "ios": {
-    "contentInset": "automatic"
+    "contentInset": "automatic",
+    "backgroundColor": "#667eea",
+    "overrideUserInterfaceStyle": "light"
   },
   "android": {
     "allowMixedContent": false

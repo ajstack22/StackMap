@@ -2,9 +2,9 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1.0">
     <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="StackMap">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="format-detection" content="telephone=no">
@@ -31,25 +31,10 @@
     <meta http-equiv="Expires" content="0">
     
     <link rel="stylesheet" href="src/stackmap.css?v=2.0.0">
-    <link rel="stylesheet" href="src/emoji-picker.css?v=1.0.0">
-    
-    <!-- iOS-specific styles loaded conditionally -->
-    <script>
-        // Only load iOS fixes on actual iOS devices running in Capacitor
-        if (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-            document.write('<link rel="stylesheet" href="src/ios-black-bars.css?v=1.0.0">');
-        }
-    </script>
 </head>
 <body>
-    <!-- iOS-specific wrapper -->
-    <script>
-        if (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-            document.write('<div class="app-wrapper">');
-        }
-    </script>
+    <!-- Complementary Header (shown when banner is at bottom) -->
+    <div class="complementary-header"></div>
     
     <!-- Header Wrapper -->
     <div class="header-wrapper" id="headerWrapper">
@@ -242,15 +227,7 @@
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
     
-    <!-- Emoji Picker Script -->
-    <script src="src/emoji-picker.js"></script>
-    
-    <!-- Close iOS wrapper -->
-    <script>
-        if (/iPad|iPhone|iPod/.test(navigator.userAgent) || 
-            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) {
-            document.write('</div>'); // Close app-wrapper
-        }
-    </script>
+    <!-- Complementary Footer (shown when banner is at top) -->
+    <div class="complementary-footer"></div>
 </body>
 </html>

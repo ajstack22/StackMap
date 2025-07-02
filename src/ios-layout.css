@@ -1,0 +1,347 @@
+/* 
+   iOS Layout System for StackMap
+   Handles Dynamic Island, Home Bar, and proper scrolling
+*/
+
+/* ===== CSS RESET FOR iOS ===== */
+html {
+    /* Critical fix for home indicator white area */
+    min-height: calc(100% + env(safe-area-inset-top));
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    
+    /* Fill viewport completely */
+    width: 100%;
+    margin: 0;
+    box-sizing: border-box;
+    
+    /* Prevent document scrolling */
+    position: relative;
+    overflow: hidden;
+    
+    /* Base background color visible in safe areas */
+    background-color: var(--primary-color);
+}
+
+body {
+    /* Reset */
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    
+    /* Prevent body scrolling */
+    position: relative;
+    overflow: hidden;
+    
+    /* Typography and base styles */
+    font-family: 'Comic Relief', 'Comic Sans MS', 'Chalkboard SE', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+    color: #ffffff;
+    -webkit-user-select: none;
+    user-select: none;
+    
+    /* Background gradient */
+    background: linear-gradient(to bottom, var(--primary-color) 0%, var(--primary-dark) 100%);
+    background-attachment: fixed;
+    background-size: 100% 100%;
+    
+    /* Ensure background extends to home indicator */
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Ensure background extends beyond viewport */
+body::before {
+    content: '';
+    position: fixed;
+    top: -100px;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: var(--primary-color);
+    z-index: -1;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -100px;
+    left: 0;
+    right: 0;
+    height: 100px;
+    background: var(--primary-dark);
+    z-index: -1;
+}
+
+/* ===== LAYOUT STRUCTURE ===== */
+
+/* Fixed header wrapper - always visible */
+.header-wrapper {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1001;
+    
+    /* Default: Banner at top */
+    height: calc(110px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Banner at bottom positioning */
+.banner-bottom .header-wrapper {
+    top: auto;
+    bottom: 0;
+    height: 110px;
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Complementary bars for visual balance */
+.complementary-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: calc(40px + env(safe-area-inset-top)); /* Visible bar + safe area */
+    padding-top: env(safe-area-inset-top);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: none;
+}
+
+.complementary-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(40px + env(safe-area-inset-bottom)); /* Visible bar + safe area */
+    padding-bottom: env(safe-area-inset-bottom);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    display: block;
+}
+
+/* Extend background to cover any gaps */
+.complementary-footer::after {
+    content: '';
+    position: absolute;
+    bottom: -50px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: var(--primary-dark);
+    z-index: -1;
+}
+
+/* Show/hide based on banner position */
+.banner-bottom .complementary-header {
+    display: block;
+}
+
+.banner-bottom .complementary-footer {
+    display: none;
+}
+
+/* ===== SCROLLABLE CONTENT AREA ===== */
+.app-container {
+    position: fixed;
+    left: 0;
+    right: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    
+    /* Prevent bounce scrolling */
+    overscroll-behavior-y: contain;
+    
+    /* Background for scrollable area */
+    background: transparent;
+}
+
+/* Container positioning based on banner location */
+/* Default: Banner at top */
+.app-container {
+    top: calc(110px + env(safe-area-inset-top)); /* Below header */
+    bottom: calc(40px + env(safe-area-inset-bottom)); /* Above complementary footer */
+}
+
+/* Banner at bottom */
+.banner-bottom .app-container {
+    top: calc(40px + env(safe-area-inset-top)); /* Below complementary header */
+    bottom: 110px; /* Above banner */
+}
+
+/* Edit mode adjustments */
+body.edit-mode .app-container {
+    top: calc(150px + env(safe-area-inset-top)); /* Account for exit button */
+}
+
+body.edit-mode.banner-bottom .app-container {
+    top: env(safe-area-inset-top);
+    bottom: calc(110px + 40px); /* Banner + exit button */
+}
+
+/* ===== MAIN CONTENT LAYOUT ===== */
+.main-content {
+    /* Content spacing */
+    padding: 20px;
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    
+    /* Prevent excessive scrolling - remove min-height */
+    /* min-height removed to prevent extra scroll space */
+    
+    /* For absolute positioned extensions */
+    position: relative;
+}
+
+/* Color extensions for overscroll */
+.main-content::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: var(--primary-color);
+    pointer-events: none;
+}
+
+.main-content::after {
+    content: '';
+    position: absolute;
+    bottom: -200px;
+    left: 0;
+    right: 0;
+    height: 200px;
+    background: var(--primary-dark);
+    pointer-events: none;
+}
+
+/* ===== ACTIVITY LIST GRID ===== */
+.activity-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem;
+    padding: 0.5rem 0 1rem 0; /* Small top padding, normal bottom */
+    margin: 0 auto;
+    max-width: 1200px;
+}
+
+/* First card should appear to slide under header */
+.activity-list > :first-child {
+    margin-top: 0;
+}
+
+/* Last card spacing */
+.activity-list > :last-child {
+    margin-bottom: 1rem;
+}
+
+/* Empty state positioning */
+.activity-list .empty-state {
+    grid-column: 1 / -1;
+    padding: 3rem 1rem;
+    text-align: center;
+}
+
+/* ===== FLOATING ACTION BUTTONS ===== */
+.fab-container {
+    position: fixed;
+    /* z-index handled by main CSS (1002) */
+}
+
+/* Default positioning (banner at top) */
+.fab-container.left {
+    top: calc(env(safe-area-inset-top) + 40px); /* Position within header area */
+    left: max(15px, env(safe-area-inset-left));
+}
+
+.fab-container.right {
+    top: calc(env(safe-area-inset-top) + 40px); /* Position within header area */
+    right: max(15px, env(safe-area-inset-right));
+}
+
+/* Banner at bottom positioning */
+.banner-bottom .fab-container.left {
+    bottom: 55px; /* Center of 110px banner */
+    top: auto;
+    left: max(15px, env(safe-area-inset-left));
+    transform: translateY(50%); /* Perfect vertical centering */
+}
+
+.banner-bottom .fab-container.right {
+    bottom: 55px; /* Center of 110px banner */
+    top: auto;
+    right: max(15px, env(safe-area-inset-right));
+    transform: translateY(50%); /* Perfect vertical centering */
+}
+
+/* Edit mode adjustments */
+body.edit-mode .fab-container.left,
+body.edit-mode .fab-container.right {
+    /* Keep same positioning since header doesn't change height */
+    /* Exit button extends below, doesn't affect header center */
+}
+
+body.edit-mode.banner-bottom .fab-container.left,
+body.edit-mode.banner-bottom .fab-container.right {
+    bottom: calc(55px + 20px); /* Account for exit button height */
+}
+
+/* ===== SIDE PANELS ===== */
+.side-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 85%;
+    max-width: 400px;
+    background: rgba(0, 0, 0, 0.95);
+    z-index: 2001;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    
+    /* Handle safe areas */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+.side-panel.right {
+    left: auto;
+    right: 0;
+    transform: translateX(100%);
+}
+
+.side-panel.open {
+    transform: translateX(0);
+}
+
+/* Panel content scrolling */
+.panel-content {
+    height: calc(100% - 60px); /* Account for panel header */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 20px;
+}
+
+/* ===== iOS SCROLL BEHAVIOR FIXES ===== */
+@supports (-webkit-touch-callout: none) {
+    /* iOS-specific adjustments */
+    .app-container {
+        /* Disable momentum scrolling to have more control */
+        -webkit-overflow-scrolling: auto;
+    }
+    
+    /* Ensure no rubber-band effect on fixed elements */
+    .header-wrapper,
+    .complementary-header,
+    .complementary-footer {
+        -webkit-transform: translateZ(0);
+        transform: translateZ(0);
+    }
+}

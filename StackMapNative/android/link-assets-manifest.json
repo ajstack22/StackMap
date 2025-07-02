@@ -1,0 +1,13 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "assets/fonts/ComicNeue-Bold.ttf",
+      "sha1": "3e3c8212c608113fbd3e24b0f286481fefd087ac"
+    },
+    {
+      "path": "assets/fonts/ComicNeue-Regular.ttf",
+      "sha1": "1b4476e9df8b05dd031dd649c59691c56e9e2d5c"
+    }
+  ]
+}

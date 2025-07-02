@@ -1,0 +1,153 @@
+/* iOS Safe Area Fix - Prevents white areas */
+
+/* Root element must fill entire viewport including safe areas */
+html {
+    /* Remove any default margins */
+    margin: 0;
+    padding: 0;
+    
+    /* Fill the entire viewport */
+    width: 100%;
+    height: 100%;
+    
+    /* Critical: Use fill-available to extend into safe areas */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    
+    /* Set background that will show in safe areas */
+    background-color: var(--primary-color);
+    
+    /* Ensure we're not constrained */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Body should also fill available space */
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    
+    /* Use the safe area hack */
+    min-height: 100vh;
+    min-height: -webkit-fill-available;
+    min-height: calc(100vh + env(safe-area-inset-top));
+    
+    /* Add safe area padding to push content into safe zones */
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+    box-sizing: border-box;
+    
+    /* Background for main content area */
+    background: linear-gradient(to bottom, var(--background-gradient-start) 0%, var(--background-main) 100%);
+    background-attachment: fixed;
+    
+    /* Ensure body fills the space */
+    position: relative;
+    overflow: hidden;
+}
+
+/* Create background extenders for safe areas */
+body::before {
+    content: '';
+    position: fixed;
+    top: calc(-1 * env(safe-area-inset-top) - 100px);
+    left: 0;
+    right: 0;
+    height: calc(env(safe-area-inset-top) + 100px);
+    background: var(--background-gradient-start);
+    z-index: -1;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: calc(-1 * env(safe-area-inset-bottom) - 100px);
+    left: 0;
+    right: 0;
+    height: calc(env(safe-area-inset-bottom) + 100px);
+    background: var(--primary-dark); /* Match the gradient end color */
+    z-index: -1;
+}
+
+/* Fixed overlay container that extends beyond safe areas */
+.fixed-overlay-container {
+    position: fixed;
+    top: calc(-1 * env(safe-area-inset-top));
+    left: 0;
+    right: 0;
+    bottom: calc(-1 * env(safe-area-inset-bottom));
+    pointer-events: none;
+    z-index: 2000;
+    overflow: visible;
+}
+
+/* App container positioning */
+.app-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: auto;
+    overscroll-behavior: none;
+    background: transparent;
+}
+
+/* Main content with proper safe area handling */
+.main-content {
+    /* Remove the top safe area from padding since body handles it */
+    padding-top: 130px;
+    padding-bottom: 50px; /* Reduced bottom padding */
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    min-height: calc(100vh - 180px); /* Ensure proper height */
+}
+
+/* Complementary elements positioned within safe areas */
+.complementary-header {
+    position: fixed;
+    top: 0; /* Start at very top */
+    left: 0;
+    right: 0;
+    height: calc(25px + env(safe-area-inset-top)); /* Much smaller, just a thin bar */
+    padding-top: env(safe-area-inset-top);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    display: none;
+    z-index: 1500;
+}
+
+.complementary-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: calc(25px + env(safe-area-inset-bottom)); /* Smaller height */
+    padding-bottom: calc(env(safe-area-inset-bottom) + 10px); /* Add some space above home bar */
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+    display: block;
+    z-index: 1500;
+}
+
+/* Adjust container positions for complementary elements */
+body:not(.banner-bottom) .app-container {
+    top: 0;
+    bottom: calc(35px + env(safe-area-inset-bottom)); /* Account for smaller footer */
+}
+
+.banner-bottom .app-container {
+    top: calc(25px + env(safe-area-inset-top)); /* Account for smaller header */
+    bottom: 0;
+}
+
+/* Show/hide complementary elements */
+.banner-bottom .complementary-header {
+    display: block;
+}
+
+.banner-bottom .complementary-footer {
+    display: none;
+}

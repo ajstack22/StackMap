@@ -8,44 +8,27 @@ echo "Building StackMap for Capacitor..."
 # Clean the www directory
 rm -rf www
 mkdir -p www
+mkdir -p www/src
 
 # Copy all necessary files
 echo "Copying application files..."
 cp index.html www/
 cp manifest.json www/
-cp browserconfig.xml www/
 cp sw.js www/
-cp offline.html www/
-cp privacy.html www/
-cp support.html www/
-cp terms.html www/
+cp offline.html www/ 2>/dev/null || true
 
 # Copy icons
 echo "Copying icons..."
-cp icon-*.png www/
+cp icon-*.png www/ 2>/dev/null || true
 
-# Copy JavaScript files
-echo "Copying JavaScript files..."
-cp *.js www/
-cp -r js www/
-cp -r app www/
-cp -r components www/
-cp -r config www/
-cp -r data www/
-cp -r utils www/
+# Copy src directory (JavaScript and CSS)
+echo "Copying source files..."
+cp -r src www/
 
-# Copy styles
-echo "Copying styles..."
-cp -r styles www/
-
-# Copy demo files
-echo "Copying demo files..."
-cp -r demo www/
-cp demo-mushroom-kingdom.json www/
-
-# Copy timer
-echo "Copying timer app..."
-cp -r timer www/
+# Copy any other necessary files
+if [ -f stackmap-ios-test.json ]; then
+    cp stackmap-ios-test.json www/
+fi
 
 echo "Build complete! Files copied to www directory."
 
