@@ -9,6 +9,7 @@ import {
   Alert,
   Animated,
   ScrollView,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import {
@@ -404,15 +405,18 @@ const ActivityLibrary = ({
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { backgroundColor: theme.primary }]}>
-        <Text style={styles.headerTitle}>Activity Library</Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Icon name="close" size={24} color="white" />
-        </TouchableOpacity>
-      </View>
+    <View style={[styles.container, { backgroundColor: theme.light }]}>
+      <SafeAreaView style={{ backgroundColor: theme.primary }}>
+        <View style={[styles.header, { backgroundColor: theme.primary }]}>
+          <Text style={styles.headerTitle}>Activity Library</Text>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Icon name="close" size={24} color="white" />
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         {categories.map(category => (
           <CategorySection
             key={category.id}
@@ -437,6 +441,7 @@ const ActivityLibrary = ({
           </Text>
         </TouchableOpacity>
       </ScrollView>
+      </View>
 
       {/* Edit Modal */}
       {editMode && (
@@ -501,6 +506,8 @@ const ActivityLibrary = ({
           </View>
         </View>
       )}
+      
+      <SafeAreaView style={{ backgroundColor: theme.light }} />
     </View>
   );
 };
@@ -508,7 +515,9 @@ const ActivityLibrary = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+  },
+  contentWrapper: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
