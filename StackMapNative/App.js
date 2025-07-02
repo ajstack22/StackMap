@@ -57,7 +57,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary } from './src/components';
 
 // Import hooks
 import { useToast } from './src/hooks';
@@ -119,6 +119,7 @@ const App = () => {
   const [showUserDayModal, setShowUserDayModal] = useState(false);
   const [showEditModeSettingsModal, setShowEditModeSettingsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
+  const [showActivityLibrary, setShowActivityLibrary] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
   const [activityTitle, setActivityTitle] = useState('');
   const [activityDescription, setActivityDescription] = useState('');
@@ -146,6 +147,9 @@ const App = () => {
   const [isModalEditMode, setIsModalEditMode] = useState(false);
   const [pinForModalEdit, setPinForModalEdit] = useState(false);
   
+  // Activity library state
+  const [activityCategories, setActivityCategories] = useState(null);
+  
   // Animation values
   const editModeIconRotation = useRef(new Animated.Value(0)).current;
   const editModeToolbarTranslate = useRef(new Animated.Value(100)).current;
@@ -165,7 +169,7 @@ const App = () => {
     if (currentUser) {
       saveData();
     }
-  }, [users, activities, currentTheme, bannerPosition, currentDay]);
+  }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories]);
 
   // Load activities when day changes
   useEffect(() => {
@@ -388,6 +392,7 @@ const App = () => {
         // PIN is now handled by secure storage
         setCurrentDay(migratedData.currentDay || 'today');
         setTemplates(migratedData.templates || []);
+        setActivityCategories(migratedData.activityCategories || null);
         
         // Set current user and load activities
         const userId = migratedData.currentUserId || Object.keys(migratedData.users || {})[0];
@@ -447,7 +452,8 @@ const App = () => {
           pinEnabled: await hasSecurePin(),
           bannerPosition: bannerPosition
         },
-        templates: templates || []
+        templates: templates || [],
+        activityCategories: activityCategories
       };
       await AsyncStorage.setItem('stackMapData', JSON.stringify(data));
     } catch (error) {
@@ -1683,7 +1689,7 @@ const App = () => {
           visible={isEditMode}
           onExit={() => setIsEditMode(false)}
           onAdd={() => setShowActivityModal(true)}
-          onLibrary={() => showToast({ message: 'Library coming soon!' })}
+          onLibrary={() => setShowActivityLibrary(true)}
           onCompleteDay={() => showToast({ message: 'Complete Day coming soon!' })}
           theme={theme}
           position={bannerPosition === 'top' ? 'bottom' : 'top'}
@@ -1694,6 +1700,51 @@ const App = () => {
           }}
         />
       )}
+      
+      {/* Activity Library Modal */}
+      <Modal
+        visible={showActivityLibrary}
+        animationType="slide"
+        onRequestClose={() => setShowActivityLibrary(false)}
+      >
+        <ActivityLibrary
+          visible={showActivityLibrary}
+          onClose={() => setShowActivityLibrary(false)}
+          onSelectActivity={(activity) => {
+            // Create a new activity from the template
+            const newActivity = {
+              ...activity,
+              id: Date.now().toString(),
+              completed: false,
+              pinned: false,
+            };
+            
+            const updatedActivities = [...activities, newActivity];
+            
+            // Update the current day's activities
+            const updatedUsers = {
+              ...users,
+              [currentUser]: {
+                ...users[currentUser],
+                days: {
+                  ...users[currentUser].days,
+                  [currentDay]: {
+                    ...users[currentUser].days?.[currentDay],
+                    activities: updatedActivities
+                  }
+                }
+              }
+            };
+            
+            setUsers(updatedUsers);
+            setActivities(updatedActivities);
+            showToast({ message: `Added: ${activity.name}` });
+          }}
+          theme={theme}
+          categories={activityCategories}
+          onSaveCategories={setActivityCategories}
+        />
+      </Modal>
       
       {/* Toast Notification */}
       <Toast

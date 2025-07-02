@@ -76,7 +76,7 @@ const EditModeToolbar = ({
   // Define all actions
   const actions = [
     { id: 'add', label: 'Add', icon: 'add', onPress: onAdd, color: theme.primary },
-    { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary, disabled: true },
+    { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
     { id: 'complete', label: 'Complete', icon: 'today', onPress: onCompleteDay, color: theme.primary, disabled: true },
   ];
 
