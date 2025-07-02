@@ -328,12 +328,12 @@ const CategorySection = ({
                       isActive && styles.draggingRow,
                     ]}
                   >
-                    <View style={styles.dragHandle}>
-                      <Icon name="drag-handle" size={24} color={COLORS.gray[400]} />
-                    </View>
                     <View style={styles.activityInfo}>
                       <Text style={styles.activityEmoji}>{item.emoji}</Text>
                       <Text style={styles.activityName}>{item.name}</Text>
+                    </View>
+                    <View style={styles.dragHandle}>
+                      <Icon name="drag-handle" size={24} color={COLORS.gray[400]} />
                     </View>
                   </TouchableOpacity>
                 </ScaleDecorator>
@@ -731,7 +731,8 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.xs,
   },
   dragHandle: {
-    paddingHorizontal: SPACING.sm,
+    paddingLeft: SPACING.md,
+    paddingRight: SPACING.sm,
     justifyContent: 'center',
   },
   draggingRow: {
