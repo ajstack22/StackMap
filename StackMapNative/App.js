@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
@@ -15,6 +15,7 @@ import {
   KeyboardAvoidingView,
   Dimensions,
   Image,
+  Animated,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -56,7 +57,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo } from './src/components';
 
 // Import hooks
 import { useToast } from './src/hooks';
@@ -82,6 +83,23 @@ const baseFontSize = isTablet() ? FONT_SCALE.tablet : FONT_SCALE.mobile;
 // Common emojis for picker
 const commonEmojis = COMMON_EMOJIS;
 
+// AnimatedIcon component for slide-up animation
+const AnimatedIcon = ({ name, size, color, translateY }) => {
+  const slideY = translateY.interpolate({
+    inputRange: [0, 1],
+    outputRange: [20, 0], // Start 20 pixels below, animate to original position
+  });
+
+  return (
+    <Animated.View style={{ transform: [{ translateY: slideY }] }}>
+      <Icon name={name} size={size} color={color} />
+    </Animated.View>
+  );
+};
+
+// Create AnimatedTouchableOpacity from the Animated API
+const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
+
 const App = () => {
   const insets = useSafeAreaInsets();
   
@@ -98,6 +116,7 @@ const App = () => {
   const [templates, setTemplates] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
+  const [showUserDayModal, setShowUserDayModal] = useState(false);
   const [showEditModeSettingsModal, setShowEditModeSettingsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [editingActivity, setEditingActivity] = useState(null);
@@ -105,12 +124,16 @@ const App = () => {
   const [activityDescription, setActivityDescription] = useState('');
   const [activityEmoji, setActivityEmoji] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showEditToolbar, setShowEditToolbar] = useState(false);
+  const [showEditIcons, setShowEditIcons] = useState(false);
   
   // User management state
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [newUserName, setNewUserName] = useState('');
   const [newUserEmoji, setNewUserEmoji] = useState(DEFAULT_USER_ICON);
   const [showUserEmojiPicker, setShowUserEmojiPicker] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [dayMode, setDayMode] = useState('today'); // 'today' or 'both'
   
   // PIN protection state
   const [showPinModal, setShowPinModal] = useState(false);
@@ -118,7 +141,16 @@ const App = () => {
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [confirmPin, setConfirmPin] = useState('');
   const [hasPinProtection, setHasPinProtection] = useState(false);
-
+  
+  // Modal edit mode state
+  const [isModalEditMode, setIsModalEditMode] = useState(false);
+  const [pinForModalEdit, setPinForModalEdit] = useState(false);
+  
+  // Animation values
+  const editModeIconRotation = useRef(new Animated.Value(0)).current;
+  const editModeToolbarTranslate = useRef(new Animated.Value(100)).current;
+  const editIconsTranslateY = useRef(new Animated.Value(0)).current;
+  const editIconsOpacity = useRef(new Animated.Value(0)).current;
 
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
@@ -133,7 +165,7 @@ const App = () => {
     if (currentUser) {
       saveData();
     }
-  }, [activities, currentTheme, bannerPosition, currentDay]);
+  }, [users, activities, currentTheme, bannerPosition, currentDay]);
 
   // Load activities when day changes
   useEffect(() => {
@@ -142,13 +174,88 @@ const App = () => {
     }
   }, [currentDay, currentUser]);
   
+  // Animate icons when edit mode changes
+  useEffect(() => {
+    if (isEditMode) {
+      // Entering edit mode: slide up from below with fade in
+      // IMPORTANT: Set initial opacity to 0 BEFORE showing the icons to prevent flash
+      editIconsOpacity.setValue(0);
+      editIconsTranslateY.setValue(0);
+      
+      // Now show the edit icons (they'll be invisible due to opacity: 0)
+      setShowEditIcons(true);
+      
+      // Small delay to ensure the opacity is applied before animation starts
+      setTimeout(() => {
+        // Animate both translation and opacity together
+        Animated.parallel([
+          Animated.timing(editIconsTranslateY, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.timing(editIconsOpacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      }, 10);
+      
+      // Also animate the main edit mode icon
+      Animated.timing(editModeIconRotation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+      
+      // Show the edit toolbar
+      setShowEditToolbar(true);
+    } else {
+      // Exiting edit mode: slide back down with delayed fade out
+      // Start slide down immediately
+      Animated.timing(editIconsTranslateY, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start(() => {
+        // Hide the edit icons after animation completes
+        setShowEditIcons(false);
+      });
+      
+      // Delay the fade out by 200ms, then fade for 100ms
+      Animated.sequence([
+        Animated.delay(200),
+        Animated.timing(editIconsOpacity, {
+          toValue: 0,
+          duration: 100,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      
+      // Also animate the main edit mode icon
+      Animated.timing(editModeIconRotation, {
+        toValue: 0,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    }
+  }, [isEditMode]);
+  
   // Handle PIN input
   useEffect(() => {
     if (pinInput.length === PIN_LENGTH && !isSettingPin) {
       // Verify PIN
       verifyPin(pinInput).then(isValid => {
         if (isValid) {
-          setIsEditMode(true);
+          if (pinForModalEdit) {
+            // PIN for modal edit mode
+            setIsModalEditMode(true);
+            setPinForModalEdit(false);
+          } else {
+            // PIN for main edit mode
+            setIsEditMode(true);
+          }
           setShowPinModal(false);
           setPinInput('');
         } else {
@@ -157,7 +264,7 @@ const App = () => {
         }
       });
     }
-  }, [pinInput, isSettingPin]);
+  }, [pinInput, isSettingPin, pinForModalEdit]);
   
   // Handle PIN setting
   useEffect(() => {
@@ -469,8 +576,7 @@ const App = () => {
           defaultView: 'normal',
           displayMode: 'numbers',
           enableDayManagement: true,
-          editModePin,
-          pinEnabled: editModePin !== null
+          pinEnabled: await hasSecurePin()
         },
         templates,
         exportDate: new Date().toISOString()
@@ -548,7 +654,7 @@ const App = () => {
               setUsers(migratedData.users || {});
               setCurrentTheme(migratedData.globalSettings?.currentTheme || 'purple');
               setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
-              setEditModePin(migratedData.globalSettings?.editModePin || null);
+              // PIN is now handled by secure storage, not imported
               setTemplates(migratedData.templates || []);
               setCurrentDay(migratedData.currentDay || 'today');
               
@@ -586,9 +692,8 @@ const App = () => {
           item.completed && [
             styles.completedCard,
             {
-              backgroundColor: `${theme.primary}15`, // 15 is hex for ~8% opacity
+              backgroundColor: theme.light, // Solid light theme color
               borderColor: theme.primary,
-              shadowColor: theme.primary,
             }
           ],
           isActive && styles.draggingCard
@@ -639,9 +744,9 @@ const App = () => {
       </View>
 
       {/* Edit Mode Actions */}
-      {isEditMode && (
+      {showEditIcons && (
         <View style={styles.editActions}>
-          <TouchableOpacity
+          <AnimatedTouchableOpacity
             onPress={() => {
               setEditingActivity(item);
               setActivityTitle(item.text || item.title || '');
@@ -649,16 +754,38 @@ const App = () => {
               setActivityEmoji(item.emoji || '🎯');
               setShowActivityModal(true);
             }}
-            style={styles.editButton}
+            style={[
+              styles.editButton,
+              {
+                opacity: editIconsOpacity,
+                transform: [{
+                  translateY: editIconsTranslateY.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }]
+              }
+            ]}
           >
             <Icon name="edit" size={20} color={theme.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
+          </AnimatedTouchableOpacity>
+          <AnimatedTouchableOpacity
             onPress={() => deleteActivity(item.id)}
-            style={styles.editButton}
+            style={[
+              styles.editButton,
+              {
+                opacity: editIconsOpacity,
+                transform: [{
+                  translateY: editIconsTranslateY.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [20, 0]
+                  })
+                }]
+              }
+            ]}
           >
             <Icon name="delete" size={20} color="#f56565" />
-          </TouchableOpacity>
+          </AnimatedTouchableOpacity>
         </View>
       )}
       </TouchableOpacity>
@@ -676,16 +803,12 @@ const App = () => {
     <View style={styles.header}>
       <View style={styles.headerContent}>
         <View style={styles.logoContainer}>
-          <View style={styles.logo}>
-            <View style={[styles.logoBar, styles.logoBar1]} />
-            <View style={[styles.logoBar, styles.logoBar2]} />
-            <View style={[styles.logoBar, styles.logoBar3]} />
-          </View>
+          <Logo size={isTablet() ? 40 : 32} theme={theme} />
           <Text style={styles.headerTitle}>StackMap</Text>
         </View>
         <TouchableOpacity 
           style={styles.subtitlePill}
-          onPress={() => setShowUserModal(true)}
+          onPress={() => setShowUserDayModal(true)}
         >
           <Text style={styles.subtitleEmoji}>
             {users[currentUser]?.icon || '😀'}
@@ -728,13 +851,13 @@ const App = () => {
   // For iPhone in bottom banner mode: center on header content area
   // The FABs need to be lower, centered on the banner content
   const fabBottom = bannerPosition === 'bottom' 
-    ? isTablet 
+    ? isTablet() 
       ? insets.bottom + 15 // Tablets: move down to prevent overlap with banner content
       : insets.bottom + 20 // iPhone: much lower, just above home bar with minimal offset
     : null; // Will use top positioning for top banner
     
   const fabTop = bannerPosition === 'top'
-    ? insets.top + (isTablet ? 20 : 20) // Same positioning as bottom mode for iPhone
+    ? insets.top + (isTablet() ? 20 : 20) // Same positioning as bottom mode for iPhone
     : null;
     
   return (
@@ -756,17 +879,6 @@ const App = () => {
         
         {/* Main Content Area */}
         <View style={styles.contentArea}>
-          {/* Exit Edit Mode Button */}
-          {isEditMode && (
-            <TouchableOpacity 
-              style={[styles.exitEditButton, { backgroundColor: 'rgba(255, 82, 82, 0.9)' }]}
-              onPress={() => setIsEditMode(false)}
-            >
-              <Icon name="close" size={18} color="white" />
-              <Text style={styles.exitEditText}>Exit Edit Mode</Text>
-            </TouchableOpacity>
-          )}
-          
           {numColumns > 1 ? (
             <FlatList
               data={activities}
@@ -774,13 +886,16 @@ const App = () => {
               keyExtractor={item => item.id}
               numColumns={numColumns}
               columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[
+                styles.listContent,
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
+              ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyIcon}>📋</Text>
                   <Text style={styles.emptyText}>No activities yet</Text>
                   <Text style={styles.emptySubtext}>
-                    {isEditMode ? 'Tap + to add an activity' : 'Use the edit button to add your first activity'}
+                    {isEditMode ? 'Tap Add to create an activity' : 'Tap the edit button to add your first activity'}
                   </Text>
                 </View>
               }
@@ -805,13 +920,16 @@ const App = () => {
                   setUsers(updatedUsers);
                 }
               }}
-              contentContainerStyle={styles.listContent}
+              contentContainerStyle={[
+                styles.listContent,
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
+              ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyIcon}>📋</Text>
                   <Text style={styles.emptyText}>No activities yet</Text>
                   <Text style={styles.emptySubtext}>
-                    {isEditMode ? 'Tap + to add an activity' : 'Use the edit button to add your first activity'}
+                    {isEditMode ? 'Tap Add to create an activity' : 'Tap the edit button to add your first activity'}
                   </Text>
                 </View>
               }
@@ -835,21 +953,28 @@ const App = () => {
         <FAB
           icon="palette"
           onPress={() => setShowUserModal(true)}
+          onLongPress={() => setShowUserModal(true)}
           position={{ bottom: fabBottom, top: fabTop, left: 20 }}
           theme={theme}
         />
 
         <FAB
-          icon={isEditMode ? "add" : "edit"}
-          onPress={() => {
+          icon={isEditMode ? "close" : "edit"}
+          onPress={async () => {
             if (isEditMode) {
-              setShowActivityModal(true);
+              setIsEditMode(false);
+              // The toolbar will be removed after animation completes
             } else {
-              setShowEditModeSettingsModal(true);
+              if (await hasSecurePin()) {
+                setShowPinModal(true);
+              } else {
+                setIsEditMode(true);
+              }
             }
           }}
           position={{ bottom: fabBottom, top: fabTop, right: 20 }}
-          theme={theme}
+          theme={isEditMode ? { primary: 'white' } : theme}
+          style={isEditMode ? { backgroundColor: '#f56565' } : {}}
         />
       </View>
 
@@ -927,6 +1052,260 @@ const App = () => {
         </View>
       </Modal>
 
+      {/* User/Day Modal */}
+      <Modal
+        visible={showUserDayModal}
+        animationType="slide"
+        onRequestClose={() => {
+          setShowUserDayModal(false);
+          setIsModalEditMode(false);
+        }}
+      >
+        <View style={styles.modalContainer}>
+          <SafeAreaView style={{ backgroundColor: theme.primary }}>
+            <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+              <Text style={styles.modalTitle}>
+                {isModalEditMode ? 'User & Day Management' : 'Switch User/Day'}
+              </Text>
+              <TouchableOpacity onPress={() => {
+                setShowUserDayModal(false);
+                setIsModalEditMode(false);
+              }}>
+                <Icon name="close" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+          
+          <View style={{ flex: 1, backgroundColor: theme.light }}>
+            <ScrollView style={styles.modalContent}>
+              {/* Users Section */}
+              <Text style={styles.sectionTitle}>Users</Text>
+              <View style={styles.usersList}>
+                {Object.entries(users).map(([userId, user]) => (
+                  <TouchableOpacity
+                    key={userId}
+                    style={[
+                      styles.userItem,
+                      currentUser === userId && styles.userItemActive
+                    ]}
+                    onPress={() => {
+                      if (!isModalEditMode) {
+                        // User mode: just select
+                        setCurrentUser(userId);
+                        setActivities(user.days?.[currentDay]?.activities || []);
+                        showToast({ message: `Switched to ${user.name}` });
+                      } else {
+                        // Edit mode: select or edit
+                        setCurrentUser(userId);
+                        setActivities(user.days?.[currentDay]?.activities || []);
+                      }
+                    }}
+                    onLongPress={() => {
+                      if (isModalEditMode && Object.keys(users).length > 1) {
+                        Alert.alert(
+                          'Delete User',
+                          `Delete ${user.name}?`,
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Delete',
+                              style: 'destructive',
+                              onPress: () => {
+                                const updatedUsers = { ...users };
+                                delete updatedUsers[userId];
+                                setUsers(updatedUsers);
+                                if (currentUser === userId) {
+                                  const newUserId = Object.keys(updatedUsers)[0];
+                                  setCurrentUser(newUserId);
+                                  setActivities(updatedUsers[newUserId].days?.[currentDay]?.activities || []);
+                                }
+                                showToast({ message: `Deleted ${user.name}` });
+                              }
+                            }
+                          ]
+                        );
+                      }
+                    }}
+                  >
+                    <Text style={styles.userItemEmoji}>{user.icon}</Text>
+                    <Text style={[
+                      styles.userItemName,
+                      currentUser === userId && styles.userItemNameActive
+                    ]}>
+                      {user.name}
+                    </Text>
+                    {currentUser === userId && (
+                      <Icon name="check" size={20} color={theme.primary} />
+                    )}
+                    {isModalEditMode && (
+                      <TouchableOpacity
+                        style={styles.editUserButton}
+                        onPress={() => {
+                          setEditingUser(userId);
+                          setNewUserName(user.name);
+                          setNewUserEmoji(user.icon);
+                          setShowUserDayModal(false);
+                          setShowAddUserModal(true);
+                        }}
+                      >
+                        <Icon name="edit" size={18} color="#666" />
+                      </TouchableOpacity>
+                    )}
+                  </TouchableOpacity>
+                ))}
+                {isModalEditMode && (
+                  <TouchableOpacity
+                    style={styles.addUserButton}
+                    onPress={() => {
+                      setEditingUser(null);
+                      setNewUserName('');
+                      setNewUserEmoji(DEFAULT_USER_ICON);
+                      setShowUserDayModal(false);
+                      setShowAddUserModal(true);
+                    }}
+                  >
+                    <Icon name="add" size={24} color={theme.primary} />
+                    <Text style={styles.addUserText}>Add User</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+
+              {/* Day Selection */}
+              <Text style={styles.sectionTitle}>Day</Text>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity
+                  style={[styles.toggle, currentDay === 'today' && styles.toggleActive]}
+                  onPress={() => setCurrentDay('today')}
+                >
+                  <Text style={[styles.toggleText, currentDay === 'today' && styles.toggleTextActive]}>
+                    Today
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggle, currentDay === 'tomorrow' && styles.toggleActive]}
+                  onPress={() => setCurrentDay('tomorrow')}
+                >
+                  <Text style={[styles.toggleText, currentDay === 'tomorrow' && styles.toggleTextActive]}>
+                    Tomorrow
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              
+              {/* Edit Mode Only Sections */}
+              {isModalEditMode && (
+                <>
+                  {/* Day Mode Section */}
+                  <Text style={styles.sectionTitle}>Day Mode</Text>
+                  <View style={styles.toggleContainer}>
+                    <TouchableOpacity
+                      style={[styles.toggle, dayMode === 'today' && styles.toggleActive]}
+                      onPress={() => setDayMode('today')}
+                    >
+                      <Text style={[styles.toggleText, dayMode === 'today' && styles.toggleTextActive]}>
+                        Today Only
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.toggle, dayMode === 'both' && styles.toggleActive]}
+                      onPress={() => setDayMode('both')}
+                    >
+                      <Text style={[styles.toggleText, dayMode === 'both' && styles.toggleTextActive]}>
+                        Today & Tomorrow
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  
+                  {/* PIN Management Section */}
+                  <Text style={styles.sectionTitle}>PIN Protection</Text>
+                  <View style={styles.pinSection}>
+                    {hasPinProtection ? (
+                      <>
+                        <Text style={styles.pinStatus}>PIN is enabled</Text>
+                        <View style={styles.pinButtons}>
+                          <TouchableOpacity
+                            style={[styles.pinButton, { backgroundColor: theme.primary }]}
+                            onPress={() => {
+                              setIsSettingPin(true);
+                              setPinInput('');
+                              setConfirmPin('');
+                              setShowUserDayModal(false);
+                              setShowPinModal(true);
+                            }}
+                          >
+                            <Text style={styles.pinButtonText}>Change PIN</Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={[styles.pinButton, { backgroundColor: '#f56565' }]}
+                            onPress={async () => {
+                              Alert.alert(
+                                'Remove PIN',
+                                'Are you sure you want to remove PIN protection?',
+                                [
+                                  { text: 'Cancel', style: 'cancel' },
+                                  {
+                                    text: 'Remove',
+                                    style: 'destructive',
+                                    onPress: async () => {
+                                      await setSecurePin(null);
+                                      setHasPinProtection(false);
+                                      showToast({ message: 'PIN removed' });
+                                    }
+                                  }
+                                ]
+                              );
+                            }}
+                          >
+                            <Text style={styles.pinButtonText}>Remove PIN</Text>
+                          </TouchableOpacity>
+                        </View>
+                      </>
+                    ) : (
+                      <TouchableOpacity
+                        style={[styles.button, { backgroundColor: theme.primary }]}
+                        onPress={() => {
+                          setIsSettingPin(true);
+                          setPinInput('');
+                          setConfirmPin('');
+                          setShowUserDayModal(false);
+                          setShowPinModal(true);
+                        }}
+                      >
+                        <Icon name="lock" size={20} color="white" />
+                        <Text style={styles.buttonText}>Enable PIN</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                </>
+              )}
+              
+              {/* Edit Mode Button - shown at bottom when not in modal edit mode */}
+              {!isModalEditMode && (
+                <View style={styles.modalEditModeButtonContainer}>
+                  <TouchableOpacity
+                    style={styles.editModePill}
+                    onPress={async () => {
+                      if (await hasSecurePin()) {
+                        // Has PIN, need to verify
+                        setPinForModalEdit(true);
+                        setShowPinModal(true);
+                        setPinInput('');
+                      } else {
+                        // No PIN, directly enter modal edit mode
+                        setIsModalEditMode(true);
+                      }
+                    }}
+                  >
+                    <Icon name="edit" size={20} color={theme.primary} />
+                    <Text style={[styles.editModePillText, { color: theme.primary }]}>Manage Users, Days, and PIN</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+          <SafeAreaView style={{ backgroundColor: theme.light }} />
+        </View>
+      </Modal>
+
       {/* Preferences Modal */}
       <Modal
         visible={showUserModal}
@@ -946,89 +1325,44 @@ const App = () => {
           <View style={{ flex: 1, backgroundColor: theme.light }}>
             <ScrollView style={styles.modalContent}>
               {/* Theme Color Section */}
-            <Text style={styles.sectionTitle}>Theme Color</Text>
-            <View style={styles.colorGrid}>
-              {Object.keys(THEMES).map(color => (
+              <Text style={styles.sectionTitle}>Theme Color</Text>
+              <View style={styles.colorGrid}>
+                {Object.keys(THEMES).map(color => (
+                  <TouchableOpacity
+                    key={color}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: THEMES[color].primary },
+                      currentTheme === color && styles.colorSelected
+                    ]}
+                    onPress={() => setCurrentTheme(color)}
+                  >
+                    {currentTheme === color && <Icon name="check" size={24} color="white" />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {/* Banner Position Section */}
+              <Text style={styles.sectionTitle}>Banner Position</Text>
+              <View style={styles.toggleContainer}>
                 <TouchableOpacity
-                  key={color}
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: THEMES[color].primary },
-                    currentTheme === color && styles.colorSelected
-                  ]}
-                  onPress={() => setCurrentTheme(color)}
+                  style={[styles.toggle, bannerPosition === 'top' && styles.toggleActive]}
+                  onPress={() => setBannerPosition('top')}
                 >
-                  {currentTheme === color && <Icon name="check" size={24} color="white" />}
+                  <Text style={[styles.toggleText, bannerPosition === 'top' && styles.toggleTextActive]}>
+                    Top
+                  </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Banner Position Section */}
-            <Text style={styles.sectionTitle}>Banner Position</Text>
-            <View style={styles.toggleContainer}>
-              <TouchableOpacity
-                style={[styles.toggle, bannerPosition === 'top' && styles.toggleActive]}
-                onPress={() => setBannerPosition('top')}
-              >
-                <Text style={[styles.toggleText, bannerPosition === 'top' && styles.toggleTextActive]}>
-                  Top
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toggle, bannerPosition === 'bottom' && styles.toggleActive]}
-                onPress={() => setBannerPosition('bottom')}
-              >
-                <Text style={[styles.toggleText, bannerPosition === 'bottom' && styles.toggleTextActive]}>
-                  Bottom
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Day Selection Section */}
-            <Text style={styles.sectionTitle}>Day</Text>
-            <View style={styles.toggleContainer}>
-              <TouchableOpacity
-                style={[styles.toggle, currentDay === 'today' && styles.toggleActive]}
-                onPress={() => setCurrentDay('today')}
-              >
-                <Text style={[styles.toggleText, currentDay === 'today' && styles.toggleTextActive]}>
-                  Today
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toggle, currentDay === 'tomorrow' && styles.toggleActive]}
-                onPress={() => setCurrentDay('tomorrow')}
-              >
-                <Text style={[styles.toggleText, currentDay === 'tomorrow' && styles.toggleTextActive]}>
-                  Tomorrow
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Import/Export Section */}
-            <Text style={styles.sectionTitle}>Data Management</Text>
-            <View style={styles.dataManagementSection}>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary, marginBottom: 10 }]}
-                onPress={exportData}
-              >
-                <Icon name="file-download" size={20} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.buttonText}>Export Data</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={importData}
-              >
-                <Icon name="file-upload" size={20} color="white" style={{ marginRight: 8 }} />
-                <Text style={styles.buttonText}>Import Data</Text>
-              </TouchableOpacity>
-              
-              <Text style={styles.dataManagementHint}>
-                Export your data to share with the web app or import data from a previous export
-              </Text>
-            </View>
-          </ScrollView>
+                <TouchableOpacity
+                  style={[styles.toggle, bannerPosition === 'bottom' && styles.toggleActive]}
+                  onPress={() => setBannerPosition('bottom')}
+                >
+                  <Text style={[styles.toggleText, bannerPosition === 'bottom' && styles.toggleTextActive]}>
+                    Bottom
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
         </View>
@@ -1146,7 +1480,7 @@ const App = () => {
         </View>
       </Modal>
       
-      {/* Add User Modal */}
+      {/* Add/Edit User Modal */}
       <Modal
         visible={showAddUserModal}
         animationType="slide"
@@ -1155,11 +1489,14 @@ const App = () => {
         <View style={styles.modalContainer}>
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>Add New User</Text>
+              <Text style={styles.modalTitle}>
+                {editingUser ? 'Edit User' : 'Add New User'}
+              </Text>
               <TouchableOpacity onPress={() => {
                 setShowAddUserModal(false);
                 setNewUserName('');
                 setNewUserEmoji('😀');
+                setEditingUser(null);
               }}>
                 <Icon name="close" size={24} color="white" />
               </TouchableOpacity>
@@ -1210,9 +1547,33 @@ const App = () => {
               
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={addUser}
+                onPress={editingUser ? () => {
+                  // Update existing user
+                  if (!newUserName.trim()) {
+                    Alert.alert('Error', 'Please enter a user name');
+                    return;
+                  }
+                  
+                  const updatedUsers = {
+                    ...users,
+                    [editingUser]: {
+                      ...users[editingUser],
+                      name: newUserName.trim(),
+                      icon: newUserEmoji
+                    }
+                  };
+                  
+                  setUsers(updatedUsers);
+                  setNewUserName('');
+                  setNewUserEmoji('😀');
+                  setEditingUser(null);
+                  setShowAddUserModal(false);
+                  showToast({ message: `Updated user: ${newUserName.trim()}` });
+                } : addUser}
               >
-                <Text style={styles.buttonText}>Add User</Text>
+                <Text style={styles.buttonText}>
+                  {editingUser ? 'Save Changes' : 'Add User'}
+                </Text>
               </TouchableOpacity>
             </ScrollView>
           </KeyboardAvoidingView>
@@ -1315,6 +1676,24 @@ const App = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Edit Mode Toolbar */}
+      {showEditToolbar && (
+        <EditModeToolbar
+          visible={isEditMode}
+          onExit={() => setIsEditMode(false)}
+          onAdd={() => setShowActivityModal(true)}
+          onLibrary={() => showToast({ message: 'Library coming soon!' })}
+          onCompleteDay={() => showToast({ message: 'Complete Day coming soon!' })}
+          theme={theme}
+          position={bannerPosition === 'top' ? 'bottom' : 'top'}
+          onAnimationComplete={() => {
+            if (!isEditMode) {
+              setShowEditToolbar(false);
+            }
+          }}
+        />
+      )}
       
       {/* Toast Notification */}
       <Toast
@@ -1383,9 +1762,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'white',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: RADIUS.round,
     marginTop: SPACING.sm,
     gap: SPACING.sm,
     ...SHADOWS.level2,
@@ -1440,14 +1819,14 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(0, 0, 0, 0.08)',
     alignSelf: 'center',
+    overflow: 'hidden',
   },
   completedCard: {
     transform: [{ scale: 1.01 }],
-    backgroundColor: 'rgba(102, 126, 234, 0.12)', // Semi-transparent primary
-    borderColor: THEMES.purple.primary,
+    // backgroundColor will be set dynamically with theme color
     borderWidth: 2,
     ...SHADOWS.level2,
-    shadowColor: THEMES.purple.primary,
+    // Same shadow as incomplete cards
   },
   draggingCard: {
     opacity: 0.9,
@@ -1753,6 +2132,10 @@ const styles = StyleSheet.create({
   userItemNameActive: {
     fontWeight: 'bold',
   },
+  editUserButton: {
+    padding: 8,
+    marginLeft: 8,
+  },
   addUserButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1779,6 +2162,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
+    fontFamily: 'ComicNeue-Regular',
+  },
+  pinButtons: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 10,
+    justifyContent: 'center',
+  },
+  pinButton: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    minWidth: 100,
+    alignItems: 'center',
+  },
+  pinButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
     fontFamily: 'ComicNeue-Regular',
   },
   pinModalOverlay: {
@@ -1875,18 +2277,29 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
   },
-  // Data management styles
   dataManagementSection: {
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    gap: 10,
   },
-  dataManagementHint: {
-    fontSize: 14,
-    color: '#666',
-    textAlign: 'center',
-    marginTop: 12,
+  modalEditModeButtonContainer: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    marginTop: 10,
+    alignItems: 'center',
+  },
+  editModePill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.sm + 2,
+    borderRadius: RADIUS.round,
+    gap: SPACING.sm,
+    ...SHADOWS.level1,
+  },
+  editModePillText: {
+    fontSize: isTablet() ? 16 : 14,
+    fontWeight: '600',
     fontFamily: 'ComicNeue-Regular',
-    lineHeight: 20,
   },
 });
 
