@@ -803,7 +803,7 @@ const App = () => {
               }
             ]}
           >
-            <Icon name="edit" size={20} color={theme.primary} />
+            <Icon name="edit" size={20} color={theme.primary} style={{ transform: [{ scaleY: -1 }] }} />
           </AnimatedTouchableOpacity>
           <AnimatedTouchableOpacity
             onPress={() => addActivityToLibrary(item)}
@@ -1201,7 +1201,7 @@ const App = () => {
                           setShowAddUserModal(true);
                         }}
                       >
-                        <Icon name="edit" size={18} color="#666" />
+                        <Icon name="edit" size={18} color="#666" style={{ transform: [{ scaleY: -1 }] }} />
                       </TouchableOpacity>
                     )}
                   </TouchableOpacity>
@@ -1348,7 +1348,7 @@ const App = () => {
                       }
                     }}
                   >
-                    <Icon name="edit" size={20} color={theme.primary} />
+                    <Icon name="edit" size={20} color={theme.primary} style={{ transform: [{ scaleY: -1 }] }} />
                     <Text style={[styles.editModePillText, { color: theme.primary }]}>Manage Users, Days, and PIN</Text>
                   </TouchableOpacity>
                 </View>
@@ -1523,7 +1523,7 @@ const App = () => {
                   }
                 }}
               >
-                <Icon name="edit" size={20} color="white" />
+                <Icon name="edit" size={20} color="white" style={{ transform: [{ scaleY: -1 }] }} />
                 <Text style={styles.buttonText}>Enter Edit Mode</Text>
               </TouchableOpacity>
             </View>
