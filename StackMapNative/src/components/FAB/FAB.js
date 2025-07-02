@@ -63,8 +63,7 @@ const FAB = ({
       <Animated.View style={{ 
         transform: [
           { rotate: spin },
-          { scaleX: icon === 'edit' ? -1 : 1 }, // Flip edit icon horizontally
-          { scaleY: icon === 'edit' ? -1 : 1 } // Flip edit icon vertically
+          { scaleX: icon === 'edit' ? -1 : 1 } // Flip edit icon horizontally only
         ] 
       }}>
         <Icon 
