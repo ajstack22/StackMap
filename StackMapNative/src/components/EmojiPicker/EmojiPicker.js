@@ -1,0 +1,523 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  Modal,
+  ScrollView,
+  TextInput,
+  StyleSheet,
+  Image,
+  FlatList,
+  SafeAreaView,
+  Dimensions,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, COLORS, isTablet, CUSTOM_IMAGE_SOURCES } from '../../constants';
+import emojiData from 'emoji-datasource-apple/emoji.json';
+
+const { width: screenWidth } = Dimensions.get('window');
+
+// Create emoji search index from emoji data
+const createEmojiSearchIndex = () => {
+  const searchIndex = {};
+  emojiData.forEach(emoji => {
+    if (emoji.unified) {
+      // Convert unified code to actual emoji
+      const emojiChar = String.fromCodePoint(...emoji.unified.split('-').map(u => parseInt(u, 16)));
+      
+      // Index by short names, keywords, and category
+      const searchTerms = [
+        ...(emoji.short_names || []),
+        ...(emoji.keywords || []),
+        emoji.category
+      ];
+      
+      searchIndex[emojiChar] = {
+        emoji: emojiChar,
+        searchTerms: searchTerms.map(term => term.toLowerCase()),
+        category: emoji.category,
+        sortOrder: emoji.sort_order
+      };
+    }
+  });
+  return searchIndex;
+};
+
+const EMOJI_SEARCH_INDEX = createEmojiSearchIndex();
+
+// Simple emoji categories for now - we'll use the comprehensive search
+const EMOJI_CATEGORIES = {
+  'Smileys': ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕'],
+  'People': ['👶', '👧', '🧒', '👦', '👩', '🧑', '👨', '👩‍🦱', '🧑‍🦱', '👨‍🦱', '👩‍🦰', '🧑‍🦰', '👨‍🦰', '👱‍♀️', '👱', '👱‍♂️', '👩‍🦳', '🧑‍🦳', '👨‍🦳', '👩‍🦲', '🧑‍🦲', '👨‍🦲', '🧔‍♀️', '🧔', '🧔‍♂️', '👵', '🧓', '👴', '👲', '👳‍♀️', '👳', '👳‍♂️', '🧕', '👮‍♀️', '👮', '👮‍♂️', '👷‍♀️', '👷', '👷‍♂️', '💂‍♀️', '💂', '💂‍♂️', '🕵️‍♀️', '🕵️', '🕵️‍♂️', '👩‍⚕️', '🧑‍⚕️', '👨‍⚕️', '👩‍🌾', '🧑‍🌾', '👨‍🌾', '👩‍🍳', '🧑‍🍳', '👨‍🍳', '👩‍🎓', '🧑‍🎓', '👨‍🎓', '👩‍🎤', '🧑‍🎤', '👨‍🎤', '👩‍🏫', '🧑‍🏫', '👨‍🏫', '👩‍🏭', '🧑‍🏭', '👨‍🏭', '👩‍💻', '🧑‍💻', '👨‍💻', '👩‍💼', '🧑‍💼', '👨‍💼', '👩‍🔧', '🧑‍🔧', '👨‍🔧', '👩‍🔬', '🧑‍🔬', '👨‍🔬', '👩‍🎨', '🧑‍🎨', '👨‍🎨', '👩‍🚒', '🧑‍🚒', '👨‍🚒', '👩‍✈️', '🧑‍✈️', '👨‍✈️', '👩‍🚀', '🧑‍🚀', '👨‍🚀', '👩‍⚖️', '🧑‍⚖️', '👨‍⚖️', '👰‍♀️', '👰', '👰‍♂️', '🤵‍♀️', '🤵', '🤵‍♂️', '👸', '🤴', '🥷', '🦸‍♀️', '🦸', '🦸‍♂️', '🦹‍♀️', '🦹', '🦹‍♂️', '🤶', '🧑‍🎄', '🎅', '🧙‍♀️', '🧙', '🧙‍♂️', '🧝‍♀️', '🧝', '🧝‍♂️', '🧛‍♀️', '🧛', '🧛‍♂️', '🧟‍♀️', '🧟', '🧟‍♂️', '🧞‍♀️', '🧞', '🧞‍♂️', '🧜‍♀️', '🧜', '🧜‍♂️', '🧚‍♀️', '🧚', '🧚‍♂️', '👼', '🤰', '🤱', '👩‍🍼', '🧑‍🍼', '👨‍🍼', '🙇‍♀️', '🙇', '🙇‍♂️', '💁‍♀️', '💁', '💁‍♂️', '🙅‍♀️', '🙅', '🙅‍♂️', '🙆‍♀️', '🙆', '🙆‍♂️', '🙋‍♀️', '🙋', '🙋‍♂️', '🧏‍♀️', '🧏', '🧏‍♂️', '🤦‍♀️', '🤦', '🤦‍♂️', '🤷‍♀️', '🤷', '🤷‍♂️', '🙎‍♀️', '🙎', '🙎‍♂️', '🙍‍♀️', '🙍', '🙍‍♂️', '💇‍♀️', '💇', '💇‍♂️', '💆‍♀️', '💆', '💆‍♂️', '🧖‍♀️', '🧖', '🧖‍♂️', '💅', '🤳', '💃', '🕺', '👯‍♀️', '👯', '👯‍♂️', '🕴️', '👩‍🦽', '🧑‍🦽', '👨‍🦽', '👩‍🦼', '🧑‍🦼', '👨‍🦼', '🚶‍♀️', '🚶', '🚶‍♂️', '👩‍🦯', '🧑‍🦯', '👨‍🦯', '🧎‍♀️', '🧎', '🧎‍♂️', '🏃‍♀️', '🏃', '🏃‍♂️', '🧍‍♀️', '🧍', '🧍‍♂️', '👫', '👭', '👬', '👩‍❤️‍👨', '👩‍❤️‍👩', '💑', '👨‍❤️‍👨', '👩‍❤️‍💋‍👨', '👩‍❤️‍💋‍👩', '💏', '👨‍❤️‍💋‍👨', '👨‍👩‍👦', '👨‍👩‍👧', '👨‍👩‍👧‍👦', '👨‍👩‍👦‍👦', '👨‍👩‍👧‍👧', '👩‍👩‍👦', '👩‍👩‍👧', '👩‍👩‍👧‍👦', '👩‍👩‍👦‍👦', '👩‍👩‍👧‍👧', '👨‍👨‍👦', '👨‍👨‍👧', '👨‍👨‍👧‍👦', '👨‍👨‍👦‍👦', '👨‍👨‍👧‍👧', '👩‍👦', '👩‍👧', '👩‍👧‍👦', '👩‍👦‍👦', '👩‍👧‍👧', '👨‍👦', '👨‍👧', '👨‍👧‍👦', '👨‍👦‍👦', '👨‍👧‍👧', '🤲', '👐', '🙌', '👏', '🤝', '👍', '👎', '👊', '✊', '🤛', '🤜', '🤞', '✌️', '🤟', '🤘', '👌', '🤌', '🤏', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤙', '💪', '🦾', '🖕', '✍️', '🙏', '🦶', '🦵', '🦿', '💄', '💋', '👄', '🦷', '👅', '👂', '🦻', '👃', '👣', '👁️', '👀', '🫀', '🫁', '🧠', '🦴', '🦳', '🦱', '🦲', '🦰'],
+  'Food': ['🍏', '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🌽', '🥕', '🥔', '🍠', '🥐', '🥖', '🍞', '🥨', '🧀', '🥚', '🍳', '🥞', '🥓', '🥩', '🍗', '🍖', '🌭', '🍔', '🍟', '🍕', '🥪', '🥙', '🌮', '🌯', '🥗', '🥘', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🍤', '🍙', '🍚', '🍘', '🍥', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '☕', '🍵', '🥤', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🍾'],
+  'Animals': ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️', '🕸️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔'],
+  'Travel': ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🏍️', '🛵', '🚲', '🛴', '🚁', '🛸', '🚀', '✈️', '🛫', '🛬', '🪂', '💺', '🚤', '⛵', '🛶', '🚢', '🛳️', '⚓', '🚇', '🚊', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚋', '🚃', '🚟', '🚠', '🚡', '🚖', '🚘', '🚍', '🚔', '🚨', '🚥', '🚦', '🛑', '🚧', '🏗️', '🏭', '🏠', '🏡', '🏘️', '🏚️', '🏢', '🏬', '🏣', '🏤', '🏥', '🏦', '🏨', '🏪', '🏫', '🏩', '💒', '🏛️', '⛪', '🕌', '🕍', '🛕', '🕋', '⛩️', '🗾', '🎑', '🏞️', '🌅', '🌄', '🌠', '🎇', '🎆', '🌇', '🌆', '🏙️', '🌃', '🌌', '🌉', '🌁'],
+  'Objects': ['⌚', '📱', '📲', '💻', '⌨️', '🖥️', '🖨️', '🖱️', '🖲️', '🕹️', '🗜️', '💽', '💾', '💿', '📀', '📼', '📷', '📸', '📹', '🎥', '📽️', '🎞️', '📞', '☎️', '📟', '📠', '📺', '📻', '🎙️', '🎚️', '🎛️', '🧭', '⏱️', '⏲️', '⏰', '🕰️', '⌛', '⏳', '📡', '🔋', '🔌', '💡', '🔦', '🕯️', '🧯', '🛢️', '💸', '💵', '💴', '💶', '💷', '💰', '💳', '💎', '⚖️', '🧰', '🔧', '🔨', '⚒️', '🛠️', '⛏️', '🔩', '⚙️', '🧱', '⛓️', '🧲', '🔫', '💣', '🧨', '🔪', '🗡️', '⚔️', '🛡️', '🚬', '⚰️', '⚱️', '🏺', '🔮', '📿', '🧿', '💈', '⚗️', '🔭', '🔬', '🕳️', '💊', '💉', '🧬', '🦠', '🧫', '🧪', '🌡️', '🧹', '🧺', '🧻', '🚽', '🚰', '🚿', '🛁', '🛀', '🧼', '🧽', '🧴', '🛎️', '🔑', '🗝️', '🚪', '🛋️', '🛏️', '🛌', '🧸', '🖼️', '🛍️', '🛒', '🎁', '🎈', '🎏', '🎀', '🎊', '🎉', '🎎', '🏮', '🎐', '🧧', '✉️', '📩', '📨', '📧', '💌', '📥', '📤', '📦', '🏷️', '📪', '📫', '📬', '📭', '📮', '📯', '📜', '📃', '📄', '📑', '🧾', '📊', '📈', '📉', '🗒️', '🗓️', '📆', '📅', '🗑️', '📇', '🗃️', '🗳️', '🗄️', '📋', '📁', '📂', '🗂️', '🗞️', '📰', '📓', '📔', '📒', '📕', '📗', '📘', '📙', '📚', '📖', '🔖', '🧷', '🔗', '📎', '🖇️', '📐', '📏', '🧮', '📌', '📍', '✂️', '🖊️', '🖋️', '✒️', '🖌️', '🖍️', '📝', '✏️', '🔍', '🔎', '🔏', '🔐', '🔒', '🔓']
+};
+
+
+
+// Skin tone modifiers
+const SKIN_TONE_MODIFIERS = {
+  none: null,
+  light: '🏻',
+  mediumLight: '🏼',
+  medium: '🏽',
+  mediumDark: '🏾',
+  dark: '🏿'
+};
+
+// List of emojis that support skin tone modifiers
+// This includes base people emojis and hand gestures only
+const SKIN_TONE_SUPPORTED = [
+  // Hand gestures
+  '👋', '🤚', '🖐', '✋', '🖖', '👌', '🤌', '🤏', '✌️', '🤞', '🤟', '🤘', '🤙', 
+  '👈', '👉', '👆', '🖕', '👇', '☝️', '👍', '👎', '✊', '👊', '🤛', '🤜', 
+  '👏', '🙌', '👐', '🤲', '🙏', '✍️', '💅', '🤳', '💪',
+  // Body parts
+  '🦵', '🦶', '👂', '🦻', '👃',
+  // Base people (no gender/role modifiers)
+  '👶', '🧒', '👦', '👧', '🧑', '👨', '👩', '🧓', '👴', '👵',
+  // Simple professions and roles
+  '👮', '👷', '💂', '🕵️', '👳', '👲', '🧕', '🤴', '👸', '🎅', '🤶', 
+  '🦸', '🦹', '🧙', '🧚', '🧛', '🧜', '🧝', '🧞', '🧟', '👼', '🤰', '🤱',
+  // Activities
+  '🙇', '💁', '🙅', '🙆', '🙋', '🧏', '🤦', '🤷', '🙎', '🙍', '💇', '💆',
+  '🧖', '💃', '🕺', '🕴', '🚶', '🧍', '🧎', '🏃', '🤸', '🏋️', '🤾', '🏌️',
+  '🏇', '🧘', '🏄', '🏊', '🤽', '🚣', '🧗', '🚵', '🚴', '🤹'
+];
+
+// Helper function to check if emoji supports skin tone
+const supportsSkinTone = (emoji) => {
+  return SKIN_TONE_SUPPORTED.includes(emoji);
+};
+
+// Helper function to apply skin tone to emoji
+const applySkinTone = (emoji, skinTone) => {
+  if (!skinTone || !supportsSkinTone(emoji)) {
+    return emoji;
+  }
+  
+  // Simply concatenate the skin tone modifier
+  // React Native should handle the rendering
+  return emoji + skinTone;
+};
+
+// Custom images list (matching PWA)
+const CUSTOM_IMAGES = [
+  { name: 'Chicken Nuggets', src: 'ChickenNuggets.png' },
+  { name: 'Fish Sticks', src: 'FishSticks.png' },
+  { name: 'Fusion', src: 'Fusion.png' },
+  { name: 'Golden Retriever', src: 'GoldenRetriever.png' },
+  { name: 'Goldfish Crackers', src: 'GoldfishCrackers.png' },
+  { name: 'Kart', src: 'kart.png' },
+  { name: 'Lambo', src: 'lambo.png' },
+  { name: 'RAV4', src: 'RAV4.png' },
+  { name: 'Swingset', src: 'Swingset.png' },
+  { name: 'Breakfast Dog', src: 'breakfast_dog.png' },
+];
+
+const EmojiPicker = ({
+  visible = false,
+  onClose,
+  onSelect,
+  mode = 'modal', // 'modal' or 'inline'
+  theme,
+  selectedEmoji,
+  showCustomImages = true,
+}) => {
+  const [selectedCategory, setSelectedCategory] = useState('Smileys');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredItems, setFilteredItems] = useState([]);
+  const [categoryKeys, setCategoryKeys] = useState(Object.keys(EMOJI_CATEGORIES));
+  const [selectedSkinTone, setSelectedSkinTone] = useState(null);
+  const [showSkinToneSelector, setShowSkinToneSelector] = useState(false);
+  
+  // Calculate columns based on screen size
+  const numColumns = isTablet() ? 10 : 6;
+  
+  // Initialize categories with custom images
+  useEffect(() => {
+    if (showCustomImages) {
+      // Add Custom category dynamically
+      if (!EMOJI_CATEGORIES['Custom']) {
+        EMOJI_CATEGORIES['Custom'] = CUSTOM_IMAGES;
+      }
+      setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
+      setSelectedCategory('Custom');
+    } else {
+      // Remove Custom category if it exists
+      if (EMOJI_CATEGORIES['Custom']) {
+        delete EMOJI_CATEGORIES['Custom'];
+      }
+      setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
+      setSelectedCategory('Smileys');
+    }
+  }, [showCustomImages]);
+  
+  // Filter items based on search
+  useEffect(() => {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const filtered = [];
+      
+      // Search all categories when there's a search query
+      Object.entries(EMOJI_CATEGORIES).forEach(([category, items]) => {
+        items.forEach(item => {
+          if (typeof item === 'string') {
+            // For emojis, check if search terms match
+            const emojiInfo = EMOJI_SEARCH_INDEX[item];
+            if (emojiInfo) {
+              const matches = emojiInfo.searchTerms.some(term => term.includes(query));
+              if (matches || item.includes(searchQuery)) {
+                filtered.push({ type: 'emoji', emoji: item, category });
+              }
+            }
+          } else {
+            // For custom images
+            if (item.name.toLowerCase().includes(query)) {
+              filtered.push({ type: 'image', ...item, category });
+            }
+          }
+        });
+      });
+      
+      setFilteredItems(filtered);
+    } else {
+      // No search, show selected category
+      const items = EMOJI_CATEGORIES[selectedCategory] || [];
+      setFilteredItems(
+        items.map(item => 
+          typeof item === 'string' 
+            ? { type: 'emoji', emoji: item, category: selectedCategory }
+            : { type: 'image', ...item, category: selectedCategory }
+        )
+      );
+    }
+  }, [searchQuery, selectedCategory]);
+  
+  const handleSelect = (item) => {
+    if (item.type === 'emoji') {
+      onSelect(item.emoji);
+    } else {
+      // For custom images, we'll use a special format
+      onSelect(`image:${item.src}`);
+    }
+    if (mode === 'modal') {
+      onClose();
+    }
+    setSearchQuery('');
+  };
+  
+  const renderItem = ({ item }) => {
+    if (item.type === 'placeholder') {
+      return <View style={styles.emojiItem} />;
+    }
+    
+    // Apply skin tone if applicable
+    let displayEmoji = item.emoji;
+    if (item.type === 'emoji' && selectedCategory === 'People' && selectedSkinTone && supportsSkinTone(item.emoji)) {
+      displayEmoji = applySkinTone(item.emoji, selectedSkinTone);
+    }
+    
+    const isSelected = item.type === 'emoji' 
+      ? selectedEmoji === displayEmoji 
+      : selectedEmoji === `image:${item.src}`;
+      
+    return (
+      <TouchableOpacity
+        style={[styles.emojiItem, isSelected && styles.selectedItem]}
+        onPress={() => handleSelect(item.type === 'emoji' ? { ...item, emoji: displayEmoji } : item)}
+      >
+        {item.type === 'emoji' ? (
+          <Text style={styles.emoji}>{displayEmoji}</Text>
+        ) : (
+          <Image 
+            source={CUSTOM_IMAGE_SOURCES[item.src]}
+            style={styles.customImage}
+            resizeMode="contain"
+          />
+        )}
+      </TouchableOpacity>
+    );
+  };
+  
+  const content = (
+    <View style={[styles.container, mode === 'inline' && styles.inlineContainer]}>
+      {/* Header */}
+      {mode === 'modal' && (
+        <View style={styles.header}>
+          <Text style={styles.title}>Choose an emoji</Text>
+          <TouchableOpacity onPress={onClose}>
+            <Icon name="close" size={24} color="#666" />
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <Icon name="search" size={20} color="#999" />
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search (e.g. car, camera, happy)..."
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholderTextColor="#999"
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        {searchQuery ? (
+          <TouchableOpacity onPress={() => setSearchQuery('')}>
+            <Icon name="close" size={20} color="#999" />
+          </TouchableOpacity>
+        ) : null}
+      </View>
+      
+      {/* Category Tabs */}
+      {!searchQuery && (
+        <View style={styles.categoryContainer}>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+          >
+            {categoryKeys.map(category => (
+              <TouchableOpacity
+                key={category}
+                style={[
+                  styles.categoryTab,
+                  selectedCategory === category && styles.selectedCategoryTab
+                ]}
+                onPress={() => setSelectedCategory(category)}
+              >
+                <Text style={[
+                  styles.categoryText,
+                  selectedCategory === category && styles.selectedCategoryText
+                ]}>
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+      
+      {/* Skin Tone Selector */}
+      {selectedCategory === 'People' && !searchQuery && (
+        <View style={styles.skinToneContainer}>
+          <View style={styles.skinToneOptions}>
+            <TouchableOpacity
+              style={[styles.skinToneOption, !selectedSkinTone && styles.selectedSkinTone]}
+              onPress={() => setSelectedSkinTone(null)}
+            >
+              <Text style={styles.skinToneEmoji}>👋</Text>
+            </TouchableOpacity>
+            {Object.entries(SKIN_TONE_MODIFIERS).filter(([key]) => key !== 'none').map(([key, modifier]) => (
+              <TouchableOpacity
+                key={key}
+                style={[styles.skinToneOption, selectedSkinTone === modifier && styles.selectedSkinTone]}
+                onPress={() => setSelectedSkinTone(modifier)}
+              >
+                <Text style={styles.skinToneEmoji}>{applySkinTone('👋', modifier)}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+      
+      {/* Emoji Grid */}
+      <View style={{ flex: 1 }}>
+        <FlatList
+          data={(() => {
+            // Add empty items to fill the last row
+            const items = [...filteredItems];
+            const remainder = items.length % numColumns;
+            if (remainder !== 0) {
+              for (let i = 0; i < (numColumns - remainder); i++) {
+                items.push({ type: 'placeholder', id: `placeholder-${i}` });
+              }
+            }
+            return items;
+          })()}
+          renderItem={renderItem}
+          keyExtractor={(item, index) => 
+            item.type === 'emoji' ? item.emoji : 
+            item.type === 'placeholder' ? item.id : item.src
+          }
+          numColumns={numColumns}
+          contentContainerStyle={styles.emojiGrid}
+          showsVerticalScrollIndicator={false}
+          removeClippedSubviews={false}
+          keyboardShouldPersistTaps="handled"
+          nestedScrollEnabled={true}
+        />
+      </View>
+    </View>
+  );
+  
+  if (mode === 'inline') {
+    return content;
+  }
+  
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity 
+        style={styles.modalOverlay} 
+        activeOpacity={1} 
+        onPress={onClose}
+      >
+        <TouchableOpacity 
+          activeOpacity={1} 
+          style={styles.modalContent}
+          onPress={(e) => e.stopPropagation()}
+        >
+          {content}
+        </TouchableOpacity>
+      </TouchableOpacity>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.xl,
+    overflow: 'hidden',
+    flex: 1,
+  },
+  inlineContainer: {
+    borderRadius: RADIUS.lg,
+    backgroundColor: '#f5f5f5',
+    height: 300,
+    maxHeight: 300,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    height: '80%',
+    maxWidth: isTablet() ? 700 : '100%',
+    alignSelf: 'center',
+    width: '100%',
+    ...SHADOWS.level3,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    paddingHorizontal: isTablet() ? SPACING.xl : SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+  },
+  title: {
+    fontSize: isTablet() ? TYPOGRAPHY.fontSize.xl : TYPOGRAPHY.fontSize.lg,
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.gray[900],
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[100],
+    borderRadius: RADIUS.md,
+    paddingHorizontal: SPACING.md,
+    margin: SPACING.md,
+    marginHorizontal: isTablet() ? SPACING.xl : SPACING.md,
+    height: isTablet() ? 48 : 40,
+    gap: SPACING.sm,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.gray[900],
+  },
+  categoryContainer: {
+    paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
+    marginBottom: SPACING.sm,
+    height: isTablet() ? 44 : 36,
+  },
+  categoryTab: {
+    paddingHorizontal: isTablet() ? SPACING.lg : SPACING.md,
+    paddingVertical: SPACING.xs,
+    marginRight: SPACING.sm,
+    borderRadius: RADIUS.md,
+    backgroundColor: COLORS.gray[100],
+    height: isTablet() ? 40 : 32,
+    justifyContent: 'center',
+  },
+  selectedCategoryTab: {
+    backgroundColor: '#667eea',
+  },
+  categoryText: {
+    fontSize: isTablet() ? TYPOGRAPHY.fontSize.md : TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.gray[700],
+  },
+  selectedCategoryText: {
+    color: 'white',
+    fontWeight: TYPOGRAPHY.fontWeight.bold,
+  },
+  emojiGrid: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+  },
+  emojiItem: {
+    flex: 1,
+    aspectRatio: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: SPACING.xs,
+    borderRadius: RADIUS.md,
+    minHeight: isTablet() ? 64 : 52,
+  },
+  selectedItem: {
+    backgroundColor: COLORS.gray[200],
+  },
+  emoji: {
+    fontSize: isTablet() ? 42 : 32,
+    textAlign: 'center',
+  },
+  customImage: {
+    width: isTablet() ? 48 : 36,
+    height: isTablet() ? 48 : 36,
+  },
+  skinToneContainer: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
+  },
+  skinToneOptions: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  skinToneOption: {
+    width: isTablet() ? 44 : 36,
+    height: isTablet() ? 44 : 36,
+    borderRadius: RADIUS.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[100],
+  },
+  selectedSkinTone: {
+    backgroundColor: '#667eea',
+  },
+  skinToneEmoji: {
+    fontSize: isTablet() ? 26 : 22,
+  },
+});
+
+export default EmojiPicker;

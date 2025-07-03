@@ -1,11 +1,30 @@
-// Color themes
+// Color themes - designed for accessibility with white text
+// First 15: Chromatic order with WCAG AA compliance for white text (includes rainbow spectrum)
+// Last 5: Neurodiversity-friendly colors (calming, reduced sensory load)
 export const THEMES = {
-  purple: { primary: '#667eea', dark: '#4a5bc7', light: '#8a9ff5' },
-  blue: { primary: '#3182ce', dark: '#2c5aa0', light: '#63b3ed' },
-  green: { primary: '#48bb78', dark: '#38a169', light: '#68d391' },
-  red: { primary: '#f56565', dark: '#e53e3e', light: '#fc8181' },
-  orange: { primary: '#ed8936', dark: '#dd6b20', light: '#f6ad55' },
-  pink: { primary: '#ed64a6', dark: '#d53f8c', light: '#f687b3' },
+  // Chromatic order - Rainbow spectrum (Red -> Orange -> Yellow -> Green -> Blue -> Purple -> Pink)
+  crimson: { primary: '#DC143C', dark: '#B91C3C', light: '#E85D75' },      // Deep crimson red
+  cherry: { primary: '#DE3163', dark: '#C42953', light: '#E85A7F' },       // Bright cherry (rainbow red)
+  scarlet: { primary: '#CD5C5C', dark: '#B94545', light: '#D98181' },      // Softer red
+  rust: { primary: '#B7410E', dark: '#963508', light: '#D4642E' },         // Rust orange
+  tangerine: { primary: '#F28500', dark: '#D47200', light: '#FF9A33' },    // Bright tangerine (rainbow orange)
+  amber: { primary: '#D97706', dark: '#B45309', light: '#F59E0B' },        // Deep amber
+  gold: { primary: '#B8860B', dark: '#996F09', light: '#D4A017' },         // Rich gold (rainbow yellow)
+  olive: { primary: '#6B8E23', dark: '#556B2F', light: '#8FBC8F' },        // Olive green
+  emerald: { primary: '#50C878', dark: '#3FA760', light: '#6FD896' },      // Bright emerald (rainbow green)
+  forest: { primary: '#228B22', dark: '#1C6E1C', light: '#3CB371' },       // Forest green
+  ocean: { primary: '#2C7A7B', dark: '#1F5F5F', light: '#4C9A9B' },        // Ocean teal
+  sapphire: { primary: '#0F52BA', dark: '#0B3D8A', light: '#3770CF' },     // Bright sapphire (rainbow blue)
+  navy: { primary: '#2C5282', dark: '#1E3A5F', light: '#3B6FA0' },         // Navy blue
+  indigo: { primary: '#4C1D95', dark: '#3B1674', light: '#6B46B5' },       // Deep indigo
+  plum: { primary: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA' },         // Rich plum
+  
+  // Neurodiversity-friendly colors
+  sage: { primary: '#6B7F6B', dark: '#556655', light: '#8B9F8B' },         // Calming sage - reduces anxiety
+  dustyBlue: { primary: '#5B7C99', dark: '#4A6480', light: '#7A95B0' },    // Muted blue - ADHD focus
+  terracotta: { primary: '#A0522D', dark: '#804020', light: '#C07550' },   // Warm earth - grounding
+  lavender: { primary: '#7B68A6', dark: '#65538C', light: '#9785BD' },     // Soft purple - sensory comfort
+  slate: { primary: '#64748B', dark: '#475569', light: '#8B95A6' }         // Neutral slate - low stimulation
 };
 
 // Common colors

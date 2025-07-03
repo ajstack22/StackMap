@@ -10,6 +10,7 @@ import {
   Animated,
   ScrollView,
   SafeAreaView,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import DraggableFlatList, {
@@ -23,7 +24,9 @@ import {
   COLORS,
   isTablet,
   DEFAULT_ACTIVITY_EMOJI,
+  CUSTOM_IMAGE_SOURCES,
 } from '../../constants';
+import EmojiPicker from '../EmojiPicker';
 
 // Default activity categories with starter activities
 const DEFAULT_CATEGORIES = [
@@ -101,7 +104,15 @@ const ActivityRow = ({
   return (
     <View style={styles.activityRow}>
       <View style={styles.activityInfo}>
-        <Text style={styles.activityEmoji}>{activity.emoji}</Text>
+        {activity.emoji && activity.emoji.startsWith('image:') ? (
+          <Image 
+            source={CUSTOM_IMAGE_SOURCES[activity.emoji.substring(6)]}
+            style={styles.activityImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={styles.activityEmoji}>{activity.emoji}</Text>
+        )}
         <Text style={styles.activityName}>{activity.name}</Text>
       </View>
       
@@ -418,7 +429,15 @@ const CategorySection = ({
                     ]}
                   >
                     <View style={styles.activityInfo}>
-                      <Text style={styles.activityEmoji}>{item.emoji}</Text>
+                      {item.emoji && item.emoji.startsWith('image:') ? (
+                        <Image 
+                          source={CUSTOM_IMAGE_SOURCES[item.emoji.substring(6)]}
+                          style={styles.activityImage}
+                          resizeMode="contain"
+                        />
+                      ) : (
+                        <Text style={styles.activityEmoji}>{item.emoji}</Text>
+                      )}
                       <Text style={styles.activityName}>{item.name}</Text>
                     </View>
                     <View style={styles.dragHandle}>
@@ -495,6 +514,7 @@ const ActivityLibrary = ({
   const [editDescription, setEditDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [isDraggingAnyCategory, setIsDraggingAnyCategory] = useState(false);
   const [categoryExpandedStates, setCategoryExpandedStates] = useState({});
   const [searchQuery, setSearchQuery] = useState('');
@@ -613,6 +633,7 @@ const ActivityLibrary = ({
     setEditName('');
     setEditEmoji('');
     setEditDescription('');
+    setShowEmojiPicker(false);
   };
 
   const handleQuickAdd = (activity) => {
@@ -872,34 +893,32 @@ const ActivityLibrary = ({
                 />
                 
                 <Text style={styles.emojiLabel}>Select Emoji:</Text>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  style={styles.emojiPicker}
+                <TouchableOpacity
+                  style={styles.emojiSelector}
+                  onPress={() => setShowEmojiPicker(true)}
                 >
-                  {['🎯', '🌅', '🛏️', '🦷', '🚿', '👔', '🥞', '🥪', 
-                    '🍽️', '🍿', '👨‍🍳', '🎮', '🏃', '📚', '📱', '📝', '🧹', '💪', 
-                    '🎵', '🎨', '🚗', '🛒', '🏥', '💊', '🎉', '🎁', '⚽', '🏀', 
-                    '🎾', '🏊', '🚴', '🧩', '🎲', '🎪', '🎭'].map((emoji, index) => (
-                    <TouchableOpacity
-                      key={emoji}
-                      style={[
-                        styles.emojiOption,
-                        editEmoji === emoji && styles.selectedEmoji,
-                      ]}
-                      onPress={() => setEditEmoji(emoji)}
-                    >
-                      <Text style={styles.emojiText}>{emoji}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                  {editEmoji && editEmoji.startsWith('image:') ? (
+                    <Image 
+                      source={CUSTOM_IMAGE_SOURCES[editEmoji.substring(6)]}
+                      style={styles.selectedEmojiImage}
+                      resizeMode="contain"
+                    />
+                  ) : (
+                    <Text style={styles.selectedEmoji}>{editEmoji || '🎯'}</Text>
+                  )}
+                  <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
+                </TouchableOpacity>
+                
               </View>
             )}
             
             <View style={styles.editModalButtons}>
               <TouchableOpacity
                 style={[styles.editButton, styles.cancelButton]}
-                onPress={() => setEditMode(null)}
+                onPress={() => {
+                  setEditMode(null);
+                  setShowEmojiPicker(false);
+                }}
               >
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
@@ -914,6 +933,20 @@ const ActivityLibrary = ({
           </View>
         </View>
       )}
+      
+      {/* Emoji Picker Modal */}
+      <EmojiPicker 
+        mode="modal"
+        visible={showEmojiPicker}
+        onClose={() => setShowEmojiPicker(false)}
+        onSelect={(emoji) => {
+          setEditEmoji(emoji);
+          setShowEmojiPicker(false);
+        }}
+        theme={theme}
+        selectedEmoji={editEmoji}
+        showCustomImages={true}
+      />
       
       <SafeAreaView style={{ backgroundColor: theme.light }} />
     </View>
@@ -1034,6 +1067,11 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 28 : 24,
     marginRight: SPACING.sm,
   },
+  activityImage: {
+    width: isTablet() ? 28 : 24,
+    height: isTablet() ? 28 : 24,
+    marginRight: SPACING.sm,
+  },
   activityName: {
     fontSize: isTablet() ? 16 : 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -1151,23 +1189,26 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.sm,
     fontWeight: '600',
   },
-  emojiPicker: {
+  emojiSelector: {
+    alignItems: 'center',
+    padding: SPACING.md,
+    backgroundColor: COLORS.gray[100],
+    borderRadius: RADIUS.md,
     marginBottom: SPACING.md,
   },
-  emojiOption: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: RADIUS.md,
-    marginRight: SPACING.xs,
-    backgroundColor: COLORS.gray[100],
-  },
   selectedEmoji: {
-    backgroundColor: COLORS.gray[300],
+    fontSize: 48,
+    marginBottom: SPACING.xs,
   },
-  emojiText: {
-    fontSize: 24,
+  selectedEmojiImage: {
+    width: 48,
+    height: 48,
+    marginBottom: SPACING.xs,
+  },
+  emojiSelectorLabel: {
+    fontSize: 12,
+    color: COLORS.gray[600],
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   editModalButtons: {
     flexDirection: 'row',

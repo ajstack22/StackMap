@@ -74,12 +74,12 @@ const EditModeToolbar = ({
     }
   }, [visible, position, onAnimationComplete]);
 
-  // Define all actions
+  // Define all actions - ordered for right-handed users (most used on right)
   const actions = [
-    { id: 'add', label: 'Add', icon: 'add', onPress: onAdd, color: theme.primary },
-    { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
-    { id: 'complete', label: 'Complete', icon: 'today', onPress: onCompleteDay, color: theme.primary },
     { id: 'settings', label: 'Settings', icon: 'settings', onPress: onSettings, color: theme.primary },
+    { id: 'complete', label: 'Complete', icon: 'today', onPress: onCompleteDay, color: theme.primary },
+    { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
+    { id: 'add', label: 'Add', icon: 'add', onPress: onAdd, color: theme.primary },
   ];
 
   // Show all 4 actions on both mobile and tablet
@@ -89,18 +89,18 @@ const EditModeToolbar = ({
 
   const renderAction = ({ item }) => (
     <TouchableOpacity
-      style={[styles.actionPill, item.disabled && styles.disabledPill]}
+      style={[styles.actionButton, item.disabled && styles.disabledButton]}
       onPress={item.disabled ? null : item.onPress}
       disabled={item.disabled}
     >
       <Icon 
         name={item.icon} 
-        size={isTablet() ? 28 : 24} 
-        color={item.disabled ? '#999' : item.color} 
+        size={isTablet() ? 32 : 28} 
+        color={item.disabled ? '#999' : 'white'} 
       />
       <Text style={[
         styles.actionLabel,
-        { color: item.disabled ? '#999' : item.color }
+        { color: item.disabled ? '#999' : 'white' }
       ]}>
         {item.label}
         {item.disabled && ' *'}
@@ -168,11 +168,11 @@ const EditModeToolbar = ({
               
               {showMore && (
                 <TouchableOpacity
-                  style={styles.actionPill}
+                  style={styles.actionButton}
                   onPress={() => setShowMoreMenu(true)}
                 >
-                  <Icon name="more-horiz" size={isTablet() ? 28 : 24} color={theme.primary} />
-                  <Text style={[styles.actionLabel, { color: theme.primary }]}>
+                  <Icon name="more-horiz" size={isTablet() ? 32 : 28} color="white" />
+                  <Text style={[styles.actionLabel, { color: 'white' }]}>
                     More
                   </Text>
                 </TouchableOpacity>
@@ -252,27 +252,22 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     paddingHorizontal: SPACING.md,
     justifyContent: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.lg,
   },
-  actionPill: {
+  actionButton: {
     flexDirection: 'column',
     alignItems: 'center',
-    backgroundColor: 'white',
-    paddingHorizontal: isTablet() ? SPACING.lg : SPACING.md,
-    paddingVertical: isTablet() ? SPACING.md : SPACING.sm * 1.5,
-    borderRadius: RADIUS.lg,
+    paddingHorizontal: isTablet() ? SPACING.md : SPACING.sm,
+    paddingVertical: SPACING.sm,
     gap: SPACING.xs,
-    minWidth: isTablet() ? 90 : 70,
-    ...SHADOWS.level1,
   },
-  disabledPill: {
+  disabledButton: {
     opacity: 0.6,
   },
   actionLabel: {
-    fontSize: isTablet() ? 14 : 12,
-    fontWeight: '600',
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    textAlign: 'center',
+    fontSize: isTablet() ? 18 : 16,
+    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   moreMenuOverlay: {
     flex: 1,

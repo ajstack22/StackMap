@@ -4,3 +4,4 @@ export { default as FAB } from './FAB';
 export { default as EditModeToolbar } from './EditModeToolbar';
 export { default as Logo } from './Logo';
 export { default as ActivityLibrary } from './ActivityLibrary';
+export { default as EmojiPicker } from './EmojiPicker';

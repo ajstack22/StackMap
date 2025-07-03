@@ -54,10 +54,11 @@ import {
   BADGE_DIMENSIONS,
   getBadgeDimensions,
   FONT_SCALE,
+  CUSTOM_IMAGE_SOURCES,
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 
 // Import hooks
@@ -106,7 +107,7 @@ const App = () => {
   const { toast, showToast, hideToast } = useToast();
   
   // State
-  const [currentTheme, setCurrentTheme] = useState('purple');
+  const [currentTheme, setCurrentTheme] = useState('navy');
   const [bannerPosition, setBannerPosition] = useState('top');
   const [currentUser, setCurrentUser] = useState(null);
   const [users, setUsers] = useState({});
@@ -175,10 +176,29 @@ const App = () => {
 
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
-    loadData();
-    migratePinToSecureStorage();
-    // Check if PIN protection is enabled
-    hasSecurePin().then(setHasPinProtection);
+    const initializeApp = async () => {
+      await migratePinToSecureStorage();
+      await loadData();
+      // Only check secure PIN if we didn't restore the state from saved data
+      const savedData = await AsyncStorage.getItem('stackMapData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        // If pinEnabled is explicitly set in saved data, use that value
+        if (parsedData.globalSettings?.pinEnabled !== undefined) {
+          setHasPinProtection(parsedData.globalSettings.pinEnabled);
+        } else {
+          // No saved PIN state, check secure storage
+          const hasPIN = await hasSecurePin();
+          setHasPinProtection(hasPIN);
+        }
+      } else {
+        // No saved data at all, check secure storage
+        const hasPIN = await hasSecurePin();
+        setHasPinProtection(hasPIN);
+      }
+    };
+    
+    initializeApp();
     
     // Listen for orientation changes
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -193,7 +213,7 @@ const App = () => {
     if (currentUser) {
       saveData();
     }
-  }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories]);
+  }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories, hasPinProtection]);
 
   // Load activities when day changes
   useEffect(() => {
@@ -395,19 +415,27 @@ const App = () => {
         
         // Handle theme color
         if (migratedData.globalSettings?.themeColor) {
+          // Map old color codes to new theme names
           const colorMap = {
-            '#667eea': 'purple',
-            '#3182ce': 'blue',
-            '#48bb78': 'green',
-            '#f56565': 'red',
-            '#ed8936': 'orange',
-            '#ed64a6': 'pink'
+            '#667eea': 'plum',     // old purple -> plum
+            '#3182ce': 'navy',     // old blue -> navy
+            '#48bb78': 'forest',   // old green -> forest
+            '#f56565': 'crimson',  // old red -> crimson
+            '#ed8936': 'rust',     // old orange -> rust
+            '#ed64a6': 'lavender'  // old pink -> lavender
           };
-          setCurrentTheme(colorMap[migratedData.globalSettings.themeColor] || 'purple');
+          // Also check if it's already a valid theme name
+          const validTheme = Object.keys(THEMES).includes(migratedData.globalSettings.themeColor) 
+            ? migratedData.globalSettings.themeColor 
+            : colorMap[migratedData.globalSettings.themeColor];
+          setCurrentTheme(validTheme || 'navy');
         }
         
         setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
-        // PIN is now handled by secure storage
+        // Restore PIN protection state from saved data
+        if (migratedData.globalSettings?.pinEnabled !== undefined) {
+          setHasPinProtection(migratedData.globalSettings.pinEnabled);
+        }
         setCurrentDay(migratedData.currentDay || 'today');
         setTemplates(migratedData.templates || []);
         setActivityCategories(migratedData.activityCategories || null);
@@ -470,8 +498,8 @@ const App = () => {
           themeColor: THEMES[currentTheme].primary,
           displayMode: 'numbers',
           enableDayManagement: true,
-          // PIN is now stored securely, not in AsyncStorage
-          pinEnabled: await hasSecurePin(),
+          // Save the current PIN protection state
+          pinEnabled: hasPinProtection,
           bannerPosition: bannerPosition
         },
         templates: templates || [],
@@ -858,8 +886,16 @@ const App = () => {
 
       {/* Card Content */}
       <View style={styles.cardContent}>
-        {/* Emoji */}
-        <Text style={styles.activityEmoji}>{item.emoji || '🎯'}</Text>
+        {/* Emoji or Custom Image */}
+        {item.emoji && item.emoji.startsWith('image:') ? (
+          <Image 
+            source={CUSTOM_IMAGE_SOURCES[item.emoji.substring(6)]}
+            style={styles.activityImage}
+            resizeMode="contain"
+          />
+        ) : (
+          <Text style={styles.activityEmoji}>{item.emoji || '🎯'}</Text>
+        )}
         
         {/* Title */}
         <Text style={[
@@ -1043,31 +1079,6 @@ const App = () => {
     );
   };
 
-  // Render emoji picker inline instead of as a modal
-  const EmojiPicker = () => (
-    <View style={styles.emojiPickerInline}>
-      <View style={styles.emojiPickerHeader}>
-        <Text style={styles.emojiPickerTitle}>Choose an emoji</Text>
-        <TouchableOpacity onPress={() => setShowEmojiPicker(false)}>
-          <Icon name="close" size={24} color="#666" />
-        </TouchableOpacity>
-      </View>
-      <View style={styles.emojiGrid}>
-        {commonEmojis.map(emoji => (
-          <TouchableOpacity
-            key={emoji}
-            style={styles.emojiOption}
-            onPress={() => {
-              setActivityEmoji(emoji);
-              setShowEmojiPicker(false);
-            }}
-          >
-            <Text style={styles.emojiOptionText}>{emoji}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </View>
-  );
 
   // Calculate FAB position - they should always sit on the banner
   // For iPhone in bottom banner mode: center on header content area
@@ -1119,36 +1130,53 @@ const App = () => {
               ) : (
                 <View style={styles.gridContainer}>
                   {activities.map((item, index) => {
-                    // Calculate dynamic width for first row
-                    const isFirstRow = index < numColumns;
-                    const cardsInFirstRow = Math.min(activities.length, numColumns);
-                    let dynamicWidth = cardWidth;
-                    
-                    if (isFirstRow && cardsInFirstRow < numColumns) {
-                      const containerPadding = screenDimensions.width <= 600 ? CARD_LAYOUT.containerPaddingMobile : CARD_LAYOUT.containerPaddingTablet;
-                      const availableWidth = screenDimensions.width - (containerPadding * 2);
-                      const totalGaps = (cardsInFirstRow - 1) * CARD_LAYOUT.gap;
-                      dynamicWidth = (availableWidth - totalGaps) / cardsInFirstRow;
-                    }
+                    const isLastInRow = (index + 1) % numColumns === 0;
+                    const isInLastRow = index >= Math.floor(activities.length / numColumns) * numColumns;
                     
                     return (
                       <View 
                         key={item.id} 
                         style={{ 
-                          width: dynamicWidth,
-                          marginRight: (index === activities.length - 1 || (index + 1) % numColumns === 0) ? 0 : CARD_LAYOUT.gap,
-                          marginBottom: SPACING.md
+                          width: cardWidth,
+                          marginHorizontal: CARD_LAYOUT.gap / 2,
+                          marginBottom: SPACING.md,
+                          // Add invisible placeholders to maintain grid structure
+                          ...(isInLastRow && !isLastInRow && index === activities.length - 1 && {
+                            marginRight: 'auto',
+                            marginLeft: 'auto',
+                          }),
                         }}
                       >
                         {renderActivity({ 
                           item, 
                           drag: () => {}, 
                           isActive: false,
-                          customWidth: dynamicWidth
+                          customWidth: cardWidth
                         })}
                       </View>
                     );
                   })}
+                  {/* Add invisible placeholders to fill the last row */}
+                  {(() => {
+                    const remainder = activities.length % numColumns;
+                    if (remainder > 0) {
+                      const placeholders = [];
+                      for (let i = 0; i < (numColumns - remainder); i++) {
+                        placeholders.push(
+                          <View 
+                            key={`placeholder-${i}`} 
+                            style={{ 
+                              width: cardWidth,
+                              marginHorizontal: CARD_LAYOUT.gap / 2,
+                              marginBottom: SPACING.md,
+                            }} 
+                          />
+                        );
+                      }
+                      return placeholders;
+                    }
+                    return null;
+                  })()}
                 </View>
               )}
             </ScrollView>
@@ -1257,16 +1285,21 @@ const App = () => {
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
               <ScrollView showsVerticalScrollIndicator={false}>
-                {showEmojiPicker ? (
-                <EmojiPicker />
-              ) : (
                 <>
                   {/* Emoji Selector */}
                   <TouchableOpacity 
                     style={styles.emojiSelector}
                     onPress={() => setShowEmojiPicker(true)}
                   >
-                    <Text style={styles.selectedEmoji}>{activityEmoji}</Text>
+                    {activityEmoji && activityEmoji.startsWith('image:') ? (
+                      <Image 
+                        source={CUSTOM_IMAGE_SOURCES[activityEmoji.substring(6)]}
+                        style={styles.selectedEmojiImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={styles.selectedEmoji}>{activityEmoji}</Text>
+                    )}
                     <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
                   </TouchableOpacity>
 
@@ -1296,11 +1329,26 @@ const App = () => {
                     </Text>
                   </TouchableOpacity>
                 </>
-              )}
               </ScrollView>
             </KeyboardAvoidingView>
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
+          
+          {/* Emoji Picker Modal for Add Activity */}
+          {showEmojiPicker && (
+            <EmojiPicker 
+              mode="modal"
+              visible={true}
+              onClose={() => setShowEmojiPicker(false)}
+              onSelect={(emoji) => {
+                setActivityEmoji(emoji);
+                setShowEmojiPicker(false);
+              }}
+              theme={theme}
+              selectedEmoji={activityEmoji}
+              showCustomImages={true}
+            />
+          )}
         </View>
       </Modal>
 
@@ -1400,19 +1448,24 @@ const App = () => {
               {/* Theme Color Section */}
               <Text style={styles.sectionTitle}>Theme Color</Text>
               <View style={styles.colorGrid}>
-                {Object.keys(THEMES).map(color => (
-                  <TouchableOpacity
-                    key={color}
-                    style={[
-                      styles.colorOption,
-                      { backgroundColor: THEMES[color].primary },
-                      currentTheme === color && styles.colorSelected
-                    ]}
-                    onPress={() => setCurrentTheme(color)}
-                  >
-                    {currentTheme === color && <Icon name="check" size={24} color="white" />}
-                  </TouchableOpacity>
-                ))}
+                {Object.keys(THEMES).map((color, index) => {
+                  // Force 5 colors per row
+                  const isEndOfRow = (index + 1) % 5 === 0;
+                  return (
+                    <View key={color} style={{ width: '20%', padding: 7.5, alignItems: 'center' }}>
+                      <TouchableOpacity
+                        style={[
+                          styles.colorOption,
+                          { backgroundColor: THEMES[color].primary },
+                          currentTheme === color && styles.colorSelected
+                        ]}
+                        onPress={() => setCurrentTheme(color)}
+                      >
+                        {currentTheme === color && <Icon name="check" size={24} color="white" />}
+                      </TouchableOpacity>
+                    </View>
+                  );
+                })}
               </View>
 
               {/* Banner Position Section */}
@@ -1584,9 +1637,16 @@ const App = () => {
                               text: 'Remove',
                               style: 'destructive',
                               onPress: async () => {
-                                await setSecurePin(null);
-                                setHasPinProtection(false);
-                                showToast({ message: 'PIN removed' });
+                                try {
+                                  await setSecurePin(null);
+                                  setHasPinProtection(false);
+                                  // Immediately save data to persist the PIN removal
+                                  await saveData();
+                                  showToast({ message: 'PIN removed' });
+                                } catch (error) {
+                                  console.error('Error removing PIN:', error);
+                                  Alert.alert('Error', 'Failed to remove PIN. Please try again.');
+                                }
                               }
                             }
                           ]
@@ -1613,6 +1673,26 @@ const App = () => {
                   </TouchableOpacity>
                 </>
               )}
+            </View>
+            
+            {/* Data Management Section */}
+            <Text style={styles.sectionTitle}>Data Management</Text>
+            <View style={styles.settingsSection}>
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: theme.primary, marginBottom: 10 }]}
+                onPress={exportData}
+              >
+                <Icon name="save-alt" size={20} color="white" />
+                <Text style={styles.buttonText}>Export Data</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: theme.primary }]}
+                onPress={importData}
+              >
+                <Icon name="folder-open" size={20} color="white" />
+                <Text style={styles.buttonText}>Import Data</Text>
+              </TouchableOpacity>
             </View>
           </ScrollView>
           </View>
@@ -1657,25 +1737,6 @@ const App = () => {
                 <Text style={styles.selectedEmoji}>{newUserEmoji}</Text>
                 <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
               </TouchableOpacity>
-              
-              {showUserEmojiPicker && (
-                <View style={styles.emojiPickerInline}>
-                  <View style={styles.emojiGrid}>
-                    {commonEmojis.map(emoji => (
-                      <TouchableOpacity
-                        key={emoji}
-                        style={styles.emojiOption}
-                        onPress={() => {
-                          setNewUserEmoji(emoji);
-                          setShowUserEmojiPicker(false);
-                        }}
-                      >
-                        <Text style={styles.emojiOptionText}>{emoji}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
 
               <TextInput
                 style={styles.input}
@@ -1719,6 +1780,22 @@ const App = () => {
           </KeyboardAvoidingView>
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
+          
+          {/* User Emoji Picker Modal */}
+          {showUserEmojiPicker && (
+            <EmojiPicker 
+              mode="modal"
+              visible={true}
+              onClose={() => setShowUserEmojiPicker(false)}
+              onSelect={(emoji) => {
+                setNewUserEmoji(emoji);
+                setShowUserEmojiPicker(false);
+              }}
+              theme={theme}
+              selectedEmoji={newUserEmoji}
+              showCustomImages={false}
+            />
+          )}
         </View>
       </Modal>
       
@@ -2054,6 +2131,8 @@ const styles = StyleSheet.create({
   listContent: {
     padding: getContainerPadding(),
     paddingBottom: 100,
+    paddingLeft: getContainerPadding() - (CARD_LAYOUT.gap / 2),
+    paddingRight: getContainerPadding() - (CARD_LAYOUT.gap / 2),
   },
   columnWrapper: {
     gap: CARD_LAYOUT.gap,
@@ -2061,6 +2140,8 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
   },
   activityCard: {
     width: calculateCardWidth(),
@@ -2143,6 +2224,11 @@ const styles = StyleSheet.create({
     fontSize: 64.8,  // Match PWA's 4.05rem = 64.8px
     lineHeight: 81,  // Match PWA's height
     marginBottom: 0,  // Gap is handled by parent
+  },
+  activityImage: {
+    width: 81,  // Match emoji height
+    height: 81,
+    marginBottom: 0,
   },
   activityTitle: {
     fontSize: 23,  // Match PWA's 1.44rem = 23.04px  
@@ -2244,6 +2330,11 @@ const styles = StyleSheet.create({
     fontSize: 80,
     marginBottom: 8,
   },
+  selectedEmojiImage: {
+    width: 80,
+    height: 80,
+    marginBottom: 8,
+  },
   emojiSelectorLabel: {
     fontSize: 14,
     color: '#666',
@@ -2290,7 +2381,9 @@ const styles = StyleSheet.create({
   colorGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: -7.5,
   },
   colorOption: {
     width: 60,
