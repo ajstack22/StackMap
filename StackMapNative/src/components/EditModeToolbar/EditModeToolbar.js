@@ -76,9 +76,9 @@ const EditModeToolbar = ({
 
   // Define all actions
   const actions = [
-    { id: 'add', label: 'New Activity', icon: 'add', onPress: onAdd, color: theme.primary },
-    { id: 'library', label: 'Activity Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
-    { id: 'complete', label: 'Complete Day', icon: 'today', onPress: onCompleteDay, color: theme.primary },
+    { id: 'add', label: 'Add', icon: 'add', onPress: onAdd, color: theme.primary },
+    { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
+    { id: 'complete', label: 'Complete', icon: 'today', onPress: onCompleteDay, color: theme.primary },
     { id: 'settings', label: 'Settings', icon: 'settings', onPress: onSettings, color: theme.primary },
   ];
 
@@ -258,11 +258,11 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     alignItems: 'center',
     backgroundColor: 'white',
-    paddingHorizontal: isTablet() ? SPACING.lg * 1.2 : SPACING.md * 1.5,
+    paddingHorizontal: isTablet() ? SPACING.lg : SPACING.md,
     paddingVertical: isTablet() ? SPACING.md : SPACING.sm * 1.5,
     borderRadius: RADIUS.lg,
     gap: SPACING.xs,
-    minWidth: isTablet() ? 110 : 90,
+    minWidth: isTablet() ? 90 : 70,
     ...SHADOWS.level1,
   },
   disabledPill: {
