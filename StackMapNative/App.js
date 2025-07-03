@@ -23,7 +23,7 @@ import DraggableFlatList, {
   ScaleDecorator,
   RenderItemParams,
 } from 'react-native-draggable-flatlist';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import DocumentPicker from 'react-native-document-picker';
 import RNFS from 'react-native-fs';
@@ -72,34 +72,32 @@ import {
   migratePinToSecureStorage,
 } from './src/utils/secureStorage';
 
-// Get screen dimensions
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+// Get initial screen dimensions
+const { width: initialScreenWidth, height: initialScreenHeight } = Dimensions.get('window');
 
-// Calculate layout values using our utilities
-const numColumns = calculateColumns(screenWidth);
-const cardWidth = calculateCardWidth(screenWidth);
-const cardHeight = getCardHeight();
+// These will be recalculated in the component
 const baseFontSize = isTablet() ? FONT_SCALE.tablet : FONT_SCALE.mobile;
 
 // Common emojis for picker
 const commonEmojis = COMMON_EMOJIS;
 
 // AnimatedIcon component for slide-up animation
-const AnimatedIcon = ({ name, size, color, translateY }) => {
-  const slideY = translateY.interpolate({
-    inputRange: [0, 1],
-    outputRange: [20, 0], // Start 20 pixels below, animate to original position
-  });
+const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
+  const slideY = React.useMemo(() => 
+    translateY.interpolate({
+      inputRange: [0, 1],
+      outputRange: [20, 0], // Start 20 pixels below, animate to original position
+    }),
+    [translateY]
+  );
 
   return (
     <Animated.View style={{ transform: [{ translateY: slideY }] }}>
       <Icon name={name} size={size} color={color} />
     </Animated.View>
   );
-};
+});
 
-// Create AnimatedTouchableOpacity from the Animated API
-const AnimatedTouchableOpacity = Animated.createAnimatedComponent(TouchableOpacity);
 
 const App = () => {
   const insets = useSafeAreaInsets();
@@ -144,18 +142,36 @@ const App = () => {
   const [confirmPin, setConfirmPin] = useState('');
   const [hasPinProtection, setHasPinProtection] = useState(false);
   
-  // Modal edit mode state
-  const [isModalEditMode, setIsModalEditMode] = useState(false);
-  const [pinForModalEdit, setPinForModalEdit] = useState(false);
+  
+  // Screen dimensions state
+  const [screenDimensions, setScreenDimensions] = useState(() => {
+    const { width, height } = Dimensions.get('window');
+    return { width, height };
+  });
+  
+  // Calculate layout values based on current screen dimensions
+  const numColumns = calculateColumns(screenDimensions.width);
+  const cardWidth = calculateCardWidth(screenDimensions.width);
+  const cardHeight = getCardHeight();
   
   // Activity library state
   const [activityCategories, setActivityCategories] = useState(null);
+  const [addedToLibraryIds, setAddedToLibraryIds] = useState(new Set());
   
   // Animation values
-  const editModeIconRotation = useRef(new Animated.Value(0)).current;
-  const editModeToolbarTranslate = useRef(new Animated.Value(100)).current;
-  const editIconsTranslateY = useRef(new Animated.Value(0)).current;
-  const editIconsOpacity = useRef(new Animated.Value(0)).current;
+  const [editModeIconRotation] = useState(() => new Animated.Value(0));
+  const [editModeToolbarTranslate] = useState(() => new Animated.Value(100));
+  const [editIconsTranslateY] = useState(() => new Animated.Value(0));
+  const [editIconsOpacity] = useState(() => new Animated.Value(0));
+  
+  // Pre-create interpolated values to avoid creating them during render
+  const editIconsTranslateYInterpolated = React.useMemo(() => 
+    editIconsTranslateY.interpolate({
+      inputRange: [0, 1],
+      outputRange: [20, 0]
+    }),
+    [editIconsTranslateY]
+  );
 
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
@@ -163,6 +179,13 @@ const App = () => {
     migratePinToSecureStorage();
     // Check if PIN protection is enabled
     hasSecurePin().then(setHasPinProtection);
+    
+    // Listen for orientation changes
+    const subscription = Dimensions.addEventListener('change', ({ window }) => {
+      setScreenDimensions({ width: window.width, height: window.height });
+    });
+    
+    return () => subscription?.remove();
   }, []);
 
   // Save data when it changes
@@ -253,14 +276,8 @@ const App = () => {
       // Verify PIN
       verifyPin(pinInput).then(isValid => {
         if (isValid) {
-          if (pinForModalEdit) {
-            // PIN for modal edit mode
-            setIsModalEditMode(true);
-            setPinForModalEdit(false);
-          } else {
-            // PIN for main edit mode
-            setIsEditMode(true);
-          }
+          // PIN for main edit mode
+          setIsEditMode(true);
           setShowPinModal(false);
           setPinInput('');
         } else {
@@ -269,7 +286,7 @@ const App = () => {
         }
       });
     }
-  }, [pinInput, isSettingPin, pinForModalEdit]);
+  }, [pinInput, isSettingPin]);
   
   // Handle PIN setting
   useEffect(() => {
@@ -440,7 +457,11 @@ const App = () => {
             ...users[currentUser],
             days: {
               ...users[currentUser]?.days,
-              [currentDay]: { activities }
+              [currentDay]: { activities },
+              // Preserve tomorrow's activities if we're on today view
+              ...(currentDay === 'today' && users[currentUser]?.days?.tomorrow ? {
+                tomorrow: users[currentUser].days.tomorrow
+              } : {})
             },
             lastActive: new Date().toISOString()
           }
@@ -469,6 +490,71 @@ const App = () => {
       activity.id === id ? { ...activity, completed: !activity.completed } : activity
     );
     setActivities(newActivities);
+  };
+
+  const togglePin = async (id) => {
+    const activity = activities.find(a => a.id === id);
+    if (!activity) return;
+    
+    const newPinnedState = !activity.pinned;
+    
+    // Update current day's activity
+    const updatedActivities = activities.map(a => 
+      a.id === id ? { ...a, pinned: newPinnedState } : a
+    );
+    setActivities(updatedActivities);
+    
+    // Update tomorrow's matching activity
+    const tomorrowActivities = users[currentUser]?.days?.tomorrow?.activities || [];
+    const matchingActivity = tomorrowActivities.find(a => 
+      a.emoji === activity.emoji && a.text === activity.text
+    );
+    
+    if (newPinnedState && !matchingActivity) {
+      // Pin: Create on tomorrow if doesn't exist
+      const newTomorrowActivity = {
+        ...activity,
+        id: 'activity_' + Date.now() + '_tomorrow',
+        completed: false,
+        pinned: true,
+        createdAt: new Date().toISOString()
+      };
+      
+      const updatedUsers = {
+        ...users,
+        [currentUser]: {
+          ...users[currentUser],
+          days: {
+            ...users[currentUser].days,
+            tomorrow: {
+              activities: [...tomorrowActivities, newTomorrowActivity]
+            }
+          }
+        }
+      };
+      setUsers(updatedUsers);
+    } else if (matchingActivity) {
+      // Update existing matching activity's pinned state
+      const updatedTomorrowActivities = tomorrowActivities.map(a =>
+        a.emoji === activity.emoji && a.text === activity.text
+          ? { ...a, pinned: newPinnedState }
+          : a
+      );
+      
+      const updatedUsers = {
+        ...users,
+        [currentUser]: {
+          ...users[currentUser],
+          days: {
+            ...users[currentUser].days,
+            tomorrow: {
+              activities: updatedTomorrowActivities
+            }
+          }
+        }
+      };
+      setUsers(updatedUsers);
+    }
   };
 
   const addActivity = () => {
@@ -547,6 +633,7 @@ const App = () => {
         id: `template-${Date.now()}`,
         name: activity.text || activity.title || 'Untitled',
         emoji: activity.emoji || '🎯',
+        description: activity.description || '',
       };
       
       // Add to My Templates
@@ -556,6 +643,19 @@ const App = () => {
       };
       
       setActivityCategories(updatedCategories);
+      
+      // Add to tracking set
+      setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
+      
+      // Remove from tracking after delay
+      setTimeout(() => {
+        setAddedToLibraryIds(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(activity.id);
+          return newSet;
+        });
+      }, 1500);
+      
       showToast({ message: 'Added to My Templates' });
     } else {
       showToast({ message: 'Could not find My Templates category' });
@@ -719,12 +819,13 @@ const App = () => {
     }
   };
 
-  const renderActivity = ({ item, drag, isActive }) => {
+  const renderActivity = ({ item, drag, isActive, customWidth }) => {
     const index = activities.findIndex(a => a.id === item.id);
     const CardContent = (
       <TouchableOpacity
         style={[
           styles.activityCard,
+          customWidth && { width: customWidth },
           item.completed && [
             styles.completedCard,
             {
@@ -781,65 +882,106 @@ const App = () => {
 
       {/* Edit Mode Actions */}
       {showEditIcons && (
-        <View style={styles.editActions}>
-          <AnimatedTouchableOpacity
-            onPress={() => {
-              setEditingActivity(item);
-              setActivityTitle(item.text || item.title || '');
-              setActivityDescription(item.description || '');
-              setActivityEmoji(item.emoji || '🎯');
-              setShowActivityModal(true);
-            }}
+        <>
+          {/* Center Actions - Edit and Add to Library */}
+          <View style={styles.editActions}>
+            <Animated.View
+              style={{
+                opacity: editIconsOpacity,
+                transform: [{
+                  translateY: editIconsTranslateYInterpolated
+                }]
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => {
+                  setEditingActivity(item);
+                  setActivityTitle(item.text || item.title || '');
+                  setActivityDescription(item.description || '');
+                  setActivityEmoji(item.emoji || '🎯');
+                  setShowActivityModal(true);
+                }}
+                style={styles.editButton}
+              >
+                <Icon name="edit" size={20} color={theme.primary} />
+              </TouchableOpacity>
+            </Animated.View>
+            <Animated.View
+              style={{
+                opacity: editIconsOpacity,
+                transform: [{
+                  translateY: editIconsTranslateYInterpolated
+                }]
+              }}
+            >
+              <TouchableOpacity
+                onPress={() => addActivityToLibrary(item)}
+                style={styles.editButton}
+                disabled={addedToLibraryIds.has(item.id)}
+              >
+                <Icon 
+                  name={addedToLibraryIds.has(item.id) ? "check" : "library-add"} 
+                  size={20} 
+                  color={addedToLibraryIds.has(item.id) ? '#4CAF50' : theme.primary} 
+                />
+              </TouchableOpacity>
+            </Animated.View>
+          </View>
+          
+          {/* Bottom Left - Pin */}
+          <Animated.View
             style={[
-              styles.editButton,
+              styles.pinButtonContainer,
               {
                 opacity: editIconsOpacity,
                 transform: [{
-                  translateY: editIconsTranslateY.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0]
-                  })
+                  translateY: editIconsTranslateYInterpolated
                 }]
               }
             ]}
           >
-            <Icon name="edit" size={20} color={theme.primary} />
-          </AnimatedTouchableOpacity>
-          <AnimatedTouchableOpacity
-            onPress={() => addActivityToLibrary(item)}
+            <TouchableOpacity
+              onPress={() => togglePin(item.id)}
+              style={[
+                styles.editButton,
+                {
+                  backgroundColor: item.pinned ? theme.primary : '#e8e8e8',
+                }
+              ]}
+            >
+              <Icon 
+                name="push-pin" 
+                size={20} 
+                color={item.pinned ? 'white' : '#666'} 
+              />
+            </TouchableOpacity>
+          </Animated.View>
+          
+          {/* Bottom Right - Delete */}
+          <Animated.View
             style={[
-              styles.editButton,
+              styles.deleteButtonContainer,
               {
                 opacity: editIconsOpacity,
                 transform: [{
-                  translateY: editIconsTranslateY.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0]
-                  })
+                  translateY: editIconsTranslateYInterpolated
                 }]
               }
             ]}
           >
-            <Icon name="library-add" size={20} color={theme.primary} />
-          </AnimatedTouchableOpacity>
-          <AnimatedTouchableOpacity
-            onPress={() => deleteActivity(item.id)}
-            style={[
-              styles.editButton,
-              {
-                opacity: editIconsOpacity,
-                transform: [{
-                  translateY: editIconsTranslateY.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [20, 0]
-                  })
-                }]
-              }
-            ]}
-          >
-            <Icon name="delete" size={20} color="#f56565" />
-          </AnimatedTouchableOpacity>
-        </View>
+            <TouchableOpacity
+              onPress={() => deleteActivity(item.id)}
+              style={[
+                styles.editButton,
+                {
+                  backgroundColor: '#f56565',
+                }
+              ]}
+            >
+              <Icon name="delete" size={20} color="white" />
+            </TouchableOpacity>
+          </Animated.View>
+        </>
       )}
       </TouchableOpacity>
     );
@@ -852,27 +994,54 @@ const App = () => {
     return CardContent;
   };
 
-  const Header = () => (
-    <View style={styles.header}>
-      <View style={styles.headerContent}>
-        <View style={styles.logoContainer}>
-          <Logo size={isTablet() ? 40 : 32} theme={theme} />
-          <Text style={styles.headerTitle}>StackMap</Text>
+  const Header = () => {
+    const handleSwipeGesture = ({ nativeEvent }) => {
+      if (nativeEvent.state === State.END) {
+        const { translationY, velocityY } = nativeEvent;
+        
+        // Check if it's a vertical swipe (threshold of 30 pixels or velocity > 800)
+        if (Math.abs(translationY) > 30 || Math.abs(velocityY) > 800) {
+          // Toggle between today and tomorrow
+          const newDay = currentDay === 'today' ? 'tomorrow' : 'today';
+          setCurrentDay(newDay);
+          setActivities(users[currentUser]?.days?.[newDay]?.activities || []);
+          
+          // Show a quick toast to confirm the change
+          showToast({ 
+            message: `Switched to ${newDay === 'today' ? 'Today' : 'Tomorrow'}`,
+            duration: 1500,
+          });
+        }
+      }
+    };
+
+    return (
+      <View style={styles.header}>
+        <View style={styles.headerContent}>
+          <View style={styles.logoContainer}>
+            <Logo size={isTablet() ? 40 : 32} theme={theme} />
+            <Text style={styles.headerTitle}>StackMap</Text>
+          </View>
+          <PanGestureHandler
+            onHandlerStateChange={handleSwipeGesture}
+            activeOffsetY={[-10, 10]} // Activate after 10 pixels of movement
+          >
+            <TouchableOpacity 
+              style={styles.subtitlePill}
+              onPress={() => setShowUserDayModal(true)}
+            >
+              <Text style={styles.subtitleEmoji}>
+                {users[currentUser]?.icon || '😀'}
+              </Text>
+              <Text style={styles.subtitleDay}>
+                {currentDay === 'today' ? 'Today' : 'Tomorrow'}
+              </Text>
+            </TouchableOpacity>
+          </PanGestureHandler>
         </View>
-        <TouchableOpacity 
-          style={styles.subtitlePill}
-          onPress={() => setShowUserDayModal(true)}
-        >
-          <Text style={styles.subtitleEmoji}>
-            {users[currentUser]?.icon || '😀'}
-          </Text>
-          <Text style={styles.subtitleDay}>
-            {currentDay === 'today' ? 'Today' : 'Tomorrow'}
-          </Text>
-        </TouchableOpacity>
       </View>
-    </View>
-  );
+    );
+  };
 
   // Render emoji picker inline instead of as a modal
   const EmojiPicker = () => (
@@ -933,17 +1102,13 @@ const App = () => {
         {/* Main Content Area */}
         <View style={styles.contentArea}>
           {numColumns > 1 ? (
-            <FlatList
-              data={activities}
-              renderItem={({ item, index }) => renderActivity({ item, drag: () => {}, isActive: false })}
-              keyExtractor={item => item.id}
-              numColumns={numColumns}
-              columnWrapperStyle={numColumns > 1 ? styles.columnWrapper : undefined}
+            <ScrollView
               contentContainerStyle={[
                 styles.listContent,
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
               ]}
-              ListEmptyComponent={
+            >
+              {activities.length === 0 ? (
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyIcon}>📋</Text>
                   <Text style={styles.emptyText}>No activities yet</Text>
@@ -951,8 +1116,42 @@ const App = () => {
                     {isEditMode ? 'Tap Add to create an activity' : 'Tap the edit button to add your first activity'}
                   </Text>
                 </View>
-              }
-            />
+              ) : (
+                <View style={styles.gridContainer}>
+                  {activities.map((item, index) => {
+                    // Calculate dynamic width for first row
+                    const isFirstRow = index < numColumns;
+                    const cardsInFirstRow = Math.min(activities.length, numColumns);
+                    let dynamicWidth = cardWidth;
+                    
+                    if (isFirstRow && cardsInFirstRow < numColumns) {
+                      const containerPadding = screenDimensions.width <= 600 ? CARD_LAYOUT.containerPaddingMobile : CARD_LAYOUT.containerPaddingTablet;
+                      const availableWidth = screenDimensions.width - (containerPadding * 2);
+                      const totalGaps = (cardsInFirstRow - 1) * CARD_LAYOUT.gap;
+                      dynamicWidth = (availableWidth - totalGaps) / cardsInFirstRow;
+                    }
+                    
+                    return (
+                      <View 
+                        key={item.id} 
+                        style={{ 
+                          width: dynamicWidth,
+                          marginRight: (index === activities.length - 1 || (index + 1) % numColumns === 0) ? 0 : CARD_LAYOUT.gap,
+                          marginBottom: SPACING.md
+                        }}
+                      >
+                        {renderActivity({ 
+                          item, 
+                          drag: () => {}, 
+                          isActive: false,
+                          customWidth: dynamicWidth
+                        })}
+                      </View>
+                    );
+                  })}
+                </View>
+              )}
+            </ScrollView>
           ) : (
             <DraggableFlatList
               data={activities}
@@ -1013,12 +1212,12 @@ const App = () => {
 
         <FAB
           icon={isEditMode ? "edit-off" : "edit"}
-          onPress={async () => {
+          onPress={() => {
             if (isEditMode) {
               setIsEditMode(false);
               // The toolbar will be removed after animation completes
             } else {
-              if (await hasSecurePin()) {
+              if (hasPinProtection) {
                 setShowPinModal(true);
               } else {
                 setIsEditMode(true);
@@ -1109,21 +1308,13 @@ const App = () => {
       <Modal
         visible={showUserDayModal}
         animationType="slide"
-        onRequestClose={() => {
-          setShowUserDayModal(false);
-          setIsModalEditMode(false);
-        }}
+        onRequestClose={() => setShowUserDayModal(false)}
       >
         <View style={styles.modalContainer}>
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>
-                {isModalEditMode ? 'User & Day Management' : 'Switch User/Day'}
-              </Text>
-              <TouchableOpacity onPress={() => {
-                setShowUserDayModal(false);
-                setIsModalEditMode(false);
-              }}>
+              <Text style={styles.modalTitle}>Switch User/Day</Text>
+              <TouchableOpacity onPress={() => setShowUserDayModal(false)}>
                 <Icon name="close" size={24} color="white" />
               </TouchableOpacity>
             </View>
@@ -1142,42 +1333,10 @@ const App = () => {
                       currentUser === userId && styles.userItemActive
                     ]}
                     onPress={() => {
-                      if (!isModalEditMode) {
-                        // User mode: just select
-                        setCurrentUser(userId);
-                        setActivities(user.days?.[currentDay]?.activities || []);
-                        showToast({ message: `Switched to ${user.name}` });
-                      } else {
-                        // Edit mode: select or edit
-                        setCurrentUser(userId);
-                        setActivities(user.days?.[currentDay]?.activities || []);
-                      }
-                    }}
-                    onLongPress={() => {
-                      if (isModalEditMode && Object.keys(users).length > 1) {
-                        Alert.alert(
-                          'Delete User',
-                          `Delete ${user.name}?`,
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                              text: 'Delete',
-                              style: 'destructive',
-                              onPress: () => {
-                                const updatedUsers = { ...users };
-                                delete updatedUsers[userId];
-                                setUsers(updatedUsers);
-                                if (currentUser === userId) {
-                                  const newUserId = Object.keys(updatedUsers)[0];
-                                  setCurrentUser(newUserId);
-                                  setActivities(updatedUsers[newUserId].days?.[currentDay]?.activities || []);
-                                }
-                                showToast({ message: `Deleted ${user.name}` });
-                              }
-                            }
-                          ]
-                        );
-                      }
+                      setCurrentUser(userId);
+                      setActivities(user.days?.[currentDay]?.activities || []);
+                      showToast({ message: `Switched to ${user.name}` });
+                      setShowUserDayModal(false);
                     }}
                   >
                     <Text style={styles.userItemEmoji}>{user.icon}</Text>
@@ -1190,37 +1349,8 @@ const App = () => {
                     {currentUser === userId && (
                       <Icon name="check" size={20} color={theme.primary} />
                     )}
-                    {isModalEditMode && (
-                      <TouchableOpacity
-                        style={styles.editUserButton}
-                        onPress={() => {
-                          setEditingUser(userId);
-                          setNewUserName(user.name);
-                          setNewUserEmoji(user.icon);
-                          setShowUserDayModal(false);
-                          setShowAddUserModal(true);
-                        }}
-                      >
-                        <Icon name="edit" size={18} color="#666" />
-                      </TouchableOpacity>
-                    )}
                   </TouchableOpacity>
                 ))}
-                {isModalEditMode && (
-                  <TouchableOpacity
-                    style={styles.addUserButton}
-                    onPress={() => {
-                      setEditingUser(null);
-                      setNewUserName('');
-                      setNewUserEmoji(DEFAULT_USER_ICON);
-                      setShowUserDayModal(false);
-                      setShowAddUserModal(true);
-                    }}
-                  >
-                    <Icon name="add" size={24} color={theme.primary} />
-                    <Text style={styles.addUserText}>Add User</Text>
-                  </TouchableOpacity>
-                )}
               </View>
 
               {/* Day Selection */}
@@ -1243,116 +1373,6 @@ const App = () => {
                   </Text>
                 </TouchableOpacity>
               </View>
-              
-              {/* Edit Mode Only Sections */}
-              {isModalEditMode && (
-                <>
-                  {/* Day Mode Section */}
-                  <Text style={styles.sectionTitle}>Day Mode</Text>
-                  <View style={styles.toggleContainer}>
-                    <TouchableOpacity
-                      style={[styles.toggle, dayMode === 'today' && styles.toggleActive]}
-                      onPress={() => setDayMode('today')}
-                    >
-                      <Text style={[styles.toggleText, dayMode === 'today' && styles.toggleTextActive]}>
-                        Today Only
-                      </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.toggle, dayMode === 'both' && styles.toggleActive]}
-                      onPress={() => setDayMode('both')}
-                    >
-                      <Text style={[styles.toggleText, dayMode === 'both' && styles.toggleTextActive]}>
-                        Today & Tomorrow
-                      </Text>
-                    </TouchableOpacity>
-                  </View>
-                  
-                  {/* PIN Management Section */}
-                  <Text style={styles.sectionTitle}>PIN Protection</Text>
-                  <View style={styles.pinSection}>
-                    {hasPinProtection ? (
-                      <>
-                        <Text style={styles.pinStatus}>PIN is enabled</Text>
-                        <View style={styles.pinButtons}>
-                          <TouchableOpacity
-                            style={[styles.pinButton, { backgroundColor: theme.primary }]}
-                            onPress={() => {
-                              setIsSettingPin(true);
-                              setPinInput('');
-                              setConfirmPin('');
-                              setShowUserDayModal(false);
-                              setShowPinModal(true);
-                            }}
-                          >
-                            <Text style={styles.pinButtonText}>Change PIN</Text>
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[styles.pinButton, { backgroundColor: '#f56565' }]}
-                            onPress={async () => {
-                              Alert.alert(
-                                'Remove PIN',
-                                'Are you sure you want to remove PIN protection?',
-                                [
-                                  { text: 'Cancel', style: 'cancel' },
-                                  {
-                                    text: 'Remove',
-                                    style: 'destructive',
-                                    onPress: async () => {
-                                      await setSecurePin(null);
-                                      setHasPinProtection(false);
-                                      showToast({ message: 'PIN removed' });
-                                    }
-                                  }
-                                ]
-                              );
-                            }}
-                          >
-                            <Text style={styles.pinButtonText}>Remove PIN</Text>
-                          </TouchableOpacity>
-                        </View>
-                      </>
-                    ) : (
-                      <TouchableOpacity
-                        style={[styles.button, { backgroundColor: theme.primary }]}
-                        onPress={() => {
-                          setIsSettingPin(true);
-                          setPinInput('');
-                          setConfirmPin('');
-                          setShowUserDayModal(false);
-                          setShowPinModal(true);
-                        }}
-                      >
-                        <Icon name="lock" size={20} color="white" />
-                        <Text style={styles.buttonText}>Enable PIN</Text>
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </>
-              )}
-              
-              {/* Edit Mode Button - shown at bottom when not in modal edit mode */}
-              {!isModalEditMode && (
-                <View style={styles.modalEditModeButtonContainer}>
-                  <TouchableOpacity
-                    style={styles.editModePill}
-                    onPress={async () => {
-                      if (await hasSecurePin()) {
-                        // Has PIN, need to verify
-                        setPinForModalEdit(true);
-                        setShowPinModal(true);
-                        setPinInput('');
-                      } else {
-                        // No PIN, directly enter modal edit mode
-                        setIsModalEditMode(true);
-                      }
-                    }}
-                  >
-                    <Icon name="edit" size={20} color={theme.primary} />
-                    <Text style={[styles.editModePillText, { color: theme.primary }]}>Manage Users, Days, and PIN</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
             </ScrollView>
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
@@ -1421,7 +1441,7 @@ const App = () => {
         </View>
       </Modal>
       
-      {/* Edit Mode Settings Modal */}
+      {/* Settings Modal */}
       <Modal
         visible={showEditModeSettingsModal}
         animationType="slide"
@@ -1430,7 +1450,7 @@ const App = () => {
         <View style={styles.modalContainer}>
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>Edit Mode</Text>
+              <Text style={styles.modalTitle}>Settings</Text>
               <TouchableOpacity onPress={() => setShowEditModeSettingsModal(false)}>
                 <Icon name="close" size={24} color="white" />
               </TouchableOpacity>
@@ -1452,6 +1472,31 @@ const App = () => {
                   onPress={() => {
                     setCurrentUser(userId);
                     setActivities(user.days?.[currentDay]?.activities || []);
+                    showToast({ message: `Switched to ${user.name}` });
+                  }}
+                  onLongPress={() => {
+                    Alert.alert(
+                      'Delete User',
+                      `Delete ${user.name}?`,
+                      [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Delete',
+                          style: 'destructive',
+                          onPress: () => {
+                            const updatedUsers = { ...users };
+                            delete updatedUsers[userId];
+                            setUsers(updatedUsers);
+                            if (currentUser === userId) {
+                              const newUserId = Object.keys(updatedUsers)[0];
+                              setCurrentUser(newUserId);
+                              setActivities(updatedUsers[newUserId].days?.[currentDay]?.activities || []);
+                            }
+                            showToast({ message: `Deleted ${user.name}` });
+                          }
+                        }
+                      ]
+                    );
                   }}
                 >
                   <Text style={styles.userItemEmoji}>{user.icon}</Text>
@@ -1464,6 +1509,18 @@ const App = () => {
                   {currentUser === userId && (
                     <Icon name="check" size={20} color={theme.primary} />
                   )}
+                  <TouchableOpacity
+                    style={styles.editUserButton}
+                    onPress={() => {
+                      setEditingUser(userId);
+                      setNewUserName(user.name);
+                      setNewUserEmoji(user.icon);
+                      setShowEditModeSettingsModal(false);
+                      setShowAddUserModal(true);
+                    }}
+                  >
+                    <Icon name="edit" size={18} color="#666" />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               ))}
               <TouchableOpacity
@@ -1475,22 +1532,70 @@ const App = () => {
               </TouchableOpacity>
             </View>
             
+            {/* Day Mode Section */}
+            <Text style={styles.sectionTitle}>Day Mode</Text>
+            <View style={styles.toggleContainer}>
+              <TouchableOpacity
+                style={[styles.toggle, dayMode === 'today' && styles.toggleActive]}
+                onPress={() => setDayMode('today')}
+              >
+                <Text style={[styles.toggleText, dayMode === 'today' && styles.toggleTextActive]}>
+                  Today Only
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.toggle, dayMode === 'both' && styles.toggleActive]}
+                onPress={() => setDayMode('both')}
+              >
+                <Text style={[styles.toggleText, dayMode === 'both' && styles.toggleTextActive]}>
+                  Today & Tomorrow
+                </Text>
+              </TouchableOpacity>
+            </View>
+            
             {/* Edit Mode PIN Section */}
-            <Text style={styles.sectionTitle}>Edit Mode PIN</Text>
+            <Text style={styles.sectionTitle}>PIN Protection</Text>
             <View style={styles.pinSection}>
               {hasPinProtection ? (
                 <>
                   <Text style={styles.pinStatus}>PIN protection is enabled</Text>
-                  <TouchableOpacity
-                    style={[styles.button, { backgroundColor: '#f56565', marginTop: 10 }]}
-                    onPress={async () => {
-                      await setSecurePin(null);
-                      setHasPinProtection(false);
-                      showToast({ message: 'PIN protection removed' });
-                    }}
-                  >
-                    <Text style={styles.buttonText}>Remove PIN</Text>
-                  </TouchableOpacity>
+                  <View style={styles.pinButtons}>
+                    <TouchableOpacity
+                      style={[styles.pinButton, { backgroundColor: theme.primary }]}
+                      onPress={() => {
+                        setIsSettingPin(true);
+                        setPinInput('');
+                        setConfirmPin('');
+                        setShowEditModeSettingsModal(false);
+                        setShowPinModal(true);
+                      }}
+                    >
+                      <Text style={styles.pinButtonText}>Change PIN</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.pinButton, { backgroundColor: '#f56565' }]}
+                      onPress={async () => {
+                        Alert.alert(
+                          'Remove PIN',
+                          'Are you sure you want to remove PIN protection?',
+                          [
+                            { text: 'Cancel', style: 'cancel' },
+                            {
+                              text: 'Remove',
+                              style: 'destructive',
+                              onPress: async () => {
+                                await setSecurePin(null);
+                                setHasPinProtection(false);
+                                showToast({ message: 'PIN removed' });
+                              }
+                            }
+                          ]
+                        );
+                      }}
+                    >
+                      <Text style={styles.pinButtonText}>Remove PIN</Text>
+                    </TouchableOpacity>
+                  </View>
                 </>
               ) : (
                 <>
@@ -1503,29 +1608,11 @@ const App = () => {
                       setShowEditModeSettingsModal(false);
                     }}
                   >
-                    <Text style={styles.buttonText}>Set PIN</Text>
+                    <Icon name="lock" size={20} color="white" />
+                    <Text style={styles.buttonText}>Enable PIN</Text>
                   </TouchableOpacity>
                 </>
               )}
-            </View>
-            
-            {/* Enter Edit Mode Button */}
-            <View style={styles.enterEditModeSection}>
-              <TouchableOpacity
-                style={[styles.button, styles.enterEditModeButton, { backgroundColor: theme.primary }]}
-                onPress={() => {
-                  if (hasPinProtection) {
-                    setShowPinModal(true);
-                    setShowEditModeSettingsModal(false);
-                  } else {
-                    setIsEditMode(true);
-                    setShowEditModeSettingsModal(false);
-                  }
-                }}
-              >
-                <Icon name="edit" size={20} color="white" />
-                <Text style={styles.buttonText}>Enter Edit Mode</Text>
-              </TouchableOpacity>
             </View>
           </ScrollView>
           </View>
@@ -1713,7 +1800,7 @@ const App = () => {
               </Text>
             )}
             
-            <View style={styles.pinButtonContainer}>
+            <View style={styles.pinModalButtonContainer}>
               <TouchableOpacity
                 style={styles.pinCancelButton}
                 onPress={() => {
@@ -1737,7 +1824,70 @@ const App = () => {
           onExit={() => setIsEditMode(false)}
           onAdd={() => setShowActivityModal(true)}
           onLibrary={() => setShowActivityLibrary(true)}
-          onCompleteDay={() => showToast({ message: 'Complete Day coming soon!' })}
+          onSettings={() => setShowEditModeSettingsModal(true)}
+          onCompleteDay={() => {
+            const pinnedCount = activities.filter(a => a.pinned).length;
+            const unpinnedCount = activities.filter(a => !a.pinned).length;
+            
+            const message = `Complete the day? This will:\n- Keep ${pinnedCount} pinned ${pinnedCount === 1 ? 'activity' : 'activities'}\n- Remove ${unpinnedCount} unpinned ${unpinnedCount === 1 ? 'activity' : 'activities'}`;
+            
+            Alert.alert(
+              'Complete Day',
+              message,
+              [
+                { text: 'Cancel', style: 'cancel' },
+                { 
+                  text: 'OK', 
+                  style: 'default',
+                  onPress: () => {
+                    // Get tomorrow's activities and move them to today
+                    const tomorrowActivities = users[currentUser]?.days?.tomorrow?.activities || [];
+                    
+                    // Keep only pinned activities from today, reset their completed status
+                    const keptActivities = activities
+                      .filter(a => a.pinned)
+                      .map(a => ({ ...a, completed: false }));
+                    
+                    // Combine kept activities with tomorrow's activities
+                    const newTodayActivities = [...keptActivities, ...tomorrowActivities];
+                    
+                    // Update users data
+                    const updatedUsers = {
+                      ...users,
+                      [currentUser]: {
+                        ...users[currentUser],
+                        days: {
+                          ...users[currentUser].days,
+                          today: { activities: newTodayActivities },
+                          tomorrow: { 
+                            activities: activities
+                              .filter(a => a.pinned)
+                              .map(a => ({ 
+                                ...a, 
+                                id: 'activity_' + Date.now() + '_' + Math.random(),
+                                completed: false 
+                              }))
+                          }
+                        }
+                      }
+                    };
+                    
+                    setUsers(updatedUsers);
+                    setActivities(newTodayActivities);
+                    
+                    // Exit edit mode
+                    setIsEditMode(false);
+                    
+                    // Show success message
+                    showToast({ 
+                      message: 'Day completed! Pinned activities kept for today.',
+                      duration: 3000,
+                    });
+                  }
+                },
+              ]
+            );
+          }}
           theme={theme}
           position={bannerPosition === 'top' ? 'bottom' : 'top'}
           onAnimationComplete={() => {
@@ -1785,7 +1935,10 @@ const App = () => {
             
             setUsers(updatedUsers);
             setActivities(updatedActivities);
-            showToast({ message: `Added: ${activity.name}` });
+            showToast({ 
+              message: `✅ Added: ${activity.emoji} ${activity.name || activity.text}`,
+              duration: 2000,
+            });
           }}
           theme={theme}
           categories={activityCategories}
@@ -1905,9 +2058,13 @@ const styles = StyleSheet.create({
   columnWrapper: {
     gap: CARD_LAYOUT.gap,
   },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
   activityCard: {
-    width: cardWidth,
-    height: cardHeight,
+    width: calculateCardWidth(),
+    height: getCardHeight(),
     backgroundColor: 'white',
     borderRadius: RADIUS.lg,
     padding: getCardPadding(),
@@ -1917,7 +2074,7 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: 'rgba(0, 0, 0, 0.08)',
     alignSelf: 'center',
-    overflow: 'hidden',
+    position: 'relative',
   },
   completedCard: {
     transform: [{ scale: 1.01 }],
@@ -1979,24 +2136,28 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    padding: 35,  // Match PWA's 35px padding
+    gap: 15,  // PWA uses 15px gap between elements
   },
   activityEmoji: {
-    fontSize: 65 * baseFontSize,
-    marginBottom: 15 * baseFontSize,
+    fontSize: 64.8,  // Match PWA's 4.05rem = 64.8px
+    lineHeight: 81,  // Match PWA's height
+    marginBottom: 0,  // Gap is handled by parent
   },
   activityTitle: {
-    fontSize: 23 * baseFontSize,
+    fontSize: 23,  // Match PWA's 1.44rem = 23.04px  
     fontWeight: '600',
     color: '#333',
     textAlign: 'center',
-    marginBottom: 8 * baseFontSize,
+    lineHeight: 23 * 1.2,  // Match PWA's line-height: 1.2
+    marginBottom: 4,  // PWA's 0.25rem
     fontFamily: 'ComicNeue-Regular',
   },
   activityDescription: {
-    fontSize: 17 * baseFontSize,
+    fontSize: 17.3,  // Match PWA's 1.08rem = 17.28px
     color: '#666',
     textAlign: 'center',
-    lineHeight: 22 * baseFontSize,
+    lineHeight: 17.3 * 1.3,  // Match PWA's line-height: 1.3
     fontFamily: 'ComicNeue-Regular',
   },
   completedText: {
@@ -2026,12 +2187,22 @@ const styles = StyleSheet.create({
   },
   editActions: {
     position: 'absolute',
-    bottom: 10,
+    bottom: 15,
     left: 0,
     right: 0,
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 15,
+  },
+  pinButtonContainer: {
+    position: 'absolute',
+    bottom: 15,
+    left: 15,
+  },
+  deleteButtonContainer: {
+    position: 'absolute',
+    bottom: 15,
+    right: 15,
   },
   editButton: {
     width: 40,
@@ -2358,7 +2529,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
-  pinButtonContainer: {
+  pinModalButtonContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 15,

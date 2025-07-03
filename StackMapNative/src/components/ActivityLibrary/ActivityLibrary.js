@@ -67,6 +67,14 @@ const DEFAULT_CATEGORIES = [
       { id: 'exercise', name: 'Exercise', emoji: '💪' },
       { id: 'music', name: 'Music', emoji: '🎵' },
       { id: 'art', name: 'Art & Crafts', emoji: '🎨' },
+      { id: 'occupational-therapy', name: 'Occupational Therapy', emoji: '🏥' },
+      { id: 'speech-therapy', name: 'Speech Therapy', emoji: '💬' },
+      { id: 'sensory-break', name: 'Sensory Break', emoji: '🌈' },
+      { id: 'doctor-appointment', name: 'Doctor\'s Appointment', emoji: '👨‍⚕️' },
+      { id: 'dentist-appointment', name: 'Dentist Appointment', emoji: '🦷' },
+      { id: 'school', name: 'School', emoji: '🏫' },
+      { id: 'work', name: 'Work', emoji: '💼' },
+      { id: 'stim-time', name: 'Stim Time', emoji: '✨' },
     ],
   },
 ];
@@ -77,8 +85,8 @@ const ActivityRow = ({
   onDelete, 
   onQuickAdd,
   theme,
-  slideAnim,
 }) => {
+  const [justAdded, setJustAdded] = useState(false);
   const handleDelete = () => {
     Alert.alert(
       'Delete Activity',
@@ -91,16 +99,7 @@ const ActivityRow = ({
   };
 
   return (
-    <Animated.View style={[
-      styles.activityRow,
-      {
-        transform: [{ translateX: slideAnim }],
-        opacity: slideAnim.interpolate({
-          inputRange: [-100, 0],
-          outputRange: [0, 1],
-        }),
-      },
-    ]}>
+    <View style={styles.activityRow}>
       <View style={styles.activityInfo}>
         <Text style={styles.activityEmoji}>{activity.emoji}</Text>
         <Text style={styles.activityName}>{activity.name}</Text>
@@ -123,12 +122,21 @@ const ActivityRow = ({
         
         <TouchableOpacity
           style={styles.iconButton}
-          onPress={() => onQuickAdd(activity)}
+          onPress={() => {
+            onQuickAdd(activity);
+            setJustAdded(true);
+            setTimeout(() => setJustAdded(false), 1500);
+          }}
+          disabled={justAdded}
         >
-          <Icon name="add" size={20} color={theme.primary} />
+          <Icon 
+            name={justAdded ? "check" : "add"} 
+            size={20} 
+            color={justAdded ? '#4CAF50' : theme.primary} 
+          />
         </TouchableOpacity>
       </View>
-    </Animated.View>
+    </View>
   );
 };
 
@@ -148,17 +156,27 @@ const CategorySection = ({
   drag,
   isActive,
   isDraggingAnyCategory,
-  onDragStart,
-  onDragEnd,
   expandedState,
   onExpandedChange,
+  searchQuery,
+  isSortMode,
 }) => {
   const isEditingCategory = editingCategoryId === category.id;
   const [isExpanded, setIsExpanded] = useState(expandedState !== undefined ? expandedState : true);
   const [editingCategoryName, setEditingCategoryName] = useState(category.name);
   const [orderedActivities, setOrderedActivities] = useState(category.activities);
-  const expandAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
-  const rotateAnim = useRef(new Animated.Value(isExpanded ? 1 : 0)).current;
+  // Use useRef for Animated values to avoid re-creation issues
+  const expandAnim = useRef(new Animated.Value(expandedState !== undefined ? (expandedState ? 1 : 0) : 1)).current;
+  const rotateAnim = useRef(new Animated.Value(expandedState !== undefined ? (expandedState ? 1 : 0) : 1)).current;
+  const isDragStarting = useRef(false);
+  const isMounted = useRef(true);
+  
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      isMounted.current = false;
+    };
+  }, []);
 
   useEffect(() => {
     setOrderedActivities(category.activities);
@@ -183,25 +201,28 @@ const CategorySection = ({
         }),
       ]).start();
     }
-  }, [expandedState]);
+  }, [expandedState, isSortMode]);
 
   // Collapse when any category starts dragging
   useEffect(() => {
     if (isDraggingAnyCategory && isExpanded) {
-      // Animate collapse
+      // Animate collapse smoothly
       Animated.parallel([
         Animated.timing(expandAnim, {
           toValue: 0,
-          duration: 150,
+          duration: 200,
           useNativeDriver: false,
         }),
         Animated.timing(rotateAnim, {
           toValue: 0,
-          duration: 150,
+          duration: 200,
           useNativeDriver: true,
         }),
       ]).start(() => {
-        setIsExpanded(false);
+        // Only update state after animation completes if still mounted
+        if (isMounted.current) {
+          setIsExpanded(false);
+        }
       });
     }
   }, [isDraggingAnyCategory]);
@@ -225,6 +246,9 @@ const CategorySection = ({
   };
 
   const toggleExpand = () => {
+    // Don't allow expand/collapse in sort mode
+    if (isSortMode) return;
+    
     const newExpanded = !isExpanded;
     const toValue = newExpanded ? 1 : 0;
     Animated.parallel([
@@ -239,16 +263,20 @@ const CategorySection = ({
         useNativeDriver: true,
       }),
     ]).start();
-    setIsExpanded(newExpanded);
-    if (onExpandedChange) {
-      onExpandedChange(category.id, newExpanded);
+    if (isMounted.current) {
+      setIsExpanded(newExpanded);
+      if (onExpandedChange) {
+        onExpandedChange(category.id, newExpanded);
+      }
     }
   };
 
   const handleDragStart = () => {
-    onDragStart();
+    // Just initiate the drag without collapsing yet
     drag();
   };
+  
+  // onDragStart is now handled at the parent level via onDragBegin
 
   const handleDeleteCategory = () => {
     Alert.alert(
@@ -261,45 +289,40 @@ const CategorySection = ({
     );
   };
 
-  const rotation = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '90deg'],
+  // Create stable interpolations using useRef to avoid re-creation
+  const animatedStylesRef = useRef({
+    rotation: rotateAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: ['0deg', '90deg'],
+    }),
+    maxHeight: expandAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, 1500],
+    }),
+    opacity: expandAnim.interpolate({
+      inputRange: [0, 0.8, 1],
+      outputRange: [0, 1, 1],
+    }),
   });
+  const animatedStyles = animatedStylesRef.current;
 
-  // Create slide animations for each activity
-  const slideAnims = useRef(
-    category.activities.map(() => new Animated.Value(0))
-  ).current;
+  // Remove slide animations since we simplified ActivityRow
 
-  React.useEffect(() => {
-    // Animate activities in sequence when expanded
-    if (isExpanded) {
-      const animations = slideAnims.map((anim, index) =>
-        Animated.timing(anim, {
-          toValue: 0,
-          duration: 200,
-          delay: index * 50,
-          useNativeDriver: true,
-        })
-      );
-      Animated.stagger(50, animations).start();
-    } else {
-      // Reset animations when collapsed
-      slideAnims.forEach(anim => anim.setValue(-100));
-    }
-  }, [isExpanded]);
 
   return (
     <TouchableOpacity
       style={[styles.categorySection, isActive && styles.draggingCategory]}
-      onLongPress={handleDragStart}
-      delayLongPress={150}
-      activeOpacity={1}
+      onLongPress={isSortMode ? handleDragStart : undefined}
+      delayLongPress={isSortMode ? 150 : 250}
+      activeOpacity={0.95}
+      disabled={isActive || !isSortMode}
     >
       <View style={[styles.categoryHeader, { backgroundColor: theme.primary }]}>
-        <View style={styles.categoryDragHandle}>
-          <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
-        </View>
+        {isSortMode && (
+          <View style={styles.categoryDragHandle}>
+            <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
+          </View>
+        )}
         {isEditingCategory ? (
           <>
             <View style={styles.categoryEditContainer}>
@@ -334,7 +357,7 @@ const CategorySection = ({
               style={styles.categoryTitleContainer}
               onPress={toggleExpand}
             >
-              <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+              <Animated.View style={{ transform: [{ rotate: animatedStyles.rotation }] }}>
                 <Icon name="chevron-right" size={24} color="white" />
               </Animated.View>
               <Text style={styles.categoryTitle}>
@@ -374,11 +397,8 @@ const CategorySection = ({
       <Animated.View style={[
         styles.activitiesList,
         {
-          maxHeight: expandAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 1000],
-          }),
-          opacity: expandAnim,
+          maxHeight: animatedStyles.maxHeight,
+          opacity: animatedStyles.opacity,
         },
       ]}>
         {isEditingCategory ? (
@@ -415,20 +435,41 @@ const CategorySection = ({
           )
         ) : (
           <>
-            {category.activities.map((activity, index) => (
-              <ActivityRow
-                key={activity.id}
-                activity={activity}
-                onEdit={onEditActivity}
-                onDelete={(activity) => onDeleteActivity(category.id, activity)}
-                onQuickAdd={onQuickAdd}
-                theme={theme}
-                slideAnim={slideAnims[index] || new Animated.Value(0)}
-              />
-            ))}
+            {category.activities
+              .map((activity, originalIndex) => {
+                if (searchQuery) {
+                  const query = searchQuery.toLowerCase();
+                  const matches = activity.name.toLowerCase().includes(query) ||
+                                activity.emoji.includes(searchQuery);
+                  if (!matches) return null;
+                }
+                
+                return (
+                  <ActivityRow
+                    key={activity.id}
+                    activity={activity}
+                    onEdit={onEditActivity}
+                    onDelete={(activity) => onDeleteActivity(category.id, activity)}
+                    onQuickAdd={onQuickAdd}
+                    theme={theme}
+                  />
+                );
+              })
+              .filter(Boolean)}
             {category.activities.length === 0 && (
               <Text style={styles.emptyMessage}>
                 No activities yet. Tap + to add one.
+              </Text>
+            )}
+            {category.activities.length > 0 && 
+             category.activities.filter(activity => {
+               if (!searchQuery) return true;
+               const query = searchQuery.toLowerCase();
+               return activity.name.toLowerCase().includes(query) ||
+                      activity.emoji.includes(searchQuery);
+             }).length === 0 && (
+              <Text style={styles.emptyMessage}>
+                No activities match your search.
               </Text>
             )}
           </>
@@ -451,10 +492,14 @@ const ActivityLibrary = ({
   const [editMode, setEditMode] = useState(null); // 'category', 'activity', 'new-category', 'new-activity'
   const [editName, setEditName] = useState('');
   const [editEmoji, setEditEmoji] = useState('');
+  const [editDescription, setEditDescription] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [editingCategoryId, setEditingCategoryId] = useState(null);
   const [isDraggingAnyCategory, setIsDraggingAnyCategory] = useState(false);
   const [categoryExpandedStates, setCategoryExpandedStates] = useState({});
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isSortMode, setIsSortMode] = useState(false);
+  const [savedExpandedStates, setSavedExpandedStates] = useState({});
 
   // Edit handlers
   const handleEditCategory = (category) => {
@@ -468,6 +513,7 @@ const ActivityLibrary = ({
     setEditMode('activity');
     setEditName(activity.name);
     setEditEmoji(activity.emoji);
+    setEditDescription(activity.description || '');
   };
 
   const handleDeleteCategory = (category) => {
@@ -500,6 +546,7 @@ const ActivityLibrary = ({
     setEditMode('new-activity');
     setEditName('');
     setEditEmoji(DEFAULT_ACTIVITY_EMOJI);
+    setEditDescription('');
   };
 
   const handleSaveEdit = () => {
@@ -522,7 +569,7 @@ const ActivityLibrary = ({
           ...cat,
           activities: cat.activities.map(act =>
             act.id === editingItem.id 
-              ? { ...act, name: editName, emoji: editEmoji || DEFAULT_ACTIVITY_EMOJI }
+              ? { ...act, name: editName, emoji: editEmoji || DEFAULT_ACTIVITY_EMOJI, description: editDescription }
               : act
           ),
         }));
@@ -551,6 +598,7 @@ const ActivityLibrary = ({
                   id: newActivityId,
                   name: editName,
                   emoji: editEmoji,
+                  description: editDescription,
                 }],
               }
             : cat
@@ -564,12 +612,19 @@ const ActivityLibrary = ({
     setEditingItem(null);
     setEditName('');
     setEditEmoji('');
+    setEditDescription('');
   };
 
   const handleQuickAdd = (activity) => {
     if (onSelectActivity) {
-      onSelectActivity(activity);
-      onClose();
+      // Transform library activity to match expected format
+      onSelectActivity({
+        emoji: activity.emoji,
+        text: activity.name, // Map 'name' to 'text'
+        title: activity.name, // Also include as 'title' for compatibility
+        description: activity.description || '', // Include description if present
+      });
+      // Don't close the modal - user likely wants to add more activities
     }
   };
 
@@ -591,21 +646,54 @@ const ActivityLibrary = ({
     setEditingCategoryId(null);
   };
 
-  const handleCategoryDragStart = () => {
-    // Save current expanded states
-    const states = {};
-    categories.forEach(cat => {
-      // We'll get this from the children components
-      states[cat.id] = categoryExpandedStates[cat.id] ?? true;
-    });
-    setCategoryExpandedStates(states);
-    setIsDraggingAnyCategory(true);
+  const [activeDragId, setActiveDragId] = useState(null);
+  const [draggedData, setDraggedData] = useState(null);
+  const hasActuallyDragged = useRef(false);
+  
+  const handleCategoryDragStart = (itemId) => {
+    // Save the initial state when drag might begin
+    if (activeDragId !== itemId) {
+      setActiveDragId(itemId);
+      hasActuallyDragged.current = false;
+      setDraggedData([...categories]); // Save original order
+      
+      // Save current expanded states before any animations
+      const states = {};
+      categories.forEach(cat => {
+        // Get actual expanded state from the component if available
+        const currentExpanded = cat.id in categoryExpandedStates ? categoryExpandedStates[cat.id] : true;
+        states[cat.id] = currentExpanded;
+      });
+      setCategoryExpandedStates(states);
+      
+      // Small delay to let state update propagate
+      setTimeout(() => {
+        setIsDraggingAnyCategory(true);
+      }, 50);
+    }
   };
 
   const handleCategoryDragEnd = ({ data }) => {
-    setCategories(data);
-    if (onSaveCategories) onSaveCategories(data);
-    // Restore expanded states after a short delay
+    // Only update if we actually dragged (data changed)
+    const dataChanged = JSON.stringify(data) !== JSON.stringify(draggedData);
+    
+    if (dataChanged && hasActuallyDragged.current) {
+      // Real drag occurred with reordering
+      setCategories(data);
+      if (onSaveCategories) onSaveCategories(data);
+    } else {
+      // No real drag, restore original order
+      if (draggedData) {
+        setCategories(draggedData);
+      }
+    }
+    
+    // Reset drag states
+    setActiveDragId(null);
+    setDraggedData(null);
+    hasActuallyDragged.current = false;
+    
+    // Restore expanded states after a delay
     setTimeout(() => {
       setIsDraggingAnyCategory(false);
     }, 300);
@@ -630,14 +718,92 @@ const ActivityLibrary = ({
       </SafeAreaView>
 
       <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
+        {/* Search and Sort Bar */}
+        <View style={styles.controlsBar}>
+          <View style={[styles.searchContainer, { backgroundColor: 'white' }]}>
+            <Icon name="search" size={20} color={COLORS.gray[400]} />
+            <TextInput
+              style={styles.searchInput}
+              placeholder="Search activities..."
+              placeholderTextColor={COLORS.gray[400]}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {searchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setSearchQuery('')}>
+                <Icon name="close" size={20} color={COLORS.gray[400]} />
+              </TouchableOpacity>
+            )}
+          </View>
+          
+          <TouchableOpacity
+            style={[
+              styles.sortButton,
+              { backgroundColor: isSortMode ? theme.primary : 'white' }
+            ]}
+            onPress={() => {
+              if (!isSortMode) {
+                // Entering sort mode - save current states and collapse all
+                const currentStates = {};
+                categories.forEach(cat => {
+                  currentStates[cat.id] = categoryExpandedStates[cat.id] !== undefined 
+                    ? categoryExpandedStates[cat.id] 
+                    : true;
+                });
+                setSavedExpandedStates(currentStates);
+                
+                // Collapse all categories
+                const collapsedStates = {};
+                categories.forEach(cat => {
+                  collapsedStates[cat.id] = false;
+                });
+                setCategoryExpandedStates(collapsedStates);
+              } else {
+                // Exiting sort mode - restore saved states
+                setCategoryExpandedStates(savedExpandedStates);
+              }
+              setIsSortMode(!isSortMode);
+            }}
+          >
+            <Icon 
+              name="swap-vert" 
+              size={24} 
+              color={isSortMode ? 'white' : theme.primary} 
+            />
+          </TouchableOpacity>
+        </View>
         <DraggableFlatList
-          data={categories}
+          data={categories.filter(category => {
+            if (!searchQuery) return true;
+            const query = searchQuery.toLowerCase();
+            // Check category name
+            if (category.name.toLowerCase().includes(query)) return true;
+            // Check activities within category
+            return category.activities.some(activity => 
+              activity.name.toLowerCase().includes(query) ||
+              activity.emoji.includes(searchQuery)
+            );
+          })}
+          onDragBegin={(index) => {
+            const draggedItem = categories[index];
+            if (draggedItem) {
+              handleCategoryDragStart(draggedItem.id);
+            }
+          }}
+          onPlaceholderIndexChange={() => {
+            // This fires when items actually move positions
+            hasActuallyDragged.current = true;
+          }}
           onDragEnd={handleCategoryDragEnd}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: SPACING.lg }}
+          scrollEnabled={!isDraggingAnyCategory && !isSortMode}
+          activationDistance={isSortMode ? 0 : 20}
           renderItem={({ item, drag, isActive }) => (
-            <ScaleDecorator activeScale={0.95}>
+            <ScaleDecorator activeScale={0.98}>
               <CategorySection
                 category={item}
                 onEditCategory={handleEditCategory}
@@ -654,10 +820,10 @@ const ActivityLibrary = ({
                 drag={drag}
                 isActive={isActive}
                 isDraggingAnyCategory={isDraggingAnyCategory}
-                onDragStart={handleCategoryDragStart}
-                onDragEnd={() => {}}
-                expandedState={isDraggingAnyCategory ? false : categoryExpandedStates[item.id]}
+                expandedState={isDraggingAnyCategory || isSortMode ? false : categoryExpandedStates[item.id]}
                 onExpandedChange={handleExpandedChange}
+                searchQuery={searchQuery}
+                isSortMode={isSortMode}
               />
             </ScaleDecorator>
           )}
@@ -695,6 +861,16 @@ const ActivityLibrary = ({
             
             {(editMode === 'activity' || editMode === 'new-activity') && (
               <View>
+                <TextInput
+                  style={[styles.editInput, styles.descriptionInput]}
+                  value={editDescription}
+                  onChangeText={setEditDescription}
+                  placeholder="Description (optional)"
+                  multiline
+                  numberOfLines={3}
+                  textAlignVertical="top"
+                />
+                
                 <Text style={styles.emojiLabel}>Select Emoji:</Text>
                 <ScrollView 
                   horizontal 
@@ -752,6 +928,35 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: SPACING.md,
   },
+  controlsBar: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    marginBottom: SPACING.md,
+  },
+  searchContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    height: 44,
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.level1,
+    gap: SPACING.sm,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: isTablet() ? 16 : 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.gray[900],
+  },
+  sortButton: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: RADIUS.lg,
+    ...SHADOWS.level1,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -775,6 +980,7 @@ const styles = StyleSheet.create({
   categorySection: {
     marginBottom: SPACING.md,
     backgroundColor: 'transparent',
+    minHeight: 60,
   },
   categoryHeader: {
     flexDirection: 'row',
@@ -871,9 +1077,16 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   draggingCategory: {
-    opacity: 0.95,
+    opacity: 0.9,
     elevation: 10,
     zIndex: 1000,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 10,
   },
   emptyMessage: {
     textAlign: 'center',
@@ -928,6 +1141,10 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     fontSize: isTablet() ? 16 : 14,
     marginBottom: SPACING.md,
+  },
+  descriptionInput: {
+    minHeight: 80,
+    textAlignVertical: 'top',
   },
   emojiLabel: {
     fontSize: isTablet() ? 16 : 14,

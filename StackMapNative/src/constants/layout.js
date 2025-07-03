@@ -4,8 +4,14 @@ import { Dimensions } from 'react-native';
 export const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 // Device type helpers
-export const isTablet = () => screenWidth >= 768;
-export const isMobile = () => screenWidth <= 600;
+export const isTablet = (width) => {
+  const currentWidth = width || Dimensions.get('window').width;
+  return currentWidth >= 768;
+};
+export const isMobile = (width) => {
+  const currentWidth = width || Dimensions.get('window').width;
+  return currentWidth <= 600;
+};
 
 // Font scale multipliers
 export const FONT_SCALE = {
@@ -15,7 +21,7 @@ export const FONT_SCALE = {
 
 // Card layout constants
 export const CARD_LAYOUT = {
-  minWidth: 280,
+  minWidth: 250,
   gap: 19, // ~1.2rem in pixels
   containerPaddingMobile: 16, // 1rem
   containerPaddingTablet: 24, // 1.5rem
@@ -27,14 +33,20 @@ export const getContainerPadding = () => {
 };
 
 export const calculateColumns = (width = screenWidth) => {
-  const containerPadding = getContainerPadding();
+  const containerPadding = width <= 600 ? CARD_LAYOUT.containerPaddingMobile : CARD_LAYOUT.containerPaddingTablet;
   const availableWidth = width - (containerPadding * 2);
-  const numColumns = Math.floor((availableWidth + CARD_LAYOUT.gap) / (CARD_LAYOUT.minWidth + CARD_LAYOUT.gap)) || 1;
+  let numColumns = Math.floor((availableWidth + CARD_LAYOUT.gap) / (CARD_LAYOUT.minWidth + CARD_LAYOUT.gap)) || 1;
+  
+  // Cap at 4 columns for tablets
+  if (isTablet(width) && numColumns > 4) {
+    numColumns = 4;
+  }
+  
   return numColumns;
 };
 
 export const calculateCardWidth = (width = screenWidth) => {
-  const containerPadding = getContainerPadding();
+  const containerPadding = width <= 600 ? CARD_LAYOUT.containerPaddingMobile : CARD_LAYOUT.containerPaddingTablet;
   const availableWidth = width - (containerPadding * 2);
   const numColumns = calculateColumns(width);
   const totalGaps = (numColumns - 1) * CARD_LAYOUT.gap;

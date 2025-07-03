@@ -11,13 +11,13 @@ export const useToast = () => {
       clearTimeout(timeoutRef.current);
     }
 
-    // Show new toast
-    setToast(config);
+    // Show new toast with visible flag
+    setToast({ ...config, visible: true });
 
     // Set auto-hide timeout
     if (config.duration !== 0) {
       timeoutRef.current = setTimeout(() => {
-        setToast(null);
+        setToast({ visible: false });
       }, config.duration || TOAST_DURATION);
     }
   }, []);
@@ -26,7 +26,7 @@ export const useToast = () => {
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
     }
-    setToast(null);
+    setToast({ visible: false });
   }, []);
 
   return {

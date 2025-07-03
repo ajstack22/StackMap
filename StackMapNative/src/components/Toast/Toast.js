@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,19 @@ import {
 import { SHADOWS, TYPOGRAPHY, RADIUS, SPACING } from '../../constants';
 
 const Toast = ({ 
-  visible, 
-  message, 
-  action, 
-  onDismiss, 
-  backgroundColor = '#667eea',
-  duration = 3000 
+  toast,
+  onDismiss,
+  theme,
 }) => {
-  const translateY = useRef(new Animated.Value(100)).current;
+  const [translateY] = useState(() => new Animated.Value(100));
   const timeoutRef = useRef(null);
+  
+  // Extract values with defaults to avoid conditional hook calls
+  const visible = toast?.visible || false;
+  const message = toast?.message || '';
+  const action = toast?.action || null;
+  const backgroundColor = toast?.backgroundColor || theme?.primary || '#667eea';
+  const duration = toast?.duration || 3000;
 
   useEffect(() => {
     if (visible) {
@@ -48,9 +52,9 @@ const Toast = ({
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [visible, duration, onDismiss, translateY]);
+  }, [visible, duration, onDismiss]);
 
-  if (!visible) return null;
+  if (!toast || !visible) return null;
 
   return (
     <Animated.View 
@@ -102,6 +106,7 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.fontSize.md,
     flex: 1,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+    textAlign: 'center',
   },
   action: {
     marginLeft: SPACING.md,
@@ -118,4 +123,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Toast;
+export default React.memo(Toast);

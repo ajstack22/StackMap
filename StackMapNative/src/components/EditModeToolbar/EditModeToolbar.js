@@ -17,15 +17,16 @@ const EditModeToolbar = ({
   onAdd,
   onLibrary,
   onCompleteDay,
+  onSettings,
   theme,
   position = 'bottom',
   visible = true,
   onAnimationComplete,
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
-  const translateY = useRef(new Animated.Value(position === 'top' ? -100 : 100)).current;
-  const opacity = useRef(new Animated.Value(0)).current;
-  const backgroundOpacity = useRef(new Animated.Value(0)).current;
+  const [translateY] = useState(() => new Animated.Value(position === 'top' ? -100 : 100));
+  const [opacity] = useState(() => new Animated.Value(0));
+  const [backgroundOpacity] = useState(() => new Animated.Value(0));
 
   useEffect(() => {
     if (visible) {
@@ -75,12 +76,13 @@ const EditModeToolbar = ({
 
   // Define all actions
   const actions = [
-    { id: 'add', label: 'Add', icon: 'add', onPress: onAdd, color: theme.primary },
-    { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
-    { id: 'complete', label: 'Complete', icon: 'today', onPress: onCompleteDay, color: theme.primary, disabled: true },
+    { id: 'add', label: 'New Activity', icon: 'add', onPress: onAdd, color: theme.primary },
+    { id: 'library', label: 'Activity Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
+    { id: 'complete', label: 'Complete Day', icon: 'today', onPress: onCompleteDay, color: theme.primary },
+    { id: 'settings', label: 'Settings', icon: 'settings', onPress: onSettings, color: theme.primary },
   ];
 
-  // Since we only have 3 actions now, we can show all of them on both mobile and tablet
+  // Show all 4 actions on both mobile and tablet
   const visibleActions = actions;
   const overflowActions = [];
   const showMore = false;
@@ -93,7 +95,7 @@ const EditModeToolbar = ({
     >
       <Icon 
         name={item.icon} 
-        size={isTablet() ? 24 : 22} 
+        size={isTablet() ? 28 : 24} 
         color={item.disabled ? '#999' : item.color} 
       />
       <Text style={[
@@ -149,13 +151,15 @@ const EditModeToolbar = ({
             {/* Animated toolbar that slides from behind */}
             <Animated.View
               style={[
-                styles.toolbar,
+                styles.toolbarWrapper,
                 {
                   transform: [{ translateY }],
                   opacity,
                 },
               ]}
             >
+              <Text style={styles.editModeLabel}>Edit Mode</Text>
+              <View style={styles.toolbar}>
               {visibleActions.map(action => (
                 <View key={action.id}>
                   {renderAction({ item: action })}
@@ -167,12 +171,13 @@ const EditModeToolbar = ({
                   style={styles.actionPill}
                   onPress={() => setShowMoreMenu(true)}
                 >
-                  <Icon name="more-horiz" size={isTablet() ? 24 : 22} color={theme.primary} />
+                  <Icon name="more-horiz" size={isTablet() ? 28 : 24} color={theme.primary} />
                   <Text style={[styles.actionLabel, { color: theme.primary }]}>
                     More
                   </Text>
                 </TouchableOpacity>
               )}
+              </View>
             </Animated.View>
           </View>
         </SafeAreaView>
@@ -229,32 +234,45 @@ const styles = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  toolbar: {
-    flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
+  toolbarWrapper: {
+    alignItems: 'center',
     paddingVertical: SPACING.sm,
-    justifyContent: 'center',
-    gap: SPACING.sm,
     position: 'relative',
     zIndex: 1,
   },
-  actionPill: {
+  editModeLabel: {
+    color: 'white',
+    fontSize: isTablet() ? 20 : 18,
+    fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    marginBottom: SPACING.sm,
+    opacity: 1,
+  },
+  toolbar: {
     flexDirection: 'row',
+    paddingHorizontal: SPACING.md,
+    justifyContent: 'center',
+    gap: SPACING.sm,
+  },
+  actionPill: {
+    flexDirection: 'column',
     alignItems: 'center',
     backgroundColor: 'white',
-    paddingHorizontal: isTablet() ? SPACING.lg : SPACING.md * 1.1,
-    paddingVertical: isTablet() ? SPACING.md * 0.75 : SPACING.sm * 1.1,
-    borderRadius: RADIUS.round,
-    gap: SPACING.sm,
+    paddingHorizontal: isTablet() ? SPACING.lg * 1.2 : SPACING.md * 1.5,
+    paddingVertical: isTablet() ? SPACING.md : SPACING.sm * 1.5,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.xs,
+    minWidth: isTablet() ? 110 : 90,
     ...SHADOWS.level1,
   },
   disabledPill: {
     opacity: 0.6,
   },
   actionLabel: {
-    fontSize: isTablet() ? 16 : 15,
+    fontSize: isTablet() ? 14 : 12,
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+    textAlign: 'center',
   },
   moreMenuOverlay: {
     flex: 1,
