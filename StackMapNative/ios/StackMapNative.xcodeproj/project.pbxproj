@@ -8,27 +8,27 @@
 
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		34D67F7E2F8CDF0ABC541410 /* libPods-StackMap.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 632B24BCD1BA2E3C93276512 /* libPods-StackMap.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7AC8E0672247E329B39B7113 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		9A2C0F4B98CB8122D2401976 /* libPods-StackMapNative.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 2ACF0409496B4B9A882D6FFA /* libPods-StackMapNative.a */; };
 		AD9B6C98274D429DBA347AC0 /* ComicNeue-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7D2628336E3649DA862D7483 /* ComicNeue-Bold.ttf */; };
 		DFC3F7F12BAA42AEB33D0540 /* ComicNeue-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F8FBA70DA8ED49F7A1F244CA /* ComicNeue-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0160459821D963E18229CCF0 /* Pods-StackMapNative.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMapNative.debug.xcconfig"; path = "Target Support Files/Pods-StackMapNative/Pods-StackMapNative.debug.xcconfig"; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* StackMapNative.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StackMapNative.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = StackMapNative/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = StackMapNative/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = StackMapNative/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		2ACF0409496B4B9A882D6FFA /* libPods-StackMapNative.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StackMapNative.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		632B24BCD1BA2E3C93276512 /* libPods-StackMap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StackMap.a"; sourceTree = BUILT_PRODUCTS_DIR; };
+		7483230C5D27F51497EB78BE /* Pods-StackMap.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.release.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = StackMapNative/AppDelegate.swift; sourceTree = "<group>"; };
-		7D2628336E3649DA862D7483 /* ComicNeue-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Bold.ttf"; path = "../assets/fonts/ComicNeue-Bold.ttf"; sourceTree = "<group>"; };
+		7D2628336E3649DA862D7483 /* ComicNeue-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Bold.ttf"; path = "../assets/fonts/ComicNeue-Bold.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = StackMapNative/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8A0DCF48A9589656B3F86A92 /* Pods-StackMapNative.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMapNative.release.xcconfig"; path = "Target Support Files/Pods-StackMapNative/Pods-StackMapNative.release.xcconfig"; sourceTree = "<group>"; };
+		E2A40D7E41675AC08AEDEE9D /* Pods-StackMap.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.debug.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.debug.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F8FBA70DA8ED49F7A1F244CA /* ComicNeue-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Regular.ttf"; path = "../assets/fonts/ComicNeue-Regular.ttf"; sourceTree = "<group>"; };
+		F8FBA70DA8ED49F7A1F244CA /* ComicNeue-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Regular.ttf"; path = "../assets/fonts/ComicNeue-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -36,7 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				9A2C0F4B98CB8122D2401976 /* libPods-StackMapNative.a in Frameworks */,
+				34D67F7E2F8CDF0ABC541410 /* libPods-StackMap.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,7 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				2ACF0409496B4B9A882D6FFA /* libPods-StackMapNative.a */,
+				632B24BCD1BA2E3C93276512 /* libPods-StackMap.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -67,8 +67,8 @@
 		6CCE57F778B1386967347150 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				0160459821D963E18229CCF0 /* Pods-StackMapNative.debug.xcconfig */,
-				8A0DCF48A9589656B3F86A92 /* Pods-StackMapNative.release.xcconfig */,
+				E2A40D7E41675AC08AEDEE9D /* Pods-StackMap.debug.xcconfig */,
+				7483230C5D27F51497EB78BE /* Pods-StackMap.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -115,24 +115,24 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* StackMapNative */ = {
+		13B07F861A680F5B00A75B9A /* StackMap */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "StackMapNative" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "StackMap" */;
 			buildPhases = (
-				5140AB4E0D1150D94E570997 /* [CP] Check Pods Manifest.lock */,
+				3F2C44B825F8433D7EE2DB43 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				0F732B229FE36002D582011E /* Frameworks */,
-				1AFEA85440BD03F5987392BC /* [CP] Embed Pods Frameworks */,
-				08ACC60ABD821D48758B9E7D /* [CP] Copy Pods Resources */,
+				58ED39270A4C673E821C7EE3 /* [CP] Embed Pods Frameworks */,
+				C6B3B8F9E01D847CC929E31C /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 			);
-			name = StackMapNative;
-			productName = StackMapNative;
+			name = StackMap;
+			productName = StackMap;
 			productReference = 13B07F961A680F5B00A75B9A /* StackMapNative.app */;
 			productType = "com.apple.product-type.application";
 		};
@@ -162,7 +162,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* StackMapNative */,
+				13B07F861A680F5B00A75B9A /* StackMap */,
 			);
 		};
 /* End PBXProject section */
@@ -199,41 +199,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		08ACC60ABD821D48758B9E7D /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMapNative/Pods-StackMapNative-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMapNative/Pods-StackMapNative-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMapNative/Pods-StackMapNative-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		1AFEA85440BD03F5987392BC /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMapNative/Pods-StackMapNative-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMapNative/Pods-StackMapNative-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMapNative/Pods-StackMapNative-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		5140AB4E0D1150D94E570997 /* [CP] Check Pods Manifest.lock */ = {
+		3F2C44B825F8433D7EE2DB43 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -248,11 +214,45 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-StackMapNative-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-StackMap-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		58ED39270A4C673E821C7EE3 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		C6B3B8F9E01D847CC929E31C /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -271,14 +271,16 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 0160459821D963E18229CCF0 /* Pods-StackMapNative.debug.xcconfig */;
+			baseConfigurationReference = E2A40D7E41675AC08AEDEE9D /* Pods-StackMap.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2000;
 				DEVELOPMENT_TEAM = 84W9WSYQQB;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -290,8 +292,8 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.stackmap.app;
-				PRODUCT_NAME = StackMapNative;
+				PRODUCT_BUNDLE_IDENTIFIER = app.stackmap;
+				PRODUCT_NAME = StackMap;
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -303,13 +305,15 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 8A0DCF48A9589656B3F86A92 /* Pods-StackMapNative.release.xcconfig */;
+			baseConfigurationReference = 7483230C5D27F51497EB78BE /* Pods-StackMap.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 1;
+				CURRENT_PROJECT_VERSION = 2000;
 				DEVELOPMENT_TEAM = 84W9WSYQQB;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -321,8 +325,8 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.stackmap.app;
-				PRODUCT_NAME = StackMapNative;
+				PRODUCT_BUNDLE_IDENTIFIER = app.stackmap;
+				PRODUCT_NAME = StackMap;
 				SUPPORTS_MACCATALYST = NO;
 				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = YES;
 				SWIFT_VERSION = 5.0;
@@ -486,7 +490,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "StackMapNative" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "StackMap" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,

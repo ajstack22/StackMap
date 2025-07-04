@@ -77,9 +77,9 @@ const EditModeToolbar = ({
   // Define all actions - ordered for right-handed users (most used on right)
   const actions = [
     { id: 'settings', label: 'Settings', icon: 'settings', onPress: onSettings, color: theme.primary },
-    { id: 'complete', label: 'Complete', icon: 'today', onPress: onCompleteDay, color: theme.primary },
+    { id: 'complete', label: 'Complete', icon: 'event-available', onPress: onCompleteDay, color: theme.primary },
     { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
-    { id: 'add', label: 'Add', icon: 'add', onPress: onAdd, color: theme.primary },
+    { id: 'add', label: 'Add', icon: 'add-circle', onPress: onAdd, color: theme.primary },
   ];
 
   // Show all 4 actions on both mobile and tablet

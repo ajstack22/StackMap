@@ -1,52 +1,48 @@
 import React from 'react';
 import { View } from 'react-native';
-import Svg, { Circle, Rect } from 'react-native-svg';
+import Svg, { Rect } from 'react-native-svg';
 
 const Logo = ({ size = 32, theme }) => {
   const primaryColor = theme?.primary || '#667eea';
-  const darkColor = theme?.dark || '#4a5bc7';
+  
+  // Adjust size to match letter height (about 20 for a 32 font size)
+  const logoHeight = size * 0.625; // roughly the x-height of the font
+  const logoWidth = size; // keep width proportional
   
   return (
-    <View style={{ width: size, height: size }}>
-      <Svg width={size} height={size} viewBox="0 0 32 32">
-        {/* White circle background */}
-        <Circle 
-          cx="16" 
-          cy="16" 
-          r="15" 
-          fill="rgba(255, 255, 255, 0.9)" 
-          stroke="rgba(255, 255, 255, 0.7)" 
-          strokeWidth="1"
+    <View style={{ width: logoWidth, height: logoHeight }}>
+      <Svg width={logoWidth} height={logoHeight} viewBox={`0 0 32 20`}>
+        {/* Top rectangle - white, 10% shorter */}
+        <Rect 
+          x="4" 
+          y="0" 
+          width="24" 
+          height="3.6" 
+          rx="3" 
+          ry="3" 
+          fill="white"
         />
         
-        {/* Top rectangle - theme color */}
+        {/* Middle rectangle - white, 10% shorter */}
         <Rect 
-          x="7" 
-          y="10" 
-          width="18" 
-          height="2.5" 
-          rx="1.25" 
-          fill={primaryColor}
+          x="4" 
+          y="5.6" 
+          width="24" 
+          height="3.6" 
+          rx="3" 
+          ry="3" 
+          fill="white"
         />
         
-        {/* Middle rectangle - theme color */}
+        {/* Bottom rectangle - white, 5% taller */}
         <Rect 
-          x="7" 
-          y="14.5" 
-          width="18" 
-          height="2.5" 
-          rx="1.25" 
-          fill={primaryColor}
-        />
-        
-        {/* Bottom rectangle - darker theme color, twice as tall */}
-        <Rect 
-          x="7" 
-          y="19" 
-          width="18" 
-          height="5" 
-          rx="2.5" 
-          fill={darkColor}
+          x="4" 
+          y="11.2" 
+          width="24" 
+          height="8.4" 
+          rx="3" 
+          ry="3" 
+          fill="white"
         />
       </Svg>
     </View>

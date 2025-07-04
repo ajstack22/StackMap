@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+    <!-- Blue background -->
+    <rect width="1024" height="1024" fill="#4A90E2"/>
+    
+    <!-- White stack lines truly centered -->
+    <!-- Total height: 115 + 64 + 115 + 64 + 269 = 627 -->
+    <!-- To center: start at (1024 - 627) / 2 = 198.5 -->
+    
+    <!-- Top line -->
+    <rect x="128" y="198.5" width="768" height="115" rx="96" ry="96" fill="white"/>
+    
+    <!-- Middle line (198.5 + 115 + 64 = 377.5) -->
+    <rect x="128" y="377.5" width="768" height="115" rx="96" ry="96" fill="white"/>
+    
+    <!-- Bottom line (377.5 + 115 + 64 = 556.5) -->
+    <rect x="128" y="556.5" width="768" height="269" rx="96" ry="96" fill="rgba(255,255,255,0.9)"/>
+</svg>

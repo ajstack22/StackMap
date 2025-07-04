@@ -58,7 +58,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 
 // Import hooks
@@ -135,6 +135,18 @@ const App = () => {
   const [showUserEmojiPicker, setShowUserEmojiPicker] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [dayMode, setDayMode] = useState('today'); // 'today' or 'both'
+  
+  // Display mode and celebrations
+  const [displayMode, setDisplayMode] = useState('numbers'); // 'none', 'numbers', 'time'
+  const [taskCelebration, setTaskCelebration] = useState('rainbow');
+  const [routineCelebration, setRoutineCelebration] = useState('rainbow');
+  const [showCelebration, setShowCelebration] = useState(null);
+  const [activityTime, setActivityTime] = useState('');
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [showReorderModal, setShowReorderModal] = useState(false);
+  const [reorderingActivity, setReorderingActivity] = useState(null);
+  const [newPosition, setNewPosition] = useState('');
   
   // PIN protection state
   const [showPinModal, setShowPinModal] = useState(false);
@@ -432,6 +444,9 @@ const App = () => {
         }
         
         setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
+        setDisplayMode(migratedData.globalSettings?.displayMode || 'numbers');
+        setTaskCelebration(migratedData.globalSettings?.taskCelebration || 'rainbow');
+        setRoutineCelebration(migratedData.globalSettings?.routineCelebration || 'rainbow');
         // Restore PIN protection state from saved data
         if (migratedData.globalSettings?.pinEnabled !== undefined) {
           setHasPinProtection(migratedData.globalSettings.pinEnabled);
@@ -496,11 +511,13 @@ const App = () => {
         },
         globalSettings: {
           themeColor: THEMES[currentTheme].primary,
-          displayMode: 'numbers',
+          displayMode: displayMode,
           enableDayManagement: true,
           // Save the current PIN protection state
           pinEnabled: hasPinProtection,
-          bannerPosition: bannerPosition
+          bannerPosition: bannerPosition,
+          taskCelebration: taskCelebration,
+          routineCelebration: routineCelebration
         },
         templates: templates || [],
         activityCategories: activityCategories
@@ -514,10 +531,31 @@ const App = () => {
   const theme = THEMES[currentTheme] || THEMES.purple;
 
   const toggleActivity = (id) => {
+    const activity = activities.find(a => a.id === id);
+    const wasCompleted = activity?.completed;
+    
     const newActivities = activities.map(activity => 
       activity.id === id ? { ...activity, completed: !activity.completed } : activity
     );
     setActivities(newActivities);
+    
+    // Check if we just completed an activity
+    if (!wasCompleted && activity) {
+      // Check if all activities are now completed
+      const allCompleted = newActivities.every(a => a.completed);
+      
+      if (allCompleted && newActivities.length > 0) {
+        // Show routine celebration (fireworks for completing all tasks)
+        if (routineCelebration !== 'none') {
+          setShowCelebration({ type: 'fireworks', theme: routineCelebration });
+        }
+      } else {
+        // Show task celebration (confetti for individual tasks)
+        if (taskCelebration !== 'none') {
+          setShowCelebration({ type: 'confetti', theme: taskCelebration });
+        }
+      }
+    }
   };
 
   const togglePin = async (id) => {
@@ -596,14 +634,14 @@ const App = () => {
       completed: false,
       pinned: false,
       activityType: 'normal',
-      time: null,
+      time: activityTime || null,
       createdAt: new Date().toISOString()
     };
     
     if (editingActivity) {
       const newActivities = activities.map(a => 
         a.id === editingActivity.id 
-          ? { ...a, text: activityTitle, description: activityDescription || '', emoji: activityEmoji } 
+          ? { ...a, text: activityTitle, description: activityDescription || '', emoji: activityEmoji, time: activityTime || null } 
           : a
       );
       setActivities(newActivities);
@@ -619,6 +657,7 @@ const App = () => {
     setActivityTitle('');
     setActivityDescription('');
     setActivityEmoji('🎯');
+    setActivityTime('');
     setEditingActivity(null);
   };
 
@@ -645,6 +684,47 @@ const App = () => {
         }
       }
     });
+  };
+
+  const reorderActivities = (fromIndex, toIndex) => {
+    const newActivities = [...activities];
+    const [movedActivity] = newActivities.splice(fromIndex, 1);
+    newActivities.splice(toIndex, 0, movedActivity);
+    setActivities(newActivities);
+    
+    // Save immediately
+    if (currentUser && users[currentUser]) {
+      const updatedUsers = { ...users };
+      if (!updatedUsers[currentUser].days) {
+        updatedUsers[currentUser].days = {};
+      }
+      if (!updatedUsers[currentUser].days[currentDay]) {
+        updatedUsers[currentUser].days[currentDay] = { activities: [] };
+      }
+      updatedUsers[currentUser].days[currentDay].activities = newActivities;
+      setUsers(updatedUsers);
+    }
+  };
+
+  const promptReorderActivity = (activity, currentPosition) => {
+    setReorderingActivity({ activity, currentPosition });
+    setNewPosition(currentPosition.toString());
+    setShowReorderModal(true);
+  };
+
+  const handleReorder = () => {
+    if (newPosition && !isNaN(newPosition)) {
+      const newIndex = parseInt(newPosition) - 1;
+      const currentIndex = activities.findIndex(a => a.id === reorderingActivity.activity.id);
+      
+      if (newIndex >= 0 && newIndex < activities.length && currentIndex !== -1 && currentIndex !== newIndex) {
+        reorderActivities(currentIndex, newIndex);
+        showToast({ message: `Moved to position ${newPosition}` });
+      }
+    }
+    setShowReorderModal(false);
+    setReorderingActivity(null);
+    setNewPosition('');
   };
 
   const addActivityToLibrary = (activity) => {
@@ -777,7 +857,7 @@ const App = () => {
   const importData = async () => {
     try {
       const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.allFiles],
+        type: [DocumentPicker.types.json],
         copyTo: 'cachesDirectory',
       });
       
@@ -879,10 +959,37 @@ const App = () => {
         ]}>✓</Text>
       </View>
 
-      {/* Number Badge */}
-      <View style={[styles.numberBadge, { backgroundColor: theme.primary }]}>
-        <Text style={styles.numberText}>{index + 1}</Text>
-      </View>
+      {/* Number/Time Badge */}
+      {displayMode !== 'none' && (
+        <TouchableOpacity
+          style={[
+            styles.numberBadge, 
+            { backgroundColor: theme.primary },
+            displayMode === 'time' && styles.timeBadge
+          ]}
+          onPress={() => {
+            if (isEditMode && displayMode === 'numbers') {
+              promptReorderActivity(item, index + 1);
+            }
+          }}
+          disabled={!isEditMode || displayMode !== 'numbers'}
+        >
+          <Text style={displayMode === 'time' ? [
+            styles.numberText,
+            styles.timeText,
+            { 
+              textShadowColor: 'rgba(255, 255, 255, 0.8)',
+              textShadowOffset: { width: 0.5, height: 0.5 },
+              textShadowRadius: 0.5
+            }
+          ] : styles.numberText}>
+            {displayMode === 'time' 
+              ? (item.time || '--:--')
+              : index + 1
+            }
+          </Text>
+        </TouchableOpacity>
+      )}
 
       {/* Card Content */}
       <View style={styles.cardContent}>
@@ -935,6 +1042,7 @@ const App = () => {
                   setActivityTitle(item.text || item.title || '');
                   setActivityDescription(item.description || '');
                   setActivityEmoji(item.emoji || '🎯');
+                  setActivityTime(item.time || '');
                   setShowActivityModal(true);
                 }}
                 style={styles.editButton}
@@ -1022,8 +1130,8 @@ const App = () => {
       </TouchableOpacity>
     );
     
-    // Only wrap with ScaleDecorator when drag functionality is available (single column)
-    if (numColumns === 1 && drag) {
+    // Wrap with ScaleDecorator only when drag functionality is available and we're in DraggableFlatList
+    if (drag && typeof drag === 'function' && !customWidth) {
       return <ScaleDecorator>{CardContent}</ScaleDecorator>;
     }
     
@@ -1112,7 +1220,7 @@ const App = () => {
         
         {/* Main Content Area */}
         <View style={styles.contentArea}>
-          {numColumns > 1 ? (
+          {(numColumns > 1) ? (
             <ScrollView
               contentContainerStyle={[
                 styles.listContent,
@@ -1320,6 +1428,13 @@ const App = () => {
                     numberOfLines={3}
                   />
                   
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Time (e.g. 9:00 AM)"
+                    value={activityTime}
+                    onChangeText={setActivityTime}
+                  />
+                  
                   <TouchableOpacity
                     style={[styles.button, { backgroundColor: theme.primary }]}
                     onPress={addActivity}
@@ -1486,6 +1601,103 @@ const App = () => {
                   <Text style={[styles.toggleText, bannerPosition === 'bottom' && styles.toggleTextActive]}>
                     Bottom
                   </Text>
+                </TouchableOpacity>
+              </View>
+              
+              {/* Display Mode Section */}
+              <Text style={styles.sectionTitle}>Activity Display</Text>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity
+                  style={[styles.toggle, displayMode === 'none' && styles.toggleActive]}
+                  onPress={() => setDisplayMode('none')}
+                >
+                  <Text style={[styles.toggleText, displayMode === 'none' && styles.toggleTextActive]}>
+                    None
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggle, displayMode === 'numbers' && styles.toggleActive]}
+                  onPress={() => setDisplayMode('numbers')}
+                >
+                  <Text style={[styles.toggleText, displayMode === 'numbers' && styles.toggleTextActive]}>
+                    Numbers
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggle, displayMode === 'time' && styles.toggleActive]}
+                  onPress={() => setDisplayMode('time')}
+                >
+                  <Text style={[styles.toggleText, displayMode === 'time' && styles.toggleTextActive]}>
+                    Time
+                  </Text>
+                </TouchableOpacity>
+              </View>
+              
+              {/* Celebrations Section */}
+              <Text style={styles.sectionTitle}>Task Celebration</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
+                <View style={styles.celebrationOptions}>
+                  {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
+                    <TouchableOpacity
+                      key={celebration}
+                      style={[
+                        styles.celebrationOption,
+                        taskCelebration === celebration && [styles.celebrationActive, { borderColor: theme.primary }]
+                      ]}
+                      onPress={() => setTaskCelebration(celebration)}
+                    >
+                      <Text style={styles.celebrationText}>
+                        {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+              
+              <Text style={styles.sectionTitle}>Routine Celebration</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
+                <View style={styles.celebrationOptions}>
+                  {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
+                    <TouchableOpacity
+                      key={celebration}
+                      style={[
+                        styles.celebrationOption,
+                        routineCelebration === celebration && [styles.celebrationActive, { borderColor: theme.primary }]
+                      ]}
+                      onPress={() => setRoutineCelebration(celebration)}
+                    >
+                      <Text style={styles.celebrationText}>
+                        {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </ScrollView>
+              
+              {/* Privacy Policy and Support Us */}
+              <View style={styles.infoSection}>
+                <TouchableOpacity
+                  style={styles.infoButton}
+                  onPress={() => {
+                    setShowUserModal(false);
+                    setTimeout(() => setShowPrivacyModal(true), 300);
+                  }}
+                >
+                  <Icon name="privacy-tip" size={24} color={theme.primary} />
+                  <Text style={styles.infoButtonText}>Privacy Policy</Text>
+                  <Icon name="chevron-right" size={24} color="#666" />
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={styles.infoButton}
+                  onPress={() => {
+                    setShowUserModal(false);
+                    setTimeout(() => setShowSupportModal(true), 300);
+                  }}
+                >
+                  <Icon name="favorite" size={24} color={theme.primary} />
+                  <Text style={styles.infoButtonText}>Support Us</Text>
+                  <Icon name="chevron-right" size={24} color="#666" />
                 </TouchableOpacity>
               </View>
             </ScrollView>
@@ -2023,12 +2235,315 @@ const App = () => {
         />
       </Modal>
       
+      {/* Privacy Policy Modal */}
+      <Modal
+        visible={showPrivacyModal}
+        animationType="slide"
+        onRequestClose={() => setShowPrivacyModal(false)}
+        presentationStyle="fullScreen"
+      >
+        <View style={styles.modalContainer}>
+          <SafeAreaView style={{ backgroundColor: '#2c3e50' }}>
+            <View style={[styles.modalHeader, { backgroundColor: '#2c3e50' }]}>
+              <Text style={[styles.modalTitle, { color: 'white' }]}>Privacy Policy</Text>
+              <TouchableOpacity onPress={() => setShowPrivacyModal(false)}>
+                <Icon name="close" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+          
+          <View style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
+            <ScrollView style={styles.privacyContent}>
+              <View style={styles.privacyHeader}>
+                <Text style={styles.privacyTitle}>Privacy Policy</Text>
+                <Text style={styles.privacyDate}>
+                  Last updated: June 18, 2025
+                </Text>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySubtitle}>Overview</Text>
+                <Text style={styles.privacyText}>
+                  StackMap is designed with privacy as a core principle. We believe families, especially those with special needs children, deserve tools that respect their privacy and give them control over their data.
+                </Text>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySubtitle}>Data Collection</Text>
+                <Text style={styles.privacyText}>
+                  <Text style={styles.privacyBold}>We collect NO personal data by default.</Text> StackMap works entirely offline on your device.
+                </Text>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySubtitle}>Data Storage</Text>
+                <View style={styles.privacyList}>
+                  <Text style={styles.privacyListItem}>• All routine data is stored locally on your device</Text>
+                  <Text style={styles.privacyListItem}>• No data is sent to our servers</Text>
+                  <Text style={styles.privacyListItem}>• Your routines, progress, and settings stay on your device</Text>
+                </View>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySubtitle}>Children's Privacy</Text>
+                <Text style={styles.privacyText}>
+                  StackMap is designed for use by children with adult supervision:
+                </Text>
+                <View style={styles.privacyList}>
+                  <Text style={styles.privacyListItem}>• We don't collect any information from children</Text>
+                  <Text style={styles.privacyListItem}>• No accounts or sign-ups required</Text>
+                  <Text style={styles.privacyListItem}>• No social features or communication between users</Text>
+                  <Text style={styles.privacyListItem}>• No behavioral tracking or analytics</Text>
+                </View>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySubtitle}>Third-Party Services</Text>
+                <Text style={styles.privacyText}>StackMap uses minimal third-party services:</Text>
+                <View style={styles.privacyList}>
+                  <Text style={styles.privacyListItem}>• <Text style={styles.privacyBold}>No analytics</Text> - We don't track usage</Text>
+                  <Text style={styles.privacyListItem}>• <Text style={styles.privacyBold}>No advertising</Text> - We don't show ads</Text>
+                  <Text style={styles.privacyListItem}>• <Text style={styles.privacyBold}>No external APIs</Text> - Everything runs locally</Text>
+                </View>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySubtitle}>Your Rights</Text>
+                <Text style={styles.privacyText}>You have complete control:</Text>
+                <View style={styles.privacyList}>
+                  <Text style={styles.privacyListItem}>• Export your data anytime</Text>
+                  <Text style={styles.privacyListItem}>• Delete your data anytime</Text>
+                  <Text style={styles.privacyListItem}>• Use the app without any account</Text>
+                  <Text style={styles.privacyListItem}>• Sync is always optional</Text>
+                </View>
+              </View>
+              
+              <View style={styles.privacySection}>
+                <Text style={styles.privacySubtitle}>Contact</Text>
+                <Text style={styles.privacyText}>
+                  Questions about privacy? Email: privacy@stackmap.app
+                </Text>
+              </View>
+              
+              <View style={styles.privacyFooter}>
+                <Text style={styles.privacyFooterText}>
+                  StackMap's code is open source. You can verify our privacy practices at: github.com/ajstack22/StackMap
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+          <SafeAreaView style={{ backgroundColor: '#f8f9fa' }} />
+        </View>
+      </Modal>
+      
+      {/* Reorder Modal */}
+      <Modal
+        visible={showReorderModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowReorderModal(false)}
+      >
+        <View style={styles.reorderModalOverlay}>
+          <View style={[styles.reorderModalContent, { backgroundColor: theme.light }]}>
+            <Text style={[styles.reorderModalTitle, { color: theme.primary }]}>
+              Move Activity
+            </Text>
+            
+            {reorderingActivity && (
+              <View style={styles.reorderActivityPreview}>
+                <Text style={styles.reorderActivityEmoji}>
+                  {reorderingActivity.activity.emoji || '🎯'}
+                </Text>
+                <Text style={styles.reorderActivityText}>
+                  {reorderingActivity.activity.text || reorderingActivity.activity.title || ''}
+                </Text>
+              </View>
+            )}
+            
+            <Text style={[styles.reorderModalLabel, { color: '#000' }]}>
+              Tap new position:
+            </Text>
+            
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              style={styles.positionSelector}
+              contentContainerStyle={styles.positionSelectorContent}
+            >
+              {activities.map((_, index) => {
+                const position = index + 1;
+                const isCurrentPosition = position === reorderingActivity?.currentPosition;
+                const isSelectedPosition = position === parseInt(newPosition);
+                
+                return (
+                  <TouchableOpacity
+                    key={index}
+                    style={[
+                      styles.positionButton,
+                      isCurrentPosition && [styles.positionButtonCurrent, { borderColor: theme.primary }],
+                      isSelectedPosition && [styles.positionButtonSelected, { backgroundColor: theme.primary }]
+                    ]}
+                    onPress={() => setNewPosition(position.toString())}
+                  >
+                    <Text style={[
+                      styles.positionButtonText,
+                      isCurrentPosition && { color: theme.primary },
+                      isSelectedPosition && { color: 'white' }
+                    ]}>
+                      {position}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+            
+            {newPosition && (
+              <View style={styles.positionPreview}>
+                <Text style={styles.positionPreviewText}>
+                  Move from position {reorderingActivity?.currentPosition} → {newPosition}
+                </Text>
+              </View>
+            )}
+            
+            <View style={styles.reorderModalButtons}>
+              <TouchableOpacity
+                style={[styles.reorderModalButton, styles.reorderModalButtonCancel]}
+                onPress={() => {
+                  setShowReorderModal(false);
+                  setReorderingActivity(null);
+                  setNewPosition('');
+                }}
+              >
+                <Text style={styles.reorderModalButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.reorderModalButton, 
+                  { backgroundColor: theme.primary },
+                  (!newPosition || newPosition === reorderingActivity?.currentPosition.toString()) && 
+                  { backgroundColor: '#ccc' }
+                ]}
+                onPress={handleReorder}
+                disabled={!newPosition || newPosition === reorderingActivity?.currentPosition.toString()}
+              >
+                <Text style={[styles.reorderModalButtonText, { color: 'white' }]}>Move</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Support Us Modal */}
+      <Modal
+        visible={showSupportModal}
+        animationType="slide"
+        onRequestClose={() => setShowSupportModal(false)}
+        presentationStyle="fullScreen"
+      >
+        <View style={styles.modalContainer}>
+          <SafeAreaView style={{ backgroundColor: '#ff6b9d' }}>
+            <View style={[styles.modalHeader, { backgroundColor: '#ff6b9d' }]}>
+              <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap 💖</Text>
+              <TouchableOpacity onPress={() => setShowSupportModal(false)}>
+                <Icon name="close" size={24} color="white" />
+              </TouchableOpacity>
+            </View>
+          </SafeAreaView>
+          
+          <View style={{ flex: 1, backgroundColor: '#fff5f8' }}>
+            <ScrollView style={styles.supportContent}>
+              <View style={styles.supportHeader}>
+                <Text style={styles.supportHeart}>💖</Text>
+                <Text style={styles.supportTitle}>Support StackMap!</Text>
+                <Text style={styles.supportSubtitle}>
+                  Made with love for families everywhere ✨
+                </Text>
+              </View>
+              
+              <View style={styles.supportMessageBox}>
+                <Text style={styles.supportMessage}>
+                  StackMap is completely free and always will be! 🎉 We're built by a small team who believes every family deserves amazing tools.
+                </Text>
+              </View>
+              
+              <View style={styles.supportWaysSection}>
+                <Text style={styles.supportSectionTitle}>Amazing Ways You Can Help! 🌟</Text>
+                
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>🎆</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Rate & Review Us!</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      App Store reviews help other families discover StackMap. Your 5-star review makes our day! ⭐⭐⭐⭐⭐
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>📣</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Spread the Word!</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      Tell friends, family, therapists, and support groups. Word of mouth is our superpower! 💪
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>💬</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Send Us Your Stories!</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      We love hearing how StackMap helps your family! Your feedback guides everything we build. 💜
+                    </Text>
+                  </View>
+                </View>
+                
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>💡</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Share Your Ideas!</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      Got ideas for new features? We're all ears! Email us anytime. 🚀
+                    </Text>
+                  </View>
+                </View>
+              </View>
+              
+              <View style={styles.supportContactBox}>
+                <Text style={styles.supportContactTitle}>Questions? We're Here! 😊</Text>
+                <Text style={styles.supportContactText}>
+                  Email us at support@stackmap.app
+                </Text>
+              </View>
+              
+              <View style={styles.supportFooter}>
+                <Text style={styles.supportFooterText}>
+                  Thank you for being part of our amazing community! 🌈
+                </Text>
+              </View>
+            </ScrollView>
+          </View>
+          <SafeAreaView style={{ backgroundColor: '#fff5f8' }} />
+        </View>
+      </Modal>
+      
       {/* Toast Notification */}
       <Toast
         toast={toast}
         onDismiss={hideToast}
         theme={theme}
       />
+      
+      {/* Celebration View */}
+      {showCelebration && (
+        <CelebrationView
+          type={showCelebration.type}
+          theme={showCelebration.theme}
+          onComplete={() => setShowCelebration(null)}
+        />
+      )}
       </>
     </GestureHandlerRootView>
   );
@@ -2055,7 +2570,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 2,
   },
   logo: {
     width: 32,
@@ -2206,6 +2721,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     ...SHADOWS.level2,
+  },
+  timeBadge: {
+    width: 'auto',
+    minWidth: getBadgeDimensions().size,
+    paddingHorizontal: 16,
+    borderRadius: getBadgeDimensions().size / 2, // Creates pill shape
   },
   numberText: {
     color: 'white',
@@ -2369,6 +2890,10 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     fontFamily: 'ComicNeue-Bold',
+  },
+  timeText: {
+    fontSize: isTablet() ? 20 : 18,
+    fontWeight: '900', // Maximum bold weight
   },
   sectionTitle: {
     fontSize: 18,
@@ -2662,6 +3187,346 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 16 : 14,
     fontWeight: '600',
     fontFamily: 'ComicNeue-Regular',
+  },
+  celebrationScrollView: {
+    marginBottom: 20,
+  },
+  celebrationOptions: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 5,
+  },
+  celebrationOption: {
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  celebrationActive: {
+    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+  },
+  celebrationText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  infoSection: {
+    marginTop: 30,
+    gap: 1,
+  },
+  infoButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    gap: 12,
+  },
+  infoButtonText: {
+    flex: 1,
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#000',
+  },
+  privacyContent: {
+    flex: 1,
+    padding: 24,
+    backgroundColor: '#f8f9fa',
+  },
+  privacyHeader: {
+    borderBottomWidth: 2,
+    borderBottomColor: '#2c3e50',
+    paddingBottom: 16,
+    marginBottom: 24,
+  },
+  privacyTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#2c3e50',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  privacyDate: {
+    fontSize: 14,
+    color: '#6c757d',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  privacySection: {
+    backgroundColor: 'white',
+    padding: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  privacySubtitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 12,
+  },
+  privacyText: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#495057',
+    marginBottom: 8,
+  },
+  privacyBold: {
+    fontWeight: 'bold',
+    color: '#2c3e50',
+  },
+  privacyList: {
+    marginTop: 8,
+  },
+  privacyListItem: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#495057',
+    marginBottom: 4,
+  },
+  privacyFooter: {
+    backgroundColor: '#e9ecef',
+    padding: 16,
+    borderRadius: 8,
+    marginTop: 8,
+  },
+  privacyFooterText: {
+    fontSize: 14,
+    color: '#6c757d',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  supportContent: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: '#fff5f8',
+  },
+  supportHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  supportHeart: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  supportTitle: {
+    fontSize: 32,
+    fontWeight: 'bold',
+    color: '#d63384',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  supportSubtitle: {
+    fontSize: 18,
+    color: '#6f42c1',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  supportMessageBox: {
+    backgroundColor: '#fff',
+    padding: 20,
+    borderRadius: 16,
+    marginBottom: 24,
+    borderLeftWidth: 4,
+    borderLeftColor: '#ff6b9d',
+    shadowColor: '#ff6b9d',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  supportMessage: {
+    fontSize: 16,
+    lineHeight: 24,
+    color: '#495057',
+    textAlign: 'center',
+  },
+  supportWaysSection: {
+    marginBottom: 24,
+  },
+  supportSectionTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#d63384',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  supportOptionFun: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 12,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  supportIconBig: {
+    fontSize: 32,
+    marginRight: 16,
+    width: 40,
+    textAlign: 'center',
+  },
+  supportOptionContent: {
+    flex: 1,
+  },
+  supportOptionTitleFun: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#d63384',
+    marginBottom: 4,
+  },
+  supportOptionTextFun: {
+    fontSize: 14,
+    lineHeight: 20,
+    color: '#495057',
+  },
+  supportContactBox: {
+    backgroundColor: '#e7f3ff',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#0d6efd',
+  },
+  supportContactTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0d6efd',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  supportContactText: {
+    fontSize: 16,
+    color: '#495057',
+    textAlign: 'center',
+  },
+  supportFooter: {
+    alignItems: 'center',
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#ffc0cb',
+  },
+  supportFooterText: {
+    fontSize: 16,
+    color: '#6f42c1',
+    textAlign: 'center',
+    fontWeight: '500',
+  },
+  draggableGrid: {
+    flex: 1,
+  },
+  reorderModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  reorderModalContent: {
+    width: '100%',
+    maxWidth: 320,
+    padding: 24,
+    borderRadius: 16,
+    ...SHADOWS.level3,
+  },
+  reorderModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  reorderActivityPreview: {
+    alignItems: 'center',
+    marginBottom: 20,
+    padding: 12,
+    backgroundColor: 'rgba(0, 0, 0, 0.05)',
+    borderRadius: 12,
+  },
+  reorderActivityEmoji: {
+    fontSize: 32,
+    marginBottom: 8,
+  },
+  reorderActivityText: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    textAlign: 'center',
+  },
+  reorderModalLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  positionSelector: {
+    maxHeight: 60,
+    marginBottom: 16,
+  },
+  positionSelectorContent: {
+    paddingHorizontal: 8,
+    alignItems: 'center',
+  },
+  positionButton: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginHorizontal: 6,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  positionButtonCurrent: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+  },
+  positionButtonSelected: {
+    transform: [{ scale: 1.1 }],
+  },
+  positionButtonText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  positionPreview: {
+    backgroundColor: '#f0f0f0',
+    padding: 12,
+    borderRadius: 8,
+    marginBottom: 16,
+  },
+  positionPreviewText: {
+    fontSize: 14,
+    color: '#333',
+    textAlign: 'center',
+  },
+  reorderModalButtons: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  reorderModalButton: {
+    flex: 1,
+    height: 44,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  reorderModalButtonCancel: {
+    backgroundColor: '#e0e0e0',
+  },
+  reorderModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
 });
 
