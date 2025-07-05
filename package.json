@@ -38,7 +38,7 @@
   "devDependencies": {
     "@capacitor/cli": "^6.2.1",
     "@capacitor/core": "^6.2.1",
-    "chalk": "^4.1.2",
+    "chalk": "^5.4.1",
     "http-server": "^14.1.1",
     "nodemon": "^3.0.0",
     "puppeteer": "^21.0.0"
