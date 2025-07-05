@@ -7,8 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		008BADC2984CFEB1DFE13C10 /* libPods-StackMap.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 8EE1CE5406ADF52CA6A7D7FA /* libPods-StackMap.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
-		34D67F7E2F8CDF0ABC541410 /* libPods-StackMap.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 632B24BCD1BA2E3C93276512 /* libPods-StackMap.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7AC8E0672247E329B39B7113 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
@@ -17,16 +17,16 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		13B07F961A680F5B00A75B9A /* StackMapNative.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StackMapNative.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		076EB3B5CCD831CEC720AAB7 /* Pods-StackMap.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.debug.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.debug.xcconfig"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* StackMap.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = StackMap.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = StackMapNative/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = StackMapNative/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = StackMapNative/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		632B24BCD1BA2E3C93276512 /* libPods-StackMap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StackMap.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		7483230C5D27F51497EB78BE /* Pods-StackMap.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.release.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.release.xcconfig"; sourceTree = "<group>"; };
+		22B9F9618C2F3DB774B1EC07 /* Pods-StackMap.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.release.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.release.xcconfig"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = StackMapNative/AppDelegate.swift; sourceTree = "<group>"; };
 		7D2628336E3649DA862D7483 /* ComicNeue-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Bold.ttf"; path = "../assets/fonts/ComicNeue-Bold.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = StackMapNative/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		E2A40D7E41675AC08AEDEE9D /* Pods-StackMap.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.debug.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.debug.xcconfig"; sourceTree = "<group>"; };
+		8EE1CE5406ADF52CA6A7D7FA /* libPods-StackMap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StackMap.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F8FBA70DA8ED49F7A1F244CA /* ComicNeue-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Regular.ttf"; path = "../assets/fonts/ComicNeue-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -36,7 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				34D67F7E2F8CDF0ABC541410 /* libPods-StackMap.a in Frameworks */,
+				008BADC2984CFEB1DFE13C10 /* libPods-StackMap.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,7 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				632B24BCD1BA2E3C93276512 /* libPods-StackMap.a */,
+				8EE1CE5406ADF52CA6A7D7FA /* libPods-StackMap.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -67,8 +67,8 @@
 		6CCE57F778B1386967347150 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				E2A40D7E41675AC08AEDEE9D /* Pods-StackMap.debug.xcconfig */,
-				7483230C5D27F51497EB78BE /* Pods-StackMap.release.xcconfig */,
+				076EB3B5CCD831CEC720AAB7 /* Pods-StackMap.debug.xcconfig */,
+				22B9F9618C2F3DB774B1EC07 /* Pods-StackMap.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -98,7 +98,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* StackMapNative.app */,
+				13B07F961A680F5B00A75B9A /* StackMap.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -119,13 +119,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "StackMap" */;
 			buildPhases = (
-				3F2C44B825F8433D7EE2DB43 /* [CP] Check Pods Manifest.lock */,
+				89C3B86D4C63758052EE0F55 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				0F732B229FE36002D582011E /* Frameworks */,
-				58ED39270A4C673E821C7EE3 /* [CP] Embed Pods Frameworks */,
-				C6B3B8F9E01D847CC929E31C /* [CP] Copy Pods Resources */,
+				F6548D07116807845606C333 /* [CP] Embed Pods Frameworks */,
+				A6960C1C58ECEEF0DA9CFB3B /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -133,7 +133,7 @@
 			);
 			name = StackMap;
 			productName = StackMap;
-			productReference = 13B07F961A680F5B00A75B9A /* StackMapNative.app */;
+			productReference = 13B07F961A680F5B00A75B9A /* StackMap.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -142,7 +142,8 @@
 		83CBB9F71A601CBA00E9B192 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 1210;
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1640;
 				TargetAttributes = {
 					13B07F861A680F5B00A75B9A = {
 						LastSwiftMigration = 1120;
@@ -199,7 +200,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		3F2C44B825F8433D7EE2DB43 /* [CP] Check Pods Manifest.lock */ = {
+		89C3B86D4C63758052EE0F55 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -221,24 +222,7 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		58ED39270A4C673E821C7EE3 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		C6B3B8F9E01D847CC929E31C /* [CP] Copy Pods Resources */ = {
+		A6960C1C58ECEEF0DA9CFB3B /* [CP] Copy Pods Resources */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -253,6 +237,23 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		F6548D07116807845606C333 /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -271,12 +272,11 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = E2A40D7E41675AC08AEDEE9D /* Pods-StackMap.debug.xcconfig */;
+			baseConfigurationReference = 076EB3B5CCD831CEC720AAB7 /* Pods-StackMap.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 2000;
-				DEVELOPMENT_TEAM = 84W9WSYQQB;
+				CURRENT_PROJECT_VERSION = 2005;
 				ENABLE_BITCODE = NO;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
@@ -305,12 +305,11 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 7483230C5D27F51497EB78BE /* Pods-StackMap.release.xcconfig */;
+			baseConfigurationReference = 22B9F9618C2F3DB774B1EC07 /* Pods-StackMap.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
-				CURRENT_PROJECT_VERSION = 2000;
-				DEVELOPMENT_TEAM = 84W9WSYQQB;
+				CURRENT_PROJECT_VERSION = 2005;
 				INFOPLIST_FILE = StackMapNative/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = StackMap;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
@@ -366,8 +365,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				DEVELOPMENT_TEAM = 84W9WSYQQB;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_DYNAMIC_NO_PIC = NO;
@@ -446,8 +447,10 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				DEVELOPMENT_TEAM = 84W9WSYQQB;
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = "";
 				GCC_C_LANGUAGE_STANDARD = gnu99;
 				GCC_NO_COMMON_BLOCKS = YES;
@@ -482,6 +485,7 @@
 				);
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
 				USE_HERMES = true;
 				VALIDATE_PRODUCT = YES;
 			};

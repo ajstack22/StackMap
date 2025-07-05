@@ -73,3 +73,12 @@ yarn-error.log
 !.yarn/releases
 !.yarn/sdks
 !.yarn/versions
+
+# iOS crash logs
+ios/Build*.txt
+ios/StackMapNative 20*
+ios/*.crash
+ios/*.ips
+
+# Temporary tools
+icon-color-preview.html
