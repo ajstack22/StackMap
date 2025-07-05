@@ -25,9 +25,10 @@ import DraggableFlatList, {
 } from 'react-native-draggable-flatlist';
 import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import DocumentPicker from 'react-native-document-picker';
-import RNFS from 'react-native-fs';
-import Share from 'react-native-share';
+// Conditionally import DocumentPicker and RNFS for iOS only
+const DocumentPicker = Platform.OS === 'ios' ? require('react-native-document-picker').default : null;
+const RNFS = Platform.OS === 'ios' ? require('react-native-fs') : null;
+import { Share } from 'react-native';
 
 // Import our new constants and utilities
 import {
@@ -107,7 +108,7 @@ const App = () => {
   const { toast, showToast, hideToast } = useToast();
   
   // State
-  const [currentTheme, setCurrentTheme] = useState('navy');
+  const [currentTheme, setCurrentTheme] = useState('stackBlue');
   const [bannerPosition, setBannerPosition] = useState('top');
   const [currentUser, setCurrentUser] = useState(null);
   const [users, setUsers] = useState({});
@@ -528,7 +529,7 @@ const App = () => {
     }
   };
 
-  const theme = THEMES[currentTheme] || THEMES.purple;
+  const theme = THEMES[currentTheme] || THEMES.stackBlue;
 
   const toggleActivity = (id) => {
     const activity = activities.find(a => a.id === id);
@@ -809,6 +810,15 @@ const App = () => {
 
   // Export data function
   const exportData = async () => {
+    if (Platform.OS === 'android' || !RNFS) {
+      Alert.alert(
+        'Export Coming Soon',
+        'File export is currently only available on iOS. Android support coming in the next update!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     try {
       const data = {
         version: 3,
@@ -833,12 +843,10 @@ const App = () => {
       // Write file to temporary location
       await RNFS.writeFile(filePath, jsonData, 'utf8');
       
-      // Share the file
-      await Share.open({
+      // Share the file using native Share API
+      const shareResult = await Share.share({
         url: `file://${filePath}`,
-        type: 'application/json',
         title: 'Export StackMap Data',
-        filename: fileName,
       });
       
       // Clean up temporary file
@@ -855,6 +863,15 @@ const App = () => {
 
   // Import data function
   const importData = async () => {
+    if (Platform.OS === 'android' || !DocumentPicker || !RNFS) {
+      Alert.alert(
+        'Import Coming Soon',
+        'File import is currently only available on iOS. Android support coming in the next update!',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     try {
       const result = await DocumentPicker.pick({
         type: [DocumentPicker.types.json],
@@ -896,7 +913,7 @@ const App = () => {
             onPress: async () => {
               // Update state with imported data
               setUsers(migratedData.users || {});
-              setCurrentTheme(migratedData.globalSettings?.currentTheme || 'purple');
+              setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
               setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
               // PIN is now handled by secure storage, not imported
               setTemplates(migratedData.templates || []);
@@ -918,7 +935,7 @@ const App = () => {
         ]
       );
     } catch (error) {
-      if (DocumentPicker.isCancel(error)) {
+      if (DocumentPicker && DocumentPicker.isCancel(error)) {
         // User cancelled the picker
       } else {
         console.error('Import error:', error);

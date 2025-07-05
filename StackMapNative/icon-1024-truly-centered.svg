@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
     <!-- Blue background -->
-    <rect width="1024" height="1024" fill="#4A90E2"/>
+    <rect width="1024" height="1024" fill="#5C7E9D"/>
     
     <!-- White stack lines truly centered -->
     <!-- Total height: 115 + 64 + 115 + 64 + 269 = 627 -->

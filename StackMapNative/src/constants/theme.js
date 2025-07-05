@@ -22,6 +22,7 @@ export const THEMES = {
   // Neurodiversity-friendly colors
   sage: { primary: '#6B7F6B', dark: '#556655', light: '#8B9F8B' },         // Calming sage - reduces anxiety
   dustyBlue: { primary: '#5B7C99', dark: '#4A6480', light: '#7A95B0' },    // Muted blue - ADHD focus
+  stackBlue: { primary: '#5C7E9D', dark: '#4A6680', light: '#7896B3' },    // StackMap blue - ADHD/neurodiverse friendly
   terracotta: { primary: '#A0522D', dark: '#804020', light: '#C07550' },   // Warm earth - grounding
   lavender: { primary: '#7B68A6', dark: '#65538C', light: '#9785BD' },     // Soft purple - sensory comfort
   slate: { primary: '#64748B', dark: '#475569', light: '#8B95A6' }         // Neutral slate - low stimulation
