@@ -19,15 +19,24 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import DraggableFlatList, {
-  ScaleDecorator,
-  RenderItemParams,
-} from 'react-native-draggable-flatlist';
-import { GestureHandlerRootView, PanGestureHandler, State } from 'react-native-gesture-handler';
+// Conditionally import drag-and-drop libraries for iOS only
+const DraggableFlatList = Platform.OS === 'ios' 
+  ? require('react-native-draggable-flatlist').default 
+  : null;
+const ScaleDecorator = Platform.OS === 'ios' 
+  ? require('react-native-draggable-flatlist').ScaleDecorator 
+  : null;
+// Conditionally import gesture handler for iOS only
+const GestureHandlerModule = Platform.OS === 'ios' 
+  ? require('react-native-gesture-handler')
+  : null;
+const GestureHandlerRootView = GestureHandlerModule?.GestureHandlerRootView;
+const PanGestureHandler = GestureHandlerModule?.PanGestureHandler;
+const State = GestureHandlerModule?.State;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// Conditionally import DocumentPicker and RNFS for iOS only
+// Import DocumentPicker and RNFS with platform checks due to compatibility
 const DocumentPicker = Platform.OS === 'ios' ? require('react-native-document-picker').default : null;
-const RNFS = Platform.OS === 'ios' ? require('react-native-fs') : null;
+const RNFS = require('react-native-fs');
 import { Share } from 'react-native';
 
 // Import our new constants and utilities
@@ -59,7 +68,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, Onboarding } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 
 // Import hooks
@@ -108,6 +117,8 @@ const App = () => {
   const { toast, showToast, hideToast } = useToast();
   
   // State
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [showSetupWizard, setShowSetupWizard] = useState(false);
   const [currentTheme, setCurrentTheme] = useState('stackBlue');
   const [bannerPosition, setBannerPosition] = useState('top');
   const [currentUser, setCurrentUser] = useState(null);
@@ -418,6 +429,14 @@ const App = () => {
   const loadData = async () => {
     try {
       const savedData = await AsyncStorage.getItem('stackMapData');
+      const hasCompletedOnboarding = await AsyncStorage.getItem('@stackmap_hasCompletedOnboarding');
+      
+      // Check if we should show onboarding regardless of whether there's data
+      if (!hasCompletedOnboarding) {
+        setShowOnboarding(true);  // Show Onboarding with new content instead of SetupWizard
+        return; // Don't load data or create default user yet, wait for setup completion
+      }
+      
       if (savedData) {
         const data = JSON.parse(savedData);
         
@@ -463,7 +482,13 @@ const App = () => {
           setActivities(migratedData.users[userId]?.days?.[currentDay]?.activities || []);
         }
       } else {
-        // First time - create default user
+        // First time - check if we should show onboarding
+        if (!hasCompletedOnboarding) {
+          setShowOnboarding(true);
+          return; // Don't create default user yet, wait for setup completion
+        }
+        
+        // Create default user
         const newUserId = `user_${Date.now()}`;
         const newUser = {
           id: newUserId,
@@ -529,6 +554,331 @@ const App = () => {
     }
   };
 
+  const handleOnboardingComplete = async (onboardingData) => {
+    try {
+      console.log('handleOnboardingComplete called with:', onboardingData);
+      
+      // Mark onboarding as completed
+      await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
+      
+      // If no onboarding data provided (shouldn't happen), create default user
+      if (!onboardingData || !onboardingData.users || onboardingData.users.length === 0) {
+        console.warn('No users provided from onboarding, creating default user');
+        const newUserId = `user_${Date.now()}`;
+        const newUser = {
+          id: newUserId,
+          name: 'My Activities',
+          icon: '😊',
+          days: {
+            today: { activities: [] },
+            tomorrow: { activities: [] }
+          },
+          settings: {
+            taskCelebration: 'rainbow',
+            routineCelebration: 'rainbow',
+            soundEnabled: true
+          },
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString()
+        };
+        
+        const newUsers = { [newUserId]: newUser };
+        setUsers(newUsers);
+        setCurrentUser(newUserId);
+        setActivities([]);
+        setShowOnboarding(false);
+        
+        // Save the data
+        const dataToSave = {
+          version: 3,
+          currentUserId: newUserId,
+          currentDay: 'today',
+          users: newUsers,
+          globalSettings: {
+            themeColor: currentTheme,
+            bannerPosition: bannerPosition,
+            displayMode: displayMode,
+            taskCelebration: taskCelebration,
+            routineCelebration: routineCelebration,
+            pinEnabled: onboardingData?.pin ? true : false,
+            pin: onboardingData?.pin || null
+          },
+          templates: templates,
+          activityCategories: activityCategories
+        };
+        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+        return;
+      }
+      
+      // Create users from onboarding data
+      const timestamp = Date.now();
+      const newUsers = {};
+      let firstUserId = null;
+      
+      // Create starter activities - mix of welcome cards and common routines
+      const starterActivities = [
+        { 
+          id: `activity_${timestamp}_1`, 
+          title: 'Welcome to StackMap!', 
+          emoji: '👋',
+          description: 'Tap activities to mark them complete',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_2`, 
+          title: 'Try Edit Mode', 
+          emoji: '✏️',
+          description: 'Use the edit button to add your own activities',
+          pinned: false 
+        },
+        { id: `activity_${timestamp}_3`, title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
+        { id: `activity_${timestamp}_4`, title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
+        { id: `activity_${timestamp}_5`, title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
+        { id: `activity_${timestamp}_6`, title: 'Breakfast', emoji: '🥞', pinned: false },
+        { id: `activity_${timestamp}_7`, title: 'Exercise', emoji: '🏃', pinned: false },
+        { id: `activity_${timestamp}_8`, title: 'Work/Study', emoji: '💻', pinned: false },
+        { id: `activity_${timestamp}_9`, title: 'Lunch', emoji: '🥗', pinned: false },
+        { id: `activity_${timestamp}_10`, title: 'Take a Break', emoji: '☕', pinned: false },
+        { id: `activity_${timestamp}_11`, title: 'Dinner', emoji: '🍽️', pinned: false },
+        { id: `activity_${timestamp}_12`, title: 'Relax', emoji: '🎮', pinned: false },
+        { id: `activity_${timestamp}_13`, title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
+        { id: `activity_${timestamp}_14`, title: 'Sleep', emoji: '😴', pinned: false },
+      ];
+      
+      // Create each user from onboarding
+      onboardingData.users.forEach((userData, index) => {
+        const userId = `user_${timestamp}_${index}`;
+        if (index === 0) firstUserId = userId;
+        
+        const newUser = {
+          id: userId,
+          name: userData.name,
+          icon: userData.emoji,
+          days: {
+            today: { activities: index === 0 ? starterActivities : [] },
+            tomorrow: { activities: [] }
+          },
+          settings: {
+            taskCelebration: 'rainbow',
+            routineCelebration: 'rainbow',
+            soundEnabled: true
+          },
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString()
+        };
+        
+        newUsers[userId] = newUser;
+      });
+      
+      // Set state with the new users
+      setUsers(newUsers);
+      setCurrentUser(firstUserId);
+      setActivities(starterActivities);
+      setShowOnboarding(false);
+      
+      // Handle PIN if provided
+      if (onboardingData.pin) {
+        setHasPinProtection(true);
+        await setSecurePin(onboardingData.pin);
+      }
+      
+      // Show welcome message after a short delay
+      setTimeout(() => {
+        showToast({ message: 'Welcome to StackMap! 🎉 Tap activities to mark them complete.', type: 'success' });
+      }, 500);
+      
+      // Save the data with the new values
+      const dataToSave = {
+        version: 3,
+        currentUserId: firstUserId,
+        currentDay: 'today',
+        users: newUsers,
+        globalSettings: {
+          themeColor: currentTheme,
+          bannerPosition: bannerPosition,
+          displayMode: displayMode,
+          taskCelebration: taskCelebration,
+          routineCelebration: routineCelebration,
+          pinEnabled: onboardingData.pin ? true : false
+        },
+        templates: templates,
+        activityCategories: activityCategories
+      };
+      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error('Error completing onboarding:', error);
+      // Still hide onboarding on error
+      setShowOnboarding(false);
+    }
+  };
+
+  const handleSetupWizardComplete = async (setupData) => {
+    try {
+      // Mark onboarding as completed
+      await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
+      
+      // Set PIN if provided
+      if (setupData.pin) {
+        await setSecurePin(setupData.pin);
+        setHasPinProtection(true);
+      }
+      
+      // Create users from setup data
+      const newUsers = {};
+      let firstUserId = null;
+      
+      // Create starter activities - mix of welcome cards and common routines
+      const timestamp = Date.now();
+      const starterActivities = [
+        { 
+          id: `activity_${timestamp}_1`, 
+          title: 'Welcome to StackMap!', 
+          emoji: '👋',
+          description: 'Tap activities to mark them complete',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_2`, 
+          title: 'Try Edit Mode', 
+          emoji: '✏️',
+          description: 'Use the edit button to add your own activities',
+          pinned: false 
+        },
+        { id: `activity_${timestamp}_3`, title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
+        { id: `activity_${timestamp}_4`, title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
+        { id: `activity_${timestamp}_5`, title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
+        { id: `activity_${timestamp}_6`, title: 'Breakfast', emoji: '🥞', pinned: false },
+        { id: `activity_${timestamp}_7`, title: 'Exercise', emoji: '🏃', pinned: false },
+        { id: `activity_${timestamp}_8`, title: 'Work/Study', emoji: '💻', pinned: false },
+        { id: `activity_${timestamp}_9`, title: 'Lunch', emoji: '🥗', pinned: false },
+        { id: `activity_${timestamp}_10`, title: 'Take a Break', emoji: '☕', pinned: false },
+        { id: `activity_${timestamp}_11`, title: 'Dinner', emoji: '🍽️', pinned: false },
+        { id: `activity_${timestamp}_12`, title: 'Relax', emoji: '🎮', pinned: false },
+        { id: `activity_${timestamp}_13`, title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
+        { id: `activity_${timestamp}_14`, title: 'Sleep', emoji: '😴', pinned: false },
+      ];
+      
+      // Create each user from the setup data
+      setupData.users.forEach((userData, index) => {
+        const userId = `user_${Date.now()}_${index}`;
+        if (index === 0) firstUserId = userId;
+        
+        // Only give starter activities to the first user
+        const userActivities = index === 0 ? starterActivities : [];
+        
+        newUsers[userId] = {
+          id: userId,
+          name: userData.name,
+          icon: userData.emoji,
+          days: {
+            today: { activities: userActivities },
+            tomorrow: { activities: [] }
+          },
+          settings: {
+            taskCelebration: 'rainbow',
+            routineCelebration: 'rainbow',
+            soundEnabled: true
+          },
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString()
+        };
+      });
+      
+      setUsers(newUsers);
+      setCurrentUser(firstUserId);
+      setActivities(newUsers[firstUserId].days.today.activities);
+      setShowSetupWizard(false);
+      
+      // Show welcome message after a short delay
+      setTimeout(() => {
+        const userNames = setupData.users.map(u => u.name).join(', ');
+        const message = setupData.users.length === 1 
+          ? `Welcome, ${userNames}! 🎉 Tap activities to mark them complete.`
+          : `Welcome ${userNames}! 🎉 Use the user menu to switch between users.`;
+        showToast({ message, type: 'success' });
+      }, 500);
+      
+      // Save the data with the new values
+      const dataToSave = {
+        version: 3,
+        currentUserId: firstUserId,
+        currentDay: 'today',
+        users: newUsers,
+        globalSettings: {
+          themeColor: currentTheme,
+          bannerPosition: bannerPosition,
+          displayMode: displayMode,
+          taskCelebration: taskCelebration,
+          routineCelebration: routineCelebration,
+          pinEnabled: setupData.pin ? true : hasPinProtection
+        },
+        templates: templates,
+        activityCategories: activityCategories
+      };
+      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error('Error completing setup wizard:', error);
+      // Still hide setup wizard on error
+      setShowSetupWizard(false);
+    }
+  };
+
+  const handleOnboardingSkip = async () => {
+    try {
+      // Mark onboarding as completed
+      await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
+      
+      // Create default user without starter activities
+      const newUserId = `user_${Date.now()}`;
+      const newUser = {
+        id: newUserId,
+        name: 'My Activities',
+        icon: '😊',
+        days: {
+          today: { activities: [] },
+          tomorrow: { activities: [] }
+        },
+        settings: {
+          taskCelebration: 'rainbow',
+          routineCelebration: 'rainbow',
+          soundEnabled: true
+        },
+        createdAt: new Date().toISOString(),
+        lastActive: new Date().toISOString()
+      };
+      
+      const newUsers = { [newUserId]: newUser };
+      setUsers(newUsers);
+      setCurrentUser(newUserId);
+      setActivities([]);
+      setShowOnboarding(false);
+      
+      // Save the data with the new values
+      const dataToSave = {
+        version: 3,
+        currentUserId: newUserId,
+        currentDay: 'today',
+        users: newUsers,
+        globalSettings: {
+          themeColor: currentTheme,
+          bannerPosition: bannerPosition,
+          displayMode: displayMode,
+          taskCelebration: taskCelebration,
+          routineCelebration: routineCelebration,
+          pinEnabled: hasPinProtection
+        },
+        templates: templates,
+        activityCategories: activityCategories
+      };
+      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+    } catch (error) {
+      console.error('Error skipping onboarding:', error);
+      // Still hide onboarding on error
+      setShowOnboarding(false);
+      setShowSetupWizard(false);
+    }
+  };
+
   const theme = THEMES[currentTheme] || THEMES.stackBlue;
 
   const toggleActivity = (id) => {
@@ -539,6 +889,23 @@ const App = () => {
       activity.id === id ? { ...activity, completed: !activity.completed } : activity
     );
     setActivities(newActivities);
+    
+    // Update the users state to persist the change
+    if (currentUser && users[currentUser]) {
+      const updatedUsers = {
+        ...users,
+        [currentUser]: {
+          ...users[currentUser],
+          days: {
+            ...users[currentUser].days,
+            [currentDay]: {
+              activities: newActivities
+            }
+          }
+        }
+      };
+      setUsers(updatedUsers);
+    }
     
     // Check if we just completed an activity
     if (!wasCompleted && activity) {
@@ -556,6 +923,31 @@ const App = () => {
           setShowCelebration({ type: 'confetti', theme: taskCelebration });
         }
       }
+    }
+  };
+
+  const moveActivity = (index, direction) => {
+    const newActivities = [...activities];
+    const newIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    if (newIndex < 0 || newIndex >= activities.length) return;
+    
+    // Swap activities
+    [newActivities[index], newActivities[newIndex]] = [newActivities[newIndex], newActivities[index]];
+    
+    setActivities(newActivities);
+    
+    // Save immediately after reordering
+    if (currentUser && users[currentUser]) {
+      const updatedUsers = { ...users };
+      if (!updatedUsers[currentUser].days) {
+        updatedUsers[currentUser].days = {};
+      }
+      if (!updatedUsers[currentUser].days[currentDay]) {
+        updatedUsers[currentUser].days[currentDay] = { activities: [] };
+      }
+      updatedUsers[currentUser].days[currentDay].activities = newActivities;
+      setUsers(updatedUsers);
     }
   };
 
@@ -639,15 +1031,34 @@ const App = () => {
       createdAt: new Date().toISOString()
     };
     
+    let newActivities;
     if (editingActivity) {
-      const newActivities = activities.map(a => 
+      newActivities = activities.map(a => 
         a.id === editingActivity.id 
           ? { ...a, text: activityTitle, description: activityDescription || '', emoji: activityEmoji, time: activityTime || null } 
           : a
       );
-      setActivities(newActivities);
     } else {
-      setActivities([...activities, newActivity]);
+      newActivities = [...activities, newActivity];
+    }
+    
+    setActivities(newActivities);
+    
+    // Update the users state to persist the change
+    if (currentUser && users[currentUser]) {
+      const updatedUsers = {
+        ...users,
+        [currentUser]: {
+          ...users[currentUser],
+          days: {
+            ...users[currentUser].days,
+            [currentDay]: {
+              activities: newActivities
+            }
+          }
+        }
+      };
+      setUsers(updatedUsers);
     }
     
     resetActivityForm();
@@ -670,6 +1081,23 @@ const App = () => {
     const updatedActivities = activities.filter(a => a.id !== id);
     setActivities(updatedActivities);
     
+    // Update the users state to persist the change
+    if (currentUser && users[currentUser]) {
+      const updatedUsers = {
+        ...users,
+        [currentUser]: {
+          ...users[currentUser],
+          days: {
+            ...users[currentUser].days,
+            [currentDay]: {
+              activities: updatedActivities
+            }
+          }
+        }
+      };
+      setUsers(updatedUsers);
+    }
+    
     // Show toast with undo
     showToast({
       message: 'Activity deleted',
@@ -682,6 +1110,27 @@ const App = () => {
             newActivities.splice(deletedIndex, 0, deletedActivity);
             return newActivities;
           });
+          
+          // Also restore in users state
+          if (currentUser && users[currentUser]) {
+            setUsers(prevUsers => {
+              const currentActivities = prevUsers[currentUser]?.days?.[currentDay]?.activities || [];
+              const restoredActivities = [...currentActivities];
+              restoredActivities.splice(deletedIndex, 0, deletedActivity);
+              return {
+                ...prevUsers,
+                [currentUser]: {
+                  ...prevUsers[currentUser],
+                  days: {
+                    ...prevUsers[currentUser].days,
+                    [currentDay]: {
+                      activities: restoredActivities
+                    }
+                  }
+                }
+              };
+            });
+          }
         }
       }
     });
@@ -810,14 +1259,6 @@ const App = () => {
 
   // Export data function
   const exportData = async () => {
-    if (Platform.OS === 'android' || !RNFS) {
-      Alert.alert(
-        'Export Coming Soon',
-        'File export is currently only available on iOS. Android support coming in the next update!',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
     
     try {
       const data = {
@@ -838,35 +1279,68 @@ const App = () => {
 
       const jsonData = JSON.stringify(data, null, 2);
       const fileName = `stackmap-export-${new Date().toISOString().split('T')[0]}.json`;
-      const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
       
-      // Write file to temporary location
-      await RNFS.writeFile(filePath, jsonData, 'utf8');
-      
-      // Share the file using native Share API
-      const shareResult = await Share.share({
-        url: `file://${filePath}`,
-        title: 'Export StackMap Data',
-      });
-      
-      // Clean up temporary file
-      await RNFS.unlink(filePath);
-      
-      showToast({ message: 'Data exported successfully' });
-    } catch (error) {
-      if (error.message !== 'User did not share') {
-        console.error('Export error:', error);
-        Alert.alert('Export Error', 'Failed to export data');
+      if (Platform.OS === 'android') {
+        // On Android, save to Downloads AND offer share menu
+        const downloadsPath = RNFS.DownloadDirectoryPath;
+        const filePath = `${downloadsPath}/${fileName}`;
+        
+        try {
+          await RNFS.writeFile(filePath, jsonData, 'utf8');
+          showToast({ message: `Saved to Downloads/${fileName}` });
+          
+          // Also offer to share the file
+          const shareResult = await Share.share({
+            url: `file://${filePath}`,
+            title: 'Share StackMap Data',
+            message: `StackMap export: ${fileName}`,
+          });
+          
+          if (shareResult.action === Share.sharedAction) {
+            showToast({ message: 'Data shared successfully' });
+          }
+        } catch (error) {
+          // If Downloads fails, try external storage
+          const externalPath = `${RNFS.ExternalStorageDirectoryPath}/Download/${fileName}`;
+          await RNFS.writeFile(externalPath, jsonData, 'utf8');
+          showToast({ message: `Saved to Download/${fileName}` });
+          
+          // Try to share from external path
+          await Share.share({
+            url: `file://${externalPath}`,
+            title: 'Share StackMap Data',
+            message: `StackMap export: ${fileName}`,
+          });
+        }
+      } else {
+        // iOS: Use share sheet
+        const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+        await RNFS.writeFile(filePath, jsonData, 'utf8');
+        
+        const shareResult = await Share.share({
+          url: `file://${filePath}`,
+          title: 'Export StackMap Data',
+        });
+        
+        await RNFS.unlink(filePath);
+        
+        if (shareResult.action !== Share.dismissedAction) {
+          showToast({ message: 'Data exported successfully' });
+        }
       }
+    } catch (error) {
+      console.error('Export error:', error);
+      Alert.alert('Export Error', 'Failed to export data. Please check app permissions.');
     }
   };
 
   // Import data function
   const importData = async () => {
-    if (Platform.OS === 'android' || !DocumentPicker || !RNFS) {
+    // For Android, show instructions since document picker has compatibility issues
+    if (Platform.OS === 'android') {
       Alert.alert(
-        'Import Coming Soon',
-        'File import is currently only available on iOS. Android support coming in the next update!',
+        'Import Instructions',
+        'To import data on Android:\n\n1. Copy your StackMap JSON file to your device\n2. Use a file manager app to share the file\n3. Select StackMap from the share menu\n\nWe\'re working on a better solution for the next update.',
         [{ text: 'OK' }]
       );
       return;
@@ -944,6 +1418,85 @@ const App = () => {
     }
   };
 
+  const resetApp = async () => {
+    Alert.alert(
+      'Reset App',
+      'This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. Are you sure?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset Everything',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Clear all AsyncStorage
+              await AsyncStorage.removeItem('@stackmap_data');
+              await AsyncStorage.removeItem('@stackmap_hasCompletedOnboarding');
+              await AsyncStorage.removeItem('@stackmap_pin_migrated');
+              await AsyncStorage.removeItem('userPin'); // Legacy PIN storage
+              await AsyncStorage.removeItem('stackMapData'); // Legacy storage key
+              
+              // Skip PIN clearing on Android due to keychain library issues
+              // The PIN will be effectively cleared when we reset hasPinProtection state
+              
+              // Reset all state to initial values
+              setUsers({});
+              setCurrentUser(null);
+              setActivities([]);
+              setCurrentTheme('stackBlue');
+              setBannerPosition('top');
+              setDisplayMode('numbers');
+              setTemplates([]);
+              setCurrentDay('today');
+              setIsEditMode(false);
+              setHasPinProtection(false);
+              setActivityCategories(null);
+              setAddedToLibraryIds(new Set());
+              
+              // Reset form states
+              setActivityTitle('');
+              setActivityDescription('');
+              setActivityEmoji(DEFAULT_ACTIVITY_EMOJI);
+              setActivityTime('');
+              setNewUserName('');
+              setNewUserEmoji(DEFAULT_USER_ICON);
+              setEditingUser(null);
+              setEditingActivity(null);
+              setPinInput('');
+              setConfirmPin('');
+              setIsSettingPin(false);
+              
+              // Close all modals
+              setShowEditModeSettingsModal(false);
+              setShowAddUserModal(false);
+              setShowEmojiPicker(false);
+              setShowActivityLibrary(false);
+              setShowActivityModal(false);
+              setShowUserModal(false);
+              setShowUserDayModal(false);
+              setShowUserEmojiPicker(false);
+              setShowPrivacyModal(false);
+              setShowSupportModal(false);
+              setShowReorderModal(false);
+              setShowPinModal(false);
+              
+              // Show success toast
+              showToast({ message: 'App reset successfully', type: 'success' });
+              
+              // Show onboarding after a brief delay
+              setTimeout(() => {
+                setShowOnboarding(true);
+              }, 500);
+            } catch (error) {
+              console.error('Reset error:', error);
+              Alert.alert('Reset Error', 'Failed to reset app data');
+            }
+          }
+        }
+      ]
+    );
+  };
+
   const renderActivity = ({ item, drag, isActive, customWidth }) => {
     const index = activities.findIndex(a => a.id === item.id);
     const CardContent = (
@@ -961,7 +1514,7 @@ const App = () => {
           isActive && styles.draggingCard
         ]}
         onPress={() => !isEditMode && toggleActivity(item.id)}
-        onLongPress={() => isEditMode && drag ? drag() : setIsEditMode(true)}
+        onLongPress={() => isEditMode && drag && Platform.OS === 'ios' ? drag() : setIsEditMode(true)}
         disabled={isActive}
         activeOpacity={0.9}
       >
@@ -1043,6 +1596,25 @@ const App = () => {
       {/* Edit Mode Actions */}
       {showEditIcons && (
         <>
+          {/* Reorder buttons for Android */}
+          {Platform.OS === 'android' && !customWidth && (
+            <View style={styles.reorderButtons}>
+              <TouchableOpacity
+                onPress={() => moveActivity(index, 'up')}
+                disabled={index === 0}
+                style={[styles.reorderButton, index === 0 && styles.reorderButtonDisabled]}
+              >
+                <Icon name="arrow-upward" size={24} color={index === 0 ? '#ddd' : '#666'} />
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => moveActivity(index, 'down')}
+                disabled={index === activities.length - 1}
+                style={[styles.reorderButton, index === activities.length - 1 && styles.reorderButtonDisabled]}
+              >
+                <Icon name="arrow-downward" size={24} color={index === activities.length - 1 ? '#ddd' : '#666'} />
+              </TouchableOpacity>
+            </View>
+          )}
           {/* Center Actions - Edit and Add to Library */}
           <View style={styles.editActions}>
             <Animated.View
@@ -1147,8 +1719,8 @@ const App = () => {
       </TouchableOpacity>
     );
     
-    // Wrap with ScaleDecorator only when drag functionality is available and we're in DraggableFlatList
-    if (drag && typeof drag === 'function' && !customWidth) {
+    // Wrap with ScaleDecorator only when drag functionality is available and we're in DraggableFlatList on iOS
+    if (drag && typeof drag === 'function' && !customWidth && Platform.OS === 'ios') {
       return <ScaleDecorator>{CardContent}</ScaleDecorator>;
     }
     
@@ -1157,7 +1729,7 @@ const App = () => {
 
   const Header = () => {
     const handleSwipeGesture = ({ nativeEvent }) => {
-      if (nativeEvent.state === State.END) {
+      if (State && nativeEvent.state === State.END) {
         const { translationY, velocityY } = nativeEvent;
         
         // Check if it's a vertical swipe (threshold of 30 pixels or velocity > 800)
@@ -1183,10 +1755,24 @@ const App = () => {
             <Logo size={isTablet() ? 40 : 32} theme={theme} />
             <Text style={styles.headerTitle}>StackMap</Text>
           </View>
-          <PanGestureHandler
-            onHandlerStateChange={handleSwipeGesture}
-            activeOffsetY={[-10, 10]} // Activate after 10 pixels of movement
-          >
+          {Platform.OS === 'ios' && PanGestureHandler ? (
+            <PanGestureHandler
+              onHandlerStateChange={handleSwipeGesture}
+              activeOffsetY={[-10, 10]} // Activate after 10 pixels of movement
+            >
+              <TouchableOpacity 
+                style={styles.subtitlePill}
+                onPress={() => setShowUserDayModal(true)}
+              >
+                <Text style={styles.subtitleEmoji}>
+                  {users[currentUser]?.icon || '😀'}
+                </Text>
+                <Text style={styles.subtitleDay}>
+                  {currentDay === 'today' ? 'Today' : 'Tomorrow'}
+                </Text>
+              </TouchableOpacity>
+            </PanGestureHandler>
+          ) : (
             <TouchableOpacity 
               style={styles.subtitlePill}
               onPress={() => setShowUserDayModal(true)}
@@ -1198,7 +1784,7 @@ const App = () => {
                 {currentDay === 'today' ? 'Today' : 'Tomorrow'}
               </Text>
             </TouchableOpacity>
-          </PanGestureHandler>
+          )}
         </View>
       </View>
     );
@@ -1211,16 +1797,19 @@ const App = () => {
   const fabBottom = bannerPosition === 'bottom' 
     ? isTablet() 
       ? insets.bottom + 15 // Tablets: move down to prevent overlap with banner content
-      : insets.bottom + 20 // iPhone: much lower, just above home bar with minimal offset
+      : Platform.OS === 'android'
+        ? 20 // Android: fixed position like iOS
+        : insets.bottom + 20 // iPhone: much lower, just above home bar with minimal offset
     : null; // Will use top positioning for top banner
     
   const fabTop = bannerPosition === 'top'
-    ? insets.top + (isTablet() ? 20 : 20) // Same positioning as bottom mode for iPhone
+    ? Platform.OS === 'android'
+      ? StatusBar.currentHeight + 20 // Android: account for status bar
+      : insets.top + (isTablet() ? 20 : 20) // iOS: use safe area insets
     : null;
     
-  return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <>
+  const AppContent = (
+    <>
       <StatusBar barStyle="light-content" backgroundColor={theme.dark} />
       <View style={[styles.container, { backgroundColor: theme.light }]}>
         {/* Status Bar Background when banner is at bottom */}
@@ -1230,7 +1819,10 @@ const App = () => {
         
         {/* Top Banner */}
         {bannerPosition === 'top' && (
-          <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <SafeAreaView style={{ 
+            backgroundColor: theme.primary,
+            paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
+          }}>
             <Header />
           </SafeAreaView>
         )}
@@ -1305,7 +1897,7 @@ const App = () => {
                 </View>
               )}
             </ScrollView>
-          ) : (
+          ) : Platform.OS === 'ios' ? (
             <DraggableFlatList
               data={activities}
               renderItem={renderActivity}
@@ -1339,12 +1931,35 @@ const App = () => {
                 </View>
               }
             />
+          ) : (
+            // Android fallback - regular FlatList with reorder buttons
+            <FlatList
+              data={activities}
+              renderItem={renderActivity}
+              keyExtractor={item => item.id}
+              contentContainerStyle={[
+                styles.listContent,
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
+              ]}
+              ListEmptyComponent={
+                <View style={styles.emptyState}>
+                  <Text style={styles.emptyIcon}>📋</Text>
+                  <Text style={styles.emptyText}>No activities yet</Text>
+                  <Text style={styles.emptySubtext}>
+                    {isEditMode ? 'Tap Add to create an activity' : 'Tap the edit button to add your first activity'}
+                  </Text>
+                </View>
+              }
+            />
           )}
         </View>
 
         {/* Bottom Banner */}
         {bannerPosition === 'bottom' && (
-          <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <SafeAreaView style={{ 
+            backgroundColor: theme.primary,
+            paddingBottom: Platform.OS === 'android' ? 10 : 0 
+          }}>
             <Header />
           </SafeAreaView>
         )}
@@ -1580,24 +2195,29 @@ const App = () => {
               {/* Theme Color Section */}
               <Text style={styles.sectionTitle}>Theme Color</Text>
               <View style={styles.colorGrid}>
-                {Object.keys(THEMES).map((color, index) => {
-                  // Force 5 colors per row
-                  const isEndOfRow = (index + 1) % 5 === 0;
-                  return (
-                    <View key={color} style={{ width: '20%', padding: 7.5, alignItems: 'center' }}>
-                      <TouchableOpacity
-                        style={[
-                          styles.colorOption,
-                          { backgroundColor: THEMES[color].primary },
-                          currentTheme === color && styles.colorSelected
-                        ]}
-                        onPress={() => setCurrentTheme(color)}
-                      >
-                        {currentTheme === color && <Icon name="check" size={24} color="white" />}
-                      </TouchableOpacity>
-                    </View>
-                  );
-                })}
+                {(() => {
+                  // Put stackBlue (default) first, then all other themes
+                  const themeKeys = Object.keys(THEMES);
+                  const reorderedThemes = ['stackBlue', ...themeKeys.filter(key => key !== 'stackBlue')];
+                  
+                  // Only show first 20 themes (4x5 grid)
+                  return reorderedThemes.slice(0, 20).map((color, index) => {
+                    return (
+                      <View key={color} style={{ width: '20%', padding: 7.5, alignItems: 'center' }}>
+                        <TouchableOpacity
+                          style={[
+                            styles.colorOption,
+                            { backgroundColor: THEMES[color].primary },
+                            currentTheme === color && styles.colorSelected
+                          ]}
+                          onPress={() => setCurrentTheme(color)}
+                        >
+                          {currentTheme === color && <Icon name="check" size={24} color="white" />}
+                        </TouchableOpacity>
+                      </View>
+                    );
+                  });
+                })()}
               </View>
 
               {/* Banner Position Section */}
@@ -1659,11 +2279,14 @@ const App = () => {
                       key={celebration}
                       style={[
                         styles.celebrationOption,
-                        taskCelebration === celebration && [styles.celebrationActive, { borderColor: theme.primary }]
+                        taskCelebration === celebration && [styles.celebrationActive, { backgroundColor: theme.primary, borderColor: theme.primary }]
                       ]}
                       onPress={() => setTaskCelebration(celebration)}
                     >
-                      <Text style={styles.celebrationText}>
+                      <Text style={[
+                        styles.celebrationText,
+                        taskCelebration === celebration && styles.celebrationTextActive
+                      ]}>
                         {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
                       </Text>
                     </TouchableOpacity>
@@ -1679,11 +2302,14 @@ const App = () => {
                       key={celebration}
                       style={[
                         styles.celebrationOption,
-                        routineCelebration === celebration && [styles.celebrationActive, { borderColor: theme.primary }]
+                        routineCelebration === celebration && [styles.celebrationActive, { backgroundColor: theme.primary, borderColor: theme.primary }]
                       ]}
                       onPress={() => setRoutineCelebration(celebration)}
                     >
-                      <Text style={styles.celebrationText}>
+                      <Text style={[
+                        styles.celebrationText,
+                        routineCelebration === celebration && styles.celebrationTextActive
+                      ]}>
                         {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
                       </Text>
                     </TouchableOpacity>
@@ -1867,7 +2493,10 @@ const App = () => {
                               style: 'destructive',
                               onPress: async () => {
                                 try {
-                                  await setSecurePin(null);
+                                  // Skip actual PIN clearing on Android due to keychain library issues
+                                  if (Platform.OS === 'ios') {
+                                    await setSecurePin(null);
+                                  }
                                   setHasPinProtection(false);
                                   // Immediately save data to persist the PIN removal
                                   await saveData();
@@ -1921,6 +2550,14 @@ const App = () => {
               >
                 <Icon name="folder-open" size={20} color="white" />
                 <Text style={styles.buttonText}>Import Data</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: COLORS.error, marginTop: 20 }]}
+                onPress={resetApp}
+              >
+                <Icon name="refresh" size={20} color="white" />
+                <Text style={styles.buttonText}>Reset App</Text>
               </TouchableOpacity>
             </View>
           </ScrollView>
@@ -2562,8 +3199,38 @@ const App = () => {
         />
       )}
       </>
-    </GestureHandlerRootView>
   );
+
+  // Show setup wizard if needed
+  if (showSetupWizard) {
+    return (
+      <SetupWizard
+        onComplete={handleSetupWizardComplete}
+        onSkip={handleOnboardingSkip}
+      />
+    );
+  }
+  
+  // Show onboarding if needed (kept for backward compatibility)
+  if (showOnboarding) {
+    return (
+      <Onboarding
+        onComplete={handleOnboardingComplete}
+        onSkip={handleOnboardingSkip}
+      />
+    );
+  }
+
+  // Wrap with GestureHandlerRootView only on iOS
+  if (Platform.OS === 'ios' && GestureHandlerRootView) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        {AppContent}
+      </GestureHandlerRootView>
+    );
+  }
+
+  return AppContent;
 };
 
 const styles = StyleSheet.create({
@@ -2578,7 +3245,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingVertical: 20,
+    paddingVertical: Platform.OS === 'android' ? 15 : 20,
     paddingHorizontal: 20,
   },
   headerContent: {
@@ -2609,14 +3276,15 @@ const styles = StyleSheet.create({
   logoBar3: { height: 5 },
   headerTitle: {
     fontSize: isTablet() ? 36 : 28,
-    fontWeight: 'bold',
+    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
     color: 'white',
-    fontFamily: 'ComicNeue-Bold',
+    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
   },
   headerSubtitle: {
     fontSize: 14,
     color: 'rgba(255,255,255,0.8)',
     marginTop: 4,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   subtitlePill: {
     flexDirection: 'row',
@@ -2636,11 +3304,13 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 18 : 14,
     fontWeight: '500',
     color: '#333',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   subtitleDay: {
     fontSize: isTablet() ? 18 : 14,
     color: '#333',
     fontWeight: '500',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   exitEditButton: {
     position: 'absolute',
@@ -2658,7 +3328,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   listContent: {
     padding: getContainerPadding(),
@@ -2774,15 +3444,15 @@ const styles = StyleSheet.create({
     color: '#333',
     textAlign: 'center',
     lineHeight: 23 * 1.2,  // Match PWA's line-height: 1.2
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     marginBottom: 4,  // PWA's 0.25rem
-    fontFamily: 'ComicNeue-Regular',
   },
   activityDescription: {
     fontSize: 17.3,  // Match PWA's 1.08rem = 17.28px
     color: '#666',
     textAlign: 'center',
     lineHeight: 17.3 * 1.3,  // Match PWA's line-height: 1.3
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   completedText: {
     color: 'white',
@@ -2802,12 +3472,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#666',
     marginBottom: 8,
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   emptySubtext: {
     fontSize: 16,
     color: '#999',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   editActions: {
     position: 'absolute',
@@ -2817,6 +3487,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     gap: 15,
+  },
+  reorderButtons: {
+    position: 'absolute',
+    right: 15,
+    top: '50%',
+    transform: [{ translateY: -40 }],
+    flexDirection: 'column',
+    gap: 8,
+  },
+  reorderButton: {
+    backgroundColor: 'white',
+    borderRadius: 20,
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+    ...SHADOWS.level1,
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.08)',
+  },
+  reorderButtonDisabled: {
+    opacity: 0.3,
+    backgroundColor: '#f5f5f5',
   },
   pinButtonContainer: {
     position: 'absolute',
@@ -2852,9 +3545,9 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal', // Android uses bold font file
     color: 'white',
-    fontFamily: 'ComicNeue-Bold',
+    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
   },
   modalContent: {
     flex: 1,
@@ -2876,7 +3569,7 @@ const styles = StyleSheet.create({
   emojiSelectorLabel: {
     fontSize: 14,
     color: '#666',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   input: {
     backgroundColor: 'white',
@@ -2886,12 +3579,12 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#e0e0e0',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   textArea: {
     height: 100,
     textAlignVertical: 'top',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   button: {
     padding: SPACING.md,
@@ -2905,20 +3598,21 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: 'bold',
-    fontFamily: 'ComicNeue-Bold',
+    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
+    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
   },
   timeText: {
     fontSize: isTablet() ? 20 : 18,
     fontWeight: '900', // Maximum bold weight
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: 'bold',
+    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
     color: '#333',
     marginBottom: 15,
     marginTop: 20,
-    fontFamily: 'ComicNeue-Bold',
+    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
   },
   colorGrid: {
     flexDirection: 'row',
@@ -2956,7 +3650,7 @@ const styles = StyleSheet.create({
   toggleText: {
     fontSize: 16,
     color: '#666',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   toggleTextActive: {
     color: '#333',
@@ -2985,7 +3679,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    fontFamily: 'ComicNeue-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   emojiGrid: {
     flexDirection: 'row',
@@ -3031,7 +3725,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     flex: 1,
     color: '#333',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userItemNameActive: {
     fontWeight: 'bold',
@@ -3056,7 +3750,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#667eea',
     fontWeight: '600',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   // PIN styles
   pinSection: {
@@ -3066,7 +3760,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#666',
     textAlign: 'center',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   pinButtons: {
     flexDirection: 'row',
@@ -3085,7 +3779,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 14,
     fontWeight: '600',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   pinModalOverlay: {
     flex: 1,
@@ -3107,7 +3801,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
     marginBottom: 30,
-    fontFamily: 'ComicNeue-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   pinInputContainer: {
     flexDirection: 'row',
@@ -3145,7 +3839,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     color: '#333',
-    fontFamily: 'ComicNeue-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   pinCancelButton: {
     paddingVertical: 10,
@@ -3155,12 +3849,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#667eea',
     fontWeight: '600',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   pinHelperText: {
     fontSize: 14,
     color: '#666',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
     marginBottom: 10,
   },
@@ -3203,7 +3897,7 @@ const styles = StyleSheet.create({
   editModePillText: {
     fontSize: isTablet() ? 16 : 14,
     fontWeight: '600',
-    fontFamily: 'ComicNeue-Regular',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   celebrationScrollView: {
     marginBottom: 20,
@@ -3222,11 +3916,15 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   celebrationActive: {
-    backgroundColor: 'rgba(102, 126, 234, 0.1)',
+    // Background color will be set inline with theme.primary
   },
   celebrationText: {
     fontSize: 14,
     fontWeight: '500',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  celebrationTextActive: {
+    color: 'white',
   },
   infoSection: {
     marginTop: 30,
@@ -3245,6 +3943,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#000',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacyContent: {
     flex: 1,
@@ -3263,12 +3962,14 @@ const styles = StyleSheet.create({
     color: '#2c3e50',
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   privacyDate: {
     fontSize: 14,
     color: '#6c757d',
     textAlign: 'center',
     fontStyle: 'italic',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacySection: {
     backgroundColor: 'white',
@@ -3286,12 +3987,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#2c3e50',
     marginBottom: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   privacyText: {
     fontSize: 16,
     lineHeight: 24,
     color: '#495057',
     marginBottom: 8,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacyBold: {
     fontWeight: 'bold',
@@ -3305,6 +4008,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#495057',
     marginBottom: 4,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   privacyFooter: {
     backgroundColor: '#e9ecef',
@@ -3317,6 +4021,7 @@ const styles = StyleSheet.create({
     color: '#6c757d',
     textAlign: 'center',
     lineHeight: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportContent: {
     flex: 1,
@@ -3337,12 +4042,14 @@ const styles = StyleSheet.create({
     color: '#d63384',
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   supportSubtitle: {
     fontSize: 18,
     color: '#6f42c1',
     textAlign: 'center',
     fontStyle: 'italic',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportMessageBox: {
     backgroundColor: '#fff',
@@ -3362,6 +4069,7 @@ const styles = StyleSheet.create({
     lineHeight: 24,
     color: '#495057',
     textAlign: 'center',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportWaysSection: {
     marginBottom: 24,
@@ -3372,6 +4080,7 @@ const styles = StyleSheet.create({
     color: '#d63384',
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   supportOptionFun: {
     flexDirection: 'row',
@@ -3400,11 +4109,13 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#d63384',
     marginBottom: 4,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   supportOptionTextFun: {
     fontSize: 14,
     lineHeight: 20,
     color: '#495057',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportContactBox: {
     backgroundColor: '#e7f3ff',
@@ -3420,11 +4131,13 @@ const styles = StyleSheet.create({
     color: '#0d6efd',
     textAlign: 'center',
     marginBottom: 8,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   supportContactText: {
     fontSize: 16,
     color: '#495057',
     textAlign: 'center',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   supportFooter: {
     alignItems: 'center',
@@ -3437,6 +4150,7 @@ const styles = StyleSheet.create({
     color: '#6f42c1',
     textAlign: 'center',
     fontWeight: '500',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   draggableGrid: {
     flex: 1,
@@ -3460,6 +4174,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   reorderActivityPreview: {
     alignItems: 'center',
@@ -3477,12 +4192,14 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#333',
     textAlign: 'center',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   reorderModalLabel: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
     textAlign: 'center',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   positionSelector: {
     maxHeight: 60,
@@ -3514,6 +4231,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   positionPreview: {
     backgroundColor: '#f0f0f0',
@@ -3525,6 +4243,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#333',
     textAlign: 'center',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   reorderModalButtons: {
     flexDirection: 'row',
@@ -3544,6 +4263,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#333',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
 });
 

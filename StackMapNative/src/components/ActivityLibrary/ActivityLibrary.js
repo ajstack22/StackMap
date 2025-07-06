@@ -1040,6 +1040,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 14 : 12,
     color: 'rgba(255, 255, 255, 0.8)',
     marginLeft: SPACING.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   categoryActions: {
     flexDirection: 'row',
@@ -1147,6 +1148,7 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     fontSize: isTablet() ? 16 : 14,
     fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   editModal: {
     position: 'absolute',
@@ -1171,6 +1173,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginBottom: SPACING.md,
     textAlign: 'center',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   editInput: {
     borderWidth: 2,
@@ -1179,6 +1182,7 @@ const styles = StyleSheet.create({
     padding: SPACING.md,
     fontSize: isTablet() ? 16 : 14,
     marginBottom: SPACING.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   descriptionInput: {
     minHeight: 80,
@@ -1188,6 +1192,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 16 : 14,
     marginBottom: SPACING.sm,
     fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   emojiSelector: {
     alignItems: 'center',
@@ -1226,10 +1231,12 @@ const styles = StyleSheet.create({
   cancelButtonText: {
     color: COLORS.gray[700],
     fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   saveButtonText: {
     color: 'white',
     fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
 });
 

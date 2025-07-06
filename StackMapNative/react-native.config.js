@@ -4,7 +4,7 @@ module.exports = {
   dependencies: {
     'react-native-document-picker': {
       platforms: {
-        android: null, // disable Android platform, iOS will still work
+        android: null, // disable Android platform due to RN 0.80 compatibility issues
       },
     },
   },

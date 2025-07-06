@@ -4,6 +4,9 @@ This is a new [**React Native**](https://reactnative.dev) project, bootstrapped 
 
 > **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
+## 🚨 CRITICAL FOR ANDROID BUILDS 🚨
+**MUST READ**: See [ANDROID_BUILD_SETUP.md](./ANDROID_BUILD_SETUP.md) for Java 17 requirements and build instructions. Android builds WILL FAIL without proper Java setup!
+
 ## Step 1: Start Metro
 
 First, you will need to run **Metro**, the JavaScript build tool for React Native.
@@ -24,12 +27,14 @@ With Metro running, open a new terminal window/pane from the root of your React 
 
 ### Android
 
-```sh
-# Using npm
-npm run android
+⚠️ **IMPORTANT**: Use the provided script to ensure Java 17 is used:
 
-# OR using Yarn
-yarn android
+```sh
+# RECOMMENDED - Uses Java 17 automatically
+./run-android.sh
+
+# Alternative (if you've manually set up Java 17)
+npm run android
 ```
 
 ### iOS

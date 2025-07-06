@@ -12,8 +12,23 @@ const PIN_USERNAME = 'editModePin';
 export const setSecurePin = async (pin) => {
   try {
     if (!pin) {
-      // Remove PIN
-      await Keychain.resetInternetCredentials(PIN_SERVICE);
+      // Remove PIN - use different approach for Android
+      try {
+        // Try to overwrite with empty credentials first
+        await Keychain.setInternetCredentials(
+          PIN_SERVICE,
+          PIN_USERNAME,
+          ''
+        );
+      } catch (e) {
+        // If that fails, try reset
+        try {
+          await Keychain.resetInternetCredentials(PIN_SERVICE);
+        } catch (resetError) {
+          // If both fail, just log and continue
+          console.log('Could not clear PIN credentials:', resetError);
+        }
+      }
       return true;
     }
 

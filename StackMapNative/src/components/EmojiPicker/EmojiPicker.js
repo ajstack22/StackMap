@@ -50,6 +50,7 @@ const EMOJI_SEARCH_INDEX = createEmojiSearchIndex();
 const EMOJI_CATEGORIES = {
   'Smileys': ['😀', '😃', '😄', '😁', '😅', '😂', '🤣', '😊', '😇', '🙂', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚', '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️', '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡', '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓', '🤗', '🤔', '🤭', '🤫', '🤥', '😶', '😐', '😑', '😬', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱', '😴', '🤤', '😪', '😵', '🤐', '🥴', '🤢', '🤮', '🤧', '😷', '🤒', '🤕'],
   'People': ['👶', '👧', '🧒', '👦', '👩', '🧑', '👨', '👩‍🦱', '🧑‍🦱', '👨‍🦱', '👩‍🦰', '🧑‍🦰', '👨‍🦰', '👱‍♀️', '👱', '👱‍♂️', '👩‍🦳', '🧑‍🦳', '👨‍🦳', '👩‍🦲', '🧑‍🦲', '👨‍🦲', '🧔‍♀️', '🧔', '🧔‍♂️', '👵', '🧓', '👴', '👲', '👳‍♀️', '👳', '👳‍♂️', '🧕', '👮‍♀️', '👮', '👮‍♂️', '👷‍♀️', '👷', '👷‍♂️', '💂‍♀️', '💂', '💂‍♂️', '🕵️‍♀️', '🕵️', '🕵️‍♂️', '👩‍⚕️', '🧑‍⚕️', '👨‍⚕️', '👩‍🌾', '🧑‍🌾', '👨‍🌾', '👩‍🍳', '🧑‍🍳', '👨‍🍳', '👩‍🎓', '🧑‍🎓', '👨‍🎓', '👩‍🎤', '🧑‍🎤', '👨‍🎤', '👩‍🏫', '🧑‍🏫', '👨‍🏫', '👩‍🏭', '🧑‍🏭', '👨‍🏭', '👩‍💻', '🧑‍💻', '👨‍💻', '👩‍💼', '🧑‍💼', '👨‍💼', '👩‍🔧', '🧑‍🔧', '👨‍🔧', '👩‍🔬', '🧑‍🔬', '👨‍🔬', '👩‍🎨', '🧑‍🎨', '👨‍🎨', '👩‍🚒', '🧑‍🚒', '👨‍🚒', '👩‍✈️', '🧑‍✈️', '👨‍✈️', '👩‍🚀', '🧑‍🚀', '👨‍🚀', '👩‍⚖️', '🧑‍⚖️', '👨‍⚖️', '👰‍♀️', '👰', '👰‍♂️', '🤵‍♀️', '🤵', '🤵‍♂️', '👸', '🤴', '🥷', '🦸‍♀️', '🦸', '🦸‍♂️', '🦹‍♀️', '🦹', '🦹‍♂️', '🤶', '🧑‍🎄', '🎅', '🧙‍♀️', '🧙', '🧙‍♂️', '🧝‍♀️', '🧝', '🧝‍♂️', '🧛‍♀️', '🧛', '🧛‍♂️', '🧟‍♀️', '🧟', '🧟‍♂️', '🧞‍♀️', '🧞', '🧞‍♂️', '🧜‍♀️', '🧜', '🧜‍♂️', '🧚‍♀️', '🧚', '🧚‍♂️', '👼', '🤰', '🤱', '👩‍🍼', '🧑‍🍼', '👨‍🍼', '🙇‍♀️', '🙇', '🙇‍♂️', '💁‍♀️', '💁', '💁‍♂️', '🙅‍♀️', '🙅', '🙅‍♂️', '🙆‍♀️', '🙆', '🙆‍♂️', '🙋‍♀️', '🙋', '🙋‍♂️', '🧏‍♀️', '🧏', '🧏‍♂️', '🤦‍♀️', '🤦', '🤦‍♂️', '🤷‍♀️', '🤷', '🤷‍♂️', '🙎‍♀️', '🙎', '🙎‍♂️', '🙍‍♀️', '🙍', '🙍‍♂️', '💇‍♀️', '💇', '💇‍♂️', '💆‍♀️', '💆', '💆‍♂️', '🧖‍♀️', '🧖', '🧖‍♂️', '💅', '🤳', '💃', '🕺', '👯‍♀️', '👯', '👯‍♂️', '🕴️', '👩‍🦽', '🧑‍🦽', '👨‍🦽', '👩‍🦼', '🧑‍🦼', '👨‍🦼', '🚶‍♀️', '🚶', '🚶‍♂️', '👩‍🦯', '🧑‍🦯', '👨‍🦯', '🧎‍♀️', '🧎', '🧎‍♂️', '🏃‍♀️', '🏃', '🏃‍♂️', '🧍‍♀️', '🧍', '🧍‍♂️', '👫', '👭', '👬', '👩‍❤️‍👨', '👩‍❤️‍👩', '💑', '👨‍❤️‍👨', '👩‍❤️‍💋‍👨', '👩‍❤️‍💋‍👩', '💏', '👨‍❤️‍💋‍👨', '👨‍👩‍👦', '👨‍👩‍👧', '👨‍👩‍👧‍👦', '👨‍👩‍👦‍👦', '👨‍👩‍👧‍👧', '👩‍👩‍👦', '👩‍👩‍👧', '👩‍👩‍👧‍👦', '👩‍👩‍👦‍👦', '👩‍👩‍👧‍👧', '👨‍👨‍👦', '👨‍👨‍👧', '👨‍👨‍👧‍👦', '👨‍👨‍👦‍👦', '👨‍👨‍👧‍👧', '👩‍👦', '👩‍👧', '👩‍👧‍👦', '👩‍👦‍👦', '👩‍👧‍👧', '👨‍👦', '👨‍👧', '👨‍👧‍👦', '👨‍👦‍👦', '👨‍👧‍👧', '🤲', '👐', '🙌', '👏', '🤝', '👍', '👎', '👊', '✊', '🤛', '🤜', '🤞', '✌️', '🤟', '🤘', '👌', '🤌', '🤏', '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️', '🖖', '👋', '🤙', '💪', '🦾', '🖕', '✍️', '🙏', '🦶', '🦵', '🦿', '💄', '💋', '👄', '🦷', '👅', '👂', '🦻', '👃', '👣', '👁️', '👀', '🫀', '🫁', '🧠', '🦴', '🦳', '🦱', '🦲', '🦰'],
+  'Lifestyle': ['👕', '👔', '👗', '👘', '👙', '👚', '👛', '👜', '👝', '🎒', '👞', '👟', '🥾', '🥿', '👠', '👡', '👢', '👑', '👒', '🎩', '🎓', '🧢', '⛑️', '🪖', '💄', '💍', '💼', '🧳', '👓', '🕶️', '🥽', '🌂', '🧥', '🦺', '👖', '🧣', '🧤', '🧦', '🪥', '🧼', '🧽', '🧴', '🛁', '🚿', '🚽', '🧻', '🪒', '💊', '💉', '🩹', '🩺', '🌡️', '🧹', '🧺', '🧯', '🛏️', '🛋️', '🪑', '🚪', '🪟', '🧱', '🏠', '🏡', '🏘️', '🍳', '🥘', '🍲', '🥗', '🍱', '🍜', '🍝', '🍕', '🍔', '🥪', '🌮', '🌯', '🥙', '🍖', '🍗', '🥩', '🥓', '🧀', '🥚', '🥞', '🧇', '🥐', '🍞', '🥖', '🥨', '🍩', '🍪', '🎂', '🍰', '🧁', '🍫', '🍬', '🍭', '🍯', '🥛', '☕', '🍵', '🧃', '🥤', '🧊', '🍽️', '🍴', '🥄', '🔪', '🧭', '🧷', '🧵', '🪡', '🧶', '🪢', '🧲', '🔑', '🗝️', '🪜', '🧰', '🪛', '🔧', '🔨', '⚒️', '🪚', '🔩', '⚙️', '🪙', '💳', '💰', '💵', '💸', '🧾', '✉️', '📧', '📨', '📬', '📮', '🗳️', '✏️', '✒️', '🖊️', '🖌️', '📝', '📄', '📃', '📑', '📊', '📈', '📉', '📆', '📅', '🗓️', '📇', '🗂️', '📁', '🗄️', '🗑️', '📱', '☎️', '📞', '📟', '📠', '💻', '🖥️', '⌨️', '🖱️', '🖨️', '🗜️', '💽', '💾', '💿', '📀', '🎥', '📹', '📷', '📸', '🔦', '💡', '🕯️', '🪔', '🔌', '🔋', '🪫', '🚰', '🚬', '⚰️', '🪦', '⚱️', '🗿', '🪧', '🏧', '🚮', '🚻', '🚹', '🚺', '🚼', '🚾', '🛂', '🛃', '🛄', '🛅'],
   'Food': ['🍏', '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓', '🍈', '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🍆', '🥑', '🥦', '🥬', '🥒', '🌶️', '🌽', '🥕', '🥔', '🍠', '🥐', '🥖', '🍞', '🥨', '🧀', '🥚', '🍳', '🥞', '🥓', '🥩', '🍗', '🍖', '🌭', '🍔', '🍟', '🍕', '🥪', '🥙', '🌮', '🌯', '🥗', '🥘', '🥫', '🍝', '🍜', '🍲', '🍛', '🍣', '🍱', '🍤', '🍙', '🍚', '🍘', '🍥', '🥮', '🍢', '🍡', '🍧', '🍨', '🍦', '🥧', '🧁', '🍰', '🎂', '🍮', '🍭', '🍬', '🍫', '🍿', '🍩', '🍪', '🌰', '🥜', '🍯', '🥛', '🍼', '☕', '🍵', '🥤', '🍶', '🍺', '🍻', '🥂', '🍷', '🥃', '🍸', '🍹', '🍾'],
   'Animals': ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷', '🐽', '🐸', '🐵', '🙈', '🙉', '🙊', '🐒', '🐔', '🐧', '🐦', '🐤', '🐣', '🐥', '🦆', '🦅', '🦉', '🦇', '🐺', '🐗', '🐴', '🦄', '🐝', '🐛', '🦋', '🐌', '🐞', '🐜', '🦟', '🦗', '🕷️', '🕸️', '🦂', '🐢', '🐍', '🦎', '🦖', '🦕', '🐙', '🦑', '🦐', '🦀', '🐡', '🐠', '🐟', '🐬', '🐳', '🐋', '🦈', '🐊', '🐅', '🐆', '🦓', '🦍', '🦧', '🐘', '🦛', '🦏', '🐪', '🐫', '🦒', '🦘', '🐃', '🐂', '🐄', '🐎', '🐖', '🐏', '🐑', '🦙', '🐐', '🦌', '🐕', '🐩', '🦮', '🐕‍🦺', '🐈', '🐈‍⬛', '🐓', '🦃', '🦚', '🦜', '🦢', '🦩', '🕊️', '🐇', '🦝', '🦨', '🦡', '🦦', '🦥', '🐁', '🐀', '🐿️', '🦔'],
   'Travel': ['🚗', '🚕', '🚙', '🚌', '🚎', '🏎️', '🚓', '🚑', '🚒', '🚐', '🛻', '🚚', '🚛', '🚜', '🏍️', '🛵', '🚲', '🛴', '🚁', '🛸', '🚀', '✈️', '🛫', '🛬', '🪂', '💺', '🚤', '⛵', '🛶', '🚢', '🛳️', '⚓', '🚇', '🚊', '🚝', '🚄', '🚅', '🚈', '🚂', '🚆', '🚋', '🚃', '🚟', '🚠', '🚡', '🚖', '🚘', '🚍', '🚔', '🚨', '🚥', '🚦', '🛑', '🚧', '🏗️', '🏭', '🏠', '🏡', '🏘️', '🏚️', '🏢', '🏬', '🏣', '🏤', '🏥', '🏦', '🏨', '🏪', '🏫', '🏩', '💒', '🏛️', '⛪', '🕌', '🕍', '🛕', '🕋', '⛩️', '🗾', '🎑', '🏞️', '🌅', '🌄', '🌠', '🎇', '🎆', '🌇', '🌆', '🏙️', '🌃', '🌌', '🌉', '🌁'],
@@ -104,6 +105,20 @@ const applySkinTone = (emoji, skinTone) => {
   return emoji + skinTone;
 };
 
+// Helper function to detect if a string contains emoji
+const containsEmoji = (text) => {
+  // Unicode ranges for emoji detection
+  const emojiRegex = /[\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]|[\u{1F000}-\u{1F02F}]|[\u{1F0A0}-\u{1F0FF}]|[\u{1F100}-\u{1F64F}]|[\u{1F680}-\u{1F6FF}]|[\u{1F900}-\u{1F9FF}]|[\u{1FA70}-\u{1FAFF}]|[\u{2300}-\u{23FF}]|[\u{2460}-\u{24FF}]|[\u{2B50}]/gu;
+  return emojiRegex.test(text);
+};
+
+// Helper function to extract emojis from text
+const extractEmojis = (text) => {
+  const emojiRegex = /[\p{Emoji_Presentation}\p{Emoji}\u{200D}]/gu;
+  const matches = text.match(emojiRegex);
+  return matches ? matches.join('') : '';
+};
+
 // Custom images list (matching PWA)
 const CUSTOM_IMAGES = [
   { name: 'Chicken Nuggets', src: 'ChickenNuggets.png' },
@@ -127,12 +142,13 @@ const EmojiPicker = ({
   selectedEmoji,
   showCustomImages = true,
 }) => {
-  const [selectedCategory, setSelectedCategory] = useState('Smileys');
+  const [selectedCategory, setSelectedCategory] = useState('Lifestyle');
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredItems, setFilteredItems] = useState([]);
   const [categoryKeys, setCategoryKeys] = useState(Object.keys(EMOJI_CATEGORIES));
   const [selectedSkinTone, setSelectedSkinTone] = useState(null);
   const [showSkinToneSelector, setShowSkinToneSelector] = useState(false);
+  const [detectedEmoji, setDetectedEmoji] = useState('');
   
   // Calculate columns based on screen size
   const numColumns = isTablet() ? 10 : 6;
@@ -145,20 +161,29 @@ const EmojiPicker = ({
         EMOJI_CATEGORIES['Custom'] = CUSTOM_IMAGES;
       }
       setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
-      setSelectedCategory('Custom');
+      // Prefer Lifestyle category if available, otherwise Custom
+      setSelectedCategory('Lifestyle');
     } else {
       // Remove Custom category if it exists
       if (EMOJI_CATEGORIES['Custom']) {
         delete EMOJI_CATEGORIES['Custom'];
       }
       setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
-      setSelectedCategory('Smileys');
+      setSelectedCategory('Lifestyle');
     }
   }, [showCustomImages]);
   
   // Filter items based on search
   useEffect(() => {
     if (searchQuery) {
+      // Check if the search query contains emoji(s)
+      const extractedEmojis = extractEmojis(searchQuery);
+      if (extractedEmojis) {
+        setDetectedEmoji(extractedEmojis);
+      } else {
+        setDetectedEmoji('');
+      }
+      
       const query = searchQuery.toLowerCase();
       const filtered = [];
       
@@ -186,6 +211,7 @@ const EmojiPicker = ({
       setFilteredItems(filtered);
     } else {
       // No search, show selected category
+      setDetectedEmoji('');
       const items = EMOJI_CATEGORIES[selectedCategory] || [];
       setFilteredItems(
         items.map(item => 
@@ -209,6 +235,7 @@ const EmojiPicker = ({
     }
     setSearchQuery('');
   };
+  
   
   const renderItem = ({ item }) => {
     if (item.type === 'placeholder') {
@@ -260,7 +287,7 @@ const EmojiPicker = ({
         <Icon name="search" size={20} color="#999" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search (e.g. car, camera, happy)..."
+          placeholder="Search or type an emoji..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#999"
@@ -325,33 +352,48 @@ const EmojiPicker = ({
         </View>
       )}
       
+      {/* Detected Emoji Result */}
+      {detectedEmoji && searchQuery && (
+        <View style={styles.detectedEmojiContainer}>
+          <Text style={styles.detectedEmojiLabel}>Typed emoji:</Text>
+          <TouchableOpacity
+            style={styles.detectedEmojiButton}
+            onPress={() => handleSelect({ type: 'emoji', emoji: detectedEmoji })}
+          >
+            <Text style={styles.detectedEmoji}>{detectedEmoji}</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       {/* Emoji Grid */}
-      <View style={{ flex: 1 }}>
-        <FlatList
-          data={(() => {
-            // Add empty items to fill the last row
-            const items = [...filteredItems];
-            const remainder = items.length % numColumns;
-            if (remainder !== 0) {
-              for (let i = 0; i < (numColumns - remainder); i++) {
-                items.push({ type: 'placeholder', id: `placeholder-${i}` });
+      {(
+        <View style={{ flex: 1 }}>
+          <FlatList
+            data={(() => {
+              // Add empty items to fill the last row
+              const items = [...filteredItems];
+              const remainder = items.length % numColumns;
+              if (remainder !== 0) {
+                for (let i = 0; i < (numColumns - remainder); i++) {
+                  items.push({ type: 'placeholder', id: `placeholder-${i}` });
+                }
               }
+              return items;
+            })()}
+            renderItem={renderItem}
+            keyExtractor={(item, index) => 
+              item.type === 'emoji' ? item.emoji : 
+              item.type === 'placeholder' ? item.id : item.src
             }
-            return items;
-          })()}
-          renderItem={renderItem}
-          keyExtractor={(item, index) => 
-            item.type === 'emoji' ? item.emoji : 
-            item.type === 'placeholder' ? item.id : item.src
-          }
-          numColumns={numColumns}
-          contentContainerStyle={styles.emojiGrid}
-          showsVerticalScrollIndicator={false}
-          removeClippedSubviews={false}
-          keyboardShouldPersistTaps="handled"
-          nestedScrollEnabled={true}
-        />
-      </View>
+            numColumns={numColumns}
+            contentContainerStyle={styles.emojiGrid}
+            showsVerticalScrollIndicator={false}
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled"
+            nestedScrollEnabled={true}
+          />
+        </View>
+      )}
     </View>
   );
   
@@ -517,6 +559,28 @@ const styles = StyleSheet.create({
   },
   skinToneEmoji: {
     fontSize: isTablet() ? 26 : 22,
+  },
+  detectedEmojiContainer: {
+    paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  detectedEmojiLabel: {
+    fontSize: isTablet() ? TYPOGRAPHY.fontSize.sm : TYPOGRAPHY.fontSize.xs,
+    color: COLORS.gray[600],
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  detectedEmojiButton: {
+    backgroundColor: COLORS.gray[100],
+    paddingHorizontal: SPACING.xl,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    borderWidth: 2,
+    borderColor: '#667eea',
+  },
+  detectedEmoji: {
+    fontSize: isTablet() ? 48 : 40,
   },
 });
 

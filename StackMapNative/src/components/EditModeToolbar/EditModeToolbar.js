@@ -8,6 +8,7 @@ import {
   Modal,
   FlatList,
   Animated,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet } from '../../constants';
@@ -236,15 +237,16 @@ const styles = StyleSheet.create({
   },
   toolbarWrapper: {
     alignItems: 'center',
-    paddingVertical: SPACING.sm,
+    paddingTop: SPACING.sm,
+    paddingBottom: Platform.OS === 'android' ? SPACING.lg : SPACING.sm,
     position: 'relative',
     zIndex: 1,
   },
   editModeLabel: {
     color: 'white',
     fontSize: isTablet() ? 20 : 18,
-    fontWeight: '700',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
+    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
     marginBottom: SPACING.sm,
     opacity: 1,
   },
@@ -266,8 +268,8 @@ const styles = StyleSheet.create({
   },
   actionLabel: {
     fontSize: isTablet() ? 18 : 16,
-    fontWeight: '700',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
+    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
   },
   moreMenuOverlay: {
     flex: 1,

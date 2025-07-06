@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 // Color themes - designed for accessibility with white text
 // First 15: Chromatic order with WCAG AA compliance for white text (includes rainbow spectrum)
 // Last 5: Neurodiversity-friendly colors (calming, reduced sensory load)
@@ -11,7 +13,7 @@ export const THEMES = {
   amber: { primary: '#D97706', dark: '#B45309', light: '#F59E0B' },        // Deep amber
   gold: { primary: '#B8860B', dark: '#996F09', light: '#D4A017' },         // Rich gold (rainbow yellow)
   olive: { primary: '#6B8E23', dark: '#556B2F', light: '#8FBC8F' },        // Olive green
-  emerald: { primary: '#50C878', dark: '#3FA760', light: '#6FD896' },      // Bright emerald (rainbow green)
+  emerald: { primary: '#2D8659', dark: '#236B48', light: '#3FA760' },      // Rich emerald (rainbow green)
   forest: { primary: '#228B22', dark: '#1C6E1C', light: '#3CB371' },       // Forest green
   ocean: { primary: '#2C7A7B', dark: '#1F5F5F', light: '#4C9A9B' },        // Ocean teal
   sapphire: { primary: '#0F52BA', dark: '#0B3D8A', light: '#3770CF' },     // Bright sapphire (rainbow blue)
@@ -21,7 +23,7 @@ export const THEMES = {
   
   // Neurodiversity-friendly colors
   sage: { primary: '#6B7F6B', dark: '#556655', light: '#8B9F8B' },         // Calming sage - reduces anxiety
-  dustyBlue: { primary: '#5B7C99', dark: '#4A6480', light: '#7A95B0' },    // Muted blue - ADHD focus
+  dustyBlue: { primary: '#4A6480', dark: '#3B5066', light: '#6B859F' },    // Muted blue - ADHD focus
   stackBlue: { primary: '#5C7E9D', dark: '#4A6680', light: '#7896B3' },    // StackMap blue - ADHD/neurodiverse friendly
   terracotta: { primary: '#A0522D', dark: '#804020', light: '#C07550' },   // Warm earth - grounding
   lavender: { primary: '#7B68A6', dark: '#65538C', light: '#9785BD' },     // Soft purple - sensory comfort
@@ -129,11 +131,17 @@ export const ANIMATION = {
   slow: 500,
 };
 
-// Typography (with Comic Neue)
+// Typography (with Comic Relief)
 export const TYPOGRAPHY = {
   fontFamily: {
-    regular: 'ComicNeue-Regular',
-    bold: 'ComicNeue-Bold',
+    regular: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular'
+    }),
+    bold: Platform.select({
+      ios: 'Comic Relief', // iOS uses same family with fontWeight
+      android: 'ComicRelief-Bold'
+    }),
   },
   fontSize: {
     xs: 12,

@@ -6,3 +6,4 @@ export { default as Logo } from './Logo';
 export { default as ActivityLibrary } from './ActivityLibrary';
 export { default as EmojiPicker } from './EmojiPicker';
 export { CelebrationView } from './CelebrationManager';
+export { default as Onboarding } from './Onboarding';
