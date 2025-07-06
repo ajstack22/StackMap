@@ -428,11 +428,23 @@ const App = () => {
 
   const loadData = async () => {
     try {
-      const savedData = await AsyncStorage.getItem('stackMapData');
+      // Try both old and new storage keys
+      const savedDataOld = await AsyncStorage.getItem('stackMapData');
+      const savedDataNew = await AsyncStorage.getItem('@stackmap_data');
+      const savedData = savedDataNew || savedDataOld; // Prefer new key if both exist
+      
       const hasCompletedOnboarding = await AsyncStorage.getItem('@stackmap_hasCompletedOnboarding');
       
-      // Check if we should show onboarding regardless of whether there's data
-      if (!hasCompletedOnboarding) {
+      // If user has data but no onboarding flag, they're an existing user - don't show onboarding
+      const isExistingUser = savedData && !hasCompletedOnboarding;
+      if (isExistingUser) {
+        // Mark onboarding as completed for existing users
+        await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
+        console.log('Existing user detected, skipping onboarding');
+      }
+      
+      // Check if we should show onboarding (only for truly new users)
+      if (!hasCompletedOnboarding && !savedData) {
         setShowOnboarding(true);  // Show Onboarding with new content instead of SetupWizard
         return; // Don't load data or create default user yet, wait for setup completion
       }
