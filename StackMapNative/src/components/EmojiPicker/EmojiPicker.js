@@ -305,7 +305,7 @@ const EmojiPicker = ({
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="done"
-          keyboardType={Platform.OS === 'ios' ? 'default' : 'visible-password'}
+          keyboardType="default"
           autoFocus={false}
           enablesReturnKeyAutomatically={true}
         />
