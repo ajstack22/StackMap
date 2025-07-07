@@ -36,7 +36,7 @@
     "android:install": "cd android && ./install-debug.sh"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.2.1",
+    "@capacitor/cli": "^7.4.1",
     "@capacitor/core": "^6.2.1",
     "chalk": "^4.1.2",
     "http-server": "^14.1.1",
