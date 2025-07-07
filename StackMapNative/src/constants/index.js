@@ -1,6 +1,7 @@
 // Re-export all constants for easy importing
 export * from './layout';
 export * from './theme';
+export * from './featureFlags';
 
 // Common emojis used in the app
 export const COMMON_EMOJIS = [

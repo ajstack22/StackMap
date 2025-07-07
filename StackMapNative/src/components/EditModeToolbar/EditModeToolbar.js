@@ -90,7 +90,11 @@ const EditModeToolbar = ({
 
   const renderAction = ({ item }) => (
     <TouchableOpacity
-      style={[styles.actionButton, item.disabled && styles.disabledButton]}
+      style={[
+        styles.actionButton, 
+        item.disabled && styles.disabledButton,
+        item.id === 'settings' && { paddingLeft: SPACING.lg }
+      ]}
       onPress={item.disabled ? null : item.onPress}
       disabled={item.disabled}
     >
@@ -237,7 +241,7 @@ const styles = StyleSheet.create({
   },
   toolbarWrapper: {
     alignItems: 'center',
-    paddingTop: SPACING.sm,
+    paddingTop: Platform.OS === 'android' ? SPACING.lg : SPACING.sm,
     paddingBottom: Platform.OS === 'android' ? SPACING.lg : SPACING.sm,
     position: 'relative',
     zIndex: 1,

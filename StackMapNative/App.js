@@ -65,6 +65,7 @@ import {
   getBadgeDimensions,
   FONT_SCALE,
   CUSTOM_IMAGE_SOURCES,
+  FEATURE_FLAGS,
 } from './src/constants';
 
 // Import components
@@ -119,7 +120,7 @@ const App = () => {
   // State
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
-  const [currentTheme, setCurrentTheme] = useState('stackBlue');
+  const [currentTheme, setCurrentTheme] = useState('stackBlue'); // This will be overridden by user's theme
   const [bannerPosition, setBannerPosition] = useState('top');
   const [currentUser, setCurrentUser] = useState(null);
   const [users, setUsers] = useState({});
@@ -132,6 +133,9 @@ const App = () => {
   const [showEditModeSettingsModal, setShowEditModeSettingsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showActivityLibrary, setShowActivityLibrary] = useState(false);
+  
+  // Force ScrollView recalculation on Android modals
+  const [modalScrollKey, setModalScrollKey] = useState(0);
   const [editingActivity, setEditingActivity] = useState(null);
   const [activityTitle, setActivityTitle] = useState('');
   const [activityDescription, setActivityDescription] = useState('');
@@ -188,6 +192,14 @@ const App = () => {
   const [editModeToolbarTranslate] = useState(() => new Animated.Value(100));
   const [editIconsTranslateY] = useState(() => new Animated.Value(0));
   const [editIconsOpacity] = useState(() => new Animated.Value(0));
+  
+  // ScrollView refs for forcing measurement on Android
+  const preferencesScrollRef = useRef(null);
+  const settingsScrollRef = useRef(null);
+  
+  // Force re-render keys for Android scroll fix
+  const [settingsScrollKey, setSettingsScrollKey] = useState(0);
+  const [preferencesScrollKey, setPreferencesScrollKey] = useState(0);
   
   // Pre-create interpolated values to avoid creating them during render
   const editIconsTranslateYInterpolated = React.useMemo(() => 
@@ -385,7 +397,8 @@ const App = () => {
         settings: user.settings || {
           taskCelebration: 'rainbow',
           routineCelebration: 'rainbow',
-          soundEnabled: true
+          soundEnabled: true,
+          theme: 'stackBlue'
         },
         createdAt: user.createdAt || new Date().toISOString(),
         lastActive: user.lastActive || new Date().toISOString()
@@ -492,6 +505,10 @@ const App = () => {
         if (userId && migratedData.users[userId]) {
           setCurrentUser(userId);
           setActivities(migratedData.users[userId]?.days?.[currentDay]?.activities || []);
+          // Load user's theme
+          if (migratedData.users[userId]?.settings?.theme) {
+            setCurrentTheme(migratedData.users[userId].settings.theme);
+          }
         }
       } else {
         // First time - check if we should show onboarding
@@ -513,7 +530,8 @@ const App = () => {
           settings: {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
-            soundEnabled: true
+            soundEnabled: true,
+            theme: 'stackBlue'
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -588,7 +606,8 @@ const App = () => {
           settings: {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
-            soundEnabled: true
+            soundEnabled: true,
+            theme: 'stackBlue'
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -673,7 +692,8 @@ const App = () => {
           settings: {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
-            soundEnabled: true
+            soundEnabled: true,
+            theme: 'stackBlue'
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -789,7 +809,8 @@ const App = () => {
           settings: {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
-            soundEnabled: true
+            soundEnabled: true,
+            theme: 'stackBlue'
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -853,7 +874,8 @@ const App = () => {
         settings: {
           taskCelebration: 'rainbow',
           routineCelebration: 'rainbow',
-          soundEnabled: true
+          soundEnabled: true,
+          theme: 'stackBlue'
         },
         createdAt: new Date().toISOString(),
         lastActive: new Date().toISOString()
@@ -1250,7 +1272,8 @@ const App = () => {
       settings: {
         taskCelebration: 'rainbow',
         routineCelebration: 'rainbow',
-        soundEnabled: true
+        soundEnabled: true,
+        theme: currentTheme || 'stackBlue'
       },
       createdAt: new Date().toISOString(),
       lastActive: new Date().toISOString()
@@ -1263,6 +1286,10 @@ const App = () => {
     
     setCurrentUser(userId);
     setActivities([]);
+    // New user inherits current theme
+    if (currentTheme) {
+      setCurrentTheme(currentTheme);
+    }
     setNewUserName('');
     setNewUserEmoji('😀');
     setShowAddUserModal(false);
@@ -1816,17 +1843,32 @@ const App = () => {
     
   const fabTop = bannerPosition === 'top'
     ? Platform.OS === 'android'
-      ? StatusBar.currentHeight + 20 // Android: account for status bar
-      : insets.top + (isTablet() ? 20 : 20) // iOS: use safe area insets
+      ? (StatusBar.currentHeight || 24) + 35 // Android: account for status bar and camera
+      : insets.top + (isTablet() ? 20 : 35) // iOS: use safe area insets
     : null;
     
   const AppContent = (
     <>
-      <StatusBar barStyle="light-content" backgroundColor={theme.dark} />
+      <StatusBar 
+        barStyle={bannerPosition === 'top' ? 'light-content' : 'dark-content'} 
+        backgroundColor={bannerPosition === 'top' ? theme.primary : theme.light} 
+        translucent={false}
+      />
       <View style={[styles.container, { backgroundColor: theme.light }]}>
         {/* Status Bar Background when banner is at bottom */}
         {bannerPosition === 'bottom' && (
-          <SafeAreaView style={{ backgroundColor: theme.primary }} />
+          Platform.OS === 'ios' ? (
+            <SafeAreaView style={{ backgroundColor: theme.primary }} />
+          ) : (
+            // On Android, show colored block only when edit mode toolbar is not visible at top
+            !(isEditMode && showEditToolbar) && (
+              <View style={{ 
+                backgroundColor: theme.primary, 
+                height: StatusBar.currentHeight || 24,
+                width: '100%'
+              }} />
+            )
+          )
         )}
         
         {/* Top Banner */}
@@ -1978,14 +2020,29 @@ const App = () => {
         
         {/* Status Bar Background when banner is at top */}
         {bannerPosition === 'top' && (
-          <SafeAreaView style={{ backgroundColor: theme.primary }} />
+          Platform.OS === 'ios' ? (
+            <SafeAreaView style={{ backgroundColor: theme.primary }} />
+          ) : (
+            // On Android, show colored block only when edit mode toolbar is not visible at bottom
+            !(isEditMode && showEditToolbar) && (
+              <View style={{ 
+                backgroundColor: theme.primary, 
+                height: 48, // Increased height to match iOS aesthetic
+                width: '100%'
+              }} />
+            )
+          )
         )}
         
         {/* FABs - Positioned on the banner */}
         <FAB
           icon="palette"
-          onPress={() => setShowUserModal(true)}
-          onLongPress={() => setShowUserModal(true)}
+          onPress={() => {
+            setShowUserModal(true);
+          }}
+          onLongPress={() => {
+            setShowUserModal(true);
+          }}
           position={{ bottom: fabBottom, top: fabTop, left: 20 }}
           theme={theme}
         />
@@ -2016,7 +2073,11 @@ const App = () => {
         animationType="slide"
         onRequestClose={() => setShowActivityModal(false)}
       >
+        <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
         <View style={styles.modalContainer}>
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          )}
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
               <Text style={styles.modalTitle}>
@@ -2036,7 +2097,11 @@ const App = () => {
               style={styles.modalContent}
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView 
+                style={{ flex: 1 }}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+                showsVerticalScrollIndicator={false}
+              >
                 <>
                   {/* Emoji Selector */}
                   <TouchableOpacity 
@@ -2055,29 +2120,38 @@ const App = () => {
                     <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
                   </TouchableOpacity>
 
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Activity title"
-                    value={activityTitle}
-                    onChangeText={setActivityTitle}
-                    autoFocus={!editingActivity}
-                  />
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Title</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Activity title"
+                      value={activityTitle}
+                      onChangeText={setActivityTitle}
+                      autoFocus={!editingActivity}
+                    />
+                  </View>
                   
-                  <TextInput
-                    style={[styles.input, styles.textArea]}
-                    placeholder="Description (optional)"
-                    value={activityDescription}
-                    onChangeText={setActivityDescription}
-                    multiline
-                    numberOfLines={3}
-                  />
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Description (optional)</Text>
+                    <TextInput
+                      style={[styles.input, styles.textArea]}
+                      placeholder="Add more details..."
+                      value={activityDescription}
+                      onChangeText={setActivityDescription}
+                      multiline
+                      numberOfLines={3}
+                    />
+                  </View>
                   
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Time (e.g. 9:00 AM)"
-                    value={activityTime}
-                    onChangeText={setActivityTime}
-                  />
+                  <View style={styles.inputGroup}>
+                    <Text style={styles.inputLabel}>Time (optional)</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="e.g. 9:00 AM"
+                      value={activityTime}
+                      onChangeText={setActivityTime}
+                    />
+                  </View>
                   
                   <TouchableOpacity
                     style={[styles.button, { backgroundColor: theme.primary }]}
@@ -2092,6 +2166,9 @@ const App = () => {
             </KeyboardAvoidingView>
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.light, height: 24 }} />
+          )}
           
           {/* Emoji Picker Modal for Add Activity */}
           {showEmojiPicker && (
@@ -2103,9 +2180,9 @@ const App = () => {
                 setActivityEmoji(emoji);
                 setShowEmojiPicker(false);
               }}
+              showCustomImages={FEATURE_FLAGS.ENABLE_CUSTOM_EMOJIS}
               theme={theme}
               selectedEmoji={activityEmoji}
-              showCustomImages={true}
             />
           )}
         </View>
@@ -2118,6 +2195,9 @@ const App = () => {
         onRequestClose={() => setShowUserDayModal(false)}
       >
         <View style={styles.modalContainer}>
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          )}
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
               <Text style={styles.modalTitle}>Switch User/Day</Text>
@@ -2127,8 +2207,11 @@ const App = () => {
             </View>
           </SafeAreaView>
           
-          <View style={{ flex: 1, backgroundColor: theme.light }}>
-            <ScrollView style={styles.modalContent}>
+          <ScrollView 
+            style={{ flex: 1, backgroundColor: theme.light }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+          >
               {/* Users Section */}
               <Text style={styles.sectionTitle}>Users</Text>
               <View style={styles.usersList}>
@@ -2142,6 +2225,10 @@ const App = () => {
                     onPress={() => {
                       setCurrentUser(userId);
                       setActivities(user.days?.[currentDay]?.activities || []);
+                      // Load user's theme
+                      if (user.settings?.theme) {
+                        setCurrentTheme(user.settings.theme);
+                      }
                       showToast({ message: `Switched to ${user.name}` });
                       setShowUserDayModal(false);
                     }}
@@ -2181,7 +2268,6 @@ const App = () => {
                 </TouchableOpacity>
               </View>
             </ScrollView>
-          </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
         </View>
       </Modal>
@@ -2191,8 +2277,19 @@ const App = () => {
         visible={showUserModal}
         animationType="slide"
         onRequestClose={() => setShowUserModal(false)}
+        onShow={() => {
+          // Force layout update on Android to fix scrolling
+          if (Platform.OS === 'android') {
+            setTimeout(() => {
+              setPreferencesScrollKey(prev => prev + 1);
+            }, 0);
+          }
+        }}
       >
         <View style={styles.modalContainer}>
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          )}
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
               <Text style={styles.modalTitle}>Preferences</Text>
@@ -2202,10 +2299,19 @@ const App = () => {
             </View>
           </SafeAreaView>
           
-          <View style={{ flex: 1, backgroundColor: theme.light }}>
-            <ScrollView style={styles.modalContent}>
+          <FlatList
+            key={preferencesScrollKey}
+            ref={preferencesScrollRef}
+            style={{ flex: 1, backgroundColor: theme.light }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+            collapsable={false}
+            nestedScrollEnabled={true}
+            data={[{ key: 'content' }]}
+            renderItem={() => (
+              <TouchableOpacity activeOpacity={1}>
               {/* Theme Color Section */}
-              <Text style={styles.sectionTitle}>Theme Color</Text>
+                <Text style={styles.sectionTitle}>Theme Color</Text>
               <View style={styles.colorGrid}>
                 {(() => {
                   // Put stackBlue (default) first, then all other themes
@@ -2222,7 +2328,23 @@ const App = () => {
                             { backgroundColor: THEMES[color].primary },
                             currentTheme === color && styles.colorSelected
                           ]}
-                          onPress={() => setCurrentTheme(color)}
+                          onPress={() => {
+                            setCurrentTheme(color);
+                            // Save theme to current user's settings
+                            if (currentUser && users[currentUser]) {
+                              const updatedUsers = {
+                                ...users,
+                                [currentUser]: {
+                                  ...users[currentUser],
+                                  settings: {
+                                    ...users[currentUser].settings,
+                                    theme: color
+                                  }
+                                }
+                              };
+                              setUsers(updatedUsers);
+                            }
+                          }}
                         >
                           {currentTheme === color && <Icon name="check" size={24} color="white" />}
                         </TouchableOpacity>
@@ -2355,8 +2477,10 @@ const App = () => {
                   <Icon name="chevron-right" size={24} color="#666" />
                 </TouchableOpacity>
               </View>
-            </ScrollView>
-          </View>
+              </TouchableOpacity>
+            )}
+            keyExtractor={(item) => item.key}
+          />
           <SafeAreaView style={{ backgroundColor: theme.light }} />
         </View>
       </Modal>
@@ -2366,8 +2490,20 @@ const App = () => {
         visible={showEditModeSettingsModal}
         animationType="slide"
         onRequestClose={() => setShowEditModeSettingsModal(false)}
+        onShow={() => {
+          // Force layout update on Android to fix scrolling
+          if (Platform.OS === 'android') {
+            setTimeout(() => {
+              setSettingsScrollKey(prev => prev + 1);
+            }, 0);
+          }
+        }}
       >
+        <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
         <View style={styles.modalContainer}>
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          )}
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
               <Text style={styles.modalTitle}>Settings</Text>
@@ -2377,10 +2513,18 @@ const App = () => {
             </View>
           </SafeAreaView>
           
-          <View style={{ flex: 1, backgroundColor: theme.light }}>
-            <ScrollView style={styles.modalContent}>
-              {/* User Management Section */}
-            <Text style={styles.sectionTitle}>Users</Text>
+          <ScrollView 
+            key={settingsScrollKey}
+            ref={settingsScrollRef}
+            style={{ flex: 1, backgroundColor: theme.light }}
+            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
+            showsVerticalScrollIndicator={false}
+            collapsable={false}
+            nestedScrollEnabled={true}
+          >
+            <TouchableOpacity activeOpacity={1}>
+                {/* User Management Section */}
+                <Text style={styles.sectionTitle}>Users</Text>
             <View style={styles.usersList}>
               {Object.entries(users).map(([userId, user]) => (
                 <TouchableOpacity
@@ -2392,6 +2536,10 @@ const App = () => {
                   onPress={() => {
                     setCurrentUser(userId);
                     setActivities(user.days?.[currentDay]?.activities || []);
+                    // Load user's theme
+                    if (user.settings?.theme) {
+                      setCurrentTheme(user.settings.theme);
+                    }
                     showToast({ message: `Switched to ${user.name}` });
                   }}
                   onLongPress={() => {
@@ -2411,6 +2559,10 @@ const App = () => {
                               const newUserId = Object.keys(updatedUsers)[0];
                               setCurrentUser(newUserId);
                               setActivities(updatedUsers[newUserId].days?.[currentDay]?.activities || []);
+                              // Load new user's theme
+                              if (updatedUsers[newUserId]?.settings?.theme) {
+                                setCurrentTheme(updatedUsers[newUserId].settings.theme);
+                              }
                             }
                             showToast({ message: `Deleted ${user.name}` });
                           }
@@ -2445,7 +2597,10 @@ const App = () => {
               ))}
               <TouchableOpacity
                 style={styles.addUserButton}
-                onPress={() => setShowAddUserModal(true)}
+                onPress={() => {
+                  setShowEditModeSettingsModal(false);
+                  setShowAddUserModal(true);
+                }}
               >
                 <Icon name="add" size={24} color={theme.primary} />
                 <Text style={styles.addUserText}>Add User</Text>
@@ -2572,8 +2727,8 @@ const App = () => {
                 <Text style={styles.buttonText}>Reset App</Text>
               </TouchableOpacity>
             </View>
+            </TouchableOpacity>
           </ScrollView>
-          </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
         </View>
       </Modal>
@@ -2585,6 +2740,9 @@ const App = () => {
         onRequestClose={() => setShowAddUserModal(false)}
       >
         <View style={styles.modalContainer}>
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          )}
           <SafeAreaView style={{ backgroundColor: theme.primary }}>
             <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
               <Text style={styles.modalTitle}>
@@ -2606,7 +2764,11 @@ const App = () => {
               style={styles.modalContent}
               behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             >
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView 
+                style={{ flex: 1 }}
+                contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+                showsVerticalScrollIndicator={false}
+              >
                 {/* Emoji Selector */}
               <TouchableOpacity 
                 style={styles.emojiSelector}
@@ -2658,6 +2820,9 @@ const App = () => {
           </KeyboardAvoidingView>
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.light, height: 24 }} />
+          )}
           
           {/* User Emoji Picker Modal */}
           {showUserEmojiPicker && (
@@ -2671,7 +2836,7 @@ const App = () => {
               }}
               theme={theme}
               selectedEmoji={newUserEmoji}
-              showCustomImages={false}
+              showCustomImages={FEATURE_FLAGS.ENABLE_CUSTOM_EMOJIS}
             />
           )}
         </View>
@@ -2779,7 +2944,9 @@ const App = () => {
           onExit={() => setIsEditMode(false)}
           onAdd={() => setShowActivityModal(true)}
           onLibrary={() => setShowActivityLibrary(true)}
-          onSettings={() => setShowEditModeSettingsModal(true)}
+          onSettings={() => {
+            setShowEditModeSettingsModal(true);
+          }}
           onCompleteDay={() => {
             const pinnedCount = activities.filter(a => a.pinned).length;
             const unpinnedCount = activities.filter(a => !a.pinned).length;
@@ -2909,6 +3076,9 @@ const App = () => {
         presentationStyle="fullScreen"
       >
         <View style={styles.modalContainer}>
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: '#2c3e50', height: StatusBar.currentHeight || 24 }} />
+          )}
           <SafeAreaView style={{ backgroundColor: '#2c3e50' }}>
             <View style={[styles.modalHeader, { backgroundColor: '#2c3e50' }]}>
               <Text style={[styles.modalTitle, { color: 'white' }]}>Privacy Policy</Text>
@@ -2999,6 +3169,9 @@ const App = () => {
             </ScrollView>
           </View>
           <SafeAreaView style={{ backgroundColor: '#f8f9fa' }} />
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: '#f8f9fa', height: 24 }} />
+          )}
         </View>
       </Modal>
       
@@ -3108,6 +3281,9 @@ const App = () => {
         presentationStyle="fullScreen"
       >
         <View style={styles.modalContainer}>
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: '#ff6b9d', height: StatusBar.currentHeight || 24 }} />
+          )}
           <SafeAreaView style={{ backgroundColor: '#ff6b9d' }}>
             <View style={[styles.modalHeader, { backgroundColor: '#ff6b9d' }]}>
               <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap 💖</Text>
@@ -3192,6 +3368,9 @@ const App = () => {
             </ScrollView>
           </View>
           <SafeAreaView style={{ backgroundColor: '#fff5f8' }} />
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: '#fff5f8', height: 24 }} />
+          )}
         </View>
       </Modal>
       
@@ -3233,8 +3412,8 @@ const App = () => {
     );
   }
 
-  // Wrap with GestureHandlerRootView only on iOS
-  if (Platform.OS === 'ios' && GestureHandlerRootView) {
+  // Wrap with GestureHandlerRootView for both iOS and Android
+  if (GestureHandlerRootView) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         {AppContent}
@@ -3257,8 +3436,9 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingVertical: Platform.OS === 'android' ? 15 : 20,
+    paddingVertical: Platform.OS === 'android' ? 20 : 20,
     paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? 25 : 20,
   },
   headerContent: {
     alignItems: 'center',
@@ -3583,12 +3763,21 @@ const styles = StyleSheet.create({
     color: '#666',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
+  inputGroup: {
+    marginBottom: 10,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
   input: {
     backgroundColor: 'white',
     borderRadius: 8,
     padding: 15,
     fontSize: 16,
-    marginBottom: 15,
     borderWidth: 1,
     borderColor: '#e0e0e0',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -3934,6 +4123,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#333',
   },
   celebrationTextActive: {
     color: 'white',

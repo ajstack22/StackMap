@@ -138,6 +138,10 @@ export const TYPOGRAPHY = {
       ios: 'Comic Relief',
       android: 'ComicRelief-Regular'
     }),
+    medium: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular'
+    }),
     bold: Platform.select({
       ios: 'Comic Relief', // iOS uses same family with fontWeight
       android: 'ComicRelief-Bold'

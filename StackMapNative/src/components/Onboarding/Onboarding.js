@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,10 @@ import {
   KeyboardAvoidingView,
   FlatList,
   StatusBar,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -37,6 +39,40 @@ const USER_EMOJI_OPTIONS = [
   '🎪', '🎯', '🏆', '💎', '🔥', '⚡', '🌙', '☀️'
 ];
 
+// Animated dot component that responds to scroll position
+const ScrollAwareDot = ({ index, scrollX, screenWidth, totalSteps }) => {
+  const inputRange = [
+    (index - 1) * screenWidth,
+    index * screenWidth,
+    (index + 1) * screenWidth,
+  ];
+  
+  const scaleX = scrollX.interpolate({
+    inputRange,
+    outputRange: [1, 2.5, 1],
+    extrapolate: 'clamp',
+  });
+  
+  const opacity = scrollX.interpolate({
+    inputRange,
+    outputRange: [0.5, 1, 0.5],
+    extrapolate: 'clamp',
+  });
+  
+  return (
+    <Animated.View
+      style={[
+        styles.dot,
+        {
+          opacity,
+          transform: [{ scaleX }],
+          backgroundColor: THEMES.stackBlue.primary,
+        },
+      ]}
+    />
+  );
+};
+
 const Onboarding = ({ onComplete, onSkip }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [users, setUsers] = useState([]);
@@ -47,10 +83,55 @@ const Onboarding = ({ onComplete, onSkip }) => {
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [isAddingAnotherUser, setIsAddingAnotherUser] = useState(false);
+  const [screenDimensions, setScreenDimensions] = useState({ width: screenWidth, height: screenHeight });
+  const scrollX = useRef(new Animated.Value(0)).current;
   const scrollViewRef = useRef(null);
+  const insets = useSafeAreaInsets();
   const nameInputRef = useRef(null);
   const pinInputRef = useRef(null);
   const confirmPinInputRef = useRef(null);
+
+  // Update screen dimensions on orientation change
+  useEffect(() => {
+    const updateDimensions = () => {
+      const { width, height } = Dimensions.get('window');
+      setScreenDimensions({ width, height });
+    };
+
+    const subscription = Dimensions.addEventListener('change', updateDimensions);
+    return () => subscription?.remove();
+  }, []);
+
+  // Calculate optimal emoji grid columns based on screen width
+  const calculateEmojiColumns = useCallback(() => {
+    const padding = isTablet() ? SPACING.xxl * 1.5 : SPACING.xl;
+    const availableWidth = screenDimensions.width - (padding * 2);
+    const maxContentWidth = isTablet() ? 560 : 400;
+    const contentWidth = Math.min(availableWidth, maxContentWidth);
+    
+    // Calculate item size with margins
+    const itemSize = isTablet() ? 70 : 55;
+    const itemMargin = SPACING.xs;
+    const totalItemWidth = itemSize + (itemMargin * 2);
+    
+    // Calculate how many columns can fit
+    const possibleColumns = Math.floor(contentWidth / totalItemWidth);
+    
+    // Limit columns to reasonable numbers and ensure all items fit without scrolling
+    const columns = Math.min(possibleColumns, isTablet() ? 8 : 6);
+    
+    // Calculate grid height to prevent scrolling
+    const rows = Math.ceil(USER_EMOJI_OPTIONS.length / columns);
+    const gridHeight = rows * totalItemWidth;
+    
+    return {
+      columns,
+      itemSize,
+      itemMargin,
+      gridHeight,
+      contentWidth
+    };
+  }, [screenDimensions.width]);
 
   // Dynamic steps based on state
   const getOnboardingSteps = () => {
@@ -82,45 +163,6 @@ const Onboarding = ({ onComplete, onSkip }) => {
         ],
       },
       {
-        id: 'independence',
-        title: 'Your Space, Your Way',
-        description: 'Tools that respect autonomy and build confidence',
-        icon: '💪',
-        type: 'info',
-        bullets: [
-          'PIN protection for privacy & control',
-          'Complete tasks anytime - no judgment',
-          'Celebration moments for positive reinforcement',
-          'Today/Tomorrow view for better planning',
-        ],
-      },
-      {
-        id: 'communication',
-        title: 'Connect Without Pressure',
-        description: 'Natural ways to share daily experiences',
-        icon: '💬',
-        type: 'info',
-        bullets: [
-          'Activities become conversation starters',
-          'Reduces "what did you do today?" stress',
-          'Shared visibility without intrusion',
-          'Celebrate achievements together',
-        ],
-      },
-      {
-        id: 'family-ready',
-        title: 'Made for Shared Spaces',
-        description: 'Perfect for families, classrooms, and care teams',
-        icon: '👨‍👩‍👧‍👦',
-        type: 'info',
-        bullets: [
-          'Multiple user profiles on one device',
-          'Each person gets their own experience',
-          'Works great in schools and therapy settings',
-          'Community-driven development',
-        ],
-      },
-      {
         id: 'simple-powerful',
         title: 'Everything You Need',
         description: 'Thoughtfully designed features that just work',
@@ -141,22 +183,17 @@ const Onboarding = ({ onComplete, onSkip }) => {
 
     const setupSteps = [
       {
-        id: 'get-started',
-        title: "Let's Get Started!",
-        description: 'Set up your first user in just a minute',
-        icon: '🚀',
-        type: 'setup-intro',
-      },
-      {
         id: 'name',
         title: users.length === 0 ? 'What\'s the first user\'s name?' : `What\'s user ${users.length + 1}\'s name?`,
         subtitle: 'You can add up to 3 users now (more can be added later)',
+        icon: '👤',
         type: 'name-input',
       },
       {
         id: 'emoji',
-        title: 'Choose an avatar',
+        title: 'Make it Theirs',
         subtitle: `Pick an emoji for ${userName || 'this user'}`,
+        icon: '✨',
         type: 'emoji-select',
       },
     ];
@@ -167,6 +204,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
         id: 'pin',
         title: 'Would you like to protect Edit Mode with a PIN?',
         subtitle: 'This helps prevent accidental changes (one PIN for all users)',
+        icon: '🔐',
         type: 'pin-input',
       });
     }
@@ -179,6 +217,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
         subtitle: users.length === 0 ? 'Add at least one user to continue' : 
                   users.length < 3 ? 'Add another user or finish setup' : 
                   'You can add more users later in Settings',
+        icon: users.length === 0 ? '👥' : '✅',
         type: 'review',
       });
     }
@@ -188,6 +227,15 @@ const Onboarding = ({ onComplete, onSkip }) => {
 
   const ONBOARDING_STEPS = getOnboardingSteps();
   
+  const scrollToStep = useCallback((step) => {
+    if (scrollViewRef.current) {
+      scrollViewRef.current.scrollTo({
+        x: step * screenDimensions.width,
+        animated: true,
+      });
+    }
+  }, [screenDimensions.width]);
+
   const handleNext = () => {
     const currentStepData = ONBOARDING_STEPS[currentStep];
     
@@ -238,18 +286,17 @@ const Onboarding = ({ onComplete, onSkip }) => {
 
     if (currentStep < ONBOARDING_STEPS.length - 1) {
       const nextStep = currentStep + 1;
+      
+      // Update scroll and state together
       setCurrentStep(nextStep);
-      scrollViewRef.current?.scrollTo({
-        x: screenWidth * nextStep,
-        animated: true,
-      });
+      scrollToStep(nextStep);
       
       // Focus management
       const nextStepData = ONBOARDING_STEPS[nextStep];
       if (nextStepData.type === 'name-input') {
-        setTimeout(() => nameInputRef.current?.focus(), 300);
+        setTimeout(() => nameInputRef.current?.focus(), 400);
       } else if (nextStepData.type === 'pin-input') {
-        setTimeout(() => pinInputRef.current?.focus(), 300);
+        setTimeout(() => pinInputRef.current?.focus(), 400);
       }
     } else {
       // Complete onboarding
@@ -261,10 +308,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
     if (currentStep > 0) {
       const prevStep = currentStep - 1;
       setCurrentStep(prevStep);
-      scrollViewRef.current?.scrollTo({
-        x: screenWidth * prevStep,
-        animated: true,
-      });
+      scrollToStep(prevStep);
     }
   };
 
@@ -359,19 +403,6 @@ const Onboarding = ({ onComplete, onSkip }) => {
           </View>
         );
 
-      case 'setup-intro':
-        return (
-          <View key={step.id} style={styles.stepContainer}>
-            <View style={styles.welcomeContent}>
-              <View style={styles.logoContainer}>
-                <Logo size={isTablet() ? 60 : 50} theme={THEMES.stackBlue} />
-              </View>
-              <Text style={styles.title}>{step.title}</Text>
-              <Text style={styles.description}>{step.description}</Text>
-            </View>
-          </View>
-        );
-
       case 'name-input':
         return (
           <KeyboardAvoidingView
@@ -380,6 +411,9 @@ const Onboarding = ({ onComplete, onSkip }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             <View style={styles.inputContent}>
+              <View style={styles.iconContainer}>
+                <Text style={styles.icon}>{step.icon}</Text>
+              </View>
               <Text style={styles.title}>{step.title}</Text>
               <Text style={styles.subtitle}>{step.subtitle}</Text>
               
@@ -404,10 +438,14 @@ const Onboarding = ({ onComplete, onSkip }) => {
         );
 
       case 'emoji-select':
+        const emojiGrid = calculateEmojiColumns();
         return (
           <View key={step.id} style={styles.stepContainer}>
-            <View style={styles.emojiContent}>
-              <Text style={styles.title}>{step.title}</Text>
+            <View style={[styles.emojiContent, { width: emojiGrid.contentWidth }]}>
+              <Text style={[
+                styles.title, 
+                Platform.OS === 'android' && { marginTop: insets.top + SPACING.xl }
+              ]}>{step.title}</Text>
               <Text style={styles.subtitle}>{step.subtitle}</Text>
               
               <View style={styles.selectedEmojiContainer}>
@@ -420,35 +458,49 @@ const Onboarding = ({ onComplete, onSkip }) => {
                 placeholderTextColor={COLORS.gray[400]}
                 value=""
                 onChangeText={(text) => {
-                  const emojiRegex = /\p{Emoji}/u;
-                  const match = text.match(emojiRegex);
-                  if (match) {
-                    setSelectedEmoji(match[0]);
+                  // More comprehensive emoji regex that handles all emoji types
+                  const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Component})+/gu;
+                  const matches = text.match(emojiRegex);
+                  if (matches && matches[0]) {
+                    setSelectedEmoji(matches[0]);
                   }
                 }}
-                maxLength={5}
+                maxLength={10}
+                autoCorrect={false}
+                autoCapitalize="none"
+                keyboardType={Platform.OS === 'ios' ? 'default' : 'visible-password'}
+                enablesReturnKeyAutomatically={true}
               />
               
               <Text style={styles.orText}>or choose from below</Text>
               
-              <FlatList
-                data={USER_EMOJI_OPTIONS}
-                numColumns={isTablet() ? 8 : 6}
-                keyExtractor={(item) => item}
-                contentContainerStyle={styles.emojiGrid}
-                showsVerticalScrollIndicator={false}
-                renderItem={({ item }) => (
-                  <TouchableOpacity
-                    style={[
-                      styles.emojiOption,
-                      selectedEmoji === item && styles.selectedEmojiOption,
-                    ]}
-                    onPress={() => setSelectedEmoji(item)}
-                  >
-                    <Text style={styles.emojiOptionText}>{item}</Text>
-                  </TouchableOpacity>
-                )}
-              />
+              <View style={[styles.emojiGridContainer, { minHeight: emojiGrid.gridHeight }]}>
+                <FlatList
+                  data={USER_EMOJI_OPTIONS}
+                  numColumns={emojiGrid.columns}
+                  key={`grid-${emojiGrid.columns}`} // Force re-render when columns change
+                  keyExtractor={(item, index) => `${item}-${index}`}
+                  contentContainerStyle={styles.emojiGrid}
+                  showsVerticalScrollIndicator={false}
+                  scrollEnabled={false} // Disable scrolling
+                  renderItem={({ item }) => (
+                    <TouchableOpacity
+                      style={[
+                        styles.emojiOption,
+                        { 
+                          width: emojiGrid.itemSize, 
+                          height: emojiGrid.itemSize,
+                          margin: emojiGrid.itemMargin 
+                        },
+                        selectedEmoji === item && styles.selectedEmojiOption,
+                      ]}
+                      onPress={() => setSelectedEmoji(item)}
+                    >
+                      <Text style={styles.emojiOptionText}>{item}</Text>
+                    </TouchableOpacity>
+                  )}
+                />
+              </View>
             </View>
           </View>
         );
@@ -461,6 +513,9 @@ const Onboarding = ({ onComplete, onSkip }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             <View style={styles.pinContent}>
+              <View style={styles.iconContainer}>
+                <Text style={styles.icon}>{step.icon}</Text>
+              </View>
               <Text style={styles.title}>{step.title}</Text>
               <Text style={styles.subtitle}>{step.subtitle}</Text>
               
@@ -600,30 +655,36 @@ const Onboarding = ({ onComplete, onSkip }) => {
       </TouchableOpacity>
       
       {/* Content */}
-      <ScrollView
+      <Animated.ScrollView
         ref={scrollViewRef}
         horizontal
         pagingEnabled
         showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+          { 
+            useNativeDriver: false,
+            listener: handleScroll 
+          }
+        )}
         scrollEventThrottle={16}
         scrollEnabled={false}
         style={styles.scrollView}
       >
         {ONBOARDING_STEPS.map((step, index) => renderStep(step, index))}
-      </ScrollView>
+      </Animated.ScrollView>
       
       {/* Navigation */}
       <View style={styles.navigation}>
         {/* Progress Dots */}
         <View style={styles.dotsContainer}>
           {ONBOARDING_STEPS.map((_, index) => (
-            <View
+            <ScrollAwareDot
               key={index}
-              style={[
-                styles.dot,
-                index === currentStep && styles.activeDot,
-              ]}
+              index={index}
+              scrollX={scrollX}
+              screenWidth={screenDimensions.width}
+              totalSteps={ONBOARDING_STEPS.length}
             />
           ))}
         </View>
@@ -676,6 +737,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
     color: THEMES.stackBlue.primary,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
   },
   scrollView: {
     flex: 1,
@@ -702,9 +764,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emojiContent: {
-    maxWidth: isTablet() ? 560 : 400,
     alignItems: 'center',
     flex: 1,
+  },
+  emojiGridContainer: {
+    width: '100%',
+    alignItems: 'center',
   },
   pinContent: {
     maxWidth: isTablet() ? 500 : 350,
@@ -720,10 +785,13 @@ const styles = StyleSheet.create({
     width: isTablet() ? 120 : 100,
     height: isTablet() ? 120 : 100,
     borderRadius: RADIUS.full,
-    backgroundColor: COLORS.gray[100],
+    backgroundColor: 'rgba(255, 255, 255, 0.9)', // Semi-transparent white
+    borderWidth: 2,
+    borderColor: 'rgba(102, 126, 234, 0.2)', // Subtle theme-colored border
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: SPACING.xl,
+    ...SHADOWS.level2, // Add shadow for depth
   },
   logoContainer: {
     width: isTablet() ? 120 : 100,
@@ -743,18 +811,25 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.xxl : TYPOGRAPHY.fontSize.xl,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    ...Platform.select({
+      ios: {
+        fontFamily: TYPOGRAPHY.fontFamily.bold,
+        fontWeight: '700',
+      },
+      android: {
+        fontFamily: 'ComicRelief-Bold',
+        fontWeight: 'normal',
+        marginTop: SPACING.sm,
+        letterSpacing: 0.5,
+      }
+    }),
     color: COLORS.gray[900],
     marginBottom: Platform.OS === 'android' ? SPACING.lg : SPACING.md,
     textAlign: 'center',
-    ...(Platform.OS === 'android' && {
-      marginTop: SPACING.sm,
-      letterSpacing: 0.5,
-    }),
   },
   description: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Regular' : TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[600],
     textAlign: 'center',
     marginBottom: SPACING.xl,
@@ -762,15 +837,20 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    ...Platform.select({
+      ios: {
+        fontFamily: TYPOGRAPHY.fontFamily.regular,
+      },
+      android: {
+        fontFamily: 'ComicRelief-Regular',
+        paddingHorizontal: SPACING.md,
+        letterSpacing: 0.3,
+      }
+    }),
     color: COLORS.gray[600],
     textAlign: 'center',
     marginBottom: Platform.OS === 'android' ? SPACING.xxl : SPACING.xl,
     lineHeight: isTablet() ? 28 : 24,
-    ...(Platform.OS === 'android' && {
-      paddingHorizontal: SPACING.md,
-      letterSpacing: 0.3,
-    }),
   },
   bulletsContainer: {
     alignSelf: 'stretch',
@@ -791,7 +871,7 @@ const styles = StyleSheet.create({
   bulletText: {
     flex: 1,
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.md : TYPOGRAPHY.fontSize.sm,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Regular' : TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[700],
     lineHeight: isTablet() ? 24 : 20,
   },
@@ -807,9 +887,12 @@ const styles = StyleSheet.create({
     width: isTablet() ? 60 : 50,
     height: isTablet() ? 60 : 50,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.gray[100],
+    backgroundColor: 'rgba(102, 126, 234, 0.08)', // Subtle theme-colored background
+    borderWidth: 1.5,
+    borderColor: 'rgba(102, 126, 234, 0.15)', // Subtle border
     justifyContent: 'center',
     alignItems: 'center',
+    ...SHADOWS.level1, // Add subtle shadow for depth
   },
   demoFeatureEmoji: {
     fontSize: isTablet() ? 32 : 28,
@@ -858,27 +941,28 @@ const styles = StyleSheet.create({
   },
   orText: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.sm : TYPOGRAPHY.fontSize.xs,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Regular' : TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[500],
     marginBottom: SPACING.lg,
   },
   emojiGrid: {
-    paddingBottom: SPACING.xl,
+    alignItems: 'center',
   },
   emojiOption: {
-    width: isTablet() ? 70 : 55,
-    height: isTablet() ? 70 : 55,
-    margin: SPACING.xs,
     borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.gray[100],
+    backgroundColor: 'rgba(255, 255, 255, 0.8)', // Semi-transparent white
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'transparent',
+    borderWidth: 1.5,
+    borderColor: COLORS.gray[200], // Subtle border always visible
+    ...SHADOWS.level1, // Add subtle shadow
   },
   selectedEmojiOption: {
     borderColor: THEMES.stackBlue.primary,
-    backgroundColor: THEMES.stackBlue.primary + '20',
+    borderWidth: 2,
+    backgroundColor: 'rgba(102, 126, 234, 0.12)', // Slightly more visible when selected
+    transform: [{ scale: 1.05 }], // Subtle scale effect
+    ...SHADOWS.level2, // Stronger shadow when selected
   },
   emojiOptionText: {
     fontSize: isTablet() ? 32 : 28,
@@ -890,6 +974,7 @@ const styles = StyleSheet.create({
   pinLabel: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.md : TYPOGRAPHY.fontSize.sm,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
     color: COLORS.gray[700],
     marginBottom: SPACING.sm,
   },
@@ -909,7 +994,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.sm : TYPOGRAPHY.fontSize.xs,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Regular' : TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[500],
     textAlign: 'center',
     marginTop: SPACING.sm,
@@ -917,6 +1002,7 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.sm : TYPOGRAPHY.fontSize.xs,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
     color: COLORS.error,
     textAlign: 'center',
     marginTop: SPACING.sm,
@@ -930,6 +1016,7 @@ const styles = StyleSheet.create({
   skipButtonText: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.md : TYPOGRAPHY.fontSize.sm,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
     color: THEMES.stackBlue.primary,
     textDecorationLine: 'underline',
   },
@@ -964,6 +1051,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
     color: COLORS.gray[900],
   },
   addUserButton: {
@@ -982,6 +1070,7 @@ const styles = StyleSheet.create({
   addUserButtonText: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.md : TYPOGRAPHY.fontSize.sm,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
     color: THEMES.stackBlue.primary,
   },
   navigation: {
@@ -999,11 +1088,7 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: COLORS.gray[300],
-  },
-  activeDot: {
-    width: 24,
-    backgroundColor: THEMES.stackBlue.primary,
+    marginHorizontal: 4,
   },
   buttonsContainer: {
     flexDirection: 'row',
@@ -1024,6 +1109,7 @@ const styles = StyleSheet.create({
   previousButtonText: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
     color: THEMES.stackBlue.primary,
   },
   nextButton: {
@@ -1034,6 +1120,7 @@ const styles = StyleSheet.create({
   nextButtonText: {
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '500' : 'normal', // iOS uses fontWeight, Android uses font file
     color: 'white',
   },
   disabledButton: {

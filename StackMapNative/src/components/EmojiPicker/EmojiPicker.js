@@ -114,9 +114,19 @@ const containsEmoji = (text) => {
 
 // Helper function to extract emojis from text
 const extractEmojis = (text) => {
-  const emojiRegex = /[\p{Emoji_Presentation}\p{Emoji}\u{200D}]/gu;
+  // More comprehensive emoji regex that works on both iOS and Android
+  // Includes emoji sequences, modifiers, and zero-width joiners
+  const emojiRegex = /(\p{Emoji_Presentation}|\p{Emoji}\uFE0F|\p{Emoji_Modifier_Base}\p{Emoji_Modifier}?|\p{Emoji_Component})+/gu;
   const matches = text.match(emojiRegex);
-  return matches ? matches.join('') : '';
+  if (!matches) return '';
+  
+  // Filter out non-visible characters and join the results
+  const emojis = matches.filter(match => {
+    // Remove any standalone variation selectors or zero-width joiners
+    return match && match.trim() && !/^[\uFE0F\u200D]+$/.test(match);
+  }).join('');
+  
+  return emojis;
 };
 
 // Custom images list (matching PWA)
@@ -151,7 +161,8 @@ const EmojiPicker = ({
   const [detectedEmoji, setDetectedEmoji] = useState('');
   
   // Calculate columns based on screen size
-  const numColumns = isTablet() ? 10 : 6;
+  // For phones, use 5 columns to ensure they fit properly without scrolling
+  const numColumns = isTablet() ? 10 : 5;
   
   // Initialize categories with custom images
   useEffect(() => {
@@ -287,12 +298,16 @@ const EmojiPicker = ({
         <Icon name="search" size={20} color="#999" />
         <TextInput
           style={styles.searchInput}
-          placeholder="Search or type an emoji..."
+          placeholder="Search, type, or paste emoji..."
           value={searchQuery}
           onChangeText={setSearchQuery}
           placeholderTextColor="#999"
           autoCorrect={false}
           autoCapitalize="none"
+          returnKeyType="done"
+          keyboardType={Platform.OS === 'ios' ? 'default' : 'visible-password'}
+          autoFocus={false}
+          enablesReturnKeyAutomatically={true}
         />
         {searchQuery ? (
           <TouchableOpacity onPress={() => setSearchQuery('')}>
@@ -355,13 +370,16 @@ const EmojiPicker = ({
       {/* Detected Emoji Result */}
       {detectedEmoji && searchQuery && (
         <View style={styles.detectedEmojiContainer}>
-          <Text style={styles.detectedEmojiLabel}>Typed emoji:</Text>
+          <Text style={styles.detectedEmojiLabel}>Tap to use your emoji:</Text>
           <TouchableOpacity
-            style={styles.detectedEmojiButton}
+            style={[styles.detectedEmojiButton, { backgroundColor: theme?.light || '#E8F0FE' }]}
             onPress={() => handleSelect({ type: 'emoji', emoji: detectedEmoji })}
+            activeOpacity={0.7}
           >
             <Text style={styles.detectedEmoji}>{detectedEmoji}</Text>
+            <Icon name="check-circle" size={24} color={theme?.primary || '#667eea'} style={{ marginLeft: 8 }} />
           </TouchableOpacity>
+          <Text style={styles.detectedEmojiHint}>You can type or paste any emoji!</Text>
         </View>
       )}
       
@@ -514,16 +532,16 @@ const styles = StyleSheet.create({
   },
   emojiGrid: {
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.sm,
+    paddingHorizontal: SPACING.md, // Consistent padding on sides
   },
   emojiItem: {
     flex: 1,
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: SPACING.xs,
+    margin: isTablet() ? SPACING.xs : 3, // Smaller margin on phones
     borderRadius: RADIUS.md,
-    minHeight: isTablet() ? 64 : 52,
+    minHeight: isTablet() ? 64 : 60, // Slightly larger for better touch targets with 5 columns
   },
   selectedItem: {
     backgroundColor: COLORS.gray[200],
@@ -572,15 +590,24 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   detectedEmojiButton: {
-    backgroundColor: COLORS.gray[100],
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     borderRadius: RADIUS.lg,
     borderWidth: 2,
     borderColor: '#667eea',
+    ...SHADOWS.level2,
   },
   detectedEmoji: {
     fontSize: isTablet() ? 48 : 40,
+  },
+  detectedEmojiHint: {
+    fontSize: isTablet() ? TYPOGRAPHY.fontSize.xs : 11,
+    color: COLORS.gray[500],
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    marginTop: SPACING.xs,
   },
 });
 

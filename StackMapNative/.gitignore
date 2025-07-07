@@ -35,6 +35,11 @@ local.properties
 !debug.keystore
 .kotlin/
 
+# Signing secrets - NEVER COMMIT THESE!
+android/gradle.properties
+android/keystore-credentials.txt
+android/app/*.keystore
+
 # node.js
 #
 node_modules/

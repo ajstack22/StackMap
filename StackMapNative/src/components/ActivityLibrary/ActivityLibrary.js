@@ -11,11 +11,17 @@ import {
   ScrollView,
   SafeAreaView,
   Image,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import DraggableFlatList, {
-  ScaleDecorator,
-} from 'react-native-draggable-flatlist';
+
+// Conditionally import drag-and-drop libraries
+const DraggableFlatList = Platform.OS === 'ios' 
+  ? require('react-native-draggable-flatlist').default 
+  : require('react-native').FlatList; // Use regular FlatList on Android
+const ScaleDecorator = Platform.OS === 'ios' 
+  ? require('react-native-draggable-flatlist').ScaleDecorator 
+  : ({ children }) => children; // Pass-through component for Android
 import {
   SHADOWS,
   TYPOGRAPHY,
@@ -388,10 +394,11 @@ const CategorySection = ({
               </TouchableOpacity>
               
               <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleDeleteCategory}
+                style={[styles.iconButton, category.id === 'my-templates' && styles.disabledButton]}
+                onPress={category.id === 'my-templates' ? undefined : handleDeleteCategory}
+                disabled={category.id === 'my-templates'}
               >
-                <Icon name="delete" size={20} color="white" />
+                <Icon name="delete" size={20} color={category.id === 'my-templates' ? '#999' : 'white'} />
               </TouchableOpacity>
               
               <TouchableOpacity
@@ -416,13 +423,13 @@ const CategorySection = ({
           orderedActivities.length > 0 ? (
             <DraggableFlatList
               data={orderedActivities}
-              onDragEnd={({ data }) => setOrderedActivities(data)}
+              onDragEnd={Platform.OS === 'ios' ? ({ data }) => setOrderedActivities(data) : undefined}
               keyExtractor={(item) => item.id}
               renderItem={({ item, drag, isActive }) => (
                 <ScaleDecorator>
                   <TouchableOpacity
-                    onLongPress={drag}
-                    disabled={isActive}
+                    onLongPress={Platform.OS === 'ios' ? drag : undefined}
+                    disabled={Platform.OS === 'ios' ? isActive : false}
                     style={[
                       styles.activityRow,
                       isActive && styles.draggingRow,
@@ -521,6 +528,19 @@ const ActivityLibrary = ({
   const [isSortMode, setIsSortMode] = useState(false);
   const [savedExpandedStates, setSavedExpandedStates] = useState({});
 
+  // Ensure My Templates folder always exists
+  useEffect(() => {
+    const hasMyTemplates = categories.some(cat => cat.id === 'my-templates');
+    if (!hasMyTemplates) {
+      const myTemplatesCategory = DEFAULT_CATEGORIES.find(cat => cat.id === 'my-templates');
+      if (myTemplatesCategory) {
+        const newCategories = [...categories, myTemplatesCategory];
+        setCategories(newCategories);
+        if (onSaveCategories) onSaveCategories(newCategories);
+      }
+    }
+  }, []);
+
   // Edit handlers
   const handleEditCategory = (category) => {
     setEditingItem(category);
@@ -537,6 +557,16 @@ const ActivityLibrary = ({
   };
 
   const handleDeleteCategory = (category) => {
+    // Prevent deletion of My Templates folder
+    if (category.id === 'my-templates') {
+      Alert.alert(
+        "Cannot Delete",
+        "The 'My Templates' folder is required for saving activities to your library. You can delete activities within it, but not the folder itself.",
+        [{ text: "OK" }]
+      );
+      return;
+    }
+    
     const newCategories = categories.filter(c => c.id !== category.id);
     setCategories(newCategories);
     if (onSaveCategories) onSaveCategories(newCategories);
@@ -727,7 +757,7 @@ const ActivityLibrary = ({
     }));
   };
 
-  return (
+  const content = (
     <View style={[styles.container, { backgroundColor: theme.light }]}>
       <SafeAreaView style={{ backgroundColor: theme.primary }}>
         <View style={[styles.header, { backgroundColor: theme.primary }]}>
@@ -807,17 +837,17 @@ const ActivityLibrary = ({
               activity.emoji.includes(searchQuery)
             );
           })}
-          onDragBegin={(index) => {
+          onDragBegin={Platform.OS === 'ios' ? (index) => {
             const draggedItem = categories[index];
             if (draggedItem) {
               handleCategoryDragStart(draggedItem.id);
             }
-          }}
-          onPlaceholderIndexChange={() => {
+          } : undefined}
+          onPlaceholderIndexChange={Platform.OS === 'ios' ? () => {
             // This fires when items actually move positions
             hasActuallyDragged.current = true;
-          }}
-          onDragEnd={handleCategoryDragEnd}
+          } : undefined}
+          onDragEnd={Platform.OS === 'ios' ? handleCategoryDragEnd : undefined}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: SPACING.lg }}
@@ -850,11 +880,11 @@ const ActivityLibrary = ({
           )}
           ListFooterComponent={() => (
             <TouchableOpacity
-              style={[styles.addCategoryButton, { borderColor: theme.primary }]}
+              style={[styles.addCategoryButton, { borderColor: 'white' }]}
               onPress={handleAddCategory}
             >
-              <Icon name="add" size={20} color={theme.primary} />
-              <Text style={[styles.addCategoryText, { color: theme.primary }]}>
+              <Icon name="add" size={20} color="white" />
+              <Text style={[styles.addCategoryText, { color: 'white' }]}>
                 Add New Category
               </Text>
             </TouchableOpacity>
@@ -951,6 +981,8 @@ const ActivityLibrary = ({
       <SafeAreaView style={{ backgroundColor: theme.light }} />
     </View>
   );
+
+  return content;
 };
 
 const styles = StyleSheet.create({
@@ -1076,6 +1108,7 @@ const styles = StyleSheet.create({
   activityName: {
     fontSize: isTablet() ? 16 : 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#333',
   },
   activityActions: {
     flexDirection: 'row',
@@ -1087,6 +1120,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: SPACING.xs,
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   categoryEditContainer: {
     flex: 1,
