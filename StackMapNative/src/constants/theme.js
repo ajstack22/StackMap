@@ -136,15 +136,18 @@ export const TYPOGRAPHY = {
   fontFamily: {
     regular: Platform.select({
       ios: 'Comic Relief',
-      android: 'ComicRelief-Regular'
+      android: 'ComicRelief-Regular',
+      web: "'Comic Neue', 'Comic Sans MS', cursive"
     }),
     medium: Platform.select({
       ios: 'Comic Relief',
-      android: 'ComicRelief-Regular'
+      android: 'ComicRelief-Regular',
+      web: "'Comic Neue', 'Comic Sans MS', cursive"
     }),
     bold: Platform.select({
       ios: 'Comic Relief', // iOS uses same family with fontWeight
-      android: 'ComicRelief-Bold'
+      android: 'ComicRelief-Bold',
+      web: "'Comic Neue', 'Comic Sans MS', cursive"
     }),
   },
   fontSize: {

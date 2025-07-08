@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>StackMap Web Debug</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            padding: 20px; 
+            background: #1e1e1e;
+            color: #fff;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 { color: #4CAF50; }
+        .controls {
+            margin: 20px 0;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        button { 
+            background: #4CAF50; 
+            color: white; 
+            border: none; 
+            padding: 10px 20px; 
+            cursor: pointer; 
+            font-size: 14px;
+            border-radius: 4px;
+        }
+        button:hover { background: #45a049; }
+        button.secondary {
+            background: #2196F3;
+        }
+        button.secondary:hover {
+            background: #1976D2;
+        }
+        #code { 
+            background: #2d2d2d; 
+            padding: 20px; 
+            border-radius: 5px; 
+            white-space: pre-wrap;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            position: relative;
+            margin-top: 20px;
+        }
+        #output {
+            background: #2d2d2d;
+            padding: 20px;
+            border-radius: 5px;
+            margin-top: 20px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        .instructions {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            border-left: 4px solid #4CAF50;
+        }
+    </style>
+</head>
+<body>
+    <h1>StackMap Web Debug Tool</h1>
+    
+    <div class="instructions">
+        <strong>Instructions:</strong>
+        <ol>
+            <li>Open http://localhost:3001 in another tab</li>
+            <li>Click a debug script button below</li>
+            <li>Copy the generated code</li>
+            <li>Paste it in the browser console of the StackMap tab</li>
+            <li>View results back here</li>
+        </ol>
+    </div>
+
+    <div class="controls">
+        <button onclick="generateNavigationDebug()">Check Navigation</button>
+        <button onclick="generateLayoutDebug()">Check Layout Structure</button>
+        <button onclick="generateScrollDebug()">Check Scroll Issues</button>
+        <button onclick="generateRenderDebug()">Check Component Render</button>
+        <button onclick="generateDeepNavSearch()">Deep Navigation Search</button>
+        <button onclick="generateOverlapCheck()">Check Overlap</button>
+        <button onclick="clearAll()">Clear</button>
+    </div>
+
+    <div id="code" style="display: none;">
+        <button class="copy-btn" onclick="copyCode()">Copy</button>
+        <code id="codeContent"></code>
+    </div>
+
+    <div id="output"></div>
+
+    <script>
+        const codeDiv = document.getElementById('code');
+        const codeContent = document.getElementById('codeContent');
+        const output = document.getElementById('output');
+        
+        function showCode(code) {
+            codeContent.textContent = code;
+            codeDiv.style.display = 'block';
+            output.style.display = 'block';
+            output.innerHTML = '<span style="color: #ffd43b;">Waiting for console output...</span>\n\nPaste the code above in the StackMap browser console, then paste the output here.';
+        }
+        
+        function copyCode() {
+            navigator.clipboard.writeText(codeContent.textContent).then(() => {
+                const btn = document.querySelector('.copy-btn');
+                btn.textContent = 'Copied!';
+                setTimeout(() => btn.textContent = 'Copy', 2000);
+            });
+        }
+        
+        function clearAll() {
+            codeDiv.style.display = 'none';
+            output.style.display = 'none';
+        }
+        
+        function generateNavigationDebug() {
+            const code = `// Check Navigation Elements
+(() => {
+    console.clear();
+    console.log('=== NAVIGATION DEBUG ===');
+    
+    // Look for buttons
+    const buttons = Array.from(document.querySelectorAll('*')).filter(el => 
+        el.textContent === 'Next' || 
+        el.textContent === 'Finish Setup' || 
+        el.textContent === 'Back'
+    );
+    
+    console.log('\\nButtons found:', buttons.length);
+    buttons.forEach((btn, i) => {
+        const rect = btn.getBoundingClientRect();
+        const visible = rect.top >= 0 && rect.top < window.innerHeight;
+        console.log(\`  \${i+1}. "\${btn.textContent}" - Top: \${rect.top}px, Visible: \${visible ? 'YES' : 'NO'}\`);
+        
+        // Check parent visibility
+        let parent = btn.parentElement;
+        let level = 0;
+        while (parent && level < 3) {
+            const pRect = parent.getBoundingClientRect();
+            const pStyles = window.getComputedStyle(parent);
+            if (pStyles.display === 'none' || pStyles.visibility === 'hidden' || pRect.height === 0) {
+                console.log(\`     ⚠️ Parent at level \${level} is hidden!\`);
+            }
+            parent = parent.parentElement;
+            level++;
+        }
+    });
+    
+    // Look for navigation container
+    const navContainers = Array.from(document.querySelectorAll('*')).filter(el => {
+        const styles = window.getComputedStyle(el);
+        return styles.minHeight === '120px' && styles.backgroundColor === 'rgb(255, 255, 255)';
+    });
+    
+    console.log('\\nNavigation containers found:', navContainers.length);
+    navContainers.forEach((nav, i) => {
+        const rect = nav.getBoundingClientRect();
+        console.log(\`  Container \${i+1}: Top: \${rect.top}px, Height: \${rect.height}px\`);
+    });
+    
+    // Check viewport
+    console.log('\\nViewport:');
+    console.log(\`  Window height: \${window.innerHeight}px\`);
+    console.log(\`  Document height: \${document.documentElement.scrollHeight}px\`);
+    console.log(\`  Current scroll: \${window.scrollY}px\`);
+    
+    // Count elements outside viewport
+    let belowCount = 0;
+    document.querySelectorAll('*').forEach(el => {
+        const rect = el.getBoundingClientRect();
+        if (rect.top > window.innerHeight && rect.height > 0) belowCount++;
+    });
+    console.log(\`  Elements below viewport: \${belowCount}\`);
+    
+    console.log('\\n=== END DEBUG ===');
+})();`;
+            showCode(code);
+        }
+        
+        function generateLayoutDebug() {
+            const code = `// Check Layout Structure
+(() => {
+    console.clear();
+    console.log('=== LAYOUT DEBUG ===');
+    
+    // Find root and main containers
+    const root = document.getElementById('root');
+    if (!root) {
+        console.log('ERROR: No root element found!');
+        return;
+    }
+    
+    function analyzeElement(el, name, level = 0) {
+        const indent = '  '.repeat(level);
+        const rect = el.getBoundingClientRect();
+        const styles = window.getComputedStyle(el);
+        
+        console.log(\`\${indent}\${name}:\`);
+        console.log(\`\${indent}  Size: \${rect.width}x\${rect.height}\`);
+        console.log(\`\${indent}  Position: top=\${rect.top}, bottom=\${rect.bottom}\`);
+        console.log(\`\${indent}  Display: \${styles.display}, Flex: \${styles.flex}\`);
+        console.log(\`\${indent}  Overflow: \${styles.overflow}\`);
+        
+        return rect;
+    }
+    
+    analyzeElement(root, 'ROOT');
+    
+    // Check children
+    console.log('\\nChildren of root:', root.children.length);
+    Array.from(root.children).forEach((child, i) => {
+        analyzeElement(child, \`Child \${i+1}\`, 1);
+    });
+    
+    // Look for SafeAreaView/Container
+    const containers = Array.from(document.querySelectorAll('*')).filter(el => {
+        const styles = window.getComputedStyle(el);
+        return styles.backgroundColor === 'rgb(250, 250, 250)' && styles.flex === '1';
+    });
+    
+    console.log('\\nMain containers found:', containers.length);
+    containers.forEach((cont, i) => {
+        const rect = analyzeElement(cont, \`Container \${i+1}\`, 1);
+        console.log(\`    Children: \${cont.children.length}\`);
+    });
+    
+    console.log('\\n=== END DEBUG ===');
+})();`;
+            showCode(code);
+        }
+        
+        function generateRenderDebug() {
+            const code = `// Check Component Rendering
+(() => {
+    console.clear();
+    console.log('=== RENDER DEBUG ===');
+    
+    // Check if React components are rendering
+    const allElements = document.querySelectorAll('*');
+    console.log('Total DOM elements:', allElements.length);
+    
+    // Look for any text content
+    const textElements = Array.from(allElements).filter(el => {
+        const text = el.textContent.trim();
+        return text && el.children.length === 0 && text.length > 0;
+    });
+    
+    console.log('\\nText elements found:', textElements.length);
+    const sampleTexts = textElements.slice(0, 10).map(el => el.textContent.trim());
+    console.log('Sample texts:', sampleTexts);
+    
+    // Check for specific onboarding content
+    const onboardingTexts = [
+        'Your Data, Your Control',
+        'Designed With You in Mind',
+        'Everything You Need',
+        'What\\'s the first user\\'s name?',
+        'Skip'
+    ];
+    
+    console.log('\\nChecking for onboarding content:');
+    onboardingTexts.forEach(text => {
+        const found = Array.from(allElements).some(el => 
+            el.textContent.includes(text)
+        );
+        console.log(\`  "\${text}": \${found ? 'FOUND' : 'NOT FOUND'}\`);
+    });
+    
+    // Check structure depth
+    function getDepth(el, depth = 0) {
+        if (!el.children.length) return depth;
+        return Math.max(...Array.from(el.children).map(child => getDepth(child, depth + 1)));
+    }
+    
+    const root = document.getElementById('root');
+    const maxDepth = root ? getDepth(root) : 0;
+    console.log('\\nDOM tree max depth:', maxDepth);
+    
+    // Look for View-type divs (React Native Web creates divs)
+    const viewDivs = Array.from(allElements).filter(el => 
+        el.tagName === 'DIV' && 
+        !el.className && 
+        !el.id
+    );
+    console.log('Plain DIVs (likely RN Views):', viewDivs.length);
+    
+    // Check if navigation might be conditionally rendered
+    console.log('\\nChecking component state indicators:');
+    
+    // Look for any error messages
+    const errors = Array.from(allElements).filter(el => 
+        el.textContent.toLowerCase().includes('error') ||
+        el.textContent.toLowerCase().includes('failed')
+    );
+    console.log('Error messages found:', errors.length);
+    errors.forEach(err => console.log('  -', err.textContent.substring(0, 100)));
+    
+    console.log('\\n=== END DEBUG ===');
+})();`;
+            showCode(code);
+        }
+        
+        function generateDeepNavSearch() {
+            const code = `// Deep Navigation Search
+(() => {
+    console.clear();
+    console.log('=== DEEP NAVIGATION SEARCH ===');
+    
+    // Since content is rendering, navigation must be there somewhere
+    // Let's find elements that CONTAIN navigation-like text
+    const allElements = Array.from(document.querySelectorAll('*'));
+    
+    // Find all elements containing "Next"
+    const nextContainers = allElements.filter(el => 
+        el.textContent.includes('Next') && 
+        !el.textContent.includes('Next"') // Avoid script tags
+    );
+    
+    console.log('\\nElements containing "Next":', nextContainers.length);
+    
+    if (nextContainers.length > 0) {
+        // Find the most specific element (least children)
+        const nextButton = nextContainers.reduce((best, current) => 
+            current.children.length < best.children.length ? current : best
+        );
+        
+        console.log('Most specific "Next" element:');
+        const rect = nextButton.getBoundingClientRect();
+        console.log('  Tag:', nextButton.tagName);
+        console.log('  Text:', nextButton.textContent.trim());
+        console.log('  Position:', \`top=\${rect.top}, left=\${rect.left}, width=\${rect.width}, height=\${rect.height}\`);
+        console.log('  Visible in viewport:', rect.top >= 0 && rect.top < window.innerHeight ? 'YES' : 'NO');
+        
+        // Trace up the parent chain
+        console.log('\\nParent chain:');
+        let parent = nextButton;
+        for (let i = 0; i < 5 && parent; i++) {
+            parent = parent.parentElement;
+            if (parent) {
+                const pRect = parent.getBoundingClientRect();
+                const pStyles = window.getComputedStyle(parent);
+                console.log(\`  Level \${i+1}: \${parent.tagName}\`);
+                console.log(\`    Height: \${pRect.height}, Top: \${pRect.top}\`);
+                console.log(\`    Background: \${pStyles.backgroundColor}\`);
+                console.log(\`    Display: \${pStyles.display}, Position: \${pStyles.position}\`);
+                console.log(\`    Overflow: \${pStyles.overflow}\`);
+            }
+        }
+    }
+    
+    // Look for small round elements (dots)
+    console.log('\\nLooking for progress dots...');
+    const smallRoundElements = allElements.filter(el => {
+        const styles = window.getComputedStyle(el);
+        const rect = el.getBoundingClientRect();
+        return rect.width > 0 && rect.width < 20 && 
+               rect.height > 0 && rect.height < 20 && 
+               styles.borderRadius !== '0px';
+    });
+    
+    console.log('Small round elements found:', smallRoundElements.length);
+    
+    // Check the bottom area of the viewport
+    console.log('\\nChecking bottom area of page...');
+    const bottomElements = allElements.filter(el => {
+        const rect = el.getBoundingClientRect();
+        return rect.bottom > window.innerHeight - 200 && rect.height > 0;
+    });
+    
+    console.log('Elements in bottom 200px:', bottomElements.length);
+    
+    // Try to find fixed/absolute positioned elements
+    const fixedElements = allElements.filter(el => {
+        const styles = window.getComputedStyle(el);
+        return styles.position === 'fixed' || styles.position === 'absolute';
+    });
+    
+    console.log('\\nFixed/absolute elements:', fixedElements.length);
+    fixedElements.forEach((el, i) => {
+        if (i < 5) { // Show first 5
+            const rect = el.getBoundingClientRect();
+            console.log(\`  \${i+1}. \${el.tagName} at top=\${rect.top}, height=\${rect.height}\`);
+        }
+    });
+    
+    console.log('\\n=== END DEBUG ===');
+})();`;
+            showCode(code);
+        }
+        
+        function generateOverlapCheck() {
+            const code = `// Check Content and Navigation Overlap
+(() => {
+    console.clear();
+    console.log('=== OVERLAP CHECK ===');
+    
+    // Find the navigation
+    const nav = Array.from(document.querySelectorAll('*')).find(el => {
+        const styles = window.getComputedStyle(el);
+        return styles.position === 'fixed' && 
+               styles.bottom === '0px' && 
+               styles.backgroundColor === 'rgb(255, 255, 255)';
+    });
+    
+    if (nav) {
+        const navRect = nav.getBoundingClientRect();
+        console.log('Navigation found:');
+        console.log('  Height:', navRect.height);
+        console.log('  Top position:', navRect.top);
+        console.log('  Bottom position:', navRect.bottom);
+        
+        // Find emoji grid items
+        const emojiItems = Array.from(document.querySelectorAll('*')).filter(el => {
+            const styles = window.getComputedStyle(el);
+            const rect = el.getBoundingClientRect();
+            return rect.width > 40 && rect.width < 50 && 
+                   rect.height > 40 && rect.height < 50 &&
+                   styles.borderRadius !== '0px';
+        });
+        
+        console.log('\\nEmoji items found:', emojiItems.length);
+        
+        // Check which ones are overlapping
+        let overlapping = 0;
+        let lastVisibleRow = 0;
+        emojiItems.forEach((emoji, i) => {
+            const rect = emoji.getBoundingClientRect();
+            if (rect.bottom > navRect.top) {
+                overlapping++;
+                if (overlapping === 1) {
+                    console.log('\\nFirst overlapping emoji:');
+                    console.log('  Index:', i);
+                    console.log('  Bottom position:', rect.bottom);
+                    console.log('  Overlap amount:', rect.bottom - navRect.top, 'px');
+                }
+            } else {
+                lastVisibleRow = Math.floor(i / 8); // Assuming 8 columns
+            }
+        });
+        
+        console.log('\\nOverlap summary:');
+        console.log('  Total overlapping emojis:', overlapping);
+        console.log('  Last fully visible row:', lastVisibleRow);
+        console.log('  Space needed:', navRect.height + 20, 'px of bottom padding');
+        
+        // Check current padding
+        const contentWrapper = Array.from(document.querySelectorAll('*')).find(el => {
+            const styles = window.getComputedStyle(el);
+            return styles.paddingBottom === '100px';
+        });
+        
+        if (contentWrapper) {
+            console.log('\\nContent wrapper padding: 100px');
+            console.log('Recommended padding:', navRect.height + 20, 'px');
+        }
+    } else {
+        console.log('Navigation not found!');
+    }
+    
+    console.log('\\n=== END OVERLAP CHECK ===');
+})();`;
+            showCode(code);
+        }
+        
+        function generateScrollDebug() {
+            const code = `// Check Scroll Issues
+(() => {
+    console.clear();
+    console.log('=== SCROLL DEBUG ===');
+    
+    // Find scrollable elements
+    const scrollables = Array.from(document.querySelectorAll('*')).filter(el => {
+        const styles = window.getComputedStyle(el);
+        const hasScroll = styles.overflow === 'auto' || 
+                         styles.overflow === 'scroll' || 
+                         styles.overflowY === 'auto' || 
+                         styles.overflowY === 'scroll';
+        return hasScroll || el.scrollHeight > el.clientHeight;
+    });
+    
+    console.log('Scrollable elements found:', scrollables.length);
+    scrollables.forEach((el, i) => {
+        const rect = el.getBoundingClientRect();
+        console.log(\`\\n\${i+1}. Scrollable element:\`);
+        console.log(\`   Client height: \${el.clientHeight}px\`);
+        console.log(\`   Scroll height: \${el.scrollHeight}px\`);
+        console.log(\`   Overflow: \${el.scrollHeight - el.clientHeight}px\`);
+        console.log(\`   Position: top=\${rect.top}, height=\${rect.height}\`);
+    });
+    
+    // Try to scroll to bottom of each
+    console.log('\\nTrying to reveal hidden content...');
+    scrollables.forEach((el, i) => {
+        el.scrollTop = el.scrollHeight;
+        console.log(\`Scrolled element \${i+1} to bottom\`);
+    });
+    
+    // Also try window scroll
+    window.scrollTo(0, document.documentElement.scrollHeight);
+    console.log('\\nScrolled window to bottom');
+    console.log(\`New scroll position: \${window.scrollY}px\`);
+    
+    // Re-check for navigation
+    setTimeout(() => {
+        const buttons = Array.from(document.querySelectorAll('*')).filter(el => 
+            el.textContent === 'Next' || el.textContent === 'Finish Setup'
+        );
+        console.log('\\nAfter scrolling - Buttons visible:', buttons.length);
+        buttons.forEach(btn => {
+            const rect = btn.getBoundingClientRect();
+            console.log(\`  "\${btn.textContent}" at top: \${rect.top}px\`);
+        });
+    }, 500);
+    
+    console.log('\\n=== END DEBUG ===');
+})();`;
+            showCode(code);
+        }
+    </script>
+</body>
+</html>

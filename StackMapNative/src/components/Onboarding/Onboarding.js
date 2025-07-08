@@ -31,12 +31,12 @@ import Logo from '../Logo/Logo';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-// Emoji options for user selection
+// Emoji options for user selection - diverse set likely to represent individuals
 const USER_EMOJI_OPTIONS = [
-  '😊', '😎', '🤓', '🧑', '👤', '🌟', '✨', '🎯',
-  '🚀', '💫', '🌈', '🦄', '🐶', '🐱', '🦊', '🐸',
-  '🦋', '🌸', '🌺', '🌼', '🍀', '🌿', '🎨', '🎭',
-  '🎪', '🎯', '🏆', '💎', '🔥', '⚡', '🌙', '☀️'
+  '😊', '😎', '🤓', '🧑', '👤', '👩', '👨', '🧒',
+  '😇', '🤗', '😋', '🤔', '😌', '🥰', '😏', '🤩',
+  '🦄', '🐶', '🐱', '🦊', '🐸', '🐼', '🦁', '🐯',
+  '🦋', '🌟', '✨', '💫', '🔥', '⚡', '🌙', '☀️'
 ];
 
 // Animated dot component that responds to scroll position
@@ -109,16 +109,30 @@ const Onboarding = ({ onComplete, onSkip }) => {
     const maxContentWidth = isTablet() ? 560 : 400;
     const contentWidth = Math.min(availableWidth, maxContentWidth);
     
-    // Calculate item size with margins
-    const itemSize = isTablet() ? 70 : 55;
-    const itemMargin = SPACING.xs;
+    // Calculate item size with margins - smaller on web
+    const itemSize = Platform.OS === 'web' ? 45 : (isTablet() ? 70 : 55);
+    const itemMargin = Platform.OS === 'web' ? 3 : SPACING.xs;
     const totalItemWidth = itemSize + (itemMargin * 2);
     
     // Calculate how many columns can fit
     const possibleColumns = Math.floor(contentWidth / totalItemWidth);
     
-    // Limit columns to reasonable numbers and ensure all items fit without scrolling
-    const columns = Math.min(possibleColumns, isTablet() ? 8 : 6);
+    // Column configuration per platform and device type
+    const columnConfig = {
+      web: { max: 8, preferredMin: 4 },
+      ios: { max: isTablet() ? 8 : 6, preferredMin: isTablet() ? 4 : 3 },
+      android: { max: isTablet() ? 8 : 6, preferredMin: isTablet() ? 4 : 3 }
+    };
+    
+    const config = columnConfig[Platform.OS] || columnConfig.ios;
+    
+    // Use preferredMin to avoid too few columns (e.g., stay at 2 columns longer)
+    let columns = possibleColumns;
+    if (possibleColumns > config.preferredMin) {
+      columns = Math.min(possibleColumns, config.max);
+    } else {
+      columns = Math.max(2, Math.min(possibleColumns, config.preferredMin));
+    }
     
     // Calculate grid height to prevent scrolling
     const rows = Math.ceil(USER_EMOJI_OPTIONS.length / columns);
@@ -174,10 +188,6 @@ const Onboarding = ({ onComplete, onSkip }) => {
           'Visual progress tracking',
           'Customizable sensory settings (sounds, haptics)',
         ],
-        demo: {
-          type: 'features',
-          items: ['😊', '📌', '📊', '🔊'],
-        },
       },
     ];
 
@@ -231,7 +241,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
     if (scrollViewRef.current) {
       scrollViewRef.current.scrollTo({
         x: step * screenDimensions.width,
-        animated: true,
+        animated: Platform.OS !== 'web', // Disable animation on web for smoother experience
       });
     }
   }, [screenDimensions.width]);
@@ -259,8 +269,8 @@ const Onboarding = ({ onComplete, onSkip }) => {
         if (reviewIndex !== -1) {
           setCurrentStep(reviewIndex);
           scrollViewRef.current?.scrollTo({
-            x: screenWidth * reviewIndex,
-            animated: true,
+            x: screenDimensions.width * reviewIndex,
+            animated: Platform.OS !== 'web', // Disable animation on web for smoother experience
           });
           return;
         }
@@ -342,8 +352,8 @@ const Onboarding = ({ onComplete, onSkip }) => {
     if (nameStepIndex !== -1) {
       setCurrentStep(nameStepIndex);
       scrollViewRef.current?.scrollTo({
-        x: screenWidth * nameStepIndex,
-        animated: true,
+        x: screenDimensions.width * nameStepIndex,
+        animated: Platform.OS !== 'web', // Disable animation on web for smoother experience
       });
       setTimeout(() => nameInputRef.current?.focus(), 300);
     }
@@ -356,7 +366,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
   
   const handleScroll = (event) => {
     const offsetX = event.nativeEvent.contentOffset.x;
-    const step = Math.round(offsetX / screenWidth);
+    const step = Math.round(offsetX / screenDimensions.width);
     if (step !== currentStep && step >= 0 && step < ONBOARDING_STEPS.length) {
       setCurrentStep(step);
     }
@@ -378,10 +388,15 @@ const Onboarding = ({ onComplete, onSkip }) => {
   };
 
   const renderStep = (step, index) => {
+    const stepStyle = [
+      styles.stepContainer,
+      { width: screenDimensions.width }
+    ];
+    
     switch (step.type) {
       case 'info':
         return (
-          <View key={step.id} style={styles.stepContainer}>
+          <View key={step.id} style={stepStyle}>
             <View style={styles.stepContent}>
               <View style={styles.iconContainer}>
                 <Text style={styles.icon}>{step.icon}</Text>
@@ -407,7 +422,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
         return (
           <KeyboardAvoidingView
             key={step.id}
-            style={styles.stepContainer}
+            style={stepStyle}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             <View style={styles.inputContent}>
@@ -440,7 +455,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
       case 'emoji-select':
         const emojiGrid = calculateEmojiColumns();
         return (
-          <View key={step.id} style={styles.stepContainer}>
+          <View key={step.id} style={stepStyle}>
             <View style={[styles.emojiContent, { width: emojiGrid.contentWidth }]}>
               <Text style={[
                 styles.title, 
@@ -509,7 +524,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
         return (
           <KeyboardAvoidingView
             key={step.id}
-            style={styles.stepContainer}
+            style={stepStyle}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
             <View style={styles.pinContent}>
@@ -580,7 +595,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
 
       case 'review':
         return (
-          <View key={step.id} style={styles.stepContainer}>
+          <View key={step.id} style={stepStyle}>
             <View style={styles.reviewContent}>
               <Text style={styles.title}>{step.title}</Text>
               <Text style={styles.subtitle}>{step.subtitle}</Text>
@@ -644,77 +659,81 @@ const Onboarding = ({ onComplete, onSkip }) => {
   
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar backgroundColor="white" barStyle="dark-content" />
+      <StatusBar backgroundColor="#fafafa" barStyle="dark-content" />
       
-      {/* Skip Button */}
-      <TouchableOpacity
-        style={styles.skipButtonTop}
-        onPress={onSkip}
-      >
-        <Text style={styles.skipText}>Skip</Text>
-      </TouchableOpacity>
-      
-      {/* Content */}
-      <Animated.ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          { 
-            useNativeDriver: false,
-            listener: handleScroll 
-          }
-        )}
-        scrollEventThrottle={16}
-        scrollEnabled={false}
-        style={styles.scrollView}
-      >
-        {ONBOARDING_STEPS.map((step, index) => renderStep(step, index))}
-      </Animated.ScrollView>
-      
-      {/* Navigation */}
-      <View style={styles.navigation}>
-        {/* Progress Dots */}
-        <View style={styles.dotsContainer}>
-          {ONBOARDING_STEPS.map((_, index) => (
-            <ScrollAwareDot
-              key={index}
-              index={index}
-              scrollX={scrollX}
-              screenWidth={screenDimensions.width}
-              totalSteps={ONBOARDING_STEPS.length}
-            />
-          ))}
-        </View>
+      {/* Main Content Wrapper */}
+      <View style={styles.contentWrapper}>
+        {/* Skip Button */}
+        <TouchableOpacity
+          style={styles.skipButtonTop}
+          onPress={onSkip}
+        >
+          <Text style={styles.skipText}>Skip</Text>
+        </TouchableOpacity>
         
-        {/* Buttons */}
-        <View style={styles.buttonsContainer}>
-          {currentStep > 0 && (
-            <TouchableOpacity
-              style={[styles.button, styles.previousButton]}
-              onPress={handlePrevious}
-            >
-              <Icon name="arrow-back" size={24} color={THEMES.stackBlue.primary} />
-              <Text style={styles.previousButtonText}>Back</Text>
-            </TouchableOpacity>
+        {/* Content */}
+        <Animated.ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={Animated.event(
+            [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+            { 
+              useNativeDriver: false,
+              listener: handleScroll 
+            }
           )}
+          scrollEventThrottle={16}
+          scrollEnabled={false}
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollViewContent}
+        >
+          {ONBOARDING_STEPS.map((step, index) => renderStep(step, index))}
+        </Animated.ScrollView>
+        
+        {/* Navigation */}
+        <View style={styles.navigation}>
+          {/* Progress Dots */}
+          <View style={styles.dotsContainer}>
+            {ONBOARDING_STEPS.map((_, index) => (
+              <ScrollAwareDot
+                key={index}
+                index={index}
+                scrollX={scrollX}
+                screenWidth={screenDimensions.width}
+                totalSteps={ONBOARDING_STEPS.length}
+              />
+            ))}
+          </View>
           
-          <TouchableOpacity
-            style={[
-              styles.button,
-              styles.nextButton,
-              !canProceed() && styles.disabledButton,
-            ]}
-            onPress={handleNext}
-            disabled={!canProceed()}
-          >
-            <Text style={styles.nextButtonText}>
-              {currentStep === ONBOARDING_STEPS.length - 1 ? 'Finish Setup' : 'Next'}
-            </Text>
-            <Icon name="arrow-forward" size={24} color="white" />
-          </TouchableOpacity>
+          {/* Buttons */}
+          <View style={styles.buttonsContainer}>
+            {currentStep > 0 && (
+              <TouchableOpacity
+                style={[styles.button, styles.previousButton]}
+                onPress={handlePrevious}
+              >
+                <Icon name="arrow-back" size={24} color={THEMES.stackBlue.primary} />
+                <Text style={styles.previousButtonText}>Back</Text>
+              </TouchableOpacity>
+            )}
+            
+            <TouchableOpacity
+              style={[
+                styles.button,
+                styles.nextButton,
+                !canProceed() && styles.disabledButton,
+              ]}
+              onPress={handleNext}
+              disabled={!canProceed()}
+            >
+              <Text style={styles.nextButtonText}>
+                {currentStep === ONBOARDING_STEPS.length - 1 ? 'Finish Setup' : 'Next'}
+              </Text>
+              <Icon name="arrow-forward" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </SafeAreaView>
@@ -724,11 +743,22 @@ const Onboarding = ({ onComplete, onSkip }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'white',
+    backgroundColor: '#fafafa', // Softer background color
+    height: Platform.OS === 'web' ? '100vh' : undefined,
+    overflow: Platform.OS === 'web' ? 'visible' : undefined, // Allow scrolling on web
+  },
+  contentWrapper: {
+    flex: 1,
+    display: Platform.OS === 'web' ? 'flex' : undefined,
+    flexDirection: Platform.OS === 'web' ? 'column' : undefined,
+    position: 'relative',
+    overflow: Platform.OS === 'web' ? 'visible' : undefined, // Allow content to be visible
+    height: Platform.OS === 'web' ? '100%' : undefined,
+    paddingBottom: Platform.OS === 'web' ? 110 : 0, // Add padding for fixed navigation
   },
   skipButtonTop: {
     position: 'absolute',
-    top: Platform.OS === 'ios' ? 60 : 40,
+    top: Platform.OS === 'ios' ? 60 : Platform.OS === 'web' ? 20 : 40,
     right: SPACING.lg,
     zIndex: 10,
     padding: SPACING.sm,
@@ -742,11 +772,17 @@ const styles = StyleSheet.create({
   scrollView: {
     flex: 1,
   },
+  scrollViewContent: {
+    flexGrow: 1,
+    paddingBottom: Platform.OS === 'web' ? 120 : 0, // Extra padding for web navigation
+  },
   stepContainer: {
     width: screenWidth,
     paddingHorizontal: Platform.OS === 'android' 
       ? (isTablet() ? SPACING.xxl * 1.2 : SPACING.lg)
       : (isTablet() ? SPACING.xxl * 1.5 : SPACING.xl),
+    paddingTop: Platform.OS === 'web' ? SPACING.xxl : 0, // Reduced top padding on web
+    paddingBottom: Platform.OS === 'web' ? 0 : 0, // Navigation padding handled in specific containers
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -766,10 +802,13 @@ const styles = StyleSheet.create({
   emojiContent: {
     alignItems: 'center',
     flex: 1,
+    paddingTop: Platform.OS === 'web' ? SPACING.sm : 0, // Further reduced padding on web
+    paddingBottom: Platform.OS === 'web' ? 20 : 0, // Extra bottom padding
   },
   emojiGridContainer: {
     width: '100%',
     alignItems: 'center',
+    paddingBottom: Platform.OS === 'web' ? 130 : 0, // Ensure emojis don't overlap navigation
   },
   pinContent: {
     maxWidth: isTablet() ? 500 : 350,
@@ -911,19 +950,19 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   selectedEmojiContainer: {
-    width: isTablet() ? 120 : 100,
-    height: isTablet() ? 120 : 100,
+    width: Platform.OS === 'web' ? 80 : (isTablet() ? 120 : 100),
+    height: Platform.OS === 'web' ? 80 : (isTablet() ? 120 : 100),
     borderRadius: RADIUS.full,
     backgroundColor: COLORS.gray[100],
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: Platform.OS === 'web' ? SPACING.md : SPACING.xl,
     borderWidth: 3,
     borderColor: THEMES.stackBlue.primary,
     ...SHADOWS.level2,
   },
   selectedEmoji: {
-    fontSize: isTablet() ? 60 : 50,
+    fontSize: Platform.OS === 'web' ? 40 : (isTablet() ? 60 : 50),
   },
   emojiInput: {
     width: '80%',
@@ -965,7 +1004,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.level2, // Stronger shadow when selected
   },
   emojiOptionText: {
-    fontSize: isTablet() ? 32 : 28,
+    fontSize: Platform.OS === 'web' ? 24 : (isTablet() ? 32 : 28),
   },
   pinInputContainer: {
     width: '100%',
@@ -1074,15 +1113,30 @@ const styles = StyleSheet.create({
     color: THEMES.stackBlue.primary,
   },
   navigation: {
+    position: Platform.OS === 'web' ? 'fixed' : 'relative',
+    bottom: Platform.OS === 'web' ? 0 : undefined,
+    left: Platform.OS === 'web' ? 0 : undefined,
+    right: Platform.OS === 'web' ? 0 : undefined,
     paddingHorizontal: SPACING.xl,
-    paddingBottom: Platform.OS === 'ios' ? SPACING.xl : SPACING.lg,
+    paddingBottom: Platform.OS === 'web' ? SPACING.sm : (Platform.OS === 'ios' ? SPACING.xl : SPACING.lg),
+    paddingTop: Platform.OS === 'web' ? SPACING.sm : SPACING.md,
+    backgroundColor: 'white', // White background to stand out
+    minHeight: Platform.OS === 'web' ? 90 : 120, // Shorter on web
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 3,
+    zIndex: Platform.OS === 'web' ? 1000 : undefined,
   },
   dotsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: SPACING.xl,
-    gap: SPACING.sm,
+    marginBottom: Platform.OS === 'web' ? SPACING.sm : SPACING.xl,
+    gap: Platform.OS === 'web' ? SPACING.xs : SPACING.sm,
   },
   dot: {
     width: 8,
@@ -1094,6 +1148,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    width: '100%',
+    minHeight: 48, // Ensure minimum height for buttons
   },
   button: {
     flexDirection: 'row',

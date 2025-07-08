@@ -21,7 +21,7 @@ export const FONT_SCALE = {
 
 // Card layout constants
 export const CARD_LAYOUT = {
-  minWidth: 250,
+  minWidth: 350,
   gap: 19, // ~1.2rem in pixels
   containerPaddingMobile: 16, // 1rem
   containerPaddingTablet: 24, // 1.5rem
@@ -37,9 +37,9 @@ export const calculateColumns = (width = screenWidth) => {
   const availableWidth = width - (containerPadding * 2);
   let numColumns = Math.floor((availableWidth + CARD_LAYOUT.gap) / (CARD_LAYOUT.minWidth + CARD_LAYOUT.gap)) || 1;
   
-  // Cap at 4 columns for tablets
-  if (isTablet(width) && numColumns > 4) {
-    numColumns = 4;
+  // Cap at 3 columns maximum
+  if (numColumns > 3) {
+    numColumns = 3;
   }
   
   return numColumns;

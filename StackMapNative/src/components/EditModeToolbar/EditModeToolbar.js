@@ -273,7 +273,7 @@ const styles = StyleSheet.create({
   actionLabel: {
     fontSize: isTablet() ? 18 : 16,
     fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
-    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   moreMenuOverlay: {
     flex: 1,

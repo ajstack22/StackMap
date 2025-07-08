@@ -35,9 +35,21 @@ const GestureHandlerRootView = GestureHandlerModule?.GestureHandlerRootView;
 const PanGestureHandler = GestureHandlerModule?.PanGestureHandler;
 const State = GestureHandlerModule?.State;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// Import DocumentPicker and RNFS
-const DocumentPicker = Platform.OS === 'ios' ? require('react-native-document-picker').default : null;
-const RNFS = require('react-native-fs');
+// Import DocumentPicker and RNFS with platform handling
+let DocumentPicker = null;
+let RNFS = null;
+
+if (Platform.OS === 'web') {
+  // Use web polyfills
+  const webHelpers = require('./src/utils/platformHelpers.web');
+  RNFS = webHelpers.RNFS;
+  DocumentPicker = webHelpers.DocumentPicker;
+} else {
+  // Use native modules
+  DocumentPicker = Platform.OS === 'ios' ? require('react-native-document-picker').default : null;
+  RNFS = require('react-native-fs');
+}
+
 import { Share, Linking } from 'react-native';
 
 // Import our new constants and utilities
@@ -2085,6 +2097,12 @@ const App = () => {
         <View style={styles.contentArea}>
           {(numColumns > 1) ? (
             <ScrollView
+              style={Platform.OS === 'web' ? { 
+                height: '100%',
+                maxHeight: 'calc(100vh - 200px)', // Account for header and other elements
+                overflow: 'auto',
+              } : undefined}
+              showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.listContent,
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
@@ -2186,11 +2204,17 @@ const App = () => {
               }
             />
           ) : (
-            // Android fallback - regular FlatList with reorder buttons
+            // Android/Web fallback - regular FlatList with reorder buttons
             <FlatList
               data={activities}
               renderItem={renderActivity}
               keyExtractor={item => item.id}
+              style={Platform.OS === 'web' ? { 
+                height: '100%',
+                maxHeight: 'calc(100vh - 200px)', // Account for header and other elements
+                overflow: 'auto',
+              } : undefined}
+              showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.listContent,
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
@@ -3627,6 +3651,9 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    ...(Platform.OS === 'web' && {
+      height: '100vh',
+    }),
   },
   contentArea: {
     flex: 1,
@@ -3670,7 +3697,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 36 : 28,
     fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
     color: 'white',
-    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   headerSubtitle: {
     fontSize: 14,
@@ -3727,6 +3754,9 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
     paddingLeft: getContainerPadding() - (CARD_LAYOUT.gap / 2),
     paddingRight: getContainerPadding() - (CARD_LAYOUT.gap / 2),
+  },
+  webScrollView: {
+    height: '100%',
   },
   columnWrapper: {
     gap: CARD_LAYOUT.gap,
@@ -3939,7 +3969,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal', // Android uses bold font file
     color: 'white',
-    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   modalContent: {
     flex: 1,
@@ -3994,13 +4024,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexDirection: 'row',
     marginTop: SPACING.sm,
+    gap: SPACING.sm,
     ...SHADOWS.level1,
   },
   buttonText: {
     color: 'white',
     fontSize: 16,
     fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
-    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   timeText: {
     fontSize: isTablet() ? 20 : 18,
@@ -4013,7 +4044,7 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 15,
     marginTop: 20,
-    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   colorGrid: {
     flexDirection: 'row',
