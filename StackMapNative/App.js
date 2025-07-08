@@ -16,6 +16,7 @@ import {
   Dimensions,
   Image,
   Animated,
+  PermissionsAndroid,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -34,10 +35,10 @@ const GestureHandlerRootView = GestureHandlerModule?.GestureHandlerRootView;
 const PanGestureHandler = GestureHandlerModule?.PanGestureHandler;
 const State = GestureHandlerModule?.State;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-// Import DocumentPicker and RNFS with platform checks due to compatibility
+// Import DocumentPicker and RNFS
 const DocumentPicker = Platform.OS === 'ios' ? require('react-native-document-picker').default : null;
 const RNFS = require('react-native-fs');
-import { Share } from 'react-native';
+import { Share, Linking } from 'react-native';
 
 // Import our new constants and utilities
 import {
@@ -1298,7 +1299,6 @@ const App = () => {
 
   // Export data function
   const exportData = async () => {
-    
     try {
       const data = {
         version: 3,
@@ -1317,39 +1317,57 @@ const App = () => {
       };
 
       const jsonData = JSON.stringify(data, null, 2);
-      const fileName = `stackmap-export-${new Date().toISOString().split('T')[0]}.json`;
+      const now = new Date();
+      const dateStr = now.toISOString().split('T')[0];
+      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+      const fileName = `stackmap-export-${dateStr}-${timeStr}.json`;
       
       if (Platform.OS === 'android') {
-        // On Android, save to Downloads AND offer share menu
-        const downloadsPath = RNFS.DownloadDirectoryPath;
-        const filePath = `${downloadsPath}/${fileName}`;
-        
+        // Try to save directly to Downloads folder
         try {
+          const downloadsPath = RNFS.DownloadDirectoryPath;
+          const filePath = `${downloadsPath}/${fileName}`;
+          
           await RNFS.writeFile(filePath, jsonData, 'utf8');
-          showToast({ message: `Saved to Downloads/${fileName}` });
           
-          // Also offer to share the file
-          const shareResult = await Share.share({
-            url: `file://${filePath}`,
-            title: 'Share StackMap Data',
-            message: `StackMap export: ${fileName}`,
-          });
-          
-          if (shareResult.action === Share.sharedAction) {
-            showToast({ message: 'Data shared successfully' });
-          }
+          // Show success dialog with share option
+          Alert.alert(
+            'Export Successful!',
+            `Your data has been saved to:\nDownloads/${fileName}\n\nWould you like to share it to another app?`,
+            [
+              {
+                text: 'No Thanks',
+                style: 'cancel',
+                onPress: () => {
+                  showToast({ message: 'Export saved to Downloads' });
+                }
+              },
+              {
+                text: 'Share',
+                onPress: async () => {
+                  try {
+                    await Share.share({
+                      url: `file://${filePath}`,
+                      title: 'StackMap Export',
+                      message: `Exported: ${fileName}`,
+                    });
+                  } catch (shareError) {
+                    console.log('Share cancelled:', shareError);
+                  }
+                }
+              }
+            ]
+          );
         } catch (error) {
-          // If Downloads fails, try external storage
-          const externalPath = `${RNFS.ExternalStorageDirectoryPath}/Download/${fileName}`;
-          await RNFS.writeFile(externalPath, jsonData, 'utf8');
-          showToast({ message: `Saved to Download/${fileName}` });
-          
-          // Try to share from external path
-          await Share.share({
-            url: `file://${externalPath}`,
-            title: 'Share StackMap Data',
-            message: `StackMap export: ${fileName}`,
-          });
+          console.error('Export error:', error);
+          // Try app's external directory as fallback
+          try {
+            const externalPath = `${RNFS.ExternalDirectoryPath}/${fileName}`;
+            await RNFS.writeFile(externalPath, jsonData, 'utf8');
+            showToast({ message: `Saved to app folder: ${fileName}` });
+          } catch (fallbackError) {
+            Alert.alert('Export Error', 'Failed to save file. ' + fallbackError.message);
+          }
         }
       } else {
         // iOS: Use share sheet
@@ -1375,16 +1393,128 @@ const App = () => {
 
   // Import data function
   const importData = async () => {
-    // For Android, show instructions since document picker has compatibility issues
+    // For Android, try to access app's external files directory
     if (Platform.OS === 'android') {
-      Alert.alert(
-        'Import Instructions',
-        'To import data on Android:\n\n1. Copy your StackMap JSON file to your device\n2. Use a file manager app to share the file\n3. Select StackMap from the share menu\n\nWe\'re working on a better solution for the next update.',
-        [{ text: 'OK' }]
-      );
+      try {
+        // First check app's documents directory (where exports might be saved)
+        const documentsPath = `${RNFS.ExternalDirectoryPath}/Documents`;
+        let jsonFiles = [];
+        
+        // Try to create Documents directory if it doesn't exist
+        try {
+          await RNFS.mkdir(documentsPath);
+        } catch (e) {
+          // Directory might already exist
+        }
+        
+        // Check multiple locations where files might be
+        const searchPaths = [
+          RNFS.DownloadDirectoryPath,
+          RNFS.ExternalDirectoryPath,
+          `${RNFS.ExternalDirectoryPath}/Documents`,
+          RNFS.DocumentDirectoryPath,
+        ];
+        
+        for (const path of searchPaths) {
+          try {
+            const files = await RNFS.readDir(path);
+            const foundFiles = files.filter(f => 
+              f.name.endsWith('.json') && 
+              f.name.toLowerCase().includes('stackmap')
+            );
+            jsonFiles = jsonFiles.concat(foundFiles);
+          } catch (e) {
+            // Skip paths we can't access
+          }
+        }
+        
+        // Remove duplicates
+        const uniqueFiles = Array.from(new Map(jsonFiles.map(f => [f.path, f])).values());
+        
+        if (uniqueFiles.length === 0) {
+          Alert.alert(
+            'No StackMap Files Found',
+            'To import data:\n\n1. First export your data using the Export button\n2. The file will be saved via the share menu\n3. Save it to your device storage\n4. Try importing again\n\nNote: On newer Android versions, apps have limited file access.',
+            [{ text: 'OK' }]
+          );
+          return;
+        }
+        
+        // If multiple files, show picker
+        if (uniqueFiles.length > 1) {
+          // Sort files by modified time (newest first)
+          uniqueFiles.sort((a, b) => b.mtime - a.mtime);
+          
+          const fileOptions = uniqueFiles.map(f => {
+            // Parse the filename to get date and time
+            const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+            let displayName = f.name;
+            
+            if (match) {
+              const date = match[1];
+              const time = match[2] ? match[2].replace(/-/g, ':') : '';
+              const dateObj = new Date(date);
+              const isToday = new Date().toDateString() === dateObj.toDateString();
+              const isYesterday = new Date(Date.now() - 86400000).toDateString() === dateObj.toDateString();
+              
+              let dateStr = date;
+              if (isToday) dateStr = 'Today';
+              else if (isYesterday) dateStr = 'Yesterday';
+              
+              displayName = time ? `${dateStr} at ${time}` : dateStr;
+              
+              // Add file size
+              const sizeKB = Math.round(f.size / 1024);
+              displayName += ` (${sizeKB} KB)`;
+            }
+            
+            return {
+              text: displayName,
+              onPress: () => importFromFile(f.path, f.name)
+            };
+          });
+          
+          Alert.alert(
+            'Select Backup to Import',
+            `Found ${uniqueFiles.length} StackMap backups:`,
+            [...fileOptions, { text: 'Cancel', style: 'cancel' }]
+          );
+        } else {
+          // Single file found - show confirmation
+          const f = uniqueFiles[0];
+          const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+          let fileInfo = f.name;
+          
+          if (match) {
+            const date = match[1];
+            const time = match[2] ? match[2].replace(/-/g, ':') : '';
+            fileInfo = time ? `${date} at ${time}` : date;
+          }
+          
+          Alert.alert(
+            'Import Backup?',
+            `Found backup from ${fileInfo}\n\nThis will replace all your current data.`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              { 
+                text: 'Import', 
+                style: 'destructive',
+                onPress: () => importFromFile(f.path, f.name)
+              }
+            ]
+          );
+        }
+      } catch (error) {
+        console.error('Import error:', error);
+        Alert.alert(
+          'Import Error', 
+          'Unable to access files. This is normal on newer Android versions due to storage restrictions.\n\nTry using a file manager app to share the JSON file with StackMap.'
+        );
+      }
       return;
     }
     
+    // iOS uses DocumentPicker
     try {
       const result = await DocumentPicker.pick({
         type: [DocumentPicker.types.json],
@@ -1454,6 +1584,76 @@ const App = () => {
         console.error('Import error:', error);
         Alert.alert('Import Error', 'Failed to import data');
       }
+    }
+  };
+  
+  // Helper function to import from a file path
+  const importFromFile = async (filePath, fileName) => {
+    try {
+      // Read the file content
+      const fileContent = await RNFS.readFile(filePath, 'utf8');
+      
+      // Parse and validate the data
+      let importedData;
+      try {
+        importedData = JSON.parse(fileContent);
+      } catch (e) {
+        Alert.alert('Error', 'Invalid file format. Please select a valid StackMap export file.');
+        return;
+      }
+      
+      // Migrate data if needed
+      const migratedData = migrateDataStructure(importedData);
+      
+      // Parse file info for better display
+      let fileDisplayName = fileName;
+      const match = fileName.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+      if (match) {
+        const date = match[1];
+        const time = match[2] ? match[2].replace(/-/g, ':') : '';
+        fileDisplayName = time ? `${date} at ${time}` : date;
+      }
+      
+      // Show import preview
+      const userCount = Object.keys(migratedData.users || {}).length;
+      const userNames = Object.values(migratedData.users || {}).map(u => u.name).join(', ');
+      
+      // Confirm import
+      Alert.alert(
+        'Import Backup',
+        `From: ${fileDisplayName}\nUsers: ${userNames} (${userCount} total)\n\n⚠️ This will replace all your current data.`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Import',
+            style: 'destructive',
+            onPress: async () => {
+              // Update state with imported data
+              setUsers(migratedData.users || {});
+              setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
+              setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
+              // PIN is now handled by secure storage, not imported
+              setTemplates(migratedData.templates || []);
+              setCurrentDay(migratedData.currentDay || 'today');
+              
+              // Set first user as current if available
+              const userIds = Object.keys(migratedData.users || {});
+              if (userIds.length > 0) {
+                setCurrentUser(userIds[0]);
+                setActivities(migratedData.users[userIds[0]].days?.[currentDay]?.activities || []);
+              }
+              
+              // Save to storage
+              await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
+              
+              showToast({ message: 'Data imported successfully' });
+            }
+          }
+        ]
+      );
+    } catch (error) {
+      console.error('Import from file error:', error);
+      Alert.alert('Import Error', 'Failed to read or process the file');
     }
   };
 

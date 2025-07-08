@@ -1,0 +1,204 @@
+{
+  "version": 3,
+  "currentDay": "today",
+  "users": {
+    "user_1751914458537_0": {
+      "id": "user_1751914458537_0",
+      "name": "Westley",
+      "icon": "🐸",
+      "days": {
+        "today": {
+          "activities": [
+            {
+              "emoji": "👔",
+              "text": "Get Dressed",
+              "title": "Get Dressed",
+              "description": "",
+              "id": "1751914487280",
+              "completed": false,
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_1",
+              "title": "Welcome to StackMap!",
+              "emoji": "👋",
+              "description": "Tap activities to mark them complete",
+              "pinned": false,
+              "completed": true
+            },
+            {
+              "id": "activity_1751914458537_2",
+              "title": "Try Edit Mode",
+              "emoji": "✏️",
+              "description": "Use the edit button to add your own activities",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_3",
+              "title": "Morning Routine",
+              "emoji": "🌅",
+              "pinned": true,
+              "pinnedOrder": 0
+            },
+            {
+              "id": "activity_1751914458537_4",
+              "title": "Brush Teeth",
+              "emoji": "🦷",
+              "pinned": true,
+              "pinnedOrder": 1
+            },
+            {
+              "id": "activity_1751914458537_5",
+              "title": "Take Medication",
+              "emoji": "💊",
+              "pinned": true,
+              "pinnedOrder": 2
+            },
+            {
+              "id": "activity_1751914458537_6",
+              "title": "Breakfast",
+              "emoji": "🥞",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_7",
+              "title": "Exercise",
+              "emoji": "🏃",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_8",
+              "title": "Work/Study",
+              "emoji": "💻",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_9",
+              "title": "Lunch",
+              "emoji": "🥗",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_10",
+              "title": "Take a Break",
+              "emoji": "☕",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_11",
+              "title": "Dinner",
+              "emoji": "🍽️",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_12",
+              "title": "Relax",
+              "emoji": "🎮",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_13",
+              "title": "Bedtime Routine",
+              "emoji": "🛏️",
+              "pinned": false
+            },
+            {
+              "id": "activity_1751914458537_14",
+              "title": "Sleep",
+              "emoji": "😴",
+              "pinned": false
+            },
+            {
+              "emoji": "🌅",
+              "text": "Morning Routine",
+              "title": "Morning Routine",
+              "description": "",
+              "id": "1751914484697",
+              "completed": false,
+              "pinned": false
+            },
+            {
+              "emoji": "🦷",
+              "text": "Brush Teeth",
+              "title": "Brush Teeth",
+              "description": "",
+              "id": "1751914485863",
+              "completed": false,
+              "pinned": false
+            }
+          ]
+        },
+        "tomorrow": {
+          "activities": []
+        }
+      },
+      "settings": {
+        "taskCelebration": "rainbow",
+        "routineCelebration": "rainbow",
+        "soundEnabled": true,
+        "theme": "olive"
+      },
+      "createdAt": "2025-07-07T18:54:18.538Z",
+      "lastActive": "2025-07-07T18:54:18.538Z"
+    },
+    "user_1751914623980": {
+      "id": "user_1751914623980",
+      "name": "Adam",
+      "icon": "🙂",
+      "days": {
+        "today": {
+          "activities": [
+            {
+              "emoji": "🌅",
+              "text": "Morning Routine",
+              "title": "Morning Routine",
+              "description": "",
+              "id": "1751914653898",
+              "completed": true,
+              "pinned": false
+            },
+            {
+              "emoji": "🦷",
+              "text": "Brush Teeth",
+              "title": "Brush Teeth",
+              "description": "",
+              "id": "1751914655365",
+              "completed": false,
+              "pinned": false
+            },
+            {
+              "emoji": "👔",
+              "text": "Get Dressed",
+              "title": "Get Dressed",
+              "description": "",
+              "id": "1751914656229",
+              "completed": false,
+              "pinned": false
+            }
+          ]
+        },
+        "tomorrow": {
+          "activities": []
+        }
+      },
+      "settings": {
+        "taskCelebration": "rainbow",
+        "routineCelebration": "rainbow",
+        "soundEnabled": true,
+        "theme": "stackBlue"
+      },
+      "createdAt": "2025-07-07T18:57:03.980Z",
+      "lastActive": "2025-07-07T18:57:03.980Z"
+    }
+  },
+  "globalSettings": {
+    "currentTheme": "stackBlue",
+    "bannerPosition": "top",
+    "defaultView": "normal",
+    "displayMode": "numbers",
+    "enableDayManagement": true,
+    "pinEnabled": false
+  },
+  "templates": [],
+  "exportDate": "2025-07-07T23:11:51.098Z"
+}
