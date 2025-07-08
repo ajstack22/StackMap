@@ -16,12 +16,22 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 // Conditionally import drag-and-drop libraries
-const DraggableFlatList = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').default 
-  : require('react-native').FlatList; // Use regular FlatList on Android
-const ScaleDecorator = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').ScaleDecorator 
-  : ({ children }) => children; // Pass-through component for Android
+let DraggableFlatList, ScaleDecorator;
+
+if (Platform.OS === 'web') {
+  // Use web-compatible draggable list
+  const DraggableListWeb = require('./DraggableList.web');
+  DraggableFlatList = DraggableListWeb.DraggableList;
+  ScaleDecorator = DraggableListWeb.ScaleDecorator;
+} else if (Platform.OS === 'ios') {
+  // Use native iOS draggable list
+  DraggableFlatList = require('react-native-draggable-flatlist').default;
+  ScaleDecorator = require('react-native-draggable-flatlist').ScaleDecorator;
+} else {
+  // Android fallback to regular FlatList
+  DraggableFlatList = require('react-native').FlatList;
+  ScaleDecorator = ({ children }) => children;
+}
 import {
   SHADOWS,
   TYPOGRAPHY,
@@ -290,7 +300,9 @@ const CategorySection = ({
 
   const handleDragStart = () => {
     // Just initiate the drag without collapsing yet
-    drag();
+    if (drag && typeof drag === 'function') {
+      drag();
+    }
   };
   
   // onDragStart is now handled at the parent level via onDragBegin
@@ -423,13 +435,13 @@ const CategorySection = ({
           orderedActivities.length > 0 ? (
             <DraggableFlatList
               data={orderedActivities}
-              onDragEnd={Platform.OS === 'ios' ? ({ data }) => setOrderedActivities(data) : undefined}
+              onDragEnd={Platform.OS === 'android' ? undefined : ({ data }) => setOrderedActivities(data)}
               keyExtractor={(item) => item.id}
               renderItem={({ item, drag, isActive }) => (
                 <ScaleDecorator>
                   <TouchableOpacity
-                    onLongPress={Platform.OS === 'ios' ? drag : undefined}
-                    disabled={Platform.OS === 'ios' ? isActive : false}
+                    onLongPress={Platform.OS === 'web' ? undefined : drag}
+                    disabled={isActive}
                     style={[
                       styles.activityRow,
                       isActive && styles.draggingRow,
@@ -837,17 +849,17 @@ const ActivityLibrary = ({
               activity.emoji.includes(searchQuery)
             );
           })}
-          onDragBegin={Platform.OS === 'ios' ? (index) => {
+          onDragBegin={Platform.OS === 'android' ? undefined : (index) => {
             const draggedItem = categories[index];
             if (draggedItem) {
               handleCategoryDragStart(draggedItem.id);
             }
-          } : undefined}
-          onPlaceholderIndexChange={Platform.OS === 'ios' ? () => {
+          }}
+          onPlaceholderIndexChange={Platform.OS === 'android' ? undefined : () => {
             // This fires when items actually move positions
             hasActuallyDragged.current = true;
-          } : undefined}
-          onDragEnd={Platform.OS === 'ios' ? handleCategoryDragEnd : undefined}
+          }}
+          onDragEnd={Platform.OS === 'android' ? undefined : handleCategoryDragEnd}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: SPACING.lg }}

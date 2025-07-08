@@ -14,6 +14,13 @@ module.exports = {
   module: {
     rules: [
       {
+        test: /\.ttf$/,
+        type: 'asset/resource',
+        generator: {
+          filename: 'fonts/[name][ext]',
+        },
+      },
+      {
         test: /\.(js|jsx|ts|tsx)$/,
         exclude: /node_modules\/(?!(react-native-.*|@react-native.*)\/).*/,
         use: {
@@ -29,9 +36,8 @@ module.exports = {
         type: 'asset/resource',
       },
       {
-        test: /\.ttf$/,
-        type: 'asset/resource',
-        include: path.resolve(__dirname, 'node_modules/react-native-vector-icons'),
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
       },
     ],
   },

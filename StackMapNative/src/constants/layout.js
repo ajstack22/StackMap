@@ -21,20 +21,36 @@ export const FONT_SCALE = {
 
 // Card layout constants
 export const CARD_LAYOUT = {
-  minWidth: 350,
-  gap: 19, // ~1.2rem in pixels
+  minWidth: 450, // Must be > 400px height to maintain landscape
+  maxWidth: 600, // Comfortable max width
+  gap: 24, // ~1.5rem in pixels
   containerPaddingMobile: 16, // 1rem
-  containerPaddingTablet: 24, // 1.5rem
+  containerPaddingTablet: 24, // 1.5rem  
+  containerPaddingDesktop: 80, // 5rem - more padding for wide screens
+  singleColumnMaxWidth: 600, // Max width for single column
 };
 
 // Helper functions
-export const getContainerPadding = () => {
-  return screenWidth <= 600 ? CARD_LAYOUT.containerPaddingMobile : CARD_LAYOUT.containerPaddingTablet;
+export const getContainerPadding = (width = screenWidth) => {
+  if (width <= 600) return CARD_LAYOUT.containerPaddingMobile;
+  
+  // With minWidth 450px, calculate breakpoints:
+  // 1 column: needs 450px + padding
+  // 2 columns: needs 924px + padding
+  // 3 columns: needs 1398px + padding
+  
+  // Progressive padding
+  if (width <= 800) return 32;   // 1 column territory
+  if (width <= 1000) return 48;  // Approaching 2 columns
+  if (width <= 1200) return 24;  // 2 column territory (less padding needed)
+  if (width <= 1600) return 48;  // Approaching 3 columns
+  return CARD_LAYOUT.containerPaddingDesktop; // 3+ columns
 };
 
 export const calculateColumns = (width = screenWidth) => {
-  const containerPadding = width <= 600 ? CARD_LAYOUT.containerPaddingMobile : CARD_LAYOUT.containerPaddingTablet;
+  const containerPadding = getContainerPadding(width);
   const availableWidth = width - (containerPadding * 2);
+  // Calculate columns based on minimum width without additional margins
   let numColumns = Math.floor((availableWidth + CARD_LAYOUT.gap) / (CARD_LAYOUT.minWidth + CARD_LAYOUT.gap)) || 1;
   
   // Cap at 3 columns maximum
@@ -46,16 +62,28 @@ export const calculateColumns = (width = screenWidth) => {
 };
 
 export const calculateCardWidth = (width = screenWidth) => {
-  const containerPadding = width <= 600 ? CARD_LAYOUT.containerPaddingMobile : CARD_LAYOUT.containerPaddingTablet;
+  const containerPadding = getContainerPadding(width);
   const availableWidth = width - (containerPadding * 2);
   const numColumns = calculateColumns(width);
+  
+  // For single column, use fixed width but respect available space
+  if (numColumns === 1) {
+    return Math.min(CARD_LAYOUT.singleColumnMaxWidth, availableWidth);
+  }
+  
+  // For web with CSS Grid, we don't need to calculate exact widths
+  if (typeof window !== 'undefined' && window.document) {
+    return 'auto';
+  }
+  
+  // For native, calculate exact widths
   const totalGaps = (numColumns - 1) * CARD_LAYOUT.gap;
   const cardWidth = (availableWidth - totalGaps) / numColumns;
-  return cardWidth;
+  return Math.min(cardWidth, CARD_LAYOUT.maxWidth);
 };
 
 export const getCardHeight = () => {
-  return isTablet() ? 400 : 320;
+  return isTablet() ? 360 : 300; // Good landscape ratio with 450px+ width
 };
 
 export const getCardPadding = () => {

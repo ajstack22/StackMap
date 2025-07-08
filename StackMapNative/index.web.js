@@ -1,6 +1,31 @@
 import { AppRegistry } from 'react-native';
 import App from './App';
 
+// Import Comic Relief fonts
+import ComicReliefRegular from './assets/fonts/ComicRelief-Regular.ttf';
+import ComicReliefBold from './assets/fonts/ComicRelief-Bold.ttf';
+
+// Create font face styles
+const fontStyles = document.createElement('style');
+fontStyles.innerHTML = `
+  @font-face {
+    font-family: 'Comic Relief';
+    src: url(${ComicReliefRegular}) format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+  }
+
+  @font-face {
+    font-family: 'Comic Relief';
+    src: url(${ComicReliefBold}) format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+  }
+`;
+document.head.appendChild(fontStyles);
+
 // Register the app
 AppRegistry.registerComponent('StackMap', () => App);
 

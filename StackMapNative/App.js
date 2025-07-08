@@ -1755,6 +1755,7 @@ const App = () => {
         style={[
           styles.activityCard,
           customWidth && { width: customWidth },
+          numColumns === 1 && Platform.OS === 'web' && { width: calculateCardWidth(screenDimensions.width), maxWidth: CARD_LAYOUT.singleColumnMaxWidth },
           item.completed && [
             styles.completedCard,
             {
@@ -2066,7 +2067,15 @@ const App = () => {
         backgroundColor={bannerPosition === 'top' ? theme.primary : theme.light} 
         translucent={false}
       />
-      <View style={[styles.container, { backgroundColor: theme.light }]}>
+      <View style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.light,
+          ...(Platform.OS === 'web' && bannerPosition === 'bottom' && {
+            backgroundColor: theme.primary, // Match banner color to prevent white strip
+          })
+        }
+      ]}>
         {/* Status Bar Background when banner is at bottom */}
         {bannerPosition === 'bottom' && (
           Platform.OS === 'ios' ? (
@@ -2094,7 +2103,12 @@ const App = () => {
         )}
         
         {/* Main Content Area */}
-        <View style={styles.contentArea}>
+        <View style={[
+          styles.contentArea,
+          Platform.OS === 'web' && bannerPosition === 'bottom' && {
+            backgroundColor: theme.light, // Ensure content area has proper background
+          }
+        ]}>
           {(numColumns > 1) ? (
             <ScrollView
               style={Platform.OS === 'web' ? { 
@@ -2105,6 +2119,7 @@ const App = () => {
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.listContent,
+                { paddingHorizontal: getContainerPadding(screenDimensions.width) },
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
               ]}
             >
@@ -2117,30 +2132,25 @@ const App = () => {
                   </Text>
                 </View>
               ) : (
-                <View style={styles.gridContainer}>
+                <View style={[styles.gridContainer, Platform.OS === 'web' && {
+                  display: 'grid',
+                  gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
+                  rowGap: CARD_LAYOUT.gap,
+                  columnGap: CARD_LAYOUT.gap,
+                  ...(numColumns === 1 && {
+                    justifyItems: 'center',
+                  }),
+                }]}>
                   {activities.map((item, index) => {
-                    const isLastInRow = (index + 1) % numColumns === 0;
-                    const isInLastRow = index >= Math.floor(activities.length / numColumns) * numColumns;
-                    
                     return (
                       <View 
                         key={item.id} 
-                        style={{ 
-                          width: cardWidth,
-                          marginHorizontal: CARD_LAYOUT.gap / 2,
-                          marginBottom: SPACING.md,
-                          // Add invisible placeholders to maintain grid structure
-                          ...(isInLastRow && !isLastInRow && index === activities.length - 1 && {
-                            marginRight: 'auto',
-                            marginLeft: 'auto',
-                          }),
-                        }}
+                        style={[styles.cardWrapper, numColumns === 1 && { width: calculateCardWidth(screenDimensions.width), maxWidth: CARD_LAYOUT.singleColumnMaxWidth }]}
                       >
                         {renderActivity({ 
                           item, 
                           drag: () => {}, 
-                          isActive: false,
-                          customWidth: cardWidth
+                          isActive: false
                         })}
                       </View>
                     );
@@ -2154,11 +2164,7 @@ const App = () => {
                         placeholders.push(
                           <View 
                             key={`placeholder-${i}`} 
-                            style={{ 
-                              width: cardWidth,
-                              marginHorizontal: CARD_LAYOUT.gap / 2,
-                              marginBottom: SPACING.md,
-                            }} 
+                            style={styles.cardWrapper}
                           />
                         );
                       }
@@ -2209,6 +2215,7 @@ const App = () => {
               data={activities}
               renderItem={renderActivity}
               keyExtractor={item => item.id}
+              ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               style={Platform.OS === 'web' ? { 
                 height: '100%',
                 maxHeight: 'calc(100vh - 200px)', // Account for header and other elements
@@ -2217,7 +2224,9 @@ const App = () => {
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.listContent,
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
+                { paddingHorizontal: getContainerPadding(screenDimensions.width) },
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
+                numColumns === 1 && { alignItems: 'center' }
               ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -2234,12 +2243,18 @@ const App = () => {
 
         {/* Bottom Banner */}
         {bannerPosition === 'bottom' && (
-          <SafeAreaView style={{ 
-            backgroundColor: theme.primary,
-            paddingBottom: Platform.OS === 'android' ? 10 : 0 
-          }}>
-            <Header />
-          </SafeAreaView>
+          Platform.OS === 'web' ? (
+            <View style={{ backgroundColor: theme.primary }}>
+              <Header />
+            </View>
+          ) : (
+            <SafeAreaView style={{ 
+              backgroundColor: theme.primary,
+              paddingBottom: Platform.OS === 'android' ? 10 : 0 
+            }}>
+              <Header />
+            </SafeAreaView>
+          )
         )}
         
         {/* Status Bar Background when banner is at top */}
@@ -3102,9 +3117,36 @@ const App = () => {
               ))}
             </View>
             
-            <View style={styles.pinKeypad}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(num => (
-                <TouchableOpacity
+            {/* Text input for desktop web */}
+            {Platform.OS === 'web' && (
+              <TextInput
+                style={[styles.pinTextInput, { borderColor: theme.primary }]}
+                value={pinInput}
+                onChangeText={(text) => {
+                  // Only allow numeric input up to 4 digits
+                  const numericText = text.replace(/[^0-9]/g, '').slice(0, 4);
+                  setPinInput(numericText);
+                }}
+                onSubmitEditing={() => {
+                  // Handle Enter key press - trigger PIN verification if 4 digits entered
+                  if (pinInput.length === 4) {
+                    // The useEffect will handle the verification automatically
+                  }
+                }}
+                placeholder="Enter 4-digit PIN"
+                placeholderTextColor="#999"
+                keyboardType="numeric"
+                maxLength={4}
+                autoFocus
+                secureTextEntry
+              />
+            )}
+            
+            {/* Only show keypad on mobile platforms */}
+            {Platform.OS !== 'web' && (
+              <View style={styles.pinKeypad}>
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(num => (
+                  <TouchableOpacity
                   key={num}
                   style={styles.pinKey}
                   onPress={() => {
@@ -3133,6 +3175,7 @@ const App = () => {
                 <Icon name="backspace" size={24} color="#666" />
               </TouchableOpacity>
             </View>
+            )}
             
             {isSettingPin && (
               <Text style={styles.pinHelperText}>
@@ -3653,6 +3696,8 @@ const styles = StyleSheet.create({
     flex: 1,
     ...(Platform.OS === 'web' && {
       height: '100vh',
+      minHeight: '100vh',
+      backgroundColor: '#f7fafc', // Ensure no white gaps show through
     }),
   },
   contentArea: {
@@ -3750,10 +3795,9 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   listContent: {
-    padding: getContainerPadding(),
+    paddingTop: 24, // Keep consistent top padding
     paddingBottom: 100,
-    paddingLeft: getContainerPadding() - (CARD_LAYOUT.gap / 2),
-    paddingRight: getContainerPadding() - (CARD_LAYOUT.gap / 2),
+    paddingHorizontal: getContainerPadding(),
   },
   webScrollView: {
     height: '100%',
@@ -3764,21 +3808,28 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     alignItems: 'flex-start',
   },
+  cardWrapper: {
+    ...(Platform.OS === 'web' ? {
+      maxWidth: CARD_LAYOUT.maxWidth,
+    } : {
+      width: calculateCardWidth(),
+      marginBottom: CARD_LAYOUT.gap,
+      marginLeft: CARD_LAYOUT.gap / 2,
+      marginRight: CARD_LAYOUT.gap / 2,
+    }),
+  },
   activityCard: {
-    width: calculateCardWidth(),
+    width: '100%', // Fill the wrapper
     height: getCardHeight(),
     backgroundColor: 'white',
     borderRadius: RADIUS.lg,
     padding: getCardPadding(),
-    marginBottom: SPACING.md,
-    marginHorizontal: 0, // Spacing handled by columnWrapper on tablets
     ...SHADOWS.level2,
     borderWidth: 2,
     borderColor: 'rgba(0, 0, 0, 0.08)',
-    alignSelf: 'center',
     position: 'relative',
   },
   completedCard: {
@@ -4258,6 +4309,18 @@ const styles = StyleSheet.create({
     gap: 15,
     width: '100%',
     marginBottom: 20,
+  },
+  pinTextInput: {
+    width: '80%',
+    height: 50,
+    borderWidth: 2,
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.md,
+    fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    textAlign: 'center',
+    marginBottom: 20,
+    backgroundColor: 'white',
   },
   pinKey: {
     width: 70,

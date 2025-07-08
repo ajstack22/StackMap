@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: isTablet() ? 20 : 18,
     fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
-    fontFamily: Platform.OS === 'ios' ? 'Comic Relief' : 'ComicRelief-Bold',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     marginBottom: SPACING.sm,
     opacity: 1,
   },
