@@ -2,15 +2,13 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/stachblx/public_html/qual
-    # Copy web build files directly to qual root
-    - /bin/cp -f ./web/build/*.js $DEPLOYPATH/ 2>/dev/null || true
-    - /bin/cp -f ./web/build/*.html $DEPLOYPATH/ 2>/dev/null || true
-    - /bin/cp -f ./web/build/*.png $DEPLOYPATH/ 2>/dev/null || true
-    - /bin/cp -f ./web/build/*.txt $DEPLOYPATH/ 2>/dev/null || true
+    - export REPOPATH=/home/stachblx/repositories/StackMap
+    # Copy web build files directly to qual root using absolute paths
+    - /bin/cp -f $REPOPATH/web/build/*.js $DEPLOYPATH/
+    - /bin/cp -f $REPOPATH/web/build/*.html $DEPLOYPATH/
+    - /bin/cp -f $REPOPATH/web/build/*.png $DEPLOYPATH/
+    - /bin/cp -f $REPOPATH/web/build/*.txt $DEPLOYPATH/
     # Copy fonts directory if it exists
-    - /bin/cp -rf ./web/build/fonts $DEPLOYPATH/ 2>/dev/null || true
-    # Set proper permissions
-    - /bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
-    - /bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;
+    - /bin/cp -rf $REPOPATH/web/build/fonts $DEPLOYPATH/
     # Log deployment for debugging
     - echo "Deployment completed at $(date)" >> $DEPLOYPATH/deploy.log
