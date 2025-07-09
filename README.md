@@ -1,102 +1,117 @@
-This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
+# StackMap
 
-# Getting Started
+A visual schedule app for managing daily activities, built with React Native for iOS, Android, and Web.
 
-> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
+## 🚀 Quick Start
 
-## 🚨 CRITICAL FOR ANDROID BUILDS 🚨
-**MUST READ**: See [ANDROID_BUILD_SETUP.md](./ANDROID_BUILD_SETUP.md) for Java 17 requirements and build instructions. Android builds WILL FAIL without proper Java setup!
-
-## Step 1: Start Metro
-
-First, you will need to run **Metro**, the JavaScript build tool for React Native.
-
-To start the Metro dev server, run the following command from the root of your React Native project:
-
-```sh
-# Using npm
-npm start
-
-# OR using Yarn
-yarn start
+### Web Development
+```bash
+npm install
+npm run web        # Start dev server on http://localhost:3001
+npm run build:web  # Build for production
 ```
 
-## Step 2: Build and run your app
-
-With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
-
-### Android
-
-⚠️ **IMPORTANT**: Use the provided script to ensure Java 17 is used:
-
-```sh
-# RECOMMENDED - Uses Java 17 automatically
-./run-android.sh
-
-# Alternative (if you've manually set up Java 17)
-npm run android
-```
-
-### iOS
-
-For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
-
-The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
-
-```sh
-bundle install
-```
-
-Then, and every time you update your native dependencies, run:
-
-```sh
-bundle exec pod install
-```
-
-For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
-
-```sh
-# Using npm
+### Mobile Development
+```bash
+# iOS
 npm run ios
 
-# OR using Yarn
-yarn ios
+# Android (requires Java 17 - see docs)
+./scripts/react-native/run-android.sh
 ```
 
-If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
+## 📁 Project Structure
 
-This is one way to run your app — you can also build it directly from Android Studio or Xcode.
+```
+StackMap/
+├── src/               # React Native source code
+│   ├── components/    # Reusable components
+│   ├── constants/     # Theme, layout constants
+│   ├── hooks/         # Custom React hooks
+│   └── utils/         # Utility functions
+├── ios/               # iOS native project
+├── android/           # Android native project
+├── web/               # Web-specific files
+├── assets/            # Images, fonts, icons
+├── scripts/           # Build and deployment scripts
+├── docs/              # Documentation
+│   ├── android/       # Android-specific docs
+│   ├── ios/           # iOS-specific docs
+│   ├── deployment/    # Deployment guides
+│   └── development/   # Development guides
+├── tools/             # Development tools
+└── tests/             # Test suites
+```
 
-## Step 3: Modify your app
+## 🛠️ Development
 
-Now that you have successfully run the app, let's make changes!
+### Prerequisites
+- Node.js 16+
+- For iOS: Xcode 14+, CocoaPods
+- For Android: Java 17, Android Studio
+- See [Environment Setup](https://reactnative.dev/docs/set-up-your-environment)
 
-Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
+### First Time Setup
+```bash
+# Install dependencies
+npm install
 
-When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
+# iOS setup
+cd ios && pod install && cd ..
 
-- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
-- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
+# Run native development setup
+./scripts/native-dev-setup.sh
+```
 
-## Congratulations! :tada:
+### Key Scripts
+- `npm run web` - Start web dev server
+- `npm run build:web` - Build web for production
+- `npm run ios` - Run iOS app
+- `npm run android` - Run Android app
+- `npm test` - Run tests
 
-You've successfully run and modified your React Native App. :partying_face:
+## 📱 Features
 
-### Now what?
+- Visual activity cards with timers
+- Multi-user support with personalized themes
+- Check-in system with mood and weather tracking
+- Activity library with categories
+- Drag-and-drop reordering
+- Import/Export functionality
+- Offline support (PWA)
 
-- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
-- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+## 📚 Documentation
 
-# Troubleshooting
+- [Android Build Setup](./docs/android/ANDROID_BUILD_SETUP.md) - **Critical for Android builds**
+- [iOS Development](./docs/ios/)
+- [Deployment Guide](./docs/deployment/DEPLOYMENT_SIMPLE.md)
+- [All Documentation](./docs/)
 
-If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+## 🚀 Deployment
 
-# Learn More
+### Web Deployment
+```bash
+./scripts/build-web.sh  # Build for production
+git add -A && git commit -m "Deploy"
+git push origin main
+# Then sync to production server
+```
 
-To learn more about React Native, take a look at the following resources:
+### Mobile Deployment
+- iOS: See [App Store Distribution](./docs/deployment/DISTRIBUTION_GUIDE.md)
+- Android: See [Google Play Setup](./docs/android/GOOGLE_PLAY_SETUP_GUIDE.md)
 
-- [React Native Website](https://reactnative.dev) - learn more about React Native.
-- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
-- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
-- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
-- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
+## 🤝 Contributing
+
+1. Create a feature branch
+2. Make your changes
+3. Run tests: `npm test`
+4. Submit a pull request
+
+## 📄 License
+
+This project is licensed under the MIT License - see [LICENSE](LICENSE) file.
+
+## 🙏 Acknowledgments
+
+Built with React Native and love for visual learners everywhere.
