@@ -42,13 +42,23 @@ fontStyles.innerHTML = `
   }
   
   /* Force Comic Relief everywhere - override any Comic Neue */
-  body, div, span, p, h1, h2, h3, h4, h5, h6, button, input, textarea, select {
+  body, div:not([style*="Material Icons"]), span:not([style*="Material Icons"]), 
+  p, h1, h2, h3, h4, h5, h6, button, input, textarea, select {
     font-family: 'Comic Relief', 'Comic Sans MS', cursive !important;
   }
   
-  /* Preserve Material Icons font */
-  .material-icons {
+  /* Preserve Material Icons font - must not override inline styles */
+  [style*="Material Icons"] {
     font-family: 'Material Icons' !important;
+    font-weight: normal !important;
+    font-style: normal !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    white-space: nowrap !important;
+    word-wrap: normal !important;
+    direction: ltr !important;
+    -webkit-font-feature-settings: 'liga' !important;
+    -webkit-font-smoothing: antialiased !important;
   }
 `;
 document.head.appendChild(fontStyles);
