@@ -3,7 +3,7 @@
 .DS_Store
 
 # Web Build
-web/build/
+# web/build/ - temporarily allowing for deployment
 .deployment-manifest
 
 # Xcode
