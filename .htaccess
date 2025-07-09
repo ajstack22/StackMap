@@ -113,6 +113,21 @@ ServerSignature Off
 # Custom error pages
 ErrorDocument 404 /index.html
 
+# Redirect root-level assets to /qual for testing
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Redirect font requests from root to /qual
+    RewriteCond %{REQUEST_URI} ^/fonts/(.*)$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^fonts/(.*)$ /qual/fonts/$1 [L,R=302]
+    
+    # Redirect favicon from root to /qual
+    RewriteCond %{REQUEST_URI} ^/favicon.ico$ [NC]
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^favicon.ico$ /qual/favicon.ico [L,R=302]
+</IfModule>
+
 # Enable HTTPS redirect (uncomment for production)
 # RewriteEngine On
 # RewriteCond %{HTTPS} off
