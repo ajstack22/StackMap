@@ -3767,10 +3767,9 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     ...(Platform.OS === 'web' && {
-      height: '100vh',
+      height: '100%',
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden',
     }),
   },
   contentArea: {
@@ -3778,8 +3777,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     ...(Platform.OS === 'web' && {
       overflow: 'hidden',
-      display: 'flex',
-      flexDirection: 'column',
+      minHeight: 0, // Critical for flexbox children to scroll
     }),
   },
   innerContainer: {
