@@ -3845,7 +3845,7 @@ const styles = StyleSheet.create({
   logoBar2: { height: 2.5 },
   logoBar3: { height: 5 },
   headerTitle: {
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 40 : 28) : (isTablet() ? 36 : 28),
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 36 : 25) : (isTablet() ? 36 : 28),
     fontWeight: Platform.OS === 'web' ? '700' : (Platform.OS === 'ios' ? 'bold' : 'normal'),
     color: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -3861,9 +3861,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: 'white',
     paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
+    paddingVertical: Platform.OS === 'web' ? 6 : SPACING.sm, // 20% reduction from 8px
     borderRadius: RADIUS.round,
-    marginTop: SPACING.sm,
+    marginTop: Platform.OS === 'web' ? 3 : SPACING.sm,
     gap: SPACING.sm,
     ...SHADOWS.level2,
   },
@@ -3872,14 +3872,14 @@ const styles = StyleSheet.create({
   },
   subtitleEmoji: {
     fontSize: Platform.OS === 'web' 
-      ? (isTablet() ? 24.5 : 24.5)  // 175% of 14px subtitle = 24.5px
+      ? (isTablet() ? 21 : 21)  // Reduced by 15% from 24.5px
       : (isTablet() ? 31 : 20), // Keep native sizes unchanged
   },
   subtitleEmojiEdit: {
     // No change needed for emoji in edit mode
   },
   subtitleText: {
-    fontSize: isTablet() ? 18 : 14,
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 15 : 12) : (isTablet() ? 18 : 14),
     fontWeight: '500',
     color: '#333',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
