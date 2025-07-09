@@ -1,0 +1,155 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Build Android Debug",
+            "type": "shell",
+            "command": "./scripts/mobile-build-automation.sh",
+            "args": ["android", "debug"],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build Android Release",
+            "type": "shell",
+            "command": "./scripts/mobile-build-automation.sh",
+            "args": ["android", "release"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Build iOS Debug",
+            "type": "shell",
+            "command": "./scripts/mobile-build-automation.sh",
+            "args": ["ios", "debug"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [],
+            "osx": {
+                "options": {
+                    "env": {
+                        "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer"
+                    }
+                }
+            }
+        },
+        {
+            "label": "Build iOS Release",
+            "type": "shell",
+            "command": "./scripts/mobile-build-automation.sh",
+            "args": ["ios", "release"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": [],
+            "osx": {
+                "options": {
+                    "env": {
+                        "DEVELOPER_DIR": "/Applications/Xcode.app/Contents/Developer"
+                    }
+                }
+            }
+        },
+        {
+            "label": "Build All Platforms",
+            "type": "shell",
+            "command": "./scripts/mobile-build-automation.sh",
+            "args": ["all", "release"],
+            "group": "build",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Sync Capacitor",
+            "type": "shell",
+            "command": "npx cap sync",
+            "group": "build",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Run Mobile Tests",
+            "type": "shell",
+            "command": "./scripts/run-mobile-tests.sh",
+            "group": "test",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy to TestFlight",
+            "type": "shell",
+            "command": "./scripts/deploy-testflight.sh",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Deploy to Play Console",
+            "type": "shell",
+            "command": "./scripts/deploy-play-console.sh",
+            "group": "none",
+            "presentation": {
+                "reveal": "always",
+                "panel": "new"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Check COPPA Compliance",
+            "type": "shell",
+            "command": "./scripts/verify-coppa-compliance.sh",
+            "group": "test",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Generate Store Assets",
+            "type": "shell",
+            "command": "./scripts/generate-store-assets.sh",
+            "group": "none",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "Update Version Numbers",
+            "type": "shell",
+            "command": "./scripts/update-version.sh",
+            "group": "none",
+            "presentation": {
+                "reveal": "always"
+            },
+            "problemMatcher": []
+        }
+    ]
+}

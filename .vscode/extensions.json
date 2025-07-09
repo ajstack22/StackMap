@@ -1,0 +1,39 @@
+{
+  "recommendations": [
+    // Essential for StackMap Development
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "ritwickdey.liveserver",
+    "msjsdiag.debugger-for-chrome",
+    
+    // Productivity Boosters
+    "christian-kohler.path-intellisense",
+    "zignd.html-css-class-completion",
+    "formulahendry.auto-rename-tag",
+    "naumovs.color-highlight",
+    
+    // Git & GitHub Integration
+    "github.vscode-pull-request-github",
+    "eamodio.gitlens",
+    "donjayamanne.githistory",
+    
+    // Code Quality
+    "wayou.vscode-todo-highlight",
+    "gruntfuggly.todo-tree",
+    "streetsidesoftware.code-spell-checker",
+    "sonarsource.sonarlint-vscode",
+    
+    // PWA & Mobile Development
+    "pwa-tools.pwa-tools",
+    "johnpapa.vscode-peacock",
+    
+    // Enhanced Editing
+    "chakrounanas.turbo-console-log",
+    "wix.vscode-import-cost",
+    "vincaslt.highlight-matching-tag",
+    
+    // Icons & Themes
+    "pkief.material-icon-theme",
+    "zhuangtongfa.material-theme"
+  ]
+}

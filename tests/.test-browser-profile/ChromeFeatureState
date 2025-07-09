@@ -1,0 +1,1 @@
+{"disable-features":"AcceptCHFrame,IsolateOrigins,MediaRouter,OptimizationHints,PaintHolding,ProcessPerSiteUpToMainFrameThreshold,Translate","enable-features":"NetworkServiceInProcess2","force-fieldtrial-params":"","force-fieldtrials":"*SeedFileTrial/Default"}

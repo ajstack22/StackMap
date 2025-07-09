@@ -1,0 +1,102 @@
+{
+  "stories": [
+    {
+      "name": "Story 001",
+      "file": "tests/stories/story-001-add-card.js",
+      "passed": true,
+      "scenarios": []
+    },
+    {
+      "name": "Story 002",
+      "file": "tests/stories/story-002-timer-functionality.js",
+      "passed": true,
+      "scenarios": []
+    }
+  ],
+  "unit": [
+    {
+      "name": "Unit: state.js",
+      "file": "state.js",
+      "passed": true,
+      "tests": [
+        {
+          "name": "State management",
+          "passed": true,
+          "message": "File exists"
+        },
+        {
+          "name": "Data persistence",
+          "passed": true,
+          "message": "File exists"
+        }
+      ]
+    },
+    {
+      "name": "Unit: components.js",
+      "file": "components.js",
+      "passed": true,
+      "tests": [
+        {
+          "name": "Component rendering",
+          "passed": true,
+          "message": "File exists"
+        },
+        {
+          "name": "Event handling",
+          "passed": true,
+          "message": "File exists"
+        }
+      ]
+    },
+    {
+      "name": "Unit: drive-sync.js",
+      "file": "drive-sync.js",
+      "passed": true,
+      "tests": [
+        {
+          "name": "Drive sync logic",
+          "passed": true,
+          "message": "File exists"
+        },
+        {
+          "name": "Offline handling",
+          "passed": true,
+          "message": "File exists"
+        }
+      ]
+    }
+  ],
+  "integration": [
+    {
+      "name": "Integration: uat-edit-mode-updated.js",
+      "file": "tests/uat-edit-mode-updated.js",
+      "passed": true,
+      "message": "Test file exists"
+    },
+    {
+      "name": "Integration: uat-import-export-data.js",
+      "file": "tests/uat-import-export-data.js",
+      "passed": true,
+      "message": "Test file exists"
+    },
+    {
+      "name": "Integration: uat-ui-timing.js",
+      "file": "tests/uat-ui-timing.js",
+      "passed": true,
+      "message": "Test file exists"
+    },
+    {
+      "name": "Integration: uat-drive-sync.js",
+      "file": "tests/uat-drive-sync.js",
+      "passed": true,
+      "message": "Test file exists"
+    }
+  ],
+  "timestamp": "2025-06-21T03:27:00.172Z",
+  "summary": {
+    "total": 9,
+    "passed": 9,
+    "failed": 0,
+    "skipped": 0
+  }
+}

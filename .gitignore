@@ -1,80 +1,93 @@
-# Dependencies
-node_modules/
-npm-debug.log*
-yarn-error.log*
-
-# Development
+# OSX
+#
 .DS_Store
-*.swp
-*.swo
-*~
-.idea/
-.vscode/
-*.sublime-*
 
-# Environment
-.env
-.env.local
-.env.*.local
+# Web Build
+web/build/
+.deployment-manifest
 
-# Logs
-logs/
-*.log
-
-# Testing
-coverage/
-.nyc_output/
-
-# Build outputs
-dist/
+# Xcode
+#
 build/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata
+*.xccheckout
+*.moved-aside
+DerivedData
+*.hmap
+*.ipa
+*.xcuserstate
+**/.xcode.env.local
 
-# Cache
-.cache/
-.parcel-cache/
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+*.keystore
+!debug.keystore
+.kotlin/
 
-# OS files
-Thumbs.db
-Desktop.ini
+# Signing secrets - NEVER COMMIT THESE!
+android/gradle.properties
+android/keystore-credentials.txt
+android/app/*.keystore
 
-# Backup files
-*.backup
-*.bak
+# node.js
+#
+node_modules/
+npm-debug.log
+yarn-error.log
 
-# API Keys (if any slip through)
-*apikey*
-*api_key*
-*secret*
+# fastlane
+#
+# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
+# screenshots whenever they are needed.
+# For more information about the recommended setup visit:
+# https://docs.fastlane.tools/best-practices/source-control/
 
-# Local development files
-dev-tools.js
-simple-app/
-# Local overrides - DO NOT COMMIT
-# Don't ignore UAT tests - they're part of the codebase
-# uat-*.js
-# test-*.js
+**/fastlane/report.xml
+**/fastlane/Preview.html
+**/fastlane/screenshots
+**/fastlane/test_output
 
-# Test artifacts
-tests/test-failure.png
-# package-lock.json  # Commented out - needed for CI/CD npm ci command
+# Bundle artifact
+*.jsbundle
 
-# Test results
-test-results/
-test-output.tmp
+# Ruby / CocoaPods
+**/Pods/
+/vendor/bundle/
 
-# Test browser profiles
-tests/.test-browser-profile/
+# Temporary files created by Metro to check the health of the file watcher
+.metro-health-check*
 
-# Release notes (contain sensitive deployment info)
-releases/
+# testing
+/coverage
 
-# Deployment logs
-deploy-log-*.txt
-deployment-log.txt
-tests/reports/
-*.report.html
-lighthouse-*.html
-lighthouse-*.json
-test-*.html
-android-twa/*.keystore
-android-twa/local.properties
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# iOS crash logs
+ios/Build*.txt
+ios/StackMapNative 20*
+ios/*.crash
+ios/*.ips
+
+# Temporary tools
+icon-color-preview.html

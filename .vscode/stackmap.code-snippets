@@ -1,0 +1,149 @@
+{
+  // StackMap Custom Code Snippets
+  "StackMap Console Log": {
+    "prefix": "smlog",
+    "body": [
+      "console.log('StackMap:', ${1:variable});"
+    ],
+    "description": "StackMap branded console log"
+  },
+  
+  "StackMap Function": {
+    "prefix": "smfunc",
+    "body": [
+      "/**",
+      " * ${1:Description}",
+      " * @param {${2:type}} ${3:param} - ${4:Parameter description}",
+      " * @returns {${5:type}} ${6:Return description}",
+      " */",
+      "function ${7:functionName}(${3:param}) {",
+      "\t${8:// Implementation}",
+      "\treturn ${9:result};",
+      "}"
+    ],
+    "description": "StackMap function with JSDoc"
+  },
+  
+  "StackMap API Call": {
+    "prefix": "smapi",
+    "body": [
+      "fetch('${1:endpoint}')",
+      "\t.then(response => response.json())",
+      "\t.then(data => {",
+      "\t\tconsole.log('StackMap API:', data);",
+      "\t\t${2:// Handle data}",
+      "\t})",
+      "\t.catch(error => {",
+      "\t\tconsole.error('StackMap Error:', error);",
+      "\t});"
+    ],
+    "description": "StackMap API call template"
+  },
+  
+  "StackMap Chrome API": {
+    "prefix": "smchrome",
+    "body": [
+      "chrome.${1:api}.${2:method}({",
+      "\t${3:// options}",
+      "}, (${4:result}) => {",
+      "\tif (chrome.runtime.lastError) {",
+      "\t\tconsole.error('StackMap Chrome Error:', chrome.runtime.lastError);",
+      "\t\treturn;",
+      "\t}",
+      "\t${5:// Handle result}",
+      "});"
+    ],
+    "description": "Chrome extension API call"
+  },
+  
+  "StackMap Event Listener": {
+    "prefix": "smevent",
+    "body": [
+      "${1:element}.addEventListener('${2:event}', (e) => {",
+      "\t${3:// Handle event}",
+      "});"
+    ],
+    "description": "Event listener"
+  },
+  
+  "StackMap Try Catch": {
+    "prefix": "smtry",
+    "body": [
+      "try {",
+      "\t${1:// Code that might throw}",
+      "} catch (error) {",
+      "\tconsole.error('StackMap Error:', error);",
+      "\t${2:// Handle error}",
+      "}"
+    ],
+    "description": "Try-catch block"
+  },
+  
+  "StackMap Module": {
+    "prefix": "smmodule",
+    "body": [
+      "/**",
+      " * StackMap ${1:Module Name}",
+      " * ${2:Module description}",
+      " */",
+      "const ${3:moduleName} = {",
+      "\t/**",
+      "\t * Initialize module",
+      "\t */",
+      "\tinit() {",
+      "\t\tconsole.log('Initializing ${3:moduleName}...');",
+      "\t\t${4:// Initialization code}",
+      "\t},",
+      "",
+      "\t${5:// Module methods}",
+      "};",
+      "",
+      "// Export for use in other modules",
+      "if (typeof module !== 'undefined' && module.exports) {",
+      "\tmodule.exports = ${3:moduleName};",
+      "}"
+    ],
+    "description": "StackMap module template"
+  },
+  
+  "StackMap CSS Class": {
+    "prefix": "smclass",
+    "body": [
+      ".stackmap-${1:component} {",
+      "\t${2:/* Styles */}",
+      "}"
+    ],
+    "description": "StackMap CSS class"
+  },
+  
+  "StackMap Media Query": {
+    "prefix": "smmedia",
+    "body": [
+      "@media (max-width: ${1:768}px) {",
+      "\t.stackmap-${2:component} {",
+      "\t\t${3:/* Mobile styles */}",
+      "\t}",
+      "}"
+    ],
+    "description": "Responsive media query"
+  },
+  
+  "StackMap Test": {
+    "prefix": "smtest",
+    "body": [
+      "describe('${1:Component/Function}', () => {",
+      "\tit('${2:should do something}', () => {",
+      "\t\t// Arrange",
+      "\t\t${3:// Setup test data}",
+      "\t\t",
+      "\t\t// Act",
+      "\t\t${4:// Execute function}",
+      "\t\t",
+      "\t\t// Assert",
+      "\t\t${5:// Check results}",
+      "\t});",
+      "});"
+    ],
+    "description": "Test case template"
+  }
+}

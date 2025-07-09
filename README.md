@@ -1,136 +1,102 @@
-# StackMap
+This is a new [**React Native**](https://reactnative.dev) project, bootstrapped using [`@react-native-community/cli`](https://github.com/react-native-community/cli).
 
-A visual routine builder designed to help families create and follow daily schedules, with special focus on accessibility for children with special needs.
+# Getting Started
 
-![StackMap Logo](icon-192.png)
+> **Note**: Make sure you have completed the [Set Up Your Environment](https://reactnative.dev/docs/set-up-your-environment) guide before proceeding.
 
-## 🚀 New Modular Architecture
+## 🚨 CRITICAL FOR ANDROID BUILDS 🚨
+**MUST READ**: See [ANDROID_BUILD_SETUP.md](./ANDROID_BUILD_SETUP.md) for Java 17 requirements and build instructions. Android builds WILL FAIL without proper Java setup!
 
-As of June 26, 2025, StackMap has been migrated to a clean modular structure for better maintainability.
+## Step 1: Start Metro
 
-### File Structure
-```
-StackMap/
-├── index.html          # Main application
-├── manifest.json       # PWA configuration  
-├── src/
-│   ├── stackmap.css   # All styles (1,506 lines)
-│   └── stackmap.js    # All JavaScript (2,206 lines)
-└── archive/           # Legacy monolithic version
-```
+First, you will need to run **Metro**, the JavaScript build tool for React Native.
 
-## Features
+To start the Metro dev server, run the following command from the root of your React Native project:
 
-- **Visual Activity Cards**: Create colorful cards with emojis and descriptions for daily activities
-- **Multiple User Support**: Each family member can have their own customized routine
-- **Day-Specific Schedules**: Different activities for different days of the week
-- **Completion Tracking**: Kids can tap cards to mark activities as complete
-- **Customizable Themes**: Choose from various colors to personalize the experience
-- **Grown-up Mode**: Protected editing mode for parents/caregivers
-- **Offline Support**: Works without internet connection (Progressive Web App)
-- **Data Sync**: Optional Google Drive sync for backup and sharing across devices
+```sh
+# Using npm
+npm start
 
-## Getting Started
-
-### For Users
-
-Visit [StackMap](https://stackmap.app) to start using the app immediately. No installation required!
-
-### For Developers
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/stackmap.git
-cd stackmap
+# OR using Yarn
+yarn start
 ```
 
-2. Serve the files locally:
-```bash
-# Using Python
-python -m http.server 8000
+## Step 2: Build and run your app
 
-# Using Node.js
-npx http-server -p 8000
+With Metro running, open a new terminal window/pane from the root of your React Native project, and use one of the following commands to build and run your Android or iOS app:
 
-# Or use any static file server
+### Android
+
+⚠️ **IMPORTANT**: Use the provided script to ensure Java 17 is used:
+
+```sh
+# RECOMMENDED - Uses Java 17 automatically
+./run-android.sh
+
+# Alternative (if you've manually set up Java 17)
+npm run android
 ```
 
-3. Open `http://localhost:8000` in your browser
+### iOS
 
-## Technology Stack
+For iOS, remember to install CocoaPods dependencies (this only needs to be run on first clone or after updating native deps).
 
-- **Frontend**: Vanilla JavaScript with modern ES6+ features
-- **Styling**: CSS with CSS Variables for theming
-- **Storage**: LocalStorage for offline data persistence
-- **PWA**: Service Worker for offline functionality
-- **Architecture**: 100% client-side (no backend server)
+The first time you create a new project, run the Ruby bundler to install CocoaPods itself:
 
-## Architecture Note
-
-StackMap is a **pure client-side application** with no backend server. This means:
-- All code runs in the user's browser
-- API keys in the code are intentional and necessary
-- Security is enforced through Google API Console restrictions (domain-locking)
-- This is standard practice for client-side applications
-
-See [SECURITY.md](SECURITY.md) for detailed security information.
-- **Sync**: Google Drive API for optional cloud backup
-
-## Project Structure
-
-```
-StackMap/
-├── app/                    # Core application files
-│   ├── StackMapApp.js     # Main application logic
-│   ├── PreferencesManager.js # Settings management
-│   └── state.js           # State management
-├── components/            # Reusable UI components
-├── styles/               # Modular CSS files
-├── js/                   # Additional JavaScript modules
-├── data/                 # Default data and constants
-├── docs/                 # Documentation
-├── index.html           # Main application entry
-├── manifest.json        # PWA manifest
-└── sw.js               # Service Worker
+```sh
+bundle install
 ```
 
-## Design Philosophy
+Then, and every time you update your native dependencies, run:
 
-StackMap follows these key principles:
+```sh
+bundle exec pod install
+```
 
-1. **Accessibility First**: Large touch targets, high contrast, simple interactions
-2. **Visual Learning**: Emoji-based interface for non-readers
-3. **Flexibility**: Adaptable to different family needs and routines
-4. **Privacy**: All data stored locally by default, optional cloud sync
-5. **Simplicity**: Clean, uncluttered interface focused on core functionality
+For more information, please visit [CocoaPods Getting Started guide](https://guides.cocoapods.org/using/getting-started.html).
 
-## Contributing
+```sh
+# Using npm
+npm run ios
 
-We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+# OR using Yarn
+yarn ios
+```
 
-### Development Guidelines
+If everything is set up correctly, you should see your new app running in the Android Emulator, iOS Simulator, or your connected device.
 
-- Maintain the existing code style (Comic Relief font, rounded corners, etc.)
-- Ensure all touch targets are at least 44px
-- Test on both mobile and desktop viewports
-- Preserve special needs accessibility features
+This is one way to run your app — you can also build it directly from Android Studio or Xcode.
 
-## License
+## Step 3: Modify your app
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+Now that you have successfully run the app, let's make changes!
 
-## Acknowledgments
+Open `App.tsx` in your text editor of choice and make some changes. When you save, your app will automatically update and reflect these changes — this is powered by [Fast Refresh](https://reactnative.dev/docs/fast-refresh).
 
-- Designed with input from families with special needs children
-- Icons from Material Design Icons
-- Built with love for the special needs community
+When you want to forcefully reload, for example to reset the state of your app, you can perform a full reload:
 
-## Support
+- **Android**: Press the <kbd>R</kbd> key twice or select **"Reload"** from the **Dev Menu**, accessed via <kbd>Ctrl</kbd> + <kbd>M</kbd> (Windows/Linux) or <kbd>Cmd ⌘</kbd> + <kbd>M</kbd> (macOS).
+- **iOS**: Press <kbd>R</kbd> in iOS Simulator.
 
-- For bugs and feature requests, please [open an issue](https://github.com/yourusername/stackmap/issues)
-- For questions, visit our [Support Page](https://stackmap.app/support.html)
-- For direct support, email contact@stackmap.app
+## Congratulations! :tada:
 
----
+You've successfully run and modified your React Native App. :partying_face:
 
-Made with ❤️ for families everywhere
+### Now what?
+
+- If you want to add this new React Native code to an existing application, check out the [Integration guide](https://reactnative.dev/docs/integration-with-existing-apps).
+- If you're curious to learn more about React Native, check out the [docs](https://reactnative.dev/docs/getting-started).
+
+# Troubleshooting
+
+If you're having issues getting the above steps to work, see the [Troubleshooting](https://reactnative.dev/docs/troubleshooting) page.
+
+# Learn More
+
+To learn more about React Native, take a look at the following resources:
+
+- [React Native Website](https://reactnative.dev) - learn more about React Native.
+- [Getting Started](https://reactnative.dev/docs/environment-setup) - an **overview** of React Native and how setup your environment.
+- [Learn the Basics](https://reactnative.dev/docs/getting-started) - a **guided tour** of the React Native **basics**.
+- [Blog](https://reactnative.dev/blog) - read the latest official React Native **Blog** posts.
+- [`@facebook/react-native`](https://github.com/facebook/react-native) - the Open Source; GitHub **repository** for React Native.
