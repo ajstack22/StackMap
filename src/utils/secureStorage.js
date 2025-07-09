@@ -12,25 +12,25 @@ const PIN_USERNAME = 'editModePin';
 export const setSecurePin = async (pin) => {
   try {
     if (!pin) {
-      console.log('setSecurePin: Removing PIN');
+      // Removing PIN
       // Remove PIN - call reset first for web compatibility
       try {
-        console.log('setSecurePin: Calling resetInternetCredentials');
+        // Calling resetInternetCredentials
         await Keychain.resetInternetCredentials(PIN_SERVICE);
-        console.log('setSecurePin: resetInternetCredentials success');
+        // resetInternetCredentials success
       } catch (resetError) {
-        console.log('setSecurePin: resetInternetCredentials failed:', resetError);
+        // resetInternetCredentials failed
         // If reset fails, try to overwrite with empty string
         try {
-          console.log('setSecurePin: Trying setInternetCredentials with empty string');
+          // Trying setInternetCredentials with empty string
           await Keychain.setInternetCredentials(
             PIN_SERVICE,
             PIN_USERNAME,
             ''
           );
-          console.log('setSecurePin: setInternetCredentials with empty string success');
+          // setInternetCredentials with empty string success
         } catch (e) {
-          console.log('Could not clear PIN credentials:', e);
+          console.error('Could not clear PIN credentials:', e);
         }
       }
       return true;
@@ -55,14 +55,14 @@ export const setSecurePin = async (pin) => {
  */
 export const getSecurePin = async () => {
   try {
-    console.log('getSecurePin: Getting credentials for', PIN_SERVICE);
+    // Getting credentials for PIN_SERVICE
     const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
-    console.log('getSecurePin: credentials:', credentials);
+    // Retrieved credentials
     if (credentials) {
-      console.log('getSecurePin: returning password:', credentials.password);
+      // Returning stored PIN
       return credentials.password;
     }
-    console.log('getSecurePin: no credentials, returning null');
+    // No credentials found
     return null;
   } catch (error) {
     console.error('Error retrieving PIN:', error);
@@ -117,7 +117,7 @@ export const migratePinToSecureStorage = async () => {
         delete parsedData.globalSettings.editModePin;
         await AsyncStorage.setItem('@stackmap_data', JSON.stringify(parsedData));
         
-        console.log('PIN migrated to secure storage successfully');
+        // PIN migrated to secure storage successfully
       }
     }
 

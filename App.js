@@ -41,9 +41,8 @@ let RNFS = null;
 
 if (Platform.OS === 'web') {
   // Use web polyfills
-  const webHelpers = require('./src/utils/platformHelpers.web');
-  RNFS = webHelpers.RNFS;
-  DocumentPicker = webHelpers.DocumentPicker;
+  RNFS = require('./src/utils/platformHelpers.web').default;
+  DocumentPicker = require('./src/utils/platformHelpers.web').DocumentPicker;
 } else {
   // Use native modules
   DocumentPicker = Platform.OS === 'ios' ? require('react-native-document-picker').default : null;
@@ -454,7 +453,7 @@ const App = () => {
       if (isExistingUser) {
         // Mark onboarding as completed for existing users
         await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
-        console.log('Existing user detected, skipping onboarding');
+        // Existing user detected, skipping onboarding
       }
       
       // Check if we should show onboarding (only for truly new users)
@@ -2943,19 +2942,19 @@ const App = () => {
                               style: 'destructive',
                               onPress: async () => {
                                 try {
-                                  console.log('Remove PIN: Starting PIN removal');
+                                  // Starting PIN removal
                                   
                                   // Check current PIN status
                                   const hasPinBefore = await hasSecurePin();
-                                  console.log('Remove PIN: Has PIN before:', hasPinBefore);
+                                  // Check PIN status before removal
                                   
                                   // Clear the PIN for both platforms
                                   const success = await setSecurePin(null);
-                                  console.log('Remove PIN: setSecurePin(null) success:', success);
+                                  // PIN removal result
                                   
                                   // Check PIN status after
                                   const hasPinAfter = await hasSecurePin();
-                                  console.log('Remove PIN: Has PIN after:', hasPinAfter);
+                                  // Check PIN status after removal
                                   
                                   if (success && !hasPinAfter) {
                                     setHasPinProtection(false);

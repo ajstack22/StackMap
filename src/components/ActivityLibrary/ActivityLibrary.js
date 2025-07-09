@@ -342,7 +342,7 @@ const CategorySection = ({
   return (
     <TouchableOpacity
       style={[styles.categorySection, isActive && styles.draggingCategory]}
-      onLongPress={isSortMode ? handleDragStart : undefined}
+      onLongPress={undefined}
       delayLongPress={isSortMode ? 150 : 250}
       activeOpacity={0.95}
       disabled={isActive || !isSortMode}
@@ -441,7 +441,7 @@ const CategorySection = ({
               renderItem={({ item, drag, isActive }) => (
                 <ScaleDecorator>
                   <TouchableOpacity
-                    onLongPress={Platform.OS === 'web' ? undefined : drag}
+                    onLongPress={undefined}
                     disabled={isActive}
                     style={[
                       styles.activityRow,

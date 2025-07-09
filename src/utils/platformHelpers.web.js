@@ -2,11 +2,11 @@
 
 // Default export for react-native-fs
 const RNFS = {
-  DocumentDirectoryPath: '',
-  DownloadDirectoryPath: '',
-  ExternalDirectoryPath: '',
-  CachesDirectoryPath: '',
-  ExternalStorageDirectoryPath: '',
+  DocumentDirectoryPath: '/tmp',
+  DownloadDirectoryPath: '/downloads',
+  ExternalDirectoryPath: '/external',
+  CachesDirectoryPath: '/cache',
+  ExternalStorageDirectoryPath: '/external-storage',
   
   writeFile: async (path, content) => {
     // For web, we'll use browser's download functionality

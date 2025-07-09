@@ -324,7 +324,7 @@ const Onboarding = ({ onComplete, onSkip }) => {
 
   const handleComplete = () => {
     console.log('Onboarding handleComplete - users array:', users);
-    console.log('Onboarding handleComplete - pin:', pin);
+    // Onboarding handleComplete called
     
     if (users.length > 0) {
       const dataToPass = {
