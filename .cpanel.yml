@@ -1,12 +1,12 @@
 ---
 deployment:
-  branch: main
   tasks:
     - export DEPLOYPATH=/home/stachblx/public_html/qual
-    # Clear the deployment directory first (except hidden files)
-    - /bin/find $DEPLOYPATH -mindepth 1 -name '.*' -prune -o -exec rm -rf {} + 2>/dev/null || true
-    # Copy only the web build files directly to qual root
-    - /bin/cp -R web/build/. $DEPLOYPATH/
+    # Remove all non-hidden files and directories from deployment path
+    - /bin/rm -rf $DEPLOYPATH/*
+    # Copy only the contents of web/build to the deployment path
+    - /bin/cp -R ./web/build/* $DEPLOYPATH/
+    - /bin/cp ./web/build/.htaccess $DEPLOYPATH/ 2>/dev/null || true
     # Set proper permissions
-    - find $DEPLOYPATH -type f -exec chmod 644 {} \;
-    - find $DEPLOYPATH -type d -exec chmod 755 {} \;
+    - /bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
+    - /bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;
