@@ -84,6 +84,8 @@ import {
 // Import components
 import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, Onboarding } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
+import { ContextModal } from './src/components/ContextModal';
+import { PlanningModal } from './src/components/PlanningModal';
 
 // Import hooks
 import { useToast } from './src/hooks';
@@ -146,9 +148,11 @@ const App = () => {
   const [showEditModeSettingsModal, setShowEditModeSettingsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showActivityLibrary, setShowActivityLibrary] = useState(false);
+  const [userContextData, setUserContextData] = useState({});
   
   // Force ScrollView recalculation on Android modals
-  const [modalScrollKey, setModalScrollKey] = useState(0);
+  const preferencesScrollRef = useRef(null);
+  const settingsScrollRef = useRef(null);
   const [editingActivity, setEditingActivity] = useState(null);
   const [activityTitle, setActivityTitle] = useState('');
   const [activityDescription, setActivityDescription] = useState('');
@@ -207,8 +211,6 @@ const App = () => {
   const [editIconsOpacity] = useState(() => new Animated.Value(0));
   
   // ScrollView refs for forcing measurement on Android
-  const preferencesScrollRef = useRef(null);
-  const settingsScrollRef = useRef(null);
   
   // Force re-render keys for Android scroll fix
   const [settingsScrollKey, setSettingsScrollKey] = useState(0);
@@ -228,23 +230,9 @@ const App = () => {
     const initializeApp = async () => {
       await migratePinToSecureStorage();
       await loadData();
-      // Only check secure PIN if we didn't restore the state from saved data
-      const savedData = await AsyncStorage.getItem('stackMapData');
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        // If pinEnabled is explicitly set in saved data, use that value
-        if (parsedData.globalSettings?.pinEnabled !== undefined) {
-          setHasPinProtection(parsedData.globalSettings.pinEnabled);
-        } else {
-          // No saved PIN state, check secure storage
-          const hasPIN = await hasSecurePin();
-          setHasPinProtection(hasPIN);
-        }
-      } else {
-        // No saved data at all, check secure storage
-        const hasPIN = await hasSecurePin();
-        setHasPinProtection(hasPIN);
-      }
+      // Always check secure storage as the source of truth for PIN
+      const hasPIN = await hasSecurePin();
+      setHasPinProtection(hasPIN);
     };
     
     initializeApp();
@@ -262,7 +250,7 @@ const App = () => {
     if (currentUser) {
       saveData();
     }
-  }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories, hasPinProtection]);
+  }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories]);
 
   // Load activities when day changes
   useEffect(() => {
@@ -483,8 +471,12 @@ const App = () => {
         
         setUsers(migratedData.users || {});
         
-        // Handle theme color
-        if (migratedData.globalSettings?.themeColor) {
+        // Handle theme
+        if (migratedData.globalSettings?.currentTheme) {
+          // Use the saved theme name directly
+          setCurrentTheme(migratedData.globalSettings.currentTheme);
+        } else if (migratedData.globalSettings?.themeColor) {
+          // Fallback to old themeColor for backward compatibility
           // Map old color codes to new theme names
           const colorMap = {
             '#667eea': 'plum',     // old purple -> plum
@@ -505,13 +497,16 @@ const App = () => {
         setDisplayMode(migratedData.globalSettings?.displayMode || 'numbers');
         setTaskCelebration(migratedData.globalSettings?.taskCelebration || 'rainbow');
         setRoutineCelebration(migratedData.globalSettings?.routineCelebration || 'rainbow');
-        // Restore PIN protection state from saved data
-        if (migratedData.globalSettings?.pinEnabled !== undefined) {
-          setHasPinProtection(migratedData.globalSettings.pinEnabled);
-        }
+        // Don't restore PIN state from saved data - secure storage is the source of truth
         setCurrentDay(migratedData.currentDay || 'today');
         setTemplates(migratedData.templates || []);
         setActivityCategories(migratedData.activityCategories || null);
+        
+        // Load user context data
+        const savedContextData = await AsyncStorage.getItem('@stackmap_userContext');
+        if (savedContextData) {
+          setUserContextData(JSON.parse(savedContextData));
+        }
         
         // Set current user and load activities
         const userId = migratedData.currentUserId || Object.keys(migratedData.users || {})[0];
@@ -579,11 +574,11 @@ const App = () => {
           }
         },
         globalSettings: {
-          themeColor: THEMES[currentTheme].primary,
+          currentTheme: currentTheme,
+          themeColor: THEMES[currentTheme].primary, // Keep for backward compatibility
           displayMode: displayMode,
           enableDayManagement: true,
-          // Save the current PIN protection state
-          pinEnabled: hasPinProtection,
+          // Don't save PIN state - secure storage is the source of truth
           bannerPosition: bannerPosition,
           taskCelebration: taskCelebration,
           routineCelebration: routineCelebration
@@ -591,7 +586,7 @@ const App = () => {
         templates: templates || [],
         activityCategories: activityCategories
       };
-      await AsyncStorage.setItem('stackMapData', JSON.stringify(data));
+      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(data));
     } catch (error) {
       console.error('Error saving data:', error);
     }
@@ -1299,10 +1294,7 @@ const App = () => {
     
     setCurrentUser(userId);
     setActivities([]);
-    // New user inherits current theme
-    if (currentTheme) {
-      setCurrentTheme(currentTheme);
-    }
+    // New user inherits current theme, no need to change it
     setNewUserName('');
     setNewUserEmoji('😀');
     setShowAddUserModal(false);
@@ -1579,6 +1571,10 @@ const App = () => {
               if (userIds.length > 0) {
                 setCurrentUser(userIds[0]);
                 setActivities(migratedData.users[userIds[0]].days?.[currentDay]?.activities || []);
+                // Load the first user's theme
+                if (migratedData.users[userIds[0]]?.settings?.theme) {
+                  setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
+                }
               }
               
               // Save to storage
@@ -1653,6 +1649,10 @@ const App = () => {
               if (userIds.length > 0) {
                 setCurrentUser(userIds[0]);
                 setActivities(migratedData.users[userIds[0]].days?.[currentDay]?.activities || []);
+                // Load the first user's theme
+                if (migratedData.users[userIds[0]]?.settings?.theme) {
+                  setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
+                }
               }
               
               // Save to storage
@@ -2013,27 +2013,27 @@ const App = () => {
               activeOffsetY={[-10, 10]} // Activate after 10 pixels of movement
             >
               <TouchableOpacity 
-                style={styles.subtitlePill}
+                style={[styles.subtitlePill, isEditMode && styles.subtitlePillEdit]}
                 onPress={() => setShowUserDayModal(true)}
               >
-                <Text style={styles.subtitleEmoji}>
+                <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
                   {users[currentUser]?.icon || '😀'}
                 </Text>
-                <Text style={styles.subtitleDay}>
-                  {currentDay === 'today' ? 'Today' : 'Tomorrow'}
+                <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
+                  {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}
                 </Text>
               </TouchableOpacity>
             </PanGestureHandler>
           ) : (
             <TouchableOpacity 
-              style={styles.subtitlePill}
+              style={[styles.subtitlePill, isEditMode && styles.subtitlePillEdit]}
               onPress={() => setShowUserDayModal(true)}
             >
-              <Text style={styles.subtitleEmoji}>
+              <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
                 {users[currentUser]?.icon || '😀'}
               </Text>
-              <Text style={styles.subtitleDay}>
-                {currentDay === 'today' ? 'Today' : 'Tomorrow'}
+              <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
+                {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}
               </Text>
             </TouchableOpacity>
           )}
@@ -2105,8 +2105,8 @@ const App = () => {
         {/* Main Content Area */}
         <View style={[
           styles.contentArea,
-          Platform.OS === 'web' && bannerPosition === 'bottom' && {
-            backgroundColor: theme.light, // Ensure content area has proper background
+          {
+            backgroundColor: theme.light, // Always use theme's light color
           }
         ]}>
           {(numColumns > 1) ? (
@@ -2132,25 +2132,48 @@ const App = () => {
                   </Text>
                 </View>
               ) : (
-                <View style={[styles.gridContainer, Platform.OS === 'web' && {
-                  display: 'grid',
-                  gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
-                  rowGap: CARD_LAYOUT.gap,
-                  columnGap: CARD_LAYOUT.gap,
-                  ...(numColumns === 1 && {
-                    justifyItems: 'center',
-                  }),
-                }]}>
+                <View style={[
+                  styles.gridContainer, 
+                  Platform.OS === 'web' ? {
+                    display: 'grid',
+                    gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
+                    rowGap: CARD_LAYOUT.gap,
+                    columnGap: CARD_LAYOUT.gap,
+                    ...(numColumns === 1 && {
+                      justifyItems: 'center',
+                    }),
+                  } : {
+                    // No negative margins needed
+                  }
+                ]}>
                   {activities.map((item, index) => {
                     return (
                       <View 
                         key={item.id} 
-                        style={[styles.cardWrapper, numColumns === 1 && { width: calculateCardWidth(screenDimensions.width), maxWidth: CARD_LAYOUT.singleColumnMaxWidth }]}
+                        style={[
+                          styles.cardWrapper,
+                          Platform.OS !== 'web' && {
+                            width: numColumns > 1 
+                              ? calculateCardWidth(screenDimensions.width) - CARD_LAYOUT.gap
+                              : calculateCardWidth(screenDimensions.width),
+                            marginBottom: CARD_LAYOUT.gap,
+                            // Add horizontal margin only for multi-column layouts
+                            ...(numColumns > 1 && {
+                              marginHorizontal: CARD_LAYOUT.gap / 2,
+                            }),
+                          },
+                          numColumns === 1 && { 
+                            maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
+                            marginLeft: 'auto',
+                            marginRight: 'auto',
+                          }
+                        ]}
                       >
                         {renderActivity({ 
                           item, 
                           drag: () => {}, 
-                          isActive: false
+                          isActive: false,
+                          customWidth: true
                         })}
                       </View>
                     );
@@ -2199,6 +2222,7 @@ const App = () => {
                 styles.listContent,
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
               ]}
+              ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyIcon}>📋</Text>
@@ -2225,8 +2249,7 @@ const App = () => {
               contentContainerStyle={[
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                numColumns === 1 && { alignItems: 'center' }
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
               ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -2248,25 +2271,30 @@ const App = () => {
               <Header />
             </View>
           ) : (
-            <SafeAreaView style={{ 
-              backgroundColor: theme.primary,
-              paddingBottom: Platform.OS === 'android' ? 10 : 0 
-            }}>
-              <Header />
-            </SafeAreaView>
+            <>
+              <SafeAreaView style={{ 
+                backgroundColor: theme.primary,
+                paddingBottom: Platform.OS === 'android' ? 10 : 0 
+              }}>
+                <Header />
+              </SafeAreaView>
+              {Platform.OS === 'android' && (
+                <View style={{ backgroundColor: theme.primary, height: 24 }} />
+              )}
+            </>
           )
         )}
         
-        {/* Status Bar Background when banner is at top */}
+        {/* Bottom Safe Area for Android */}
         {bannerPosition === 'top' && (
           Platform.OS === 'ios' ? (
             <SafeAreaView style={{ backgroundColor: theme.primary }} />
           ) : (
-            // On Android, show colored block only when edit mode toolbar is not visible at bottom
+            // On Android, show colored block for navigation bar
             !(isEditMode && showEditToolbar) && (
               <View style={{ 
                 backgroundColor: theme.primary, 
-                height: 48, // Increased height to match iOS aesthetic
+                height: 24,
                 width: '100%'
               }} />
             )
@@ -2291,6 +2319,10 @@ const App = () => {
           onPress={() => {
             if (isEditMode) {
               setIsEditMode(false);
+              // Switch to today when exiting edit mode
+              if (currentDay !== 'today') {
+                setCurrentDay('today');
+              }
               // The toolbar will be removed after animation completes
             } else {
               if (hasPinProtection) {
@@ -2427,94 +2459,67 @@ const App = () => {
         </View>
       </Modal>
 
-      {/* User/Day Modal */}
-      <Modal
-        visible={showUserDayModal}
-        animationType="slide"
-        onRequestClose={() => setShowUserDayModal(false)}
-      >
-        <View style={styles.modalContainer}>
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-          )}
-          <SafeAreaView style={{ backgroundColor: theme.primary }}>
-            <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>Switch User/Day</Text>
-              <TouchableOpacity onPress={() => setShowUserDayModal(false)}>
-                <Icon name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-          
-          <ScrollView 
-            style={{ flex: 1, backgroundColor: theme.light }}
-            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-            showsVerticalScrollIndicator={false}
-          >
-              {/* Users Section */}
-              <Text style={styles.sectionTitle}>Users</Text>
-              <View style={styles.usersList}>
-                {Object.entries(users).map(([userId, user]) => (
-                  <TouchableOpacity
-                    key={userId}
-                    style={[
-                      styles.userItem,
-                      currentUser === userId && styles.userItemActive
-                    ]}
-                    onPress={() => {
-                      setCurrentUser(userId);
-                      setActivities(user.days?.[currentDay]?.activities || []);
-                      // Load user's theme
-                      if (user.settings?.theme) {
-                        setCurrentTheme(user.settings.theme);
-                      }
-                      showToast({ message: `Switched to ${user.name}` });
-                      setShowUserDayModal(false);
-                    }}
-                  >
-                    <Text style={styles.userItemEmoji}>{user.icon}</Text>
-                    <Text style={[
-                      styles.userItemName,
-                      currentUser === userId && styles.userItemNameActive
-                    ]}>
-                      {user.name}
-                    </Text>
-                    {currentUser === userId && (
-                      <Icon name="check" size={20} color={theme.primary} />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
+      {/* Context Modal - Normal Mode */}
+      {!isEditMode && (
+        <ContextModal
+          visible={showUserDayModal}
+          onClose={() => setShowUserDayModal(false)}
+          currentUser={currentUser}
+          users={users}
+          theme={theme}
+          onUserChange={(userId) => {
+            setCurrentUser(userId);
+            if (users[userId]?.settings?.theme) {
+              setCurrentTheme(users[userId].settings.theme);
+            }
+          }}
+          onSave={(contextData) => {
+            // Save context data for the selected user
+            const userToSave = contextData.user || currentUser;
+            const updatedContextData = {
+              ...userContextData,
+              [userToSave]: contextData
+            };
+            setUserContextData(updatedContextData);
+            AsyncStorage.setItem('@stackmap_userContext', JSON.stringify(updatedContextData));
+            showToast({ message: 'Context saved!' });
+            
+            // Only close modal if it's not an auto-save
+            if (!contextData.autoSave) {
+              setShowUserDayModal(false);
+            }
+          }}
+        />
+      )}
 
-              {/* Day Selection */}
-              <Text style={styles.sectionTitle}>Day</Text>
-              <View style={styles.toggleContainer}>
-                <TouchableOpacity
-                  style={[styles.toggle, currentDay === 'today' && styles.toggleActive]}
-                  onPress={() => setCurrentDay('today')}
-                >
-                  <Text style={[styles.toggleText, currentDay === 'today' && styles.toggleTextActive]}>
-                    Today
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggle, currentDay === 'tomorrow' && styles.toggleActive]}
-                  onPress={() => setCurrentDay('tomorrow')}
-                >
-                  <Text style={[styles.toggleText, currentDay === 'tomorrow' && styles.toggleTextActive]}>
-                    Tomorrow
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </ScrollView>
-          <SafeAreaView style={{ backgroundColor: theme.light }} />
-        </View>
-      </Modal>
+      {/* Planning Modal - Edit Mode */}
+      {isEditMode && (
+        <PlanningModal
+          visible={showUserDayModal}
+          onClose={() => setShowUserDayModal(false)}
+          currentUser={currentUser}
+          currentDay={currentDay}
+          users={users}
+          theme={theme}
+          onSelectUserDay={(userId, day) => {
+            setCurrentUser(userId);
+            setCurrentDay(day);
+            setActivities(users[userId]?.days?.[day]?.activities || []);
+            // Load the selected user's theme
+            if (users[userId]?.settings?.theme) {
+              setCurrentTheme(users[userId].settings.theme);
+            }
+            showToast({ message: `Planning ${users[userId].name}'s ${day === 'today' ? 'Today' : 'Tomorrow'}` });
+          }}
+        />
+      )}
 
       {/* Preferences Modal */}
       <Modal
         visible={showUserModal}
         animationType="slide"
+        transparent={false}
+        statusBarTranslucent={true}
         onRequestClose={() => setShowUserModal(false)}
         onShow={() => {
           // Force layout update on Android to fix scrolling
@@ -2525,7 +2530,14 @@ const App = () => {
           }
         }}
       >
-        <View style={styles.modalContainer}>
+        {Platform.OS === 'android' && (
+          <StatusBar 
+            backgroundColor={theme.primary} 
+            barStyle="light-content" 
+            translucent={false}
+          />
+        )}
+        <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
           {Platform.OS === 'android' && (
             <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
           )}
@@ -2570,19 +2582,17 @@ const App = () => {
                           onPress={() => {
                             setCurrentTheme(color);
                             // Save theme to current user's settings
-                            if (currentUser && users[currentUser]) {
-                              const updatedUsers = {
-                                ...users,
-                                [currentUser]: {
-                                  ...users[currentUser],
-                                  settings: {
-                                    ...users[currentUser].settings,
-                                    theme: color
-                                  }
+                            const updatedUsers = {
+                              ...users,
+                              [currentUser]: {
+                                ...users[currentUser],
+                                settings: {
+                                  ...users[currentUser]?.settings,
+                                  theme: color
                                 }
-                              };
-                              setUsers(updatedUsers);
-                            }
+                              }
+                            };
+                            setUsers(updatedUsers);
                           }}
                         >
                           {currentTheme === color && <Icon name="check" size={24} color="white" />}
@@ -2721,6 +2731,9 @@ const App = () => {
             keyExtractor={(item) => item.key}
           />
           <SafeAreaView style={{ backgroundColor: theme.light }} />
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.primary, height: 24 }} />
+          )}
         </View>
       </Modal>
       
@@ -2728,6 +2741,8 @@ const App = () => {
       <Modal
         visible={showEditModeSettingsModal}
         animationType="slide"
+        transparent={false}
+        statusBarTranslucent={true}
         onRequestClose={() => setShowEditModeSettingsModal(false)}
         onShow={() => {
           // Force layout update on Android to fix scrolling
@@ -2738,8 +2753,14 @@ const App = () => {
           }
         }}
       >
-        <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
-        <View style={styles.modalContainer}>
+        {Platform.OS === 'android' && (
+          <StatusBar 
+            backgroundColor={theme.primary} 
+            barStyle="light-content" 
+            translucent={false}
+          />
+        )}
+        <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
           {Platform.OS === 'android' && (
             <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
           )}
@@ -2775,7 +2796,7 @@ const App = () => {
                   onPress={() => {
                     setCurrentUser(userId);
                     setActivities(user.days?.[currentDay]?.activities || []);
-                    // Load user's theme
+                    // Load the selected user's theme
                     if (user.settings?.theme) {
                       setCurrentTheme(user.settings.theme);
                     }
@@ -2798,7 +2819,7 @@ const App = () => {
                               const newUserId = Object.keys(updatedUsers)[0];
                               setCurrentUser(newUserId);
                               setActivities(updatedUsers[newUserId].days?.[currentDay]?.activities || []);
-                              // Load new user's theme
+                              // Load the new user's theme
                               if (updatedUsers[newUserId]?.settings?.theme) {
                                 setCurrentTheme(updatedUsers[newUserId].settings.theme);
                               }
@@ -2889,6 +2910,31 @@ const App = () => {
                     <TouchableOpacity
                       style={[styles.pinButton, { backgroundColor: '#f56565' }]}
                       onPress={async () => {
+                        
+                        // On web, Alert.alert might not work, so let's use a simple confirm
+                        if (Platform.OS === 'web') {
+                          const confirmed = window.confirm('Are you sure you want to remove PIN protection?');
+                          if (confirmed) {
+                            try {
+                              // Clear the PIN for both platforms
+                              const success = await setSecurePin(null);
+                              const hasPinAfter = await hasSecurePin();
+                              
+                              if (success && !hasPinAfter) {
+                                setHasPinProtection(false);
+                                showToast({ message: 'PIN removed' });
+                              } else {
+                                throw new Error(`Failed to clear PIN - success: ${success}, hasPinAfter: ${hasPinAfter}`);
+                              }
+                            } catch (error) {
+                              console.error('Error removing PIN:', error);
+                              window.alert('Failed to remove PIN. Please try again.');
+                            }
+                          }
+                          return;
+                        }
+                        
+                        // Native platforms use Alert.alert
                         Alert.alert(
                           'Remove PIN',
                           'Are you sure you want to remove PIN protection?',
@@ -2899,17 +2945,28 @@ const App = () => {
                               style: 'destructive',
                               onPress: async () => {
                                 try {
-                                  // Skip actual PIN clearing on Android due to keychain library issues
-                                  if (Platform.OS === 'ios') {
-                                    await setSecurePin(null);
+                                  console.log('Remove PIN: Starting PIN removal');
+                                  
+                                  // Check current PIN status
+                                  const hasPinBefore = await hasSecurePin();
+                                  console.log('Remove PIN: Has PIN before:', hasPinBefore);
+                                  
+                                  // Clear the PIN for both platforms
+                                  const success = await setSecurePin(null);
+                                  console.log('Remove PIN: setSecurePin(null) success:', success);
+                                  
+                                  // Check PIN status after
+                                  const hasPinAfter = await hasSecurePin();
+                                  console.log('Remove PIN: Has PIN after:', hasPinAfter);
+                                  
+                                  if (success && !hasPinAfter) {
+                                    setHasPinProtection(false);
+                                    showToast({ message: 'PIN removed' });
+                                  } else {
+                                    throw new Error(`Failed to clear PIN - success: ${success}, hasPinAfter: ${hasPinAfter}`);
                                   }
-                                  setHasPinProtection(false);
-                                  // Immediately save data to persist the PIN removal
-                                  await saveData();
-                                  showToast({ message: 'PIN removed' });
                                 } catch (error) {
-                                  console.error('Error removing PIN:', error);
-                                  Alert.alert('Error', 'Failed to remove PIN. Please try again.');
+                                    Alert.alert('Error', 'Failed to remove PIN. Please try again.');
                                 }
                               }
                             }
@@ -2969,6 +3026,9 @@ const App = () => {
             </TouchableOpacity>
           </ScrollView>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
+          {Platform.OS === 'android' && (
+            <View style={{ backgroundColor: theme.primary, height: 24 }} />
+          )}
         </View>
       </Modal>
       
@@ -2976,9 +3036,18 @@ const App = () => {
       <Modal
         visible={showAddUserModal}
         animationType="slide"
+        transparent={false}
+        statusBarTranslucent={true}
         onRequestClose={() => setShowAddUserModal(false)}
       >
-        <View style={styles.modalContainer}>
+        {Platform.OS === 'android' && (
+          <StatusBar 
+            backgroundColor={theme.primary} 
+            barStyle="light-content" 
+            translucent={false}
+          />
+        )}
+        <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
           {Platform.OS === 'android' && (
             <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
           )}
@@ -3208,9 +3277,16 @@ const App = () => {
       {showEditToolbar && (
         <EditModeToolbar
           visible={isEditMode}
-          onExit={() => setIsEditMode(false)}
+          onExit={() => {
+            setIsEditMode(false);
+            // Switch to today when exiting edit mode
+            if (currentDay !== 'today') {
+              setCurrentDay('today');
+            }
+          }}
           onAdd={() => setShowActivityModal(true)}
           onLibrary={() => setShowActivityLibrary(true)}
+          onPlan={() => setShowUserDayModal(true)}
           onSettings={() => {
             setShowEditModeSettingsModal(true);
           }}
@@ -3761,8 +3837,16 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
     ...SHADOWS.level2,
   },
+  subtitlePillEdit: {
+    backgroundColor: 'white',
+  },
   subtitleEmoji: {
-    fontSize: isTablet() ? 24 : 20,
+    fontSize: Platform.OS === 'web' 
+      ? (isTablet() ? 31 : 26)  // 30% larger on web
+      : (isTablet() ? 31 : 20), // 30% larger on iOS tablets too
+  },
+  subtitleEmojiEdit: {
+    // No change needed for emoji in edit mode
   },
   subtitleText: {
     fontSize: isTablet() ? 18 : 14,
@@ -3775,6 +3859,10 @@ const styles = StyleSheet.create({
     color: '#333',
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  subtitleDayEdit: {
+    color: COLORS.error,
+    fontWeight: 'bold',
   },
   exitEditButton: {
     position: 'absolute',
@@ -3808,7 +3896,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'flex-start',
+    justifyContent: 'center',
     alignItems: 'flex-start',
   },
   cardWrapper: {
@@ -3913,7 +4001,7 @@ const styles = StyleSheet.create({
   },
   activityTitle: {
     fontSize: 23,  // Match PWA's 1.44rem = 23.04px  
-    fontWeight: '600',
+    fontWeight: Platform.OS === 'android' ? 'normal' : '600',  // Android uses font file, not weight
     color: '#333',
     textAlign: 'center',
     lineHeight: 23 * 1.2,  // Match PWA's line-height: 1.2
@@ -3965,7 +4053,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: 15,
     top: '50%',
-    transform: [{ translateY: -40 }],
+    transform: [{ translateY: -20 }], // Adjust to center between number badge and delete button
     flexDirection: 'column',
     gap: 8,
   },

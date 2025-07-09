@@ -1,4 +1,4 @@
-import { Dimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 
 // Screen dimensions
 export const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
@@ -21,35 +21,36 @@ export const FONT_SCALE = {
 
 // Card layout constants
 export const CARD_LAYOUT = {
-  minWidth: 450, // Must be > 400px height to maintain landscape
-  maxWidth: 600, // Comfortable max width
-  gap: 24, // ~1.5rem in pixels
+  minWidth: 280, // Reduced to allow 2 columns on iPad portrait (768px)
+  maxWidth: 450, // Comfortable max width
+  gap: 20, // Balanced gap for better column breakpoints
   containerPaddingMobile: 16, // 1rem
   containerPaddingTablet: 24, // 1.5rem  
-  containerPaddingDesktop: 80, // 5rem - more padding for wide screens
-  singleColumnMaxWidth: 600, // Max width for single column
+  containerPaddingDesktop: 48, // 3rem - reasonable padding for wide screens
+  singleColumnMaxWidth: 450, // Max width for single column
 };
 
 // Helper functions
 export const getContainerPadding = (width = screenWidth) => {
   if (width <= 600) return CARD_LAYOUT.containerPaddingMobile;
-  
-  // With minWidth 450px, calculate breakpoints:
-  // 1 column: needs 450px + padding
-  // 2 columns: needs 924px + padding
-  // 3 columns: needs 1398px + padding
-  
-  // Progressive padding
-  if (width <= 800) return 32;   // 1 column territory
-  if (width <= 1000) return 48;  // Approaching 2 columns
-  if (width <= 1200) return 24;  // 2 column territory (less padding needed)
-  if (width <= 1600) return 48;  // Approaching 3 columns
-  return CARD_LAYOUT.containerPaddingDesktop; // 3+ columns
+  if (width <= 1024) return CARD_LAYOUT.containerPaddingTablet;
+  return CARD_LAYOUT.containerPaddingDesktop;
 };
 
 export const calculateColumns = (width = screenWidth) => {
   const containerPadding = getContainerPadding(width);
   const availableWidth = width - (containerPadding * 2);
+  
+  // Special handling for iPad devices
+  // Force 2 columns for iPad in portrait mode (width < height)
+  // This covers iPad Mini, iPad Air, iPad Pro in portrait
+  if (Platform.OS === 'ios' && isTablet(width)) {
+    // If it's a tablet and width is less than 1024 (portrait orientation)
+    if (width < 1024) {
+      return 2;
+    }
+  }
+  
   // Calculate columns based on minimum width without additional margins
   let numColumns = Math.floor((availableWidth + CARD_LAYOUT.gap) / (CARD_LAYOUT.minWidth + CARD_LAYOUT.gap)) || 1;
   
@@ -72,7 +73,7 @@ export const calculateCardWidth = (width = screenWidth) => {
   }
   
   // For web with CSS Grid, we don't need to calculate exact widths
-  if (typeof window !== 'undefined' && window.document) {
+  if (Platform.OS === 'web') {
     return 'auto';
   }
   
@@ -83,7 +84,7 @@ export const calculateCardWidth = (width = screenWidth) => {
 };
 
 export const getCardHeight = () => {
-  return isTablet() ? 360 : 300; // Good landscape ratio with 450px+ width
+  return isTablet() ? 320 : 280; // Good proportions with 350px width
 };
 
 export const getCardPadding = () => {

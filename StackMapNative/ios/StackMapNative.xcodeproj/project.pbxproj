@@ -14,8 +14,6 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7AC8E0672247E329B39B7113 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		AD9B6C98274D429DBA347AC0 /* ComicNeue-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 7D2628336E3649DA862D7483 /* ComicNeue-Bold.ttf */; };
-		DFC3F7F12BAA42AEB33D0540 /* ComicNeue-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = F8FBA70DA8ED49F7A1F244CA /* ComicNeue-Regular.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -27,12 +25,10 @@
 		22B9F9618C2F3DB774B1EC07 /* Pods-StackMap.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.release.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.release.xcconfig"; sourceTree = "<group>"; };
 		25CFBD72FF9140DB97B8765D /* ComicRelief-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicRelief-Bold.ttf"; path = "../assets/fonts/ComicRelief-Bold.ttf"; sourceTree = "<group>"; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = StackMapNative/AppDelegate.swift; sourceTree = "<group>"; };
-		7D2628336E3649DA862D7483 /* ComicNeue-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Bold.ttf"; path = "../assets/fonts/ComicNeue-Bold.ttf"; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = StackMapNative/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		8EE1CE5406ADF52CA6A7D7FA /* libPods-StackMap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StackMap.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		CF367D3422A94B10883D3ACD /* ComicRelief-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicRelief-Regular.ttf"; path = "../assets/fonts/ComicRelief-Regular.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
-		F8FBA70DA8ED49F7A1F244CA /* ComicNeue-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicNeue-Regular.ttf"; path = "../assets/fonts/ComicNeue-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -110,8 +106,6 @@
 		D2EE0D28BCED49C1A0E047B0 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				7D2628336E3649DA862D7483 /* ComicNeue-Bold.ttf */,
-				F8FBA70DA8ED49F7A1F244CA /* ComicNeue-Regular.ttf */,
 				CF367D3422A94B10883D3ACD /* ComicRelief-Regular.ttf */,
 				25CFBD72FF9140DB97B8765D /* ComicRelief-Bold.ttf */,
 			);
@@ -182,8 +176,6 @@
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				7AC8E0672247E329B39B7113 /* PrivacyInfo.xcprivacy in Resources */,
-				AD9B6C98274D429DBA347AC0 /* ComicNeue-Bold.ttf in Resources */,
-				DFC3F7F12BAA42AEB33D0540 /* ComicNeue-Regular.ttf in Resources */,
 				1F3426D727DD49DB96E597F2 /* ComicRelief-Regular.ttf in Resources */,
 				52139873F7714AC3B85AC47B /* ComicRelief-Bold.ttf in Resources */,
 			);

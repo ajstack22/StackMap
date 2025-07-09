@@ -11,7 +11,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet } from '../../constants';
+import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet, getContainerPadding } from '../../constants';
 
 const EditModeToolbar = ({
   onExit,
@@ -19,6 +19,7 @@ const EditModeToolbar = ({
   onLibrary,
   onCompleteDay,
   onSettings,
+  onPlan,
   theme,
   position = 'bottom',
   visible = true,
@@ -79,6 +80,7 @@ const EditModeToolbar = ({
   const actions = [
     { id: 'settings', label: 'Settings', icon: 'settings', onPress: onSettings, color: theme.primary },
     { id: 'complete', label: 'Complete', icon: 'event-available', onPress: onCompleteDay, color: theme.primary },
+    { id: 'plan', label: 'Plan', icon: 'event', onPress: onPlan, color: theme.primary },
     { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
     { id: 'add', label: 'Add', icon: 'add-circle', onPress: onAdd, color: theme.primary },
   ];
@@ -92,15 +94,14 @@ const EditModeToolbar = ({
     <TouchableOpacity
       style={[
         styles.actionButton, 
-        item.disabled && styles.disabledButton,
-        item.id === 'settings' && { paddingLeft: SPACING.lg }
+        item.disabled && styles.disabledButton
       ]}
       onPress={item.disabled ? null : item.onPress}
       disabled={item.disabled}
     >
       <Icon 
         name={item.icon} 
-        size={isTablet() ? 32 : 28} 
+        size={isTablet() ? 36 : 31} 
         color={item.disabled ? '#999' : 'white'} 
       />
       <Text style={[
@@ -256,24 +257,29 @@ const styles = StyleSheet.create({
   },
   toolbar: {
     flexDirection: 'row',
-    paddingHorizontal: SPACING.md,
-    justifyContent: 'center',
-    gap: SPACING.lg,
+    paddingHorizontal: getContainerPadding() + SPACING.sm,
+    justifyContent: (Platform.OS === 'web' || isTablet()) ? 'center' : 'space-between',
+    width: '100%',
+    gap: (Platform.OS === 'web' || isTablet()) ? SPACING.md : 0,
   },
   actionButton: {
     flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: isTablet() ? SPACING.md : SPACING.sm,
+    paddingHorizontal: SPACING.xs,
     paddingVertical: SPACING.sm,
     gap: SPACING.xs,
+    flex: (Platform.OS === 'web' || isTablet()) ? 0 : 1,
+    maxWidth: (Platform.OS === 'web' || isTablet()) ? undefined : 80,
+    minWidth: (Platform.OS === 'web' || isTablet()) ? 70 : undefined,
   },
   disabledButton: {
     opacity: 0.6,
   },
   actionLabel: {
-    fontSize: isTablet() ? 18 : 16,
-    fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
+    fontSize: isTablet() ? 16 : 14,
+    fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
+    textAlign: 'center',
   },
   moreMenuOverlay: {
     flex: 1,

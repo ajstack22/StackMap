@@ -12,21 +12,25 @@ const PIN_USERNAME = 'editModePin';
 export const setSecurePin = async (pin) => {
   try {
     if (!pin) {
-      // Remove PIN - use different approach for Android
+      console.log('setSecurePin: Removing PIN');
+      // Remove PIN - call reset first for web compatibility
       try {
-        // Try to overwrite with empty credentials first
-        await Keychain.setInternetCredentials(
-          PIN_SERVICE,
-          PIN_USERNAME,
-          ''
-        );
-      } catch (e) {
-        // If that fails, try reset
+        console.log('setSecurePin: Calling resetInternetCredentials');
+        await Keychain.resetInternetCredentials(PIN_SERVICE);
+        console.log('setSecurePin: resetInternetCredentials success');
+      } catch (resetError) {
+        console.log('setSecurePin: resetInternetCredentials failed:', resetError);
+        // If reset fails, try to overwrite with empty string
         try {
-          await Keychain.resetInternetCredentials(PIN_SERVICE);
-        } catch (resetError) {
-          // If both fail, just log and continue
-          console.log('Could not clear PIN credentials:', resetError);
+          console.log('setSecurePin: Trying setInternetCredentials with empty string');
+          await Keychain.setInternetCredentials(
+            PIN_SERVICE,
+            PIN_USERNAME,
+            ''
+          );
+          console.log('setSecurePin: setInternetCredentials with empty string success');
+        } catch (e) {
+          console.log('Could not clear PIN credentials:', e);
         }
       }
       return true;
@@ -51,10 +55,14 @@ export const setSecurePin = async (pin) => {
  */
 export const getSecurePin = async () => {
   try {
+    console.log('getSecurePin: Getting credentials for', PIN_SERVICE);
     const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
+    console.log('getSecurePin: credentials:', credentials);
     if (credentials) {
+      console.log('getSecurePin: returning password:', credentials.password);
       return credentials.password;
     }
+    console.log('getSecurePin: no credentials, returning null');
     return null;
   } catch (error) {
     console.error('Error retrieving PIN:', error);
@@ -68,7 +76,7 @@ export const getSecurePin = async () => {
  */
 export const hasSecurePin = async () => {
   const pin = await getSecurePin();
-  return pin !== null;
+  return pin !== null && pin !== '';
 };
 
 /**

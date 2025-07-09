@@ -12,6 +12,7 @@ import {
   SafeAreaView,
   Image,
   Platform,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
@@ -770,7 +771,10 @@ const ActivityLibrary = ({
   };
 
   const content = (
-    <View style={[styles.container, { backgroundColor: theme.light }]}>
+    <View style={[styles.container, { backgroundColor: theme.primary }]}>
+      {Platform.OS === 'android' && (
+        <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+      )}
       <SafeAreaView style={{ backgroundColor: theme.primary }}>
         <View style={[styles.header, { backgroundColor: theme.primary }]}>
           <Text style={styles.headerTitle}>Activity Library</Text>
@@ -991,6 +995,9 @@ const ActivityLibrary = ({
       />
       
       <SafeAreaView style={{ backgroundColor: theme.light }} />
+      {Platform.OS === 'android' && (
+        <View style={{ backgroundColor: theme.primary, height: 24 }} />
+      )}
     </View>
   );
 
