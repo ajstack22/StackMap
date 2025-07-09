@@ -25,14 +25,9 @@ fontStyles.innerHTML = `
   }
   
   /* Critical: Ensure React Native Web respects viewport constraints */
-  #root > div {
+  #root > div:first-child {
     height: 100%;
     overflow: hidden;
-  }
-  
-  /* Ensure all RN Web wrapper divs fill their parent */
-  #root > div > div {
-    height: 100%;
     display: flex;
     flex-direction: column;
   }

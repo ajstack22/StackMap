@@ -3766,19 +3766,10 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    ...(Platform.OS === 'web' && {
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }),
   },
   contentArea: {
     flex: 1,
     position: 'relative',
-    ...(Platform.OS === 'web' && {
-      overflow: 'hidden',
-      minHeight: 0, // Critical for flexbox children to scroll
-    }),
   },
   innerContainer: {
     flex: 1,
