@@ -40,6 +40,11 @@ fontStyles.innerHTML = `
     display: flex !important;
     flex-direction: column !important;
   }
+  
+  /* Force Comic Relief everywhere - override any Comic Neue */
+  * {
+    font-family: 'Comic Relief', 'Comic Sans MS', cursive !important;
+  }
 `;
 document.head.appendChild(fontStyles);
 
