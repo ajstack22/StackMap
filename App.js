@@ -2110,14 +2110,15 @@ const App = () => {
           {(numColumns > 1) ? (
             <ScrollView
               style={Platform.OS === 'web' ? { 
-                height: '100%',
+                flex: 1,
                 overflow: 'auto',
               } : undefined}
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 }
               ]}
             >
               {activities.length === 0 ? (
@@ -2238,14 +2239,15 @@ const App = () => {
               keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               style={Platform.OS === 'web' ? { 
-                height: '100%',
+                flex: 1,
                 overflow: 'auto',
               } : undefined}
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 }
               ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -3769,6 +3771,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' && {
       height: '100vh',
       minHeight: '100vh',
+      position: 'relative',
     }),
   },
   contentArea: {
@@ -3776,7 +3779,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     ...(Platform.OS === 'web' && {
       height: '100%',
-      overflow: 'hidden',
+      overflow: 'auto',
     }),
   },
   innerContainer: {
