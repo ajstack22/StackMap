@@ -1,5 +1,20 @@
-import { AppRegistry } from 'react-native';
+import { AppRegistry, Platform } from 'react-native';
 import App from './App';
+
+// Disable useNativeDriver warnings on web
+if (Platform.OS === 'web') {
+  // Store the original console.warn
+  const originalWarn = console.warn;
+  
+  // Override console.warn to filter out useNativeDriver warnings
+  console.warn = (...args) => {
+    if (args[0] && typeof args[0] === 'string' && 
+        args[0].includes('useNativeDriver')) {
+      return; // Suppress useNativeDriver warnings
+    }
+    originalWarn.apply(console, args);
+  };
+}
 
 // Import Comic Relief fonts
 import ComicReliefRegular from './assets/fonts/ComicRelief-Regular.ttf';

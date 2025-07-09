@@ -1404,9 +1404,11 @@ const App = () => {
           });
         }
         
-        await RNFS.unlink(filePath);
+        if (Platform.OS !== 'web') {
+          await RNFS.unlink(filePath);
+        }
         
-        if (shareResult.action !== Share.dismissedAction) {
+        if (Platform.OS !== 'web' && shareResult && shareResult.action !== Share.dismissedAction) {
           showToast({ message: 'Data exported successfully' });
         }
       }
