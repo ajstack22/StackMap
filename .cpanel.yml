@@ -12,3 +12,5 @@ deployment:
     # Set proper permissions
     - /bin/find $DEPLOYPATH -type f -exec chmod 644 {} \;
     - /bin/find $DEPLOYPATH -type d -exec chmod 755 {} \;
+    # Log deployment for debugging
+    - echo "Deployment completed at $(date)" >> $DEPLOYPATH/deploy.log
