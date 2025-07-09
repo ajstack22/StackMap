@@ -1,14 +1,4 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-  <meta name="theme-color" content="#667eea">
-  <title>StackMap</title>
-  <link rel="manifest" href="/manifest.json">
-  <link rel="apple-touch-icon" href="/icon-192x192.png">
-  <style>
-    /* Reset and base styles */
+<!doctype html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><meta name="theme-color" content="#667eea"><title>StackMap</title><style>/* Reset and base styles */
     * {
       box-sizing: border-box;
     }
@@ -47,25 +37,4 @@
     
     @keyframes spin {
       to { transform: rotate(360deg); }
-    }
-  </style>
-  <script defer="defer" src="/bundle.5b0e97da86c0317c2980.js"></script>
-</head>
-<body>
-  <div id="root">
-    <div class="loading">
-      <div class="spinner"></div>
-    </div>
-  </div>
-  <script>
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js')
-          .then(registration => console.log('SW registered:', registration))
-          .catch(error => console.log('SW registration failed:', error));
-      });
-    }
-  </script>
-</body>
-</html>
+    }</style><script defer="defer" src="./bundle.888ebc36d69de96156d9.js"></script></head><body><div id="root"><div class="loading"><div class="spinner"></div></div></div></body></html>
