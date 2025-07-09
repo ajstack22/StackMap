@@ -2070,14 +2070,11 @@ const App = () => {
       <View style={[
         styles.container, 
         { 
-          backgroundColor: theme.light,
-          ...(Platform.OS === 'web' && bannerPosition === 'bottom' && {
-            backgroundColor: theme.primary, // Match banner color to prevent white strip
-          })
+          backgroundColor: theme.light
         }
       ]}>
-        {/* Status Bar Background when banner is at bottom */}
-        {bannerPosition === 'bottom' && (
+        {/* Status Bar Background when banner is at bottom - not needed on web */}
+        {bannerPosition === 'bottom' && Platform.OS !== 'web' && (
           Platform.OS === 'ios' ? (
             <SafeAreaView style={{ backgroundColor: theme.primary }} />
           ) : (
@@ -2094,26 +2091,26 @@ const App = () => {
         
         {/* Top Banner */}
         {bannerPosition === 'top' && (
-          <SafeAreaView style={{ 
-            backgroundColor: theme.primary,
-            paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
-          }}>
-            <Header />
-          </SafeAreaView>
+          Platform.OS === 'web' ? (
+            <View style={{ backgroundColor: theme.primary }}>
+              <Header />
+            </View>
+          ) : (
+            <SafeAreaView style={{ 
+              backgroundColor: theme.primary,
+              paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0 
+            }}>
+              <Header />
+            </SafeAreaView>
+          )
         )}
         
         {/* Main Content Area */}
-        <View style={[
-          styles.contentArea,
-          {
-            backgroundColor: theme.light, // Always use theme's light color
-          }
-        ]}>
+        <View style={styles.contentArea}>
           {(numColumns > 1) ? (
             <ScrollView
               style={Platform.OS === 'web' ? { 
                 height: '100%',
-                maxHeight: 'calc(100vh - 200px)', // Account for header and other elements
                 overflow: 'auto',
               } : undefined}
               showsVerticalScrollIndicator={true}
@@ -2242,7 +2239,6 @@ const App = () => {
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               style={Platform.OS === 'web' ? { 
                 height: '100%',
-                maxHeight: 'calc(100vh - 200px)', // Account for header and other elements
                 overflow: 'auto',
               } : undefined}
               showsVerticalScrollIndicator={true}
@@ -2285,8 +2281,8 @@ const App = () => {
           )
         )}
         
-        {/* Bottom Safe Area for Android */}
-        {bannerPosition === 'top' && (
+        {/* Bottom Safe Area for Mobile only */}
+        {bannerPosition === 'top' && Platform.OS !== 'web' && (
           Platform.OS === 'ios' ? (
             <SafeAreaView style={{ backgroundColor: theme.primary }} />
           ) : (
@@ -3773,7 +3769,6 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' && {
       height: '100vh',
       minHeight: '100vh',
-      backgroundColor: '#f7fafc', // Ensure no white gaps show through
     }),
   },
   contentArea: {
@@ -3884,7 +3879,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     paddingTop: 24, // Keep consistent top padding
-    paddingBottom: 100,
+    paddingBottom: 24, // Reduced from 100 to match top padding
     paddingHorizontal: getContainerPadding(),
   },
   webScrollView: {
