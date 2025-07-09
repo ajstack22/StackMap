@@ -3,6 +3,8 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/stachblx/public_html/qual
     # Don't remove files, just copy what we need
+    # Copy the htaccess to prevent directory listing and redirect
+    - /bin/cp ./qual-htaccess $DEPLOYPATH/.htaccess
     # Copy the redirect index file to qual root
     - /bin/cp ./qual-redirect.html $DEPLOYPATH/index.html
     # Ensure web/build directory exists
