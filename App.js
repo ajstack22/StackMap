@@ -1377,10 +1377,32 @@ const App = () => {
         const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
         await RNFS.writeFile(filePath, jsonData, 'utf8');
         
-        const shareResult = await Share.share({
-          url: `file://${filePath}`,
-          title: 'Export StackMap Data',
-        });
+        if (Platform.OS === 'web') {
+          // Web: Use blob URL for sharing
+          const blob = new Blob([jsonData], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          
+          try {
+            await navigator.share({
+              title: 'Export StackMap Data',
+              text: `StackMap export: ${fileName}`,
+              files: [new File([blob], fileName, { type: 'application/json' })]
+            });
+          } catch (shareError) {
+            // Fallback to download if share fails
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = fileName;
+            a.click();
+          } finally {
+            URL.revokeObjectURL(url);
+          }
+        } else {
+          const shareResult = await Share.share({
+            url: `file://${filePath}`,
+            title: 'Export StackMap Data',
+          });
+        }
         
         await RNFS.unlink(filePath);
         
@@ -1520,20 +1542,24 @@ const App = () => {
     // iOS uses DocumentPicker
     try {
       const result = await DocumentPicker.pick({
-        type: [DocumentPicker.types.json],
+        type: Platform.OS === 'web' ? 'application/json' : [DocumentPicker.types.json],
         copyTo: 'cachesDirectory',
       });
       
-      if (!result[0]?.fileCopyUri) {
+      let fileContent;
+      
+      // Web implementation includes content directly
+      if (Platform.OS === 'web' && result[0]?.content) {
+        fileContent = result[0].content;
+      } else if (result[0]?.fileCopyUri) {
+        // Native implementation needs to read the file
+        fileContent = await RNFS.readFile(result[0].fileCopyUri, 'utf8');
+        // Clean up temporary file
+        await RNFS.unlink(result[0].fileCopyUri);
+      } else {
         Alert.alert('Error', 'Could not read the selected file');
         return;
       }
-      
-      // Read the file content
-      const fileContent = await RNFS.readFile(result[0].fileCopyUri, 'utf8');
-      
-      // Clean up temporary file
-      await RNFS.unlink(result[0].fileCopyUri);
       
       // Parse and validate the data
       let importedData;
