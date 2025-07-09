@@ -277,12 +277,12 @@ const App = () => {
           Animated.timing(editIconsTranslateY, {
             toValue: 1,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
           Animated.timing(editIconsOpacity, {
             toValue: 1,
             duration: 300,
-            useNativeDriver: true,
+            useNativeDriver: Platform.OS !== 'web',
           }),
         ]).start();
       }, 10);
@@ -291,7 +291,7 @@ const App = () => {
       Animated.timing(editModeIconRotation, {
         toValue: 1,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
       
       // Show the edit toolbar
@@ -302,7 +302,7 @@ const App = () => {
       Animated.timing(editIconsTranslateY, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
         // Hide the edit icons after animation completes
         setShowEditIcons(false);
@@ -314,7 +314,7 @@ const App = () => {
         Animated.timing(editIconsOpacity, {
           toValue: 0,
           duration: 100,
-          useNativeDriver: true,
+          useNativeDriver: Platform.OS !== 'web',
         }),
       ]).start();
       
@@ -322,7 +322,7 @@ const App = () => {
       Animated.timing(editModeIconRotation, {
         toValue: 0,
         duration: 300,
-        useNativeDriver: true,
+        useNativeDriver: Platform.OS !== 'web',
       }).start();
     }
   }, [isEditMode]);
@@ -3774,6 +3774,10 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
     position: 'relative',
+    ...(Platform.OS === 'web' && {
+      height: '100%',
+      overflow: 'hidden',
+    }),
   },
   innerContainer: {
     flex: 1,
