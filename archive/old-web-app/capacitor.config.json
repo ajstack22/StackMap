@@ -1,0 +1,30 @@
+{
+  "appId": "com.stackmap.app",
+  "appName": "StackMap",
+  "webDir": "www",
+  "server": {
+    "iosScheme": "https",
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#ffffff",
+      "showSpinner": false,
+      "androidSpinnerStyle": "large",
+      "iosSpinnerStyle": "small"
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#ffffff"
+    }
+  },
+  "ios": {
+    "contentInset": "automatic",
+    "backgroundColor": "#667eea",
+    "overrideUserInterfaceStyle": "light"
+  },
+  "android": {
+    "allowMixedContent": false
+  }
+}

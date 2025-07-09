@@ -1,0 +1,194 @@
+/* 
+   iOS PWA Fix - Following 2025 Best Practices
+   Container-based architecture with proper safe area handling
+*/
+
+/* Only apply on iOS devices */
+@supports (-webkit-touch-callout: none) {
+
+/* Prevent overscroll behavior on iOS 16+ */
+html {
+    overscroll-behavior: none;
+    overscroll-behavior-y: none;
+    
+    /* Safe area padding without breaking layout */
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    background-color: var(--primary-color);
+}
+
+/* Container-based scrolling - body remains static */
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    overflow: hidden; /* Body never scrolls */
+    position: relative; /* NOT fixed - prevents iOS 16.6+ viewport cropping */
+    
+    /* Visual safe area extensions */
+    background-color: var(--primary-color);
+}
+
+/* Create flex container for proper layout */
+body {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Fixed header with safe area and hardware acceleration */
+.header-wrapper {
+    position: sticky; /* More reliable than fixed on iOS */
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    
+    /* Hardware acceleration for smooth scrolling */
+    -webkit-transform: translate3d(0, 0, 0);
+    will-change: transform;
+    
+    /* Safe area padding */
+    padding-top: env(safe-area-inset-top);
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+}
+
+/* Main content scrollable container */
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: none;
+    
+    /* Safe area padding */
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Complementary header for safe area coverage */
+.complementary-header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-top);
+    background: var(--primary-color);
+    z-index: 99;
+}
+
+/* Complementary footer for home bar area */
+.complementary-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: env(safe-area-inset-bottom);
+    background: var(--primary-dark);
+    z-index: 99;
+}
+
+/* Show complementary elements based on banner position */
+.banner-bottom .complementary-header {
+    display: block;
+    height: calc(26px + env(safe-area-inset-top));
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Banner at bottom adjustments */
+.banner-bottom .header-wrapper {
+    position: fixed;
+    bottom: 0;
+    top: auto;
+    padding-top: 0;
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* FAB positioning with safe areas */
+.fab-container {
+    position: fixed;
+    -webkit-transform: translate3d(0, 0, 0);
+    will-change: transform;
+}
+
+.fab-container.left {
+    top: calc(25px + env(safe-area-inset-top));
+    left: max(15px, env(safe-area-inset-left));
+}
+
+.fab-container.right {
+    top: calc(25px + env(safe-area-inset-top));
+    right: max(15px, env(safe-area-inset-right));
+}
+
+.banner-bottom .fab-container.left,
+.banner-bottom .fab-container.right {
+    bottom: calc(55px + env(safe-area-inset-bottom));
+    top: auto;
+}
+
+/* Side panels with proper z-indexing */
+.side-panel {
+    position: fixed;
+    z-index: 200;
+    -webkit-transform: translate3d(0, 0, 0);
+    will-change: transform;
+    
+    /* Ensure panels are scrollable */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Backdrop for modals */
+.backdrop {
+    position: fixed;
+    z-index: 199;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+}
+
+/* PIN entry modal proper positioning */
+.pin-entry-modal {
+    position: fixed;
+    z-index: 201;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    -webkit-transform: translate3d(-50%, -50%, 0);
+    
+    /* Ensure it's on screen */
+    max-width: 90vw;
+    max-height: 90vh;
+    overflow: auto;
+}
+
+/* Activity cards remain in normal flow */
+.activity-card {
+    position: relative;
+    z-index: 1;
+}
+
+/* Edit mode adjustments */
+body.edit-mode .main-content {
+    /* Account for exit edit button */
+    padding-top: 40px;
+}
+
+/* Prevent rubber band scrolling on touch move */
+.main-content {
+    /* Only this container should scroll */
+    touch-action: pan-y;
+}
+
+/* Ensure proper stacking context */
+* {
+    -webkit-transform-style: preserve-3d;
+}
+
+} /* End @supports */
