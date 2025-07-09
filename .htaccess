@@ -33,7 +33,7 @@
     # No cache for development and dynamic files
     <FilesMatch "\.(html|htm|php)$">
         ExpiresDefault "access plus 0 seconds"
-        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
         Header set Pragma "no-cache"
         Header set Expires 0
     </FilesMatch>
@@ -102,6 +102,13 @@
 
 # Disable server signature
 ServerSignature Off
+
+# Force refresh for /qual directory
+<If "%{REQUEST_URI} =~ m#^/qual/#">
+    Header set Cache-Control "no-cache, no-store, must-revalidate, max-age=0"
+    Header set Pragma "no-cache"
+    Header set Expires 0
+</If>
 
 # Custom error pages
 ErrorDocument 404 /index.html
