@@ -2082,9 +2082,11 @@ const App = () => {
     : null; // Will use top positioning for top banner
     
   const fabTop = bannerPosition === 'top'
-    ? Platform.OS === 'android'
-      ? (StatusBar.currentHeight || 24) + 35 // Android: account for status bar and camera
-      : insets.top + (isTablet() ? 20 : 35) // iOS: use safe area insets
+    ? Platform.OS === 'web'
+      ? 25 // Web: center on 110px header (110/2 - 60/2 = 25)
+      : Platform.OS === 'android'
+        ? (StatusBar.currentHeight || 24) + 35 // Android: account for status bar and camera
+        : insets.top + (isTablet() ? 20 : 35) // iOS: use safe area insets
     : null;
     
   const AppContent = (
@@ -3809,7 +3811,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingVertical: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 20 : 20),
-    paddingHorizontal: 20,
+    paddingHorizontal: Platform.OS === 'web' ? 80 : 20, // 60px FAB + 20px margin
     paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 25 : 20),
     ...(Platform.OS === 'web' && {
       height: 110,

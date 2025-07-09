@@ -94,12 +94,12 @@ export const getCardPadding = () => {
 // FAB dimensions
 export const FAB_DIMENSIONS = {
   mobile: {
-    size: 72,
-    iconSize: 31,
+    size: Platform.OS === 'web' ? 60 : 72,
+    iconSize: Platform.OS === 'web' ? 26 : 31,
   },
   tablet: {
-    size: 96,
-    iconSize: 38,
+    size: Platform.OS === 'web' ? 60 : 96,
+    iconSize: Platform.OS === 'web' ? 26 : 38,
   },
 };
 
