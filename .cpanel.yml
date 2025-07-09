@@ -3,30 +3,10 @@ deployment:
   branch: main
   tasks:
     - export DEPLOYPATH=/home/stachblx/public_html/qual
-    - /bin/cp -R . $DEPLOYPATH
-    - /bin/rm -rf $DEPLOYPATH/.git
-    - /bin/rm -rf $DEPLOYPATH/.cpanel.yml
-    - /bin/rm -rf $DEPLOYPATH/docs
-    - /bin/rm -rf $DEPLOYPATH/Screenshots
-    - /bin/rm -rf $DEPLOYPATH/node_modules
-    - /bin/rm -rf $DEPLOYPATH/tests
-    - /bin/rm -rf $DEPLOYPATH/scripts
-    - /bin/rm -rf $DEPLOYPATH/.githooks
-    - /bin/rm -f $DEPLOYPATH/README.md
-    - /bin/rm -f $DEPLOYPATH/LICENSE
-    - /bin/rm -f $DEPLOYPATH/CONTRIBUTING.md
-    - /bin/rm -f $DEPLOYPATH/SECURITY.md
-    - /bin/rm -f $DEPLOYPATH/DEPLOYMENT_GUIDE.md
-    - /bin/rm -f $DEPLOYPATH/deploy-checklist.txt
-    - /bin/rm -f $DEPLOYPATH/.gitignore
-    - /bin/rm -f $DEPLOYPATH/.env.example
-    - /bin/rm -f $DEPLOYPATH/package.json
-    - /bin/rm -f $DEPLOYPATH/package-lock.json
-    - /bin/rm -rf $DEPLOYPATH/context
-    - /bin/rm -f $DEPLOYPATH/dev-tools.js
-    - /bin/rm -f $DEPLOYPATH/*.log
-    - /bin/rm -f $DEPLOYPATH/debug-*.js
-    - /bin/rm -f $DEPLOYPATH/test-*.html
-    - /bin/rm -f $DEPLOYPATH/test-*.js
+    # Clear the deployment directory first (except hidden files)
+    - /bin/rm -rf $DEPLOYPATH/*
+    # Copy only the web build files
+    - /bin/cp -R web/build/* $DEPLOYPATH/
+    # Set proper permissions
     - find $DEPLOYPATH -type f -exec chmod 644 {} \;
     - find $DEPLOYPATH -type d -exec chmod 755 {} \;
