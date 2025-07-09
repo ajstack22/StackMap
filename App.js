@@ -3808,9 +3808,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingVertical: Platform.OS === 'web' ? 15 : (Platform.OS === 'android' ? 20 : 20),
+    paddingVertical: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 20 : 20),
     paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'web' ? 15 : (Platform.OS === 'android' ? 25 : 20),
+    paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 25 : 20),
+    ...(Platform.OS === 'web' && {
+      height: 110,
+      justifyContent: 'center',
+    }),
   },
   headerContent: {
     alignItems: 'center',
@@ -3839,8 +3843,8 @@ const styles = StyleSheet.create({
   logoBar2: { height: 2.5 },
   logoBar3: { height: 5 },
   headerTitle: {
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 32 : 24) : (isTablet() ? 36 : 28),
-    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 40 : 28) : (isTablet() ? 36 : 28),
+    fontWeight: Platform.OS === 'web' ? '700' : (Platform.OS === 'ios' ? 'bold' : 'normal'),
     color: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
@@ -3866,8 +3870,8 @@ const styles = StyleSheet.create({
   },
   subtitleEmoji: {
     fontSize: Platform.OS === 'web' 
-      ? (isTablet() ? 31 : 26)  // 30% larger on web
-      : (isTablet() ? 31 : 20), // 30% larger on iOS tablets too
+      ? (isTablet() ? 24.5 : 24.5)  // 175% of 14px subtitle = 24.5px
+      : (isTablet() ? 31 : 20), // Keep native sizes unchanged
   },
   subtitleEmojiEdit: {
     // No change needed for emoji in edit mode
