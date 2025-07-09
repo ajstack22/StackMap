@@ -26,10 +26,19 @@ fontStyles.innerHTML = `
   
   /* Critical: Ensure React Native Web respects viewport constraints */
   #root > div:first-child {
-    height: 100%;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
+    height: 100% !important;
+    max-height: 100% !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  
+  /* Ensure nested containers also respect height */
+  #root > div > div {
+    height: 100% !important;
+    max-height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 `;
 document.head.appendChild(fontStyles);

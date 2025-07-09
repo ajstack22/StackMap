@@ -2111,6 +2111,7 @@ const App = () => {
             <ScrollView
               style={Platform.OS === 'web' ? { 
                 flex: 1,
+                height: '100%',
               } : undefined}
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
@@ -2239,6 +2240,7 @@ const App = () => {
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               style={Platform.OS === 'web' ? { 
                 flex: 1,
+                height: '100%',
               } : undefined}
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
@@ -3770,6 +3772,10 @@ const styles = StyleSheet.create({
   contentArea: {
     flex: 1,
     position: 'relative',
+    ...(Platform.OS === 'web' && {
+      overflow: 'hidden',
+      height: '100%',
+    }),
   },
   innerContainer: {
     flex: 1,
