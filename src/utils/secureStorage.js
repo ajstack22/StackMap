@@ -1,5 +1,6 @@
 import * as Keychain from 'react-native-keychain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const PIN_SERVICE = 'StackMapPIN';
 const PIN_USERNAME = 'editModePin';
@@ -13,27 +14,49 @@ export const setSecurePin = async (pin) => {
   try {
     if (!pin) {
       // Removing PIN
-      // Remove PIN - call reset first for web compatibility
+      let removed = false;
+      
+      // Try resetInternetCredentials first
       try {
         // Calling resetInternetCredentials
-        await Keychain.resetInternetCredentials(PIN_SERVICE);
-        // resetInternetCredentials success
+        const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
+        // resetInternetCredentials result
+        removed = resetResult !== false;
       } catch (resetError) {
+        console.warn('resetInternetCredentials failed:', resetError);
         // resetInternetCredentials failed
-        // If reset fails, try to overwrite with empty string
+      }
+      
+      // If reset didn't work, try to overwrite with empty string
+      if (!removed) {
         try {
           // Trying setInternetCredentials with empty string
-          await Keychain.setInternetCredentials(
+          const setResult = await Keychain.setInternetCredentials(
             PIN_SERVICE,
             PIN_USERNAME,
             ''
           );
-          // setInternetCredentials with empty string success
-        } catch (e) {
-          console.error('Could not clear PIN credentials:', e);
+          // setInternetCredentials with empty string result
+          removed = setResult !== false;
+        } catch (setError) {
+          console.error('Could not clear PIN credentials:', setError);
+          return false;
         }
       }
-      return true;
+      
+      // Verify PIN was actually removed
+      try {
+        const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
+        if (credentials && credentials.password && credentials.password !== '') {
+          console.error('PIN still exists after removal attempt');
+          return false;
+        }
+      } catch (verifyError) {
+        // If we can't get credentials, assume they were removed
+        console.log('Credentials removed successfully');
+      }
+      
+      return removed;
     }
 
     // Store PIN securely
@@ -42,7 +65,7 @@ export const setSecurePin = async (pin) => {
       PIN_USERNAME,
       pin
     );
-    return result;
+    return result !== false;
   } catch (error) {
     console.error('Error storing PIN securely:', error);
     return false;
@@ -67,6 +90,71 @@ export const getSecurePin = async () => {
   } catch (error) {
     console.error('Error retrieving PIN:', error);
     return null;
+  }
+};
+
+/**
+ * Remove PIN from secure storage
+ * @returns {Promise<boolean>} Success status
+ */
+export const removeSecurePin = async () => {
+  try {
+    // Try multiple approaches to ensure PIN is removed
+    let removed = false;
+    
+    // Approach 1: Use resetInternetCredentials
+    try {
+      const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
+      if (resetResult !== false) {
+        removed = true;
+      }
+    } catch (error) {
+      console.warn('resetInternetCredentials failed:', error);
+    }
+    
+    // Approach 2: Overwrite with empty credentials
+    if (!removed) {
+      try {
+        const setResult = await Keychain.setInternetCredentials(
+          PIN_SERVICE,
+          PIN_USERNAME,
+          ''
+        );
+        if (setResult !== false) {
+          removed = true;
+        }
+      } catch (error) {
+        console.warn('setInternetCredentials with empty string failed:', error);
+      }
+    }
+    
+    // Approach 3: For iOS specifically, try removing with different variations
+    if (!removed && Platform.OS === 'ios') {
+      try {
+        // Some iOS versions might need explicit null
+        await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, null);
+        removed = true;
+      } catch (error) {
+        console.warn('setInternetCredentials with null failed:', error);
+      }
+    }
+    
+    // Final verification
+    try {
+      const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
+      if (!credentials || !credentials.password || credentials.password === '') {
+        return true;
+      } else {
+        console.error('PIN still exists after all removal attempts');
+        return false;
+      }
+    } catch (error) {
+      // If we can't retrieve credentials, assume they don't exist
+      return true;
+    }
+  } catch (error) {
+    console.error('Error removing PIN:', error);
+    return false;
   }
 };
 

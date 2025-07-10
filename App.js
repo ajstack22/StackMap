@@ -96,6 +96,7 @@ import {
   hasSecurePin,
   verifyPin,
   migratePinToSecureStorage,
+  removeSecurePin,
 } from './src/utils/secureStorage';
 
 // Get initial screen dimensions
@@ -103,6 +104,14 @@ const { width: initialScreenWidth, height: initialScreenHeight } = Dimensions.ge
 
 // These will be recalculated in the component
 const baseFontSize = isTablet() ? FONT_SCALE.tablet : FONT_SCALE.mobile;
+
+// Helper function for Android modal bottom safety zones
+const getAndroidModalBottomHeight = (insets) => {
+  const isLargeDevice = isTablet() || initialScreenHeight > 800;
+  return isLargeDevice 
+    ? Math.max(insets.bottom * 1.2, 20) // Reduced by 40% (was 32, now 20)
+    : Math.max(insets.bottom, 10); // Reduced by 40% (was 16, now 10)
+};
 
 // Common emojis for picker
 const commonEmojis = COMMON_EMOJIS;
@@ -1300,6 +1309,58 @@ const App = () => {
     showToast({ message: `Added user: ${newUser.name}` });
   };
 
+  // Delete user function
+  const deleteUser = (userId) => {
+    // Check if this is the last user
+    const userKeys = Object.keys(users);
+    if (userKeys.length === 1) {
+      if (Platform.OS === 'web') {
+        window.alert('You must have at least one user.');
+      } else {
+        Alert.alert('Cannot Delete', 'You must have at least one user.');
+      }
+      return;
+    }
+
+    // Get user info for toast message
+    const deletedUserName = users[userId]?.name || 'User';
+
+    // Remove the user
+    const updatedUsers = { ...users };
+    delete updatedUsers[userId];
+    setUsers(updatedUsers);
+
+    // If we're deleting the current user, switch to another user
+    if (currentUser === userId) {
+      const remainingUserIds = Object.keys(updatedUsers);
+      if (remainingUserIds.length > 0) {
+        const newCurrentUser = remainingUserIds[0];
+        const newUser = updatedUsers[newCurrentUser];
+        
+        // Switch to the new user
+        setCurrentUser(newCurrentUser);
+        
+        // Load the new user's activities for current day
+        const newUserActivities = newUser?.days?.[currentDay]?.activities || [];
+        setActivities(newUserActivities);
+        
+        // Load the new user's theme
+        if (newUser?.settings?.theme) {
+          setCurrentTheme(newUser.settings.theme);
+        }
+        
+        // Load the new user's celebration settings
+        if (newUser?.settings) {
+          setTaskCelebration(newUser.settings.taskCelebration || 'rainbow');
+          setRoutineCelebration(newUser.settings.routineCelebration || 'rainbow');
+          setSoundEnabled(newUser.settings.soundEnabled !== false);
+        }
+      }
+    }
+
+    showToast({ message: `Deleted user: ${deletedUserName}` });
+  };
+
   // Export data function
   const exportData = async () => {
     try {
@@ -1793,7 +1854,7 @@ const App = () => {
           isActive && styles.draggingCard
         ]}
         onPress={() => !isEditMode && toggleActivity(item.id)}
-        onLongPress={() => isEditMode && drag && Platform.OS === 'ios' ? drag() : setIsEditMode(true)}
+        onLongPress={() => isEditMode && drag && Platform.OS === 'ios' ? drag() : null}
         disabled={isActive}
         activeOpacity={0.9}
       >
@@ -2006,7 +2067,7 @@ const App = () => {
     return CardContent;
   };
 
-  const Header = () => {
+  const Header = ({ position = 'top' }) => {
     const handleSwipeGesture = ({ nativeEvent }) => {
       if (State && nativeEvent.state === State.END) {
         const { translationY, velocityY } = nativeEvent;
@@ -2028,7 +2089,15 @@ const App = () => {
     };
 
     return (
-      <View style={styles.header}>
+      <View style={[
+        styles.header,
+        position === 'bottom' && Platform.OS === 'android' && {
+          paddingVertical: isTablet() ? 14 : 10,
+          paddingTop: isTablet() ? 16 : 12,
+          paddingBottom: isTablet() ? 12 : 8,
+          minHeight: isTablet() ? 70 : 60,
+        }
+      ]}>
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
             <Logo size={isTablet() ? 40 : 32} theme={theme} />
@@ -2075,18 +2144,18 @@ const App = () => {
   // The FABs need to be lower, centered on the banner content
   const fabBottom = bannerPosition === 'bottom' 
     ? isTablet() 
-      ? insets.bottom + 15 // Tablets: move down to prevent overlap with banner content
+      ? insets.bottom + 25 // Tablets: centered on banner
       : Platform.OS === 'android'
-        ? 35 // Android: higher position to align better with banner
-        : insets.bottom + 20 // iPhone: much lower, just above home bar with minimal offset
+        ? Math.max(insets.bottom + 25, 35) // Android: centered on banner with minimum
+        : insets.bottom + 20 // iPhone: just above home bar
     : null; // Will use top positioning for top banner
     
   const fabTop = bannerPosition === 'top'
     ? Platform.OS === 'web'
       ? 25 // Web: center on 110px header (110/2 - 60/2 = 25)
       : Platform.OS === 'android'
-        ? (StatusBar.currentHeight || 24) + 35 // Android: account for status bar and camera
-        : insets.top + (isTablet() ? 20 : 35) // iOS: use safe area insets
+        ? (StatusBar.currentHeight || 24) + 25 // Android: moved up to better center on banner
+        : insets.top + (isTablet() ? 15 : 25) // iOS: moved up for better centering
     : null;
     
   const AppContent = (
@@ -2147,8 +2216,8 @@ const App = () => {
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 },
-                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingTop: Platform.OS === 'android' ? 120 : 100 }
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
+                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
             >
               {activities.length === 0 ? (
@@ -2249,7 +2318,8 @@ const App = () => {
               contentContainerStyle={[
                 styles.listContent,
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingTop: Platform.OS === 'android' ? 120 : 100 }
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
+                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               ListEmptyComponent={
@@ -2278,8 +2348,8 @@ const App = () => {
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 },
-                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingTop: Platform.OS === 'android' ? 120 : 100 }
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
+                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -2298,18 +2368,23 @@ const App = () => {
         {bannerPosition === 'bottom' && (
           Platform.OS === 'web' ? (
             <View style={{ backgroundColor: theme.primary }}>
-              <Header />
+              <Header position="bottom" />
             </View>
           ) : (
             <>
               <SafeAreaView style={{ 
                 backgroundColor: theme.primary,
-                paddingBottom: Platform.OS === 'android' ? 10 : 0 
+                paddingBottom: Platform.OS === 'android' ? 0 : 0 
               }}>
-                <Header />
+                <Header position="bottom" />
               </SafeAreaView>
               {Platform.OS === 'android' && (
-                <View style={{ backgroundColor: theme.primary, height: 24 }} />
+                <View style={{ 
+                  backgroundColor: theme.primary, 
+                  height: isTablet() 
+                    ? Math.max(insets.bottom, 24) // Tablets: use actual inset or 24px
+                    : Math.max(insets.bottom, 16) // Phones: use actual inset or 16px
+                }} />
               )}
             </>
           )
@@ -2321,13 +2396,11 @@ const App = () => {
             <SafeAreaView style={{ backgroundColor: theme.primary }} />
           ) : (
             // On Android, show colored block for navigation bar
-            !(isEditMode && showEditToolbar) && (
-              <View style={{ 
-                backgroundColor: theme.primary, 
-                height: 24,
-                width: '100%'
-              }} />
-            )
+            <View style={{ 
+              backgroundColor: theme.primary, 
+              height: getAndroidModalBottomHeight(insets),
+              width: '100%'
+            }} />
           )
         )}
         
@@ -2372,9 +2445,17 @@ const App = () => {
       <Modal
         visible={showActivityModal}
         animationType="slide"
+        transparent={false}
+        statusBarTranslucent={true}
         onRequestClose={() => setShowActivityModal(false)}
       >
-        <StatusBar barStyle="light-content" backgroundColor={theme.primary} />
+        {Platform.OS === 'android' && (
+          <StatusBar 
+            backgroundColor={theme.primary} 
+            barStyle="light-content" 
+            translucent={false}
+          />
+        )}
         <View style={styles.modalContainer}>
           {Platform.OS === 'android' && (
             <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
@@ -2468,7 +2549,7 @@ const App = () => {
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
           {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.light, height: 24 }} />
+            <View style={{ backgroundColor: theme.primary, height: getAndroidModalBottomHeight(insets) }} />
           )}
           
           {/* Emoji Picker Modal for Add Activity */}
@@ -2762,7 +2843,7 @@ const App = () => {
           />
           <SafeAreaView style={{ backgroundColor: theme.light }} />
           {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: 24 }} />
+            <View style={{ backgroundColor: theme.primary, height: getAndroidModalBottomHeight(insets) }} />
           )}
         </View>
       </Modal>
@@ -2883,6 +2964,37 @@ const App = () => {
                   >
                     <Icon name="edit" size={18} color="#666" />
                   </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.deleteUserButton}
+                    onPress={() => {
+                      if (Platform.OS === 'web') {
+                        const confirmed = window.confirm(
+                          `Are you sure you want to delete ${user.name}? This will permanently remove the user and all their activity cards for all days.`
+                        );
+                        if (confirmed) {
+                          deleteUser(userId);
+                        }
+                      } else {
+                        Alert.alert(
+                          'Delete User',
+                          `Are you sure you want to delete ${user.name}? This will permanently remove the user and all their activity cards for all days.`,
+                          [
+                            {
+                              text: 'Cancel',
+                              style: 'cancel'
+                            },
+                            {
+                              text: 'Delete',
+                              style: 'destructive',
+                              onPress: () => deleteUser(userId)
+                            }
+                          ]
+                        );
+                      }
+                    }}
+                  >
+                    <Icon name="delete" size={18} color="#ff4444" />
+                  </TouchableOpacity>
                 </TouchableOpacity>
               ))}
               <TouchableOpacity
@@ -2946,8 +3058,8 @@ const App = () => {
                           const confirmed = window.confirm('Are you sure you want to remove PIN protection?');
                           if (confirmed) {
                             try {
-                              // Clear the PIN for both platforms
-                              const success = await setSecurePin(null);
+                              // Clear the PIN using dedicated removal function
+                              const success = await removeSecurePin();
                               const hasPinAfter = await hasSecurePin();
                               
                               if (success && !hasPinAfter) {
@@ -2981,8 +3093,8 @@ const App = () => {
                                   const hasPinBefore = await hasSecurePin();
                                   // Check PIN status before removal
                                   
-                                  // Clear the PIN for both platforms
-                                  const success = await setSecurePin(null);
+                                  // Clear the PIN using dedicated removal function
+                                  const success = await removeSecurePin();
                                   // PIN removal result
                                   
                                   // Check PIN status after
@@ -3057,7 +3169,7 @@ const App = () => {
           </ScrollView>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
           {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: 24 }} />
+            <View style={{ backgroundColor: theme.primary, height: getAndroidModalBottomHeight(insets) }} />
           )}
         </View>
       </Modal>
@@ -3159,7 +3271,7 @@ const App = () => {
           </View>
           <SafeAreaView style={{ backgroundColor: theme.light }} />
           {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.light, height: 24 }} />
+            <View style={{ backgroundColor: theme.light, height: getAndroidModalBottomHeight(insets) }} />
           )}
           
           {/* User Emoji Picker Modal */}
@@ -3397,6 +3509,8 @@ const App = () => {
       <Modal
         visible={showActivityLibrary}
         animationType="slide"
+        transparent={false}
+        statusBarTranslucent={true}
         onRequestClose={() => setShowActivityLibrary(false)}
       >
         <ActivityLibrary
@@ -3543,7 +3657,7 @@ const App = () => {
           </View>
           <SafeAreaView style={{ backgroundColor: '#f8f9fa' }} />
           {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: '#f8f9fa', height: 24 }} />
+            <View style={{ backgroundColor: '#f8f9fa', height: getAndroidModalBottomHeight(insets) }} />
           )}
         </View>
       </Modal>
@@ -3742,7 +3856,7 @@ const App = () => {
           </View>
           <SafeAreaView style={{ backgroundColor: '#fff5f8' }} />
           {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: '#fff5f8', height: 24 }} />
+            <View style={{ backgroundColor: '#fff5f8', height: getAndroidModalBottomHeight(insets) }} />
           )}
         </View>
       </Modal>
@@ -3813,16 +3927,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingVertical: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
+    paddingVertical: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 12 : 20),
     paddingHorizontal: Platform.OS === 'web' ? 80 : 20, // 60px FAB + 20px margin
-    paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 20 : 20),
-    paddingBottom: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 12 : 20),
+    paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
+    paddingBottom: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 10 : 20),
     ...(Platform.OS === 'web' && {
       height: 110,
       justifyContent: 'center',
     }),
     ...(Platform.OS === 'android' && {
-      minHeight: 85,
+      minHeight: 70,
       justifyContent: 'center',
       alignItems: 'center',
     }),
@@ -4343,6 +4457,10 @@ const styles = StyleSheet.create({
   editUserButton: {
     padding: 8,
     marginLeft: 8,
+  },
+  deleteUserButton: {
+    padding: 8,
+    marginLeft: 4,
   },
   addUserButton: {
     flexDirection: 'row',

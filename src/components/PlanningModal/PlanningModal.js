@@ -8,11 +8,14 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY } from '../../constants/theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../constants/theme';
 
 const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSelectUserDay, theme }) => {
+  const insets = useSafeAreaInsets();
   const themeColors = theme || THEMES.stackBlue;
   const [selectedUser, setSelectedUser] = useState(currentUser);
   const [selectedDay, setSelectedDay] = useState(currentDay);
@@ -52,7 +55,7 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
           </View>
         
         <ScrollView 
-          style={{ flex: 1, backgroundColor: COLORS.gray[50] }}
+          style={{ flex: 1, backgroundColor: themeColors.light }}
           contentContainerStyle={{ padding: SPACING.lg, paddingBottom: 40 }}
           showsVerticalScrollIndicator={false}
         >
@@ -84,32 +87,20 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
 
           {/* Day Selection */}
           <Text style={styles.sectionTitle}>Day</Text>
-          <View style={styles.daySelector}>
+          <View style={styles.toggleContainer}>
             <TouchableOpacity
-              style={[
-                styles.dayButton,
-                selectedDay === 'today' && styles.dayButtonActive
-              ]}
+              style={[styles.toggle, selectedDay === 'today' && styles.toggleActive]}
               onPress={() => setSelectedDay('today')}
             >
-              <Text style={[
-                styles.dayButtonText,
-                selectedDay === 'today' && styles.dayButtonTextActive
-              ]}>
+              <Text style={[styles.toggleText, selectedDay === 'today' && styles.toggleTextActive]}>
                 Today
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[
-                styles.dayButton,
-                selectedDay === 'tomorrow' && styles.dayButtonActive
-              ]}
+              style={[styles.toggle, selectedDay === 'tomorrow' && styles.toggleActive]}
               onPress={() => setSelectedDay('tomorrow')}
             >
-              <Text style={[
-                styles.dayButtonText,
-                selectedDay === 'tomorrow' && styles.dayButtonTextActive
-              ]}>
+              <Text style={[styles.toggleText, selectedDay === 'tomorrow' && styles.toggleTextActive]}>
                 Tomorrow
               </Text>
             </TouchableOpacity>
@@ -127,7 +118,12 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
         </ScrollView>
         </SafeAreaView>
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: themeColors.primary, height: 24 }} />
+          <View style={{ 
+            backgroundColor: themeColors.primary, 
+            height: (Dimensions.get('window').width >= 768 || Dimensions.get('window').height > 800) 
+              ? Math.max(insets.bottom * 1.2, 20) // Reduced by 40%
+              : Math.max(insets.bottom, 10) // Reduced by 40%
+          }} />
         )}
       </View>
     </Modal>
@@ -196,30 +192,32 @@ const getStyles = (themeColors) => ({
   checkmark: {
     marginLeft: 'auto',
   },
-  daySelector: {
+  toggleContainer: {
     flexDirection: 'row',
-    gap: SPACING.sm,
+    gap: SPACING.xs,
+    backgroundColor: COLORS.gray[100],
+    borderRadius: RADIUS.md,
+    padding: 4,
   },
-  dayButton: {
+  toggle: {
     flex: 1,
-    paddingVertical: SPACING.md,
-    borderWidth: 2,
-    borderColor: COLORS.gray[300],
-    borderRadius: RADIUS.lg,
-    backgroundColor: COLORS.white,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
   },
-  dayButtonActive: {
-    backgroundColor: themeColors.primary,
-    borderColor: themeColors.primary,
+  toggleActive: {
+    backgroundColor: COLORS.white,
+    ...SHADOWS.level1,
   },
-  dayButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.gray[700],
+  toggleText: {
+    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: COLORS.gray[600],
   },
-  dayButtonTextActive: {
-    color: COLORS.white,
+  toggleTextActive: {
+    color: COLORS.gray[900],
+    fontWeight: '600',
   },
   actionButtons: {
     flexDirection: 'row',

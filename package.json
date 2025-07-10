@@ -53,6 +53,7 @@
     "jetifier": "^2.0.0",
     "prettier": "2.8.8",
     "process": "^0.11.10",
+    "puppeteer": "^24.12.1",
     "react-native-svg-web": "^1.0.9",
     "react-test-renderer": "19.1.0",
     "style-loader": "^4.0.0",

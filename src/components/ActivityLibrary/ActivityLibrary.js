@@ -13,8 +13,10 @@ import {
   Image,
   Platform,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Conditionally import drag-and-drop libraries
 let DraggableFlatList, ScaleDecorator;
@@ -526,6 +528,7 @@ const ActivityLibrary = ({
   categories: customCategories,
   onSaveCategories,
 }) => {
+  const insets = useSafeAreaInsets();
   const [categories, setCategories] = useState(customCategories || DEFAULT_CATEGORIES);
   const [editingItem, setEditingItem] = useState(null);
   const [editMode, setEditMode] = useState(null); // 'category', 'activity', 'new-category', 'new-activity'
@@ -773,6 +776,13 @@ const ActivityLibrary = ({
   const content = (
     <View style={[styles.container, { backgroundColor: theme.primary }]}>
       {Platform.OS === 'android' && (
+        <StatusBar 
+          backgroundColor={theme.primary} 
+          barStyle="light-content" 
+          translucent={false}
+        />
+      )}
+      {Platform.OS === 'android' && (
         <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
       )}
       <SafeAreaView style={{ backgroundColor: theme.primary }}>
@@ -994,9 +1004,15 @@ const ActivityLibrary = ({
         showCustomImages={true}
       />
       
-      <SafeAreaView style={{ backgroundColor: theme.light }} />
-      {Platform.OS === 'android' && (
-        <View style={{ backgroundColor: theme.primary, height: 24 }} />
+      {Platform.OS === 'ios' ? (
+        <SafeAreaView style={{ backgroundColor: theme.light, flex: 0 }} />
+      ) : (
+        <View style={{ 
+          backgroundColor: theme.light, 
+          height: (isTablet() || Dimensions.get('window').height > 800) 
+            ? Math.max(insets.bottom * 0.6, 10) // Half of standard modal height
+            : Math.max(insets.bottom * 0.5, 5) // Half of standard modal height
+        }} />
       )}
     </View>
   );
@@ -1050,7 +1066,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     fontSize: isTablet() ? 22 : 20,
-    fontWeight: 'bold',
+    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal', // Android uses bold font file
     color: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },

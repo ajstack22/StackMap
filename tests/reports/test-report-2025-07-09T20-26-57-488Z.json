@@ -1,0 +1,50 @@
+{
+  "stories": [
+    {
+      "name": "Story 001",
+      "file": "tests/stories/story-001-add-card.js",
+      "passed": true,
+      "scenarios": []
+    },
+    {
+      "name": "Story 002",
+      "file": "tests/stories/story-002-timer-functionality.js",
+      "passed": true,
+      "scenarios": []
+    }
+  ],
+  "unit": [],
+  "integration": [
+    {
+      "name": "Integration: uat-edit-mode-updated.js",
+      "file": "tests/uat-edit-mode-updated.js",
+      "passed": true,
+      "message": "Test file exists"
+    },
+    {
+      "name": "Integration: uat-import-export-data.js",
+      "file": "tests/uat-import-export-data.js",
+      "passed": true,
+      "message": "Test file exists"
+    },
+    {
+      "name": "Integration: uat-ui-timing.js",
+      "file": "tests/uat-ui-timing.js",
+      "passed": true,
+      "message": "Test file exists"
+    },
+    {
+      "name": "Integration: uat-drive-sync.js",
+      "file": "tests/uat-drive-sync.js",
+      "passed": true,
+      "message": "Test file exists"
+    }
+  ],
+  "timestamp": "2025-07-09T20:26:57.476Z",
+  "summary": {
+    "total": 6,
+    "passed": 6,
+    "failed": 0,
+    "skipped": 0
+  }
+}

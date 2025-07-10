@@ -13,10 +13,12 @@ import {
   Picker,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../constants/theme';
 import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler';
 
 const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onUserChange }) => {
+  const insets = useSafeAreaInsets();
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const isSmallScreen = screenWidth < 768;
   const [selectedUser, setSelectedUser] = useState(currentUser);
@@ -651,7 +653,12 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         </ScrollView>
         </SafeAreaView>
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: currentUserTheme.primary, height: 24 }} />
+          <View style={{ 
+            backgroundColor: currentUserTheme.primary, 
+            height: (screenWidth >= 768 || Dimensions.get('window').height > 800) 
+              ? Math.max(insets.bottom * 1.2, 20) // Reduced by 40%
+              : Math.max(insets.bottom, 10) // Reduced by 40%
+          }} />
         )}
       </View>
       </GestureHandlerRootView>

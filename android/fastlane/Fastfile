@@ -1,0 +1,46 @@
+# Android Fastfile for StackMap
+
+default_platform(:android)
+
+platform :android do
+  desc "Generate screenshots"
+  lane :screenshots do
+    # Build debug APK first
+    gradle(
+      task: "assembleDebug",
+      project_dir: "./"
+    )
+    
+    # Build test APK
+    gradle(
+      task: "assembleAndroidTest",
+      project_dir: "./"
+    )
+    
+    # Capture screenshots
+    capture_android_screenshots(
+      locales: ["en-US"],
+      clear_previous_screenshots: true,
+      output_directory: "./fastlane/screenshots",
+      skip_open_summary: true,
+      app_package_name: "com.stackmapnative",
+      tests_package_name: "com.stackmapnative.test",
+      use_tests_in_packages: ["com.stackmapnative.screenshots"],
+      app_apk_path: "./app/build/outputs/apk/debug/app-debug.apk",
+      tests_apk_path: "./app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk",
+      test_instrumentation_runner: "androidx.test.runner.AndroidJUnitRunner",
+      devices: [
+        "Pixel_9_Pro_XL",
+        "Pixel_7"
+      ]
+    )
+  end
+  
+  desc "Frame screenshots with device frames"
+  lane :frame_screenshots do
+    frameit(
+      path: "./fastlane/screenshots",
+      use_platform: "ANDROID"
+    )
+  end
+end

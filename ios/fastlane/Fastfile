@@ -1,0 +1,44 @@
+# iOS Fastfile for StackMap
+
+default_platform(:ios)
+
+platform :ios do
+  desc "Generate screenshots"
+  lane :screenshots do
+    # Ensure we're using the correct scheme
+    scheme = "StackMapNative"
+    
+    # Define devices for screenshots
+    devices = [
+      "iPhone 16 Pro Max",      # 6.9" Display
+      "iPhone 16 Pro",          # 6.3" Display
+      "iPad Pro (13-inch)"      # 13" Display
+    ]
+    
+    # Clear previous screenshots
+    clear_derived_data
+    
+    # Capture screenshots
+    capture_screenshots(
+      workspace: "StackMapNative.xcworkspace",
+      scheme: scheme,
+      devices: devices,
+      languages: ["en-US"],
+      clear_previous_screenshots: true,
+      output_directory: "./fastlane/screenshots",
+      skip_open_summary: true,
+      reinstall_app: true,
+      app_identifier: "app.stackmap",
+      stop_after_first_error: false,
+      configuration: "Debug"
+    )
+  end
+  
+  desc "Frame screenshots with device frames"
+  lane :frame_screenshots do
+    frameit(
+      path: "./fastlane/screenshots",
+      use_platform: "IOS"
+    )
+  end
+end
