@@ -2147,7 +2147,8 @@ const App = () => {
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 }
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 },
+                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingTop: Platform.OS === 'android' ? 120 : 100 }
               ]}
             >
               {activities.length === 0 ? (
@@ -2247,7 +2248,8 @@ const App = () => {
               }}
               contentContainerStyle={[
                 styles.listContent,
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 }
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingTop: Platform.OS === 'android' ? 120 : 100 }
               ]}
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               ListEmptyComponent={
@@ -2276,7 +2278,8 @@ const App = () => {
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 }
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingBottom: 150 },
+                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingTop: Platform.OS === 'android' ? 120 : 100 }
               ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -3812,8 +3815,8 @@ const styles = StyleSheet.create({
   header: {
     paddingVertical: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
     paddingHorizontal: Platform.OS === 'web' ? 80 : 20, // 60px FAB + 20px margin
-    paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
-    paddingBottom: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
+    paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 20 : 20),
+    paddingBottom: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 12 : 20),
     ...(Platform.OS === 'web' && {
       height: 110,
       justifyContent: 'center',
