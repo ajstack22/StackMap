@@ -104,10 +104,18 @@ export const FAB_DIMENSIONS = {
 };
 
 // Badge dimensions (number and completion circles)
-export const getBadgeDimensions = () => ({
-  size: isTablet() ? 70 : 54,
-  iconSize: isTablet() ? 36 : 28,
-});
+export const getBadgeDimensions = () => {
+  const baseSize = isTablet() ? 70 : 54;
+  const baseIconSize = isTablet() ? 36 : 28;
+  
+  // Reduce by 30% on web only
+  const webReduction = Platform.OS === 'web' ? 0.7 : 1;
+  
+  return {
+    size: Math.round(baseSize * webReduction),
+    iconSize: Math.round(baseIconSize * webReduction),
+  };
+};
 
 // For backward compatibility
 export const BADGE_DIMENSIONS = getBadgeDimensions();

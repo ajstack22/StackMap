@@ -9,6 +9,7 @@ import {
   FlatList,
   Animated,
   Platform,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet, getContainerPadding } from '../../constants';
@@ -101,7 +102,7 @@ const EditModeToolbar = ({
     >
       <Icon 
         name={item.icon} 
-        size={isTablet() ? 36 : 31} 
+        size={Platform.OS === 'web' ? (isTablet() ? 31 : 27) : (isTablet() ? 36 : 31)} 
         color={item.disabled ? '#999' : 'white'} 
       />
       <Text style={[
@@ -161,6 +162,17 @@ const EditModeToolbar = ({
                 {
                   transform: [{ translateY }],
                   opacity,
+                  // Add extra padding for Android to avoid camera
+                  ...(Platform.OS === 'android' && {
+                    // When toolbar is at top (banner at bottom), add top padding
+                    ...(position === 'top' && {
+                      paddingTop: (StatusBar.currentHeight || 24) + 12,
+                    }),
+                    // When toolbar is at bottom (banner at top), add bottom padding to avoid camera
+                    ...(position === 'bottom' && {
+                      paddingBottom: 24, // Extra padding to avoid camera cutout
+                    }),
+                  }),
                 },
               ]}
             >
@@ -242,17 +254,17 @@ const styles = StyleSheet.create({
   },
   toolbarWrapper: {
     alignItems: 'center',
-    paddingTop: Platform.OS === 'android' ? SPACING.lg : SPACING.sm,
-    paddingBottom: Platform.OS === 'android' ? SPACING.lg : SPACING.sm,
+    paddingTop: Platform.OS === 'web' ? 6 : (Platform.OS === 'android' ? 12 : 6),
+    paddingBottom: Platform.OS === 'web' ? 6 : (Platform.OS === 'android' ? 12 : 6),
     position: 'relative',
     zIndex: 1,
   },
   editModeLabel: {
     color: 'white',
-    fontSize: isTablet() ? 20 : 18,
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 17 : 16) : (isTablet() ? 20 : 18),
     fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    marginBottom: SPACING.sm,
+    marginBottom: Platform.OS === 'web' ? 4 : 5,
     opacity: 1,
   },
   toolbar: {
@@ -265,9 +277,9 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: SPACING.sm,
-    gap: SPACING.xs,
+    paddingHorizontal: Platform.OS === 'web' ? 3 : SPACING.xs,
+    paddingVertical: Platform.OS === 'web' ? 6 : SPACING.sm,
+    gap: Platform.OS === 'web' ? 2 : SPACING.xs,
     flex: (Platform.OS === 'web' || isTablet()) ? 0 : 1,
     maxWidth: (Platform.OS === 'web' || isTablet()) ? undefined : 80,
     minWidth: (Platform.OS === 'web' || isTablet()) ? 70 : undefined,
@@ -276,7 +288,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   actionLabel: {
-    fontSize: isTablet() ? 16 : 14,
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 14 : 12) : (isTablet() ? 16 : 14),
     fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',

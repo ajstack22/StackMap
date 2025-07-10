@@ -2077,7 +2077,7 @@ const App = () => {
     ? isTablet() 
       ? insets.bottom + 15 // Tablets: move down to prevent overlap with banner content
       : Platform.OS === 'android'
-        ? 20 // Android: fixed position like iOS
+        ? 35 // Android: higher position to align better with banner
         : insets.bottom + 20 // iPhone: much lower, just above home bar with minimal offset
     : null; // Will use top positioning for top banner
     
@@ -3810,12 +3810,18 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   header: {
-    paddingVertical: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 20 : 20),
+    paddingVertical: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
     paddingHorizontal: Platform.OS === 'web' ? 80 : 20, // 60px FAB + 20px margin
-    paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 25 : 20),
+    paddingTop: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
+    paddingBottom: Platform.OS === 'web' ? 20 : (Platform.OS === 'android' ? 16 : 20),
     ...(Platform.OS === 'web' && {
       height: 110,
       justifyContent: 'center',
+    }),
+    ...(Platform.OS === 'android' && {
+      minHeight: 85,
+      justifyContent: 'center',
+      alignItems: 'center',
     }),
   },
   headerContent: {
@@ -3863,7 +3869,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: Platform.OS === 'web' ? 6 : SPACING.sm, // 20% reduction from 8px
     borderRadius: RADIUS.round,
-    marginTop: Platform.OS === 'web' ? 3 : SPACING.sm,
+    marginTop: Platform.OS === 'web' ? 3 : 5, // Tighter gap on native too
     gap: SPACING.sm,
     ...SHADOWS.level2,
   },
