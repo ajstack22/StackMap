@@ -91,3 +91,9 @@ ios/*.ips
 
 # Temporary tools
 icon-color-preview.html
+
+# Build artifacts that shouldn't be committed
+/index.html
+/bundle.*.js
+/bundle.*.js.LICENSE.txt
+/temp/

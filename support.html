@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support StackMap</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: #fff5f8;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .header {
+            background-color: #ff6b9d;
+            color: white;
+            padding: 16px 20px;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .header-content {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        .close-button {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            height: 32px;
+        }
+        
+        .close-button:hover {
+            opacity: 0.8;
+        }
+        
+        .content {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: calc(100vh - 60px);
+        }
+        
+        .support-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .support-heart {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        
+        .support-title {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff6b9d;
+            margin-bottom: 10px;
+        }
+        
+        .support-subtitle {
+            font-size: 18px;
+            color: #666;
+        }
+        
+        .support-message-box {
+            background-color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .support-message {
+            font-size: 16px;
+            color: #555;
+            line-height: 1.6;
+            text-align: center;
+        }
+        
+        .support-ways-section {
+            margin-bottom: 30px;
+        }
+        
+        .support-ways-title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #ff6b9d;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .support-option-fun {
+            background-color: white;
+            padding: 20px;
+            border-radius: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+        
+        .support-option-fun:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .support-icon-big {
+            font-size: 40px;
+            margin-right: 20px;
+            flex-shrink: 0;
+        }
+        
+        .support-option-content {
+            flex: 1;
+        }
+        
+        .support-option-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ff6b9d;
+            margin-bottom: 5px;
+        }
+        
+        .support-option-text {
+            font-size: 16px;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .support-contact-box {
+            background-color: #ffeef4;
+            padding: 20px;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .support-contact-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff6b9d;
+            margin-bottom: 10px;
+        }
+        
+        .support-contact-text {
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .support-contact-text a {
+            color: #ff6b9d;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .support-contact-text a:hover {
+            text-decoration: underline;
+        }
+        
+        .support-footer {
+            text-align: center;
+            padding: 20px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .support-footer-emoji {
+            font-size: 20px;
+            margin: 0 5px;
+        }
+        
+        @media (max-width: 600px) {
+            .support-title {
+                font-size: 24px;
+            }
+            
+            .support-ways-title {
+                font-size: 20px;
+            }
+            
+            .support-option-title {
+                font-size: 18px;
+            }
+            
+            .support-icon-big {
+                font-size: 32px;
+                margin-right: 16px;
+            }
+            
+            .content {
+                padding: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="header-content">
+            <h1>Support StackMap 💖</h1>
+            <button class="close-button" onclick="window.close()" aria-label="Close">×</button>
+        </div>
+    </div>
+    
+    <div class="content">
+        <div class="support-header">
+            <div class="support-heart">💖</div>
+            <h2 class="support-title">Support StackMap</h2>
+            <p class="support-subtitle">Help us make StackMap even better!</p>
+        </div>
+        
+        <div class="support-message-box">
+            <p class="support-message">
+                StackMap is free and always will be. If you find it helpful, here are some ways you can support us and help others discover the app!
+            </p>
+        </div>
+        
+        <div class="support-ways-section">
+            <h3 class="support-ways-title">Ways You Can Help 🌟</h3>
+            
+            <div class="support-option-fun">
+                <div class="support-icon-big">🎆</div>
+                <div class="support-option-content">
+                    <div class="support-option-title">Rate & Review</div>
+                    <div class="support-option-text">Leave a review on the App Store or Google Play. Your feedback helps others find us!</div>
+                </div>
+            </div>
+            
+            <div class="support-option-fun">
+                <div class="support-icon-big">📣</div>
+                <div class="support-option-content">
+                    <div class="support-option-title">Spread the Word</div>
+                    <div class="support-option-text">Tell friends, family, teachers, or therapists who might benefit from visual scheduling</div>
+                </div>
+            </div>
+            
+            <div class="support-option-fun">
+                <div class="support-icon-big">💬</div>
+                <div class="support-option-content">
+                    <div class="support-option-title">Share Your Story</div>
+                    <div class="support-option-text">We love hearing how StackMap helps! Send us your success stories</div>
+                </div>
+            </div>
+            
+            <div class="support-option-fun">
+                <div class="support-icon-big">💡</div>
+                <div class="support-option-content">
+                    <div class="support-option-title">Share Ideas</div>
+                    <div class="support-option-text">Have suggestions? We're always looking for ways to improve</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="support-contact-box">
+            <div class="support-contact-title">Get in Touch</div>
+            <p class="support-contact-text">
+                Email us at <a href="mailto:hello@stackmap.app">hello@stackmap.app</a>
+            </p>
+        </div>
+        
+        <div class="support-footer">
+            <p>Thank you for being part of the StackMap community <span class="support-footer-emoji">🎉</span></p>
+        </div>
+    </div>
+</body>
+</html>
