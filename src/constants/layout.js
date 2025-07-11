@@ -51,15 +51,19 @@ export const calculateColumns = (width = screenWidth) => {
     }
   }
   
-  // Calculate columns based on minimum width without additional margins
-  let numColumns = Math.floor((availableWidth + CARD_LAYOUT.gap) / (CARD_LAYOUT.minWidth + CARD_LAYOUT.gap)) || 1;
-  
-  // Cap at 3 columns maximum
-  if (numColumns > 3) {
-    numColumns = 3;
+  // Better breakpoints for smoother transitions
+  // Single column up to 600px (gives cards room to breathe)
+  if (width < 600) {
+    return 1;
   }
   
-  return numColumns;
+  // Two columns from 600px to 900px
+  if (width < 900) {
+    return 2;
+  }
+  
+  // Three columns for 900px and above
+  return 3;
 };
 
 export const calculateCardWidth = (width = screenWidth) => {

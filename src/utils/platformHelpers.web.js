@@ -66,6 +66,19 @@ const DocumentPicker = {
         }
       };
       
+      // Handle cancellation
+      input.oncancel = () => {
+        reject(new Error('User cancelled'));
+      };
+      
+      // Clean up the input element after use
+      input.addEventListener('change', () => {
+        setTimeout(() => {
+          document.body.removeChild(input);
+        }, 100);
+      });
+      
+      document.body.appendChild(input);
       input.click();
     });
   },
@@ -74,6 +87,10 @@ const DocumentPicker = {
     allFiles: '*/*',
     plainText: 'text/plain',
     json: 'application/json'
+  },
+  
+  isCancel: (error) => {
+    return error && (error.message === 'User cancelled' || error.message === 'No file selected');
   }
 };
 

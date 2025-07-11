@@ -142,9 +142,13 @@ export const removeSecurePin = async () => {
         return true;
       }
     } else if (Platform.OS === 'web') {
-      // Web-specific approach
+      // Web-specific approach - use the same Keychain polyfill
       try {
-        await AsyncStorage.removeItem('@stackmap_editModePin');
+        const removed = await Keychain.resetInternetCredentials(PIN_SERVICE);
+        
+        // Also try to overwrite with empty string
+        await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
+        
         return true;
       } catch (error) {
         console.warn('Web PIN removal failed:', error);

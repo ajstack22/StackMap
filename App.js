@@ -89,6 +89,9 @@ import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLib
 // Import hooks
 import { useToast } from './src/hooks';
 
+// Import stores
+import { useAppStore } from './src/stores';
+
 // Import utilities
 import {
   setSecurePin,
@@ -140,15 +143,35 @@ const App = () => {
   // Use our custom hooks
   const { toast, showToast, hideToast } = useToast();
   
+  // Zustand store - using a single selector for better performance
+  const {
+    currentTheme,
+    setCurrentTheme,
+    bannerPosition,
+    setBannerPosition,
+    soundEnabled,
+    setSoundEnabled,
+    taskCelebration,
+    setTaskCelebration,
+    routineCelebration,
+    setRoutineCelebration,
+    users,
+    setUsers,
+    addUser,
+    updateUser,
+    updateUserActivities,
+    deleteUser: deleteUserFromStore,
+    currentUser,
+    setCurrentUser,
+    activities,
+    setActivities,
+    currentDay,
+    setCurrentDay,
+  } = useAppStore();
+  
   // State
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
-  const [currentTheme, setCurrentTheme] = useState('stackBlue'); // This will be overridden by user's theme
-  const [bannerPosition, setBannerPosition] = useState('top');
-  const [currentUser, setCurrentUser] = useState(null);
-  const [users, setUsers] = useState({});
-  const [activities, setActivities] = useState([]);
-  const [currentDay, setCurrentDay] = useState('today');
   const [templates, setTemplates] = useState([]);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
@@ -179,8 +202,6 @@ const App = () => {
   
   // Display mode and celebrations
   const [displayMode, setDisplayMode] = useState('numbers'); // 'none', 'numbers', 'time'
-  const [taskCelebration, setTaskCelebration] = useState('rainbow');
-  const [routineCelebration, setRoutineCelebration] = useState('rainbow');
   const [showCelebration, setShowCelebration] = useState(null);
   const [activityTime, setActivityTime] = useState('');
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -236,8 +257,44 @@ const App = () => {
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
     const initializeApp = async () => {
+      // Log Zustand store state for debugging
+      console.log('Zustand store initialized with:', {
+        currentTheme,
+        bannerPosition,
+        users: Object.keys(users).length,
+        currentUser,
+        activities: activities.length,
+        currentDay
+      });
+      
       await migratePinToSecureStorage();
-      await loadData();
+      // TODO: Remove loadData after migrating to Zustand persistence
+      // await loadData();
+      
+      // Initialize default user if none exists
+      if (Object.keys(users).length === 0) {
+        const newUserId = `user_${Date.now()}`;
+        const newUser = {
+          id: newUserId,
+          name: 'My Activities',
+          icon: '😊',
+          days: {
+            today: { activities: [] },
+            tomorrow: { activities: [] }
+          },
+          settings: {
+            taskCelebration: 'rainbow',
+            routineCelebration: 'rainbow',
+            soundEnabled: true,
+            theme: 'stackBlue'
+          },
+          createdAt: new Date().toISOString(),
+          lastActive: new Date().toISOString()
+        };
+        addUser(newUserId, newUser);
+        setCurrentUser(newUserId);
+      }
+      
       // Always check secure storage as the source of truth for PIN
       const hasPIN = await hasSecurePin();
       setHasPinProtection(hasPIN);
@@ -254,11 +311,12 @@ const App = () => {
   }, []);
 
   // Save data when it changes
-  useEffect(() => {
-    if (currentUser) {
-      saveData();
-    }
-  }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories]);
+  // TODO: Remove after Zustand persistence is fully working
+  // useEffect(() => {
+  //   if (currentUser) {
+  //     saveData();
+  //   }
+  // }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories]);
 
   // Load activities when day changes
   useEffect(() => {
@@ -1163,22 +1221,18 @@ const App = () => {
           
           // Also restore in users state
           if (currentUser && users[currentUser]) {
-            setUsers(prevUsers => {
-              const currentActivities = prevUsers[currentUser]?.days?.[currentDay]?.activities || [];
-              const restoredActivities = [...currentActivities];
-              restoredActivities.splice(deletedIndex, 0, deletedActivity);
-              return {
-                ...prevUsers,
-                [currentUser]: {
-                  ...prevUsers[currentUser],
-                  days: {
-                    ...prevUsers[currentUser].days,
-                    [currentDay]: {
-                      activities: restoredActivities
-                    }
-                  }
+            const currentUserData = users[currentUser];
+            const currentActivities = currentUserData?.days?.[currentDay]?.activities || [];
+            const restoredActivities = [...currentActivities];
+            restoredActivities.splice(deletedIndex, 0, deletedActivity);
+            
+            updateUser(currentUser, {
+              days: {
+                ...currentUserData.days,
+                [currentDay]: {
+                  activities: restoredActivities
                 }
-              };
+              }
             });
           }
         }
@@ -1194,15 +1248,7 @@ const App = () => {
     
     // Save immediately
     if (currentUser && users[currentUser]) {
-      const updatedUsers = { ...users };
-      if (!updatedUsers[currentUser].days) {
-        updatedUsers[currentUser].days = {};
-      }
-      if (!updatedUsers[currentUser].days[currentDay]) {
-        updatedUsers[currentUser].days[currentDay] = { activities: [] };
-      }
-      updatedUsers[currentUser].days[currentDay].activities = newActivities;
-      setUsers(updatedUsers);
+      updateUserActivities(currentUser, currentDay, newActivities);
     }
   };
 
@@ -1270,45 +1316,6 @@ const App = () => {
     }
   };
   
-  const addUser = () => {
-    if (!newUserName.trim()) {
-      Alert.alert('Error', 'Please enter a user name');
-      return;
-    }
-    
-    const userId = `user_${Date.now()}`;
-    const newUser = {
-      id: userId,
-      name: newUserName.trim(),
-      icon: newUserEmoji,
-      days: {
-        today: { activities: [] },
-        tomorrow: { activities: [] }
-      },
-      settings: {
-        taskCelebration: 'rainbow',
-        routineCelebration: 'rainbow',
-        soundEnabled: true,
-        theme: currentTheme || 'stackBlue'
-      },
-      createdAt: new Date().toISOString(),
-      lastActive: new Date().toISOString()
-    };
-    
-    setUsers(prevUsers => ({
-      ...prevUsers,
-      [userId]: newUser
-    }));
-    
-    setCurrentUser(userId);
-    setActivities([]);
-    // New user inherits current theme, no need to change it
-    setNewUserName('');
-    setNewUserEmoji('😀');
-    setShowAddUserModal(false);
-    showToast({ message: `Added user: ${newUser.name}` });
-  };
-
   // Handle adding user from AddUserModal
   const handleAddUser = (userName, userEmoji) => {
     const userId = `user_${Date.now()}`;
@@ -1330,10 +1337,7 @@ const App = () => {
       lastActive: new Date().toISOString()
     };
     
-    setUsers(prevUsers => ({
-      ...prevUsers,
-      [userId]: newUser
-    }));
+    addUser(userId, newUser);
     
     setCurrentUser(userId);
     setActivities([]);
@@ -1380,12 +1384,12 @@ const App = () => {
     const deletedUserName = users[userId]?.name || 'User';
 
     // Remove the user
-    const updatedUsers = { ...users };
-    delete updatedUsers[userId];
-    setUsers(updatedUsers);
+    deleteUserFromStore(userId);
 
     // If we're deleting the current user, switch to another user
     if (currentUser === userId) {
+      const updatedUsers = { ...users };
+      delete updatedUsers[userId];
       const remainingUserIds = Object.keys(updatedUsers);
       if (remainingUserIds.length > 0) {
         const newCurrentUser = remainingUserIds[0];
@@ -1517,14 +1521,14 @@ const App = () => {
             url: `file://${filePath}`,
             title: 'Export StackMap Data',
           });
+          
+          if (shareResult && shareResult.action !== Share.dismissedAction) {
+            showToast({ message: 'Data exported successfully' });
+          }
         }
         
         if (Platform.OS !== 'web') {
           await RNFS.unlink(filePath);
-        }
-        
-        if (Platform.OS !== 'web' && shareResult && shareResult.action !== Share.dismissedAction) {
-          showToast({ message: 'Data exported successfully' });
         }
       }
     } catch (error) {
@@ -1658,81 +1662,110 @@ const App = () => {
     
     // iOS uses DocumentPicker
     try {
+      console.log('Starting import process...');
       const result = await DocumentPicker.pick({
         type: Platform.OS === 'web' ? 'application/json' : [DocumentPicker.types.json],
         copyTo: 'cachesDirectory',
       });
       
+      console.log('DocumentPicker result:', result);
+      
       let fileContent;
       
       // Web implementation includes content directly
       if (Platform.OS === 'web' && result[0]?.content) {
+        console.log('Using web content path');
         fileContent = result[0].content;
       } else if (result[0]?.fileCopyUri) {
         // Native implementation needs to read the file
+        console.log('Using native file path');
         fileContent = await RNFS.readFile(result[0].fileCopyUri, 'utf8');
         // Clean up temporary file
         await RNFS.unlink(result[0].fileCopyUri);
       } else {
+        console.error('No valid file content found in result:', result);
         Alert.alert('Error', 'Could not read the selected file');
         return;
       }
       
+      console.log('File content length:', fileContent?.length);
+      
       // Parse and validate the data
       let importedData;
       try {
+        console.log('Parsing JSON...');
         importedData = JSON.parse(fileContent);
+        console.log('Parsed data:', importedData);
       } catch (e) {
+        console.error('JSON parse error:', e);
         Alert.alert('Error', 'Invalid file format. Please select a valid StackMap export file.');
         return;
       }
       
       // Migrate data if needed
+      console.log('Migrating data structure...');
       const migratedData = migrateDataStructure(importedData);
+      console.log('Migrated data:', migratedData);
       
       // Confirm import
-      Alert.alert(
-        'Import Data',
-        'This will replace all your current data. Are you sure?',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Import',
-            style: 'destructive',
-            onPress: async () => {
-              // Update state with imported data
-              setUsers(migratedData.users || {});
-              setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
-              setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
-              // PIN is now handled by secure storage, not imported
-              setTemplates(migratedData.templates || []);
-              setCurrentDay(migratedData.currentDay || 'today');
-              
-              // Set first user as current if available
-              const userIds = Object.keys(migratedData.users || {});
-              if (userIds.length > 0) {
-                setCurrentUser(userIds[0]);
-                setActivities(migratedData.users[userIds[0]].days?.[currentDay]?.activities || []);
-                // Load the first user's theme
-                if (migratedData.users[userIds[0]]?.settings?.theme) {
-                  setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
-                }
-              }
-              
-              // Save to storage
-              await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
-              
-              showToast({ message: 'Data imported successfully' });
-            }
+      console.log('Showing import confirmation dialog...');
+      
+      const confirmImport = async () => {
+        console.log('User confirmed import, applying data...');
+        // Update state with imported data
+        const importedCurrentDay = migratedData.currentDay || 'today';
+        
+        setUsers(migratedData.users || {});
+        setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
+        setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
+        // PIN is now handled by secure storage, not imported
+        setTemplates(migratedData.templates || []);
+        setCurrentDay(importedCurrentDay);
+        
+        // Set first user as current if available
+        const userIds = Object.keys(migratedData.users || {});
+        if (userIds.length > 0) {
+          setCurrentUser(userIds[0]);
+          setActivities(migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || []);
+          // Load the first user's theme
+          if (migratedData.users[userIds[0]]?.settings?.theme) {
+            setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
           }
-        ]
-      );
-    } catch (error) {
-      if (DocumentPicker && DocumentPicker.isCancel(error)) {
-        // User cancelled the picker
+        }
+        
+        // Save to storage
+        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
+        
+        showToast({ message: 'Data imported successfully' });
+      };
+      
+      // Show confirmation dialog - use platform-specific approach
+      if (Platform.OS === 'web') {
+        if (window.confirm('This will replace all your current data. Are you sure?')) {
+          await confirmImport();
+        }
       } else {
-        console.error('Import error:', error);
-        Alert.alert('Import Error', 'Failed to import data');
+        Alert.alert(
+          'Import Data',
+          'This will replace all your current data. Are you sure?',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Import',
+              style: 'destructive',
+              onPress: confirmImport
+            }
+          ]
+        );
+      }
+    } catch (error) {
+      console.error('Import catch block - error:', error);
+      if (DocumentPicker && DocumentPicker.isCancel && DocumentPicker.isCancel(error)) {
+        // User cancelled the picker
+        console.log('User cancelled file picker');
+      } else {
+        console.error('Import error details:', error.message, error.stack);
+        Alert.alert('Import Error', `Failed to import data: ${error.message}`);
       }
     }
   };
@@ -1779,18 +1812,20 @@ const App = () => {
             style: 'destructive',
             onPress: async () => {
               // Update state with imported data
+              const importedCurrentDay = migratedData.currentDay || 'today';
+              
               setUsers(migratedData.users || {});
               setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
               setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
               // PIN is now handled by secure storage, not imported
               setTemplates(migratedData.templates || []);
-              setCurrentDay(migratedData.currentDay || 'today');
+              setCurrentDay(importedCurrentDay);
               
               // Set first user as current if available
               const userIds = Object.keys(migratedData.users || {});
               if (userIds.length > 0) {
                 setCurrentUser(userIds[0]);
-                setActivities(migratedData.users[userIds[0]].days?.[currentDay]?.activities || []);
+                setActivities(migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || []);
                 // Load the first user's theme
                 if (migratedData.users[userIds[0]]?.settings?.theme) {
                   setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
@@ -1812,35 +1847,34 @@ const App = () => {
   };
 
   const resetApp = async () => {
-    Alert.alert(
-      'Reset App',
-      'This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. Are you sure?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Reset Everything',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              // Clear all AsyncStorage
+    const message = 'This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. Are you sure?';
+    
+    const performReset = async () => {
+      try {
+              // Clear all AsyncStorage including Zustand storage
               await AsyncStorage.removeItem('@stackmap_data');
               await AsyncStorage.removeItem('@stackmap_hasCompletedOnboarding');
               await AsyncStorage.removeItem('@stackmap_pin_migrated');
               await AsyncStorage.removeItem('userPin'); // Legacy PIN storage
               await AsyncStorage.removeItem('stackMapData'); // Legacy storage key
+              await AsyncStorage.removeItem('stackmap-storage'); // Zustand storage
               
               // Skip PIN clearing on Android due to keychain library issues
               // The PIN will be effectively cleared when we reset hasPinProtection state
               
-              // Reset all state to initial values
+              // Reset Zustand store to initial values
               setUsers({});
               setCurrentUser(null);
               setActivities([]);
               setCurrentTheme('stackBlue');
               setBannerPosition('top');
+              setTaskCelebration('rainbow');
+              setRoutineCelebration('rainbow');
+              setCurrentDay('today');
+              
+              // Reset local state
               setDisplayMode('numbers');
               setTemplates([]);
-              setCurrentDay('today');
               setIsEditMode(false);
               setHasPinProtection(false);
               setActivityCategories(null);
@@ -1855,9 +1889,6 @@ const App = () => {
               setNewUserEmoji(DEFAULT_USER_ICON);
               setEditingUser(null);
               setEditingActivity(null);
-              setPinInput('');
-              setConfirmPin('');
-              setIsSettingPin(false);
               
               // Close all modals
               setShowEditModeSettingsModal(false);
@@ -1873,21 +1904,42 @@ const App = () => {
               setShowReorderModal(false);
               setShowPinModal(false);
               
-              // Show success toast
-              showToast({ message: 'App reset successfully', type: 'success' });
-              
-              // Show onboarding after a brief delay
-              setTimeout(() => {
-                setShowOnboarding(true);
-              }, 500);
-            } catch (error) {
-              console.error('Reset error:', error);
-              Alert.alert('Reset Error', 'Failed to reset app data');
-            }
-          }
+        // Show success toast
+        showToast({ message: 'App reset successfully', type: 'success' });
+        
+        // Show onboarding after a brief delay
+        setTimeout(() => {
+          setShowOnboarding(true);
+        }, 500);
+      } catch (error) {
+        console.error('Reset error:', error);
+        if (Platform.OS === 'web') {
+          window.alert('Failed to reset app data');
+        } else {
+          Alert.alert('Reset Error', 'Failed to reset app data');
         }
-      ]
-    );
+      }
+    };
+    
+    // Show confirmation dialog
+    if (Platform.OS === 'web') {
+      if (window.confirm(message)) {
+        performReset();
+      }
+    } else {
+      Alert.alert(
+        'Reset App',
+        message,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Reset Everything',
+            style: 'destructive',
+            onPress: performReset
+          }
+        ]
+      );
+    }
   };
 
   // Preference save helpers
@@ -2020,8 +2072,8 @@ const App = () => {
       {/* Edit Mode Actions */}
       {showEditIcons && (
         <>
-          {/* Reorder buttons for Android */}
-          {Platform.OS === 'android' && !customWidth && (
+          {/* Reorder buttons for Android and Web */}
+          {(Platform.OS === 'android' || Platform.OS === 'web') && !customWidth && (
             <View style={styles.reorderButtons}>
               <TouchableOpacity
                 onPress={() => moveActivity(index, 'up')}
@@ -2320,11 +2372,17 @@ const App = () => {
                   styles.gridContainer, 
                   Platform.OS === 'web' ? {
                     display: 'grid',
-                    gridTemplateColumns: `repeat(${numColumns}, 1fr)`,
+                    gridTemplateColumns: numColumns === 1 
+                      ? '1fr' 
+                      : `repeat(${numColumns}, minmax(0, ${CARD_LAYOUT.singleColumnMaxWidth}px))`,
                     rowGap: CARD_LAYOUT.gap,
                     columnGap: CARD_LAYOUT.gap,
+                    justifyContent: 'center',
                     ...(numColumns === 1 && {
                       justifyItems: 'center',
+                      maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
+                      marginLeft: 'auto',
+                      marginRight: 'auto',
                     }),
                   } : {
                     // No negative margins needed
@@ -2434,6 +2492,7 @@ const App = () => {
               contentContainerStyle={[
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
+                Platform.OS === 'web' && { alignItems: 'center' },
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
                 isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
@@ -2865,7 +2924,7 @@ const App = () => {
         activities={activities}
         newPosition={newPosition}
         setNewPosition={setNewPosition}
-        handleReorder={handleReorder}
+        onReorder={handleReorder}
         styles={styles}
       />
       
@@ -3124,6 +3183,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'flex-start',
+    width: '100%',
   },
   cardWrapper: {
     ...(Platform.OS === 'web' ? {
