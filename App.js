@@ -167,19 +167,31 @@ const App = () => {
     setActivities,
     currentDay,
     setCurrentDay,
+    displayMode,
+    setDisplayMode,
+    dayMode,
+    setDayMode,
+    templates,
+    setTemplates,
+    activityCategories,
+    setActivityCategories,
+    userContextData,
+    setUserContextData,
+    hasCompletedOnboarding,
+    setHasCompletedOnboarding,
   } = useAppStore();
   
   // State
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
-  const [templates, setTemplates] = useState([]);
+  // Removed - now using Zustand store
   const [isEditMode, setIsEditMode] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showUserDayModal, setShowUserDayModal] = useState(false);
   const [showEditModeSettingsModal, setShowEditModeSettingsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showActivityLibrary, setShowActivityLibrary] = useState(false);
-  const [userContextData, setUserContextData] = useState({});
+  // Removed - now using Zustand store
   
   // Force ScrollView recalculation on Android modals
   const preferencesScrollRef = useRef(null);
@@ -198,10 +210,10 @@ const App = () => {
   const [newUserEmoji, setNewUserEmoji] = useState(DEFAULT_USER_ICON);
   const [showUserEmojiPicker, setShowUserEmojiPicker] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [dayMode, setDayMode] = useState('today'); // 'today' or 'both'
+  // Removed - now using Zustand store
   
   // Display mode and celebrations
-  const [displayMode, setDisplayMode] = useState('numbers'); // 'none', 'numbers', 'time'
+  // Removed - now using Zustand store
   const [showCelebration, setShowCelebration] = useState(null);
   const [activityTime, setActivityTime] = useState('');
   const [showPrivacyModal, setShowPrivacyModal] = useState(false);
@@ -230,7 +242,7 @@ const App = () => {
   const cardHeight = getCardHeight();
   
   // Activity library state
-  const [activityCategories, setActivityCategories] = useState(null);
+  // activityCategories now in Zustand store
   const [addedToLibraryIds, setAddedToLibraryIds] = useState(new Set());
   
   // Animation values
@@ -268,11 +280,15 @@ const App = () => {
       });
       
       await migratePinToSecureStorage();
-      // TODO: Remove loadData after migrating to Zustand persistence
-      // await loadData();
       
-      // Initialize default user if none exists
-      if (Object.keys(users).length === 0) {
+      // Check if we should show onboarding
+      if (!hasCompletedOnboarding && Object.keys(users).length === 0) {
+        setShowOnboarding(true);
+        return; // Don't create default user, wait for onboarding
+      }
+      
+      // Initialize default user if none exists and onboarding is complete
+      if (hasCompletedOnboarding && Object.keys(users).length === 0) {
         const newUserId = `user_${Date.now()}`;
         const newUser = {
           id: newUserId,
@@ -310,13 +326,7 @@ const App = () => {
     return () => subscription?.remove();
   }, []);
 
-  // Save data when it changes
-  // TODO: Remove after Zustand persistence is fully working
-  // useEffect(() => {
-  //   if (currentUser) {
-  //     saveData();
-  //   }
-  // }, [users, activities, currentTheme, bannerPosition, currentDay, activityCategories]);
+  // Data is now automatically persisted through Zustand
 
   // Load activities when day changes
   useEffect(() => {
@@ -506,164 +516,16 @@ const App = () => {
     };
   };
 
-  const loadData = async () => {
-    try {
-      // Try both old and new storage keys
-      const savedDataOld = await AsyncStorage.getItem('stackMapData');
-      const savedDataNew = await AsyncStorage.getItem('@stackmap_data');
-      const savedData = savedDataNew || savedDataOld; // Prefer new key if both exist
-      
-      const hasCompletedOnboarding = await AsyncStorage.getItem('@stackmap_hasCompletedOnboarding');
-      
-      // If user has data but no onboarding flag, they're an existing user - don't show onboarding
-      const isExistingUser = savedData && !hasCompletedOnboarding;
-      if (isExistingUser) {
-        // Mark onboarding as completed for existing users
-        await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
-        // Existing user detected, skipping onboarding
-      }
-      
-      // Check if we should show onboarding (only for truly new users)
-      if (!hasCompletedOnboarding && !savedData) {
-        setShowOnboarding(true);  // Show Onboarding with new content instead of SetupWizard
-        return; // Don't load data or create default user yet, wait for setup completion
-      }
-      
-      if (savedData) {
-        const data = JSON.parse(savedData);
-        
-        // Migration: Convert old RN format to PWA format
-        const migratedData = migrateDataStructure(data);
-        
-        setUsers(migratedData.users || {});
-        
-        // Handle theme
-        if (migratedData.globalSettings?.currentTheme) {
-          // Use the saved theme name directly
-          setCurrentTheme(migratedData.globalSettings.currentTheme);
-        } else if (migratedData.globalSettings?.themeColor) {
-          // Fallback to old themeColor for backward compatibility
-          // Map old color codes to new theme names
-          const colorMap = {
-            '#667eea': 'plum',     // old purple -> plum
-            '#3182ce': 'navy',     // old blue -> navy
-            '#48bb78': 'forest',   // old green -> forest
-            '#f56565': 'crimson',  // old red -> crimson
-            '#ed8936': 'rust',     // old orange -> rust
-            '#ed64a6': 'lavender'  // old pink -> lavender
-          };
-          // Also check if it's already a valid theme name
-          const validTheme = Object.keys(THEMES).includes(migratedData.globalSettings.themeColor) 
-            ? migratedData.globalSettings.themeColor 
-            : colorMap[migratedData.globalSettings.themeColor];
-          setCurrentTheme(validTheme || 'navy');
-        }
-        
-        setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
-        setDisplayMode(migratedData.globalSettings?.displayMode || 'numbers');
-        setTaskCelebration(migratedData.globalSettings?.taskCelebration || 'rainbow');
-        setRoutineCelebration(migratedData.globalSettings?.routineCelebration || 'rainbow');
-        // Don't restore PIN state from saved data - secure storage is the source of truth
-        setCurrentDay(migratedData.currentDay || 'today');
-        setTemplates(migratedData.templates || []);
-        setActivityCategories(migratedData.activityCategories || null);
-        
-        // Load user context data
-        const savedContextData = await AsyncStorage.getItem('@stackmap_userContext');
-        if (savedContextData) {
-          setUserContextData(JSON.parse(savedContextData));
-        }
-        
-        // Set current user and load activities
-        const userId = migratedData.currentUserId || Object.keys(migratedData.users || {})[0];
-        if (userId && migratedData.users[userId]) {
-          setCurrentUser(userId);
-          setActivities(migratedData.users[userId]?.days?.[currentDay]?.activities || []);
-          // Load user's theme
-          if (migratedData.users[userId]?.settings?.theme) {
-            setCurrentTheme(migratedData.users[userId].settings.theme);
-          }
-        }
-      } else {
-        // First time - check if we should show onboarding
-        if (!hasCompletedOnboarding) {
-          setShowOnboarding(true);
-          return; // Don't create default user yet, wait for setup completion
-        }
-        
-        // Create default user
-        const newUserId = `user_${Date.now()}`;
-        const newUser = {
-          id: newUserId,
-          name: 'My Activities',
-          icon: '😊',
-          days: {
-            today: { activities: [] },
-            tomorrow: { activities: [] }
-          },
-          settings: {
-            taskCelebration: 'rainbow',
-            routineCelebration: 'rainbow',
-            soundEnabled: true,
-            theme: 'stackBlue'
-          },
-          createdAt: new Date().toISOString(),
-          lastActive: new Date().toISOString()
-        };
-        setUsers({ [newUserId]: newUser });
-        setCurrentUser(newUserId);
-      }
-    } catch (error) {
-      console.error('Error loading data:', error);
-    }
-  };
+  // Removed loadData - now using Zustand persistence
 
-  const saveData = async () => {
-    try {
-      const data = {
-        version: 3,
-        currentUserId: currentUser,
-        currentDay: currentDay,
-        users: {
-          ...users,
-          [currentUser]: {
-            ...users[currentUser],
-            days: {
-              ...users[currentUser]?.days,
-              [currentDay]: { activities },
-              // Preserve tomorrow's activities if we're on today view
-              ...(currentDay === 'today' && users[currentUser]?.days?.tomorrow ? {
-                tomorrow: users[currentUser].days.tomorrow
-              } : {})
-            },
-            lastActive: new Date().toISOString()
-          }
-        },
-        globalSettings: {
-          currentTheme: currentTheme,
-          themeColor: THEMES[currentTheme].primary, // Keep for backward compatibility
-          displayMode: displayMode,
-          enableDayManagement: true,
-          // Don't save PIN state - secure storage is the source of truth
-          bannerPosition: bannerPosition,
-          taskCelebration: taskCelebration,
-          routineCelebration: routineCelebration
-        },
-        templates: templates || [],
-        activityCategories: activityCategories
-      };
-      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(data));
-    } catch (error) {
-      console.error('Error saving data:', error);
-    }
-  };
+  // Removed saveData - now using Zustand persistence
 
   const handleOnboardingComplete = async (onboardingData) => {
     try {
       console.log('handleOnboardingComplete called with:', onboardingData);
       
       // Mark onboarding as completed
-      await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
+      setHasCompletedOnboarding(true);
       
       // If no onboarding data provided (shouldn't happen), create default user
       if (!onboardingData || !onboardingData.users || onboardingData.users.length === 0) {
@@ -711,7 +573,7 @@ const App = () => {
           templates: templates,
           activityCategories: activityCategories
         };
-        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+        // Data is now persisted automatically through Zustand
         return;
       }
       
@@ -810,7 +672,7 @@ const App = () => {
         templates: templates,
         activityCategories: activityCategories
       };
-      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+      // Data is now persisted automatically through Zustand
     } catch (error) {
       console.error('Error completing onboarding:', error);
       // Still hide onboarding on error
@@ -821,7 +683,7 @@ const App = () => {
   const handleSetupWizardComplete = async (setupData) => {
     try {
       // Mark onboarding as completed
-      await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
+      setHasCompletedOnboarding(true);
       
       // Set PIN if provided
       if (setupData.pin) {
@@ -922,7 +784,7 @@ const App = () => {
         templates: templates,
         activityCategories: activityCategories
       };
-      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+      // Data is now persisted automatically through Zustand
     } catch (error) {
       console.error('Error completing setup wizard:', error);
       // Still hide setup wizard on error
@@ -933,7 +795,7 @@ const App = () => {
   const handleOnboardingSkip = async () => {
     try {
       // Mark onboarding as completed
-      await AsyncStorage.setItem('@stackmap_hasCompletedOnboarding', 'true');
+      setHasCompletedOnboarding(true);
       
       // Create default user without starter activities
       const newUserId = `user_${Date.now()}`;
@@ -978,7 +840,7 @@ const App = () => {
         templates: templates,
         activityCategories: activityCategories
       };
-      await AsyncStorage.setItem('@stackmap_data', JSON.stringify(dataToSave));
+      // Data is now persisted automatically through Zustand
     } catch (error) {
       console.error('Error skipping onboarding:', error);
       // Still hide onboarding on error
@@ -2975,7 +2837,7 @@ const App = () => {
               [userToSave]: contextData
             };
             setUserContextData(updatedContextData);
-            AsyncStorage.setItem('@stackmap_userContext', JSON.stringify(updatedContextData));
+            // User context is now persisted automatically through Zustand
             showToast({ message: 'Context saved!' });
             
             // Only close modal if it's not an auto-save

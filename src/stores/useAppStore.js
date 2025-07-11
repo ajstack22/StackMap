@@ -91,11 +91,29 @@ const useAppStore = create(
       // Activities and Days
       activities: [],
       currentDay: 'today',
+      displayMode: 'numbers',
+      dayMode: 'today',
+      templates: [],
+      activityCategories: null,
+      userContextData: {},
+      hasCompletedOnboarding: false,
       
       // Activity Actions
       setActivities: (activities) => set({ activities }, false, 'setActivities'),
       
       setCurrentDay: (day) => set({ currentDay: day }, false, 'setCurrentDay'),
+      
+      setDisplayMode: (mode) => set({ displayMode: mode }, false, 'setDisplayMode'),
+      
+      setDayMode: (mode) => set({ dayMode: mode }, false, 'setDayMode'),
+      
+      setTemplates: (templates) => set({ templates }, false, 'setTemplates'),
+      
+      setActivityCategories: (categories) => set({ activityCategories: categories }, false, 'setActivityCategories'),
+      
+      setUserContextData: (data) => set({ userContextData: data }, false, 'setUserContextData'),
+      
+      setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }, false, 'setHasCompletedOnboarding'),
       
       addActivity: (activity) => set((state) => ({
         activities: [...state.activities, activity]
@@ -141,11 +159,18 @@ const useAppStore = create(
         // Only persist specific parts of the state
         currentTheme: state.currentTheme,
         bannerPosition: state.bannerPosition,
+        soundEnabled: state.soundEnabled,
         taskCelebration: state.taskCelebration,
         routineCelebration: state.routineCelebration,
         users: state.users,
         currentUser: state.currentUser,
         currentDay: state.currentDay,
+        displayMode: state.displayMode,
+        dayMode: state.dayMode,
+        templates: state.templates,
+        activityCategories: state.activityCategories,
+        userContextData: state.userContextData,
+        hasCompletedOnboarding: state.hasCompletedOnboarding,
         // Note: activities are stored per user, so we don't persist them here
       }),
     }
