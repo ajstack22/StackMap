@@ -37,34 +37,27 @@ echo "🔨 Building React Native web..."
 npm run build:web || exit_error "Build failed"
 success "Web build completed"
 
-# Copy build files to root (for deployment)
-echo "📋 Copying build files..."
-cp -r web/build/* . || exit_error "Failed to copy build files"
-success "Build files copied to root"
-
-# Update service worker cache version
-echo "🔄 Updating service worker cache version..."
-TIMESTAMP=$(date +%s)
-sed -i.bak "s/stackmap-v[0-9]*/stackmap-v$TIMESTAMP/" sw.js
-rm sw.js.bak
-success "Service worker updated with new cache version"
+# Note: Build files are kept in web/build/ directory
+# They should be deployed from there, not copied to root
+echo "📋 Build files ready in web/build/"
+success "Build files ready for deployment"
 
 # Create deployment manifest
 echo "📝 Creating deployment manifest..."
-cat > .deployment-manifest <<EOF
+cat > web/build/.deployment-manifest <<EOF
 {
   "buildTime": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")",
   "version": "react-native-web",
-  "bundleHash": "$(ls bundle.*.js | head -1 | grep -o '[a-f0-9]\{16,\}')"
+  "bundleHash": "$(cd web/build && ls bundle.*.js | head -1 | grep -o '[a-f0-9]\{16,\}')"
 }
 EOF
 success "Deployment manifest created"
 
 echo
 echo "✅ BUILD COMPLETE!"
-echo "📦 Ready for deployment to server"
+echo "📦 Build files ready in web/build/ directory"
 echo
 echo "Next steps:"
-echo "1. Commit changes: git add -A && git commit -m 'Build for deployment'"
+echo "1. Commit changes: git add web/build && git commit -m 'Build for deployment'"
 echo "2. Push to GitHub: git push origin main"
-echo "3. Deploy to server: ./scripts/simple-deploy.sh"
+echo "3. Deploy will use files from web/build/ directory"

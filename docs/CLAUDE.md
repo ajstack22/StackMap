@@ -3,11 +3,11 @@
 ## 🚨 DEPLOYMENT - SIMPLE SYSTEM 🚨
 
 ```bash
-./DEPLOY.sh        # Deploy qual to production
-./ROLLBACK.sh      # Rollback if issues occur
+./scripts/simple-deploy.sh deploy    # Deploy qual to production
+./scripts/simple-deploy.sh rollback  # Rollback if issues occur
 ```
 
-See `/DEPLOYMENT_SIMPLE.md` for details.
+See `/docs/DEPLOYMENT.md` for details.
 
 ---
 
@@ -111,7 +111,7 @@ Local → GitHub → Qual → Production
 ### Documentation Locations
 - Architecture: `/context/` directory
 - Testing: `/docs/UAT_TESTING_GUIDE.md`
-- Deployment: `/DEPLOYMENT_SIMPLE.md`
+- Deployment: `/docs/DEPLOYMENT.md`
 - CSS modules: `/context/css-module-map.md`
 
 ### Common Issues & Solutions

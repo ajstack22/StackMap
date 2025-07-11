@@ -2,6 +2,32 @@
 
 This directory contains scripts to enforce deployment best practices and ensure quality releases.
 
+## Important Update (January 2025)
+
+The build process has been updated to keep build files in `web/build/` instead of copying them to the root directory. This prevents clutter and maintains a cleaner project structure.
+
+### Key Changes:
+
+1. **Build Output**: `npm run build:web` now outputs files to `web/build/` only
+2. **No Root Copies**: Files like `index.html` and `bundle.*.js` are no longer copied to the project root
+3. **Deployment Process**: The cPanel deployment now handles files from `web/build/` correctly
+
+### Deployment Flow:
+
+1. **Local Build**: Run `npm run build:web` - creates files in `web/build/`
+2. **Git Commit**: Commit the `web/build/` directory changes
+3. **Push to GitHub**: `git push origin main`
+4. **Automatic Deployment**: 
+   - GitHub webhook triggers cPanel to pull changes
+   - `cpanel-post-pull.sh` copies files from `web/build/` to the qual root
+   - Files are then available at https://stackmap.app/qual/
+
+### Scripts Updated:
+
+- `build-web.sh` - No longer copies to root, keeps files in `web/build/`
+- `cpanel-webhook.php` - Now runs post-pull script after git pull
+- `cpanel-post-pull.sh` - NEW: Handles copying from `web/build/` to qual root on cPanel
+
 ## Quick Start
 
 After cloning the repository, run:

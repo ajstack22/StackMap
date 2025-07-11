@@ -38,9 +38,9 @@
 - `node_modules/` - NPM packages (gitignored)
 
 ### Deployment
-- `DEPLOY.sh` - Deploy to production
-- `ROLLBACK.sh` - Rollback deployment
-- `DEPLOYMENT_SIMPLE.md` - Deployment instructions
+- `scripts/simple-deploy.sh` - Deploy to production with rollback functionality
+- `scripts/ROLLBACK.sh` - Alternative rollback script
+- `docs/DEPLOYMENT.md` - Deployment instructions
 - `.cpanel.yml` - cPanel deployment configuration
 - `scripts/` - Deployment and build scripts
 

@@ -1,1 +1,1 @@
-{"disable-features":"AcceptCHFrame,IsolateOrigins,MediaRouter,OptimizationHints,PaintHolding,ProcessPerSiteUpToMainFrameThreshold,Translate","enable-features":"NetworkServiceInProcess2","force-fieldtrial-params":"","force-fieldtrials":"*SeedFileTrial/Default"}
+{"disable-features":"AcceptCHFrame,IsolateOrigins,IsolateSandboxedIframes,MediaRouter,OptimizationHints,PaintHolding,ProcessPerSiteUpToMainFrameThreshold,Translate","enable-features":"PdfOopif","force-fieldtrial-params":"","force-fieldtrials":"*SeedFileTrial/Default"}

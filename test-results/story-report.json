@@ -1,5 +1,5 @@
 {
-  "timestamp": "2025-07-09T14:16:41.052Z",
+  "timestamp": "2025-07-10T20:59:30.340Z",
   "summary": {
     "total": 3,
     "passed": 0,
@@ -21,7 +21,8 @@
             "given": "Multiple changes have been made offline",
             "when": "Connection is restored",
             "then": "Changes should be batched into a single compressed delta",
-            "passed": true
+            "passed": false,
+            "error": "page.waitForTimeout is not a function"
           }
         ]
       },
@@ -34,7 +35,8 @@
             "given": "User visits the PWA",
             "when": "Page loads with app manifest",
             "then": "All required manifest fields are present",
-            "passed": true
+            "passed": false,
+            "error": "No manifest link found in HTML"
           },
           {
             "given": "PWA is loaded on mobile device",
@@ -94,7 +96,8 @@
             "given": "Multiple changes have been made offline",
             "when": "Connection is restored",
             "then": "Changes should be batched into a single compressed delta",
-            "passed": true
+            "passed": false,
+            "error": "page.waitForTimeout is not a function"
           }
         ]
       },
@@ -107,7 +110,8 @@
             "given": "User visits the PWA",
             "when": "Page loads with app manifest",
             "then": "All required manifest fields are present",
-            "passed": true
+            "passed": false,
+            "error": "No manifest link found in HTML"
           },
           {
             "given": "PWA is loaded on mobile device",

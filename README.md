@@ -84,7 +84,7 @@ cd ios && pod install && cd ..
 
 - [Android Build Setup](./docs/android/ANDROID_BUILD_SETUP.md) - **Critical for Android builds**
 - [iOS Development](./docs/ios/)
-- [Deployment Guide](./docs/deployment/DEPLOYMENT_SIMPLE.md)
+- [Deployment Guide](./docs/DEPLOYMENT.md)
 - [All Documentation](./docs/)
 
 ## 🚀 Deployment

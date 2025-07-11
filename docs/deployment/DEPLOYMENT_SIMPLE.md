@@ -7,7 +7,7 @@ This is the ACTUAL deployment system that works. It's simple, reliable, and does
 
 ### Deploy Qual to Production
 ```bash
-./DEPLOY.sh
+./scripts/simple-deploy.sh deploy
 ```
 
 That's it. This will:
@@ -17,7 +17,7 @@ That's it. This will:
 
 ### Rollback if Something Goes Wrong
 ```bash
-./ROLLBACK.sh
+./scripts/simple-deploy.sh rollback
 ```
 
 This will restore production to exactly how it was before the last deployment.
@@ -30,9 +30,8 @@ This will restore production to exactly how it was before the last deployment.
 
 ## Files
 
-- `DEPLOY.sh` - Push button to deploy qual → prod
-- `ROLLBACK.sh` - Push button to rollback to previous version
-- `scripts/simple-deploy.sh` - The actual deployment logic (both scripts use this)
+- `scripts/simple-deploy.sh` - The deployment script with deploy/rollback functionality
+- `scripts/ROLLBACK.sh` - Alternative rollback script
 
 ## Why This Exists
 
@@ -47,9 +46,9 @@ Don't replace this with something complex. If you need more features, ADD to thi
 
 1. Make changes in qual
 2. Test thoroughly at https://stackmap.app/qual/
-3. Run `./DEPLOY.sh`
+3. Run `./scripts/simple-deploy.sh deploy`
 4. Check https://stackmap.app
-5. If issues, run `./ROLLBACK.sh`
+5. If issues, run `./scripts/simple-deploy.sh rollback`
 
 ## Important Notes
 

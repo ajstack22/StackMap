@@ -823,11 +823,10 @@ npm run deploy
 
 #### 3. Rollback Process
 ```bash
-./ROLLBACK.sh
+./scripts/simple-deploy.sh rollback
 # Features:
-# - List recent deployments
-# - Select version to restore
-# - Automatic backup creation
+# - Restore from last deployment backup
+# - Automatic backup restoration
 # - Deployment verification
 ```
 
