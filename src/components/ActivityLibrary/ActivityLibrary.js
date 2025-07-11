@@ -14,6 +14,7 @@ import {
   Platform,
   StatusBar,
   Dimensions,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -773,26 +774,33 @@ const ActivityLibrary = ({
     }));
   };
 
-  const content = (
-    <View style={[styles.container, { backgroundColor: theme.primary }]}>
-      {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor={theme.primary} 
-          barStyle="light-content" 
-          translucent={false}
-        />
-      )}
-      {Platform.OS === 'android' && (
-        <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-      )}
-      <SafeAreaView style={{ backgroundColor: theme.primary }}>
-        <View style={[styles.header, { backgroundColor: theme.primary }]}>
-          <Text style={styles.headerTitle}>Activity Library</Text>
-          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <Icon name="close" size={24} color="white" />
-          </TouchableOpacity>
-        </View>
-      </SafeAreaView>
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+    >
+      <View style={[styles.container, { backgroundColor: theme.primary }]}>
+        {Platform.OS === 'android' && (
+          <StatusBar 
+            backgroundColor={theme.primary} 
+            barStyle="light-content" 
+            translucent={false}
+          />
+        )}
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+        )}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View style={[styles.header, { backgroundColor: theme.primary }]}>
+            <Text style={styles.headerTitle}>Activity Library</Text>
+            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+              <Icon name="close" size={24} color="white" />
+            </TouchableOpacity>
+          </View>
+        </SafeAreaView>
 
       <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
         {/* Search and Sort Bar */}
@@ -1014,10 +1022,9 @@ const ActivityLibrary = ({
             : Math.max(insets.bottom * 0.5, 5) // Half of standard modal height
         }} />
       )}
-    </View>
+      </View>
+    </Modal>
   );
-
-  return content;
 };
 
 const styles = StyleSheet.create({

@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../constants/theme';
+import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../../constants';
 
 const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSelectUserDay, theme }) => {
   const insets = useSafeAreaInsets();
@@ -250,4 +250,4 @@ const getStyles = (themeColors) => ({
   },
 });
 
-export default PlanningModal;
+export default React.memo(PlanningModal);

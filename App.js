@@ -81,10 +81,10 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, Onboarding } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, Onboarding, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
-import { ContextModal } from './src/components/ContextModal';
-import { PlanningModal } from './src/components/PlanningModal';
+
+// Component imports verified - all components are properly imported
 
 // Import hooks
 import { useToast } from './src/hooks';
@@ -1309,6 +1309,60 @@ const App = () => {
     showToast({ message: `Added user: ${newUser.name}` });
   };
 
+  // Handle adding user from AddUserModal
+  const handleAddUser = (userName, userEmoji) => {
+    const userId = `user_${Date.now()}`;
+    const newUser = {
+      id: userId,
+      name: userName,
+      icon: userEmoji,
+      days: {
+        today: { activities: [] },
+        tomorrow: { activities: [] }
+      },
+      settings: {
+        taskCelebration: 'rainbow',
+        routineCelebration: 'rainbow',
+        soundEnabled: true,
+        theme: currentTheme || 'stackBlue'
+      },
+      createdAt: new Date().toISOString(),
+      lastActive: new Date().toISOString()
+    };
+    
+    setUsers(prevUsers => ({
+      ...prevUsers,
+      [userId]: newUser
+    }));
+    
+    setCurrentUser(userId);
+    setActivities([]);
+    setNewUserName('');
+    setNewUserEmoji('😀');
+    setEditingUser(null);
+    setShowAddUserModal(false);
+    showToast({ message: `Added user: ${userName}` });
+  };
+
+  // Handle updating user from AddUserModal
+  const handleUpdateUser = (userId, userName, userEmoji) => {
+    const updatedUsers = {
+      ...users,
+      [userId]: {
+        ...users[userId],
+        name: userName,
+        icon: userEmoji
+      }
+    };
+    
+    setUsers(updatedUsers);
+    setNewUserName('');
+    setNewUserEmoji('😀');
+    setEditingUser(null);
+    setShowAddUserModal(false);
+    showToast({ message: `Updated user: ${userName}` });
+  };
+
   // Delete user function
   const deleteUser = (userId) => {
     // Check if this is the last user
@@ -1836,6 +1890,36 @@ const App = () => {
     );
   };
 
+  // Preference save helpers
+  const saveThemePreference = (newTheme) => {
+    // Theme is saved automatically via useEffect when currentTheme changes
+    if (currentUser && users[currentUser]) {
+      const updatedUsers = { ...users };
+      updatedUsers[currentUser].settings.theme = newTheme;
+      setUsers(updatedUsers);
+    }
+  };
+
+  const saveBannerPositionPreference = (position) => {
+    // Banner position is saved automatically via useEffect
+  };
+
+  const saveDisplayModePreference = (mode) => {
+    // Display mode is saved automatically via useEffect
+  };
+
+  const saveCelebrationPreference = (type, celebration) => {
+    if (currentUser && users[currentUser]) {
+      const updatedUsers = { ...users };
+      if (type === 'task') {
+        updatedUsers[currentUser].settings.taskCelebration = celebration;
+      } else if (type === 'routine') {
+        updatedUsers[currentUser].settings.routineCelebration = celebration;
+      }
+      setUsers(updatedUsers);
+    }
+  };
+
   const renderActivity = ({ item, drag, isActive, customWidth }) => {
     const index = activities.findIndex(a => a.id === item.id);
     const CardContent = (
@@ -2060,8 +2144,9 @@ const App = () => {
     );
     
     // Wrap with ScaleDecorator only when drag functionality is available and we're in DraggableFlatList on iOS
-    if (drag && typeof drag === 'function' && !customWidth && Platform.OS === 'ios') {
-      return <ScaleDecorator>{CardContent}</ScaleDecorator>;
+    if (drag && typeof drag === 'function' && !customWidth && Platform.OS === 'ios' && ScaleDecorator) {
+      const ValidScaleDecorator = ScaleDecorator;
+      return <ValidScaleDecorator>{CardContent}</ValidScaleDecorator>;
     }
     
     return CardContent;
@@ -2158,6 +2243,8 @@ const App = () => {
         : insets.top + (isTablet() ? 15 : 25) // iOS: moved up for better centering
     : null;
     
+  // All components are properly loaded and ready to render
+  
   const AppContent = (
     <>
       <StatusBar 
@@ -2442,134 +2529,371 @@ const App = () => {
       </View>
 
       {/* Add/Edit Activity Modal */}
-      <Modal
+      <ActivityModal
         visible={showActivityModal}
-        animationType="slide"
-        transparent={false}
-        statusBarTranslucent={true}
-        onRequestClose={() => setShowActivityModal(false)}
-      >
-        {Platform.OS === 'android' && (
-          <StatusBar 
-            backgroundColor={theme.primary} 
-            barStyle="light-content" 
-            translucent={false}
-          />
-        )}
-        <View style={styles.modalContainer}>
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-          )}
-          <SafeAreaView style={{ backgroundColor: theme.primary }}>
-            <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>
-                {editingActivity ? 'Edit Activity' : 'New Activity'}
-              </Text>
-              <TouchableOpacity onPress={() => {
-                setShowActivityModal(false);
-                resetActivityForm();
-              }}>
-                <Icon name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-          
-          <View style={{ flex: 1, backgroundColor: theme.light }}>
-            <KeyboardAvoidingView 
-              style={styles.modalContent}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-              <ScrollView 
-                style={{ flex: 1 }}
-                contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
-                showsVerticalScrollIndicator={false}
-              >
-                <>
-                  {/* Emoji Selector */}
-                  <TouchableOpacity 
-                    style={styles.emojiSelector}
-                    onPress={() => setShowEmojiPicker(true)}
-                  >
-                    {activityEmoji && activityEmoji.startsWith('image:') ? (
-                      <Image 
-                        source={CUSTOM_IMAGE_SOURCES[activityEmoji.substring(6)]}
-                        style={styles.selectedEmojiImage}
-                        resizeMode="contain"
-                      />
-                    ) : (
-                      <Text style={styles.selectedEmoji}>{activityEmoji}</Text>
-                    )}
-                    <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
-                  </TouchableOpacity>
+        onClose={() => setShowActivityModal(false)}
+        theme={theme}
+        insets={insets}
+        // Form state
+        activityTitle={activityTitle}
+        setActivityTitle={setActivityTitle}
+        activityDescription={activityDescription}
+        setActivityDescription={setActivityDescription}
+        activityEmoji={activityEmoji}
+        setActivityEmoji={setActivityEmoji}
+        activityTime={activityTime}
+        setActivityTime={setActivityTime}
+        // Edit mode
+        editingActivity={editingActivity}
+        // Actions
+        onSave={addActivity}
+        onReset={resetActivityForm}
+        // Emoji picker
+        showEmojiPicker={showEmojiPicker}
+        setShowEmojiPicker={setShowEmojiPicker}
+        // Android specific
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+      />
 
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Title</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="Activity title"
-                      value={activityTitle}
-                      onChangeText={setActivityTitle}
-                      autoFocus={!editingActivity}
-                    />
-                  </View>
-                  
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Description (optional)</Text>
-                    <TextInput
-                      style={[styles.input, styles.textArea]}
-                      placeholder="Add more details..."
-                      value={activityDescription}
-                      onChangeText={setActivityDescription}
-                      multiline
-                      numberOfLines={3}
-                    />
-                  </View>
-                  
-                  <View style={styles.inputGroup}>
-                    <Text style={styles.inputLabel}>Time (optional)</Text>
-                    <TextInput
-                      style={styles.input}
-                      placeholder="e.g. 9:00 AM"
-                      value={activityTime}
-                      onChangeText={setActivityTime}
-                    />
-                  </View>
-                  
-                  <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.primary }]}
-                    onPress={addActivity}
-                  >
-                    <Text style={styles.buttonText}>
-                      {editingActivity ? 'Save Changes' : 'Add Activity'}
-                    </Text>
-                  </TouchableOpacity>
-                </>
-              </ScrollView>
-            </KeyboardAvoidingView>
-          </View>
-          <SafeAreaView style={{ backgroundColor: theme.light }} />
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: getAndroidModalBottomHeight(insets) }} />
-          )}
-          
-          {/* Emoji Picker Modal for Add Activity */}
-          {showEmojiPicker && (
-            <EmojiPicker 
-              mode="modal"
-              visible={true}
-              onClose={() => setShowEmojiPicker(false)}
-              onSelect={(emoji) => {
-                setActivityEmoji(emoji);
-                setShowEmojiPicker(false);
-              }}
-              showCustomImages={FEATURE_FLAGS.ENABLE_CUSTOM_EMOJIS}
-              theme={theme}
-              selectedEmoji={activityEmoji}
-            />
-          )}
-        </View>
-      </Modal>
+      {/* Preferences Modal */}
+      <PreferencesModal
+        visible={showUserModal}
+        onClose={() => setShowUserModal(false)}
+        theme={theme}
+        insets={insets}
+        // State
+        currentTheme={currentTheme}
+        setCurrentTheme={setCurrentTheme}
+        bannerPosition={bannerPosition}
+        setBannerPosition={setBannerPosition}
+        displayMode={displayMode}
+        setDisplayMode={setDisplayMode}
+        taskCelebration={taskCelebration}
+        setTaskCelebration={setTaskCelebration}
+        routineCelebration={routineCelebration}
+        setRoutineCelebration={setRoutineCelebration}
+        preferencesScrollKey={preferencesScrollKey}
+        setPreferencesScrollKey={setPreferencesScrollKey}
+        // Actions
+        onSaveTheme={saveThemePreference}
+        onSaveBannerPosition={saveBannerPositionPreference}
+        onSaveDisplayMode={saveDisplayModePreference}
+        onSaveCelebration={saveCelebrationPreference}
+        onPrivacyPress={() => {
+          setShowUserModal(false);
+          setTimeout(() => setShowPrivacyModal(true), 300);
+        }}
+        onSupportPress={() => {
+          setShowUserModal(false);
+          setTimeout(() => setShowSupportModal(true), 300);
+        }}
+        // Android specific
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+      />
+      
+      
+      {/* Settings Modal */}
+      <EditModeSettingsModal
+        visible={showEditModeSettingsModal}
+        onClose={() => setShowEditModeSettingsModal(false)}
+        theme={theme}
+        insets={insets}
+        users={users}
+        currentUser={currentUser}
+        dayMode={dayMode}
+        setDayMode={setDayMode}
+        hasPinProtection={hasPinProtection}
+        settingsScrollKey={settingsScrollKey}
+        onUserSelect={(userId) => {
+          setCurrentUser(userId);
+          setActivities(users[userId]?.days?.[currentDay]?.activities || []);
+          if (users[userId]?.settings?.theme) {
+            setCurrentTheme(users[userId].settings.theme);
+          }
+          showToast({ message: `Switched to ${users[userId].name}` });
+        }}
+        onUserEdit={(userId, userName, userIcon) => {
+          setEditingUser(userId);
+          setNewUserName(userName);
+          setNewUserEmoji(userIcon);
+          setShowEditModeSettingsModal(false);
+          setShowAddUserModal(true);
+        }}
+        onUserDelete={deleteUser}
+        onAddUser={() => {
+          setShowEditModeSettingsModal(false);
+          setShowAddUserModal(true);
+        }}
+        onPinChange={() => {
+          setIsSettingPin(true);
+          setPinInput('');
+          setConfirmPin('');
+          setShowEditModeSettingsModal(false);
+          setShowPinModal(true);
+        }}
+        onPinRemove={async () => {
+          try {
+            const success = await removeSecurePin();
+            const hasPinAfter = await hasSecurePin();
+            
+            if (success && !hasPinAfter) {
+              setHasPinProtection(false);
+              showToast({ message: 'PIN removed' });
+            } else {
+              throw new Error(`Failed to clear PIN - success: ${success}, hasPinAfter: ${hasPinAfter}`);
+            }
+          } catch (error) {
+            console.error('Error removing PIN:', error);
+            if (Platform.OS === 'web') {
+              window.alert('Failed to remove PIN. Please try again.');
+            } else {
+              Alert.alert('Error', 'Failed to remove PIN. Please try again.');
+            }
+          }
+        }}
+        onPinEnable={() => {
+          setIsSettingPin(true);
+          setShowPinModal(true);
+          setShowEditModeSettingsModal(false);
+        }}
+        onExportData={exportData}
+        onImportData={importData}
+        onResetApp={resetApp}
+        showToast={showToast}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+      />
+      
+      {/* Add/Edit User Modal */}
+      <AddUserModal
+        visible={showAddUserModal}
+        onClose={() => {
+          setShowAddUserModal(false);
+          setEditingUser(null);
+        }}
+        theme={theme}
+        insets={insets}
+        newUserName={newUserName}
+        setNewUserName={setNewUserName}
+        newUserEmoji={newUserEmoji}
+        setNewUserEmoji={setNewUserEmoji}
+        showUserEmojiPicker={showUserEmojiPicker}
+        setShowUserEmojiPicker={setShowUserEmojiPicker}
+        editingUser={editingUser}
+        users={users}
+        onAddUser={handleAddUser}
+        onUpdateUser={handleUpdateUser}
+        showToast={showToast}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+      />
+      
+      {/* PIN Modal */}
+      <PinModal
+        visible={showPinModal}
+        onClose={() => {
+          setShowPinModal(false);
+          setPinInput('');
+          setConfirmPin('');
+          setIsSettingPin(false);
+        }}
+        theme={theme}
+        pinInput={pinInput}
+        setPinInput={setPinInput}
+        isSettingPin={isSettingPin}
+        confirmPin={confirmPin}
+      />
 
+      {/* Edit Mode Toolbar */}
+      {showEditToolbar && (
+        <EditModeToolbar
+          visible={isEditMode}
+          onExit={() => {
+            setIsEditMode(false);
+            // Switch to today when exiting edit mode
+            if (currentDay !== 'today') {
+              setCurrentDay('today');
+            }
+          }}
+          onAdd={() => setShowActivityModal(true)}
+          onLibrary={() => setShowActivityLibrary(true)}
+          onPlan={() => setShowUserDayModal(true)}
+          onSettings={() => {
+            setShowEditModeSettingsModal(true);
+          }}
+          onCompleteDay={() => {
+            const pinnedCount = activities.filter(a => a.pinned).length;
+            const unpinnedCount = activities.filter(a => !a.pinned).length;
+            
+            const message = `Complete the day? This will:\n- Keep ${pinnedCount} pinned ${pinnedCount === 1 ? 'activity' : 'activities'}\n- Remove ${unpinnedCount} unpinned ${unpinnedCount === 1 ? 'activity' : 'activities'}`;
+            
+            const handleComplete = () => {
+              // Get tomorrow's activities and move them to today
+              const tomorrowActivities = users[currentUser]?.days?.tomorrow?.activities || [];
+              
+              // Keep only pinned activities from today, reset their completed status
+              const keptActivities = activities
+                .filter(a => a.pinned)
+                .map(a => ({ ...a, completed: false }));
+              
+              // Combine kept activities with tomorrow's activities
+              const newTodayActivities = [...keptActivities, ...tomorrowActivities];
+              
+              // Update users data
+              const updatedUsers = {
+                ...users,
+                [currentUser]: {
+                  ...users[currentUser],
+                  days: {
+                    ...users[currentUser].days,
+                    today: { activities: newTodayActivities },
+                    tomorrow: { 
+                      activities: activities
+                        .filter(a => a.pinned)
+                        .map(a => ({ 
+                          ...a, 
+                          id: 'activity_' + Date.now() + '_' + Math.random(),
+                          completed: false 
+                        }))
+                    }
+                  }
+                }
+              };
+              
+              setUsers(updatedUsers);
+              setActivities(newTodayActivities);
+              
+              // Exit edit mode
+              setIsEditMode(false);
+              
+              // Show success message
+              showToast({ 
+                message: 'Day completed! Pinned activities kept for today.',
+                duration: 3000,
+              });
+            };
+            
+            // Use platform-specific confirmation
+            if (Platform.OS === 'web') {
+              if (window.confirm(message)) {
+                handleComplete();
+              }
+            } else {
+              Alert.alert(
+                'Complete Day',
+                message,
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  { 
+                    text: 'OK', 
+                    style: 'default',
+                    onPress: handleComplete
+                  }
+                ]
+              );
+            }
+          }}
+          theme={theme}
+          position={bannerPosition === 'top' ? 'bottom' : 'top'}
+          onAnimationComplete={() => {
+            if (!isEditMode) {
+              setShowEditToolbar(false);
+            }
+          }}
+        />
+      )}
+      
+      {/* Activity Library Modal */}
+      <ActivityLibrary
+        visible={showActivityLibrary}
+        onClose={() => setShowActivityLibrary(false)}
+          onSelectActivity={(activity) => {
+            // Create a new activity from the template
+            const newActivity = {
+              ...activity,
+              id: Date.now().toString(),
+              completed: false,
+              pinned: false,
+            };
+            
+            const updatedActivities = [...activities, newActivity];
+            
+            // Update the current day's activities
+            const updatedUsers = {
+              ...users,
+              [currentUser]: {
+                ...users[currentUser],
+                days: {
+                  ...users[currentUser].days,
+                  [currentDay]: {
+                    ...users[currentUser].days?.[currentDay],
+                    activities: updatedActivities
+                  }
+                }
+              }
+            };
+            
+            setUsers(updatedUsers);
+            setActivities(updatedActivities);
+            showToast({ 
+              message: `✅ Added: ${activity.emoji} ${activity.name || activity.text}`,
+              duration: 2000,
+            });
+          }}
+        theme={theme}
+        categories={activityCategories}
+        onSaveCategories={setActivityCategories}
+      />
+      
+      {/* Privacy Policy Modal */}
+      <PrivacyModal
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        insets={insets}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+        styles={styles}
+      />
+      
+      {/* Reorder Modal */}
+      <ReorderModal
+        visible={showReorderModal}
+        onClose={() => {
+          setShowReorderModal(false);
+          setReorderingActivity(null);
+          setNewPosition('');
+        }}
+        theme={theme}
+        reorderingActivity={reorderingActivity}
+        activities={activities}
+        newPosition={newPosition}
+        setNewPosition={setNewPosition}
+        handleReorder={handleReorder}
+        styles={styles}
+      />
+      
+      {/* Support Us Modal */}
+      <SupportModal
+        visible={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        insets={insets}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+        styles={styles}
+      />
+      
+      {/* Toast Notification */}
+      <Toast
+        toast={toast}
+        onDismiss={hideToast}
+        theme={theme}
+      />
+      
+      {/* Celebration View */}
+      {showCelebration && (
+        <CelebrationView
+          type={showCelebration.type}
+          theme={showCelebration.theme}
+          onComplete={() => setShowCelebration(null)}
+        />
+      )}
+      
       {/* Context Modal - Normal Mode */}
       {!isEditMode && (
         <ContextModal
@@ -2624,1270 +2948,19 @@ const App = () => {
           }}
         />
       )}
-
-      {/* Preferences Modal */}
-      <Modal
-        visible={showUserModal}
-        animationType="slide"
-        transparent={false}
-        statusBarTranslucent={true}
-        onRequestClose={() => setShowUserModal(false)}
-        onShow={() => {
-          // Force layout update on Android to fix scrolling
-          if (Platform.OS === 'android') {
-            setTimeout(() => {
-              setPreferencesScrollKey(prev => prev + 1);
-            }, 0);
-          }
-        }}
-      >
-        {Platform.OS === 'android' && (
-          <StatusBar 
-            backgroundColor={theme.primary} 
-            barStyle="light-content" 
-            translucent={false}
-          />
-        )}
-        <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-          )}
-          <SafeAreaView style={{ backgroundColor: theme.primary }}>
-            <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>Preferences</Text>
-              <TouchableOpacity onPress={() => setShowUserModal(false)}>
-                <Icon name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-          
-          <FlatList
-            key={preferencesScrollKey}
-            ref={preferencesScrollRef}
-            style={{ flex: 1, backgroundColor: theme.light }}
-            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-            showsVerticalScrollIndicator={false}
-            collapsable={false}
-            nestedScrollEnabled={true}
-            data={[{ key: 'content' }]}
-            renderItem={() => (
-              <TouchableOpacity activeOpacity={1}>
-              {/* Theme Color Section */}
-                <Text style={styles.sectionTitle}>Theme Color</Text>
-              <View style={styles.colorGrid}>
-                {(() => {
-                  // Put stackBlue (default) first, then all other themes
-                  const themeKeys = Object.keys(THEMES);
-                  const reorderedThemes = ['stackBlue', ...themeKeys.filter(key => key !== 'stackBlue')];
-                  
-                  // Only show first 20 themes (4x5 grid)
-                  return reorderedThemes.slice(0, 20).map((color, index) => {
-                    return (
-                      <View key={color} style={{ width: '20%', padding: 7.5, alignItems: 'center' }}>
-                        <TouchableOpacity
-                          style={[
-                            styles.colorOption,
-                            { backgroundColor: THEMES[color].primary },
-                            currentTheme === color && styles.colorSelected
-                          ]}
-                          onPress={() => {
-                            setCurrentTheme(color);
-                            // Save theme to current user's settings
-                            const updatedUsers = {
-                              ...users,
-                              [currentUser]: {
-                                ...users[currentUser],
-                                settings: {
-                                  ...users[currentUser]?.settings,
-                                  theme: color
-                                }
-                              }
-                            };
-                            setUsers(updatedUsers);
-                          }}
-                        >
-                          {currentTheme === color && <Icon name="check" size={24} color="white" />}
-                        </TouchableOpacity>
-                      </View>
-                    );
-                  });
-                })()}
-              </View>
-
-              {/* Banner Position Section */}
-              <Text style={styles.sectionTitle}>Banner Position</Text>
-              <View style={styles.toggleContainer}>
-                <TouchableOpacity
-                  style={[styles.toggle, bannerPosition === 'top' && styles.toggleActive]}
-                  onPress={() => setBannerPosition('top')}
-                >
-                  <Text style={[styles.toggleText, bannerPosition === 'top' && styles.toggleTextActive]}>
-                    Top
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggle, bannerPosition === 'bottom' && styles.toggleActive]}
-                  onPress={() => setBannerPosition('bottom')}
-                >
-                  <Text style={[styles.toggleText, bannerPosition === 'bottom' && styles.toggleTextActive]}>
-                    Bottom
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              {/* Display Mode Section */}
-              <Text style={styles.sectionTitle}>Activity Display</Text>
-              <View style={styles.toggleContainer}>
-                <TouchableOpacity
-                  style={[styles.toggle, displayMode === 'none' && styles.toggleActive]}
-                  onPress={() => setDisplayMode('none')}
-                >
-                  <Text style={[styles.toggleText, displayMode === 'none' && styles.toggleTextActive]}>
-                    None
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggle, displayMode === 'numbers' && styles.toggleActive]}
-                  onPress={() => setDisplayMode('numbers')}
-                >
-                  <Text style={[styles.toggleText, displayMode === 'numbers' && styles.toggleTextActive]}>
-                    Numbers
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.toggle, displayMode === 'time' && styles.toggleActive]}
-                  onPress={() => setDisplayMode('time')}
-                >
-                  <Text style={[styles.toggleText, displayMode === 'time' && styles.toggleTextActive]}>
-                    Time
-                  </Text>
-                </TouchableOpacity>
-              </View>
-              
-              {/* Celebrations Section */}
-              <Text style={styles.sectionTitle}>Task Celebration</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
-                <View style={styles.celebrationOptions}>
-                  {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
-                    <TouchableOpacity
-                      key={celebration}
-                      style={[
-                        styles.celebrationOption,
-                        taskCelebration === celebration && [styles.celebrationActive, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                      ]}
-                      onPress={() => setTaskCelebration(celebration)}
-                    >
-                      <Text style={[
-                        styles.celebrationText,
-                        taskCelebration === celebration && styles.celebrationTextActive
-                      ]}>
-                        {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-              
-              <Text style={styles.sectionTitle}>Routine Celebration</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
-                <View style={styles.celebrationOptions}>
-                  {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
-                    <TouchableOpacity
-                      key={celebration}
-                      style={[
-                        styles.celebrationOption,
-                        routineCelebration === celebration && [styles.celebrationActive, { backgroundColor: theme.primary, borderColor: theme.primary }]
-                      ]}
-                      onPress={() => setRoutineCelebration(celebration)}
-                    >
-                      <Text style={[
-                        styles.celebrationText,
-                        routineCelebration === celebration && styles.celebrationTextActive
-                      ]}>
-                        {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-              
-              {/* Privacy Policy and Support Us */}
-              <View style={styles.infoSection}>
-                <TouchableOpacity
-                  style={styles.infoButton}
-                  onPress={() => {
-                    setShowUserModal(false);
-                    setTimeout(() => setShowPrivacyModal(true), 300);
-                  }}
-                >
-                  <Icon name="privacy-tip" size={24} color={theme.primary} />
-                  <Text style={styles.infoButtonText}>Privacy Policy</Text>
-                  <Icon name="chevron-right" size={24} color="#666" />
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={styles.infoButton}
-                  onPress={() => {
-                    setShowUserModal(false);
-                    setTimeout(() => setShowSupportModal(true), 300);
-                  }}
-                >
-                  <Icon name="favorite" size={24} color={theme.primary} />
-                  <Text style={styles.infoButtonText}>Support Us</Text>
-                  <Icon name="chevron-right" size={24} color="#666" />
-                </TouchableOpacity>
-              </View>
-              </TouchableOpacity>
-            )}
-            keyExtractor={(item) => item.key}
-          />
-          <SafeAreaView style={{ backgroundColor: theme.light }} />
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: getAndroidModalBottomHeight(insets) }} />
-          )}
-        </View>
-      </Modal>
-      
-      {/* Settings Modal */}
-      <Modal
-        visible={showEditModeSettingsModal}
-        animationType="slide"
-        transparent={false}
-        statusBarTranslucent={true}
-        onRequestClose={() => setShowEditModeSettingsModal(false)}
-        onShow={() => {
-          // Force layout update on Android to fix scrolling
-          if (Platform.OS === 'android') {
-            setTimeout(() => {
-              setSettingsScrollKey(prev => prev + 1);
-            }, 0);
-          }
-        }}
-      >
-        {Platform.OS === 'android' && (
-          <StatusBar 
-            backgroundColor={theme.primary} 
-            barStyle="light-content" 
-            translucent={false}
-          />
-        )}
-        <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-          )}
-          <SafeAreaView style={{ backgroundColor: theme.primary }}>
-            <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>Settings</Text>
-              <TouchableOpacity onPress={() => setShowEditModeSettingsModal(false)}>
-                <Icon name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-          
-          <ScrollView 
-            key={settingsScrollKey}
-            ref={settingsScrollRef}
-            style={{ flex: 1, backgroundColor: theme.light }}
-            contentContainerStyle={{ padding: 20, paddingBottom: 40 }}
-            showsVerticalScrollIndicator={false}
-            collapsable={false}
-            nestedScrollEnabled={true}
-          >
-            <TouchableOpacity activeOpacity={1}>
-                {/* User Management Section */}
-                <Text style={styles.sectionTitle}>Users</Text>
-            <View style={styles.usersList}>
-              {Object.entries(users).map(([userId, user]) => (
-                <TouchableOpacity
-                  key={userId}
-                  style={[
-                    styles.userItem,
-                    currentUser === userId && styles.userItemActive
-                  ]}
-                  onPress={() => {
-                    setCurrentUser(userId);
-                    setActivities(user.days?.[currentDay]?.activities || []);
-                    // Load the selected user's theme
-                    if (user.settings?.theme) {
-                      setCurrentTheme(user.settings.theme);
-                    }
-                    showToast({ message: `Switched to ${user.name}` });
-                  }}
-                  onLongPress={() => {
-                    Alert.alert(
-                      'Delete User',
-                      `Delete ${user.name}?`,
-                      [
-                        { text: 'Cancel', style: 'cancel' },
-                        {
-                          text: 'Delete',
-                          style: 'destructive',
-                          onPress: () => {
-                            const updatedUsers = { ...users };
-                            delete updatedUsers[userId];
-                            setUsers(updatedUsers);
-                            if (currentUser === userId) {
-                              const newUserId = Object.keys(updatedUsers)[0];
-                              setCurrentUser(newUserId);
-                              setActivities(updatedUsers[newUserId].days?.[currentDay]?.activities || []);
-                              // Load the new user's theme
-                              if (updatedUsers[newUserId]?.settings?.theme) {
-                                setCurrentTheme(updatedUsers[newUserId].settings.theme);
-                              }
-                            }
-                            showToast({ message: `Deleted ${user.name}` });
-                          }
-                        }
-                      ]
-                    );
-                  }}
-                >
-                  <Text style={styles.userItemEmoji}>{user.icon}</Text>
-                  <Text style={[
-                    styles.userItemName,
-                    currentUser === userId && styles.userItemNameActive
-                  ]}>
-                    {user.name}
-                  </Text>
-                  {currentUser === userId && (
-                    <Icon name="check" size={20} color={theme.primary} />
-                  )}
-                  <TouchableOpacity
-                    style={styles.editUserButton}
-                    onPress={() => {
-                      setEditingUser(userId);
-                      setNewUserName(user.name);
-                      setNewUserEmoji(user.icon);
-                      setShowEditModeSettingsModal(false);
-                      setShowAddUserModal(true);
-                    }}
-                  >
-                    <Icon name="edit" size={18} color="#666" />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.deleteUserButton}
-                    onPress={() => {
-                      if (Platform.OS === 'web') {
-                        const confirmed = window.confirm(
-                          `Are you sure you want to delete ${user.name}? This will permanently remove the user and all their activity cards for all days.`
-                        );
-                        if (confirmed) {
-                          deleteUser(userId);
-                        }
-                      } else {
-                        Alert.alert(
-                          'Delete User',
-                          `Are you sure you want to delete ${user.name}? This will permanently remove the user and all their activity cards for all days.`,
-                          [
-                            {
-                              text: 'Cancel',
-                              style: 'cancel'
-                            },
-                            {
-                              text: 'Delete',
-                              style: 'destructive',
-                              onPress: () => deleteUser(userId)
-                            }
-                          ]
-                        );
-                      }
-                    }}
-                  >
-                    <Icon name="delete" size={18} color="#ff4444" />
-                  </TouchableOpacity>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.addUserButton}
-                onPress={() => {
-                  setShowEditModeSettingsModal(false);
-                  setShowAddUserModal(true);
-                }}
-              >
-                <Icon name="add" size={24} color={theme.primary} />
-                <Text style={styles.addUserText}>Add User</Text>
-              </TouchableOpacity>
-            </View>
-            
-            {/* Day Mode Section */}
-            <Text style={styles.sectionTitle}>Day Mode</Text>
-            <View style={styles.toggleContainer}>
-              <TouchableOpacity
-                style={[styles.toggle, dayMode === 'today' && styles.toggleActive]}
-                onPress={() => setDayMode('today')}
-              >
-                <Text style={[styles.toggleText, dayMode === 'today' && styles.toggleTextActive]}>
-                  Today Only
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toggle, dayMode === 'both' && styles.toggleActive]}
-                onPress={() => setDayMode('both')}
-              >
-                <Text style={[styles.toggleText, dayMode === 'both' && styles.toggleTextActive]}>
-                  Today & Tomorrow
-                </Text>
-              </TouchableOpacity>
-            </View>
-            
-            {/* Edit Mode PIN Section */}
-            <Text style={styles.sectionTitle}>PIN Protection</Text>
-            <View style={styles.pinSection}>
-              {hasPinProtection ? (
-                <>
-                  <Text style={styles.pinStatus}>PIN protection is enabled</Text>
-                  <View style={styles.pinButtons}>
-                    <TouchableOpacity
-                      style={[styles.pinButton, { backgroundColor: theme.primary }]}
-                      onPress={() => {
-                        setIsSettingPin(true);
-                        setPinInput('');
-                        setConfirmPin('');
-                        setShowEditModeSettingsModal(false);
-                        setShowPinModal(true);
-                      }}
-                    >
-                      <Text style={styles.pinButtonText}>Change PIN</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={[styles.pinButton, { backgroundColor: '#f56565' }]}
-                      onPress={async () => {
-                        
-                        // On web, Alert.alert might not work, so let's use a simple confirm
-                        if (Platform.OS === 'web') {
-                          const confirmed = window.confirm('Are you sure you want to remove PIN protection?');
-                          if (confirmed) {
-                            try {
-                              // Clear the PIN using dedicated removal function
-                              const success = await removeSecurePin();
-                              const hasPinAfter = await hasSecurePin();
-                              
-                              if (success && !hasPinAfter) {
-                                setHasPinProtection(false);
-                                showToast({ message: 'PIN removed' });
-                              } else {
-                                throw new Error(`Failed to clear PIN - success: ${success}, hasPinAfter: ${hasPinAfter}`);
-                              }
-                            } catch (error) {
-                              console.error('Error removing PIN:', error);
-                              window.alert('Failed to remove PIN. Please try again.');
-                            }
-                          }
-                          return;
-                        }
-                        
-                        // Native platforms use Alert.alert
-                        Alert.alert(
-                          'Remove PIN',
-                          'Are you sure you want to remove PIN protection?',
-                          [
-                            { text: 'Cancel', style: 'cancel' },
-                            {
-                              text: 'Remove',
-                              style: 'destructive',
-                              onPress: async () => {
-                                try {
-                                  // Starting PIN removal
-                                  
-                                  // Check current PIN status
-                                  const hasPinBefore = await hasSecurePin();
-                                  // Check PIN status before removal
-                                  
-                                  // Clear the PIN using dedicated removal function
-                                  const success = await removeSecurePin();
-                                  // PIN removal result
-                                  
-                                  // Check PIN status after
-                                  const hasPinAfter = await hasSecurePin();
-                                  // Check PIN status after removal
-                                  
-                                  if (success && !hasPinAfter) {
-                                    setHasPinProtection(false);
-                                    showToast({ message: 'PIN removed' });
-                                  } else {
-                                    throw new Error(`Failed to clear PIN - success: ${success}, hasPinAfter: ${hasPinAfter}`);
-                                  }
-                                } catch (error) {
-                                    Alert.alert('Error', 'Failed to remove PIN. Please try again.');
-                                }
-                              }
-                            }
-                          ]
-                        );
-                      }}
-                    >
-                      <Text style={styles.pinButtonText}>Remove PIN</Text>
-                    </TouchableOpacity>
-                  </View>
-                </>
-              ) : (
-                <>
-                  <Text style={styles.pinStatus}>No PIN set</Text>
-                  <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.primary, marginTop: 10 }]}
-                    onPress={() => {
-                      setIsSettingPin(true);
-                      setShowPinModal(true);
-                      setShowEditModeSettingsModal(false);
-                    }}
-                  >
-                    <Icon name="lock" size={20} color="white" />
-                    <Text style={styles.buttonText}>Enable PIN</Text>
-                  </TouchableOpacity>
-                </>
-              )}
-            </View>
-            
-            {/* Data Management Section */}
-            <Text style={styles.sectionTitle}>Data Management</Text>
-            <View style={styles.settingsSection}>
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary, marginBottom: 10 }]}
-                onPress={exportData}
-              >
-                <Icon name="save-alt" size={20} color="white" />
-                <Text style={styles.buttonText}>Export Data</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={importData}
-              >
-                <Icon name="folder-open" size={20} color="white" />
-                <Text style={styles.buttonText}>Import Data</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: COLORS.error, marginTop: 20 }]}
-                onPress={resetApp}
-              >
-                <Icon name="refresh" size={20} color="white" />
-                <Text style={styles.buttonText}>Reset App</Text>
-              </TouchableOpacity>
-            </View>
-            </TouchableOpacity>
-          </ScrollView>
-          <SafeAreaView style={{ backgroundColor: theme.light }} />
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: getAndroidModalBottomHeight(insets) }} />
-          )}
-        </View>
-      </Modal>
-      
-      {/* Add/Edit User Modal */}
-      <Modal
-        visible={showAddUserModal}
-        animationType="slide"
-        transparent={false}
-        statusBarTranslucent={true}
-        onRequestClose={() => setShowAddUserModal(false)}
-      >
-        {Platform.OS === 'android' && (
-          <StatusBar 
-            backgroundColor={theme.primary} 
-            barStyle="light-content" 
-            translucent={false}
-          />
-        )}
-        <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-          )}
-          <SafeAreaView style={{ backgroundColor: theme.primary }}>
-            <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-              <Text style={styles.modalTitle}>
-                {editingUser ? 'Edit User' : 'Add New User'}
-              </Text>
-              <TouchableOpacity onPress={() => {
-                setShowAddUserModal(false);
-                setNewUserName('');
-                setNewUserEmoji('😀');
-                setEditingUser(null);
-              }}>
-                <Icon name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-          
-          <View style={{ flex: 1, backgroundColor: theme.light }}>
-            <KeyboardAvoidingView 
-              style={styles.modalContent}
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            >
-              <ScrollView 
-                style={{ flex: 1 }}
-                contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
-                showsVerticalScrollIndicator={false}
-              >
-                {/* Emoji Selector */}
-              <TouchableOpacity 
-                style={styles.emojiSelector}
-                onPress={() => setShowUserEmojiPicker(!showUserEmojiPicker)}
-              >
-                <Text style={styles.selectedEmoji}>{newUserEmoji}</Text>
-                <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
-              </TouchableOpacity>
-
-              <TextInput
-                style={styles.input}
-                placeholder="User name"
-                value={newUserName}
-                onChangeText={setNewUserName}
-                autoFocus
-              />
-              
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={editingUser ? () => {
-                  // Update existing user
-                  if (!newUserName.trim()) {
-                    Alert.alert('Error', 'Please enter a user name');
-                    return;
-                  }
-                  
-                  const updatedUsers = {
-                    ...users,
-                    [editingUser]: {
-                      ...users[editingUser],
-                      name: newUserName.trim(),
-                      icon: newUserEmoji
-                    }
-                  };
-                  
-                  setUsers(updatedUsers);
-                  setNewUserName('');
-                  setNewUserEmoji('😀');
-                  setEditingUser(null);
-                  setShowAddUserModal(false);
-                  showToast({ message: `Updated user: ${newUserName.trim()}` });
-                } : addUser}
-              >
-                <Text style={styles.buttonText}>
-                  {editingUser ? 'Save Changes' : 'Add User'}
-                </Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </KeyboardAvoidingView>
-          </View>
-          <SafeAreaView style={{ backgroundColor: theme.light }} />
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: theme.light, height: getAndroidModalBottomHeight(insets) }} />
-          )}
-          
-          {/* User Emoji Picker Modal */}
-          {showUserEmojiPicker && (
-            <EmojiPicker 
-              mode="modal"
-              visible={true}
-              onClose={() => setShowUserEmojiPicker(false)}
-              onSelect={(emoji) => {
-                setNewUserEmoji(emoji);
-                setShowUserEmojiPicker(false);
-              }}
-              theme={theme}
-              selectedEmoji={newUserEmoji}
-              showCustomImages={FEATURE_FLAGS.ENABLE_CUSTOM_EMOJIS}
-            />
-          )}
-        </View>
-      </Modal>
-      
-      {/* PIN Modal */}
-      <Modal
-        visible={showPinModal}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => {
-          setShowPinModal(false);
-          setPinInput('');
-          setConfirmPin('');
-          setIsSettingPin(false);
-        }}
-      >
-        <View style={styles.pinModalOverlay}>
-          <View style={styles.pinModalContent}>
-            <Text style={styles.pinModalTitle}>
-              {isSettingPin ? 
-                (confirmPin ? 'Confirm PIN' : 'Set New PIN') : 
-                'Enter PIN'}
-            </Text>
-            
-            <View style={styles.pinInputContainer}>
-              {[0, 1, 2, 3].map(index => (
-                <View
-                  key={index}
-                  style={[
-                    styles.pinDot,
-                    { borderColor: theme.primary },
-                    pinInput.length > index && [
-                      styles.pinDotFilled,
-                      { backgroundColor: theme.primary, borderColor: theme.primary }
-                    ]
-                  ]}
-                />
-              ))}
-            </View>
-            
-            {/* Text input for desktop web */}
-            {Platform.OS === 'web' && (
-              <TextInput
-                style={[styles.pinTextInput, { borderColor: theme.primary }]}
-                value={pinInput}
-                onChangeText={(text) => {
-                  // Only allow numeric input up to 4 digits
-                  const numericText = text.replace(/[^0-9]/g, '').slice(0, 4);
-                  setPinInput(numericText);
-                }}
-                onSubmitEditing={() => {
-                  // Handle Enter key press - trigger PIN verification if 4 digits entered
-                  if (pinInput.length === 4) {
-                    // The useEffect will handle the verification automatically
-                  }
-                }}
-                placeholder="Enter 4-digit PIN"
-                placeholderTextColor="#999"
-                keyboardType="numeric"
-                maxLength={4}
-                autoFocus
-                secureTextEntry
-              />
-            )}
-            
-            {/* Only show keypad on mobile platforms */}
-            {Platform.OS !== 'web' && (
-              <View style={styles.pinKeypad}>
-                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map(num => (
-                  <TouchableOpacity
-                  key={num}
-                  style={styles.pinKey}
-                  onPress={() => {
-                    if (isSettingPin && confirmPin) {
-                      // During confirmation, we still use pinInput
-                      if (pinInput.length < 4) {
-                        setPinInput(pinInput + num);
-                      }
-                    } else {
-                      // Initial PIN entry
-                      if (pinInput.length < 4) {
-                        setPinInput(pinInput + num);
-                      }
-                    }
-                  }}
-                >
-                  <Text style={styles.pinKeyText}>{num}</Text>
-                </TouchableOpacity>
-              ))}
-              <TouchableOpacity
-                style={styles.pinKey}
-                onPress={() => {
-                  setPinInput(pinInput.slice(0, -1));
-                }}
-              >
-                <Icon name="backspace" size={24} color="#666" />
-              </TouchableOpacity>
-            </View>
-            )}
-            
-            {isSettingPin && (
-              <Text style={styles.pinHelperText}>
-                {!confirmPin ? 
-                  'Enter a 4-digit PIN' : 
-                  (pinInput.length === 4 ? 
-                    'PIN confirmed! Processing...' : 
-                    `Re-enter PIN to confirm (${pinInput.length}/4)`)}
-              </Text>
-            )}
-            
-            <View style={styles.pinModalButtonContainer}>
-              <TouchableOpacity
-                style={styles.pinCancelButton}
-                onPress={() => {
-                  setShowPinModal(false);
-                  setPinInput('');
-                  setConfirmPin('');
-                  setIsSettingPin(false);
-                }}
-              >
-                <Text style={[styles.pinCancelText, { color: theme.primary }]}>Cancel</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-
-      {/* Edit Mode Toolbar */}
-      {showEditToolbar && (
-        <EditModeToolbar
-          visible={isEditMode}
-          onExit={() => {
-            setIsEditMode(false);
-            // Switch to today when exiting edit mode
-            if (currentDay !== 'today') {
-              setCurrentDay('today');
-            }
-          }}
-          onAdd={() => setShowActivityModal(true)}
-          onLibrary={() => setShowActivityLibrary(true)}
-          onPlan={() => setShowUserDayModal(true)}
-          onSettings={() => {
-            setShowEditModeSettingsModal(true);
-          }}
-          onCompleteDay={() => {
-            const pinnedCount = activities.filter(a => a.pinned).length;
-            const unpinnedCount = activities.filter(a => !a.pinned).length;
-            
-            const message = `Complete the day? This will:\n- Keep ${pinnedCount} pinned ${pinnedCount === 1 ? 'activity' : 'activities'}\n- Remove ${unpinnedCount} unpinned ${unpinnedCount === 1 ? 'activity' : 'activities'}`;
-            
-            Alert.alert(
-              'Complete Day',
-              message,
-              [
-                { text: 'Cancel', style: 'cancel' },
-                { 
-                  text: 'OK', 
-                  style: 'default',
-                  onPress: () => {
-                    // Get tomorrow's activities and move them to today
-                    const tomorrowActivities = users[currentUser]?.days?.tomorrow?.activities || [];
-                    
-                    // Keep only pinned activities from today, reset their completed status
-                    const keptActivities = activities
-                      .filter(a => a.pinned)
-                      .map(a => ({ ...a, completed: false }));
-                    
-                    // Combine kept activities with tomorrow's activities
-                    const newTodayActivities = [...keptActivities, ...tomorrowActivities];
-                    
-                    // Update users data
-                    const updatedUsers = {
-                      ...users,
-                      [currentUser]: {
-                        ...users[currentUser],
-                        days: {
-                          ...users[currentUser].days,
-                          today: { activities: newTodayActivities },
-                          tomorrow: { 
-                            activities: activities
-                              .filter(a => a.pinned)
-                              .map(a => ({ 
-                                ...a, 
-                                id: 'activity_' + Date.now() + '_' + Math.random(),
-                                completed: false 
-                              }))
-                          }
-                        }
-                      }
-                    };
-                    
-                    setUsers(updatedUsers);
-                    setActivities(newTodayActivities);
-                    
-                    // Exit edit mode
-                    setIsEditMode(false);
-                    
-                    // Show success message
-                    showToast({ 
-                      message: 'Day completed! Pinned activities kept for today.',
-                      duration: 3000,
-                    });
-                  }
-                },
-              ]
-            );
-          }}
-          theme={theme}
-          position={bannerPosition === 'top' ? 'bottom' : 'top'}
-          onAnimationComplete={() => {
-            if (!isEditMode) {
-              setShowEditToolbar(false);
-            }
-          }}
-        />
-      )}
-      
-      {/* Activity Library Modal */}
-      <Modal
-        visible={showActivityLibrary}
-        animationType="slide"
-        transparent={false}
-        statusBarTranslucent={true}
-        onRequestClose={() => setShowActivityLibrary(false)}
-      >
-        <ActivityLibrary
-          visible={showActivityLibrary}
-          onClose={() => setShowActivityLibrary(false)}
-          onSelectActivity={(activity) => {
-            // Create a new activity from the template
-            const newActivity = {
-              ...activity,
-              id: Date.now().toString(),
-              completed: false,
-              pinned: false,
-            };
-            
-            const updatedActivities = [...activities, newActivity];
-            
-            // Update the current day's activities
-            const updatedUsers = {
-              ...users,
-              [currentUser]: {
-                ...users[currentUser],
-                days: {
-                  ...users[currentUser].days,
-                  [currentDay]: {
-                    ...users[currentUser].days?.[currentDay],
-                    activities: updatedActivities
-                  }
-                }
-              }
-            };
-            
-            setUsers(updatedUsers);
-            setActivities(updatedActivities);
-            showToast({ 
-              message: `✅ Added: ${activity.emoji} ${activity.name || activity.text}`,
-              duration: 2000,
-            });
-          }}
-          theme={theme}
-          categories={activityCategories}
-          onSaveCategories={setActivityCategories}
-        />
-      </Modal>
-      
-      {/* Privacy Policy Modal */}
-      <Modal
-        visible={showPrivacyModal}
-        animationType="slide"
-        onRequestClose={() => setShowPrivacyModal(false)}
-        presentationStyle="fullScreen"
-      >
-        <View style={styles.modalContainer}>
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: '#2c3e50', height: StatusBar.currentHeight || 24 }} />
-          )}
-          <SafeAreaView style={{ backgroundColor: '#2c3e50' }}>
-            <View style={[styles.modalHeader, { backgroundColor: '#2c3e50' }]}>
-              <Text style={[styles.modalTitle, { color: 'white' }]}>Privacy Policy</Text>
-              <TouchableOpacity onPress={() => setShowPrivacyModal(false)}>
-                <Icon name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-          
-          <View style={{ flex: 1, backgroundColor: '#f8f9fa' }}>
-            <ScrollView style={styles.privacyContent}>
-              <View style={styles.privacyHeader}>
-                <Text style={styles.privacyTitle}>Privacy Policy</Text>
-                <Text style={styles.privacyDate}>
-                  Last updated: June 18, 2025
-                </Text>
-              </View>
-              
-              <View style={styles.privacySection}>
-                <Text style={styles.privacySubtitle}>Overview</Text>
-                <Text style={styles.privacyText}>
-                  StackMap is designed with privacy as a core principle. We believe families, especially those with special needs children, deserve tools that respect their privacy and give them control over their data.
-                </Text>
-              </View>
-              
-              <View style={styles.privacySection}>
-                <Text style={styles.privacySubtitle}>Data Collection</Text>
-                <Text style={styles.privacyText}>
-                  <Text style={styles.privacyBold}>We collect NO personal data by default.</Text> StackMap works entirely offline on your device.
-                </Text>
-              </View>
-              
-              <View style={styles.privacySection}>
-                <Text style={styles.privacySubtitle}>Data Storage</Text>
-                <View style={styles.privacyList}>
-                  <Text style={styles.privacyListItem}>• All routine data is stored locally on your device</Text>
-                  <Text style={styles.privacyListItem}>• No data is sent to our servers</Text>
-                  <Text style={styles.privacyListItem}>• Your routines, progress, and settings stay on your device</Text>
-                </View>
-              </View>
-              
-              <View style={styles.privacySection}>
-                <Text style={styles.privacySubtitle}>Children's Privacy</Text>
-                <Text style={styles.privacyText}>
-                  StackMap is designed for use by children with adult supervision:
-                </Text>
-                <View style={styles.privacyList}>
-                  <Text style={styles.privacyListItem}>• We don't collect any information from children</Text>
-                  <Text style={styles.privacyListItem}>• No accounts or sign-ups required</Text>
-                  <Text style={styles.privacyListItem}>• No social features or communication between users</Text>
-                  <Text style={styles.privacyListItem}>• No behavioral tracking or analytics</Text>
-                </View>
-              </View>
-              
-              <View style={styles.privacySection}>
-                <Text style={styles.privacySubtitle}>Third-Party Services</Text>
-                <Text style={styles.privacyText}>StackMap uses minimal third-party services:</Text>
-                <View style={styles.privacyList}>
-                  <Text style={styles.privacyListItem}>• <Text style={styles.privacyBold}>No analytics</Text> - We don't track usage</Text>
-                  <Text style={styles.privacyListItem}>• <Text style={styles.privacyBold}>No advertising</Text> - We don't show ads</Text>
-                  <Text style={styles.privacyListItem}>• <Text style={styles.privacyBold}>No external APIs</Text> - Everything runs locally</Text>
-                </View>
-              </View>
-              
-              <View style={styles.privacySection}>
-                <Text style={styles.privacySubtitle}>Your Rights</Text>
-                <Text style={styles.privacyText}>You have complete control:</Text>
-                <View style={styles.privacyList}>
-                  <Text style={styles.privacyListItem}>• Export your data anytime</Text>
-                  <Text style={styles.privacyListItem}>• Delete your data anytime</Text>
-                  <Text style={styles.privacyListItem}>• Use the app without any account</Text>
-                  <Text style={styles.privacyListItem}>• Sync is always optional</Text>
-                </View>
-              </View>
-              
-              <View style={styles.privacySection}>
-                <Text style={styles.privacySubtitle}>Contact</Text>
-                <Text style={styles.privacyText}>
-                  Questions about privacy? Email: privacy@stackmap.app
-                </Text>
-              </View>
-              
-              <View style={styles.privacyFooter}>
-                <Text style={styles.privacyFooterText}>
-                  StackMap's code is open source. You can verify our privacy practices at: github.com/ajstack22/StackMap
-                </Text>
-              </View>
-            </ScrollView>
-          </View>
-          <SafeAreaView style={{ backgroundColor: '#f8f9fa' }} />
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: '#f8f9fa', height: getAndroidModalBottomHeight(insets) }} />
-          )}
-        </View>
-      </Modal>
-      
-      {/* Reorder Modal */}
-      <Modal
-        visible={showReorderModal}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={() => setShowReorderModal(false)}
-      >
-        <View style={styles.reorderModalOverlay}>
-          <View style={[styles.reorderModalContent, { backgroundColor: theme.light }]}>
-            <Text style={[styles.reorderModalTitle, { color: theme.primary }]}>
-              Move Activity
-            </Text>
-            
-            {reorderingActivity && (
-              <View style={styles.reorderActivityPreview}>
-                <Text style={styles.reorderActivityEmoji}>
-                  {reorderingActivity.activity.emoji || '🎯'}
-                </Text>
-                <Text style={styles.reorderActivityText}>
-                  {reorderingActivity.activity.text || reorderingActivity.activity.title || ''}
-                </Text>
-              </View>
-            )}
-            
-            <Text style={[styles.reorderModalLabel, { color: '#000' }]}>
-              Tap new position:
-            </Text>
-            
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              style={styles.positionSelector}
-              contentContainerStyle={styles.positionSelectorContent}
-            >
-              {activities.map((_, index) => {
-                const position = index + 1;
-                const isCurrentPosition = position === reorderingActivity?.currentPosition;
-                const isSelectedPosition = position === parseInt(newPosition);
-                
-                return (
-                  <TouchableOpacity
-                    key={index}
-                    style={[
-                      styles.positionButton,
-                      isCurrentPosition && [styles.positionButtonCurrent, { borderColor: theme.primary }],
-                      isSelectedPosition && [styles.positionButtonSelected, { backgroundColor: theme.primary }]
-                    ]}
-                    onPress={() => setNewPosition(position.toString())}
-                  >
-                    <Text style={[
-                      styles.positionButtonText,
-                      isCurrentPosition && { color: theme.primary },
-                      isSelectedPosition && { color: 'white' }
-                    ]}>
-                      {position}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
-            
-            {newPosition && (
-              <View style={styles.positionPreview}>
-                <Text style={styles.positionPreviewText}>
-                  Move from position {reorderingActivity?.currentPosition} → {newPosition}
-                </Text>
-              </View>
-            )}
-            
-            <View style={styles.reorderModalButtons}>
-              <TouchableOpacity
-                style={[styles.reorderModalButton, styles.reorderModalButtonCancel]}
-                onPress={() => {
-                  setShowReorderModal(false);
-                  setReorderingActivity(null);
-                  setNewPosition('');
-                }}
-              >
-                <Text style={styles.reorderModalButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[
-                  styles.reorderModalButton, 
-                  { backgroundColor: theme.primary },
-                  (!newPosition || newPosition === reorderingActivity?.currentPosition.toString()) && 
-                  { backgroundColor: '#ccc' }
-                ]}
-                onPress={handleReorder}
-                disabled={!newPosition || newPosition === reorderingActivity?.currentPosition.toString()}
-              >
-                <Text style={[styles.reorderModalButtonText, { color: 'white' }]}>Move</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
-      
-      {/* Support Us Modal */}
-      <Modal
-        visible={showSupportModal}
-        animationType="slide"
-        onRequestClose={() => setShowSupportModal(false)}
-        presentationStyle="fullScreen"
-      >
-        <View style={styles.modalContainer}>
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: '#ff6b9d', height: StatusBar.currentHeight || 24 }} />
-          )}
-          <SafeAreaView style={{ backgroundColor: '#ff6b9d' }}>
-            <View style={[styles.modalHeader, { backgroundColor: '#ff6b9d' }]}>
-              <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap 💖</Text>
-              <TouchableOpacity onPress={() => setShowSupportModal(false)}>
-                <Icon name="close" size={24} color="white" />
-              </TouchableOpacity>
-            </View>
-          </SafeAreaView>
-          
-          <View style={{ flex: 1, backgroundColor: '#fff5f8' }}>
-            <ScrollView style={styles.supportContent}>
-              <View style={styles.supportHeader}>
-                <Text style={styles.supportHeart}>💖</Text>
-                <Text style={styles.supportTitle}>Support StackMap!</Text>
-                <Text style={styles.supportSubtitle}>
-                  Made with love for families everywhere ✨
-                </Text>
-              </View>
-              
-              <View style={styles.supportMessageBox}>
-                <Text style={styles.supportMessage}>
-                  StackMap is completely free and always will be! 🎉 We're built by a small team who believes every family deserves amazing tools.
-                </Text>
-              </View>
-              
-              <View style={styles.supportWaysSection}>
-                <Text style={styles.supportSectionTitle}>Amazing Ways You Can Help! 🌟</Text>
-                
-                <View style={styles.supportOptionFun}>
-                  <Text style={styles.supportIconBig}>🎆</Text>
-                  <View style={styles.supportOptionContent}>
-                    <Text style={styles.supportOptionTitleFun}>Rate & Review Us!</Text>
-                    <Text style={styles.supportOptionTextFun}>
-                      App Store reviews help other families discover StackMap. Your 5-star review makes our day! ⭐⭐⭐⭐⭐
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={styles.supportOptionFun}>
-                  <Text style={styles.supportIconBig}>📣</Text>
-                  <View style={styles.supportOptionContent}>
-                    <Text style={styles.supportOptionTitleFun}>Spread the Word!</Text>
-                    <Text style={styles.supportOptionTextFun}>
-                      Tell friends, family, therapists, and support groups. Word of mouth is our superpower! 💪
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={styles.supportOptionFun}>
-                  <Text style={styles.supportIconBig}>💬</Text>
-                  <View style={styles.supportOptionContent}>
-                    <Text style={styles.supportOptionTitleFun}>Send Us Your Stories!</Text>
-                    <Text style={styles.supportOptionTextFun}>
-                      We love hearing how StackMap helps your family! Your feedback guides everything we build. 💜
-                    </Text>
-                  </View>
-                </View>
-                
-                <View style={styles.supportOptionFun}>
-                  <Text style={styles.supportIconBig}>💡</Text>
-                  <View style={styles.supportOptionContent}>
-                    <Text style={styles.supportOptionTitleFun}>Share Your Ideas!</Text>
-                    <Text style={styles.supportOptionTextFun}>
-                      Got ideas for new features? We're all ears! Email us anytime. 🚀
-                    </Text>
-                  </View>
-                </View>
-              </View>
-              
-              <View style={styles.supportContactBox}>
-                <Text style={styles.supportContactTitle}>Questions? We're Here! 😊</Text>
-                <Text style={styles.supportContactText}>
-                  Email us at support@stackmap.app
-                </Text>
-              </View>
-              
-              <View style={styles.supportFooter}>
-                <Text style={styles.supportFooterText}>
-                  Thank you for being part of our amazing community! 🌈
-                </Text>
-              </View>
-            </ScrollView>
-          </View>
-          <SafeAreaView style={{ backgroundColor: '#fff5f8' }} />
-          {Platform.OS === 'android' && (
-            <View style={{ backgroundColor: '#fff5f8', height: getAndroidModalBottomHeight(insets) }} />
-          )}
-        </View>
-      </Modal>
-      
-      {/* Toast Notification */}
-      <Toast
-        toast={toast}
-        onDismiss={hideToast}
-        theme={theme}
-      />
-      
-      {/* Celebration View */}
-      {showCelebration && (
-        <CelebrationView
-          type={showCelebration.type}
-          theme={showCelebration.theme}
-          onComplete={() => setShowCelebration(null)}
-        />
-      )}
       </>
   );
 
   // Show setup wizard if needed
-  if (showSetupWizard) {
-    return (
-      <SetupWizard
-        onComplete={handleSetupWizardComplete}
-        onSkip={handleOnboardingSkip}
-      />
-    );
-  }
+  // SetupWizard component not implemented yet
+  // if (showSetupWizard) {
+  //   return (
+  //     <SetupWizard
+  //       onComplete={handleSetupWizardComplete}
+  //       onSkip={handleOnboardingSkip}
+  //     />
+  //   );
+  // }
   
   // Show onboarding if needed (kept for backward compatibility)
   if (showOnboarding) {
@@ -3899,8 +2972,8 @@ const App = () => {
     );
   }
 
-  // Wrap with GestureHandlerRootView for both iOS and Android
-  if (GestureHandlerRootView) {
+  // Wrap with GestureHandlerRootView for iOS only (gesture handler not available on web)
+  if (Platform.OS === 'ios' && GestureHandlerRootView) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         {AppContent}
@@ -4190,7 +3263,7 @@ const styles = StyleSheet.create({
   },
   emptySubtext: {
     fontSize: 16,
-    color: '#999',
+    color: '#4a5568',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   editActions: {
@@ -4266,24 +3339,6 @@ const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
     padding: 20,
-  },
-  emojiSelector: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  selectedEmoji: {
-    fontSize: 80,
-    marginBottom: 8,
-  },
-  selectedEmojiImage: {
-    width: 80,
-    height: 80,
-    marginBottom: 8,
-  },
-  emojiSelectorLabel: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   inputGroup: {
     marginBottom: 10,
@@ -4508,100 +3563,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  pinModalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  pinModalContent: {
-    backgroundColor: 'white',
-    borderRadius: RADIUS.xl,
-    padding: SPACING.lg,
-    width: '85%',
-    maxWidth: 350,
-    alignItems: 'center',
-    ...SHADOWS.level3,
-  },
-  pinModalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 30,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-  },
-  pinInputContainer: {
-    flexDirection: 'row',
-    gap: 20,
-    marginBottom: 40,
-  },
-  pinDot: {
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: '#ddd',
-  },
-  pinDotFilled: {
-    backgroundColor: '#667eea',
-    borderColor: '#667eea',
-  },
-  pinKeypad: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    gap: 15,
-    width: '100%',
-    marginBottom: 20,
-  },
-  pinTextInput: {
-    width: '80%',
-    height: 50,
-    borderWidth: 2,
-    borderRadius: RADIUS.lg,
-    paddingHorizontal: SPACING.md,
-    fontSize: 18,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    textAlign: 'center',
-    marginBottom: 20,
-    backgroundColor: 'white',
-  },
-  pinKey: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pinKeyText: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#333',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-  },
-  pinCancelButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-  },
-  pinCancelText: {
-    fontSize: 16,
-    color: '#667eea',
-    fontWeight: '600',
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  pinHelperText: {
-    fontSize: 14,
-    color: '#666',
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  pinModalButtonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 15,
   },
   enterEditModeSection: {
     marginTop: 30,

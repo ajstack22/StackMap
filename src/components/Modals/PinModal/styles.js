@@ -1,0 +1,96 @@
+import { StyleSheet } from 'react-native';
+import { TYPOGRAPHY, SPACING, RADIUS } from '../../../constants';
+
+export const styles = StyleSheet.create({
+  pinModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pinModalContent: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.xl,
+    padding: SPACING.lg,
+    width: '90%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  pinModalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 40,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  pinInputContainer: {
+    flexDirection: 'row',
+    gap: 20,
+    marginBottom: 40,
+  },
+  pinDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+  },
+  pinDotFilled: {
+    backgroundColor: '#667eea',
+    borderColor: '#667eea',
+  },
+  pinKeypad: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 20,
+    marginBottom: 20,
+    width: 280,
+  },
+  pinKey: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pinKeyText: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#333',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  pinTextInput: {
+    width: '80%',
+    height: 50,
+    borderWidth: 2,
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    fontSize: 18,
+    textAlign: 'center',
+    marginBottom: 40,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  pinHelperText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  pinModalButtonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 15,
+  },
+  pinCancelButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+  },
+  pinCancelText: {
+    fontSize: 16,
+    color: '#667eea',
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+});

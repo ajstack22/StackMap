@@ -14,8 +14,15 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../constants/theme';
-import { PanGestureHandler, State, GestureHandlerRootView } from 'react-native-gesture-handler';
+import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../../constants';
+
+// Conditionally import gesture handler for iOS only
+const GestureHandlerModule = Platform.OS === 'ios' 
+  ? require('react-native-gesture-handler')
+  : null;
+const GestureHandlerRootView = GestureHandlerModule?.GestureHandlerRootView || View;
+const PanGestureHandler = GestureHandlerModule?.PanGestureHandler;
+const State = GestureHandlerModule?.State || {};
 
 const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onUserChange }) => {
   const insets = useSafeAreaInsets();
@@ -276,7 +283,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     const currentWeather = weatherOptions[selectedWeather];
     
     const handleWeatherSwipe = ({ nativeEvent }) => {
-      if (nativeEvent.state === State.END) {
+      if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
           cycleWeather('prev');
         } else if (nativeEvent.translationX < -50) {
@@ -309,7 +316,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
         </TouchableOpacity>
         
-        {Platform.OS !== 'web' ? (
+        {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleWeatherSwipe}>
             {carouselContent}
           </PanGestureHandler>
@@ -332,7 +339,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     const currentDay = dayOptions[selectedDayOfWeek];
     
     const handleDaySwipe = ({ nativeEvent }) => {
-      if (nativeEvent.state === State.END) {
+      if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
           cycleDay('prev');
         } else if (nativeEvent.translationX < -50) {
@@ -365,7 +372,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
         </TouchableOpacity>
         
-        {Platform.OS !== 'web' ? (
+        {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleDaySwipe}>
             {carouselContent}
           </PanGestureHandler>
@@ -388,7 +395,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     const currentTemp = temperatureOptions[selectedTemperature];
     
     const handleTempSwipe = ({ nativeEvent }) => {
-      if (nativeEvent.state === State.END) {
+      if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
           cycleTemperature('prev');
         } else if (nativeEvent.translationX < -50) {
@@ -421,7 +428,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
         </TouchableOpacity>
         
-        {Platform.OS !== 'web' ? (
+        {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleTempSwipe}>
             {carouselContent}
           </PanGestureHandler>
@@ -444,7 +451,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     const currentMood = moods[selectedMood];
     
     const handleMoodSwipe = ({ nativeEvent }) => {
-      if (nativeEvent.state === State.END) {
+      if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
           cycleMood('prev');
         } else if (nativeEvent.translationX < -50) {
@@ -477,7 +484,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
         </TouchableOpacity>
         
-        {Platform.OS !== 'web' ? (
+        {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleMoodSwipe}>
             {carouselContent}
           </PanGestureHandler>
@@ -502,7 +509,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     const userTheme = THEMES[userThemeColor] || THEMES.stackBlue;
     
     const handleUserSwipe = ({ nativeEvent }) => {
-      if (nativeEvent.state === State.END) {
+      if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
           cycleUser('prev');
         } else if (nativeEvent.translationX < -50) {
@@ -544,7 +551,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           <View style={styles.carouselArrow} />
         )}
         
-        {Platform.OS !== 'web' && hasMultipleUsers ? (
+        {Platform.OS !== 'web' && hasMultipleUsers && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleUserSwipe}>
             {carouselContent}
           </PanGestureHandler>
@@ -868,4 +875,4 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
   },
 });
 
-export default ContextModal;
+export default React.memo(ContextModal);
