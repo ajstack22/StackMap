@@ -17,6 +17,7 @@ import {
   Image,
   Animated,
   PermissionsAndroid,
+  ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -81,8 +82,9 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, Onboarding, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
+import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 
 // Component imports verified - all components are properly imported
 
@@ -183,6 +185,7 @@ const App = () => {
   
   // State
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   // Removed - now using Zustand store
   const [isEditMode, setIsEditMode] = useState(false);
@@ -266,29 +269,62 @@ const App = () => {
     [editIconsTranslateY]
   );
 
+  // Wait for Zustand store to hydrate from AsyncStorage
+  useEffect(() => {
+    const checkHydration = async () => {
+      // Give Zustand time to load persisted state
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Check Zustand persisted data directly
+      const zustandData = await AsyncStorage.getItem('stackmap-storage');
+      console.log('[App] Checking Zustand hydration:', zustandData ? 'Data exists' : 'No data');
+      
+      if (zustandData) {
+        try {
+          const parsed = JSON.parse(zustandData);
+          console.log('[App] Zustand persisted state:', {
+            hasCompletedOnboarding: parsed?.state?.hasCompletedOnboarding,
+            usersCount: Object.keys(parsed?.state?.users || {}).length
+          });
+        } catch (e) {
+          console.error('[App] Error parsing Zustand data:', e);
+        }
+      }
+      
+      setIsHydrated(true);
+    };
+    
+    checkHydration();
+  }, []);
+  
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
+    if (!isHydrated) return;
+    
     const initializeApp = async () => {
       // Log Zustand store state for debugging
-      console.log('Zustand store initialized with:', {
+      console.log('[App] Zustand store after hydration:', {
         currentTheme,
         bannerPosition,
         users: Object.keys(users).length,
         currentUser,
         activities: activities.length,
-        currentDay
+        currentDay,
+        hasCompletedOnboarding
       });
       
       await migratePinToSecureStorage();
       
       // Check if we should show onboarding
       if (!hasCompletedOnboarding && Object.keys(users).length === 0) {
+        console.log('[App] Showing onboarding - no users and not completed');
         setShowOnboarding(true);
         return; // Don't create default user, wait for onboarding
       }
       
       // Initialize default user if none exists and onboarding is complete
       if (hasCompletedOnboarding && Object.keys(users).length === 0) {
+        console.log('[App] Creating default user - onboarding complete but no users');
         const newUserId = `user_${Date.now()}`;
         const newUser = {
           id: newUserId,
@@ -324,7 +360,7 @@ const App = () => {
     });
     
     return () => subscription?.remove();
-  }, []);
+  }, [isHydrated, hasCompletedOnboarding, users, currentTheme, bannerPosition, activities, currentDay, currentUser, addUser, setCurrentUser]);
 
   // Data is now automatically persisted through Zustand
 
@@ -333,7 +369,7 @@ const App = () => {
     if (currentUser && users[currentUser]) {
       setActivities(users[currentUser]?.days?.[currentDay]?.activities || []);
     }
-  }, [currentDay, currentUser]);
+  }, [currentDay, currentUser, users, setActivities]);
   
   // Animate icons when edit mode changes
   useEffect(() => {
@@ -1302,7 +1338,11 @@ const App = () => {
 
       const jsonData = JSON.stringify(data, null, 2);
       const now = new Date();
-      const dateStr = now.toISOString().split('T')[0];
+      // Use local date instead of UTC
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
       const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
       const fileName = `stackmap-export-${dateStr}-${timeStr}.json`;
       
@@ -1436,8 +1476,11 @@ const App = () => {
           }
         }
         
-        // Remove duplicates
-        const uniqueFiles = Array.from(new Map(jsonFiles.map(f => [f.path, f])).values());
+        // Remove duplicates based on file name (not path)
+        // This ensures we don't show the same backup file multiple times
+        // even if it exists in different directories
+        const uniqueFiles = Array.from(new Map(jsonFiles.map(f => [f.name, f])).values());
+        
         
         if (uniqueFiles.length === 0) {
           Alert.alert(
@@ -1453,40 +1496,100 @@ const App = () => {
           // Sort files by modified time (newest first)
           uniqueFiles.sort((a, b) => b.mtime - a.mtime);
           
-          const fileOptions = uniqueFiles.map(f => {
-            // Parse the filename to get date and time
-            const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
-            let displayName = f.name;
+          // Android Alert can only show 3 buttons max, so if we have more files,
+          // we need to show them in batches or use a different approach
+          if (uniqueFiles.length > 2) {
+            // Show only the 2 most recent files + a "Show More" option
+            const recentFiles = uniqueFiles.slice(0, 2);
+            const fileOptions = recentFiles.map(f => {
+              // Parse the filename to get date and time
+              const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+              let displayName = f.name;
+              
+              if (match) {
+                const date = match[1];
+                const time = match[2] ? match[2].replace(/-/g, ':') : '';
+                
+                // Just show the raw date and time from filename
+                // to avoid timezone confusion
+                displayName = time ? `${date} at ${time}` : date;
+                
+                // Add file size
+                const sizeKB = Math.round(f.size / 1024);
+                displayName += ` (${sizeKB} KB)`;
+              }
+              
+              return {
+                text: displayName,
+                onPress: () => importFromFile(f.path, f.name)
+              };
+            });
             
-            if (match) {
-              const date = match[1];
-              const time = match[2] ? match[2].replace(/-/g, ':') : '';
-              const dateObj = new Date(date);
-              const isToday = new Date().toDateString() === dateObj.toDateString();
-              const isYesterday = new Date(Date.now() - 86400000).toDateString() === dateObj.toDateString();
+            Alert.alert(
+              'Select Backup to Import',
+              `Found ${uniqueFiles.length} backups. Showing 2 most recent:`,
+              [
+                ...fileOptions,
+                {
+                  text: 'Show All Files',
+                  onPress: () => {
+                    // Show all files with their full paths
+                    const allFilesInfo = uniqueFiles.map((f, index) => {
+                      const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+                      let info = `${index + 1}. `;
+                      if (match) {
+                        const date = match[1];
+                        const time = match[2] ? match[2].replace(/-/g, ':') : '';
+                        info += time ? `${date} at ${time}` : date;
+                      } else {
+                        info += f.name;
+                      }
+                      info += ` (${Math.round(f.size / 1024)} KB)`;
+                      return info;
+                    }).join('\n');
+                    
+                    Alert.alert(
+                      'All Backup Files',
+                      allFilesInfo + '\n\nTo import a specific file, use a file manager app to open it with StackMap.',
+                      [{ text: 'OK', onPress: () => importData() }]
+                    );
+                  }
+                },
+                { text: 'Cancel', style: 'cancel' }
+              ]
+            );
+          } else {
+            // 2 or fewer files, show them all
+            const fileOptions = uniqueFiles.map(f => {
+              // Parse the filename to get date and time
+              const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+              let displayName = f.name;
               
-              let dateStr = date;
-              if (isToday) dateStr = 'Today';
-              else if (isYesterday) dateStr = 'Yesterday';
+              if (match) {
+                const date = match[1];
+                const time = match[2] ? match[2].replace(/-/g, ':') : '';
+                
+                // Just show the raw date and time from filename
+                // to avoid timezone confusion
+                displayName = time ? `${date} at ${time}` : date;
+                
+                // Add file size
+                const sizeKB = Math.round(f.size / 1024);
+                displayName += ` (${sizeKB} KB)`;
+              }
               
-              displayName = time ? `${dateStr} at ${time}` : dateStr;
-              
-              // Add file size
-              const sizeKB = Math.round(f.size / 1024);
-              displayName += ` (${sizeKB} KB)`;
-            }
+              return {
+                text: displayName,
+                onPress: () => importFromFile(f.path, f.name)
+              };
+            });
             
-            return {
-              text: displayName,
-              onPress: () => importFromFile(f.path, f.name)
-            };
-          });
-          
-          Alert.alert(
-            'Select Backup to Import',
-            `Found ${uniqueFiles.length} StackMap backups:`,
-            [...fileOptions, { text: 'Cancel', style: 'cancel' }]
-          );
+            Alert.alert(
+              'Select Backup to Import',
+              `Found ${uniqueFiles.length} StackMap backups:`,
+              [...fileOptions, { text: 'Cancel', style: 'cancel' }]
+            );
+          }
         } else {
           // Single file found - show confirmation
           const f = uniqueFiles[0];
@@ -1599,6 +1702,11 @@ const App = () => {
         await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
         
         showToast({ message: 'Data imported successfully' });
+        
+        // Hide onboarding if we're in it
+        if (showOnboarding) {
+          setShowOnboarding(false);
+        }
       };
       
       // Show confirmation dialog - use platform-specific approach
@@ -1698,6 +1806,11 @@ const App = () => {
               await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
               
               showToast({ message: 'Data imported successfully' });
+        
+        // Hide onboarding if we're in it
+        if (showOnboarding) {
+          setShowOnboarding(false);
+        }
             }
           }
         ]
@@ -2883,12 +2996,31 @@ const App = () => {
   //   );
   // }
   
+  // Don't render until store is hydrated
+  if (!isHydrated) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0095FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#FFFFFF" />
+      </View>
+    );
+  }
+  
   // Show onboarding if needed (kept for backward compatibility)
   if (showOnboarding) {
     return (
-      <Onboarding
+      <OnboardingNew
         onComplete={handleOnboardingComplete}
-        onSkip={handleOnboardingSkip}
+        onImport={async () => {
+          try {
+            // Don't hide onboarding until import succeeds
+            await importData();
+            // Only hide onboarding if import was successful
+            // (importData will have already set showOnboarding to false if successful)
+          } catch (error) {
+            console.log('Import cancelled or failed, staying in onboarding');
+            // Stay in onboarding if import fails
+          }
+        }}
       />
     );
   }

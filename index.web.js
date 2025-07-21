@@ -86,3 +86,33 @@ AppRegistry.runApplication('StackMap', {
   initialProps: {},
   rootTag: document.getElementById('root')
 });
+
+// Register service worker for PWA
+if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/service-worker.js')
+      .then((registration) => {
+        console.log('PWA service worker registered:', registration);
+        
+        // Check for updates periodically
+        setInterval(() => {
+          registration.update();
+        }, 60 * 60 * 1000); // Check every hour
+        
+        // Handle updates
+        registration.addEventListener('updatefound', () => {
+          const newWorker = registration.installing;
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+              // New content available
+              console.log('New app version available! Reload to update.');
+            }
+          });
+        });
+      })
+      .catch((error) => {
+        console.log('Service worker registration failed:', error);
+      });
+  });
+}

@@ -15,16 +15,12 @@ const PinModal = ({
   onClose,
   theme,
   pinInput,
+  pinLength,
   setPinInput,
   isSettingPin,
   confirmPin,
 }) => {
-  // Clear PIN on unmount for security
-  useEffect(() => {
-    return () => {
-      setPinInput('');
-    };
-  }, [setPinInput]);
+  // No need to clear PIN on unmount - handled by parent
   const handleNumberPress = (num) => {
     if (isSettingPin && confirmPin) {
       // During confirmation, we still use pinInput
@@ -69,7 +65,7 @@ const PinModal = ({
                 style={[
                   styles.pinDot,
                   { borderColor: theme.primary },
-                  pinInput.length > index && [
+                  pinLength > index && [
                     styles.pinDotFilled,
                     { backgroundColor: theme.primary, borderColor: theme.primary }
                   ]
@@ -128,9 +124,9 @@ const PinModal = ({
             <Text style={styles.pinHelperText}>
               {!confirmPin ? 
                 'Enter a 4-digit PIN' : 
-                (pinInput.length === 4 ? 
+                (pinLength === 4 ? 
                   'PIN confirmed! Processing...' : 
-                  `Re-enter PIN to confirm (${pinInput.length}/4)`)}
+                  `Re-enter PIN to confirm (${pinLength}/4)`)}
             </Text>
           )}
           

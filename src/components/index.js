@@ -6,7 +6,6 @@ export { default as Logo } from './Logo';
 export { default as ActivityLibrary } from './ActivityLibrary';
 export { default as EmojiPicker } from './EmojiPicker';
 export { default as CelebrationView } from './CelebrationManager';
-export { default as Onboarding } from './Onboarding';
 
 // Import modal components directly to avoid re-export issues
 import ContextModal from './Modals/ContextModal/ContextModal';

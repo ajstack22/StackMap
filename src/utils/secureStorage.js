@@ -91,15 +91,6 @@ export const getSecurePin = async () => {
         return credentials.password;
       }
       
-      // Also check generic password as fallback for iOS only
-      try {
-        const genericCreds = await Keychain.getGenericPassword({ service: PIN_SERVICE });
-        if (genericCreds && genericCreds.password) {
-          return genericCreds.password;
-        }
-      } catch (error) {
-        // Ignore generic password errors
-      }
       
       return null;
     } else {
@@ -122,12 +113,9 @@ export const getSecurePin = async () => {
 export const removeSecurePin = async () => {
   try {
     if (Platform.OS === 'ios') {
-      // iOS-specific approach: Use generic password instead of internet credentials
+      // iOS-specific approach: Use internet credentials
       try {
-        // First, try to reset the generic password service
-        await Keychain.resetGenericPassword({ service: PIN_SERVICE });
-        
-        // Also try to reset internet credentials
+        // Try to reset internet credentials
         await Keychain.resetInternetCredentials(PIN_SERVICE);
         
         // Set an empty password to overwrite any cached value

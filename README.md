@@ -48,6 +48,12 @@ StackMap/
 ### Prerequisites
 - Node.js 16+
 - For iOS: Xcode 14+, CocoaPods
+
+### ⚠️ Important: Cross-Platform Development
+
+When updating shared components, **you must test on all platforms** (iOS, Android, Web) before committing. Changes that work on one platform may break on others.
+
+See [Cross-Platform Development Guidelines](./docs/CROSS_PLATFORM_DEVELOPMENT.md) for detailed instructions.
 - For Android: Java 17, Android Studio
 - See [Environment Setup](https://reactnative.dev/docs/set-up-your-environment)
 

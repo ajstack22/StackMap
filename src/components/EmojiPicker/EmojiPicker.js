@@ -11,6 +11,7 @@ import {
   FlatList,
   SafeAreaView,
   Dimensions,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, COLORS, isTablet, CUSTOM_IMAGE_SOURCES } from '../../constants';
@@ -160,9 +161,11 @@ const EmojiPicker = ({
   const [showSkinToneSelector, setShowSkinToneSelector] = useState(false);
   const [detectedEmoji, setDetectedEmoji] = useState('');
   
-  // Calculate columns based on screen size
-  // For phones, use 5 columns to ensure they fit properly without scrolling
-  const numColumns = isTablet() ? 10 : 5;
+  // Calculate columns based on screen size and platform
+  // For Android phones use 6 columns, for web use 8-10 based on screen size
+  const numColumns = Platform.OS === 'web' 
+    ? (isTablet() ? 10 : 8) 
+    : (isTablet() ? 10 : (Platform.OS === 'android' ? 6 : 5));
   
   // Initialize categories with custom images
   useEffect(() => {
@@ -305,7 +308,7 @@ const EmojiPicker = ({
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="done"
-          keyboardType="default"
+          keyboardType={Platform.OS === 'android' ? 'visible-password' : 'default'}
           autoFocus={false}
           enablesReturnKeyAutomatically={true}
         />
@@ -385,7 +388,7 @@ const EmojiPicker = ({
       
       {/* Emoji Grid */}
       {(
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, overflow: 'hidden' }}>
           <FlatList
             data={(() => {
               // Add empty items to fill the last row
@@ -406,9 +409,12 @@ const EmojiPicker = ({
             numColumns={numColumns}
             contentContainerStyle={styles.emojiGrid}
             showsVerticalScrollIndicator={false}
-            removeClippedSubviews={false}
+            removeClippedSubviews={Platform.OS === 'android'}
             keyboardShouldPersistTaps="handled"
             nestedScrollEnabled={true}
+            windowSize={Platform.OS === 'web' ? 21 : (Platform.OS === 'android' ? 10 : 21)}
+            maxToRenderPerBatch={Platform.OS === 'web' ? 50 : (Platform.OS === 'android' ? 10 : 15)}
+            initialNumToRender={Platform.OS === 'web' ? 50 : 20}
           />
         </View>
       )}
@@ -453,8 +459,8 @@ const styles = StyleSheet.create({
   inlineContainer: {
     borderRadius: RADIUS.lg,
     backgroundColor: '#f5f5f5',
-    height: 300,
-    maxHeight: 300,
+    height: Platform.OS === 'web' ? 400 : 300,
+    maxHeight: Platform.OS === 'web' ? 400 : 300,
   },
   modalOverlay: {
     flex: 1,
@@ -465,7 +471,8 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
-    height: '80%',
+    height: Platform.OS === 'web' ? '70%' : (Platform.OS === 'android' ? '75%' : '80%'),
+    maxHeight: Platform.OS === 'web' ? 600 : (Platform.OS === 'android' ? '75%' : '80%'),
     maxWidth: isTablet() ? 700 : '100%',
     alignSelf: 'center',
     width: '100%',
@@ -503,6 +510,9 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[900],
+    ...(Platform.OS === 'android' && {
+      textAlignVertical: 'center',
+    }),
   },
   categoryContainer: {
     paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
@@ -532,22 +542,23 @@ const styles = StyleSheet.create({
   },
   emojiGrid: {
     paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.md, // Consistent padding on sides
+    paddingHorizontal: Platform.OS === 'android' ? SPACING.sm : SPACING.md,
+    paddingBottom: Platform.OS === 'android' ? 80 : SPACING.md, // Extra bottom padding for Android
   },
   emojiItem: {
     flex: 1,
     aspectRatio: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    margin: isTablet() ? SPACING.xs : 3, // Smaller margin on phones
+    margin: Platform.OS === 'web' ? 4 : (Platform.OS === 'android' ? 2 : (isTablet() ? SPACING.xs : 3)),
     borderRadius: RADIUS.md,
-    minHeight: isTablet() ? 64 : 60, // Slightly larger for better touch targets with 5 columns
+    minHeight: Platform.OS === 'web' ? 56 : (isTablet() ? 64 : (Platform.OS === 'android' ? 52 : 60)),
   },
   selectedItem: {
     backgroundColor: COLORS.gray[200],
   },
   emoji: {
-    fontSize: isTablet() ? 42 : 32,
+    fontSize: Platform.OS === 'web' ? 28 : (isTablet() ? 42 : (Platform.OS === 'android' ? 28 : 32)),
     textAlign: 'center',
   },
   customImage: {
