@@ -8,7 +8,10 @@ deployment:
     - /bin/cp -f $REPOPATH/web/build/*.html $DEPLOYPATH/
     - /bin/cp -f $REPOPATH/web/build/*.png $DEPLOYPATH/
     - /bin/cp -f $REPOPATH/web/build/*.txt $DEPLOYPATH/
+    - /bin/cp -f $REPOPATH/web/build/*.json $DEPLOYPATH/
     # Copy fonts directory if it exists
     - /bin/cp -rf $REPOPATH/web/build/fonts $DEPLOYPATH/
+    # Copy icons directory for PWA
+    - /bin/cp -rf $REPOPATH/web/build/icons $DEPLOYPATH/
     # Log deployment for debugging
     - echo "Deployment completed at $(date)" >> $DEPLOYPATH/deploy.log
