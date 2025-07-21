@@ -2,16 +2,5 @@
 deployment:
   tasks:
     - export DEPLOYPATH=/home/stachblx/public_html/qual
-    - export REPOPATH=/home/stachblx/repositories/StackMap
-    # Clear qual directory (preserving .htaccess if exists)
-    - /bin/find $DEPLOYPATH -mindepth 1 -name '.htaccess' -prune -o -exec rm -rf {} + 2>/dev/null || true
-    # Copy all files from web/build to qual root
-    - /bin/cp -rf $REPOPATH/web/build/* $DEPLOYPATH/
-    # Copy hidden files if any (like .htaccess from web/build)
-    - /bin/cp -rf $REPOPATH/web/build/.[^.]* $DEPLOYPATH/ 2>/dev/null || true
-    # Set proper permissions
-    - /bin/chmod -R 755 $DEPLOYPATH/
-    # Create deployment log
-    - echo "=== Deployment completed at $(date) ===" > $DEPLOYPATH/deploy.log
-    - echo "Files deployed:" >> $DEPLOYPATH/deploy.log
-    - /bin/ls -la $DEPLOYPATH/ >> $DEPLOYPATH/deploy.log
+    # Simple direct deployment - just set deployment path
+    # cPanel will handle the file sync when set up with correct deployment path
