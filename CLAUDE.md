@@ -6,6 +6,20 @@
     * Prioritize sensory elements: visual (colors/contrast/animations), auditory (sounds/alerts), or tactile (haptics/vibration)
     * Mobile-first architecture considerations for sensory design
 
+## CRITICAL DEPLOYMENT FACTS (MUST READ)
+- Git repository clones DIRECTLY to /public_html/qual/ (not a separate repo directory)
+- .cpanel.yml DOES NOT EXECUTE on Namecheap - ignore it completely
+- Web files must be at repository ROOT to deploy correctly (not in web/build/)
+- Use simple-deploy.sh for qual->prod only
+- When building web: must use relative paths (NODE_ENV=production npm run build:web)
+
+### Pre-flight Deployment Checklist
+When user mentions deployment:
+1. CHECK: Where is git repo cloned? (it's directly in qual/)
+2. CHECK: Are web files at repo root? (not in web/build/)
+3. IGNORE: .cpanel.yml automation (doesn't work on Namecheap)
+4. BUILD: Use NODE_ENV=production to ensure relative paths
+
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by:
   - Removing automatic sorting that put pinned items first (respects manual order now)
