@@ -1,0 +1,21 @@
+# Prevent directory listing
+Options -Indexes
+
+# Set index.html as default
+DirectoryIndex index.html
+
+# Enable RewriteEngine for SPA routing
+RewriteEngine On
+
+# Handle SPA routing - redirect all non-file requests to index.html
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^.*$ index.html [L]
+
+# Ensure correct MIME types
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType application/json .json
+    AddType application/manifest+json .webmanifest
+</IfModule>
