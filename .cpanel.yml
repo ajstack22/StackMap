@@ -3,21 +3,15 @@ deployment:
   tasks:
     - export DEPLOYPATH=/home/stachblx/public_html/qual
     - export REPOPATH=/home/stachblx/repositories/StackMap
-    # Remove old bundle files to ensure clean deployment
-    - /bin/rm -f $DEPLOYPATH/bundle.*.js
-    - /bin/rm -f $DEPLOYPATH/bundle.*.js.LICENSE.txt
-    # Copy web build files directly to qual root using absolute paths
-    - /bin/cp -f $REPOPATH/web/build/*.js $DEPLOYPATH/
-    - /bin/cp -f $REPOPATH/web/build/*.html $DEPLOYPATH/
-    - /bin/cp -f $REPOPATH/web/build/*.png $DEPLOYPATH/
-    - /bin/cp -f $REPOPATH/web/build/*.txt $DEPLOYPATH/
-    - /bin/cp -f $REPOPATH/web/build/*.json $DEPLOYPATH/
-    # Copy fonts directory if it exists
-    - /bin/cp -rf $REPOPATH/web/build/fonts $DEPLOYPATH/
-    # Copy icons directory for PWA
-    - /bin/cp -rf $REPOPATH/web/build/icons $DEPLOYPATH/
-    # List files for debugging
+    # Clear qual directory (preserving .htaccess if exists)
+    - /bin/find $DEPLOYPATH -mindepth 1 -name '.htaccess' -prune -o -exec rm -rf {} + 2>/dev/null || true
+    # Copy all files from web/build to qual root
+    - /bin/cp -rf $REPOPATH/web/build/* $DEPLOYPATH/
+    # Copy hidden files if any (like .htaccess from web/build)
+    - /bin/cp -rf $REPOPATH/web/build/.[^.]* $DEPLOYPATH/ 2>/dev/null || true
+    # Set proper permissions
+    - /bin/chmod -R 755 $DEPLOYPATH/
+    # Create deployment log
+    - echo "=== Deployment completed at $(date) ===" > $DEPLOYPATH/deploy.log
+    - echo "Files deployed:" >> $DEPLOYPATH/deploy.log
     - /bin/ls -la $DEPLOYPATH/ >> $DEPLOYPATH/deploy.log
-    # Log deployment for debugging
-    - echo "=== Deployment started at $(date) ===" >> $DEPLOYPATH/deploy.log
-    - echo "Deployment completed at $(date)" >> $DEPLOYPATH/deploy.log
