@@ -19,4 +19,5 @@ deployment:
     # List files for debugging
     - /bin/ls -la $DEPLOYPATH/ >> $DEPLOYPATH/deploy.log
     # Log deployment for debugging
+    - echo "=== Deployment started at $(date) ===" >> $DEPLOYPATH/deploy.log
     - echo "Deployment completed at $(date)" >> $DEPLOYPATH/deploy.log
