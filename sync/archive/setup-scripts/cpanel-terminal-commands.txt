@@ -1,0 +1,125 @@
+# Copy and paste these commands into your cPanel Terminal
+# This will set up the entire API structure
+
+# 1. Create all directories
+mkdir -p ~/public_html/api/{sync,config,utils,logs} && chmod 755 ~/public_html/api/{sync,config,utils} && chmod 700 ~/public_html/api/logs
+
+# 2. Create .htaccess for API security
+cat > ~/public_html/api/.htaccess << 'EOF'
+Header set Access-Control-Allow-Origin "*"
+Header set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+Header set Access-Control-Allow-Headers "Content-Type"
+Header set X-Content-Type-Options "nosniff"
+Header set X-Frame-Options "DENY"
+
+<Files "logs/*">
+    Order deny,allow
+    Deny from all
+</Files>
+EOF
+
+# 3. Create database config (UPDATE THE CREDENTIALS!)
+cat > ~/public_html/api/config/database.php << 'EOF'
+<?php
+class Database {
+    private static $instance = null;
+    private $pdo;
+    
+    private function __construct() {
+        $host = 'localhost';
+        $db = 'stachblx_stackmap_sync';
+        $user = 'YOUR_DB_USER';  // UPDATE THIS
+        $pass = 'YOUR_DB_PASS';  // UPDATE THIS
+        
+        try {
+            $this->pdo = new PDO(
+                "mysql:host=$host;dbname=$db;charset=utf8mb4",
+                $user, $pass,
+                [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]
+            );
+        } catch (PDOException $e) {
+            error_log("DB Error: " . $e->getMessage());
+            die(json_encode(['error' => 'Database connection failed']));
+        }
+    }
+    
+    public static function getInstance() {
+        if (self::$instance === null) {
+            self::$instance = new self();
+        }
+        return self::$instance;
+    }
+    
+    public function getConnection() {
+        return $this->pdo;
+    }
+}
+EOF
+
+# 4. Create CORS helper
+cat > ~/public_html/api/config/cors.php << 'EOF'
+<?php
+function setCorsHeaders() {
+    header("Access-Control-Allow-Origin: *");
+    header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
+    header("Access-Control-Allow-Headers: Content-Type");
+    header("Content-Type: application/json; charset=UTF-8");
+    
+    if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
+        http_response_code(200);
+        exit();
+    }
+}
+EOF
+
+# 5. Create response utilities
+cat > ~/public_html/api/utils/response.php << 'EOF'
+<?php
+function sendResponse($data, $code = 200) {
+    http_response_code($code);
+    echo json_encode($data);
+    exit();
+}
+
+function sendError($message, $code = 400) {
+    sendResponse(['error' => true, 'message' => $message], $code);
+}
+
+function getJsonInput() {
+    $data = json_decode(file_get_contents('php://input'), true);
+    if (!$data) sendError('Invalid JSON');
+    return $data;
+}
+EOF
+
+# 6. Create test endpoint
+cat > ~/public_html/api/sync/test.php << 'EOF'
+<?php
+require_once '../config/cors.php';
+require_once '../config/database.php';
+require_once '../utils/response.php';
+
+setCorsHeaders();
+
+try {
+    $db = Database::getInstance()->getConnection();
+    $stmt = $db->query("SELECT COUNT(*) as count FROM sync_data");
+    $result = $stmt->fetch();
+    
+    sendResponse([
+        'status' => 'ok',
+        'database' => 'connected',
+        'sync_groups' => $result['count'],
+        'time' => date('Y-m-d H:i:s')
+    ]);
+} catch (Exception $e) {
+    sendError('Database test failed: ' . $e->getMessage(), 500);
+}
+EOF
+
+# 7. Set permissions
+chmod 644 ~/public_html/api/.htaccess ~/public_html/api/config/*.php ~/public_html/api/utils/*.php ~/public_html/api/sync/*.php
+
+echo "✅ Basic API structure created!"
+echo "⚠️  Now edit ~/public_html/api/config/database.php with your database credentials"
+echo "Then test at: https://stackmap.app/api/sync/test.php"
