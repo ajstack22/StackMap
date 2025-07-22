@@ -143,7 +143,6 @@ const EditModeSettingsModal = ({
           collapsable={false}
           nestedScrollEnabled={true}
         >
-          <TouchableOpacity activeOpacity={1}>
             {/* User Management Section */}
             <Text style={styles.sectionTitle}>Users</Text>
             <View style={styles.usersList}>
@@ -272,7 +271,6 @@ const EditModeSettingsModal = ({
                 <Text style={styles.buttonText}>Reset App</Text>
               </TouchableOpacity>
             </View>
-          </TouchableOpacity>
         </ScrollView>
         <SafeAreaView style={{ backgroundColor: theme.light }} />
         {Platform.OS === 'android' && (

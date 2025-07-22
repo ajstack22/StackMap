@@ -146,9 +146,22 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
     AccessibilityInfo.isReduceMotionEnabled().then(setReducedMotion);
   }, []);
 
+  // Call onComplete after animation duration (single hook for all types)
+  useEffect(() => {
+    if (reducedMotion || theme === 'none') {
+      onComplete?.();
+      return;
+    }
+
+    const duration = type === 'confetti' ? 4500 : 3500;
+    const timer = setTimeout(() => {
+      onComplete?.();
+    }, duration);
+    return () => clearTimeout(timer);
+  }, [type, theme, reducedMotion, onComplete]);
+
   // Don't show animations if reduced motion is enabled or theme is 'none'
   if (reducedMotion || theme === 'none') {
-    onComplete?.();
     return null;
   }
 
@@ -169,14 +182,6 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
       delay: Math.random() * 500,
       startX: Math.random() * screenWidth,
     }));
-
-    // Call onComplete after animation duration
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        onComplete?.();
-      }, 4500);
-      return () => clearTimeout(timer);
-    }, []);
 
     return (
       <View style={styles.container} pointerEvents="none">
@@ -199,14 +204,6 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
       y: 10 + Math.random() * 60, // percentage of screen height  
       delay: i * 160, // 25% faster rate (was 200ms)
     }));
-
-    // Call onComplete after animation duration
-    useEffect(() => {
-      const timer = setTimeout(() => {
-        onComplete?.();
-      }, 3500);
-      return () => clearTimeout(timer);
-    }, []);
 
     return (
       <View style={styles.container} pointerEvents="none">

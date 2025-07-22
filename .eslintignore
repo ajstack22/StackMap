@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+web/build/
+android/app/build/
+ios/build/
+build/
+dist/
+
+# Archive folders (old code not in use)
+archive/
+
+# Platform-specific builds
+android/
+ios/
+
+# Test coverage
+coverage/
+
+# Metro
+.metro-health-check*
+
+# Temporary files
+temp/
+tmp/
+
+# Bundle outputs
+*.bundle.js
+*.chunk.js
+*.min.js
+
+# Test artifacts
+test-results/
+
+# IDE
+.idea/
+.vscode/
+
+# macOS
+.DS_Store
+
+# Logs
+*.log

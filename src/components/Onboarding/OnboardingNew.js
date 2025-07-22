@@ -640,7 +640,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: Platform.OS === 'web' ? 120 : 80,
     justifyContent: 'center',
-    width: Platform.OS === 'web' ? undefined : '100%',
     width: Platform.OS === 'web' ? 'auto' : '90%',
     ...SHADOWS.level2,
   },
