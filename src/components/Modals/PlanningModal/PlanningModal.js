@@ -149,12 +149,12 @@ const getStyles = (themeColors) => ({
     paddingVertical: SPACING.md,
   },
   modalTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontSize: TYPOGRAPHY.sizes.xxl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.white,
   },
   sectionTitle: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: TYPOGRAPHY.sizes.lg,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
     marginBottom: SPACING.md,
@@ -181,7 +181,7 @@ const getStyles = (themeColors) => ({
     fontSize: 32,
   },
   userName: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: TYPOGRAPHY.sizes.lg,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: COLORS.gray[700],
     flex: 1,
@@ -211,7 +211,7 @@ const getStyles = (themeColors) => ({
     ...SHADOWS.level1,
   },
   toggleText: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: TYPOGRAPHY.sizes.sm,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: COLORS.gray[600],
   },
@@ -232,7 +232,7 @@ const getStyles = (themeColors) => ({
     alignItems: 'center',
   },
   cancelButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.sizes.md,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[700],
   },
@@ -244,7 +244,7 @@ const getStyles = (themeColors) => ({
     alignItems: 'center',
   },
   saveButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.sizes.md,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.white,
   },

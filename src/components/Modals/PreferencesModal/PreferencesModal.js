@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -13,6 +13,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { THEMES } from '../../../constants';
 import { styles } from './styles';
+import SyncSettings from '../../SyncSettings';
 
 const PreferencesModal = ({
   visible,
@@ -43,6 +44,24 @@ const PreferencesModal = ({
   getAndroidModalBottomHeight,
 }) => {
   const preferencesScrollRef = useRef(null);
+  const syncSectionRef = useRef(null);
+  
+  // Scroll to sync section if requested
+  useEffect(() => {
+    if (preferencesScrollKey === 'sync-section' && syncSectionRef.current && preferencesScrollRef.current) {
+      setTimeout(() => {
+        syncSectionRef.current.measureLayout(
+          preferencesScrollRef.current,
+          (x, y) => {
+            preferencesScrollRef.current.scrollTo({ y: y - 20, animated: true });
+          },
+          () => console.log('Failed to measure sync section')
+        );
+      }, 100);
+      // Clear the scroll key
+      setPreferencesScrollKey(null);
+    }
+  }, [preferencesScrollKey, setPreferencesScrollKey]);
   
   const handleThemeChange = (color) => {
     setCurrentTheme(color);
@@ -195,6 +214,11 @@ const PreferencesModal = ({
           ))}
         </View>
       </ScrollView>
+      
+      {/* Sync Settings Section */}
+      <View ref={syncSectionRef} style={styles.syncSection}>
+        <SyncSettings theme={theme} onClose={onClose} />
+      </View>
       
       {/* Info Section */}
       <View style={styles.infoSection}>

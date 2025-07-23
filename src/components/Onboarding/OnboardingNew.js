@@ -157,7 +157,7 @@ const OnboardingNew = ({ onComplete, onImport }) => {
             }]}
             showsVerticalScrollIndicator={false}
           >
-            <Logo size={Platform.OS === 'web' ? 80 : 60} theme={{ primary: THEMES.stackBlue.primary }} />
+            <Logo size={Platform.OS === 'web' ? 80 : 60} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
             <Text style={styles.welcomeTitle}>StackMap</Text>
             <Text style={styles.welcomeSubtitle}>Routine Ready</Text>
             
@@ -177,17 +177,18 @@ const OnboardingNew = ({ onComplete, onImport }) => {
             </View>
 
             <TouchableOpacity 
-              style={styles.getStartedButton}
+              style={styles.primaryButton}
               onPress={() => transitionTo('createUser')}
             >
-              <Text style={[styles.buttonTextBase, styles.getStartedText]}>Get Started</Text>
+              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Fresh</Text>
             </TouchableOpacity>
             
             <TouchableOpacity 
-              style={styles.importButton}
+              style={[styles.secondaryButton, { marginTop: 10 }]}
               onPress={onImport}
             >
-              <Text style={[styles.buttonTextBase, styles.importText]}>Import from backup</Text>
+              <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
+              <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore Backup</Text>
             </TouchableOpacity>
           </ScrollView>
         );
@@ -465,7 +466,6 @@ const OnboardingNew = ({ onComplete, onImport }) => {
 const styles = StyleSheet.create({
   // Button text base style for consistent centering
   buttonTextBase: {
-    width: '100%',
     textAlign: 'center',
     flex: 0,
   },
@@ -520,48 +520,34 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: Platform.OS === 'web' ? 20 : 18,
   },
-  getStartedButton: {
-    backgroundColor: THEMES.stackBlue.primary,
-    paddingHorizontal: Platform.OS === 'web' ? 32 : 24,
-    paddingVertical: Platform.OS === 'web' ? 14 : 12,
-    borderRadius: 8,
-    width: Platform.OS === 'web' ? 'auto' : '100%',
-    maxWidth: 300,
-    alignItems: 'center',
+  secondaryButtonsContainer: {
+    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    gap: 10,
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 400 : 300,
     justifyContent: 'center',
-    display: 'flex',
-    flexDirection: 'row',
-    minWidth: Platform.OS === 'web' ? 150 : undefined,
-    ...SHADOWS.level2,
+    alignItems: 'center',
   },
-  getStartedText: {
-    color: 'white',
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    textAlign: 'center',
-  },
-  importButton: {
+  secondaryButton: {
     backgroundColor: 'white',
-    paddingHorizontal: Platform.OS === 'web' ? 32 : 24,
-    paddingVertical: Platform.OS === 'web' ? 14 : 12,
+    paddingHorizontal: Platform.OS === 'web' ? 20 : 20,
+    paddingVertical: Platform.OS === 'web' ? 12 : 10,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: THEMES.stackBlue.primary,
-    marginTop: 8,
-    width: Platform.OS === 'web' ? 'auto' : '100%',
-    maxWidth: 300,
     alignItems: 'center',
     justifyContent: 'center',
-    display: 'flex',
     flexDirection: 'row',
-    minWidth: Platform.OS === 'web' ? 150 : undefined,
     ...SHADOWS.level1,
   },
-  importText: {
+  secondaryButtonText: {
     color: THEMES.stackBlue.primary,
     fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     textAlign: 'center',
+  },
+  buttonIcon: {
+    marginRight: 8,
   },
   
   // Original styles continue below

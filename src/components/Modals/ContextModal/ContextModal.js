@@ -690,7 +690,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     paddingVertical: SPACING.md,
   },
   modalTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xxl,
+    fontSize: TYPOGRAPHY.sizes.xxl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.white,
   },
@@ -719,7 +719,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     borderRadius: 1,
   },
   sectionTitle: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
+    fontSize: TYPOGRAPHY.sizes.xl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.white,
     marginBottom: SPACING.md,
@@ -739,12 +739,12 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     marginBottom: SPACING.sm,
   },
   userCarouselName: {
-    fontSize: TYPOGRAPHY.fontSize.xxxl,
+    fontSize: TYPOGRAPHY.sizes.xxxl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     marginBottom: SPACING.xs,
   },
   userCarouselLabel: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: TYPOGRAPHY.sizes.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[600],
   },
@@ -761,7 +761,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     marginBottom: SPACING.lg,
   },
   contextLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
+    fontSize: TYPOGRAPHY.sizes.xl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.white,
     letterSpacing: 0.5,
@@ -781,7 +781,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     width: '100%',
   },
   pickerItem: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
+    fontSize: TYPOGRAPHY.sizes.xl,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
     color: userTheme.primary,
@@ -829,13 +829,13 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     marginBottom: SPACING.sm,
   },
   carouselLabel: {
-    fontSize: TYPOGRAPHY.fontSize.xl,
+    fontSize: TYPOGRAPHY.sizes.xl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
     marginBottom: SPACING.xs,
   },
   carouselDescription: {
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontSize: TYPOGRAPHY.sizes.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[600],
     textAlign: 'center',
@@ -856,7 +856,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     ...SHADOWS.level1,
   },
   cancelButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: TYPOGRAPHY.sizes.lg,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: userTheme.primary,
   },
@@ -869,7 +869,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     ...SHADOWS.level2,
   },
   saveButtonText: {
-    fontSize: TYPOGRAPHY.fontSize.lg,
+    fontSize: TYPOGRAPHY.sizes.lg,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.white,
   },

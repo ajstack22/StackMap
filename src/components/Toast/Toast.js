@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   },
   message: {
     color: 'white',
-    fontSize: TYPOGRAPHY.fontSize.md,
+    fontSize: TYPOGRAPHY.sizes.md,
     flex: 1,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
@@ -117,8 +117,8 @@ const styles = StyleSheet.create({
   },
   actionText: {
     color: 'white',
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
-    fontSize: TYPOGRAPHY.fontSize.sm,
+    fontWeight: TYPOGRAPHY.weights.bold,
+    fontSize: TYPOGRAPHY.sizes.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 });

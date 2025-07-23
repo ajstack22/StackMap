@@ -2,8 +2,9 @@ import React from 'react';
 import { View } from 'react-native';
 import Svg, { Rect } from 'react-native-svg';
 
-const Logo = ({ size = 32, theme }) => {
+const Logo = ({ size = 32, theme, color }) => {
   const primaryColor = theme?.primary || '#667eea';
+  const logoColor = color || 'white'; // Default to white if no color specified
   
   // Adjust size to match letter height (about 20 for a 32 font size)
   const logoHeight = size * 0.625; // roughly the x-height of the font
@@ -12,7 +13,7 @@ const Logo = ({ size = 32, theme }) => {
   return (
     <View style={{ width: logoWidth, height: logoHeight }}>
       <Svg width={logoWidth} height={logoHeight} viewBox={`0 0 32 20`}>
-        {/* Top rectangle - white, 10% shorter */}
+        {/* Top rectangle - 10% shorter */}
         <Rect 
           x="4" 
           y="0" 
@@ -20,10 +21,10 @@ const Logo = ({ size = 32, theme }) => {
           height="3.6" 
           rx="3" 
           ry="3" 
-          fill="white"
+          fill={logoColor}
         />
         
-        {/* Middle rectangle - white, 10% shorter */}
+        {/* Middle rectangle - 10% shorter */}
         <Rect 
           x="4" 
           y="5.6" 
@@ -31,10 +32,10 @@ const Logo = ({ size = 32, theme }) => {
           height="3.6" 
           rx="3" 
           ry="3" 
-          fill="white"
+          fill={logoColor}
         />
         
-        {/* Bottom rectangle - white, 5% taller */}
+        {/* Bottom rectangle - 5% taller */}
         <Rect 
           x="4" 
           y="11.2" 
@@ -42,7 +43,7 @@ const Logo = ({ size = 32, theme }) => {
           height="8.4" 
           rx="3" 
           ry="3" 
-          fill="white"
+          fill={logoColor}
         />
       </Svg>
     </View>

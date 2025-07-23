@@ -488,8 +488,8 @@ const styles = StyleSheet.create({
     borderBottomColor: COLORS.gray[200],
   },
   title: {
-    fontSize: isTablet() ? TYPOGRAPHY.fontSize.xl : TYPOGRAPHY.fontSize.lg,
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontSize: isTablet() ? TYPOGRAPHY.sizes.xl : TYPOGRAPHY.sizes.lg,
+    fontWeight: TYPOGRAPHY.weights.bold,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
   },
@@ -507,7 +507,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     paddingVertical: SPACING.sm,
-    fontSize: isTablet() ? TYPOGRAPHY.fontSize.lg : TYPOGRAPHY.fontSize.md,
+    fontSize: isTablet() ? TYPOGRAPHY.sizes.lg : TYPOGRAPHY.sizes.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[900],
     ...(Platform.OS === 'android' && {
@@ -532,13 +532,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#667eea',
   },
   categoryText: {
-    fontSize: isTablet() ? TYPOGRAPHY.fontSize.md : TYPOGRAPHY.fontSize.sm,
+    fontSize: isTablet() ? TYPOGRAPHY.sizes.md : TYPOGRAPHY.sizes.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[700],
   },
   selectedCategoryText: {
     color: 'white',
-    fontWeight: TYPOGRAPHY.fontWeight.bold,
+    fontWeight: TYPOGRAPHY.weights.bold,
   },
   emojiGrid: {
     paddingVertical: SPACING.md,
@@ -596,7 +596,7 @@ const styles = StyleSheet.create({
     gap: SPACING.sm,
   },
   detectedEmojiLabel: {
-    fontSize: isTablet() ? TYPOGRAPHY.fontSize.sm : TYPOGRAPHY.fontSize.xs,
+    fontSize: isTablet() ? TYPOGRAPHY.sizes.sm : TYPOGRAPHY.sizes.xs,
     color: COLORS.gray[600],
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -615,7 +615,7 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 48 : 40,
   },
   detectedEmojiHint: {
-    fontSize: isTablet() ? TYPOGRAPHY.fontSize.xs : 11,
+    fontSize: isTablet() ? TYPOGRAPHY.sizes.xs : 11,
     color: COLORS.gray[500],
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginTop: SPACING.xs,

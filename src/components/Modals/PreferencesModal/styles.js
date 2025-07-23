@@ -104,6 +104,12 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
+  syncSection: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#e0e0e0',
+  },
   infoSection: {
     marginTop: 30,
     paddingTop: 20,

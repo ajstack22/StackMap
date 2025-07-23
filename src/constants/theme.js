@@ -150,7 +150,7 @@ export const TYPOGRAPHY = {
       web: "'Comic Relief', 'Comic Sans MS', cursive"
     }),
   },
-  fontSize: {
+  sizes: {
     xs: 12,
     sm: 14,
     md: 16,
@@ -159,7 +159,7 @@ export const TYPOGRAPHY = {
     xxl: 24,
     xxxl: 28,
   },
-  fontWeight: {
+  weights: {
     normal: '400',
     medium: '500',
     semibold: '600',

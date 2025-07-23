@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { TYPOGRAPHY, SPACING, RADIUS, COLORS, SHADOWS } from '../../../constants';
 
 export const styles = StyleSheet.create({
@@ -141,5 +141,85 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.medium,
     padding: 20,
     ...SHADOWS.medium,
+  },
+  syncStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  syncStatusText: {
+    fontSize: 16,
+    color: '#333',
+    fontWeight: '500',
+  },
+  syncDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 16,
+    lineHeight: 20,
+  },
+  recoveryPhraseContainer: {
+    backgroundColor: '#f8f9fa',
+    borderRadius: RADIUS.small,
+    padding: 16,
+    marginBottom: 16,
+  },
+  recoveryPhraseLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  recoveryPhrase: {
+    fontSize: 16,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    color: '#333',
+    marginBottom: 12,
+    lineHeight: 24,
+  },
+  recoveryPhraseWarning: {
+    fontSize: 13,
+    color: '#e67e22',
+    lineHeight: 18,
+  },
+  recoveryInputContainer: {
+    marginBottom: 16,
+  },
+  recoveryInputLabel: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+  },
+  recoveryInput: {
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: RADIUS.small,
+    padding: 12,
+    fontSize: 16,
+    marginBottom: 8,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  recoveryInputButtons: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  errorText: {
+    color: COLORS.error,
+    fontSize: 13,
+    marginBottom: 8,
+  },
+  dangerZone: {
+    marginTop: 20,
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#ffcdd2',
+  },
+  dangerZoneText: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
 });
