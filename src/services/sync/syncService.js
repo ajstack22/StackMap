@@ -17,14 +17,26 @@ const getApiBaseUrl = () => {
       // Use the production API with proxy or return local API if you have one
       return 'https://stackmap.app/api/sync';
     }
-    // For web, use relative path to work in both root and subdirectories
-    return './api/sync';
   }
-  // For native apps, use absolute URL
+  // Always use absolute URL for main sync endpoints
   return 'https://stackmap.app/api/sync';
 };
 
 const API_BASE_URL = getApiBaseUrl();
+
+// For share endpoints in subdirectories, use relative path
+const getShareApiUrl = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'https://stackmap.app/api/sync';
+    }
+    // Use relative path for share endpoints to work in subdirectories
+    return './api/sync';
+  }
+  return 'https://stackmap.app/api/sync';
+};
+
+const SHARE_API_URL = getShareApiUrl();
 
 class SyncService {
   constructor() {
@@ -1073,7 +1085,7 @@ class SyncService {
       const deviceId = await encryptionService.getDeviceId();
       const deviceName = encryptionService.getDeviceName();
 
-      const response = await fetch(`${API_BASE_URL}/create_share.php`, {
+      const response = await fetch(`${SHARE_API_URL}/create_share.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
