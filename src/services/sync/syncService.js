@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import encryptionService from './encryptionService';
 import { useAppStore } from '../../stores';
 import syncQueue from './syncQueue';
@@ -8,7 +9,19 @@ import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
 
-const API_BASE_URL = 'https://stackmap.app/api/sync';
+// Determine API URL based on environment
+const getApiBaseUrl = () => {
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    // For local development
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // Use the production API with proxy or return local API if you have one
+      return 'https://stackmap.app/api/sync';
+    }
+  }
+  return 'https://stackmap.app/api/sync';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class SyncService {
   constructor() {
@@ -1016,6 +1029,20 @@ class SyncService {
       
       if (!user) {
         throw new Error('User not found');
+      }
+
+      // For local development, return a mock response
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.warn('Share links require deployment to stackmap.app. Returning mock data for local testing.');
+          const mockUrl = `https://stackmap.app?share=${accessToken}`;
+          return {
+            share_id: 'mock-' + Date.now(),
+            access_token: accessToken,
+            expires_at: new Date(Date.now() + (expiresHours * 60 * 60 * 1000)).toISOString(),
+            share_url: mockUrl
+          };
+        }
       }
 
       // Prepare user data for sharing
