@@ -12,6 +12,7 @@ import {
   ScrollView,
   Animated,
   StatusBar,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -37,7 +38,14 @@ const OnboardingNew = ({ onComplete, onImport }) => {
   const [users, setUsers] = useState([]);
   const [emojiInputValue, setEmojiInputValue] = useState('');
   const [pin, setPin] = useState('');
+  const [confirmPin, setConfirmPin] = useState('');
+  const [pinError, setPinError] = useState('');
   const [activeFeature, setActiveFeature] = useState(0);
+  
+  // Sync-related state
+  const [recoveryInput, setRecoveryInput] = useState('');
+  const [syncLoading, setSyncLoading] = useState(false);
+  const [syncError, setSyncError] = useState('');
   
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -94,6 +102,13 @@ const OnboardingNew = ({ onComplete, onImport }) => {
     ]).start(() => {
       setCurrentScreen(nextScreen);
       slideAnim.setValue(50);
+      
+      // Reset sync state when entering sync screen
+      if (nextScreen === 'sync') {
+        setRecoveryInput('');
+        setSyncError('');
+      }
+      
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -118,7 +133,7 @@ const OnboardingNew = ({ onComplete, onImport }) => {
       if (users.length === 0) {
         transitionTo('features');
       } else {
-        transitionTo('complete');
+        transitionTo('setupPin');
       }
     }
   };
@@ -183,13 +198,23 @@ const OnboardingNew = ({ onComplete, onImport }) => {
               <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Fresh</Text>
             </TouchableOpacity>
             
-            <TouchableOpacity 
-              style={[styles.secondaryButton, { marginTop: 10 }]}
-              onPress={onImport}
-            >
-              <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-              <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore Backup</Text>
-            </TouchableOpacity>
+            <View style={styles.secondaryButtonsRow}>
+              <TouchableOpacity 
+                style={[styles.secondaryButton, styles.secondaryButtonEqual]}
+                onPress={onImport}
+              >
+                <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
+                <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore StackMap</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity 
+                style={[styles.secondaryButton, styles.secondaryButtonEqual]}
+                onPress={() => transitionTo('sync')}
+              >
+                <Icon name="cloud-sync" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
+                <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         );
 
@@ -382,7 +407,7 @@ const OnboardingNew = ({ onComplete, onImport }) => {
                 style={styles.primaryButton}
                 onPress={() => {
                   if (users.length > 0) {
-                    transitionTo('complete');
+                    transitionTo('setupPin');
                   } else {
                     transitionTo('createUser');
                   }
@@ -403,6 +428,190 @@ const OnboardingNew = ({ onComplete, onImport }) => {
               )}
             </ScrollView>
           </View>
+        );
+
+      case 'sync':
+        const handleSyncSetup = async () => {
+          setSyncLoading(true);
+          setSyncError('');
+          
+          try {
+            const syncService = require('../../services/sync/syncService').default;
+            await syncService.initialize(recoveryInput);
+            
+            // Check if sync restored users
+            const { useAppStore } = require('../../stores');
+            const syncedUsers = useAppStore.getState().users;
+            
+            if (syncedUsers && Object.keys(syncedUsers).length > 0) {
+              // Users already exist from sync, skip user creation
+              const userList = Object.values(syncedUsers);
+              setUsers(userList);
+              
+              // Mark onboarding as complete
+              useAppStore.setState({ hasCompletedOnboarding: true });
+              
+              // Complete onboarding with synced users
+              onComplete({ users: userList, pin: null });
+            } else {
+              // No users in sync, continue to user creation
+              transitionTo('createUser');
+            }
+          } catch (error) {
+            setSyncError(error.message || 'Failed to join sync');
+          } finally {
+            setSyncLoading(false);
+          }
+        };
+        
+        return (
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={[styles.createUserContainer, {
+              paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
+              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.bottom)
+            }]}
+          >
+            <Logo size={Platform.OS === 'web' ? 60 : 50} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
+            <Text style={styles.screenTitle}>Sync Your StackMap</Text>
+            <Text style={styles.syncSubtitle}>
+              Join your existing sync to keep your activities synchronized across all your devices
+            </Text>
+            
+            <View style={styles.syncFeatures}>
+              <View style={styles.syncFeature}>
+                <Icon name="lock" size={24} color={THEMES.stackBlue.primary} />
+                <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
+              </View>
+              <View style={styles.syncFeature}>
+                <Icon name="sync" size={24} color={THEMES.stackBlue.primary} />
+                <Text style={styles.syncFeatureText}>Automatic sync</Text>
+              </View>
+              <View style={styles.syncFeature}>
+                <Icon name="devices" size={24} color={THEMES.stackBlue.primary} />
+                <Text style={styles.syncFeatureText}>Multi-device support</Text>
+              </View>
+            </View>
+            
+            <View style={styles.formSection}>
+              <Text style={styles.inputLabel}>Enter Recovery Phrase</Text>
+              <TextInput
+                style={[styles.textInput, { height: 80 }]}
+                placeholder="Enter your recovery phrase from another device"
+                placeholderTextColor={COLORS.gray[400]}
+                value={recoveryInput}
+                onChangeText={setRecoveryInput}
+                multiline
+                autoCapitalize="none"
+                autoCorrect={false}
+                autoFocus
+              />
+              {syncError ? (
+                <Text style={styles.errorText}>{syncError}</Text>
+              ) : null}
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.primaryButton, syncLoading && styles.disabledButton]}
+              onPress={handleSyncSetup}
+              disabled={syncLoading || !recoveryInput.trim()}
+            >
+              {syncLoading ? (
+                <ActivityIndicator size="small" color="white" />
+              ) : (
+                <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Join Sync</Text>
+              )}
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.secondaryButton, { marginTop: 10 }]}
+              onPress={() => transitionTo('welcome')}
+            >
+              <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
+        );
+
+      case 'setupPin':
+        const handlePinSetup = () => {
+          if (pin && pin === confirmPin) {
+            transitionTo('complete');
+          } else if (pin !== confirmPin) {
+            setPinError('PINs do not match');
+          }
+        };
+        
+        return (
+          <KeyboardAvoidingView 
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={[styles.createUserContainer, {
+              paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
+              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.bottom)
+            }]}
+          >
+            <Text style={styles.screenTitle}>Secure Your StackMap</Text>
+            <Text style={styles.screenSubtitle}>
+              Set up a PIN to protect your edit mode and settings (optional)
+            </Text>
+            
+            <View style={styles.formSection}>
+              <Text style={styles.inputLabel}>Create PIN</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Enter 4-6 digit PIN"
+                placeholderTextColor={COLORS.gray[400]}
+                value={pin}
+                onChangeText={(text) => {
+                  setPinError('');
+                  setPin(text.replace(/\D/g, ''));
+                }}
+                keyboardType="numeric"
+                secureTextEntry={true}
+                maxLength={6}
+                autoFocus
+              />
+              
+              <Text style={[styles.inputLabel, { marginTop: 20 }]}>Confirm PIN</Text>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Re-enter PIN"
+                placeholderTextColor={COLORS.gray[400]}
+                value={confirmPin}
+                onChangeText={(text) => {
+                  setPinError('');
+                  setConfirmPin(text.replace(/\D/g, ''));
+                }}
+                keyboardType="numeric"
+                secureTextEntry={true}
+                maxLength={6}
+              />
+              
+              {pinError ? (
+                <Text style={styles.errorText}>{pinError}</Text>
+              ) : null}
+            </View>
+            
+            <TouchableOpacity 
+              style={[styles.primaryButton, (!pin || pin.length < 4 || !confirmPin) && styles.disabledButton]}
+              onPress={handlePinSetup}
+              disabled={!pin || pin.length < 4 || !confirmPin}
+            >
+              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
+                Set PIN
+              </Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity 
+              style={[styles.secondaryButton, { marginTop: 10 }]}
+              onPress={() => {
+                setPin('');
+                setConfirmPin('');
+                transitionTo('complete');
+              }}
+            >
+              <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip for Now</Text>
+            </TouchableOpacity>
+          </KeyboardAvoidingView>
         );
 
       case 'complete':
@@ -430,7 +639,7 @@ const OnboardingNew = ({ onComplete, onImport }) => {
 
             <TouchableOpacity 
               style={styles.primaryButton}
-              onPress={() => onComplete({ users, pin: null })}
+              onPress={() => onComplete({ users, pin: pin || null })}
             >
               <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Using StackMap</Text>
             </TouchableOpacity>
@@ -528,9 +737,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
+  secondaryButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 400 : 350,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  secondaryButtonEqual: {
+    flex: 1,
+    minWidth: undefined,
+    maxWidth: undefined,
+  },
   secondaryButton: {
     backgroundColor: 'white',
-    paddingHorizontal: Platform.OS === 'web' ? 20 : 20,
+    paddingHorizontal: Platform.OS === 'web' ? 16 : 14,
     paddingVertical: Platform.OS === 'web' ? 12 : 10,
     borderRadius: 8,
     borderWidth: 2,
@@ -951,6 +1174,91 @@ const styles = StyleSheet.create({
     color: COLORS.gray[600],
     marginTop: SPACING.sm,
     marginBottom: SPACING.lg,
+  },
+  syncContent: {
+    paddingTop: Platform.OS === 'web' ? 60 : 40,
+    paddingBottom: Platform.OS === 'web' ? 40 : 20,
+    paddingHorizontal: Platform.OS === 'web' ? 40 : 16,
+    alignItems: 'center',
+    minHeight: Platform.OS === 'web' ? '100%' : undefined,
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-start',
+  },
+  syncSubtitle: {
+    fontSize: Platform.OS === 'web' ? 16 : 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.gray[600],
+    textAlign: 'center',
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.xl,
+    maxWidth: 400,
+    lineHeight: Platform.OS === 'web' ? 24 : 20,
+  },
+  syncFeatures: {
+    width: '100%',
+    maxWidth: 400,
+    marginBottom: SPACING.xl,
+    gap: SPACING.md,
+  },
+  syncFeature: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.md,
+    ...SHADOWS.level1,
+  },
+  syncFeatureText: {
+    fontSize: Platform.OS === 'web' ? 16 : 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: COLORS.gray[700],
+    flex: 1,
+  },
+  syncInfoText: {
+    fontSize: Platform.OS === 'web' ? 14 : 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.gray[600],
+    textAlign: 'center',
+    marginTop: SPACING.xs,
+    lineHeight: Platform.OS === 'web' ? 20 : 18,
+  },
+  errorText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: COLORS.error,
+    marginTop: SPACING.xs,
+    textAlign: 'center',
+  },
+  recoveryPhraseContainer: {
+    backgroundColor: 'white',
+    padding: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginVertical: SPACING.xl,
+    width: '100%',
+    maxWidth: 400,
+    ...SHADOWS.level2,
+  },
+  recoveryPhraseLabel: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.gray[700],
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  recoveryPhrase: {
+    fontSize: Platform.OS === 'web' ? 18 : 16,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    color: COLORS.gray[900],
+    textAlign: 'center',
+    marginVertical: SPACING.md,
+    lineHeight: Platform.OS === 'web' ? 26 : 24,
+  },
+  recoveryPhraseWarning: {
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#ff9800',
+    textAlign: 'center',
+    marginTop: SPACING.sm,
   },
 });
 

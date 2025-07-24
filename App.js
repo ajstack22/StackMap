@@ -21,6 +21,7 @@ import {
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSyncOnChange } from './src/hooks/useSyncOnChange';
 // Conditionally import drag-and-drop libraries for iOS only
 const DraggableFlatList = Platform.OS === 'ios' 
   ? require('react-native-draggable-flatlist').default 
@@ -144,6 +145,9 @@ const App = () => {
   
   // Use our custom hooks
   const { toast, showToast, hideToast } = useToast();
+  
+  // Enable automatic sync on state changes
+  useSyncOnChange();
   
   // Zustand store - using a single selector for better performance
   const {

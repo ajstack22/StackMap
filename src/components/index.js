@@ -6,7 +6,7 @@ export { default as Logo } from './Logo';
 export { default as ActivityLibrary } from './ActivityLibrary';
 export { default as EmojiPicker } from './EmojiPicker';
 export { default as CelebrationView } from './CelebrationManager';
-export { default as SyncSettings } from './SyncSettings';
+export { default as SyncStatusIndicator } from './SyncStatusIndicator';
 
 // Import modal components directly to avoid re-export issues
 import ContextModal from './Modals/ContextModal/ContextModal';
@@ -19,6 +19,7 @@ import PrivacyModal from './Modals/PrivacyModal/PrivacyModal';
 import SupportModal from './Modals/SupportModal/SupportModal';
 import EditModeSettingsModal from './Modals/EditModeSettingsModal/EditModeSettingsModal';
 import ReorderModal from './Modals/ReorderModal/ReorderModal';
+import ConflictResolutionModal from './ConflictResolutionModal/ConflictResolutionModal';
 
 // Export the imported modal components
 export {
@@ -31,5 +32,6 @@ export {
   PrivacyModal,
   SupportModal,
   EditModeSettingsModal,
-  ReorderModal
+  ReorderModal,
+  ConflictResolutionModal
 };

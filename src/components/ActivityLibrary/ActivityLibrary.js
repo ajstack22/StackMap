@@ -110,6 +110,12 @@ const ActivityRow = ({
   theme,
 }) => {
   const [justAdded, setJustAdded] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const menuButtonRef = useRef(null);
+  const screenWidth = Dimensions.get('window').width;
+  const isMobile = screenWidth < 480;
+  const insets = useSafeAreaInsets();
   const handleDelete = () => {
     Alert.alert(
       'Delete Activity',
@@ -137,35 +143,148 @@ const ActivityRow = ({
       </View>
       
       <View style={styles.activityActions}>
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => onEdit(activity)}
-        >
-          <Icon name="edit" size={20} color={theme.primary} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={handleDelete}
-        >
-          <Icon name="delete" size={20} color={COLORS.error} />
-        </TouchableOpacity>
-        
-        <TouchableOpacity
-          style={styles.iconButton}
-          onPress={() => {
-            onQuickAdd(activity);
-            setJustAdded(true);
-            setTimeout(() => setJustAdded(false), 1500);
-          }}
-          disabled={justAdded}
-        >
-          <Icon 
-            name={justAdded ? "check" : "add"} 
-            size={20} 
-            color={justAdded ? '#4CAF50' : theme.primary} 
-          />
-        </TouchableOpacity>
+        {isMobile ? (
+          <>
+            <TouchableOpacity
+              style={[styles.iconButton, { marginRight: SPACING.xs }]}
+              onPress={() => {
+                onQuickAdd(activity);
+                setJustAdded(true);
+                setTimeout(() => setJustAdded(false), 1500);
+              }}
+              disabled={justAdded}
+            >
+              <Icon 
+                name={justAdded ? "check" : "add-circle"} 
+                size={20} 
+                color={justAdded ? '#4CAF50' : theme.primary} 
+              />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              ref={menuButtonRef}
+              style={styles.iconButton}
+              onPress={() => {
+                if (menuButtonRef.current && !showMenu) {
+                  menuButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+                    setMenuPosition({ x: pageX, y: pageY + height });
+                  });
+                }
+                setShowMenu(!showMenu);
+              }}
+            >
+              <Icon name="more-vert" size={20} color={theme.primary} />
+            </TouchableOpacity>
+            
+            {showMenu && (
+              <Modal
+                transparent={true}
+                visible={showMenu}
+                onRequestClose={() => setShowMenu(false)}
+                animationType={Platform.OS === 'ios' ? 'none' : 'fade'}
+              >
+                <TouchableOpacity
+                  style={styles.menuOverlay}
+                  activeOpacity={1}
+                  onPress={() => setShowMenu(false)}
+                >
+                  {Platform.OS === 'web' ? (
+                    <View style={[
+                      styles.menuDropdown,
+                      {
+                        top: menuPosition.y,
+                        right: Math.max(20, screenWidth - menuPosition.x),
+                      }
+                    ]}>
+                      <TouchableOpacity
+                        style={styles.menuItem}
+                        onPress={() => {
+                          setShowMenu(false);
+                          onEdit(activity);
+                        }}
+                      >
+                        <Icon name="edit" size={20} color={theme.primary} />
+                        <Text style={[styles.menuItemText, { color: theme.primary }]}>Edit Activity</Text>
+                      </TouchableOpacity>
+                      
+                      <TouchableOpacity
+                        style={[styles.menuItem, styles.menuItemDanger]}
+                        onPress={() => {
+                          setShowMenu(false);
+                          handleDelete();
+                        }}
+                      >
+                        <Icon name="delete" size={20} color={COLORS.error} />
+                        <Text style={[styles.menuItemText, { color: COLORS.error }]}>Delete Activity</Text>
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <SafeAreaView style={styles.mobileMenuContainer}>
+                      <View style={[styles.mobileMenuCard, { paddingBottom: SPACING.xl + Math.max(insets.bottom, 16) }]}>
+                        <View style={styles.mobileMenuHandle} />
+                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md }]}>{activity.name}</Text>
+                        
+                        <TouchableOpacity
+                          style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                          onPress={() => {
+                            setShowMenu(false);
+                            onEdit(activity);
+                          }}
+                        >
+                          <Icon name="edit" size={24} color={theme.primary} />
+                          <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Edit Activity</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                          style={[styles.menuItem, styles.menuItemDanger, { paddingHorizontal: SPACING.lg }]}
+                          onPress={() => {
+                            setShowMenu(false);
+                            handleDelete();
+                          }}
+                        >
+                          <Icon name="delete" size={24} color={COLORS.error} />
+                          <Text style={[styles.menuItemText, { color: COLORS.error, fontSize: 18 }]}>Delete Activity</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </SafeAreaView>
+                  )}
+                </TouchableOpacity>
+              </Modal>
+            )}
+          </>
+        ) : (
+          <>
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => onEdit(activity)}
+            >
+              <Icon name="edit" size={20} color={theme.primary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={handleDelete}
+            >
+              <Icon name="delete" size={20} color={COLORS.error} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={styles.iconButton}
+              onPress={() => {
+                onQuickAdd(activity);
+                setJustAdded(true);
+                setTimeout(() => setJustAdded(false), 1500);
+              }}
+              disabled={justAdded}
+            >
+              <Icon 
+                name={justAdded ? "check" : "add-circle"} 
+                size={20} 
+                color={justAdded ? '#4CAF50' : theme.primary} 
+              />
+            </TouchableOpacity>
+          </>
+        )}
       </View>
     </View>
   );
@@ -179,6 +298,7 @@ const CategorySection = ({
   onDeleteActivity,
   onQuickAdd,
   onAddActivity,
+  onAddAllFromCategory,
   onUpdateCategory,
   theme,
   editingCategoryId,
@@ -196,6 +316,12 @@ const CategorySection = ({
   const [isExpanded, setIsExpanded] = useState(expandedState !== undefined ? expandedState : true);
   const [editingCategoryName, setEditingCategoryName] = useState(category.name);
   const [orderedActivities, setOrderedActivities] = useState(category.activities);
+  const [showMenu, setShowMenu] = useState(false);
+  const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const menuButtonRef = useRef(null);
+  const screenWidth = Dimensions.get('window').width;
+  const isMobile = screenWidth < 480;
+  const insets = useSafeAreaInsets();
   // Use useRef for Animated values to avoid re-creation issues
   const expandAnim = useRef(new Animated.Value(expandedState !== undefined ? (expandedState ? 1 : 0) : 1)).current;
   const rotateAnim = useRef(new Animated.Value(expandedState !== undefined ? (expandedState ? 1 : 0) : 1)).current;
@@ -402,27 +528,185 @@ const CategorySection = ({
             </TouchableOpacity>
             
             <View style={styles.categoryActions}>
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={handleStartEditCategory}
-              >
-                <Icon name="edit" size={20} color="white" />
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.iconButton, category.id === 'my-templates' && styles.disabledButton]}
-                onPress={category.id === 'my-templates' ? undefined : handleDeleteCategory}
-                disabled={category.id === 'my-templates'}
-              >
-                <Icon name="delete" size={20} color={category.id === 'my-templates' ? '#999' : 'white'} />
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={styles.iconButton}
-                onPress={() => onAddActivity(category)}
-              >
-                <Icon name="add" size={20} color="white" />
-              </TouchableOpacity>
+              {isMobile ? (
+                <>
+                  <TouchableOpacity
+                    ref={menuButtonRef}
+                    style={styles.iconButton}
+                    onPress={() => {
+                      if (menuButtonRef.current && !showMenu) {
+                        menuButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
+                          setMenuPosition({ x: pageX, y: pageY + height });
+                        });
+                      }
+                      setShowMenu(!showMenu);
+                    }}
+                  >
+                    <Icon name="more-vert" size={20} color="white" />
+                  </TouchableOpacity>
+                  
+                  {showMenu && (
+                    <Modal
+                      transparent={true}
+                      visible={showMenu}
+                      onRequestClose={() => setShowMenu(false)}
+                      animationType={Platform.OS === 'web' ? 'none' : 'slide'}
+                    >
+                      <TouchableOpacity
+                        style={styles.menuOverlay}
+                        activeOpacity={1}
+                        onPress={() => setShowMenu(false)}
+                      >
+                        {Platform.OS === 'web' ? (
+                          <View style={[
+                            styles.menuDropdown,
+                            {
+                              top: menuPosition.y,
+                              right: Math.max(20, screenWidth - menuPosition.x),
+                            }
+                          ]}>
+                            <TouchableOpacity
+                              style={styles.menuItem}
+                              onPress={() => {
+                                setShowMenu(false);
+                                handleStartEditCategory();
+                              }}
+                            >
+                              <Icon name="edit" size={20} color={theme.primary} />
+                              <Text style={[styles.menuItemText, { color: theme.primary }]}>Edit Name</Text>
+                            </TouchableOpacity>
+                            
+                            {category.activities.length > 0 && (
+                              <TouchableOpacity
+                                style={styles.menuItem}
+                                onPress={() => {
+                                  setShowMenu(false);
+                                  onAddAllFromCategory(category);
+                                }}
+                              >
+                                <Icon name="add-circle-outline" size={20} color={theme.primary} />
+                                <Text style={[styles.menuItemText, { color: theme.primary }]}>Add All to Cards</Text>
+                              </TouchableOpacity>
+                            )}
+                            
+                            <TouchableOpacity
+                              style={styles.menuItem}
+                              onPress={() => {
+                                setShowMenu(false);
+                                onAddActivity(category);
+                              }}
+                            >
+                              <Icon name="library-add" size={20} color={theme.primary} />
+                              <Text style={[styles.menuItemText, { color: theme.primary }]}>Add New Activity</Text>
+                            </TouchableOpacity>
+                            
+                            {category.id !== 'my-templates' && (
+                              <TouchableOpacity
+                                style={[styles.menuItem, styles.menuItemDanger]}
+                                onPress={() => {
+                                  setShowMenu(false);
+                                  handleDeleteCategory();
+                                }}
+                              >
+                                <Icon name="delete" size={20} color={COLORS.error} />
+                                <Text style={[styles.menuItemText, { color: COLORS.error }]}>Delete Category</Text>
+                              </TouchableOpacity>
+                            )}
+                          </View>
+                        ) : (
+                          <SafeAreaView style={styles.mobileMenuContainer}>
+                            <View style={[styles.mobileMenuCard, { paddingBottom: SPACING.xl + Math.max(insets.bottom, 16) }]}>
+                              <View style={styles.mobileMenuHandle} />
+                              <Text style={[styles.categoryTitle, { color: theme.primary, textAlign: 'center', marginBottom: SPACING.md }]}>{category.name}</Text>
+                              
+                              <TouchableOpacity
+                                style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                                onPress={() => {
+                                  setShowMenu(false);
+                                  handleStartEditCategory();
+                                }}
+                              >
+                                <Icon name="edit" size={24} color={theme.primary} />
+                                <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Edit Name</Text>
+                              </TouchableOpacity>
+                              
+                              {category.activities.length > 0 && (
+                                <TouchableOpacity
+                                  style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                                  onPress={() => {
+                                    setShowMenu(false);
+                                    onAddAllFromCategory(category);
+                                  }}
+                                >
+                                  <Icon name="add-circle-outline" size={24} color={theme.primary} />
+                                  <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Add All to Cards</Text>
+                                </TouchableOpacity>
+                              )}
+                              
+                              <TouchableOpacity
+                                style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                                onPress={() => {
+                                  setShowMenu(false);
+                                  onAddActivity(category);
+                                }}
+                              >
+                                <Icon name="library-add" size={24} color={theme.primary} />
+                                <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Add New Activity</Text>
+                              </TouchableOpacity>
+                              
+                              {category.id !== 'my-templates' && (
+                                <TouchableOpacity
+                                  style={[styles.menuItem, styles.menuItemDanger, { paddingHorizontal: SPACING.lg }]}
+                                  onPress={() => {
+                                    setShowMenu(false);
+                                    handleDeleteCategory();
+                                  }}
+                                >
+                                  <Icon name="delete" size={24} color={COLORS.error} />
+                                  <Text style={[styles.menuItemText, { color: COLORS.error, fontSize: 18 }]}>Delete Category</Text>
+                                </TouchableOpacity>
+                              )}
+                            </View>
+                          </SafeAreaView>
+                        )}
+                      </TouchableOpacity>
+                    </Modal>
+                  )}
+                </>
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={handleStartEditCategory}
+                  >
+                    <Icon name="edit" size={20} color="white" />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[styles.iconButton, category.id === 'my-templates' && styles.disabledButton]}
+                    onPress={category.id === 'my-templates' ? undefined : handleDeleteCategory}
+                    disabled={category.id === 'my-templates'}
+                  >
+                    <Icon name="delete" size={20} color={category.id === 'my-templates' ? '#999' : 'white'} />
+                  </TouchableOpacity>
+                  
+                  {category.activities.length > 0 && (
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={() => onAddAllFromCategory(category)}
+                    >
+                      <Icon name="add-circle-outline" size={20} color="white" />
+                    </TouchableOpacity>
+                  )}
+                  
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => onAddActivity(category)}
+                  >
+                    <Icon name="library-add" size={20} color="white" />
+                  </TouchableOpacity>
+                </>
+              )}
             </View>
           </>
         )}
@@ -696,6 +980,26 @@ const ActivityLibrary = ({
     }
   };
 
+  const handleAddAllFromCategory = (category) => {
+    if (onSelectActivity && category.activities.length > 0) {
+      // Add all activities from this category
+      category.activities.forEach(activity => {
+        onSelectActivity({
+          emoji: activity.emoji,
+          text: activity.name,
+          title: activity.name,
+          description: activity.description || '',
+        });
+      });
+      
+      Alert.alert(
+        'Added to Cards',
+        `Added ${category.activities.length} activities from "${category.name}" to your current cards.`,
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   const handleUpdateCategory = (categoryId, newName, newActivities) => {
     const newCategories = categories.map(cat =>
       cat.id === categoryId
@@ -897,6 +1201,7 @@ const ActivityLibrary = ({
                 onDeleteActivity={handleDeleteActivity}
                 onQuickAdd={handleQuickAdd}
                 onAddActivity={handleAddActivity}
+                onAddAllFromCategory={handleAddAllFromCategory}
                 onUpdateCategory={handleUpdateCategory}
                 theme={theme}
                 editingCategoryId={editingCategoryId}
@@ -1315,6 +1620,55 @@ const styles = StyleSheet.create({
     color: 'white',
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  menuOverlay: {
+    flex: 1,
+    backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0, 0, 0, 0.3)',
+  },
+  menuDropdown: {
+    position: 'absolute',
+    borderRadius: RADIUS.lg,
+    backgroundColor: 'white',
+    ...SHADOWS.level3,
+    minWidth: 220,
+    paddingVertical: SPACING.sm,
+  },
+  mobileMenuContainer: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  mobileMenuCard: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    paddingTop: SPACING.lg,
+    ...SHADOWS.level3,
+  },
+  mobileMenuHandle: {
+    width: 40,
+    height: 4,
+    backgroundColor: COLORS.gray[300],
+    borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: SPACING.md,
+  },
+  menuItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  menuItemText: {
+    marginLeft: SPACING.sm,
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  menuItemDanger: {
+    borderTopWidth: 1,
+    borderTopColor: COLORS.gray[200],
+    marginTop: SPACING.xs,
+    paddingTop: SPACING.sm,
   },
 });
 

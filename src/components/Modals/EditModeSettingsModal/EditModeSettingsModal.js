@@ -16,6 +16,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { COLORS } from '../../../constants';
 import { styles } from './styles';
 import syncService from '../../../services/sync/syncService';
+import SyncStatusIndicator from '../../SyncStatusIndicator';
 
 const EditModeSettingsModal = ({
   visible,
@@ -271,8 +272,8 @@ const EditModeSettingsModal = ({
               )}
             </View>
             
-            {/* Data Management Section */}
-            <Text style={styles.sectionTitle}>Data Management</Text>
+            {/* Local Data Section */}
+            <Text style={styles.sectionTitle}>Local Data</Text>
             <View style={styles.settingsSection}>
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: theme.primary, marginBottom: 10 }]}
@@ -304,10 +305,7 @@ const EditModeSettingsModal = ({
             <View style={styles.settingsSection}>
               {syncEnabled ? (
                 <>
-                  <View style={styles.syncStatus}>
-                    <Icon name="sync" size={24} color={theme.primary} />
-                    <Text style={styles.syncStatusText}>Sync is enabled</Text>
-                  </View>
+                  <SyncStatusIndicator theme={theme} showDetails={true} />
                   
                   {showRecoveryPhrase ? (
                     <View style={styles.recoveryPhraseContainer}>
@@ -352,7 +350,7 @@ const EditModeSettingsModal = ({
                     onPress={async () => {
                       setSyncLoading(true);
                       try {
-                        await syncService.sync();
+                        await syncService.requestSync({ immediate: true, priority: 'high' });
                         showToast('Sync completed successfully', 'success');
                         setLastSyncTime(new Date());
                       } catch (error) {
