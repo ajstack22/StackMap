@@ -10,7 +10,6 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { format } from 'date-fns';
-import ActivityCard from '../ActivityCard/ActivityCard';
 import styles from './styles';
 import { CUSTOM_IMAGE_SOURCES } from '../../constants';
 
@@ -73,15 +72,49 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
     // Skip deleted activities
     if (activity.deleted) return null;
 
+    const renderActivityEmoji = () => {
+      if (activity.emoji && activity.emoji.includes('.png')) {
+        const imageSource = CUSTOM_IMAGE_SOURCES[activity.emoji];
+        if (imageSource) {
+          return (
+            <Image 
+              source={imageSource} 
+              style={styles.activityImage}
+              resizeMode="contain"
+            />
+          );
+        }
+      }
+      return <Text style={styles.activityEmoji}>{activity.emoji || '🎯'}</Text>;
+    };
+
     return (
-      <View key={activity.id || index} style={styles.activityItem}>
-        <ActivityCard
-          activity={activity}
-          onToggleComplete={() => {}}
-          editMode={false}
-          theme={theme}
-          readOnly={true}
-        />
+      <View key={activity.id || index} style={styles.activityCard}>
+        <View style={styles.activityContent}>
+          <View style={styles.activityEmojiContainer}>
+            {renderActivityEmoji()}
+          </View>
+          <View style={styles.activityTextContainer}>
+            <Text style={styles.activityTitle}>{activity.title}</Text>
+            {activity.description && (
+              <Text style={styles.activityDescription}>{activity.description}</Text>
+            )}
+            {activity.time && (
+              <View style={styles.activityTimeContainer}>
+                <Icon name="access-time" size={14} color="#999" />
+                <Text style={styles.activityTime}>{activity.time}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <View style={[
+          styles.completionCircle,
+          activity.completed && styles.completionCircleCompleted
+        ]}>
+          {activity.completed && (
+            <Icon name="check" size={20} color="#fff" />
+          )}
+        </View>
       </View>
     );
   };

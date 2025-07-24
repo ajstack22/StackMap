@@ -231,8 +231,93 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 16,
   },
-  activityItem: {
+  activityCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  activityContent: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  activityEmojiContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  activityEmoji: {
+    fontSize: 20,
+  },
+  activityImage: {
+    width: 30,
+    height: 30,
+  },
+  activityTextContainer: {
+    flex: 1,
+  },
+  activityTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#1a202c',
+    marginBottom: 2,
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  activityDescription: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  activityTimeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  activityTime: {
+    fontSize: 12,
+    color: '#999',
+    marginLeft: 4,
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  completionCircle: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#e2e8f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 12,
+  },
+  completionCircleCompleted: {
+    backgroundColor: '#48bb78',
+    borderColor: '#48bb78',
   },
   emptyState: {
     alignItems: 'center',
