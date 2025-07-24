@@ -5,8 +5,16 @@
  * Copy this file to config.php and update with your actual database values
  */
 
-// Detect environment based on path
-$isQual = strpos($_SERVER['REQUEST_URI'], '/qual/') !== false;
+// Detect environment based on path or referrer
+$requestUri = $_SERVER['REQUEST_URI'] ?? '';
+$httpReferer = $_SERVER['HTTP_REFERER'] ?? '';
+$scriptName = $_SERVER['SCRIPT_NAME'] ?? '';
+
+// Check multiple indicators for qual environment
+$isQual = (strpos($requestUri, '/qual/') !== false) || 
+          (strpos($httpReferer, '/qual/') !== false) ||
+          (strpos($scriptName, '/qual/') !== false);
+          
 $environment = $isQual ? 'qual' : 'prod';
 
 // Database configuration for StackMap (not Manyla)
