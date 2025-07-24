@@ -1,6 +1,6 @@
 <?php
 /**
- * Database connection singleton for StackMap sync API
+ * Database connection singleton for StackMap share API
  */
 
 require_once 'config.php';

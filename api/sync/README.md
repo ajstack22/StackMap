@@ -7,27 +7,26 @@
    cp config.example.php config.php
    ```
 
-2. **Edit config.php** with your database credentials:
+2. **Edit config.php** with your StackMap database credentials:
    - DB_HOST (usually 'localhost')
-   - DB_NAME (your database name)
-   - DB_USER (your database username)
-   - DB_PASS (your database password)
+   - DB_NAME (your StackMap database name)
+   - DB_USER (your StackMap database username)
+   - DB_PASS (your StackMap database password)
    - ENCRYPTION_KEY (generate a random string)
 
 3. **Create the database table**:
-   Run the SQL from `share_schema.sql` in your database.
+   Run the SQL from `share_schema.sql` in your StackMap database.
 
 4. **Set permissions**:
    ```bash
    chmod 644 *.php
    ```
 
-## Security Notes
+## Important Notes
 
-- Never commit config.php to version control
-- Use a strong, random ENCRYPTION_KEY
-- Ensure your database user has only the necessary permissions
-- Consider using environment variables for production
+- This uses StackMap's own database, NOT Manyla's database
+- The config.php file should never be committed to git
+- Make sure to use your StackMap database credentials, not Manyla's
 
 ## Testing
 
