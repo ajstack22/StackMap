@@ -100,3 +100,11 @@ icon-color-preview.html
 /bundle.*.js
 /bundle.*.js.LICENSE.txt
 /temp/
+# Temporary deployment - remove these after deploy
+# Web build files
+!/index.html
+!/bundle.601e641d7f2a40bf8b40.js
+!/bundle.601e641d7f2a40bf8b40.js.LICENSE.txt
+!/service-worker.js
+!/workbox-*.js
+!/manifest.json
