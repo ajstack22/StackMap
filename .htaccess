@@ -10,6 +10,7 @@ RewriteEngine On
 # Handle SPA routing - redirect all non-file requests to index.html
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !^/api/
 RewriteRule ^.*$ index.html [L]
 
 # Ensure correct MIME types
