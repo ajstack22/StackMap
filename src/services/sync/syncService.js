@@ -24,15 +24,16 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-// Share endpoints always use production API (share links always go to root domain)
+// Share endpoints use environment-specific API for testing
 const getShareApiUrl = () => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      // For local development, still use production API
+      // For local development
       return 'https://stackmap.app/api/sync';
     }
+    // Use relative path to work in both qual and prod
+    return './api/sync';
   }
-  // Always use production API for shares
   return 'https://stackmap.app/api/sync';
 };
 

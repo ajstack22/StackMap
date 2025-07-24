@@ -128,13 +128,19 @@ try {
         $data['device_name'] ?? 'Unknown Device'
     ]);
     
+    // Generate environment-appropriate share URL
+    $isQual = strpos($_SERVER['REQUEST_URI'] ?? '', '/qual/') !== false;
+    $shareUrl = $isQual 
+        ? 'https://stackmap.app/qual/?share=' . $token
+        : 'https://stackmap.app?share=' . $token;
+    
     // Return success with share URL
     echo json_encode([
         'success' => true,
         'share_id' => $shareId,
         'access_token' => $token,
         'expires_at' => $expiresAt,
-        'share_url' => 'https://stackmap.app?share=' . $token
+        'share_url' => $shareUrl
     ]);
     
 } catch (Exception $e) {

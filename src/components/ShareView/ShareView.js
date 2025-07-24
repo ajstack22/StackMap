@@ -30,8 +30,13 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
       setLoading(true);
       setError(null);
 
+      // Use relative path to work in both qual and prod environments
+      const apiPath = Platform.OS === 'web' && window.location.pathname.includes('/qual/')
+        ? '/qual/api/sync/access_share.php'
+        : '/api/sync/access_share.php';
+
       const response = await fetch(
-        `https://stackmap.app/api/sync/access_share.php?token=${shareToken}`
+        `${apiPath}?token=${shareToken}`
       );
 
       if (!response.ok) {
