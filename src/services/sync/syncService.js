@@ -24,15 +24,15 @@ const getApiBaseUrl = () => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-// For share endpoints in subdirectories, use relative path
+// Share endpoints always use production API (share links always go to root domain)
 const getShareApiUrl = () => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      // For local development, still use production API
       return 'https://stackmap.app/api/sync';
     }
-    // Use relative path for share endpoints to work in subdirectories
-    return './api/sync';
   }
+  // Always use production API for shares
   return 'https://stackmap.app/api/sync';
 };
 
