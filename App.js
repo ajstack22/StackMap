@@ -83,9 +83,10 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal, ShareModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
+import ShareView from './src/components/ShareView/ShareView';
 
 // Component imports verified - all components are properly imported
 
@@ -94,6 +95,9 @@ import { useToast } from './src/hooks';
 
 // Import stores
 import { useAppStore } from './src/stores';
+
+// Import services
+import syncService from './src/services/sync/syncService';
 
 // Import utilities
 import {
@@ -232,6 +236,10 @@ const App = () => {
   // PIN protection state
   const [showPinModal, setShowPinModal] = useState(false);
   const [pinInput, setPinInput] = useState('');
+  
+  // Share modal state
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [shareUserId, setShareUserId] = useState(null);
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [confirmPin, setConfirmPin] = useState('');
   const [hasPinProtection, setHasPinProtection] = useState(false);
@@ -272,6 +280,19 @@ const App = () => {
     }),
     [editIconsTranslateY]
   );
+
+  // Check for share token in URL (web only)
+  const [shareToken, setShareToken] = useState(null);
+  
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const token = urlParams.get('share');
+      if (token) {
+        setShareToken(token);
+      }
+    }
+  }, []);
 
   // Wait for Zustand store to hydrate from AsyncStorage
   useEffect(() => {
@@ -1087,8 +1108,10 @@ const App = () => {
     const deletedActivity = activities.find(a => a.id === id);
     const deletedIndex = activities.findIndex(a => a.id === id);
     
-    // Remove the activity
-    const updatedActivities = activities.filter(a => a.id !== id);
+    // Mark the activity as deleted instead of removing it
+    const updatedActivities = activities.map(a => 
+      a.id === id ? { ...a, deleted: true, deletedAt: Date.now() } : a
+    );
     setActivities(updatedActivities);
     
     // Update the users state to persist the change
@@ -1114,19 +1137,20 @@ const App = () => {
       action: {
         label: 'Undo',
         onPress: () => {
-          // Restore the activity at its original position
-          setActivities(prevActivities => {
-            const newActivities = [...prevActivities];
-            newActivities.splice(deletedIndex, 0, deletedActivity);
-            return newActivities;
-          });
+          // Restore the activity by removing the deleted flag
+          setActivities(prevActivities => 
+            prevActivities.map(a => 
+              a.id === id ? { ...a, deleted: false, deletedAt: undefined } : a
+            )
+          );
           
           // Also restore in users state
           if (currentUser && users[currentUser]) {
             const currentUserData = users[currentUser];
             const currentActivities = currentUserData?.days?.[currentDay]?.activities || [];
-            const restoredActivities = [...currentActivities];
-            restoredActivities.splice(deletedIndex, 0, deletedActivity);
+            const restoredActivities = currentActivities.map(a => 
+              a.id === id ? { ...a, deleted: false, deletedAt: undefined } : a
+            );
             
             updateUser(currentUser, {
               days: {
@@ -1681,6 +1705,13 @@ const App = () => {
       
       const confirmImport = async () => {
         console.log('User confirmed import, applying data...');
+        
+        // Disable sync before importing to prevent conflicts
+        if (await syncService.isEnabled()) {
+          console.log('Disabling sync before import...');
+          await syncService.disable();
+        }
+        
         // Update state with imported data
         const importedCurrentDay = migratedData.currentDay || 'today';
         
@@ -1695,7 +1726,8 @@ const App = () => {
         const userIds = Object.keys(migratedData.users || {});
         if (userIds.length > 0) {
           setCurrentUser(userIds[0]);
-          setActivities(migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || []);
+          const activities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
+          setActivities(activities.filter(a => !a.deleted));
           // Load the first user's theme
           if (migratedData.users[userIds[0]]?.settings?.theme) {
             setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
@@ -1785,6 +1817,12 @@ const App = () => {
             text: 'Import',
             style: 'destructive',
             onPress: async () => {
+              // Disable sync before importing to prevent conflicts
+              if (await syncService.isEnabled()) {
+                console.log('Disabling sync before import...');
+                await syncService.disable();
+              }
+              
               // Update state with imported data
               const importedCurrentDay = migratedData.currentDay || 'today';
               
@@ -1799,7 +1837,8 @@ const App = () => {
               const userIds = Object.keys(migratedData.users || {});
               if (userIds.length > 0) {
                 setCurrentUser(userIds[0]);
-                setActivities(migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || []);
+                const activities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
+          setActivities(activities.filter(a => !a.deleted));
                 // Load the first user's theme
                 if (migratedData.users[userIds[0]]?.settings?.theme) {
                   setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
@@ -1830,6 +1869,12 @@ const App = () => {
     
     const performReset = async () => {
       try {
+              // IMPORTANT: Disable sync FIRST to prevent syncing the reset state to other devices
+              if (await syncService.isEnabled()) {
+                console.log('Disabling sync before reset...');
+                await syncService.disable();
+              }
+              
               // Clear all AsyncStorage including Zustand storage
               await AsyncStorage.removeItem('@stackmap_data');
               await AsyncStorage.removeItem('@stackmap_hasCompletedOnboarding');
@@ -1837,6 +1882,11 @@ const App = () => {
               await AsyncStorage.removeItem('userPin'); // Legacy PIN storage
               await AsyncStorage.removeItem('stackMapData'); // Legacy storage key
               await AsyncStorage.removeItem('stackmap-storage'); // Zustand storage
+              
+              // Clear sync-related storage
+              await AsyncStorage.removeItem('@sync_enabled');
+              await AsyncStorage.removeItem('@sync_id');
+              await AsyncStorage.removeItem('@sync_last_version');
               
               // Skip PIN clearing on Android due to keychain library issues
               // The PIN will be effectively cleared when we reset hasPinProtection state
@@ -2367,7 +2417,7 @@ const App = () => {
                     // No negative margins needed
                   }
                 ]}>
-                  {activities.map((item, index) => {
+                  {activities.filter(a => !a.deleted).map((item, index) => {
                     return (
                       <View 
                         key={item.id} 
@@ -2401,7 +2451,8 @@ const App = () => {
                   })}
                   {/* Add invisible placeholders to fill the last row */}
                   {(() => {
-                    const remainder = activities.length % numColumns;
+                    const filteredCount = activities.filter(a => !a.deleted).length;
+                    const remainder = filteredCount % numColumns;
                     if (remainder > 0) {
                       const placeholders = [];
                       for (let i = 0; i < (numColumns - remainder); i++) {
@@ -2421,7 +2472,7 @@ const App = () => {
             </ScrollView>
           ) : Platform.OS === 'ios' ? (
             <DraggableFlatList
-              data={activities}
+              data={activities.filter(a => !a.deleted)}
               renderItem={renderActivity}
               keyExtractor={item => item.id}
               onDragEnd={({ data }) => {
@@ -2459,7 +2510,7 @@ const App = () => {
           ) : (
             // Android/Web fallback - regular FlatList with reorder buttons
             <FlatList
-              data={activities}
+              data={activities.filter(a => !a.deleted)}
               renderItem={renderActivity}
               keyExtractor={item => item.id}
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
@@ -2644,7 +2695,8 @@ const App = () => {
         settingsScrollKey={settingsScrollKey}
         onUserSelect={(userId) => {
           setCurrentUser(userId);
-          setActivities(users[userId]?.days?.[currentDay]?.activities || []);
+          const userActivities = users[userId]?.days?.[currentDay]?.activities || [];
+          setActivities(userActivities.filter(a => !a.deleted));
           if (users[userId]?.settings?.theme) {
             setCurrentTheme(users[userId].settings.theme);
           }
@@ -2697,6 +2749,11 @@ const App = () => {
         onExportData={exportData}
         onImportData={importData}
         onResetApp={resetApp}
+        onShareUser={(userId) => {
+          setShareUserId(userId);
+          setShowShareModal(true);
+          setShowEditModeSettingsModal(false);
+        }}
         showToast={showToast}
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
@@ -2977,7 +3034,8 @@ const App = () => {
           onSelectUserDay={(userId, day) => {
             setCurrentUser(userId);
             setCurrentDay(day);
-            setActivities(users[userId]?.days?.[day]?.activities || []);
+            const dayActivities = users[userId]?.days?.[day]?.activities || [];
+            setActivities(dayActivities.filter(a => !a.deleted));
             // Load the selected user's theme
             if (users[userId]?.settings?.theme) {
               setCurrentTheme(users[userId].settings.theme);
@@ -2986,6 +3044,19 @@ const App = () => {
           }}
         />
       )}
+      
+      {/* Share Modal */}
+      <ShareModal
+        visible={showShareModal}
+        onClose={() => {
+          setShowShareModal(false);
+          setShareUserId(null);
+        }}
+        theme={theme}
+        user={shareUserId ? users[shareUserId] : null}
+        userId={shareUserId}
+        showToast={showToast}
+      />
       </>
   );
 
@@ -3007,6 +3078,11 @@ const App = () => {
         <ActivityIndicator size="large" color="#FFFFFF" />
       </View>
     );
+  }
+  
+  // Show share view if share token is present
+  if (shareToken) {
+    return <ShareView shareToken={shareToken} theme={theme} />;
   }
   
   // Show onboarding if needed (kept for backward compatibility)

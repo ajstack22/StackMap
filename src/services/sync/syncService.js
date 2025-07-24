@@ -484,7 +484,8 @@ class SyncService {
       currentUser: state.currentUser,
       hasCompletedOnboarding: state.hasCompletedOnboarding,
       completedActivities: state.completedActivities,
-      lastBackup: new Date().toISOString()
+      lastBackup: new Date().toISOString(),
+      lastModified: Date.now() // Add timestamp for conflict resolution
     };
     
     console.log('getCurrentState: Full export-style state:', currentState);
@@ -595,9 +596,49 @@ class SyncService {
    * Merge remote data with local data
    */
   async mergeData(remoteData) {
-    // This is now only called when there are no conflicts
-    // Just apply the remote data
+    // Get current local state before applying remote
+    const currentState = useAppStore.getState();
+    const currentUsers = currentState.users || {};
+    
+    // Build a map of local completed activities
+    const localCompletedMap = new Map();
+    Object.keys(currentUsers).forEach(userId => {
+      const userDays = currentUsers[userId]?.days || {};
+      Object.keys(userDays).forEach(day => {
+        const activities = userDays[day]?.activities || [];
+        activities.forEach(activity => {
+          if (activity.completed) {
+            const key = `${userId}_${day}_${activity.id}`;
+            localCompletedMap.set(key, true);
+          }
+        });
+      });
+    });
+    
+    // Apply remote data
     await this.restoreData(remoteData);
+    
+    // Now restore any completed states that were true locally
+    const mergedState = useAppStore.getState();
+    const mergedUsers = { ...mergedState.users };
+    
+    Object.keys(mergedUsers).forEach(userId => {
+      const userDays = mergedUsers[userId]?.days || {};
+      Object.keys(userDays).forEach(day => {
+        const activities = userDays[day]?.activities || [];
+        mergedUsers[userId].days[day].activities = activities.map(activity => {
+          const key = `${userId}_${day}_${activity.id}`;
+          // If this was completed locally, keep it completed
+          if (localCompletedMap.has(key)) {
+            return { ...activity, completed: true };
+          }
+          return activity;
+        });
+      });
+    });
+    
+    // Update with merged state
+    useAppStore.setState({ users: mergedUsers });
   }
   
   /**
@@ -949,6 +990,153 @@ class SyncService {
    */
   getPendingConflicts() {
     return this.pendingConflicts;
+  }
+
+  /**
+   * Create a share link for provider access
+   */
+  async createShareLink(userId, options = {}) {
+    if (!this.syncEnabled || !this.syncId) {
+      throw new Error('Sync must be enabled to create share links');
+    }
+
+    const {
+      recipientName = '',
+      shareNote = '',
+      includeCompleted = true,
+      includeTomorrow = true,
+      expiresHours = 24,
+      accessToken = this.generateShareToken()
+    } = options;
+
+    try {
+      // Get current state
+      const state = useAppStore.getState();
+      const user = state.users[userId];
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Prepare user data for sharing
+      const userData = {
+        id: userId,
+        name: user.name,
+        icon: user.icon,
+        days: user.days || {},
+        settings: {
+          theme: user.settings?.theme || state.currentTheme
+        }
+      };
+
+      // Filter out deleted activities
+      if (userData.days) {
+        Object.keys(userData.days).forEach(day => {
+          if (userData.days[day]?.activities) {
+            userData.days[day].activities = userData.days[day].activities.filter(
+              activity => !activity.deleted
+            );
+          }
+        });
+      }
+
+      const deviceId = await encryptionService.getDeviceId();
+      const deviceName = encryptionService.getDeviceName();
+
+      const response = await fetch(`${API_BASE_URL}/create_share.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sync_id: this.syncId,
+          user_id: userId,
+          user_data: userData,
+          access_token: accessToken,
+          expires_hours: expiresHours,
+          recipient_name: recipientName,
+          share_note: shareNote,
+          include_completed: includeCompleted,
+          include_tomorrow: includeTomorrow,
+          device_name: deviceName
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create share link');
+      }
+
+      const result = await response.json();
+      
+      // Store share info locally for reference
+      const shares = await this.getActiveShares();
+      shares.push({
+        shareId: result.share_id,
+        token: result.access_token,
+        userId,
+        userName: user.name,
+        recipientName,
+        shareNote,
+        createdAt: new Date().toISOString(),
+        expiresAt: result.expires_at,
+        shareUrl: result.share_url
+      });
+      
+      await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
+
+      return result;
+    } catch (error) {
+      console.error('Failed to create share link:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Generate a random share token
+   */
+  generateShareToken() {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let token = '';
+    for (let i = 0; i < 6; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  }
+
+  /**
+   * Get active shares created by this device
+   */
+  async getActiveShares() {
+    try {
+      const stored = await AsyncStorage.getItem('@stackmap_shares');
+      if (!stored) return [];
+      
+      const shares = JSON.parse(stored);
+      const now = new Date();
+      
+      // Filter out expired shares
+      return shares.filter(share => new Date(share.expiresAt) > now);
+    } catch (error) {
+      console.error('Failed to get active shares:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Delete a share link
+   */
+  async deleteShare(shareId) {
+    try {
+      const shares = await this.getActiveShares();
+      const filtered = shares.filter(share => share.shareId !== shareId);
+      await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(filtered));
+      
+      // Could also call API to revoke the share early
+      // But for now, let them expire naturally
+    } catch (error) {
+      console.error('Failed to delete share:', error);
+    }
   }
 }
 

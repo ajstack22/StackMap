@@ -20,6 +20,7 @@ import SupportModal from './Modals/SupportModal/SupportModal';
 import EditModeSettingsModal from './Modals/EditModeSettingsModal/EditModeSettingsModal';
 import ReorderModal from './Modals/ReorderModal/ReorderModal';
 import ConflictResolutionModal from './ConflictResolutionModal/ConflictResolutionModal';
+import ShareModal from './Modals/ShareModal/ShareModal';
 
 // Export the imported modal components
 export {
@@ -33,5 +34,6 @@ export {
   SupportModal,
   EditModeSettingsModal,
   ReorderModal,
-  ConflictResolutionModal
+  ConflictResolutionModal,
+  ShareModal
 };

@@ -1,0 +1,288 @@
+import { StyleSheet, Platform } from 'react-native';
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#f7fafc',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f7fafc',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#666',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#f7fafc',
+    padding: 32,
+  },
+  errorTitle: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#1a202c',
+    marginTop: 16,
+    marginBottom: 8,
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Bold',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  errorMessage: {
+    fontSize: 16,
+    color: '#666',
+    textAlign: 'center',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  backButton: {
+    marginTop: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#667eea',
+    borderRadius: 8,
+  },
+  backButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  header: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    ...Platform.select({
+      web: {
+        paddingHorizontal: 24,
+      },
+    }),
+  },
+  userInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  userIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#f0f0f0',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  userIcon: {
+    fontSize: 24,
+  },
+  userImage: {
+    width: 40,
+    height: 40,
+  },
+  userName: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#1a202c',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Bold',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  shareInfo: {
+    fontSize: 12,
+    color: '#666',
+    marginTop: 2,
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  recipientInfo: {
+    fontSize: 12,
+    color: '#666',
+    fontStyle: 'italic',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  ctaButton: {
+    backgroundColor: '#667eea',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 8,
+  },
+  ctaButtonText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '600',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  noteContainer: {
+    backgroundColor: '#fff9e6',
+    borderLeftWidth: 4,
+    borderLeftColor: '#ffb300',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    margin: 16,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  noteText: {
+    flex: 1,
+    marginLeft: 8,
+    fontSize: 14,
+    color: '#5d4e37',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  daySelector: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e2e8f0',
+  },
+  dayTab: {
+    paddingHorizontal: 20,
+    paddingVertical: 8,
+    marginRight: 12,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+  },
+  dayTabActive: {
+    backgroundColor: '#667eea',
+  },
+  dayTabText: {
+    fontSize: 14,
+    color: '#666',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  dayTabTextActive: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  progressSummary: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    marginBottom: 16,
+  },
+  progressText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 8,
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  progressBar: {
+    height: 8,
+    backgroundColor: '#e2e8f0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  activitiesContainer: {
+    flex: 1,
+    paddingHorizontal: 16,
+  },
+  activityItem: {
+    marginBottom: 8,
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 48,
+  },
+  emptyStateText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#999',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  expirationWarning: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    marginTop: 16,
+  },
+  expirationText: {
+    marginLeft: 8,
+    fontSize: 12,
+    color: '#ff9800',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+  footer: {
+    backgroundColor: '#f7fafc',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e2e8f0',
+    alignItems: 'center',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#999',
+    textAlign: 'center',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Regular',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+})
+
+export default styles;

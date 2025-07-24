@@ -84,7 +84,15 @@ const useAppStore = create(
       
       deleteUser: (userId) => set((state) => {
         const newUsers = { ...state.users };
-        delete newUsers[userId];
+        // Instead of deleting, mark as deleted with timestamp
+        // This allows sync to properly handle deletions
+        if (newUsers[userId]) {
+          newUsers[userId] = {
+            ...newUsers[userId],
+            deleted: true,
+            deletedAt: Date.now()
+          };
+        }
         return { users: newUsers };
       }, false, 'deleteUser'),
       

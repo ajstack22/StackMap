@@ -14,8 +14,8 @@ const FIELD_STRATEGIES = {
   activities: STRATEGIES.MERGE,
   completedActivities: STRATEGIES.MERGE,
   
-  // Objects - merge properties
-  users: STRATEGIES.MERGE,
+  // Objects - merge properties with special handling
+  users: STRATEGIES.CUSTOM,
   
   // Scalars - last write wins
   currentUser: STRATEGIES.LAST_WRITE_WINS,
@@ -163,6 +163,29 @@ class ConflictResolver {
         };
         break;
         
+      case STRATEGIES.CUSTOM:
+        if (conflict.field === 'users') {
+          // Store timestamps for the merge function to use
+          this.lastLocalTimestamp = conflict.localTimestamp;
+          this.lastRemoteTimestamp = conflict.remoteTimestamp;
+          
+          resolution.resolvedValue = this.mergeUsersPreservingCompleted(
+            conflict.localValue,
+            conflict.remoteValue
+          );
+          
+          // Clear timestamps
+          this.lastLocalTimestamp = null;
+          this.lastRemoteTimestamp = null;
+        } else {
+          resolution.resolvedValue = this.mergeValues(
+            conflict.field,
+            conflict.localValue,
+            conflict.remoteValue
+          );
+        }
+        break;
+        
       default:
         // Default to preferring local if specified, otherwise remote
         resolution.resolvedValue = preferLocal ? conflict.localValue : conflict.remoteValue;
@@ -179,20 +202,23 @@ class ConflictResolver {
     // Array merge - combine unique items
     if (Array.isArray(localValue) && Array.isArray(remoteValue)) {
       if (field === 'completedActivities') {
-        // For completed activities, merge by unique ID
-        const merged = [...localValue];
-        const localIds = new Set(localValue.map(item => 
-          `${item.id}_${item.userId}_${item.date}`
-        ));
+        // For completed activities, merge by unique key
+        const mergeMap = new Map();
         
+        // Add all remote completions first
         for (const item of remoteValue) {
-          const itemId = `${item.id}_${item.userId}_${item.date}`;
-          if (!localIds.has(itemId)) {
-            merged.push(item);
-          }
+          const key = `${item.activityId}_${item.userId}_${item.date}`;
+          mergeMap.set(key, item);
         }
         
-        return merged;
+        // Add all local completions (overwrites remote if same key)
+        // This ensures local completions are never undone
+        for (const item of localValue) {
+          const key = `${item.activityId}_${item.userId}_${item.date}`;
+          mergeMap.set(key, item);
+        }
+        
+        return Array.from(mergeMap.values());
       } else if (field === 'activities') {
         // For activities, merge by ID and keep latest version
         const activityMap = new Map();
@@ -334,6 +360,151 @@ class ConflictResolver {
     }
     
     return summary;
+  }
+
+  /**
+   * Merge users data while preserving local completed states and deletions
+   */
+  mergeUsersPreservingCompleted(localUsers, remoteUsers) {
+    const mergedUsers = {};
+    
+    // First, process all users from both local and remote
+    const allUserIds = new Set([...Object.keys(localUsers), ...Object.keys(remoteUsers)]);
+    
+    allUserIds.forEach(userId => {
+      const localUser = localUsers[userId];
+      const remoteUser = remoteUsers[userId];
+      
+      // Handle deletion conflicts
+      if (localUser?.deleted && remoteUser?.deleted) {
+        // Both deleted - use the one with the later deletion timestamp
+        if ((localUser.deletedAt || 0) >= (remoteUser.deletedAt || 0)) {
+          mergedUsers[userId] = localUser;
+        } else {
+          mergedUsers[userId] = remoteUser;
+        }
+      } else if (localUser?.deleted) {
+        // Only local deleted - check if deletion is newer than remote update
+        if (remoteUser && !remoteUser.deleted) {
+          // If local deletion is recent (within last 30 seconds), keep the deletion
+          const recentDeletion = (Date.now() - (localUser.deletedAt || 0)) < 30000;
+          if (recentDeletion) {
+            mergedUsers[userId] = localUser; // Keep the deletion
+          } else {
+            mergedUsers[userId] = remoteUser; // Remote wins - user was probably recreated
+          }
+        } else {
+          mergedUsers[userId] = localUser;
+        }
+      } else if (remoteUser?.deleted) {
+        // Only remote deleted
+        if (localUser && !localUser.deleted) {
+          // If remote deletion is recent, respect it
+          const recentDeletion = (Date.now() - (remoteUser.deletedAt || 0)) < 30000;
+          if (recentDeletion) {
+            mergedUsers[userId] = remoteUser; // Keep the deletion
+          } else {
+            mergedUsers[userId] = localUser; // Local wins - user is still active
+          }
+        } else {
+          mergedUsers[userId] = remoteUser;
+        }
+      } else {
+        // Neither deleted - merge normally
+        if (!localUser) {
+          // User only exists remotely
+          mergedUsers[userId] = JSON.parse(JSON.stringify(remoteUser));
+        } else if (!remoteUser) {
+          // User only exists locally
+          mergedUsers[userId] = JSON.parse(JSON.stringify(localUser));
+        } else {
+          // User exists in both - merge while preserving completed states
+          mergedUsers[userId] = JSON.parse(JSON.stringify(remoteUser));
+          
+          const localUserDays = localUser.days || {};
+          const mergedUserDays = mergedUsers[userId].days || {};
+          
+          Object.keys(localUserDays).forEach(day => {
+            const localActivities = localUserDays[day]?.activities || [];
+            
+            if (!mergedUserDays[day]) {
+              mergedUserDays[day] = { activities: [] };
+            }
+            
+            const mergedActivities = mergedUserDays[day].activities || [];
+            
+            // Create a map of local completed activities
+            const localCompletedMap = new Map();
+            localActivities.forEach(activity => {
+              if (activity.completed) {
+                localCompletedMap.set(activity.id, true);
+              }
+            });
+            
+            // Merge activities while handling deletions and completed states
+            const activityMap = new Map();
+            
+            // Add remote activities first
+            mergedActivities.forEach(activity => {
+              activityMap.set(activity.id, { ...activity });
+            });
+            
+            // Process local activities
+            localActivities.forEach(localActivity => {
+              const remoteActivity = activityMap.get(localActivity.id);
+              
+              if (localActivity.deleted) {
+                // If locally deleted recently, keep the deletion
+                if ((Date.now() - (localActivity.deletedAt || 0)) < 30000) {
+                  activityMap.set(localActivity.id, localActivity);
+                }
+                // Otherwise, if remote has it non-deleted, keep remote version
+              } else if (!remoteActivity) {
+                // Activity only exists locally
+                activityMap.set(localActivity.id, localActivity);
+              } else {
+                // Activity exists in both - merge states
+                const merged = { ...remoteActivity };
+                
+                // Preserve local completed state
+                if (localActivity.completed) {
+                  merged.completed = true;
+                }
+                
+                // Handle deletion conflicts
+                if (remoteActivity.deleted && !localActivity.deleted) {
+                  // Remote deleted but local is active
+                  if ((Date.now() - (remoteActivity.deletedAt || 0)) < 30000) {
+                    // Recent remote deletion - respect it
+                    merged.deleted = true;
+                    merged.deletedAt = remoteActivity.deletedAt;
+                  } else {
+                    // Old deletion - keep local active state
+                    delete merged.deleted;
+                    delete merged.deletedAt;
+                  }
+                }
+                
+                activityMap.set(localActivity.id, merged);
+              }
+            });
+            
+            mergedUserDays[day].activities = Array.from(activityMap.values());
+          });
+          
+          // Add any days that exist only locally
+          Object.keys(localUserDays).forEach(day => {
+            if (!mergedUserDays[day]) {
+              mergedUserDays[day] = JSON.parse(JSON.stringify(localUserDays[day]));
+            }
+          });
+          
+          mergedUsers[userId].days = mergedUserDays;
+        }
+      }
+    });
+    
+    return mergedUsers;
   }
 }
 

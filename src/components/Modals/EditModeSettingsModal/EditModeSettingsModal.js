@@ -42,6 +42,8 @@ const EditModeSettingsModal = ({
   onExportData,
   onImportData,
   onResetApp,
+  // Share function
+  onShareUser,
   // Toast
   showToast,
   // Android specific
@@ -174,7 +176,9 @@ const EditModeSettingsModal = ({
             {/* User Management Section */}
             <Text style={styles.sectionTitle}>Users</Text>
             <View style={styles.usersList}>
-              {Object.entries(users).map(([userId, user]) => (
+              {Object.entries(users)
+                .filter(([userId, user]) => !user.deleted)
+                .map(([userId, user]) => (
                 <TouchableOpacity
                   key={userId}
                   style={[
@@ -306,6 +310,19 @@ const EditModeSettingsModal = ({
               {syncEnabled ? (
                 <>
                   <SyncStatusIndicator theme={theme} showDetails={true} />
+                  
+                  {/* Share Button */}
+                  <TouchableOpacity
+                    style={[styles.button, { backgroundColor: theme.primary, marginTop: 15 }]}
+                    onPress={() => {
+                      if (onShareUser) {
+                        onShareUser(currentUser);
+                      }
+                    }}
+                  >
+                    <Icon name="share" size={20} color="white" />
+                    <Text style={styles.buttonText}>Share Progress</Text>
+                  </TouchableOpacity>
                   
                   {showRecoveryPhrase ? (
                     <View style={styles.recoveryPhraseContainer}>
