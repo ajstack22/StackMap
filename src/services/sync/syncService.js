@@ -17,7 +17,10 @@ const getApiBaseUrl = () => {
       // Use the production API with proxy or return local API if you have one
       return 'https://stackmap.app/api/sync';
     }
+    // For web, use relative path to work in both root and subdirectories
+    return './api/sync';
   }
+  // For native apps, use absolute URL
   return 'https://stackmap.app/api/sync';
 };
 

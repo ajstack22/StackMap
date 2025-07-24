@@ -103,8 +103,8 @@ icon-color-preview.html
 # Temporary deployment - remove these after deploy
 # Web build files
 !/index.html
-!/bundle.076310063c4c201fbf5a.js
-!/bundle.076310063c4c201fbf5a.js.LICENSE.txt
+!/bundle.e80dfcc6a698ab6718ec.js
+!/bundle.e80dfcc6a698ab6718ec.js.LICENSE.txt
 !/service-worker.js
 !/workbox-*.js
 !/manifest.json
