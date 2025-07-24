@@ -311,19 +311,6 @@ const EditModeSettingsModal = ({
                 <>
                   <SyncStatusIndicator theme={theme} showDetails={true} />
                   
-                  {/* Share Button */}
-                  <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.primary, marginTop: 15 }]}
-                    onPress={() => {
-                      if (onShareUser) {
-                        onShareUser(currentUser);
-                      }
-                    }}
-                  >
-                    <Icon name="share" size={20} color="white" />
-                    <Text style={styles.buttonText}>Share Progress</Text>
-                  </TouchableOpacity>
-                  
                   {showRecoveryPhrase ? (
                     <View style={styles.recoveryPhraseContainer}>
                       <Text style={styles.recoveryPhraseLabel}>Your Recovery Phrase:</Text>
@@ -361,6 +348,20 @@ const EditModeSettingsModal = ({
                       <Text style={styles.buttonText}>Show Recovery Phrase</Text>
                     </TouchableOpacity>
                   )}
+                  
+                  {/* Share Button - Add spacing to avoid overlap with Show/Hide button */}
+                  <TouchableOpacity
+                    style={[styles.button, { backgroundColor: theme.primary, marginTop: showRecoveryPhrase ? 0 : 15, marginBottom: 15 }]}
+                    onPress={() => {
+                      console.log('Share button pressed', { onShareUser: !!onShareUser, currentUser });
+                      if (onShareUser) {
+                        onShareUser(currentUser);
+                      }
+                    }}
+                  >
+                    <Icon name="share" size={20} color="white" />
+                    <Text style={styles.buttonText}>Share Progress</Text>
+                  </TouchableOpacity>
                   
                   <TouchableOpacity
                     style={[styles.button, { backgroundColor: theme.primary, marginBottom: 10 }]}
