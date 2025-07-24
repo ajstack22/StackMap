@@ -1,0 +1,5 @@
+# Ignore the actual config file with credentials
+config.php
+
+# But track the example
+!config.example.php
