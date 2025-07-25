@@ -1218,6 +1218,7 @@ class SyncService {
         includeCompleted,
         includeTomorrow,
         autoUpdate: options.autoUpdate || false,
+        shareVersion: useEncryption && accessToken.length >= 24 ? 2 : 1,
         createdAt: new Date().toISOString(),
         expiresAt: result.expires_at,
         shareUrl: result.share_url
@@ -1301,32 +1302,51 @@ class SyncService {
         delete filteredUserData.days?.tomorrow;
       }
       
-      // Create updated share data
-      const shareData = {
-        user: filteredUserData,
-        shared_at: shareInfo.createdAt, // Keep original creation time
-        expires_at: shareInfo.expiresAt,
-        recipient_name: shareInfo.recipientName,
-        share_note: shareInfo.shareNote,
-        read_only: true,
-        version: 2,
-        last_updated: new Date().toISOString() // Add update timestamp
-      };
+      // Check share version (default to V1 for old shares)
+      const shareVersion = shareInfo.shareVersion || 1;
       
-      // Encrypt with the same key
-      const shareKey = util.decodeBase64(
-        token.replace(/-/g, '+').replace(/_/g, '/') + '=='
-      );
+      let encryptedData;
       
-      const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-      const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
-      const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
-      
-      const combined = new Uint8Array(nonce.length + encrypted.length);
-      combined.set(nonce);
-      combined.set(encrypted, nonce.length);
-      
-      const encryptedData = util.encodeBase64(combined);
+      if (shareVersion === 2) {
+        // V2: Encrypted share
+        const shareData = {
+          user: filteredUserData,
+          shared_at: shareInfo.createdAt, // Keep original creation time
+          expires_at: shareInfo.expiresAt,
+          recipient_name: shareInfo.recipientName,
+          share_note: shareInfo.shareNote,
+          read_only: true,
+          version: 2,
+          last_updated: new Date().toISOString() // Add update timestamp
+        };
+        
+        // Encrypt with the same key
+        const shareKey = util.decodeBase64(
+          token.replace(/-/g, '+').replace(/_/g, '/') + '=='
+        );
+        
+        const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+        const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
+        const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+        
+        const combined = new Uint8Array(nonce.length + encrypted.length);
+        combined.set(nonce);
+        combined.set(encrypted, nonce.length);
+        
+        encryptedData = util.encodeBase64(combined);
+      } else {
+        // V1: Legacy share - just base64 encode
+        const shareData = {
+          user: filteredUserData,
+          shared_at: shareInfo.createdAt,
+          expires_at: shareInfo.expiresAt,
+          recipient_name: shareInfo.recipientName,
+          share_note: shareInfo.shareNote,
+          last_updated: new Date().toISOString()
+        };
+        
+        encryptedData = btoa(JSON.stringify(shareData));
+      }
 
       // For local development, skip API call
       if (Platform.OS === 'web' && typeof window !== 'undefined') {

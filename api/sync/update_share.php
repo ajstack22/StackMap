@@ -54,7 +54,7 @@ try {
     
     // Check if share exists and is not expired
     $checkStmt = $db->prepare("
-        SELECT share_id, expires_at, share_version
+        SELECT share_id, expires_at, share_version, auto_update
         FROM share_links 
         WHERE access_token = ? 
         AND expires_at > NOW()
@@ -66,16 +66,16 @@ try {
         throw new Exception('Share not found or expired');
     }
     
-    // Only v2 (encrypted) shares can be updated
-    if ($share['share_version'] != 2) {
-        throw new Exception('Only encrypted shares (v2) can be updated');
+    // Check if auto-update is enabled
+    if (!$share['auto_update']) {
+        throw new Exception('Share does not have auto-update enabled');
     }
     
     // Update the encrypted data
     $updateStmt = $db->prepare("
         UPDATE share_links 
         SET encrypted_data = ?,
-            last_modified = NOW()
+            last_updated_at = NOW()
         WHERE access_token = ?
     ");
     
