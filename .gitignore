@@ -96,15 +96,14 @@ ios/*.ips
 icon-color-preview.html
 
 # Build artifacts that shouldn't be committed
-/index.html
 /bundle.*.js
 /bundle.*.js.LICENSE.txt
 /temp/
-# Temporary deployment - remove these after deploy
-# Web build files
-!/index.html
-!/bundle.17fb85aa3c3f5ed7af63.js
-!/bundle.17fb85aa3c3f5ed7af63.js.LICENSE.txt
-!/service-worker.js
-!/workbox-*.js
-!/manifest.json
+
+# Allow ALL web build files at root level for deployment
+!index.html
+!bundle.*.js
+!bundle.*.js.LICENSE.txt
+!service-worker.js
+!workbox-*.js
+!manifest.json
