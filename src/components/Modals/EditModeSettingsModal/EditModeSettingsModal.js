@@ -327,10 +327,14 @@ const EditModeSettingsModal = ({
                       {/* QR Code for recovery phrase */}
                       <View style={styles.qrCodeContainer}>
                         <QRCode
-                          value={Platform.OS === 'web' 
-                            ? `${window.location.origin}${window.location.pathname}?sync=${encodeURIComponent(syncRecoveryPhrase)}`
-                            : `https://stackmap.app?sync=${encodeURIComponent(syncRecoveryPhrase)}`
-                          }
+                          value={(() => {
+                            const baseUrl = Platform.OS === 'web' 
+                              ? `${window.location.origin}${window.location.pathname}`
+                              : `https://stackmap.app`;
+                            const fullUrl = `${baseUrl}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                            console.log('[QR Code] Generated URL:', fullUrl);
+                            return fullUrl;
+                          })()}
                           size={180}
                           color="#000"
                           backgroundColor="#fff"

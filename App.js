@@ -291,6 +291,12 @@ const App = () => {
       const token = urlParams.get('share');
       const syncPhrase = urlParams.get('sync');
       
+      console.log('[App] URL params:', { 
+        search: window.location.search,
+        syncPhrase,
+        decoded: syncPhrase ? decodeURIComponent(syncPhrase) : null 
+      });
+      
       if (token) {
         setShareToken(token);
       } else if (syncPhrase) {
