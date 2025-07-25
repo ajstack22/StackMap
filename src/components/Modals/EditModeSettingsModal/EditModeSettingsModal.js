@@ -49,6 +49,8 @@ const EditModeSettingsModal = ({
   showToast,
   // Android specific
   getAndroidModalBottomHeight,
+  // Sync setup from URL
+  syncSetupPhrase,
 }) => {
   const settingsScrollRef = useRef(null);
   const [syncEnabled, setSyncEnabled] = useState(false);
@@ -64,8 +66,14 @@ const EditModeSettingsModal = ({
   useEffect(() => {
     if (visible) {
       checkSyncStatus();
+      
+      // If we have a sync setup phrase from URL, populate it
+      if (syncSetupPhrase && !syncEnabled) {
+        setRecoveryInput(syncSetupPhrase);
+        setShowRecoveryInput(true);
+      }
     }
-  }, [visible]);
+  }, [visible, syncSetupPhrase, syncEnabled]);
 
   const checkSyncStatus = async () => {
     const enabled = await syncService.isEnabled();
@@ -319,7 +327,7 @@ const EditModeSettingsModal = ({
                       {/* QR Code for recovery phrase */}
                       <View style={styles.qrCodeContainer}>
                         <QRCode
-                          value={syncRecoveryPhrase}
+                          value={`https://stackmap.app?sync=${encodeURIComponent(syncRecoveryPhrase)}`}
                           size={180}
                           color="#000"
                           backgroundColor="#fff"

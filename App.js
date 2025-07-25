@@ -283,13 +283,19 @@ const App = () => {
 
   // Check for share token in URL (web only)
   const [shareToken, setShareToken] = useState(null);
+  const [syncSetupPhrase, setSyncSetupPhrase] = useState(null);
   
   useEffect(() => {
     if (Platform.OS === 'web') {
       const urlParams = new URLSearchParams(window.location.search);
       const token = urlParams.get('share');
+      const syncPhrase = urlParams.get('sync');
+      
       if (token) {
         setShareToken(token);
+      } else if (syncPhrase) {
+        // Store sync phrase to handle after app initializes
+        setSyncSetupPhrase(syncPhrase);
       }
     }
   }, []);
@@ -395,6 +401,18 @@ const App = () => {
       setActivities(users[currentUser]?.days?.[currentDay]?.activities || []);
     }
   }, [currentDay, currentUser, users, setActivities]);
+  
+  // Handle sync setup from URL parameter
+  useEffect(() => {
+    if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
+      // Open settings modal with sync setup
+      setShowEditModeSettings(true);
+      // Clear the URL parameter
+      if (Platform.OS === 'web') {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    }
+  }, [syncSetupPhrase, isHydrated, hasCompletedOnboarding, showOnboarding]);
   
   // Animate icons when edit mode changes
   useEffect(() => {
@@ -2711,7 +2729,10 @@ const App = () => {
       {/* Settings Modal */}
       <EditModeSettingsModal
         visible={showEditModeSettingsModal}
-        onClose={() => setShowEditModeSettingsModal(false)}
+        onClose={() => {
+          setShowEditModeSettingsModal(false);
+          setSyncSetupPhrase(null); // Clear sync setup phrase when closing
+        }}
         theme={theme}
         insets={insets}
         users={users}
@@ -2720,6 +2741,7 @@ const App = () => {
         setDayMode={setDayMode}
         hasPinProtection={hasPinProtection}
         settingsScrollKey={settingsScrollKey}
+        syncSetupPhrase={syncSetupPhrase}
         onUserSelect={(userId) => {
           setCurrentUser(userId);
           const userActivities = users[userId]?.days?.[currentDay]?.activities || [];
