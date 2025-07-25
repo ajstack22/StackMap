@@ -1037,9 +1037,16 @@ class SyncService {
       includeCompleted = true,
       includeTomorrow = true,
       expiresHours = 24,
-      accessToken = this.generateShareToken(),
+      accessToken = null,
+      autoUpdate = false,  // Add autoUpdate parameter
       useEncryption = true  // Default to v2 encrypted shares
     } = options;
+    
+    // Generate token if not provided
+    const isSecureToken = useEncryption && (!accessToken || accessToken.length >= 24);
+    if (!accessToken) {
+      accessToken = this.generateShareToken(isSecureToken);
+    }
 
     try {
       // Get current state
@@ -1126,9 +1133,20 @@ class SyncService {
         };
         
         // Encrypt with the token as the key
-        const shareKey = util.decodeBase64(
-          accessToken.replace(/-/g, '+').replace(/_/g, '/') + '=='
-        );
+        let shareKey;
+        if (this._lastShareKeyBytes && isSecureToken) {
+          // Use the raw bytes we generated
+          shareKey = this._lastShareKeyBytes;
+          // Clear it after use for security
+          this._lastShareKeyBytes = null;
+        } else {
+          // Fallback: decode the token (for tokens passed in)
+          const paddedToken = accessToken.replace(/-/g, '+').replace(/_/g, '/');
+          // Add padding if needed
+          const padding = (4 - (paddedToken.length % 4)) % 4;
+          const fullToken = paddedToken + '='.repeat(padding);
+          shareKey = util.decodeBase64(fullToken);
+        }
         
         // Use a simplified encryption for shares
         const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
@@ -1152,6 +1170,7 @@ class SyncService {
           share_note: shareNote,
           include_completed: includeCompleted,
           include_tomorrow: includeTomorrow,
+          auto_update: autoUpdate,
           device_name: deviceName,
           share_version: 2
         };
@@ -1369,11 +1388,17 @@ class SyncService {
   generateShareToken(secure = false) {
     if (secure) {
       // Generate a secure 24-character token for v2 shares (encryption key)
-      const bytes = nacl.randomBytes(18); // 18 bytes = 144 bits, base64 = 24 chars
-      return util.encodeBase64(bytes)
+      // We need 32 bytes for nacl.secretbox key
+      const bytes = nacl.randomBytes(32); // 32 bytes for secretbox key
+      const token = util.encodeBase64(bytes)
         .replace(/\+/g, '-')  // URL-safe
         .replace(/\//g, '_')
         .replace(/=/g, '');   // Remove padding
+      
+      // Store the raw bytes for use as encryption key
+      this._lastShareKeyBytes = bytes;
+      
+      return token;
     } else {
       // Legacy 6-8 character token for v1 shares
       const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';

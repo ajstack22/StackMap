@@ -58,9 +58,11 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
           const encryptedData = data.encrypted_data;
           
           // Convert token back to key
-          const shareKey = util.decodeBase64(
-            shareToken.replace(/-/g, '+').replace(/_/g, '/') + '=='
-          );
+          const paddedToken = shareToken.replace(/-/g, '+').replace(/_/g, '/');
+          // Add padding if needed
+          const padding = (4 - (paddedToken.length % 4)) % 4;
+          const fullToken = paddedToken + '='.repeat(padding);
+          const shareKey = util.decodeBase64(fullToken);
           
           // Decode the encrypted data
           const combined = util.decodeBase64(encryptedData);
