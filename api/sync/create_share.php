@@ -34,18 +34,34 @@ try {
         throw new Exception('Invalid request data');
     }
     
-    // Validate required fields
-    $required = ['sync_id', 'user_id', 'user_data', 'access_token', 'expires_hours'];
+    // Check if this is a v2 encrypted share
+    $isV2Share = isset($data['share_version']) && $data['share_version'] === 2;
+    
+    // Validate required fields based on share version
+    if ($isV2Share) {
+        $required = ['sync_id', 'user_id', 'encrypted_data', 'access_token', 'expires_hours', 'share_version'];
+    } else {
+        $required = ['sync_id', 'user_id', 'user_data', 'access_token', 'expires_hours'];
+    }
+    
     foreach ($required as $field) {
         if (!isset($data[$field])) {
             throw new Exception("Missing required field: $field");
         }
     }
     
-    // Validate token format (6-8 uppercase alphanumeric)
+    // Validate token format based on version
     $token = $data['access_token'];
-    if (!preg_match('/^[A-Z0-9]{6,8}$/', $token)) {
-        throw new Exception('Invalid token format. Must be 6-8 uppercase alphanumeric characters.');
+    if ($isV2Share) {
+        // V2 tokens are base64-url encoded (longer, mixed case)
+        if (!preg_match('/^[A-Za-z0-9_-]{24,}$/', $token)) {
+            throw new Exception('Invalid token format for v2 share. Must be at least 24 characters.');
+        }
+    } else {
+        // V1 tokens are 6-8 uppercase alphanumeric
+        if (!preg_match('/^[A-Z0-9]{6,8}$/', $token)) {
+            throw new Exception('Invalid token format. Must be 6-8 uppercase alphanumeric characters.');
+        }
     }
     
     // Validate expiration hours (1-2160, max 3 months)
@@ -57,10 +73,8 @@ try {
     // Calculate expiration timestamp
     $expiresAt = date('Y-m-d H:i:s', time() + ($expiresHours * 3600));
     
-    // Check if this is a new encrypted share (version 2) or legacy
-    $isEncryptedShare = isset($data['encrypted_data']) && isset($data['share_version']) && $data['share_version'] === 2;
-    
-    if ($isEncryptedShare) {
+    // Process based on share version
+    if ($isV2Share) {
         // New zero-knowledge share - client already filtered and encrypted the data
         $encryptedData = $data['encrypted_data'];
         
@@ -129,8 +143,8 @@ try {
             share_id, access_token, sync_id, user_id,
             encrypted_data, recipient_name, share_note,
             include_completed, include_tomorrow,
-            expires_at, created_by_device, share_version
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            expires_at, created_by_device, share_version, auto_update
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     
     $stmt->execute([
@@ -145,7 +159,8 @@ try {
         $data['include_tomorrow'] ?? true,
         $expiresAt,
         $data['device_name'] ?? 'Unknown Device',
-        $isEncryptedShare ? 2 : 1  // Version 2 for encrypted, 1 for legacy
+        $isV2Share ? 2 : 1,  // Version 2 for encrypted, 1 for legacy
+        $data['auto_update'] ?? false  // Auto-update flag
     ]);
     
     // Generate environment-appropriate share URL

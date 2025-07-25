@@ -13,10 +13,21 @@ try {
     $db->exec($sql);
     echo "Added share_version column successfully.\n";
     
-    // Create index
+    // Add auto_update column if it doesn't exist
+    $sql = "ALTER TABLE share_links
+            ADD COLUMN IF NOT EXISTS auto_update BOOLEAN DEFAULT FALSE AFTER share_version";
+    
+    $db->exec($sql);
+    echo "Added auto_update column successfully.\n";
+    
+    // Create indexes
     $sql = "CREATE INDEX IF NOT EXISTS idx_version ON share_links(share_version)";
     $db->exec($sql);
-    echo "Created index successfully.\n";
+    echo "Created version index successfully.\n";
+    
+    $sql = "CREATE INDEX IF NOT EXISTS idx_auto_update ON share_links(user_id, auto_update, expires_at)";
+    $db->exec($sql);
+    echo "Created auto_update index successfully.\n";
     
     // Show current table structure
     $stmt = $db->query("DESCRIBE share_links");
