@@ -94,7 +94,7 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
     // This ensures we always use the latest bundle
     const clearOldCaches = async () => {
       const cacheNames = await caches.keys();
-      const currentBundle = './bundle.02bdff906de68dc6d82e.js';
+      const currentBundle = './bundle.ba8e096f2decc5a3dd4e.js';
       
       // Check if any cache contains old bundles
       for (const cacheName of cacheNames) {

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Debug Share Storage</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .share-item {
+            background: #f4f4f4;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .token {
+            font-family: monospace;
+            background: #e0e0e0;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+            cursor: pointer;
+        }
+        pre {
+            background: #f0f0f0;
+            padding: 10px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Debug Share Storage</h1>
+    
+    <button onclick="checkShares()">Check Local Share Storage</button>
+    <button onclick="clearShares()">Clear All Shares</button>
+    
+    <div id="output"></div>
+    
+    <script>
+        const output = document.getElementById('output');
+        
+        async function checkShares() {
+            try {
+                const stored = localStorage.getItem('@stackmap_shares');
+                if (!stored) {
+                    output.innerHTML = '<p>No shares found in localStorage</p>';
+                    return;
+                }
+                
+                const shares = JSON.parse(stored);
+                let html = `<h3>Found ${shares.length} shares:</h3>`;
+                
+                shares.forEach((share, index) => {
+                    const tokenLength = share.token ? share.token.length : 0;
+                    const tokenPreview = share.token ? share.token.substring(0, 10) + '...' : 'null';
+                    
+                    html += `
+                        <div class="share-item">
+                            <strong>Share ${index + 1}:</strong><br>
+                            Token: <span class="token">${tokenPreview}</span> (length: ${tokenLength})<br>
+                            Version: ${share.shareVersion || 'undefined'}<br>
+                            Auto-update: ${share.autoUpdate}<br>
+                            User ID: ${share.userId}<br>
+                            Created: ${share.createdAt}<br>
+                            Expires: ${share.expiresAt}<br>
+                        </div>
+                    `;
+                });
+                
+                html += '<h3>Full data:</h3>';
+                html += '<pre>' + JSON.stringify(shares, null, 2) + '</pre>';
+                
+                output.innerHTML = html;
+                
+            } catch (error) {
+                output.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+        
+        async function clearShares() {
+            if (confirm('Clear all local shares? This cannot be undone.')) {
+                localStorage.removeItem('@stackmap_shares');
+                output.innerHTML = '<p style="color: green;">All shares cleared!</p>';
+            }
+        }
+    </script>
+</body>
+</html>

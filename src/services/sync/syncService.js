@@ -1299,9 +1299,30 @@ class SyncService {
       };
       
       // Encrypt with the same key
-      const shareKey = util.decodeBase64(
-        token.replace(/-/g, '+').replace(/_/g, '/') + '=='
-      );
+      let shareKey;
+      try {
+        // Validate token format before decoding
+        if (!/^[A-Za-z0-9_-]+$/.test(token)) {
+          console.log(`Invalid token characters in ${token.substring(0, 6)}..., skipping update`);
+          return;
+        }
+        
+        // Add padding back for base64 decoding
+        const paddedToken = token.replace(/-/g, '+').replace(/_/g, '/');
+        const padding = paddedToken.length % 4;
+        const finalToken = paddedToken + (padding ? '='.repeat(4 - padding) : '');
+        
+        shareKey = util.decodeBase64(finalToken);
+        
+        // Verify key length for secretbox
+        if (shareKey.length !== 32) {
+          console.log(`Invalid key length ${shareKey.length} for ${token.substring(0, 6)}..., skipping update`);
+          return;
+        }
+      } catch (error) {
+        console.log(`Failed to decode token ${token.substring(0, 6)}...: ${error.message}`);
+        return;
+      }
       
       const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
       const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
@@ -1354,9 +1375,15 @@ class SyncService {
       share => share.userId === userId && share.autoUpdate && share.shareVersion === 2
     );
     
-    // Update shares in parallel
+    // Update shares in parallel with error handling for each
     await Promise.all(
-      userShares.map(share => this.updateShare(share.token, userId))
+      userShares.map(async share => {
+        try {
+          await this.updateShare(share.token, userId);
+        } catch (error) {
+          console.error(`Failed to update share ${share.token?.substring(0, 6)}...:`, error.message);
+        }
+      })
     );
   }
 
