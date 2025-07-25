@@ -1,20 +1,20 @@
 import { StyleSheet, Platform } from 'react-native';
 
-const styles = StyleSheet.create({
+const createStyles = (isDarkMode) => StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f7fafc',
+    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f7fafc',
+    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
   },
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     fontFamily: Platform.select({
       ios: 'Comic Relief',
       android: 'ComicRelief-Regular',
@@ -25,13 +25,13 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#f7fafc',
+    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
     padding: 32,
   },
   errorTitle: {
     fontSize: 24,
     fontWeight: '700',
-    color: '#1a202c',
+    color: isDarkMode ? '#f7fafc' : '#1a202c',
     marginTop: 16,
     marginBottom: 8,
     fontFamily: Platform.select({
@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
   },
   errorMessage: {
     fontSize: 16,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -68,14 +68,15 @@ const styles = StyleSheet.create({
     }),
   },
   header: {
-    backgroundColor: '#fff',
+    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
     paddingHorizontal: 16,
     paddingVertical: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: isDarkMode ? '#4a5568' : '#e2e8f0',
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
     ...Platform.select({
       web: {
         paddingHorizontal: 24,
@@ -85,12 +86,24 @@ const styles = StyleSheet.create({
   userInfo: {
     flexDirection: 'row',
     alignItems: 'center',
+    flex: 1,
+  },
+  userTextContainer: {
+    flex: 1,
+  },
+  headerControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  darkModeToggle: {
+    padding: 8,
+    marginRight: 8,
   },
   userIconContainer: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -105,7 +118,7 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a202c',
+    color: isDarkMode ? '#f7fafc' : '#1a202c',
     fontFamily: Platform.select({
       ios: 'Comic Relief',
       android: 'ComicRelief-Bold',
@@ -114,7 +127,7 @@ const styles = StyleSheet.create({
   },
   shareInfo: {
     fontSize: 12,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     marginTop: 2,
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -124,7 +137,7 @@ const styles = StyleSheet.create({
   },
   recipientInfo: {
     fontSize: 12,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     fontStyle: 'italic',
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -172,25 +185,25 @@ const styles = StyleSheet.create({
   },
   daySelector: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#e2e8f0',
+    borderBottomColor: isDarkMode ? '#4a5568' : '#e2e8f0',
   },
   dayTab: {
     paddingHorizontal: 20,
     paddingVertical: 8,
     marginRight: 12,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
   },
   dayTabActive: {
     backgroundColor: '#667eea',
   },
   dayTabText: {
     fontSize: 14,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     fontFamily: Platform.select({
       ios: 'Comic Relief',
       android: 'ComicRelief-Regular',
@@ -202,14 +215,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   progressSummary: {
-    backgroundColor: '#fff',
+    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
     paddingHorizontal: 16,
     paddingVertical: 16,
     marginBottom: 16,
   },
   progressText: {
     fontSize: 14,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     marginBottom: 8,
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -219,7 +232,7 @@ const styles = StyleSheet.create({
   },
   progressBar: {
     height: 8,
-    backgroundColor: '#e2e8f0',
+    backgroundColor: isDarkMode ? '#4a5568' : '#e2e8f0',
     borderRadius: 4,
     overflow: 'hidden',
   },
@@ -232,14 +245,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   activityCard: {
-    backgroundColor: '#fff',
+    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    shadowColor: '#000',
+    shadowColor: isDarkMode ? '#000' : '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -254,7 +267,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 12,
@@ -272,7 +285,7 @@ const styles = StyleSheet.create({
   activityTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a202c',
+    color: isDarkMode ? '#f7fafc' : '#1a202c',
     marginBottom: 2,
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -282,7 +295,7 @@ const styles = StyleSheet.create({
   },
   activityDescription: {
     fontSize: 14,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     marginBottom: 4,
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -297,7 +310,7 @@ const styles = StyleSheet.create({
   },
   activityTime: {
     fontSize: 12,
-    color: '#999',
+    color: isDarkMode ? '#718096' : '#999',
     marginLeft: 4,
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -310,7 +323,7 @@ const styles = StyleSheet.create({
     height: 28,
     borderRadius: 14,
     borderWidth: 2,
-    borderColor: '#e2e8f0',
+    borderColor: isDarkMode ? '#4a5568' : '#e2e8f0',
     justifyContent: 'center',
     alignItems: 'center',
     marginLeft: 12,
@@ -326,7 +339,7 @@ const styles = StyleSheet.create({
   emptyStateText: {
     marginTop: 16,
     fontSize: 16,
-    color: '#999',
+    color: isDarkMode ? '#718096' : '#999',
     fontFamily: Platform.select({
       ios: 'Comic Relief',
       android: 'ComicRelief-Regular',
@@ -351,16 +364,16 @@ const styles = StyleSheet.create({
     }),
   },
   footer: {
-    backgroundColor: '#f7fafc',
+    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
     paddingVertical: 16,
     paddingHorizontal: 16,
     borderTopWidth: 1,
-    borderTopColor: '#e2e8f0',
+    borderTopColor: isDarkMode ? '#4a5568' : '#e2e8f0',
     alignItems: 'center',
   },
   footerText: {
     fontSize: 12,
-    color: '#999',
+    color: isDarkMode ? '#718096' : '#999',
     textAlign: 'center',
     fontFamily: Platform.select({
       ios: 'Comic Relief',
@@ -372,35 +385,72 @@ const styles = StyleSheet.create({
   infoSection: {
     marginVertical: 16,
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: isDarkMode ? '#2d3748' : '#f5f5f5',
     borderRadius: 8,
   },
   infoTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     marginBottom: 8,
-    color: '#333',
+    color: isDarkMode ? '#f7fafc' : '#333',
   },
   infoText: {
     fontSize: 14,
-    color: '#666',
+    color: isDarkMode ? '#a0aec0' : '#666',
     marginBottom: 4,
   },
   message: {
     fontSize: 16,
     textAlign: 'center',
     marginVertical: 16,
-    color: '#333',
+    color: isDarkMode ? '#f7fafc' : '#333',
   },
   successNote: {
     fontSize: 14,
     textAlign: 'center',
     marginTop: 20,
     padding: 16,
-    backgroundColor: '#e8f5e9',
+    backgroundColor: isDarkMode ? '#2d3e2f' : '#e8f5e9',
     borderRadius: 8,
-    color: '#2e7d32',
+    color: isDarkMode ? '#68d391' : '#2e7d32',
   },
-})
+  // Mobile CTA button styles
+  mobileCtaContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
+    borderTopWidth: 1,
+    borderTopColor: isDarkMode ? '#4a5568' : '#e2e8f0',
+    padding: 16,
+    ...Platform.select({
+      web: {
+        position: 'fixed',
+      },
+    }),
+  },
+  mobileCtaButton: {
+    backgroundColor: '#667eea',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  mobileCtaButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '700',
+    fontFamily: Platform.select({
+      ios: 'Comic Relief',
+      android: 'ComicRelief-Bold',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
+  },
+});
 
-export default styles;
+export default createStyles;

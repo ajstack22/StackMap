@@ -12,7 +12,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { format } from 'date-fns';
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
-import styles from './styles';
+import createStyles from './styles';
 import { CUSTOM_IMAGE_SOURCES } from '../../constants';
 
 const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
@@ -20,6 +20,18 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
   const [error, setError] = useState(null);
   const [shareData, setShareData] = useState(null);
   const [selectedDay, setSelectedDay] = useState('today');
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [windowWidth, setWindowWidth] = useState(Platform.OS === 'web' ? window.innerWidth : 0);
+  
+  const styles = createStyles(isDarkMode);
+
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      const handleResize = () => setWindowWidth(window.innerWidth);
+      window.addEventListener('resize', handleResize);
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, []);
 
   useEffect(() => {
     if (shareToken) {
@@ -268,7 +280,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
           <View style={styles.userIconContainer}>
             {renderUserIcon(user)}
           </View>
-          <View>
+          <View style={styles.userTextContainer}>
             <Text style={styles.userName}>{user.name}'s Progress</Text>
             <Text style={styles.shareInfo}>
               Shared {format(new Date(shared_at), 'MMM d, yyyy h:mm a')}
@@ -278,14 +290,28 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
             )}
           </View>
         </View>
-        {Platform.OS === 'web' && (
+        <View style={styles.headerControls}>
+          {/* Dark Mode Toggle */}
           <TouchableOpacity
-            style={styles.ctaButton}
-            onPress={() => window.location.href = '/'}
+            style={styles.darkModeToggle}
+            onPress={() => setIsDarkMode(!isDarkMode)}
           >
-            <Text style={styles.ctaButtonText}>Try StackMap</Text>
+            <Icon 
+              name={isDarkMode ? "brightness-7" : "brightness-4"} 
+              size={24} 
+              color={isDarkMode ? '#fff' : '#666'} 
+            />
           </TouchableOpacity>
-        )}
+          {/* Try StackMap button - desktop only */}
+          {Platform.OS === 'web' && windowWidth > 768 && (
+            <TouchableOpacity
+              style={styles.ctaButton}
+              onPress={() => window.location.href = '/'}
+            >
+              <Text style={styles.ctaButtonText}>Try StackMap</Text>
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       {/* Share Note */}
@@ -361,6 +387,18 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
           Powered by StackMap - Visual task management for everyone
         </Text>
       </View>
+      
+      {/* Mobile Try StackMap button */}
+      {Platform.OS === 'web' && windowWidth <= 768 && (
+        <View style={styles.mobileCtaContainer}>
+          <TouchableOpacity
+            style={styles.mobileCtaButton}
+            onPress={() => window.location.href = '/'}
+          >
+            <Text style={styles.mobileCtaButtonText}>Try StackMap</Text>
+          </TouchableOpacity>
+        </View>
+      )}
     </View>
   );
 };
