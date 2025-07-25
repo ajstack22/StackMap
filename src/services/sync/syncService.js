@@ -1394,9 +1394,26 @@ class SyncService {
       share => share.userId === userId && share.autoUpdate
     );
     
+    // Filter out shares that would cause errors:
+    // 1. V1 shares (6-8 char tokens)
+    // 2. Shares without version info (old shares)
+    const updatableShares = userShares.filter(share => {
+      // Skip V1 tokens
+      if (/^[A-Z0-9]{6,8}$/.test(share.token)) {
+        console.log(`Skipping V1 share ${share.token.substring(0, 6)}... - V1 shares don't support updates`);
+        return false;
+      }
+      // Skip shares without version (legacy)
+      if (!share.shareVersion) {
+        console.log(`Skipping legacy share ${share.token.substring(0, 6)}... - no version info`);
+        return false;
+      }
+      return true;
+    });
+    
     // Update shares in parallel
     await Promise.all(
-      userShares.map(share => this.updateShare(share.token, userId))
+      updatableShares.map(share => this.updateShare(share.token, userId))
     );
   }
 
