@@ -29,8 +29,8 @@ try {
     // Get token from query parameter
     $token = $_GET['token'] ?? '';
     
-    // Validate token format
-    if (!preg_match('/^[A-Z0-9]{6,8}$/', $token)) {
+    // Validate token format - support both v1 and v2 tokens
+    if (!preg_match('/^[A-Z0-9]{6,8}$/', $token) && !preg_match('/^[A-Za-z0-9_-]{24,}$/', $token)) {
         throw new Exception('Invalid token format');
     }
     
