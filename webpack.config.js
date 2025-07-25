@@ -49,6 +49,7 @@ module.exports = {
       'react-native$': 'react-native-web',
       // Add aliases for RN packages that need web versions
       'react-native-svg': 'react-native-svg-web',
+      'react-native-qrcode-svg': path.resolve(__dirname, 'src/utils/QRCode.web.js'),
       '@react-native-async-storage/async-storage': path.resolve(__dirname, 'src/utils/AsyncStorage.web.js'),
       'react-native-keychain': path.resolve(__dirname, 'src/utils/Keychain.web.js'),
       'react-native-fs': path.resolve(__dirname, 'src/utils/platformHelpers.web.js'),
