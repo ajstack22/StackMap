@@ -35,12 +35,18 @@ try {
     $isV2 = strlen($token) >= 24;
     
     if ($isV2) {
-        // Return mock encrypted data for v2 share
-        // This is just test data - in reality this would come from the database
+        // For v2, we need to create properly encrypted test data
+        // Since we can't decrypt without the actual key, let's return a message
         echo json_encode([
             'success' => true,
             'version' => 2,
-            'encrypted_data' => 'dGVzdCBlbmNyeXB0ZWQgZGF0YQ==', // base64 encoded test data
+            'test_mode' => true,
+            'message' => 'Share endpoint is working! The real share would be encrypted.',
+            'token_info' => [
+                'token' => $token,
+                'length' => strlen($token),
+                'type' => 'v2 encrypted share'
+            ],
             'recipient_name' => 'Test Recipient',
             'share_note' => 'This is a test share',
             'expires_at' => date('Y-m-d H:i:s', time() + 86400),

@@ -368,6 +368,39 @@ const styles = StyleSheet.create({
       web: "'Comic Relief', 'Comic Sans MS', cursive"
     }),
   },
+  // Test mode styles
+  infoSection: {
+    marginVertical: 16,
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    color: '#333',
+  },
+  infoText: {
+    fontSize: 14,
+    color: '#666',
+    marginBottom: 4,
+  },
+  message: {
+    fontSize: 16,
+    textAlign: 'center',
+    marginVertical: 16,
+    color: '#333',
+  },
+  successNote: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 20,
+    padding: 16,
+    backgroundColor: '#e8f5e9',
+    borderRadius: 8,
+    color: '#2e7d32',
+  },
 })
 
 export default styles;

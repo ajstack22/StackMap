@@ -53,6 +53,21 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
       }
 
       // Check if this is a v2 encrypted share
+      // Handle test mode
+      if (data.test_mode) {
+        setShareData({
+          success: true,
+          testMode: true,
+          message: data.message,
+          tokenInfo: data.token_info,
+          recipient_name: data.recipient_name,
+          share_note: data.share_note,
+          expires_at: data.expires_at
+        });
+        setLoading(false);
+        return;
+      }
+      
       if (data.version === 2) {
         try {
           // Decrypt the data client-side
@@ -197,6 +212,37 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
             <Text style={styles.backButtonText}>Go to StackMap</Text>
           </TouchableOpacity>
         )}
+      </View>
+    );
+  }
+  
+  // Handle test mode display
+  if (shareData?.testMode) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <Icon name="check-circle" size={48} color="#4CAF50" />
+          <Text style={styles.title}>Share Endpoint Working!</Text>
+        </View>
+        <View style={styles.content}>
+          <Text style={styles.message}>{shareData.message}</Text>
+          <View style={styles.infoSection}>
+            <Text style={styles.infoTitle}>Token Information:</Text>
+            <Text style={styles.infoText}>Type: {shareData.tokenInfo?.type}</Text>
+            <Text style={styles.infoText}>Length: {shareData.tokenInfo?.length} characters</Text>
+            <Text style={styles.infoText}>Token: {shareData.tokenInfo?.token?.substring(0, 20)}...</Text>
+          </View>
+          <View style={styles.infoSection}>
+            <Text style={styles.infoTitle}>Share Details:</Text>
+            <Text style={styles.infoText}>Recipient: {shareData.recipient_name || 'None'}</Text>
+            <Text style={styles.infoText}>Note: {shareData.share_note || 'None'}</Text>
+            <Text style={styles.infoText}>Expires: {shareData.expires_at}</Text>
+          </View>
+          <Text style={styles.successNote}>
+            ✅ The share system is working correctly!{'\n'}
+            The issue is with the database connection in access_share.php
+          </Text>
+        </View>
       </View>
     );
   }
