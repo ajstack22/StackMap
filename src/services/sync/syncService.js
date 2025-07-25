@@ -1038,14 +1038,12 @@ class SyncService {
       includeTomorrow = true,
       expiresHours = 24,
       accessToken = null,
-      autoUpdate = false,  // Add autoUpdate parameter
-      useEncryption = true  // Default to v2 encrypted shares
+      autoUpdate = false
     } = options;
     
-    // Generate token if not provided
-    const isSecureToken = useEncryption && (!accessToken || accessToken.length >= 24);
+    // Always generate V2 secure token
     if (!accessToken) {
-      accessToken = this.generateShareToken(isSecureToken);
+      accessToken = this.generateShareToken();
     }
 
     try {
@@ -1096,100 +1094,81 @@ class SyncService {
       const deviceId = await encryptionService.getDeviceId();
       const deviceName = encryptionService.getDeviceName();
 
-      let requestBody;
+      // Always use V2: Zero-knowledge encrypted share
+      // Filter data client-side
+      let filteredUserData = { ...userData };
       
-      if (useEncryption && accessToken.length >= 24) {
-        // V2: Zero-knowledge encrypted share
-        // Filter data client-side
-        let filteredUserData = { ...userData };
-        
-        if (!includeCompleted) {
-          // Remove completed activities
-          if (filteredUserData.days) {
-            Object.keys(filteredUserData.days).forEach(day => {
-              if (filteredUserData.days[day]?.activities) {
-                filteredUserData.days[day].activities = filteredUserData.days[day].activities.filter(
-                  activity => !activity.completed
-                );
-              }
-            });
-          }
+      if (!includeCompleted) {
+        // Remove completed activities
+        if (filteredUserData.days) {
+          Object.keys(filteredUserData.days).forEach(day => {
+            if (filteredUserData.days[day]?.activities) {
+              filteredUserData.days[day].activities = filteredUserData.days[day].activities.filter(
+                activity => !activity.completed
+              );
+            }
+          });
         }
-        
-        if (!includeTomorrow) {
-          // Remove tomorrow data
-          delete filteredUserData.days?.tomorrow;
-        }
-        
-        // Create share data structure
-        const shareData = {
-          user: filteredUserData,
-          shared_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + (expiresHours * 60 * 60 * 1000)).toISOString(),
-          recipient_name: recipientName,
-          share_note: shareNote,
-          read_only: true,
-          version: 2
-        };
-        
-        // Encrypt with the token as the key
-        let shareKey;
-        if (this._lastShareKeyBytes && isSecureToken) {
-          // Use the raw bytes we generated
-          shareKey = this._lastShareKeyBytes;
-          // Clear it after use for security
-          this._lastShareKeyBytes = null;
-        } else {
-          // Fallback: decode the token (for tokens passed in)
-          const paddedToken = accessToken.replace(/-/g, '+').replace(/_/g, '/');
-          // Add padding if needed
-          const padding = (4 - (paddedToken.length % 4)) % 4;
-          const fullToken = paddedToken + '='.repeat(padding);
-          shareKey = util.decodeBase64(fullToken);
-        }
-        
-        // Use a simplified encryption for shares
-        const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-        const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
-        const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
-        
-        // Combine nonce and ciphertext
-        const combined = new Uint8Array(nonce.length + encrypted.length);
-        combined.set(nonce);
-        combined.set(encrypted, nonce.length);
-        
-        const encryptedData = util.encodeBase64(combined);
-        
-        requestBody = {
-          sync_id: this.syncId,
-          user_id: userId,
-          encrypted_data: encryptedData,
-          access_token: accessToken,
-          expires_hours: expiresHours,
-          recipient_name: recipientName,
-          share_note: shareNote,
-          include_completed: includeCompleted,
-          include_tomorrow: includeTomorrow,
-          auto_update: autoUpdate,
-          device_name: deviceName,
-          share_version: 2
-        };
-      } else {
-        // V1: Legacy server-side filtering (server can read)
-        requestBody = {
-          sync_id: this.syncId,
-          user_id: userId,
-          user_data: userData,
-          access_token: accessToken,
-          expires_hours: expiresHours,
-          recipient_name: recipientName,
-          share_note: shareNote,
-          include_completed: includeCompleted,
-          include_tomorrow: includeTomorrow,
-          auto_update: autoUpdate,
-          device_name: deviceName
-        };
       }
+      
+      if (!includeTomorrow) {
+        // Remove tomorrow data
+        delete filteredUserData.days?.tomorrow;
+      }
+      
+      // Create share data structure
+      const shareData = {
+        user: filteredUserData,
+        shared_at: new Date().toISOString(),
+        expires_at: new Date(Date.now() + (expiresHours * 60 * 60 * 1000)).toISOString(),
+        recipient_name: recipientName,
+        share_note: shareNote,
+        read_only: true,
+        version: 2
+      };
+      
+      // Encrypt with the token as the key
+      let shareKey;
+      if (this._lastShareKeyBytes) {
+        // Use the raw bytes we generated
+        shareKey = this._lastShareKeyBytes;
+        // Clear it after use for security
+        this._lastShareKeyBytes = null;
+      } else {
+        // Fallback: decode the token (for tokens passed in)
+        const paddedToken = accessToken.replace(/-/g, '+').replace(/_/g, '/');
+        // Add padding if needed
+        const padding = (4 - (paddedToken.length % 4)) % 4;
+        const fullToken = paddedToken + '='.repeat(padding);
+        shareKey = util.decodeBase64(fullToken);
+      }
+      
+      // Use a simplified encryption for shares
+      const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+      const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
+      const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+      
+      // Combine nonce and ciphertext
+      const combined = new Uint8Array(nonce.length + encrypted.length);
+      combined.set(nonce);
+      combined.set(encrypted, nonce.length);
+      
+      const encryptedData = util.encodeBase64(combined);
+      
+      const requestBody = {
+        sync_id: this.syncId,
+        user_id: userId,
+        encrypted_data: encryptedData,
+        access_token: accessToken,
+        expires_hours: expiresHours,
+        recipient_name: recipientName,
+        share_note: shareNote,
+        include_completed: includeCompleted,
+        include_tomorrow: includeTomorrow,
+        auto_update: autoUpdate,
+        device_name: deviceName,
+        share_version: 2
+      };
 
       const response = await fetch(`${SHARE_API_URL}/create_share.php`, {
         method: 'POST',
@@ -1218,7 +1197,7 @@ class SyncService {
         includeCompleted,
         includeTomorrow,
         autoUpdate: options.autoUpdate || false,
-        shareVersion: useEncryption && accessToken.length >= 24 ? 2 : 1,
+        shareVersion: 2, // Always V2 now
         createdAt: new Date().toISOString(),
         expiresAt: result.expires_at,
         shareUrl: result.share_url
@@ -1234,7 +1213,7 @@ class SyncService {
   }
 
   /**
-   * Update an existing share with fresh data
+   * Update an existing share with fresh data (V2 only)
    */
   async updateShare(token, userId) {
     if (!this.syncEnabled || !this.syncId) {
@@ -1242,11 +1221,6 @@ class SyncService {
     }
 
     try {
-      // Skip update for tokens that are clearly V1 format (6-8 uppercase chars)
-      if (/^[A-Z0-9]{6,8}$/.test(token)) {
-        console.log(`Skipping update for V1 share ${token.substring(0, 6)}... - V1 shares don't support updates`);
-        return;
-      }
       // Get current state
       const state = useAppStore.getState();
       const user = state.users[userId];
@@ -1307,51 +1281,32 @@ class SyncService {
         delete filteredUserData.days?.tomorrow;
       }
       
-      // Check share version (default to V1 for old shares)
-      const shareVersion = shareInfo.shareVersion || 1;
+      // V2 only: Encrypted share
+      const shareData = {
+        user: filteredUserData,
+        shared_at: shareInfo.createdAt, // Keep original creation time
+        expires_at: shareInfo.expiresAt,
+        recipient_name: shareInfo.recipientName,
+        share_note: shareInfo.shareNote,
+        read_only: true,
+        version: 2,
+        last_updated: new Date().toISOString() // Add update timestamp
+      };
       
-      let encryptedData;
+      // Encrypt with the same key
+      const shareKey = util.decodeBase64(
+        token.replace(/-/g, '+').replace(/_/g, '/') + '=='
+      );
       
-      if (shareVersion === 2) {
-        // V2: Encrypted share
-        const shareData = {
-          user: filteredUserData,
-          shared_at: shareInfo.createdAt, // Keep original creation time
-          expires_at: shareInfo.expiresAt,
-          recipient_name: shareInfo.recipientName,
-          share_note: shareInfo.shareNote,
-          read_only: true,
-          version: 2,
-          last_updated: new Date().toISOString() // Add update timestamp
-        };
-        
-        // Encrypt with the same key
-        const shareKey = util.decodeBase64(
-          token.replace(/-/g, '+').replace(/_/g, '/') + '=='
-        );
-        
-        const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-        const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
-        const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
-        
-        const combined = new Uint8Array(nonce.length + encrypted.length);
-        combined.set(nonce);
-        combined.set(encrypted, nonce.length);
-        
-        encryptedData = util.encodeBase64(combined);
-      } else {
-        // V1: Legacy share - just base64 encode
-        const shareData = {
-          user: filteredUserData,
-          shared_at: shareInfo.createdAt,
-          expires_at: shareInfo.expiresAt,
-          recipient_name: shareInfo.recipientName,
-          share_note: shareInfo.shareNote,
-          last_updated: new Date().toISOString()
-        };
-        
-        encryptedData = btoa(JSON.stringify(shareData));
-      }
+      const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+      const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
+      const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+      
+      const combined = new Uint8Array(nonce.length + encrypted.length);
+      combined.set(nonce);
+      combined.set(encrypted, nonce.length);
+      
+      const encryptedData = util.encodeBase64(combined);
 
       // For local development, skip API call
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -1386,34 +1341,17 @@ class SyncService {
   }
 
   /**
-   * Update all auto-update shares for a user
+   * Update all auto-update shares for a user (V2 only)
    */
   async updateActiveShares(userId) {
     const shares = await this.getActiveShares();
     const userShares = shares.filter(
-      share => share.userId === userId && share.autoUpdate
+      share => share.userId === userId && share.autoUpdate && share.shareVersion === 2
     );
-    
-    // Filter out shares that would cause errors:
-    // 1. V1 shares (6-8 char tokens)
-    // 2. Shares without version info (old shares)
-    const updatableShares = userShares.filter(share => {
-      // Skip V1 tokens
-      if (/^[A-Z0-9]{6,8}$/.test(share.token)) {
-        console.log(`Skipping V1 share ${share.token.substring(0, 6)}... - V1 shares don't support updates`);
-        return false;
-      }
-      // Skip shares without version (legacy)
-      if (!share.shareVersion) {
-        console.log(`Skipping legacy share ${share.token.substring(0, 6)}... - no version info`);
-        return false;
-      }
-      return true;
-    });
     
     // Update shares in parallel
     await Promise.all(
-      updatableShares.map(share => this.updateShare(share.token, userId))
+      userShares.map(share => this.updateShare(share.token, userId))
     );
   }
 
@@ -1426,31 +1364,21 @@ class SyncService {
   }
 
   /**
-   * Generate a random share token
+   * Generate a V2 share token (always secure)
    */
-  generateShareToken(secure = false) {
-    if (secure) {
-      // Generate a secure 24-character token for v2 shares (encryption key)
-      // We need 32 bytes for nacl.secretbox key
-      const bytes = nacl.randomBytes(32); // 32 bytes for secretbox key
-      const token = util.encodeBase64(bytes)
-        .replace(/\+/g, '-')  // URL-safe
-        .replace(/\//g, '_')
-        .replace(/=/g, '');   // Remove padding
-      
-      // Store the raw bytes for use as encryption key
-      this._lastShareKeyBytes = bytes;
-      
-      return token;
-    } else {
-      // Legacy 6-8 character token for v1 shares
-      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-      let token = '';
-      for (let i = 0; i < 6; i++) {
-        token += chars.charAt(Math.floor(Math.random() * chars.length));
-      }
-      return token;
-    }
+  generateShareToken() {
+    // Generate a secure token for v2 shares (encryption key)
+    // We need 32 bytes for nacl.secretbox key
+    const bytes = nacl.randomBytes(32); // 32 bytes for secretbox key
+    const token = util.encodeBase64(bytes)
+      .replace(/\+/g, '-')  // URL-safe
+      .replace(/\//g, '_')
+      .replace(/=/g, '');   // Remove padding
+    
+    // Store the raw bytes for use as encryption key
+    this._lastShareKeyBytes = bytes;
+    
+    return token;
   }
 
   /**

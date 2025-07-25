@@ -34,15 +34,13 @@ try {
         throw new Exception('Invalid request data');
     }
     
-    // Check if this is a v2 encrypted share
-    $isV2Share = isset($data['share_version']) && $data['share_version'] === 2;
-    
-    // Validate required fields based on share version
-    if ($isV2Share) {
-        $required = ['sync_id', 'user_id', 'encrypted_data', 'access_token', 'expires_hours', 'share_version'];
-    } else {
-        $required = ['sync_id', 'user_id', 'user_data', 'access_token', 'expires_hours'];
+    // Only accept V2 encrypted shares
+    if (!isset($data['share_version']) || $data['share_version'] !== 2) {
+        throw new Exception('Only V2 encrypted shares are supported');
     }
+    
+    // V2 required fields
+    $required = ['sync_id', 'user_id', 'encrypted_data', 'access_token', 'expires_hours', 'share_version'];
     
     foreach ($required as $field) {
         if (!isset($data[$field])) {
@@ -50,18 +48,10 @@ try {
         }
     }
     
-    // Validate token format based on version
+    // Validate V2 token format (base64-url encoded, 24+ chars)
     $token = $data['access_token'];
-    if ($isV2Share) {
-        // V2 tokens are base64-url encoded (longer, mixed case)
-        if (!preg_match('/^[A-Za-z0-9_-]{24,}$/', $token)) {
-            throw new Exception('Invalid token format for v2 share. Must be at least 24 characters.');
-        }
-    } else {
-        // V1 tokens are 6-8 uppercase alphanumeric
-        if (!preg_match('/^[A-Z0-9]{6,8}$/', $token)) {
-            throw new Exception('Invalid token format. Must be 6-8 uppercase alphanumeric characters.');
-        }
+    if (!preg_match('/^[A-Za-z0-9_-]{24,}$/', $token)) {
+        throw new Exception('Invalid token format. V2 tokens must be at least 24 characters.');
     }
     
     // Validate expiration hours (1-2160, max 3 months)
@@ -73,56 +63,12 @@ try {
     // Calculate expiration timestamp
     $expiresAt = date('Y-m-d H:i:s', time() + ($expiresHours * 3600));
     
-    // Process based on share version
-    if ($isV2Share) {
-        // New zero-knowledge share - client already filtered and encrypted the data
-        $encryptedData = $data['encrypted_data'];
-        
-        // Validate it's properly formatted (base64)
-        if (!preg_match('/^[A-Za-z0-9+\/]+=*$/', $encryptedData)) {
-            throw new Exception('Invalid encrypted data format');
-        }
-        
-        // For v2 shares, token must be longer (minimum 24 chars for security)
-        if (strlen($token) < 24) {
-            throw new Exception('Token must be at least 24 characters for encrypted shares');
-        }
-    } else {
-        // Legacy share - server filters and encodes with base64
-        $userData = $data['user_data'];
-        if (!($data['include_completed'] ?? true)) {
-            // Remove completed activities
-            if (isset($userData['days'])) {
-                foreach ($userData['days'] as $day => &$dayData) {
-                    if (isset($dayData['activities'])) {
-                        $dayData['activities'] = array_filter($dayData['activities'], function($activity) {
-                            return !($activity['completed'] ?? false);
-                        });
-                        // Re-index array
-                        $dayData['activities'] = array_values($dayData['activities']);
-                    }
-                }
-            }
-        }
-        
-        if (!($data['include_tomorrow'] ?? true)) {
-            // Remove tomorrow data
-            unset($userData['days']['tomorrow']);
-        }
-        
-        // Add share metadata
-        $shareData = [
-            'user' => $userData,
-            'shared_at' => date('c'),
-            'expires_at' => $expiresAt,
-            'recipient_name' => $data['recipient_name'] ?? null,
-            'share_note' => $data['share_note'] ?? null,
-            'read_only' => true,
-            'version' => 1 // Mark as legacy version
-        ];
-        
-        // Encrypt the data (base64 for simplicity, could use proper encryption)
-        $encryptedData = base64_encode(json_encode($shareData));
+    // V2 zero-knowledge share - client already filtered and encrypted the data
+    $encryptedData = $data['encrypted_data'];
+    
+    // Validate it's properly formatted (base64)
+    if (!preg_match('/^[A-Za-z0-9+\/]+=*$/', $encryptedData)) {
+        throw new Exception('Invalid encrypted data format');
     }
     
     // Generate unique share ID
@@ -159,7 +105,7 @@ try {
         $data['include_tomorrow'] ?? true,
         $expiresAt,
         $data['device_name'] ?? 'Unknown Device',
-        $isV2Share ? 2 : 1,  // Version 2 for encrypted, 1 for legacy
+        2,  // Always version 2
         $data['auto_update'] ?? false  // Auto-update flag
     ]);
     
