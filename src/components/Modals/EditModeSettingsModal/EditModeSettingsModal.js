@@ -13,6 +13,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import QRCode from 'react-native-qrcode-svg';
 import { COLORS } from '../../../constants';
 import { styles } from './styles';
 import syncService from '../../../services/sync/syncService';
@@ -314,6 +315,18 @@ const EditModeSettingsModal = ({
                   {showRecoveryPhrase ? (
                     <View style={styles.recoveryPhraseContainer}>
                       <Text style={styles.recoveryPhraseLabel}>Your Recovery Phrase:</Text>
+                      
+                      {/* QR Code for recovery phrase */}
+                      <View style={styles.qrCodeContainer}>
+                        <QRCode
+                          value={syncRecoveryPhrase}
+                          size={180}
+                          color="#000"
+                          backgroundColor="#fff"
+                        />
+                      </View>
+                      <Text style={styles.qrCodeHint}>Scan to sync on another device</Text>
+                      
                       <Text style={styles.recoveryPhrase}>{syncRecoveryPhrase}</Text>
                       <Text style={styles.recoveryPhraseWarning}>
                         ⚠️ Save this phrase securely. You'll need it to sync on other devices.
@@ -524,6 +537,9 @@ const EditModeSettingsModal = ({
                         autoCapitalize="none"
                         autoCorrect={false}
                       />
+                      <Text style={styles.qrScanHint}>
+                        <Icon name="qr-code-scanner" size={14} color="#666" /> Or scan the QR code from your other device
+                      </Text>
                       {syncError ? (
                         <Text style={styles.errorText}>{syncError}</Text>
                       ) : null}
