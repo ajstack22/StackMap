@@ -287,9 +287,22 @@ const App = () => {
   
   useEffect(() => {
     if (Platform.OS === 'web') {
-      const urlParams = new URLSearchParams(window.location.search);
+      // Get the raw query string to handle + characters properly
+      const search = window.location.search;
+      const urlParams = new URLSearchParams(search);
       const token = urlParams.get('share');
-      const syncPhrase = urlParams.get('sync');
+      let syncPhrase = urlParams.get('sync');
+      
+      // If we have a sync phrase, we need to handle + characters that might be in base64
+      if (syncPhrase && search.includes('sync=')) {
+        // Extract the raw sync parameter value to preserve + characters
+        const syncMatch = search.match(/[?&]sync=([^&]+)/);
+        if (syncMatch) {
+          // Don't decode - the value is already decoded by URLSearchParams
+          // but we need to check if + was incorrectly converted to space
+          syncPhrase = syncMatch[1].replace(/ /g, '+');
+        }
+      }
       
       console.log('[App] URL params:', { 
         search: window.location.search,

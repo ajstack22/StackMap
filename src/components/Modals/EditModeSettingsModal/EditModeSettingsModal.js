@@ -75,6 +75,39 @@ const EditModeSettingsModal = ({
     }
   }, [visible, syncSetupPhrase, syncEnabled]);
 
+  // Auto-connect when sync phrase is provided from URL
+  useEffect(() => {
+    const autoConnect = async () => {
+      if (visible && syncSetupPhrase && !syncEnabled && showRecoveryInput && !syncLoading) {
+        // Small delay to ensure UI is ready
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        setSyncLoading(true);
+        setSyncError('');
+        try {
+          const { syncId: newSyncId, recoveryPhrase } = await syncService.initialize(syncSetupPhrase.trim());
+          setSyncEnabled(true);
+          setSyncId(newSyncId);
+          setSyncRecoveryPhrase(recoveryPhrase);
+          setShowRecoveryInput(false);
+          setRecoveryInput('');
+          showToast('Successfully connected to sync!', 'success');
+          
+          // Clear the sync setup phrase
+          if (Platform.OS === 'web') {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch (error) {
+          setSyncError(error.message || 'Invalid recovery phrase');
+        } finally {
+          setSyncLoading(false);
+        }
+      }
+    };
+    
+    autoConnect();
+  }, [visible, syncSetupPhrase, syncEnabled, showRecoveryInput, syncLoading, showToast]);
+
   const checkSyncStatus = async () => {
     const enabled = await syncService.isEnabled();
     setSyncEnabled(enabled);
