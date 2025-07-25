@@ -1242,6 +1242,11 @@ class SyncService {
     }
 
     try {
+      // Skip update for tokens that are clearly V1 format (6-8 uppercase chars)
+      if (/^[A-Z0-9]{6,8}$/.test(token)) {
+        console.log(`Skipping update for V1 share ${token.substring(0, 6)}... - V1 shares don't support updates`);
+        return;
+      }
       // Get current state
       const state = useAppStore.getState();
       const user = state.users[userId];
