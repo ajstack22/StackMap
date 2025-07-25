@@ -625,6 +625,18 @@ const App = () => {
       // Mark onboarding as completed
       setHasCompletedOnboarding(true);
       
+      // Handle abbreviated onboarding (sync URL flow)
+      if (onboardingData?.isAbbreviated && onboardingData?.syncSetupPhrase) {
+        console.log('Abbreviated onboarding - will trigger sync after setup');
+        // Set showOnboarding to false to show main app
+        setShowOnboarding(false);
+        // Wait a moment for UI to update, then open settings to trigger sync
+        setTimeout(() => {
+          setShowEditModeSettingsModal(true);
+        }, 500);
+        return;
+      }
+      
       // If no onboarding data provided (shouldn't happen), create default user
       if (!onboardingData || !onboardingData.users || onboardingData.users.length === 0) {
         console.warn('No users provided from onboarding, creating default user');
@@ -3169,6 +3181,8 @@ const App = () => {
             // Stay in onboarding if import fails
           }
         }}
+        isAbbreviated={!!syncSetupPhrase}
+        syncSetupPhrase={syncSetupPhrase}
       />
     );
   }

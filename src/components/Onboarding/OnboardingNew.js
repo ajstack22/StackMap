@@ -31,7 +31,7 @@ const isTablet = () => screenWidth >= 768;
 const isMobileWeb = () => Platform.OS === 'web' && Dimensions.get('window').width < 768;
 
 // Updated: 2025-07-18 16:45 - Fixed mobile layout
-const OnboardingNew = ({ onComplete, onImport }) => {
+const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupPhrase = null }) => {
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [userName, setUserName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('😊');
@@ -191,30 +191,41 @@ const OnboardingNew = ({ onComplete, onImport }) => {
               </View>
             </View>
 
-            <TouchableOpacity 
-              style={styles.primaryButton}
-              onPress={() => transitionTo('createUser')}
-            >
-              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Fresh</Text>
-            </TouchableOpacity>
-            
-            <View style={styles.secondaryButtonsRow}>
+            {isAbbreviated ? (
               <TouchableOpacity 
-                style={[styles.secondaryButton, styles.secondaryButtonEqual]}
-                onPress={onImport}
+                style={styles.primaryButton}
+                onPress={() => transitionTo('features')}
               >
-                <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore StackMap</Text>
+                <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Continue</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.secondaryButton, styles.secondaryButtonEqual]}
-                onPress={() => transitionTo('sync')}
-              >
-                <Icon name="cloud-sync" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
-              </TouchableOpacity>
-            </View>
+            ) : (
+              <>
+                <TouchableOpacity 
+                  style={styles.primaryButton}
+                  onPress={() => transitionTo('createUser')}
+                >
+                  <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Fresh</Text>
+                </TouchableOpacity>
+                
+                <View style={styles.secondaryButtonsRow}>
+                  <TouchableOpacity 
+                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
+                    onPress={onImport}
+                  >
+                    <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore StackMap</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
+                    onPress={() => transitionTo('sync')}
+                  >
+                    <Icon name="cloud-sync" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </ScrollView>
         );
 
@@ -406,7 +417,10 @@ const OnboardingNew = ({ onComplete, onImport }) => {
               <TouchableOpacity 
                 style={styles.primaryButton}
                 onPress={() => {
-                  if (users.length > 0) {
+                  if (isAbbreviated) {
+                    // For abbreviated onboarding, complete without user/pin setup
+                    onComplete({ isAbbreviated: true, syncSetupPhrase });
+                  } else if (users.length > 0) {
                     transitionTo('setupPin');
                   } else {
                     transitionTo('createUser');
@@ -414,11 +428,11 @@ const OnboardingNew = ({ onComplete, onImport }) => {
                 }}
               >
                 <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                  {users.length > 0 ? 'Continue to StackMap' : 'Create First User'}
+                  {isAbbreviated ? 'Continue to StackMap' : (users.length > 0 ? 'Continue to StackMap' : 'Create First User')}
                 </Text>
               </TouchableOpacity>
 
-              {users.length < 3 && (
+              {!isAbbreviated && users.length < 3 && (
                 <TouchableOpacity 
                   style={styles.secondaryButton}
                   onPress={() => transitionTo('createUser')}
