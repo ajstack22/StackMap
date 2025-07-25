@@ -412,7 +412,7 @@ const App = () => {
   useEffect(() => {
     if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
       // Open settings modal with sync setup
-      setShowEditModeSettings(true);
+      setShowEditModeSettingsModal(true);
       // Clear the URL parameter
       if (Platform.OS === 'web') {
         window.history.replaceState({}, document.title, window.location.pathname);
