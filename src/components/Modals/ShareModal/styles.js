@@ -115,6 +115,13 @@ const styles = StyleSheet.create({
     fontSize: TYPOGRAPHY.sizes.md || 16,
     color: modalColors.text,
   },
+  autoUpdateHint: {
+    fontSize: TYPOGRAPHY.sizes.sm || 14,
+    color: modalColors.textSecondary,
+    marginTop: SPACING.xs || 4,
+    marginLeft: 32, // Align with checkbox text
+    fontStyle: 'italic',
+  },
   tokenPreview: {
     backgroundColor: modalColors.backgroundLight,
     borderRadius: RADIUS.md || 8,
@@ -122,16 +129,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginVertical: SPACING.lg || 24,
   },
+  tokenHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm || 8,
+  },
   tokenLabel: {
     fontSize: TYPOGRAPHY.sizes.sm || 14,
     color: modalColors.textSecondary,
-    marginBottom: SPACING.sm || 8,
+    marginLeft: SPACING.xs || 4,
   },
   tokenText: {
-    fontSize: TYPOGRAPHY.sizes.xxl || 24,
-    fontWeight: TYPOGRAPHY.weights.bold,
-    color: modalColors.primary,
-    letterSpacing: 2,
+    fontSize: TYPOGRAPHY.sizes.md || 16,
+    fontWeight: TYPOGRAPHY.weights.medium,
+    color: modalColors.textSecondary,
+    letterSpacing: 1,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    maxWidth: '80%',
   },
   tokenHint: {
     fontSize: TYPOGRAPHY.sizes.sm || 14,
@@ -210,6 +224,40 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.md || 16,
     textAlign: 'center',
   },
+  primaryCopyButton: {
+    backgroundColor: modalColors.primary,
+    borderRadius: RADIUS.md || 8,
+    paddingVertical: SPACING.md || 16,
+    paddingHorizontal: SPACING.xl || 32,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.lg || 24,
+    ...SHADOWS.level2,
+  },
+  primaryCopyButtonText: {
+    color: '#fff',
+    fontSize: TYPOGRAPHY.sizes.md || 16,
+    fontWeight: TYPOGRAPHY.weights.semibold,
+    marginLeft: SPACING.sm || 8,
+  },
+  urlPreview: {
+    backgroundColor: modalColors.backgroundLight,
+    borderRadius: RADIUS.md || 8,
+    padding: SPACING.sm || 8,
+    marginBottom: SPACING.md || 16,
+    width: '100%',
+  },
+  urlPreviewLabel: {
+    fontSize: TYPOGRAPHY.sizes.xs || 12,
+    color: modalColors.textSecondary,
+    marginBottom: 4,
+  },
+  urlPreviewText: {
+    fontSize: TYPOGRAPHY.sizes.sm || 14,
+    color: modalColors.textSecondary,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
   newShareButton: {
     paddingVertical: SPACING.md || 16,
     paddingHorizontal: SPACING.lg || 24,
@@ -254,11 +302,30 @@ const styles = StyleSheet.create({
   shareItemInfo: {
     flex: 1,
   },
+  shareItemTokenRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+  },
   shareItemToken: {
     fontSize: TYPOGRAPHY.sizes.md || 16,
     fontWeight: TYPOGRAPHY.weights.semibold,
     color: modalColors.text,
-    marginBottom: 2,
+  },
+  autoUpdateBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4CAF50' + '20',
+    borderRadius: RADIUS.sm || 4,
+    paddingHorizontal: SPACING.xs || 4,
+    paddingVertical: 2,
+    marginLeft: SPACING.sm || 8,
+  },
+  autoUpdateBadgeText: {
+    fontSize: TYPOGRAPHY.sizes.xs || 12,
+    color: '#4CAF50',
+    marginLeft: 2,
+    fontWeight: TYPOGRAPHY.weights.medium,
   },
   shareItemRecipient: {
     fontSize: TYPOGRAPHY.sizes.sm || 14,

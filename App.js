@@ -912,6 +912,24 @@ const App = () => {
 
   const theme = THEMES[currentTheme] || THEMES.stackBlue;
 
+  // Helper to update auto-update shares after activity changes
+  const updateAutoUpdateShares = async (userId) => {
+    try {
+      if (await syncService.isEnabled() && await syncService.hasAutoUpdateShares(userId)) {
+        // Use a small delay to batch multiple updates
+        if (updateAutoUpdateShares.timeout) {
+          clearTimeout(updateAutoUpdateShares.timeout);
+        }
+        updateAutoUpdateShares.timeout = setTimeout(async () => {
+          await syncService.updateActiveShares(userId);
+          console.log('Auto-update shares refreshed');
+        }, 1000); // 1 second delay to batch updates
+      }
+    } catch (error) {
+      console.log('Share update skipped:', error.message);
+    }
+  };
+
   const toggleActivity = (id) => {
     const activity = activities.find(a => a.id === id);
     const wasCompleted = activity?.completed;
@@ -936,6 +954,9 @@ const App = () => {
         }
       };
       setUsers(updatedUsers);
+      
+      // Update auto-update shares
+      updateAutoUpdateShares(currentUser);
     }
     
     // Check if we just completed an activity
@@ -1090,6 +1111,9 @@ const App = () => {
         }
       };
       setUsers(updatedUsers);
+      
+      // Update auto-update shares
+      updateAutoUpdateShares(currentUser);
     }
     
     resetActivityForm();
@@ -1129,6 +1153,9 @@ const App = () => {
         }
       };
       setUsers(updatedUsers);
+      
+      // Update auto-update shares
+      updateAutoUpdateShares(currentUser);
     }
     
     // Show toast with undo

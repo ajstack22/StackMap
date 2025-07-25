@@ -36,7 +36,7 @@ try {
     
     $db = Database::getInstance()->getConnection();
     
-    // Fetch share data
+    // Fetch share data including version
     $stmt = $db->prepare("
         SELECT 
             share_id,
@@ -44,7 +44,8 @@ try {
             recipient_name,
             share_note,
             expires_at,
-            accessed_count
+            accessed_count,
+            share_version
         FROM share_links
         WHERE access_token = ?
         AND expires_at > NOW()
@@ -71,38 +72,57 @@ try {
     ");
     $updateStmt->execute([$token]);
     
-    // Decrypt the data
-    $decryptedData = json_decode(base64_decode($share['encrypted_data']), true);
+    // Check share version
+    $shareVersion = intval($share['share_version'] ?? 1);
     
-    if (!$decryptedData) {
-        throw new Exception('Failed to decrypt share data');
-    }
-    
-    // Calculate time until expiration
-    $expiresAt = new DateTime($share['expires_at']);
-    $now = new DateTime();
-    $interval = $now->diff($expiresAt);
-    
-    $hoursRemaining = ($interval->days * 24) + $interval->h;
-    $expiresIn = $hoursRemaining > 24 
-        ? $interval->days . ' day' . ($interval->days > 1 ? 's' : '')
-        : $hoursRemaining . ' hour' . ($hoursRemaining > 1 ? 's' : '');
-    
-    // Return share data
-    echo json_encode([
-        'success' => true,
-        'data' => [
-            'share_id' => $share['share_id'],
-            'user' => $decryptedData['user'],
+    if ($shareVersion === 2) {
+        // Version 2: Zero-knowledge encrypted share
+        // Return encrypted data for client-side decryption
+        echo json_encode([
+            'success' => true,
+            'version' => 2,
+            'encrypted_data' => $share['encrypted_data'],
             'recipient_name' => $share['recipient_name'],
             'share_note' => $share['share_note'],
-            'shared_at' => $decryptedData['shared_at'],
             'expires_at' => $share['expires_at'],
-            'expires_in' => $expiresIn,
-            'access_count' => intval($share['accessed_count']) + 1,
-            'read_only' => true
-        ]
-    ]);
+            'access_count' => intval($share['accessed_count']) + 1
+        ]);
+    } else {
+        // Version 1: Legacy base64-encoded share
+        // Server-side "decryption" (base64 decode)
+        $decryptedData = json_decode(base64_decode($share['encrypted_data']), true);
+        
+        if (!$decryptedData) {
+            throw new Exception('Failed to decrypt share data');
+        }
+        
+        // Calculate time until expiration
+        $expiresAt = new DateTime($share['expires_at']);
+        $now = new DateTime();
+        $interval = $now->diff($expiresAt);
+        
+        $hoursRemaining = ($interval->days * 24) + $interval->h;
+        $expiresIn = $hoursRemaining > 24 
+            ? $interval->days . ' day' . ($interval->days > 1 ? 's' : '')
+            : $hoursRemaining . ' hour' . ($hoursRemaining > 1 ? 's' : '');
+        
+        // Return share data
+        echo json_encode([
+            'success' => true,
+            'version' => 1,
+            'data' => [
+                'share_id' => $share['share_id'],
+                'user' => $decryptedData['user'],
+                'recipient_name' => $share['recipient_name'],
+                'share_note' => $share['share_note'],
+                'shared_at' => $decryptedData['shared_at'],
+                'expires_at' => $share['expires_at'],
+                'expires_in' => $expiresIn,
+                'access_count' => intval($share['accessed_count']) + 1,
+                'read_only' => true
+            ]
+        ]);
+    }
     
 } catch (Exception $e) {
     error_log('Access share error: ' . $e->getMessage());

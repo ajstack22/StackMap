@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { format } from 'date-fns';
+import nacl from 'tweetnacl';
+import util from 'tweetnacl-util';
 import styles from './styles';
 import { CUSTOM_IMAGE_SOURCES } from '../../constants';
 
@@ -49,7 +51,52 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
         throw new Error(data.error || 'Invalid share link');
       }
 
-      setShareData(data.data);
+      // Check if this is a v2 encrypted share
+      if (data.version === 2) {
+        try {
+          // Decrypt the data client-side
+          const encryptedData = data.encrypted_data;
+          
+          // Convert token back to key
+          const shareKey = util.decodeBase64(
+            shareToken.replace(/-/g, '+').replace(/_/g, '/') + '=='
+          );
+          
+          // Decode the encrypted data
+          const combined = util.decodeBase64(encryptedData);
+          
+          // Extract nonce and ciphertext
+          const nonce = combined.slice(0, nacl.secretbox.nonceLength);
+          const ciphertext = combined.slice(nacl.secretbox.nonceLength);
+          
+          // Decrypt
+          const decrypted = nacl.secretbox.open(ciphertext, nonce, shareKey);
+          if (!decrypted) {
+            throw new Error('Failed to decrypt share data - invalid key');
+          }
+          
+          // Parse decrypted data
+          const decryptedString = util.encodeUTF8(decrypted);
+          const shareData = JSON.parse(decryptedString);
+          
+          // Format for display (similar to v1 structure)
+          setShareData({
+            user: shareData.user,
+            recipient_name: data.recipient_name,
+            share_note: data.share_note,
+            shared_at: shareData.shared_at,
+            expires_at: data.expires_at,
+            access_count: data.access_count,
+            read_only: true
+          });
+        } catch (decryptError) {
+          console.error('Decryption failed:', decryptError);
+          throw new Error('Failed to decrypt share data. The link may be corrupted.');
+        }
+      } else {
+        // V1 legacy share - data already decrypted by server
+        setShareData(data.data);
+      }
     } catch (err) {
       setError(err.message);
     } finally {

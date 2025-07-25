@@ -34,13 +34,14 @@ const ShareModal = ({
   const [expiresHours, setExpiresHours] = useState('24');
   const [includeCompleted, setIncludeCompleted] = useState(true);
   const [includeTomorrow, setIncludeTomorrow] = useState(true);
+  const [autoUpdate, setAutoUpdate] = useState(true); // New state for auto-update
   const [activeShares, setActiveShares] = useState([]);
   const [showActiveShares, setShowActiveShares] = useState(false);
 
   useEffect(() => {
     if (visible) {
-      // Generate new token when modal opens
-      const token = syncService.generateShareToken();
+      // Generate new secure token when modal opens (v2 encrypted shares)
+      const token = syncService.generateShareToken(true); // true = secure 24-char token
       setShareToken(token);
       loadActiveShares();
     } else {
@@ -52,6 +53,7 @@ const ShareModal = ({
       setExpiresHours('24');
       setIncludeCompleted(true);
       setIncludeTomorrow(true);
+      setAutoUpdate(true);
     }
   }, [visible]);
 
@@ -68,6 +70,7 @@ const ShareModal = ({
         shareNote,
         includeCompleted,
         includeTomorrow,
+        autoUpdate,
         expiresHours: parseInt(expiresHours),
         accessToken: shareToken
       });
@@ -221,13 +224,38 @@ const ShareModal = ({
                       />
                       <Text style={styles.checkboxLabel}>Include tomorrow's plan</Text>
                     </TouchableOpacity>
+
+                    <TouchableOpacity
+                      style={styles.checkbox}
+                      onPress={() => setAutoUpdate(!autoUpdate)}
+                    >
+                      <Icon 
+                        name={autoUpdate ? 'check-box' : 'check-box-outline-blank'}
+                        size={24}
+                        color={theme.primary}
+                      />
+                      <Text style={styles.checkboxLabel}>Keep share up-to-date</Text>
+                    </TouchableOpacity>
+                    
+                    {autoUpdate && (
+                      <Text style={styles.autoUpdateHint}>
+                        <Icon name="info-outline" size={14} color="#999" /> Share will automatically update when activities change
+                      </Text>
+                    )}
                   </View>
                 </View>
 
                 <View style={styles.tokenPreview}>
-                  <Text style={styles.tokenLabel}>Access Code</Text>
-                  <Text style={styles.tokenText}>{shareToken}</Text>
-                  <Text style={styles.tokenHint}>This code will be part of your share link</Text>
+                  <View style={styles.tokenHeader}>
+                    <Icon name="lock" size={16} color="#666" />
+                    <Text style={styles.tokenLabel}>End-to-End Encrypted Share</Text>
+                  </View>
+                  <Text style={styles.tokenText} numberOfLines={1} ellipsizeMode="middle">
+                    {shareToken}
+                  </Text>
+                  <Text style={styles.tokenHint}>
+                    This key encrypts your data - only share with trusted recipients
+                  </Text>
                 </View>
 
                 <TouchableOpacity
@@ -262,13 +290,23 @@ const ShareModal = ({
                     />
                   </View>
                   
-                  <Text style={styles.qrCodeHint}>Scan this code or share the link below</Text>
+                  <Text style={styles.qrCodeHint}>Scan this code to access the share</Text>
                   
-                  <View style={styles.urlContainer}>
-                    <Text style={styles.urlText} numberOfLines={2}>{shareUrl}</Text>
-                    <TouchableOpacity style={styles.copyButton} onPress={handleCopyUrl}>
-                      <Icon name="content-copy" size={20} color={theme.primary} />
-                    </TouchableOpacity>
+                  {/* Prominent Copy Button */}
+                  <TouchableOpacity 
+                    style={styles.primaryCopyButton} 
+                    onPress={handleCopyUrl}
+                  >
+                    <Icon name="content-copy" size={24} color="#fff" />
+                    <Text style={styles.primaryCopyButtonText}>Copy Share Link</Text>
+                  </TouchableOpacity>
+                  
+                  {/* De-emphasized URL display */}
+                  <View style={styles.urlPreview}>
+                    <Text style={styles.urlPreviewLabel}>Share URL:</Text>
+                    <Text style={styles.urlPreviewText} numberOfLines={1} ellipsizeMode="middle">
+                      {shareUrl}
+                    </Text>
                   </View>
 
                   {recipientName && (
@@ -291,7 +329,7 @@ const ShareModal = ({
                     style={styles.newShareButton}
                     onPress={() => {
                       setShareUrl('');
-                      setShareToken(syncService.generateShareToken());
+                      setShareToken(syncService.generateShareToken(true)); // Generate secure token
                     }}
                   >
                     <Text style={styles.newShareButtonText}>Create Another Share</Text>
@@ -322,7 +360,15 @@ const ShareModal = ({
                     {activeShares.map(share => (
                       <View key={share.shareId} style={styles.shareItem}>
                         <View style={styles.shareItemInfo}>
-                          <Text style={styles.shareItemToken}>{share.token}</Text>
+                          <View style={styles.shareItemTokenRow}>
+                            <Text style={styles.shareItemToken}>{share.token.substring(0, 8)}...</Text>
+                            {share.autoUpdate && (
+                              <View style={styles.autoUpdateBadge}>
+                                <Icon name="sync" size={12} color="#4CAF50" />
+                                <Text style={styles.autoUpdateBadgeText}>Auto-update</Text>
+                              </View>
+                            )}
+                          </View>
                           {share.recipientName && (
                             <Text style={styles.shareItemRecipient}>
                               For: {share.recipientName}

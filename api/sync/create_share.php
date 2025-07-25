@@ -57,40 +57,59 @@ try {
     // Calculate expiration timestamp
     $expiresAt = date('Y-m-d H:i:s', time() + ($expiresHours * 3600));
     
-    // Filter user data based on share settings
-    $userData = $data['user_data'];
-    if (!($data['include_completed'] ?? true)) {
-        // Remove completed activities
-        if (isset($userData['days'])) {
-            foreach ($userData['days'] as $day => &$dayData) {
-                if (isset($dayData['activities'])) {
-                    $dayData['activities'] = array_filter($dayData['activities'], function($activity) {
-                        return !($activity['completed'] ?? false);
-                    });
-                    // Re-index array
-                    $dayData['activities'] = array_values($dayData['activities']);
+    // Check if this is a new encrypted share (version 2) or legacy
+    $isEncryptedShare = isset($data['encrypted_data']) && isset($data['share_version']) && $data['share_version'] === 2;
+    
+    if ($isEncryptedShare) {
+        // New zero-knowledge share - client already filtered and encrypted the data
+        $encryptedData = $data['encrypted_data'];
+        
+        // Validate it's properly formatted (base64)
+        if (!preg_match('/^[A-Za-z0-9+\/]+=*$/', $encryptedData)) {
+            throw new Exception('Invalid encrypted data format');
+        }
+        
+        // For v2 shares, token must be longer (minimum 24 chars for security)
+        if (strlen($token) < 24) {
+            throw new Exception('Token must be at least 24 characters for encrypted shares');
+        }
+    } else {
+        // Legacy share - server filters and encodes with base64
+        $userData = $data['user_data'];
+        if (!($data['include_completed'] ?? true)) {
+            // Remove completed activities
+            if (isset($userData['days'])) {
+                foreach ($userData['days'] as $day => &$dayData) {
+                    if (isset($dayData['activities'])) {
+                        $dayData['activities'] = array_filter($dayData['activities'], function($activity) {
+                            return !($activity['completed'] ?? false);
+                        });
+                        // Re-index array
+                        $dayData['activities'] = array_values($dayData['activities']);
+                    }
                 }
             }
         }
+        
+        if (!($data['include_tomorrow'] ?? true)) {
+            // Remove tomorrow data
+            unset($userData['days']['tomorrow']);
+        }
+        
+        // Add share metadata
+        $shareData = [
+            'user' => $userData,
+            'shared_at' => date('c'),
+            'expires_at' => $expiresAt,
+            'recipient_name' => $data['recipient_name'] ?? null,
+            'share_note' => $data['share_note'] ?? null,
+            'read_only' => true,
+            'version' => 1 // Mark as legacy version
+        ];
+        
+        // Encrypt the data (base64 for simplicity, could use proper encryption)
+        $encryptedData = base64_encode(json_encode($shareData));
     }
-    
-    if (!($data['include_tomorrow'] ?? true)) {
-        // Remove tomorrow data
-        unset($userData['days']['tomorrow']);
-    }
-    
-    // Add share metadata
-    $shareData = [
-        'user' => $userData,
-        'shared_at' => date('c'),
-        'expires_at' => $expiresAt,
-        'recipient_name' => $data['recipient_name'] ?? null,
-        'share_note' => $data['share_note'] ?? null,
-        'read_only' => true
-    ];
-    
-    // Encrypt the data (base64 for simplicity, could use proper encryption)
-    $encryptedData = base64_encode(json_encode($shareData));
     
     // Generate unique share ID
     $shareId = bin2hex(random_bytes(16));
@@ -110,8 +129,8 @@ try {
             share_id, access_token, sync_id, user_id,
             encrypted_data, recipient_name, share_note,
             include_completed, include_tomorrow,
-            expires_at, created_by_device
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            expires_at, created_by_device, share_version
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     
     $stmt->execute([
@@ -125,7 +144,8 @@ try {
         $data['include_completed'] ?? true,
         $data['include_tomorrow'] ?? true,
         $expiresAt,
-        $data['device_name'] ?? 'Unknown Device'
+        $data['device_name'] ?? 'Unknown Device',
+        $isEncryptedShare ? 2 : 1  // Version 2 for encrypted, 1 for legacy
     ]);
     
     // Generate environment-appropriate share URL

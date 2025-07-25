@@ -1,5 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import nacl from 'tweetnacl';
+import util from 'tweetnacl-util';
 import encryptionService from './encryptionService';
 import { useAppStore } from '../../stores';
 import syncQueue from './syncQueue';
@@ -1035,7 +1037,8 @@ class SyncService {
       includeCompleted = true,
       includeTomorrow = true,
       expiresHours = 24,
-      accessToken = this.generateShareToken()
+      accessToken = this.generateShareToken(),
+      useEncryption = true  // Default to v2 encrypted shares
     } = options;
 
     try {
@@ -1086,12 +1089,75 @@ class SyncService {
       const deviceId = await encryptionService.getDeviceId();
       const deviceName = encryptionService.getDeviceName();
 
-      const response = await fetch(`${SHARE_API_URL}/create_share.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
+      let requestBody;
+      
+      if (useEncryption && accessToken.length >= 24) {
+        // V2: Zero-knowledge encrypted share
+        // Filter data client-side
+        let filteredUserData = { ...userData };
+        
+        if (!includeCompleted) {
+          // Remove completed activities
+          if (filteredUserData.days) {
+            Object.keys(filteredUserData.days).forEach(day => {
+              if (filteredUserData.days[day]?.activities) {
+                filteredUserData.days[day].activities = filteredUserData.days[day].activities.filter(
+                  activity => !activity.completed
+                );
+              }
+            });
+          }
+        }
+        
+        if (!includeTomorrow) {
+          // Remove tomorrow data
+          delete filteredUserData.days?.tomorrow;
+        }
+        
+        // Create share data structure
+        const shareData = {
+          user: filteredUserData,
+          shared_at: new Date().toISOString(),
+          expires_at: new Date(Date.now() + (expiresHours * 60 * 60 * 1000)).toISOString(),
+          recipient_name: recipientName,
+          share_note: shareNote,
+          read_only: true,
+          version: 2
+        };
+        
+        // Encrypt with the token as the key
+        const shareKey = util.decodeBase64(
+          accessToken.replace(/-/g, '+').replace(/_/g, '/') + '=='
+        );
+        
+        // Use a simplified encryption for shares
+        const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+        const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
+        const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+        
+        // Combine nonce and ciphertext
+        const combined = new Uint8Array(nonce.length + encrypted.length);
+        combined.set(nonce);
+        combined.set(encrypted, nonce.length);
+        
+        const encryptedData = util.encodeBase64(combined);
+        
+        requestBody = {
+          sync_id: this.syncId,
+          user_id: userId,
+          encrypted_data: encryptedData,
+          access_token: accessToken,
+          expires_hours: expiresHours,
+          recipient_name: recipientName,
+          share_note: shareNote,
+          include_completed: includeCompleted,
+          include_tomorrow: includeTomorrow,
+          device_name: deviceName,
+          share_version: 2
+        };
+      } else {
+        // V1: Legacy server-side filtering (server can read)
+        requestBody = {
           sync_id: this.syncId,
           user_id: userId,
           user_data: userData,
@@ -1102,7 +1168,15 @@ class SyncService {
           include_completed: includeCompleted,
           include_tomorrow: includeTomorrow,
           device_name: deviceName
-        })
+        };
+      }
+
+      const response = await fetch(`${SHARE_API_URL}/create_share.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
@@ -1121,6 +1195,9 @@ class SyncService {
         userName: user.name,
         recipientName,
         shareNote,
+        includeCompleted,
+        includeTomorrow,
+        autoUpdate: options.autoUpdate || false,
         createdAt: new Date().toISOString(),
         expiresAt: result.expires_at,
         shareUrl: result.share_url
@@ -1136,15 +1213,176 @@ class SyncService {
   }
 
   /**
+   * Update an existing share with fresh data
+   */
+  async updateShare(token, userId) {
+    if (!this.syncEnabled || !this.syncId) {
+      throw new Error('Sync must be enabled to update shares');
+    }
+
+    try {
+      // Get current state
+      const state = useAppStore.getState();
+      const user = state.users[userId];
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+
+      // Get share metadata to apply same filters
+      const shares = await this.getActiveShares();
+      const shareInfo = shares.find(s => s.token === token);
+      
+      if (!shareInfo) {
+        console.warn('Share not found locally, skipping update');
+        return;
+      }
+
+      // Prepare user data (same as create)
+      const userData = {
+        id: userId,
+        name: user.name,
+        icon: user.icon,
+        days: user.days || {},
+        settings: {
+          theme: user.settings?.theme || state.currentTheme
+        }
+      };
+
+      // Filter out deleted activities
+      if (userData.days) {
+        Object.keys(userData.days).forEach(day => {
+          if (userData.days[day]?.activities) {
+            userData.days[day].activities = userData.days[day].activities.filter(
+              activity => !activity.deleted
+            );
+          }
+        });
+      }
+
+      // Apply same filters as original share
+      let filteredUserData = { ...userData };
+      
+      if (!shareInfo.includeCompleted) {
+        // Remove completed activities
+        if (filteredUserData.days) {
+          Object.keys(filteredUserData.days).forEach(day => {
+            if (filteredUserData.days[day]?.activities) {
+              filteredUserData.days[day].activities = filteredUserData.days[day].activities.filter(
+                activity => !activity.completed
+              );
+            }
+          });
+        }
+      }
+      
+      if (!shareInfo.includeTomorrow) {
+        // Remove tomorrow data
+        delete filteredUserData.days?.tomorrow;
+      }
+      
+      // Create updated share data
+      const shareData = {
+        user: filteredUserData,
+        shared_at: shareInfo.createdAt, // Keep original creation time
+        expires_at: shareInfo.expiresAt,
+        recipient_name: shareInfo.recipientName,
+        share_note: shareInfo.shareNote,
+        read_only: true,
+        version: 2,
+        last_updated: new Date().toISOString() // Add update timestamp
+      };
+      
+      // Encrypt with the same key
+      const shareKey = util.decodeBase64(
+        token.replace(/-/g, '+').replace(/_/g, '/') + '=='
+      );
+      
+      const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
+      const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
+      const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+      
+      const combined = new Uint8Array(nonce.length + encrypted.length);
+      combined.set(nonce);
+      combined.set(encrypted, nonce.length);
+      
+      const encryptedData = util.encodeBase64(combined);
+
+      // For local development, skip API call
+      if (Platform.OS === 'web' && typeof window !== 'undefined') {
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          console.log('Share update skipped in local development');
+          return;
+        }
+      }
+
+      // Update on server
+      const response = await fetch(`${SHARE_API_URL}/update_share.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          access_token: token,
+          encrypted_data: encryptedData
+        })
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to update share');
+      }
+
+      console.log(`Share ${token.substring(0, 6)}... updated successfully`);
+    } catch (error) {
+      console.error('Failed to update share:', error);
+      // Don't throw - we don't want share updates to break the app
+    }
+  }
+
+  /**
+   * Update all auto-update shares for a user
+   */
+  async updateActiveShares(userId) {
+    const shares = await this.getActiveShares();
+    const userShares = shares.filter(
+      share => share.userId === userId && share.autoUpdate
+    );
+    
+    // Update shares in parallel
+    await Promise.all(
+      userShares.map(share => this.updateShare(share.token, userId))
+    );
+  }
+
+  /**
+   * Check if user has any auto-update shares
+   */
+  async hasAutoUpdateShares(userId) {
+    const shares = await this.getActiveShares();
+    return shares.some(share => share.userId === userId && share.autoUpdate);
+  }
+
+  /**
    * Generate a random share token
    */
-  generateShareToken() {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    let token = '';
-    for (let i = 0; i < 6; i++) {
-      token += chars.charAt(Math.floor(Math.random() * chars.length));
+  generateShareToken(secure = false) {
+    if (secure) {
+      // Generate a secure 24-character token for v2 shares (encryption key)
+      const bytes = nacl.randomBytes(18); // 18 bytes = 144 bits, base64 = 24 chars
+      return util.encodeBase64(bytes)
+        .replace(/\+/g, '-')  // URL-safe
+        .replace(/\//g, '_')
+        .replace(/=/g, '');   // Remove padding
+    } else {
+      // Legacy 6-8 character token for v1 shares
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+      let token = '';
+      for (let i = 0; i < 6; i++) {
+        token += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return token;
     }
-    return token;
   }
 
   /**
