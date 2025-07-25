@@ -33,9 +33,10 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
       setError(null);
 
       // Use relative path to work in both qual and prod environments
+      // TEMPORARY: Using standalone version for testing
       const apiPath = Platform.OS === 'web' && window.location.pathname.includes('/qual/')
-        ? '/qual/api/sync/access_share.php'
-        : '/api/sync/access_share.php';
+        ? '/qual/api/sync/access_share_standalone.php'
+        : '/api/sync/access_share_standalone.php';
 
       const response = await fetch(
         `${apiPath}?token=${shareToken}`
