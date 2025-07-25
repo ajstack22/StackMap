@@ -1186,6 +1186,7 @@ class SyncService {
           share_note: shareNote,
           include_completed: includeCompleted,
           include_tomorrow: includeTomorrow,
+          auto_update: autoUpdate,
           device_name: deviceName
         };
       }
