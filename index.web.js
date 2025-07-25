@@ -90,9 +90,36 @@ AppRegistry.runApplication('StackMap', {
 // Register service worker for PWA
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('./service-worker.js')
-      .then((registration) => {
+    // First, clear any existing caches if there's a version mismatch
+    // This ensures we always use the latest bundle
+    const clearOldCaches = async () => {
+      const cacheNames = await caches.keys();
+      const currentBundle = './bundle.02bdff906de68dc6d82e.js';
+      
+      // Check if any cache contains old bundles
+      for (const cacheName of cacheNames) {
+        const cache = await caches.open(cacheName);
+        const cachedRequests = await cache.keys();
+        
+        for (const request of cachedRequests) {
+          // If we find an old bundle in cache, clear all caches
+          if (request.url.includes('bundle.') && !request.url.includes('02bdff906de68dc6d82e')) {
+            console.log('Found old bundle in cache, clearing all caches...');
+            await Promise.all(cacheNames.map(name => caches.delete(name)));
+            return true;
+          }
+        }
+      }
+      return false;
+    };
+    
+    clearOldCaches().then(cleared => {
+      if (cleared) {
+        console.log('Old caches cleared, registering service worker...');
+      }
+      
+      return navigator.serviceWorker.register('./service-worker.js');
+    }).then((registration) => {
         console.log('PWA service worker registered:', registration);
         
         // Check for updates periodically
@@ -105,8 +132,21 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
           const newWorker = registration.installing;
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-              // New content available
-              console.log('New app version available! Reload to update.');
+              // New content available - clear all caches and reload
+              console.log('New app version available! Clearing caches and reloading...');
+              
+              // Clear all caches
+              caches.keys().then(cacheNames => {
+                return Promise.all(
+                  cacheNames.map(cacheName => {
+                    console.log('Clearing cache:', cacheName);
+                    return caches.delete(cacheName);
+                  })
+                );
+              }).then(() => {
+                // Force reload
+                window.location.reload(true);
+              });
             }
           });
         });

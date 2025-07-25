@@ -1221,6 +1221,11 @@ class SyncService {
     }
 
     try {
+      // Extra safety check - only update tokens that look like V2
+      if (!token || token.length < 24) {
+        console.log(`Skipping invalid token ${token?.substring(0, 6) || 'null'}... - not a V2 token`);
+        return;
+      }
       // Get current state
       const state = useAppStore.getState();
       const user = state.users[userId];
