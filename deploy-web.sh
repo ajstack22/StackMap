@@ -22,7 +22,8 @@ echo "Files ready for deployment:"
 ls -la index.html bundle.*.js service-worker.js manifest.json
 
 echo ""
-echo "These files are gitignored and need to be manually deployed."
-echo "Options:"
-echo "1. Use FTP/cPanel to upload these files to /public_html/qual/"
-echo "2. OR temporarily remove from .gitignore, commit, push, then re-add to .gitignore"
+echo "Ready to deploy! These files will be committed:"
+echo "1. Run: git add ."
+echo "2. Run: git commit -m 'build: Update web bundle'"
+echo "3. Run: git push"
+echo "4. On server: cd /public_html/qual && git pull"
