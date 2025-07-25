@@ -91,7 +91,7 @@ AppRegistry.runApplication('StackMap', {
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
     navigator.serviceWorker
-      .register('/service-worker.js')
+      .register('./service-worker.js')
       .then((registration) => {
         console.log('PWA service worker registered:', registration);
         
