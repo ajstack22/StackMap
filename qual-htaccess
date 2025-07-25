@@ -1,7 +1,0 @@
-# Prevent directory browsing
-Options -Indexes
-
-# Redirect to web/build
-RewriteEngine On
-RewriteCond %{REQUEST_URI} ^/qual/?$
-RewriteRule ^.*$ /qual/web/build/ [L,R=302]
