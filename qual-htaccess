@@ -1,0 +1,24 @@
+# This file should be copied to /public_html/qual/.htaccess after deployment
+
+# Prevent directory listing
+Options -Indexes
+
+# Set web/build as the document root for this directory
+RewriteEngine On
+
+# Serve files from web/build subdirectory
+RewriteCond %{REQUEST_URI} !^/qual/web/build/
+RewriteRule ^(.*)$ /qual/web/build/$1 [L]
+
+# Ensure correct MIME types
+<IfModule mod_mime.c>
+    AddType application/javascript .js
+    AddType text/css .css
+    AddType application/json .json
+    AddType application/manifest+json .webmanifest
+    AddType font/ttf .ttf
+    AddType font/woff .woff
+    AddType font/woff2 .woff2
+    AddType image/png .png
+    AddType image/jpeg .jpg .jpeg
+</IfModule>

@@ -10,10 +10,11 @@
 
 ### 1. QUAL DEPLOYMENT (Testing)
 ```bash
-# Files are served DIRECTLY from web/build/
-# URL: https://stackmap.app/qual/web/build/
+# URL: https://stackmap.app/qual/
 # Git pulls to: /public_html/qual/
-# NO COPYING NEEDED - NAMECHEAP SERVES FROM web/build/
+# Files are in: /public_html/qual/web/build/
+# .htaccess magic: Serves web/build/ content at /qual/
+# IMPORTANT: Copy qual-htaccess to /public_html/qual/.htaccess
 ```
 
 ### 2. PRODUCTION DEPLOYMENT
@@ -49,6 +50,9 @@ git add -A && git commit -m "message" && git push
 # 3. Deploy
 ./scripts/deploy-to-qual.sh
 # OR manually: ssh stackmap-cpanel "cd ~/public_html/qual && git pull"
+
+# 4. CRITICAL: Copy htaccess
+ssh stackmap-cpanel "cp ~/public_html/qual/qual-htaccess ~/public_html/qual/.htaccess"
 ```
 
 ### To Production:
@@ -59,14 +63,14 @@ git add -A && git commit -m "message" && git push
 
 ## 🚫 IGNORE THESE FILES
 - `.cpanel.yml` - DOES NOT WORK on Namecheap
-- `qual-htaccess` - NOT NEEDED, Namecheap serves from web/build/ directly
 
 ## 🎯 KEY FACTS
-1. Qual URL: `https://stackmap.app/qual/web/build/`
+1. Qual URL: `https://stackmap.app/qual/` (NOT /qual/web/build/)
 2. Git clones directly to `/public_html/qual/`
 3. Build outputs to `web/build/`
 4. NEVER copy build files to root manually
 5. Production deployment ONLY via simple-deploy.sh
+6. **AFTER GIT PULL**: Copy qual-htaccess to .htaccess in qual directory
 
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by removing automatic sorting
