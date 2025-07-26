@@ -101,12 +101,13 @@ module.exports = {
           },
           {
             urlPattern: /\.(js|css|woff2?)$/,
-            handler: 'CacheFirst',
+            handler: 'NetworkFirst',
             options: {
               cacheName: 'stackmap-assets',
+              networkTimeoutSeconds: 5,
               expiration: {
                 maxEntries: 30,
-                maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+                maxAgeSeconds: 7 * 24 * 60 * 60, // 7 days
               },
             },
           },
