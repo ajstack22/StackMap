@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head><title>Bundle Analysis</title></head>
+<body>
+<h1>Bundle Analysis</h1>
+<div id="results"></div>
+
+<script>
+function addResult(title, content, isError = false) {
+  const div = document.createElement('div');
+  div.style.margin = '10px';
+  div.style.padding = '10px';
+  div.style.border = isError ? '2px solid red' : '2px solid green';
+  div.innerHTML = '<h3>' + title + '</h3><pre>' + content + '</pre>';
+  document.getElementById('results').appendChild(div);
+}
+
+// Test 1: Check which bundle the browser is trying to load
+fetch('./').then(r => r.text()).then(html => {
+  const match = html.match(/bundle\.([a-f0-9]+)\.js/);
+  if (match) {
+    addResult('Bundle in index.html', match[0]);
+  }
+});
+
+// Test 2: Try to load both bundles
+const oldBundle = './bundle.4af3ee7e315fad6cedcd.js';
+const newBundle = './bundle.336cef90ad7567c37e85.js';
+
+fetch(oldBundle, { method: 'HEAD' }).then(r => {
+  addResult('Old bundle exists', oldBundle + ' - Status: ' + r.status, r.status !== 200);
+}).catch(e => {
+  addResult('Old bundle check failed', e.message, true);
+});
+
+fetch(newBundle, { method: 'HEAD' }).then(r => {
+  addResult('New bundle exists', newBundle + ' - Status: ' + r.status, r.status !== 200);
+}).catch(e => {
+  addResult('New bundle check failed', e.message, true);
+});
+
+// Test 3: Check service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(regs => {
+    if (regs.length > 0) {
+      addResult('Service Worker', 'Active: ' + regs.length + ' registration(s)');
+      // Try to unregister all
+      regs.forEach(reg => {
+        reg.unregister().then(() => {
+          addResult('Service Worker Unregistered', 'Success');
+        });
+      });
+    } else {
+      addResult('Service Worker', 'No active registrations');
+    }
+  });
+}
+
+// Test 4: Check browser cache
+if ('caches' in window) {
+  caches.keys().then(names => {
+    addResult('Cache Storage', names.length + ' caches: ' + names.join(', '));
+    // Clear all caches
+    Promise.all(names.map(name => caches.delete(name))).then(() => {
+      addResult('Caches Cleared', 'All caches deleted');
+    });
+  });
+}
+</script>
+</body>
+</html>

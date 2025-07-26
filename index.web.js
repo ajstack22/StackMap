@@ -94,7 +94,22 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
     // This ensures we always use the latest bundle
     const clearOldCaches = async () => {
       const cacheNames = await caches.keys();
-      const currentBundle = './bundle.ba8e096f2decc5a3dd4e.js';
+      
+      // Get the current bundle name from the script tag
+      const scripts = document.getElementsByTagName('script');
+      let currentBundleHash = null;
+      for (const script of scripts) {
+        const match = script.src.match(/bundle\.([a-f0-9]+)\.js/);
+        if (match) {
+          currentBundleHash = match[1];
+          break;
+        }
+      }
+      
+      if (!currentBundleHash) {
+        console.log('Could not determine current bundle hash');
+        return false;
+      }
       
       // Check if any cache contains old bundles
       for (const cacheName of cacheNames) {
@@ -103,7 +118,7 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
         
         for (const request of cachedRequests) {
           // If we find an old bundle in cache, clear all caches
-          if (request.url.includes('bundle.') && !request.url.includes('02bdff906de68dc6d82e')) {
+          if (request.url.includes('bundle.') && !request.url.includes(currentBundleHash)) {
             console.log('Found old bundle in cache, clearing all caches...');
             await Promise.all(cacheNames.map(name => caches.delete(name)));
             return true;
