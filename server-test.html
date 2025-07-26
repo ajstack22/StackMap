@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head><title>Server Bundle Test</title></head>
+<body>
+<h1>Server Bundle Test</h1>
+<p>Current time: Sat Jul 26 2025 12:58:00</p>
+<p>Bundle that SHOULD be served: bundle.336cef90ad7567c37e85.js</p>
+<p>Check what bundle is in the actual index.html on server</p>
+<script>
+fetch('/qual/').then(r => r.text()).then(html => {
+  const match = html.match(/bundle\.([a-f0-9]+)\.js/);
+  if (match) {
+    document.body.innerHTML += '<h2>Bundle in index.html: ' + match[0] + '</h2>';
+    if (match[0] === 'bundle.336cef90ad7567c37e85.js') {
+      document.body.innerHTML += '<p style="color:green">✓ Correct bundle in HTML</p>';
+    } else {
+      document.body.innerHTML += '<p style="color:red">✗ Wrong bundle in HTML</p>';
+    }
+  }
+});
+</script>
+</body>
+</html>
