@@ -21,6 +21,9 @@ const EditModeToolbar = ({
   onCompleteDay,
   onSettings,
   onPlan,
+  onShare,
+  onData,
+  onUsers,
   theme,
   position = 'bottom',
   visible = true,
@@ -80,7 +83,10 @@ const EditModeToolbar = ({
   // Define all actions - ordered for right-handed users (most used on right)
   const actions = [
     { id: 'settings', label: 'Settings', icon: 'settings', onPress: onSettings, color: theme.primary },
+    { id: 'users', label: 'Users', icon: 'group', onPress: onUsers, color: theme.primary },
+    { id: 'data', label: 'Data', icon: 'cloud-sync', onPress: onData, color: theme.primary },
     { id: 'complete', label: 'Complete', icon: 'event-available', onPress: onCompleteDay, color: theme.primary },
+    { id: 'share', label: 'Share', icon: 'share', onPress: onShare, color: theme.primary },
     { id: 'plan', label: 'Plan', icon: 'event', onPress: onPlan, color: theme.primary },
     { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
     { id: 'add', label: 'Add', icon: 'add-circle', onPress: onAdd, color: theme.primary },

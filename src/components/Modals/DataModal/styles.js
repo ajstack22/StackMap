@@ -1,0 +1,166 @@
+import { StyleSheet, Platform } from 'react-native';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
+
+export const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    maxHeight: '90%',
+    ...SHADOWS.large,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.gray[900],
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  closeButton: {
+    padding: SPACING.xs,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  section: {
+    padding: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.gray[900],
+    marginBottom: SPACING.md,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: COLORS.gray[600],
+    marginBottom: SPACING.lg,
+    lineHeight: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginBottom: SPACING.sm,
+    ...SHADOWS.small,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  statusContainer: {
+    backgroundColor: COLORS.gray[50],
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: COLORS.gray[600],
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  statusValue: {
+    fontSize: 14,
+    color: COLORS.gray[900],
+    fontWeight: '500',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+  connectedBadge: {
+    backgroundColor: COLORS.green[100],
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+  },
+  connectedText: {
+    color: COLORS.green[700],
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  recoveryPhraseContainer: {
+    marginTop: SPACING.md,
+  },
+  recoveryPhrase: {
+    backgroundColor: COLORS.gray[100],
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.sm,
+  },
+  recoveryPhraseText: {
+    fontSize: 14,
+    fontFamily: 'monospace',
+    color: COLORS.gray[900],
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  infoText: {
+    fontSize: 12,
+    color: COLORS.gray[500],
+    textAlign: 'center',
+    fontStyle: 'italic',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  errorText: {
+    color: COLORS.red[600],
+    fontSize: 14,
+    marginTop: SPACING.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: COLORS.gray[300],
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    fontSize: 16,
+    marginBottom: SPACING.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    marginVertical: SPACING.lg,
+  },
+  divider: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: SPACING.lg,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: COLORS.gray[300],
+  },
+  dividerText: {
+    marginHorizontal: SPACING.md,
+    color: COLORS.gray[500],
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+});

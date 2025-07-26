@@ -1,0 +1,170 @@
+import { StyleSheet, Platform } from 'react-native';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
+
+export const styles = StyleSheet.create({
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: 'white',
+    borderTopLeftRadius: RADIUS.xl,
+    borderTopRightRadius: RADIUS.xl,
+    maxHeight: '90%',
+    ...SHADOWS.large,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+  },
+  title: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: COLORS.gray[900],
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  closeButton: {
+    padding: SPACING.xs,
+  },
+  scrollContent: {
+    flex: 1,
+  },
+  section: {
+    padding: SPACING.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.gray[200],
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: COLORS.gray[900],
+    marginBottom: SPACING.md,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  sectionDescription: {
+    fontSize: 14,
+    color: COLORS.gray[600],
+    marginBottom: SPACING.lg,
+    lineHeight: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  usersList: {
+    marginBottom: SPACING.md,
+  },
+  userItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[50],
+    padding: SPACING.md,
+    borderRadius: RADIUS.lg,
+    marginBottom: SPACING.sm,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  userItemActive: {
+    borderColor: COLORS.blue[500],
+    backgroundColor: COLORS.blue[50],
+  },
+  userItemEmoji: {
+    fontSize: 24,
+    marginRight: SPACING.md,
+  },
+  userItemName: {
+    flex: 1,
+    fontSize: 16,
+    color: COLORS.gray[900],
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+  userItemNameActive: {
+    color: COLORS.blue[700],
+    fontWeight: '600',
+  },
+  userActions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  iconButton: {
+    padding: SPACING.xs,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: COLORS.gray[100],
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginTop: SPACING.sm,
+  },
+  addButtonText: {
+    color: COLORS.gray[700],
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  button: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.lg,
+    marginBottom: SPACING.sm,
+    ...SHADOWS.small,
+  },
+  buttonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  pinStatus: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[50],
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+  },
+  pinStatusIcon: {
+    marginRight: SPACING.sm,
+  },
+  pinStatusText: {
+    flex: 1,
+    fontSize: 14,
+    color: COLORS.gray[700],
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  enabledBadge: {
+    backgroundColor: COLORS.green[100],
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: RADIUS.full,
+  },
+  enabledText: {
+    color: COLORS.green[700],
+    fontSize: 12,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  warningBox: {
+    backgroundColor: COLORS.yellow[50],
+    padding: SPACING.md,
+    borderRadius: RADIUS.md,
+    marginTop: SPACING.md,
+    borderWidth: 1,
+    borderColor: COLORS.yellow[200],
+  },
+  warningText: {
+    fontSize: 14,
+    color: COLORS.yellow[800],
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+});

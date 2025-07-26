@@ -83,7 +83,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal, ShareModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -243,6 +243,10 @@ const App = () => {
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [confirmPin, setConfirmPin] = useState('');
   const [hasPinProtection, setHasPinProtection] = useState(false);
+  
+  // New modal states
+  const [showDataModal, setShowDataModal] = useState(false);
+  const [showUsersSecurityModal, setShowUsersSecurityModal] = useState(false);
   
   
   // Screen dimensions state
@@ -2894,6 +2898,12 @@ const App = () => {
           onSettings={() => {
             setShowEditModeSettingsModal(true);
           }}
+          onShare={() => {
+            setShareUserId(currentUser);
+            setShowShareModal(true);
+          }}
+          onData={() => setShowDataModal(true)}
+          onUsers={() => setShowUsersSecurityModal(true)}
           onCompleteDay={() => {
             const pinnedCount = activities.filter(a => a.pinned).length;
             const unpinnedCount = activities.filter(a => !a.pinned).length;
@@ -3135,6 +3145,57 @@ const App = () => {
         theme={theme}
         user={shareUserId ? users[shareUserId] : null}
         userId={shareUserId}
+        showToast={showToast}
+      />
+      
+      {/* Data Modal */}
+      <DataModal
+        visible={showDataModal}
+        onClose={() => setShowDataModal(false)}
+        theme={theme}
+        onExportData={exportData}
+        onImportData={importData}
+        showToast={showToast}
+      />
+      
+      {/* Users & Security Modal */}
+      <UsersSecurityModal
+        visible={showUsersSecurityModal}
+        onClose={() => setShowUsersSecurityModal(false)}
+        theme={theme}
+        users={users}
+        currentUser={currentUser}
+        onUserSelect={(userId) => {
+          setCurrentUser(userId);
+          const userActivities = users[userId]?.days?.[currentDay]?.activities || [];
+          setActivities(userActivities.filter(a => !a.deleted));
+          if (users[userId]?.settings?.theme) {
+            setCurrentTheme(users[userId].settings.theme);
+          }
+          showToast({ message: `Switched to ${users[userId].name}` });
+        }}
+        onUserEdit={(userId, userName, userIcon) => {
+          setEditingUserId(userId);
+          setEditingUserName(userName);
+          setEditingUserIcon(userIcon);
+          setShowAddUserModal(true);
+        }}
+        onUserDelete={deleteUser}
+        onAddUser={() => setShowAddUserModal(true)}
+        hasPinProtection={hasPinProtection}
+        onPinChange={() => {
+          setIsSettingPin(true);
+          setShowPinModal(true);
+        }}
+        onPinRemove={async () => {
+          await removeSecurePin();
+          setHasPinProtection(false);
+          showToast({ message: 'PIN protection removed' });
+        }}
+        onPinEnable={() => {
+          setIsSettingPin(true);
+          setShowPinModal(true);
+        }}
         showToast={showToast}
       />
       </>

@@ -21,6 +21,8 @@ import EditModeSettingsModal from './Modals/EditModeSettingsModal/EditModeSettin
 import ReorderModal from './Modals/ReorderModal/ReorderModal';
 import ConflictResolutionModal from './ConflictResolutionModal/ConflictResolutionModal';
 import ShareModal from './Modals/ShareModal/ShareModal';
+import DataModal from './Modals/DataModal/DataModal';
+import UsersSecurityModal from './Modals/UsersSecurityModal/UsersSecurityModal';
 
 // Export the imported modal components
 export {
@@ -35,5 +37,7 @@ export {
   EditModeSettingsModal,
   ReorderModal,
   ConflictResolutionModal,
-  ShareModal
+  ShareModal,
+  DataModal,
+  UsersSecurityModal
 };
