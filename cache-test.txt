@@ -1,0 +1,4 @@
+Cache test file created at: Sat Jul 26 2025 12:55:00
+Bundle should be: bundle.336cef90ad7567c37e85.js
+If you see this file, the server is serving new content.
+Test URL: https://stackmap.app/qual/cache-test.txt
