@@ -1,5 +1,8 @@
 # StackMap Deployment Guide
 
+> **Last Updated**: 2024-12-28  
+> **CRITICAL**: Read [DO_NOT_IGNORE_BUILD_FILES.md](../DO_NOT_IGNORE_BUILD_FILES.md) to avoid 403 errors!
+
 ## Overview
 
 Simple deployment process for StackMap on Namecheap hosting.
@@ -10,23 +13,46 @@ Simple deployment process for StackMap on Namecheap hosting.
 Local Development → GitHub → Qual (staging) → Production
 ```
 
+## ⚠️ CRITICAL REQUIREMENTS
+
+### Build Files MUST Be in Git
+The most common deployment error is 403 Forbidden. This happens when:
+- Build files are in .gitignore
+- After git pull, there's no index.html on the server
+- **Solution**: Ensure these files are committed to git:
+  - index.html
+  - bundle.*.js  
+  - manifest.json
+  - service-worker.js
+  - All other build outputs
+
 ## Step-by-Step Process
 
-### 1. Build and Commit Locally
+### 1. Build and Prepare Files
 
 ```bash
-# Build the web app
-npm run build:web
+# Build with production settings
+NODE_ENV=production npm run build:web
 
-# Add and commit changes
-git add .
+# CRITICAL: Copy build files to repository root for qual
+cp web/build/*.* .
+cp -r web/build/fonts .
+cp -r web/build/icons .
+
+# Verify files are NOT ignored
+git status # Should show the build files
+```
+
+### 2. Commit and Push
+
+```bash
+# Add ALL files including build outputs
+git add -A
 git commit -m "Your commit message"
-
-# Push to GitHub
 git push origin main
 ```
 
-### 2. Deploy to Qual (Staging)
+### 3. Deploy to Qual (Staging)
 
 1. Log into your Namecheap hosting control panel
 2. Navigate to Git Version Control (or SSH into server)

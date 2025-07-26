@@ -1,5 +1,10 @@
 # 🚨 STACKMAP DEPLOYMENT - THE TRUTH 🚨
 
+## 📚 Documentation Guide
+- **[MD_FILES_INDEX.md](./MD_FILES_INDEX.md)** - Start here! Index of all documentation
+- **[MD_FILES_AUDIT_REPORT.md](./MD_FILES_AUDIT_REPORT.md)** - Which docs to trust/ignore
+- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common issues & solutions
+
 ## ✅ WHAT ACTUALLY WORKS ✅
 
 ### For Qual Deployment:
