@@ -10,6 +10,7 @@ import {
   Animated,
   Platform,
   StatusBar,
+  Dimensions,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet, getContainerPadding } from '../../constants';
@@ -24,15 +25,28 @@ const EditModeToolbar = ({
   onShare,
   onData,
   onUsers,
+  onCustomize,
   theme,
   position = 'bottom',
   visible = true,
   onAnimationComplete,
+  toolbarOrder,
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [translateY] = useState(() => new Animated.Value(position === 'top' ? -100 : 100));
   const [opacity] = useState(() => new Animated.Value(0));
   const [backgroundOpacity] = useState(() => new Animated.Value(0));
+  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  
+  // Update screen width on dimension change
+  useEffect(() => {
+    const updateDimensions = ({ window }) => {
+      setScreenWidth(window.width);
+    };
+    
+    const subscription = Dimensions.addEventListener('change', updateDimensions);
+    return () => subscription?.remove();
+  }, []);
 
   useEffect(() => {
     if (visible) {
@@ -80,22 +94,54 @@ const EditModeToolbar = ({
     }
   }, [visible, position, onAnimationComplete]);
 
-  // Define all actions - ordered for right-handed users (most used on right)
-  const actions = [
-    { id: 'settings', label: 'Settings', icon: 'settings', onPress: onSettings, color: theme.primary },
-    { id: 'users', label: 'Users', icon: 'group', onPress: onUsers, color: theme.primary },
-    { id: 'data', label: 'Data', icon: 'cloud-sync', onPress: onData, color: theme.primary },
-    { id: 'complete', label: 'Complete', icon: 'event-available', onPress: onCompleteDay, color: theme.primary },
-    { id: 'share', label: 'Share', icon: 'share', onPress: onShare, color: theme.primary },
-    { id: 'plan', label: 'Plan', icon: 'event', onPress: onPlan, color: theme.primary },
-    { id: 'library', label: 'Library', icon: 'collections-bookmark', onPress: onLibrary, color: theme.primary },
-    { id: 'add', label: 'Add', icon: 'add-circle', onPress: onAdd, color: theme.primary },
-  ];
+  // Define all actions
+  const actionMap = {
+    settings: { label: 'Settings', icon: 'settings', onPress: onSettings },
+    users: { label: 'Users', icon: 'group', onPress: onUsers },
+    data: { label: 'Data', icon: 'cloud-sync', onPress: onData },
+    complete: { label: 'Complete', icon: 'event-available', onPress: onCompleteDay },
+    share: { label: 'Share', icon: 'share', onPress: onShare },
+    plan: { label: 'Plan', icon: 'event', onPress: onPlan },
+    library: { label: 'Library', icon: 'collections-bookmark', onPress: onLibrary },
+    add: { label: 'Add', icon: 'add-circle', onPress: onAdd },
+  };
 
-  // Show all 4 actions on both mobile and tablet
-  const visibleActions = actions;
-  const overflowActions = [];
-  const showMore = false;
+  // Default order if none provided
+  const defaultOrder = ['add', 'library', 'plan', 'share', 'complete', 'data', 'users', 'settings'];
+  const currentOrder = toolbarOrder || defaultOrder;
+
+  // Create actions array based on custom order
+  const actions = currentOrder.map(id => ({
+    id,
+    ...actionMap[id],
+    color: theme.primary
+  })).filter(action => action.onPress); // Filter out any invalid actions
+
+  // Calculate how many buttons can fit based on screen width
+  const calculateVisibleButtons = () => {
+    const containerPadding = getContainerPadding() * 2;
+    const buttonPadding = SPACING.xs * 2;
+    const availableWidth = screenWidth - containerPadding - buttonPadding;
+    
+    // Button width calculation (approximate)
+    const minButtonWidth = isTablet() ? 70 : 60;
+    const editModeTextWidth = isTablet() ? 100 : 80;
+    const moreButtonWidth = minButtonWidth;
+    
+    // Reserve space for "Edit Mode" text and "More" button
+    const usableWidth = availableWidth - editModeTextWidth - moreButtonWidth;
+    
+    // Calculate how many buttons fit
+    const maxButtons = Math.floor(usableWidth / minButtonWidth);
+    
+    // Ensure at least 3 buttons are visible
+    return Math.max(3, Math.min(maxButtons, actions.length));
+  };
+
+  const visibleButtonCount = calculateVisibleButtons();
+  const visibleActions = actions.slice(0, visibleButtonCount);
+  const overflowActions = actions.slice(visibleButtonCount);
+  const showMore = overflowActions.length > 0;
 
   const renderAction = ({ item }) => (
     <TouchableOpacity
@@ -182,7 +228,9 @@ const EditModeToolbar = ({
                 },
               ]}
             >
-              <Text style={styles.editModeLabel}>Edit Mode</Text>
+              <TouchableOpacity onLongPress={onCustomize} activeOpacity={0.8}>
+                <Text style={styles.editModeLabel}>Edit Mode</Text>
+              </TouchableOpacity>
               <View style={styles.toolbar}>
               {visibleActions.map(action => (
                 <View key={action.id}>

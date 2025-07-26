@@ -83,7 +83,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -247,6 +247,7 @@ const App = () => {
   // New modal states
   const [showDataModal, setShowDataModal] = useState(false);
   const [showUsersSecurityModal, setShowUsersSecurityModal] = useState(false);
+  const [showToolbarCustomizeModal, setShowToolbarCustomizeModal] = useState(false);
   
   
   // Screen dimensions state
@@ -392,7 +393,8 @@ const App = () => {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
             soundEnabled: true,
-            theme: 'stackBlue'
+            theme: 'stackBlue',
+            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -657,7 +659,8 @@ const App = () => {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
             soundEnabled: true,
-            theme: 'stackBlue'
+            theme: 'stackBlue',
+            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -743,7 +746,8 @@ const App = () => {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
             soundEnabled: true,
-            theme: 'stackBlue'
+            theme: 'stackBlue',
+            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -860,7 +864,8 @@ const App = () => {
             taskCelebration: 'rainbow',
             routineCelebration: 'rainbow',
             soundEnabled: true,
-            theme: 'stackBlue'
+            theme: 'stackBlue',
+            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -925,7 +930,8 @@ const App = () => {
           taskCelebration: 'rainbow',
           routineCelebration: 'rainbow',
           soundEnabled: true,
-          theme: 'stackBlue'
+          theme: 'stackBlue',
+          toolbarOrder: null
         },
         createdAt: new Date().toISOString(),
         lastActive: new Date().toISOString()
@@ -1337,7 +1343,8 @@ const App = () => {
         taskCelebration: 'rainbow',
         routineCelebration: 'rainbow',
         soundEnabled: true,
-        theme: currentTheme || 'stackBlue'
+        theme: currentTheme || 'stackBlue',
+        toolbarOrder: null
       },
       createdAt: new Date().toISOString(),
       lastActive: new Date().toISOString()
@@ -2904,6 +2911,8 @@ const App = () => {
           }}
           onData={() => setShowDataModal(true)}
           onUsers={() => setShowUsersSecurityModal(true)}
+          onCustomize={() => setShowToolbarCustomizeModal(true)}
+          toolbarOrder={users[currentUser]?.settings?.toolbarOrder}
           onCompleteDay={() => {
             const pinnedCount = activities.filter(a => a.pinned).length;
             const unpinnedCount = activities.filter(a => !a.pinned).length;
@@ -3195,6 +3204,26 @@ const App = () => {
         onPinEnable={() => {
           setIsSettingPin(true);
           setShowPinModal(true);
+        }}
+        showToast={showToast}
+      />
+      
+      {/* Toolbar Customize Modal */}
+      <ToolbarCustomizeModal
+        visible={showToolbarCustomizeModal}
+        onClose={() => setShowToolbarCustomizeModal(false)}
+        theme={theme}
+        currentOrder={users[currentUser]?.settings?.toolbarOrder}
+        onSaveOrder={(newOrder) => {
+          // Update user settings with new toolbar order
+          const updatedUser = {
+            ...users[currentUser],
+            settings: {
+              ...users[currentUser].settings,
+              toolbarOrder: newOrder
+            }
+          };
+          updateUser(currentUser, updatedUser);
         }}
         showToast={showToast}
       />

@@ -23,6 +23,7 @@ import ConflictResolutionModal from './ConflictResolutionModal/ConflictResolutio
 import ShareModal from './Modals/ShareModal/ShareModal';
 import DataModal from './Modals/DataModal/DataModal';
 import UsersSecurityModal from './Modals/UsersSecurityModal/UsersSecurityModal';
+import ToolbarCustomizeModal from './Modals/ToolbarCustomizeModal/ToolbarCustomizeModal';
 
 // Export the imported modal components
 export {
@@ -39,5 +40,6 @@ export {
   ConflictResolutionModal,
   ShareModal,
   DataModal,
-  UsersSecurityModal
+  UsersSecurityModal,
+  ToolbarCustomizeModal
 };
