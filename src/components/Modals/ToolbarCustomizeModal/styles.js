@@ -57,8 +57,8 @@ export const styles = StyleSheet.create({
   },
   buttonItemDragging: {
     opacity: 0.8,
-    borderColor: COLORS.blue[500],
-    backgroundColor: COLORS.blue[50],
+    borderColor: COLORS.info,
+    backgroundColor: '#ebf8ff',
   },
   dragHandle: {
     padding: SPACING.xs,
@@ -79,7 +79,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   overflowIndicator: {
-    backgroundColor: COLORS.yellow[50],
+    backgroundColor: '#fffff0',
     borderRadius: RADIUS.sm,
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
@@ -87,7 +87,7 @@ export const styles = StyleSheet.create({
   },
   overflowText: {
     fontSize: 12,
-    color: COLORS.yellow[700],
+    color: COLORS.warning,
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },

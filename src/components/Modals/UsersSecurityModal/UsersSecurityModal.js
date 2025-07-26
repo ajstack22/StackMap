@@ -163,7 +163,7 @@ const UsersSecurityModal = ({
                 <Icon 
                   name={hasPinProtection ? "lock" : "lock-open"} 
                   size={20} 
-                  color={hasPinProtection ? COLORS.green[600] : COLORS.gray[500]}
+                  color={hasPinProtection ? COLORS.success : COLORS.gray[500]}
                   style={styles.pinStatusIcon}
                 />
                 <Text style={styles.pinStatusText}>

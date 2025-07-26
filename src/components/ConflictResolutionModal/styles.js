@@ -38,11 +38,11 @@ export const styles = StyleSheet.create({
   
   conflictInfo: {
     backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     padding: SPACING.lg,
     alignItems: 'center',
     marginBottom: SPACING.lg,
-    ...SHADOWS.medium,
+    ...SHADOWS.level2,
   },
   
   conflictTitle: {
@@ -66,11 +66,11 @@ export const styles = StyleSheet.create({
   
   choiceCard: {
     backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     padding: SPACING.md,
     borderWidth: 2,
     borderColor: 'transparent',
-    ...SHADOWS.small,
+    ...SHADOWS.level1,
   },
   
   choiceCardHover: {
@@ -102,7 +102,7 @@ export const styles = StyleSheet.create({
   
   valueContainer: {
     backgroundColor: '#f5f5f5',
-    borderRadius: RADIUS.small,
+    borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     minHeight: 60,
   },
@@ -175,7 +175,7 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.9)',
     justifyContent: 'center',
     alignItems: 'center',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
   },
   
   resolvingText: {

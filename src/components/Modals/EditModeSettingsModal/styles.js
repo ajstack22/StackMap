@@ -26,9 +26,9 @@ export const styles = StyleSheet.create({
   },
   usersList: {
     backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     overflow: 'hidden',
-    ...SHADOWS.medium,
+    ...SHADOWS.level2,
   },
   userItem: {
     flexDirection: 'row',
@@ -75,18 +75,18 @@ export const styles = StyleSheet.create({
   toggleContainer: {
     flexDirection: 'row',
     backgroundColor: '#f0f0f0',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     padding: 4,
   },
   toggle: {
     flex: 1,
     paddingVertical: 12,
     alignItems: 'center',
-    borderRadius: RADIUS.small,
+    borderRadius: RADIUS.sm,
   },
   toggleActive: {
     backgroundColor: 'white',
-    ...SHADOWS.small,
+    ...SHADOWS.level1,
   },
   toggleText: {
     fontSize: 14,
@@ -98,9 +98,9 @@ export const styles = StyleSheet.create({
   },
   pinSection: {
     backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     padding: 20,
-    ...SHADOWS.medium,
+    ...SHADOWS.level2,
   },
   pinStatus: {
     fontSize: 16,
@@ -114,7 +114,7 @@ export const styles = StyleSheet.create({
   pinButton: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: RADIUS.small,
+    borderRadius: RADIUS.sm,
     alignItems: 'center',
   },
   pinButtonText: {
@@ -128,7 +128,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     gap: 8,
   },
   buttonText: {
@@ -138,9 +138,9 @@ export const styles = StyleSheet.create({
   },
   settingsSection: {
     backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     padding: 20,
-    ...SHADOWS.medium,
+    ...SHADOWS.level2,
   },
   syncStatus: {
     flexDirection: 'row',
@@ -161,7 +161,7 @@ export const styles = StyleSheet.create({
   },
   recoveryPhraseContainer: {
     backgroundColor: '#f8f9fa',
-    borderRadius: RADIUS.small,
+    borderRadius: RADIUS.sm,
     padding: 16,
     marginBottom: 16,
   },
@@ -193,7 +193,7 @@ export const styles = StyleSheet.create({
   recoveryInput: {
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: RADIUS.small,
+    borderRadius: RADIUS.sm,
     padding: 12,
     fontSize: 16,
     marginBottom: 8,

@@ -67,8 +67,8 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   userItemActive: {
-    borderColor: COLORS.blue[500],
-    backgroundColor: COLORS.blue[50],
+    borderColor: COLORS.info,
+    backgroundColor: '#ebf8ff',
   },
   userItemEmoji: {
     fontSize: 24,
@@ -81,7 +81,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   userItemNameActive: {
-    color: COLORS.blue[700],
+    color: COLORS.info,
     fontWeight: '600',
   },
   userActions: {
@@ -116,7 +116,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.lg,
     marginBottom: SPACING.sm,
-    ...SHADOWS.small,
+    ...SHADOWS.level1,
   },
   buttonText: {
     color: 'white',
@@ -143,28 +143,28 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   enabledBadge: {
-    backgroundColor: COLORS.green[100],
+    backgroundColor: '#e6fffa',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
   },
   enabledText: {
-    color: COLORS.green[700],
+    color: COLORS.success,
     fontSize: 12,
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   warningBox: {
-    backgroundColor: COLORS.yellow[50],
+    backgroundColor: '#fffff0',
     padding: SPACING.md,
     borderRadius: RADIUS.md,
     marginTop: SPACING.md,
     borderWidth: 1,
-    borderColor: COLORS.yellow[200],
+    borderColor: COLORS.warning,
   },
   warningText: {
     fontSize: 14,
-    color: COLORS.yellow[800],
+    color: COLORS.warning,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
 });

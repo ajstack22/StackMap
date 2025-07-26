@@ -4,9 +4,9 @@ import { TYPOGRAPHY, SPACING, RADIUS, COLORS, SHADOWS } from '../../constants';
 export const styles = StyleSheet.create({
   container: {
     backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     marginVertical: SPACING.xs,
-    ...SHADOWS.small,
+    ...SHADOWS.level1,
   },
   
   compactContainer: {
@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.small,
+    borderRadius: RADIUS.sm,
     borderWidth: 1,
     backgroundColor: 'white',
   },
@@ -84,7 +84,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: SPACING.xs,
     paddingHorizontal: SPACING.sm,
-    borderRadius: RADIUS.small,
+    borderRadius: RADIUS.sm,
     marginTop: SPACING.sm,
     gap: SPACING.xs,
   },

@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.lg,
     marginBottom: SPACING.sm,
-    ...SHADOWS.small,
+    ...SHADOWS.level1,
   },
   buttonText: {
     color: 'white',
@@ -94,13 +94,13 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   connectedBadge: {
-    backgroundColor: COLORS.green[100],
+    backgroundColor: '#e6fffa',
     paddingHorizontal: SPACING.sm,
     paddingVertical: SPACING.xs,
-    borderRadius: RADIUS.full,
+    borderRadius: RADIUS.round,
   },
   connectedText: {
-    color: COLORS.green[700],
+    color: COLORS.success,
     fontSize: 12,
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -129,7 +129,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   errorText: {
-    color: COLORS.red[600],
+    color: COLORS.error,
     fontSize: 14,
     marginTop: SPACING.sm,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
