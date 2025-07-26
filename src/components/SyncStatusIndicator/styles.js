@@ -55,12 +55,12 @@ export const styles = StyleSheet.create({
   
   detailLabel: {
     fontSize: 13,
-    color: '#666',
+    color: '#000',
   },
   
   detailValue: {
     fontSize: 13,
-    color: '#333',
+    color: '#000',
     fontWeight: '500',
   },
   

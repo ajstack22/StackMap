@@ -758,6 +758,19 @@ class SyncService {
   }
 
   /**
+   * Get recovery phrase if available
+   */
+  async getRecoveryPhrase() {
+    if (!this.syncId) return null;
+    try {
+      return await encryptionService.getStoredRecoveryPhrase(this.syncId);
+    } catch (error) {
+      console.error('Failed to get recovery phrase:', error);
+      return null;
+    }
+  }
+
+  /**
    * Re-initialize encryption with recovery phrase (for restoring after refresh)
    */
   async restoreEncryption(recoveryPhrase) {
@@ -1075,8 +1088,8 @@ class SyncService {
         name: user.name,
         icon: user.icon,
         days: user.days || {},
-        settings: {
-          theme: user.settings?.theme || state.currentTheme
+        settings: user.settings || {
+          theme: state.currentTheme
         }
       };
 
@@ -1249,8 +1262,8 @@ class SyncService {
         name: user.name,
         icon: user.icon,
         days: user.days || {},
-        settings: {
-          theme: user.settings?.theme || state.currentTheme
+        settings: user.settings || {
+          theme: state.currentTheme
         }
       };
 
@@ -1424,8 +1437,24 @@ class SyncService {
       const shares = JSON.parse(stored);
       const now = new Date();
       
-      // Filter out expired shares
-      return shares.filter(share => new Date(share.expiresAt) > now);
+      // Process shares to mark as idle if expired but within grace period
+      const processedShares = shares.map(share => {
+        const expiryDate = new Date(share.expiresAt);
+        const gracePeriodEnd = new Date(expiryDate.getTime() + (30 * 24 * 60 * 60 * 1000)); // 30 days grace
+        
+        if (expiryDate < now && gracePeriodEnd > now) {
+          // Mark as idle if expired but within grace period
+          return { ...share, status: 'idle' };
+        } else if (expiryDate >= now) {
+          // Still active
+          return { ...share, status: 'active' };
+        }
+        // Return null for shares past grace period
+        return null;
+      });
+      
+      // Filter out null entries (shares past grace period)
+      return processedShares.filter(share => share !== null);
     } catch (error) {
       console.error('Failed to get active shares:', error);
       return [];
@@ -1437,7 +1466,9 @@ class SyncService {
    */
   async deleteShare(shareId) {
     try {
-      const shares = await this.getActiveShares();
+      // Get all shares from storage directly (not just active ones)
+      const stored = await AsyncStorage.getItem('@stackmap_shares');
+      const shares = stored ? JSON.parse(stored) : [];
       const filtered = shares.filter(share => share.shareId !== shareId);
       await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(filtered));
       
@@ -1445,6 +1476,45 @@ class SyncService {
       // But for now, let them expire naturally
     } catch (error) {
       console.error('Failed to delete share:', error);
+    }
+  }
+
+  /**
+   * Extend a share link
+   */
+  async extendShare(shareId, additionalHours) {
+    try {
+      const shares = await this.getActiveShares();
+      const shareIndex = shares.findIndex(share => share.shareId === shareId);
+      
+      if (shareIndex === -1) {
+        throw new Error('Share not found');
+      }
+
+      const share = shares[shareIndex];
+      const currentExpiry = new Date(share.expiresAt);
+      const now = new Date();
+      
+      // If expired or idle, extend from now, otherwise extend from current expiry
+      const baseTime = currentExpiry < now || share.status === 'idle' ? now : currentExpiry;
+      const newExpiry = new Date(baseTime.getTime() + (additionalHours * 60 * 60 * 1000));
+      
+      shares[shareIndex] = {
+        ...share,
+        expiresAt: newExpiry.toISOString(),
+        status: 'active', // Re-activate if it was idle
+        extendedAt: new Date().toISOString(),
+      };
+      
+      await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
+      
+      // In production, would also update the server
+      console.log(`Extended share ${shareId} by ${additionalHours} hours`);
+      
+      return shares[shareIndex];
+    } catch (error) {
+      console.error('Failed to extend share:', error);
+      throw error;
     }
   }
 }

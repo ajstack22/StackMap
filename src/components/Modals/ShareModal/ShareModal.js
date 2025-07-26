@@ -10,12 +10,15 @@ import {
   Platform,
   Clipboard,
   Alert,
+  StatusBar,
+  SafeAreaView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import styles from './styles';
 import syncService from '../../../services/sync/syncService';
+import { COLORS, SPACING } from '../../../constants';
 
 const ShareModal = ({
   visible,
@@ -31,12 +34,14 @@ const ShareModal = ({
   const [shareUrl, setShareUrl] = useState('');
   const [recipientName, setRecipientName] = useState('');
   const [shareNote, setShareNote] = useState('');
-  const [expiresHours, setExpiresHours] = useState('24');
+  const [expiresHours, setExpiresHours] = useState('168'); // Default to 1 week
   const [includeCompleted, setIncludeCompleted] = useState(true);
   const [includeTomorrow, setIncludeTomorrow] = useState(true);
   const [autoUpdate, setAutoUpdate] = useState(true); // New state for auto-update
   const [activeShares, setActiveShares] = useState([]);
-  const [showActiveShares, setShowActiveShares] = useState(false);
+  const [showActiveShares, setShowActiveShares] = useState(true);
+  const [extendingShare, setExtendingShare] = useState(null);
+  const [extendDuration, setExtendDuration] = useState('168');
 
   useEffect(() => {
     if (visible) {
@@ -116,43 +121,61 @@ const ShareModal = ({
     );
   };
 
+  const handleExtendShare = async (shareId) => {
+    try {
+      await syncService.extendShare(shareId, parseInt(extendDuration));
+      showToast({ message: 'Share link extended!' });
+      setExtendingShare(null);
+      setExtendDuration('168');
+      loadActiveShares();
+    } catch (error) {
+      showToast({ message: error.message || 'Failed to extend share' });
+    }
+  };
+
   const getExpirationOptions = () => [
-    { label: '1 hour', value: '1' },
-    { label: '6 hours', value: '6' },
-    { label: '24 hours', value: '24' },
-    { label: '3 days', value: '72' },
+    { label: '1 day', value: '24' },
     { label: '1 week', value: '168' },
     { label: '1 month', value: '720' },    // 30 days
-    { label: '2 months', value: '1440' },  // 60 days
     { label: '3 months', value: '2160' },  // 90 days
+    { label: '6 months', value: '4320' },  // 180 days
   ];
 
   return (
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
+      transparent={false}
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <View style={[
-          styles.modalContent,
-          { paddingBottom: insets.bottom + 20 }
-        ]}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Share {user?.name}'s Progress</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={24} color="#666" />
+      {Platform.OS === 'android' && (
+        <StatusBar 
+          backgroundColor={theme.primary} 
+          barStyle="light-content" 
+          translucent={false}
+        />
+      )}
+      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+        )}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+            <View style={styles.headerLeft}>
+              <Icon name="share" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Share {user?.name}'s Progress</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
-
-          <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-            {!shareUrl ? (
-              <>
-                {/* Create Share Form */}
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Share Settings</Text>
-                  
+        </SafeAreaView>
+        <View style={{ flex: 1, backgroundColor: theme.light }}>
+          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+            {/* Create Share Form */}
+            <View style={[styles.section, shareUrl && styles.sectionCollapsed]}>
+                  <Text style={styles.sectionTitle}>{shareUrl ? 'New Share' : 'Share Settings'}</Text>
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Recipient (optional)</Text>
                     <TextInput
@@ -179,20 +202,14 @@ const ShareModal = ({
 
                   <View style={styles.inputGroup}>
                     <Text style={styles.label}>Expires in</Text>
-                    <View style={styles.expirationOptions}>
+                    <View style={styles.toggleContainer}>
                       {getExpirationOptions().map(option => (
                         <TouchableOpacity
                           key={option.value}
-                          style={[
-                            styles.expirationOption,
-                            expiresHours === option.value && styles.expirationOptionActive
-                          ]}
+                          style={[styles.toggle, expiresHours === option.value && styles.toggleActive]}
                           onPress={() => setExpiresHours(option.value)}
                         >
-                          <Text style={[
-                            styles.expirationOptionText,
-                            expiresHours === option.value && styles.expirationOptionTextActive
-                          ]}>
+                          <Text style={[styles.toggleText, expiresHours === option.value && styles.toggleTextActive]}>
                             {option.label}
                           </Text>
                         </TouchableOpacity>
@@ -205,11 +222,9 @@ const ShareModal = ({
                       style={styles.checkbox}
                       onPress={() => setIncludeCompleted(!includeCompleted)}
                     >
-                      <Icon 
-                        name={includeCompleted ? 'check-box' : 'check-box-outline-blank'}
-                        size={24}
-                        color={theme.primary}
-                      />
+                      <View style={[styles.checkboxContainer, { borderColor: theme.primary, backgroundColor: includeCompleted ? theme.primary : 'white' }]}>
+                        {includeCompleted && <Icon name="check" size={18} color="white" />}
+                      </View>
                       <Text style={styles.checkboxLabel}>Show completed activities</Text>
                     </TouchableOpacity>
 
@@ -217,11 +232,9 @@ const ShareModal = ({
                       style={styles.checkbox}
                       onPress={() => setIncludeTomorrow(!includeTomorrow)}
                     >
-                      <Icon 
-                        name={includeTomorrow ? 'check-box' : 'check-box-outline-blank'}
-                        size={24}
-                        color={theme.primary}
-                      />
+                      <View style={[styles.checkboxContainer, { borderColor: theme.primary, backgroundColor: includeTomorrow ? theme.primary : 'white' }]}>
+                        {includeTomorrow && <Icon name="check" size={18} color="white" />}
+                      </View>
                       <Text style={styles.checkboxLabel}>Include tomorrow's plan</Text>
                     </TouchableOpacity>
 
@@ -229,91 +242,103 @@ const ShareModal = ({
                       style={styles.checkbox}
                       onPress={() => setAutoUpdate(!autoUpdate)}
                     >
-                      <Icon 
-                        name={autoUpdate ? 'check-box' : 'check-box-outline-blank'}
-                        size={24}
-                        color={theme.primary}
-                      />
+                      <View style={[styles.checkboxContainer, { borderColor: theme.primary, backgroundColor: autoUpdate ? theme.primary : 'white' }]}>
+                        {autoUpdate && <Icon name="check" size={18} color="white" />}
+                      </View>
                       <Text style={styles.checkboxLabel}>Keep share up-to-date</Text>
                     </TouchableOpacity>
                     
                     {autoUpdate && (
                       <Text style={styles.autoUpdateHint}>
-                        <Icon name="info-outline" size={14} color="#999" /> Share will automatically update when activities change
+                        Share will automatically update when activities change
                       </Text>
                     )}
                   </View>
-                </View>
 
                 <View style={styles.tokenPreview}>
                   <View style={styles.tokenHeader}>
-                    <Icon name="lock" size={16} color="#666" />
+                    <Icon name="lock" size={16} color="#000" />
                     <Text style={styles.tokenLabel}>End-to-End Encrypted Share</Text>
                   </View>
-                  <Text style={styles.tokenText} numberOfLines={1} ellipsizeMode="middle">
-                    {shareToken}
-                  </Text>
                   <Text style={styles.tokenHint}>
-                    This key encrypts your data - only share with trusted recipients
+                    Your data will be encrypted before sharing
                   </Text>
                 </View>
 
-                <TouchableOpacity
-                  style={[styles.createButton, loading && styles.createButtonDisabled]}
-                  onPress={handleCreateShare}
-                  disabled={loading}
-                >
-                  {loading ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <>
-                      <Icon name="share" size={20} color="#fff" />
-                      <Text style={styles.createButtonText}>Create Share Link</Text>
-                    </>
-                  )}
-                </TouchableOpacity>
-              </>
-            ) : (
-              <>
-                {/* Share Link Created */}
-                <View style={styles.successSection}>
-                  <Icon name="check-circle" size={48} color="#4CAF50" />
-                  <Text style={styles.successTitle}>Share Link Created!</Text>
+                {!shareUrl && (
+                  <TouchableOpacity
+                    style={[styles.createButton, { backgroundColor: theme.primary }, loading && styles.createButtonDisabled]}
+                    onPress={handleCreateShare}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <>
+                        <Icon name="share" size={20} color="#fff" />
+                        <Text style={styles.createButtonText}>Create Share Link</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                )}
+            </View>
+
+            {/* Share Link Created */}
+            {shareUrl && (
+              <View style={styles.shareSection}>
+                  <View style={styles.successHeader}>
+                    <Icon name="check-circle" size={32} color={COLORS.success} />
+                    <Text style={styles.sectionTitle}>Share Link Created!</Text>
+                    <TouchableOpacity
+                      style={styles.newShareLink}
+                      onPress={() => {
+                        setShareUrl('');
+                        setShareToken(syncService.generateShareToken(true));
+                        setRecipientName('');
+                        setShareNote('');
+                      }}
+                    >
+                      <Icon name="add-circle-outline" size={20} color={theme.primary} />
+                      <Text style={[styles.newShareLinkText, { color: theme.primary }]}>New Share</Text>
+                    </TouchableOpacity>
+                  </View>
                   
                   {/* QR Code */}
-                  <View style={styles.qrCodeContainer}>
+                  <View style={styles.qrContainer}>
                     <QRCode
                       value={shareUrl}
                       size={200}
-                      color="#000"
-                      backgroundColor="#fff"
+                      color="#000000"
+                      backgroundColor="#ffffff"
                     />
                   </View>
                   
-                  <Text style={styles.qrCodeHint}>Scan this code to access the share</Text>
-                  
-                  {/* Prominent Copy Button */}
+                  {/* Copy Buttons */}
                   <TouchableOpacity 
-                    style={styles.primaryCopyButton} 
+                    style={[styles.button, { backgroundColor: theme.primary }]} 
                     onPress={handleCopyUrl}
                   >
-                    <Icon name="content-copy" size={24} color="#fff" />
-                    <Text style={styles.primaryCopyButtonText}>Copy Share Link</Text>
+                    <Icon name="content-copy" size={20} color="white" />
+                    <Text style={styles.buttonText}>Copy Full Share Link</Text>
                   </TouchableOpacity>
-                  
-                  {/* De-emphasized URL display */}
-                  <View style={styles.urlPreview}>
-                    <Text style={styles.urlPreviewLabel}>Share URL:</Text>
-                    <Text style={styles.urlPreviewText} numberOfLines={1} ellipsizeMode="middle">
-                      {shareUrl}
-                    </Text>
-                  </View>
+                  <TouchableOpacity 
+                    style={[styles.button, { backgroundColor: theme.primary, opacity: 0.8 }]} 
+                    onPress={() => {
+                      Clipboard.setString(shareToken);
+                      showToast({ message: 'Encryption key copied!' });
+                    }}
+                  >
+                    <Icon name="key" size={20} color="white" />
+                    <Text style={styles.buttonText}>Copy Encryption Key Only</Text>
+                  </TouchableOpacity>
 
                   {recipientName && (
-                    <Text style={styles.recipientInfo}>For: {recipientName}</Text>
+                    <View style={styles.metaInfo}>
+                      <Text style={styles.metaLabel}>For: {recipientName}</Text>
+                    </View>
                   )}
 
-                  <Text style={styles.expirationInfo}>
+                  <Text style={styles.metaLabel}>
                     Expires in {
                       parseInt(expiresHours) >= 720 
                         ? `${Math.floor(parseInt(expiresHours) / 720)} month${Math.floor(parseInt(expiresHours) / 720) > 1 ? 's' : ''}`
@@ -325,17 +350,7 @@ const ShareModal = ({
                     }
                   </Text>
 
-                  <TouchableOpacity
-                    style={styles.newShareButton}
-                    onPress={() => {
-                      setShareUrl('');
-                      setShareToken(syncService.generateShareToken(true)); // Generate secure token
-                    }}
-                  >
-                    <Text style={styles.newShareButtonText}>Create Another Share</Text>
-                  </TouchableOpacity>
                 </View>
-              </>
             )}
 
             {/* Active Shares */}
@@ -351,47 +366,130 @@ const ShareModal = ({
                   <Icon 
                     name={showActiveShares ? 'expand-less' : 'expand-more'}
                     size={24}
-                    color="#666"
+                    color="#000"
                   />
                 </TouchableOpacity>
 
                 {showActiveShares && (
                   <View style={styles.sharesList}>
-                    {activeShares.map(share => (
-                      <View key={share.shareId} style={styles.shareItem}>
-                        <View style={styles.shareItemInfo}>
-                          <View style={styles.shareItemTokenRow}>
-                            <Text style={styles.shareItemToken}>{share.token.substring(0, 8)}...</Text>
+                    {activeShares.map(share => {
+                      const isExpired = new Date(share.expiresAt) < new Date();
+                      const isIdle = share.status === 'idle';
+                      
+                      return (
+                        <View key={share.shareId} style={[styles.activeShareItem, isIdle && styles.idleShareItem]}>
+                          <View style={styles.activeShareInfo}>
+                            {isIdle && (
+                              <View style={styles.idleBadge}>
+                                <Icon name="pause-circle-outline" size={16} color={COLORS.warning} />
+                                <Text style={styles.idleBadgeText}>Idle</Text>
+                              </View>
+                            )}
+                            <Text style={styles.activeShareRecipient}>
+                              {share.recipientName || 'Unnamed share'}
+                            </Text>
+                            <Text style={styles.activeShareMeta}>
+                              {isExpired ? 'Expired' : 'Expires'}: {new Date(share.expiresAt).toLocaleDateString()}
+                            </Text>
                             {share.autoUpdate && (
                               <View style={styles.autoUpdateBadge}>
-                                <Icon name="sync" size={12} color="#4CAF50" />
-                                <Text style={styles.autoUpdateBadgeText}>Auto-update</Text>
+                                <Text style={styles.autoUpdateText}>Auto-update</Text>
                               </View>
                             )}
                           </View>
-                          {share.recipientName && (
-                            <Text style={styles.shareItemRecipient}>
-                              For: {share.recipientName}
-                            </Text>
+                          
+                          {extendingShare === share.shareId ? (
+                            <View style={styles.extendControls}>
+                              <View style={styles.miniToggleContainer}>
+                                {['24', '168', '720'].map(value => (
+                                  <TouchableOpacity
+                                    key={value}
+                                    style={[styles.miniToggle, extendDuration === value && styles.miniToggleActive]}
+                                    onPress={() => setExtendDuration(value)}
+                                  >
+                                    <Text style={[styles.miniToggleText, extendDuration === value && styles.miniToggleTextActive]}>
+                                      {value === '24' ? '1d' : value === '168' ? '1w' : '1m'}
+                                    </Text>
+                                  </TouchableOpacity>
+                                ))}
+                              </View>
+                              <View style={styles.extendButtons}>
+                                <TouchableOpacity
+                                  style={styles.extendConfirmButton}
+                                  onPress={() => handleExtendShare(share.shareId)}
+                                >
+                                  <Icon name="check" size={16} color="white" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  style={styles.extendCancelButton}
+                                  onPress={() => {
+                                    setExtendingShare(null);
+                                    setExtendDuration('168');
+                                  }}
+                                >
+                                  <Icon name="close" size={16} color={COLORS.gray[600]} />
+                                </TouchableOpacity>
+                              </View>
+                            </View>
+                          ) : (
+                            <View style={styles.activeShareActions}>
+                              {isIdle ? (
+                                <>
+                                  <TouchableOpacity
+                                    style={[styles.extendShareButton, { backgroundColor: theme.light }]}
+                                    onPress={() => setExtendingShare(share.shareId)}
+                                  >
+                                    <Icon name="restore" size={16} color={theme.primary} />
+                                    <Text style={[styles.extendShareButtonText, { color: theme.primary }]}>Re-enable</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={styles.deleteShareButton}
+                                    onPress={() => handleDeleteShare(share.shareId)}
+                                  >
+                                    <Icon name="delete" size={16} color="#e53e3e" />
+                                    <Text style={styles.deleteShareButtonText}>Delete</Text>
+                                  </TouchableOpacity>
+                                </>
+                              ) : (
+                                <>
+                                  <TouchableOpacity
+                                    style={styles.viewShareButton}
+                                    onPress={() => {
+                                      Clipboard.setString(share.shareUrl);
+                                      showToast({ message: 'Share link copied!' });
+                                    }}
+                                  >
+                                    <Icon name="content-copy" size={16} color={COLORS.gray[700]} />
+                                    <Text style={styles.viewShareButtonText}>Copy</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={styles.extendShareButton}
+                                    onPress={() => setExtendingShare(share.shareId)}
+                                  >
+                                    <Icon name="update" size={16} color={theme.primary} />
+                                    <Text style={[styles.extendShareButtonText, { color: theme.primary }]}>Extend</Text>
+                                  </TouchableOpacity>
+                                  <TouchableOpacity
+                                    style={styles.deleteShareButton}
+                                    onPress={() => handleDeleteShare(share.shareId)}
+                                  >
+                                    <Icon name="delete" size={16} color="#e53e3e" />
+                                    <Text style={styles.deleteShareButtonText}>Delete</Text>
+                                  </TouchableOpacity>
+                                </>
+                              )}
+                            </View>
                           )}
-                          <Text style={styles.shareItemExpires}>
-                            Expires: {new Date(share.expiresAt).toLocaleString()}
-                          </Text>
                         </View>
-                        <TouchableOpacity
-                          style={styles.deleteShareButton}
-                          onPress={() => handleDeleteShare(share.shareId)}
-                        >
-                          <Icon name="delete" size={20} color="#ff4444" />
-                        </TouchableOpacity>
-                      </View>
-                    ))}
+                      );
+                    })}
                   </View>
                 )}
               </View>
             )}
           </ScrollView>
         </View>
+        <SafeAreaView style={{ backgroundColor: theme.light }} />
       </View>
     </Modal>
   );

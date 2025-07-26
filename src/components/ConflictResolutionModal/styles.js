@@ -29,7 +29,6 @@ export const styles = StyleSheet.create({
   
   content: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
   
   contentContainer: {

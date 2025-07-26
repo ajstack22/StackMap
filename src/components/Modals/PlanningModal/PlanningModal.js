@@ -14,7 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../../constants';
 
-const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSelectUserDay, theme }) => {
+const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSelectUserDay, theme, dayMode, setDayMode }) => {
   const insets = useSafeAreaInsets();
   const themeColors = theme || THEMES.stackBlue;
   const [selectedUser, setSelectedUser] = useState(currentUser);
@@ -48,8 +48,11 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
         )}
         <SafeAreaView style={{ flex: 1, backgroundColor: themeColors.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: themeColors.primary }]}>
-            <Text style={styles.modalTitle}>Planning</Text>
-            <TouchableOpacity onPress={onClose}>
+            <View style={styles.headerLeft}>
+              <Icon name="event" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Plan Ahead</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
@@ -85,26 +88,58 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
             ))}
           </View>
 
-          {/* Day Selection */}
-          <Text style={styles.sectionTitle}>Day</Text>
-          <View style={styles.toggleContainer}>
+          {/* View Mode */}
+          <Text style={styles.sectionTitle}>View Mode</Text>
+          <Text style={styles.sectionDescription}>How many days should be visible in your StackMap?</Text>
+          <View style={[styles.toggleContainer, styles.viewModeContainer]}>
             <TouchableOpacity
-              style={[styles.toggle, selectedDay === 'today' && styles.toggleActive]}
-              onPress={() => setSelectedDay('today')}
+              style={[styles.toggle, styles.viewModeToggle, dayMode === 'today' && styles.toggleActive]}
+              onPress={() => {
+                setDayMode('today');
+                setSelectedDay('today'); // Force today when in today-only mode
+              }}
             >
-              <Text style={[styles.toggleText, selectedDay === 'today' && styles.toggleTextActive]}>
-                Today
+              <Icon name="today" size={20} color={dayMode === 'today' ? themeColors.primary : '#000'} />
+              <Text style={[styles.toggleText, dayMode === 'today' && styles.toggleTextActive]}>
+                Today Only
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.toggle, selectedDay === 'tomorrow' && styles.toggleActive]}
-              onPress={() => setSelectedDay('tomorrow')}
+              style={[styles.toggle, styles.viewModeToggle, dayMode === 'both' && styles.toggleActive]}
+              onPress={() => setDayMode('both')}
             >
-              <Text style={[styles.toggleText, selectedDay === 'tomorrow' && styles.toggleTextActive]}>
-                Tomorrow
+              <Icon name="date-range" size={20} color={dayMode === 'both' ? themeColors.primary : '#000'} />
+              <Text style={[styles.toggleText, dayMode === 'both' && styles.toggleTextActive]}>
+                Today & Tomorrow
               </Text>
             </TouchableOpacity>
           </View>
+
+          {/* Day Selection - only show when view mode includes tomorrow */}
+          {dayMode === 'both' && (
+            <>
+              <Text style={styles.sectionTitle}>Planning Day</Text>
+              <Text style={styles.sectionDescription}>Which day are you planning?</Text>
+              <View style={styles.toggleContainer}>
+                <TouchableOpacity
+                  style={[styles.toggle, selectedDay === 'today' && styles.toggleActive]}
+                  onPress={() => setSelectedDay('today')}
+                >
+                  <Text style={[styles.toggleText, selectedDay === 'today' && styles.toggleTextActive]}>
+                    Today
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.toggle, selectedDay === 'tomorrow' && styles.toggleActive]}
+                  onPress={() => setSelectedDay('tomorrow')}
+                >
+                  <Text style={[styles.toggleText, selectedDay === 'tomorrow' && styles.toggleTextActive]}>
+                    Tomorrow
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </>
+          )}
 
           {/* Action Buttons */}
           <View style={styles.actionButtons}>
@@ -148,6 +183,14 @@ const getStyles = (themeColors) => ({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIcon: {
+    marginRight: 12,
+  },
   modalTitle: {
     fontSize: TYPOGRAPHY.sizes.xxl,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -157,8 +200,15 @@ const getStyles = (themeColors) => ({
     fontSize: TYPOGRAPHY.sizes.lg,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.xs,
     marginTop: SPACING.lg,
+  },
+  sectionDescription: {
+    fontSize: TYPOGRAPHY.sizes.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+    marginBottom: SPACING.md,
+    lineHeight: 20,
   },
   usersList: {
     gap: SPACING.sm,
@@ -213,11 +263,20 @@ const getStyles = (themeColors) => ({
   toggleText: {
     fontSize: TYPOGRAPHY.sizes.sm,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    color: COLORS.gray[600],
+    color: '#000',
   },
   toggleTextActive: {
     color: COLORS.gray[900],
     fontWeight: '600',
+  },
+  viewModeContainer: {
+    backgroundColor: '#e8f4fd',
+    borderWidth: 1,
+    borderColor: themeColors.primary + '30',
+  },
+  viewModeToggle: {
+    flexDirection: 'row',
+    gap: SPACING.xs,
   },
   actionButtons: {
     flexDirection: 'row',

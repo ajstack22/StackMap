@@ -32,7 +32,7 @@ const SupportModal = ({
         <SafeAreaView style={{ backgroundColor: '#ff6b9d' }}>
           <View style={[styles.modalHeader, { backgroundColor: '#ff6b9d' }]}>
             <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap 💖</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>

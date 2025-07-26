@@ -83,7 +83,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, EditModeSettingsModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -165,6 +165,10 @@ const App = () => {
     setTaskCelebration,
     routineCelebration,
     setRoutineCelebration,
+    toolbarOrder,
+    setToolbarOrder,
+    moreButtonPosition,
+    setMoreButtonPosition,
     users,
     setUsers,
     addUser,
@@ -199,7 +203,6 @@ const App = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const [showUserModal, setShowUserModal] = useState(false);
   const [showUserDayModal, setShowUserDayModal] = useState(false);
-  const [showEditModeSettingsModal, setShowEditModeSettingsModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
   const [showActivityLibrary, setShowActivityLibrary] = useState(false);
   // Removed - now using Zustand store
@@ -368,6 +371,7 @@ const App = () => {
         hasCompletedOnboarding
       });
       
+      
       await migratePinToSecureStorage();
       
       // Check if we should show onboarding
@@ -394,7 +398,6 @@ const App = () => {
             routineCelebration: 'rainbow',
             soundEnabled: true,
             theme: 'stackBlue',
-            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -430,8 +433,8 @@ const App = () => {
   // Handle sync setup from URL parameter
   useEffect(() => {
     if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
-      // Open settings modal with sync setup
-      setShowEditModeSettingsModal(true);
+      // Sync setup functionality moved to data modal
+      // TODO: Auto-open data modal for sync setup
       // Clear the URL parameter
       if (Platform.OS === 'web') {
         window.history.replaceState({}, document.title, window.location.pathname);
@@ -636,10 +639,7 @@ const App = () => {
         console.log('Abbreviated onboarding - will trigger sync after setup');
         // Set showOnboarding to false to show main app
         setShowOnboarding(false);
-        // Wait a moment for UI to update, then open settings to trigger sync
-        setTimeout(() => {
-          setShowEditModeSettingsModal(true);
-        }, 500);
+        // Sync setup functionality moved to data modal
         return;
       }
       
@@ -660,7 +660,6 @@ const App = () => {
             routineCelebration: 'rainbow',
             soundEnabled: true,
             theme: 'stackBlue',
-            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -747,7 +746,6 @@ const App = () => {
             routineCelebration: 'rainbow',
             soundEnabled: true,
             theme: 'stackBlue',
-            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -865,7 +863,6 @@ const App = () => {
             routineCelebration: 'rainbow',
             soundEnabled: true,
             theme: 'stackBlue',
-            toolbarOrder: null
           },
           createdAt: new Date().toISOString(),
           lastActive: new Date().toISOString()
@@ -931,7 +928,6 @@ const App = () => {
           routineCelebration: 'rainbow',
           soundEnabled: true,
           theme: 'stackBlue',
-          toolbarOrder: null
         },
         createdAt: new Date().toISOString(),
         lastActive: new Date().toISOString()
@@ -1344,7 +1340,6 @@ const App = () => {
         routineCelebration: 'rainbow',
         soundEnabled: true,
         theme: currentTheme || 'stackBlue',
-        toolbarOrder: null
       },
       createdAt: new Date().toISOString(),
       lastActive: new Date().toISOString()
@@ -2007,7 +2002,6 @@ const App = () => {
               setEditingActivity(null);
               
               // Close all modals
-              setShowEditModeSettingsModal(false);
               setShowAddUserModal(false);
               setShowEmojiPicker(false);
               setShowActivityLibrary(false);
@@ -2768,86 +2762,7 @@ const App = () => {
       />
       
       
-      {/* Settings Modal */}
-      <EditModeSettingsModal
-        visible={showEditModeSettingsModal}
-        onClose={() => {
-          setShowEditModeSettingsModal(false);
-          setSyncSetupPhrase(null); // Clear sync setup phrase when closing
-        }}
-        theme={theme}
-        insets={insets}
-        users={users}
-        currentUser={currentUser}
-        dayMode={dayMode}
-        setDayMode={setDayMode}
-        hasPinProtection={hasPinProtection}
-        settingsScrollKey={settingsScrollKey}
-        syncSetupPhrase={syncSetupPhrase}
-        onUserSelect={(userId) => {
-          setCurrentUser(userId);
-          const userActivities = users[userId]?.days?.[currentDay]?.activities || [];
-          setActivities(userActivities.filter(a => !a.deleted));
-          if (users[userId]?.settings?.theme) {
-            setCurrentTheme(users[userId].settings.theme);
-          }
-          showToast({ message: `Switched to ${users[userId].name}` });
-        }}
-        onUserEdit={(userId, userName, userIcon) => {
-          setEditingUser(userId);
-          setNewUserName(userName);
-          setNewUserEmoji(userIcon);
-          setShowEditModeSettingsModal(false);
-          setShowAddUserModal(true);
-        }}
-        onUserDelete={deleteUser}
-        onAddUser={() => {
-          setShowEditModeSettingsModal(false);
-          setShowAddUserModal(true);
-        }}
-        onPinChange={() => {
-          setIsSettingPin(true);
-          setPinInput('');
-          setConfirmPin('');
-          setShowEditModeSettingsModal(false);
-          setShowPinModal(true);
-        }}
-        onPinRemove={async () => {
-          try {
-            const success = await removeSecurePin();
-            const hasPinAfter = await hasSecurePin();
-            
-            if (success && !hasPinAfter) {
-              setHasPinProtection(false);
-              showToast({ message: 'PIN removed' });
-            } else {
-              throw new Error(`Failed to clear PIN - success: ${success}, hasPinAfter: ${hasPinAfter}`);
-            }
-          } catch (error) {
-            console.error('Error removing PIN:', error);
-            if (Platform.OS === 'web') {
-              window.alert('Failed to remove PIN. Please try again.');
-            } else {
-              Alert.alert('Error', 'Failed to remove PIN. Please try again.');
-            }
-          }
-        }}
-        onPinEnable={() => {
-          setIsSettingPin(true);
-          setShowPinModal(true);
-          setShowEditModeSettingsModal(false);
-        }}
-        onExportData={exportData}
-        onImportData={importData}
-        onResetApp={resetApp}
-        onShareUser={(userId) => {
-          setShareUserId(userId);
-          setShowShareModal(true);
-          setShowEditModeSettingsModal(false);
-        }}
-        showToast={showToast}
-        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
-      />
+      {/* EditModeSettingsModal removed - functionality distributed to specific modals */}
       
       {/* Add/Edit User Modal */}
       <AddUserModal
@@ -2902,9 +2817,6 @@ const App = () => {
           onAdd={() => setShowActivityModal(true)}
           onLibrary={() => setShowActivityLibrary(true)}
           onPlan={() => setShowUserDayModal(true)}
-          onSettings={() => {
-            setShowEditModeSettingsModal(true);
-          }}
           onShare={() => {
             setShareUserId(currentUser);
             setShowShareModal(true);
@@ -2912,7 +2824,8 @@ const App = () => {
           onData={() => setShowDataModal(true)}
           onUsers={() => setShowUsersSecurityModal(true)}
           onCustomize={() => setShowToolbarCustomizeModal(true)}
-          toolbarOrder={users[currentUser]?.settings?.toolbarOrder}
+          toolbarOrder={toolbarOrder}
+          moreButtonPosition={moreButtonPosition}
           onCompleteDay={() => {
             const pinnedCount = activities.filter(a => a.pinned).length;
             const unpinnedCount = activities.filter(a => !a.pinned).length;
@@ -3130,6 +3043,8 @@ const App = () => {
           currentDay={currentDay}
           users={users}
           theme={theme}
+          dayMode={dayMode}
+          setDayMode={setDayMode}
           onSelectUserDay={(userId, day) => {
             setCurrentUser(userId);
             setCurrentDay(day);
@@ -3164,6 +3079,7 @@ const App = () => {
         theme={theme}
         onExportData={exportData}
         onImportData={importData}
+        onResetApp={resetApp}
         showToast={showToast}
       />
       
@@ -3213,18 +3129,10 @@ const App = () => {
         visible={showToolbarCustomizeModal}
         onClose={() => setShowToolbarCustomizeModal(false)}
         theme={theme}
-        currentOrder={users[currentUser]?.settings?.toolbarOrder}
-        onSaveOrder={(newOrder) => {
-          // Update user settings with new toolbar order
-          const updatedUser = {
-            ...users[currentUser],
-            settings: {
-              ...users[currentUser].settings,
-              toolbarOrder: newOrder
-            }
-          };
-          updateUser(currentUser, updatedUser);
-        }}
+        currentOrder={toolbarOrder}
+        moreButtonPosition={moreButtonPosition}
+        onSaveOrder={setToolbarOrder}
+        onSaveMorePosition={setMoreButtonPosition}
         showToast={showToast}
       />
       </>

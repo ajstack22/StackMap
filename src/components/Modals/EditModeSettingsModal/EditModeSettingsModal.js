@@ -200,7 +200,7 @@ const EditModeSettingsModal = ({
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
             <Text style={styles.modalTitle}>Settings</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
@@ -259,27 +259,6 @@ const EditModeSettingsModal = ({
               >
                 <Icon name="add" size={24} color={theme.primary} />
                 <Text style={styles.addUserText}>Add User</Text>
-              </TouchableOpacity>
-            </View>
-            
-            {/* Day Mode Section */}
-            <Text style={styles.sectionTitle}>Day Mode</Text>
-            <View style={styles.toggleContainer}>
-              <TouchableOpacity
-                style={[styles.toggle, dayMode === 'today' && styles.toggleActive]}
-                onPress={() => setDayMode('today')}
-              >
-                <Text style={[styles.toggleText, dayMode === 'today' && styles.toggleTextActive]}>
-                  Today Only
-                </Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.toggle, dayMode === 'both' && styles.toggleActive]}
-                onPress={() => setDayMode('both')}
-              >
-                <Text style={[styles.toggleText, dayMode === 'both' && styles.toggleTextActive]}>
-                  Today & Tomorrow
-                </Text>
               </TouchableOpacity>
             </View>
             
@@ -487,85 +466,6 @@ const EditModeSettingsModal = ({
                       <Text style={styles.buttonText}>Disable Sync Locally</Text>
                     </TouchableOpacity>
                     
-                    <TouchableOpacity
-                      style={[styles.button, { backgroundColor: COLORS.error }]}
-                      onPress={async () => {
-                        const message = 'Are you sure you want to permanently delete all your sync data from the server? This will remove your data from all synced devices. This action cannot be undone.';
-                        
-                        if (Platform.OS === 'web') {
-                          const confirmed = window.confirm(message);
-                          if (confirmed) {
-                            const doubleConfirm = window.confirm('This will DELETE all your synced data from the server. Are you absolutely sure?');
-                            if (doubleConfirm) {
-                              setSyncLoading(true);
-                              try {
-                                await syncService.deleteFromServer();
-                                setSyncEnabled(false);
-                                setSyncId(null);
-                                setSyncRecoveryPhrase('');
-                                showToast('All sync data permanently deleted from server', 'success');
-                              } catch (error) {
-                                showToast(error.message || 'Failed to delete sync data', 'error');
-                              } finally {
-                                setSyncLoading(false);
-                              }
-                            }
-                          }
-                        } else {
-                          Alert.alert(
-                            '⚠️ Delete Sync Data',
-                            message,
-                            [
-                              { text: 'Cancel', style: 'cancel' },
-                              {
-                                text: 'Delete Forever',
-                                style: 'destructive',
-                                onPress: () => {
-                                  Alert.alert(
-                                    '⚠️ Final Confirmation',
-                                    'This will DELETE all your synced data from the server. Are you absolutely sure?',
-                                    [
-                                      { text: 'Cancel', style: 'cancel' },
-                                      {
-                                        text: 'Delete Everything',
-                                        style: 'destructive',
-                                        onPress: async () => {
-                                          setSyncLoading(true);
-                                          try {
-                                            await syncService.deleteFromServer();
-                                            setSyncEnabled(false);
-                                            setSyncId(null);
-                                            setSyncRecoveryPhrase('');
-                                            showToast('All sync data permanently deleted from server', 'success');
-                                          } catch (error) {
-                                            showToast(error.message || 'Failed to delete sync data', 'error');
-                                          } finally {
-                                            setSyncLoading(false);
-                                          }
-                                        }
-                                      }
-                                    ]
-                                  );
-                                }
-                              }
-                            ]
-                          );
-                        }
-                      }}
-                      disabled={syncLoading}
-                    >
-                      {syncLoading ? (
-                        <ActivityIndicator size="small" color="white" />
-                      ) : (
-                        <Icon name="delete-forever" size={20} color="white" />
-                      )}
-                      <Text style={styles.buttonText}>Delete from Server</Text>
-                    </TouchableOpacity>
-                    
-                    <Text style={styles.dangerZoneText}>
-                      Delete from Server will permanently remove all your synced data from our servers. 
-                      Your local data will remain untouched.
-                    </Text>
                   </View>
                 </>
               ) : (

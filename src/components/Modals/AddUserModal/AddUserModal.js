@@ -81,7 +81,7 @@ const AddUserModal = ({
             <Text style={styles.modalTitle}>
               {editingUser ? 'Edit User' : 'Add New User'}
             </Text>
-            <TouchableOpacity onPress={handleClose}>
+            <TouchableOpacity onPress={handleClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>

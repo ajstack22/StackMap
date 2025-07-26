@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Platform,
   ActivityIndicator,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
@@ -170,10 +171,22 @@ const ConflictResolutionModal = ({
       visible={visible}
       animationType="slide"
       transparent={false}
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.primary }]}>
-        <View style={styles.header}>
+      {Platform.OS === 'android' && (
+        <StatusBar 
+          backgroundColor={theme.primary} 
+          barStyle="light-content" 
+          translucent={false}
+        />
+      )}
+      <View style={[styles.container, { backgroundColor: theme.primary }]}>
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+        )}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View style={[styles.header, { backgroundColor: theme.primary }]}>
           <View>
             <Text style={styles.title}>Sync Conflict</Text>
             <Text style={styles.subtitle}>
@@ -183,9 +196,10 @@ const ConflictResolutionModal = ({
           <TouchableOpacity onPress={onClose} disabled={resolving}>
             <Icon name="close" size={24} color="white" />
           </TouchableOpacity>
-        </View>
+          </View>
+        </SafeAreaView>
 
-        <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer}>
+        <ScrollView style={[styles.content, { backgroundColor: theme.light }]} contentContainerStyle={styles.contentContainer}>
           <View style={styles.conflictInfo}>
             <Icon name="warning" size={32} color={theme.primary} />
             <Text style={styles.conflictTitle}>
@@ -221,12 +235,13 @@ const ConflictResolutionModal = ({
           )}
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View style={[styles.footer, { backgroundColor: 'white' }]}>
           <Text style={styles.footerText}>
             Tip: For activity lists, merging usually gives the best result
           </Text>
         </View>
-      </SafeAreaView>
+        <SafeAreaView style={{ backgroundColor: theme.light }} />
+      </View>
     </Modal>
   );
 };

@@ -77,7 +77,7 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
         if (queueStatus.pending > 0) {
           return { name: 'cloud-queue', color: '#ff9800' };
         }
-        return { name: 'cloud', color: '#999' };
+        return { name: 'cloud', color: '#000' };
     }
   };
 
@@ -175,7 +175,7 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
           <Icon 
             name={isExpanded ? 'expand-less' : 'expand-more'} 
             size={24} 
-            color="#666" 
+            color="#000" 
           />
         )}
       </TouchableOpacity>

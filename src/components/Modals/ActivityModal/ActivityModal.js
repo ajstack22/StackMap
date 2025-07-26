@@ -72,10 +72,13 @@ const ActivityModal = ({
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-            <Text style={styles.modalTitle}>
-              {editingActivity ? 'Edit Activity' : 'New Activity'}
-            </Text>
-            <TouchableOpacity onPress={handleClose}>
+            <View style={styles.headerLeft}>
+              <Icon name="add-circle" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>
+                {editingActivity ? 'Edit Activity' : 'Add Activity'}
+              </Text>
+            </View>
+            <TouchableOpacity onPress={handleClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>

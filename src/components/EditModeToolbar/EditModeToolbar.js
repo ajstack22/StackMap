@@ -20,7 +20,6 @@ const EditModeToolbar = ({
   onAdd,
   onLibrary,
   onCompleteDay,
-  onSettings,
   onPlan,
   onShare,
   onData,
@@ -31,6 +30,7 @@ const EditModeToolbar = ({
   visible = true,
   onAnimationComplete,
   toolbarOrder,
+  moreButtonPosition = 'right',
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [translateY] = useState(() => new Animated.Value(position === 'top' ? -100 : 100));
@@ -96,7 +96,6 @@ const EditModeToolbar = ({
 
   // Define all actions
   const actionMap = {
-    settings: { label: 'Settings', icon: 'settings', onPress: onSettings },
     users: { label: 'Users', icon: 'group', onPress: onUsers },
     data: { label: 'Data', icon: 'cloud-sync', onPress: onData },
     complete: { label: 'Complete', icon: 'event-available', onPress: onCompleteDay },
@@ -104,18 +103,25 @@ const EditModeToolbar = ({
     plan: { label: 'Plan', icon: 'event', onPress: onPlan },
     library: { label: 'Library', icon: 'collections-bookmark', onPress: onLibrary },
     add: { label: 'Add', icon: 'add-circle', onPress: onAdd },
+    sort: { label: 'Sort', icon: 'sort', onPress: onCustomize, alwaysOverflow: true },
   };
 
   // Default order if none provided
-  const defaultOrder = ['add', 'library', 'plan', 'share', 'complete', 'data', 'users', 'settings'];
-  const currentOrder = toolbarOrder || defaultOrder;
+  const defaultOrder = ['data', 'users', 'share', 'complete', 'plan', 'library', 'add'];
+  
+  // Validate and use toolbar order
+  const currentOrder = (Array.isArray(toolbarOrder) && toolbarOrder.length > 0) 
+    ? toolbarOrder 
+    : defaultOrder;
 
-  // Create actions array based on custom order
-  const actions = currentOrder.map(id => ({
-    id,
-    ...actionMap[id],
-    color: theme.primary
-  })).filter(action => action.onPress); // Filter out any invalid actions
+  // Create actions array based on custom order (excluding special buttons like sort)
+  const actions = currentOrder
+    .filter(id => actionMap[id] && !actionMap[id].alwaysOverflow) // Filter first
+    .map(id => ({
+      id,
+      ...actionMap[id],
+      color: theme.primary
+    }));
 
   // Calculate how many buttons can fit based on screen width
   const calculateVisibleButtons = () => {
@@ -139,8 +145,20 @@ const EditModeToolbar = ({
   };
 
   const visibleButtonCount = calculateVisibleButtons();
-  const visibleActions = actions.slice(0, visibleButtonCount);
-  const overflowActions = actions.slice(visibleButtonCount);
+  const visibleActions = moreButtonPosition === 'left' 
+    ? actions.slice(-visibleButtonCount) // Take from the end when More is on left
+    : actions.slice(0, visibleButtonCount); // Take from the beginning when More is on right
+  const regularOverflowActions = moreButtonPosition === 'left'
+    ? actions.slice(0, -visibleButtonCount) // Overflow from the beginning when More is on left
+    : actions.slice(visibleButtonCount); // Overflow from the end when More is on right
+  
+  // Add Sort button to overflow actions
+  const sortAction = {
+    id: 'sort',
+    ...actionMap.sort,
+    color: theme.primary
+  };
+  const overflowActions = [...regularOverflowActions, sortAction];
   const showMore = overflowActions.length > 0;
 
   const renderAction = ({ item }) => (
@@ -228,17 +246,32 @@ const EditModeToolbar = ({
                 },
               ]}
             >
-              <TouchableOpacity onLongPress={onCustomize} activeOpacity={0.8}>
+              <View style={styles.editModeLabelContainer}>
                 <Text style={styles.editModeLabel}>Edit Mode</Text>
-              </TouchableOpacity>
+              </View>
               <View style={styles.toolbar}>
+              {/* More button on the left */}
+              {showMore && moreButtonPosition === 'left' && (
+                <TouchableOpacity
+                  style={styles.actionButton}
+                  onPress={() => setShowMoreMenu(true)}
+                >
+                  <Icon name="more-horiz" size={isTablet() ? 32 : 28} color="white" />
+                  <Text style={[styles.actionLabel, { color: 'white' }]}>
+                    More
+                  </Text>
+                </TouchableOpacity>
+              )}
+              
+              {/* Regular action buttons */}
               {visibleActions.map(action => (
                 <View key={action.id}>
                   {renderAction({ item: action })}
                 </View>
               ))}
               
-              {showMore && (
+              {/* More button on the right */}
+              {showMore && moreButtonPosition === 'right' && (
                 <TouchableOpacity
                   style={styles.actionButton}
                   onPress={() => setShowMoreMenu(true)}
@@ -313,28 +346,31 @@ const styles = StyleSheet.create({
     position: 'relative',
     zIndex: 1,
   },
+  editModeLabelContainer: {
+    marginBottom: Platform.OS === 'web' ? 2 : 3,
+  },
   editModeLabel: {
     color: 'white',
     fontSize: Platform.OS === 'web' ? (isTablet() ? 16 : 15) : (isTablet() ? 18 : 16),
     fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    marginBottom: Platform.OS === 'web' ? 2 : 3,
     opacity: 1,
   },
   toolbar: {
     flexDirection: 'row',
     paddingHorizontal: getContainerPadding() + SPACING.xs,
-    justifyContent: 'space-evenly',
+    justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
+    gap: Platform.OS === 'web' ? 8 : 10,
   },
   actionButton: {
     flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 2 : 3,
+    paddingHorizontal: Platform.OS === 'web' ? 8 : 10,
     paddingVertical: Platform.OS === 'web' ? 4 : 5,
     gap: Platform.OS === 'web' ? 1 : 2,
-    flex: 1,
+    minWidth: isTablet() ? 70 : 60,
   },
   disabledButton: {
     opacity: 0.6,

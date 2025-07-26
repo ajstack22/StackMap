@@ -2,64 +2,83 @@ import { StyleSheet, Platform } from 'react-native';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
 
 export const styles = StyleSheet.create({
-  modalOverlay: {
+  modalContainer: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
   },
-  modalContent: {
-    backgroundColor: 'white',
-    borderTopLeftRadius: RADIUS.xl,
-    borderTopRightRadius: RADIUS.xl,
-    maxHeight: '90%',
-    ...SHADOWS.level3,
-  },
-  header: {
+  modalHeader: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: SPACING.lg,
+    justifyContent: 'space-between',
+    padding: 20,
+    backgroundColor: 'white',
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
+    borderBottomColor: '#e0e0e0',
   },
-  title: {
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIcon: {
+    marginRight: 12,
+  },
+  modalTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
-    color: COLORS.gray[900],
+    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
+    color: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
-  closeButton: {
-    padding: SPACING.xs,
-  },
-  scrollContent: {
-    flex: 1,
+  modalContent: {
+    padding: 20,
   },
   section: {
-    padding: SPACING.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.gray[200],
+    marginBottom: 30,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: COLORS.gray[900],
-    marginBottom: SPACING.md,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: '#333',
+    marginBottom: 10,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   sectionDescription: {
     fontSize: 14,
-    color: COLORS.gray[600],
-    marginBottom: SPACING.lg,
+    color: '#000',
     lineHeight: 20,
+    marginBottom: SPACING.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  statusContainer: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.md,
+    ...SHADOWS.level1,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.xs,
+  },
+  statusLabel: {
+    fontSize: 14,
+    color: '#000',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  statusValue: {
+    fontSize: 14,
+    color: COLORS.gray[900],
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   button: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.lg,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: RADIUS.md,
+    gap: SPACING.sm,
     marginBottom: SPACING.sm,
     ...SHADOWS.level1,
   },
@@ -67,36 +86,22 @@ export const styles = StyleSheet.create({
     color: 'white',
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: SPACING.sm,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
-  statusContainer: {
-    backgroundColor: COLORS.gray[50],
-    padding: SPACING.md,
-    borderRadius: RADIUS.md,
-    marginBottom: SPACING.md,
+  closeButton: {
+    padding: SPACING.xs,
   },
-  statusRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
-  statusLabel: {
+  disabledText: {
     fontSize: 14,
-    color: COLORS.gray[600],
+    color: COLORS.gray[500],
+    textAlign: 'center',
+    fontStyle: 'italic',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  statusValue: {
-    fontSize: 14,
-    color: COLORS.gray[900],
-    fontWeight: '500',
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   connectedBadge: {
     backgroundColor: '#e6fffa',
     paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
+    paddingVertical: 2,
     borderRadius: RADIUS.round,
   },
   connectedText: {
@@ -123,7 +128,7 @@ export const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 12,
-    color: COLORS.gray[500],
+    color: '#000',
     textAlign: 'center',
     fontStyle: 'italic',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -141,26 +146,28 @@ export const styles = StyleSheet.create({
     padding: SPACING.md,
     fontSize: 16,
     marginBottom: SPACING.md,
+    backgroundColor: 'white',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
+  warningContainer: {
+    backgroundColor: '#fffff0',
+    borderWidth: 1,
+    borderColor: COLORS.warning,
+    borderRadius: RADIUS.md,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
+  },
+  warningText: {
+    color: COLORS.warning,
+    fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   qrContainer: {
     alignItems: 'center',
-    marginVertical: SPACING.lg,
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: SPACING.lg,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: COLORS.gray[300],
-  },
-  dividerText: {
-    marginHorizontal: SPACING.md,
-    color: COLORS.gray[500],
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    padding: SPACING.lg,
+    backgroundColor: 'white',
+    borderRadius: RADIUS.md,
+    marginBottom: SPACING.md,
+    ...SHADOWS.level1,
   },
 });

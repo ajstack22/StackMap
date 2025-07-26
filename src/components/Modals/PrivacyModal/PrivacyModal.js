@@ -32,7 +32,7 @@ const PrivacyModal = ({
         <SafeAreaView style={{ backgroundColor: '#2c3e50' }}>
           <View style={[styles.modalHeader, { backgroundColor: '#2c3e50' }]}>
             <Text style={[styles.modalTitle, { color: 'white' }]}>Privacy Policy</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>

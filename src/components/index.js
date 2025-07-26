@@ -17,7 +17,6 @@ import PinModal from './Modals/PinModal/PinModal';
 import AddUserModal from './Modals/AddUserModal/AddUserModal';
 import PrivacyModal from './Modals/PrivacyModal/PrivacyModal';
 import SupportModal from './Modals/SupportModal/SupportModal';
-import EditModeSettingsModal from './Modals/EditModeSettingsModal/EditModeSettingsModal';
 import ReorderModal from './Modals/ReorderModal/ReorderModal';
 import ConflictResolutionModal from './ConflictResolutionModal/ConflictResolutionModal';
 import ShareModal from './Modals/ShareModal/ShareModal';
@@ -35,7 +34,6 @@ export {
   AddUserModal,
   PrivacyModal,
   SupportModal,
-  EditModeSettingsModal,
   ReorderModal,
   ConflictResolutionModal,
   ShareModal,

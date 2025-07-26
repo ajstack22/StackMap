@@ -244,7 +244,7 @@ const PreferencesModal = ({
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
             <Text style={styles.modalTitle}>Preferences</Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>

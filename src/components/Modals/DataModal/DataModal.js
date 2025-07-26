@@ -10,6 +10,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,6 +18,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { styles } from './styles';
 import syncService from '../../../services/sync/syncService';
 import SyncStatusIndicator from '../../SyncStatusIndicator';
+import { COLORS } from '../../../constants';
 
 const DataModal = ({
   visible,
@@ -24,6 +26,7 @@ const DataModal = ({
   theme,
   onExportData,
   onImportData,
+  onResetApp,
   showToast,
 }) => {
   const insets = useSafeAreaInsets();
@@ -120,19 +123,35 @@ const DataModal = ({
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
+      transparent={false}
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <SafeAreaView style={[styles.modalContent, { paddingBottom: insets.bottom }]}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Data Management</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={24} color="#666" />
+      {Platform.OS === 'android' && (
+        <StatusBar 
+          backgroundColor={theme.primary} 
+          barStyle="light-content" 
+          translucent={false}
+        />
+      )}
+      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+        )}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+            <View style={styles.headerLeft}>
+              <Icon name="cloud-sync" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Data Management</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
-
-          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        </SafeAreaView>
+        
+        <View style={{ flex: 1, backgroundColor: theme.light }}>
+          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
             {/* Sync Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Sync</Text>
@@ -142,20 +161,7 @@ const DataModal = ({
 
               {syncEnabled ? (
                 <>
-                  <View style={styles.statusContainer}>
-                    <View style={styles.statusRow}>
-                      <Text style={styles.statusLabel}>Status</Text>
-                      <View style={styles.connectedBadge}>
-                        <Text style={styles.connectedText}>Connected</Text>
-                      </View>
-                    </View>
-                    <View style={styles.statusRow}>
-                      <Text style={styles.statusLabel}>Sync ID</Text>
-                      <Text style={styles.statusValue}>{syncId?.substring(0, 8)}...</Text>
-                    </View>
-                  </View>
-
-                  <SyncStatusIndicator />
+                  <SyncStatusIndicator theme={theme} />
 
                   <TouchableOpacity
                     style={[styles.button, { backgroundColor: theme.primary }]}
@@ -173,8 +179,8 @@ const DataModal = ({
                         <QRCode
                           value={syncRecoveryPhrase}
                           size={200}
-                          backgroundColor="white"
-                          color={theme.primary}
+                          backgroundColor="#ffffff"
+                          color="#000000"
                         />
                       </View>
                       <View style={styles.recoveryPhrase}>
@@ -264,7 +270,7 @@ const DataModal = ({
             </View>
 
             {/* Backup Section */}
-            <View style={[styles.section, { borderBottomWidth: 0 }]}>
+            <View style={styles.section}>
               <Text style={styles.sectionTitle}>Backup</Text>
               <Text style={styles.sectionDescription}>
                 Export and import your StackMap data for safekeeping or transfer.
@@ -286,8 +292,128 @@ const DataModal = ({
                 <Text style={styles.buttonText}>Import Data</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Danger Zone - Only show when sync is enabled */}
+            {syncEnabled && (
+              <View style={[styles.section, { borderBottomWidth: 0 }]}>
+                <Text style={[styles.sectionTitle, { color: '#d32f2f' }]}>Danger Zone</Text>
+                <Text style={styles.sectionDescription}>
+                  Irreversible actions that affect your synced data.
+                </Text>
+
+                <TouchableOpacity
+                  style={[styles.button, { backgroundColor: COLORS.error }]}
+                  onPress={async () => {
+                    const message = 'Are you sure you want to permanently delete all your sync data from the server? This will remove your data from all synced devices. This action cannot be undone.';
+                    
+                    if (Platform.OS === 'web') {
+                      const confirmed = window.confirm(message);
+                      if (confirmed) {
+                        const doubleConfirm = window.confirm('This will DELETE all your synced data from the server. Are you absolutely sure?');
+                        if (doubleConfirm) {
+                          setSyncLoading(true);
+                          try {
+                            await syncService.deleteFromServer();
+                            setSyncEnabled(false);
+                            setSyncId(null);
+                            setSyncRecoveryPhrase('');
+                            showToast({ message: 'All sync data permanently deleted from server' });
+                          } catch (error) {
+                            showToast({ message: error.message || 'Failed to delete sync data' });
+                          } finally {
+                            setSyncLoading(false);
+                          }
+                        }
+                      }
+                    } else {
+                      Alert.alert(
+                        '⚠️ Delete Sync Data',
+                        message,
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          {
+                            text: 'Delete Forever',
+                            style: 'destructive',
+                            onPress: () => {
+                              Alert.alert(
+                                '⚠️ Final Confirmation',
+                                'This will DELETE all your synced data from the server. Are you absolutely sure?',
+                                [
+                                  { text: 'Cancel', style: 'cancel' },
+                                  {
+                                    text: 'Delete Everything',
+                                    style: 'destructive',
+                                    onPress: async () => {
+                                      setSyncLoading(true);
+                                      try {
+                                        await syncService.deleteFromServer();
+                                        setSyncEnabled(false);
+                                        setSyncId(null);
+                                        setSyncRecoveryPhrase('');
+                                        showToast({ message: 'All sync data permanently deleted from server' });
+                                      } catch (error) {
+                                        showToast({ message: error.message || 'Failed to delete sync data' });
+                                      } finally {
+                                        setSyncLoading(false);
+                                      }
+                                    }
+                                  }
+                                ]
+                              );
+                            }
+                          }
+                        ]
+                      );
+                    }
+                  }}
+                  disabled={syncLoading}
+                >
+                  {syncLoading ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <>
+                      <Icon name="delete-forever" size={20} color="white" />
+                      <Text style={styles.buttonText}>Delete All Server Data</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+                
+                <View style={styles.warningContainer}>
+                  <Text style={styles.warningText}>
+                    ⚠️ This will permanently remove all your synced data from our servers. Your local data will remain untouched.
+                  </Text>
+                </View>
+              </View>
+            )}
+
+            {/* Local Data Danger Zone - Always show */}
+            <View style={[styles.section, { borderBottomWidth: 0, marginTop: syncEnabled ? 0 : 20 }]}>
+              {!syncEnabled && (
+                <>
+                  <Text style={[styles.sectionTitle, { color: '#d32f2f' }]}>Danger Zone</Text>
+                  <Text style={styles.sectionDescription}>
+                    Irreversible actions that affect your local data.
+                  </Text>
+                </>
+              )}
+              
+              <TouchableOpacity
+                style={[styles.button, { backgroundColor: COLORS.error }]}
+                onPress={onResetApp}
+              >
+                <Icon name="refresh" size={20} color="white" />
+                <Text style={styles.buttonText}>Reset App</Text>
+              </TouchableOpacity>
+              
+              <View style={styles.warningContainer}>
+                <Text style={styles.warningText}>
+                  ⚠️ This will delete all local data and reset the app to its initial state. This action cannot be undone.
+                </Text>
+              </View>
+            </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
+        <SafeAreaView style={{ backgroundColor: theme.light }} />
       </View>
     </Modal>
   );

@@ -1099,7 +1099,10 @@ const ActivityLibrary = ({
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.header, { backgroundColor: theme.primary }]}>
-            <Text style={styles.headerTitle}>Activity Library</Text>
+            <View style={styles.headerLeft}>
+              <Icon name="collections-bookmark" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.headerTitle}>Activity Library</Text>
+            </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
@@ -1375,6 +1378,14 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIcon: {
+    marginRight: 12,
   },
   headerTitle: {
     fontSize: isTablet() ? 22 : 20,

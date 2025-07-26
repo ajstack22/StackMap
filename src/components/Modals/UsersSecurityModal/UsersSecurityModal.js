@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Alert,
   Platform,
+  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -63,8 +64,8 @@ const UsersSecurityModal = ({
 
   const handlePinRemove = () => {
     Alert.alert(
-      'Remove PIN Protection',
-      'Are you sure you want to remove PIN protection? Anyone will be able to access the app.',
+      'Remove PIN',
+      'Are you sure you want to remove the PIN? The app will be accessible without a code.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -80,19 +81,35 @@ const UsersSecurityModal = ({
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={true}
+      transparent={false}
+      statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View style={styles.modalOverlay}>
-        <SafeAreaView style={[styles.modalContent, { paddingBottom: insets.bottom }]}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Users & Security</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={24} color="#666" />
+      {Platform.OS === 'android' && (
+        <StatusBar 
+          backgroundColor={theme.primary} 
+          barStyle="light-content" 
+          translucent={false}
+        />
+      )}
+      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+        )}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+            <View style={styles.headerLeft}>
+              <Icon name="group" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Users & Security</Text>
+            </View>
+            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
+              <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
-
-          <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        </SafeAreaView>
+        
+        <View style={{ flex: 1, backgroundColor: theme.light }}>
+          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
             {/* Users Section */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Users</Text>
@@ -145,9 +162,9 @@ const UsersSecurityModal = ({
               </View>
 
               {Object.keys(users).filter(id => !users[id].deleted).length < 5 && (
-                <TouchableOpacity style={styles.addButton} onPress={onAddUser}>
-                  <Icon name="person-add" size={20} color={COLORS.gray[700]} />
-                  <Text style={styles.addButtonText}>Add User</Text>
+                <TouchableOpacity style={[styles.addUserButton, { borderColor: theme.primary }]} onPress={onAddUser}>
+                  <Icon name="person-add" size={20} color={theme.primary} />
+                  <Text style={[styles.addUserText, { color: theme.primary }]}>Add User</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -156,24 +173,24 @@ const UsersSecurityModal = ({
             <View style={[styles.section, { borderBottomWidth: 0 }]}>
               <Text style={styles.sectionTitle}>Security</Text>
               <Text style={styles.sectionDescription}>
-                Protect your StackMap with a PIN.
+                Add a simple PIN to prevent accidental changes.
               </Text>
 
-              <View style={styles.pinStatus}>
+              <View style={[styles.pinStatus, { borderColor: hasPinProtection ? COLORS.success : COLORS.gray[300] }]}>
                 <Icon 
                   name={hasPinProtection ? "lock" : "lock-open"} 
-                  size={20} 
+                  size={24} 
                   color={hasPinProtection ? COLORS.success : COLORS.gray[500]}
                   style={styles.pinStatusIcon}
                 />
-                <Text style={styles.pinStatusText}>
-                  PIN Protection is {hasPinProtection ? 'enabled' : 'disabled'}
-                </Text>
-                {hasPinProtection && (
-                  <View style={styles.enabledBadge}>
-                    <Text style={styles.enabledText}>Active</Text>
-                  </View>
-                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.pinStatusText}>
+                    {hasPinProtection ? 'PIN Enabled' : 'PIN Disabled'}
+                  </Text>
+                  <Text style={styles.pinStatusSubtext}>
+                    {hasPinProtection ? 'Prevents accidental changes to your plans' : 'Quick access without a code'}
+                  </Text>
+                </View>
               </View>
 
               {hasPinProtection ? (
@@ -183,7 +200,7 @@ const UsersSecurityModal = ({
                     onPress={onPinChange}
                   >
                     <Icon name="lock-reset" size={20} color="white" />
-                    <Text style={styles.buttonText}>Change PIN</Text>
+                    <Text style={styles.buttonText}>Change Code</Text>
                   </TouchableOpacity>
                   <TouchableOpacity
                     style={[styles.button, { backgroundColor: '#e53e3e' }]}
@@ -199,21 +216,21 @@ const UsersSecurityModal = ({
                   onPress={onPinEnable}
                 >
                   <Icon name="lock" size={20} color="white" />
-                  <Text style={styles.buttonText}>Enable PIN Protection</Text>
+                  <Text style={styles.buttonText}>Add PIN</Text>
                 </TouchableOpacity>
               )}
 
-              <View style={styles.warningBox}>
-                <Text style={styles.warningText}>
-                  {hasPinProtection 
-                    ? '⚠️ Make sure to remember your PIN. If forgotten, you\'ll need to reset the app.'
-                    : 'ℹ️ A PIN adds security by requiring a code to access the app.'
-                  }
-                </Text>
-              </View>
+              {hasPinProtection && (
+                <View style={styles.warningBox}>
+                  <Text style={styles.warningText}>
+                    💡 Remember your PIN! If forgotten, you'll need to reset the app data.
+                  </Text>
+                </View>
+              )}
             </View>
           </ScrollView>
-        </SafeAreaView>
+        </View>
+        <SafeAreaView style={{ backgroundColor: theme.light }} />
       </View>
     </Modal>
   );

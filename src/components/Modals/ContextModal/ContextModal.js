@@ -700,7 +700,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     gap: SPACING.sm,
   },
   closeButton: {
-    padding: SPACING.xs,
+    padding: 8,
   },
   userSection: {
     paddingBottom: SPACING.md,

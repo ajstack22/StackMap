@@ -42,6 +42,10 @@ const useAppStore = create(
       taskCelebration: 'rainbow',
       routineCelebration: 'rainbow',
       
+      // Device-specific toolbar settings (not synced)
+      toolbarOrder: null,
+      moreButtonPosition: 'left',
+      
       // Actions for Theme & Settings
       setCurrentTheme: (theme) => set({ currentTheme: theme }, false, 'setCurrentTheme'),
       
@@ -52,6 +56,11 @@ const useAppStore = create(
       setTaskCelebration: (celebration) => set({ taskCelebration: celebration }, false, 'setTaskCelebration'),
       
       setRoutineCelebration: (celebration) => set({ routineCelebration: celebration }, false, 'setRoutineCelebration'),
+      
+      // Toolbar settings (device-specific)
+      setToolbarOrder: (order) => set({ toolbarOrder: order }, false, 'setToolbarOrder'),
+      
+      setMoreButtonPosition: (position) => set({ moreButtonPosition: position }, false, 'setMoreButtonPosition'),
       
       // Batch update for settings
       updateSettings: (settings) => set((state) => ({
@@ -75,12 +84,28 @@ const useAppStore = create(
         }
       }), false, 'addUser'),
       
-      updateUser: (userId, updates) => set((state) => ({
-        users: {
-          ...state.users,
-          [userId]: merge({}, state.users[userId], updates)
+      updateUser: (userId, updates) => set((state) => {
+        // Special handling for arrays in settings to ensure they're replaced, not merged
+        const currentUser = state.users[userId];
+        if (!currentUser) return state;
+        
+        let updatedUser = merge({}, currentUser, updates);
+        
+        // If updating settings with arrays, replace them instead of merging
+        if (updates.settings) {
+          updatedUser.settings = {
+            ...updatedUser.settings,
+            ...updates.settings
+          };
         }
-      }), false, 'updateUser'),
+        
+        return {
+          users: {
+            ...state.users,
+            [userId]: updatedUser
+          }
+        };
+      }, false, 'updateUser'),
       
       deleteUser: (userId) => set((state) => {
         const newUsers = { ...state.users };
@@ -170,6 +195,8 @@ const useAppStore = create(
         soundEnabled: state.soundEnabled,
         taskCelebration: state.taskCelebration,
         routineCelebration: state.routineCelebration,
+        toolbarOrder: state.toolbarOrder,
+        moreButtonPosition: state.moreButtonPosition,
         users: state.users,
         currentUser: state.currentUser,
         currentDay: state.currentDay,
