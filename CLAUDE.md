@@ -1,37 +1,74 @@
-## Research Notes
+# 🚨🚨🚨 CRITICAL DEPLOYMENT INFO - READ THIS FIRST 🚨🚨🚨
 
-- Exploring sensory preference patterns for users with ADHD and autism in digital interfaces
-  - Key research questions:
-    * Implement user-controlled sensory settings or automatic adaptive interfaces?
-    * Prioritize sensory elements: visual (colors/contrast/animations), auditory (sounds/alerts), or tactile (haptics/vibration)
-    * Mobile-first architecture considerations for sensory design
+## ⚠️ NEVER EVER DO THIS ⚠️
+### ❌ DO NOT COPY BUILD FILES TO REPOSITORY ROOT ❌
+### ❌ NO `cp web/build/* .` ❌
+### ❌ NO `cp -r web/build/* .` ❌
+### ❌ BUILD FILES STAY IN web/build/ ❌
 
-## CRITICAL DEPLOYMENT FACTS (MUST READ)
-- Git repository clones DIRECTLY to /public_html/qual/ (not a separate repo directory)
-- .cpanel.yml DOES NOT EXECUTE on Namecheap - ignore it completely
-- Build files go to web/build/ - the deployment process handles getting them to the right place
-- NEVER copy build files to repository root (no `cp -r web/build/* .`)
-- Use simple-deploy.sh for qual->prod only
-- When building web: must use relative paths (NODE_ENV=production npm run build:web)
+## ✅ HOW NAMECHEAP DEPLOYMENT ACTUALLY WORKS ✅
 
-### Pre-flight Deployment Checklist
-When user mentions deployment:
-1. CHECK: Where is git repo cloned? (it's directly in qual/)
-2. BUILD: Run NODE_ENV=production npm run build:web (outputs to web/build/)
-3. DEPLOY: Push to git - server will use files from web/build/
-4. IGNORE: .cpanel.yml automation (doesn't work on Namecheap)
-5. NEVER: Copy build output to repository root - keep it clean!
+### 1. QUAL DEPLOYMENT (Testing)
+```bash
+# Files are served DIRECTLY from web/build/
+# URL: https://stackmap.app/qual/web/build/
+# Git pulls to: /public_html/qual/
+# NO COPYING NEEDED - NAMECHEAP SERVES FROM web/build/
+```
+
+### 2. PRODUCTION DEPLOYMENT
+```bash
+# Use scripts/simple-deploy.sh
+# This RSYNC's files from qual/ to production root
+# ONLY simple-deploy.sh copies files - YOU DON'T
+```
+
+## 📁 CORRECT FILE STRUCTURE
+```
+/public_html/
+├── qual/                    # Git repo clones here
+│   ├── web/
+│   │   └── build/          # BUILD FILES STAY HERE
+│   │       ├── index.html
+│   │       ├── bundle.*.js
+│   │       └── ...
+│   └── src/                # Source files
+└── index.html              # Production (copied by simple-deploy.sh ONLY)
+```
+
+## 🔧 DEPLOYMENT COMMANDS
+
+### To Qual (for testing):
+```bash
+# 1. Build with relative paths
+NODE_ENV=production npm run build:web
+
+# 2. Commit and push (DO NOT COPY FILES)
+git add -A && git commit -m "message" && git push
+
+# 3. Deploy
+./scripts/deploy-to-qual.sh
+# OR manually: ssh stackmap-cpanel "cd ~/public_html/qual && git pull"
+```
+
+### To Production:
+```bash
+# ONLY after qual is tested and working
+./scripts/simple-deploy.sh
+```
+
+## 🚫 IGNORE THESE FILES
+- `.cpanel.yml` - DOES NOT WORK on Namecheap
+- `qual-htaccess` - NOT NEEDED, Namecheap serves from web/build/ directly
+
+## 🎯 KEY FACTS
+1. Qual URL: `https://stackmap.app/qual/web/build/`
+2. Git clones directly to `/public_html/qual/`
+3. Build outputs to `web/build/`
+4. NEVER copy build files to root manually
+5. Production deployment ONLY via simple-deploy.sh
 
 ## Recent Changes (December 28, 2024)
-- Fixed drag and drop by:
-  - Removing automatic sorting that put pinned items first (respects manual order now)
-  - Fixed getActivityIdFromCard to use data-activity-id attribute
-  - Added null checks to prevent errors
-- Added direct delete button to activity cards in edit mode:
-  - Red delete icon positioned center-bottom
-  - Fixed hover issue by combining transforms properly
-  - No confirmation dialog for faster workflow
-- Implemented toast notification system:
-  - 3-second auto-dismiss timer
-  - Undo functionality for deleted activities
-  - Toast appears at bottom center of screen
+- Fixed drag and drop by removing automatic sorting
+- Added direct delete button to activity cards in edit mode
+- Implemented toast notification system with undo
