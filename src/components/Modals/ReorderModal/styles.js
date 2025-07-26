@@ -12,9 +12,9 @@ export const styles = StyleSheet.create({
   reorderModalContent: {
     width: '100%',
     maxWidth: 400,
-    borderRadius: RADIUS.large,
+    borderRadius: RADIUS.lg,
     padding: 24,
-    ...SHADOWS.large,
+    ...SHADOWS.level3,
   },
   reorderModalTitle: {
     fontSize: 24,
@@ -28,7 +28,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     backgroundColor: 'rgba(0, 0, 0, 0.05)',
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     marginBottom: 20,
   },
   reorderActivityEmoji: {
@@ -90,7 +90,7 @@ export const styles = StyleSheet.create({
   reorderModalButton: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: RADIUS.medium,
+    borderRadius: RADIUS.md,
     alignItems: 'center',
   },
   reorderModalButtonCancel: {

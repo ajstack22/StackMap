@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     maxHeight: '90%',
-    ...SHADOWS.large,
+    ...SHADOWS.level3,
   },
   header: {
     flexDirection: 'row',

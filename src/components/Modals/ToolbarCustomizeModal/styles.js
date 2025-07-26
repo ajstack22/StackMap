@@ -12,7 +12,7 @@ export const styles = StyleSheet.create({
     borderTopLeftRadius: RADIUS.xl,
     borderTopRightRadius: RADIUS.xl,
     maxHeight: '80%',
-    ...SHADOWS.large,
+    ...SHADOWS.level3,
   },
   header: {
     flexDirection: 'row',
@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
-    ...SHADOWS.small,
+    ...SHADOWS.level1,
   },
   saveButtonText: {
     color: 'white',
