@@ -1610,15 +1610,43 @@ const App = () => {
   // Import data function for onboarding (doesn't hide onboarding)
   const importDataForOnboarding = async () => {
     try {
-      const result = await DocumentPicker.getDocumentAsync({
-        type: 'application/json',
-        copyToCacheDirectory: true
-      });
+      let fileContent;
       
-      if (result.assets && result.assets.length > 0) {
+      if (Platform.OS === 'web') {
+        // Web implementation using file input
+        fileContent = await new Promise((resolve, reject) => {
+          const input = document.createElement('input');
+          input.type = 'file';
+          input.accept = '.json';
+          input.onchange = async (e) => {
+            const file = e.target.files[0];
+            if (file) {
+              const reader = new FileReader();
+              reader.onload = (e) => resolve(e.target.result);
+              reader.onerror = reject;
+              reader.readAsText(file);
+            } else {
+              reject(new Error('No file selected'));
+            }
+          };
+          input.click();
+        });
+      } else {
+        // Mobile implementation using DocumentPicker
+        const result = await DocumentPicker.getDocumentAsync({
+          type: 'application/json',
+          copyToCacheDirectory: true
+        });
+        
+        if (!result.assets || result.assets.length === 0) {
+          return false; // User cancelled
+        }
+        
         const file = result.assets[0];
-        const fileContent = await fetch(file.uri).then(r => r.text());
-        const importedData = JSON.parse(fileContent);
+        fileContent = await fetch(file.uri).then(r => r.text());
+      }
+      
+      const importedData = JSON.parse(fileContent);
         
         // Validate and restore the data
         const migratedData = migrateData(importedData);
@@ -1681,9 +1709,8 @@ const App = () => {
         
         // Return true to indicate success
         return true;
-      }
       
-      // User cancelled
+      // User cancelled if we get here (only for web when no file selected)
       return false;
     } catch (error) {
       console.error('Import error:', error);
