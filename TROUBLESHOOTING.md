@@ -118,6 +118,7 @@ git push
 - **Touch events**: Ensure proper event handlers for web
 - **PWA not installing**: Check manifest.json paths
 - **Alert.alert not working**: React Native's Alert doesn't work on web, use `window.confirm()` instead (see Common Issues in CLAUDE.md)
+- **React State Batching**: Multiple rapid setState calls may only apply the last update. Use batch updates instead (see issue #6 below)
 
 ---
 
@@ -212,6 +213,71 @@ git push
 4. **Test locally first**: `npm run web`
 5. **Use incognito mode**: Eliminates cache issues
 6. **Check server logs**: Look for PHP/Apache errors
+
+---
+
+### 6. React State Batching Issues
+
+**Symptoms:**
+- "Add All" button only adds one item instead of all
+- Multiple items processed but only last one appears
+- forEach loops with setState only applying last change
+
+**Cause:**
+React batches multiple setState calls for performance. When calling setState in a loop, only the last update may be applied because each setState uses the current state, not the updated state from previous iterations.
+
+**Solution:**
+```javascript
+// ❌ BAD: Multiple setState calls in a loop
+items.forEach(item => {
+  setActivities([...activities, createNewItem(item)]);
+});
+
+// ✅ GOOD: Batch all updates into one setState
+const newItems = items.map(item => createNewItem(item));
+setActivities([...activities, ...newItems]);
+
+// ✅ ALSO GOOD: Use functional setState for sequential updates
+setActivities(prevActivities => {
+  const newItems = items.map(item => createNewItem(item));
+  return [...prevActivities, ...newItems];
+});
+```
+
+**Best Practice:**
+- Always batch multiple state updates into a single setState call
+- Use functional setState when the new state depends on the previous state
+- Create separate handlers for single vs multiple item operations
+
+---
+
+### 7. "no PRNG" Error in Sync Initialization
+
+**Symptoms:**
+- Error: "no PRNG" when trying to enable sync
+- Sync initialization fails on mobile devices
+- Error appears in console: `Sync initialization failed: Error: no PRNG`
+
+**Cause:**
+React Native doesn't have the Web Crypto API available by default. The TweetNaCl encryption library requires a proper random number generator for cryptographic operations.
+
+**Solution:**
+This has been fixed by installing `react-native-get-random-values` and importing it before any crypto-dependent libraries:
+
+```javascript
+// In index.js - Import this BEFORE any other imports
+import 'react-native-get-random-values';
+
+// Also in encryptionService.js
+if (Platform.OS !== 'web') {
+  require('react-native-get-random-values');
+}
+```
+
+**If the error persists:**
+1. Run `cd ios && pod install` for iOS
+2. Rebuild the app: `npx react-native run-ios` or `npx react-native run-android`
+3. Clear Metro cache: `npx react-native start --reset-cache`
 
 ---
 

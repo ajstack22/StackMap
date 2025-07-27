@@ -82,9 +82,41 @@ const [showConfirm, setShowConfirm] = useState(false);
 - Delete user confirmation (should be updated)
 - Delete category confirmation (should be updated)
 
+## 📖 REACT BEST PRACTICES
+
+### State Batching for Multiple Updates
+When adding multiple items to state (e.g., "Add All" functionality), batch all updates into a single setState call:
+
+```javascript
+// ❌ BAD: Multiple setState calls in a loop
+activities.forEach(activity => {
+  setItems([...items, createNewItem(activity)]);
+});
+// Result: Only the last item is added due to React state batching
+
+// ✅ GOOD: Batch all updates into one setState
+const newItems = activities.map(activity => createNewItem(activity));
+setItems([...items, ...newItems]);
+// Result: All items are added correctly
+
+// ✅ ALSO GOOD: Create separate handlers for batch operations
+onSelectMultipleActivities={(activities) => {
+  const newItems = activities.map((activity, index) => ({
+    ...activity,
+    id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+    completed: false,
+    pinned: false,
+  }));
+  setActivities([...currentActivities, ...newItems]);
+}}
+```
+
+**Why this happens:** React batches state updates for performance. When setState is called multiple times synchronously, React may only apply the last update because each call uses the stale state value.
+
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by removing automatic sorting
 - Added direct delete button to activity cards in edit mode
 - Implemented toast notification system with undo
 - Fixed PIN modal z-index issues
 - Fixed Alert.alert not working on web for Remove PIN button
+- Fixed "Add All" button only adding one activity due to React state batching

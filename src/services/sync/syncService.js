@@ -693,13 +693,25 @@ class SyncService {
    * Disable sync and clear credentials
    */
   async disable() {
+    // Stop periodic sync FIRST before clearing state
+    this.stopPeriodicSync();
+    
+    // Clear sync state
     this.syncEnabled = false;
     this.syncId = null;
     this.lastSyncVersion = 0;
     
-    // Stop periodic sync
-    this.stopPeriodicSync();
+    // Clear any pending throttled syncs
+    if (syncThrottle) {
+      syncThrottle.clear();
+    }
     
+    // Clear any queued items
+    if (syncQueue) {
+      syncQueue.clear();
+    }
+    
+    // Clear stored credentials
     await AsyncStorage.removeItem('@sync_enabled');
     await AsyncStorage.removeItem('@sync_id');
     await AsyncStorage.removeItem('@sync_last_version');
@@ -856,6 +868,12 @@ class SyncService {
    */
   async syncWithQueue() {
     try {
+      // Check if sync is still enabled before processing
+      if (!this.syncEnabled || !this.syncId) {
+        console.log('Sync is disabled, skipping queue processing');
+        return;
+      }
+      
       // Process any queued items first
       if (networkMonitor.isOnline) {
         await syncQueue.process(this);

@@ -1,7 +1,12 @@
+// Import crypto polyfill for React Native BEFORE tweetnacl
+import { Platform } from 'react-native';
+if (Platform.OS !== 'web') {
+  require('react-native-get-random-values');
+}
+
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
 import pako from 'pako';
 
 const ENCRYPTION_VERSION = 2; // Bumped for compression support

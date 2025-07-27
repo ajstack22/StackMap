@@ -1144,7 +1144,7 @@ const App = () => {
     if (!activityTitle.trim()) return;
     
     const newActivity = {
-      id: 'activity_' + Date.now(),
+      id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       text: activityTitle,
       description: activityDescription || '',
       emoji: activityEmoji,
@@ -1309,7 +1309,7 @@ const App = () => {
     if (myTemplatesIndex !== -1) {
       // Create a template from the activity
       const template = {
-        id: `template-${Date.now()}`,
+        id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: activity.text || activity.title || 'Untitled',
         emoji: activity.emoji || '🎯',
         description: activity.description || '',
@@ -2860,10 +2860,10 @@ const App = () => {
         visible={showActivityLibrary}
         onClose={() => setShowActivityLibrary(false)}
           onSelectActivity={(activity) => {
-            // Create a new activity from the template
+            // Create a new activity from the template with unique ID
             const newActivity = {
               ...activity,
-              id: Date.now().toString(),
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               completed: false,
               pinned: false,
             };
@@ -2889,6 +2889,39 @@ const App = () => {
             setActivities(updatedActivities);
             showToast({ 
               message: `✅ Added: ${activity.emoji} ${activity.name || activity.text}`,
+              duration: 2000,
+            });
+          }}
+          onSelectMultipleActivities={(activitiesToAdd) => {
+            // Create all new activities at once
+            const newActivities = activitiesToAdd.map((activity, index) => ({
+              ...activity,
+              id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+              completed: false,
+              pinned: false,
+            }));
+            
+            const updatedActivities = [...activities, ...newActivities];
+            
+            // Update the current day's activities
+            const updatedUsers = {
+              ...users,
+              [currentUser]: {
+                ...users[currentUser],
+                days: {
+                  ...users[currentUser].days,
+                  [currentDay]: {
+                    ...users[currentUser].days?.[currentDay],
+                    activities: updatedActivities
+                  }
+                }
+              }
+            };
+            
+            setUsers(updatedUsers);
+            setActivities(updatedActivities);
+            showToast({ 
+              message: `✅ Added ${newActivities.length} activities`,
               duration: 2000,
             });
           }}

@@ -19,6 +19,7 @@ import { styles } from './styles';
 import syncService from '../../../services/sync/syncService';
 import SyncStatusIndicator from '../../SyncStatusIndicator';
 import { COLORS } from '../../../constants';
+import ConfirmModal from '../ConfirmModal';
 
 const DataModal = ({
   visible,
@@ -41,6 +42,8 @@ const DataModal = ({
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
+  const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
+  const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -109,27 +112,36 @@ const DataModal = ({
   };
 
   const handleDisableSync = () => {
-    Alert.alert(
-      'Disable Sync',
-      'Are you sure you want to disable sync? Your local data will remain but will no longer sync with other devices.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Disable',
-          style: 'destructive',
-          onPress: async () => {
-            await syncService.disable();
-            setSyncEnabled(false);
-            if (onSyncStatusChange) {
-              onSyncStatusChange(false);
-            }
-            setSyncId(null);
-            setSyncRecoveryPhrase('');
-            showToast({ message: 'Sync disabled' });
-          }
-        }
-      ]
-    );
+    setShowDisableSyncConfirm(true);
+  };
+
+  const confirmDisableSync = async () => {
+    await syncService.disable();
+    setSyncEnabled(false);
+    if (onSyncStatusChange) {
+      onSyncStatusChange(false);
+    }
+    setSyncId(null);
+    setSyncRecoveryPhrase('');
+    showToast({ message: 'Sync disabled' });
+  };
+
+  const confirmDeleteServerData = async () => {
+    setSyncLoading(true);
+    try {
+      await syncService.deleteFromServer();
+      setSyncEnabled(false);
+      if (onSyncStatusChange) {
+        onSyncStatusChange(false);
+      }
+      setSyncId(null);
+      setSyncRecoveryPhrase('');
+      showToast({ message: 'All sync data permanently deleted from server' });
+    } catch (error) {
+      showToast({ message: error.message || 'Failed to delete sync data' });
+    } finally {
+      setSyncLoading(false);
+    }
   };
 
   return (
@@ -321,75 +333,7 @@ const DataModal = ({
 
                 <TouchableOpacity
                   style={[styles.button, { backgroundColor: COLORS.error }]}
-                  onPress={async () => {
-                    const message = 'Are you sure you want to permanently delete all your sync data from the server? This will remove your data from all synced devices. This action cannot be undone.';
-                    
-                    if (Platform.OS === 'web') {
-                      const confirmed = window.confirm(message);
-                      if (confirmed) {
-                        const doubleConfirm = window.confirm('This will DELETE all your synced data from the server. Are you absolutely sure?');
-                        if (doubleConfirm) {
-                          setSyncLoading(true);
-                          try {
-                            await syncService.deleteFromServer();
-                            setSyncEnabled(false);
-                            if (onSyncStatusChange) {
-                              onSyncStatusChange(false);
-                            }
-                            setSyncId(null);
-                            setSyncRecoveryPhrase('');
-                            showToast({ message: 'All sync data permanently deleted from server' });
-                          } catch (error) {
-                            showToast({ message: error.message || 'Failed to delete sync data' });
-                          } finally {
-                            setSyncLoading(false);
-                          }
-                        }
-                      }
-                    } else {
-                      Alert.alert(
-                        '⚠️ Delete Sync Data',
-                        message,
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Delete Forever',
-                            style: 'destructive',
-                            onPress: () => {
-                              Alert.alert(
-                                '⚠️ Final Confirmation',
-                                'This will DELETE all your synced data from the server. Are you absolutely sure?',
-                                [
-                                  { text: 'Cancel', style: 'cancel' },
-                                  {
-                                    text: 'Delete Everything',
-                                    style: 'destructive',
-                                    onPress: async () => {
-                                      setSyncLoading(true);
-                                      try {
-                                        await syncService.deleteFromServer();
-                                        setSyncEnabled(false);
-                                        if (onSyncStatusChange) {
-                                          onSyncStatusChange(false);
-                                        }
-                                        setSyncId(null);
-                                        setSyncRecoveryPhrase('');
-                                        showToast({ message: 'All sync data permanently deleted from server' });
-                                      } catch (error) {
-                                        showToast({ message: error.message || 'Failed to delete sync data' });
-                                      } finally {
-                                        setSyncLoading(false);
-                                      }
-                                    }
-                                  }
-                                ]
-                              );
-                            }
-                          }
-                        ]
-                      );
-                    }
-                  }}
+                  onPress={() => setShowDeleteServerDataConfirm(true)}
                   disabled={syncLoading}
                 >
                   {syncLoading ? (
@@ -439,6 +383,34 @@ const DataModal = ({
         </View>
         <SafeAreaView style={{ backgroundColor: theme.light }} />
       </View>
+      
+      {/* Disable Sync Confirmation Modal */}
+      <ConfirmModal
+        visible={showDisableSyncConfirm}
+        onClose={() => setShowDisableSyncConfirm(false)}
+        onConfirm={confirmDisableSync}
+        theme={theme}
+        title="Disable Sync"
+        message="Are you sure you want to disable sync? Your local data will remain but will no longer sync with other devices."
+        confirmText="Disable Sync"
+        confirmButtonColor="#e53e3e"
+        icon="sync-disabled"
+        iconColor="#e53e3e"
+      />
+      
+      {/* Delete Server Data Confirmation Modal */}
+      <ConfirmModal
+        visible={showDeleteServerDataConfirm}
+        onClose={() => setShowDeleteServerDataConfirm(false)}
+        onConfirm={confirmDeleteServerData}
+        theme={theme}
+        title="Delete Sync Data"
+        message="Are you sure you want to permanently delete all your sync data from the server? This will remove your data from all synced devices. This action cannot be undone."
+        confirmText="Delete Forever"
+        confirmButtonColor="#d32f2f"
+        icon="delete-forever"
+        iconColor="#d32f2f"
+      />
     </Modal>
   );
 };

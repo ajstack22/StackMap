@@ -807,6 +807,7 @@ const ActivityLibrary = ({
   visible, 
   onClose, 
   onSelectActivity,
+  onSelectMultipleActivities,
   theme,
   categories: customCategories,
   onSaveCategories,
@@ -979,16 +980,31 @@ const ActivityLibrary = ({
   };
 
   const handleAddAllFromCategory = (category) => {
-    if (onSelectActivity && category.activities.length > 0) {
-      // Add all activities from this category
-      category.activities.forEach(activity => {
-        onSelectActivity({
+    if (category.activities.length > 0) {
+      // Check if we have the batch method available
+      if (onSelectMultipleActivities) {
+        // Use batch method for better performance
+        const activitiesToAdd = category.activities.map(activity => ({
           emoji: activity.emoji,
           text: activity.name,
           title: activity.name,
           description: activity.description || '',
+        }));
+        
+        onSelectMultipleActivities(activitiesToAdd);
+      } else if (onSelectActivity) {
+        // Fallback to individual adds
+        category.activities.forEach((activity) => {
+          onSelectActivity({
+            emoji: activity.emoji,
+            text: activity.name,
+            title: activity.name,
+            description: activity.description || '',
+          });
         });
-      });
+      } else {
+        return;
+      }
       
       Alert.alert(
         'Added to Cards',

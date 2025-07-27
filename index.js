@@ -2,6 +2,9 @@
  * @format
  */
 
+// Import crypto polyfill for React Native BEFORE any other imports that might use it
+import 'react-native-get-random-values';
+
 import React from 'react';
 import { AppRegistry, Text, TextInput, Platform, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';

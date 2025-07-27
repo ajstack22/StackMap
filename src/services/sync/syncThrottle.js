@@ -121,6 +121,20 @@ class SyncThrottle {
   }
 
   /**
+   * Clear any pending syncs
+   */
+  clear() {
+    if (this.syncTimeout) {
+      clearTimeout(this.syncTimeout);
+      this.syncTimeout = null;
+    }
+    this.pendingSync = null;
+    this.syncInProgress = false;
+    this.debounceStartTime = 0;
+    console.log('SyncThrottle: Cleared all pending syncs');
+  }
+
+  /**
    * Execute the sync
    */
   async executeSync(syncFunction) {

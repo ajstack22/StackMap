@@ -17,6 +17,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
+import SyncStatusIndicator from '../SyncStatusIndicator';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -46,6 +47,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const [recoveryInput, setRecoveryInput] = useState('');
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [syncEnabled, setSyncEnabled] = useState(false);
   
   const fadeAnim = useRef(new Animated.Value(0)).current; // Start at 0 for fade in
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -352,6 +354,12 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             >
               <Text style={styles.screenTitle}>How to use StackMap</Text>
               
+              {syncEnabled && (
+                <View style={{ marginBottom: SPACING.lg, alignItems: 'center' }}>
+                  <SyncStatusIndicator theme={THEMES.stackBlue} />
+                </View>
+              )}
+              
               <View style={(Platform.OS === 'web' && !isMobileWeb()) ? styles.desktopFeatureLayout : null}>
               <View style={[styles.controlsRow, (Platform.OS === 'web' && !isMobileWeb()) && styles.controlsRowDesktop]}>
                 {features.map((feature, index) => (
@@ -460,7 +468,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
           
           try {
             const syncService = require('../../services/sync/syncService').default;
-            await syncService.initialize(recoveryInput);
+            await syncService.initialize(recoveryInput.trim());
             
             // Check if sync restored users
             const { useAppStore } = require('../../stores');
@@ -470,89 +478,117 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               // Users already exist from sync, skip user creation
               const userList = Object.values(syncedUsers);
               setUsers(userList);
+              setSyncEnabled(true);
               
-              // Mark onboarding as complete
-              useAppStore.setState({ hasCompletedOnboarding: true });
-              
-              // Complete onboarding with synced users
-              onComplete({ users: userList, pin: null });
+              // Go to features carousel to complete onboarding nicely
+              transitionTo('features');
             } else {
               // No users in sync, continue to user creation
+              setSyncEnabled(true);
               transitionTo('createUser');
             }
           } catch (error) {
-            setSyncError(error.message || 'Failed to join sync');
+            // Stay on sync screen with error message
+            if (error.message.includes('Invalid recovery phrase')) {
+              setSyncError('Invalid recovery phrase. Please check and try again.');
+            } else if (error.message.includes('Network')) {
+              setSyncError('Network error. Please check your connection and try again.');
+            } else {
+              setSyncError(error.message || 'Failed to join sync. Please try again.');
+            }
           } finally {
             setSyncLoading(false);
           }
         };
         
         return (
-          <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.createUserContainer, {
-              paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.bottom)
-            }]}
-          >
-            <Logo size={Platform.OS === 'web' ? 60 : 50} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
-            <Text style={styles.screenTitle}>Sync Your StackMap</Text>
-            <Text style={styles.syncSubtitle}>
-              Join your existing sync to keep your activities synchronized across all your devices
-            </Text>
-            
-            <View style={styles.syncFeatures}>
-              <View style={styles.syncFeature}>
-                <Icon name="lock" size={24} color={THEMES.stackBlue.primary} />
-                <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
-              </View>
-              <View style={styles.syncFeature}>
-                <Icon name="sync" size={24} color={THEMES.stackBlue.primary} />
-                <Text style={styles.syncFeatureText}>Automatic sync</Text>
-              </View>
-              <View style={styles.syncFeature}>
-                <Icon name="devices" size={24} color={THEMES.stackBlue.primary} />
-                <Text style={styles.syncFeatureText}>Multi-device support</Text>
-              </View>
-            </View>
-            
-            <View style={styles.formSection}>
-              <Text style={styles.inputLabel}>Enter Recovery Phrase</Text>
-              <TextInput
-                style={[styles.textInput, { height: 80 }]}
-                placeholder="Enter your recovery phrase from another device"
-                placeholderTextColor={COLORS.gray[400]}
-                value={recoveryInput}
-                onChangeText={setRecoveryInput}
-                multiline
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoFocus
-              />
-              {syncError ? (
-                <Text style={styles.errorText}>{syncError}</Text>
-              ) : null}
-            </View>
-            
-            <TouchableOpacity 
-              style={[styles.primaryButton, syncLoading && styles.disabledButton]}
-              onPress={handleSyncSetup}
-              disabled={syncLoading || !recoveryInput.trim()}
+          <View style={styles.container}>
+            <KeyboardAvoidingView 
+              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              style={{ flex: 1 }}
             >
-              {syncLoading ? (
-                <ActivityIndicator size="small" color="white" />
-              ) : (
-                <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Join Sync</Text>
-              )}
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.secondaryButton, { marginTop: 10 }]}
-              onPress={() => transitionTo('welcome')}
-            >
-              <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
-            </TouchableOpacity>
-          </KeyboardAvoidingView>
+              <ScrollView 
+                style={styles.scrollContent} 
+                contentContainerStyle={[styles.syncContent, {
+                  paddingBottom: Platform.OS === 'web' ? SPACING.xl : (20 + insets.bottom),
+                  paddingTop: Platform.OS === 'web' ? SPACING.xl : (20 + insets.top)
+                }]}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                <Logo size={isTablet() ? 50 : 40} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
+                <Text style={styles.screenTitle}>Sync Your StackMap</Text>
+                <Text style={styles.screenSubtitle}>
+                  Connect to your existing sync group
+                </Text>
+                
+                <View style={styles.syncFeatures}>
+                  <View style={styles.syncFeature}>
+                    <View style={styles.syncFeatureIcon}>
+                      <Icon name="lock" size={20} color={THEMES.stackBlue.primary} />
+                    </View>
+                    <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
+                  </View>
+                  <View style={styles.syncFeature}>
+                    <View style={styles.syncFeatureIcon}>
+                      <Icon name="sync" size={20} color={THEMES.stackBlue.primary} />
+                    </View>
+                    <Text style={styles.syncFeatureText}>Automatic sync</Text>
+                  </View>
+                  <View style={styles.syncFeature}>
+                    <View style={styles.syncFeatureIcon}>
+                      <Icon name="devices" size={20} color={THEMES.stackBlue.primary} />
+                    </View>
+                    <Text style={styles.syncFeatureText}>Multi-device support</Text>
+                  </View>
+                </View>
+                
+                <View style={styles.formSection}>
+                  <Text style={styles.inputLabel}>Recovery Phrase</Text>
+                  <TextInput
+                    style={[styles.textInput, { 
+                      fontSize: isTablet() ? 16 : 14,
+                      borderColor: syncError ? COLORS.error : COLORS.gray[300],
+                    }]}
+                    placeholder="Enter your recovery phrase"
+                    placeholderTextColor={COLORS.gray[400]}
+                    value={recoveryInput}
+                    onChangeText={(text) => {
+                      setRecoveryInput(text);
+                      if (syncError) setSyncError(''); // Clear error when typing
+                    }}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    autoFocus={Platform.OS === 'web'}
+                  />
+                  {syncError ? (
+                    <Text style={styles.errorText}>{syncError}</Text>
+                  ) : null}
+                </View>
+                
+                <View style={styles.buttonGroup}>
+                  <TouchableOpacity 
+                    style={[styles.primaryButton, syncLoading && styles.disabledButton]}
+                    onPress={handleSyncSetup}
+                    disabled={syncLoading || !recoveryInput.trim()}
+                  >
+                    {syncLoading ? (
+                      <ActivityIndicator size="small" color="white" />
+                    ) : (
+                      <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Join Sync</Text>
+                    )}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.secondaryButton}
+                    onPress={() => transitionTo('welcome')}
+                  >
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+            </KeyboardAvoidingView>
+          </View>
         );
 
       case 'setupPin':
@@ -893,13 +929,22 @@ const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'android' ? 'ComicRelief-Bold' : TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
     textAlign: 'center',
-    marginBottom: Platform.OS === 'web' ? SPACING.md : (Platform.OS === 'ios' ? 16 : 40),
-    marginTop: Platform.OS === 'web' ? 0 : 0,
+    marginBottom: SPACING.xs,
+    marginTop: SPACING.sm,
+  },
+  screenSubtitle: {
+    fontSize: isTablet() ? 16 : 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: COLORS.gray[600],
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+    marginHorizontal: SPACING.lg,
   },
   formSection: {
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
+    marginTop: SPACING.md,
   },
   createUserContainer: {
     flex: 1,
@@ -1206,44 +1251,48 @@ const styles = StyleSheet.create({
     minHeight: Platform.OS === 'web' ? '100%' : undefined,
     justifyContent: Platform.OS === 'web' ? 'center' : 'flex-start',
   },
-  syncSubtitle: {
-    fontSize: Platform.OS === 'web' ? 16 : 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: COLORS.gray[600],
-    textAlign: 'center',
-    marginTop: SPACING.sm,
-    marginBottom: SPACING.xl,
-    maxWidth: 400,
-    lineHeight: Platform.OS === 'web' ? 24 : 20,
-  },
   syncFeatures: {
     width: '100%',
     maxWidth: 400,
-    marginBottom: SPACING.xl,
-    gap: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.lg,
+    gap: SPACING.xs,
+    alignItems: 'center',
   },
   syncFeature: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    padding: SPACING.md,
-    borderRadius: RADIUS.lg,
-    gap: SPACING.md,
-    ...SHADOWS.level1,
+    paddingVertical: 4,
+    gap: SPACING.sm,
+  },
+  syncFeatureIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: COLORS.gray[100],
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   syncFeatureText: {
-    fontSize: Platform.OS === 'web' ? 16 : 14,
+    fontSize: isTablet() ? 15 : 13,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: COLORS.gray[700],
     flex: 1,
+    lineHeight: isTablet() ? 18 : 16,
+  },
+  buttonGroup: {
+    width: '100%',
+    maxWidth: 400,
+    gap: SPACING.sm,
+    marginTop: SPACING.lg,
   },
   syncInfoText: {
-    fontSize: Platform.OS === 'web' ? 14 : 13,
+    fontSize: Platform.OS === 'web' ? 13 : 12,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[600],
     textAlign: 'center',
     marginTop: SPACING.xs,
-    lineHeight: Platform.OS === 'web' ? 20 : 18,
+    lineHeight: Platform.OS === 'web' ? 18 : 16,
   },
   errorText: {
     fontSize: 14,
