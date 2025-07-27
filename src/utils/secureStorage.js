@@ -81,25 +81,16 @@ export const getSecurePin = async () => {
     // Get credentials using internet credentials (works on all platforms)
     const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
     
-    if (Platform.OS === 'ios') {
-      // On iOS, check if we've cleared the PIN by checking for empty string
-      if (credentials && credentials.password === '') {
-        // PIN was explicitly cleared
+    if (credentials && credentials.password) {
+      // Check for our deletion marker or empty string
+      if (credentials.password === 'DELETED' || credentials.password === '') {
         return null;
       }
-      if (credentials && credentials.password) {
-        return credentials.password;
-      }
-      
-      
-      return null;
-    } else {
-      // Android and Web - only use internet credentials
-      if (credentials && credentials.password && credentials.password !== '') {
-        return credentials.password;
-      }
-      return null;
+      // Return the actual PIN
+      return credentials.password;
     }
+    
+    return null;
   } catch (error) {
     console.error('Error retrieving PIN:', error);
     return null;
@@ -112,83 +103,48 @@ export const getSecurePin = async () => {
  */
 export const removeSecurePin = async () => {
   try {
-    if (Platform.OS === 'ios') {
-      // iOS-specific approach: Use internet credentials
-      try {
-        // Try to reset internet credentials
-        const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
-        console.log('iOS reset result:', resetResult);
-        
-        // Also try to delete using setInternetCredentials with null
-        try {
-          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, null);
-        } catch (e) {
-          // If null doesn't work, try empty string
-          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
-        }
-        
-        // Verify removal by checking if we can still get the PIN
-        try {
-          const check = await Keychain.getInternetCredentials(PIN_SERVICE);
-          if (check && check.password && check.password !== '') {
-            console.warn('PIN still exists after removal attempt on iOS');
-            // Try one more time with resetInternetCredentials
-            await Keychain.resetInternetCredentials(PIN_SERVICE);
-            return true;
-          }
-        } catch (checkError) {
-          // If we can't get credentials, they're removed
-          console.log('PIN successfully removed on iOS');
-        }
-        
-        return true;
-      } catch (error) {
-        console.warn('iOS PIN removal error:', error);
-        return false;
-      }
-    } else if (Platform.OS === 'web') {
-      // Web-specific approach - use the same Keychain polyfill
-      try {
-        const removed = await Keychain.resetInternetCredentials(PIN_SERVICE);
-        
-        // Also try to overwrite with empty string
-        await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
-        
-        return true;
-      } catch (error) {
-        console.warn('Web PIN removal failed:', error);
-        return false;
-      }
-    } else {
-      // Android approach - don't use resetGenericPassword as it expects different parameters
-      try {
-        // Try to reset internet credentials first
-        let removed = false;
-        try {
-          const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
-          if (resetResult !== false) {
-            removed = true;
-          }
-        } catch (resetError) {
-          console.warn('Android resetInternetCredentials failed:', resetError);
-        }
-        
-        // If that didn't work, try overwriting with empty string
-        if (!removed) {
-          try {
-            await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
-            removed = true;
-          } catch (setError) {
-            console.warn('Android setInternetCredentials failed:', setError);
-          }
-        }
-        
-        return removed;
-      } catch (error) {
-        console.error('Android PIN removal failed:', error);
-        return false;
-      }
+    let success = false;
+    
+    // First, try to reset the credentials
+    try {
+      const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
+      console.log('Reset internet credentials result:', resetResult);
+      success = true;
+    } catch (resetError) {
+      console.log('Reset failed, trying alternative methods:', resetError.message);
     }
+    
+    // For all platforms, also try to overwrite with a special marker
+    try {
+      // Use a special marker that we'll recognize as "deleted"
+      await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED');
+      success = true;
+    } catch (setError) {
+      console.log('Failed to set deletion marker:', setError.message);
+    }
+    
+    // Verify removal
+    try {
+      const check = await Keychain.getInternetCredentials(PIN_SERVICE);
+      if (check && check.password && check.password !== 'DELETED' && check.password !== '') {
+        console.warn('PIN still exists after removal attempts:', check.password?.length, 'chars');
+        // One final attempt - overwrite with empty
+        try {
+          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
+          success = true;
+        } catch (e) {
+          console.error('Final removal attempt failed:', e);
+        }
+      } else {
+        success = true;
+      }
+    } catch (checkError) {
+      // If we can't get credentials, consider them removed
+      console.log('Cannot retrieve credentials, considering them removed');
+      success = true;
+    }
+    
+    return success;
   } catch (error) {
     console.error('Error removing PIN:', error);
     return false;

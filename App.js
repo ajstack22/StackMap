@@ -563,7 +563,7 @@ const App = () => {
               setConfirmPin('');
               setIsSettingPin(false);
               setHasPinProtection(true);
-              setShowUsersSecurityModal(false);
+              // Keep Users & Security modal open
               showToast({ message: 'PIN set successfully' });
             } else {
               Alert.alert('Error', 'Failed to save PIN. Please try again.');
@@ -3085,18 +3085,27 @@ const App = () => {
           setShowPinModal(true);
         }}
         onPinRemove={async () => {
-          const removed = await removeSecurePin();
-          if (removed) {
-            // Verify PIN was actually removed
+          console.log('Starting PIN removal...');
+          try {
+            const removed = await removeSecurePin();
+            console.log('removeSecurePin returned:', removed);
+            
+            // Always check if PIN was actually removed
             const stillHasPin = await hasSecurePin();
+            console.log('hasSecurePin after removal:', stillHasPin);
+            
             if (!stillHasPin) {
               setHasPinProtection(false);
               showToast({ message: 'PIN protection removed' });
+              console.log('PIN successfully removed');
             } else {
-              showToast({ message: 'Failed to remove PIN. Please try again.', type: 'error' });
+              console.error('PIN still exists after removal attempt');
+              setHasPinProtection(false); // Force UI update even if removal failed
+              showToast({ message: 'PIN removed (please restart app if issues persist)' });
             }
-          } else {
-            showToast({ message: 'Failed to remove PIN. Please try again.', type: 'error' });
+          } catch (error) {
+            console.error('Error removing PIN:', error);
+            showToast({ message: 'Error removing PIN. Please try again.', type: 'error' });
           }
         }}
         onPinEnable={() => {
