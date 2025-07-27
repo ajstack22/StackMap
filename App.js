@@ -2845,22 +2845,6 @@ const App = () => {
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
       
-      {/* PIN Modal */}
-      <PinModal
-        visible={showPinModal}
-        onClose={() => {
-          setShowPinModal(false);
-          setPinInput('');
-          setConfirmPin('');
-          setIsSettingPin(false);
-        }}
-        theme={theme}
-        pinInput={pinInput}
-        setPinInput={setPinInput}
-        isSettingPin={isSettingPin}
-        confirmPin={confirmPin}
-      />
-
       {/* Edit Mode Toolbar */}
       {showEditToolbar && (
         <EditModeToolbar
@@ -3120,6 +3104,22 @@ const App = () => {
           setShowPinModal(true);
         }}
         showToast={showToast}
+      />
+      
+      {/* PIN Modal - Rendered after UsersSecurityModal to ensure proper z-index */}
+      <PinModal
+        visible={showPinModal}
+        onClose={() => {
+          setShowPinModal(false);
+          setPinInput('');
+          setConfirmPin('');
+          setIsSettingPin(false);
+        }}
+        theme={theme}
+        pinInput={pinInput}
+        setPinInput={setPinInput}
+        isSettingPin={isSettingPin}
+        confirmPin={confirmPin}
       />
       
       {/* Toolbar Customize Modal */}
