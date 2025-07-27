@@ -54,39 +54,11 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   
   // Fade in on mount
   useEffect(() => {
-    console.log('[Onboarding] Mount - starting fade animation');
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 300,
       useNativeDriver: true,
     }).start();
-  }, []);
-  
-  // Debug: Log any re-renders
-  useEffect(() => {
-    console.log('[Onboarding] Component re-rendered:', {
-      currentScreen,
-      timestamp: new Date().toISOString(),
-      fadeAnimValue: fadeAnim._value
-    });
-  });
-  
-  // Debug: Monitor for 8-second issue
-  useEffect(() => {
-    const mountTime = Date.now();
-    console.log('[Onboarding] Setting up 8-second monitor');
-    
-    const intervals = [7000, 7500, 8000, 8500, 9000];
-    const timers = intervals.map(ms => 
-      setTimeout(() => {
-        console.log(`[Onboarding] ${ms}ms checkpoint - still mounted, fadeAnim: ${fadeAnim._value}`);
-      }, ms)
-    );
-    
-    return () => {
-      console.log('[Onboarding] Cleanup - component unmounting');
-      timers.forEach(clearTimeout);
-    };
   }, []);
 
   const quickEmojis = ['😊', '😎', '🎯', '⭐', '🚀'];

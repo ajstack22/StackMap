@@ -85,7 +85,11 @@ module.exports = {
         exclude: [/\.map$/, /^manifest.*\.js$/],
         runtimeCaching: [
           {
-            urlPattern: /^https?.*/,
+            // Only cache requests to the same origin and path
+            urlPattern: ({ url }) => {
+              return url.origin === self.location.origin && 
+                     url.pathname.startsWith(self.location.pathname.replace(/\/[^\/]*$/, '/'));
+            },
             handler: 'NetworkFirst',
             options: {
               cacheName: 'stackmap-data',
