@@ -201,7 +201,10 @@ const ToolbarCustomizeModal = ({
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-            <Text style={styles.modalTitle}>Sort Toolbar</Text>
+            <View style={styles.headerLeft}>
+              <Icon name="sort" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Sort Toolbar</Text>
+            </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>

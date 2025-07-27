@@ -597,7 +597,10 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         )}
         <SafeAreaView style={{ flex: 1, backgroundColor: currentUserTheme.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: currentUserTheme.primary }]}>
-            <Text style={styles.modalTitle}>✅ Check-In</Text>
+            <View style={styles.headerLeft}>
+              <Icon name="assignment-turned-in" size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Check-In</Text>
+            </View>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
@@ -688,6 +691,14 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.md,
+  },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIcon: {
+    marginRight: 12,
   },
   modalTitle: {
     fontSize: TYPOGRAPHY.sizes.xxl,

@@ -11,6 +11,14 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 20,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIcon: {
+    marginRight: 12,
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',

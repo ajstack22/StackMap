@@ -13,6 +13,14 @@ export const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIcon: {
+    marginRight: 12,
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',

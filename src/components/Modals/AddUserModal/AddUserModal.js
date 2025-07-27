@@ -78,9 +78,12 @@ const AddUserModal = ({
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-            <Text style={styles.modalTitle}>
-              {editingUser ? 'Edit User' : 'Add New User'}
-            </Text>
+            <View style={styles.headerLeft}>
+              <Icon name={editingUser ? "edit" : "person-add"} size={24} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>
+                {editingUser ? 'Edit User' : 'Add New User'}
+              </Text>
+            </View>
             <TouchableOpacity onPress={handleClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
