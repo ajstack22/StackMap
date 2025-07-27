@@ -2126,7 +2126,12 @@ const App = () => {
 
   const resetApp = async () => {
     console.log('[Reset] Reset button pressed, showing confirmation modal...');
-    setShowResetAppConfirm(true);
+    // Close the DataModal first to avoid modal stacking issues
+    setShowDataModal(false);
+    // Small delay to ensure modal closes before showing confirm
+    setTimeout(() => {
+      setShowResetAppConfirm(true);
+    }, 100);
   };
 
   const performReset = async () => {
@@ -3305,7 +3310,9 @@ const App = () => {
       {/* Reset App Confirmation Modal */}
       <ConfirmModal
         visible={showResetAppConfirm}
-        onClose={() => setShowResetAppConfirm(false)}
+        onClose={() => {
+          setShowResetAppConfirm(false);
+        }}
         onConfirm={async () => {
           // Don't close modal yet - let performReset complete first
           await performReset();
