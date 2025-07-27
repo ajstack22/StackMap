@@ -47,10 +47,19 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
   
-  const fadeAnim = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current; // Start at 0 for fade in
   const slideAnim = useRef(new Animated.Value(0)).current;
   const featureFadeAnim = useRef(new Animated.Value(1)).current;
   const insets = useSafeAreaInsets();
+  
+  // Fade in on mount
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      useNativeDriver: true,
+    }).start();
+  }, []);
 
   const quickEmojis = ['😊', '😎', '🎯', '⭐', '🚀'];
   

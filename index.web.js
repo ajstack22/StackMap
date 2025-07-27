@@ -3,17 +3,35 @@ import App from './App';
 
 // Disable useNativeDriver warnings on web
 if (Platform.OS === 'web') {
-  // Store the original console.warn
+  // Store the original console methods
   const originalWarn = console.warn;
+  const originalLog = console.log;
+  const originalInfo = console.info;
+  const originalDebug = console.debug;
   
-  // Override console.warn to filter out useNativeDriver warnings
-  console.warn = (...args) => {
-    if (args[0] && typeof args[0] === 'string' && 
-        args[0].includes('useNativeDriver')) {
-      return; // Suppress useNativeDriver warnings
-    }
-    originalWarn.apply(console, args);
-  };
+  // In production, disable all console outputs except errors
+  if (process.env.NODE_ENV === 'production') {
+    console.log = () => {};
+    console.info = () => {};
+    console.debug = () => {};
+    console.warn = (...args) => {
+      // Still suppress useNativeDriver warnings in production
+      if (args[0] && typeof args[0] === 'string' && 
+          args[0].includes('useNativeDriver')) {
+        return;
+      }
+      // Suppress other warnings in production too
+    };
+  } else {
+    // In development, only suppress useNativeDriver warnings
+    console.warn = (...args) => {
+      if (args[0] && typeof args[0] === 'string' && 
+          args[0].includes('useNativeDriver')) {
+        return; // Suppress useNativeDriver warnings
+      }
+      originalWarn.apply(console, args);
+    };
+  }
 }
 
 // Import Comic Relief fonts
@@ -107,7 +125,6 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       }
       
       if (!currentBundleHash) {
-        console.log('Could not determine current bundle hash');
         return false;
       }
       
@@ -119,7 +136,6 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
         for (const request of cachedRequests) {
           // If we find an old bundle in cache, clear all caches
           if (request.url.includes('bundle.') && !request.url.includes(currentBundleHash)) {
-            console.log('Found old bundle in cache, clearing all caches...');
             await Promise.all(cacheNames.map(name => caches.delete(name)));
             return true;
           }
@@ -129,13 +145,8 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
     };
     
     clearOldCaches().then(cleared => {
-      if (cleared) {
-        console.log('Old caches cleared, registering service worker...');
-      }
-      
       return navigator.serviceWorker.register('./service-worker.js');
     }).then((registration) => {
-        console.log('PWA service worker registered:', registration);
         
         // Check for updates periodically
         setInterval(() => {
@@ -148,13 +159,10 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
               // New content available - clear all caches and reload
-              console.log('New app version available! Clearing caches and reloading...');
-              
               // Clear all caches
               caches.keys().then(cacheNames => {
                 return Promise.all(
                   cacheNames.map(cacheName => {
-                    console.log('Clearing cache:', cacheName);
                     return caches.delete(cacheName);
                   })
                 );
@@ -167,7 +175,7 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
         });
       })
       .catch((error) => {
-        console.log('Service worker registration failed:', error);
+        // Silently fail in production
       });
   });
 }
