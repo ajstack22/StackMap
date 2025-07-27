@@ -1545,4 +1545,9 @@ class SyncService {
   }
 }
 
-export default new SyncService();
+const syncService = new SyncService();
+syncService.generateSyncId = syncService.generateSyncId.bind(syncService);
+syncService.API_BASE_URL = API_BASE_URL;
+syncService.encryptionService = encryptionService;
+
+export default syncService;

@@ -468,6 +468,21 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
           
           try {
             const syncService = require('../../services/sync/syncService').default;
+            
+            // First check if this is an existing sync group
+            const syncId = await syncService.generateSyncId(recoveryInput.trim());
+            const deviceId = await syncService.encryptionService.getDeviceId();
+            
+            // Try to fetch existing sync data
+            const checkUrl = `${syncService.API_BASE_URL}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
+            const checkResponse = await fetch(checkUrl);
+            
+            if (checkResponse.status === 404) {
+              // Sync group doesn't exist - invalid recovery phrase for joining
+              throw new Error('Invalid recovery phrase - no sync group found');
+            }
+            
+            // Now initialize with the recovery phrase
             await syncService.initialize(recoveryInput.trim());
             
             // Check if sync restored users
@@ -483,7 +498,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               // Go to features carousel to complete onboarding nicely
               transitionTo('features');
             } else {
-              // No users in sync, continue to user creation
+              // No users in sync but group exists, continue to user creation
               setSyncEnabled(true);
               transitionTo('createUser');
             }
