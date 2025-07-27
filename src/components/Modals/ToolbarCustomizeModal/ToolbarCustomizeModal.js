@@ -56,18 +56,24 @@ const ToolbarCustomizeModal = ({
   // Calculate visible button count based on screen width
   const calculateVisibleButtonCount = () => {
     const containerPadding = 32 * 2; // Match EditModeToolbar's calculation
-    const buttonPadding = SPACING.xs * 2;
-    const availableWidth = screenWidth - containerPadding - buttonPadding;
+    const availableWidth = screenWidth - containerPadding;
     
-    // Button width calculation (approximate)
-    const minButtonWidth = 60; // Match EditModeToolbar
-    const editModeTextWidth = 80; // Match EditModeToolbar
-    const moreButtonWidth = minButtonWidth; // Match EditModeToolbar
+    // Button width calculation - more accurate based on actual button content
+    const buttonWidth = Platform.OS === 'web' ? 50 : 50; // Actual button width is smaller
+    const buttonGap = Platform.OS === 'web' ? 8 : 10; // Gap between buttons from styles
+    const editModeTextWidth = Platform.OS === 'web' ? 65 : 65; // More accurate text width
+    const moreButtonWidth = buttonWidth; // Same as regular buttons
     
-    const usableWidth = availableWidth - editModeTextWidth - moreButtonWidth;
-    const count = Math.floor(usableWidth / minButtonWidth);
+    // Reserve space for "Edit Mode" text and "More" button
+    const reservedWidth = editModeTextWidth + moreButtonWidth + (buttonGap * 2);
+    const usableWidth = availableWidth - reservedWidth;
     
-    return Math.max(3, Math.min(count, buttonOrder.length));
+    // Calculate how many buttons fit (including gaps)
+    const maxButtons = Math.floor((usableWidth + buttonGap) / (buttonWidth + buttonGap));
+    
+    // Ensure at least 4 buttons are visible on phones
+    const minVisible = 4;
+    return Math.max(minVisible, Math.min(maxButtons, buttonOrder.length));
   };
   
   const visibleButtonCount = calculateVisibleButtonCount();
@@ -207,9 +213,6 @@ const ToolbarCustomizeModal = ({
             {/* More Button Position Section */}
             <View style={styles.morePositionSection}>
               <Text style={styles.sectionTitle}>More Button Position</Text>
-              <Text style={styles.sectionDescription}>
-                Choose which side the More button appears on
-              </Text>
               <View style={styles.toggleContainer}>
                 <TouchableOpacity
                   style={[styles.toggle, morePosition === 'left' && styles.toggleActive]}
@@ -291,27 +294,6 @@ const ToolbarCustomizeModal = ({
                 style={styles.buttonsList}
               />
             )}
-
-            <View style={styles.previewSection}>
-              <Text style={styles.previewTitle}>Preview</Text>
-              <Text style={styles.previewNote}>Note: Sort button always stays in overflow menu</Text>
-              <View style={styles.previewToolbar}>
-                {morePosition === 'left' && buttonOrder.length > visibleButtonCount && (
-                  <View style={styles.previewOverflow}>
-                    <Icon name="more-horiz" size={20} color={theme.primary} />
-                  </View>
-                )}
-                {(morePosition === 'left' 
-                  ? buttonOrder.slice(-visibleButtonCount) // Show last items when More is on left
-                  : buttonOrder.slice(0, visibleButtonCount) // Show first items when More is on right
-                ).map(renderPreviewButton)}
-                {morePosition === 'right' && buttonOrder.length > visibleButtonCount && (
-                  <View style={styles.previewOverflow}>
-                    <Icon name="more-horiz" size={20} color={theme.primary} />
-                  </View>
-                )}
-              </View>
-            </View>
 
             <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
               <Icon name="restore" size={20} color="#000" />

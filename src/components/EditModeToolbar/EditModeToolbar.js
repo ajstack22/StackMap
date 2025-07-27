@@ -37,6 +37,7 @@ const EditModeToolbar = ({
   const [opacity] = useState(() => new Animated.Value(0));
   const [backgroundOpacity] = useState(() => new Animated.Value(0));
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [expandHeight] = useState(() => new Animated.Value(0));
   
   // Update screen width on dimension change
   useEffect(() => {
@@ -47,6 +48,15 @@ const EditModeToolbar = ({
     const subscription = Dimensions.addEventListener('change', updateDimensions);
     return () => subscription?.remove();
   }, []);
+
+  // Animate expand/collapse of overflow row
+  useEffect(() => {
+    Animated.timing(expandHeight, {
+      toValue: showMoreMenu ? 1 : 0,
+      duration: 200,
+      useNativeDriver: false,
+    }).start();
+  }, [showMoreMenu]);
 
   useEffect(() => {
     if (visible) {
@@ -99,7 +109,7 @@ const EditModeToolbar = ({
     users: { label: 'Users', icon: 'group', onPress: onUsers },
     data: { label: 'Data', icon: 'cloud-sync', onPress: onData },
     complete: { label: 'Complete', icon: 'event-available', onPress: onCompleteDay },
-    share: { label: 'Share', icon: 'share', onPress: onShare },
+    ...(onShare && { share: { label: 'Share', icon: 'share', onPress: onShare } }),
     plan: { label: 'Plan', icon: 'event', onPress: onPlan },
     library: { label: 'Library', icon: 'collections-bookmark', onPress: onLibrary },
     add: { label: 'Add', icon: 'add-circle', onPress: onAdd },
@@ -126,22 +136,24 @@ const EditModeToolbar = ({
   // Calculate how many buttons can fit based on screen width
   const calculateVisibleButtons = () => {
     const containerPadding = getContainerPadding() * 2;
-    const buttonPadding = SPACING.xs * 2;
-    const availableWidth = screenWidth - containerPadding - buttonPadding;
+    const availableWidth = screenWidth - containerPadding;
     
-    // Button width calculation (approximate)
-    const minButtonWidth = isTablet() ? 70 : 60;
-    const editModeTextWidth = isTablet() ? 100 : 80;
-    const moreButtonWidth = minButtonWidth;
+    // Button width calculation - more accurate based on actual button content
+    const buttonWidth = isTablet() ? 65 : 50; // Actual button width is smaller
+    const buttonGap = Platform.OS === 'web' ? 8 : 10; // Gap between buttons from styles
+    const editModeTextWidth = isTablet() ? 90 : 65; // More accurate text width
+    const moreButtonWidth = buttonWidth; // Same as regular buttons
     
     // Reserve space for "Edit Mode" text and "More" button
-    const usableWidth = availableWidth - editModeTextWidth - moreButtonWidth;
+    const reservedWidth = editModeTextWidth + moreButtonWidth + (buttonGap * 2);
+    const usableWidth = availableWidth - reservedWidth;
     
-    // Calculate how many buttons fit
-    const maxButtons = Math.floor(usableWidth / minButtonWidth);
+    // Calculate how many buttons fit (including gaps)
+    const maxButtons = Math.floor((usableWidth + buttonGap) / (buttonWidth + buttonGap));
     
-    // Ensure at least 3 buttons are visible
-    return Math.max(3, Math.min(maxButtons, actions.length));
+    // Ensure at least 4 buttons are visible on phones (5 total with More button)
+    const minVisible = isTablet() ? 3 : 4;
+    return Math.max(minVisible, Math.min(maxButtons, actions.length));
   };
 
   const visibleButtonCount = calculateVisibleButtons();
@@ -185,32 +197,6 @@ const EditModeToolbar = ({
     </TouchableOpacity>
   );
 
-  const renderMoreMenuItem = ({ item }) => (
-    <TouchableOpacity
-      style={[styles.moreMenuItem, item.disabled && styles.disabledMenuItem]}
-      onPress={() => {
-        setShowMoreMenu(false);
-        if (!item.disabled && item.onPress) {
-          item.onPress();
-        }
-      }}
-      disabled={item.disabled}
-    >
-      <Icon 
-        name={item.icon} 
-        size={24} 
-        color={item.disabled ? '#999' : item.color} 
-      />
-      <Text style={[
-        styles.moreMenuLabel,
-        { color: item.disabled ? '#999' : item.color }
-      ]}>
-        {item.label}
-        {item.disabled && ' *'}
-      </Text>
-    </TouchableOpacity>
-  );
-
   return (
     <>
       <View style={[
@@ -246,19 +232,49 @@ const EditModeToolbar = ({
                 },
               ]}
             >
-              <View style={styles.editModeLabelContainer}>
-                <Text style={styles.editModeLabel}>Edit Mode</Text>
-              </View>
+              {/* Edit Mode label at top when position is top, at bottom when position is bottom */}
+              {position === 'top' && (
+                <View style={styles.editModeLabelContainer}>
+                  <Text style={styles.editModeLabel}>Edit Mode</Text>
+                </View>
+              )}
+              
+              {/* Expandable overflow row - appears above main toolbar when position is bottom */}
+              {showMore && position === 'bottom' && (
+                <Animated.View 
+                  style={[
+                    styles.overflowRow,
+                    styles.overflowRowTop,
+                    {
+                      maxHeight: expandHeight.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 100]
+                      }),
+                      opacity: expandHeight,
+                      overflow: 'hidden',
+                    }
+                  ]}
+                >
+                  <View style={styles.overflowButtons}>
+                    {overflowActions.map(action => (
+                      <View key={action.id}>
+                        {renderAction({ item: action })}
+                      </View>
+                    ))}
+                  </View>
+                </Animated.View>
+              )}
+              
               <View style={styles.toolbar}>
               {/* More button on the left */}
               {showMore && moreButtonPosition === 'left' && (
                 <TouchableOpacity
                   style={styles.actionButton}
-                  onPress={() => setShowMoreMenu(true)}
+                  onPress={() => setShowMoreMenu(!showMoreMenu)}
                 >
-                  <Icon name="more-horiz" size={isTablet() ? 32 : 28} color="white" />
+                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 32 : 28)} color="white" />
                   <Text style={[styles.actionLabel, { color: 'white' }]}>
-                    More
+                    {showMoreMenu ? 'Less' : 'More'}
                   </Text>
                 </TouchableOpacity>
               )}
@@ -274,42 +290,52 @@ const EditModeToolbar = ({
               {showMore && moreButtonPosition === 'right' && (
                 <TouchableOpacity
                   style={styles.actionButton}
-                  onPress={() => setShowMoreMenu(true)}
+                  onPress={() => setShowMoreMenu(!showMoreMenu)}
                 >
-                  <Icon name="more-horiz" size={isTablet() ? 32 : 28} color="white" />
+                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 32 : 28)} color="white" />
                   <Text style={[styles.actionLabel, { color: 'white' }]}>
-                    More
+                    {showMoreMenu ? 'Less' : 'More'}
                   </Text>
                 </TouchableOpacity>
               )}
               </View>
+              
+              {/* Edit Mode label at bottom when position is bottom */}
+              {position === 'bottom' && (
+                <View style={[styles.editModeLabelContainer, styles.editModeLabelBottom]}>
+                  <Text style={styles.editModeLabel}>Edit Mode</Text>
+                </View>
+              )}
+              
+              {/* Expandable overflow row - appears below main toolbar when position is top */}
+              {showMore && position === 'top' && (
+                <Animated.View 
+                  style={[
+                    styles.overflowRow,
+                    {
+                      maxHeight: expandHeight.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [0, 100]
+                      }),
+                      opacity: expandHeight,
+                      overflow: 'hidden',
+                    }
+                  ]}
+                >
+                  <View style={styles.overflowButtons}>
+                    {overflowActions.map(action => (
+                      <View key={action.id}>
+                        {renderAction({ item: action })}
+                      </View>
+                    ))}
+                  </View>
+                </Animated.View>
+              )}
             </Animated.View>
           </View>
         </SafeAreaView>
       </View>
 
-      {/* More Menu Modal */}
-      <Modal
-        visible={showMoreMenu}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowMoreMenu(false)}
-      >
-        <TouchableOpacity
-          style={styles.moreMenuOverlay}
-          activeOpacity={1}
-          onPress={() => setShowMoreMenu(false)}
-        >
-          <View style={[styles.moreMenuContainer, { backgroundColor: 'white' }]}>
-            <FlatList
-              data={overflowActions}
-              renderItem={renderMoreMenuItem}
-              keyExtractor={item => item.id}
-              ItemSeparatorComponent={() => <View style={styles.moreMenuSeparator} />}
-            />
-          </View>
-        </TouchableOpacity>
-      </Modal>
     </>
   );
 };
@@ -349,6 +375,10 @@ const styles = StyleSheet.create({
   editModeLabelContainer: {
     marginBottom: Platform.OS === 'web' ? 2 : 3,
   },
+  editModeLabelBottom: {
+    marginBottom: 0,
+    marginTop: Platform.OS === 'web' ? 2 : 3,
+  },
   editModeLabel: {
     color: 'white',
     fontSize: Platform.OS === 'web' ? (isTablet() ? 16 : 15) : (isTablet() ? 18 : 16),
@@ -381,34 +411,28 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',
   },
-  moreMenuOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  overflowRow: {
+    marginTop: Platform.OS === 'web' ? 4 : 6,
+    paddingTop: Platform.OS === 'web' ? 4 : 6,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  overflowRowTop: {
+    marginTop: 0,
+    marginBottom: Platform.OS === 'web' ? 4 : 6,
+    paddingTop: 0,
+    paddingBottom: Platform.OS === 'web' ? 4 : 6,
+    borderTopWidth: 0,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+  },
+  overflowButtons: {
+    flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  moreMenuContainer: {
-    width: '80%',
-    maxWidth: 300,
-    borderRadius: RADIUS.lg,
-    ...SHADOWS.level3,
-  },
-  moreMenuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: SPACING.md,
-    gap: SPACING.md,
-  },
-  disabledMenuItem: {
-    opacity: 0.6,
-  },
-  moreMenuLabel: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  moreMenuSeparator: {
-    height: 1,
-    backgroundColor: '#e0e0e0',
+    flexWrap: 'wrap',
+    gap: Platform.OS === 'web' ? 8 : 10,
+    paddingHorizontal: getContainerPadding() + SPACING.xs,
   },
 });
 

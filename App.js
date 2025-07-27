@@ -217,6 +217,7 @@ const App = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showEditToolbar, setShowEditToolbar] = useState(false);
   const [showEditIcons, setShowEditIcons] = useState(false);
+  const [syncEnabled, setSyncEnabled] = useState(false);
   
   // User management state
   const [showAddUserModal, setShowAddUserModal] = useState(false);
@@ -355,6 +356,18 @@ const App = () => {
     
     checkHydration();
   }, []);
+  
+  // Check sync status
+  useEffect(() => {
+    if (!isHydrated) return;
+    
+    const checkSyncStatus = async () => {
+      const enabled = await syncService.isEnabled();
+      setSyncEnabled(enabled);
+    };
+    
+    checkSyncStatus();
+  }, [isHydrated]);
   
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
@@ -2858,10 +2871,10 @@ const App = () => {
           onAdd={() => setShowActivityModal(true)}
           onLibrary={() => setShowActivityLibrary(true)}
           onPlan={() => setShowUserDayModal(true)}
-          onShare={() => {
+          onShare={syncEnabled ? () => {
             setShareUserId(currentUser);
             setShowShareModal(true);
-          }}
+          } : null}
           onData={() => setShowDataModal(true)}
           onUsers={() => setShowUsersSecurityModal(true)}
           onCustomize={() => setShowToolbarCustomizeModal(true)}
@@ -3051,6 +3064,7 @@ const App = () => {
         onImportData={importData}
         onResetApp={resetApp}
         showToast={showToast}
+        onSyncStatusChange={(enabled) => setSyncEnabled(enabled)}
       />
       
       {/* Users & Security Modal */}

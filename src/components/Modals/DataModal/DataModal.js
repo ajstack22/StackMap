@@ -28,6 +28,7 @@ const DataModal = ({
   onImportData,
   onResetApp,
   showToast,
+  onSyncStatusChange,
 }) => {
   const insets = useSafeAreaInsets();
   
@@ -50,6 +51,9 @@ const DataModal = ({
   const checkSyncStatus = async () => {
     const enabled = await syncService.isEnabled();
     setSyncEnabled(enabled);
+    if (onSyncStatusChange) {
+      onSyncStatusChange(enabled);
+    }
     if (enabled) {
       const status = syncService.getStatus();
       setSyncId(status.syncId);
@@ -64,6 +68,9 @@ const DataModal = ({
     try {
       const { syncId: newSyncId, recoveryPhrase } = await syncService.initialize();
       setSyncEnabled(true);
+      if (onSyncStatusChange) {
+        onSyncStatusChange(true);
+      }
       setSyncId(newSyncId);
       setSyncRecoveryPhrase(recoveryPhrase);
       setShowRecoveryPhrase(true);
@@ -86,6 +93,9 @@ const DataModal = ({
     try {
       const { syncId: newSyncId, recoveryPhrase } = await syncService.initialize(recoveryInput.trim());
       setSyncEnabled(true);
+      if (onSyncStatusChange) {
+        onSyncStatusChange(true);
+      }
       setSyncId(newSyncId);
       setSyncRecoveryPhrase(recoveryPhrase);
       setShowRecoveryInput(false);
@@ -110,6 +120,9 @@ const DataModal = ({
           onPress: async () => {
             await syncService.disable();
             setSyncEnabled(false);
+            if (onSyncStatusChange) {
+              onSyncStatusChange(false);
+            }
             setSyncId(null);
             setSyncRecoveryPhrase('');
             showToast({ message: 'Sync disabled' });
@@ -242,20 +255,25 @@ const DataModal = ({
                     </>
                   ) : (
                     <>
-                      <TouchableOpacity
-                        style={[styles.button, { backgroundColor: theme.primary }]}
-                        onPress={handleEnableSync}
-                        disabled={syncLoading}
-                      >
-                        {syncLoading ? (
-                          <ActivityIndicator size="small" color="white" />
-                        ) : (
-                          <>
-                            <Icon name="sync" size={20} color="white" />
-                            <Text style={styles.buttonText}>Enable New Sync</Text>
-                          </>
-                        )}
-                      </TouchableOpacity>
+                      {/* Only show "Enable New Sync" button on web */}
+                      {Platform.OS === 'web' && (
+                        <TouchableOpacity
+                          style={[styles.button, { backgroundColor: theme.primary }]}
+                          onPress={handleEnableSync}
+                          disabled={syncLoading}
+                        >
+                          {syncLoading ? (
+                            <ActivityIndicator size="small" color="white" />
+                          ) : (
+                            <>
+                              <Icon name="sync" size={20} color="white" />
+                              <Text style={styles.buttonText}>Enable New Sync</Text>
+                            </>
+                          )}
+                        </TouchableOpacity>
+                      )}
+                      
+                      {/* Show "Connect Existing Sync" on all platforms */}
                       <TouchableOpacity
                         style={[styles.button, { backgroundColor: theme.primary }]}
                         onPress={() => setShowRecoveryInput(true)}
@@ -315,6 +333,9 @@ const DataModal = ({
                           try {
                             await syncService.deleteFromServer();
                             setSyncEnabled(false);
+                            if (onSyncStatusChange) {
+                              onSyncStatusChange(false);
+                            }
                             setSyncId(null);
                             setSyncRecoveryPhrase('');
                             showToast({ message: 'All sync data permanently deleted from server' });
@@ -348,6 +369,9 @@ const DataModal = ({
                                       try {
                                         await syncService.deleteFromServer();
                                         setSyncEnabled(false);
+                                        if (onSyncStatusChange) {
+                                          onSyncStatusChange(false);
+                                        }
                                         setSyncId(null);
                                         setSyncRecoveryPhrase('');
                                         showToast({ message: 'All sync data permanently deleted from server' });
