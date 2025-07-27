@@ -3211,7 +3211,12 @@ const App = () => {
         hasPinProtection={hasPinProtection}
         onPinChange={() => {
           setIsSettingPin(true);
-          setShowPinModal(true);
+          // Close the UsersSecurityModal first to avoid modal stacking
+          setShowUsersSecurityModal(false);
+          // Small delay to ensure modal closes before showing PIN modal
+          setTimeout(() => {
+            setShowPinModal(true);
+          }, 100);
         }}
         onPinRemove={async () => {
           console.log('Starting PIN removal...');
@@ -3239,7 +3244,12 @@ const App = () => {
         }}
         onPinEnable={() => {
           setIsSettingPin(true);
-          setShowPinModal(true);
+          // Close the UsersSecurityModal first to avoid modal stacking
+          setShowUsersSecurityModal(false);
+          // Small delay to ensure modal closes before showing PIN modal
+          setTimeout(() => {
+            setShowPinModal(true);
+          }, 100);
         }}
         showToast={showToast}
       />
