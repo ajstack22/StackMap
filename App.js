@@ -83,7 +83,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -251,6 +251,7 @@ const App = () => {
   const [showDataModal, setShowDataModal] = useState(false);
   const [showUsersSecurityModal, setShowUsersSecurityModal] = useState(false);
   const [showToolbarCustomizeModal, setShowToolbarCustomizeModal] = useState(false);
+  const [showCompleteDayModal, setShowCompleteDayModal] = useState(false);
   
   
   // Screen dimensions state
@@ -1549,6 +1550,46 @@ const App = () => {
     }
   };
 
+  // Complete day handler
+  const handleCompleteDayConfirm = (organizedActivities) => {
+    // Destructure the organized activities
+    const { toKeepForToday, fromTomorrowToToday, forNewTomorrow } = organizedActivities;
+    
+    // Reset completed status for kept activities
+    const keptActivities = toKeepForToday.map(a => ({ ...a, completed: false }));
+    
+    // Combine kept activities with tomorrow's activities
+    const newTodayActivities = [...keptActivities, ...fromTomorrowToToday];
+    
+    // Update users data
+    const updatedUsers = {
+      ...users,
+      [currentUser]: {
+        ...users[currentUser],
+        days: {
+          ...users[currentUser].days,
+          today: { activities: newTodayActivities },
+          tomorrow: { activities: forNewTomorrow }
+        }
+      }
+    };
+    
+    setUsers(updatedUsers);
+    setActivities(newTodayActivities);
+    
+    // Exit edit mode
+    setIsEditMode(false);
+    
+    // Close the modal
+    setShowCompleteDayModal(false);
+    
+    // Show success message
+    showToast({ 
+      message: 'Day completed! Activities reorganized.',
+      duration: 3000,
+    });
+  };
+
   // Import data function
   const importData = async () => {
     // For Android, try to access app's external files directory
@@ -2826,78 +2867,7 @@ const App = () => {
           onCustomize={() => setShowToolbarCustomizeModal(true)}
           toolbarOrder={toolbarOrder}
           moreButtonPosition={moreButtonPosition}
-          onCompleteDay={() => {
-            const pinnedCount = activities.filter(a => a.pinned).length;
-            const unpinnedCount = activities.filter(a => !a.pinned).length;
-            
-            const message = `Complete the day? This will:\n- Keep ${pinnedCount} pinned ${pinnedCount === 1 ? 'activity' : 'activities'}\n- Remove ${unpinnedCount} unpinned ${unpinnedCount === 1 ? 'activity' : 'activities'}`;
-            
-            const handleComplete = () => {
-              // Get tomorrow's activities and move them to today
-              const tomorrowActivities = users[currentUser]?.days?.tomorrow?.activities || [];
-              
-              // Keep only pinned activities from today, reset their completed status
-              const keptActivities = activities
-                .filter(a => a.pinned)
-                .map(a => ({ ...a, completed: false }));
-              
-              // Combine kept activities with tomorrow's activities
-              const newTodayActivities = [...keptActivities, ...tomorrowActivities];
-              
-              // Update users data
-              const updatedUsers = {
-                ...users,
-                [currentUser]: {
-                  ...users[currentUser],
-                  days: {
-                    ...users[currentUser].days,
-                    today: { activities: newTodayActivities },
-                    tomorrow: { 
-                      activities: activities
-                        .filter(a => a.pinned)
-                        .map(a => ({ 
-                          ...a, 
-                          id: 'activity_' + Date.now() + '_' + Math.random(),
-                          completed: false 
-                        }))
-                    }
-                  }
-                }
-              };
-              
-              setUsers(updatedUsers);
-              setActivities(newTodayActivities);
-              
-              // Exit edit mode
-              setIsEditMode(false);
-              
-              // Show success message
-              showToast({ 
-                message: 'Day completed! Pinned activities kept for today.',
-                duration: 3000,
-              });
-            };
-            
-            // Use platform-specific confirmation
-            if (Platform.OS === 'web') {
-              if (window.confirm(message)) {
-                handleComplete();
-              }
-            } else {
-              Alert.alert(
-                'Complete Day',
-                message,
-                [
-                  { text: 'Cancel', style: 'cancel' },
-                  { 
-                    text: 'OK', 
-                    style: 'default',
-                    onPress: handleComplete
-                  }
-                ]
-              );
-            }
-          }}
+          onCompleteDay={() => setShowCompleteDayModal(true)}
           theme={theme}
           position={bannerPosition === 'top' ? 'bottom' : 'top'}
           onAnimationComplete={() => {
@@ -3134,6 +3104,18 @@ const App = () => {
         onSaveOrder={setToolbarOrder}
         onSaveMorePosition={setMoreButtonPosition}
         showToast={showToast}
+      />
+      
+      {/* Complete Day Modal */}
+      <CompleteDayModal
+        visible={showCompleteDayModal}
+        onClose={() => setShowCompleteDayModal(false)}
+        theme={theme}
+        activities={activities}
+        showToast={showToast}
+        onCompleteDay={handleCompleteDayConfirm}
+        currentUser={currentUser}
+        users={users}
       />
       </>
   );

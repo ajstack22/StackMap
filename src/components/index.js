@@ -23,6 +23,7 @@ import ShareModal from './Modals/ShareModal/ShareModal';
 import DataModal from './Modals/DataModal/DataModal';
 import UsersSecurityModal from './Modals/UsersSecurityModal/UsersSecurityModal';
 import ToolbarCustomizeModal from './Modals/ToolbarCustomizeModal/ToolbarCustomizeModal';
+import CompleteDayModal from './Modals/CompleteDayModal/CompleteDayModal';
 
 // Export the imported modal components
 export {
@@ -39,5 +40,6 @@ export {
   ShareModal,
   DataModal,
   UsersSecurityModal,
-  ToolbarCustomizeModal
+  ToolbarCustomizeModal,
+  CompleteDayModal
 };

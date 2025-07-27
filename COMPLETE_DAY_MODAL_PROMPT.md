@@ -170,10 +170,10 @@ const actionMap = {
 
 1. **Color Scheme**
    - Header: Theme primary color
-   - Background: White for content areas
-   - Sections: Light gray backgrounds (#f5f5f5)
+   - Background: Theme light color for sections
+   - Activity cards: White with subtle shadow
    - Success state: Green (#48bb78)
-   - Text: Black primary, gray secondary
+   - Text: BLACK ONLY - no gray text (accessibility requirement)
 
 2. **Typography**
    - Use Comic Relief font family
@@ -336,5 +336,12 @@ export const SHADOWS = {
 5. Test theme color changes
 6. Test overflow behavior with many activities
 7. Test platform-specific styling differences
+
+## ⚠️ IMPORTANT ACCESSIBILITY RULES ⚠️
+
+1. **NEVER USE GRAY TEXT** - All text must be black (#000) for maximum contrast
+2. **Theme backgrounds require black text** - When using theme.light backgrounds, ensure all text is black
+3. **Follow WCAG guidelines** - The app serves neurodivergent users who need clear, high-contrast interfaces
+4. **Test with all themes** - Some themes have light backgrounds that require careful contrast consideration
 
 Remember: Follow the established modal patterns exactly. The app prioritizes consistency and accessibility for neurodivergent users.
