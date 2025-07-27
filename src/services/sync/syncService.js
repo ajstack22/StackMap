@@ -72,14 +72,20 @@ class SyncService {
     // Initialize sync history
     syncHistory.initialize();
     
-    // Auto-restore state on construction
-    this.restoreState();
+    // Auto-restore state on construction (non-blocking)
+    // Using setTimeout to prevent blocking the constructor
+    setTimeout(() => this.restoreState(), 0);
   }
   
   /**
    * Restore sync state from AsyncStorage
    */
   async restoreState() {
+    // Prevent multiple restores
+    if (this.initialized) {
+      return;
+    }
+    
     try {
       const enabled = await AsyncStorage.getItem('@sync_enabled');
       const syncId = await AsyncStorage.getItem('@sync_id');
