@@ -338,19 +338,21 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               </View>
             </View>
 
-            <TouchableOpacity 
-              style={[styles.primaryButton, !userName.trim() && styles.disabledButton]}
-              onPress={addUser}
-              disabled={!userName.trim()}
-            >
-              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                {users.length === 0 ? 'Continue' : 'Add User'}
-              </Text>
-            </TouchableOpacity>
+            <View style={{ flex: 1, justifyContent: 'center', width: '100%', marginTop: SPACING.xl }}>
+              <TouchableOpacity 
+                style={[styles.primaryButton, !userName.trim() && styles.disabledButton, { marginTop: 0 }]}
+                onPress={addUser}
+                disabled={!userName.trim()}
+              >
+                <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
+                  {users.length === 0 ? 'Continue' : 'Add User'}
+                </Text>
+              </TouchableOpacity>
+            </View>
 
             {users.length === 0 && (
               <TouchableOpacity 
-                style={styles.secondaryButton}
+                style={[styles.secondaryButton, { marginTop: 0 }]}
                 onPress={() => transitionTo('welcome')}
               >
                 <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
@@ -1069,7 +1071,8 @@ const styles = StyleSheet.create({
   },
   previewSection: {
     alignItems: 'center',
-    marginVertical: SPACING.md,
+    marginTop: SPACING.md,
+    marginBottom: 0,
   },
   previewLabel: {
     fontSize: 14,
