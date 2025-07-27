@@ -7,6 +7,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 9999,
+    elevation: 9999,
   },
   pinModalContent: {
     backgroundColor: 'white',
@@ -15,6 +17,8 @@ export const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     alignItems: 'center',
+    zIndex: 10000,
+    elevation: 10000,
   },
   pinModalTitle: {
     fontSize: 20,

@@ -49,6 +49,8 @@ const PinModal = ({
       animationType="fade"
       transparent={true}
       onRequestClose={handleCancel}
+      presentationStyle={Platform.OS === 'ios' ? 'overFullScreen' : 'fullScreen'}
+      statusBarTranslucent={true}
     >
       <View style={styles.pinModalOverlay}>
         <View style={styles.pinModalContent}>
