@@ -375,6 +375,12 @@ const App = () => {
   
   // Load data on mount and migrate PIN if needed
   useEffect(() => {
+    // If onboarding is already showing, don't run initialization
+    if (showOnboarding) {
+      console.log('[App] Onboarding already active, skipping initialization');
+      return;
+    }
+    
     if (!isHydrated) return;
     
     const initializeApp = async () => {
@@ -393,7 +399,8 @@ const App = () => {
       await migratePinToSecureStorage();
       
       // Check if we should show onboarding
-      if (!hasCompletedOnboarding && Object.keys(users).length === 0) {
+      // IMPORTANT: Only show onboarding on initial load, not if already showing
+      if (!hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
         console.log('[App] Showing onboarding - no users and not completed');
         setShowOnboarding(true);
         return; // Don't create default user, wait for onboarding
@@ -437,7 +444,7 @@ const App = () => {
     });
     
     return () => subscription?.remove();
-  }, [isHydrated, hasCompletedOnboarding, users, currentTheme, bannerPosition, activities, currentDay, currentUser, addUser, setCurrentUser]);
+  }, [isHydrated, hasCompletedOnboarding, users, currentTheme, bannerPosition, activities, currentDay, currentUser, addUser, setCurrentUser, showOnboarding]);
 
   // Data is now automatically persisted through Zustand
 

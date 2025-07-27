@@ -74,7 +74,8 @@ class SyncService {
     
     // Auto-restore state on construction (non-blocking)
     // Using setTimeout to prevent blocking the constructor
-    setTimeout(() => this.restoreState(), 0);
+    // Wait 1 second to avoid interfering with onboarding
+    setTimeout(() => this.restoreState(), 1000);
   }
   
   /**
