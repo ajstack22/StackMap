@@ -24,7 +24,8 @@ const ConfirmModal = ({
 }) => {
   const handleConfirm = () => {
     onConfirm();
-    onClose();
+    // Don't auto-close - let the parent handle closing
+    // This prevents the modal from closing before async operations complete
   };
 
   const handleCancel = () => {

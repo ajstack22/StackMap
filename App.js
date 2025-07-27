@@ -20,6 +20,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Keychain from 'react-native-keychain';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
 // Conditionally import drag-and-drop libraries for iOS only
@@ -2124,17 +2125,21 @@ const App = () => {
   };
 
   const resetApp = async () => {
+    console.log('[Reset] Reset button pressed, showing confirmation modal...');
     setShowResetAppConfirm(true);
   };
 
   const performReset = async () => {
       try {
+              console.log('[Reset] Starting app reset...');
+              
               // IMPORTANT: Disable sync FIRST to prevent syncing the reset state to other devices
               if (await syncService.isEnabled()) {
-                console.log('Disabling sync before reset...');
+                console.log('[Reset] Disabling sync before reset...');
                 await syncService.disable();
               }
               
+              console.log('[Reset] Clearing AsyncStorage...');
               // Clear all AsyncStorage including Zustand storage
               await AsyncStorage.removeItem('@stackmap_data');
               await AsyncStorage.removeItem('@stackmap_hasCompletedOnboarding');
@@ -2148,9 +2153,19 @@ const App = () => {
               await AsyncStorage.removeItem('@sync_id');
               await AsyncStorage.removeItem('@sync_last_version');
               
-              // Skip PIN clearing on Android due to keychain library issues
-              // The PIN will be effectively cleared when we reset hasPinProtection state
+              // Clear PIN on iOS (skip on Android due to keychain library issues)
+              if (Platform.OS === 'ios') {
+                try {
+                  console.log('[Reset] Attempting to clear PIN...');
+                  await Keychain.resetInternetCredentials('com.stackmap.pin');
+                  console.log('[Reset] PIN cleared successfully on iOS');
+                } catch (keychainError) {
+                  console.log('[Reset] Error clearing PIN on iOS:', keychainError);
+                  // Continue with reset even if PIN clearing fails
+                }
+              }
               
+              console.log('[Reset] Resetting Zustand store...');
               // Reset Zustand store to initial values
               setUsers({});
               setCurrentUser(null);
@@ -3291,9 +3306,10 @@ const App = () => {
       <ConfirmModal
         visible={showResetAppConfirm}
         onClose={() => setShowResetAppConfirm(false)}
-        onConfirm={() => {
+        onConfirm={async () => {
+          // Don't close modal yet - let performReset complete first
+          await performReset();
           setShowResetAppConfirm(false);
-          performReset();
         }}
         theme={theme}
         title="Reset App"
