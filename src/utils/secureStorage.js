@@ -116,18 +116,35 @@ export const removeSecurePin = async () => {
       // iOS-specific approach: Use internet credentials
       try {
         // Try to reset internet credentials
-        await Keychain.resetInternetCredentials(PIN_SERVICE);
+        const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
+        console.log('iOS reset result:', resetResult);
         
-        // Set an empty password to overwrite any cached value
-        await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
+        // Also try to delete using setInternetCredentials with null
+        try {
+          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, null);
+        } catch (e) {
+          // If null doesn't work, try empty string
+          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
+        }
         
-        // For iOS, we consider it successful if we've made the attempts
-        // because iOS keychain can cache values
+        // Verify removal by checking if we can still get the PIN
+        try {
+          const check = await Keychain.getInternetCredentials(PIN_SERVICE);
+          if (check && check.password && check.password !== '') {
+            console.warn('PIN still exists after removal attempt on iOS');
+            // Try one more time with resetInternetCredentials
+            await Keychain.resetInternetCredentials(PIN_SERVICE);
+            return true;
+          }
+        } catch (checkError) {
+          // If we can't get credentials, they're removed
+          console.log('PIN successfully removed on iOS');
+        }
+        
         return true;
       } catch (error) {
         console.warn('iOS PIN removal error:', error);
-        // Even on error, return true for iOS as the keychain might be caching
-        return true;
+        return false;
       }
     } else if (Platform.OS === 'web') {
       // Web-specific approach - use the same Keychain polyfill

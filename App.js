@@ -3096,17 +3096,33 @@ const App = () => {
         onAddUser={() => setShowAddUserModal(true)}
         hasPinProtection={hasPinProtection}
         onPinChange={() => {
-          setIsSettingPin(true);
-          setShowPinModal(true);
+          setShowUsersSecurityModal(false);
+          setTimeout(() => {
+            setIsSettingPin(true);
+            setShowPinModal(true);
+          }, 300);
         }}
         onPinRemove={async () => {
-          await removeSecurePin();
-          setHasPinProtection(false);
-          showToast({ message: 'PIN protection removed' });
+          const removed = await removeSecurePin();
+          if (removed) {
+            // Verify PIN was actually removed
+            const stillHasPin = await hasSecurePin();
+            if (!stillHasPin) {
+              setHasPinProtection(false);
+              showToast({ message: 'PIN protection removed' });
+            } else {
+              showToast({ message: 'Failed to remove PIN. Please try again.', type: 'error' });
+            }
+          } else {
+            showToast({ message: 'Failed to remove PIN. Please try again.', type: 'error' });
+          }
         }}
         onPinEnable={() => {
-          setIsSettingPin(true);
-          setShowPinModal(true);
+          setShowUsersSecurityModal(false);
+          setTimeout(() => {
+            setIsSettingPin(true);
+            setShowPinModal(true);
+          }, 300);
         }}
         showToast={showToast}
       />
