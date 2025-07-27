@@ -38,6 +38,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const [selectedEmoji, setSelectedEmoji] = useState('😊');
   const [users, setUsers] = useState([]);
   const [emojiInputValue, setEmojiInputValue] = useState('');
+  const [importSuccessful, setImportSuccessful] = useState(false);
   const [pin, setPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
@@ -221,7 +222,17 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                 <View style={styles.secondaryButtonsRow}>
                   <TouchableOpacity 
                     style={[styles.secondaryButton, styles.secondaryButtonEqual]}
-                    onPress={onImport}
+                    onPress={async () => {
+                      try {
+                        await onImport();
+                        // If import was successful, mark it and go to features
+                        setImportSuccessful(true);
+                        transitionTo('features');
+                      } catch (error) {
+                        // Import was cancelled or failed, stay on welcome screen
+                        console.log('Import cancelled or failed');
+                      }
+                    }}
                   >
                     <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
                     <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore StackMap</Text>
@@ -357,6 +368,15 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               {syncEnabled && (
                 <View style={{ marginBottom: SPACING.lg, alignItems: 'center' }}>
                   <SyncStatusIndicator theme={THEMES.stackBlue} />
+                </View>
+              )}
+              
+              {importSuccessful && (
+                <View style={{ marginBottom: SPACING.lg, alignItems: 'center' }}>
+                  <View style={styles.successBanner}>
+                    <Icon name="check-circle" size={20} color={THEMES.stackBlue.primary} />
+                    <Text style={styles.successText}>Data imported successfully!</Text>
+                  </View>
                 </View>
               )}
               
@@ -1346,6 +1366,20 @@ const styles = StyleSheet.create({
     color: '#ff9800',
     textAlign: 'center',
     marginTop: SPACING.sm,
+  },
+  successBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.gray[100],
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: RADIUS.lg,
+    gap: SPACING.sm,
+  },
+  successText: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: THEMES.stackBlue.primary,
   },
 });
 

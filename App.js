@@ -247,6 +247,7 @@ const App = () => {
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [confirmPin, setConfirmPin] = useState('');
   const [hasPinProtection, setHasPinProtection] = useState(false);
+  const [showResetAppConfirm, setShowResetAppConfirm] = useState(false);
   
   // New modal states
   const [showDataModal, setShowDataModal] = useState(false);
@@ -1606,6 +1607,91 @@ const App = () => {
     });
   };
 
+  // Import data function for onboarding (doesn't hide onboarding)
+  const importDataForOnboarding = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: 'application/json',
+        copyToCacheDirectory: true
+      });
+      
+      if (result.assets && result.assets.length > 0) {
+        const file = result.assets[0];
+        const fileContent = await fetch(file.uri).then(r => r.text());
+        const importedData = JSON.parse(fileContent);
+        
+        // Validate and restore the data
+        const migratedData = migrateData(importedData);
+        
+        // Restore users
+        if (migratedData.users) {
+          setUsers(migratedData.users);
+          if (migratedData.currentUserId && migratedData.users[migratedData.currentUserId]) {
+            setCurrentUser(migratedData.currentUserId);
+            const userData = migratedData.users[migratedData.currentUserId];
+            setCurrentDay(userData.currentDay || 'today');
+            const userActivities = userData.days?.[userData.currentDay || 'today']?.activities || [];
+            setActivities(userActivities.filter(a => !a.deleted));
+            
+            // Restore user settings
+            if (userData.settings) {
+              if (userData.settings.theme) setCurrentTheme(userData.settings.theme);
+              if (userData.settings.displayMode) setDisplayMode(userData.settings.displayMode);
+              if (userData.settings.bannerPosition) setBannerPosition(userData.settings.bannerPosition);
+              if (userData.settings.taskCelebration) setTaskCelebration(userData.settings.taskCelebration);
+              if (userData.settings.routineCelebration) setRoutineCelebration(userData.settings.routineCelebration);
+            }
+          }
+        }
+        
+        // Restore global settings
+        if (migratedData.settings) {
+          if (migratedData.settings.pinEnabled) {
+            setHasPinProtection(true);
+          }
+        }
+        
+        // Restore templates
+        if (migratedData.templates) {
+          setTemplates(migratedData.templates);
+        }
+        
+        // Restore activity categories
+        if (migratedData.activityCategories) {
+          setActivityCategories(migratedData.activityCategories);
+          
+          // Update addedToLibraryIds
+          const libraryIds = new Set();
+          Object.values(migratedData.activityCategories).forEach(category => {
+            if (category.activities) {
+              category.activities.forEach(activity => {
+                if (activity.id) {
+                  libraryIds.add(activity.id);
+                }
+              });
+            }
+          });
+          setAddedToLibraryIds(libraryIds);
+        }
+        
+        // Save to storage
+        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
+        
+        showToast({ message: 'Data imported successfully' });
+        
+        // Return true to indicate success
+        return true;
+      }
+      
+      // User cancelled
+      return false;
+    } catch (error) {
+      console.error('Import error:', error);
+      showToast({ message: 'Failed to import data', type: 'error' });
+      return false;
+    }
+  };
+  
   // Import data function
   const importData = async () => {
     // For Android, try to access app's external files directory
@@ -2004,9 +2090,10 @@ const App = () => {
   };
 
   const resetApp = async () => {
-    const message = 'This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. Are you sure?';
-    
-    const performReset = async () => {
+    setShowResetAppConfirm(true);
+  };
+
+  const performReset = async () => {
       try {
               // IMPORTANT: Disable sync FIRST to prevent syncing the reset state to other devices
               if (await syncService.isEnabled()) {
@@ -2070,6 +2157,10 @@ const App = () => {
               setShowSupportModal(false);
               setShowReorderModal(false);
               setShowPinModal(false);
+              setShowDataModal(false);
+              setShowUsersSecurityModal(false);
+              setShowCompleteDayModal(false);
+              setShowResetAppConfirm(false);
               
         // Show success toast
         showToast({ message: 'App reset successfully', type: 'success' });
@@ -2080,33 +2171,8 @@ const App = () => {
         }, 500);
       } catch (error) {
         console.error('Reset error:', error);
-        if (Platform.OS === 'web') {
-          window.alert('Failed to reset app data');
-        } else {
-          Alert.alert('Reset Error', 'Failed to reset app data');
-        }
+        showToast({ message: 'Failed to reset app data', type: 'error' });
       }
-    };
-    
-    // Show confirmation dialog
-    if (Platform.OS === 'web') {
-      if (window.confirm(message)) {
-        performReset();
-      }
-    } else {
-      Alert.alert(
-        'Reset App',
-        message,
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Reset Everything',
-            style: 'destructive',
-            onPress: performReset
-          }
-        ]
-      );
-    }
   };
 
   // Preference save helpers
@@ -3186,6 +3252,23 @@ const App = () => {
         currentUser={currentUser}
         users={users}
       />
+      
+      {/* Reset App Confirmation Modal */}
+      <ConfirmModal
+        visible={showResetAppConfirm}
+        onClose={() => setShowResetAppConfirm(false)}
+        onConfirm={() => {
+          setShowResetAppConfirm(false);
+          performReset();
+        }}
+        theme={theme}
+        title="Reset App"
+        message="This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. This action cannot be undone."
+        confirmText="Reset Everything"
+        confirmButtonColor={COLORS.error}
+        icon="refresh"
+        iconColor={COLORS.error}
+      />
       </>
   );
 
@@ -3220,14 +3303,10 @@ const App = () => {
       <OnboardingNew
         onComplete={handleOnboardingComplete}
         onImport={async () => {
-          try {
-            // Don't hide onboarding until import succeeds
-            await importData();
-            // Only hide onboarding if import was successful
-            // (importData will have already set showOnboarding to false if successful)
-          } catch (error) {
-            console.log('Import cancelled or failed, staying in onboarding');
-            // Stay in onboarding if import fails
+          // Create a version of importData that doesn't hide onboarding
+          const success = await importDataForOnboarding();
+          if (!success) {
+            throw new Error('Import cancelled or failed');
           }
         }}
         isAbbreviated={!!syncSetupPhrase}
