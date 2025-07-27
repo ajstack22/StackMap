@@ -45,30 +45,42 @@ Use `./scripts/simple-deploy.sh` (it rsyncs from qual to prod)
 ## 🐛 COMMON ISSUES & FIXES
 
 ### Alert.alert Doesn't Work on Web
-React Native's `Alert.alert` is not supported on web. Use platform-specific code:
+React Native's `Alert.alert` is not supported on web. Instead of using platform-specific code with `window.confirm()`, we use our custom `ConfirmModal` component for consistency across all platforms:
 
 ```javascript
+// DON'T DO THIS:
 if (Platform.OS === 'web') {
-  const confirmed = window.confirm('Your message here');
-  if (confirmed) {
-    // Handle confirmation
-  }
+  const confirmed = window.confirm('Message');
+  // ...
 } else {
-  Alert.alert(
-    'Title',
-    'Message',
-    [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'OK', onPress: () => { /* Handle confirmation */ } }
-    ]
-  );
+  Alert.alert('Title', 'Message', [...]);
 }
+
+// DO THIS INSTEAD:
+import ConfirmModal from '../ConfirmModal';
+
+// In component:
+const [showConfirm, setShowConfirm] = useState(false);
+
+// In JSX:
+<ConfirmModal
+  visible={showConfirm}
+  onClose={() => setShowConfirm(false)}
+  onConfirm={handleConfirm}
+  theme={theme}
+  title="Confirm Action"
+  message="Are you sure?"
+  confirmText="Confirm"
+  confirmButtonColor="#e53e3e"
+  icon="warning"
+  iconColor="#e53e3e"
+/>
 ```
 
-**Where we've hit this:**
+**Where we use ConfirmModal:**
 - Remove PIN button in Users & Security modal
-- Delete user confirmation
-- Delete category confirmation
+- Delete user confirmation (should be updated)
+- Delete category confirmation (should be updated)
 
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by removing automatic sorting

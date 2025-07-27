@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { COLORS } from '../../../constants';
+import ConfirmModal from '../ConfirmModal';
 
 const UsersSecurityModal = ({
   visible,
@@ -32,6 +33,7 @@ const UsersSecurityModal = ({
   showToast,
 }) => {
   const insets = useSafeAreaInsets();
+  const [showPinRemoveConfirm, setShowPinRemoveConfirm] = useState(false);
 
   const handleUserSelect = (userId) => {
     onUserSelect(userId);
@@ -63,31 +65,12 @@ const UsersSecurityModal = ({
   };
 
   const handlePinRemove = () => {
-    if (Platform.OS === 'web') {
-      const confirmed = window.confirm(
-        'Are you sure you want to remove the PIN? The app will be accessible without a code.'
-      );
-      if (confirmed) {
-        showToast({ message: 'Removing PIN...' });
-        onPinRemove();
-      }
-    } else {
-      Alert.alert(
-        'Remove PIN',
-        'Are you sure you want to remove the PIN? The app will be accessible without a code.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          {
-            text: 'Remove PIN',
-            style: 'destructive',
-            onPress: () => {
-              showToast({ message: 'Removing PIN...' });
-              onPinRemove();
-            },
-          }
-        ]
-      );
-    }
+    setShowPinRemoveConfirm(true);
+  };
+  
+  const confirmPinRemove = () => {
+    showToast({ message: 'Removing PIN...' });
+    onPinRemove();
   };
 
   return (
@@ -245,6 +228,20 @@ const UsersSecurityModal = ({
         </View>
         <SafeAreaView style={{ backgroundColor: theme.light }} />
       </View>
+      
+      {/* PIN Removal Confirmation Modal */}
+      <ConfirmModal
+        visible={showPinRemoveConfirm}
+        onClose={() => setShowPinRemoveConfirm(false)}
+        onConfirm={confirmPinRemove}
+        theme={theme}
+        title="Remove PIN"
+        message="Are you sure you want to remove the PIN? The app will be accessible without a code."
+        confirmText="Remove PIN"
+        confirmButtonColor="#e53e3e"
+        icon="lock-open"
+        iconColor="#e53e3e"
+      />
     </Modal>
   );
 };

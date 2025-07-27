@@ -83,7 +83,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal, ConfirmModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';

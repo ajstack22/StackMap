@@ -24,6 +24,7 @@ import DataModal from './Modals/DataModal/DataModal';
 import UsersSecurityModal from './Modals/UsersSecurityModal/UsersSecurityModal';
 import ToolbarCustomizeModal from './Modals/ToolbarCustomizeModal/ToolbarCustomizeModal';
 import CompleteDayModal from './Modals/CompleteDayModal/CompleteDayModal';
+import ConfirmModal from './Modals/ConfirmModal/ConfirmModal';
 
 // Export the imported modal components
 export {
@@ -41,5 +42,6 @@ export {
   DataModal,
   UsersSecurityModal,
   ToolbarCustomizeModal,
-  CompleteDayModal
+  CompleteDayModal,
+  ConfirmModal
 };
