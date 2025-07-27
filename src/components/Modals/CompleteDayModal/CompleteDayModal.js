@@ -143,7 +143,7 @@ const CompleteDayModal = ({
           {activity.text || activity.title || 'Activity'}
         </Text>
         {showActions && category !== 'newTomorrow' && (
-          <Icon name={iconName} size={20} color={iconColor} style={styles.actionIcon} />
+          <Icon name={iconName} size={Platform.OS === 'ios' ? 16 : 20} color={iconColor} style={styles.actionIcon} />
         )}
       </>
     );
@@ -172,7 +172,7 @@ const CompleteDayModal = ({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <View style={[styles.sectionIconContainer, { backgroundColor: iconColor + '20' }]}>
-          <Icon name={icon} size={Platform.OS === 'ios' ? 20 : 22} color={iconColor} />
+          <Icon name={icon} size={Platform.OS === 'ios' ? 18 : 22} color={iconColor} />
         </View>
         <View style={styles.sectionTitleContainer}>
           <Text style={styles.sectionTitle}>{title}</Text>
