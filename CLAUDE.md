@@ -42,7 +42,37 @@ Use `./scripts/simple-deploy.sh` (it rsyncs from qual to prod)
 3. StackMap serves neurodivergent users who need clear, high-contrast interfaces
 4. Always test with all theme colors to ensure readability
 
+## 🐛 COMMON ISSUES & FIXES
+
+### Alert.alert Doesn't Work on Web
+React Native's `Alert.alert` is not supported on web. Use platform-specific code:
+
+```javascript
+if (Platform.OS === 'web') {
+  const confirmed = window.confirm('Your message here');
+  if (confirmed) {
+    // Handle confirmation
+  }
+} else {
+  Alert.alert(
+    'Title',
+    'Message',
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'OK', onPress: () => { /* Handle confirmation */ } }
+    ]
+  );
+}
+```
+
+**Where we've hit this:**
+- Remove PIN button in Users & Security modal
+- Delete user confirmation
+- Delete category confirmation
+
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by removing automatic sorting
 - Added direct delete button to activity cards in edit mode
 - Implemented toast notification system with undo
+- Fixed PIN modal z-index issues
+- Fixed Alert.alert not working on web for Remove PIN button

@@ -117,6 +117,7 @@ git push
 - **Scroll not working**: Check overflow CSS properties
 - **Touch events**: Ensure proper event handlers for web
 - **PWA not installing**: Check manifest.json paths
+- **Alert.alert not working**: React Native's Alert doesn't work on web, use `window.confirm()` instead (see Common Issues in CLAUDE.md)
 
 ---
 
