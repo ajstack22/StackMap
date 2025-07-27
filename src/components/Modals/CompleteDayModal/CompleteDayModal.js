@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   StatusBar,
   Alert,
+  Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
@@ -229,6 +230,7 @@ const CompleteDayModal = ({
           style={[styles.modalContent, { backgroundColor }]}
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          bounces={Platform.OS === 'ios' ? false : true}
         >
           {/* Complete Day Button at Top */}
           <View style={[styles.topActionContainer, { backgroundColor: theme.light }]}>

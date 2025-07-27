@@ -33,15 +33,16 @@ export const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingVertical: Platform.OS === 'ios' ? 0 : SPACING.xs,
+    flexGrow: Platform.OS === 'ios' ? 0 : 1,
   },
   
   // Top Action Container
   topActionContainer: {
     backgroundColor: 'white',
-    paddingVertical: Platform.OS === 'ios' ? 12 : SPACING.xl,
+    paddingVertical: Platform.OS === 'ios' ? 8 : SPACING.xl,
     paddingHorizontal: Platform.OS === 'ios' ? 12 : SPACING.lg,
     margin: Platform.OS === 'ios' ? 6 : SPACING.md,
-    marginBottom: Platform.OS === 'ios' ? 4 : SPACING.xs,
+    marginBottom: Platform.OS === 'ios' ? 2 : SPACING.xs,
     alignItems: 'center',
     borderRadius: Platform.OS === 'ios' ? RADIUS.md : RADIUS.lg,
     borderWidth: Platform.OS === 'ios' ? 0 : 1,
@@ -71,12 +72,12 @@ export const styles = StyleSheet.create({
   // Sections
   section: {
     backgroundColor: 'white',
-    marginTop: Platform.OS === 'ios' ? 4 : SPACING.md,
-    marginBottom: 0,
+    marginTop: Platform.OS === 'ios' ? 2 : SPACING.md,
+    marginBottom: Platform.OS === 'ios' ? 2 : 0,
     marginHorizontal: Platform.OS === 'ios' ? 6 : SPACING.md,
-    paddingTop: Platform.OS === 'ios' ? 8 : SPACING.lg,
-    paddingBottom: Platform.OS === 'ios' ? 6 : SPACING.lg,
-    paddingHorizontal: Platform.OS === 'ios' ? 10 : SPACING.lg,
+    paddingTop: Platform.OS === 'ios' ? 6 : SPACING.lg,
+    paddingBottom: Platform.OS === 'ios' ? 4 : SPACING.lg,
+    paddingHorizontal: Platform.OS === 'ios' ? 8 : SPACING.lg,
     borderRadius: Platform.OS === 'ios' ? RADIUS.md : RADIUS.lg,
     borderWidth: Platform.OS === 'ios' ? 0 : 1,
     borderColor: 'rgba(0,0,0,0.06)',
@@ -85,6 +86,8 @@ export const styles = StyleSheet.create({
     shadowOpacity: Platform.OS === 'ios' ? 0.02 : 0.04,
     shadowRadius: Platform.OS === 'ios' ? 2 : 6,
     elevation: Platform.OS === 'ios' ? 1 : 2,
+    minHeight: Platform.OS === 'ios' ? undefined : 'auto',
+    flex: Platform.OS === 'ios' ? 0 : undefined,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -132,6 +135,10 @@ export const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? 0 : SPACING.sm,
     marginLeft: Platform.OS === 'ios' ? -3 : -SPACING.xs,
     marginRight: Platform.OS === 'ios' ? -3 : 0,
+    minHeight: Platform.OS === 'ios' ? undefined : 'auto',
+    flex: Platform.OS === 'ios' ? 0 : undefined,
+    flexGrow: Platform.OS === 'ios' ? 0 : undefined,
+    flexShrink: Platform.OS === 'ios' ? 1 : undefined,
   },
   
   // Activity Card
@@ -178,11 +185,11 @@ export const styles = StyleSheet.create({
   // Summary
   summaryContainer: {
     backgroundColor: 'white',
-    paddingVertical: Platform.OS === 'ios' ? 8 : SPACING.lg,
+    paddingVertical: Platform.OS === 'ios' ? 6 : SPACING.lg,
     paddingHorizontal: Platform.OS === 'ios' ? 10 : SPACING.lg,
-    marginTop: Platform.OS === 'ios' ? 4 : SPACING.md,
+    marginTop: Platform.OS === 'ios' ? 2 : SPACING.md,
     marginHorizontal: Platform.OS === 'ios' ? 6 : SPACING.md,
-    marginBottom: Platform.OS === 'ios' ? 6 : SPACING.md,
+    marginBottom: Platform.OS === 'ios' ? 4 : SPACING.md,
     borderRadius: Platform.OS === 'ios' ? RADIUS.md : RADIUS.lg,
     borderWidth: Platform.OS === 'ios' ? 0 : 1,
     borderColor: 'rgba(0,0,0,0.06)',
