@@ -23,6 +23,7 @@
 ### Feature Implementation
 - **[COMPLETE_DAY_MODAL_PROMPT.md](./COMPLETE_DAY_MODAL_PROMPT.md)** - Complete Day modal spec
 - **[EDIT_MODE_MENU_STRATEGY.md](./EDIT_MODE_MENU_STRATEGY.md)** - Toolbar overflow logic
+- **[MODAL_PATTERNS.md](./MODAL_PATTERNS.md)** - Standard modal implementation patterns
 
 ### System Architecture
 - **[docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md](./docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md)** - Full system documentation

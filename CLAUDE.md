@@ -36,6 +36,12 @@ Use `./scripts/simple-deploy.sh` (it rsyncs from qual to prod)
 4. .cpanel.yml doesn't work on Namecheap - ignore it
 5. No htaccess tricks needed - just files in root
 
+## 🎨 DESIGN RULES
+1. **NO GRAY TEXT** - All text must be black (#000) for accessibility
+2. Theme backgrounds require high contrast - especially with light theme colors
+3. StackMap serves neurodivergent users who need clear, high-contrast interfaces
+4. Always test with all theme colors to ensure readability
+
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by removing automatic sorting
 - Added direct delete button to activity cards in edit mode
