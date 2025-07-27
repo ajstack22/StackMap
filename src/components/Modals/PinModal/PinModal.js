@@ -46,7 +46,7 @@ const PinModal = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="fade"
       transparent={true}
       onRequestClose={handleCancel}
     >

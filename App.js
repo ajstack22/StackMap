@@ -563,6 +563,7 @@ const App = () => {
               setConfirmPin('');
               setIsSettingPin(false);
               setHasPinProtection(true);
+              setShowUsersSecurityModal(false);
               showToast({ message: 'PIN set successfully' });
             } else {
               Alert.alert('Error', 'Failed to save PIN. Please try again.');
@@ -3096,11 +3097,8 @@ const App = () => {
         onAddUser={() => setShowAddUserModal(true)}
         hasPinProtection={hasPinProtection}
         onPinChange={() => {
-          setShowUsersSecurityModal(false);
-          setTimeout(() => {
-            setIsSettingPin(true);
-            setShowPinModal(true);
-          }, 300);
+          setIsSettingPin(true);
+          setShowPinModal(true);
         }}
         onPinRemove={async () => {
           const removed = await removeSecurePin();
@@ -3118,11 +3116,8 @@ const App = () => {
           }
         }}
         onPinEnable={() => {
-          setShowUsersSecurityModal(false);
-          setTimeout(() => {
-            setIsSettingPin(true);
-            setShowPinModal(true);
-          }, 300);
+          setIsSettingPin(true);
+          setShowPinModal(true);
         }}
         showToast={showToast}
       />
