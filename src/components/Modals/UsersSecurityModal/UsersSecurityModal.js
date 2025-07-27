@@ -63,18 +63,31 @@ const UsersSecurityModal = ({
   };
 
   const handlePinRemove = () => {
-    Alert.alert(
-      'Remove PIN',
-      'Are you sure you want to remove the PIN? The app will be accessible without a code.',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Remove PIN',
-          style: 'destructive',
-          onPress: onPinRemove,
-        }
-      ]
-    );
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm(
+        'Are you sure you want to remove the PIN? The app will be accessible without a code.'
+      );
+      if (confirmed) {
+        showToast({ message: 'Removing PIN...' });
+        onPinRemove();
+      }
+    } else {
+      Alert.alert(
+        'Remove PIN',
+        'Are you sure you want to remove the PIN? The app will be accessible without a code.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Remove PIN',
+            style: 'destructive',
+            onPress: () => {
+              showToast({ message: 'Removing PIN...' });
+              onPinRemove();
+            },
+          }
+        ]
+      );
+    }
   };
 
   return (
