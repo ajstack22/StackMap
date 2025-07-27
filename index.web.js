@@ -108,6 +108,11 @@ AppRegistry.runApplication('StackMap', {
 // Register service worker for PWA
 if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
   window.addEventListener('load', () => {
+    // Check if we're in onboarding
+    const isOnboarding = !localStorage.getItem('stackmap-storage');
+    
+    // Delay service worker registration during onboarding to prevent flashes
+    const registerServiceWorker = () => {
     // First, clear any existing caches if there's a version mismatch
     // This ensures we always use the latest bundle
     const clearOldCaches = async () => {
@@ -153,23 +158,29 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
           registration.update();
         }, 60 * 60 * 1000); // Check every hour
         
-        // Handle updates
+        // Handle updates - but don't reload during onboarding
         registration.addEventListener('updatefound', () => {
           const newWorker = registration.installing;
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
-              // New content available - clear all caches and reload
-              // Clear all caches
-              caches.keys().then(cacheNames => {
-                return Promise.all(
-                  cacheNames.map(cacheName => {
-                    return caches.delete(cacheName);
-                  })
-                );
-              }).then(() => {
-                // Force reload
-                window.location.reload(true);
-              });
+              // Check if we're in onboarding before reloading
+              const isOnboarding = window.location.search.includes('onboarding=true') ||
+                                  document.querySelector('[data-testid="onboarding-screen"]') !== null ||
+                                  !localStorage.getItem('stackmap-storage');
+              
+              if (!isOnboarding) {
+                // New content available - clear all caches and reload
+                caches.keys().then(cacheNames => {
+                  return Promise.all(
+                    cacheNames.map(cacheName => {
+                      return caches.delete(cacheName);
+                    })
+                  );
+                }).then(() => {
+                  // Force reload only if not in onboarding
+                  window.location.reload(true);
+                });
+              }
             }
           });
         });
@@ -177,5 +188,13 @@ if ('serviceWorker' in navigator && process.env.NODE_ENV === 'production') {
       .catch((error) => {
         // Silently fail in production
       });
+    };
+    
+    // If in onboarding, delay registration by 10 seconds
+    if (isOnboarding) {
+      setTimeout(registerServiceWorker, 10000);
+    } else {
+      registerServiceWorker();
+    }
   });
 }

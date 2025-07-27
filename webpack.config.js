@@ -79,8 +79,10 @@ module.exports = {
     // Add service worker generation for production builds
     ...(process.env.NODE_ENV === 'production' ? [
       new GenerateSW({
-        clientsClaim: true,
-        skipWaiting: true,
+        // Don't claim clients immediately - let user control when to update
+        clientsClaim: false,
+        // Don't skip waiting - activate on next navigation
+        skipWaiting: false,
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB
         exclude: [/\.map$/, /^manifest.*\.js$/],
         runtimeCaching: [
