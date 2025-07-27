@@ -172,7 +172,7 @@ const CompleteDayModal = ({
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
         <View style={[styles.sectionIconContainer, { backgroundColor: iconColor + '20' }]}>
-          <Icon name={icon} size={22} color={iconColor} />
+          <Icon name={icon} size={Platform.OS === 'ios' ? 20 : 22} color={iconColor} />
         </View>
         <View style={styles.sectionTitleContainer}>
           <Text style={styles.sectionTitle}>{title}</Text>
@@ -206,7 +206,6 @@ const CompleteDayModal = ({
       transparent={false}
       statusBarTranslucent={true}
       onRequestClose={onClose}
-      presentationStyle="pageSheet"
     >
       <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
         <StatusBar backgroundColor={theme.primary} barStyle="light-content" />
