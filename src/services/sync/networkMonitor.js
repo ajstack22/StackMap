@@ -28,7 +28,9 @@ class NetworkMonitor {
       this.handleNetworkChange(state);
     });
 
-    console.log('NetworkMonitor: Started monitoring');
+    if (__DEV__) {
+      console.log('NetworkMonitor: Started monitoring');
+    }
   }
 
   /**
@@ -38,7 +40,9 @@ class NetworkMonitor {
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
-      console.log('NetworkMonitor: Stopped monitoring');
+      if (__DEV__) {
+        console.log('NetworkMonitor: Stopped monitoring');
+      }
     }
   }
 
@@ -53,11 +57,13 @@ class NetworkMonitor {
     this.connectionType = state.type;
     this.isInternetReachable = state.isInternetReachable !== false;
 
-    console.log('NetworkMonitor: Network state changed', {
-      isOnline: this.isOnline,
-      type: this.connectionType,
-      isInternetReachable: this.isInternetReachable
-    });
+    if (__DEV__) {
+      console.log('NetworkMonitor: Network state changed', {
+        isOnline: this.isOnline,
+        type: this.connectionType,
+        isInternetReachable: this.isInternetReachable
+      });
+    }
 
     // Notify listeners if online status changed
     if (wasOnline !== this.isOnline) {
@@ -103,7 +109,9 @@ class NetworkMonitor {
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
-      console.log('NetworkMonitor: Server unreachable', error.message);
+      if (__DEV__) {
+        console.log('NetworkMonitor: Server unreachable', error.message);
+      }
       return false;
     }
   }

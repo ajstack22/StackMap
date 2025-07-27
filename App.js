@@ -361,13 +361,16 @@ const App = () => {
   useEffect(() => {
     if (!isHydrated) return;
     
+    // Don't check sync status during onboarding to prevent flashes
+    if (showOnboarding || showSetupWizard) return;
+    
     const checkSyncStatus = async () => {
       const enabled = await syncService.isEnabled();
       setSyncEnabled(enabled);
     };
     
     checkSyncStatus();
-  }, [isHydrated]);
+  }, [isHydrated, showOnboarding, showSetupWizard]);
   
   // Load data on mount and migrate PIN if needed
   useEffect(() => {

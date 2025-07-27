@@ -883,7 +883,9 @@ class SyncService {
    * Handle network status changes
    */
   handleNetworkChange({ isOnline, wasOnline }) {
-    console.log('SyncService: Network changed', { isOnline, wasOnline });
+    if (__DEV__) {
+      console.log('SyncService: Network changed', { isOnline, wasOnline });
+    }
     
     if (!wasOnline && isOnline && this.syncEnabled) {
       console.log('SyncService: Back online, processing queue');
