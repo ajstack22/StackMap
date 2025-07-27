@@ -563,8 +563,11 @@ const App = () => {
               setConfirmPin('');
               setIsSettingPin(false);
               setHasPinProtection(true);
-              // Keep Users & Security modal open
               showToast({ message: 'PIN set successfully' });
+              // Reopen Users & Security modal after PIN is set
+              setTimeout(() => {
+                setShowUsersSecurityModal(true);
+              }, 300);
             } else {
               Alert.alert('Error', 'Failed to save PIN. Please try again.');
               setPinInput('');
@@ -3081,8 +3084,12 @@ const App = () => {
         onAddUser={() => setShowAddUserModal(true)}
         hasPinProtection={hasPinProtection}
         onPinChange={() => {
-          setIsSettingPin(true);
-          setShowPinModal(true);
+          // Close Users modal first, then show PIN modal
+          setShowUsersSecurityModal(false);
+          setTimeout(() => {
+            setIsSettingPin(true);
+            setShowPinModal(true);
+          }, 500);
         }}
         onPinRemove={async () => {
           console.log('Starting PIN removal...');
@@ -3109,8 +3116,12 @@ const App = () => {
           }
         }}
         onPinEnable={() => {
-          setIsSettingPin(true);
-          setShowPinModal(true);
+          // Close Users modal first, then show PIN modal
+          setShowUsersSecurityModal(false);
+          setTimeout(() => {
+            setIsSettingPin(true);
+            setShowPinModal(true);
+          }, 500);
         }}
         showToast={showToast}
       />
@@ -3123,6 +3134,12 @@ const App = () => {
           setPinInput('');
           setConfirmPin('');
           setIsSettingPin(false);
+          // Reopen Users & Security modal if we were setting up PIN
+          if (isSettingPin) {
+            setTimeout(() => {
+              setShowUsersSecurityModal(true);
+            }, 300);
+          }
         }}
         theme={theme}
         pinInput={pinInput}
