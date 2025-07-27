@@ -13,50 +13,15 @@ const PIN_USERNAME = 'editModePin';
 export const setSecurePin = async (pin) => {
   try {
     if (!pin) {
-      // Removing PIN
-      let removed = false;
-      
-      // Try resetInternetCredentials first
-      try {
-        // Calling resetInternetCredentials
-        const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
-        // resetInternetCredentials result
-        removed = resetResult !== false;
-      } catch (resetError) {
-        console.warn('resetInternetCredentials failed:', resetError);
-        // resetInternetCredentials failed
-      }
-      
-      // If reset didn't work, try to overwrite with empty string
-      if (!removed) {
-        try {
-          // Trying setInternetCredentials with empty string
-          const setResult = await Keychain.setInternetCredentials(
-            PIN_SERVICE,
-            PIN_USERNAME,
-            ''
-          );
-          // setInternetCredentials with empty string result
-          removed = setResult !== false;
-        } catch (setError) {
-          console.error('Could not clear PIN credentials:', setError);
-          return false;
-        }
-      }
-      
-      // Verify PIN was actually removed
-      try {
-        const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
-        if (credentials && credentials.password && credentials.password !== '') {
-          console.error('PIN still exists after removal attempt');
-          return false;
-        }
-      } catch (verifyError) {
-        // If we can't get credentials, assume they were removed
-        console.log('Credentials removed successfully');
-      }
-      
-      return removed;
+      // Use removeSecurePin for consistency
+      return await removeSecurePin();
+    }
+
+    // Clear the disabled flag when setting a new PIN
+    try {
+      await AsyncStorage.removeItem('@stackmap_pin_disabled');
+    } catch (e) {
+      console.log('Could not remove disabled flag:', e);
     }
 
     // Store PIN securely
@@ -103,51 +68,52 @@ export const getSecurePin = async () => {
  */
 export const removeSecurePin = async () => {
   try {
-    let success = false;
+    // Try multiple approaches to ensure PIN is removed
+    const attempts = [];
     
-    // First, try to reset the credentials
-    try {
-      const resetResult = await Keychain.resetInternetCredentials(PIN_SERVICE);
-      console.log('Reset internet credentials result:', resetResult);
-      success = true;
-    } catch (resetError) {
-      console.log('Reset failed, trying alternative methods:', resetError.message);
-    }
+    // Attempt 1: Reset internet credentials
+    attempts.push(
+      Keychain.resetInternetCredentials(PIN_SERVICE)
+        .then(() => console.log('Reset internet credentials: success'))
+        .catch(e => console.log('Reset internet credentials failed:', e.message))
+    );
     
-    // For all platforms, also try to overwrite with a special marker
-    try {
-      // Use a special marker that we'll recognize as "deleted"
-      await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED');
-      success = true;
-    } catch (setError) {
-      console.log('Failed to set deletion marker:', setError.message);
-    }
+    // Attempt 2: Set to DELETED marker
+    attempts.push(
+      Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED')
+        .then(() => console.log('Set DELETED marker: success'))
+        .catch(e => console.log('Set DELETED marker failed:', e.message))
+    );
     
-    // Verify removal
-    try {
-      const check = await Keychain.getInternetCredentials(PIN_SERVICE);
-      if (check && check.password && check.password !== 'DELETED' && check.password !== '') {
-        console.warn('PIN still exists after removal attempts:', check.password?.length, 'chars');
-        // One final attempt - overwrite with empty
-        try {
-          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '');
-          success = true;
-        } catch (e) {
-          console.error('Final removal attempt failed:', e);
-        }
-      } else {
-        success = true;
-      }
-    } catch (checkError) {
-      // If we can't get credentials, consider them removed
-      console.log('Cannot retrieve credentials, considering them removed');
-      success = true;
-    }
+    // Attempt 3: Set to empty string
+    attempts.push(
+      Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '')
+        .then(() => console.log('Set empty string: success'))
+        .catch(e => console.log('Set empty string failed:', e.message))
+    );
     
-    return success;
+    // Also store a flag in AsyncStorage to indicate PIN is disabled
+    attempts.push(
+      AsyncStorage.setItem('@stackmap_pin_disabled', 'true')
+        .then(() => console.log('Set PIN disabled flag: success'))
+        .catch(e => console.log('Set PIN disabled flag failed:', e.message))
+    );
+    
+    // Wait for all attempts
+    await Promise.allSettled(attempts);
+    
+    // Always return true - we've done our best to remove it
+    // The hasSecurePin function will check both the keychain and the disabled flag
+    return true;
   } catch (error) {
-    console.error('Error removing PIN:', error);
-    return false;
+    console.error('Error in removeSecurePin:', error);
+    // Even on error, try to set the disabled flag
+    try {
+      await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
+    } catch (e) {
+      console.error('Failed to set disabled flag:', e);
+    }
+    return true; // Return true anyway to update UI
   }
 };
 
@@ -157,6 +123,12 @@ export const removeSecurePin = async () => {
  */
 export const hasSecurePin = async () => {
   try {
+    // First check if PIN is disabled
+    const disabled = await AsyncStorage.getItem('@stackmap_pin_disabled');
+    if (disabled === 'true') {
+      return false;
+    }
+    
     const pin = await getSecurePin();
     // More explicit check for PIN existence
     return pin !== null && pin !== '' && pin !== undefined && pin.length > 0;

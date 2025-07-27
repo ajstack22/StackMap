@@ -2821,29 +2821,6 @@ const App = () => {
       
       {/* EditModeSettingsModal removed - functionality distributed to specific modals */}
       
-      {/* Add/Edit User Modal */}
-      <AddUserModal
-        visible={showAddUserModal}
-        onClose={() => {
-          setShowAddUserModal(false);
-          setEditingUser(null);
-        }}
-        theme={theme}
-        insets={insets}
-        newUserName={newUserName}
-        setNewUserName={setNewUserName}
-        newUserEmoji={newUserEmoji}
-        setNewUserEmoji={setNewUserEmoji}
-        showUserEmojiPicker={showUserEmojiPicker}
-        setShowUserEmojiPicker={setShowUserEmojiPicker}
-        editingUser={editingUser}
-        users={users}
-        onAddUser={handleAddUser}
-        onUpdateUser={handleUpdateUser}
-        showToast={showToast}
-        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
-      />
-      
       {/* Edit Mode Toolbar */}
       {showEditToolbar && (
         <EditModeToolbar
@@ -3071,9 +3048,9 @@ const App = () => {
           showToast({ message: `Switched to ${users[userId].name}` });
         }}
         onUserEdit={(userId, userName, userIcon) => {
-          setEditingUserId(userId);
-          setEditingUserName(userName);
-          setEditingUserIcon(userIcon);
+          setEditingUser({ id: userId, name: userName, icon: userIcon });
+          setNewUserName(userName);
+          setNewUserEmoji(userIcon);
           setShowAddUserModal(true);
         }}
         onUserDelete={deleteUser}
@@ -3128,6 +3105,29 @@ const App = () => {
         setPinInput={setPinInput}
         isSettingPin={isSettingPin}
         confirmPin={confirmPin}
+      />
+      
+      {/* Add/Edit User Modal - Rendered after UsersSecurityModal and PinModal for proper z-index */}
+      <AddUserModal
+        visible={showAddUserModal}
+        onClose={() => {
+          setShowAddUserModal(false);
+          setEditingUser(null);
+        }}
+        theme={theme}
+        insets={insets}
+        newUserName={newUserName}
+        setNewUserName={setNewUserName}
+        newUserEmoji={newUserEmoji}
+        setNewUserEmoji={setNewUserEmoji}
+        showUserEmojiPicker={showUserEmojiPicker}
+        setShowUserEmojiPicker={setShowUserEmojiPicker}
+        editingUser={editingUser}
+        users={users}
+        onAddUser={handleAddUser}
+        onUpdateUser={handleUpdateUser}
+        showToast={showToast}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
       
       {/* Toolbar Customize Modal */}
