@@ -350,7 +350,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
 
             {users.length === 0 && (
               <TouchableOpacity 
-                style={[styles.secondaryButton, { marginTop: SPACING.xxl }]}
+                style={[styles.secondaryButton, { marginTop: SPACING.md }]}
                 onPress={() => transitionTo('welcome')}
               >
                 <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
