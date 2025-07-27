@@ -169,33 +169,58 @@ const CompleteDayModal = ({
     );
   };
   
-  const renderSection = (title, activities, icon, iconColor, description, category) => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <View style={[styles.sectionIconContainer, { backgroundColor: iconColor + '20' }]}>
-          <Icon name={icon} size={Platform.OS === 'ios' ? 18 : 22} color={iconColor} />
-        </View>
-        <View style={styles.sectionTitleContainer}>
-          <Text style={styles.sectionTitle}>{title}</Text>
-          <Text style={styles.sectionCount}>({activities.length})</Text>
+  const renderSection = (title, activities, icon, iconColor, description, category) => {
+    // Debug log for iOS
+    if (Platform.OS === 'ios') {
+      console.log(`Section: ${title}, Activities: ${activities.length}`);
+    }
+    
+    return (
+      <View style={styles.section}>
+        <View style={styles.sectionInner}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.sectionIconContainer, { backgroundColor: iconColor + '20' }]}>
+              <Icon name={icon} size={Platform.OS === 'ios' ? 18 : 22} color={iconColor} />
+            </View>
+            <View style={styles.sectionTitleContainer}>
+              <Text style={styles.sectionTitle}>{title}</Text>
+              <Text style={styles.sectionCount}>({activities.length})</Text>
+            </View>
+          </View>
+          {description && (
+            <Text style={styles.sectionDescription}>{description}</Text>
+          )}
+          {Platform.OS === 'ios' ? (
+            <View style={[styles.activitiesContainer, { minHeight: 0, height: 'auto' }]}>
+              {activities.length > 0 ? (
+                <>
+                  {activities.map(activity => renderActivityCard(
+                    activity, 
+                    category,
+                    category !== 'newTomorrow' // Don't show actions for new tomorrow items
+                  ))}
+                </>
+              ) : (
+                <Text style={styles.emptyText}>No activities</Text>
+              )}
+            </View>
+          ) : (
+            <View style={styles.activitiesContainer}>
+              {activities.length > 0 ? (
+                activities.map(activity => renderActivityCard(
+                  activity, 
+                  category,
+                  category !== 'newTomorrow' // Don't show actions for new tomorrow items
+                ))
+              ) : (
+                <Text style={styles.emptyText}>No activities</Text>
+              )}
+            </View>
+          )}
         </View>
       </View>
-      {description && (
-        <Text style={styles.sectionDescription}>{description}</Text>
-      )}
-      <View style={styles.activitiesContainer}>
-        {activities.length > 0 ? (
-          activities.map(activity => renderActivityCard(
-            activity, 
-            category,
-            category !== 'newTomorrow' // Don't show actions for new tomorrow items
-          ))
-        ) : (
-          <Text style={styles.emptyText}>No activities</Text>
-        )}
-      </View>
-    </View>
-  );
+    );
+  };
   
   // Use theme light color for background
   const backgroundColor = theme.light;
@@ -208,30 +233,33 @@ const CompleteDayModal = ({
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <SafeAreaView style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
-        <StatusBar backgroundColor={theme.primary} barStyle="light-content" />
-        
-        {/* Header */}
-        <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-          <View style={styles.headerLeft}>
-            <Icon name="event-available" size={28} color="white" style={styles.headerIcon} />
-            <Text style={styles.modalTitle}>Complete Day</Text>
+      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+        )}
+        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+            <View style={styles.headerLeft}>
+              <Icon name="event-available" size={28} color="white" style={styles.headerIcon} />
+              <Text style={styles.modalTitle}>Complete Day</Text>
+            </View>
+            <TouchableOpacity 
+              onPress={onClose} 
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Icon name="close" size={30} color="white" />
+            </TouchableOpacity>
           </View>
-          <TouchableOpacity 
-            onPress={onClose} 
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Icon name="close" size={30} color="white" />
-          </TouchableOpacity>
-        </View>
+        </SafeAreaView>
         
-        {/* Content */}
-        <ScrollView 
-          style={[styles.modalContent, { backgroundColor }]}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-          bounces={Platform.OS === 'ios' ? false : true}
-        >
+        {/* Content wrapper with flex: 1 */}
+        <View style={{ flex: 1, backgroundColor }}>
+          <ScrollView 
+            style={styles.modalScrollView}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            bounces={Platform.OS === 'ios' ? false : true}
+          >
           {/* Complete Day Button at Top */}
           <View style={[styles.topActionContainer, { backgroundColor: theme.light }]}>
             <Text style={styles.explanationText}>
@@ -299,8 +327,10 @@ const CompleteDayModal = ({
             </Text>
           </View>
           
-        </ScrollView>
-      </SafeAreaView>
+          </ScrollView>
+        </View>
+        <SafeAreaView style={{ backgroundColor }} />
+      </View>
     </Modal>
   );
 };

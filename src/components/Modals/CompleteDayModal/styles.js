@@ -31,9 +31,12 @@ export const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
   },
+  modalScrollView: {
+    flex: 1,
+  },
   scrollContent: {
     paddingVertical: Platform.OS === 'ios' ? 0 : SPACING.xs,
-    flexGrow: Platform.OS === 'ios' ? 0 : 1,
+    ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
   },
   
   // Top Action Container
@@ -75,19 +78,27 @@ export const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? 2 : SPACING.md,
     marginBottom: Platform.OS === 'ios' ? 2 : 0,
     marginHorizontal: Platform.OS === 'ios' ? 6 : SPACING.md,
-    paddingTop: Platform.OS === 'ios' ? 6 : SPACING.lg,
-    paddingBottom: Platform.OS === 'ios' ? 4 : SPACING.lg,
-    paddingHorizontal: Platform.OS === 'ios' ? 8 : SPACING.lg,
     borderRadius: Platform.OS === 'ios' ? RADIUS.md : RADIUS.lg,
     borderWidth: Platform.OS === 'ios' ? 0 : 1,
     borderColor: 'rgba(0,0,0,0.06)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: Platform.OS === 'ios' ? 1 : 2 },
-    shadowOpacity: Platform.OS === 'ios' ? 0.02 : 0.04,
-    shadowRadius: Platform.OS === 'ios' ? 2 : 6,
-    elevation: Platform.OS === 'ios' ? 1 : 2,
-    minHeight: Platform.OS === 'ios' ? undefined : 'auto',
-    flex: Platform.OS === 'ios' ? 0 : undefined,
+    ...(Platform.OS !== 'ios' && {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.04,
+      shadowRadius: 6,
+      elevation: 2,
+    }),
+    overflow: 'hidden',
+  },
+  sectionInner: {
+    paddingTop: Platform.OS === 'ios' ? 6 : SPACING.lg,
+    paddingBottom: Platform.OS === 'ios' ? 4 : SPACING.lg,
+    paddingHorizontal: Platform.OS === 'ios' ? 8 : SPACING.lg,
+    ...(Platform.OS === 'ios' && {
+      flex: 0,
+      flexGrow: 0,
+      flexShrink: 1,
+    }),
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -135,10 +146,10 @@ export const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? 0 : SPACING.sm,
     marginLeft: Platform.OS === 'ios' ? -3 : -SPACING.xs,
     marginRight: Platform.OS === 'ios' ? -3 : 0,
-    minHeight: Platform.OS === 'ios' ? undefined : 'auto',
-    flex: Platform.OS === 'ios' ? 0 : undefined,
-    flexGrow: Platform.OS === 'ios' ? 0 : undefined,
-    flexShrink: Platform.OS === 'ios' ? 1 : undefined,
+    ...(Platform.OS === 'ios' && {
+      alignSelf: 'flex-start',
+      width: '100%',
+    }),
   },
   
   // Activity Card
@@ -159,6 +170,10 @@ export const styles = StyleSheet.create({
     shadowOpacity: 0,
     shadowRadius: 0,
     elevation: 0,
+    ...(Platform.OS === 'ios' && {
+      height: 32,
+      maxHeight: 32,
+    }),
   },
   actionIcon: {
     marginLeft: 'auto',
