@@ -181,7 +181,7 @@ const ActivityRow = ({
                 transparent={true}
                 visible={showMenu}
                 onRequestClose={() => setShowMenu(false)}
-                animationType={Platform.OS === 'ios' ? 'none' : 'fade'}
+                animationType="fade"
               >
                 <TouchableOpacity
                   style={styles.menuOverlay}
@@ -219,10 +219,9 @@ const ActivityRow = ({
                       </TouchableOpacity>
                     </View>
                   ) : (
-                    <SafeAreaView style={styles.mobileMenuContainer}>
-                      <View style={[styles.mobileMenuCard, { paddingBottom: SPACING.xl + Math.max(insets.bottom, 16) }]}>
-                        <View style={styles.mobileMenuHandle} />
-                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md }]}>{activity.name}</Text>
+                    <View style={styles.centerMenuContainer}>
+                      <View style={styles.centerMenuCard}>
+                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{activity.name}</Text>
                         
                         <TouchableOpacity
                           style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
@@ -246,7 +245,7 @@ const ActivityRow = ({
                           <Text style={[styles.menuItemText, { color: COLORS.error, fontSize: 18 }]}>Delete Activity</Text>
                         </TouchableOpacity>
                       </View>
-                    </SafeAreaView>
+                    </View>
                   )}
                 </TouchableOpacity>
               </Modal>
@@ -550,7 +549,7 @@ const CategorySection = ({
                       transparent={true}
                       visible={showMenu}
                       onRequestClose={() => setShowMenu(false)}
-                      animationType={Platform.OS === 'web' ? 'none' : 'slide'}
+                      animationType="fade"
                     >
                       <TouchableOpacity
                         style={styles.menuOverlay}
@@ -614,10 +613,9 @@ const CategorySection = ({
                             )}
                           </View>
                         ) : (
-                          <SafeAreaView style={styles.mobileMenuContainer}>
-                            <View style={[styles.mobileMenuCard, { paddingBottom: SPACING.xl + Math.max(insets.bottom, 16) }]}>
-                              <View style={styles.mobileMenuHandle} />
-                              <Text style={[styles.categoryTitle, { color: theme.primary, textAlign: 'center', marginBottom: SPACING.md }]}>{category.name}</Text>
+                          <View style={styles.centerMenuContainer}>
+                            <View style={styles.centerMenuCard}>
+                              <Text style={[styles.categoryTitle, { color: theme.primary, textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{category.name}</Text>
                               
                               <TouchableOpacity
                                 style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
@@ -667,7 +665,7 @@ const CategorySection = ({
                                 </TouchableOpacity>
                               )}
                             </View>
-                          </SafeAreaView>
+                          </View>
                         )}
                       </TouchableOpacity>
                     </Modal>
@@ -1634,7 +1632,9 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0, 0, 0, 0.3)',
+    backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   menuDropdown: {
     position: 'absolute',
@@ -1643,6 +1643,20 @@ const styles = StyleSheet.create({
     ...SHADOWS.level3,
     minWidth: 220,
     paddingVertical: SPACING.sm,
+  },
+  centerMenuContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xl,
+  },
+  centerMenuCard: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.xl,
+    padding: SPACING.xl,
+    width: '100%',
+    maxWidth: 340,
+    ...SHADOWS.level3,
   },
   mobileMenuContainer: {
     flex: 1,
