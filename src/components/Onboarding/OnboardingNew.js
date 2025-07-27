@@ -338,21 +338,19 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               </View>
             </View>
 
-            <View style={{ flex: 1, justifyContent: 'center', width: '100%', marginTop: SPACING.xl }}>
-              <TouchableOpacity 
-                style={[styles.primaryButton, !userName.trim() && styles.disabledButton, { marginTop: 0 }]}
-                onPress={addUser}
-                disabled={!userName.trim()}
-              >
-                <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                  {users.length === 0 ? 'Continue' : 'Add User'}
-                </Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity 
+              style={[styles.primaryButton, !userName.trim() && styles.disabledButton, { marginTop: SPACING.xxl }]}
+              onPress={addUser}
+              disabled={!userName.trim()}
+            >
+              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
+                {users.length === 0 ? 'Continue' : 'Add User'}
+              </Text>
+            </TouchableOpacity>
 
             {users.length === 0 && (
               <TouchableOpacity 
-                style={[styles.secondaryButton, { marginTop: 0 }]}
+                style={[styles.secondaryButton, { marginTop: SPACING.xxl }]}
                 onPress={() => transitionTo('welcome')}
               >
                 <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
