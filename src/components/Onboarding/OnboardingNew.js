@@ -348,6 +348,15 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               </Text>
             </TouchableOpacity>
 
+            {users.length === 0 && (
+              <TouchableOpacity 
+                style={styles.secondaryButton}
+                onPress={() => transitionTo('welcome')}
+              >
+                <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+              </TouchableOpacity>
+            )}
+
           </KeyboardAvoidingView>
         );
 
@@ -992,11 +1001,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[700],
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.xs,
     textAlign: 'center',
   },
   textInput: {
-    height: 52,
+    height: 48,
     borderWidth: 2,
     borderColor: COLORS.gray[300],
     borderRadius: RADIUS.lg,
@@ -1005,7 +1014,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[900],
     backgroundColor: 'white',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.lg,
     width: '100%',
     textAlign: 'center',
     ...SHADOWS.level1,
@@ -1013,7 +1022,7 @@ const styles = StyleSheet.create({
   emojiSelection: {
     flexDirection: 'row',
     gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.sm,
     justifyContent: 'center',
     marginTop: SPACING.xs,
   },
@@ -1049,18 +1058,18 @@ const styles = StyleSheet.create({
   },
   emojiInputContainer: {
     width: 200,
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
   },
   orText: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[500],
-    marginVertical: SPACING.sm,
+    marginVertical: SPACING.xs,
     textAlign: 'center',
   },
   previewSection: {
     alignItems: 'center',
-    marginVertical: SPACING.xl,
+    marginVertical: SPACING.md,
   },
   previewLabel: {
     fontSize: 14,
