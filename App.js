@@ -3220,22 +3220,10 @@ const App = () => {
           setEditingUser({ id: userId, name: userName, icon: userIcon });
           setNewUserName(userName);
           setNewUserEmoji(userIcon);
-          // Close the Users & Security modal first to avoid z-index issues on iOS
-          setShowUsersSecurityModal(false);
-          // Small delay to ensure the modal is closed before opening the next one
-          setTimeout(() => {
-            setShowAddUserModal(true);
-          }, 300);
+          setShowAddUserModal(true);
         }}
         onUserDelete={deleteUser}
-        onAddUser={() => {
-          // Close the Users & Security modal first to avoid z-index issues on iOS
-          setShowUsersSecurityModal(false);
-          // Small delay to ensure the modal is closed before opening the next one
-          setTimeout(() => {
-            setShowAddUserModal(true);
-          }, 300);
-        }}
+        onAddUser={() => setShowAddUserModal(true)}
         hasPinProtection={hasPinProtection}
         onPinChange={() => {
           setIsSettingPin(true);
@@ -3285,10 +3273,6 @@ const App = () => {
         onClose={() => {
           setShowAddUserModal(false);
           setEditingUser(null);
-          // Reopen the Users & Security modal after closing Add/Edit User modal
-          setTimeout(() => {
-            setShowUsersSecurityModal(true);
-          }, 300);
         }}
         theme={theme}
         insets={insets}

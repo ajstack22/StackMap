@@ -4,6 +4,8 @@ import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
 export const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
+    zIndex: 1000,
+    elevation: 1000,
   },
   modalHeader: {
     flexDirection: 'row',
