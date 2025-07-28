@@ -16,6 +16,7 @@ import { styles } from './styles';
 import { COLORS } from '../../../constants';
 import ConfirmModal from '../ConfirmModal';
 import PinModal from '../PinModal';
+import AddUserModal from '../AddUserModal';
 
 const UsersSecurityModal = ({
   visible,
@@ -39,6 +40,20 @@ const UsersSecurityModal = ({
   isSettingPin,
   confirmPin,
   pinLength,
+  // Add/Edit User Modal props
+  showAddUserModal,
+  setShowAddUserModal,
+  newUserName,
+  setNewUserName,
+  newUserEmoji,
+  setNewUserEmoji,
+  showUserEmojiPicker,
+  setShowUserEmojiPicker,
+  editingUser,
+  setEditingUser,
+  handleAddUser,
+  handleUpdateUser,
+  getAndroidModalBottomHeight,
 }) => {
   const insets = useSafeAreaInsets();
   const [showPinRemoveConfirm, setShowPinRemoveConfirm] = useState(false);
@@ -159,7 +174,12 @@ const UsersSecurityModal = ({
                       <View style={styles.userActions}>
                         <TouchableOpacity
                           style={styles.iconButton}
-                          onPress={() => onUserEdit(userId, user.name, user.icon)}
+                          onPress={() => {
+                            setEditingUser({ id: userId, name: user.name, icon: user.icon });
+                            setNewUserName(user.name);
+                            setNewUserEmoji(user.icon);
+                            setShowAddUserModal(true);
+                          }}
                         >
                           <Icon name="edit" size={20} color={theme.primary} />
                         </TouchableOpacity>
@@ -177,7 +197,15 @@ const UsersSecurityModal = ({
               </View>
 
               {Object.keys(users).filter(id => !users[id].deleted).length < 5 && (
-                <TouchableOpacity style={[styles.addUserButton, { borderColor: theme.primary }]} onPress={onAddUser}>
+                <TouchableOpacity 
+                  style={[styles.addUserButton, { borderColor: theme.primary }]} 
+                  onPress={() => {
+                    setEditingUser(null);
+                    setNewUserName('');
+                    setNewUserEmoji('😀');
+                    setShowAddUserModal(true);
+                  }}
+                >
                   <Icon name="person-add" size={20} color={theme.primary} />
                   <Text style={[styles.addUserText, { color: theme.primary }]}>Add User</Text>
                 </TouchableOpacity>
@@ -273,6 +301,7 @@ const UsersSecurityModal = ({
         isSettingPin={isSettingPin}
         confirmPin={confirmPin}
       />
+      
     </Modal>
   );
 };

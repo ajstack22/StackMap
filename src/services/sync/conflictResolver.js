@@ -368,12 +368,99 @@ class ConflictResolver {
   mergeUsersPreservingCompleted(localUsers, remoteUsers) {
     const mergedUsers = {};
     
+    // Track users by name and emoji to detect duplicates
+    const usersByNameAndEmoji = new Map();
+    const processedUserIds = new Set();
+    
     // First, process all users from both local and remote
     const allUserIds = new Set([...Object.keys(localUsers), ...Object.keys(remoteUsers)]);
     
+    // Build a map of existing users by name+emoji to detect duplicates
     allUserIds.forEach(userId => {
+      const user = localUsers[userId] || remoteUsers[userId];
+      if (user && !user.deleted) {
+        const key = `${user.name}|${user.icon}`;
+        if (!usersByNameAndEmoji.has(key)) {
+          usersByNameAndEmoji.set(key, []);
+        }
+        usersByNameAndEmoji.get(key).push({ userId, source: localUsers[userId] ? 'local' : 'remote' });
+      }
+    });
+    
+    allUserIds.forEach(userId => {
+      // Skip if already processed as part of deduplication
+      if (processedUserIds.has(userId)) {
+        return;
+      }
       const localUser = localUsers[userId];
       const remoteUser = remoteUsers[userId];
+      
+      // Check for duplicates before processing
+      if (localUser && !localUser.deleted || remoteUser && !remoteUser.deleted) {
+        const user = localUser || remoteUser;
+        const key = `${user.name}|${user.icon}`;
+        const duplicates = usersByNameAndEmoji.get(key) || [];
+        
+        if (duplicates.length > 1) {
+          // Found duplicates - merge them into one user
+          console.log(`[Sync] Detected duplicate users with name="${user.name}" and icon="${user.icon}"`);
+          
+          // Choose the oldest user ID as the primary one
+          const sortedDuplicates = duplicates.sort((a, b) => {
+            const aId = a.userId;
+            const bId = b.userId;
+            // Extract timestamp from user ID (user_<timestamp>_<index>)
+            const aTimestamp = parseInt(aId.split('_')[1]) || 0;
+            const bTimestamp = parseInt(bId.split('_')[1]) || 0;
+            return aTimestamp - bTimestamp;
+          });
+          
+          const primaryUserId = sortedDuplicates[0].userId;
+          
+          // If this is not the primary user, skip it
+          if (userId !== primaryUserId) {
+            processedUserIds.add(userId);
+            return;
+          }
+          
+          // Merge all duplicate users into the primary one
+          let mergedUser = null;
+          const mergedDays = {};
+          
+          duplicates.forEach(dup => {
+            processedUserIds.add(dup.userId);
+            const dupUser = localUsers[dup.userId] || remoteUsers[dup.userId];
+            
+            if (!mergedUser) {
+              mergedUser = JSON.parse(JSON.stringify(dupUser));
+              mergedUser.id = primaryUserId;
+            }
+            
+            // Merge activities from all duplicates
+            const dupDays = dupUser.days || {};
+            Object.keys(dupDays).forEach(day => {
+              if (!mergedDays[day]) {
+                mergedDays[day] = { activities: [] };
+              }
+              
+              const activities = dupDays[day]?.activities || [];
+              // Add activities, avoiding duplicates by ID
+              const existingIds = new Set(mergedDays[day].activities.map(a => a.id));
+              activities.forEach(activity => {
+                if (!existingIds.has(activity.id) && !activity.deleted) {
+                  mergedDays[day].activities.push(activity);
+                }
+              });
+            });
+          });
+          
+          if (mergedUser) {
+            mergedUser.days = mergedDays;
+            mergedUsers[primaryUserId] = mergedUser;
+          }
+          return;
+        }
+      }
       
       // Handle deletion conflicts
       if (localUser?.deleted && remoteUser?.deleted) {

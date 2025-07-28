@@ -88,6 +88,7 @@ import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, Celebr
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
+import PinModal from './src/components/Modals/PinModal';
 
 // Component imports verified - all components are properly imported
 
@@ -1407,6 +1408,42 @@ const App = () => {
     setEditingUser(null);
     setShowAddUserModal(false);
     showToast({ message: `Updated user: ${userName}` });
+  };
+
+  // PIN handlers
+  const handlePinChange = () => {
+    setIsSettingPin(true);
+    setShowPinModal(true);
+  };
+
+  const handlePinRemove = async () => {
+    console.log('Starting PIN removal...');
+    try {
+      const removed = await removeSecurePin();
+      console.log('removeSecurePin returned:', removed);
+      
+      // Always check if PIN was actually removed
+      const stillHasPin = await hasSecurePin();
+      console.log('hasSecurePin after removal:', stillHasPin);
+      
+      if (!stillHasPin) {
+        setHasPinProtection(false);
+        showToast({ message: 'PIN protection removed' });
+        console.log('PIN successfully removed');
+      } else {
+        console.error('PIN still exists after removal attempt');
+        setHasPinProtection(false); // Force UI update even if removal failed
+        showToast({ message: 'PIN removed (please restart app if issues persist)' });
+      }
+    } catch (error) {
+      console.error('Error removing PIN:', error);
+      showToast({ message: 'Error removing PIN. Please try again.', type: 'error' });
+    }
+  };
+
+  const handlePinEnable = () => {
+    setIsSettingPin(true);
+    setShowPinModal(true);
   };
 
   // Delete user function
@@ -2865,6 +2902,11 @@ const App = () => {
         <FAB
           icon={isEditMode ? "edit-off" : "edit"}
           onPress={() => {
+            console.log('[FAB] Edit button pressed', {
+              isEditMode,
+              hasPinProtection,
+              showPinModal
+            });
             if (isEditMode) {
               setIsEditMode(false);
               // Switch to today when exiting edit mode
@@ -2874,8 +2916,10 @@ const App = () => {
               // The toolbar will be removed after animation completes
             } else {
               if (hasPinProtection) {
+                console.log('[FAB] Has PIN protection, showing PIN modal');
                 setShowPinModal(true);
               } else {
+                console.log('[FAB] No PIN protection, entering edit mode');
                 setIsEditMode(true);
               }
             }
@@ -3225,38 +3269,9 @@ const App = () => {
         onUserDelete={deleteUser}
         onAddUser={() => setShowAddUserModal(true)}
         hasPinProtection={hasPinProtection}
-        onPinChange={() => {
-          setIsSettingPin(true);
-          setShowPinModal(true);
-        }}
-        onPinRemove={async () => {
-          console.log('Starting PIN removal...');
-          try {
-            const removed = await removeSecurePin();
-            console.log('removeSecurePin returned:', removed);
-            
-            // Always check if PIN was actually removed
-            const stillHasPin = await hasSecurePin();
-            console.log('hasSecurePin after removal:', stillHasPin);
-            
-            if (!stillHasPin) {
-              setHasPinProtection(false);
-              showToast({ message: 'PIN protection removed' });
-              console.log('PIN successfully removed');
-            } else {
-              console.error('PIN still exists after removal attempt');
-              setHasPinProtection(false); // Force UI update even if removal failed
-              showToast({ message: 'PIN removed (please restart app if issues persist)' });
-            }
-          } catch (error) {
-            console.error('Error removing PIN:', error);
-            showToast({ message: 'Error removing PIN. Please try again.', type: 'error' });
-          }
-        }}
-        onPinEnable={() => {
-          setIsSettingPin(true);
-          setShowPinModal(true);
-        }}
+        onPinChange={handlePinChange}
+        onPinRemove={handlePinRemove}
+        onPinEnable={handlePinEnable}
         showToast={showToast}
         pinInput={pinInput}
         setPinInput={setPinInput}
@@ -3265,9 +3280,23 @@ const App = () => {
         isSettingPin={isSettingPin}
         confirmPin={confirmPin}
         pinLength={pinInput.length}
+        // Add/Edit User Modal props
+        showAddUserModal={showAddUserModal}
+        setShowAddUserModal={setShowAddUserModal}
+        newUserName={newUserName}
+        setNewUserName={setNewUserName}
+        newUserEmoji={newUserEmoji}
+        setNewUserEmoji={setNewUserEmoji}
+        showUserEmojiPicker={showUserEmojiPicker}
+        setShowUserEmojiPicker={setShowUserEmojiPicker}
+        editingUser={editingUser}
+        setEditingUser={setEditingUser}
+        handleAddUser={handleAddUser}
+        handleUpdateUser={handleUpdateUser}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
       
-      {/* Add/Edit User Modal - Rendered after UsersSecurityModal and PinModal for proper z-index */}
+      {/* Add/Edit User Modal */}
       <AddUserModal
         visible={showAddUserModal}
         onClose={() => {
@@ -3333,6 +3362,24 @@ const App = () => {
         icon="refresh"
         iconColor={COLORS.error}
       />
+      
+      {/* PIN Modal for Edit Mode - Standalone for when not in Users & Security modal */}
+      {showPinModal && !showUsersSecurityModal && (
+        <PinModal
+          visible={showPinModal}
+          onClose={() => {
+            setShowPinModal(false);
+            setPinInput('');
+          }}
+          theme={theme}
+          pinInput={pinInput}
+          pinLength={PIN_LENGTH}
+          setPinInput={setPinInput}
+          isSettingPin={false}
+          confirmPin=""
+        />
+      )}
+      
       </>
   );
 
