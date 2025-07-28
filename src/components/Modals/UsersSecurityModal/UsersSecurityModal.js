@@ -16,7 +16,7 @@ import { styles } from './styles';
 import { COLORS } from '../../../constants';
 import ConfirmModal from '../ConfirmModal';
 import PinModal from '../PinModal';
-import AddUserModal from '../AddUserModal';
+import AddUserModal from '../AddUserModal/AddUserModal';
 
 const UsersSecurityModal = ({
   visible,
