@@ -13,6 +13,11 @@ import syncHistory from './syncHistory';
 
 // Determine API URL based on environment
 const getApiBaseUrl = () => {
+  // For iOS/Android development builds, use qual environment
+  if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+    return 'https://stackmap.app/qual/api/sync';
+  }
+  
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     // For local development
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
@@ -28,6 +33,11 @@ const API_BASE_URL = getApiBaseUrl();
 
 // Share endpoints use environment-specific API for testing
 const getShareApiUrl = () => {
+  // For iOS/Android development builds, use qual environment
+  if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+    return 'https://stackmap.app/qual/api/sync';
+  }
+  
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       // For local development
@@ -56,6 +66,9 @@ class SyncService {
     this.statusListeners = new Set();
     this.conflictListeners = new Set();
     this.pendingConflicts = [];
+    this.storeUnsubscribe = null;
+    this.syncDebounceTimer = null;
+    this.syncDebounceDelay = 5000; // 5 seconds
     
     // Initialize network monitoring
     networkMonitor.start();
@@ -84,22 +97,38 @@ class SyncService {
   async restoreState() {
     // Prevent multiple restores
     if (this.initialized) {
+      console.log('SyncService: Already initialized, skipping restore');
       return;
     }
     
     try {
+      console.log('SyncService: Restoring state...');
       const enabled = await AsyncStorage.getItem('@sync_enabled');
       const syncId = await AsyncStorage.getItem('@sync_id');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
+      const lastSyncSuccess = await AsyncStorage.getItem('@sync_last_success');
+      
+      console.log('SyncService: Loaded from storage - enabled:', enabled, 'syncId:', syncId);
       
       if (enabled === 'true' && syncId) {
         this.syncEnabled = true;
         this.syncId = syncId;
         this.lastSyncVersion = parseInt(lastVersion || '0', 10);
+        this.lastSyncSuccess = lastSyncSuccess ? parseInt(lastSyncSuccess, 10) : null;
         console.log('SyncService: State restored, syncId:', syncId, 'version:', this.lastSyncVersion);
         
         // Try to restore encryption automatically
-        await this.restoreEncryptionFromStorage();
+        const encryptionRestored = await this.restoreEncryptionFromStorage();
+        
+        if (encryptionRestored) {
+          // Start periodic sync now that we're restored
+          this.startPeriodicSync();
+          console.log('Sync fully restored and ready, periodic sync started');
+        } else {
+          console.log('Sync state restored but encryption needs recovery phrase');
+        }
+      } else {
+        console.log('SyncService: No sync state to restore');
       }
       
       this.initialized = true;
@@ -474,6 +503,9 @@ class SyncService {
       this.lastSyncSuccess = Date.now();
       this.updateSyncStatus('success');
       
+      // Persist last sync success time
+      await AsyncStorage.setItem('@sync_last_success', this.lastSyncSuccess.toString());
+      
       // Mark changes as synced
       changeTracker.markAsSynced();
       
@@ -491,9 +523,37 @@ class SyncService {
         this.updateSyncStatus('offline', 'Network error. Will retry when connection is restored.');
       } else {
         this.updateSyncStatus('error', error.message);
+        
+        // Log error to sync history for debugging
+        await syncHistory.recordOperation({
+          type: 'sync',
+          direction: 'both',
+          status: 'error',
+          error: error.message,
+          details: {
+            errorStack: error.stack,
+            syncId: this.syncId,
+            lastAttempt: this.lastSyncAttempt
+          }
+        });
+        
+        // Don't let errors break the sync loop entirely
+        // Schedule a retry after a delay
+        if (this.syncEnabled) {
+          console.log('Scheduling sync retry after error in 30 seconds...');
+          setTimeout(() => {
+            if (this.syncEnabled) {
+              this.requestSync({ priority: 'low', reason: 'error_recovery' });
+            }
+          }, 30000); // 30 seconds
+        }
       }
       
-      throw error;
+      // Don't throw error to prevent breaking the sync loop
+      return { 
+        success: false, 
+        error: error.message 
+      };
     }
   }
 
@@ -855,6 +915,9 @@ class SyncService {
     
     console.log('Starting periodic sync every', this.syncIntervalDuration / 1000, 'seconds');
     
+    // Subscribe to store changes for immediate sync
+    this.subscribeToStoreChanges();
+    
     // Run immediate sync
     this.syncWithQueue();
     
@@ -862,6 +925,44 @@ class SyncService {
     this.syncInterval = setInterval(() => {
       this.syncWithQueue();
     }, this.syncIntervalDuration);
+  }
+  
+  /**
+   * Subscribe to store changes to trigger sync
+   */
+  subscribeToStoreChanges() {
+    // Unsubscribe if already subscribed
+    if (this.storeUnsubscribe) {
+      this.storeUnsubscribe();
+    }
+    
+    // Subscribe to all state changes
+    this.storeUnsubscribe = useAppStore.subscribe(
+      (state) => {
+        // Only trigger sync if we're enabled and have a sync ID
+        if (this.syncEnabled && this.syncId && networkMonitor.isOnline) {
+          this.debouncedSync();
+        }
+      }
+    );
+    
+    console.log('Subscribed to store changes for automatic sync');
+  }
+  
+  /**
+   * Debounced sync to avoid too frequent syncs
+   */
+  debouncedSync() {
+    // Clear existing timer
+    if (this.syncDebounceTimer) {
+      clearTimeout(this.syncDebounceTimer);
+    }
+    
+    // Set new timer
+    this.syncDebounceTimer = setTimeout(() => {
+      console.log('Store change detected, triggering sync...');
+      this.requestSync({ priority: 'high', reason: 'store_change' });
+    }, this.syncDebounceDelay);
   }
   
   /**
@@ -895,6 +996,19 @@ class SyncService {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
       console.log('Stopped periodic sync');
+    }
+    
+    // Also unsubscribe from store changes
+    if (this.storeUnsubscribe) {
+      this.storeUnsubscribe();
+      this.storeUnsubscribe = null;
+      console.log('Unsubscribed from store changes');
+    }
+    
+    // Clear any pending sync timer
+    if (this.syncDebounceTimer) {
+      clearTimeout(this.syncDebounceTimer);
+      this.syncDebounceTimer = null;
     }
   }
   
@@ -1040,6 +1154,9 @@ class SyncService {
       // Update success status
       this.lastSyncSuccess = Date.now();
       this.updateSyncStatus('success');
+      
+      // Persist last sync success time
+      await AsyncStorage.setItem('@sync_last_success', this.lastSyncSuccess.toString());
       
       // Mark changes as synced
       changeTracker.markAsSynced();
@@ -1210,7 +1327,11 @@ class SyncService {
         share_version: 2
       };
 
-      const response = await fetch(`${SHARE_API_URL}/create_share.php`, {
+      const shareUrl = `${SHARE_API_URL}/create_share.php`;
+      console.log('Creating share at URL:', shareUrl);
+      console.log('Share API URL base:', SHARE_API_URL);
+
+      const response = await fetch(shareUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -1218,12 +1339,28 @@ class SyncService {
         body: JSON.stringify(requestBody)
       });
 
+      const responseText = await response.text();
+      
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to create share link');
+        // Try to parse as JSON first
+        try {
+          const error = JSON.parse(responseText);
+          throw new Error(error.error || 'Failed to create share link');
+        } catch (e) {
+          // If not JSON, it's likely an HTML error page
+          console.error('Share API returned non-JSON response:', responseText.substring(0, 200));
+          throw new Error(`Share API error (${response.status}): Server returned invalid response`);
+        }
       }
 
-      const result = await response.json();
+      // Parse the successful response
+      let result;
+      try {
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse share API response:', responseText.substring(0, 200));
+        throw new Error('Invalid response from share API');
+      }
       
       // Store share info locally for reference
       const shares = await this.getActiveShares();

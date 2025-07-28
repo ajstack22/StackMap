@@ -65,7 +65,9 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
           {/* Users Section */}
           <Text style={styles.sectionTitle}>Users</Text>
           <View style={styles.usersList}>
-            {Object.entries(users).map(([userId, user]) => (
+            {Object.entries(users)
+              .filter(([userId, user]) => !user.deleted)
+              .map(([userId, user]) => (
               <TouchableOpacity
                 key={userId}
                 style={[

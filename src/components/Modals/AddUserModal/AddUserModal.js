@@ -51,7 +51,7 @@ const AddUserModal = ({
     }
 
     if (editingUser) {
-      onUpdateUser(editingUser, newUserName.trim(), newUserEmoji);
+      onUpdateUser(editingUser.id, newUserName.trim(), newUserEmoji);
     } else {
       onAddUser(newUserName.trim(), newUserEmoji);
     }

@@ -84,7 +84,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, PinModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal, ConfirmModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal, ConfirmModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -449,10 +449,22 @@ const App = () => {
 
   // Data is now automatically persisted through Zustand
 
+  // Helper function to clean up activities array and ensure no gaps
+  const cleanupActivities = (activitiesArray) => {
+    if (!activitiesArray || !Array.isArray(activitiesArray)) return [];
+    
+    // Filter out any null, undefined, or deleted items
+    const validActivities = activitiesArray.filter(a => a && !a.deleted);
+    
+    // If there are any gaps in the array (e.g., missing indices), this will fix them
+    return validActivities;
+  };
+
   // Load activities when day changes
   useEffect(() => {
     if (currentUser && users[currentUser]) {
-      setActivities(users[currentUser]?.days?.[currentDay]?.activities || []);
+      const rawActivities = users[currentUser]?.days?.[currentDay]?.activities || [];
+      setActivities(cleanupActivities(rawActivities));
     }
   }, [currentDay, currentUser, users, setActivities]);
   
@@ -1384,16 +1396,12 @@ const App = () => {
 
   // Handle updating user from AddUserModal
   const handleUpdateUser = (userId, userName, userEmoji) => {
-    const updatedUsers = {
-      ...users,
-      [userId]: {
-        ...users[userId],
-        name: userName,
-        icon: userEmoji
-      }
-    };
+    // Use the store's updateUser method to properly update the user
+    updateUser(userId, {
+      name: userName,
+      icon: userEmoji
+    });
     
-    setUsers(updatedUsers);
     setNewUserName('');
     setNewUserEmoji('😀');
     setEditingUser(null);
@@ -1986,8 +1994,8 @@ const App = () => {
         const userIds = Object.keys(migratedData.users || {});
         if (userIds.length > 0) {
           setCurrentUser(userIds[0]);
-          const activities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
-          setActivities(activities.filter(a => !a.deleted));
+          const rawActivities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
+          setActivities(cleanupActivities(rawActivities));
           // Load the first user's theme
           if (migratedData.users[userIds[0]]?.settings?.theme) {
             setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
@@ -2260,7 +2268,9 @@ const App = () => {
   };
 
   const renderActivity = ({ item, drag, isActive, customWidth }) => {
-    const index = activities.findIndex(a => a.id === item.id);
+    // Get the actual index in the filtered activities array
+    const visibleActivities = activities.filter(a => a && !a.deleted);
+    const index = visibleActivities.findIndex(a => a.id === item.id);
     const CardContent = (
       <TouchableOpacity
         style={[
@@ -2342,7 +2352,7 @@ const App = () => {
           styles.activityTitle,
           item.completed && [styles.completedText, { color: 'white' }]
         ]}>
-          {item.text || item.title || ''}
+          {item.text || item.title || item.name || ''}
         </Text>
         
         {/* Description */}
@@ -2501,7 +2511,8 @@ const App = () => {
           // Toggle between today and tomorrow
           const newDay = currentDay === 'today' ? 'tomorrow' : 'today';
           setCurrentDay(newDay);
-          setActivities(users[currentUser]?.days?.[newDay]?.activities || []);
+          const rawActivities = users[currentUser]?.days?.[newDay]?.activities || [];
+          setActivities(cleanupActivities(rawActivities));
           
           // Show a quick toast to confirm the change
           showToast({ 
@@ -2979,11 +2990,13 @@ const App = () => {
       <ActivityLibrary
         visible={showActivityLibrary}
         onClose={() => setShowActivityLibrary(false)}
+        showToast={showToast}
           onSelectActivity={(activity) => {
             // Create a new activity from the template with unique ID
             const newActivity = {
               ...activity,
               id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
               completed: false,
               pinned: false,
             };
@@ -3008,7 +3021,7 @@ const App = () => {
             setUsers(updatedUsers);
             setActivities(updatedActivities);
             showToast({ 
-              message: `✅ Added: ${activity.emoji} ${activity.name || activity.text}`,
+              message: `✅ Added: ${activity.emoji} ${newActivity.text}`,
               duration: 2000,
             });
           }}
@@ -3017,11 +3030,14 @@ const App = () => {
             const newActivities = activitiesToAdd.map((activity, index) => ({
               ...activity,
               id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+              text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
               completed: false,
               pinned: false,
             }));
             
-            const updatedActivities = [...activities, ...newActivities];
+            // Ensure we don't have any gaps in the activities array
+            const validActivities = activities.filter(a => a && !a.deleted);
+            const updatedActivities = [...validActivities, ...newActivities];
             
             // Update the current day's activities
             const updatedUsers = {
@@ -3204,19 +3220,26 @@ const App = () => {
           setEditingUser({ id: userId, name: userName, icon: userIcon });
           setNewUserName(userName);
           setNewUserEmoji(userIcon);
-          setShowAddUserModal(true);
+          // Close the Users & Security modal first to avoid z-index issues on iOS
+          setShowUsersSecurityModal(false);
+          // Small delay to ensure the modal is closed before opening the next one
+          setTimeout(() => {
+            setShowAddUserModal(true);
+          }, 300);
         }}
         onUserDelete={deleteUser}
-        onAddUser={() => setShowAddUserModal(true)}
+        onAddUser={() => {
+          // Close the Users & Security modal first to avoid z-index issues on iOS
+          setShowUsersSecurityModal(false);
+          // Small delay to ensure the modal is closed before opening the next one
+          setTimeout(() => {
+            setShowAddUserModal(true);
+          }, 300);
+        }}
         hasPinProtection={hasPinProtection}
         onPinChange={() => {
           setIsSettingPin(true);
-          // Close the UsersSecurityModal first to avoid modal stacking
-          setShowUsersSecurityModal(false);
-          // Small delay to ensure modal closes before showing PIN modal
-          setTimeout(() => {
-            setShowPinModal(true);
-          }, 100);
+          setShowPinModal(true);
         }}
         onPinRemove={async () => {
           console.log('Starting PIN removal...');
@@ -3232,10 +3255,14 @@ const App = () => {
               setHasPinProtection(false);
               showToast({ message: 'PIN protection removed' });
               console.log('PIN successfully removed');
+              // Close the Users & Security modal after successful PIN removal
+              setShowUsersSecurityModal(false);
             } else {
               console.error('PIN still exists after removal attempt');
               setHasPinProtection(false); // Force UI update even if removal failed
               showToast({ message: 'PIN removed (please restart app if issues persist)' });
+              // Close the modal even if there was an issue
+              setShowUsersSecurityModal(false);
             }
           } catch (error) {
             console.error('Error removing PIN:', error);
@@ -3244,30 +3271,16 @@ const App = () => {
         }}
         onPinEnable={() => {
           setIsSettingPin(true);
-          // Close the UsersSecurityModal first to avoid modal stacking
-          setShowUsersSecurityModal(false);
-          // Small delay to ensure modal closes before showing PIN modal
-          setTimeout(() => {
-            setShowPinModal(true);
-          }, 100);
+          setShowPinModal(true);
         }}
         showToast={showToast}
-      />
-      
-      {/* PIN Modal - Rendered after UsersSecurityModal to ensure proper z-index */}
-      <PinModal
-        visible={showPinModal}
-        onClose={() => {
-          setShowPinModal(false);
-          setPinInput('');
-          setConfirmPin('');
-          setIsSettingPin(false);
-        }}
-        theme={theme}
         pinInput={pinInput}
         setPinInput={setPinInput}
+        showPinModal={showPinModal}
+        setShowPinModal={setShowPinModal}
         isSettingPin={isSettingPin}
         confirmPin={confirmPin}
+        pinLength={pinInput.length}
       />
       
       {/* Add/Edit User Modal - Rendered after UsersSecurityModal and PinModal for proper z-index */}
@@ -3276,6 +3289,10 @@ const App = () => {
         onClose={() => {
           setShowAddUserModal(false);
           setEditingUser(null);
+          // Reopen the Users & Security modal after closing Add/Edit User modal
+          setTimeout(() => {
+            setShowUsersSecurityModal(true);
+          }, 300);
         }}
         theme={theme}
         insets={insets}

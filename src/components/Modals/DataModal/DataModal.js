@@ -123,6 +123,7 @@ const DataModal = ({
     }
     setSyncId(null);
     setSyncRecoveryPhrase('');
+    setShowDisableSyncConfirm(false);
     showToast({ message: 'Sync disabled' });
   };
 
@@ -136,9 +137,11 @@ const DataModal = ({
       }
       setSyncId(null);
       setSyncRecoveryPhrase('');
+      setShowDeleteServerDataConfirm(false);
       showToast({ message: 'All sync data permanently deleted from server' });
     } catch (error) {
       showToast({ message: error.message || 'Failed to delete sync data' });
+      setShowDeleteServerDataConfirm(false);
     } finally {
       setSyncLoading(false);
     }
