@@ -302,6 +302,29 @@ const UsersSecurityModal = ({
         confirmPin={confirmPin}
       />
       
+      {/* Add/Edit User Modal - Rendered inside UsersSecurityModal for proper iOS stacking */}
+      <AddUserModal
+        visible={showAddUserModal}
+        onClose={() => {
+          setShowAddUserModal(false);
+          setEditingUser(null);
+        }}
+        theme={theme}
+        insets={insets}
+        newUserName={newUserName}
+        setNewUserName={setNewUserName}
+        newUserEmoji={newUserEmoji}
+        setNewUserEmoji={setNewUserEmoji}
+        showUserEmojiPicker={showUserEmojiPicker}
+        setShowUserEmojiPicker={setShowUserEmojiPicker}
+        editingUser={editingUser}
+        users={users}
+        onAddUser={handleAddUser}
+        onUpdateUser={handleUpdateUser}
+        showToast={showToast}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+      />
+      
     </Modal>
   );
 };

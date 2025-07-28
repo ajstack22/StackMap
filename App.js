@@ -3296,28 +3296,31 @@ const App = () => {
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
       
-      {/* Add/Edit User Modal */}
-      <AddUserModal
-        visible={showAddUserModal}
-        onClose={() => {
-          setShowAddUserModal(false);
-          setEditingUser(null);
-        }}
-        theme={theme}
-        insets={insets}
-        newUserName={newUserName}
-        setNewUserName={setNewUserName}
-        newUserEmoji={newUserEmoji}
-        setNewUserEmoji={setNewUserEmoji}
-        showUserEmojiPicker={showUserEmojiPicker}
-        setShowUserEmojiPicker={setShowUserEmojiPicker}
-        editingUser={editingUser}
-        users={users}
-        onAddUser={handleAddUser}
-        onUpdateUser={handleUpdateUser}
-        showToast={showToast}
-        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
-      />
+      {/* Add/Edit User Modal - Only render when UsersSecurityModal is not visible */}
+      {/* On iOS, this modal is rendered inside UsersSecurityModal for proper stacking */}
+      {(Platform.OS !== 'ios' || !showUsersSecurityModal) && (
+        <AddUserModal
+          visible={showAddUserModal}
+          onClose={() => {
+            setShowAddUserModal(false);
+            setEditingUser(null);
+          }}
+          theme={theme}
+          insets={insets}
+          newUserName={newUserName}
+          setNewUserName={setNewUserName}
+          newUserEmoji={newUserEmoji}
+          setNewUserEmoji={setNewUserEmoji}
+          showUserEmojiPicker={showUserEmojiPicker}
+          setShowUserEmojiPicker={setShowUserEmojiPicker}
+          editingUser={editingUser}
+          users={users}
+          onAddUser={handleAddUser}
+          onUpdateUser={handleUpdateUser}
+          showToast={showToast}
+          getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+        />
+      )}
       
       {/* Toolbar Customize Modal */}
       <ToolbarCustomizeModal
