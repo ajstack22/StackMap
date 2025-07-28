@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Modal,
   View,
@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { COLORS } from '../../../constants';
 import ConfirmModal from '../ConfirmModal';
+import PinModal from '../PinModal';
 
 const UsersSecurityModal = ({
   visible,
@@ -31,6 +32,13 @@ const UsersSecurityModal = ({
   onPinRemove,
   onPinEnable,
   showToast,
+  pinInput,
+  setPinInput,
+  showPinModal,
+  setShowPinModal,
+  isSettingPin,
+  confirmPin,
+  pinLength,
 }) => {
   const insets = useSafeAreaInsets();
   const [showPinRemoveConfirm, setShowPinRemoveConfirm] = useState(false);
@@ -70,7 +78,18 @@ const UsersSecurityModal = ({
   
   const confirmPinRemove = () => {
     showToast({ message: 'Removing PIN...' });
+    setShowPinRemoveConfirm(false);
     onPinRemove();
+  };
+  
+  // Handle PIN modal close
+  const handlePinModalClose = () => {
+    setShowPinModal(false);
+    setPinInput('');
+    if (isSettingPin && confirmPin) {
+      // Reset confirmPin if we're in the setting flow
+      onPinChange(); // This will reset confirmPin in parent
+    }
   };
 
   return (
@@ -241,6 +260,18 @@ const UsersSecurityModal = ({
         confirmButtonColor="#e53e3e"
         icon="lock-open"
         iconColor="#e53e3e"
+      />
+      
+      {/* PIN Modal - Rendered inside UsersSecurityModal for proper stacking */}
+      <PinModal
+        visible={showPinModal}
+        onClose={handlePinModalClose}
+        theme={theme}
+        pinInput={pinInput}
+        pinLength={pinLength || pinInput.length}
+        setPinInput={setPinInput}
+        isSettingPin={isSettingPin}
+        confirmPin={confirmPin}
       />
     </Modal>
   );

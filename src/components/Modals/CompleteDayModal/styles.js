@@ -10,14 +10,10 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 20,
-    backgroundColor: 'white',
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
   },
   headerIcon: {
     marginRight: 12,
@@ -28,127 +24,131 @@ export const styles = StyleSheet.create({
     color: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
-  modalContent: {
-    flex: 1,
-  },
+  // 🚨 CRITICAL iOS FIX - DO NOT CHANGE 🚨
+  // iOS modals will expand beyond content without these EXACT constraints
   modalScrollView: {
-    flex: 1,
+    flex: 1,  // REQUIRED: Must have flex: 1 for proper iOS layout
   },
   scrollContent: {
-    paddingVertical: Platform.OS === 'ios' ? 0 : SPACING.xs,
+    // CRITICAL: iOS must NOT have flexGrow or panels become huge
     ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
   },
   
   // Top Action Container
   topActionContainer: {
-    backgroundColor: 'white',
-    paddingVertical: Platform.OS === 'ios' ? 8 : SPACING.xl,
-    paddingHorizontal: Platform.OS === 'ios' ? 12 : SPACING.lg,
-    margin: Platform.OS === 'ios' ? 6 : SPACING.md,
-    marginBottom: Platform.OS === 'ios' ? 8 : SPACING.xs,
+    backgroundColor: '#f8f9fa',
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
     alignItems: 'center',
-    borderRadius: Platform.OS === 'ios' ? RADIUS.md : RADIUS.lg,
-    borderWidth: Platform.OS === 'ios' ? 0 : 1,
-    borderColor: 'rgba(0,0,0,0.06)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: Platform.OS === 'ios' ? 1 : 2 },
-    shadowOpacity: Platform.OS === 'ios' ? 0.02 : 0.04,
-    shadowRadius: Platform.OS === 'ios' ? 2 : 6,
-    elevation: Platform.OS === 'ios' ? 1 : 2,
+    ...(Platform.OS === 'ios' && {
+      alignSelf: 'stretch',
+    }),
+  },
+  topIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
   },
   explanationText: {
-    fontSize: Platform.OS === 'ios' ? 15 : 16,
+    fontSize: 16,
+    fontWeight: '600',
     color: '#000',
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     textAlign: 'center',
-    lineHeight: Platform.OS === 'ios' ? 20 : 22,
-    marginBottom: Platform.OS === 'ios' ? 4 : SPACING.xs,
+    marginBottom: SPACING.xs,
   },
   explanationSubtext: {
-    fontSize: Platform.OS === 'ios' ? 13 : 14,
-    color: '#000',
+    fontSize: 14,
+    color: '#000',  // Changed from #666 for accessibility
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
-    marginBottom: Platform.OS === 'ios' ? SPACING.xs : SPACING.sm,
+    marginBottom: SPACING.md,
   },
   
   // Sections
   section: {
     backgroundColor: 'white',
-    marginTop: Platform.OS === 'ios' ? 8 : SPACING.md,
+    marginTop: SPACING.md,
     marginBottom: 0,
-    marginHorizontal: Platform.OS === 'ios' ? 6 : SPACING.md,
-    borderRadius: Platform.OS === 'ios' ? RADIUS.md : RADIUS.lg,
-    borderWidth: Platform.OS === 'ios' ? 0 : 1,
-    borderColor: 'rgba(0,0,0,0.06)',
-    ...(Platform.OS !== 'ios' && {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.04,
-      shadowRadius: 6,
-      elevation: 2,
-    }),
+    marginHorizontal: SPACING.md,  // Same as summary/top containers
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
     overflow: 'hidden',
+    ...(Platform.OS === 'ios' && {
+      alignSelf: 'stretch',
+    }),
   },
   sectionInner: {
-    paddingTop: Platform.OS === 'ios' ? 6 : SPACING.lg,
-    paddingBottom: Platform.OS === 'ios' ? 4 : SPACING.lg,
-    paddingHorizontal: Platform.OS === 'ios' ? 8 : SPACING.lg,
+    padding: SPACING.lg,
+    // 🚨 CRITICAL iOS CONSTRAINT - NEVER REMOVE 🚨
+    // Without these exact values, panels will expand to fill screen
     ...(Platform.OS === 'ios' && {
-      flex: 0,
-      flexGrow: 0,
-      flexShrink: 1,
+      flex: 0,       // MUST be 0 to prevent expansion
+      flexGrow: 0,   // MUST be 0 to prevent growing
+      flexShrink: 1, // Allow shrinking if needed
     }),
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: Platform.OS === 'ios' ? 4 : SPACING.sm,
+    justifyContent: 'center',
+    marginBottom: SPACING.md,
   },
   sectionIconContainer: {
-    width: Platform.OS === 'ios' ? 32 : 40,
-    height: Platform.OS === 'ios' ? 32 : 40,
-    borderRadius: Platform.OS === 'ios' ? 16 : 20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: Platform.OS === 'ios' ? 8 : SPACING.md,
+    marginRight: SPACING.sm,  // Reduced margin
   },
   sectionTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    justifyContent: 'center',
   },
   sectionTitle: {
-    fontSize: Platform.OS === 'ios' ? 17 : 18,
-    fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: 17,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
   },
   sectionCount: {
     fontSize: 16,
-    color: '#000',
+    color: '#666',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginLeft: SPACING.xs,
   },
   sectionDescription: {
-    fontSize: Platform.OS === 'ios' ? 11 : 13,
-    color: '#000',
+    fontSize: 13,
+    color: '#000',  // Changed for accessibility
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    marginBottom: Platform.OS === 'ios' ? 2 : SPACING.sm,
-    opacity: 0.7,
-    lineHeight: Platform.OS === 'ios' ? 14 : 18,
+    marginBottom: SPACING.md,
+    lineHeight: 18,
+    textAlign: 'center',
   },
   
   // Activities Container
   activitiesContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginTop: Platform.OS === 'ios' ? 0 : SPACING.sm,
-    marginLeft: Platform.OS === 'ios' ? -3 : -SPACING.xs,
-    marginRight: Platform.OS === 'ios' ? -3 : 0,
+    justifyContent: 'center',  // Center the activity cards
+    marginTop: SPACING.sm,
+    marginLeft: -SPACING.xs,
+    marginRight: -SPACING.xs,
     ...(Platform.OS === 'ios' && {
-      alignSelf: 'flex-start',
       width: '100%',
+      flexGrow: 0, // Prevent expansion
+      flexShrink: 1, // Allow shrinking
     }),
   },
   
@@ -156,77 +156,98 @@ export const styles = StyleSheet.create({
   activityCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Platform.OS === 'ios' ? '#f5f5f5' : 'white',
-    borderRadius: Platform.OS === 'ios' ? 6 : RADIUS.lg,
-    paddingVertical: Platform.OS === 'ios' ? 6 : 12,
-    paddingHorizontal: Platform.OS === 'ios' ? 10 : 16,
-    marginLeft: Platform.OS === 'ios' ? 3 : SPACING.xs,
-    marginRight: Platform.OS === 'ios' ? 3 : 0,
-    marginBottom: Platform.OS === 'ios' ? 3 : SPACING.sm,
-    borderWidth: 0,
-    borderColor: 'rgba(0,0,0,0.08)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0,
-    shadowRadius: 0,
-    elevation: 0,
+    backgroundColor: '#f8f9fa',
+    borderRadius: RADIUS.md,
+    paddingVertical: Platform.OS === 'ios' ? 8 : 12,
+    paddingHorizontal: Platform.OS === 'ios' ? 8 : 16, // Reduced iOS padding for more text space
+    marginLeft: Platform.OS === 'ios' ? 4 : SPACING.xs,
+    marginRight: Platform.OS === 'ios' ? 4 : SPACING.xs,
+    marginBottom: Platform.OS === 'ios' ? 6 : SPACING.sm,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    minHeight: Platform.OS === 'ios' ? 36 : 44,
+    flexBasis: 'auto', // Allow cards to size based on content
+    flexGrow: 0,
+    // 🚨 iOS HEIGHT FIX - REQUIRED TO PREVENT PANEL EXPANSION 🚨
     ...(Platform.OS === 'ios' && {
-      height: 32,
-      maxHeight: 32,
+      height: 'auto',    // Let height adjust to content
+      maxHeight: 60,     // Prevent excessive expansion
+      minWidth: '45%',   // Take up more width to show text
     }),
   },
   actionIcon: {
-    marginLeft: 'auto',
-    marginRight: SPACING.xs,
+    marginLeft: SPACING.sm,
   },
   activityEmoji: {
-    fontSize: Platform.OS === 'ios' ? 16 : 20,
-    marginRight: Platform.OS === 'ios' ? 4 : SPACING.xs,
+    fontSize: 18,
+    marginRight: Platform.OS === 'ios' ? 6 : SPACING.sm, // Less margin on iOS
+  },
+  activityTextContainer: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  activityTitle: {
+    fontSize: 14,
+    color: '#000',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   activityText: {
-    fontSize: Platform.OS === 'ios' ? 12 : 14,
-    color: '#000',
+    fontSize: 12,
+    color: '#000',  // Changed from #666 for accessibility
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    flex: 1,
-    lineHeight: Platform.OS === 'ios' ? 16 : 20,
+    lineHeight: 16,
   },
   emptyText: {
     fontSize: 14,
-    color: '#000',
+    color: '#000',  // Changed from #999 for accessibility
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontStyle: 'italic',
+    padding: SPACING.md,
+    textAlign: 'center',
+    width: '100%',
   },
   
   // Summary
   summaryContainer: {
-    backgroundColor: 'white',
-    paddingVertical: Platform.OS === 'ios' ? 6 : SPACING.lg,
-    paddingHorizontal: Platform.OS === 'ios' ? 10 : SPACING.lg,
-    marginTop: Platform.OS === 'ios' ? 8 : SPACING.md,
-    marginHorizontal: Platform.OS === 'ios' ? 6 : SPACING.md,
-    marginBottom: Platform.OS === 'ios' ? 8 : SPACING.md,
-    borderRadius: Platform.OS === 'ios' ? RADIUS.md : RADIUS.lg,
-    borderWidth: Platform.OS === 'ios' ? 0 : 1,
-    borderColor: 'rgba(0,0,0,0.06)',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: Platform.OS === 'ios' ? 1 : 2 },
-    shadowOpacity: Platform.OS === 'ios' ? 0.02 : 0.04,
-    shadowRadius: Platform.OS === 'ios' ? 2 : 6,
-    elevation: Platform.OS === 'ios' ? 1 : 2,
+    backgroundColor: '#f8f9fa',
+    padding: SPACING.lg,
+    marginTop: SPACING.md,
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.xl,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.05)',
+    ...(Platform.OS === 'ios' && {
+      alignSelf: 'stretch',
+    }),
+  },
+  summaryHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  summaryIcon: {
+    marginRight: SPACING.xs,
   },
   summaryTitle: {
-    fontSize: Platform.OS === 'ios' ? 14 : 16,
-    fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
-    marginBottom: Platform.OS === 'ios' ? 2 : SPACING.sm,
+  },
+  summaryContent: {
+    gap: SPACING.sm,
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   summaryText: {
-    fontSize: Platform.OS === 'ios' ? 12 : 14,
-    color: '#000',
+    fontSize: 14,
+    color: '#000',  // Changed from #333 for consistency
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    lineHeight: Platform.OS === 'ios' ? 16 : 22,
-    marginBottom: Platform.OS === 'ios' ? 1 : SPACING.xs,
+    flex: 1,
   },
   
   // Actions
@@ -239,25 +260,21 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: Platform.OS === 'ios' ? 10 : 16,
-    paddingHorizontal: Platform.OS === 'ios' ? 24 : 40,
-    borderRadius: Platform.OS === 'ios' ? RADIUS.lg : RADIUS.xl,
-    marginTop: Platform.OS === 'ios' ? 8 : SPACING.lg,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: Platform.OS === 'ios' ? 2 : 4 },
-    shadowOpacity: Platform.OS === 'ios' ? 0.1 : 0.15,
-    shadowRadius: Platform.OS === 'ios' ? 4 : 8,
-    elevation: Platform.OS === 'ios' ? 2 : 4,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    borderRadius: RADIUS.full,
+    marginTop: SPACING.lg,
+    ...SHADOWS.level2,
   },
   buttonIcon: {
     marginRight: SPACING.xs,
   },
   buttonText: {
     color: 'white',
-    fontSize: Platform.OS === 'ios' ? 15 : 17,
-    fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    letterSpacing: Platform.OS === 'ios' ? 0.3 : 0.5,
+    fontSize: 16,
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    letterSpacing: 0.3,
   },
   cancelButton: {
     alignItems: 'center',

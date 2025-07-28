@@ -317,6 +317,7 @@ const CategorySection = ({
   const [orderedActivities, setOrderedActivities] = useState(category.activities);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [justAddedAll, setJustAddedAll] = useState(false);
   const menuButtonRef = useRef(null);
   const screenWidth = Dimensions.get('window').width;
   const isMobile = screenWidth < 480;
@@ -445,6 +446,12 @@ const CategorySection = ({
         { text: 'Delete', style: 'destructive', onPress: () => onDeleteCategory(category) },
       ]
     );
+  };
+
+  const handleAddAll = () => {
+    onAddAllFromCategory(category);
+    setJustAddedAll(true);
+    setTimeout(() => setJustAddedAll(false), 1500);
   };
 
   // Create stable interpolations using useRef to avoid re-creation
@@ -580,11 +587,21 @@ const CategorySection = ({
                                 style={styles.menuItem}
                                 onPress={() => {
                                   setShowMenu(false);
-                                  onAddAllFromCategory(category);
+                                  handleAddAll();
                                 }}
+                                disabled={justAddedAll}
                               >
-                                <Icon name="add-circle-outline" size={20} color={theme.primary} />
-                                <Text style={[styles.menuItemText, { color: theme.primary }]}>Add All to Cards</Text>
+                                <Icon 
+                                  name={justAddedAll ? "done-all" : "add-circle-outline"} 
+                                  size={20} 
+                                  color={justAddedAll ? 'white' : theme.primary} 
+                                />
+                                <Text style={[styles.menuItemText, { 
+                                  color: justAddedAll ? 'white' : theme.primary,
+                                  fontWeight: justAddedAll ? 'bold' : 'normal'
+                                }]}>
+                                  {justAddedAll ? 'Added!' : 'Add All to Cards'}
+                                </Text>
                               </TouchableOpacity>
                             )}
                             
@@ -633,11 +650,22 @@ const CategorySection = ({
                                   style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
                                   onPress={() => {
                                     setShowMenu(false);
-                                    onAddAllFromCategory(category);
+                                    handleAddAll();
                                   }}
+                                  disabled={justAddedAll}
                                 >
-                                  <Icon name="add-circle-outline" size={24} color={theme.primary} />
-                                  <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Add All to Cards</Text>
+                                  <Icon 
+                                    name={justAddedAll ? "done-all" : "add-circle-outline"} 
+                                    size={24} 
+                                    color={justAddedAll ? 'white' : theme.primary} 
+                                  />
+                                  <Text style={[styles.menuItemText, { 
+                                    color: justAddedAll ? 'white' : theme.primary, 
+                                    fontSize: 18,
+                                    fontWeight: justAddedAll ? 'bold' : 'normal'
+                                  }]}>
+                                    {justAddedAll ? 'Added!' : 'Add All to Cards'}
+                                  </Text>
                                 </TouchableOpacity>
                               )}
                               
@@ -691,9 +719,14 @@ const CategorySection = ({
                   {category.activities.length > 0 && (
                     <TouchableOpacity
                       style={styles.iconButton}
-                      onPress={() => onAddAllFromCategory(category)}
+                      onPress={handleAddAll}
+                      disabled={justAddedAll}
                     >
-                      <Icon name="add-circle-outline" size={20} color="white" />
+                      <Icon 
+                        name={justAddedAll ? "done-all" : "add-circle-outline"} 
+                        size={20} 
+                        color="white" 
+                      />
                     </TouchableOpacity>
                   )}
                   
@@ -811,6 +844,7 @@ const ActivityLibrary = ({
   theme,
   categories: customCategories,
   onSaveCategories,
+  showToast,
 }) => {
   const insets = useSafeAreaInsets();
   const [categories, setCategories] = useState(customCategories || DEFAULT_CATEGORIES);
@@ -1005,12 +1039,6 @@ const ActivityLibrary = ({
       } else {
         return;
       }
-      
-      Alert.alert(
-        'Added to Cards',
-        `Added ${category.activities.length} activities from "${category.name}" to your current cards.`,
-        [{ text: 'OK' }]
-      );
     }
   };
 

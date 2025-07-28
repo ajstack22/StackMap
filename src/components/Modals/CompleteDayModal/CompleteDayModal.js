@@ -134,17 +134,17 @@ const CompleteDayModal = ({
     // Determine which icon to show based on current category
     const showDeleteIcon = category === 'keep' || category === 'fromTomorrow';
     const targetCategory = showDeleteIcon ? 'delete' : 'keep';
-    const iconName = showDeleteIcon ? 'delete' : 'push-pin';
-    const iconColor = showDeleteIcon ? '#d32f2f' : '#4CAF50';
+    const iconName = showDeleteIcon ? 'delete-outline' : 'push-pin';
+    const iconColor = showDeleteIcon ? '#e53e3e' : theme.primary;
     
     const CardContent = (
       <>
         <Text style={styles.activityEmoji}>{activity.emoji || '🎯'}</Text>
-        <Text style={styles.activityText} numberOfLines={1}>
-          {activity.text || activity.title || 'Activity'}
+        <Text style={[styles.activityTitle, { flex: 1 }]} numberOfLines={2}>
+          {activity.text || activity.title || activity.name || ''}
         </Text>
         {showActions && category !== 'newTomorrow' && (
-          <Icon name={iconName} size={Platform.OS === 'ios' ? 16 : 20} color={iconColor} style={styles.actionIcon} />
+          <Icon name={iconName} size={18} color={iconColor} style={styles.actionIcon} />
         )}
       </>
     );
@@ -179,8 +179,8 @@ const CompleteDayModal = ({
       <View style={styles.section}>
         <View style={styles.sectionInner}>
           <View style={styles.sectionHeader}>
-            <View style={[styles.sectionIconContainer, { backgroundColor: iconColor + '20' }]}>
-              <Icon name={icon} size={Platform.OS === 'ios' ? 18 : 22} color={iconColor} />
+            <View style={[styles.sectionIconContainer, { backgroundColor: iconColor + '15' }]}>
+              <Icon name={icon} size={20} color={iconColor} />
             </View>
             <View style={styles.sectionTitleContainer}>
               <Text style={styles.sectionTitle}>{title}</Text>
@@ -190,33 +190,17 @@ const CompleteDayModal = ({
           {description && (
             <Text style={styles.sectionDescription}>{description}</Text>
           )}
-          {Platform.OS === 'ios' ? (
-            <View style={[styles.activitiesContainer, { minHeight: 0, height: 'auto' }]}>
-              {activities.length > 0 ? (
-                <>
-                  {activities.map(activity => renderActivityCard(
-                    activity, 
-                    category,
-                    category !== 'newTomorrow' // Don't show actions for new tomorrow items
-                  ))}
-                </>
-              ) : (
-                <Text style={styles.emptyText}>No activities</Text>
-              )}
-            </View>
-          ) : (
-            <View style={styles.activitiesContainer}>
-              {activities.length > 0 ? (
-                activities.map(activity => renderActivityCard(
-                  activity, 
-                  category,
-                  category !== 'newTomorrow' // Don't show actions for new tomorrow items
-                ))
-              ) : (
-                <Text style={styles.emptyText}>No activities</Text>
-              )}
-            </View>
-          )}
+          <View style={styles.activitiesContainer}>
+            {activities.length > 0 ? (
+              activities.map(activity => renderActivityCard(
+                activity, 
+                category,
+                category !== 'newTomorrow' // Don't show actions for new tomorrow items
+              ))
+            ) : (
+              <Text style={styles.emptyText}>No activities</Text>
+            )}
+          </View>
         </View>
       </View>
     );
@@ -240,41 +224,44 @@ const CompleteDayModal = ({
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
             <View style={styles.headerLeft}>
-              <Icon name="event-available" size={28} color="white" style={styles.headerIcon} />
+              <Icon name="event-available" size={24} color="white" style={styles.headerIcon} />
               <Text style={styles.modalTitle}>Complete Day</Text>
             </View>
             <TouchableOpacity 
               onPress={onClose} 
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              style={{ padding: 8 }}
             >
-              <Icon name="close" size={30} color="white" />
+              <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
         </SafeAreaView>
         
-        {/* Content wrapper with flex: 1 */}
         <View style={{ flex: 1, backgroundColor }}>
           <ScrollView 
             style={styles.modalScrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
-            bounces={Platform.OS === 'ios' ? false : true}
           >
           {/* Complete Day Button at Top */}
-          <View style={[styles.topActionContainer, { backgroundColor: theme.light }]}>
-            <Text style={styles.explanationText}>
-              {hasTomorrowActivities 
-                ? 'Review and adjust how activities will be organized:'
-                : 'Complete today and clean up activities:'}
-            </Text>
+          <View style={styles.topActionContainer}>
+            <View style={styles.summaryHeader}>
+              <Icon name="event-available" size={20} color={theme.primary} style={styles.summaryIcon} />
+              <Text style={styles.explanationText}>
+                {hasTomorrowActivities 
+                  ? 'Review and organize your activities'
+                  : 'Complete today and clean up your day'}
+              </Text>
+            </View>
             <Text style={styles.explanationSubtext}>
-              Tap 📌 to keep, tap 🗑️ to remove
+              Tap activities to move them between sections
             </Text>
             <TouchableOpacity
               style={[styles.primaryButton, { backgroundColor: theme.primary }]}
               onPress={handleCompleteDay}
+              activeOpacity={0.8}
             >
-              <Icon name="check" size={20} color="white" style={styles.buttonIcon} />
+              <Icon name="check-circle" size={20} color="white" style={styles.buttonIcon} />
               <Text style={styles.buttonText}>Complete Day</Text>
             </TouchableOpacity>
           </View>
@@ -283,49 +270,33 @@ const CompleteDayModal = ({
           {renderSection(
             'Will Be Removed',
             unpinnedToDelete,
-            'delete',
-            '#d32f2f',
-            hasTomorrowActivities ? 'These activities will be deleted' : 'Unpinned activities will be deleted',
+            'delete-outline',
+            '#e53e3e',
+            'These activities will be permanently deleted',
             'delete'
           )}
           
           {/* Today Section - Tomorrow's Activities - Only show if tomorrow has activities */}
           {hasTomorrowActivities && renderSection(
-            'Tomorrow → Today',
+            'Moving from Tomorrow',
             tomorrowToToday,
-            'arrow-forward',
+            'schedule',
             '#2196F3',
-            "Tomorrow's activities moving to today",
+            "Tomorrow's activities will move to today",
             'fromTomorrow'
           )}
           
           {/* Keep Section - Pinned Activities */}
           {renderSection(
-            hasTomorrowActivities ? 'Keep Today & Copy to Tomorrow' : 'Keep for Today',
+            hasTomorrowActivities ? 'Keep & Copy Forward' : 'Keep for Today',
             pinnedToKeep,
             'push-pin',
-            '#4CAF50',
+            theme.primary,
             hasTomorrowActivities 
-              ? 'Pinned activities stay on today and are copied to tomorrow'
+              ? 'Pinned activities stay today and copy to tomorrow'
               : 'Pinned activities will remain on today',
             'keep'
           )}
-          
-          {/* Summary */}
-          <View style={[styles.summaryContainer, { backgroundColor: theme.light }]}>
-            <Text style={styles.summaryTitle}>Summary:</Text>
-            <Text style={styles.summaryText}>
-              • {unpinnedToDelete.length} activities will be removed
-            </Text>
-            {hasTomorrowActivities && (
-              <Text style={styles.summaryText}>
-                • {tomorrowToToday.length} activities move from tomorrow to today
-              </Text>
-            )}
-            <Text style={styles.summaryText}>
-              • {pinnedToKeep.length} pinned activities {hasTomorrowActivities ? 'stay today & copy to tomorrow' : 'will remain on today'}
-            </Text>
-          </View>
           
           </ScrollView>
         </View>

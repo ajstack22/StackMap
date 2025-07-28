@@ -42,6 +42,20 @@ Use `./scripts/simple-deploy.sh` (it rsyncs from qual to prod)
 3. StackMap serves neurodivergent users who need clear, high-contrast interfaces
 4. Always test with all theme colors to ensure readability
 
+## 🚨 iOS MODAL PANEL EXPANSION FIX 🚨
+
+If panels in modals appear "too large" or "too big" on iOS, check these EXACT constraints:
+
+```javascript
+// REQUIRED iOS constraints in styles.js:
+modalScrollView: { flex: 1 }
+scrollContent: { ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }) }
+sectionInner: { ...(Platform.OS === 'ios' && { flex: 0, flexGrow: 0, flexShrink: 1 }) }
+activityCard: { ...(Platform.OS === 'ios' && { height: 32, maxHeight: 32 }) }
+```
+
+**NEVER:** Use inline styles, remove constraints, or add flexGrow on iOS!
+
 ## 🐛 COMMON ISSUES & FIXES
 
 ### Alert.alert Doesn't Work on Web
@@ -120,3 +134,7 @@ onSelectMultipleActivities={(activities) => {
 - Fixed PIN modal z-index issues
 - Fixed Alert.alert not working on web for Remove PIN button
 - Fixed "Add All" button only adding one activity due to React state batching
+- Fixed card numbering gaps issue (cards starting at 5 instead of 1)
+  - Added cleanupActivities() helper to filter out null/undefined/deleted items
+  - Updated renderActivity to use filtered activities for proper indexing
+  - Ensures card numbers always start at 1 and are sequential

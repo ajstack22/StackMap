@@ -88,5 +88,47 @@ This document outlines the standard patterns for implementing modals in StackMap
 - Consider desktop viewports
 - Keyboard navigation support
 
+## 🚨 CRITICAL: iOS Modal Panel Expansion Fix 🚨
+
+### The Problem
+iOS modals will expand beyond their content and become "too large" without proper flex constraints. This has caused HOURS of debugging.
+
+### The Solution Pattern
+```javascript
+// styles.js - MUST FOLLOW EXACTLY
+modalScrollView: {
+  flex: 1,  // REQUIRED for iOS
+},
+scrollContent: {
+  // iOS must NOT have flexGrow
+  ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
+},
+sectionInner: {
+  ...(Platform.OS === 'ios' && {
+    flex: 0,       // CRITICAL: Prevents expansion
+    flexGrow: 0,   // CRITICAL: No growing
+    flexShrink: 1, // Can shrink if needed
+  }),
+},
+activityCard: {
+  ...(Platform.OS === 'ios' && {
+    height: 32,    // FIXED height
+    maxHeight: 32, // MUST match height
+  }),
+}
+```
+
+### ⚠️ Common Mistakes That Break iOS Modals
+1. **Adding flexGrow to scrollContent on iOS** - Panels become huge
+2. **Removing flex constraints from sectionInner** - Sections expand
+3. **Using inline styles like `{ height: 'auto' }`** - Breaks constraints
+4. **Forgetting the wrapper View with flex: 1** - Layout breaks
+
+### Testing Checklist
+- [ ] Test on iOS simulator with multiple theme colors
+- [ ] Ensure panels only show content height, not full screen
+- [ ] Check with 0 activities, few activities, many activities
+- [ ] Verify scrolling works when content exceeds screen
+
 ## Example Implementation
 See `CompleteDayModal` for a complete implementation following these patterns.

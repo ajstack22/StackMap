@@ -1,1 +1,1 @@
-export { default as PinModal } from './PinModal';
+export { default } from './PinModal';

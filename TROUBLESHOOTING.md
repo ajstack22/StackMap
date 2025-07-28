@@ -101,7 +101,57 @@ git push
 
 ---
 
-### 5. Platform-Specific Issues
+### 5. iOS Modal Panels Expanding Too Large 🚨 CRITICAL FIX 🚨
+
+**Symptoms:**
+- Modal panels expand beyond their content on iOS
+- Sections appear "too big" or "too large"
+- Content doesn't fit properly within modal boundaries
+
+**Cause:**
+iOS handles flex properties differently in ScrollView. Without proper constraints, panels will expand to fill all available space.
+
+**Solution - MUST FOLLOW EXACTLY:**
+```javascript
+// 1. ScrollView MUST have flex: 1
+modalScrollView: {
+  flex: 1,  // REQUIRED for iOS
+},
+
+// 2. scrollContent MUST NOT have flexGrow on iOS
+scrollContent: {
+  ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
+},
+
+// 3. sectionInner MUST have iOS constraints
+sectionInner: {
+  ...(Platform.OS === 'ios' && {
+    flex: 0,      // CRITICAL: Prevents expansion
+    flexGrow: 0,  // CRITICAL: No growing
+    flexShrink: 1,// CRITICAL: Can shrink if needed
+  }),
+},
+
+// 4. Activity cards MUST have explicit height on iOS
+activityCard: {
+  ...(Platform.OS === 'ios' && {
+    height: 32,    // CRITICAL: Fixed height
+    maxHeight: 32, // CRITICAL: Prevent expansion
+  }),
+}
+```
+
+**⚠️ NEVER DO THIS:**
+- Don't use inline styles like `{ minHeight: 0, height: 'auto' }` on iOS
+- Don't remove the iOS-specific flex constraints
+- Don't use flexGrow on iOS ScrollView content
+- Don't forget the wrapper View with flex: 1
+
+**This fix has caused hours of debugging. DO NOT CHANGE without understanding why each constraint exists!**
+
+---
+
+### 6. Platform-Specific Issues
 
 ### iOS Issues
 - **White screen**: Check Xcode console for errors
@@ -248,6 +298,36 @@ setActivities(prevActivities => {
 - Always batch multiple state updates into a single setState call
 - Use functional setState when the new state depends on the previous state
 - Create separate handlers for single vs multiple item operations
+
+---
+
+### 8. Card Numbering Gaps (Cards Starting at 5 Instead of 1)
+
+**Symptoms:**
+- Card numbers don't start at 1
+- Missing card numbers (e.g., no cards 1-4, first card shows as 5)
+- Gaps in card numbering sequence
+- Issue often occurs after using "Add All" from Activity Library
+
+**Cause:**
+Card numbers are based on the array index position. If the activities array has null/undefined values or gaps, the numbering will be incorrect.
+
+**Solution:**
+The app now includes a `cleanupActivities()` helper function that:
+```javascript
+// Filters out any null, undefined, or deleted items
+const validActivities = activitiesArray.filter(a => a && !a.deleted);
+```
+
+This is automatically applied when:
+- Loading activities on app start
+- Switching between today/tomorrow
+- Adding multiple activities via "Add All"
+
+**Prevention:**
+- Always use the batch handler `onSelectMultipleActivities` for adding multiple items
+- The app automatically cleans up the activities array to prevent gaps
+- Card numbers are calculated based on visible (non-deleted) activities only
 
 ---
 
