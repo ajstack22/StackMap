@@ -3255,14 +3255,10 @@ const App = () => {
               setHasPinProtection(false);
               showToast({ message: 'PIN protection removed' });
               console.log('PIN successfully removed');
-              // Close the Users & Security modal after successful PIN removal
-              setShowUsersSecurityModal(false);
             } else {
               console.error('PIN still exists after removal attempt');
               setHasPinProtection(false); // Force UI update even if removal failed
               showToast({ message: 'PIN removed (please restart app if issues persist)' });
-              // Close the modal even if there was an issue
-              setShowUsersSecurityModal(false);
             }
           } catch (error) {
             console.error('Error removing PIN:', error);
