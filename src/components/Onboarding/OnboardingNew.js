@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Dimensions,
   Platform,
-  SafeAreaView,
   TextInput,
   KeyboardAvoidingView,
   ScrollView,
@@ -176,14 +175,16 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     switch (currentScreen) {
       case 'welcome':
         return (
-          <ScrollView 
-            style={styles.scrollContent}
-            contentContainerStyle={[styles.welcomeContent, {
-              paddingTop: Platform.OS === 'web' ? styles.welcomeContent.paddingTop : (40 + insets.top),
-              paddingBottom: Platform.OS === 'web' ? styles.welcomeContent.paddingBottom : (20 + insets.bottom)
-            }]}
-            showsVerticalScrollIndicator={false}
-          >
+          <View style={{ flex: 1 }}>
+            <ScrollView 
+              style={styles.scrollContent}
+              contentContainerStyle={[styles.welcomeContent, {
+                paddingTop: Platform.OS === 'web' ? styles.welcomeContent.paddingTop : (20 + insets.top),
+                paddingBottom: Platform.OS === 'web' ? styles.welcomeContent.paddingBottom : 
+                  Math.max(20, insets.bottom)
+              }]}
+              showsVerticalScrollIndicator={false}
+            >
             <Logo size={Platform.OS === 'web' ? 80 : 60} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
             <Text style={styles.welcomeTitle}>StackMap</Text>
             <Text style={styles.welcomeSubtitle}>Routine Ready</Text>
@@ -246,9 +247,11 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
                   </TouchableOpacity>
                 </View>
+                
               </>
             )}
           </ScrollView>
+          </View>
         );
 
       case 'createUser':
@@ -257,7 +260,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={[styles.createUserContainer, {
               paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.bottom)
+              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
             }]}
           >
             <Text style={styles.screenTitle}>
@@ -367,8 +370,8 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             <ScrollView 
               style={styles.scrollContent} 
               contentContainerStyle={[styles.featuresScrollContent, {
-                paddingBottom: Platform.OS === 'web' ? SPACING.lg : (40 + insets.bottom),
-                paddingTop: Platform.OS === 'web' ? styles.featuresScrollContent.paddingTop : (60 + insets.top)
+                paddingBottom: Platform.OS === 'web' ? SPACING.lg : Math.max(20, insets.bottom),
+                paddingTop: Platform.OS === 'web' ? styles.featuresScrollContent.paddingTop : (20 + insets.top)
               }]}
               showsVerticalScrollIndicator={false}
             >
@@ -404,7 +407,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                       ]}>
                         <Icon 
                           name={feature.icon} 
-                          size={Platform.OS === 'web' ? 28 : (isTablet() ? 44 : 32)} 
+                          size={Platform.OS === 'web' ? 28 : (isTablet() ? 44 : 28)} 
                           color={activeFeature === index ? 'white' : THEMES.stackBlue.primary} 
                         />
                       </View>
@@ -554,7 +557,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               <ScrollView 
                 style={styles.scrollContent} 
                 contentContainerStyle={[styles.syncContent, {
-                  paddingBottom: Platform.OS === 'web' ? SPACING.xl : (20 + insets.bottom),
+                  paddingBottom: Platform.OS === 'web' ? SPACING.xl : Math.max(20, insets.bottom),
                   paddingTop: Platform.OS === 'web' ? SPACING.xl : (20 + insets.top)
                 }]}
                 showsVerticalScrollIndicator={false}
@@ -649,7 +652,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={[styles.createUserContainer, {
               paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.bottom)
+              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
             }]}
           >
             <Text style={styles.screenTitle}>Secure Your StackMap</Text>
@@ -721,7 +724,8 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         return (
           <View style={[styles.completeContainer, {
             paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-            paddingBottom: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.bottom)
+            paddingBottom: Platform.OS === 'web' ? SPACING.xxl : 
+              (isTablet() ? Math.max(80, SPACING.xxl + insets.bottom) : (SPACING.xxl + insets.bottom))
           }]}>
             <View style={styles.successIcon}>
               <Icon name="check-circle" size={80} color={THEMES.stackBlue.primary} />
@@ -752,7 +756,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <View style={styles.container}>
       {Platform.OS === 'android' && (
         <StatusBar 
           backgroundColor="#f8f9fa"
@@ -770,8 +774,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       >
         {renderContent()}
       </Animated.View>
-      
-    </SafeAreaView>
+    </View>
   );
 };
 
@@ -1106,7 +1109,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     display: 'flex',
     flexDirection: 'row',
-    marginTop: Platform.OS === 'web' ? 16 : (Platform.OS === 'ios' ? 16 : 32),
+    marginTop: Platform.OS === 'web' ? 16 : 16,
     width: Platform.OS === 'web' ? 'auto' : '100%',
     maxWidth: 300,
     minWidth: Platform.OS === 'web' ? 150 : undefined,
@@ -1170,9 +1173,9 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   whiteFab: {
-    width: Platform.OS === 'web' ? 60 : (isTablet() ? 110 : 70),
-    height: Platform.OS === 'web' ? 60 : (isTablet() ? 110 : 70),
-    borderRadius: Platform.OS === 'web' ? 30 : (isTablet() ? 55 : 35),
+    width: Platform.OS === 'web' ? 60 : (isTablet() ? 110 : 60),
+    height: Platform.OS === 'web' ? 60 : (isTablet() ? 110 : 60),
+    borderRadius: Platform.OS === 'web' ? 30 : (isTablet() ? 55 : 30),
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1201,8 +1204,8 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   featureDetailsWrapper: {
-    minHeight: Platform.OS === 'web' ? 220 : (Platform.OS === 'ios' ? 260 : 380),
-    marginBottom: Platform.OS === 'web' ? 0 : (Platform.OS === 'ios' ? 16 : 40),
+    minHeight: Platform.OS === 'web' ? 220 : (Platform.OS === 'ios' ? 260 : 280),
+    marginBottom: Platform.OS === 'web' ? 0 : (Platform.OS === 'ios' ? 16 : 20),
   },
   featureDetails: {
     paddingHorizontal: Platform.OS === 'web' ? SPACING.md : SPACING.sm,
@@ -1254,7 +1257,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     marginTop: Platform.OS === 'web' ? SPACING.md : 0,
-    marginBottom: Platform.OS === 'web' ? SPACING.sm : (Platform.OS === 'ios' ? 16 : 50),
+    marginBottom: Platform.OS === 'web' ? SPACING.sm : (Platform.OS === 'ios' ? 16 : 20),
   },
   indicator: {
     width: 8,

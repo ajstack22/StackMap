@@ -20,6 +20,11 @@ const DraggableFlatList = Platform.OS !== 'web'
   ? require('react-native-draggable-flatlist').default 
   : null;
 
+// Import GestureHandlerRootView for platforms that need it
+const GestureHandlerRootView = Platform.OS !== 'web' 
+  ? require('react-native-gesture-handler').GestureHandlerRootView
+  : null;
+
 const DEFAULT_TOOLBAR_ORDER = ['data', 'users', 'share', 'complete', 'plan', 'library', 'add'];
 
 const TOOLBAR_BUTTONS = {
@@ -195,7 +200,7 @@ const ToolbarCustomizeModal = ({
           translucent={false}
         />
       )}
-      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
         )}
@@ -247,8 +252,8 @@ const ToolbarCustomizeModal = ({
               }
             </Text>
 
-            {Platform.OS === 'web' ? (
-              // Web doesn't support DraggableFlatList, show list with up/down controls
+            {Platform.OS !== 'ios' ? (
+              // Web and Android use arrow controls instead of drag-and-drop
               <View style={styles.buttonsList}>
                 {buttonOrder.map((buttonId, index) => {
                   const button = TOOLBAR_BUTTONS[buttonId];
@@ -289,13 +294,15 @@ const ToolbarCustomizeModal = ({
                 })}
               </View>
             ) : (
-              <DraggableFlatList
-                data={buttonOrder}
-                renderItem={renderButton}
-                keyExtractor={(item) => item}
-                onDragEnd={({ data }) => setButtonOrder(data)}
-                style={styles.buttonsList}
-              />
+              <GestureHandlerRootView style={{ flex: 1 }}>
+                <DraggableFlatList
+                  data={buttonOrder}
+                  renderItem={renderButton}
+                  keyExtractor={(item) => item}
+                  onDragEnd={({ data }) => setButtonOrder(data)}
+                  style={styles.buttonsList}
+                />
+              </GestureHandlerRootView>
             )}
 
             <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
@@ -311,7 +318,9 @@ const ToolbarCustomizeModal = ({
             </TouchableOpacity>
           </ScrollView>
         </View>
-        <SafeAreaView style={{ backgroundColor: theme.light }} />
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
+        )}
       </View>
     </Modal>
   );

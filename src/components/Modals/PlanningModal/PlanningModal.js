@@ -42,7 +42,7 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
           translucent={false}
         />
       )}
-      <View style={[styles.modalContainer, { backgroundColor: themeColors.primary }]}>
+      <View style={[styles.modalContainer, { backgroundColor: themeColors.light }]}>
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: themeColors.primary, height: StatusBar.currentHeight || 24 }} />
         )}
@@ -156,10 +156,8 @@ const PlanningModal = ({ visible, onClose, currentUser, currentDay, users, onSel
         </SafeAreaView>
         {Platform.OS === 'android' && (
           <View style={{ 
-            backgroundColor: themeColors.primary, 
-            height: (Dimensions.get('window').width >= 768 || Dimensions.get('window').height > 800) 
-              ? Math.max(insets.bottom * 1.2, 20) // Reduced by 40%
-              : Math.max(insets.bottom, 10) // Reduced by 40%
+            backgroundColor: themeColors.light, 
+            height: Math.max(insets.bottom, 20)
           }} />
         )}
       </View>

@@ -1128,7 +1128,7 @@ const ActivityLibrary = ({
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View style={[styles.container, { backgroundColor: theme.primary }]}>
+      <View style={[styles.container, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
           <StatusBar 
             backgroundColor={theme.primary} 
@@ -1362,15 +1362,8 @@ const ActivityLibrary = ({
         showCustomImages={true}
       />
       
-      {Platform.OS === 'ios' ? (
-        <SafeAreaView style={{ backgroundColor: theme.light, flex: 0 }} />
-      ) : (
-        <View style={{ 
-          backgroundColor: theme.light, 
-          height: (isTablet() || Dimensions.get('window').height > 800) 
-            ? Math.max(insets.bottom * 0.6, 10) // Half of standard modal height
-            : Math.max(insets.bottom * 0.5, 5) // Half of standard modal height
-        }} />
+      {Platform.OS === 'android' && (
+        <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
       )}
       </View>
     </Modal>

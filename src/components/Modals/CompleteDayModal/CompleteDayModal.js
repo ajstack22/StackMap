@@ -10,8 +10,11 @@ import {
   Alert,
   Platform,
 } from 'react-native';
+import { gestureHandlerRootHOC } from 'react-native-gesture-handler';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
+import { SPACING } from '../../../constants';
 
 const CompleteDayModal = ({
   visible,
@@ -23,6 +26,7 @@ const CompleteDayModal = ({
   currentUser,
   users,
 }) => {
+  const insets = useSafeAreaInsets();
   // State for managing which activities go where
   const [unpinnedToDelete, setUnpinnedToDelete] = useState([]);
   const [pinnedToKeep, setPinnedToKeep] = useState([]);
@@ -209,19 +213,13 @@ const CompleteDayModal = ({
   // Use theme light color for background
   const backgroundColor = theme.light;
   
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      statusBarTranslucent={true}
-      onRequestClose={onClose}
-    >
-      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
-        {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-        )}
-        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+  // Create the modal content
+  const ModalContent = () => (
+    <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
+        <View style={{ 
+          backgroundColor: theme.primary, 
+          paddingTop: Platform.OS === 'android' ? (StatusBar.currentHeight || 24) : insets.top 
+        }}>
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
             <View style={styles.headerLeft}>
               <Icon name="event-available" size={24} color="white" style={styles.headerIcon} />
@@ -235,14 +233,21 @@ const CompleteDayModal = ({
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
-        </SafeAreaView>
+        </View>
         
         <View style={{ flex: 1, backgroundColor }}>
           <ScrollView 
-            style={styles.modalScrollView}
-            contentContainerStyle={styles.scrollContent}
+            style={{ flex: 1 }}
+            contentContainerStyle={{ 
+              padding: SPACING.lg, 
+              paddingBottom: 100, // Increased padding to ensure scrollability
+              flexGrow: 1 // Allow content to grow
+            }}
             showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+            scrollEnabled={true}
           >
+          <TouchableOpacity activeOpacity={1} style={{ flex: 1 }}>
           {/* Complete Day Button at Top */}
           <View style={styles.topActionContainer}>
             <View style={styles.summaryHeader}>
@@ -298,10 +303,27 @@ const CompleteDayModal = ({
             'keep'
           )}
           
+          </TouchableOpacity>
           </ScrollView>
         </View>
-        <SafeAreaView style={{ backgroundColor }} />
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
+        )}
       </View>
+  );
+
+  // Wrap content with gestureHandlerRootHOC for Android
+  const WrappedContent = Platform.OS === 'android' ? gestureHandlerRootHOC(ModalContent) : ModalContent;
+  
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={false}
+      statusBarTranslucent={true}
+      onRequestClose={onClose}
+    >
+      <WrappedContent />
     </Modal>
   );
 };

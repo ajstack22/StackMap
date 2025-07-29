@@ -28,7 +28,8 @@ export const setSecurePin = async (pin) => {
     const result = await Keychain.setInternetCredentials(
       PIN_SERVICE,
       PIN_USERNAME,
-      pin
+      pin,
+      {}
     );
     return result !== false;
   } catch (error) {
@@ -68,52 +69,54 @@ export const getSecurePin = async () => {
  */
 export const removeSecurePin = async () => {
   try {
-    // Try multiple approaches to ensure PIN is removed
-    const attempts = [];
+    console.log('[SecureStorage] Starting PIN removal for platform:', Platform.OS);
     
-    // Attempt 1: Reset internet credentials
-    attempts.push(
-      Keychain.resetInternetCredentials(PIN_SERVICE)
-        .then(() => console.log('Reset internet credentials: success'))
-        .catch(e => console.log('Reset internet credentials failed:', e.message))
-    );
+    // First, set the disabled flag to prevent any PIN checks
+    try {
+      await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
+      console.log('[SecureStorage] Set PIN disabled flag successfully');
+    } catch (e) {
+      console.error('[SecureStorage] Failed to set disabled flag:', e);
+    }
     
-    // Attempt 2: Set to DELETED marker
-    attempts.push(
-      Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED')
-        .then(() => console.log('Set DELETED marker: success'))
-        .catch(e => console.log('Set DELETED marker failed:', e.message))
-    );
+    // Platform-specific PIN removal
+    if (Platform.OS === 'android') {
+      // On Android, resetInternetCredentials can cause crashes
+      // Just overwrite with DELETED marker
+      try {
+        await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+        console.log('[SecureStorage] Android: Set DELETED marker successfully');
+      } catch (e) {
+        console.log('[SecureStorage] Android: Failed to set DELETED marker:', e.message);
+        // Don't throw - we already set the disabled flag
+      }
+    } else {
+      // iOS - try reset first, then fallback to DELETED
+      try {
+        await Keychain.resetInternetCredentials(PIN_SERVICE);
+        console.log('[SecureStorage] iOS: Reset credentials successfully');
+      } catch (e) {
+        console.log('[SecureStorage] iOS: Reset failed, trying DELETED marker:', e.message);
+        try {
+          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+          console.log('[SecureStorage] iOS: Set DELETED marker successfully');
+        } catch (e2) {
+          console.log('[SecureStorage] iOS: Failed to set DELETED marker:', e2.message);
+        }
+      }
+    }
     
-    // Attempt 3: Set to empty string
-    attempts.push(
-      Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, '')
-        .then(() => console.log('Set empty string: success'))
-        .catch(e => console.log('Set empty string failed:', e.message))
-    );
-    
-    // Also store a flag in AsyncStorage to indicate PIN is disabled
-    attempts.push(
-      AsyncStorage.setItem('@stackmap_pin_disabled', 'true')
-        .then(() => console.log('Set PIN disabled flag: success'))
-        .catch(e => console.log('Set PIN disabled flag failed:', e.message))
-    );
-    
-    // Wait for all attempts
-    await Promise.allSettled(attempts);
-    
-    // Always return true - we've done our best to remove it
-    // The hasSecurePin function will check both the keychain and the disabled flag
+    console.log('[SecureStorage] PIN removal completed');
     return true;
   } catch (error) {
-    console.error('Error in removeSecurePin:', error);
-    // Even on error, try to set the disabled flag
+    console.error('[SecureStorage] Critical error in removeSecurePin:', error);
+    // Even on error, ensure the disabled flag is set
     try {
       await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
     } catch (e) {
-      console.error('Failed to set disabled flag:', e);
+      console.error('[SecureStorage] Failed to set disabled flag in catch:', e);
     }
-    return true; // Return true anyway to update UI
+    return true; // Return true to allow UI update
   }
 };
 

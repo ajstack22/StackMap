@@ -30,24 +30,21 @@ export const styles = StyleSheet.create({
     flex: 1,  // REQUIRED: Must have flex: 1 for proper iOS layout
   },
   scrollContent: {
-    // CRITICAL: iOS must NOT have flexGrow or panels become huge
-    ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
+    // Allow scrolling on all platforms while preventing panel expansion
+    flexGrow: 1,
+    paddingBottom: Platform.OS !== 'web' ? 100 : 20, // Extra padding for Android
+    minHeight: '100%', // Ensure content is scrollable
   },
   
   // Top Action Container
   topActionContainer: {
     backgroundColor: '#f8f9fa',
     padding: SPACING.lg,
-    marginTop: SPACING.md,
-    marginHorizontal: SPACING.md,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
     alignItems: 'center',
-    ...(Platform.OS === 'ios' && {
-      alignSelf: 'stretch',
-    }),
   },
   topIconContainer: {
     width: 64,
@@ -76,22 +73,17 @@ export const styles = StyleSheet.create({
   // Sections
   section: {
     backgroundColor: 'white',
-    marginTop: SPACING.md,
-    marginBottom: 0,
-    marginHorizontal: SPACING.md,  // Same as summary/top containers
+    marginBottom: SPACING.md,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
     overflow: 'hidden',
-    ...(Platform.OS === 'ios' && {
-      alignSelf: 'stretch',
-    }),
   },
   sectionInner: {
     padding: SPACING.lg,
-    // 🚨 CRITICAL iOS CONSTRAINT - NEVER REMOVE 🚨
+    // 🚨 CRITICAL MOBILE CONSTRAINT - NEVER REMOVE 🚨
     // Without these exact values, panels will expand to fill screen
-    ...(Platform.OS === 'ios' && {
+    ...(Platform.OS !== 'web' && {
       flex: 0,       // MUST be 0 to prevent expansion
       flexGrow: 0,   // MUST be 0 to prevent growing
       flexShrink: 1, // Allow shrinking if needed
@@ -145,7 +137,7 @@ export const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     marginLeft: -SPACING.xs,
     marginRight: -SPACING.xs,
-    ...(Platform.OS === 'ios' && {
+    ...(Platform.OS !== 'web' && {
       width: '100%',
       flexGrow: 0, // Prevent expansion
       flexShrink: 1, // Allow shrinking
@@ -158,18 +150,18 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#f8f9fa',
     borderRadius: RADIUS.md,
-    paddingVertical: Platform.OS === 'ios' ? 8 : 12,
-    paddingHorizontal: Platform.OS === 'ios' ? 8 : 16, // Reduced iOS padding for more text space
-    marginLeft: Platform.OS === 'ios' ? 4 : SPACING.xs,
-    marginRight: Platform.OS === 'ios' ? 4 : SPACING.xs,
-    marginBottom: Platform.OS === 'ios' ? 6 : SPACING.sm,
+    paddingVertical: Platform.OS === 'web' ? 12 : 8,
+    paddingHorizontal: Platform.OS === 'web' ? 16 : 8, // Reduced mobile padding for more text space
+    marginLeft: Platform.OS === 'web' ? SPACING.xs : 4,
+    marginRight: Platform.OS === 'web' ? SPACING.xs : 4,
+    marginBottom: Platform.OS === 'web' ? SPACING.sm : 6,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
-    minHeight: Platform.OS === 'ios' ? 36 : 44,
+    minHeight: Platform.OS === 'web' ? 44 : 36,
     flexBasis: 'auto', // Allow cards to size based on content
     flexGrow: 0,
-    // 🚨 iOS HEIGHT FIX - REQUIRED TO PREVENT PANEL EXPANSION 🚨
-    ...(Platform.OS === 'ios' && {
+    // 🚨 MOBILE HEIGHT FIX - REQUIRED TO PREVENT PANEL EXPANSION 🚨
+    ...(Platform.OS !== 'web' && {
       height: 'auto',    // Let height adjust to content
       maxHeight: 60,     // Prevent excessive expansion
       minWidth: '45%',   // Take up more width to show text
@@ -180,7 +172,7 @@ export const styles = StyleSheet.create({
   },
   activityEmoji: {
     fontSize: 18,
-    marginRight: Platform.OS === 'ios' ? 6 : SPACING.sm, // Less margin on iOS
+    marginRight: Platform.OS === 'web' ? SPACING.sm : 6, // Less margin on mobile
   },
   activityTextContainer: {
     flex: 1,
@@ -211,15 +203,10 @@ export const styles = StyleSheet.create({
   summaryContainer: {
     backgroundColor: '#f8f9fa',
     padding: SPACING.lg,
-    marginTop: SPACING.md,
-    marginHorizontal: SPACING.md,
     marginBottom: SPACING.xl,
     borderRadius: RADIUS.lg,
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.05)',
-    ...(Platform.OS === 'ios' && {
-      alignSelf: 'stretch',
-    }),
   },
   summaryHeader: {
     flexDirection: 'row',

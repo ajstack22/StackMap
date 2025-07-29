@@ -38,7 +38,7 @@ const ConfirmModal = ({
       animationType="fade"
       transparent={true}
       onRequestClose={handleCancel}
-      presentationStyle={Platform.OS === 'ios' ? 'overFullScreen' : 'fullScreen'}
+      presentationStyle="overFullScreen"
       statusBarTranslucent={true}
     >
       <TouchableOpacity

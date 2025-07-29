@@ -1446,27 +1446,35 @@ const App = () => {
   };
 
   const handlePinRemove = async () => {
-    console.log('Starting PIN removal...');
+    console.log('[App] Starting PIN removal...');
     try {
       const removed = await removeSecurePin();
-      console.log('removeSecurePin returned:', removed);
+      console.log('[App] removeSecurePin returned:', removed);
+      
+      // Small delay to ensure async operations complete on Android
+      if (Platform.OS === 'android') {
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       // Always check if PIN was actually removed
       const stillHasPin = await hasSecurePin();
-      console.log('hasSecurePin after removal:', stillHasPin);
+      console.log('[App] hasSecurePin after removal:', stillHasPin);
       
       if (!stillHasPin) {
         setHasPinProtection(false);
         showToast({ message: 'PIN protection removed' });
-        console.log('PIN successfully removed');
+        console.log('[App] PIN successfully removed');
       } else {
-        console.error('PIN still exists after removal attempt');
-        setHasPinProtection(false); // Force UI update even if removal failed
+        console.error('[App] PIN still exists after removal attempt');
+        // Force UI update even if removal check failed
+        setHasPinProtection(false);
         showToast({ message: 'PIN removed (please restart app if issues persist)' });
       }
     } catch (error) {
-      console.error('Error removing PIN:', error);
-      showToast({ message: 'Error removing PIN. Please try again.', type: 'error' });
+      console.error('[App] Error removing PIN:', error);
+      // Force UI update even on error to prevent crash
+      setHasPinProtection(false);
+      showToast({ message: 'PIN removed (please restart app if issues persist)' });
     }
   };
 

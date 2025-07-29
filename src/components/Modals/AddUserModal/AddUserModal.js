@@ -72,7 +72,7 @@ const AddUserModal = ({
           translucent={false}
         />
       )}
-      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
         )}

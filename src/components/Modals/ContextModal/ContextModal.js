@@ -591,7 +591,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
             translucent={false}
           />
         )}
-        <View style={[styles.modalContainer, { backgroundColor: currentUserTheme.primary }]}>
+        <View style={[styles.modalContainer, { backgroundColor: currentUserTheme.light }]}>
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: currentUserTheme.primary, height: StatusBar.currentHeight || 24 }} />
         )}
@@ -664,10 +664,8 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         </SafeAreaView>
         {Platform.OS === 'android' && (
           <View style={{ 
-            backgroundColor: currentUserTheme.primary, 
-            height: (screenWidth >= 768 || Dimensions.get('window').height > 800) 
-              ? Math.max(insets.bottom * 1.2, 20) // Reduced by 40%
-              : Math.max(insets.bottom, 10) // Reduced by 40%
+            backgroundColor: currentUserTheme.light, 
+            height: Math.max(insets.bottom, 20)
           }} />
         )}
       </View>

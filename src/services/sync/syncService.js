@@ -30,6 +30,7 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('[SyncService] Using API_BASE_URL:', API_BASE_URL);
 
 // Share endpoints use environment-specific API for testing
 const getShareApiUrl = () => {
@@ -382,15 +383,34 @@ class SyncService {
       return null; // Sync group doesn't exist
     }
 
+    // Get response text first to check if it's JSON
+    const responseText = await response.text();
+    
     if (!response.ok) {
-      const error = await response.json();
-      console.error('pullData error:', error);
-      throw new Error(error.message || 'Failed to pull data');
+      // Try to parse as JSON, but handle HTML responses
+      try {
+        const error = JSON.parse(responseText);
+        console.error('pullData error:', error);
+        throw new Error(error.message || 'Failed to pull data');
+      } catch (e) {
+        // Response is not JSON (likely HTML error page)
+        console.error('pullData received non-JSON response:', responseText.substring(0, 200));
+        if (responseText.includes('<!DOCTYPE') || responseText.includes('<html')) {
+          throw new Error('Server returned an HTML error page. Please check your connection and try again.');
+        }
+        throw new Error(`Server error (${response.status}): ${responseText.substring(0, 100)}`);
+      }
     }
 
-    const data = await response.json();
-    console.log('pullData: received data', data);
-    return data;
+    // Parse successful response
+    try {
+      const data = JSON.parse(responseText);
+      console.log('pullData: received data', data);
+      return data;
+    } catch (e) {
+      console.error('Failed to parse response as JSON:', responseText.substring(0, 200));
+      throw new Error('Server returned invalid response format');
+    }
   }
 
   /**

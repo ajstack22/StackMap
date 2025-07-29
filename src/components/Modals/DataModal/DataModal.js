@@ -163,7 +163,7 @@ const DataModal = ({
           translucent={false}
         />
       )}
-      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
         )}
@@ -385,7 +385,9 @@ const DataModal = ({
             </View>
           </ScrollView>
         </View>
-        <SafeAreaView style={{ backgroundColor: theme.light }} />
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
+        )}
       </View>
       
       {/* Disable Sync Confirmation Modal */}

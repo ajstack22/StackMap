@@ -91,10 +91,16 @@ const UsersSecurityModal = ({
     setShowPinRemoveConfirm(true);
   };
   
-  const confirmPinRemove = () => {
-    showToast({ message: 'Removing PIN...' });
-    setShowPinRemoveConfirm(false);
-    onPinRemove();
+  const confirmPinRemove = async () => {
+    try {
+      showToast({ message: 'Removing PIN...' });
+      setShowPinRemoveConfirm(false);
+      // Wait for the PIN removal to complete
+      await onPinRemove();
+    } catch (error) {
+      console.error('[UsersSecurityModal] Error removing PIN:', error);
+      showToast({ message: 'Failed to remove PIN. Please try again.' });
+    }
   };
   
   // Handle PIN modal close
@@ -120,7 +126,7 @@ const UsersSecurityModal = ({
           translucent={false}
         />
       )}
-      <View style={[styles.modalContainer, { backgroundColor: theme.primary }]}>
+      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
         )}
@@ -271,7 +277,9 @@ const UsersSecurityModal = ({
             </View>
           </ScrollView>
         </View>
-        <SafeAreaView style={{ backgroundColor: theme.light }} />
+        {Platform.OS === 'android' && (
+          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
+        )}
       </View>
       
       {/* PIN Removal Confirmation Modal */}
