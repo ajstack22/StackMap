@@ -126,13 +126,20 @@ export const hasSecurePin = async () => {
     // First check if PIN is disabled
     const disabled = await AsyncStorage.getItem('@stackmap_pin_disabled');
     if (disabled === 'true') {
+      console.log('[SecureStorage] PIN is disabled via flag');
       return false;
     }
     
     const pin = await getSecurePin();
+    console.log('[SecureStorage] Retrieved PIN:', pin ? `exists (length: ${pin.length})` : 'null/empty');
+    
     // More explicit check for PIN existence
-    return pin !== null && pin !== '' && pin !== undefined && pin.length > 0;
+    const hasPin = pin !== null && pin !== '' && pin !== undefined && pin.length > 0 && pin !== 'DELETED';
+    console.log('[SecureStorage] hasSecurePin result:', hasPin);
+    
+    return hasPin;
   } catch (error) {
+    console.error('[SecureStorage] Error in hasSecurePin:', error);
     // If there's an error getting the PIN, assume it doesn't exist
     return false;
   }
@@ -145,7 +152,16 @@ export const hasSecurePin = async () => {
  */
 export const verifyPin = async (inputPin) => {
   const storedPin = await getSecurePin();
-  return storedPin === inputPin;
+  
+  // If there's no stored PIN, verification should always fail
+  if (!storedPin || storedPin === '' || storedPin === 'DELETED') {
+    console.log('[SecureStorage] No valid PIN stored, verification failed');
+    return false;
+  }
+  
+  const isValid = storedPin === inputPin;
+  console.log('[SecureStorage] PIN verification:', isValid ? 'success' : 'failed');
+  return isValid;
 };
 
 /**

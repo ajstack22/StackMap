@@ -435,10 +435,28 @@ const App = () => {
       
       // Always check secure storage as the source of truth for PIN
       const hasPIN = await hasSecurePin();
+      console.log('[App] Checking for PIN on startup:', hasPIN);
+      
+      // Debug: Check what's in the keychain
+      if (hasPIN) {
+        const pin = await getSecurePin();
+        console.log('[App] Found PIN in keychain:', pin ? 'Yes (length: ' + pin.length + ')' : 'No');
+      }
+      
       setHasPinProtection(hasPIN);
     };
     
     initializeApp();
+    
+    // Force clear PIN if there's a stuck PIN from previous installations
+    // This is a workaround for iOS simulators that might persist keychain data
+    if (Platform.OS === 'ios' && !hasCompletedOnboarding) {
+      // If user hasn't completed onboarding, they shouldn't have a PIN
+      console.log('[App] New user on iOS, clearing any existing PIN');
+      removeSecurePin().then(() => {
+        setHasPinProtection(false);
+      });
+    }
     
     // Listen for orientation changes
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -553,15 +571,26 @@ const App = () => {
   useEffect(() => {
     if (pinInput.length === PIN_LENGTH && !isSettingPin) {
       // Verify PIN
-      verifyPin(pinInput).then(isValid => {
+      verifyPin(pinInput).then(async (isValid) => {
         if (isValid) {
           // PIN for main edit mode
           setIsEditMode(true);
           setShowPinModal(false);
           setPinInput('');
         } else {
-          Alert.alert('Incorrect PIN', 'Please try again');
-          setPinInput('');
+          // Double-check if there's actually a PIN set
+          const actuallyHasPin = await hasSecurePin();
+          if (!actuallyHasPin) {
+            // No PIN exists, so just enter edit mode
+            console.log('[App] No PIN actually exists, entering edit mode');
+            setHasPinProtection(false);
+            setIsEditMode(true);
+            setShowPinModal(false);
+            setPinInput('');
+          } else {
+            Alert.alert('Incorrect PIN', 'Please try again');
+            setPinInput('');
+          }
         }
       });
     }
