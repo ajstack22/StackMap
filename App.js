@@ -2170,13 +2170,8 @@ const App = () => {
   };
 
   const resetApp = async () => {
-    console.log('[Reset] Reset button pressed, showing confirmation modal...');
-    // Close the DataModal first to avoid modal stacking issues
-    setShowDataModal(false);
-    // Small delay to ensure modal closes before showing confirm
-    setTimeout(() => {
-      setShowResetAppConfirm(true);
-    }, 100);
+    console.log('[Reset] User confirmed reset, performing reset...');
+    await performReset();
   };
 
   const performReset = async () => {
@@ -3346,25 +3341,6 @@ const App = () => {
         users={users}
       />
       
-      {/* Reset App Confirmation Modal */}
-      <ConfirmModal
-        visible={showResetAppConfirm}
-        onClose={() => {
-          setShowResetAppConfirm(false);
-        }}
-        onConfirm={async () => {
-          // Don't close modal yet - let performReset complete first
-          await performReset();
-          setShowResetAppConfirm(false);
-        }}
-        theme={theme}
-        title="Reset App"
-        message="This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. This action cannot be undone."
-        confirmText="Reset Everything"
-        confirmButtonColor={COLORS.error}
-        icon="refresh"
-        iconColor={COLORS.error}
-      />
       
       {/* PIN Modal for Edit Mode - Standalone for when not in Users & Security modal */}
       {showPinModal && !showUsersSecurityModal && (

@@ -44,6 +44,7 @@ const DataModal = ({
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
+  const [showResetAppConfirm, setShowResetAppConfirm] = useState(false);
 
   useEffect(() => {
     if (visible) {
@@ -370,7 +371,7 @@ const DataModal = ({
               
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: COLORS.error }]}
-                onPress={onResetApp}
+                onPress={() => setShowResetAppConfirm(true)}
               >
                 <Icon name="refresh" size={20} color="white" />
                 <Text style={styles.buttonText}>Reset App</Text>
@@ -413,6 +414,23 @@ const DataModal = ({
         confirmButtonColor="#d32f2f"
         icon="delete-forever"
         iconColor="#d32f2f"
+      />
+      
+      {/* Reset App Confirmation Modal */}
+      <ConfirmModal
+        visible={showResetAppConfirm}
+        onClose={() => setShowResetAppConfirm(false)}
+        onConfirm={() => {
+          setShowResetAppConfirm(false);
+          onResetApp();
+        }}
+        theme={theme}
+        title="Reset App"
+        message="This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. This action cannot be undone."
+        confirmText="Reset Everything"
+        confirmButtonColor={COLORS.error}
+        icon="refresh"
+        iconColor={COLORS.error}
       />
     </Modal>
   );
