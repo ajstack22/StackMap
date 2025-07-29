@@ -2912,6 +2912,10 @@ const App = () => {
             } else {
               if (hasPinProtection) {
                 console.log('[FAB] Has PIN protection, showing PIN modal');
+                // Ensure we're in verification mode, not setup mode
+                setIsSettingPin(false);
+                setPinInput('');
+                setConfirmPin('');
                 setShowPinModal(true);
               } else {
                 console.log('[FAB] No PIN protection, entering edit mode');
@@ -3349,13 +3353,15 @@ const App = () => {
           onClose={() => {
             setShowPinModal(false);
             setPinInput('');
+            setIsSettingPin(false);
+            setConfirmPin('');
           }}
           theme={theme}
           pinInput={pinInput}
           pinLength={PIN_LENGTH}
           setPinInput={setPinInput}
-          isSettingPin={false}
-          confirmPin=""
+          isSettingPin={isSettingPin}
+          confirmPin={confirmPin}
         />
       )}
       

@@ -101,10 +101,8 @@ const UsersSecurityModal = ({
   const handlePinModalClose = () => {
     setShowPinModal(false);
     setPinInput('');
-    if (isSettingPin && confirmPin) {
-      // Reset confirmPin if we're in the setting flow
-      onPinChange(); // This will reset confirmPin in parent
-    }
+    // Don't call onPinChange here as it sets isSettingPin to true
+    // The parent component should handle cleanup
   };
 
   return (
