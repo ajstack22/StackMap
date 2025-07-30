@@ -20,7 +20,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Keychain from 'react-native-keychain';
+// import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
 // Conditionally import drag-and-drop libraries for iOS only
@@ -84,7 +84,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal, ConfirmModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal, ConfirmModal, BuyMeCoffeeButton } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -2569,6 +2569,7 @@ const App = () => {
     
     return CardContent;
   };
+  
 
   const Header = ({ position = 'top' }) => {
     const handleSwipeGesture = ({ nativeEvent }) => {

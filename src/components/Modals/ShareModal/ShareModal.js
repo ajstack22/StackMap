@@ -19,6 +19,7 @@ import QRCode from 'react-native-qrcode-svg';
 import styles from './styles';
 import syncService from '../../../services/sync/syncService';
 import { COLORS, SPACING } from '../../../constants';
+import { BuyMeCoffeeButton } from '../..';
 
 const ShareModal = ({
   visible,
@@ -485,6 +486,32 @@ const ShareModal = ({
                     })}
                   </View>
                 )}
+              </View>
+            )}
+            
+            {/* Buy Me a Coffee - Web only */}
+            {Platform.OS === 'web' && (
+              <View style={[styles.section, { 
+                backgroundColor: '#f0f8ff', 
+                borderColor: theme.primary, 
+                borderWidth: 2,
+                borderRadius: 16,
+                padding: 24,
+                marginHorizontal: 8,
+                marginTop: 20
+              }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                  <Icon name="favorite" size={24} color={theme.primary} style={{ marginRight: 8 }} />
+                  <Text style={[styles.sectionTitle, { color: theme.primary, marginBottom: 0 }]}>Love Sharing StackMap?</Text>
+                </View>
+                <Text style={[styles.sectionDescription, { textAlign: 'center', fontSize: 15, marginBottom: 16, paddingHorizontal: 12 }]}>
+                  Help us keep these sharing features free and secure for all families. Your support helps maintain our servers and keeps StackMap accessible to everyone.
+                </Text>
+                <BuyMeCoffeeButton 
+                  style="button"
+                  theme={theme}
+                  containerStyle={{ alignSelf: 'center' }}
+                />
               </View>
             )}
           </ScrollView>

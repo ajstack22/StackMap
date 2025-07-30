@@ -20,6 +20,7 @@ import syncService from '../../../services/sync/syncService';
 import SyncStatusIndicator from '../../SyncStatusIndicator';
 import { COLORS } from '../../../constants';
 import ConfirmModal from '../ConfirmModal';
+import { BuyMeCoffeeButton } from '../..';
 
 const DataModal = ({
   visible,
@@ -326,6 +327,31 @@ const DataModal = ({
                 <Text style={styles.buttonText}>Import Data</Text>
               </TouchableOpacity>
             </View>
+
+            {/* Buy Me a Coffee - Web only */}
+            {Platform.OS === 'web' && (
+              <View style={[styles.section, { 
+                backgroundColor: '#f0fff4', 
+                borderColor: theme.primary, 
+                borderWidth: 2,
+                borderRadius: 16,
+                padding: 24,
+                marginHorizontal: 8
+              }]}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                  <Icon name="favorite" size={24} color={theme.primary} style={{ marginRight: 8 }} />
+                  <Text style={[styles.sectionTitle, { color: theme.primary, marginBottom: 0 }]}>Support Our Mission</Text>
+                </View>
+                <Text style={[styles.sectionDescription, { textAlign: 'center', fontSize: 15, marginBottom: 16, paddingHorizontal: 12 }]}>
+                  StackMap is a labor of love, built to help families everywhere. Your support ensures we can keep it <Text style={{ fontWeight: 'bold' }}>100% free</Text> for families who need it most, while maintaining our commitment to privacy and data security.
+                </Text>
+                <BuyMeCoffeeButton 
+                  style="button"
+                  theme={theme}
+                  containerStyle={{ alignSelf: 'center' }}
+                />
+              </View>
+            )}
 
             {/* Danger Zone - Only show when sync is enabled */}
             {syncEnabled && (

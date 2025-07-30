@@ -7,6 +7,7 @@ export { default as ActivityLibrary } from './ActivityLibrary';
 export { default as EmojiPicker } from './EmojiPicker';
 export { default as CelebrationView } from './CelebrationManager';
 export { default as SyncStatusIndicator } from './SyncStatusIndicator';
+export { default as BuyMeCoffeeButton } from './BuyMeCoffeeButton';
 
 // Import modal components directly to avoid re-export issues
 import ContextModal from './Modals/ContextModal/ContextModal';

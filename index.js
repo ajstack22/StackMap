@@ -2,6 +2,9 @@
  * @format
  */
 
+// Import Reanimated FIRST before any other imports
+import 'react-native-reanimated';
+
 // Import crypto polyfill for React Native BEFORE any other imports that might use it
 import 'react-native-get-random-values';
 

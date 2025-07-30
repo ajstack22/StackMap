@@ -114,10 +114,22 @@ const EditModeToolbar = ({
     library: { label: 'Library', icon: 'collections-bookmark', onPress: onLibrary },
     add: { label: 'Add', icon: 'add-circle', onPress: onAdd },
     sort: { label: 'Sort', icon: 'sort', onPress: onCustomize, alwaysOverflow: true },
+    ...(Platform.OS === 'web' && { 
+      contribute: { 
+        label: 'Contribute', 
+        icon: 'favorite', 
+        onPress: () => {
+          if (Platform.OS === 'web') {
+            window.open('https://www.buymeacoffee.com/stackmap', '_blank');
+          }
+        }, 
+        alwaysOverflow: true 
+      } 
+    }),
   };
 
   // Default order if none provided
-  const defaultOrder = ['data', 'users', 'share', 'complete', 'plan', 'library', 'add'];
+  const defaultOrder = ['data', 'users', 'share', 'complete', 'plan', 'library', 'add', 'contribute'];
   
   // Validate and use toolbar order
   const currentOrder = (Array.isArray(toolbarOrder) && toolbarOrder.length > 0) 
@@ -170,7 +182,18 @@ const EditModeToolbar = ({
     ...actionMap.sort,
     color: theme.primary
   };
-  const overflowActions = [...regularOverflowActions, sortAction];
+  
+  // Add Contribute button for web only
+  const alwaysOverflowActions = [sortAction];
+  if (Platform.OS === 'web' && actionMap.contribute) {
+    alwaysOverflowActions.push({
+      id: 'contribute',
+      ...actionMap.contribute,
+      color: theme.primary
+    });
+  }
+  
+  const overflowActions = [...regularOverflowActions, ...alwaysOverflowActions];
   const showMore = overflowActions.length > 0;
 
   const renderAction = ({ item }) => (

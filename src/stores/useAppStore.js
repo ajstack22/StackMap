@@ -8,7 +8,17 @@ const storage = {
   getItem: async (name) => {
     try {
       const value = await AsyncStorage.getItem(name);
-      return value ? JSON.parse(value) : null;
+      if (!value) return null;
+      
+      // Try to parse JSON, but handle cases where value might not be valid JSON
+      try {
+        return JSON.parse(value);
+      } catch (parseError) {
+        console.error('Error parsing stored value, clearing corrupted data:', parseError);
+        // Clear corrupted data
+        await AsyncStorage.removeItem(name);
+        return null;
+      }
     } catch (error) {
       console.error('Error reading from AsyncStorage:', error);
       return null;

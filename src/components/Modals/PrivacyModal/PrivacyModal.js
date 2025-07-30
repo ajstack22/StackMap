@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
+import { BuyMeCoffeeButton } from '../..';
 
 const PrivacyModal = ({
   visible,
@@ -116,6 +117,21 @@ const PrivacyModal = ({
                 StackMap's code is open source. You can verify our privacy practices at: github.com/ajstack22/StackMap
               </Text>
             </View>
+            
+            {Platform.OS === 'web' && (
+              <View style={[styles.privacySection, { backgroundColor: '#f0f8ff', padding: 20, marginTop: 20, borderRadius: 12 }]}>
+                <Text style={[styles.privacySubtitle, { textAlign: 'center' }]}>Keep StackMap Free & Private</Text>
+                <Text style={[styles.privacyText, { textAlign: 'center', marginTop: 8 }]}>
+                  We don't sell data or show ads. Your support helps us maintain our privacy-first approach while keeping StackMap free for families who need it.
+                </Text>
+                <View style={{ marginTop: 16, alignItems: 'center' }}>
+                  <BuyMeCoffeeButton 
+                    style="button"
+                    theme={{ primary: '#3498db' }}
+                  />
+                </View>
+              </View>
+            )}
           </ScrollView>
         </View>
         <SafeAreaView style={{ backgroundColor: '#f8f9fa' }} />
