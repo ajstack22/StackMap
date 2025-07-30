@@ -106,6 +106,9 @@ const SupportModal = ({
                     theme={{ primary: '#5C7E9D' }}
                     textStyle={{ fontSize: 18 }}
                   />
+                  <Text style={{ fontSize: 12, color: '#718096', marginTop: 8 }}>
+                    via Buy Me a Coffee
+                  </Text>
                 </View>
               )}
             </View>

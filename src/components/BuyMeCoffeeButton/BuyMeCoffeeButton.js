@@ -101,7 +101,7 @@ const BuyMeCoffeeButton = ({
       ]}
     >
       <Text style={[{ color: 'white', fontSize: 16, fontWeight: 'bold' }, textStyle]}>
-        ☕ Help Keep StackMap Free
+        ☕ Support StackMap
       </Text>
     </TouchableOpacity>
   );
