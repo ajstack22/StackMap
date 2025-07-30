@@ -60,23 +60,23 @@ export const styles = StyleSheet.create({
     flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 40,
+    gap: 50,
     marginTop: 20,
-    marginBottom: 10,
+    marginBottom: 20,
   },
   photoContainer: {
     alignItems: 'center',
-    width: 350,
+    width: 450,
     maxWidth: '100%',
   },
   teamPhoto: {
     width: '100%',
-    height: 220,
+    height: 300,
     borderRadius: 15,
     objectFit: 'cover',
   },
   impactWrapper: {
-    width: 350,
+    width: 450,
     maxWidth: '100%',
   },
   stackMapText: {
@@ -190,11 +190,11 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   contributionHeader: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
     color: '#2d3748',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   impactSection: {
     marginBottom: 16,
@@ -218,14 +218,14 @@ export const styles = StyleSheet.create({
     flex: 1,
   },
   impactTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '600',
     color: '#2c3e50',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   impactDescription: {
-    fontSize: 14,
+    fontSize: 16,
     color: '#718096',
-    lineHeight: 18,
+    lineHeight: 22,
   },
 });
