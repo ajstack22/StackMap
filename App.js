@@ -3088,6 +3088,7 @@ const App = () => {
           onData={() => setShowDataModal(true)}
           onUsers={() => setShowUsersSecurityModal(true)}
           onCustomize={() => setShowToolbarCustomizeModal(true)}
+          onSupport={() => setShowSupportModal(true)}
           toolbarOrder={toolbarOrder}
           moreButtonPosition={moreButtonPosition}
           onCompleteDay={() => setShowCompleteDayModal(true)}

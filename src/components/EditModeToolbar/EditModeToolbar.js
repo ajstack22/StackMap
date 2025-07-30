@@ -25,6 +25,7 @@ const EditModeToolbar = ({
   onData,
   onUsers,
   onCustomize,
+  onSupport,
   theme,
   position = 'bottom',
   visible = true,
@@ -114,15 +115,11 @@ const EditModeToolbar = ({
     library: { label: 'Library', icon: 'collections-bookmark', onPress: onLibrary },
     add: { label: 'Add', icon: 'add-circle', onPress: onAdd },
     sort: { label: 'Sort', icon: 'sort', onPress: onCustomize, alwaysOverflow: true },
-    ...(Platform.OS === 'web' && { 
+    ...(Platform.OS === 'web' && onSupport && { 
       contribute: { 
         label: 'Contribute', 
         icon: 'favorite', 
-        onPress: () => {
-          if (Platform.OS === 'web') {
-            window.open('https://www.buymeacoffee.com/stackmap', '_blank');
-          }
-        }, 
+        onPress: onSupport, 
         alwaysOverflow: true 
       } 
     }),
