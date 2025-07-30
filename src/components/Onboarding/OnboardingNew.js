@@ -222,9 +222,9 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                   <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Fresh</Text>
                 </TouchableOpacity>
                 
-                <View style={styles.secondaryButtonsRow}>
+                <View style={styles.secondaryButtonsContainer}>
                   <TouchableOpacity 
-                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
+                    style={[styles.secondaryButton, styles.secondaryButtonThird]}
                     onPress={async () => {
                       try {
                         await onImport();
@@ -238,26 +238,25 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     }}
                   >
                     <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore StackMap</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
-                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
+                    style={[styles.secondaryButton, styles.secondaryButtonThird]}
                     onPress={() => transitionTo('sync')}
                   >
                     <Icon name="cloud-sync" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.secondaryButton, styles.secondaryButtonThird]}
+                    onPress={() => setShowCreateSyncModal(true)}
+                  >
+                    <Icon name="smartphone" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Create Sync</Text>
                   </TouchableOpacity>
                 </View>
-                
-                {/* Create Sync for App button */}
-                <TouchableOpacity 
-                  style={styles.createSyncButton}
-                  onPress={() => setShowCreateSyncModal(true)}
-                >
-                  <Icon name="smartphone" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                  <Text style={[styles.buttonTextBase, styles.createSyncButtonText]}>Create Sync for App</Text>
-                </TouchableOpacity>
               </>
             )}
           </ScrollView>
@@ -857,12 +856,14 @@ const styles = StyleSheet.create({
     lineHeight: Platform.OS === 'web' ? 20 : 18,
   },
   secondaryButtonsContainer: {
-    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    flexDirection: 'row',
     gap: 10,
     width: '100%',
-    maxWidth: Platform.OS === 'web' ? 400 : 300,
+    maxWidth: Platform.OS === 'web' ? 600 : 350,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 10,
+    flexWrap: Platform.OS === 'web' ? 'nowrap' : 'wrap',
   },
   secondaryButtonsRow: {
     flexDirection: 'row',
@@ -877,6 +878,11 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: undefined,
     maxWidth: undefined,
+  },
+  secondaryButtonThird: {
+    flex: 1,
+    minWidth: Platform.OS === 'web' ? 120 : 100,
+    maxWidth: Platform.OS === 'web' ? 180 : undefined,
   },
   secondaryButton: {
     backgroundColor: 'white',
@@ -897,29 +903,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   buttonIcon: {
-    marginRight: 8,
-  },
-  createSyncButton: {
-    backgroundColor: 'white',
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 20,
-    paddingVertical: Platform.OS === 'web' ? 12 : 10,
-    borderRadius: 8,
-    borderWidth: 2,
-    borderColor: THEMES.stackBlue.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexDirection: 'row',
-    marginTop: 10,
-    maxWidth: Platform.OS === 'web' ? 400 : 350,
-    width: '100%',
-    alignSelf: 'center',
-    ...SHADOWS.level1,
-  },
-  createSyncButtonText: {
-    color: THEMES.stackBlue.primary,
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
-    textAlign: 'center',
+    marginRight: 6,
   },
   
   // Original styles continue below

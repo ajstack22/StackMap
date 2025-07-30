@@ -29,7 +29,7 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
     if (visible && !syncData) {
       createNewSync();
     }
-  }, [visible]);
+  }, [visible, syncData]);
 
   const createNewSync = async () => {
     setLoading(true);
@@ -76,10 +76,22 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
   };
 
   const handleClose = () => {
-    setSyncData(null);
+    // Don't reset syncData to prevent re-triggering createNewSync
     setError(null);
     onClose();
   };
+  
+  // Reset sync data when modal becomes invisible
+  useEffect(() => {
+    if (!visible) {
+      // Reset after a delay to prevent flashing
+      const timer = setTimeout(() => {
+        setSyncData(null);
+        setError(null);
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [visible]);
 
   return (
     <Modal
