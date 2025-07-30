@@ -4,7 +4,7 @@ import { TYPOGRAPHY, SPACING, RADIUS, COLORS } from '../../../constants';
 export const styles = StyleSheet.create({
   modalContainer: {
     flex: 1,
-    backgroundColor: '#fff5f8',
+    backgroundColor: '#f0f4f8',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -33,12 +33,12 @@ export const styles = StyleSheet.create({
   supportTitle: {
     fontSize: 32,
     fontWeight: '700',
-    color: '#ff6b9d',
+    color: '#5C7E9D',
     marginBottom: 8,
   },
   supportSubtitle: {
     fontSize: 18,
-    color: '#c56a90',
+    color: '#8FA5B8',
   },
   supportMessageBox: {
     backgroundColor: 'white',
@@ -63,7 +63,7 @@ export const styles = StyleSheet.create({
   supportSectionTitle: {
     fontSize: 24,
     fontWeight: '600',
-    color: '#ff6b9d',
+    color: '#5C7E9D',
     textAlign: 'center',
     marginBottom: 24,
   },
@@ -90,7 +90,7 @@ export const styles = StyleSheet.create({
   supportOptionTitleFun: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#ff6b9d',
+    color: '#5C7E9D',
     marginBottom: 4,
   },
   supportOptionTextFun: {
@@ -99,7 +99,7 @@ export const styles = StyleSheet.create({
     color: '#4a5568',
   },
   supportContactBox: {
-    backgroundColor: '#ff6b9d',
+    backgroundColor: '#5C7E9D',
     borderRadius: 16,
     padding: 24,
     alignItems: 'center',
@@ -121,7 +121,7 @@ export const styles = StyleSheet.create({
   },
   supportFooterText: {
     fontSize: 16,
-    color: '#c56a90',
+    color: '#8FA5B8',
     textAlign: 'center',
   },
 });

@@ -32,7 +32,7 @@ const SupportModal = ({
         )}
         <SafeAreaView style={{ backgroundColor: '#5C7E9D' }}>
           <View style={[styles.modalHeader, { backgroundColor: '#5C7E9D' }]}>
-            <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap 💖</Text>
+            <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap 💙</Text>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
@@ -42,7 +42,7 @@ const SupportModal = ({
         <View style={{ flex: 1, backgroundColor: '#f0f4f8' }}>
           <ScrollView style={styles.supportContent}>
             <View style={styles.supportHeader}>
-              <Text style={styles.supportHeart}>💖</Text>
+              <Text style={styles.supportHeart}>💙</Text>
               <Text style={styles.supportTitle}>Support StackMap!</Text>
               <Text style={styles.supportSubtitle}>
                 Made with love for families everywhere ✨
@@ -50,13 +50,31 @@ const SupportModal = ({
             </View>
             
             <View style={styles.supportMessageBox}>
-              <Text style={styles.supportMessage}>
-                StackMap is completely free and always will be! 🎉 We're built by a small team who believes every family deserves amazing tools. While the app is free, your support helps cover the costs of keeping it running for everyone.
+              <Text style={[styles.supportMessage, { fontSize: 17, marginBottom: 16 }]}>
+                StackMap is completely free and always will be! 🎉 We're built by a small team who believes every family deserves amazing tools. While the app is free, your contributions help cover the costs of keeping it running for everyone.
               </Text>
+              <Text style={[styles.supportMessage, { fontSize: 16, textAlign: 'left', marginBottom: 8 }]}>
+                Specifically your contributions help fund:
+              </Text>
+              <Text style={[styles.supportMessage, { fontSize: 15, textAlign: 'left', paddingLeft: 16 }]}>
+                • Keeping the app 100% free with no ads or data collection{'\n'}
+                • Maintaining codebase and secure cloud sync servers{'\n'}
+                • Continuing development on new features and services{'\n'}
+                • Ongoing support to families who need it
+              </Text>
+              {Platform.OS === 'web' && (
+                <View style={{ marginTop: 20, alignItems: 'center' }}>
+                  <BuyMeCoffeeButton 
+                    style="button"
+                    theme={{ primary: '#5C7E9D' }}
+                    textStyle={{ fontSize: 18 }}
+                  />
+                </View>
+              )}
             </View>
             
             <View style={styles.supportWaysSection}>
-              <Text style={styles.supportSectionTitle}>Amazing Ways You Can Help! 🌟</Text>
+              <Text style={styles.supportSectionTitle}>Other Amazing Ways You Can Help! 🌟</Text>
               
               <View style={styles.supportOptionFun}>
                 <Text style={styles.supportIconBig}>🎆</Text>
@@ -83,7 +101,7 @@ const SupportModal = ({
                 <View style={styles.supportOptionContent}>
                   <Text style={styles.supportOptionTitleFun}>Send Us Your Stories!</Text>
                   <Text style={styles.supportOptionTextFun}>
-                    We love hearing how StackMap helps your family! Your feedback guides everything we build. 💜
+                    We love hearing how StackMap helps your family! Your feedback guides everything we build. 💙
                   </Text>
                 </View>
               </View>
@@ -106,31 +124,6 @@ const SupportModal = ({
               </Text>
             </View>
             
-            <View style={[styles.supportOptionFun, { backgroundColor: '#e8f0f8', borderColor: '#5C7E9D', borderWidth: 2 }]}>
-              <Text style={styles.supportIconBig}>☕</Text>
-              <View style={styles.supportOptionContent}>
-                <Text style={[styles.supportOptionTitleFun, { color: '#5C7E9D' }]}>Help Keep StackMap Free!</Text>
-                <Text style={styles.supportOptionTextFun}>
-                  StackMap will always be free for families, but developing and hosting the app does have real costs. Your voluntary contributions help us:
-                </Text>
-                <View style={{ marginTop: 8 }}>
-                  <Text style={[styles.supportOptionTextFun, { fontSize: 15 }]}>
-                    • Keep the app 100% free with no ads{'\n'}
-                    • Maintain secure cloud sync servers{'\n'}
-                    • Continue developing new features{'\n'}
-                    • Provide support to families who need it
-                  </Text>
-                </View>
-                {Platform.OS === 'web' && (
-                  <View style={{ marginTop: 16, alignItems: 'center' }}>
-                    <BuyMeCoffeeButton 
-                      style="button"
-                      theme={{ primary: '#5C7E9D' }}
-                    />
-                  </View>
-                )}
-              </View>
-            </View>
             
             <View style={styles.supportFooter}>
               <Text style={styles.supportFooterText}>

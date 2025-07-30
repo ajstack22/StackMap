@@ -12,6 +12,7 @@
 2. Copy build files to root: `cp web/build/*.* . && cp -r web/build/fonts . && cp -r web/build/icons .`
 3. Commit and push
 4. Pull on server: `ssh stackmap-cpanel "cd ~/public_html/qual && git pull"`
+5. Access at: https://stackmap.app/qual/
 
 ### For Production:
 Use `./scripts/simple-deploy.sh` (it rsyncs from qual to prod)

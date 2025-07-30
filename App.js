@@ -305,6 +305,8 @@ const App = () => {
       const urlParams = new URLSearchParams(search);
       const token = urlParams.get('share');
       let syncPhrase = urlParams.get('sync');
+      const privacyParam = urlParams.has('privacy');
+      const supportParam = urlParams.has('supportus');
       
       // If we have a sync phrase, we need to handle + characters that might be in base64
       if (syncPhrase && search.includes('sync=')) {
@@ -320,7 +322,9 @@ const App = () => {
       console.log('[App] URL params:', { 
         search: window.location.search,
         syncPhrase,
-        decoded: syncPhrase ? decodeURIComponent(syncPhrase) : null 
+        decoded: syncPhrase ? decodeURIComponent(syncPhrase) : null,
+        privacy: privacyParam,
+        supportus: supportParam
       });
       
       if (token) {
@@ -328,6 +332,12 @@ const App = () => {
       } else if (syncPhrase) {
         // Store sync phrase to handle after app initializes
         setSyncSetupPhrase(syncPhrase);
+      } else if (privacyParam) {
+        // Open privacy modal after app initializes
+        setTimeout(() => setShowPrivacyModal(true), 500);
+      } else if (supportParam) {
+        // Open support modal after app initializes
+        setTimeout(() => setShowSupportModal(true), 500);
       }
     }
   }, []);
