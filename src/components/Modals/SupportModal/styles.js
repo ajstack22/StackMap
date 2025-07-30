@@ -64,8 +64,8 @@ export const styles = StyleSheet.create({
   supportMessageBox: {
     backgroundColor: 'white',
     borderRadius: 16,
-    padding: 20,
-    marginBottom: 32,
+    padding: 16,
+    marginBottom: 24,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
@@ -79,14 +79,14 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   supportWaysSection: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   supportSectionTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: '600',
     color: '#5C7E9D',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   supportOptionFun: {
     flexDirection: 'row',
@@ -165,13 +165,13 @@ export const styles = StyleSheet.create({
     marginTop: 10,
   },
   impactSection: {
-    marginTop: 20,
-    marginBottom: 20,
+    marginTop: 16,
+    marginBottom: 16,
   },
   impactRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
     paddingHorizontal: 16,
   },
   impactIcon: {
