@@ -332,12 +332,14 @@ const App = () => {
       } else if (syncPhrase) {
         // Store sync phrase to handle after app initializes
         setSyncSetupPhrase(syncPhrase);
-      } else if (privacyParam) {
-        // Open privacy modal after app initializes
-        setTimeout(() => setShowPrivacyModal(true), 500);
-      } else if (supportParam) {
-        // Open support modal after app initializes
-        setTimeout(() => setShowSupportModal(true), 500);
+      }
+      
+      // Store URL params in state to handle them properly
+      if (privacyParam) {
+        window.urlOpenPrivacy = true;
+      }
+      if (supportParam) {
+        window.urlOpenSupport = true;
       }
     }
   }, []);
@@ -369,6 +371,28 @@ const App = () => {
     
     checkHydration();
   }, []);
+  
+  // Handle URL parameter modals after hydration
+  useEffect(() => {
+    if (!isHydrated) return;
+    
+    // Check if we should open modals from URL params
+    if (Platform.OS === 'web') {
+      // Use a longer delay to ensure everything is mounted
+      setTimeout(() => {
+        if (window.urlOpenPrivacy) {
+          console.log('[App] Opening privacy modal from URL param');
+          setShowPrivacyModal(true);
+          window.urlOpenPrivacy = false;
+        }
+        if (window.urlOpenSupport) {
+          console.log('[App] Opening support modal from URL param');
+          setShowSupportModal(true);
+          window.urlOpenSupport = false;
+        }
+      }, 1000);
+    }
+  }, [isHydrated]);
   
   // Check sync status
   useEffect(() => {
@@ -3444,10 +3468,11 @@ const App = () => {
   // Show onboarding if needed (kept for backward compatibility)
   if (showOnboarding) {
     return (
-      <OnboardingNew
-        onComplete={handleOnboardingComplete}
-        onImport={async () => {
-          // Create a version of importData that doesn't hide onboarding
+      <>
+        <OnboardingNew
+          onComplete={handleOnboardingComplete}
+          onImport={async () => {
+            // Create a version of importData that doesn't hide onboarding
           const success = await importDataForOnboarding();
           if (!success) {
             throw new Error('Import cancelled or failed');
@@ -3456,6 +3481,24 @@ const App = () => {
         isAbbreviated={!!syncSetupPhrase}
         syncSetupPhrase={syncSetupPhrase}
       />
+      
+      {/* Privacy Policy Modal - Available during onboarding for App Store */}
+      <PrivacyModal
+        visible={showPrivacyModal}
+        onClose={() => setShowPrivacyModal(false)}
+        insets={insets}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
+        styles={styles}
+      />
+      
+      {/* Support Modal - Available during onboarding */}
+      <SupportModal
+        visible={showSupportModal}
+        onClose={() => setShowSupportModal(false)}
+        showToast={showToast}
+        theme={theme}
+      />
+      </>
     );
   }
 
