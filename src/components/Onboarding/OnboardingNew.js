@@ -12,12 +12,17 @@ import {
   Animated,
   StatusBar,
   ActivityIndicator,
+  Linking,
+  Clipboard,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import QRCode from 'react-native-qrcode-svg';
 import Logo from '../Logo/Logo';
 import SyncStatusIndicator from '../SyncStatusIndicator';
-import CreateSyncModal from '../Modals/CreateSyncModal';
+import syncService from '../../services/sync/syncService';
+import encryptionService from '../../services/sync/encryptionService';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -49,7 +54,9 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [syncEnabled, setSyncEnabled] = useState(false);
-  const [showCreateSyncModal, setShowCreateSyncModal] = useState(false);
+  const [syncMode, setSyncMode] = useState('join'); // 'join' or 'create'
+  const [newSyncData, setNewSyncData] = useState(null);
+  const [showCopiedToast, setShowCopiedToast] = useState(false);
   
   const fadeAnim = useRef(new Animated.Value(0)).current; // Start at 0 for fade in
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -222,9 +229,9 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                   <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Fresh</Text>
                 </TouchableOpacity>
                 
-                <View style={styles.secondaryButtonsContainer}>
+                <View style={styles.secondaryButtonsRow}>
                   <TouchableOpacity 
-                    style={[styles.secondaryButton, styles.secondaryButtonThird]}
+                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
                     onPress={async () => {
                       try {
                         await onImport();
@@ -242,20 +249,13 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
-                    style={[styles.secondaryButton, styles.secondaryButtonThird]}
+                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
                     onPress={() => transitionTo('sync')}
                   >
                     <Icon name="cloud-sync" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
                     <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
                   </TouchableOpacity>
                   
-                  <TouchableOpacity 
-                    style={[styles.secondaryButton, styles.secondaryButtonThird]}
-                    onPress={() => setShowCreateSyncModal(true)}
-                  >
-                    <Icon name="smartphone" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>New App Sync</Text>
-                  </TouchableOpacity>
                 </View>
               </>
             )}
@@ -556,6 +556,43 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             setSyncLoading(false);
           }
         };
+
+        // Create new sync function
+        const createNewSync = async () => {
+          setSyncLoading(true);
+          setSyncError('');
+          
+          try {
+            // Generate recovery phrase
+            const recoveryPhrase = encryptionService.generateRecoveryPhrase();
+            
+            // Generate sync ID from recovery phrase
+            const syncId = await syncService.generateSyncId(recoveryPhrase);
+            
+            setNewSyncData({
+              recoveryPhrase,
+              syncId,
+              qrData: `stackmap://sync/${recoveryPhrase}`,
+            });
+          } catch (err) {
+            console.error('Error creating sync:', err);
+            setSyncError('Failed to create sync. Please try again.');
+          } finally {
+            setSyncLoading(false);
+          }
+        };
+
+        const handleCopyCode = () => {
+          if (newSyncData?.recoveryPhrase) {
+            Clipboard.setString(newSyncData.recoveryPhrase);
+            setShowCopiedToast(true);
+            setTimeout(() => setShowCopiedToast(false), 2000);
+          }
+        };
+
+        const handleVisitSupport = () => {
+          Linking.openURL('https://stackmap.app?supportus');
+        };
         
         return (
           <View style={styles.container}>
@@ -574,11 +611,43 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               >
                 <Logo size={isTablet() ? 50 : 40} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
                 <Text style={styles.screenTitle}>Sync Your StackMap</Text>
+                
+                {/* Sync Mode Toggle */}
+                <View style={styles.syncModeToggle}>
+                  <TouchableOpacity 
+                    style={[styles.syncModeButton, syncMode === 'join' && styles.syncModeButtonActive]}
+                    onPress={() => {
+                      setSyncMode('join');
+                      setSyncError('');
+                    }}
+                  >
+                    <Text style={[styles.syncModeButtonText, syncMode === 'join' && styles.syncModeButtonTextActive]}>
+                      Join Existing Sync
+                    </Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.syncModeButton, syncMode === 'create' && styles.syncModeButtonActive]}
+                    onPress={() => {
+                      setSyncMode('create');
+                      setSyncError('');
+                      if (!newSyncData) {
+                        createNewSync();
+                      }
+                    }}
+                  >
+                    <Text style={[styles.syncModeButtonText, syncMode === 'create' && styles.syncModeButtonTextActive]}>
+                      Create New Sync
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+
                 <Text style={styles.screenSubtitle}>
-                  Connect to your existing sync group
+                  {syncMode === 'join' ? 'Connect to your existing sync group' : 'Create a sync code for your device'}
                 </Text>
                 
-                <View style={styles.syncFeatures}>
+                {syncMode === 'join' ? (
+                  <>
+                    <View style={styles.syncFeatures}>
                   <View style={styles.syncFeature}>
                     <View style={styles.syncFeatureIcon}>
                       <Icon name="lock" size={20} color={THEMES.stackBlue.primary} />
@@ -642,6 +711,130 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
                   </TouchableOpacity>
                 </View>
+                  </>
+                ) : (
+                  <>
+                    {/* Create New Sync Content */}
+                    {syncLoading ? (
+                      <View style={styles.loadingContainer}>
+                        <ActivityIndicator size="large" color={THEMES.stackBlue.primary} />
+                        <Text style={[styles.loadingText, { color: THEMES.stackBlue.text }]}>
+                          Creating sync code...
+                        </Text>
+                      </View>
+                    ) : syncError ? (
+                      <View style={styles.errorContainer}>
+                        <Icon name="error-outline" size={48} color="#e53e3e" />
+                        <Text style={[styles.errorText, { color: '#e53e3e' }]}>{syncError}</Text>
+                        <TouchableOpacity 
+                          style={[styles.retryButton, { backgroundColor: THEMES.stackBlue.primary }]}
+                          onPress={createNewSync}
+                        >
+                          <Text style={styles.retryButtonText}>Try Again</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : newSyncData ? (
+                      <>
+                        <Text style={[styles.description, { color: THEMES.stackBlue.text }]}>
+                          Use this sync code on your device to connect your existing StackMap data to the cloud.
+                        </Text>
+
+                        {/* QR Code */}
+                        <View style={styles.qrContainer}>
+                          <QRCode
+                            value={newSyncData.qrData}
+                            size={200}
+                            color={THEMES.stackBlue.text}
+                            backgroundColor={THEMES.stackBlue.background}
+                          />
+                        </View>
+
+                        {/* Recovery Phrase */}
+                        <View style={[styles.codeContainer, { backgroundColor: THEMES.stackBlue.card || '#f5f5f5' }]}>
+                          <Text style={[styles.codeLabel, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                            Sync Code
+                          </Text>
+                          <Text style={[styles.codeText, { color: THEMES.stackBlue.text }]}>
+                            {newSyncData.recoveryPhrase}
+                          </Text>
+                          <TouchableOpacity
+                            style={[styles.copyButton, { backgroundColor: THEMES.stackBlue.primary }]}
+                            onPress={handleCopyCode}
+                          >
+                            <Icon name="content-copy" size={18} color="white" />
+                            <Text style={styles.copyButtonText}>Copy Code</Text>
+                          </TouchableOpacity>
+                        </View>
+
+                        {/* Instructions */}
+                        <View style={styles.instructionsContainer}>
+                          <Text style={[styles.instructionsTitle, { color: THEMES.stackBlue.text }]}>
+                            How to sync your device:
+                          </Text>
+                          <View style={styles.instructionItem}>
+                            <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>1</Text>
+                            <Text style={[styles.instructionText, { color: THEMES.stackBlue.text }]}>
+                              Open StackMap on your device
+                            </Text>
+                          </View>
+                          <View style={styles.instructionItem}>
+                            <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>2</Text>
+                            <Text style={[styles.instructionText, { color: THEMES.stackBlue.text }]}>
+                              Go to Settings → Data Management
+                            </Text>
+                          </View>
+                          <View style={styles.instructionItem}>
+                            <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>3</Text>
+                            <Text style={[styles.instructionText, { color: THEMES.stackBlue.text }]}>
+                              Enable Sync and enter this code
+                            </Text>
+                          </View>
+                        </View>
+
+                        {/* Support Button */}
+                        <TouchableOpacity
+                          style={[styles.supportButton, { backgroundColor: THEMES.stackBlue.primary }]}
+                          onPress={handleVisitSupport}
+                        >
+                          <Icon name="favorite" size={20} color="white" />
+                          <Text style={styles.supportButtonText}>Support StackMap</Text>
+                        </TouchableOpacity>
+
+                        <Text style={[styles.supportText, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                          Your contributions help us provide:
+                        </Text>
+                        <View style={styles.contributionList}>
+                          <Text style={[styles.contributionItem, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                            • Free sync service for all families
+                          </Text>
+                          <Text style={[styles.contributionItem, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                            • Ongoing development & improvements
+                          </Text>
+                          <Text style={[styles.contributionItem, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                            • Server costs for data storage
+                          </Text>
+                        </View>
+
+                        <TouchableOpacity 
+                          style={styles.secondaryButton}
+                          onPress={() => transitionTo('welcome')}
+                        >
+                          <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+                        </TouchableOpacity>
+                      </>
+                    ) : null}
+                  </>
+                )}
+
+                {/* Toast */}
+                {showCopiedToast && (
+                  <View style={styles.toastContainer}>
+                    <View style={[styles.toast, { backgroundColor: THEMES.stackBlue.primary }]}>
+                      <Icon name="check" size={20} color="white" />
+                      <Text style={styles.toastText}>Copied to clipboard!</Text>
+                    </View>
+                  </View>
+                )}
               </ScrollView>
             </KeyboardAvoidingView>
           </View>
@@ -783,17 +976,6 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       >
         {renderContent()}
       </Animated.View>
-      
-      {/* Create Sync Modal */}
-      <CreateSyncModal
-        visible={showCreateSyncModal}
-        onClose={() => setShowCreateSyncModal(false)}
-        onSyncCreated={(recoveryPhrase) => {
-          // Don't close the modal here - let user close it manually
-          console.log('Sync created with recovery phrase:', recoveryPhrase);
-        }}
-        theme={THEMES.stackBlue}
-      />
     </View>
   );
 };
@@ -1420,6 +1602,199 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: THEMES.stackBlue.primary,
+  },
+  // Sync mode toggle styles
+  syncModeToggle: {
+    flexDirection: 'row',
+    backgroundColor: 'white',
+    borderRadius: 8,
+    marginVertical: 16,
+    padding: 4,
+    gap: 4,
+  },
+  syncModeButton: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  syncModeButtonActive: {
+    backgroundColor: THEMES.stackBlue.primary,
+  },
+  syncModeButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: COLORS.gray[600],
+  },
+  syncModeButtonTextActive: {
+    color: 'white',
+  },
+  // Create sync styles
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+    paddingVertical: 40,
+  },
+  retryButton: {
+    marginTop: 24,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  retryButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  qrContainer: {
+    alignItems: 'center',
+    marginBottom: 24,
+    padding: 20,
+    backgroundColor: 'white',
+    borderRadius: 12,
+    alignSelf: 'center',
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    } : {
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    }),
+  },
+  codeContainer: {
+    padding: 20,
+    borderRadius: 12,
+    marginBottom: 24,
+    alignItems: 'center',
+    ...(Platform.OS === 'web' ? {
+      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+    } : {
+      elevation: 2,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    }),
+  },
+  codeLabel: {
+    fontSize: 14,
+    marginBottom: 8,
+  },
+  codeText: {
+    fontSize: 18,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  copyButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 6,
+  },
+  copyButtonText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  instructionsContainer: {
+    marginBottom: 24,
+  },
+  instructionsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 12,
+  },
+  instructionItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginBottom: 12,
+  },
+  instructionNumber: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginRight: 12,
+    width: 24,
+  },
+  instructionText: {
+    flex: 1,
+    fontSize: 15,
+    lineHeight: 22,
+  },
+  supportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+    alignSelf: 'center',
+    marginBottom: 12,
+  },
+  supportButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  supportText: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  contributionList: {
+    marginTop: 8,
+    marginBottom: 20,
+    alignItems: 'flex-start',
+    alignSelf: 'center',
+  },
+  contributionItem: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginVertical: 2,
+  },
+  toastContainer: {
+    position: 'absolute',
+    bottom: 100,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  toast: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 25,
+    gap: 8,
+  },
+  toastText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
