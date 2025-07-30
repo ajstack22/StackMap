@@ -13,6 +13,14 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
   },
+  headerLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  headerIcon: {
+    marginRight: 12,
+  },
   modalTitle: {
     fontSize: 20,
     fontWeight: '600',

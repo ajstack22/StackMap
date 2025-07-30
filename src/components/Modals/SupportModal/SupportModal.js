@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
-import { BuyMeCoffeeButton } from '../..';
+import { BuyMeCoffeeButton, Logo } from '../..';
 
 const SupportModal = ({
   visible,
@@ -32,7 +32,10 @@ const SupportModal = ({
         )}
         <SafeAreaView style={{ backgroundColor: '#5C7E9D' }}>
           <View style={[styles.modalHeader, { backgroundColor: '#5C7E9D' }]}>
-            <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap 💙</Text>
+            <View style={styles.headerLeft}>
+              <Icon name="favorite" size={24} color="white" style={styles.headerIcon} />
+              <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap</Text>
+            </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
@@ -42,7 +45,7 @@ const SupportModal = ({
         <View style={{ flex: 1, backgroundColor: '#f0f4f8' }}>
           <ScrollView style={styles.supportContent}>
             <View style={styles.supportHeader}>
-              <Text style={styles.supportHeart}>💙</Text>
+              <Logo size={80} style={{ marginBottom: 16 }} />
               <Text style={styles.supportTitle}>Support StackMap!</Text>
               <Text style={styles.supportSubtitle}>
                 Made with love for families everywhere ✨
