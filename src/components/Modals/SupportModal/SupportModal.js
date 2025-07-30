@@ -66,9 +66,9 @@ const SupportModal = ({
                 </View>
                 
                 <View style={styles.impactWrapper}>
-                  <Text style={styles.contributionHeader}>Your contributions help us provide:</Text>
+                  <Text style={[styles.contributionHeader, { textAlign: 'left', paddingLeft: 0 }]}>Your contributions help us provide:</Text>
                   
-                  <View style={styles.impactSection}>
+                  <View style={[styles.impactSection, { alignItems: 'flex-start' }]}>
                     <View style={styles.impactRow}>
                       <View style={styles.impactIcon}>
                         <Icon name="lock" size={24} color="#5C7E9D" />
