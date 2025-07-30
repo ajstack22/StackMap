@@ -254,7 +254,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     onPress={() => setShowCreateSyncModal(true)}
                   >
                     <Icon name="smartphone" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Create Sync for App</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>New App Sync</Text>
                   </TouchableOpacity>
                 </View>
               </>

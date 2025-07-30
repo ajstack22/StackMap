@@ -22,14 +22,16 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
   const [error, setError] = useState(null);
   const [syncData, setSyncData] = useState(null);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [hasCreatedSync, setHasCreatedSync] = useState(false);
   const insets = useSafeAreaInsets();
 
   // Create sync when modal opens
   useEffect(() => {
-    if (visible && !syncData) {
+    if (visible && !hasCreatedSync) {
       createNewSync();
+      setHasCreatedSync(true);
     }
-  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visible, hasCreatedSync]);
 
   const createNewSync = async () => {
     setLoading(true);
@@ -83,15 +85,16 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
   
   // Reset sync data when modal becomes invisible
   useEffect(() => {
-    if (!visible) {
+    if (!visible && hasCreatedSync) {
       // Reset after a delay to prevent flashing
       const timer = setTimeout(() => {
         setSyncData(null);
         setError(null);
-      }, 300);
+        setHasCreatedSync(false);
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [visible]);
+  }, [visible, hasCreatedSync]);
 
   return (
     <Modal
@@ -110,7 +113,7 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
             >
               <Icon name="close" size={24} color={theme.text} />
             </TouchableOpacity>
-            <Text style={[styles.title, { color: theme.text }]}>Create Sync for App</Text>
+            <Text style={[styles.title, { color: theme.text }]}>New App Sync</Text>
             <View style={{ width: 24 }} />
           </View>
 
