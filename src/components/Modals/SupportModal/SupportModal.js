@@ -118,43 +118,45 @@ const SupportModal = ({
             <View style={styles.supportWaysSection}>
               <Text style={styles.supportSectionTitle}>Other Ways to Help</Text>
               
-              <View style={styles.supportOptionFun}>
-                <Text style={styles.supportIconBig}>🎆</Text>
-                <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Leave a Review</Text>
-                  <Text style={styles.supportOptionTextFun}>
-                    Help other families find us
-                  </Text>
+              <View style={styles.supportOptionsGrid}>
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>🎆</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Leave a Review</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      Help other families find us
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              
-              <View style={styles.supportOptionFun}>
-                <Text style={styles.supportIconBig}>📣</Text>
-                <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Tell a Friend</Text>
-                  <Text style={styles.supportOptionTextFun}>
-                    Share with someone who could use StackMap
-                  </Text>
+                
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>📣</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Tell a Friend</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      Share with someone who could use StackMap
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              
-              <View style={styles.supportOptionFun}>
-                <Text style={styles.supportIconBig}>💬</Text>
-                <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Share Your Story</Text>
-                  <Text style={styles.supportOptionTextFun}>
-                    We'd love to hear how StackMap helps
-                  </Text>
+                
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>💬</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Share Your Story</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      We'd love to hear how StackMap helps
+                    </Text>
+                  </View>
                 </View>
-              </View>
-              
-              <View style={styles.supportOptionFun}>
-                <Text style={styles.supportIconBig}>💡</Text>
-                <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Send Ideas</Text>
-                  <Text style={styles.supportOptionTextFun}>
-                    What would make StackMap better for you?
-                  </Text>
+                
+                <View style={styles.supportOptionFun}>
+                  <Text style={styles.supportIconBig}>💡</Text>
+                  <View style={styles.supportOptionContent}>
+                    <Text style={styles.supportOptionTitleFun}>Send Ideas</Text>
+                    <Text style={styles.supportOptionTextFun}>
+                      What would make StackMap better for you?
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
