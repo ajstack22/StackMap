@@ -52,7 +52,7 @@ const SupportModal = ({
             
             <View style={styles.supportMessageBox}>
               <Text style={[styles.supportMessage, { fontSize: 17, marginBottom: 20 }]}>
-                StackMap is completely free and always will be! 🎉 We're built by a small team who believes every family deserves amazing tools. While the app is free, your contributions help cover the costs of keeping it running for everyone.
+                StackMap is free and always will be. Built by parents, for families everywhere.
               </Text>
               
               <Image 
@@ -69,13 +69,11 @@ const SupportModal = ({
               <Text style={[styles.teamCaption, { alignSelf: 'center', marginBottom: 20 }]}>The StackMap Team</Text>
               
               <Text style={[styles.supportMessage, { fontSize: 16, marginBottom: 12 }]}>
-                Specifically your contributions help fund:
+                Your support helps us:
               </Text>
               <View style={styles.contributionList}>
-                <Text style={styles.contributionItem}>Keeping the app 100% free with no ads or data collection</Text>
-                <Text style={styles.contributionItem}>Maintaining codebase and secure cloud sync servers</Text>
-                <Text style={styles.contributionItem}>Continuing development on new features and services</Text>
-                <Text style={styles.contributionItem}>Ongoing support to families who need it</Text>
+                <Text style={styles.contributionItem}>Keep it 100% free • No ads • No data tracking</Text>
+                <Text style={styles.contributionItem}>Run servers • Build features • Help more families</Text>
               </View>
               {Platform.OS === 'web' && (
                 <View style={{ marginTop: 20, alignItems: 'center' }}>
@@ -89,14 +87,14 @@ const SupportModal = ({
             </View>
             
             <View style={styles.supportWaysSection}>
-              <Text style={styles.supportSectionTitle}>Other Amazing Ways You Can Help! 🌟</Text>
+              <Text style={styles.supportSectionTitle}>Other Ways to Help</Text>
               
               <View style={styles.supportOptionFun}>
                 <Text style={styles.supportIconBig}>🎆</Text>
                 <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Rate & Review Us!</Text>
+                  <Text style={styles.supportOptionTitleFun}>Leave a Review</Text>
                   <Text style={styles.supportOptionTextFun}>
-                    App Store reviews help other families discover StackMap. Your 5-star review makes our day! ⭐⭐⭐⭐⭐
+                    Help other families find us
                   </Text>
                 </View>
               </View>
@@ -104,9 +102,9 @@ const SupportModal = ({
               <View style={styles.supportOptionFun}>
                 <Text style={styles.supportIconBig}>📣</Text>
                 <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Spread the Word!</Text>
+                  <Text style={styles.supportOptionTitleFun}>Tell a Friend</Text>
                   <Text style={styles.supportOptionTextFun}>
-                    Tell friends, family, therapists, and support groups. Word of mouth is our superpower! 💪
+                    Share with someone who could use StackMap
                   </Text>
                 </View>
               </View>
@@ -114,9 +112,9 @@ const SupportModal = ({
               <View style={styles.supportOptionFun}>
                 <Text style={styles.supportIconBig}>💬</Text>
                 <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Send Us Your Stories!</Text>
+                  <Text style={styles.supportOptionTitleFun}>Share Your Story</Text>
                   <Text style={styles.supportOptionTextFun}>
-                    We love hearing how StackMap helps your family! Your feedback guides everything we build. 💙
+                    We'd love to hear how StackMap helps
                   </Text>
                 </View>
               </View>
@@ -124,25 +122,25 @@ const SupportModal = ({
               <View style={styles.supportOptionFun}>
                 <Text style={styles.supportIconBig}>💡</Text>
                 <View style={styles.supportOptionContent}>
-                  <Text style={styles.supportOptionTitleFun}>Share Your Ideas!</Text>
+                  <Text style={styles.supportOptionTitleFun}>Send Ideas</Text>
                   <Text style={styles.supportOptionTextFun}>
-                    Got ideas for new features? We're all ears! Email us anytime. 🚀
+                    What would make StackMap better for you?
                   </Text>
                 </View>
               </View>
             </View>
             
             <View style={styles.supportContactBox}>
-              <Text style={styles.supportContactTitle}>Questions? We're Here! 😊</Text>
+              <Text style={styles.supportContactTitle}>Get in Touch</Text>
               <Text style={styles.supportContactText}>
-                Email us at support@stackmap.app
+                support@stackmap.app
               </Text>
             </View>
             
             
             <View style={styles.supportFooter}>
               <Text style={styles.supportFooterText}>
-                Thank you for being part of our amazing community! 🌈
+                Thank you for being part of StackMap
               </Text>
             </View>
           </ScrollView>
