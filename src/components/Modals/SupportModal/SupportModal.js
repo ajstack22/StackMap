@@ -48,26 +48,17 @@ const SupportModal = ({
             <View style={styles.supportHeader}>
               <Logo size={80} color="#5C7E9D" style={{ marginBottom: 8 }} />
               <Text style={styles.stackMapText}>StackMap</Text>
-              <View style={{ 
-                width: 320, 
-                height: 160, 
-                borderRadius: 10, 
-                marginBottom: 8, 
-                marginTop: 25,
-                overflow: 'hidden',
-                backgroundColor: '#f0f4f8'
-              }}>
-                <Image 
-                  source={require('../../../../image_library/StackMapTeam.jpg')}
-                  style={{ 
-                    width: 320, 
-                    height: 213,
-                    position: 'absolute',
-                    top: -20,
-                  }}
-                  resizeMode="cover"
-                />
-              </View>
+              <Image 
+                source={require('../../../../image_library/StackMapTeam.jpg')}
+                style={{ 
+                  width: 300, 
+                  height: 200,
+                  borderRadius: 10, 
+                  marginBottom: 8, 
+                  marginTop: 30,
+                }}
+                resizeMode="contain"
+              />
               <Text style={styles.teamCaption}>The StackMap Team</Text>
             </View>
             
