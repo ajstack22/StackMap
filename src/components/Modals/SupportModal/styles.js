@@ -55,6 +55,12 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 8,
   },
+  stackMapText: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: '#5C7E9D',
+    marginBottom: 10,
+  },
   supportMessageBox: {
     backgroundColor: 'white',
     borderRadius: 16,

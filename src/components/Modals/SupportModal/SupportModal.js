@@ -46,10 +46,11 @@ const SupportModal = ({
         <View style={{ flex: 1, backgroundColor: '#f0f4f8' }}>
           <ScrollView style={styles.supportContent}>
             <View style={styles.supportHeader}>
-              <Logo size={80} color="#5C7E9D" style={{ marginBottom: 40 }} />
+              <Logo size={80} color="#5C7E9D" style={{ marginBottom: 8 }} />
+              <Text style={styles.stackMapText}>StackMap</Text>
               <Image 
                 source={require('../../../../image_library/StackMapTeam.jpg')}
-                style={{ width: 280, height: 187, borderRadius: 10, marginBottom: 8, marginTop: 20 }}
+                style={{ width: 280, height: 187, borderRadius: 10, marginBottom: 8, marginTop: 30 }}
                 resizeMode="contain"
               />
               <Text style={styles.teamCaption}>The StackMap Team</Text>
