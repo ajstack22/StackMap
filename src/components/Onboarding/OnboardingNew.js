@@ -17,6 +17,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
 import SyncStatusIndicator from '../SyncStatusIndicator';
+import CreateSyncModal from '../Modals/CreateSyncModal';
 import {
   COLORS,
   TYPOGRAPHY,
@@ -48,6 +49,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const [syncLoading, setSyncLoading] = useState(false);
   const [syncError, setSyncError] = useState('');
   const [syncEnabled, setSyncEnabled] = useState(false);
+  const [showCreateSyncModal, setShowCreateSyncModal] = useState(false);
   
   const fadeAnim = useRef(new Animated.Value(0)).current; // Start at 0 for fade in
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -248,6 +250,14 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                   </TouchableOpacity>
                 </View>
                 
+                {/* Create Sync for App button */}
+                <TouchableOpacity 
+                  style={styles.createSyncButton}
+                  onPress={() => setShowCreateSyncModal(true)}
+                >
+                  <Icon name="smartphone" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
+                  <Text style={[styles.buttonTextBase, styles.createSyncButtonText]}>Create Sync for App</Text>
+                </TouchableOpacity>
               </>
             )}
           </ScrollView>
@@ -774,6 +784,17 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       >
         {renderContent()}
       </Animated.View>
+      
+      {/* Create Sync Modal */}
+      <CreateSyncModal
+        visible={showCreateSyncModal}
+        onClose={() => setShowCreateSyncModal(false)}
+        onSyncCreated={(recoveryPhrase) => {
+          setShowCreateSyncModal(false);
+          // Optionally could transition to features or show success
+        }}
+        theme={THEMES.stackBlue}
+      />
     </View>
   );
 };
@@ -877,6 +898,28 @@ const styles = StyleSheet.create({
   },
   buttonIcon: {
     marginRight: 8,
+  },
+  createSyncButton: {
+    backgroundColor: 'white',
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 20,
+    paddingVertical: Platform.OS === 'web' ? 12 : 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: THEMES.stackBlue.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row',
+    marginTop: 10,
+    maxWidth: Platform.OS === 'web' ? 400 : 350,
+    width: '100%',
+    alignSelf: 'center',
+    ...SHADOWS.level1,
+  },
+  createSyncButtonText: {
+    color: THEMES.stackBlue.primary,
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    textAlign: 'center',
   },
   
   // Original styles continue below
