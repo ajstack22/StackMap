@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
+  Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
@@ -46,7 +47,12 @@ const SupportModal = ({
           <ScrollView style={styles.supportContent}>
             <View style={styles.supportHeader}>
               <Logo size={80} color="#5C7E9D" style={{ marginBottom: 16 }} />
-              <Text style={styles.supportTitle}>Support StackMap!</Text>
+              <Image 
+                source={require('../../../../image_library/StackMapTeam.jpg')}
+                style={{ width: 300, height: 200, borderRadius: 10, marginBottom: 8 }}
+                resizeMode="cover"
+              />
+              <Text style={styles.teamCaption}>The StackMap Team</Text>
               <Text style={styles.supportSubtitle}>
                 Made with love for families everywhere ✨
               </Text>

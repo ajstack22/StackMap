@@ -48,6 +48,13 @@ export const styles = StyleSheet.create({
     fontSize: 18,
     color: '#8FA5B8',
   },
+  teamCaption: {
+    fontSize: 16,
+    color: '#5C7E9D',
+    fontWeight: '500',
+    marginBottom: 16,
+    marginTop: 8,
+  },
   supportMessageBox: {
     backgroundColor: 'white',
     borderRadius: 16,
