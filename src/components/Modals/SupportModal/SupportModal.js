@@ -68,13 +68,15 @@ const SupportModal = ({
               />
               <Text style={[styles.teamCaption, { alignSelf: 'center', marginBottom: 20 }]}>The StackMap Team</Text>
               
+              <Text style={styles.contributionHeader}>Your contributions help us provide:</Text>
+              
               <View style={styles.impactSection}>
                 <View style={styles.impactRow}>
                   <View style={styles.impactIcon}>
                     <Icon name="lock" size={24} color="#5C7E9D" />
                   </View>
                   <View style={styles.impactContent}>
-                    <Text style={styles.impactTitle}>100% Private</Text>
+                    <Text style={styles.impactTitle}>100% Private & Ad-Free</Text>
                     <Text style={styles.impactDescription}>No ads, no tracking, your data stays yours</Text>
                   </View>
                 </View>
@@ -84,8 +86,8 @@ const SupportModal = ({
                     <Icon name="cloud" size={24} color="#5C7E9D" />
                   </View>
                   <View style={styles.impactContent}>
-                    <Text style={styles.impactTitle}>Always Available</Text>
-                    <Text style={styles.impactDescription}>Reliable servers & continuous improvements</Text>
+                    <Text style={styles.impactTitle}>Free Sync Service</Text>
+                    <Text style={styles.impactDescription}>Reliable servers for all families</Text>
                   </View>
                 </View>
                 
@@ -94,8 +96,8 @@ const SupportModal = ({
                     <Icon name="favorite" size={24} color="#5C7E9D" />
                   </View>
                   <View style={styles.impactContent}>
-                    <Text style={styles.impactTitle}>Free Forever</Text>
-                    <Text style={styles.impactDescription}>Supporting families who need it most</Text>
+                    <Text style={styles.impactTitle}>Ongoing Development</Text>
+                    <Text style={styles.impactDescription}>Continuous improvements & support</Text>
                   </View>
                 </View>
               </View>

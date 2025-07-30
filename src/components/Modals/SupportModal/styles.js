@@ -156,6 +156,14 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 20,
   },
+  contributionHeader: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#2d3748',
+    textAlign: 'center',
+    marginBottom: 16,
+    marginTop: 10,
+  },
   impactSection: {
     marginTop: 20,
     marginBottom: 20,
