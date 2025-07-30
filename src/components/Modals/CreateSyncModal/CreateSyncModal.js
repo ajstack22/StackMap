@@ -195,8 +195,19 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
                 </TouchableOpacity>
 
                 <Text style={[styles.supportText, { color: theme.textSecondary }]}>
-                  Keep StackMap free for families everywhere
+                  Your contributions help us provide:
                 </Text>
+                <View style={styles.contributionList}>
+                  <Text style={[styles.contributionItem, { color: theme.textSecondary }]}>
+                    • Free sync service for all families
+                  </Text>
+                  <Text style={[styles.contributionItem, { color: theme.textSecondary }]}>
+                    • Ongoing development & improvements
+                  </Text>
+                  <Text style={[styles.contributionItem, { color: theme.textSecondary }]}>
+                    • Server costs for data storage
+                  </Text>
+                </View>
               </>
             ) : null}
           </View>

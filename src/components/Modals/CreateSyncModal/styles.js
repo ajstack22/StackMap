@@ -161,6 +161,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 12,
   },
+  contributionList: {
+    marginTop: 8,
+    marginBottom: 20,
+    alignItems: 'flex-start',
+    alignSelf: 'center',
+  },
+  contributionItem: {
+    fontSize: 13,
+    lineHeight: 20,
+    marginVertical: 2,
+  },
   toastContainer: {
     position: 'absolute',
     bottom: 100,

@@ -789,8 +789,8 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         visible={showCreateSyncModal}
         onClose={() => setShowCreateSyncModal(false)}
         onSyncCreated={(recoveryPhrase) => {
-          setShowCreateSyncModal(false);
-          // Optionally could transition to features or show success
+          // Don't close the modal here - let user close it manually
+          console.log('Sync created with recovery phrase:', recoveryPhrase);
         }}
         theme={THEMES.stackBlue}
       />
