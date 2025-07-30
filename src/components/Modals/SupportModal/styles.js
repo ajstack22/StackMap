@@ -156,4 +156,37 @@ export const styles = StyleSheet.create({
     marginBottom: 8,
     paddingHorizontal: 20,
   },
+  impactSection: {
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  impactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    paddingHorizontal: 16,
+  },
+  impactIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#E8F4F8',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  impactContent: {
+    flex: 1,
+  },
+  impactTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#2c3e50',
+    marginBottom: 2,
+  },
+  impactDescription: {
+    fontSize: 14,
+    color: '#718096',
+    lineHeight: 18,
+  },
 });
