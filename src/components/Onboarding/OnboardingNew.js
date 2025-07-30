@@ -863,7 +863,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
-    flexWrap: Platform.OS === 'web' ? 'nowrap' : 'wrap',
+    flexWrap: 'wrap',
   },
   secondaryButtonsRow: {
     flexDirection: 'row',
@@ -881,7 +881,8 @@ const styles = StyleSheet.create({
   },
   secondaryButtonThird: {
     flex: 1,
-    minWidth: Platform.OS === 'web' ? 150 : 100,
+    minWidth: Platform.OS === 'web' ? 180 : 105,
+    minHeight: 44,
   },
   secondaryButton: {
     backgroundColor: 'white',

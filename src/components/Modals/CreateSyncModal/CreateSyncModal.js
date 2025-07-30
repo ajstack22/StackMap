@@ -18,20 +18,19 @@ import syncService from '../../../services/sync/syncService';
 import encryptionService from '../../../services/sync/encryptionService';
 
 const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [syncData, setSyncData] = useState(null);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
-  const [hasCreatedSync, setHasCreatedSync] = useState(false);
   const insets = useSafeAreaInsets();
 
   // Create sync when modal opens
   useEffect(() => {
-    if (visible && !hasCreatedSync) {
+    if (visible && !syncData && !error) {
+      setLoading(true);
       createNewSync();
-      setHasCreatedSync(true);
     }
-  }, [visible, hasCreatedSync]);
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createNewSync = async () => {
     setLoading(true);
@@ -78,23 +77,14 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
   };
 
   const handleClose = () => {
-    // Don't reset syncData to prevent re-triggering createNewSync
-    setError(null);
     onClose();
+    // Reset state after modal animation completes
+    setTimeout(() => {
+      setSyncData(null);
+      setError(null);
+      setLoading(true);
+    }, 300);
   };
-  
-  // Reset sync data when modal becomes invisible
-  useEffect(() => {
-    if (!visible && hasCreatedSync) {
-      // Reset after a delay to prevent flashing
-      const timer = setTimeout(() => {
-        setSyncData(null);
-        setError(null);
-        setHasCreatedSync(false);
-      }, 500);
-      return () => clearTimeout(timer);
-    }
-  }, [visible, hasCreatedSync]);
 
   return (
     <Modal
