@@ -45,7 +45,7 @@ const SupportModal = ({
         <View style={{ flex: 1, backgroundColor: '#f0f4f8' }}>
           <ScrollView style={styles.supportContent}>
             <View style={styles.supportHeader}>
-              <Logo size={80} style={{ marginBottom: 16 }} />
+              <Logo size={80} color="#5C7E9D" style={{ marginBottom: 16 }} />
               <Text style={styles.supportTitle}>Support StackMap!</Text>
               <Text style={styles.supportSubtitle}>
                 Made with love for families everywhere ✨
