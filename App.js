@@ -3189,6 +3189,10 @@ const App = () => {
         insets={insets}
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
         styles={styles}
+        onShowSupport={() => {
+          setShowPrivacyModal(false);
+          setTimeout(() => setShowSupportModal(true), 300);
+        }}
       />
       
       {/* Reorder Modal */}
@@ -3302,6 +3306,10 @@ const App = () => {
         user={shareUserId ? users[shareUserId] : null}
         userId={shareUserId}
         showToast={showToast}
+        onShowSupport={() => {
+          setShowShareModal(false);
+          setTimeout(() => setShowSupportModal(true), 300);
+        }}
       />
       
       {/* Data Modal */}
@@ -3314,6 +3322,10 @@ const App = () => {
         onResetApp={resetApp}
         showToast={showToast}
         onSyncStatusChange={(enabled) => setSyncEnabled(enabled)}
+        onShowSupport={() => {
+          setShowDataModal(false);
+          setTimeout(() => setShowSupportModal(true), 300);
+        }}
       />
       
       {/* Users & Security Modal */}
@@ -3490,6 +3502,10 @@ const App = () => {
         insets={insets}
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
         styles={styles}
+        onShowSupport={() => {
+          setShowPrivacyModal(false);
+          setTimeout(() => setShowSupportModal(true), 300);
+        }}
       />
       
       {/* Support Modal - Available during onboarding */}

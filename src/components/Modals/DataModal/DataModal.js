@@ -31,6 +31,7 @@ const DataModal = ({
   onResetApp,
   showToast,
   onSyncStatusChange,
+  onShowSupport,
 }) => {
   const insets = useSafeAreaInsets();
   
@@ -349,6 +350,7 @@ const DataModal = ({
                   style="button"
                   theme={theme}
                   containerStyle={{ alignSelf: 'center' }}
+                  onPress={onShowSupport}
                 />
               </View>
             )}

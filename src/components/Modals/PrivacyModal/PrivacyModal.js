@@ -18,6 +18,7 @@ const PrivacyModal = ({
   onClose,
   getAndroidModalBottomHeight,
   insets,
+  onShowSupport,
 }) => {
   return (
     <Modal
@@ -128,6 +129,7 @@ const PrivacyModal = ({
                   <BuyMeCoffeeButton 
                     style="button"
                     theme={{ primary: '#3498db' }}
+                    onPress={onShowSupport}
                   />
                 </View>
               </View>

@@ -28,6 +28,7 @@ const ShareModal = ({
   user,
   userId,
   showToast,
+  onShowSupport,
 }) => {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
@@ -511,6 +512,7 @@ const ShareModal = ({
                   style="button"
                   theme={theme}
                   containerStyle={{ alignSelf: 'center' }}
+                  onPress={onShowSupport}
                 />
               </View>
             )}

@@ -7,6 +7,7 @@ const BuyMeCoffeeButton = ({
   theme,
   containerStyle,
   textStyle,
+  onPress, // Optional custom onPress handler
 }) => {
   // Only render on web
   if (Platform.OS !== 'web') {
@@ -56,7 +57,11 @@ const BuyMeCoffeeButton = ({
   }
 
   const handlePress = () => {
-    Linking.openURL('https://www.buymeacoffee.com/stackmap');
+    if (onPress) {
+      onPress();
+    } else {
+      Linking.openURL('https://www.buymeacoffee.com/stackmap');
+    }
   };
 
   // Link style - simple text link
