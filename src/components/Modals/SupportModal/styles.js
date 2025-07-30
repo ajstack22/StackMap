@@ -52,8 +52,30 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     color: '#5C7E9D',
     fontWeight: '500',
-    marginBottom: 16,
     marginTop: 8,
+    textAlign: 'center',
+  },
+  photoAndImpactContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 20,
+    marginTop: 10,
+  },
+  photoContainer: {
+    alignItems: 'center',
+    minWidth: 250,
+    flex: 1,
+  },
+  teamPhoto: {
+    width: 280,
+    height: 180,
+    borderRadius: 15,
+  },
+  impactWrapper: {
+    flex: 2,
+    minWidth: 300,
+    alignItems: 'center',
   },
   stackMapText: {
     fontSize: 32,
@@ -162,10 +184,8 @@ export const styles = StyleSheet.create({
     color: '#2d3748',
     textAlign: 'center',
     marginBottom: 16,
-    marginTop: 10,
   },
   impactSection: {
-    marginTop: 16,
     marginBottom: 16,
   },
   impactRow: {

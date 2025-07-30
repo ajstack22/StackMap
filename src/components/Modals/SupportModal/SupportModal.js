@@ -55,49 +55,49 @@ const SupportModal = ({
                 StackMap is free and always will be. Built by parents, for families everywhere.
               </Text>
               
-              <Image 
-                source={require('../../../../image_library/StackMapTeam.jpg')}
-                style={{ 
-                  width: 300, 
-                  height: 200,
-                  borderRadius: 15, 
-                  marginBottom: 8, 
-                  alignSelf: 'center',
-                }}
-                resizeMode="contain"
-              />
-              <Text style={[styles.teamCaption, { alignSelf: 'center', marginBottom: 20 }]}>The StackMap Team</Text>
-              
-              <Text style={styles.contributionHeader}>Your contributions help us provide:</Text>
-              
-              <View style={styles.impactSection}>
-                <View style={styles.impactRow}>
-                  <View style={styles.impactIcon}>
-                    <Icon name="lock" size={24} color="#5C7E9D" />
-                  </View>
-                  <View style={styles.impactContent}>
-                    <Text style={styles.impactTitle}>100% Private & Ad-Free</Text>
-                    <Text style={styles.impactDescription}>No ads, no tracking, your data stays yours</Text>
-                  </View>
+              <View style={styles.photoAndImpactContainer}>
+                <View style={styles.photoContainer}>
+                  <Image 
+                    source={require('../../../../image_library/StackMapTeam.jpg')}
+                    style={styles.teamPhoto}
+                    resizeMode="contain"
+                  />
+                  <Text style={styles.teamCaption}>The StackMap Team</Text>
                 </View>
                 
-                <View style={styles.impactRow}>
-                  <View style={styles.impactIcon}>
-                    <Icon name="cloud" size={24} color="#5C7E9D" />
-                  </View>
-                  <View style={styles.impactContent}>
-                    <Text style={styles.impactTitle}>Free Sync Service</Text>
-                    <Text style={styles.impactDescription}>Reliable servers for all families</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.impactRow}>
-                  <View style={styles.impactIcon}>
-                    <Icon name="favorite" size={24} color="#5C7E9D" />
-                  </View>
-                  <View style={styles.impactContent}>
-                    <Text style={styles.impactTitle}>Ongoing Development</Text>
-                    <Text style={styles.impactDescription}>Continuous improvements & support</Text>
+                <View style={styles.impactWrapper}>
+                  <Text style={styles.contributionHeader}>Your contributions help us provide:</Text>
+                  
+                  <View style={styles.impactSection}>
+                    <View style={styles.impactRow}>
+                      <View style={styles.impactIcon}>
+                        <Icon name="lock" size={24} color="#5C7E9D" />
+                      </View>
+                      <View style={styles.impactContent}>
+                        <Text style={styles.impactTitle}>100% Private & Ad-Free</Text>
+                        <Text style={styles.impactDescription}>No ads, no tracking, your data stays yours</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.impactRow}>
+                      <View style={styles.impactIcon}>
+                        <Icon name="cloud" size={24} color="#5C7E9D" />
+                      </View>
+                      <View style={styles.impactContent}>
+                        <Text style={styles.impactTitle}>Free Sync Service</Text>
+                        <Text style={styles.impactDescription}>Reliable servers for all families</Text>
+                      </View>
+                    </View>
+                    
+                    <View style={styles.impactRow}>
+                      <View style={styles.impactIcon}>
+                        <Icon name="favorite" size={24} color="#5C7E9D" />
+                      </View>
+                      <View style={styles.impactContent}>
+                        <Text style={styles.impactTitle}>Ongoing Development</Text>
+                        <Text style={styles.impactDescription}>Continuous improvements & support</Text>
+                      </View>
+                    </View>
                   </View>
                 </View>
               </View>
