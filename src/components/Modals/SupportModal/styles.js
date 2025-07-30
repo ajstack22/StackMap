@@ -59,17 +59,19 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'center',
-    gap: 20,
+    alignItems: 'flex-start',
+    gap: 30,
     marginTop: 10,
   },
   photoContainer: {
     alignItems: 'center',
-    minWidth: 250,
+    minWidth: 300,
     flex: 1,
   },
   teamPhoto: {
-    width: 280,
-    height: 180,
+    width: '100%',
+    maxWidth: 400,
+    height: 260,
     borderRadius: 15,
   },
   impactWrapper: {
