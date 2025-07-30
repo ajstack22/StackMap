@@ -85,7 +85,7 @@ const SupportModal = ({
                       </View>
                       <View style={styles.impactContent}>
                         <Text style={styles.impactTitle}>Free Sync Service</Text>
-                        <Text style={styles.impactDescription}>Reliable servers for all families</Text>
+                        <Text style={styles.impactDescription}>Convenient family sync and provider sharing</Text>
                       </View>
                     </View>
                     
