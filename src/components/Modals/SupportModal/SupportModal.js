@@ -48,33 +48,35 @@ const SupportModal = ({
             <View style={styles.supportHeader}>
               <Logo size={80} color="#5C7E9D" style={{ marginBottom: 8 }} />
               <Text style={styles.stackMapText}>StackMap</Text>
+            </View>
+            
+            <View style={styles.supportMessageBox}>
+              <Text style={[styles.supportMessage, { fontSize: 17, marginBottom: 20 }]}>
+                StackMap is completely free and always will be! 🎉 We're built by a small team who believes every family deserves amazing tools. While the app is free, your contributions help cover the costs of keeping it running for everyone.
+              </Text>
+              
               <Image 
                 source={require('../../../../image_library/StackMapTeam.jpg')}
                 style={{ 
                   width: 300, 
                   height: 200,
-                  borderRadius: 10, 
+                  borderRadius: 15, 
                   marginBottom: 8, 
-                  marginTop: 30,
+                  alignSelf: 'center',
                 }}
                 resizeMode="contain"
               />
-              <Text style={styles.teamCaption}>The StackMap Team</Text>
-            </View>
-            
-            <View style={styles.supportMessageBox}>
-              <Text style={[styles.supportMessage, { fontSize: 17, marginBottom: 16 }]}>
-                StackMap is completely free and always will be! 🎉 We're built by a small team who believes every family deserves amazing tools. While the app is free, your contributions help cover the costs of keeping it running for everyone.
-              </Text>
-              <Text style={[styles.supportMessage, { fontSize: 16, textAlign: 'left', marginBottom: 8 }]}>
+              <Text style={[styles.teamCaption, { alignSelf: 'center', marginBottom: 20 }]}>The StackMap Team</Text>
+              
+              <Text style={[styles.supportMessage, { fontSize: 16, marginBottom: 12 }]}>
                 Specifically your contributions help fund:
               </Text>
-              <Text style={[styles.supportMessage, { fontSize: 15, textAlign: 'left', paddingLeft: 16 }]}>
-                • Keeping the app 100% free with no ads or data collection{'\n'}
-                • Maintaining codebase and secure cloud sync servers{'\n'}
-                • Continuing development on new features and services{'\n'}
-                • Ongoing support to families who need it
-              </Text>
+              <View style={styles.contributionList}>
+                <Text style={styles.contributionItem}>Keeping the app 100% free with no ads or data collection</Text>
+                <Text style={styles.contributionItem}>Maintaining codebase and secure cloud sync servers</Text>
+                <Text style={styles.contributionItem}>Continuing development on new features and services</Text>
+                <Text style={styles.contributionItem}>Ongoing support to families who need it</Text>
+              </View>
               {Platform.OS === 'web' && (
                 <View style={{ marginTop: 20, alignItems: 'center' }}>
                   <BuyMeCoffeeButton 

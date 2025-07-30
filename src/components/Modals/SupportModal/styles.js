@@ -145,4 +145,15 @@ export const styles = StyleSheet.create({
     color: '#8FA5B8',
     textAlign: 'center',
   },
+  contributionList: {
+    marginTop: 8,
+  },
+  contributionItem: {
+    fontSize: 15,
+    lineHeight: 24,
+    color: '#4a5568',
+    textAlign: 'center',
+    marginBottom: 8,
+    paddingHorizontal: 20,
+  },
 });
