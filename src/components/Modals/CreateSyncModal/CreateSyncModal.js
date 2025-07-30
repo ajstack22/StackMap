@@ -29,7 +29,7 @@ const CreateSyncModal = ({ visible, onClose, onSyncCreated, theme }) => {
     if (visible && !syncData) {
       createNewSync();
     }
-  }, [visible, syncData]);
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const createNewSync = async () => {
     setLoading(true);

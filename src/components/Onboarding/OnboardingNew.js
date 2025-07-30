@@ -238,7 +238,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     }}
                   >
                     <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore StackMap</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
@@ -246,7 +246,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     onPress={() => transitionTo('sync')}
                   >
                     <Icon name="cloud-sync" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
@@ -254,7 +254,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     onPress={() => setShowCreateSyncModal(true)}
                   >
                     <Icon name="smartphone" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Create Sync</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Create Sync for App</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -881,8 +881,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonThird: {
     flex: 1,
-    minWidth: Platform.OS === 'web' ? 120 : 100,
-    maxWidth: Platform.OS === 'web' ? 180 : undefined,
+    minWidth: Platform.OS === 'web' ? 150 : 100,
   },
   secondaryButton: {
     backgroundColor: 'white',
