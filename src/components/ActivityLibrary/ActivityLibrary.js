@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import ConfirmModal from '../Modals/ConfirmModal';
 
 // Conditionally import drag-and-drop libraries
 let DraggableFlatList, ScaleDecorator;
@@ -112,19 +113,32 @@ const ActivityRow = ({
   const [justAdded, setJustAdded] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuButtonRef = useRef(null);
   const screenWidth = Dimensions.get('window').width;
   const isMobile = screenWidth < 480;
   const insets = useSafeAreaInsets();
   const handleDelete = () => {
-    Alert.alert(
-      'Delete Activity',
-      `Are you sure you want to delete "${activity.name}"?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => onDelete(activity) },
-      ]
-    );
+    console.log('handleDelete in ActivityRow called for:', activity.name);
+    if (Platform.OS === 'web') {
+      setShowDeleteConfirm(true);
+    } else {
+      Alert.alert(
+        'Delete Activity',
+        `Are you sure you want to delete "${activity.name}"?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Delete', 
+            style: 'destructive', 
+            onPress: () => {
+              console.log('Delete confirmed, calling onDelete');
+              onDelete(activity);
+            }
+          },
+        ]
+      );
+    }
   };
 
   return (
@@ -285,6 +299,25 @@ const ActivityRow = ({
           </>
         )}
       </View>
+      
+      {Platform.OS === 'web' && (
+        <ConfirmModal
+          visible={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => {
+            console.log('Delete confirmed in ConfirmModal, calling onDelete');
+            onDelete(activity);
+            setShowDeleteConfirm(false);
+          }}
+          theme={theme}
+          title="Delete Activity"
+          message={`Are you sure you want to delete "${activity.name}"?`}
+          confirmText="Delete"
+          confirmButtonColor="#e53e3e"
+          icon="delete"
+          iconColor="#e53e3e"
+        />
+      )}
     </View>
   );
 };
@@ -318,6 +351,7 @@ const CategorySection = ({
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [justAddedAll, setJustAddedAll] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const menuButtonRef = useRef(null);
   const screenWidth = Dimensions.get('window').width;
   const isMobile = screenWidth < 480;
@@ -438,14 +472,18 @@ const CategorySection = ({
   // onDragStart is now handled at the parent level via onDragBegin
 
   const handleDeleteCategory = () => {
-    Alert.alert(
-      'Delete Category',
-      `Are you sure you want to delete "${category.name}" and all its activities?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Delete', style: 'destructive', onPress: () => onDeleteCategory(category) },
-      ]
-    );
+    if (Platform.OS === 'web') {
+      setShowDeleteConfirm(true);
+    } else {
+      Alert.alert(
+        'Delete Category',
+        `Are you sure you want to delete "${category.name}" and all its activities?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => onDeleteCategory(category) },
+        ]
+      );
+    }
   };
 
   const handleAddAll = () => {
@@ -512,7 +550,16 @@ const CategorySection = ({
                 style={styles.iconButton}
                 onPress={handleCancelEdit}
               >
-                <Icon name="close" size={20} color="white" />
+                <View style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <Icon name="close" size={20} color="white" />
+                </View>
               </TouchableOpacity>
             </View>
           </>
@@ -832,6 +879,24 @@ const CategorySection = ({
           </>
         )}
       </Animated.View>
+      
+      {Platform.OS === 'web' && (
+        <ConfirmModal
+          visible={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={() => {
+            onDeleteCategory(category);
+            setShowDeleteConfirm(false);
+          }}
+          theme={theme}
+          title="Delete Category"
+          message={`Are you sure you want to delete "${category.name}" and all its activities?`}
+          confirmText="Delete"
+          confirmButtonColor="#e53e3e"
+          icon="delete"
+          iconColor="#e53e3e"
+        />
+      )}
     </TouchableOpacity>
   );
 };
@@ -907,6 +972,7 @@ const ActivityLibrary = ({
   };
 
   const handleDeleteActivity = (categoryId, activity) => {
+    console.log('handleDeleteActivity called:', { categoryId, activity, onSaveCategories: !!onSaveCategories });
     const newCategories = categories.map(cat => {
       if (cat.id === categoryId) {
         return {
@@ -916,8 +982,14 @@ const ActivityLibrary = ({
       }
       return cat;
     });
+    console.log('New categories:', newCategories);
     setCategories(newCategories);
-    if (onSaveCategories) onSaveCategories(newCategories);
+    if (onSaveCategories) {
+      console.log('Calling onSaveCategories');
+      onSaveCategories(newCategories);
+    } else {
+      console.log('onSaveCategories is not defined!');
+    }
   };
 
   const handleAddCategory = () => {
@@ -1146,7 +1218,16 @@ const ActivityLibrary = ({
               <Text style={styles.headerTitle}>Activity Library</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Icon name="close" size={24} color="white" />
+              <View style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Icon name="close" size={20} color="white" />
+              </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>

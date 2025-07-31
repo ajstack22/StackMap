@@ -1,0 +1,196 @@
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  Platform,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { styles } from './styles';
+import ConfirmModal from '../../Modals/ConfirmModal';
+import AddUserModal from '../../Modals/AddUserModal/AddUserModal';
+
+const UsersTabContent = ({
+  theme,
+  users,
+  currentUser,
+  onAddUser,
+  onSelectUser,
+  onDeleteUser,
+  showToast,
+  loading,
+  setLoading,
+}) => {
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmoji, setNewUserEmoji] = useState('😀');
+  const [showUserEmojiPicker, setShowUserEmojiPicker] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null);
+
+  const handleUserSelect = (userId) => {
+    onSelectUser(userId);
+    showToast({ message: `Switched to ${users[userId].name}` });
+  };
+
+  const handleUserDelete = (userId, userName) => {
+    setUserToDelete({ id: userId, name: userName });
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmUserDelete = () => {
+    if (userToDelete) {
+      onDeleteUser(userToDelete.id);
+      setShowDeleteConfirm(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleAddUser = async (userData) => {
+    setLoading(true);
+    try {
+      await onAddUser(userData);
+      setShowAddUserModal(false);
+      setEditingUser(null);
+    } catch (error) {
+      showToast({ message: 'Failed to add user', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateUser = async (userId, userData) => {
+    setLoading(true);
+    try {
+      // Implement user update logic
+      const updatedUsers = { ...users };
+      updatedUsers[userId] = { ...updatedUsers[userId], ...userData };
+      await onAddUser(updatedUsers); // This should be onUpdateUsers
+      setShowAddUserModal(false);
+      setEditingUser(null);
+      showToast({ message: 'User updated successfully' });
+    } catch (error) {
+      showToast({ message: 'Failed to update user', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <ScrollView 
+      style={styles.tabContent} 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ paddingBottom: 20 }}
+    >
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Users</Text>
+        <Text style={styles.sectionDescription}>
+          Manage users and switch between them.
+        </Text>
+
+        <View style={styles.usersList}>
+          {Object.entries(users)
+            .filter(([userId, user]) => !user.deleted)
+            .map(([userId, user]) => (
+              <TouchableOpacity
+                key={userId}
+                style={[
+                  styles.userItem,
+                  currentUser === userId && styles.userItemActive
+                ]}
+                onPress={() => handleUserSelect(userId)}
+              >
+                <Text style={styles.userItemEmoji}>{user.icon}</Text>
+                <Text style={[
+                  styles.userItemName,
+                  currentUser === userId && styles.userItemNameActive
+                ]}>
+                  {user.name}
+                </Text>
+                {currentUser === userId && (
+                  <View style={styles.enabledBadge}>
+                    <Text style={styles.enabledText}>Active</Text>
+                  </View>
+                )}
+                <View style={styles.userActions}>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => {
+                      setEditingUser({ id: userId, name: user.name, icon: user.icon });
+                      setNewUserName(user.name);
+                      setNewUserEmoji(user.icon);
+                      setShowAddUserModal(true);
+                    }}
+                  >
+                    <Icon name="edit" size={20} color={theme.primary} />
+                  </TouchableOpacity>
+                  {Object.keys(users).filter(id => !users[id].deleted).length > 1 && (
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={() => handleUserDelete(userId, user.name)}
+                    >
+                      <Icon name="delete" size={20} color="#e53e3e" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+        </View>
+
+        {Object.keys(users).filter(id => !users[id].deleted).length < 5 && (
+          <TouchableOpacity 
+            style={[styles.addUserButton, { borderColor: theme.primary }]} 
+            onPress={() => {
+              setEditingUser(null);
+              setNewUserName('');
+              setNewUserEmoji('😀');
+              setShowAddUserModal(true);
+            }}
+          >
+            <Icon name="person-add" size={20} color={theme.primary} />
+            <Text style={[styles.addUserText, { color: theme.primary }]}>Add User</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        visible={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={confirmUserDelete}
+        theme={theme}
+        title="Delete User"
+        message={`Are you sure you want to delete ${userToDelete?.name}? This will permanently remove the user and all their activity cards.`}
+        confirmText="Delete"
+        confirmButtonColor="#e53e3e"
+        icon="delete"
+        iconColor="#e53e3e"
+      />
+
+      {/* Add/Edit User Modal */}
+      <AddUserModal
+        visible={showAddUserModal}
+        onClose={() => {
+          setShowAddUserModal(false);
+          setEditingUser(null);
+        }}
+        theme={theme}
+        newUserName={newUserName}
+        setNewUserName={setNewUserName}
+        newUserEmoji={newUserEmoji}
+        setNewUserEmoji={setNewUserEmoji}
+        showUserEmojiPicker={showUserEmojiPicker}
+        setShowUserEmojiPicker={setShowUserEmojiPicker}
+        editingUser={editingUser}
+        users={users}
+        onAddUser={handleAddUser}
+        onUpdateUser={handleUpdateUser}
+        showToast={showToast}
+      />
+    </ScrollView>
+  );
+};
+
+export default UsersTabContent;

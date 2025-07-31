@@ -1,39 +1,71 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Modal,
   View,
   Text,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   Platform,
   TextInput,
   ActivityIndicator,
   Alert,
-  StatusBar,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import QRCode from 'react-native-qrcode-svg';
 import { styles } from './styles';
-import syncService from '../../../services/sync/syncService';
-import SyncStatusIndicator from '../../SyncStatusIndicator';
-import { COLORS } from '../../../constants';
+import { SPACING, COLORS } from '../../../constants';
 import ConfirmModal from '../ConfirmModal';
-import { BuyMeCoffeeButton } from '../..';
+import { TabbedModal, TabContent } from '../../../components';
+import { FormInput, ModalFooter } from '../../ModalUtilities';
+import SyncStatusIndicator from '../../SyncStatusIndicator';
+import syncService from '../../../services/sync/syncService';
+import QRCode from 'react-native-qrcode-svg';
+
+// Import platform-specific modules
+let DocumentPicker = null;
+let RNFS = null;
+
+if (Platform.OS === 'web') {
+  // Use web polyfills
+  RNFS = require('../../../utils/platformHelpers.web').default;
+  DocumentPicker = require('../../../utils/platformHelpers.web').DocumentPicker;
+} else {
+  // Use native modules
+  DocumentPicker = require('react-native-document-picker').default;
+  RNFS = require('react-native-fs');
+}
 
 const DataModal = ({
   visible,
   onClose,
   theme,
-  onExportData,
-  onImportData,
-  onResetApp,
+  users,
+  currentDay,
+  templates,
+  activityCategories,
+  currentTheme,
+  bannerPosition,
+  hasSecurePin,
   showToast,
+  onImportComplete,
   onSyncStatusChange,
   onShowSupport,
 }) => {
   const insets = useSafeAreaInsets();
+  const [loading, setLoading] = useState(false);
+  
+  // Export state
+  const [exportSelections, setExportSelections] = useState({
+    users: true,
+    activityCards: true,
+    activityLibrary: true,
+  });
+  
+  // Import state
+  const [importFile, setImportFile] = useState(null);
+  const [importData, setImportData] = useState(null);
+  const [importMode, setImportMode] = useState('fresh'); // 'fresh' or 'merge'
+  const [importSelections, setImportSelections] = useState({});
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
   
   // Sync state
   const [syncEnabled, setSyncEnabled] = useState(false);
@@ -45,41 +77,413 @@ const DataModal = ({
   const [syncError, setSyncError] = useState('');
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
-  const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
-  const [showResetAppConfirm, setShowResetAppConfirm] = useState(false);
-
+  const [syncStatusChecked, setSyncStatusChecked] = useState(false);
+  
+  // Share state
+  const [shareLoading, setShareLoading] = useState(false);
+  const [shareToken, setShareToken] = useState('');
+  const [shareUrl, setShareUrl] = useState('');
+  const [recipientName, setRecipientName] = useState('');
+  const [shareNote, setShareNote] = useState('');
+  const [expiresHours, setExpiresHours] = useState('168'); // Default to 1 week
+  const [includeCompleted, setIncludeCompleted] = useState(true);
+  const [includeTomorrow, setIncludeTomorrow] = useState(true);
+  const [autoUpdate, setAutoUpdate] = useState(true);
+  const [activeShares, setActiveShares] = useState([]);
+  const [showActiveShares, setShowActiveShares] = useState(true);
+  const [selectedShareUser, setSelectedShareUser] = useState(null);
+  
+  // Tabs configuration
+  const tabs = [
+    { key: 'sync', label: 'Sync', icon: 'sync' },
+    { key: 'share', label: 'Share', icon: 'share' },
+    { key: 'import', label: 'Import', icon: 'file-upload' },
+    { key: 'export', label: 'Export', icon: 'file-download' },
+  ];
+  
+  const [activeTab, setActiveTab] = useState(0); // Default to Sync tab
+  
+  // Reset state when modal opens/closes
   useEffect(() => {
-    if (visible) {
-      checkSyncStatus();
+    if (!visible) {
+      setImportFile(null);
+      setImportData(null);
+      setImportMode('fresh');
+      setImportSelections({});
+      setSyncError('');
+      setShowRecoveryInput(false);
+      setRecoveryInput('');
+      setShareUrl('');
+      setRecipientName('');
+      setShareNote('');
+      setExpiresHours('168');
+      setIncludeCompleted(true);
+      setIncludeTomorrow(true);
+      setAutoUpdate(true);
+      setSelectedShareUser(null);
+      // Reset to Import tab when modal closes
+      setActiveTab(0);
+    } else {
+      // When opening, generate new share token and load active shares
+      const token = syncService.generateShareToken(true);
+      setShareToken(token);
+      loadActiveShares();
     }
   }, [visible]);
-
+  
+  // Check sync status on mount
+  useEffect(() => {
+    checkSyncStatus();
+  }, []);
+  
   const checkSyncStatus = async () => {
-    const enabled = await syncService.isEnabled();
-    setSyncEnabled(enabled);
-    if (onSyncStatusChange) {
-      onSyncStatusChange(enabled);
-    }
-    if (enabled) {
-      const status = syncService.getStatus();
-      setSyncId(status.syncId);
-      const phrase = await syncService.getRecoveryPhrase();
-      setSyncRecoveryPhrase(phrase);
+    try {
+      const enabled = await syncService.isEnabled();
+      setSyncEnabled(enabled);
+      
+      if (enabled) {
+        const id = await syncService.getSyncId();
+        const phrase = await syncService.getRecoveryPhrase();
+        setSyncId(id);
+        setSyncRecoveryPhrase(phrase);
+      }
+      setSyncStatusChecked(true);
+    } catch (error) {
+      console.error('Error checking sync status:', error);
+      setSyncStatusChecked(true);
     }
   };
-
-  const handleEnableSync = async () => {
-    setSyncLoading(true);
-    setSyncError('');
+  
+  const loadActiveShares = async () => {
     try {
-      const { syncId: newSyncId, recoveryPhrase } = await syncService.initialize();
+      const shares = await syncService.getActiveShares();
+      const userShares = {};
+      
+      // Group shares by user
+      if (users) {
+        Object.entries(users).forEach(([userId, user]) => {
+        const userActiveShares = shares.filter(share => share.userId === userId);
+        if (userActiveShares.length > 0) {
+          userShares[userId] = {
+            user,
+            shares: userActiveShares
+          };
+        }
+        });
+      }
+      
+      setActiveShares(userShares);
+    } catch (error) {
+      console.error('Error loading active shares:', error);
+    }
+  };
+  
+  // Toggle export selection
+  const toggleExportSelection = (key) => {
+    setExportSelections(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+  
+  // Handle export
+  const handleExport = async () => {
+    try {
+      setLoading(true);
+      
+      // Build export data based on selections
+      const exportData = {
+        version: 3,
+        exportDate: new Date().toISOString(),
+        exportedItems: {
+          users: exportSelections.users,
+          activityCards: exportSelections.activityCards,
+          activityLibrary: exportSelections.activityLibrary,
+        }
+      };
+      
+      // Add selected data
+      if (exportSelections.users) {
+        exportData.users = users;
+        exportData.currentDay = currentDay;
+      }
+      
+      if (exportSelections.activityCards) {
+        // Extract all activity cards from users
+        const allActivities = {};
+        Object.entries(users).forEach(([userId, user]) => {
+          if (user.days?.today?.activities) {
+            user.days.today.activities.forEach(activity => {
+              allActivities[activity.id] = activity;
+            });
+          }
+          if (user.days?.tomorrow?.activities) {
+            user.days.tomorrow.activities.forEach(activity => {
+              allActivities[activity.id] = activity;
+            });
+          }
+        });
+        exportData.activityCards = Object.values(allActivities);
+      }
+      
+      if (exportSelections.activityLibrary) {
+        // Transform activityCategories array to templates object format
+        const templatesObject = {};
+        if (activityCategories && Array.isArray(activityCategories)) {
+          activityCategories.forEach(category => {
+            templatesObject[category.id] = {
+              name: category.name,
+              activities: (category.activities || []).map(activity => ({
+                id: activity.id,
+                text: activity.name,
+                icon: activity.emoji
+              }))
+            };
+          });
+        }
+        exportData.templates = templatesObject;
+      }
+      
+      // Add global settings
+      exportData.globalSettings = {
+        currentTheme,
+        bannerPosition,
+        defaultView: 'normal',
+        displayMode: 'numbers',
+        enableDayManagement: true,
+        pinEnabled: await hasSecurePin()
+      };
+      
+      // Convert to JSON
+      const jsonData = JSON.stringify(exportData, null, 2);
+      
+      // Generate filename
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const dateStr = `${year}-${month}-${day}`;
+      const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
+      const fileName = `stackmap-export-${dateStr}-${timeStr}.json`;
+      
+      // Platform-specific export
+      if (Platform.OS === 'android') {
+        try {
+          const downloadsPath = RNFS.DownloadDirectoryPath;
+          const filePath = `${downloadsPath}/${fileName}`;
+          await RNFS.writeFile(filePath, jsonData, 'utf8');
+          
+          showToast({ message: `Exported to Downloads/${fileName}` });
+        } catch (error) {
+          // Fallback to share
+          const { Share } = require('react-native');
+          await Share.share({
+            message: jsonData,
+            title: fileName,
+          });
+        }
+      } else if (Platform.OS === 'web') {
+        const blob = new Blob([jsonData], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        showToast({ message: 'Export downloaded successfully!' });
+      } else {
+        // iOS - use share sheet
+        const { Share } = require('react-native');
+        const documentsPath = RNFS.DocumentDirectoryPath;
+        const filePath = `${documentsPath}/${fileName}`;
+        await RNFS.writeFile(filePath, jsonData, 'utf8');
+        
+        await Share.share({
+          url: `file://${filePath}`,
+          title: fileName,
+        });
+        
+        await RNFS.unlink(filePath);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      Alert.alert('Export Error', 'Failed to export data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Handle file selection
+  const handleSelectFile = async () => {
+    try {
+      setLoading(true);
+      
+      const result = await DocumentPicker.pick({
+        type: Platform.OS === 'web' ? 'application/json' : [DocumentPicker.types.json],
+        copyTo: 'cachesDirectory',
+      });
+      
+      let fileContent;
+      
+      if (Platform.OS === 'web' && result[0]?.content) {
+        fileContent = result[0].content;
+      } else if (result[0]?.fileCopyUri) {
+        fileContent = await RNFS.readFile(result[0].fileCopyUri, 'utf8');
+        await RNFS.unlink(result[0].fileCopyUri);
+      } else {
+        Alert.alert('Error', 'Could not read the selected file');
+        return;
+      }
+      
+      // Parse and validate
+      const parsedData = JSON.parse(fileContent);
+      
+      // Validate data structure
+      if (!parsedData.version) {
+        Alert.alert('Error', 'Invalid StackMap export file');
+        return;
+      }
+      
+      setImportFile(result[0]);
+      setImportData(parsedData);
+      
+      // Initialize import selections based on what's in the file
+      const selections = {};
+      
+      if (parsedData.users) {
+        Object.entries(parsedData.users).forEach(([userId, user]) => {
+          selections[`user_${userId}`] = true;
+        });
+      }
+      
+      if (parsedData.activityCards) {
+        parsedData.activityCards.forEach(activity => {
+          selections[`activity_${activity.id}`] = true;
+        });
+      }
+      
+      if (parsedData.templates) {
+        Object.entries(parsedData.templates).forEach(([categoryId, category]) => {
+          selections[`category_${categoryId}`] = true;
+          if (category.activities) {
+            category.activities.forEach(activity => {
+              selections[`template_${categoryId}_${activity.id}`] = true;
+            });
+          }
+        });
+      }
+      
+      setImportSelections(selections);
+      
+    } catch (error) {
+      if (error.code !== DocumentPicker.errorCodes?.cancelled && error.code !== 'DOCUMENT_PICKER_CANCELED') {
+        console.error('File selection error:', error);
+        Alert.alert('Error', 'Failed to select file. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  // Toggle import selection
+  const toggleImportSelection = (key) => {
+    setImportSelections(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+  
+  // Handle import confirmation
+  const handleImportConfirm = async () => {
+    try {
+      setLoading(true);
+      
+      // Prepare imported data based on selections
+      const dataToImport = {
+        mode: importMode,
+        users: {},
+        activityCards: [],
+        templates: {},
+        globalSettings: importData.globalSettings || {},
+      };
+      
+      // Process selected users
+      if (importData.users) {
+        Object.entries(importData.users).forEach(([userId, user]) => {
+          if (importSelections[`user_${userId}`]) {
+            dataToImport.users[userId] = user;
+          }
+        });
+      }
+      
+      // Process selected activity cards
+      if (importData.activityCards) {
+        importData.activityCards.forEach(activity => {
+          if (importSelections[`activity_${activity.id}`]) {
+            dataToImport.activityCards.push(activity);
+          }
+        });
+      }
+      
+      // Process selected templates
+      if (importData.templates) {
+        Object.entries(importData.templates).forEach(([categoryId, category]) => {
+          if (importSelections[`category_${categoryId}`]) {
+            const categoryToImport = { ...category, activities: [] };
+            
+            if (category.activities) {
+              category.activities.forEach(activity => {
+                if (importSelections[`template_${categoryId}_${activity.id}`]) {
+                  categoryToImport.activities.push(activity);
+                }
+              });
+            }
+            
+            dataToImport.templates[categoryId] = categoryToImport;
+          }
+        });
+      }
+      
+      // Call parent import handler
+      await onImportComplete(dataToImport);
+      
+      showToast({ 
+        message: importMode === 'fresh' 
+          ? 'Data imported successfully!' 
+          : 'Data merged successfully!' 
+      });
+      
+      onClose();
+      
+    } catch (error) {
+      console.error('Import error:', error);
+      Alert.alert('Import Error', 'Failed to import data. Please try again.');
+    } finally {
+      setLoading(false);
+      setShowImportConfirm(false);
+    }
+  };
+  
+  // Handle sync enable
+  const handleEnableSync = async () => {
+    try {
+      setSyncLoading(true);
+      setSyncError('');
+      
+      const result = await syncService.enable();
+      
       setSyncEnabled(true);
+      setSyncId(result.syncId);
+      setSyncRecoveryPhrase(result.recoveryPhrase);
+      setShowRecoveryPhrase(true);
+      
       if (onSyncStatusChange) {
         onSyncStatusChange(true);
       }
-      setSyncId(newSyncId);
-      setSyncRecoveryPhrase(recoveryPhrase);
-      setShowRecoveryPhrase(true);
+      
       showToast({ message: 'Sync enabled successfully!' });
     } catch (error) {
       setSyncError(error.message || 'Failed to enable sync');
@@ -87,382 +491,883 @@ const DataModal = ({
       setSyncLoading(false);
     }
   };
-
-  const handleConnectSync = async () => {
-    if (!recoveryInput.trim()) {
-      setSyncError('Please enter a recovery phrase');
-      return;
-    }
-
-    setSyncLoading(true);
-    setSyncError('');
+  
+  // Handle sync restore
+  const handleRestoreSync = async () => {
     try {
-      const { syncId: newSyncId, recoveryPhrase } = await syncService.initialize(recoveryInput.trim());
+      setSyncLoading(true);
+      setSyncError('');
+      
+      if (!recoveryInput.trim()) {
+        setSyncError('Please enter your recovery phrase');
+        return;
+      }
+      
+      await syncService.restore(recoveryInput.trim());
+      
+      const id = await syncService.getSyncId();
+      setSyncId(id);
+      setSyncRecoveryPhrase(recoveryInput.trim());
       setSyncEnabled(true);
+      setShowRecoveryInput(false);
+      setRecoveryInput('');
+      
       if (onSyncStatusChange) {
         onSyncStatusChange(true);
       }
-      setSyncId(newSyncId);
-      setSyncRecoveryPhrase(recoveryPhrase);
-      setShowRecoveryInput(false);
-      setRecoveryInput('');
-      showToast({ message: 'Connected to sync successfully!' });
+      
+      showToast({ message: 'Sync restored successfully!' });
     } catch (error) {
-      setSyncError(error.message || 'Invalid recovery phrase');
+      setSyncError(error.message || 'Failed to restore sync');
     } finally {
       setSyncLoading(false);
     }
   };
-
-  const handleDisableSync = () => {
-    setShowDisableSyncConfirm(true);
-  };
-
-  const confirmDisableSync = async () => {
-    await syncService.disable();
-    setSyncEnabled(false);
-    if (onSyncStatusChange) {
-      onSyncStatusChange(false);
-    }
-    setSyncId(null);
-    setSyncRecoveryPhrase('');
-    setShowDisableSyncConfirm(false);
-    showToast({ message: 'Sync disabled' });
-  };
-
-  const confirmDeleteServerData = async () => {
-    setSyncLoading(true);
+  
+  // Handle sync disable
+  const handleDisableSync = async () => {
     try {
-      await syncService.deleteFromServer();
+      setSyncLoading(true);
+      
+      await syncService.disable();
+      
       setSyncEnabled(false);
+      setSyncId(null);
+      setSyncRecoveryPhrase('');
+      setShowDisableSyncConfirm(false);
+      
       if (onSyncStatusChange) {
         onSyncStatusChange(false);
       }
-      setSyncId(null);
-      setSyncRecoveryPhrase('');
-      setShowDeleteServerDataConfirm(false);
-      showToast({ message: 'All sync data permanently deleted from server' });
+      
+      showToast({ message: 'Sync disabled' });
     } catch (error) {
-      showToast({ message: error.message || 'Failed to delete sync data' });
-      setShowDeleteServerDataConfirm(false);
+      Alert.alert('Error', 'Failed to disable sync');
     } finally {
       setSyncLoading(false);
     }
   };
+  
+  // Handle share creation
+  const handleCreateShare = async () => {
+    if (!selectedShareUser) {
+      showToast({ message: 'Please select a user to share', type: 'error' });
+      return;
+    }
+    
+    setShareLoading(true);
+    try {
+      const result = await syncService.createShareLink(selectedShareUser, {
+        recipientName,
+        shareNote,
+        includeCompleted,
+        includeTomorrow,
+        autoUpdate,
+        expiresHours: parseInt(expiresHours),
+        accessToken: shareToken
+      });
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={false}
-      statusBarTranslucent={true}
-      onRequestClose={onClose}
-    >
-      {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor={theme.primary} 
-          barStyle="light-content" 
-          translucent={false}
-        />
-      )}
-      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
-        {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
-        )}
-        <SafeAreaView style={{ backgroundColor: theme.primary }}>
-          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
-            <View style={styles.headerLeft}>
-              <Icon name="cloud-sync" size={24} color="white" style={styles.headerIcon} />
-              <Text style={styles.modalTitle}>Data Management</Text>
+      setShareUrl(result.share_url);
+      showToast({ message: 'Share link created!' });
+      loadActiveShares();
+    } catch (error) {
+      showToast({ 
+        message: error.message || 'Failed to create share link',
+        type: 'error'
+      });
+    } finally {
+      setShareLoading(false);
+    }
+  };
+  
+  // Handle copy share URL
+  const handleCopyShareUrl = () => {
+    if (Platform.OS === 'web') {
+      navigator.clipboard.writeText(shareUrl);
+    } else {
+      const Clipboard = require('@react-native-clipboard/clipboard').default;
+      Clipboard.setString(shareUrl);
+    }
+    showToast({ message: 'Link copied to clipboard!' });
+  };
+  
+  // Handle delete share
+  const handleDeleteShare = async (shareId) => {
+    try {
+      await syncService.deleteShare(shareId);
+      showToast({ message: 'Share deleted' });
+      loadActiveShares();
+    } catch (error) {
+      showToast({ 
+        message: error.message || 'Failed to delete share',
+        type: 'error'
+      });
+    }
+  };
+  
+  // Render import tab content
+  const renderImportContent = () => (
+    <ScrollView showsVerticalScrollIndicator={false}>
+      {!importData ? (
+        <View style={styles.section}>
+          <View style={styles.emptyStateContainer}>
+            <Icon name="file-upload" size={48} color="#ccc" />
+            <Text style={styles.emptyStateText}>
+              Select a StackMap export file to import
+            </Text>
+            <View style={styles.sectionFooter}>
+              <ModalFooter
+                theme={theme}
+                primaryButton={{
+                  label: 'Select File',
+                  icon: 'folder-open',
+                  onPress: handleSelectFile,
+                  disabled: loading
+                }}
+                loading={loading}
+              />
             </View>
-            <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
-              <Icon name="close" size={24} color="white" />
-            </TouchableOpacity>
           </View>
-        </SafeAreaView>
-        
-        <View style={{ flex: 1, backgroundColor: theme.light }}>
-          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-            {/* Sync Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Sync</Text>
-              <Text style={styles.sectionDescription}>
-                Keep your StackMap data synchronized across all your devices.
-              </Text>
-
-              {syncEnabled ? (
-                <>
-                  <SyncStatusIndicator theme={theme} />
-
-                  <TouchableOpacity
-                    style={[styles.button, { backgroundColor: theme.primary }]}
-                    onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
-                  >
-                    <Icon name={showRecoveryPhrase ? "visibility-off" : "visibility"} size={20} color="white" />
-                    <Text style={styles.buttonText}>
-                      {showRecoveryPhrase ? 'Hide' : 'Show'} Recovery Phrase
-                    </Text>
-                  </TouchableOpacity>
-
-                  {showRecoveryPhrase && (
-                    <View style={styles.recoveryPhraseContainer}>
-                      <View style={styles.qrContainer}>
-                        <QRCode
-                          value={syncRecoveryPhrase}
-                          size={200}
-                          backgroundColor="#ffffff"
-                          color="#000000"
-                        />
-                      </View>
-                      <View style={styles.recoveryPhrase}>
-                        <Text style={styles.recoveryPhraseText}>{syncRecoveryPhrase}</Text>
-                      </View>
-                      <Text style={styles.infoText}>
-                        Save this phrase to connect other devices
-                      </Text>
-                    </View>
-                  )}
-
-                  <TouchableOpacity
-                    style={[styles.button, { backgroundColor: '#e53e3e' }]}
-                    onPress={handleDisableSync}
-                  >
-                    <Icon name="sync-disabled" size={20} color="white" />
-                    <Text style={styles.buttonText}>Disable Sync</Text>
-                  </TouchableOpacity>
-                </>
-              ) : (
-                <>
-                  {showRecoveryInput ? (
-                    <>
-                      <TextInput
-                        style={styles.input}
-                        value={recoveryInput}
-                        onChangeText={setRecoveryInput}
-                        placeholder="Enter recovery phrase"
-                        autoCapitalize="none"
-                        autoCorrect={false}
-                      />
-                      {syncError ? (
-                        <Text style={styles.errorText}>{syncError}</Text>
-                      ) : null}
-                      <TouchableOpacity
-                        style={[styles.button, { backgroundColor: theme.primary }]}
-                        onPress={handleConnectSync}
-                        disabled={syncLoading}
-                      >
-                        {syncLoading ? (
-                          <ActivityIndicator size="small" color="white" />
-                        ) : (
-                          <>
-                            <Icon name="link" size={20} color="white" />
-                            <Text style={styles.buttonText}>Connect</Text>
-                          </>
-                        )}
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={[styles.button, { backgroundColor: '#666' }]}
-                        onPress={() => {
-                          setShowRecoveryInput(false);
-                          setRecoveryInput('');
-                          setSyncError('');
-                        }}
-                      >
-                        <Text style={styles.buttonText}>Cancel</Text>
-                      </TouchableOpacity>
-                    </>
-                  ) : (
-                    <>
-                      {/* Only show "Enable New Sync" button on web */}
-                      {Platform.OS === 'web' && (
-                        <TouchableOpacity
-                          style={[styles.button, { backgroundColor: theme.primary }]}
-                          onPress={handleEnableSync}
-                          disabled={syncLoading}
-                        >
-                          {syncLoading ? (
-                            <ActivityIndicator size="small" color="white" />
-                          ) : (
-                            <>
-                              <Icon name="sync" size={20} color="white" />
-                              <Text style={styles.buttonText}>Enable New Sync</Text>
-                            </>
-                          )}
-                        </TouchableOpacity>
-                      )}
-                      
-                      {/* Show "Connect Existing Sync" on all platforms */}
-                      <TouchableOpacity
-                        style={[styles.button, { backgroundColor: theme.primary }]}
-                        onPress={() => setShowRecoveryInput(true)}
-                      >
-                        <Icon name="link" size={20} color="white" />
-                        <Text style={styles.buttonText}>Connect Existing Sync</Text>
-                      </TouchableOpacity>
-                    </>
-                  )}
-                </>
-              )}
-            </View>
-
-            {/* Backup Section */}
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Backup</Text>
-              <Text style={styles.sectionDescription}>
-                Export and import your StackMap data for safekeeping or transfer.
-              </Text>
-
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={onExportData}
-              >
-                <Icon name="file-download" size={20} color="white" />
-                <Text style={styles.buttonText}>Export Data</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.button, { backgroundColor: theme.primary }]}
-                onPress={onImportData}
-              >
-                <Icon name="file-upload" size={20} color="white" />
-                <Text style={styles.buttonText}>Import Data</Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Buy Me a Coffee - Web only */}
-            {Platform.OS === 'web' && (
-              <View style={[styles.section, { 
-                backgroundColor: '#f0fff4', 
-                borderColor: theme.primary, 
-                borderWidth: 2,
-                borderRadius: 16,
-                padding: 24,
-                marginHorizontal: 8
-              }]}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                  <Icon name="favorite" size={24} color={theme.primary} style={{ marginRight: 8 }} />
-                  <Text style={[styles.sectionTitle, { color: theme.primary, marginBottom: 0 }]}>Support Our Mission</Text>
-                </View>
-                <Text style={[styles.sectionDescription, { textAlign: 'center', fontSize: 15, marginBottom: 16, paddingHorizontal: 12 }]}>
-                  StackMap is a labor of love, built to help families everywhere. Your support ensures we can keep it <Text style={{ fontWeight: 'bold' }}>100% free</Text> for families who need it most, while maintaining our commitment to privacy and data security.
+        </View>
+      ) : (
+        <>
+          <View style={styles.section}>
+            <View style={styles.fileInfoCard}>
+              <Icon name="insert-drive-file" size={24} color={theme.primary} />
+              <View style={styles.fileInfoContent}>
+                <Text style={styles.fileInfoName} numberOfLines={1}>
+                  {importFile.name}
                 </Text>
-                <BuyMeCoffeeButton 
-                  style="button"
-                  theme={theme}
-                  containerStyle={{ alignSelf: 'center' }}
-                  onPress={onShowSupport}
-                />
+                <Text style={styles.fileInfoDate}>
+                  Exported: {new Date(importData.exportDate).toLocaleDateString()}
+                </Text>
               </View>
-            )}
-
-            {/* Danger Zone - Only show when sync is enabled */}
-            {syncEnabled && (
-              <View style={[styles.section, { borderBottomWidth: 0 }]}>
-                <Text style={[styles.sectionTitle, { color: '#d32f2f' }]}>Danger Zone</Text>
-                <Text style={styles.sectionDescription}>
-                  Irreversible actions that affect your synced data.
-                </Text>
-
+              <TouchableOpacity
+                onPress={() => {
+                  setImportFile(null);
+                  setImportData(null);
+                  setImportSelections({});
+                }}
+              >
+                <Icon name="close" size={20} color="#999" />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.importModeContainer}>
+              <Text style={styles.importModeTitle}>Import Mode</Text>
+              <View style={styles.importModeOptions}>
                 <TouchableOpacity
-                  style={[styles.button, { backgroundColor: COLORS.error }]}
-                  onPress={() => setShowDeleteServerDataConfirm(true)}
-                  disabled={syncLoading}
+                  style={[
+                    styles.importModeOption,
+                    importMode === 'fresh' && styles.importModeOptionActive
+                  ]}
+                  onPress={() => setImportMode('fresh')}
                 >
-                  {syncLoading ? (
-                    <ActivityIndicator size="small" color="white" />
-                  ) : (
-                    <>
-                      <Icon name="delete-forever" size={20} color="white" />
-                      <Text style={styles.buttonText}>Delete All Server Data</Text>
-                    </>
-                  )}
+                  <Icon 
+                    name="refresh" 
+                    size={20} 
+                    color={importMode === 'fresh' ? theme.primary : '#666'} 
+                  />
+                  <Text style={[
+                    styles.importModeText,
+                    importMode === 'fresh' && styles.importModeTextActive
+                  ]}>
+                    Start Fresh
+                  </Text>
                 </TouchableOpacity>
                 
-                <View style={styles.warningContainer}>
-                  <Text style={styles.warningText}>
-                    ⚠️ This will permanently remove all your synced data from our servers. Your local data will remain untouched.
+                <TouchableOpacity
+                  style={[
+                    styles.importModeOption,
+                    importMode === 'merge' && styles.importModeOptionActive
+                  ]}
+                  onPress={() => setImportMode('merge')}
+                >
+                  <Icon 
+                    name="merge-type" 
+                    size={20} 
+                    color={importMode === 'merge' ? theme.primary : '#666'} 
+                  />
+                  <Text style={[
+                    styles.importModeText,
+                    importMode === 'merge' && styles.importModeTextActive
+                  ]}>
+                    Merge with Existing
                   </Text>
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.importModeDescription}>
+                {importMode === 'fresh' 
+                  ? 'Replace all current data with imported data'
+                  : 'Keep existing data and add selected items'}
+              </Text>
+            </View>
+            
+            <View style={styles.importSelectionsContainer}>
+              <Text style={styles.sectionTitle}>Select Items to Import</Text>
+              
+              {importData.users && Object.keys(importData.users).length > 0 && (
+                <View style={styles.importCategory}>
+                  <Text style={styles.importCategoryTitle}>Users</Text>
+                  {Object.entries(importData.users).map(([userId, user]) => (
+                    <TouchableOpacity
+                      key={userId}
+                      style={styles.importItem}
+                      onPress={() => toggleImportSelection(`user_${userId}`)}
+                      activeOpacity={0.7}
+                    >
+                      <Icon 
+                        name={importSelections[`user_${userId}`] ? "check-box" : "check-box-outline-blank"} 
+                        size={20} 
+                        color={importSelections[`user_${userId}`] ? theme.primary : '#999'} 
+                      />
+                      <Text style={styles.importItemEmoji}>{user.icon || '😀'}</Text>
+                      <Text style={styles.importItemText}>{user.name}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              
+              {importData.activityCards && importData.activityCards.length > 0 && (
+                <View style={styles.importCategory}>
+                  <Text style={styles.importCategoryTitle}>
+                    Activity Cards ({importData.activityCards.length})
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.selectAllButton}
+                    onPress={() => {
+                      const allSelected = importData.activityCards.every(a => 
+                        importSelections[`activity_${a.id}`]
+                      );
+                      const newSelections = { ...importSelections };
+                      importData.activityCards.forEach(activity => {
+                        newSelections[`activity_${activity.id}`] = !allSelected;
+                      });
+                      setImportSelections(newSelections);
+                    }}
+                  >
+                    <Text style={styles.selectAllText}>
+                      {importData.activityCards.every(a => importSelections[`activity_${a.id}`]) 
+                        ? 'Deselect All' 
+                        : 'Select All'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              
+              {importData.templates && Object.keys(importData.templates).length > 0 && (
+                <View style={styles.importCategory}>
+                  <Text style={styles.importCategoryTitle}>Activity Library</Text>
+                  {Object.entries(importData.templates).map(([categoryId, category]) => (
+                    <View key={categoryId}>
+                      <TouchableOpacity
+                        style={styles.importItem}
+                        onPress={() => toggleImportSelection(`category_${categoryId}`)}
+                        activeOpacity={0.7}
+                      >
+                        <Icon 
+                          name={importSelections[`category_${categoryId}`] ? "check-box" : "check-box-outline-blank"} 
+                          size={20} 
+                          color={importSelections[`category_${categoryId}`] ? theme.primary : '#999'} 
+                        />
+                        <Icon name="folder" size={16} color="#666" style={{ marginLeft: 8 }} />
+                        <Text style={styles.importItemText}>{category.name}</Text>
+                        <Text style={styles.importItemCount}>
+                          ({category.activities?.length || 0})
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              )}
+            </View>
+          </View>
+          
+          <ModalFooter
+            theme={theme}
+            primaryButton={{
+              label: 'Import Selected Items',
+              icon: 'file-upload',
+              onPress: () => setShowImportConfirm(true),
+              disabled: !Object.values(importSelections).some(v => v) || loading
+            }}
+          />
+        </>
+      )}
+    </ScrollView>
+  );
+  
+  // Render export tab content
+  const renderExportContent = () => (
+    <ScrollView 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ flexGrow: 1 }}
+      style={{ flex: 1 }}
+    >
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Icon name="file-download" size={20} color={theme.primary} />
+          <Text style={styles.sectionTitle}>Select Data to Export</Text>
+        </View>
+        
+        <TouchableOpacity
+          style={styles.selectionCard}
+          onPress={() => toggleExportSelection('users')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.checkboxContainer}>
+            <Icon 
+              name={exportSelections.users ? "check-box" : "check-box-outline-blank"} 
+              size={24} 
+              color={exportSelections.users ? theme.primary : '#999'} 
+            />
+          </View>
+          <View style={styles.selectionContent}>
+            <Text style={styles.selectionTitle}>Users</Text>
+            <Text style={styles.selectionDescription}>
+              All user profiles and their assigned activities
+            </Text>
+          </View>
+          <View style={styles.selectionCount}>
+            <Text style={styles.countText}>{users ? Object.keys(users).length : 0}</Text>
+            <Icon name="person" size={16} color="#666" />
+          </View>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.selectionCard}
+          onPress={() => toggleExportSelection('activityCards')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.checkboxContainer}>
+            <Icon 
+              name={exportSelections.activityCards ? "check-box" : "check-box-outline-blank"} 
+              size={24} 
+              color={exportSelections.activityCards ? theme.primary : '#999'} 
+            />
+          </View>
+          <View style={styles.selectionContent}>
+            <Text style={styles.selectionTitle}>Activity Cards</Text>
+            <Text style={styles.selectionDescription}>
+              All current activity cards from all users
+            </Text>
+          </View>
+          <View style={styles.selectionCount}>
+            <Text style={styles.countText}>
+              {users ? Object.values(users).reduce((count, user) => 
+                count + (user.days?.today?.activities?.length || 0) + 
+                (user.days?.tomorrow?.activities?.length || 0), 0
+              ) : 0}
+            </Text>
+            <Icon name="dashboard" size={16} color="#666" />
+          </View>
+        </TouchableOpacity>
+        
+        <TouchableOpacity
+          style={styles.selectionCard}
+          onPress={() => toggleExportSelection('activityLibrary')}
+          activeOpacity={0.7}
+        >
+          <View style={styles.checkboxContainer}>
+            <Icon 
+              name={exportSelections.activityLibrary ? "check-box" : "check-box-outline-blank"} 
+              size={24} 
+              color={exportSelections.activityLibrary ? theme.primary : '#999'} 
+            />
+          </View>
+          <View style={styles.selectionContent}>
+            <Text style={styles.selectionTitle}>Activity Library</Text>
+            <Text style={styles.selectionDescription}>
+              All categories and routine templates
+            </Text>
+          </View>
+          <View style={styles.selectionCount}>
+            <Text style={styles.countText}>
+              {activityCategories ? activityCategories.reduce((count, category) => 
+                count + (category.activities?.length || 0), 0
+              ) : 0}
+            </Text>
+            <Icon name="folder" size={16} color="#666" />
+          </View>
+        </TouchableOpacity>
+      </View>
+      
+      <ModalFooter
+        theme={theme}
+        primaryButton={{
+          label: 'Export Selected Data',
+          icon: 'file-download',
+          onPress: handleExport,
+          disabled: !Object.values(exportSelections).some(v => v) || loading
+        }}
+        loading={loading}
+      />
+    </ScrollView>
+  );
+  
+  // Render sync tab content
+  const renderSyncContent = () => (
+    <ScrollView 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ flexGrow: 1 }}
+      style={{ flex: 1 }}
+    >
+      <View style={styles.section}>
+        {!syncEnabled ? (
+          <>
+            <View style={styles.syncInfoContainer}>
+              <Icon name="sync" size={48} color={theme.primary} />
+              <Text style={styles.syncTitle}>Sync Your Data</Text>
+              <Text style={styles.syncDescription}>
+                Keep your data synchronized across devices with end-to-end encryption
+              </Text>
+              
+              <View style={styles.syncFeatures}>
+                <View style={styles.syncFeature}>
+                  <Icon name="security" size={20} color={theme.primary} />
+                  <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
+                </View>
+                <View style={styles.syncFeature}>
+                  <Icon name="devices" size={20} color={theme.primary} />
+                  <Text style={styles.syncFeatureText}>Multi-device support</Text>
+                </View>
+                <View style={styles.syncFeature}>
+                  <Icon name="cloud-off" size={20} color={theme.primary} />
+                  <Text style={styles.syncFeatureText}>Works offline</Text>
                 </View>
               </View>
-            )}
-
-            {/* Local Data Danger Zone - Always show */}
-            <View style={[styles.section, { borderBottomWidth: 0, marginTop: syncEnabled ? 0 : 20 }]}>
-              {!syncEnabled && (
+              
+              {syncError && (
+                <View style={styles.errorContainer}>
+                  <Icon name="error-outline" size={16} color="#d32f2f" />
+                  <Text style={styles.errorText}>{syncError}</Text>
+                </View>
+              )}
+              
+              {!showRecoveryInput ? (
+                <ModalFooter
+                  theme={theme}
+                  primaryButton={{
+                    label: 'Create New Sync',
+                    icon: 'add-circle',
+                    onPress: handleEnableSync,
+                    disabled: syncLoading
+                  }}
+                  secondaryButton={{
+                    label: 'Restore from Recovery Phrase',
+                    icon: 'restore',
+                    onPress: () => setShowRecoveryInput(true)
+                  }}
+                  loading={syncLoading}
+                />
+              ) : (
                 <>
-                  <Text style={[styles.sectionTitle, { color: '#d32f2f' }]}>Danger Zone</Text>
-                  <Text style={styles.sectionDescription}>
-                    Irreversible actions that affect your local data.
-                  </Text>
+                  <View style={styles.recoveryInputContainer}>
+                    <FormInput
+                      value={recoveryInput}
+                      onChangeText={setRecoveryInput}
+                      placeholder="Enter your recovery phrase"
+                      multiline
+                      numberOfLines={3}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      theme={theme}
+                    />
+                  </View>
+                  
+                  <ModalFooter
+                    theme={theme}
+                    primaryButton={{
+                      label: 'Restore',
+                      onPress: handleRestoreSync,
+                      disabled: syncLoading || !recoveryInput.trim()
+                    }}
+                    secondaryButton={{
+                      label: 'Cancel',
+                      onPress: () => {
+                        setShowRecoveryInput(false);
+                        setRecoveryInput('');
+                        setSyncError('');
+                      }
+                    }}
+                    loading={syncLoading}
+                  />
                 </>
+              )}
+            </View>
+          </>
+        ) : (
+          <>
+            <View style={styles.syncStatusCard}>
+              <View style={styles.syncStatusHeader}>
+                <SyncStatusIndicator theme={theme} size="large" />
+                <View style={styles.syncStatusInfo}>
+                  <Text style={styles.syncStatusTitle}>Sync Enabled</Text>
+                  <Text style={styles.syncStatusId}>ID: {syncId}</Text>
+                </View>
+              </View>
+              
+              {showRecoveryPhrase && (
+                <View style={styles.recoveryPhraseCard}>
+                  <Icon name="warning" size={20} color="#ff9800" />
+                  <Text style={styles.recoveryPhraseWarning}>
+                    Save this recovery phrase! You'll need it to sync other devices.
+                  </Text>
+                  <View style={styles.recoveryPhraseContainer}>
+                    <Text style={styles.recoveryPhrase} selectable>
+                      {syncRecoveryPhrase}
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[styles.primaryButton, { backgroundColor: theme.primary }]}
+                    onPress={() => setShowRecoveryPhrase(false)}
+                  >
+                    <Text style={styles.buttonText}>I've Saved It</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+              
+              <View style={styles.syncActions}>
+                <TouchableOpacity
+                  style={styles.syncActionButton}
+                  onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
+                >
+                  <Icon name="key" size={20} color={theme.primary} />
+                  <Text style={styles.syncActionText}>
+                    {showRecoveryPhrase ? 'Hide' : 'Show'} Recovery Phrase
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.syncActionButton, styles.dangerButton]}
+                  onPress={() => setShowDisableSyncConfirm(true)}
+                >
+                  <Icon name="sync-disabled" size={20} color="#d32f2f" />
+                  <Text style={[styles.syncActionText, { color: '#d32f2f' }]}>
+                    Disable Sync
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        )}
+      </View>
+    </ScrollView>
+  );
+  
+  // Render share tab content
+  const renderShareContent = () => (
+    <ScrollView 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={{ flexGrow: 1 }}
+      style={{ flex: 1 }}
+    >
+      {!syncEnabled ? (
+        <View style={styles.section}>
+          <View style={styles.syncRequiredContainer}>
+            <Icon name="sync-disabled" size={48} color="#ff9800" />
+            <Text style={styles.syncRequiredTitle}>Sync Required</Text>
+            <Text style={styles.syncRequiredText}>
+              You need to enable sync before you can share your activities
+            </Text>
+            <TouchableOpacity
+              style={[styles.primaryButton, { backgroundColor: theme.primary, marginTop: 20 }]}
+              onPress={() => setActiveTab(2)}
+            >
+              <Icon name="sync" size={20} color="white" />
+              <Text style={styles.buttonText}>Go to Sync</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      ) : !shareUrl ? (
+        <View style={styles.section}>
+          {/* User Selection */}
+          <View style={styles.shareSection}>
+            <Text style={styles.shareSectionTitle}>Select User to Share</Text>
+            <View style={styles.userSelectionGrid}>
+              {users && Object.entries(users).map(([userId, user]) => (
+                <TouchableOpacity
+                  key={userId}
+                  style={[
+                    styles.userSelectionCard,
+                    selectedShareUser === userId && styles.userSelectionCardActive
+                  ]}
+                  onPress={() => setSelectedShareUser(userId)}
+                >
+                  <Text style={styles.userSelectionEmoji}>{user.icon || '😀'}</Text>
+                  <Text style={styles.userSelectionName}>{user.name}</Text>
+                  {selectedShareUser === userId && (
+                    <Icon name="check-circle" size={20} color={theme.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+          
+          {selectedShareUser && (
+            <>
+              {/* Share Settings */}
+              <View style={styles.shareSection}>
+                <Text style={styles.shareSectionTitle}>Share Settings</Text>
+                
+                <FormInput
+                  label="Recipient Name (optional)"
+                  value={recipientName}
+                  onChangeText={setRecipientName}
+                  placeholder="Enter recipient's name"
+                  theme={theme}
+                />
+                
+                <FormInput
+                  label="Note (optional)"
+                  value={shareNote}
+                  onChangeText={setShareNote}
+                  placeholder="Add a note for the recipient"
+                  multiline
+                  numberOfLines={3}
+                  theme={theme}
+                />
+                
+                <View style={styles.shareField}>
+                  <Text style={styles.shareFieldLabel}>Expires After</Text>
+                  <View style={styles.expirationOptions}>
+                    {['24', '168', '720'].map(hours => (
+                      <TouchableOpacity
+                        key={hours}
+                        style={[
+                          styles.expirationOption,
+                          expiresHours === hours && styles.expirationOptionActive
+                        ]}
+                        onPress={() => setExpiresHours(hours)}
+                      >
+                        <Text style={[
+                          styles.expirationOptionText,
+                          expiresHours === hours && styles.expirationOptionTextActive
+                        ]}>
+                          {hours === '24' ? '1 Day' : hours === '168' ? '1 Week' : '30 Days'}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+                
+                <View style={styles.shareOptions}>
+                  <TouchableOpacity
+                    style={styles.shareOption}
+                    onPress={() => setIncludeCompleted(!includeCompleted)}
+                  >
+                    <Icon 
+                      name={includeCompleted ? "check-box" : "check-box-outline-blank"} 
+                      size={24} 
+                      color={theme.primary} 
+                    />
+                    <Text style={styles.shareOptionText}>Include completed status</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.shareOption}
+                    onPress={() => setIncludeTomorrow(!includeTomorrow)}
+                  >
+                    <Icon 
+                      name={includeTomorrow ? "check-box" : "check-box-outline-blank"} 
+                      size={24} 
+                      color={theme.primary} 
+                    />
+                    <Text style={styles.shareOptionText}>Include tomorrow's activities</Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={styles.shareOption}
+                    onPress={() => setAutoUpdate(!autoUpdate)}
+                  >
+                    <Icon 
+                      name={autoUpdate ? "check-box" : "check-box-outline-blank"} 
+                      size={24} 
+                      color={theme.primary} 
+                    />
+                    <Text style={styles.shareOptionText}>Auto-update when I make changes</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+              
+              <ModalFooter
+                theme={theme}
+                primaryButton={{
+                  label: 'Create Share Link',
+                  icon: 'share',
+                  onPress: handleCreateShare,
+                  disabled: shareLoading
+                }}
+                loading={shareLoading}
+              />
+            </>
+          )}
+          
+          {/* Active Shares */}
+          {Object.keys(activeShares).length > 0 && (
+            <View style={styles.shareSection}>
+              <TouchableOpacity
+                style={styles.shareSectionHeader}
+                onPress={() => setShowActiveShares(!showActiveShares)}
+              >
+                <Text style={styles.shareSectionTitle}>Active Shares</Text>
+                <Icon 
+                  name={showActiveShares ? "expand-less" : "expand-more"} 
+                  size={24} 
+                  color="#666" 
+                />
+              </TouchableOpacity>
+              
+              {showActiveShares && Object.entries(activeShares).map(([userId, { user, shares }]) => (
+                <View key={userId} style={styles.userSharesContainer}>
+                  <View style={styles.userSharesHeader}>
+                    <Text style={styles.userSharesEmoji}>{user.icon || '😀'}</Text>
+                    <Text style={styles.userSharesName}>{user.name}</Text>
+                    <Text style={styles.userSharesCount}>{shares.length} active</Text>
+                  </View>
+                  {shares.map(share => (
+                    <View key={share.share_id} style={styles.activeShareCard}>
+                      <View style={styles.activeShareInfo}>
+                        {share.recipient_name && (
+                          <Text style={styles.activeShareRecipient}>
+                            To: {share.recipient_name}
+                          </Text>
+                        )}
+                        <Text style={styles.activeShareDate}>
+                          Expires: {new Date(share.expires_at).toLocaleDateString()}
+                        </Text>
+                        {share.auto_update && (
+                          <View style={styles.activeShareBadge}>
+                            <Icon name="sync" size={12} color="#4caf50" />
+                            <Text style={styles.activeShareBadgeText}>Auto-update</Text>
+                          </View>
+                        )}
+                      </View>
+                      <TouchableOpacity
+                        onPress={() => handleDeleteShare(share.share_id)}
+                        style={styles.activeShareDelete}
+                      >
+                        <Icon name="delete" size={20} color="#d32f2f" />
+                      </TouchableOpacity>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </View>
+          )}
+        </View>
+      ) : (
+        // Share Created View
+        <View style={styles.section}>
+          <View style={styles.shareSuccessContainer}>
+            <Icon name="check-circle" size={48} color="#4caf50" />
+            <Text style={styles.shareSuccessTitle}>Share Link Created!</Text>
+            
+            <View style={styles.shareUrlContainer}>
+              <Text style={styles.shareUrlLabel}>Share this link:</Text>
+              <View style={styles.shareUrlBox}>
+                <Text style={styles.shareUrl} numberOfLines={2}>
+                  {shareUrl}
+                </Text>
+              </View>
+              
+              <ModalFooter
+                theme={theme}
+                primaryButton={{
+                  label: 'Copy Link',
+                  icon: 'content-copy',
+                  onPress: handleCopyShareUrl
+                }}
+              />
+              
+              {Platform.OS !== 'web' && (
+                <View style={styles.qrCodeContainer}>
+                  <Text style={styles.qrCodeLabel}>Or scan this QR code:</Text>
+                  <QRCode
+                    value={shareUrl}
+                    size={200}
+                    backgroundColor="white"
+                    color="black"
+                  />
+                </View>
               )}
               
               <TouchableOpacity
-                style={[styles.button, { backgroundColor: COLORS.error }]}
-                onPress={() => setShowResetAppConfirm(true)}
+                style={styles.secondaryButton}
+                onPress={() => {
+                  setShareUrl('');
+                  const token = syncService.generateShareToken(true);
+                  setShareToken(token);
+                }}
               >
-                <Icon name="refresh" size={20} color="white" />
-                <Text style={styles.buttonText}>Reset App</Text>
-              </TouchableOpacity>
-              
-              <View style={styles.warningContainer}>
-                <Text style={styles.warningText}>
-                  ⚠️ This will delete all local data and reset the app to its initial state. This action cannot be undone.
+                <Icon name="add-circle" size={20} color={theme.primary} />
+                <Text style={[styles.buttonText, { color: theme.primary }]}>
+                  Create Another Share
                 </Text>
-              </View>
+              </TouchableOpacity>
             </View>
-          </ScrollView>
+          </View>
         </View>
-        {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
-        )}
-      </View>
+      )}
+    </ScrollView>
+  );
+  
+  return (
+    <>
+      <TabbedModal
+        visible={visible}
+        onClose={onClose}
+        theme={theme}
+        title="Data Management"
+        icon="storage"
+        tabs={tabs}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      >
+        <TabContent isActive={activeTab === 0} modalVisible={visible}>
+          {renderSyncContent()}
+        </TabContent>
+        <TabContent isActive={activeTab === 1} modalVisible={visible}>
+          {renderShareContent()}
+        </TabContent>
+        <TabContent isActive={activeTab === 2} modalVisible={visible}>
+          {renderImportContent()}
+        </TabContent>
+        <TabContent isActive={activeTab === 3} modalVisible={visible}>
+          {renderExportContent()}
+        </TabContent>
+      </TabbedModal>
       
-      {/* Disable Sync Confirmation Modal */}
+      <ConfirmModal
+        visible={showImportConfirm}
+        onClose={() => setShowImportConfirm(false)}
+        onConfirm={handleImportConfirm}
+        theme={theme}
+        title={importMode === 'fresh' ? 'Start Fresh Import' : 'Merge Import'}
+        message={
+          importMode === 'fresh'
+            ? 'This will replace all your current data with the selected items. This action cannot be undone.'
+            : 'This will add the selected items to your existing data. Duplicate items will be skipped.'
+        }
+        confirmText="Import"
+        confirmButtonColor={theme.primary}
+        icon="file-upload"
+        iconColor={theme.primary}
+      />
+      
       <ConfirmModal
         visible={showDisableSyncConfirm}
         onClose={() => setShowDisableSyncConfirm(false)}
-        onConfirm={confirmDisableSync}
+        onConfirm={handleDisableSync}
         theme={theme}
         title="Disable Sync"
-        message="Are you sure you want to disable sync? Your local data will remain but will no longer sync with other devices."
-        confirmText="Disable Sync"
-        confirmButtonColor="#e53e3e"
-        icon="sync-disabled"
-        iconColor="#e53e3e"
-      />
-      
-      {/* Delete Server Data Confirmation Modal */}
-      <ConfirmModal
-        visible={showDeleteServerDataConfirm}
-        onClose={() => setShowDeleteServerDataConfirm(false)}
-        onConfirm={confirmDeleteServerData}
-        theme={theme}
-        title="Delete Sync Data"
-        message="Are you sure you want to permanently delete all your sync data from the server? This will remove your data from all synced devices. This action cannot be undone."
-        confirmText="Delete Forever"
+        message="This will stop syncing your data. Your local data will remain unchanged. You can re-enable sync later with your recovery phrase."
+        confirmText="Disable"
         confirmButtonColor="#d32f2f"
-        icon="delete-forever"
+        icon="sync-disabled"
         iconColor="#d32f2f"
       />
-      
-      {/* Reset App Confirmation Modal */}
-      <ConfirmModal
-        visible={showResetAppConfirm}
-        onClose={() => setShowResetAppConfirm(false)}
-        onConfirm={() => {
-          setShowResetAppConfirm(false);
-          onResetApp();
-        }}
-        theme={theme}
-        title="Reset App"
-        message="This will delete all your data and reset the app to its initial state. You will need to go through the onboarding again. This action cannot be undone."
-        confirmText="Reset Everything"
-        confirmButtonColor={COLORS.error}
-        icon="refresh"
-        iconColor={COLORS.error}
-      />
-    </Modal>
+    </>
   );
 };
 

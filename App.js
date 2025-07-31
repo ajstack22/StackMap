@@ -84,7 +84,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PlanningModal, PrivacyModal, SupportModal, ReorderModal, ShareModal, DataModal, UsersSecurityModal, ToolbarCustomizeModal, CompleteDayModal, ConfirmModal, BuyMeCoffeeButton } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PrivacyModal, SupportModal, ReorderModal, DataModal, AccessModal, ToolbarCustomizeModal, ConfirmModal, DayManagementModal, ActivityManagementModal, BuyMeCoffeeButton } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -244,7 +244,6 @@ const App = () => {
   const [pinInput, setPinInput] = useState('');
   
   // Share modal state
-  const [showShareModal, setShowShareModal] = useState(false);
   const [shareUserId, setShareUserId] = useState(null);
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [confirmPin, setConfirmPin] = useState('');
@@ -253,9 +252,13 @@ const App = () => {
   
   // New modal states
   const [showDataModal, setShowDataModal] = useState(false);
-  const [showUsersSecurityModal, setShowUsersSecurityModal] = useState(false);
+  const [showAccessModal, setShowAccessModal] = useState(false);
+  const [accessModalActiveTab, setAccessModalActiveTab] = useState(0);
   const [showToolbarCustomizeModal, setShowToolbarCustomizeModal] = useState(false);
-  const [showCompleteDayModal, setShowCompleteDayModal] = useState(false);
+  const [showDayManagementModal, setShowDayManagementModal] = useState(false);
+  const [dayManagementActiveTab, setDayManagementActiveTab] = useState(0);
+  const [showActivityManagementModal, setShowActivityManagementModal] = useState(false);
+  const [activityManagementActiveTab, setActivityManagementActiveTab] = useState(0);
   
   
   // Screen dimensions state
@@ -1386,6 +1389,14 @@ const App = () => {
   const addActivityToLibrary = (activity) => {
     // Initialize with default categories if none exist
     const categories = activityCategories || DEFAULT_CATEGORIES;
+    
+    // If activityCategories was null, set it to defaults
+    if (!activityCategories) {
+      console.log('Initializing activity categories with defaults');
+      setActivityCategories(DEFAULT_CATEGORIES);
+    }
+    
+    // Create a new array to avoid mutating state
     const updatedCategories = [...categories];
     
     // Find My Templates category
@@ -1403,12 +1414,12 @@ const App = () => {
       // Add to My Templates
       updatedCategories[myTemplatesIndex] = {
         ...updatedCategories[myTemplatesIndex],
-        activities: [...updatedCategories[myTemplatesIndex].activities, template]
+        activities: [...(updatedCategories[myTemplatesIndex].activities || []), template]
       };
       
       setActivityCategories(updatedCategories);
       
-      // Add to tracking set
+      // Add to tracking set to show checkmark
       setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
       
       // Remove from tracking after delay
@@ -1421,8 +1432,10 @@ const App = () => {
       }, 1500);
       
       showToast({ message: 'Added to My Templates' });
+      console.log('Added to library:', template);
     } else {
       showToast({ message: 'Could not find My Templates category' });
+      console.error('My Templates category not found in:', categories);
     }
   };
   
@@ -1515,6 +1528,30 @@ const App = () => {
   const handlePinEnable = () => {
     setIsSettingPin(true);
     setShowPinModal(true);
+  };
+
+  const handlePinSet = async (pin) => {
+    try {
+      const hashedPin = hashPin(pin);
+      await storage.set('user.pin', hashedPin);
+      setHasPinProtection(true);
+      setIsSettingPin(false);
+      showToast({ message: 'PIN set successfully' });
+    } catch (error) {
+      console.error('[App] Error setting PIN:', error);
+      showToast({ message: 'Failed to set PIN', type: 'error' });
+    }
+  };
+
+  const handlePinVerify = async (pin) => {
+    try {
+      const hashedPin = await storage.get('user.pin');
+      const inputHash = hashPin(pin);
+      return hashedPin === inputHash;
+    } catch (error) {
+      console.error('[App] Error verifying PIN:', error);
+      return false;
+    }
   };
 
   // Delete user function
@@ -1803,10 +1840,7 @@ const App = () => {
           }
         }
         
-        // Restore templates
-        if (migratedData.templates) {
-          setTemplates(migratedData.templates);
-        }
+        // Templates are now handled through activityCategories
         
         // Restore activity categories
         if (migratedData.activityCategories) {
@@ -2095,7 +2129,7 @@ const App = () => {
         setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
         setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
         // PIN is now handled by secure storage, not imported
-        setTemplates(migratedData.templates || []);
+        // Templates now handled through activityCategories
         setCurrentDay(importedCurrentDay);
         
         // Set first user as current if available
@@ -2149,6 +2183,182 @@ const App = () => {
         console.error('Import error details:', error.message, error.stack);
         Alert.alert('Import Error', `Failed to import data: ${error.message}`);
       }
+    }
+  };
+  
+  // Handle import from ImportExportModal
+  const handleImportComplete = async (importData) => {
+    try {
+      // Disable sync before importing to prevent conflicts
+      if (await syncService.isEnabled()) {
+        console.log('Disabling sync before import...');
+        await syncService.disable();
+      }
+      
+      if (importData.mode === 'fresh') {
+        // Fresh import - replace everything
+        
+        // Restore users
+        if (importData.users && Object.keys(importData.users).length > 0) {
+          setUsers(importData.users);
+          
+          // Set first user as current
+          const userIds = Object.keys(importData.users);
+          setCurrentUser(userIds[0]);
+          
+          const userData = importData.users[userIds[0]];
+          setCurrentDay(userData.currentDay || 'today');
+          
+          const userActivities = userData.days?.[userData.currentDay || 'today']?.activities || [];
+          setActivities(cleanupActivities(userActivities));
+          
+          // Restore user theme
+          if (userData.settings?.theme) {
+            setCurrentTheme(userData.settings.theme);
+          }
+        }
+        
+        // Restore templates by converting to activityCategories format
+        if (importData.templates) {
+          const categoriesArray = [];
+          Object.entries(importData.templates).forEach(([categoryId, category]) => {
+            categoriesArray.push({
+              id: categoryId,
+              name: category.name,
+              activities: (category.activities || []).map(activity => ({
+                id: activity.id,
+                name: activity.text,
+                emoji: activity.icon
+              }))
+            });
+          });
+          setActivityCategories(categoriesArray);
+        }
+        
+        // Restore global settings
+        if (importData.globalSettings) {
+          if (importData.globalSettings.currentTheme) {
+            setCurrentTheme(importData.globalSettings.currentTheme);
+          }
+          if (importData.globalSettings.bannerPosition) {
+            setBannerPosition(importData.globalSettings.bannerPosition);
+          }
+        }
+        
+      } else {
+        // Merge mode - add to existing data
+        
+        // Merge users
+        if (importData.users && Object.keys(importData.users).length > 0) {
+          const mergedUsers = { ...users };
+          
+          // Add imported users, avoiding duplicates by checking names
+          Object.entries(importData.users).forEach(([userId, user]) => {
+            // Check if user with same name already exists
+            const existingUser = Object.values(mergedUsers).find(u => u.name === user.name);
+            if (!existingUser) {
+              // Generate new ID to avoid conflicts
+              const newUserId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+              mergedUsers[newUserId] = {
+                ...user,
+                id: newUserId
+              };
+            }
+          });
+          
+          setUsers(mergedUsers);
+        }
+        
+        // Merge activity cards
+        if (importData.activityCards && importData.activityCards.length > 0) {
+          const currentUserData = users[currentUser];
+          if (currentUserData) {
+            const currentActivities = [...activities];
+            
+            // Add imported activities with new IDs to avoid conflicts
+            importData.activityCards.forEach(activity => {
+              const newActivity = {
+                ...activity,
+                id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                completed: false,
+                pinned: false,
+              };
+              currentActivities.push(newActivity);
+            });
+            
+            setActivities(currentActivities);
+            
+            // Update user data
+            const updatedUsers = { ...users };
+            updatedUsers[currentUser] = {
+              ...currentUserData,
+              days: {
+                ...currentUserData.days,
+                [currentDay]: {
+                  ...currentUserData.days?.[currentDay],
+                  activities: currentActivities
+                }
+              }
+            };
+            setUsers(updatedUsers);
+          }
+        }
+        
+        // Merge templates
+        if (importData.templates && Object.keys(importData.templates).length > 0) {
+          const currentCategories = [...(activityCategories || [])];
+          
+          Object.entries(importData.templates).forEach(([categoryId, category]) => {
+            // Check if category already exists
+            const existingCategoryIndex = currentCategories.findIndex(c => c.name === category.name);
+            
+            if (existingCategoryIndex !== -1) {
+              // Merge activities into existing category
+              const existingCategory = currentCategories[existingCategoryIndex];
+              const existingActivities = existingCategory.activities || [];
+              const newActivities = category.activities || [];
+              
+              newActivities.forEach(newActivity => {
+                // Check if activity already exists by name
+                if (!existingActivities.some(a => a.name === newActivity.text)) {
+                  existingActivities.push({
+                    id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                    name: newActivity.text,
+                    emoji: newActivity.icon
+                  });
+                }
+              });
+              
+              currentCategories[existingCategoryIndex] = {
+                ...existingCategory,
+                activities: existingActivities
+              };
+            } else {
+              // Add new category
+              currentCategories.push({
+                id: categoryId,
+                name: category.name,
+                activities: (category.activities || []).map(activity => ({
+                  id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+                  name: activity.text,
+                  emoji: activity.icon
+                }))
+              });
+            }
+          });
+          
+          setActivityCategories(currentCategories);
+        }
+      }
+      
+      // Hide onboarding if showing
+      if (showOnboarding) {
+        setShowOnboarding(false);
+      }
+      
+    } catch (error) {
+      console.error('Import error:', error);
+      Alert.alert('Import Error', 'Failed to import data. Please try again.');
     }
   };
   
@@ -2206,7 +2416,7 @@ const App = () => {
               setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
               setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
               // PIN is now handled by secure storage, not imported
-              setTemplates(migratedData.templates || []);
+              // Templates now handled through activityCategories
               setCurrentDay(importedCurrentDay);
               
               // Set first user as current if available
@@ -2294,7 +2504,7 @@ const App = () => {
               
               // Reset local state
               setDisplayMode('numbers');
-              setTemplates([]);
+              // Templates now handled through activityCategories
               setIsEditMode(false);
               setHasPinProtection(false);
               setActivityCategories(null);
@@ -2323,7 +2533,7 @@ const App = () => {
               setShowReorderModal(false);
               setShowPinModal(false);
               setShowDataModal(false);
-              setShowUsersSecurityModal(false);
+              setShowAccessModal(false);
               setShowCompleteDayModal(false);
               setShowResetAppConfirm(false);
               
@@ -3080,18 +3290,47 @@ const App = () => {
           }}
           onAdd={() => setShowActivityModal(true)}
           onLibrary={() => setShowActivityLibrary(true)}
-          onPlan={() => setShowUserDayModal(true)}
+          onPlan={() => {
+            setDayManagementActiveTab(0);
+            setShowDayManagementModal(true);
+          }}
           onShare={syncEnabled ? () => {
-            setShareUserId(currentUser);
-            setShowShareModal(true);
+            // Share functionality moved to DataModal Share tab
+            setShowDataModal(true);
           } : null}
           onData={() => setShowDataModal(true)}
-          onUsers={() => setShowUsersSecurityModal(true)}
+          onUsers={() => {
+            setAccessModalActiveTab(0);
+            setShowAccessModal(true);
+          }}
           onCustomize={() => setShowToolbarCustomizeModal(true)}
           onSupport={() => setShowSupportModal(true)}
           toolbarOrder={toolbarOrder}
           moreButtonPosition={moreButtonPosition}
-          onCompleteDay={() => setShowCompleteDayModal(true)}
+          onCompleteDay={() => {
+            setDayManagementActiveTab(1);
+            setTimeout(() => {
+              setShowDayManagementModal(true);
+            }, 0);
+          }}
+          onDayManagement={(tab) => {
+            setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
+            // Use setTimeout to ensure state update happens first
+            setTimeout(() => {
+              setShowDayManagementModal(true);
+            }, 0);
+          }}
+          onActivityManagement={(tab) => {
+            console.log('EditModeToolbar clicked:', tab);
+            const tabIndex = tab === 'add' ? 0 : 1;
+            console.log('Setting activityManagementActiveTab to:', tabIndex);
+            setActivityManagementActiveTab(tabIndex);
+            // Use setTimeout to ensure state update happens first
+            setTimeout(() => {
+              console.log('Opening modal with tab index:', tabIndex);
+              setShowActivityManagementModal(true);
+            }, 0);
+          }}
           theme={theme}
           position={bannerPosition === 'top' ? 'bottom' : 'top'}
           onAnimationComplete={() => {
@@ -3107,7 +3346,9 @@ const App = () => {
         visible={showActivityLibrary}
         onClose={() => setShowActivityLibrary(false)}
         showToast={showToast}
-          onSelectActivity={(activity) => {
+        categories={activityCategories}
+        onSaveCategories={setActivityCategories}
+        onSelectActivity={(activity) => {
             // Create a new activity from the template with unique ID
             const newActivity = {
               ...activity,
@@ -3178,8 +3419,6 @@ const App = () => {
             });
           }}
         theme={theme}
-        categories={activityCategories}
-        onSaveCategories={setActivityCategories}
       />
       
       {/* Privacy Policy Modal */}
@@ -3270,57 +3509,22 @@ const App = () => {
         />
       )}
 
-      {/* Planning Modal - Edit Mode */}
-      {isEditMode && (
-        <PlanningModal
-          visible={showUserDayModal}
-          onClose={() => setShowUserDayModal(false)}
-          currentUser={currentUser}
-          currentDay={currentDay}
-          users={users}
-          theme={theme}
-          dayMode={dayMode}
-          setDayMode={setDayMode}
-          onSelectUserDay={(userId, day) => {
-            setCurrentUser(userId);
-            setCurrentDay(day);
-            const dayActivities = users[userId]?.days?.[day]?.activities || [];
-            setActivities(dayActivities.filter(a => !a.deleted));
-            // Load the selected user's theme
-            if (users[userId]?.settings?.theme) {
-              setCurrentTheme(users[userId].settings.theme);
-            }
-            showToast({ message: `Planning ${users[userId].name}'s ${day === 'today' ? 'Today' : 'Tomorrow'}` });
-          }}
-        />
-      )}
       
-      {/* Share Modal */}
-      <ShareModal
-        visible={showShareModal}
-        onClose={() => {
-          setShowShareModal(false);
-          setShareUserId(null);
-        }}
-        theme={theme}
-        user={shareUserId ? users[shareUserId] : null}
-        userId={shareUserId}
-        showToast={showToast}
-        onShowSupport={() => {
-          setShowShareModal(false);
-          setTimeout(() => setShowSupportModal(true), 300);
-        }}
-      />
       
       {/* Data Modal */}
       <DataModal
         visible={showDataModal}
         onClose={() => setShowDataModal(false)}
         theme={theme}
-        onExportData={exportData}
-        onImportData={importData}
-        onResetApp={resetApp}
+        users={users}
+        currentDay={currentDay}
+        templates={templates}
+        activityCategories={activityCategories}
+        currentTheme={currentTheme}
+        bannerPosition={bannerPosition}
+        hasSecurePin={hasSecurePin}
         showToast={showToast}
+        onImportComplete={handleImportComplete}
         onSyncStatusChange={(enabled) => setSyncEnabled(enabled)}
         onShowSupport={() => {
           setShowDataModal(false);
@@ -3329,47 +3533,28 @@ const App = () => {
       />
       
       {/* Users & Security Modal */}
-      <UsersSecurityModal
-        visible={showUsersSecurityModal}
-        onClose={() => setShowUsersSecurityModal(false)}
+      <AccessModal
+        visible={showAccessModal}
+        onClose={() => setShowAccessModal(false)}
         theme={theme}
         users={users}
         currentUser={currentUser}
-        onUserSelect={(userId) => {
+        onAddUser={handleAddUser}
+        onSelectUser={(userId) => {
           setCurrentUser(userId);
           const userActivities = users[userId]?.days?.[currentDay]?.activities || [];
           setActivities(userActivities.filter(a => !a.deleted));
           if (users[userId]?.settings?.theme) {
             setCurrentTheme(users[userId].settings.theme);
           }
-          showToast({ message: `Switched to ${users[userId].name}` });
         }}
-        onUserEdit={(userId, userName, userIcon) => {
-          setEditingUser({ id: userId, name: userName, icon: userIcon });
-          setNewUserName(userName);
-          setNewUserEmoji(userIcon);
-          setShowAddUserModal(true);
-        }}
-        onUserDelete={deleteUser}
-        onAddUser={() => setShowAddUserModal(true)}
-        hasPinProtection={hasPinProtection}
-        onPinChange={handlePinChange}
-        onPinRemove={handlePinRemove}
-        onPinEnable={handlePinEnable}
+        onDeleteUser={deleteUser}
+        hasSecurePin={hasPinProtection}
+        onSetPin={handlePinSet}
+        onRemovePin={handlePinRemove}
+        onVerifyPin={handlePinVerify}
         showToast={showToast}
-        pinInput={pinInput}
-        setPinInput={setPinInput}
-        showPinModal={showPinModal}
-        setShowPinModal={setShowPinModal}
-        isSettingPin={isSettingPin}
-        confirmPin={confirmPin}
-        pinLength={pinInput.length}
-        // Add/Edit User Modal props
-        showAddUserModal={showAddUserModal}
-        setShowAddUserModal={setShowAddUserModal}
-        newUserName={newUserName}
-        setNewUserName={setNewUserName}
-        newUserEmoji={newUserEmoji}
+        initialTab={accessModalActiveTab}
         setNewUserEmoji={setNewUserEmoji}
         showUserEmojiPicker={showUserEmojiPicker}
         setShowUserEmojiPicker={setShowUserEmojiPicker}
@@ -3382,7 +3567,7 @@ const App = () => {
       
       {/* Add/Edit User Modal - Only render when UsersSecurityModal is not visible */}
       {/* On iOS, this modal is rendered inside UsersSecurityModal for proper stacking */}
-      {(Platform.OS !== 'ios' || !showUsersSecurityModal) && (
+      {(Platform.OS !== 'ios' || !showAccessModal) && (
         <AddUserModal
           visible={showAddUserModal}
           onClose={() => {
@@ -3418,21 +3603,111 @@ const App = () => {
         showToast={showToast}
       />
       
-      {/* Complete Day Modal */}
-      <CompleteDayModal
-        visible={showCompleteDayModal}
-        onClose={() => setShowCompleteDayModal(false)}
+      {/* Day Management Modal */}
+      <DayManagementModal
+        visible={showDayManagementModal}
+        onClose={() => setShowDayManagementModal(false)}
         theme={theme}
         activities={activities}
-        showToast={showToast}
+        completedCount={activities.filter(a => a.completed).length}
+        totalCount={activities.length}
         onCompleteDay={handleCompleteDayConfirm}
-        currentUser={currentUser}
+        onPlanTomorrow={() => {/* TODO: Implement plan tomorrow */}}
+        showToast={showToast}
+        templates={(() => {
+          // Transform activityCategories to templates format
+          const templatesObject = {};
+          if (activityCategories && Array.isArray(activityCategories)) {
+            activityCategories.forEach(category => {
+              templatesObject[category.id] = {
+                name: category.name,
+                activities: (category.activities || []).map(activity => ({
+                  id: activity.id,
+                  text: activity.name,
+                  icon: activity.emoji
+                }))
+              };
+            });
+          }
+          return templatesObject;
+        })()}
         users={users}
+        currentUser={currentUser}
+        tomorrowActivities={users[currentUser]?.days?.tomorrow?.activities || []}
+        onUpdateTomorrowActivities={(planData) => {
+          // Update activities for the specified user and day
+          const updatedUsers = { ...users };
+          if (!updatedUsers[planData.userId]) return;
+          
+          if (!updatedUsers[planData.userId].days) {
+            updatedUsers[planData.userId].days = {};
+          }
+          if (!updatedUsers[planData.userId].days[planData.day]) {
+            updatedUsers[planData.userId].days[planData.day] = {};
+          }
+          
+          updatedUsers[planData.userId].days[planData.day].activities = planData.activities;
+          setUsers(updatedUsers);
+          
+          showToast({ message: 'Plan saved successfully!' });
+          setShowDayManagementModal(false);
+        }}
+        initialActiveTab={dayManagementActiveTab}
+        dayMode={dayMode}
+        setDayMode={setDayMode}
+        onSelectUserDay={(userId, day) => {
+          setCurrentUser(userId);
+          setCurrentDay(day);
+          const dayActivities = users[userId]?.days?.[day]?.activities || [];
+          setActivities(dayActivities.filter(a => !a.deleted));
+          // Load the selected user's theme
+          if (users[userId]?.settings?.theme) {
+            setCurrentTheme(users[userId].settings.theme);
+          }
+        }}
+      />
+      
+      {/* Activity Management Modal */}
+      <ActivityManagementModal
+        visible={showActivityManagementModal}
+        onClose={() => setShowActivityManagementModal(false)}
+        theme={theme}
+        categories={activityCategories}
+        showToast={showToast}
+        onSaveCategories={setActivityCategories}
+        onAddActivity={(activity) => {
+          const newActivity = {
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            text: activity.name || activity.text,
+            icon: activity.emoji || activity.icon,
+            completed: false,
+            pinned: false,
+            deleted: false,
+            type: 'task',
+            ...(activity.isPersonal && { isPersonal: true })
+          };
+          setActivities([...activities, newActivity]);
+          showToast({ message: `Added "${newActivity.text}" to today's activities` });
+        }}
+        onSelectActivity={(activity) => {
+          const newActivity = {
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            text: activity.name || activity.text,
+            icon: activity.emoji || activity.icon,
+            completed: false,
+            pinned: false,
+            deleted: false,
+            type: 'task'
+          };
+          setActivities([...activities, newActivity]);
+          showToast({ message: `Added "${newActivity.text}" to today's activities` });
+        }}
+        initialTab={activityManagementActiveTab}
       />
       
       
       {/* PIN Modal for Edit Mode - Standalone for when not in Users & Security modal */}
-      {showPinModal && !showUsersSecurityModal && (
+      {showPinModal && !showAccessModal && (
         <PinModal
           visible={showPinModal}
           onClose={() => {

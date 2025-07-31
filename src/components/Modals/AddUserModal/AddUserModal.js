@@ -85,7 +85,16 @@ const AddUserModal = ({
               </Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={{ padding: 8 }}>
-              <Icon name="close" size={24} color="white" />
+              <View style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+                <Icon name="close" size={20} color="white" />
+              </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
@@ -112,6 +121,7 @@ const AddUserModal = ({
               <TextInput
                 style={styles.input}
                 placeholder="User name"
+                placeholderTextColor="#666"
                 value={newUserName}
                 onChangeText={setNewUserName}
                 autoFocus

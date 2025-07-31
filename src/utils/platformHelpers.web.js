@@ -62,13 +62,17 @@ const DocumentPicker = {
             reject(error);
           }
         } else {
-          reject(new Error('No file selected'));
+          const cancelError = new Error('No file selected');
+          cancelError.code = 'DOCUMENT_PICKER_CANCELED';
+          reject(cancelError);
         }
       };
       
       // Handle cancellation
       input.oncancel = () => {
-        reject(new Error('User cancelled'));
+        const cancelError = new Error('User cancelled');
+        cancelError.code = 'DOCUMENT_PICKER_CANCELED';
+        reject(cancelError);
       };
       
       // Clean up the input element after use
@@ -89,8 +93,12 @@ const DocumentPicker = {
     json: 'application/json'
   },
   
+  errorCodes: {
+    cancelled: 'DOCUMENT_PICKER_CANCELED'
+  },
+  
   isCancel: (error) => {
-    return error && (error.message === 'User cancelled' || error.message === 'No file selected');
+    return error && (error.code === 'DOCUMENT_PICKER_CANCELED' || error.message === 'User cancelled' || error.message === 'No file selected');
   }
 };
 

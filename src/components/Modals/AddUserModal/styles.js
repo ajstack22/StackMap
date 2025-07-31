@@ -57,6 +57,7 @@ export const styles = StyleSheet.create({
     marginBottom: 20,
     backgroundColor: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
   },
   button: {
     borderRadius: RADIUS.lg,

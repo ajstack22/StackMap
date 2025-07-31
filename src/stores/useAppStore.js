@@ -136,7 +136,7 @@ const useAppStore = create(
       currentDay: 'today',
       displayMode: 'numbers',
       dayMode: 'today',
-      templates: [],
+      templates: {},
       activityCategories: null,
       userContextData: {},
       hasCompletedOnboarding: false,

@@ -8,6 +8,7 @@ export { default as EmojiPicker } from './EmojiPicker';
 export { default as CelebrationView } from './CelebrationManager';
 export { default as SyncStatusIndicator } from './SyncStatusIndicator';
 export { default as BuyMeCoffeeButton } from './BuyMeCoffeeButton';
+export { TabbedModal, TabContent } from './TabbedModal';
 
 // Import modal components directly to avoid re-export issues
 import ContextModal from './Modals/ContextModal/ContextModal';
@@ -26,6 +27,9 @@ import UsersSecurityModal from './Modals/UsersSecurityModal/UsersSecurityModal';
 import ToolbarCustomizeModal from './Modals/ToolbarCustomizeModal/ToolbarCustomizeModal';
 import CompleteDayModal from './Modals/CompleteDayModal/CompleteDayModal';
 import ConfirmModal from './Modals/ConfirmModal/ConfirmModal';
+import DayManagementModal from './Modals/DayManagementModal/DayManagementModal';
+import ActivityManagementModal from './Modals/ActivityManagementModal/ActivityManagementModal';
+import AccessModal from './Modals/AccessModal/AccessModal';
 
 // Export the imported modal components
 export {
@@ -44,5 +48,8 @@ export {
   UsersSecurityModal,
   ToolbarCustomizeModal,
   CompleteDayModal,
-  ConfirmModal
+  ConfirmModal,
+  DayManagementModal,
+  ActivityManagementModal,
+  AccessModal
 };

@@ -24,6 +24,8 @@ const EditModeToolbar = ({
   onShare,
   onData,
   onUsers,
+  onDayManagement,
+  onActivityManagement,
   onCustomize,
   onSupport,
   theme,
@@ -105,19 +107,33 @@ const EditModeToolbar = ({
     }
   }, [visible, position, onAnimationComplete]);
 
-  // Define all actions
+  // Define all actions - only modal buttons
   const actionMap = {
-    users: { label: 'Users', icon: 'group', onPress: onUsers },
-    data: { label: 'Data', icon: 'cloud-sync', onPress: onData },
-    complete: { label: 'Complete', icon: 'event-available', onPress: onCompleteDay },
-    ...(onShare && { share: { label: 'Share', icon: 'share', onPress: onShare } }),
-    plan: { label: 'Plan', icon: 'event', onPress: onPlan },
-    library: { label: 'Library', icon: 'collections-bookmark', onPress: onLibrary },
-    add: { label: 'Add', icon: 'add-circle', onPress: onAdd },
+    activities: { 
+      label: 'Activities', 
+      icon: 'add-circle', 
+      onPress: () => onActivityManagement && onActivityManagement('add') 
+    },
+    day: { 
+      label: 'Day', 
+      icon: 'event', 
+      onPress: () => onDayManagement && onDayManagement('plan') 
+    },
+    access: { 
+      label: 'Access', 
+      icon: 'security', 
+      onPress: onUsers 
+    },
+    data: { 
+      label: 'Data', 
+      icon: 'cloud-sync', 
+      onPress: onData 
+    },
+    // Overflow items
     sort: { label: 'Sort', icon: 'sort', onPress: onCustomize, alwaysOverflow: true },
     ...(Platform.OS === 'web' && onSupport && { 
       contribute: { 
-        label: 'Contribute', 
+        label: 'Support', 
         icon: 'favorite', 
         onPress: onSupport, 
         alwaysOverflow: true 
@@ -125,8 +141,8 @@ const EditModeToolbar = ({
     }),
   };
 
-  // Default order if none provided
-  const defaultOrder = ['data', 'users', 'share', 'complete', 'plan', 'library', 'add', 'contribute'];
+  // Default order if none provided - R->L: Activities, Day, Access, Data
+  const defaultOrder = ['data', 'access', 'day', 'activities'];
   
   // Validate and use toolbar order
   const currentOrder = (Array.isArray(toolbarOrder) && toolbarOrder.length > 0) 
@@ -289,7 +305,7 @@ const EditModeToolbar = ({
               {/* More button on the left */}
               {showMore && moreButtonPosition === 'left' && (
                 <TouchableOpacity
-                  style={styles.actionButton}
+                  style={[styles.actionButton, showMoreMenu && styles.actionButtonActive]}
                   onPress={() => setShowMoreMenu(!showMoreMenu)}
                 >
                   <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 32 : 28)} color="white" />
@@ -309,7 +325,7 @@ const EditModeToolbar = ({
               {/* More button on the right */}
               {showMore && moreButtonPosition === 'right' && (
                 <TouchableOpacity
-                  style={styles.actionButton}
+                  style={[styles.actionButton, showMoreMenu && styles.actionButtonActive]}
                   onPress={() => setShowMoreMenu(!showMoreMenu)}
                 >
                   <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 32 : 28)} color="white" />
@@ -425,6 +441,10 @@ const styles = StyleSheet.create({
   disabledButton: {
     opacity: 0.6,
   },
+  actionButtonActive: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    borderRadius: 8,
+  },
   actionLabel: {
     fontSize: Platform.OS === 'web' ? (isTablet() ? 13 : 11) : (isTablet() ? 14 : 12),
     fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
@@ -433,18 +453,19 @@ const styles = StyleSheet.create({
   },
   overflowRow: {
     marginTop: Platform.OS === 'web' ? 4 : 6,
-    paddingTop: Platform.OS === 'web' ? 4 : 6,
-    borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.2)',
+    paddingTop: Platform.OS === 'web' ? 6 : 8,
+    paddingBottom: Platform.OS === 'web' ? 2 : 4,
+    borderTopWidth: 2,
+    borderTopColor: 'rgba(255, 255, 255, 0.3)',
   },
   overflowRowTop: {
     marginTop: 0,
     marginBottom: Platform.OS === 'web' ? 4 : 6,
-    paddingTop: 0,
-    paddingBottom: Platform.OS === 'web' ? 4 : 6,
+    paddingTop: Platform.OS === 'web' ? 2 : 4,
+    paddingBottom: Platform.OS === 'web' ? 6 : 8,
     borderTopWidth: 0,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.2)',
+    borderBottomWidth: 2,
+    borderBottomColor: 'rgba(255, 255, 255, 0.3)',
   },
   overflowButtons: {
     flexDirection: 'row',

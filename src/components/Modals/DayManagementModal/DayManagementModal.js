@@ -1,0 +1,116 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import TabbedModal from '../../TabbedModal';
+import { TabContent } from '../../TabbedModal';
+import CompleteTabContent from './CompleteTabContent';
+import PlanTabContent from './PlanTabContent';
+import { styles } from './styles';
+
+const DayManagementModal = ({
+  visible,
+  onClose,
+  theme,
+  activities = [],
+  completedCount = 0,
+  totalCount = 0,
+  onCompleteDay,
+  onPlanTomorrow,
+  showToast,
+  templates = {},
+  users = {},
+  currentUser,
+  tomorrowActivities = [],
+  onUpdateTomorrowActivities,
+  initialActiveTab = 0,
+  dayMode,
+  setDayMode,
+  onSelectUserDay,
+}) => {
+  const [activeTab, setActiveTab] = useState(initialActiveTab);
+  const [loading, setLoading] = useState(false);
+
+  // Reset activeTab when modal opens with a different tab
+  useEffect(() => {
+    if (visible) {
+      setActiveTab(initialActiveTab);
+    }
+  }, [visible, initialActiveTab]);
+
+  const tabs = [
+    { id: 'plan', label: 'Plan Ahead', icon: 'event' },
+    { id: 'complete', label: 'Complete Day', icon: 'check-circle' },
+  ];
+
+  const handleCompleteDay = async () => {
+    setLoading(true);
+    try {
+      await onCompleteDay();
+      showToast({ message: 'Day completed successfully!' });
+      onClose();
+    } catch (error) {
+      showToast({ message: 'Failed to complete day', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSavePlan = async (updatedActivities) => {
+    setLoading(true);
+    try {
+      await onUpdateTomorrowActivities(updatedActivities);
+      showToast({ message: 'Tomorrow\'s plan saved!' });
+    } catch (error) {
+      showToast({ message: 'Failed to save plan', type: 'error' });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <TabbedModal
+      visible={visible}
+      onClose={onClose}
+      theme={theme}
+      title="Day Management"
+      tabs={tabs}
+      activeTab={activeTab}
+      onTabChange={setActiveTab}
+    >
+      <TabContent isActive={activeTab === 0} modalVisible={visible}>
+        <PlanTabContent
+          theme={theme}
+          tomorrowActivities={tomorrowActivities}
+          templates={templates}
+          users={users}
+          currentUser={currentUser}
+          onSavePlan={onUpdateTomorrowActivities}
+          loading={loading}
+          showToast={showToast}
+          dayMode={dayMode}
+          setDayMode={setDayMode}
+          onSelectUserDay={onSelectUserDay}
+        />
+      </TabContent>
+      <TabContent isActive={activeTab === 1} modalVisible={visible}>
+        <CompleteTabContent
+          theme={theme}
+          activities={activities}
+          onCompleteDay={handleCompleteDay}
+          loading={loading}
+          showToast={showToast}
+          currentUser={currentUser}
+          users={users}
+        />
+      </TabContent>
+    </TabbedModal>
+  );
+};
+
+export default React.memo(DayManagementModal);
