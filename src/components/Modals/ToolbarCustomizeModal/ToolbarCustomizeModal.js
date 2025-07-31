@@ -25,16 +25,13 @@ const GestureHandlerRootView = Platform.OS !== 'web'
   ? require('react-native-gesture-handler').GestureHandlerRootView
   : null;
 
-const DEFAULT_TOOLBAR_ORDER = ['data', 'users', 'share', 'complete', 'plan', 'library', 'add'];
+const DEFAULT_TOOLBAR_ORDER = ['data', 'access', 'day', 'activities'];
 
 const TOOLBAR_BUTTONS = {
-  add: { label: 'Add', icon: 'add-circle' },
-  library: { label: 'Library', icon: 'collections-bookmark' },
-  plan: { label: 'Plan', icon: 'event' },
-  share: { label: 'Share', icon: 'share' },
-  complete: { label: 'Complete', icon: 'event-available' },
+  activities: { label: 'Activities', icon: 'add-circle' },
+  day: { label: 'Day', icon: 'event' },
+  access: { label: 'Access', icon: 'security' },
   data: { label: 'Data', icon: 'cloud-sync' },
-  users: { label: 'Users', icon: 'group' },
 };
 
 const ToolbarCustomizeModal = ({

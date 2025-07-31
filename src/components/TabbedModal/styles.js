@@ -91,6 +91,7 @@ export const styles = StyleSheet.create({
   contentContainer: {
     flex: 1,
     width: '100%',
+    overflow: 'hidden', // Clip content during transitions
   },
   tabContent: {
     flex: 1,

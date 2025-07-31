@@ -11,6 +11,7 @@ import {
   Dimensions,
   ScrollView,
   PanResponder,
+  Easing,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,12 +34,21 @@ const TabbedModal = ({
   const insets = useSafeAreaInsets();
   const [internalActiveTab, setInternalActiveTab] = useState(defaultTab);
   const swipeAnimation = useRef(new Animated.Value(0)).current;
-  const tabTransition = useRef(new Animated.Value(0)).current;
   const { width: screenWidth } = Dimensions.get('window');
   
   // Use controlled activeTab if provided, otherwise use internal state
   const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
   
+  // Store activeTab and tabs in refs to use in pan responder
+  const activeTabRef = useRef(activeTab);
+  const tabsRef = useRef(tabs);
+  useEffect(() => {
+    activeTabRef.current = activeTab;
+  }, [activeTab]);
+  useEffect(() => {
+    tabsRef.current = tabs;
+  }, [tabs]);
+
   // Create pan responder for swipe gestures
   const panResponder = useRef(
     PanResponder.create({
@@ -58,40 +68,42 @@ const TabbedModal = ({
         let dx = gestureState.dx;
         
         // Add resistance when trying to swipe past edges
-        if ((activeTab === 0 && dx > 0) || (activeTab === tabs.length - 1 && dx < 0)) {
+        if ((activeTabRef.current === 0 && dx > 0) || (activeTabRef.current === tabsRef.current.length - 1 && dx < 0)) {
           dx = dx * resistance;
         }
         
         swipeAnimation.setValue(dx);
       },
       onPanResponderRelease: (evt, gestureState) => {
-        const swipeThreshold = screenWidth * 0.25; // 25% of screen width
-        const velocityThreshold = 0.3;
+        const swipeThreshold = screenWidth * 0.2; // 20% of screen width
+        const velocityThreshold = 0.5;
         
         // Check velocity for quick swipes
         const shouldSwipeLeft = gestureState.dx < -swipeThreshold || gestureState.vx < -velocityThreshold;
         const shouldSwipeRight = gestureState.dx > swipeThreshold || gestureState.vx > velocityThreshold;
         
-        if (shouldSwipeRight && activeTab > 0) {
+        if (shouldSwipeRight && activeTabRef.current > 0) {
           // Swipe right - go to previous tab
-          animateToTab(activeTab - 1);
-        } else if (shouldSwipeLeft && activeTab < tabs.length - 1) {
+          animateToTab(activeTabRef.current - 1);
+        } else if (shouldSwipeLeft && activeTabRef.current < tabsRef.current.length - 1) {
           // Swipe left - go to next tab
-          animateToTab(activeTab + 1);
+          animateToTab(activeTabRef.current + 1);
         } else {
           // Return to original position
-          Animated.spring(swipeAnimation, {
+          Animated.timing(swipeAnimation, {
             toValue: 0,
-            tension: 40,
-            friction: 8,
+            duration: 250,
+            easing: Easing.bezier(0.2, 0, 0, 1),
             useNativeDriver: true,
           }).start();
         }
       },
       onPanResponderTerminate: () => {
         // Handle gesture interruption
-        Animated.spring(swipeAnimation, {
+        Animated.timing(swipeAnimation, {
           toValue: 0,
+          duration: 250,
+          easing: Easing.bezier(0.2, 0, 0, 1),
           useNativeDriver: true,
         }).start();
       },
@@ -106,45 +118,25 @@ const TabbedModal = ({
   }, [visible, defaultTab, controlledActiveTab]);
   
   const animateToTab = (index) => {
-    const direction = index > activeTab ? -1 : 1;
+    if (index === activeTabRef.current) return;
     
-    // Animate swipe to full screen width in the direction of the new tab
-    Animated.parallel([
-      Animated.timing(swipeAnimation, {
-        toValue: direction * screenWidth,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(tabTransition, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      // Update the active tab
-      handleTabPress(index);
-      
-      // Reset animations for next transition
-      swipeAnimation.setValue(direction * -screenWidth);
-      
-      Animated.parallel([
-        Animated.spring(swipeAnimation, {
-          toValue: 0,
-          tension: 40,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-        Animated.timing(tabTransition, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
+    const direction = index > activeTabRef.current ? -1 : 1;
+    
+    // Update the active tab immediately
+    handleTabPress(index);
+    
+    // Material Design 3 shared axis transition
+    swipeAnimation.setValue(direction * screenWidth);
+    Animated.timing(swipeAnimation, {
+      toValue: 0,
+      duration: 300, // MD3 standard duration
+      easing: Easing.bezier(0.2, 0, 0, 1), // MD3 emphasized easing
+      useNativeDriver: true,
+    }).start();
   };
 
   const handleTabPress = (index) => {
-    if (index !== activeTab) {
+    if (index !== activeTabRef.current) {
       if (controlledActiveTab === undefined) {
         setInternalActiveTab(index);
       }
@@ -159,10 +151,10 @@ const TabbedModal = ({
     if (!visible || Platform.OS !== 'web') return;
     
     const handleKeyPress = (e) => {
-      if (e.key === 'ArrowLeft' && activeTab > 0) {
-        animateToTab(activeTab - 1);
-      } else if (e.key === 'ArrowRight' && activeTab < tabs.length - 1) {
-        animateToTab(activeTab + 1);
+      if (e.key === 'ArrowLeft' && activeTabRef.current > 0) {
+        animateToTab(activeTabRef.current - 1);
+      } else if (e.key === 'ArrowRight' && activeTabRef.current < tabsRef.current.length - 1) {
+        animateToTab(activeTabRef.current + 1);
       } else if (e.key === 'Escape') {
         onClose();
       }
@@ -292,15 +284,11 @@ const TabbedModal = ({
                   {
                     translateX: swipeAnimation.interpolate({
                       inputRange: [-screenWidth, 0, screenWidth],
-                      outputRange: [-screenWidth * 0.3, 0, screenWidth * 0.3],
+                      outputRange: [-screenWidth * 0.35, 0, screenWidth * 0.35],
                       extrapolate: 'clamp',
                     })
                   }
-                ],
-                opacity: tabTransition.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [1, 0.8],
-                })
+                ]
               }
             ]}
             {...panResponder.panHandlers}
