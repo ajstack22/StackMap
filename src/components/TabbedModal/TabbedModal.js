@@ -78,18 +78,30 @@ const TabbedModal = ({
         const swipeThreshold = screenWidth * 0.2; // 20% of screen width
         const velocityThreshold = 0.5;
         
+        // Debug logging
+        console.log('Swipe release:', {
+          activeTab: activeTabRef.current,
+          tabsLength: tabsRef.current.length,
+          dx: gestureState.dx,
+          vx: gestureState.vx,
+          threshold: swipeThreshold
+        });
+        
         // Check velocity for quick swipes
         const shouldSwipeLeft = gestureState.dx < -swipeThreshold || gestureState.vx < -velocityThreshold;
         const shouldSwipeRight = gestureState.dx > swipeThreshold || gestureState.vx > velocityThreshold;
         
         if (shouldSwipeRight && activeTabRef.current > 0) {
           // Swipe right - go to previous tab
+          console.log('Swiping right to tab:', activeTabRef.current - 1);
           animateToTab(activeTabRef.current - 1);
         } else if (shouldSwipeLeft && activeTabRef.current < tabsRef.current.length - 1) {
           // Swipe left - go to next tab
+          console.log('Swiping left to tab:', activeTabRef.current + 1);
           animateToTab(activeTabRef.current + 1);
         } else {
           // Return to original position
+          console.log('Returning to original position');
           Animated.timing(swipeAnimation, {
             toValue: 0,
             duration: 250,
@@ -118,7 +130,16 @@ const TabbedModal = ({
   }, [visible, defaultTab, controlledActiveTab]);
   
   const animateToTab = (index) => {
-    if (index === activeTabRef.current) return;
+    console.log('animateToTab called:', {
+      targetIndex: index,
+      currentTab: activeTabRef.current,
+      isSame: index === activeTabRef.current
+    });
+    
+    if (index === activeTabRef.current) {
+      console.log('Same tab, returning');
+      return;
+    }
     
     const direction = index > activeTabRef.current ? -1 : 1;
     
@@ -136,6 +157,12 @@ const TabbedModal = ({
   };
 
   const handleTabPress = (index) => {
+    console.log('handleTabPress called:', {
+      targetIndex: index,
+      currentTabRef: activeTabRef.current,
+      willUpdate: index !== activeTabRef.current
+    });
+    
     if (index !== activeTabRef.current) {
       if (controlledActiveTab === undefined) {
         setInternalActiveTab(index);
