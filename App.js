@@ -3288,16 +3288,6 @@ const App = () => {
               setCurrentDay('today');
             }
           }}
-          onAdd={() => setShowActivityModal(true)}
-          onLibrary={() => setShowActivityLibrary(true)}
-          onPlan={() => {
-            setDayManagementActiveTab(0);
-            setShowDayManagementModal(true);
-          }}
-          onShare={syncEnabled ? () => {
-            // Share functionality moved to DataModal Share tab
-            setShowDataModal(true);
-          } : null}
           onData={() => setShowDataModal(true)}
           onUsers={() => {
             setAccessModalActiveTab(0);
@@ -3307,12 +3297,6 @@ const App = () => {
           onSupport={() => setShowSupportModal(true)}
           toolbarOrder={toolbarOrder}
           moreButtonPosition={moreButtonPosition}
-          onCompleteDay={() => {
-            setDayManagementActiveTab(1);
-            setTimeout(() => {
-              setShowDayManagementModal(true);
-            }, 0);
-          }}
           onDayManagement={(tab) => {
             setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
             // Use setTimeout to ensure state update happens first

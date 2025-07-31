@@ -17,11 +17,6 @@ import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet, getContainerPadding } f
 
 const EditModeToolbar = ({
   onExit,
-  onAdd,
-  onLibrary,
-  onCompleteDay,
-  onPlan,
-  onShare,
   onData,
   onUsers,
   onDayManagement,
@@ -163,21 +158,24 @@ const EditModeToolbar = ({
     const containerPadding = getContainerPadding() * 2;
     const availableWidth = screenWidth - containerPadding;
     
-    // Button width calculation - more accurate based on actual button content
-    const buttonWidth = isTablet() ? 65 : 50; // Actual button width is smaller
+    // Button width calculation based on actual minWidth from styles
+    const buttonWidth = isTablet() ? 70 : 55; // Match minWidth from styles
     const buttonGap = Platform.OS === 'web' ? 8 : 10; // Gap between buttons from styles
-    const editModeTextWidth = isTablet() ? 90 : 65; // More accurate text width
+    const editModeTextWidth = isTablet() ? 90 : 70; // Edit Mode text width
     const moreButtonWidth = buttonWidth; // Same as regular buttons
     
-    // Reserve space for "Edit Mode" text and "More" button
+    // Always reserve space for More button since Sort is always in overflow
     const reservedWidth = editModeTextWidth + moreButtonWidth + (buttonGap * 2);
     const usableWidth = availableWidth - reservedWidth;
     
     // Calculate how many buttons fit (including gaps)
     const maxButtons = Math.floor((usableWidth + buttonGap) / (buttonWidth + buttonGap));
     
-    // Ensure at least 4 buttons are visible on phones (5 total with More button)
-    const minVisible = isTablet() ? 3 : 4;
+    // Since we only have 4 action buttons, try to show all 4 on phones
+    // On very small screens, ensure at least 3 are visible
+    const minVisible = 3;
+    
+    // Return the number of buttons that can fit, but at least minVisible
     return Math.max(minVisible, Math.min(maxButtons, actions.length));
   };
 
@@ -436,7 +434,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Platform.OS === 'web' ? 8 : 10,
     paddingVertical: Platform.OS === 'web' ? 4 : 5,
     gap: Platform.OS === 'web' ? 1 : 2,
-    minWidth: isTablet() ? 70 : 60,
+    minWidth: isTablet() ? 70 : 55,
   },
   disabledButton: {
     opacity: 0.6,
