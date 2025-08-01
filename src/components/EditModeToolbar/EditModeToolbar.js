@@ -121,7 +121,7 @@ const EditModeToolbar = ({
     },
     data: { 
       label: 'Data', 
-      icon: 'cloud-sync', 
+      icon: 'source', 
       onPress: onData 
     },
     // Overflow items
@@ -159,9 +159,9 @@ const EditModeToolbar = ({
     const availableWidth = screenWidth - containerPadding;
     
     // Button width calculation based on actual minWidth from styles
-    const buttonWidth = isTablet() ? 70 : 55; // Match minWidth from styles
-    const buttonGap = Platform.OS === 'web' ? 8 : 10; // Gap between buttons from styles
-    const editModeTextWidth = isTablet() ? 90 : 70; // Edit Mode text width
+    const buttonWidth = isTablet() ? 65 : 48; // Match minWidth from styles
+    const buttonGap = Platform.OS === 'web' ? 6 : 8; // Gap between buttons from styles
+    const editModeTextWidth = isTablet() ? 85 : 65; // Edit Mode text width
     const moreButtonWidth = buttonWidth; // Same as regular buttons
     
     // Always reserve space for More button since Sort is always in overflow
@@ -426,15 +426,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    gap: Platform.OS === 'web' ? 8 : 10,
+    gap: Platform.OS === 'web' ? 6 : 8,
   },
   actionButton: {
     flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 8 : 10,
+    paddingHorizontal: Platform.OS === 'web' ? 6 : 7,
     paddingVertical: Platform.OS === 'web' ? 4 : 5,
     gap: Platform.OS === 'web' ? 1 : 2,
-    minWidth: isTablet() ? 70 : 55,
+    minWidth: isTablet() ? 65 : 48,
   },
   disabledButton: {
     opacity: 0.6,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   actionLabel: {
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 13 : 11) : (isTablet() ? 14 : 12),
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 12 : 10) : (isTablet() ? 13 : 11),
     fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',

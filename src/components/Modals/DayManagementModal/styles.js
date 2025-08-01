@@ -1,6 +1,23 @@
 import { StyleSheet, Platform } from 'react-native';
+import { SPACING } from '../../../constants';
 
 export const styles = StyleSheet.create({
+  // Container styles
+  scrollContainer: {
+    paddingVertical: SPACING.sm,
+    ...(Platform.OS === 'web' && {
+      paddingHorizontal: SPACING.lg,
+    }),
+  },
+  contentSection: {
+    marginHorizontal: SPACING.md,
+    marginVertical: SPACING.sm,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+    }),
+  },
   // Complete Tab Styles
   summarySection: {
     alignItems: 'center',
@@ -109,6 +126,13 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 16,
     borderRadius: 12,
+    gap: 8,
+    minWidth: 160,
+  },
+  completeButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
     marginBottom: 10,
   },
   buttonText: {

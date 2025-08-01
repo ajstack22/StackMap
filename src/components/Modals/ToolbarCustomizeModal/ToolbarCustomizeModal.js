@@ -31,7 +31,7 @@ const TOOLBAR_BUTTONS = {
   activities: { label: 'Activities', icon: 'add-circle' },
   day: { label: 'Day', icon: 'event' },
   access: { label: 'Access', icon: 'security' },
-  data: { label: 'Data', icon: 'cloud-sync' },
+  data: { label: 'Data', icon: 'source' },
 };
 
 const ToolbarCustomizeModal = ({
@@ -205,7 +205,7 @@ const ToolbarCustomizeModal = ({
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
             <View style={styles.headerLeft}>
               <Icon name="sort" size={24} color="white" style={styles.headerIcon} />
-              <Text style={styles.modalTitle}>Sort Toolbar</Text>
+              <Text style={styles.modalTitle}>Sort</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <View style={{

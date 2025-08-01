@@ -2,15 +2,41 @@ import { StyleSheet, Platform } from 'react-native';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../../constants';
 
 export const styles = StyleSheet.create({
+  // Container styles
+  scrollContainer: {
+    paddingVertical: SPACING.sm,
+    ...(Platform.OS === 'web' && {
+      paddingHorizontal: SPACING.lg,
+    }),
+  },
+  contentSection: {
+    marginHorizontal: SPACING.md,
+    marginVertical: SPACING.sm,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+    }),
+  },
   // Library Tab Styles
   searchContainer: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 10,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   listContainer: {
     paddingHorizontal: 20,
     paddingBottom: 100,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   categoryContainer: {
     marginBottom: 15,
@@ -22,8 +48,10 @@ export const styles = StyleSheet.create({
       shadowOffset: { width: 0, height: 2 },
       shadowOpacity: 0.1,
       shadowRadius: 4,
-    } : {
+    } : Platform.OS === 'android' ? {
       elevation: 3,
+    } : {
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
     }),
   },
   categoryHeader: {

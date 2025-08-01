@@ -6,6 +6,7 @@ import {
   ScrollView,
   Platform,
   Dimensions,
+  ActivityIndicator,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { ModalFooter } from '../../ModalUtilities';
@@ -214,21 +215,41 @@ const CompleteTabContent = ({
     <>
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
+        contentContainerStyle={[{ flexGrow: 1, paddingBottom: 80 }, styles.scrollContainer]}
       >
+        <View style={styles.contentSection}>
         {/* Complete Day Info */}
-        <View style={styles.completeTopActionContainer}>
-          <View style={styles.completeSummaryHeader}>
+        <View style={[styles.completeTopActionContainer, { alignItems: 'center' }]}>
+          <View style={[styles.completeSummaryHeader, { justifyContent: 'center' }]}>
             <Icon name="event-available" size={20} color={theme.primary} style={styles.completeSummaryIcon} />
-            <Text style={styles.completeExplanationText}>
+            <Text style={[styles.completeExplanationText, { textAlign: 'center' }]}>
               {hasTomorrowActivities 
                 ? 'Review and organize your activities'
                 : 'Complete today and clean up your day'}
             </Text>
           </View>
-          <Text style={styles.completeExplanationSubtext}>
+          <Text style={[styles.completeExplanationSubtext, { textAlign: 'center' }]}>
             Tap activities to move them between sections
           </Text>
+          
+          {/* Complete Day Button */}
+          <TouchableOpacity
+            style={[
+              styles.completeButton,
+              { backgroundColor: theme.primary, marginTop: 20 }
+            ]}
+            onPress={handleCompleteDay}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <>
+                <Icon name="check-circle" size={20} color="white" />
+                <Text style={styles.completeButtonText}>Complete Day</Text>
+              </>
+            )}
+          </TouchableOpacity>
         </View>
         
         {/* Sections Container - Grid or Stack based on width */}
@@ -276,19 +297,8 @@ const CompleteTabContent = ({
             )}
           </View>
         </View>
+        </View>
       </ScrollView>
-
-      {/* Complete Day Button */}
-      <ModalFooter
-        theme={theme}
-        primaryButton={{
-          label: 'Complete Day',
-          icon: 'check-circle',
-          onPress: handleCompleteDay,
-          disabled: loading
-        }}
-        loading={loading}
-      />
 
       {/* Confirmation Modal */}
       <ConfirmModal

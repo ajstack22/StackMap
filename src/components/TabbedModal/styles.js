@@ -1,5 +1,7 @@
-import { StyleSheet, Platform } from 'react-native';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
 import { TYPOGRAPHY, SPACING, isTablet } from '../../constants';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 export const styles = StyleSheet.create({
   modalContainer: {

@@ -5,9 +5,19 @@ export const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
     padding: 20,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   section: {
     marginBottom: 30,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   sectionTitle: {
     fontSize: 18,
@@ -28,6 +38,11 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.md,
     overflow: 'hidden',
     ...SHADOWS.level1,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   userItem: {
     flexDirection: 'row',

@@ -2,9 +2,38 @@ import { StyleSheet, Platform } from 'react-native';
 import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
 
 export const styles = StyleSheet.create({
+  // Container styles
+  scrollContainer: {
+    paddingVertical: SPACING.sm,
+    ...(Platform.OS === 'web' && {
+      paddingHorizontal: SPACING.lg,
+    }),
+  },
+  
   // Section styles
   section: {
+    marginHorizontal: SPACING.md,
+    marginVertical: SPACING.sm,
     padding: SPACING.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+        maxWidth: 800,
+        alignSelf: 'center',
+        width: '100%',
+      },
+    }),
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -18,11 +47,15 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
   },
+  sectionFooter: {
+    marginTop: SPACING.md,
+  },
   
   // Empty state
   emptyStateContainer: {
     alignItems: 'center',
     paddingVertical: SPACING.xl * 2,
+    paddingHorizontal: SPACING.md,
   },
   emptyStateText: {
     fontSize: 16,
@@ -43,12 +76,26 @@ export const styles = StyleSheet.create({
   // Export selection cards
   selectionCard: {
     flexDirection: 'row',
-    backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
     alignItems: 'center',
-    ...SHADOWS.small,
+    elevation: 1,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      },
+    }),
   },
   checkboxContainer: {
     marginRight: SPACING.md,
@@ -224,13 +271,17 @@ export const styles = StyleSheet.create({
   syncFeatures: {
     width: '100%',
     marginBottom: SPACING.lg,
+    alignItems: 'center',
   },
   syncFeature: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     paddingVertical: SPACING.sm,
     paddingHorizontal: SPACING.lg,
     gap: SPACING.sm,
+    minWidth: 250,
+    alignSelf: 'center',
   },
   syncFeatureText: {
     fontSize: 15,
@@ -239,10 +290,25 @@ export const styles = StyleSheet.create({
   },
   
   syncStatusCard: {
-    backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
-    padding: SPACING.md,
-    ...SHADOWS.small,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: SPACING.lg,
+    marginHorizontal: 0,
+    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+      },
+    }),
   },
   syncStatusHeader: {
     flexDirection: 'row',
@@ -333,8 +399,10 @@ export const styles = StyleSheet.create({
   
   // Buttons
   buttonContainer: {
-    padding: SPACING.md,
-    paddingTop: 0,
+    paddingHorizontal: SPACING.md,
+    paddingBottom: SPACING.md,
+    paddingTop: SPACING.md,
+    alignItems: 'center',
   },
   primaryButton: {
     flexDirection: 'row',
@@ -342,8 +410,22 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.medium,
+    borderRadius: 12,
     gap: SPACING.sm,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      },
+    }),
   },
   secondaryButton: {
     flexDirection: 'row',
@@ -351,15 +433,28 @@ export const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.medium,
+    borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
     gap: SPACING.sm,
     marginTop: SPACING.sm,
+    ...Platform.select({
+      web: {
+        transition: 'all 0.2s ease',
+        ':hover': {
+          borderColor: '#BDBDBD',
+          backgroundColor: '#FAFAFA',
+        },
+      },
+    }),
   },
   dangerButton: {
     borderColor: '#ffcdd2',
     backgroundColor: '#ffebee',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
   buttonText: {
     fontSize: 16,
@@ -370,6 +465,7 @@ export const styles = StyleSheet.create({
   buttonRow: {
     flexDirection: 'row',
     gap: SPACING.sm,
+    justifyContent: 'center',
   },
   
   // Error
@@ -435,17 +531,29 @@ export const styles = StyleSheet.create({
   userSelectionCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     padding: SPACING.md,
-    borderWidth: 2,
-    borderColor: '#e0e0e0',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
     gap: SPACING.sm,
     minWidth: 120,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.03,
+        shadowRadius: 1,
+      },
+      web: {
+        transition: 'all 0.2s ease',
+      },
+    }),
   },
   userSelectionCardActive: {
-    borderColor: '#000',
-    backgroundColor: '#f5f5f5',
+    borderColor: '#1976D2',
+    backgroundColor: '#E3F2FD',
+    elevation: 2,
   },
   userSelectionEmoji: {
     fontSize: 24,
@@ -468,14 +576,14 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   shareInput: {
-    backgroundColor: 'white',
-    borderRadius: RADIUS.medium,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
     padding: SPACING.md,
-    fontSize: 15,
+    fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     borderWidth: 1,
-    borderColor: '#e0e0e0',
+    borderColor: '#E0E0E0',
   },
   
   expirationOptions: {
@@ -607,10 +715,12 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   shareUrlBox: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: RADIUS.medium,
+    backgroundColor: '#F5F5F5',
+    borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.md,
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
   },
   shareUrl: {
     fontSize: 14,
@@ -621,6 +731,25 @@ export const styles = StyleSheet.create({
   qrCodeContainer: {
     alignItems: 'center',
     marginVertical: SPACING.lg,
+    backgroundColor: '#FFFFFF',
+    padding: SPACING.xl,
+    marginHorizontal: SPACING.md,
+    borderRadius: 16,
+    elevation: 2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 6px rgba(0,0,0,0.12)',
+      },
+    }),
   },
   qrCodeLabel: {
     fontSize: 16,

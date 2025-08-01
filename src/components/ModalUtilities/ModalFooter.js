@@ -5,11 +5,10 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
-  SafeAreaView,
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../constants';
+import { TYPOGRAPHY, SPACING } from '../../constants';
 
 const ModalFooter = ({
   primaryButton,
@@ -19,7 +18,12 @@ const ModalFooter = ({
   loading = false,
   insets,
   getAndroidModalBottomHeight,
+  showOnDesktop = false,
 }) => {
+  // Hide footer on desktop unless explicitly shown
+  if (Platform.OS === 'web' && !showOnDesktop) {
+    return null;
+  }
   const renderButton = (button, isPrimary = false) => {
     if (!button) return null;
 
@@ -42,6 +46,7 @@ const ModalFooter = ({
         style={buttonStyle}
         onPress={button.onPress}
         disabled={button.disabled || loading}
+        activeOpacity={isPrimary ? 0.8 : 0.7}
       >
         {loading && isPrimary ? (
           <ActivityIndicator size="small" color="white" />
@@ -51,11 +56,11 @@ const ModalFooter = ({
               <Icon
                 name={button.icon}
                 size={20}
-                color={isPrimary ? 'white' : theme.primary}
+                color={isPrimary ? 'white' : (button.disabled ? '#999' : theme.primary)}
                 style={styles.buttonIcon}
               />
             )}
-            <Text style={textStyle}>{button.label}</Text>
+            <Text style={textStyle} numberOfLines={2}>{button.label}</Text>
           </>
         )}
       </TouchableOpacity>
@@ -68,7 +73,7 @@ const ModalFooter = ({
 
   return (
     <>
-      <View style={[styles.footer, { backgroundColor: theme.light }]}>
+      <View style={styles.footer}>
         {tertiaryButton && (
           <View style={styles.tertiaryButtonContainer}>
             {renderButton(tertiaryButton)}
@@ -79,28 +84,21 @@ const ModalFooter = ({
           {primaryButton && renderButton(primaryButton, true)}
         </View>
       </View>
-      <SafeAreaView style={{ backgroundColor: theme.light }} />
-      {Platform.OS === 'android' && getAndroidModalBottomHeight && (
-        <View style={{ 
-          backgroundColor: theme.light, 
-          height: getAndroidModalBottomHeight(insets) 
-        }} />
-      )}
     </>
   );
 };
 
 const styles = StyleSheet.create({
   footer: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.md,
-    borderTopWidth: 1,
-    borderTopColor: '#e0e0e0',
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.md,
   },
   mainButtonsContainer: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    justifyContent: 'center',
     gap: SPACING.sm,
+    flexWrap: 'wrap',
   },
   tertiaryButtonContainer: {
     marginBottom: SPACING.sm,
@@ -109,26 +107,45 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: RADIUS.md,
-    minWidth: 100,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg * 1.5,
+    borderRadius: 12,
+    minWidth: 160,
+    minHeight: 48,
   },
   primaryButton: {
-    ...SHADOWS.level2,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      },
+    }),
   },
   secondaryButton: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    backgroundColor: 'white',
+    borderColor: '#E0E0E0',
+    backgroundColor: '#FFFFFF',
+    ...Platform.select({
+      web: {
+        transition: 'all 0.2s ease',
+      },
+    }),
   },
   disabledButton: {
     opacity: 0.5,
   },
   buttonText: {
     fontSize: 16,
-    fontWeight: Platform.OS === 'ios' ? '600' : 'bold',
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    fontWeight: Platform.OS === 'ios' ? '600' : '700',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   primaryButtonText: {
     color: 'white',

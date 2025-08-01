@@ -161,10 +161,13 @@ const PlanTabContent = ({
   // Selection Mode UI
   if (!planningMode) {
     return (
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
-      >
+      <>
+        <ScrollView 
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
+          style={{ flex: 1 }}
+        >
+        <View style={styles.contentSection}>
         {/* Users Section */}
         <View style={styles.planSelectionSection}>
           <Text style={styles.planSectionTitle}>Select User</Text>
@@ -250,7 +253,9 @@ const PlanTabContent = ({
             </View>
           </View>
         )}
-
+        </View>
+        </ScrollView>
+        
         {/* Start Planning Button */}
         <ModalFooter
           theme={theme}
@@ -259,14 +264,21 @@ const PlanTabContent = ({
             icon: 'arrow-forward',
             onPress: handleStartPlanning,
           }}
+          showOnDesktop={true}
         />
-      </ScrollView>
+      </>
     );
   }
 
   // Planning Mode UI
   return (
-    <View style={{ flex: 1 }}>
+    <>
+    <ScrollView 
+      style={{ flex: 1 }}
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={styles.scrollContainer}
+    >
+      <View style={styles.contentSection}>
       {/* Back Button and Header */}
       <View style={styles.planHeader}>
         <TouchableOpacity
@@ -354,6 +366,9 @@ const PlanTabContent = ({
         </View>
       )}
 
+      </View>
+      </ScrollView>
+
       {/* Save Button */}
       <ModalFooter
         theme={theme}
@@ -368,8 +383,9 @@ const PlanTabContent = ({
           onPress: handleBackToSelection,
         }}
         loading={loading}
+        showOnDesktop={true}
       />
-    </View>
+    </>
   );
 };
 

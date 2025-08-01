@@ -447,7 +447,7 @@ const LibraryTabContent = ({
         data={getFilteredCategories()}
         renderItem={renderCategory}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContainer}
+        contentContainerStyle={[styles.listContainer, styles.scrollContainer]}
         showsVerticalScrollIndicator={false}
       />
 

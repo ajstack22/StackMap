@@ -78,30 +78,18 @@ const TabbedModal = ({
         const swipeThreshold = screenWidth * 0.2; // 20% of screen width
         const velocityThreshold = 0.5;
         
-        // Debug logging
-        console.log('Swipe release:', {
-          activeTab: activeTabRef.current,
-          tabsLength: tabsRef.current.length,
-          dx: gestureState.dx,
-          vx: gestureState.vx,
-          threshold: swipeThreshold
-        });
-        
         // Check velocity for quick swipes
         const shouldSwipeLeft = gestureState.dx < -swipeThreshold || gestureState.vx < -velocityThreshold;
         const shouldSwipeRight = gestureState.dx > swipeThreshold || gestureState.vx > velocityThreshold;
         
         if (shouldSwipeRight && activeTabRef.current > 0) {
           // Swipe right - go to previous tab
-          console.log('Swiping right to tab:', activeTabRef.current - 1);
           animateToTab(activeTabRef.current - 1);
         } else if (shouldSwipeLeft && activeTabRef.current < tabsRef.current.length - 1) {
           // Swipe left - go to next tab
-          console.log('Swiping left to tab:', activeTabRef.current + 1);
           animateToTab(activeTabRef.current + 1);
         } else {
           // Return to original position
-          console.log('Returning to original position');
           Animated.timing(swipeAnimation, {
             toValue: 0,
             duration: 250,
@@ -130,24 +118,16 @@ const TabbedModal = ({
   }, [visible, defaultTab, controlledActiveTab]);
   
   const animateToTab = (index) => {
-    console.log('animateToTab called:', {
-      targetIndex: index,
-      currentTab: activeTabRef.current,
-      isSame: index === activeTabRef.current
-    });
+    if (index === activeTabRef.current) return;
     
-    if (index === activeTabRef.current) {
-      console.log('Same tab, returning');
-      return;
-    }
-    
+    // Direction: negative when going to next tab (content slides left), positive when going to previous tab (content slides right)
     const direction = index > activeTabRef.current ? -1 : 1;
     
     // Update the active tab immediately
     handleTabPress(index);
     
-    // Material Design 3 shared axis transition
-    swipeAnimation.setValue(direction * screenWidth);
+    // Material Design 3 shared axis transition - start from opposite direction
+    swipeAnimation.setValue(-direction * screenWidth * 0.35);
     Animated.timing(swipeAnimation, {
       toValue: 0,
       duration: 300, // MD3 standard duration
@@ -157,12 +137,6 @@ const TabbedModal = ({
   };
 
   const handleTabPress = (index) => {
-    console.log('handleTabPress called:', {
-      targetIndex: index,
-      currentTabRef: activeTabRef.current,
-      willUpdate: index !== activeTabRef.current
-    });
-    
     if (index !== activeTabRef.current) {
       if (controlledActiveTab === undefined) {
         setInternalActiveTab(index);
@@ -241,16 +215,16 @@ const TabbedModal = ({
                 accessibilityLabel={`${tab.label} tab`}
               >
                 <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                  {/* Modern pill/blob indicator behind content */}
+                  {/* Modern rounded rectangle indicator behind content */}
                   {activeTab === index && (
                     <View style={{
                       position: 'absolute',
-                      top: Platform.OS === 'web' ? 6 : 4,
-                      bottom: Platform.OS === 'web' ? 6 : 4,
-                      left: Platform.OS === 'web' ? 8 : 4,
-                      right: Platform.OS === 'web' ? 8 : 4,
+                      top: Platform.OS === 'web' ? 8 : 6,
+                      bottom: Platform.OS === 'web' ? 8 : 6,
+                      left: Platform.OS === 'web' ? 10 : 6,
+                      right: Platform.OS === 'web' ? 10 : 6,
                       backgroundColor: '#FFFFFF',
-                      borderRadius: 20,
+                      borderRadius: 12,
                       opacity: 1,
                       ...(Platform.OS === 'ios' && {
                         shadowColor: '#000',

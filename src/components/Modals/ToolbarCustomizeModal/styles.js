@@ -27,6 +27,12 @@ export const styles = StyleSheet.create({
   },
   modalContent: {
     padding: 20,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+      margin: '0 auto',
+    }),
   },
   description: {
     fontSize: 14,
@@ -37,6 +43,11 @@ export const styles = StyleSheet.create({
   },
   buttonsList: {
     marginBottom: SPACING.lg,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 500,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   buttonItem: {
     flexDirection: 'row',

@@ -104,11 +104,13 @@ const AddTabContent = ({
   };
 
   return (
-    <ScrollView 
-      showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ flexGrow: 1, paddingBottom: 80 }}
-    >
-      <View style={styles.addFormContainer}>
+    <>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
+        style={{ flex: 1 }}
+      >
+      <View style={[styles.addFormContainer, styles.contentSection]}>
         {/* Activity Name */}
         <View style={styles.formSection}>
           <Text style={styles.formLabel}>Activity Name</Text>
@@ -210,6 +212,7 @@ const AddTabContent = ({
           </View>
         </View>
       </View>
+      </ScrollView>
 
       {/* Action Buttons */}
       <ModalFooter
@@ -238,7 +241,7 @@ const AddTabContent = ({
           theme={theme}
         />
       )}
-    </ScrollView>
+    </>
   );
 };
 
