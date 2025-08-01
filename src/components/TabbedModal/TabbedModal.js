@@ -12,6 +12,7 @@ import {
   ScrollView,
   PanResponder,
   Easing,
+  BackHandler,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -34,7 +35,9 @@ const TabbedModal = ({
   const insets = useSafeAreaInsets();
   const [internalActiveTab, setInternalActiveTab] = useState(defaultTab);
   const swipeAnimation = useRef(new Animated.Value(0)).current;
-  const { width: screenWidth } = Dimensions.get('window');
+  const modalSlideAnimation = useRef(new Animated.Value(0)).current;
+  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  const [isScrolling, setIsScrolling] = useState(false);
   
   // Use controlled activeTab if provided, otherwise use internal state
   const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
@@ -49,15 +52,15 @@ const TabbedModal = ({
     tabsRef.current = tabs;
   }, [tabs]);
 
-  // Create pan responder for swipe gestures
-  const panResponder = useRef(
+  // Create pan responder for horizontal swipe gestures (tab switching)
+  const horizontalPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Respond to horizontal swipes greater than 5 pixels
+        // Only respond to horizontal swipes when not scrolling
         const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
         const hasMovedEnough = Math.abs(gestureState.dx) > 5;
-        return isHorizontalSwipe && hasMovedEnough;
+        return isHorizontalSwipe && hasMovedEnough && !isScrolling;
       },
       onPanResponderGrant: () => {
         // Start gesture
@@ -110,6 +113,62 @@ const TabbedModal = ({
     })
   ).current;
   
+  // Create pan responder for vertical swipe gestures (modal dismissal)
+  const verticalPanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => false,
+      onMoveShouldSetPanResponder: (evt, gestureState) => {
+        // Only respond to downward swipes when not scrolling
+        const isDownwardSwipe = gestureState.dy > 10 && Math.abs(gestureState.dx) < Math.abs(gestureState.dy);
+        return isDownwardSwipe && !isScrolling;
+      },
+      onPanResponderGrant: () => {
+        // Start gesture
+      },
+      onPanResponderMove: (evt, gestureState) => {
+        // Only allow downward movement
+        if (gestureState.dy > 0) {
+          modalSlideAnimation.setValue(gestureState.dy);
+        }
+      },
+      onPanResponderRelease: (evt, gestureState) => {
+        const dismissThreshold = screenHeight * 0.2; // 20% of screen height
+        const velocityThreshold = 0.5;
+        
+        // Check if should dismiss modal
+        if (gestureState.dy > dismissThreshold || gestureState.vy > velocityThreshold) {
+          // Animate out and close
+          Animated.timing(modalSlideAnimation, {
+            toValue: screenHeight,
+            duration: 250,
+            easing: Easing.bezier(0.2, 0, 0, 1),
+            useNativeDriver: true,
+          }).start(() => {
+            modalSlideAnimation.setValue(0);
+            onClose();
+          });
+        } else {
+          // Snap back to position
+          Animated.timing(modalSlideAnimation, {
+            toValue: 0,
+            duration: 250,
+            easing: Easing.bezier(0.2, 0, 0, 1),
+            useNativeDriver: true,
+          }).start();
+        }
+      },
+      onPanResponderTerminate: () => {
+        // Handle gesture interruption
+        Animated.timing(modalSlideAnimation, {
+            toValue: 0,
+            duration: 250,
+            easing: Easing.bezier(0.2, 0, 0, 1),
+            useNativeDriver: true,
+          }).start();
+      },
+    })
+  ).current;
+  
   // Reset to default tab when modal opens (only if not controlled)
   useEffect(() => {
     if (visible && controlledActiveTab === undefined) {
@@ -147,22 +206,35 @@ const TabbedModal = ({
     }
   };
   
-  // Keyboard navigation
+  // Keyboard navigation for web and back button handling for Android
   useEffect(() => {
-    if (!visible || Platform.OS !== 'web') return;
+    if (!visible) return;
     
-    const handleKeyPress = (e) => {
-      if (e.key === 'ArrowLeft' && activeTabRef.current > 0) {
-        animateToTab(activeTabRef.current - 1);
-      } else if (e.key === 'ArrowRight' && activeTabRef.current < tabsRef.current.length - 1) {
-        animateToTab(activeTabRef.current + 1);
-      } else if (e.key === 'Escape') {
+    // Web keyboard navigation
+    if (Platform.OS === 'web') {
+      const handleKeyPress = (e) => {
+        if (e.key === 'ArrowLeft' && activeTabRef.current > 0) {
+          animateToTab(activeTabRef.current - 1);
+        } else if (e.key === 'ArrowRight' && activeTabRef.current < tabsRef.current.length - 1) {
+          animateToTab(activeTabRef.current + 1);
+        } else if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+      
+      window.addEventListener('keydown', handleKeyPress);
+      return () => window.removeEventListener('keydown', handleKeyPress);
+    }
+    
+    // Android back button handling
+    if (Platform.OS === 'android') {
+      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
         onClose();
-      }
-    };
-    
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+        return true; // Prevent default back behavior
+      });
+      
+      return () => backHandler.remove();
+    }
   }, [visible, activeTab, tabs.length, onClose]);
   
   return (
@@ -173,7 +245,27 @@ const TabbedModal = ({
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
+      <Animated.View 
+        style={[
+          styles.modalContainer, 
+          { 
+            backgroundColor: theme.light,
+            transform: [{
+              translateY: modalSlideAnimation.interpolate({
+                inputRange: [0, screenHeight],
+                outputRange: [0, screenHeight],
+                extrapolate: 'clamp',
+              })
+            }],
+            opacity: modalSlideAnimation.interpolate({
+              inputRange: [0, screenHeight * 0.5, screenHeight],
+              outputRange: [1, 0.5, 0],
+              extrapolate: 'clamp',
+            })
+          }
+        ]}
+        {...verticalPanResponder.panHandlers}
+      >
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
         )}
@@ -292,23 +384,29 @@ const TabbedModal = ({
                 ]
               }
             ]}
-            {...panResponder.panHandlers}
+            {...horizontalPanResponder.panHandlers}
           >
-            {children}
+            {React.Children.map(children, child => 
+              React.cloneElement(child, { 
+                onScrollStateChange: setIsScrolling 
+              })
+            )}
           </Animated.View>
         </View>
         
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
         )}
-      </View>
+      </Animated.View>
     </Modal>
   );
 };
 
 // Tab Content Wrapper Component
-export const TabContent = ({ children, isActive, modalVisible }) => {
+export const TabContent = ({ children, isActive, modalVisible, onScrollStateChange }) => {
   const [hasBeenActive, setHasBeenActive] = useState(false);
+  const scrollViewRef = useRef(null);
+  const scrollOffset = useRef(0);
   
   // Reset hasBeenActive when modal closes
   useEffect(() => {
@@ -328,9 +426,35 @@ export const TabContent = ({ children, isActive, modalVisible }) => {
     return null;
   }
   
+  // Wrap children to intercept scroll events
+  const wrappedChildren = React.Children.map(children, child => {
+    // If child is a ScrollView, add scroll event handlers
+    if (child?.type === ScrollView || child?.props?.showsVerticalScrollIndicator !== undefined) {
+      return React.cloneElement(child, {
+        ref: scrollViewRef,
+        onScrollBeginDrag: (e) => {
+          onScrollStateChange?.(true);
+          child.props.onScrollBeginDrag?.(e);
+        },
+        onScrollEndDrag: (e) => {
+          scrollOffset.current = e.nativeEvent.contentOffset.y;
+          onScrollStateChange?.(false);
+          child.props.onScrollEndDrag?.(e);
+        },
+        onMomentumScrollEnd: (e) => {
+          scrollOffset.current = e.nativeEvent.contentOffset.y;
+          onScrollStateChange?.(false);
+          child.props.onMomentumScrollEnd?.(e);
+        },
+        scrollEventThrottle: 16,
+      });
+    }
+    return child;
+  });
+  
   return (
     <View style={[styles.tabContent, { display: isActive ? 'flex' : 'none' }]}>
-      {children}
+      {wrappedChildren}
     </View>
   );
 };
