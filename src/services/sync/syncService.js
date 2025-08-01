@@ -857,6 +857,13 @@ class SyncService {
   }
 
   /**
+   * Get sync ID
+   */
+  getSyncId() {
+    return this.syncId;
+  }
+
+  /**
    * Get recovery phrase if available
    */
   async getRecoveryPhrase() {
