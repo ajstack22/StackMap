@@ -158,10 +158,10 @@ const EditModeToolbar = ({
     const containerPadding = getContainerPadding() * 2;
     const availableWidth = screenWidth - containerPadding;
     
-    // Button width calculation based on actual minWidth from styles
-    const buttonWidth = isTablet() ? 65 : 48; // Match minWidth from styles
-    const buttonGap = Platform.OS === 'web' ? 6 : 8; // Gap between buttons from styles
-    const editModeTextWidth = isTablet() ? 85 : 65; // Edit Mode text width
+    // Button width calculation - adjusted for Galaxy S25+ and similar phones
+    const buttonWidth = isTablet() ? 65 : 44; // Reduced from 45 to 44 for phones
+    const buttonGap = Platform.OS === 'web' ? 5 : 5; // Reduced gap from 6 to 5 for phones
+    const editModeTextWidth = isTablet() ? 85 : 58; // Reduced from 60 to 58
     const moreButtonWidth = buttonWidth; // Same as regular buttons
     
     // Always reserve space for More button since Sort is always in overflow
@@ -171,9 +171,9 @@ const EditModeToolbar = ({
     // Calculate how many buttons fit (including gaps)
     const maxButtons = Math.floor((usableWidth + buttonGap) / (buttonWidth + buttonGap));
     
-    // Since we only have 4 action buttons, try to show all 4 on phones
-    // On very small screens, ensure at least 3 are visible
-    const minVisible = 3;
+    // Force 4 buttons on phones with reasonable screen width (like Galaxy S25+)
+    // Only drop to 3 on very small screens
+    const minVisible = screenWidth >= 360 ? 4 : 3;
     
     // Return the number of buttons that can fit, but at least minVisible
     return Math.max(minVisible, Math.min(maxButtons, actions.length));
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   },
   editModeLabel: {
     color: 'white',
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 16 : 15) : (isTablet() ? 18 : 16),
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 16 : 15) : (isTablet() ? 18 : 15),
     fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     opacity: 1,
@@ -426,15 +426,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    gap: Platform.OS === 'web' ? 6 : 8,
+    gap: Platform.OS === 'web' ? 5 : 5,
   },
   actionButton: {
     flexDirection: 'column',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 6 : 7,
+    paddingHorizontal: Platform.OS === 'web' ? 5 : 4,
     paddingVertical: Platform.OS === 'web' ? 4 : 5,
     gap: Platform.OS === 'web' ? 1 : 2,
-    minWidth: isTablet() ? 65 : 48,
+    minWidth: isTablet() ? 65 : 44,
   },
   disabledButton: {
     opacity: 0.6,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   actionLabel: {
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 12 : 10) : (isTablet() ? 13 : 11),
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 12 : 9) : (isTablet() ? 13 : 9),
     fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',
