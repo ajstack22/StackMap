@@ -241,7 +241,7 @@ const TabbedModal = ({
     <Modal
       visible={visible}
       animationType="slide"
-      transparent={false}
+      transparent={true}
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
@@ -256,12 +256,7 @@ const TabbedModal = ({
                 outputRange: [0, screenHeight],
                 extrapolate: 'clamp',
               })
-            }],
-            opacity: modalSlideAnimation.interpolate({
-              inputRange: [0, screenHeight * 0.5, screenHeight],
-              outputRange: [1, 0.5, 0],
-              extrapolate: 'clamp',
-            })
+            }]
           }
         ]}
         {...verticalPanResponder.panHandlers}
