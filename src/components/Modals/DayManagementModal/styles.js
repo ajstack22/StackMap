@@ -1,5 +1,8 @@
-import { StyleSheet, Platform } from 'react-native';
-import { SPACING } from '../../../constants';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { SPACING, isMobile } from '../../../constants';
+
+const { width: screenWidth } = Dimensions.get('window');
+const IS_MOBILE = isMobile(screenWidth);
 
 export const styles = StyleSheet.create({
   // Container styles
@@ -10,10 +13,9 @@ export const styles = StyleSheet.create({
     }),
   },
   contentSection: {
-    marginHorizontal: SPACING.xs, // Reduced from SPACING.md
+    marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
     marginVertical: SPACING.sm,
-    ...(Platform.OS === 'web' && {
-      marginHorizontal: SPACING.md, // Keep original spacing on web
+    ...(!IS_MOBILE && {
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
@@ -22,12 +24,8 @@ export const styles = StyleSheet.create({
   // Complete Tab Styles
   summarySection: {
     alignItems: 'center',
-    padding: 16, // Reduced from 20
-    marginBottom: 16, // Reduced from 20
-    ...(Platform.OS === 'web' && {
-      padding: 20,
-      marginBottom: 20,
-    }),
+    padding: IS_MOBILE ? 16 : 20,
+    marginBottom: IS_MOBILE ? 16 : 20,
   },
   summaryCircle: {
     width: 120,
@@ -81,12 +79,8 @@ export const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   section: {
-    marginBottom: 16, // Reduced from 20
-    paddingHorizontal: 12, // Reduced from 20
-    ...(Platform.OS === 'web' && {
-      marginBottom: 20,
-      paddingHorizontal: 20,
-    }),
+    marginBottom: IS_MOBILE ? 16 : 20,
+    paddingHorizontal: IS_MOBILE ? 12 : 20,
   },
   sectionTitle: {
     fontSize: 18,

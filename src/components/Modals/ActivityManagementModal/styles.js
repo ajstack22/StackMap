@@ -1,19 +1,19 @@
-import { StyleSheet, Platform } from 'react-native';
-import { TYPOGRAPHY, SPACING, RADIUS } from '../../../constants';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { TYPOGRAPHY, SPACING, RADIUS, isMobile } from '../../../constants';
+
+const { width: screenWidth } = Dimensions.get('window');
+const IS_MOBILE = isMobile(screenWidth);
 
 export const styles = StyleSheet.create({
   // Container styles
   scrollContainer: {
     paddingVertical: SPACING.sm,
-    ...(Platform.OS === 'web' && {
-      paddingHorizontal: SPACING.lg,
-    }),
+    // Remove horizontal padding - handled by addFormContainer
   },
   contentSection: {
-    marginHorizontal: SPACING.xs, // Reduced from SPACING.md
+    marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
     marginVertical: SPACING.sm,
-    ...(Platform.OS === 'web' && {
-      marginHorizontal: SPACING.md, // Keep original spacing on web
+    ...(!IS_MOBILE && {
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
@@ -21,22 +21,19 @@ export const styles = StyleSheet.create({
   },
   // Library Tab Styles
   searchContainer: {
-    paddingHorizontal: 12, // Reduced from 20
-    paddingTop: 12, // Reduced from 20
+    paddingHorizontal: IS_MOBILE ? 12 : 20,
+    paddingTop: IS_MOBILE ? 12 : 20,
     paddingBottom: 10,
-    ...(Platform.OS === 'web' && {
-      paddingHorizontal: 20, // Keep original padding on web
-      paddingTop: 20,
+    ...(!IS_MOBILE && {
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
     }),
   },
   listContainer: {
-    paddingHorizontal: 12, // Reduced from 20
+    paddingHorizontal: IS_MOBILE ? 12 : 20,
     paddingBottom: 100,
-    ...(Platform.OS === 'web' && {
-      paddingHorizontal: 20, // Keep original padding on web
+    ...(!IS_MOBILE && {
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
@@ -226,20 +223,14 @@ export const styles = StyleSheet.create({
 
   // Add Tab Styles
   addFormContainer: {
-    padding: 12, // Reduced from 20
-    ...(Platform.OS === 'web' && {
-      padding: 20, // Keep original padding on web
-    }),
+    paddingHorizontal: IS_MOBILE ? 12 : 20,
+    paddingVertical: IS_MOBILE ? 12 : 20,
   },
   formPanel: {
     backgroundColor: 'white',
     borderRadius: RADIUS.lg,
-    padding: 16, // Reduced from 20
-    marginBottom: 16, // Reduced from 20
-    ...(Platform.OS === 'web' && {
-      padding: 20, // Keep original padding on web
-      marginBottom: 20,
-    }),
+    padding: IS_MOBILE ? 16 : 20,
+    marginBottom: IS_MOBILE ? 16 : 20,
     ...(Platform.OS === 'ios' ? {
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 2 },

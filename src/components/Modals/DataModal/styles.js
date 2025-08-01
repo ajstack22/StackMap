@@ -1,5 +1,8 @@
-import { StyleSheet, Platform } from 'react-native';
-import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, isMobile } from '../../../constants';
+
+const { width: screenWidth } = Dimensions.get('window');
+const IS_MOBILE = isMobile(screenWidth);
 
 export const styles = StyleSheet.create({
   // Container styles
@@ -12,9 +15,9 @@ export const styles = StyleSheet.create({
   
   // Section styles
   section: {
-    marginHorizontal: SPACING.xs, // Reduced from SPACING.md
+    marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
     marginVertical: SPACING.sm,
-    padding: SPACING.sm, // Reduced from SPACING.md
+    padding: IS_MOBILE ? SPACING.sm : SPACING.md,
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     ...Platform.select({
@@ -28,13 +31,13 @@ export const styles = StyleSheet.create({
         elevation: 2,
       },
       web: {
-        marginHorizontal: SPACING.md, // Keep original spacing on web
-        padding: SPACING.md,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-        maxWidth: 800,
-        alignSelf: 'center',
-        width: '100%',
       },
+    }),
+    ...(!IS_MOBILE && {
+      maxWidth: 800,
+      alignSelf: 'center',
+      width: '100%',
     }),
   },
   sectionHeader: {
