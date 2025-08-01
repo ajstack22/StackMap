@@ -22,7 +22,7 @@ const ModalButton = ({
   textStyle,
   fullWidth = false,
   compact = false,
-  hideOnDesktop = true,
+  hideOnDesktop = false,
 }) => {
   // Hide button on desktop if specified
   if (Platform.OS === 'web' && hideOnDesktop) {
