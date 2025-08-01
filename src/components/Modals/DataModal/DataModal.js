@@ -1100,7 +1100,7 @@ const DataModal = ({
               variant="primary"
               label="Go to Sync"
               icon="sync"
-              onPress={() => setActiveTab(2)}
+              onPress={() => setActiveTab(0)}
               style={{ marginTop: 20 }}
             />
           </View>
