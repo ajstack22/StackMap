@@ -34,8 +34,8 @@ const ActivityManagementModal = ({
   }, [visible, initialTab]);
 
   const tabs = [
-    { id: 'add', label: 'Add Activity', icon: 'add-circle' },
-    { id: 'library', label: 'Activity Library', icon: 'folder' },
+    { id: 'add', label: 'Add', icon: 'add-circle' },
+    { id: 'library', label: 'Library', icon: 'folder' },
   ];
 
   const handleSelectFromLibrary = (activity, category) => {

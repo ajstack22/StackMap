@@ -240,7 +240,7 @@ const TabbedModal = ({
   return (
     <Modal
       visible={visible}
-      animationType="slide"
+      animationType="none"
       transparent={true}
       statusBarTranslucent={true}
       onRequestClose={onClose}

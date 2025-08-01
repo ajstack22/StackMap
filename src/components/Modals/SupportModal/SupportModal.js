@@ -35,7 +35,7 @@ const SupportModal = ({
           <View style={[styles.modalHeader, { backgroundColor: '#5C7E9D' }]}>
             <View style={styles.headerLeft}>
               <Icon name="favorite" size={24} color="white" style={styles.headerIcon} />
-              <Text style={[styles.modalTitle, { color: 'white' }]}>Support StackMap</Text>
+              <Text style={[styles.modalTitle, { color: 'white' }]}>Support</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <View style={{

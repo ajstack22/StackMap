@@ -79,7 +79,7 @@ export const styles = StyleSheet.create({
   },
   activityCount: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     marginRight: 12,
   },
   actionButton: {
@@ -215,7 +215,7 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
   },
   cancelButtonText: {
-    color: '#666',
+    color: '#000',
     fontSize: 16,
     fontWeight: '600',
   },
@@ -230,7 +230,7 @@ export const styles = StyleSheet.create({
   formLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: '#000',
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -250,7 +250,7 @@ export const styles = StyleSheet.create({
   },
   emojiSelectorText: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
   },
   checkboxContainer: {
     flexDirection: 'row',
@@ -293,7 +293,7 @@ export const styles = StyleSheet.create({
   },
   categoryChipText: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
   },
   categoryChipTextActive: {
     color: '#007AFF',

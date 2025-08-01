@@ -275,7 +275,7 @@ const LibraryTabContent = ({
             onPress={() => setEditingActivity(null)}
             style={styles.cancelButton}
           >
-            <Icon name="close" size={20} color="#999" />
+            <Icon name="close" size={20} color="#000" />
           </TouchableOpacity>
         </View>
       );
@@ -301,7 +301,7 @@ const LibraryTabContent = ({
             onPress={() => setEditingActivity(`${categoryId}-${activity.id}`)}
             style={styles.actionButton}
           >
-            <Icon name="edit" size={18} color="#666" />
+            <Icon name="edit" size={18} color="#000" />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => {
@@ -331,7 +331,7 @@ const LibraryTabContent = ({
           <Icon
             name={isExpanded ? "expand-less" : "expand-more"}
             size={24}
-            color="#666"
+            color="#000"
           />
           {isEditing ? (
             <TextInput
@@ -358,7 +358,7 @@ const LibraryTabContent = ({
                 onPress={() => setEditingCategory(category.id)}
                 style={styles.actionButton}
               >
-                <Icon name="edit" size={18} color="#666" />
+                <Icon name="edit" size={18} color="#000" />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
@@ -411,7 +411,7 @@ const LibraryTabContent = ({
                   }}
                   style={styles.cancelButton}
                 >
-                  <Icon name="close" size={20} color="#999" />
+                  <Icon name="close" size={20} color="#000" />
                 </TouchableOpacity>
               </View>
             ) : (

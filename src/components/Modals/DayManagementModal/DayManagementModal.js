@@ -44,8 +44,8 @@ const DayManagementModal = ({
   }, [visible, initialActiveTab]);
 
   const tabs = [
-    { id: 'plan', label: 'Plan Ahead', icon: 'event' },
-    { id: 'complete', label: 'Complete Day', icon: 'check-circle' },
+    { id: 'plan', label: 'Plan', icon: 'event' },
+    { id: 'complete', label: 'Complete', icon: 'check-circle' },
   ];
 
   const handleCompleteDay = async () => {
