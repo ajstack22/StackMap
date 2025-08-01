@@ -10,6 +10,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FormInput, ModalFooter } from '../../ModalUtilities';
 import EmojiPicker from '../../EmojiPicker';
+import TimePicker from '../../TimePicker';
 import { styles } from './styles';
 import { DEFAULT_ACTIVITY_EMOJI } from '../../../constants';
 
@@ -49,9 +50,7 @@ const AddTabContent = ({
       newErrors.text = 'Activity name is required';
     }
     
-    if (activityTime && isNaN(parseInt(activityTime))) {
-      newErrors.time = 'Time must be a number';
-    }
+    // Time validation removed - now using time picker
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -69,7 +68,7 @@ const AddTabContent = ({
       icon: activityIcon,
       completed: false,
       pinned: false,
-      ...(activityTime && { duration: parseInt(activityTime) }),
+      ...(activityTime && { time: activityTime }),
     };
 
     // Add to current day
@@ -136,16 +135,15 @@ const AddTabContent = ({
           </TouchableOpacity>
         </View>
 
-        {/* Time/Duration (Optional) */}
+        {/* Time (Optional) */}
         <View style={styles.formSection}>
-          <Text style={styles.formLabel}>Duration (Optional)</Text>
-          <FormInput
-            placeholder="Minutes (e.g., 30)"
+          <Text style={styles.formLabel}>Time (Optional)</Text>
+          <TimePicker
             value={activityTime}
-            onChangeText={setActivityTime}
-            keyboardType="numeric"
-            error={errors.time}
+            onChange={setActivityTime}
+            placeholder="Select time"
             theme={theme}
+            error={errors.time}
           />
         </View>
 
@@ -165,7 +163,7 @@ const AddTabContent = ({
             <View style={styles.categorySelector}>
               <Text style={styles.formLabel}>Category</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {categories.map(category => (
+                {(categories || []).map(category => (
                   <TouchableOpacity
                     key={category.id}
                     style={[

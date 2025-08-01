@@ -9,6 +9,7 @@ export { default as CelebrationView } from './CelebrationManager';
 export { default as SyncStatusIndicator } from './SyncStatusIndicator';
 export { default as BuyMeCoffeeButton } from './BuyMeCoffeeButton';
 export { TabbedModal, TabContent } from './TabbedModal';
+export { default as TimePicker } from './TimePicker';
 
 // Import modal components directly to avoid re-export issues
 import ContextModal from './Modals/ContextModal/ContextModal';
