@@ -306,10 +306,10 @@ const TabbedModal = ({
                   {activeTab === index && (
                     <View style={{
                       position: 'absolute',
-                      top: Platform.OS === 'web' ? 8 : 6,
-                      bottom: Platform.OS === 'web' ? 8 : 6,
-                      left: Platform.OS === 'web' ? 10 : 6,
-                      right: Platform.OS === 'web' ? 10 : 6,
+                      top: Platform.OS === 'web' ? 4 : 3,
+                      bottom: Platform.OS === 'web' ? 4 : 3,
+                      left: Platform.OS === 'web' ? 4 : 2,
+                      right: Platform.OS === 'web' ? 4 : 2,
                       backgroundColor: '#FFFFFF',
                       borderRadius: 12,
                       opacity: 1,

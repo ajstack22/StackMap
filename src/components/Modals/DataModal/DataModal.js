@@ -97,8 +97,8 @@ const DataModal = ({
   const tabs = [
     { key: 'sync', label: 'Sync', icon: 'sync' },
     { key: 'share', label: 'Share', icon: 'share' },
-    { key: 'import', label: 'Import', icon: 'file-upload' },
-    { key: 'export', label: 'Export', icon: 'file-download' },
+    { key: 'import', label: 'Import', icon: 'file-download' },
+    { key: 'export', label: 'Export', icon: 'file-upload' },
   ];
   
   const [activeTab, setActiveTab] = useState(0); // Default to Sync tab
@@ -799,7 +799,7 @@ const DataModal = ({
             theme={theme}
             variant="primary"
             label="Import Selected Items"
-            icon="file-upload"
+            icon="file-download"
             onPress={() => setShowImportConfirm(true)}
             disabled={!Object.values(importSelections).some(v => v) || loading}
             loading={loading}
@@ -909,7 +909,7 @@ const DataModal = ({
           theme={theme}
           variant="primary"
           label="Export Selected Data"
-          icon="file-download"
+          icon="file-upload"
           onPress={handleExport}
           disabled={!Object.values(exportSelections).some(v => v) || loading}
           loading={loading}
@@ -1375,7 +1375,7 @@ const DataModal = ({
         }
         confirmText="Import"
         confirmButtonColor={theme.primary}
-        icon="file-upload"
+        icon="file-download"
         iconColor={theme.primary}
       />
       
