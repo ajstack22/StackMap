@@ -110,45 +110,48 @@ const AddTabContent = ({
         style={{ flex: 1 }}
       >
       <View style={[styles.addFormContainer, styles.contentSection]}>
-        {/* Activity Name */}
-        <View style={styles.formSection}>
-          <Text style={styles.formLabel}>Activity Name</Text>
-          <FormInput
-            placeholder="Enter activity name"
-            value={activityText}
-            onChangeText={setActivityText}
-            error={errors.text}
-            theme={theme}
-            autoFocus
-          />
+        {/* Main Activity Details Panel */}
+        <View style={styles.formPanel}>
+          {/* Activity Name */}
+          <View style={styles.formSection}>
+            <Text style={styles.formLabel}>Activity Name</Text>
+            <FormInput
+              placeholder="Enter activity name"
+              value={activityText}
+              onChangeText={setActivityText}
+              error={errors.text}
+              theme={theme}
+              autoFocus
+            />
+          </View>
+
+          {/* Emoji Selection */}
+          <View style={styles.formSection}>
+            <Text style={styles.formLabel}>Icon</Text>
+            <TouchableOpacity
+              style={styles.emojiSelector}
+              onPress={() => setShowEmojiPicker(true)}
+            >
+              <Text style={styles.selectedEmoji}>{activityIcon}</Text>
+              <Text style={styles.emojiSelectorText}>Tap to change</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Time (Optional) */}
+          <View style={[styles.formSection, { marginBottom: 0 }]}>
+            <Text style={styles.formLabel}>Time (Optional)</Text>
+            <TimePicker
+              value={activityTime}
+              onChange={setActivityTime}
+              placeholder="Select time"
+              theme={theme}
+              error={errors.time}
+            />
+          </View>
         </View>
 
-        {/* Emoji Selection */}
-        <View style={styles.formSection}>
-          <Text style={styles.formLabel}>Icon</Text>
-          <TouchableOpacity
-            style={styles.emojiSelector}
-            onPress={() => setShowEmojiPicker(true)}
-          >
-            <Text style={styles.selectedEmoji}>{activityIcon}</Text>
-            <Text style={styles.emojiSelectorText}>Tap to change</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* Time (Optional) */}
-        <View style={styles.formSection}>
-          <Text style={styles.formLabel}>Time (Optional)</Text>
-          <TimePicker
-            value={activityTime}
-            onChange={setActivityTime}
-            placeholder="Select time"
-            theme={theme}
-            error={errors.time}
-          />
-        </View>
-
-        {/* Save to Library Option */}
-        <View style={styles.formSection}>
+        {/* Save to Library Panel */}
+        <View style={styles.formPanel}>
           <TouchableOpacity
             style={styles.checkboxContainer}
             onPress={() => setSaveToLibrary(!saveToLibrary)}
@@ -185,9 +188,9 @@ const AddTabContent = ({
           )}
         </View>
 
-        {/* Quick Templates */}
-        <View style={styles.formSection}>
-          <Text style={styles.formLabel}>Quick Templates</Text>
+        {/* Quick Templates Panel */}
+        <View style={styles.formPanel}>
+          <Text style={[styles.formLabel, { marginBottom: 12 }]}>Quick Templates</Text>
           <View style={styles.quickTemplates}>
             {[
               { icon: '🏃', text: 'Exercise' },

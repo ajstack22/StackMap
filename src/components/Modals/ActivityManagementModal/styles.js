@@ -10,9 +10,10 @@ export const styles = StyleSheet.create({
     }),
   },
   contentSection: {
-    marginHorizontal: SPACING.md,
+    marginHorizontal: SPACING.xs, // Reduced from SPACING.md
     marginVertical: SPACING.sm,
     ...(Platform.OS === 'web' && {
+      marginHorizontal: SPACING.md, // Keep original spacing on web
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
@@ -20,19 +21,22 @@ export const styles = StyleSheet.create({
   },
   // Library Tab Styles
   searchContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingHorizontal: 12, // Reduced from 20
+    paddingTop: 12, // Reduced from 20
     paddingBottom: 10,
     ...(Platform.OS === 'web' && {
+      paddingHorizontal: 20, // Keep original padding on web
+      paddingTop: 20,
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
     }),
   },
   listContainer: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 12, // Reduced from 20
     paddingBottom: 100,
     ...(Platform.OS === 'web' && {
+      paddingHorizontal: 20, // Keep original padding on web
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
@@ -222,7 +226,30 @@ export const styles = StyleSheet.create({
 
   // Add Tab Styles
   addFormContainer: {
-    padding: 20,
+    padding: 12, // Reduced from 20
+    ...(Platform.OS === 'web' && {
+      padding: 20, // Keep original padding on web
+    }),
+  },
+  formPanel: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.lg,
+    padding: 16, // Reduced from 20
+    marginBottom: 16, // Reduced from 20
+    ...(Platform.OS === 'web' && {
+      padding: 20, // Keep original padding on web
+      marginBottom: 20,
+    }),
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    } : Platform.OS === 'android' ? {
+      elevation: 3,
+    } : {
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    }),
   },
   formSection: {
     marginBottom: 24,

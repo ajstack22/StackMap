@@ -11,7 +11,10 @@
     "web": "webpack serve --mode development",
     "build:web": "webpack --mode production",
     "web:build": "NODE_ENV=production webpack --mode production",
-    "deploy:qual": "echo '🚨 BUILD AND COPY FILES FOR QUAL DEPLOYMENT' && NODE_ENV=production npm run build:web && cp web/build/*.* . && cp -r web/build/fonts . && cp -r web/build/icons . && echo '✅ Files copied to root - NOW: git add -A && git commit && git push'"
+    "deploy:qual": "echo '🚨 BUILD AND COPY FILES FOR QUAL DEPLOYMENT' && NODE_ENV=production npm run build:web && cp web/build/*.* . && cp -r web/build/fonts . && cp -r web/build/icons . && echo '✅ Files copied to root - NOW: git add -A && git commit && git push'",
+    "security:audit": "npm audit --audit-level=moderate",
+    "prebuild:web": "npm run security:audit",
+    "build:secure": "npm run security:audit && npm run build:web"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",

@@ -10,9 +10,10 @@ export const styles = StyleSheet.create({
     }),
   },
   contentSection: {
-    marginHorizontal: SPACING.md,
+    marginHorizontal: SPACING.xs, // Reduced from SPACING.md
     marginVertical: SPACING.sm,
     ...(Platform.OS === 'web' && {
+      marginHorizontal: SPACING.md, // Keep original spacing on web
       maxWidth: 800,
       alignSelf: 'center',
       width: '100%',
@@ -21,8 +22,12 @@ export const styles = StyleSheet.create({
   // Complete Tab Styles
   summarySection: {
     alignItems: 'center',
-    padding: 20,
-    marginBottom: 20,
+    padding: 16, // Reduced from 20
+    marginBottom: 16, // Reduced from 20
+    ...(Platform.OS === 'web' && {
+      padding: 20,
+      marginBottom: 20,
+    }),
   },
   summaryCircle: {
     width: 120,
@@ -76,8 +81,12 @@ export const styles = StyleSheet.create({
     fontStyle: 'italic',
   },
   section: {
-    marginBottom: 20,
-    paddingHorizontal: 20,
+    marginBottom: 16, // Reduced from 20
+    paddingHorizontal: 12, // Reduced from 20
+    ...(Platform.OS === 'web' && {
+      marginBottom: 20,
+      paddingHorizontal: 20,
+    }),
   },
   sectionTitle: {
     fontSize: 18,

@@ -12,9 +12,9 @@ export const styles = StyleSheet.create({
   
   // Section styles
   section: {
-    marginHorizontal: SPACING.md,
+    marginHorizontal: SPACING.xs, // Reduced from SPACING.md
     marginVertical: SPACING.sm,
-    padding: SPACING.md,
+    padding: SPACING.sm, // Reduced from SPACING.md
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     ...Platform.select({
@@ -28,6 +28,8 @@ export const styles = StyleSheet.create({
         elevation: 2,
       },
       web: {
+        marginHorizontal: SPACING.md, // Keep original spacing on web
+        padding: SPACING.md,
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
         maxWidth: 800,
         alignSelf: 'center',
