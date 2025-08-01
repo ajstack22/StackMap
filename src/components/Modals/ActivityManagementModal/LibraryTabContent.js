@@ -486,6 +486,7 @@ const LibraryTabContent = ({
             icon: 'add',
             onPress: () => setShowAddCategory(true),
           }}
+          showOnDesktop={true}
         />
       )}
 

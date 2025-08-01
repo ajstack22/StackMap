@@ -227,6 +227,7 @@ const AddTabContent = ({
           disabled: loading
         }}
         loading={loading}
+        showOnDesktop={true}
       />
 
       {/* Emoji Picker Modal */}
