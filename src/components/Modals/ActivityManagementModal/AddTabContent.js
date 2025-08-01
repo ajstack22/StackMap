@@ -109,7 +109,7 @@ const AddTabContent = ({
         contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
         style={{ flex: 1 }}
       >
-      <View style={[styles.addFormContainer, styles.contentSection]}>
+      <View style={styles.addFormContainer}>
         {/* Main Activity Details Panel */}
         <View style={styles.formPanel}>
           {/* Activity Name */}
