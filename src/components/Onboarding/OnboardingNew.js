@@ -196,7 +196,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             >
             <Logo size={Platform.OS === 'web' ? 80 : 60} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
             <Text style={styles.welcomeTitle}>StackMap</Text>
-            <Text style={styles.welcomeSubtitle}>Routine Ready</Text>
+            <Text style={styles.welcomeSubtitle}>Better days through shared understanding</Text>
             
             <View style={styles.cardsContainer}>
               <View style={styles.card}>
