@@ -358,7 +358,7 @@ const ImportExportModal = ({
     <View style={styles.tabContent}>
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Icon name="file-download" size={20} color={theme.primary} />
+          <Icon name="file-upload" size={20} color={theme.primary} />
           <Text style={styles.sectionTitle}>Select Data to Export</Text>
         </View>
         
@@ -453,7 +453,7 @@ const ImportExportModal = ({
             <ActivityIndicator size="small" color="white" />
           ) : (
             <>
-              <Icon name="file-download" size={20} color="white" />
+              <Icon name="file-upload" size={20} color="white" />
               <Text style={styles.buttonText}>Export Selected Data</Text>
             </>
           )}
@@ -468,7 +468,7 @@ const ImportExportModal = ({
       {!importData ? (
         <View style={styles.section}>
           <View style={styles.emptyStateContainer}>
-            <Icon name="file-upload" size={48} color="#ccc" />
+            <Icon name="file-download" size={48} color="#ccc" />
             <Text style={styles.emptyStateText}>
               Select a StackMap export file to import
             </Text>
@@ -651,7 +651,7 @@ const ImportExportModal = ({
               onPress={() => setShowImportConfirm(true)}
               disabled={!Object.values(importSelections).some(v => v) || loading}
             >
-              <Icon name="file-upload" size={20} color="white" />
+              <Icon name="file-download" size={20} color="white" />
               <Text style={styles.buttonText}>Import Selected Items</Text>
             </TouchableOpacity>
           </View>
