@@ -358,7 +358,7 @@ const ImportExportModal = ({
     <View style={styles.tabContent}>
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Icon name="file-upload" size={20} color={theme.primary} />
+          <Text style={{ fontSize: 20, color: theme.primary }}>↑</Text>
           <Text style={styles.sectionTitle}>Select Data to Export</Text>
         </View>
         
@@ -453,7 +453,7 @@ const ImportExportModal = ({
             <ActivityIndicator size="small" color="white" />
           ) : (
             <>
-              <Icon name="file-upload" size={20} color="white" />
+              <Text style={{ fontSize: 20, color: 'white' }}>↑</Text>
               <Text style={styles.buttonText}>Export Selected Data</Text>
             </>
           )}
@@ -468,7 +468,7 @@ const ImportExportModal = ({
       {!importData ? (
         <View style={styles.section}>
           <View style={styles.emptyStateContainer}>
-            <Icon name="file-download" size={48} color="#ccc" />
+            <Text style={{ fontSize: 48, color: '#ccc' }}>↓</Text>
             <Text style={styles.emptyStateText}>
               Select a StackMap export file to import
             </Text>
@@ -651,7 +651,7 @@ const ImportExportModal = ({
               onPress={() => setShowImportConfirm(true)}
               disabled={!Object.values(importSelections).some(v => v) || loading}
             >
-              <Icon name="file-download" size={20} color="white" />
+              <Text style={{ fontSize: 20, color: 'white' }}>↓</Text>
               <Text style={styles.buttonText}>Import Selected Items</Text>
             </TouchableOpacity>
           </View>
@@ -700,11 +700,7 @@ const ImportExportModal = ({
               ]}
               onPress={() => setActiveTab('export')}
             >
-              <Icon 
-                name="file-upload" 
-                size={20} 
-                color={activeTab === 'export' ? theme.primary : 'rgba(255,255,255,0.7)'} 
-              />
+              <Text style={{ fontSize: 20, color: activeTab === 'export' ? theme.primary : 'rgba(255,255,255,0.7)' }}>↑</Text>
               <Text style={[
                 styles.tabText,
                 activeTab === 'export' && styles.tabTextActive
@@ -720,11 +716,7 @@ const ImportExportModal = ({
               ]}
               onPress={() => setActiveTab('import')}
             >
-              <Icon 
-                name="file-download" 
-                size={20} 
-                color={activeTab === 'import' ? theme.primary : 'rgba(255,255,255,0.7)'} 
-              />
+              <Text style={{ fontSize: 20, color: activeTab === 'import' ? theme.primary : 'rgba(255,255,255,0.7)' }}>↓</Text>
               <Text style={[
                 styles.tabText,
                 activeTab === 'import' && styles.tabTextActive
