@@ -32,7 +32,7 @@ $sync_id = $input['sync_id'];
 $device_id = $input['device_id'];
 
 try {
-    $db = Database::getInstance();
+    $db = Database::getInstance()->getConnection();
     
     // First verify that this sync_id exists
     $checkStmt = $db->prepare("SELECT id FROM sync_data WHERE sync_id = ? LIMIT 1");
