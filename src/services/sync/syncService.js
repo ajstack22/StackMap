@@ -865,6 +865,33 @@ class SyncService {
   }
 
   /**
+   * Verify sync exists on server
+   */
+  async verifySyncExists() {
+    if (!this.syncEnabled || !this.syncId) {
+      return false;
+    }
+
+    try {
+      const deviceId = await encryptionService.getDeviceId();
+      const response = await fetch(`${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
+      
+      if (response.status === 404) {
+        // Sync doesn't exist on server, disable locally
+        console.log('SyncService: Sync not found on server, disabling locally');
+        await this.disable();
+        return false;
+      }
+      
+      return response.ok;
+    } catch (error) {
+      console.error('SyncService: Error verifying sync:', error);
+      // Don't disable on network errors
+      return this.syncEnabled;
+    }
+  }
+
+  /**
    * Get sync status
    */
   getStatus() {

@@ -145,14 +145,22 @@ const DataModal = ({
   const checkSyncStatus = async () => {
     try {
       const enabled = await syncService.isEnabled();
-      setSyncEnabled(enabled);
       
       if (enabled) {
-        const id = await syncService.getSyncId();
-        const phrase = await syncService.getRecoveryPhrase();
-        setSyncId(id);
-        setSyncRecoveryPhrase(phrase);
+        // Verify sync exists on server
+        const exists = await syncService.verifySyncExists();
+        setSyncEnabled(exists);
+        
+        if (exists) {
+          const id = await syncService.getSyncId();
+          const phrase = await syncService.getRecoveryPhrase();
+          setSyncId(id);
+          setSyncRecoveryPhrase(phrase);
+        }
+      } else {
+        setSyncEnabled(false);
       }
+      
       setSyncStatusChecked(true);
     } catch (error) {
       console.error('Error checking sync status:', error);
