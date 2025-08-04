@@ -78,6 +78,7 @@ const DataModal = ({
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
   const [syncStatusChecked, setSyncStatusChecked] = useState(false);
+  const [showSyncQR, setShowSyncQR] = useState(false);
   
   // Share state
   const [shareLoading, setShareLoading] = useState(false);
@@ -1045,11 +1046,105 @@ const DataModal = ({
                       {syncRecoveryPhrase}
                     </Text>
                   </View>
+                  
+                  <View style={styles.syncActionsContainer}>
+                    {Platform.OS === 'web' ? (
+                      <>
+                        <ModalButton
+                          theme={theme}
+                          variant="primary"
+                          label="Show QR Code"
+                          icon="qr-code-2"
+                          onPress={() => setShowSyncQR(!showSyncQR)}
+                          compact
+                        />
+                        <ModalButton
+                          theme={theme}
+                          variant="secondary"
+                          label="Copy Phrase"
+                          icon="content-copy"
+                          onPress={() => {
+                            if (Platform.OS === 'web') {
+                              navigator.clipboard.writeText(syncRecoveryPhrase);
+                            } else {
+                              const Clipboard = require('@react-native-clipboard/clipboard').default;
+                              Clipboard.setString(syncRecoveryPhrase);
+                            }
+                            showToast({ message: 'Recovery phrase copied to clipboard!' });
+                          }}
+                          compact
+                        />
+                        <ModalButton
+                          theme={theme}
+                          variant="secondary"
+                          label="Copy URL"
+                          icon="link"
+                          onPress={() => {
+                            const syncUrl = `${window.location.origin}/sync?phrase=${encodeURIComponent(syncRecoveryPhrase)}`;
+                            if (Platform.OS === 'web') {
+                              navigator.clipboard.writeText(syncUrl);
+                            } else {
+                              const Clipboard = require('@react-native-clipboard/clipboard').default;
+                              Clipboard.setString(syncUrl);
+                            }
+                            showToast({ message: 'Sync URL copied to clipboard!' });
+                          }}
+                          compact
+                        />
+                      </>
+                    ) : (
+                      <View style={styles.mobileSyncActions}>
+                        <ModalButton
+                          theme={theme}
+                          variant="secondary"
+                          label="Copy Phrase"
+                          icon="content-copy"
+                          onPress={() => {
+                            const Clipboard = require('@react-native-clipboard/clipboard').default;
+                            Clipboard.setString(syncRecoveryPhrase);
+                            showToast({ message: 'Recovery phrase copied to clipboard!' });
+                          }}
+                        />
+                        <ModalButton
+                          theme={theme}
+                          variant="secondary"
+                          label="Copy URL"
+                          icon="link"
+                          onPress={() => {
+                            const syncUrl = `${window.location.origin}/sync?phrase=${encodeURIComponent(syncRecoveryPhrase)}`;
+                            const Clipboard = require('@react-native-clipboard/clipboard').default;
+                            Clipboard.setString(syncUrl);
+                            showToast({ message: 'Sync URL copied to clipboard!' });
+                          }}
+                          style={{ marginTop: 10 }}
+                        />
+                      </View>
+                    )}
+                  </View>
+                  
+                  {(Platform.OS !== 'web' || showSyncQR) && (
+                    <View style={styles.qrCodeContainer}>
+                      <Text style={styles.qrCodeLabel}>Sync QR Code:</Text>
+                      <QRCode
+                        value={`${window.location.origin}/sync?phrase=${encodeURIComponent(syncRecoveryPhrase)}`}
+                        size={200}
+                        backgroundColor="white"
+                        color="black"
+                      />
+                    </View>
+                  )}
+                  
+                  <View style={styles.divider} />
+                  
                   <ModalButton
                     theme={theme}
                     variant="primary"
                     label="I've Saved It"
-                    onPress={() => setShowRecoveryPhrase(false)}
+                    onPress={() => {
+                      setShowRecoveryPhrase(false);
+                      setShowSyncQR(false);
+                    }}
+                    style={{ marginTop: 10 }}
                   />
                 </View>
               )}

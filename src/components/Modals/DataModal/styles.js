@@ -738,6 +738,16 @@ export const styles = StyleSheet.create({
   mobileShareActions: {
     width: '100%',
   },
+  syncActionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    justifyContent: 'center',
+    marginBottom: SPACING.lg,
+  },
+  mobileSyncActions: {
+    width: '100%',
+  },
   divider: {
     height: 1,
     backgroundColor: '#e0e0e0',
