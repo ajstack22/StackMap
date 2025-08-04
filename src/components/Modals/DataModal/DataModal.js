@@ -1349,17 +1349,17 @@ const DataModal = ({
                     <Text style={styles.userSharesCount}>{shares.length} active</Text>
                   </View>
                   {shares.map(share => (
-                    <View key={share.share_id} style={styles.activeShareCard}>
+                    <View key={share.shareId} style={styles.activeShareCard}>
                       <View style={styles.activeShareInfo}>
-                        {share.recipient_name && (
+                        {share.recipientName && (
                           <Text style={styles.activeShareRecipient}>
-                            To: {share.recipient_name}
+                            To: {share.recipientName}
                           </Text>
                         )}
                         <Text style={styles.activeShareDate}>
-                          Expires: {new Date(share.expires_at).toLocaleDateString()}
+                          Expires: {share.expiresAt ? new Date(share.expiresAt).toLocaleDateString() : 'N/A'}
                         </Text>
-                        {share.auto_update && (
+                        {share.autoUpdate && (
                           <View style={styles.activeShareBadge}>
                             <Icon name="sync" size={12} color="#4caf50" />
                             <Text style={styles.activeShareBadgeText}>Auto-update</Text>
@@ -1367,7 +1367,7 @@ const DataModal = ({
                         )}
                       </View>
                       <TouchableOpacity
-                        onPress={() => handleDeleteShare(share.share_id)}
+                        onPress={() => handleDeleteShare(share.shareId)}
                         style={styles.activeShareDelete}
                       >
                         <Icon name="delete" size={20} color="#d32f2f" />
