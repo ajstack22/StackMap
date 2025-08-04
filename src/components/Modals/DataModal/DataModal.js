@@ -682,18 +682,19 @@ const DataModal = ({
                 Import your saved StackMap data from a backup file
               </Text>
             </View>
-          </View>
-          
-          <View style={styles.buttonContainer}>
-            <ModalButton
-              theme={theme}
-              variant="primary"
-              label="Select File"
-              icon="folder-open"
-              onPress={handleSelectFile}
-              disabled={loading}
-              loading={loading}
-            />
+            
+            <View style={styles.inPanelButtonContainer}>
+              <ModalButton
+                theme={theme}
+                variant="primary"
+                label="Select File"
+                icon="folder-open"
+                onPress={handleSelectFile}
+                disabled={loading}
+                loading={loading}
+                fullWidth
+              />
+            </View>
           </View>
         </>
       ) : (
@@ -848,22 +849,23 @@ const DataModal = ({
                 </View>
               )}
             </View>
+            
+            {importData && (
+              <View style={styles.inPanelButtonContainer}>
+                <ModalButton
+                  theme={theme}
+                  variant="primary"
+                  label="Import Selected Items"
+                  icon="file-download"
+                  onPress={() => setShowImportConfirm(true)}
+                  disabled={!Object.values(importSelections).some(v => v) || loading}
+                  loading={loading}
+                  fullWidth
+                />
+              </View>
+            )}
           </View>
         </>
-      )}
-      
-      {importData && (
-        <View style={styles.buttonContainer}>
-          <ModalButton
-            theme={theme}
-            variant="primary"
-            label="Import Selected Items"
-            icon="file-download"
-            onPress={() => setShowImportConfirm(true)}
-            disabled={!Object.values(importSelections).some(v => v) || loading}
-            loading={loading}
-          />
-        </View>
       )}
     </ScrollView>
   );
@@ -961,18 +963,19 @@ const DataModal = ({
             <Icon name="folder" size={16} color="#666" />
           </View>
         </TouchableOpacity>
-      </View>
-      
-      <View style={styles.buttonContainer}>
-        <ModalButton
-          theme={theme}
-          variant="primary"
-          label="Export Selected Data"
-          icon="file-upload"
-          onPress={handleExport}
-          disabled={!Object.values(exportSelections).some(v => v) || loading}
-          loading={loading}
-        />
+        
+        <View style={styles.inPanelButtonContainer}>
+          <ModalButton
+            theme={theme}
+            variant="primary"
+            label="Export Selected Data"
+            icon="file-upload"
+            onPress={handleExport}
+            disabled={!Object.values(exportSelections).some(v => v) || loading}
+            loading={loading}
+            fullWidth
+          />
+        </View>
       </View>
     </ScrollView>
   );
@@ -1025,17 +1028,18 @@ const DataModal = ({
             Tip: Export your data before resetting if you want to keep a backup
           </Text>
         </View>
-      </View>
-      
-      <View style={styles.buttonContainer}>
-        <ModalButton
-          theme={theme}
-          variant="danger"
-          label="Reset App"
-          icon="refresh"
-          onPress={() => setShowResetConfirm(true)}
-          loading={loading}
-        />
+        
+        <View style={styles.inPanelButtonContainer}>
+          <ModalButton
+            theme={theme}
+            variant="danger"
+            label="Reset App"
+            icon="refresh"
+            onPress={() => setShowResetConfirm(true)}
+            loading={loading}
+            fullWidth
+          />
+        </View>
       </View>
     </ScrollView>
   );
@@ -1048,102 +1052,101 @@ const DataModal = ({
       style={{ flex: 1 }}
     >
       {!syncEnabled ? (
-        <>
-          <View style={styles.section}>
-            <View style={styles.syncInfoContainer}>
-              <Icon name="sync" size={48} color={theme.primary} />
-              <Text style={styles.syncTitle}>Sync Your Data</Text>
-              <Text style={styles.syncDescription}>
-                Keep your data synchronized across devices with end-to-end encryption
-              </Text>
-              
-              <View style={styles.syncFeatures}>
-                <View style={styles.syncFeature}>
-                  <Icon name="security" size={20} color={theme.primary} />
-                  <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
-                </View>
-                <View style={styles.syncFeature}>
-                  <Icon name="devices" size={20} color={theme.primary} />
-                  <Text style={styles.syncFeatureText}>Multi-device support</Text>
-                </View>
-                <View style={styles.syncFeature}>
-                  <Icon name="cloud-off" size={20} color={theme.primary} />
-                  <Text style={styles.syncFeatureText}>Works offline</Text>
-                </View>
+        <View style={styles.section}>
+          <View style={styles.syncInfoContainer}>
+            <Icon name="sync" size={48} color={theme.primary} />
+            <Text style={styles.syncTitle}>Sync Your Data</Text>
+            <Text style={styles.syncDescription}>
+              Keep your data synchronized across devices with end-to-end encryption
+            </Text>
+            
+            <View style={styles.syncFeatures}>
+              <View style={styles.syncFeature}>
+                <Icon name="security" size={20} color={theme.primary} />
+                <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
               </View>
-              
-              {syncError && (
-                <View style={styles.errorContainer}>
-                  <Icon name="error-outline" size={16} color="#d32f2f" />
-                  <Text style={styles.errorText}>{syncError}</Text>
-                </View>
-              )}
-              
-              {showRecoveryInput && (
-                <View style={styles.recoveryInputContainer}>
-                  <FormInput
-                    value={recoveryInput}
-                    onChangeText={setRecoveryInput}
-                    placeholder="Enter your recovery phrase"
-                    multiline
-                    numberOfLines={3}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    theme={theme}
-                  />
-                </View>
-              )}
+              <View style={styles.syncFeature}>
+                <Icon name="devices" size={20} color={theme.primary} />
+                <Text style={styles.syncFeatureText}>Multi-device support</Text>
+              </View>
+              <View style={styles.syncFeature}>
+                <Icon name="cloud-off" size={20} color={theme.primary} />
+                <Text style={styles.syncFeatureText}>Works offline</Text>
+              </View>
             </View>
-          </View>
-          
-          {!showRecoveryInput ? (
-            <View style={styles.buttonContainer}>
-              <ModalButton
-                theme={theme}
-                variant="primary"
-                label="Create New Sync"
-                icon="add-circle"
-                onPress={handleEnableSync}
-                disabled={syncLoading}
-                loading={syncLoading}
-              />
-              
-              <ModalButton
-                theme={theme}
-                variant="secondary"
-                label="Restore from Recovery Phrase"
-                icon="restore"
-                onPress={() => setShowRecoveryInput(true)}
-                style={{ marginTop: SPACING.sm }}
-              />
-            </View>
-          ) : (
-            <View style={styles.buttonContainer}>
-              <View style={styles.buttonRow}>
+            
+            {syncError && (
+              <View style={styles.errorContainer}>
+                <Icon name="error-outline" size={16} color="#d32f2f" />
+                <Text style={styles.errorText}>{syncError}</Text>
+              </View>
+            )}
+            
+            {showRecoveryInput && (
+              <View style={styles.recoveryInputContainer}>
+                <FormInput
+                  value={recoveryInput}
+                  onChangeText={setRecoveryInput}
+                  placeholder="Enter your recovery phrase"
+                  multiline
+                  numberOfLines={3}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  theme={theme}
+                />
+              </View>
+            )}
+            
+            {!showRecoveryInput ? (
+              <View style={styles.inPanelButtonContainer}>
                 <ModalButton
                   theme={theme}
-                  variant="secondary"
-                  label="Cancel"
-                  onPress={() => {
-                    setShowRecoveryInput(false);
-                    setRecoveryInput('');
-                    setSyncError('');
-                  }}
-                  compact
+                  variant="primary"
+                  label="Create New Sync"
+                  icon="add-circle"
+                  onPress={handleEnableSync}
+                  disabled={syncLoading}
+                  loading={syncLoading}
+                  fullWidth
                 />
                 
                 <ModalButton
                   theme={theme}
-                  variant="primary"
-                  label="Restore"
-                  onPress={handleRestoreSync}
-                  disabled={syncLoading || !recoveryInput.trim()}
-                  loading={syncLoading}
+                  variant="secondary"
+                  label="Restore from Recovery Phrase"
+                  icon="restore"
+                  onPress={() => setShowRecoveryInput(true)}
+                  fullWidth
                 />
               </View>
-            </View>
-          )}
-        </>
+            ) : (
+              <View style={styles.inPanelButtonContainer}>
+                <View style={styles.buttonRow}>
+                  <ModalButton
+                    theme={theme}
+                    variant="secondary"
+                    label="Cancel"
+                    onPress={() => {
+                      setShowRecoveryInput(false);
+                      setRecoveryInput('');
+                      setSyncError('');
+                    }}
+                    compact
+                  />
+                  
+                  <ModalButton
+                    theme={theme}
+                    variant="primary"
+                    label="Restore"
+                    onPress={handleRestoreSync}
+                    disabled={syncLoading || !recoveryInput.trim()}
+                    loading={syncLoading}
+                  />
+                </View>
+              </View>
+            )}
+          </View>
+        </View>
       ) : (
           <View style={styles.section}>
             <View style={styles.syncStatusCard}>
@@ -1269,36 +1272,33 @@ const DataModal = ({
                 </View>
               )}
               
-              <View style={styles.syncActions}>
-                <TouchableOpacity
-                  style={styles.syncActionButton}
+              <View style={styles.inPanelButtonContainer}>
+                <ModalButton
+                  theme={theme}
+                  variant="secondary"
+                  label={showRecoveryPhrase ? 'Hide Recovery Phrase' : 'Show Recovery Phrase'}
+                  icon="key"
                   onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
-                >
-                  <Icon name="key" size={20} color={theme.primary} />
-                  <Text style={styles.syncActionText}>
-                    {showRecoveryPhrase ? 'Hide' : 'Show'} Recovery Phrase
-                  </Text>
-                </TouchableOpacity>
+                  fullWidth
+                />
                 
-                <TouchableOpacity
-                  style={[styles.syncActionButton, styles.dangerButton]}
+                <ModalButton
+                  theme={theme}
+                  variant="danger"
+                  label="Disable Sync"
+                  icon="sync-disabled"
                   onPress={() => setShowDisableSyncConfirm(true)}
-                >
-                  <Icon name="sync-disabled" size={20} color="#d32f2f" />
-                  <Text style={[styles.syncActionText, { color: '#d32f2f' }]}>
-                    Disable Sync
-                  </Text>
-                </TouchableOpacity>
+                  fullWidth
+                />
                 
-                <TouchableOpacity
-                  style={[styles.syncActionButton, styles.dangerButton]}
+                <ModalButton
+                  theme={theme}
+                  variant="danger"
+                  label="Delete Server Data"
+                  icon="delete-forever"
                   onPress={() => setShowDeleteServerDataConfirm(true)}
-                >
-                  <Icon name="delete-forever" size={20} color="#d32f2f" />
-                  <Text style={[styles.syncActionText, { color: '#d32f2f' }]}>
-                    Delete Server Data
-                  </Text>
-                </TouchableOpacity>
+                  fullWidth
+                />
               </View>
             </View>
           </View>
@@ -1442,17 +1442,18 @@ const DataModal = ({
                 </View>
               </View>
               
-              <ModalFooter
-                theme={theme}
-                primaryButton={{
-                  label: 'Create Share Link',
-                  icon: 'share',
-                  onPress: handleCreateShare,
-                  disabled: shareLoading
-                }}
-                loading={shareLoading}
-                showOnDesktop={true}
-              />
+              <View style={styles.inPanelButtonContainer}>
+                <ModalButton
+                  theme={theme}
+                  variant="primary"
+                  label="Create Share Link"
+                  icon="share"
+                  onPress={handleCreateShare}
+                  disabled={shareLoading}
+                  loading={shareLoading}
+                  fullWidth
+                />
+              </View>
             </>
           )}
           

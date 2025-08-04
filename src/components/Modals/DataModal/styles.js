@@ -409,6 +409,10 @@ export const styles = StyleSheet.create({
     paddingTop: SPACING.md,
     alignItems: 'center',
   },
+  inPanelButtonContainer: {
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  },
   primaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
