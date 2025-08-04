@@ -807,4 +807,65 @@ export const styles = StyleSheet.create({
     color: '#000',
     marginBottom: SPACING.md,
   },
+  
+  // Reset styles
+  resetWarningContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  resetWarningTitle: {
+    fontSize: 24,
+    fontWeight: Platform.OS === 'ios' ? '700' : '800',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: '#000',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  resetWarningText: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    textAlign: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
+  resetInfoSection: {
+    backgroundColor: '#ffebee',
+    borderRadius: RADIUS.medium,
+    padding: SPACING.lg,
+    marginTop: SPACING.xl,
+  },
+  resetInfoTitle: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: '#000',
+    marginBottom: SPACING.md,
+  },
+  resetInfoList: {
+    gap: SPACING.sm,
+  },
+  resetInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  resetInfoText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+  },
+  resetNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f5f5f5',
+    borderRadius: RADIUS.small,
+    padding: SPACING.md,
+    marginTop: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  resetNoteText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+  },
 });

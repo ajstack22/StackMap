@@ -49,6 +49,7 @@ const DataModal = ({
   onImportComplete,
   onSyncStatusChange,
   onShowSupport,
+  onReset,
 }) => {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
@@ -77,6 +78,8 @@ const DataModal = ({
   const [syncError, setSyncError] = useState('');
   const [showRecoveryPhrase, setShowRecoveryPhrase] = useState(false);
   const [showDisableSyncConfirm, setShowDisableSyncConfirm] = useState(false);
+  const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [syncStatusChecked, setSyncStatusChecked] = useState(false);
   const [showSyncQR, setShowSyncQR] = useState(false);
   
@@ -101,6 +104,7 @@ const DataModal = ({
     { key: 'share', label: 'Share', icon: 'share' },
     { key: 'import', label: 'Import', icon: 'file-download' },
     { key: 'export', label: 'Export', icon: 'file-upload' },
+    { key: 'reset', label: 'Reset', icon: 'refresh' },
   ];
   
   const [activeTab, setActiveTab] = useState(0); // Default to Sync tab
@@ -550,6 +554,59 @@ const DataModal = ({
     }
   };
   
+  // Handle delete server data
+  const handleDeleteServerData = async () => {
+    try {
+      setSyncLoading(true);
+      
+      // Delete all server data for this sync ID
+      await syncService.deleteFromServer();
+      
+      // Disable sync after deleting server data
+      await syncService.disable();
+      
+      setSyncEnabled(false);
+      setSyncId(null);
+      setSyncRecoveryPhrase('');
+      setShowDeleteServerDataConfirm(false);
+      
+      if (onSyncStatusChange) {
+        onSyncStatusChange(false);
+      }
+      
+      showToast({ message: 'Server data deleted and sync disabled' });
+    } catch (error) {
+      showToast({ 
+        message: error.message || 'Failed to delete server data',
+        type: 'error'
+      });
+    } finally {
+      setSyncLoading(false);
+    }
+  };
+  
+  // Handle app reset
+  const handleReset = async () => {
+    try {
+      setLoading(true);
+      
+      // Call the onReset function passed from parent
+      if (onReset) {
+        await onReset();
+      }
+      
+      setShowResetConfirm(false);
+      onClose();
+    } catch (error) {
+      showToast({ 
+        message: error.message || 'Failed to reset app',
+        type: 'error'
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   // Handle share creation
   const handleCreateShare = async () => {
     if (!selectedShareUser) {
@@ -920,6 +977,69 @@ const DataModal = ({
     </ScrollView>
   );
   
+  // Render reset tab content
+  const renderResetContent = () => (
+    <ScrollView 
+      showsVerticalScrollIndicator={false}
+      contentContainerStyle={[styles.scrollContainer, { flexGrow: 1 }]}
+      style={{ flex: 1 }}
+    >
+      <View style={styles.section}>
+        <View style={styles.resetWarningContainer}>
+          <Icon name="warning" size={48} color="#ff9800" />
+          <Text style={styles.resetWarningTitle}>Reset StackMap</Text>
+          <Text style={styles.resetWarningText}>
+            This will delete all data and return the app to its initial state
+          </Text>
+        </View>
+        
+        <View style={styles.resetInfoSection}>
+          <Text style={styles.resetInfoTitle}>What will be deleted:</Text>
+          <View style={styles.resetInfoList}>
+            <View style={styles.resetInfoItem}>
+              <Icon name="check-circle" size={16} color="#d32f2f" />
+              <Text style={styles.resetInfoText}>All users and profiles</Text>
+            </View>
+            <View style={styles.resetInfoItem}>
+              <Icon name="check-circle" size={16} color="#d32f2f" />
+              <Text style={styles.resetInfoText}>All activity cards</Text>
+            </View>
+            <View style={styles.resetInfoItem}>
+              <Icon name="check-circle" size={16} color="#d32f2f" />
+              <Text style={styles.resetInfoText}>Activity library and categories</Text>
+            </View>
+            <View style={styles.resetInfoItem}>
+              <Icon name="check-circle" size={16} color="#d32f2f" />
+              <Text style={styles.resetInfoText}>All settings and preferences</Text>
+            </View>
+            <View style={styles.resetInfoItem}>
+              <Icon name="check-circle" size={16} color="#d32f2f" />
+              <Text style={styles.resetInfoText}>Sync configuration (if enabled)</Text>
+            </View>
+          </View>
+        </View>
+        
+        <View style={styles.resetNote}>
+          <Icon name="info" size={16} color="#666" />
+          <Text style={styles.resetNoteText}>
+            Tip: Export your data before resetting if you want to keep a backup
+          </Text>
+        </View>
+      </View>
+      
+      <View style={styles.buttonContainer}>
+        <ModalButton
+          theme={theme}
+          variant="danger"
+          label="Reset App"
+          icon="refresh"
+          onPress={() => setShowResetConfirm(true)}
+          loading={loading}
+        />
+      </View>
+    </ScrollView>
+  );
+  
   // Render sync tab content
   const renderSyncContent = () => (
     <ScrollView 
@@ -1167,6 +1287,16 @@ const DataModal = ({
                   <Icon name="sync-disabled" size={20} color="#d32f2f" />
                   <Text style={[styles.syncActionText, { color: '#d32f2f' }]}>
                     Disable Sync
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.syncActionButton, styles.dangerButton]}
+                  onPress={() => setShowDeleteServerDataConfirm(true)}
+                >
+                  <Icon name="delete-forever" size={20} color="#d32f2f" />
+                  <Text style={[styles.syncActionText, { color: '#d32f2f' }]}>
+                    Delete Server Data
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1518,6 +1648,9 @@ const DataModal = ({
         <TabContent isActive={activeTab === 3} modalVisible={visible}>
           {renderExportContent()}
         </TabContent>
+        <TabContent isActive={activeTab === 4} modalVisible={visible}>
+          {renderResetContent()}
+        </TabContent>
       </TabbedModal>
       
       <ConfirmModal
@@ -1547,6 +1680,32 @@ const DataModal = ({
         confirmText="Disable"
         confirmButtonColor="#d32f2f"
         icon="sync-disabled"
+        iconColor="#d32f2f"
+      />
+      
+      <ConfirmModal
+        visible={showDeleteServerDataConfirm}
+        onClose={() => setShowDeleteServerDataConfirm(false)}
+        onConfirm={handleDeleteServerData}
+        theme={theme}
+        title="Delete Server Data"
+        message="This will permanently delete all your data from the server and disable sync. Your local data will remain unchanged. This action cannot be undone."
+        confirmText="Delete Server Data"
+        confirmButtonColor="#d32f2f"
+        icon="delete-forever"
+        iconColor="#d32f2f"
+      />
+      
+      <ConfirmModal
+        visible={showResetConfirm}
+        onClose={() => setShowResetConfirm(false)}
+        onConfirm={handleReset}
+        theme={theme}
+        title="Reset StackMap"
+        message="This will delete all data and return the app to its initial state. This action cannot be undone."
+        confirmText="Reset App"
+        confirmButtonColor="#d32f2f"
+        icon="refresh"
         iconColor="#d32f2f"
       />
     </>
