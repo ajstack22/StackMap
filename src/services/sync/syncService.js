@@ -399,6 +399,7 @@ class SyncService {
     console.log('pullData: response status', response.status);
 
     if (response.status === 404) {
+      console.log('pullData: Sync group not found on server');
       return null; // Sync group doesn't exist
     }
 
@@ -479,6 +480,14 @@ class SyncService {
       // Pull latest data
       console.log('sync: Pulling latest data...');
       const remoteData = await this.pullData();
+      
+      // If pullData returns null and we have a lastSyncVersion > 0, it means the sync was deleted on server
+      if (remoteData === null && this.lastSyncVersion > 0) {
+        console.log('sync: Sync data not found on server, disabling sync');
+        await this.disable();
+        this.updateSyncStatus('error', 'Sync data not found on server');
+        throw new Error('Sync data not found on server. Sync has been disabled.');
+      }
       
       if (remoteData && remoteData.version > this.lastSyncVersion) {
         console.log('sync: Remote data is newer, checking for conflicts...');
