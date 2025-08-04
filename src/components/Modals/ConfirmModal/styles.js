@@ -49,13 +49,16 @@ export const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: SPACING.md,
     width: '100%',
+    justifyContent: 'center',
   },
   button: {
     flex: 1,
     paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.sm,
     borderRadius: RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
+    minHeight: 48,
   },
   cancelButton: {
     backgroundColor: '#f0f0f0',
@@ -67,10 +70,12 @@ export const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
+    textAlign: 'center',
   },
   confirmButtonText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: 'white',
+    textAlign: 'center',
   },
 });

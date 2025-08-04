@@ -76,7 +76,7 @@ const ConfirmModal = ({
               ]}
               onPress={handleConfirm}
             >
-              <Text style={styles.confirmButtonText}>{confirmText}</Text>
+              <Text style={styles.confirmButtonText} numberOfLines={2}>{confirmText}</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
