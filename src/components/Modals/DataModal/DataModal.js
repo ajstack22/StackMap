@@ -1128,8 +1128,8 @@ const DataModal = ({
                       <QRCode
                         value={`${window.location.origin}/sync?phrase=${encodeURIComponent(syncRecoveryPhrase)}`}
                         size={200}
-                        backgroundColor="white"
-                        color="black"
+                        backgroundColor="#ffffff"
+                        color="#000000"
                       />
                     </View>
                   )}
@@ -1467,8 +1467,8 @@ const DataModal = ({
                 <QRCode
                   value={shareUrl}
                   size={200}
-                  backgroundColor="white"
-                  color="black"
+                  backgroundColor="#ffffff"
+                  color="#000000"
                 />
               </View>
             )}
