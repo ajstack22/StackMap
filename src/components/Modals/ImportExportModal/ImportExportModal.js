@@ -701,7 +701,7 @@ const ImportExportModal = ({
               onPress={() => setActiveTab('export')}
             >
               <Icon 
-                name="file-download" 
+                name="file-upload" 
                 size={20} 
                 color={activeTab === 'export' ? theme.primary : 'rgba(255,255,255,0.7)'} 
               />
@@ -721,7 +721,7 @@ const ImportExportModal = ({
               onPress={() => setActiveTab('import')}
             >
               <Icon 
-                name="file-upload" 
+                name="file-download" 
                 size={20} 
                 color={activeTab === 'import' ? theme.primary : 'rgba(255,255,255,0.7)'} 
               />
@@ -763,7 +763,7 @@ const ImportExportModal = ({
         }
         confirmText="Import"
         confirmButtonColor={theme.primary}
-        icon="file-upload"
+        icon="file-download"
         iconColor={theme.primary}
       />
     </Modal>
