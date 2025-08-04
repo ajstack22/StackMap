@@ -709,6 +709,41 @@ export const styles = StyleSheet.create({
     marginTop: SPACING.md,
     marginBottom: SPACING.lg,
   },
+  shareInfoBox: {
+    backgroundColor: '#f5f5f5',
+    borderRadius: RADIUS.medium,
+    padding: SPACING.md,
+    width: '100%',
+    marginBottom: SPACING.md,
+  },
+  shareInfoLabel: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: '#666',
+    marginBottom: SPACING.xs,
+  },
+  shareInfoValue: {
+    fontSize: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+    color: '#000',
+    lineHeight: 20,
+  },
+  shareActionsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+    justifyContent: 'center',
+    marginBottom: SPACING.lg,
+  },
+  mobileShareActions: {
+    width: '100%',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    width: '100%',
+    marginVertical: SPACING.lg,
+  },
   shareUrlContainer: {
     width: '100%',
   },

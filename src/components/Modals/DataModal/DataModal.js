@@ -92,6 +92,7 @@ const DataModal = ({
   const [activeShares, setActiveShares] = useState([]);
   const [showActiveShares, setShowActiveShares] = useState(true);
   const [selectedShareUser, setSelectedShareUser] = useState(null);
+  const [showShareQR, setShowShareQR] = useState(false);
   
   // Tabs configuration
   const tabs = [
@@ -1290,48 +1291,108 @@ const DataModal = ({
             <Icon name="check-circle" size={48} color="#4caf50" />
             <Text style={styles.shareSuccessTitle}>Share Link Created!</Text>
             
-            <View style={styles.shareUrlContainer}>
-              <Text style={styles.shareUrlLabel}>Share this link:</Text>
-              <View style={styles.shareUrlBox}>
-                <Text style={styles.shareUrl} numberOfLines={2}>
-                  {shareUrl}
-                </Text>
-              </View>
-              
-              <ModalFooter
-                theme={theme}
-                primaryButton={{
-                  label: 'Copy Link',
-                  icon: 'content-copy',
-                  onPress: handleCopyShareUrl
-                }}
-                showOnDesktop={true}
-              />
-              
-              {Platform.OS !== 'web' && (
-                <View style={styles.qrCodeContainer}>
-                  <Text style={styles.qrCodeLabel}>Or scan this QR code:</Text>
-                  <QRCode
-                    value={shareUrl}
-                    size={200}
-                    backgroundColor="white"
-                    color="black"
+            <View style={styles.shareInfoBox}>
+              <Text style={styles.shareInfoLabel}>Share Token:</Text>
+              <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
+                {shareToken}
+              </Text>
+            </View>
+            
+            <View style={styles.shareInfoBox}>
+              <Text style={styles.shareInfoLabel}>Share URL:</Text>
+              <Text style={styles.shareInfoValue} selectable numberOfLines={2}>
+                {shareUrl}
+              </Text>
+            </View>
+            
+            <View style={styles.shareActionsContainer}>
+              {Platform.OS === 'web' ? (
+                <>
+                  <ModalButton
+                    theme={theme}
+                    variant="primary"
+                    label="Show QR Code"
+                    icon="qr-code-2"
+                    onPress={() => setShowShareQR(!showShareQR)}
+                    compact
+                  />
+                  <ModalButton
+                    theme={theme}
+                    variant="secondary"
+                    label="Copy Token"
+                    icon="content-copy"
+                    onPress={() => {
+                      if (Platform.OS === 'web') {
+                        navigator.clipboard.writeText(shareToken);
+                      } else {
+                        const Clipboard = require('@react-native-clipboard/clipboard').default;
+                        Clipboard.setString(shareToken);
+                      }
+                      showToast({ message: 'Token copied to clipboard!' });
+                    }}
+                    compact
+                  />
+                  <ModalButton
+                    theme={theme}
+                    variant="secondary"
+                    label="Copy URL"
+                    icon="link"
+                    onPress={handleCopyShareUrl}
+                    compact
+                  />
+                </>
+              ) : (
+                <View style={styles.mobileShareActions}>
+                  <ModalButton
+                    theme={theme}
+                    variant="secondary"
+                    label="Copy Token"
+                    icon="content-copy"
+                    onPress={() => {
+                      const Clipboard = require('@react-native-clipboard/clipboard').default;
+                      Clipboard.setString(shareToken);
+                      showToast({ message: 'Token copied to clipboard!' });
+                    }}
+                  />
+                  <ModalButton
+                    theme={theme}
+                    variant="secondary"
+                    label="Copy URL"
+                    icon="link"
+                    onPress={handleCopyShareUrl}
+                    style={{ marginTop: 10 }}
                   />
                 </View>
               )}
-              
-              <ModalButton
-                theme={theme}
-                variant="secondary"
-                label="Create Another Share"
-                icon="add-circle"
-                onPress={() => {
-                  setShareUrl('');
-                  const token = syncService.generateShareToken(true);
-                  setShareToken(token);
-                }}
-              />
             </View>
+            
+            {(Platform.OS !== 'web' || showShareQR) && (
+              <View style={styles.qrCodeContainer}>
+                <Text style={styles.qrCodeLabel}>Share QR Code:</Text>
+                <QRCode
+                  value={shareUrl}
+                  size={200}
+                  backgroundColor="white"
+                  color="black"
+                />
+              </View>
+            )}
+            
+            <View style={styles.divider} />
+            
+            <ModalButton
+              theme={theme}
+              variant="secondary"
+              label="Create Another Share"
+              icon="add-circle"
+              onPress={() => {
+                setShareUrl('');
+                setShowShareQR(false);
+                const token = syncService.generateShareToken(true);
+                setShareToken(token);
+              }}
+              style={{ marginTop: 20 }}
+            />
           </View>
         </View>
       )}
