@@ -66,7 +66,7 @@ const iconMap = {
 const Icon = ({ name, size = 24, color = '#000', style }) => {
   // Use ligatures instead of unicode for proper rendering
   const iconStyle = {
-    fontFamily: 'Material Icons',
+    fontFamily: 'Material Icons, -apple-system, BlinkMacSystemFont, sans-serif',
     fontSize: size,
     color: color,
     lineHeight: size,
@@ -117,8 +117,8 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
     'arrow-forward': 'arrow_forward',
     'arrow-upward': 'arrow_upward',
     'arrow-downward': 'arrow_downward',
-    'file-upload': 'file_upload',
-    'file-download': 'file_download',
+    'file-upload': '\ue2c6',
+    'file-download': '\ue2c4',
   };
   
   // First check if we have an alias
@@ -127,9 +127,12 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
   // Then convert any remaining hyphens to underscores for Material Icons
   iconName = iconName.replace(/-/g, '_');
 
+  // Use unicode if we have it, otherwise use ligature
+  const iconContent = iconMap[name] || iconName;
+  
   return (
     <Text style={iconStyle}>
-      {iconName}
+      {iconContent}
     </Text>
   );
 };
