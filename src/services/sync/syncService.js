@@ -393,15 +393,15 @@ class SyncService {
     console.log('pullData: syncId:', this.syncId, 'deviceId:', deviceId);
     
     const url = `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
-    console.log('pullData: fetching from', url);
     
     const response = await fetch(url);
-    console.log('pullData: response status', response.status);
 
     if (response.status === 404) {
-      console.log('pullData: Sync group not found on server');
+      // This is expected during sync creation - don't log as error
       return null; // Sync group doesn't exist
     }
+    
+    console.log('pullData: response status', response.status);
 
     // Get response text first to check if it's JSON
     const responseText = await response.text();
