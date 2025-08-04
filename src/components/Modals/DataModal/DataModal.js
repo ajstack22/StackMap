@@ -1225,6 +1225,7 @@ const DataModal = ({
                   disabled: shareLoading
                 }}
                 loading={shareLoading}
+                showOnDesktop={true}
               />
             </>
           )}
@@ -1304,6 +1305,7 @@ const DataModal = ({
                   icon: 'content-copy',
                   onPress: handleCopyShareUrl
                 }}
+                showOnDesktop={true}
               />
               
               {Platform.OS !== 'web' && (
