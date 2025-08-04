@@ -682,7 +682,7 @@ const DataModal = ({
         <>
           <View style={styles.section}>
             <View style={styles.emptyStateContainer}>
-              <Icon name="file-upload" size={48} color={theme.primary} />
+              <Icon name="file-download" size={48} color={theme.primary} />
               <Text style={styles.emptyStateText}>
                 Select a StackMap export file to import
               </Text>
@@ -887,7 +887,7 @@ const DataModal = ({
     >
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Icon name="file-download" size={20} color={theme.primary} />
+          <Icon name="file-upload" size={20} color={theme.primary} />
           <Text style={styles.sectionTitle}>Select Data to Export</Text>
         </View>
         

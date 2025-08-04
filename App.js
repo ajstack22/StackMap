@@ -2186,7 +2186,7 @@ const App = () => {
     }
   };
   
-  // Handle import from ImportExportModal
+  // Handle import from DataModal
   const handleImportComplete = async (importData) => {
     try {
       // Disable sync before importing to prevent conflicts
@@ -3514,6 +3514,7 @@ const App = () => {
           setShowDataModal(false);
           setTimeout(() => setShowSupportModal(true), 300);
         }}
+        onReset={resetApp}
       />
       
       {/* Users & Security Modal */}
