@@ -2504,6 +2504,7 @@ const App = () => {
               
               // Reset local state
               setDisplayMode('numbers');
+              setHasCompletedOnboarding(false);
               // Templates now handled through activityCategories
               setIsEditMode(false);
               setHasPinProtection(false);
