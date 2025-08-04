@@ -21,11 +21,14 @@ const getApiBaseUrl = () => {
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     // For local development
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      // Use the production API with proxy or return local API if you have one
       return 'https://stackmap.app/api/sync';
     }
+    // Check if we're in qual environment
+    if (window.location.pathname.startsWith('/qual')) {
+      return 'https://stackmap.app/qual/api/sync';
+    }
   }
-  // Always use absolute URL for main sync endpoints
+  // Default to production API
   return 'https://stackmap.app/api/sync';
 };
 
@@ -169,6 +172,18 @@ class SyncService {
     }
     
     return false;
+  }
+
+  /**
+   * Enable sync (wrapper for initialize for backward compatibility)
+   */
+  async enable() {
+    const recoveryPhrase = encryptionService.generateRecoveryPhrase();
+    await this.initialize(recoveryPhrase);
+    return {
+      syncId: this.syncId,
+      recoveryPhrase: recoveryPhrase
+    };
   }
 
   /**
