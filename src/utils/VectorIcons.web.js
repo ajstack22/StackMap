@@ -117,6 +117,8 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
     'arrow-forward': 'arrow_forward',
     'arrow-upward': 'arrow_upward',
     'arrow-downward': 'arrow_downward',
+    'file-upload': 'file_upload',
+    'file-download': 'file_download',
   };
   
   // First check if we have an alias
