@@ -35,21 +35,10 @@ const getApiBaseUrl = () => {
 const API_BASE_URL = getApiBaseUrl();
 console.log('[SyncService] Using API_BASE_URL:', API_BASE_URL);
 
-// Share endpoints use environment-specific API for testing
+// Share endpoints always use production API since they need to be accessible across environments
 const getShareApiUrl = () => {
-  // For iOS/Android development builds, use qual environment
-  if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
-    return 'https://stackmap.app/qual/api/sync';
-  }
-  
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      // For local development
-      return 'https://stackmap.app/api/sync';
-    }
-    // Use relative path to work in both qual and prod
-    return './api/sync';
-  }
+  // Always use production API for share endpoints
+  // This ensures shares work regardless of which environment they're created from
   return 'https://stackmap.app/api/sync';
 };
 
