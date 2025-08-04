@@ -114,6 +114,7 @@ const ActivityManagementModal = ({
           loading={loading}
           prefilledActivity={selectedFromLibrary?.activity || prefilledActivity}
           prefilledCategory={selectedFromLibrary?.category || selectedCategory}
+          onClose={onClose}
         />
       </TabContent>
       

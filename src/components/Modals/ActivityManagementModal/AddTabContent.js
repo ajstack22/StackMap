@@ -23,8 +23,10 @@ const AddTabContent = ({
   loading,
   prefilledActivity = null,
   prefilledCategory = null,
+  onClose,
 }) => {
   const [activityText, setActivityText] = useState('');
+  const [activityDescription, setActivityDescription] = useState('');
   const [activityIcon, setActivityIcon] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [activityTime, setActivityTime] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('my-templates');
@@ -36,6 +38,7 @@ const AddTabContent = ({
   useEffect(() => {
     if (prefilledActivity) {
       setActivityText(prefilledActivity.name || prefilledActivity.text || '');
+      setActivityDescription(prefilledActivity.description || '');
       setActivityIcon(prefilledActivity.emoji || prefilledActivity.icon || DEFAULT_ACTIVITY_EMOJI);
       if (prefilledCategory) {
         setSelectedCategory(prefilledCategory);
@@ -56,7 +59,7 @@ const AddTabContent = ({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSave = async () => {
+  const handleSaveAndReturn = async () => {
     if (!validateForm()) {
       showToast({ message: 'Please fix the errors', type: 'error' });
       return;
@@ -65,6 +68,37 @@ const AddTabContent = ({
     const activityData = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       text: activityText.trim(),
+      description: activityDescription.trim(),
+      icon: activityIcon,
+      completed: false,
+      pinned: false,
+      ...(activityTime && { time: activityTime }),
+    };
+
+    // Add to current day
+    await onAddActivity(activityData);
+
+    // Optionally save to library
+    if (saveToLibrary && selectedCategory) {
+      await onSaveToLibrary(activityData, selectedCategory);
+    }
+
+    // Close the modal
+    if (onClose) {
+      onClose();
+    }
+  };
+
+  const handleSaveAndContinue = async () => {
+    if (!validateForm()) {
+      showToast({ message: 'Please fix the errors', type: 'error' });
+      return;
+    }
+
+    const activityData = {
+      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      text: activityText.trim(),
+      description: activityDescription.trim(),
       icon: activityIcon,
       completed: false,
       pinned: false,
@@ -81,16 +115,12 @@ const AddTabContent = ({
 
     // Reset form for next activity
     resetForm();
-  };
-
-  const handleSaveAndAddAnother = async () => {
-    await handleSave();
-    // Form is reset but modal stays open
     showToast({ message: 'Activity added! Add another one.' });
   };
 
   const resetForm = () => {
     setActivityText('');
+    setActivityDescription('');
     setActivityIcon(DEFAULT_ACTIVITY_EMOJI);
     setActivityTime('');
     setErrors({});
@@ -135,6 +165,19 @@ const AddTabContent = ({
               <Text style={styles.selectedEmoji}>{activityIcon}</Text>
               <Text style={styles.emojiSelectorText}>Tap to change</Text>
             </TouchableOpacity>
+          </View>
+
+          {/* Description */}
+          <View style={styles.formSection}>
+            <Text style={styles.formLabel}>Description (Optional)</Text>
+            <FormInput
+              placeholder="Enter activity description"
+              value={activityDescription}
+              onChangeText={setActivityDescription}
+              multiline
+              numberOfLines={3}
+              theme={theme}
+            />
           </View>
 
           {/* Time (Optional) */}
@@ -219,14 +262,15 @@ const AddTabContent = ({
       <ModalFooter
         theme={theme}
         primaryButton={{
-          label: 'Add Activity',
-          icon: 'add',
-          onPress: handleSave,
+          label: 'Save & Return',
+          icon: 'check',
+          onPress: handleSaveAndReturn,
           disabled: loading
         }}
         secondaryButton={{
-          label: 'Add & Continue',
-          onPress: handleSaveAndAddAnother,
+          label: 'Save & Continue',
+          icon: 'add',
+          onPress: handleSaveAndContinue,
           disabled: loading
         }}
         loading={loading}
