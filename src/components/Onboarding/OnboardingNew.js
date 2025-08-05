@@ -38,7 +38,7 @@ const isMobileWeb = () => Platform.OS === 'web' && Dimensions.get('window').widt
 
 // Updated: 2025-07-18 16:45 - Fixed mobile layout
 const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupPhrase = null }) => {
-  const [currentScreen, setCurrentScreen] = useState('welcome');
+  const [currentScreen, setCurrentScreen] = useState(isAbbreviated && syncSetupPhrase ? 'sync' : 'welcome');
   const [userName, setUserName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('😊');
   const [users, setUsers] = useState([]);
@@ -62,6 +62,14 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const slideAnim = useRef(new Animated.Value(0)).current;
   const featureFadeAnim = useRef(new Animated.Value(1)).current;
   const insets = useSafeAreaInsets();
+  
+  // Pre-populate recovery input if sync phrase provided from URL
+  useEffect(() => {
+    if (syncSetupPhrase && !recoveryInput) {
+      setRecoveryInput(syncSetupPhrase);
+      setSyncMode('join');
+    }
+  }, [syncSetupPhrase]);
   
   // Fade in on mount
   useEffect(() => {
@@ -536,8 +544,17 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               setUsers(userList);
               setSyncEnabled(true);
               
-              // Go to features carousel to complete onboarding nicely
-              transitionTo('features');
+              // If abbreviated onboarding (from sync URL), complete immediately
+              if (isAbbreviated) {
+                onComplete({ 
+                  isAbbreviated: true, 
+                  syncSetupPhrase,
+                  syncCompleted: true 
+                });
+              } else {
+                // Go to features carousel to complete onboarding nicely
+                transitionTo('features');
+              }
             } else {
               // No users in sync but group exists, continue to user creation
               setSyncEnabled(true);
