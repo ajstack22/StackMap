@@ -17,9 +17,9 @@ $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
 // Validate required fields
-if (!$data || !isset($data['sync_id']) || !isset($data['encrypted_blob']) || !isset($data['recovery_salt'])) {
+if (!$data || !isset($data['sync_id']) || !isset($data['encrypted_blob'])) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'error' => 'Missing required fields: sync_id, encrypted_blob, recovery_salt']);
+    echo json_encode(['success' => false, 'error' => 'Missing required fields: sync_id, encrypted_blob']);
     exit();
 }
 
@@ -36,13 +36,12 @@ try {
 
     // Create new sync group
     $stmt = $db->prepare("
-        INSERT INTO sync_data (sync_id, encrypted_blob, recovery_salt)
-        VALUES (?, ?, ?)
+        INSERT INTO sync_data (sync_id, encrypted_blob)
+        VALUES (?, ?)
     ");
     $stmt->execute([
         $data['sync_id'],
-        $data['encrypted_blob'],
-        $data['recovery_salt']
+        $data['encrypted_blob']
     ]);
 
     // Try to log metric but don't fail if table doesn't exist
