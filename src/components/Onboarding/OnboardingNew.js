@@ -735,8 +735,16 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                           setUsers(userList);
                           setSyncEnabled(true);
                           
-                          // Continue to features screen
-                          transitionTo('features');
+                          // Wait a moment for store to fully update
+                          setTimeout(() => {
+                            setSyncLoading(false);
+                            // Continue to features screen
+                            transitionTo('features');
+                          }, 100);
+                        } else {
+                          // No users in synced data
+                          setSyncLoading(false);
+                          setSyncError('No users found in sync data.');
                         }
                       } catch (error) {
                         setSyncError('Failed to join sync. Please try again.');
