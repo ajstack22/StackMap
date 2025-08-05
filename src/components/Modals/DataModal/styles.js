@@ -35,7 +35,7 @@ export const styles = StyleSheet.create({
       },
     }),
     ...(!IS_MOBILE && {
-      maxWidth: 800,
+      maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
     }),
