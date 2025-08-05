@@ -242,7 +242,9 @@ class EncryptionService {
     let deviceId = await AsyncStorage.getItem(key);
     
     if (!deviceId) {
-      deviceId = util.encodeBase64(nacl.randomBytes(16));
+      // Use hex encoding for device ID too (no padding, URL-safe)
+      const deviceBytes = nacl.randomBytes(16);
+      deviceId = Array.from(deviceBytes, byte => byte.toString(16).padStart(2, '0')).join('');
       await AsyncStorage.setItem(key, deviceId);
     }
     
