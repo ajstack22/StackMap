@@ -755,6 +755,14 @@ const App = () => {
       // Handle abbreviated onboarding (sync URL flow)
       if (onboardingData?.isAbbreviated && onboardingData?.syncSetupPhrase) {
         console.log('Abbreviated onboarding - will trigger sync after setup');
+        
+        // Ensure theme is set before showing main app
+        const storeState = useAppStore.getState();
+        if (!storeState.currentTheme) {
+          console.log('Setting default theme after sync onboarding');
+          setCurrentTheme('stackBlue');
+        }
+        
         // Set showOnboarding to false to show main app
         setShowOnboarding(false);
         // Sync setup functionality moved to data modal
@@ -1083,7 +1091,27 @@ const App = () => {
     }
   };
 
-  const theme = THEMES[currentTheme] || THEMES.stackBlue;
+  // Ensure theme is always defined, even if currentTheme is undefined
+  const theme = currentTheme && THEMES[currentTheme] ? THEMES[currentTheme] : THEMES.stackBlue;
+  
+  // Log for debugging
+  if (!currentTheme) {
+    console.warn('[App] currentTheme is undefined, using default stackBlue theme');
+    console.warn('[App] THEMES object:', THEMES);
+    console.warn('[App] isHydrated:', isHydrated);
+  }
+  
+  // Double-check theme is valid
+  if (!theme || typeof theme !== 'object') {
+    console.error('[App] Theme is invalid:', theme);
+    // Force a valid theme
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0095FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#FFFFFF" />
+        <Text style={{ color: '#FFFFFF', marginTop: 20 }}>Loading theme...</Text>
+      </View>
+    );
+  }
 
   // Helper to update auto-update shares after activity changes
   const updateAutoUpdateShares = async (userId) => {
