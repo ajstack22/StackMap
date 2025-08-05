@@ -717,21 +717,36 @@ class SyncService {
   getCurrentState() {
     const state = useAppStore.getState();
     
-    // Debug: Check users for missing icons
+    // Debug: Check users for missing icons and repair them
     console.log('[DEBUG] getCurrentState - Raw users from store:', JSON.stringify(state.users, null, 2));
+    const repairedUsers = { ...state.users };
+    let needsRepair = false;
+    
     if (state.users) {
       Object.entries(state.users).forEach(([userId, user]) => {
         if (!user.icon && !user.emoji) {
           console.warn(`[DEBUG] getCurrentState - User ${userId} in store is missing icon/emoji:`, user);
+          // Repair by adding default icon
+          repairedUsers[userId] = {
+            ...user,
+            icon: '😀' // Default user icon
+          };
+          needsRepair = true;
         }
       });
+    }
+    
+    // If we repaired any users, update the store
+    if (needsRepair) {
+      console.log('[DEBUG] Repairing users with missing icons...');
+      useAppStore.getState().setUsers(repairedUsers);
     }
     
     // Use the same structure as the export functionality
     const currentState = {
       version: 3,
       currentDay: state.currentDay,
-      users: state.users,
+      users: needsRepair ? repairedUsers : state.users,
       globalSettings: {
         currentTheme: state.currentTheme,
         bannerPosition: state.bannerPosition,
