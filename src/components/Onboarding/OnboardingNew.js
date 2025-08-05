@@ -117,6 +117,103 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     }
   ];
 
+  // Fetch sync preview data
+  const fetchSyncPreview = async () => {
+    setSyncLoading(true);
+    setSyncError('');
+    
+    try {
+      // Generate sync ID from recovery phrase
+      const syncId = await syncService.generateSyncId(recoveryInput.trim() || syncSetupPhrase);
+      const deviceId = await encryptionService.getDeviceId();
+      
+      // Try to fetch existing sync data
+      const checkUrl = `${syncService.API_BASE_URL}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
+      const checkResponse = await fetch(checkUrl);
+      
+      if (checkResponse.status === 404) {
+        throw new Error('No sync group found with this recovery phrase');
+      }
+      
+      // Get the encrypted data
+      const encryptedData = await checkResponse.json();
+      
+      // Initialize encryption with the recovery phrase to decrypt
+      await encryptionService.initialize(recoveryInput.trim() || syncSetupPhrase);
+      
+      // Decrypt the data
+      const decryptedData = encryptionService.decryptData(encryptedData.encrypted_blob);
+      
+      // Extract preview information
+      const preview = {
+        users: {},
+        totalActivities: 0,
+        activityLibraryCount: 0,
+        hasData: false
+      };
+      
+      if (decryptedData.users) {
+        Object.entries(decryptedData.users).forEach(([userId, user]) => {
+          let activityCount = 0;
+          
+          // Count activities across all days
+          if (user.days) {
+            Object.values(user.days).forEach(day => {
+              if (day.activities && Array.isArray(day.activities)) {
+                activityCount += day.activities.filter(a => !a.deleted).length;
+              }
+            });
+          }
+          
+          preview.users[userId] = {
+            name: user.name || 'Unknown User',
+            icon: user.icon || user.emoji || '😊',
+            activityCount
+          };
+          
+          preview.totalActivities += activityCount;
+        });
+      }
+      
+      // Count activity library items
+      if (decryptedData.activityCategories) {
+        Object.values(decryptedData.activityCategories).forEach(category => {
+          if (category.activities && Array.isArray(category.activities)) {
+            preview.activityLibraryCount += category.activities.length;
+          }
+        });
+      }
+      
+      preview.hasData = Object.keys(preview.users).length > 0;
+      
+      setSyncPreviewData(preview);
+      setShowSyncPreview(true);
+      transitionTo('syncPreview');
+      
+    } catch (error) {
+      setSyncLoading(false);
+      let errorMessage = 'Failed to fetch sync data. Please try again.';
+      
+      if (error.message.includes('404') || error.message.includes('No sync group')) {
+        errorMessage = 'No sync group found with this recovery phrase.';
+      } else if (error.message.includes('Network')) {
+        errorMessage = 'Network error. Please check your connection and try again.';
+      }
+      
+      // Show error and exit onboarding
+      Alert.alert(
+        'Sync Error',
+        errorMessage,
+        [
+          { 
+            text: 'OK', 
+            onPress: () => onComplete({ isAbbreviated: true })
+          }
+        ]
+      );
+    }
+  };
+
   const transitionTo = (nextScreen) => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
@@ -225,10 +322,22 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
 
             {isAbbreviated ? (
               <TouchableOpacity 
-                style={styles.primaryButton}
-                onPress={() => transitionTo('features')}
+                style={[styles.primaryButton, syncLoading && styles.disabledButton]}
+                onPress={() => {
+                  // For sync URLs, automatically fetch the preview
+                  if (syncSetupPhrase) {
+                    fetchSyncPreview();
+                  } else {
+                    transitionTo('features');
+                  }
+                }}
+                disabled={syncLoading}
               >
-                <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Continue</Text>
+                {syncLoading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Continue</Text>
+                )}
               </TouchableOpacity>
             ) : (
               <>
@@ -485,10 +594,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               <TouchableOpacity 
                 style={styles.primaryButton}
                 onPress={() => {
-                  if (isAbbreviated && !syncEnabled) {
-                    // For abbreviated onboarding, go to sync screen after features
-                    transitionTo('sync');
-                  } else if (isAbbreviated && syncEnabled) {
+                  if (isAbbreviated && syncEnabled) {
                     // For abbreviated onboarding with sync completed, finish
                     onComplete({ 
                       isAbbreviated: true, 
@@ -503,8 +609,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                 }}
               >
                 <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                  {isAbbreviated && !syncEnabled ? 'Continue' : 
-                   isAbbreviated && syncEnabled ? 'Continue to StackMap' : 
+                  {isAbbreviated && syncEnabled ? 'Continue to StackMap' : 
                    (users.length > 0 ? 'Continue to StackMap' : 'Create First User')}
                 </Text>
               </TouchableOpacity>
@@ -533,12 +638,12 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               showsVerticalScrollIndicator={false}
             >
               <Logo size={isTablet() ? 50 : 40} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
-              <Text style={styles.screenTitle}>Join Sync Group</Text>
+              <Text style={styles.screenTitle}>Sync Data Preview</Text>
               
               {syncPreviewData && syncPreviewData.hasData ? (
                 <>
                   <Text style={styles.screenSubtitle}>
-                    This sync group contains the following data:
+                    You're about to join a sync group with the following data:
                   </Text>
                   
                   <View style={styles.syncPreviewContainer}>
@@ -563,6 +668,15 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                         Total: {Object.keys(syncPreviewData.users).length} user{Object.keys(syncPreviewData.users).length !== 1 ? 's' : ''}, {syncPreviewData.totalActivities} {syncPreviewData.totalActivities === 1 ? 'activity' : 'activities'}
                       </Text>
                     </View>
+                    
+                    {syncPreviewData.activityLibraryCount > 0 && (
+                      <View style={styles.syncPreviewLibrary}>
+                        <Icon name="library-books" size={20} color={THEMES.stackBlue.primary} />
+                        <Text style={styles.syncPreviewLibraryText}>
+                          Activity Library: {syncPreviewData.activityLibraryCount} {syncPreviewData.activityLibraryCount === 1 ? 'item' : 'items'}
+                        </Text>
+                      </View>
+                    )}
                   </View>
                   
                   <View style={styles.syncWarning}>
@@ -574,7 +688,30 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                   
                   <TouchableOpacity 
                     style={[styles.primaryButton, syncLoading && styles.disabledButton]}
-                    onPress={handleSyncSetup}
+                    onPress={async () => {
+                      setSyncLoading(true);
+                      try {
+                        // Initialize with the recovery phrase
+                        await syncService.initialize(syncSetupPhrase);
+                        
+                        // Check if sync restored users
+                        const { useAppStore } = require('../../stores');
+                        const syncedUsers = useAppStore.getState().users;
+                        
+                        if (syncedUsers && Object.keys(syncedUsers).length > 0) {
+                          // Users already exist from sync
+                          const userList = Object.values(syncedUsers);
+                          setUsers(userList);
+                          setSyncEnabled(true);
+                          
+                          // Continue to features screen
+                          transitionTo('features');
+                        }
+                      } catch (error) {
+                        setSyncError('Failed to join sync. Please try again.');
+                        setSyncLoading(false);
+                      }
+                    }}
                     disabled={syncLoading}
                   >
                     {syncLoading ? (
@@ -589,10 +726,11 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     onPress={() => {
                       setShowSyncPreview(false);
                       setSyncPreviewData(null);
-                      transitionTo('sync');
+                      // Exit onboarding without syncing
+                      onComplete({ isAbbreviated: true });
                     }}
                   >
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip</Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -606,10 +744,11 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     onPress={() => {
                       setShowSyncPreview(false);
                       setSyncPreviewData(null);
-                      transitionTo('sync');
+                      // Exit onboarding without syncing
+                      onComplete({ isAbbreviated: true });
                     }}
                   >
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip</Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -618,83 +757,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         );
 
       case 'sync':
-        // Fetch sync preview data
-  const fetchSyncPreview = async () => {
-    setSyncLoading(true);
-    setSyncError('');
-    
-    try {
-      // Generate sync ID from recovery phrase
-      const syncId = await syncService.generateSyncId(recoveryInput.trim());
-      const deviceId = await encryptionService.getDeviceId();
-      
-      // Try to fetch existing sync data
-      const checkUrl = `${syncService.API_BASE_URL}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
-      const checkResponse = await fetch(checkUrl);
-      
-      if (checkResponse.status === 404) {
-        throw new Error('No sync group found with this recovery phrase');
-      }
-      
-      // Get the encrypted data
-      const encryptedData = await checkResponse.json();
-      
-      // Initialize encryption with the recovery phrase to decrypt
-      await encryptionService.initialize(recoveryInput.trim());
-      
-      // Decrypt the data
-      const decryptedData = encryptionService.decryptData(encryptedData.encrypted_blob);
-      
-      // Extract preview information
-      const preview = {
-        users: {},
-        totalActivities: 0,
-        hasData: false
-      };
-      
-      if (decryptedData.users) {
-        Object.entries(decryptedData.users).forEach(([userId, user]) => {
-          let activityCount = 0;
-          
-          // Count activities across all days
-          if (user.days) {
-            Object.values(user.days).forEach(day => {
-              if (day.activities && Array.isArray(day.activities)) {
-                activityCount += day.activities.filter(a => !a.deleted).length;
-              }
-            });
-          }
-          
-          preview.users[userId] = {
-            name: user.name || 'Unknown User',
-            icon: user.icon || user.emoji || '😊',
-            activityCount
-          };
-          
-          preview.totalActivities += activityCount;
-        });
-        
-        preview.hasData = Object.keys(preview.users).length > 0;
-      }
-      
-      setSyncPreviewData(preview);
-      setShowSyncPreview(true);
-      transitionTo('syncPreview');
-      
-    } catch (error) {
-      if (error.message.includes('404') || error.message.includes('No sync group')) {
-        setSyncError('No sync group found with this recovery phrase');
-      } else if (error.message.includes('Network')) {
-        setSyncError('Network error. Please check your connection and try again.');
-      } else {
-        setSyncError('Failed to fetch sync data. Please try again.');
-      }
-    } finally {
-      setSyncLoading(false);
-    }
-  };
-
-  const handleSyncSetup = async () => {
+        const handleSyncSetup = async () => {
           setSyncLoading(true);
           setSyncError('');
           
@@ -2072,6 +2135,18 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#856404',
+  },
+  syncPreviewLibrary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: SPACING.md,
+    gap: SPACING.sm,
+  },
+  syncPreviewLibraryText: {
+    flex: 1,
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: COLORS.gray[700],
   },
 });
 
