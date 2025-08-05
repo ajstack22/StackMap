@@ -531,7 +531,7 @@ class SyncService {
         console.log('sync: Remote data is newer, checking for conflicts...');
         
         // Decrypt remote data
-        const decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
+        let decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
         
         // Validate decrypted data
         if (!validateSyncedData(decryptedData)) {
