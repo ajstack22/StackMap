@@ -454,6 +454,26 @@ class SyncService {
     try {
       const data = JSON.parse(responseText);
       console.log('pullData: received data', data);
+      
+      // Debug: Log the decrypted data if available
+      if (data && data.encrypted_blob) {
+        try {
+          const decrypted = encryptionService.decryptData(data.encrypted_blob);
+          console.log('[DEBUG] Decrypted sync data structure:', JSON.stringify(decrypted, null, 2));
+          
+          // Check users for missing icons
+          if (decrypted.users) {
+            Object.entries(decrypted.users).forEach(([userId, user]) => {
+              if (!user.icon && !user.emoji) {
+                console.warn(`[DEBUG] User ${userId} is missing icon/emoji:`, user);
+              }
+            });
+          }
+        } catch (e) {
+          console.error('[DEBUG] Failed to decrypt for debugging:', e);
+        }
+      }
+      
       return data;
     } catch (e) {
       console.error('Failed to parse response as JSON:', responseText.substring(0, 200));
@@ -696,6 +716,16 @@ class SyncService {
    */
   getCurrentState() {
     const state = useAppStore.getState();
+    
+    // Debug: Check users for missing icons
+    console.log('[DEBUG] getCurrentState - Raw users from store:', JSON.stringify(state.users, null, 2));
+    if (state.users) {
+      Object.entries(state.users).forEach(([userId, user]) => {
+        if (!user.icon && !user.emoji) {
+          console.warn(`[DEBUG] getCurrentState - User ${userId} in store is missing icon/emoji:`, user);
+        }
+      });
+    }
     
     // Use the same structure as the export functionality
     const currentState = {
