@@ -39,6 +39,21 @@ const isMobileWeb = () => Platform.OS === 'web' && Dimensions.get('window').widt
 
 // Updated: 2025-07-18 16:45 - Fixed mobile layout
 const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupPhrase = null }) => {
+  // Safety check for THEMES
+  console.log('[OnboardingNew] THEMES object:', THEMES);
+  console.log('[OnboardingNew] THEMES.stackBlue:', THEMES?.stackBlue);
+  
+  // Create a proper theme object with expected properties
+  const defaultTheme = {
+    primary: THEMES?.stackBlue?.primary || '#5C7E9D',
+    dark: THEMES?.stackBlue?.dark || '#4A6680',
+    light: THEMES?.stackBlue?.light || '#7896B3',
+    text: '#000000', // Black text for accessibility
+    textSecondary: '#666666',
+    background: '#FFFFFF',
+    card: '#F5F5F5'
+  };
+  
   const [currentScreen, setCurrentScreen] = useState('welcome');
   const [userName, setUserName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('😊');
@@ -1033,7 +1048,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     {syncLoading ? (
                       <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color={THEMES.stackBlue.primary} />
-                        <Text style={[styles.loadingText, { color: THEMES.stackBlue.text }]}>
+                        <Text style={[styles.loadingText, { color: defaultTheme.text }]}>
                           Creating sync code...
                         </Text>
                       </View>
@@ -1050,7 +1065,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                       </View>
                     ) : newSyncData ? (
                       <>
-                        <Text style={[styles.description, { color: THEMES.stackBlue.text }]}>
+                        <Text style={[styles.description, { color: defaultTheme.text }]}>
                           Use this sync code on your device to connect your existing StackMap data to the cloud.
                         </Text>
 
@@ -1059,17 +1074,17 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                           <QRCode
                             value={newSyncData.qrData}
                             size={200}
-                            color={THEMES.stackBlue.text}
-                            backgroundColor={THEMES.stackBlue.background}
+                            color={defaultTheme.text}
+                            backgroundColor={defaultTheme.background}
                           />
                         </View>
 
                         {/* Recovery Phrase */}
-                        <View style={[styles.codeContainer, { backgroundColor: THEMES.stackBlue.card || '#f5f5f5' }]}>
-                          <Text style={[styles.codeLabel, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                        <View style={[styles.codeContainer, { backgroundColor: defaultTheme.card || '#f5f5f5' }]}>
+                          <Text style={[styles.codeLabel, { color: defaultTheme.textSecondary || '#666' }]}>
                             Sync Code
                           </Text>
-                          <Text style={[styles.codeText, { color: THEMES.stackBlue.text }]}>
+                          <Text style={[styles.codeText, { color: defaultTheme.text }]}>
                             {newSyncData.recoveryPhrase}
                           </Text>
                           <TouchableOpacity
@@ -1083,24 +1098,24 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
 
                         {/* Instructions */}
                         <View style={styles.instructionsContainer}>
-                          <Text style={[styles.instructionsTitle, { color: THEMES.stackBlue.text }]}>
+                          <Text style={[styles.instructionsTitle, { color: defaultTheme.text }]}>
                             How to sync your device:
                           </Text>
                           <View style={styles.instructionItem}>
                             <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>1</Text>
-                            <Text style={[styles.instructionText, { color: THEMES.stackBlue.text }]}>
+                            <Text style={[styles.instructionText, { color: defaultTheme.text }]}>
                               Open StackMap on your device
                             </Text>
                           </View>
                           <View style={styles.instructionItem}>
                             <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>2</Text>
-                            <Text style={[styles.instructionText, { color: THEMES.stackBlue.text }]}>
+                            <Text style={[styles.instructionText, { color: defaultTheme.text }]}>
                               Go to Settings → Data Management
                             </Text>
                           </View>
                           <View style={styles.instructionItem}>
                             <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>3</Text>
-                            <Text style={[styles.instructionText, { color: THEMES.stackBlue.text }]}>
+                            <Text style={[styles.instructionText, { color: defaultTheme.text }]}>
                               Enable Sync and enter this code
                             </Text>
                           </View>
@@ -1115,17 +1130,17 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                           <Text style={styles.supportButtonText}>Support StackMap</Text>
                         </TouchableOpacity>
 
-                        <Text style={[styles.supportText, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                        <Text style={[styles.supportText, { color: defaultTheme.textSecondary || '#666' }]}>
                           Your contributions help us provide:
                         </Text>
                         <View style={styles.contributionList}>
-                          <Text style={[styles.contributionItem, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                          <Text style={[styles.contributionItem, { color: defaultTheme.textSecondary || '#666' }]}>
                             • Free sync service for all families
                           </Text>
-                          <Text style={[styles.contributionItem, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                          <Text style={[styles.contributionItem, { color: defaultTheme.textSecondary || '#666' }]}>
                             • Ongoing development & improvements
                           </Text>
-                          <Text style={[styles.contributionItem, { color: THEMES.stackBlue.textSecondary || '#666' }]}>
+                          <Text style={[styles.contributionItem, { color: defaultTheme.textSecondary || '#666' }]}>
                             • Server costs for data storage
                           </Text>
                         </View>
