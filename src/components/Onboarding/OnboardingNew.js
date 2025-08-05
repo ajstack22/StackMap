@@ -213,6 +213,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       
       setSyncPreviewData(preview);
       setShowSyncPreview(true);
+      setSyncLoading(false); // Reset loading state on success
       transitionTo('syncPreview');
       
     } catch (error) {
