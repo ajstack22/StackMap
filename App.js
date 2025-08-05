@@ -100,6 +100,7 @@ import { useAppStore } from './src/stores';
 
 // Import services
 import syncService from './src/services/sync/syncService';
+import encryptionService from './src/services/sync/encryptionService';
 
 // Import utilities
 import {
