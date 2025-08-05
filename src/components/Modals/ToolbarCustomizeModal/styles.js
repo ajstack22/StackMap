@@ -44,7 +44,7 @@ export const styles = StyleSheet.create({
   buttonsList: {
     marginBottom: SPACING.lg,
     ...(Platform.OS === 'web' && {
-      maxWidth: 500,
+      maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
     }),

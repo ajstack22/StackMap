@@ -32,6 +32,11 @@ export const styles = StyleSheet.create({
   modalContent: {
     flex: 1,
     padding: 20,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   emojiSelector: {
     alignItems: 'center',

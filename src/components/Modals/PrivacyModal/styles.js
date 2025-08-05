@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { TYPOGRAPHY, SPACING, RADIUS, COLORS } from '../../../constants';
 
 export const styles = StyleSheet.create({
@@ -21,6 +21,11 @@ export const styles = StyleSheet.create({
   privacyContent: {
     flex: 1,
     padding: 20,
+    ...(Platform.OS === 'web' && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   privacyHeader: {
     marginBottom: 24,

@@ -6,7 +6,7 @@ export const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
     ...(Platform.OS === 'web' && {
-      maxWidth: 800,
+      maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
     }),
