@@ -27,7 +27,7 @@ try {
 
     // Get sync data
     $stmt = $db->prepare("
-        SELECT encrypted_blob, version, last_modified
+        SELECT encrypted_blob, version, updated_at
         FROM sync_data
         WHERE sync_id = ?
     ");
@@ -63,7 +63,7 @@ try {
     echo json_encode([
         'encrypted_blob' => $result['encrypted_blob'],
         'version' => $result['version'],
-        'last_modified' => $result['last_modified']
+        'last_modified' => $result['updated_at']
     ]);
 
 } catch (Exception $e) {

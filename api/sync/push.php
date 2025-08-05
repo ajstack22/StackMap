@@ -50,8 +50,7 @@ try {
     ]);
 
     // Get updated version
-    $versionStmt = $db->prepare("SELECT version, last_modified FROM 
-sync_data WHERE sync_id = ?");
+    $versionStmt = $db->prepare("SELECT version, updated_at FROM sync_data WHERE sync_id = ?");
     $versionStmt->execute([$data['sync_id']]);
     $versionData = $versionStmt->fetch();
 
@@ -71,7 +70,7 @@ sync_data WHERE sync_id = ?");
     echo json_encode([
         'success' => true,
         'version' => $versionData['version'],
-        'last_modified' => $versionData['last_modified']
+        'last_modified' => $versionData['updated_at']
     ]);
 
 } catch (Exception $e) {
