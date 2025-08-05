@@ -368,8 +368,8 @@ class SyncService {
       }
     };
     
-    // Validate data before pushing
-    if (!validateSyncedData(syncData)) {
+    // Validate data before pushing (only for full syncs)
+    if (syncType === 'full' && !validateSyncedData(syncData)) {
       console.error('sync: Local data validation failed before push');
       throw new Error('Cannot push invalid data to server');
     }
