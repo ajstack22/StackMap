@@ -25,10 +25,11 @@ class EncryptionService {
    * Generate a random recovery phrase (12 words from a wordlist)
    */
   generateRecoveryPhrase() {
-    // For now, generate a random 128-bit seed and convert to hex
+    // Generate a random 128-bit seed and convert to hex
     // In production, use BIP39 wordlist for better UX
     const seedBytes = nacl.randomBytes(16);
-    return util.encodeBase64(seedBytes);
+    // Convert to hex string (no padding, URL-safe)
+    return Array.from(seedBytes, byte => byte.toString(16).padStart(2, '0')).join('');
   }
 
   /**
