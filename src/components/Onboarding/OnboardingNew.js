@@ -727,7 +727,14 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                         
                         // Check if sync restored users
                         const { useAppStore } = require('../../stores');
-                        const syncedUsers = useAppStore.getState().users;
+                        const fullState = useAppStore.getState();
+                        const syncedUsers = fullState.users;
+                        
+                        // DEBUG: Log entire state after sync
+                        console.log('[DEBUG] Full Zustand state after sync:', JSON.stringify(fullState, null, 2));
+                        console.log('[DEBUG] currentTheme:', fullState.currentTheme);
+                        console.log('[DEBUG] users:', fullState.users);
+                        console.log('[DEBUG] hasCompletedOnboarding:', fullState.hasCompletedOnboarding);
                         
                         if (syncedUsers && Object.keys(syncedUsers).length > 0) {
                           // Users already exist from sync

@@ -770,6 +770,9 @@ class SyncService {
     console.log('restoreData: Export format data - Users:', users);
     console.log('restoreData: Export format data - Templates:', templates);
     
+    // DEBUG: Log full incoming data
+    console.log('[DEBUG] Full sync data being restored:', JSON.stringify(data, null, 2));
+    
     // Get current state to preserve certain values
     const currentState = useAppStore.getState();
     
@@ -789,7 +792,20 @@ class SyncService {
     };
     
     console.log('restoreData: Setting export format state:', newState);
+    
+    // DEBUG: Log what we're about to set
+    console.log('[DEBUG] About to set state with:');
+    console.log('[DEBUG] - currentTheme:', newState.currentTheme);
+    console.log('[DEBUG] - hasCompletedOnboarding:', newState.hasCompletedOnboarding);
+    console.log('[DEBUG] - users count:', Object.keys(newState.users || {}).length);
+    
     useAppStore.setState(newState);
+    
+    // DEBUG: Verify what was actually set
+    const afterState = useAppStore.getState();
+    console.log('[DEBUG] State after setState:');
+    console.log('[DEBUG] - currentTheme:', afterState.currentTheme);
+    console.log('[DEBUG] - hasCompletedOnboarding:', afterState.hasCompletedOnboarding);
   }
 
   /**
