@@ -1176,6 +1176,40 @@ const DataModal = ({
                     <Text style={styles.recoveryPhrase} selectable>
                       {syncRecoveryPhrase}
                     </Text>
+                    <View style={styles.keyActionButtons}>
+                      <TouchableOpacity
+                        style={styles.keyActionButton}
+                        onPress={() => {
+                          if (Platform.OS === 'web') {
+                            navigator.clipboard.writeText(syncRecoveryPhrase);
+                          } else {
+                            const Clipboard = require('@react-native-clipboard/clipboard').default;
+                            Clipboard.setString(syncRecoveryPhrase);
+                          }
+                          showToast({ message: 'Sync key copied!' });
+                        }}
+                      >
+                        <Icon name="content-copy" size={18} color={theme.primary} />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.keyActionButton}
+                        onPress={() => {
+                          const basePath = window.location.pathname.endsWith('/') 
+                            ? window.location.pathname 
+                            : window.location.pathname + '/';
+                          const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                          if (Platform.OS === 'web') {
+                            navigator.clipboard.writeText(syncUrl);
+                          } else {
+                            const Clipboard = require('@react-native-clipboard/clipboard').default;
+                            Clipboard.setString(syncUrl);
+                          }
+                          showToast({ message: 'Sync URL copied!' });
+                        }}
+                      >
+                        <Icon name="link" size={18} color={theme.primary} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                   
                   {/* QR Code - Always visible */}
@@ -1192,56 +1226,6 @@ const DataModal = ({
                         backgroundColor="#ffffff"
                         color="#000000"
                       />
-                    
-                    {/* URL with copy button */}
-                    <View style={styles.syncUrlContainer}>
-                      <Text style={styles.syncUrlText} numberOfLines={2}>
-                        {(() => {
-                          const basePath = window.location.pathname.endsWith('/') 
-                            ? window.location.pathname 
-                            : window.location.pathname + '/';
-                          return `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
-                        })()}
-                      </Text>
-                      <TouchableOpacity
-                        style={styles.copyIconButton}
-                        onPress={() => {
-                          const basePath = window.location.pathname.endsWith('/') 
-                            ? window.location.pathname 
-                            : window.location.pathname + '/';
-                          const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
-                          if (Platform.OS === 'web') {
-                            navigator.clipboard.writeText(syncUrl);
-                          } else {
-                            const Clipboard = require('@react-native-clipboard/clipboard').default;
-                            Clipboard.setString(syncUrl);
-                          }
-                          showToast({ message: 'Sync URL copied to clipboard!' });
-                        }}
-                      >
-                        <Icon name="content-copy" size={20} color={theme.primary} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                  
-                  {/* Action button */}
-                  <View style={styles.syncActionsContainer}>
-                    <ModalButton
-                      theme={theme}
-                      variant="secondary"
-                      label="Copy Sync Key"
-                      icon="content-copy"
-                      onPress={() => {
-                        if (Platform.OS === 'web') {
-                          navigator.clipboard.writeText(syncRecoveryPhrase);
-                        } else {
-                          const Clipboard = require('@react-native-clipboard/clipboard').default;
-                          Clipboard.setString(syncRecoveryPhrase);
-                        }
-                        showToast({ message: 'Sync key copied to clipboard!' });
-                      }}
-                      compact
-                    />
                   </View>
                   
                   <View style={styles.divider} />
@@ -1505,17 +1489,34 @@ const DataModal = ({
             <Text style={styles.shareSuccessTitle}>Share Link Created!</Text>
             
             <View style={styles.shareInfoBox}>
-              <Text style={styles.shareInfoLabel}>Share Token:</Text>
-              <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
-                {shareToken}
-              </Text>
-            </View>
-            
-            <View style={styles.shareInfoBox}>
-              <Text style={styles.shareInfoLabel}>Share URL:</Text>
-              <Text style={styles.shareInfoValue} selectable numberOfLines={2}>
-                {shareUrl}
-              </Text>
+              <Text style={styles.shareInfoLabel}>Share Key:</Text>
+              <View style={styles.shareKeyContainer}>
+                <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
+                  {shareToken}
+                </Text>
+                <View style={styles.keyActionButtons}>
+                  <TouchableOpacity
+                    style={styles.keyActionButton}
+                    onPress={() => {
+                      if (Platform.OS === 'web') {
+                        navigator.clipboard.writeText(shareToken);
+                      } else {
+                        const Clipboard = require('@react-native-clipboard/clipboard').default;
+                        Clipboard.setString(shareToken);
+                      }
+                      showToast({ message: 'Share key copied!' });
+                    }}
+                  >
+                    <Icon name="content-copy" size={18} color={theme.primary} />
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={styles.keyActionButton}
+                    onPress={handleCopyShareUrl}
+                  >
+                    <Icon name="link" size={18} color={theme.primary} />
+                  </TouchableOpacity>
+                </View>
+              </View>
             </View>
             
             {/* QR Code - Always visible */}
@@ -1525,39 +1526,6 @@ const DataModal = ({
                 size={200}
                 backgroundColor="#ffffff"
                 color="#000000"
-              />
-              
-              {/* URL with copy button */}
-              <View style={styles.syncUrlContainer}>
-                <Text style={styles.syncUrlText} numberOfLines={2}>
-                  {shareUrl}
-                </Text>
-                <TouchableOpacity
-                  style={styles.copyIconButton}
-                  onPress={handleCopyShareUrl}
-                >
-                  <Icon name="content-copy" size={20} color={theme.primary} />
-                </TouchableOpacity>
-              </View>
-            </View>
-            
-            {/* Action button */}
-            <View style={styles.shareActionsContainer}>
-              <ModalButton
-                theme={theme}
-                variant="secondary"
-                label="Copy Share Key"
-                icon="content-copy"
-                onPress={() => {
-                  if (Platform.OS === 'web') {
-                    navigator.clipboard.writeText(shareToken);
-                  } else {
-                    const Clipboard = require('@react-native-clipboard/clipboard').default;
-                    Clipboard.setString(shareToken);
-                  }
-                  showToast({ message: 'Share key copied to clipboard!' });
-                }}
-                compact
               />
             </View>
             
