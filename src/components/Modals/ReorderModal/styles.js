@@ -83,22 +83,44 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
   },
-  reorderModalButtons: {
+  modalHeader: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
   },
-  reorderModalButton: {
-    flex: 1,
-    paddingVertical: 14,
+  closeButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    padding: 4,
+  },
+  closeButtonText: {
+    fontSize: 20,
+    color: '#999',
+  },
+  formPanel: {
+    backgroundColor: '#f9f9f9',
     borderRadius: RADIUS.md,
+    padding: 20,
+  },
+  positionSection: {
     alignItems: 'center',
   },
-  reorderModalButtonCancel: {
+  divider: {
+    height: 1,
     backgroundColor: '#e0e0e0',
+    marginVertical: 16,
   },
-  reorderModalButtonText: {
+  actionButton: {
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
   },
 });
