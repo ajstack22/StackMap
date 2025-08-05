@@ -756,7 +756,10 @@ const App = () => {
       
       // Handle abbreviated onboarding (sync URL flow)
       if (onboardingData?.isAbbreviated && onboardingData?.syncSetupPhrase) {
-        console.log('Abbreviated onboarding - will trigger sync after setup');
+        console.log('Abbreviated onboarding completed - sync already handled');
+        
+        // Clear the sync setup phrase to prevent duplicate modal
+        setSyncSetupPhrase(null);
         
         // Ensure theme is set before showing main app
         const storeState = useAppStore.getState();
@@ -767,7 +770,6 @@ const App = () => {
         
         // Set showOnboarding to false to show main app
         setShowOnboarding(false);
-        // Sync setup functionality moved to data modal
         return;
       }
       
