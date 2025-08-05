@@ -1,4 +1,5 @@
 import { useAppStore } from '../../stores';
+import { validateSyncedData } from './dataValidator';
 
 // Conflict resolution strategies
 const STRATEGIES = {
@@ -12,7 +13,6 @@ const STRATEGIES = {
 const FIELD_STRATEGIES = {
   // Arrays - merge unique items
   activities: STRATEGIES.MERGE,
-  completedActivities: STRATEGIES.MERGE,
   
   // Objects - merge properties with special handling
   users: STRATEGIES.CUSTOM,
@@ -201,25 +201,7 @@ class ConflictResolver {
   mergeValues(field, localValue, remoteValue) {
     // Array merge - combine unique items
     if (Array.isArray(localValue) && Array.isArray(remoteValue)) {
-      if (field === 'completedActivities') {
-        // For completed activities, merge by unique key
-        const mergeMap = new Map();
-        
-        // Add all remote completions first
-        for (const item of remoteValue) {
-          const key = `${item.activityId}_${item.userId}_${item.date}`;
-          mergeMap.set(key, item);
-        }
-        
-        // Add all local completions (overwrites remote if same key)
-        // This ensures local completions are never undone
-        for (const item of localValue) {
-          const key = `${item.activityId}_${item.userId}_${item.date}`;
-          mergeMap.set(key, item);
-        }
-        
-        return Array.from(mergeMap.values());
-      } else if (field === 'activities') {
+      if (field === 'activities') {
         // For activities, merge by ID and keep latest version
         const activityMap = new Map();
         
@@ -270,6 +252,12 @@ class ConflictResolver {
       if (!resolution.requiresUserInput && resolution.resolvedValue !== undefined) {
         newState[resolution.field] = resolution.resolvedValue;
       }
+    }
+    
+    // Validate the final state
+    if (!validateSyncedData(newState)) {
+      console.error('Conflict resolution resulted in invalid state');
+      throw new Error('Conflict resolution failed validation');
     }
     
     return newState;

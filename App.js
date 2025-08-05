@@ -1090,13 +1090,34 @@ const App = () => {
     }
   };
 
-  const toggleActivity = (id) => {
+  const toggleActivity = async (id) => {
     const activity = activities.find(a => a.id === id);
     const wasCompleted = activity?.completed;
     
-    const newActivities = activities.map(activity => 
-      activity.id === id ? { ...activity, completed: !activity.completed } : activity
-    );
+    // Get device ID for tracking who completed the activity
+    const deviceId = await encryptionService.getDeviceId();
+    
+    const newActivities = activities.map(activity => {
+      if (activity.id === id) {
+        if (!activity.completed) {
+          // Completing the activity - add timestamp and device info
+          return { 
+            ...activity, 
+            completed: true,
+            completedAt: Date.now(),
+            completedBy: deviceId
+          };
+        } else {
+          // Uncompleting the activity - remove timestamp and device info
+          const { completedAt, completedBy, ...activityWithoutCompletion } = activity;
+          return {
+            ...activityWithoutCompletion,
+            completed: false
+          };
+        }
+      }
+      return activity;
+    });
     setActivities(newActivities);
     
     // Update the users state to persist the change
@@ -1228,11 +1249,14 @@ const App = () => {
     }
   };
 
-  const addActivity = () => {
+  const addActivity = async () => {
     if (!activityTitle.trim()) return;
     
+    // Get device ID for enhanced activity IDs
+    const deviceId = await encryptionService.getDeviceId();
+    
     const newActivity = {
-      id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `activity_${deviceId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       text: activityTitle,
       description: activityDescription || '',
       emoji: activityEmoji,
@@ -3329,11 +3353,14 @@ const App = () => {
         showToast={showToast}
         categories={activityCategories}
         onSaveCategories={setActivityCategories}
-        onSelectActivity={(activity) => {
+        onSelectActivity={async (activity) => {
+            // Get device ID for enhanced activity IDs
+            const deviceId = await encryptionService.getDeviceId();
+            
             // Create a new activity from the template with unique ID
             const newActivity = {
               ...activity,
-              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
               completed: false,
               pinned: false,
@@ -3363,11 +3390,14 @@ const App = () => {
               duration: 2000,
             });
           }}
-          onSelectMultipleActivities={(activitiesToAdd) => {
+          onSelectMultipleActivities={async (activitiesToAdd) => {
+            // Get device ID for enhanced activity IDs
+            const deviceId = await encryptionService.getDeviceId();
+            
             // Create all new activities at once
             const newActivities = activitiesToAdd.map((activity, index) => ({
               ...activity,
-              id: `${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+              id: `${deviceId}-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
               text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
               completed: false,
               pinned: false,
@@ -3657,9 +3687,12 @@ const App = () => {
         categories={activityCategories}
         showToast={showToast}
         onSaveCategories={setActivityCategories}
-        onAddActivity={(activity) => {
+        onAddActivity={async (activity) => {
+          // Get device ID for enhanced activity IDs
+          const deviceId = await encryptionService.getDeviceId();
+          
           const newActivity = {
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
             icon: activity.emoji || activity.icon,
             completed: false,
@@ -3671,9 +3704,12 @@ const App = () => {
           setActivities([...activities, newActivity]);
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
         }}
-        onSelectActivity={(activity) => {
+        onSelectActivity={async (activity) => {
+          // Get device ID for enhanced activity IDs
+          const deviceId = await encryptionService.getDeviceId();
+          
           const newActivity = {
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
             icon: activity.emoji || activity.icon,
             completed: false,

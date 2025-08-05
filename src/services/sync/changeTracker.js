@@ -94,7 +94,6 @@ class ChangeTracker {
     const fieldsToTrack = [
       'activities',
       'users',
-      'completedActivities',
       'currentUser',
       'currentTheme',
       'bannerPosition',
@@ -203,7 +202,6 @@ class ChangeTracker {
     return {
       activities: state.activities,
       users: state.users,
-      completedActivities: state.completedActivities,
       currentUser: state.currentUser,
       currentTheme: state.currentTheme,
       bannerPosition: state.bannerPosition,

@@ -10,6 +10,7 @@ import changeTracker from './changeTracker';
 import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
+import { validateSyncedData, repairSyncedData } from './dataValidator';
 
 // Determine API URL based on environment
 const getApiBaseUrl = () => {
@@ -77,6 +78,14 @@ class SyncService {
     this.storeUnsubscribe = null;
     this.syncDebounceTimer = null;
     this.syncDebounceDelay = 5000; // 5 seconds
+    
+    // Sync lock mechanism
+    this.syncInProgress = false;
+    this.syncQueue = [];
+    
+    // Sync transaction tracking
+    this.processedTransactions = new Set();
+    this.transactionCleanupInterval = null;
     
     // Initialize network monitoring
     networkMonitor.start();
@@ -338,19 +347,38 @@ class SyncService {
       syncType = 'full';
     }
     
+    // Generate unique transaction ID
+    const transactionId = `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Check if we've already processed this transaction (shouldn't happen with unique IDs)
+    if (this.processedTransactions.has(transactionId)) {
+      console.warn('Duplicate transaction detected, skipping push');
+      return { success: false, duplicate: true };
+    }
+    
     // Add sync metadata
     const dataWithMetadata = {
       ...syncData,
       syncType,
       syncTimestamp: Date.now(),
+      transactionId,
       deviceInfo: {
         id: deviceId,
         name: deviceName
       }
     };
     
+    // Validate data before pushing
+    if (!validateSyncedData(syncData)) {
+      console.error('sync: Local data validation failed before push');
+      throw new Error('Cannot push invalid data to server');
+    }
+    
     // Encrypt the data (compression happens inside if beneficial)
     const encryptedBlob = encryptionService.encryptData(dataWithMetadata);
+    
+    // Track this transaction
+    this.processedTransactions.add(transactionId);
     
     const response = await fetch(`${API_BASE_URL}/push.php`, {
       method: 'POST',
@@ -447,36 +475,46 @@ class SyncService {
    * Sync data (pull, merge, push)
    */
   async sync() {
-    // Wait for initialization if needed
-    if (!this.initialized) {
-      await this.restoreState();
+    // Check if sync is already in progress
+    if (this.syncInProgress) {
+      console.log('sync: Sync already in progress, queueing request');
+      return new Promise((resolve, reject) => {
+        this.syncQueue.push({ resolve, reject });
+      });
     }
     
-    console.log('sync: Starting sync, enabled:', this.syncEnabled, 'syncId:', this.syncId);
+    // Set sync lock
+    this.syncInProgress = true;
     
-    if (!this.syncEnabled) {
-      throw new Error('Sync not enabled');
-    }
-
-    // Check network status first
-    if (!networkMonitor.isOnline) {
-      console.log('sync: Offline, queueing sync operation');
-      await syncQueue.enqueue({ type: 'sync', timestamp: Date.now() });
-      this.updateSyncStatus('offline', 'No network connection');
-      throw new Error('No network connection. Changes will sync when online.');
-    }
-
-    // Ensure encryption is initialized
-    if (!encryptionService.masterKey) {
-      console.log('sync: Encryption not initialized, need recovery phrase');
-      throw new Error('Encryption not initialized. Please re-enter your recovery phrase.');
-    }
-
-    // Update sync status
-    this.updateSyncStatus('syncing');
-    this.lastSyncAttempt = Date.now();
-
     try {
+      // Wait for initialization if needed
+      if (!this.initialized) {
+        await this.restoreState();
+      }
+      
+      console.log('sync: Starting sync, enabled:', this.syncEnabled, 'syncId:', this.syncId);
+      
+      if (!this.syncEnabled) {
+        throw new Error('Sync not enabled');
+      }
+
+      // Check network status first
+      if (!networkMonitor.isOnline) {
+        console.log('sync: Offline, queueing sync operation');
+        await syncQueue.enqueue({ type: 'sync', timestamp: Date.now() });
+        this.updateSyncStatus('offline', 'No network connection');
+        throw new Error('No network connection. Changes will sync when online.');
+      }
+
+      // Ensure encryption is initialized
+      if (!encryptionService.masterKey) {
+        console.log('sync: Encryption not initialized, need recovery phrase');
+        throw new Error('Encryption not initialized. Please re-enter your recovery phrase.');
+      }
+
+      // Update sync status
+      this.updateSyncStatus('syncing');
+      this.lastSyncAttempt = Date.now();
       // Pull latest data
       console.log('sync: Pulling latest data...');
       const remoteData = await this.pullData();
@@ -494,6 +532,19 @@ class SyncService {
         
         // Decrypt remote data
         const decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
+        
+        // Validate decrypted data
+        if (!validateSyncedData(decryptedData)) {
+          console.error('sync: Remote data validation failed, attempting repair...');
+          const repairedData = repairSyncedData(decryptedData);
+          
+          if (!validateSyncedData(repairedData)) {
+            throw new Error('Remote data is corrupted and cannot be repaired');
+          }
+          
+          console.log('sync: Data repaired successfully');
+          decryptedData = repairedData;
+        }
         
         // Get current local state
         const localState = this.getCurrentState();
@@ -602,6 +653,31 @@ class SyncService {
         success: false, 
         error: error.message 
       };
+    } finally {
+      // Release sync lock
+      this.syncInProgress = false;
+      
+      // Process queued sync requests
+      if (this.syncQueue.length > 0) {
+        console.log(`sync: Processing ${this.syncQueue.length} queued sync requests`);
+        const queuedRequests = this.syncQueue.splice(0); // Get all and clear queue
+        
+        // Process the next sync asynchronously to avoid recursion issues
+        setTimeout(async () => {
+          try {
+            const syncResult = await this.sync();
+            // Resolve all queued promises with the result
+            for (const { resolve } of queuedRequests) {
+              resolve(syncResult);
+            }
+          } catch (error) {
+            // Reject all queued promises with the error
+            for (const { reject } of queuedRequests) {
+              reject(error);
+            }
+          }
+        }, 0);
+      }
     }
   }
 
@@ -629,7 +705,6 @@ class SyncService {
       templates: state.activities, // activities are the templates
       currentUser: state.currentUser,
       hasCompletedOnboarding: state.hasCompletedOnboarding,
-      completedActivities: state.completedActivities,
       lastBackup: new Date().toISOString(),
       lastModified: Date.now() // Add timestamp for conflict resolution
     };
@@ -672,70 +747,39 @@ class SyncService {
       return;
     }
     
-    // Handle full sync data
-    if (data.version === 3 && data.templates !== undefined) {
-      // New export format
-      const {
-        users,
-        templates,
-        completedActivities,
-        currentUser,
-        globalSettings,
-        hasCompletedOnboarding,
-        currentDay
-      } = data;
-      
-      console.log('restoreData: Export format data - Users:', users);
-      console.log('restoreData: Export format data - Templates:', templates);
-      
-      // Get current state to preserve certain values
-      const currentState = useAppStore.getState();
-      
-      // Update store with export format data
-      const newState = {
-        activities: templates || [],
-        users: users || {},
-        completedActivities: completedActivities || [],
-        currentUser: currentUser || Object.keys(users || {})[0] || 'user_1',
-        currentTheme: globalSettings?.currentTheme || 'stackBlue',
-        bannerPosition: globalSettings?.bannerPosition || 'top',
-        soundEnabled: globalSettings?.soundEnabled !== false,
-        taskCelebration: globalSettings?.taskCelebration || 'rainbow',
-        routineCelebration: globalSettings?.routineCelebration || 'rainbow',
-        // Preserve local hasCompletedOnboarding if not explicitly set in sync data
-        hasCompletedOnboarding: hasCompletedOnboarding !== undefined ? hasCompletedOnboarding : currentState.hasCompletedOnboarding,
-        currentDay: currentDay || 'today'
-      };
-      
-      console.log('restoreData: Setting export format state:', newState);
-      useAppStore.setState(newState);
-    } else {
-      // Old format (backwards compatibility)
-      const {
-        activities,
-        users,
-        completedActivities,
-        currentUser,
-        currentTheme,
-        bannerPosition,
-        hasCompletedOnboarding
-      } = data;
-      
-      const currentState = useAppStore.getState();
-      
-      const newState = {
-        activities: activities || [],
-        users: users || {},
-        completedActivities: completedActivities || [],
-        currentUser: currentUser || 'user_1',
-        currentTheme: currentTheme || 'stackBlue',
-        bannerPosition: bannerPosition || 'top',
-        // Preserve local hasCompletedOnboarding if not explicitly set
-        hasCompletedOnboarding: hasCompletedOnboarding !== undefined ? hasCompletedOnboarding : currentState.hasCompletedOnboarding
-      };
-      
-      useAppStore.setState(newState);
-    }
+    // Handle full sync data (only support v3 format)
+    const {
+      users,
+      templates,
+      currentUser,
+      globalSettings,
+      hasCompletedOnboarding,
+      currentDay
+    } = data;
+    
+    console.log('restoreData: Export format data - Users:', users);
+    console.log('restoreData: Export format data - Templates:', templates);
+    
+    // Get current state to preserve certain values
+    const currentState = useAppStore.getState();
+    
+    // Update store with export format data
+    const newState = {
+      activities: templates || [],
+      users: users || {},
+      currentUser: currentUser || Object.keys(users || {})[0] || 'user_1',
+      currentTheme: globalSettings?.currentTheme || 'stackBlue',
+      bannerPosition: globalSettings?.bannerPosition || 'top',
+      soundEnabled: globalSettings?.soundEnabled !== false,
+      taskCelebration: globalSettings?.taskCelebration || 'rainbow',
+      routineCelebration: globalSettings?.routineCelebration || 'rainbow',
+      // Preserve local hasCompletedOnboarding if not explicitly set in sync data
+      hasCompletedOnboarding: hasCompletedOnboarding !== undefined ? hasCompletedOnboarding : currentState.hasCompletedOnboarding,
+      currentDay: currentDay || 'today'
+    };
+    
+    console.log('restoreData: Setting export format state:', newState);
+    useAppStore.setState(newState);
   }
 
   /**
@@ -746,16 +790,20 @@ class SyncService {
     const currentState = useAppStore.getState();
     const currentUsers = currentState.users || {};
     
-    // Build a map of local completed activities
+    // Build a map of local completed activities with timestamps
     const localCompletedMap = new Map();
     Object.keys(currentUsers).forEach(userId => {
       const userDays = currentUsers[userId]?.days || {};
       Object.keys(userDays).forEach(day => {
         const activities = userDays[day]?.activities || [];
         activities.forEach(activity => {
-          if (activity.completed) {
+          if (activity.completed && activity.completedAt && activity.completedBy) {
             const key = `${userId}_${day}_${activity.id}`;
-            localCompletedMap.set(key, true);
+            localCompletedMap.set(key, {
+              completed: true,
+              completedAt: activity.completedAt,
+              completedBy: activity.completedBy
+            });
           }
         });
       });
@@ -774,14 +822,40 @@ class SyncService {
         const activities = userDays[day]?.activities || [];
         mergedUsers[userId].days[day].activities = activities.map(activity => {
           const key = `${userId}_${day}_${activity.id}`;
-          // If this was completed locally, keep it completed
-          if (localCompletedMap.has(key)) {
-            return { ...activity, completed: true };
+          const localCompletion = localCompletedMap.get(key);
+          
+          // If this was completed locally
+          if (localCompletion) {
+            // If remote also has it completed, use the earlier completion time
+            if (activity.completed && activity.completedAt) {
+              const useLocal = localCompletion.completedAt < activity.completedAt;
+              return {
+                ...activity,
+                completed: true,
+                completedAt: useLocal ? localCompletion.completedAt : activity.completedAt,
+                completedBy: useLocal ? localCompletion.completedBy : activity.completedBy
+              };
+            } else {
+              // Remote doesn't have it completed, use local completion
+              return {
+                ...activity,
+                completed: true,
+                completedAt: localCompletion.completedAt,
+                completedBy: localCompletion.completedBy
+              };
+            }
           }
           return activity;
         });
       });
     });
+    
+    // Validate merged state before applying
+    const finalMergedState = { ...currentState, users: mergedUsers };
+    if (!validateSyncedData(finalMergedState)) {
+      console.error('sync: Merged data validation failed');
+      throw new Error('Data validation failed after merge');
+    }
     
     // Update with merged state
     useAppStore.setState({ users: mergedUsers });
@@ -791,6 +865,12 @@ class SyncService {
    * Apply state from conflict resolution
    */
   async applyState(state) {
+    // Validate state before applying
+    if (!validateSyncedData(state)) {
+      console.error('sync: State validation failed in applyState');
+      throw new Error('Invalid state cannot be applied');
+    }
+    
     // Apply the resolved state
     useAppStore.setState(state);
     
@@ -1000,6 +1080,9 @@ class SyncService {
     // Subscribe to store changes for immediate sync
     this.subscribeToStoreChanges();
     
+    // Start transaction cleanup
+    this.startTransactionCleanup();
+    
     // Run immediate sync
     this.syncWithQueue();
     
@@ -1007,6 +1090,64 @@ class SyncService {
     this.syncInterval = setInterval(() => {
       this.syncWithQueue();
     }, this.syncIntervalDuration);
+  }
+  
+  /**
+   * Start transaction cleanup timer
+   */
+  startTransactionCleanup() {
+    // Clear any existing interval
+    this.stopTransactionCleanup();
+    
+    // Clean up old transactions every 5 minutes
+    this.transactionCleanupInterval = setInterval(() => {
+      this.cleanupOldTransactions();
+    }, 5 * 60 * 1000); // 5 minutes
+  }
+  
+  /**
+   * Stop transaction cleanup timer
+   */
+  stopTransactionCleanup() {
+    if (this.transactionCleanupInterval) {
+      clearInterval(this.transactionCleanupInterval);
+      this.transactionCleanupInterval = null;
+    }
+  }
+  
+  /**
+   * Clean up old transactions to prevent memory leak
+   */
+  cleanupOldTransactions() {
+    const now = Date.now();
+    const maxAge = 60 * 60 * 1000; // 1 hour
+    
+    // Parse transaction IDs and remove old ones
+    const toRemove = [];
+    for (const transactionId of this.processedTransactions) {
+      try {
+        // Transaction ID format: deviceId-timestamp-random
+        const parts = transactionId.split('-');
+        if (parts.length >= 2) {
+          const timestamp = parseInt(parts[1]);
+          if (!isNaN(timestamp) && (now - timestamp) > maxAge) {
+            toRemove.push(transactionId);
+          }
+        }
+      } catch (error) {
+        // Invalid transaction ID, remove it
+        toRemove.push(transactionId);
+      }
+    }
+    
+    // Remove old transactions
+    for (const id of toRemove) {
+      this.processedTransactions.delete(id);
+    }
+    
+    if (toRemove.length > 0) {
+      console.log(`Cleaned up ${toRemove.length} old transaction IDs`);
+    }
   }
   
   /**
@@ -1079,6 +1220,9 @@ class SyncService {
       this.syncInterval = null;
       console.log('Stopped periodic sync');
     }
+    
+    // Stop transaction cleanup
+    this.stopTransactionCleanup();
     
     // Also unsubscribe from store changes
     if (this.storeUnsubscribe) {

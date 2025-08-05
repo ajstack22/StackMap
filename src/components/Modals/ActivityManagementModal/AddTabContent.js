@@ -65,8 +65,19 @@ const AddTabContent = ({
       return;
     }
 
+    // Generate enhanced activity ID with device ID
+    const deviceId = await (async () => {
+      try {
+        const encryptionService = (await import('../../../services/sync/encryptionService')).default;
+        return await encryptionService.getDeviceId();
+      } catch (error) {
+        console.warn('Could not get device ID, using fallback:', error);
+        return 'unknown';
+      }
+    })();
+    
     const activityData = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       text: activityText.trim(),
       description: activityDescription.trim(),
       icon: activityIcon,
@@ -95,8 +106,19 @@ const AddTabContent = ({
       return;
     }
 
+    // Generate enhanced activity ID with device ID
+    const deviceId = await (async () => {
+      try {
+        const encryptionService = (await import('../../../services/sync/encryptionService')).default;
+        return await encryptionService.getDeviceId();
+      } catch (error) {
+        console.warn('Could not get device ID, using fallback:', error);
+        return 'unknown';
+      }
+    })();
+    
     const activityData = {
-      id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       text: activityText.trim(),
       description: activityDescription.trim(),
       icon: activityIcon,
