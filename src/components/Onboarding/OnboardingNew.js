@@ -160,8 +160,10 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         // Get the encrypted data
         const encryptedData = await checkResponse.json();
         
-        // Initialize encryption with the recovery phrase to decrypt
-        await encryptionService.initialize(phraseToUse);
+        // Initialize encryption with the recovery phrase and syncId to decrypt
+        // Use the same fixed salt as syncService for consistency
+        const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+        await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
         
         // Decrypt the data
         decryptedData = encryptionService.decryptData(encryptedData.encrypted_blob);

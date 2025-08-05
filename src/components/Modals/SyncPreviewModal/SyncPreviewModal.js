@@ -73,7 +73,9 @@ const SyncPreviewModal = ({
       const data = await response.json();
       
       // Initialize encryption to decrypt the data
-      await encryptionService.initialize(decodedPhrase, syncId);
+      // Use the same fixed salt as syncService for consistency
+      const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+      await encryptionService.initialize(decodedPhrase, syncId, fixedSalt);
       
       // Decrypt and preview the data
       const decryptedData = encryptionService.decryptData(data.encrypted_blob);
