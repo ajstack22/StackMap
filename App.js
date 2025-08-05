@@ -530,10 +530,14 @@ const App = () => {
   // Handle sync setup from URL parameter
   useEffect(() => {
     if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
-      // Auto-open sync preview modal with sync setup
-      console.log('[App] Opening sync preview modal for sync setup with phrase:', syncSetupPhrase);
-      setSyncPreviewPhrase(syncSetupPhrase);
-      setShowSyncPreviewModal(true);
+      // Add a small delay to ensure theme is initialized
+      setTimeout(() => {
+        // Auto-open sync preview modal with sync setup
+        console.log('[App] Opening sync preview modal for sync setup with phrase:', syncSetupPhrase);
+        console.log('[App] Current theme:', currentTheme, THEMES[currentTheme]);
+        setSyncPreviewPhrase(syncSetupPhrase);
+        setShowSyncPreviewModal(true);
+      }, 100);
       
       // Clear the URL parameter
       if (Platform.OS === 'web') {
@@ -542,7 +546,7 @@ const App = () => {
       // Clear the state as well
       setSyncSetupPhrase(null);
     }
-  }, [syncSetupPhrase, isHydrated, hasCompletedOnboarding, showOnboarding]);
+  }, [syncSetupPhrase, isHydrated, hasCompletedOnboarding, showOnboarding, currentTheme]);
   
   // Animate icons when edit mode changes
   useEffect(() => {
