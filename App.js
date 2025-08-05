@@ -1758,9 +1758,6 @@ const App = () => {
     // Exit edit mode
     setIsEditMode(false);
     
-    // Close the modal
-    setShowCompleteDayModal(false);
-    
     // Show success message
     showToast({ 
       message: 'Day completed! Activities reorganized.',
@@ -2535,7 +2532,6 @@ const App = () => {
               setShowPinModal(false);
               setShowDataModal(false);
               setShowAccessModal(false);
-              setShowCompleteDayModal(false);
               setShowResetAppConfirm(false);
               
         // Show success toast
@@ -3551,8 +3547,8 @@ const App = () => {
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
       
-      {/* Add/Edit User Modal - Only render when UsersSecurityModal is not visible */}
-      {/* On iOS, this modal is rendered inside UsersSecurityModal for proper stacking */}
+      {/* Add/Edit User Modal - Only render when AccessModal is not visible */}
+      {/* On iOS, this modal is rendered inside AccessModal for proper stacking */}
       {(Platform.OS !== 'ios' || !showAccessModal) && (
         <AddUserModal
           visible={showAddUserModal}
