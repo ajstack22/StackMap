@@ -533,8 +533,8 @@ class SyncService {
         // Decrypt remote data
         let decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
         
-        // Validate decrypted data
-        if (!validateSyncedData(decryptedData)) {
+        // Validate decrypted data (skip for incremental syncs)
+        if (decryptedData.type !== 'incremental' && !validateSyncedData(decryptedData)) {
           console.error('sync: Remote data validation failed, attempting repair...');
           const repairedData = repairSyncedData(decryptedData);
           
