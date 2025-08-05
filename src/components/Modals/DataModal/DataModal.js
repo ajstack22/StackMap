@@ -513,7 +513,7 @@ const DataModal = ({
       setSyncError('');
       
       if (!recoveryInput.trim()) {
-        setSyncError('Please enter your recovery phrase');
+        setSyncError('Please enter your sync key');
         return;
       }
       
@@ -1095,7 +1095,7 @@ const DataModal = ({
                 <FormInput
                   value={recoveryInput}
                   onChangeText={setRecoveryInput}
-                  placeholder="Enter your recovery phrase"
+                  placeholder="Enter your sync key"
                   multiline
                   numberOfLines={3}
                   autoCapitalize="none"
@@ -1121,7 +1121,7 @@ const DataModal = ({
                 <ModalButton
                   theme={theme}
                   variant="secondary"
-                  label="Restore from Recovery Phrase"
+                  label="Restore from Sync Key"
                   icon="restore"
                   onPress={() => setShowRecoveryInput(true)}
                   fullWidth
@@ -1170,7 +1170,7 @@ const DataModal = ({
                 <View style={styles.recoveryPhraseCard}>
                   <Icon name="warning" size={20} color="#ff9800" />
                   <Text style={styles.recoveryPhraseWarning}>
-                    Save this recovery phrase! You'll need it to sync other devices.
+                    Save this sync key! You'll need it to sync other devices.
                   </Text>
                   <View style={styles.recoveryPhraseContainer}>
                     <Text style={styles.recoveryPhrase} selectable>
@@ -1178,95 +1178,9 @@ const DataModal = ({
                     </Text>
                   </View>
                   
-                  <View style={styles.syncActionsContainer}>
-                    {Platform.OS === 'web' ? (
-                      <>
-                        <ModalButton
-                          theme={theme}
-                          variant="primary"
-                          label="Show QR Code"
-                          icon="qr-code-2"
-                          onPress={() => setShowSyncQR(!showSyncQR)}
-                          compact
-                        />
-                        <ModalButton
-                          theme={theme}
-                          variant="secondary"
-                          label="Copy Phrase"
-                          icon="content-copy"
-                          onPress={() => {
-                            if (Platform.OS === 'web') {
-                              navigator.clipboard.writeText(syncRecoveryPhrase);
-                            } else {
-                              const Clipboard = require('@react-native-clipboard/clipboard').default;
-                              Clipboard.setString(syncRecoveryPhrase);
-                            }
-                            showToast({ message: 'Recovery phrase copied to clipboard!' });
-                          }}
-                          compact
-                        />
-                        <ModalButton
-                          theme={theme}
-                          variant="secondary"
-                          label="Copy URL"
-                          icon="link"
-                          onPress={() => {
-                            // Use the current pathname to construct the correct sync URL
-                            // Ensure path ends with trailing slash to avoid redirects
-                            const basePath = window.location.pathname.endsWith('/') 
-                              ? window.location.pathname 
-                              : window.location.pathname + '/';
-                            const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
-                            if (Platform.OS === 'web') {
-                              navigator.clipboard.writeText(syncUrl);
-                            } else {
-                              const Clipboard = require('@react-native-clipboard/clipboard').default;
-                              Clipboard.setString(syncUrl);
-                            }
-                            showToast({ message: 'Sync URL copied to clipboard!' });
-                          }}
-                          compact
-                        />
-                      </>
-                    ) : (
-                      <View style={styles.mobileSyncActions}>
-                        <ModalButton
-                          theme={theme}
-                          variant="secondary"
-                          label="Copy Phrase"
-                          icon="content-copy"
-                          onPress={() => {
-                            const Clipboard = require('@react-native-clipboard/clipboard').default;
-                            Clipboard.setString(syncRecoveryPhrase);
-                            showToast({ message: 'Recovery phrase copied to clipboard!' });
-                          }}
-                        />
-                        <ModalButton
-                          theme={theme}
-                          variant="secondary"
-                          label="Copy URL"
-                          icon="link"
-                          onPress={() => {
-                            // Use the current pathname to construct the correct sync URL
-                            // Ensure path ends with trailing slash to avoid redirects
-                            const basePath = window.location.pathname.endsWith('/') 
-                              ? window.location.pathname 
-                              : window.location.pathname + '/';
-                            const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
-                            const Clipboard = require('@react-native-clipboard/clipboard').default;
-                            Clipboard.setString(syncUrl);
-                            showToast({ message: 'Sync URL copied to clipboard!' });
-                          }}
-                          style={{ marginTop: 10 }}
-                        />
-                      </View>
-                    )}
-                  </View>
-                  
-                  {(Platform.OS !== 'web' || showSyncQR) && (
-                    <View style={styles.qrCodeContainer}>
-                      <Text style={styles.qrCodeLabel}>Sync QR Code:</Text>
-                      <QRCode
+                  {/* QR Code - Always visible */}
+                  <View style={styles.qrCodeContainer}>
+                    <QRCode
                         value={(() => {
                           // Ensure path ends with trailing slash to avoid redirects
                           const basePath = window.location.pathname.endsWith('/') 
@@ -1278,8 +1192,57 @@ const DataModal = ({
                         backgroundColor="#ffffff"
                         color="#000000"
                       />
+                    
+                    {/* URL with copy button */}
+                    <View style={styles.syncUrlContainer}>
+                      <Text style={styles.syncUrlText} numberOfLines={2}>
+                        {(() => {
+                          const basePath = window.location.pathname.endsWith('/') 
+                            ? window.location.pathname 
+                            : window.location.pathname + '/';
+                          return `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                        })()}
+                      </Text>
+                      <TouchableOpacity
+                        style={styles.copyIconButton}
+                        onPress={() => {
+                          const basePath = window.location.pathname.endsWith('/') 
+                            ? window.location.pathname 
+                            : window.location.pathname + '/';
+                          const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                          if (Platform.OS === 'web') {
+                            navigator.clipboard.writeText(syncUrl);
+                          } else {
+                            const Clipboard = require('@react-native-clipboard/clipboard').default;
+                            Clipboard.setString(syncUrl);
+                          }
+                          showToast({ message: 'Sync URL copied to clipboard!' });
+                        }}
+                      >
+                        <Icon name="content-copy" size={20} color={theme.primary} />
+                      </TouchableOpacity>
                     </View>
-                  )}
+                  </View>
+                  
+                  {/* Action button */}
+                  <View style={styles.syncActionsContainer}>
+                    <ModalButton
+                      theme={theme}
+                      variant="secondary"
+                      label="Copy Sync Key"
+                      icon="content-copy"
+                      onPress={() => {
+                        if (Platform.OS === 'web') {
+                          navigator.clipboard.writeText(syncRecoveryPhrase);
+                        } else {
+                          const Clipboard = require('@react-native-clipboard/clipboard').default;
+                          Clipboard.setString(syncRecoveryPhrase);
+                        }
+                        showToast({ message: 'Sync key copied to clipboard!' });
+                      }}
+                      compact
+                    />
+                  </View>
                   
                   <View style={styles.divider} />
                   
@@ -1300,7 +1263,7 @@ const DataModal = ({
                 <ModalButton
                   theme={theme}
                   variant="secondary"
-                  label={showRecoveryPhrase ? 'Hide Recovery Phrase' : 'Show Recovery Phrase'}
+                  label={showRecoveryPhrase ? 'Hide Sync Key' : 'Show Sync Key'}
                   icon="key"
                   onPress={() => setShowRecoveryPhrase(!showRecoveryPhrase)}
                   fullWidth
@@ -1555,78 +1518,48 @@ const DataModal = ({
               </Text>
             </View>
             
-            <View style={styles.shareActionsContainer}>
-              {Platform.OS === 'web' ? (
-                <>
-                  <ModalButton
-                    theme={theme}
-                    variant="primary"
-                    label="Show QR Code"
-                    icon="qr-code-2"
-                    onPress={() => setShowShareQR(!showShareQR)}
-                    compact
-                  />
-                  <ModalButton
-                    theme={theme}
-                    variant="secondary"
-                    label="Copy Token"
-                    icon="content-copy"
-                    onPress={() => {
-                      if (Platform.OS === 'web') {
-                        navigator.clipboard.writeText(shareToken);
-                      } else {
-                        const Clipboard = require('@react-native-clipboard/clipboard').default;
-                        Clipboard.setString(shareToken);
-                      }
-                      showToast({ message: 'Token copied to clipboard!' });
-                    }}
-                    compact
-                  />
-                  <ModalButton
-                    theme={theme}
-                    variant="secondary"
-                    label="Copy URL"
-                    icon="link"
-                    onPress={handleCopyShareUrl}
-                    compact
-                  />
-                </>
-              ) : (
-                <View style={styles.mobileShareActions}>
-                  <ModalButton
-                    theme={theme}
-                    variant="secondary"
-                    label="Copy Token"
-                    icon="content-copy"
-                    onPress={() => {
-                      const Clipboard = require('@react-native-clipboard/clipboard').default;
-                      Clipboard.setString(shareToken);
-                      showToast({ message: 'Token copied to clipboard!' });
-                    }}
-                  />
-                  <ModalButton
-                    theme={theme}
-                    variant="secondary"
-                    label="Copy URL"
-                    icon="link"
-                    onPress={handleCopyShareUrl}
-                    style={{ marginTop: 10 }}
-                  />
-                </View>
-              )}
+            {/* QR Code - Always visible */}
+            <View style={styles.qrCodeContainer}>
+              <QRCode
+                  value={shareUrl}
+                size={200}
+                backgroundColor="#ffffff"
+                color="#000000"
+              />
+              
+              {/* URL with copy button */}
+              <View style={styles.syncUrlContainer}>
+                <Text style={styles.syncUrlText} numberOfLines={2}>
+                  {shareUrl}
+                </Text>
+                <TouchableOpacity
+                  style={styles.copyIconButton}
+                  onPress={handleCopyShareUrl}
+                >
+                  <Icon name="content-copy" size={20} color={theme.primary} />
+                </TouchableOpacity>
+              </View>
             </View>
             
-            {(Platform.OS !== 'web' || showShareQR) && (
-              <View style={styles.qrCodeContainer}>
-                <Text style={styles.qrCodeLabel}>Share QR Code:</Text>
-                <QRCode
-                  value={shareUrl}
-                  size={200}
-                  backgroundColor="#ffffff"
-                  color="#000000"
-                />
-              </View>
-            )}
+            {/* Action button */}
+            <View style={styles.shareActionsContainer}>
+              <ModalButton
+                theme={theme}
+                variant="secondary"
+                label="Copy Share Key"
+                icon="content-copy"
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    navigator.clipboard.writeText(shareToken);
+                  } else {
+                    const Clipboard = require('@react-native-clipboard/clipboard').default;
+                    Clipboard.setString(shareToken);
+                  }
+                  showToast({ message: 'Share key copied to clipboard!' });
+                }}
+                compact
+              />
+            </View>
             
             <View style={styles.divider} />
             
@@ -1701,7 +1634,7 @@ const DataModal = ({
         onConfirm={handleDisableSync}
         theme={theme}
         title="Disable Sync"
-        message="This will stop syncing your data. Your local data will remain unchanged. You can re-enable sync later with your recovery phrase."
+        message="This will stop syncing your data. Your local data will remain unchanged. You can re-enable sync later with your sync key."
         confirmText="Disable"
         confirmButtonColor="#d32f2f"
         icon="sync-disabled"

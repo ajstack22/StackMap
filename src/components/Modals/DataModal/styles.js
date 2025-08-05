@@ -811,6 +811,25 @@ export const styles = StyleSheet.create({
     color: '#000',
     marginBottom: SPACING.md,
   },
+  syncUrlContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 8,
+    padding: SPACING.sm,
+  },
+  syncUrlText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginRight: SPACING.sm,
+  },
+  copyIconButton: {
+    padding: SPACING.xs,
+  },
   
   // Reset styles
   resetWarningContainer: {

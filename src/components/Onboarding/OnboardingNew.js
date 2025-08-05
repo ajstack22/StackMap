@@ -175,7 +175,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         const pullResult = await syncService.pull();
         
         if (!pullResult || !pullResult.data) {
-          throw new Error('No sync group found with this recovery phrase');
+          throw new Error('No sync group found with this sync key');
         }
         
         decryptedData = pullResult.data;
@@ -244,7 +244,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       let errorMessage = 'Failed to fetch sync data. Please try again.';
       
       if (error.message.includes('404') || error.message.includes('No sync group')) {
-        errorMessage = 'No sync group found with this recovery phrase.';
+        errorMessage = 'No sync group found with this sync key.';
       } else if (error.message.includes('Network')) {
         errorMessage = 'Network error. Please check your connection and try again.';
       }
@@ -842,8 +842,8 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             const checkResponse = await fetch(checkUrl);
             
             if (checkResponse.status === 404) {
-              // Sync group doesn't exist - invalid recovery phrase for joining
-              throw new Error('Invalid recovery phrase - no sync group found');
+              // Sync group doesn't exist - invalid sync key for joining
+              throw new Error('Invalid sync key - no sync group found');
             }
             
             // Now initialize with the recovery phrase
@@ -873,8 +873,8 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             }
           } catch (error) {
             // Stay on sync screen with error message
-            if (error.message.includes('Invalid recovery phrase')) {
-              setSyncError('Invalid recovery phrase. Please check and try again.');
+            if (error.message.includes('Invalid sync key')) {
+              setSyncError('Invalid sync key. Please check and try again.');
             } else if (error.message.includes('Network')) {
               setSyncError('Network error. Please check your connection and try again.');
             } else {
@@ -970,7 +970,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                 </View>
 
                 <Text style={styles.screenSubtitle}>
-                  {syncMode === 'join' ? 'Connect to your existing sync group' : 'Create a sync code for your device'}
+                  {syncMode === 'join' ? 'Connect to your existing sync group' : 'Create a sync key for your device'}
                 </Text>
                 
                 {syncMode === 'join' ? (
@@ -1003,7 +1003,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                       fontSize: isTablet() ? 16 : 14,
                       borderColor: syncError ? COLORS.error : COLORS.gray[300],
                     }]}
-                    placeholder="Enter your recovery phrase"
+                    placeholder="Enter your sync key"
                     placeholderTextColor={COLORS.gray[400]}
                     value={recoveryInput}
                     onChangeText={(text) => {
@@ -1057,7 +1057,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                       <View style={styles.loadingContainer}>
                         <ActivityIndicator size="large" color={THEMES.stackBlue.primary} />
                         <Text style={[styles.loadingText, { color: defaultTheme.text }]}>
-                          Creating sync code...
+                          Creating sync key...
                         </Text>
                       </View>
                     ) : syncError ? (
@@ -1074,7 +1074,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     ) : newSyncData ? (
                       <>
                         <Text style={[styles.description, { color: defaultTheme.text }]}>
-                          Use this sync code on your device to connect your existing StackMap data to the cloud.
+                          Use this sync key on your device to connect your existing StackMap data to the cloud.
                         </Text>
 
                         {/* QR Code */}
