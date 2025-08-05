@@ -12,13 +12,13 @@ export const validateSyncedData = (data) => {
   try {
     // Check if data is an object
     if (!data || typeof data !== 'object') {
-      console.error('Data validation failed: Data is not an object');
+      console.error('Data validation failed: Data is not an object', data);
       return false;
     }
 
     // Check required top-level fields
     if (!data.users || typeof data.users !== 'object') {
-      console.error('Data validation failed: Missing or invalid users object');
+      console.error('Data validation failed: Missing or invalid users object', data);
       return false;
     }
 
