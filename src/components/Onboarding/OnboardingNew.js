@@ -54,7 +54,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     card: '#F5F5F5'
   };
   
-  const [currentScreen, setCurrentScreen] = useState('welcome');
+  const [currentScreen, setCurrentScreen] = useState(isAbbreviated && syncSetupPhrase ? 'syncSetup' : 'welcome');
   const [userName, setUserName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState('😊');
   const [users, setUsers] = useState([]);
@@ -88,6 +88,14 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       setSyncMode('join');
     }
   }, [syncSetupPhrase]);
+
+  // Auto-fetch sync preview when on sync setup screen with URL
+  useEffect(() => {
+    if (currentScreen === 'syncSetup' && syncSetupPhrase && !syncLoading && !syncPreviewData && !syncError) {
+      // Automatically fetch the sync preview
+      fetchSyncPreview();
+    }
+  }, [currentScreen, syncSetupPhrase]);
   
   // Fade in on mount
   useEffect(() => {

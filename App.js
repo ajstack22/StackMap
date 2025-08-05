@@ -531,7 +531,9 @@ const App = () => {
   // Handle sync setup from URL parameter
   useEffect(() => {
     if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding && currentTheme) {
-      // Add a small delay to ensure everything is initialized
+      // Only show sync preview modal if user has already completed onboarding
+      // (returning user with sync URL)
+      // If they're a new user, onboarding will handle the sync
       setTimeout(() => {
         // Auto-open sync preview modal with sync setup
         console.log('[App] Opening sync preview modal for sync setup with phrase:', syncSetupPhrase);
