@@ -7,6 +7,7 @@ import {
   TextInput,
   ScrollView,
   Platform,
+  Animated,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -66,7 +67,7 @@ const LibraryTabContent = ({
   categories = DEFAULT_CATEGORIES,
   onSaveCategories,
   onSelectActivity,
-  onChooseActivity,
+  onSelectMultipleActivities,
   showToast,
   loading,
 }) => {
@@ -81,10 +82,36 @@ const LibraryTabContent = ({
   const [itemToDelete, setItemToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [notification, setNotification] = useState(null);
+  const notificationOpacity = useRef(new Animated.Value(0)).current;
+  const notificationTimer = useRef(null);
 
   useEffect(() => {
     setLocalCategories(categories || DEFAULT_CATEGORIES);
   }, [categories]);
+
+  const showNotification = (message) => {
+    setNotification(message);
+    Animated.timing(notificationOpacity, {
+      toValue: 1,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+    
+    if (notificationTimer.current) {
+      clearTimeout(notificationTimer.current);
+    }
+    
+    notificationTimer.current = setTimeout(() => {
+      Animated.timing(notificationOpacity, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start(() => {
+        setNotification(null);
+      });
+    }, 2000);
+  };
 
   const toggleCategory = (categoryId) => {
     setExpandedCategories(prev => ({
@@ -283,19 +310,19 @@ const LibraryTabContent = ({
 
     return (
       <View style={styles.activityItem}>
-        <TouchableOpacity
-          style={styles.activityContent}
-          onPress={() => onSelectActivity(activity)}
-        >
+        <View style={styles.activityContent}>
           <Text style={styles.activityEmoji}>{activity.emoji}</Text>
           <Text style={styles.activityName}>{activity.name}</Text>
-        </TouchableOpacity>
+        </View>
         <View style={styles.activityActions}>
           <TouchableOpacity
-            onPress={() => onChooseActivity(activity, categoryId)}
-            style={styles.chooseButton}
+            onPress={() => {
+              onSelectActivity(activity);
+              showNotification(`Added: ${activity.emoji} ${activity.name}`);
+            }}
+            style={styles.actionButton}
           >
-            <Text style={styles.chooseButtonText}>Choose</Text>
+            <Icon name="add-circle" size={20} color={theme.primary} />
           </TouchableOpacity>
           <TouchableOpacity
             onPress={() => setEditingActivity(`${categoryId}-${activity.id}`)}
@@ -350,8 +377,29 @@ const LibraryTabContent = ({
             <Text style={styles.categoryName}>{category.name}</Text>
           )}
           <Text style={styles.activityCount}>
-            {category.activities?.length || 0}
+            ({category.activities?.length || 0})
           </Text>
+          {category.activities && category.activities.length > 0 && (
+            <TouchableOpacity
+              onPress={() => {
+                // Add all activities from this category
+                if (onSelectMultipleActivities) {
+                  // Use batch method for proper state updates
+                  onSelectMultipleActivities(category.activities);
+                  showNotification(`Added ${category.activities.length} activities!`);
+                } else if (onSelectActivity) {
+                  // Fallback to individual adds (won't work properly)
+                  category.activities.forEach(activity => {
+                    onSelectActivity(activity);
+                  });
+                  showNotification(`Added ${category.activities.length} activities!`);
+                }
+              }}
+              style={styles.addAllButton}
+            >
+              <Text style={styles.addAllButtonText}>Add All</Text>
+            </TouchableOpacity>
+          )}
           {category.id !== 'my-templates' && (
             <>
               <TouchableOpacity
@@ -433,6 +481,18 @@ const LibraryTabContent = ({
 
   return (
     <View style={{ flex: 1 }}>
+      {/* Inline Notification */}
+      {notification && (
+        <Animated.View
+          style={[
+            styles.notification,
+            { opacity: notificationOpacity },
+          ]}
+        >
+          <Text style={styles.notificationText}>{notification}</Text>
+        </Animated.View>
+      )}
+      
       <View style={styles.searchContainer}>
         <FormInput
           placeholder="Search activities..."

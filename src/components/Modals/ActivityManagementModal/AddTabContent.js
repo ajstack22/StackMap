@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { FormInput, ModalFooter } from '../../ModalUtilities';
+import { FormInput } from '../../ModalUtilities';
 import EmojiPicker from '../../EmojiPicker';
 import TimePicker from '../../TimePicker';
 import { styles } from './styles';
@@ -162,7 +162,7 @@ const AddTabContent = ({
         style={{ flex: 1 }}
       >
       <View style={styles.addFormContainer}>
-        {/* Main Activity Details Panel */}
+        {/* Single Consolidated Panel */}
         <View style={styles.formPanel}>
           {/* Activity Name */}
           <View style={styles.formSection}>
@@ -203,7 +203,7 @@ const AddTabContent = ({
           </View>
 
           {/* Time (Optional) */}
-          <View style={[styles.formSection, { marginBottom: 0 }]}>
+          <View style={styles.formSection}>
             <Text style={styles.formLabel}>Time (Optional)</Text>
             <TimePicker
               value={activityTime}
@@ -213,91 +213,102 @@ const AddTabContent = ({
               error={errors.time}
             />
           </View>
-        </View>
 
-        {/* Save to Library Panel */}
-        <View style={styles.formPanel}>
-          <TouchableOpacity
-            style={styles.checkboxContainer}
-            onPress={() => setSaveToLibrary(!saveToLibrary)}
-          >
-            <View style={[styles.checkbox, saveToLibrary && styles.checkboxChecked]}>
-              {saveToLibrary && <Icon name="check" size={16} color="white" />}
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Save to Library */}
+          <View style={styles.formSection}>
+            <TouchableOpacity
+              style={styles.checkboxContainer}
+              onPress={() => setSaveToLibrary(!saveToLibrary)}
+            >
+              <View style={[styles.checkbox, saveToLibrary && styles.checkboxChecked]}>
+                {saveToLibrary && <Icon name="check" size={16} color="white" />}
+              </View>
+              <Text style={styles.checkboxLabel}>Save to Activity Library</Text>
+            </TouchableOpacity>
+
+            {saveToLibrary && (
+              <View style={styles.categorySelector}>
+                <Text style={styles.formLabel}>Category</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  {(categories || []).map(category => (
+                    <TouchableOpacity
+                      key={category.id}
+                      style={[
+                        styles.categoryChip,
+                        selectedCategory === category.id && styles.categoryChipActive
+                      ]}
+                      onPress={() => setSelectedCategory(category.id)}
+                    >
+                      <Text style={[
+                        styles.categoryChipText,
+                        selectedCategory === category.id && styles.categoryChipTextActive
+                      ]}>
+                        {category.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Quick Templates */}
+          <View style={styles.formSection}>
+            <Text style={[styles.formLabel, { marginBottom: 12 }]}>Quick Templates</Text>
+            <View style={styles.quickTemplates}>
+              {[
+                { icon: '🏃', text: 'Exercise' },
+                { icon: '📚', text: 'Reading' },
+                { icon: '🧹', text: 'Chores' },
+                { icon: '🎮', text: 'Play Time' },
+              ].map((template, index) => (
+                <TouchableOpacity
+                  key={index}
+                  style={styles.quickTemplate}
+                  onPress={() => {
+                    setActivityText(template.text);
+                    setActivityIcon(template.icon);
+                  }}
+                >
+                  <Text style={styles.quickTemplateIcon}>{template.icon}</Text>
+                  <Text style={styles.quickTemplateText}>{template.text}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <Text style={styles.checkboxLabel}>Save to Activity Library</Text>
-          </TouchableOpacity>
+          </View>
 
-          {saveToLibrary && (
-            <View style={styles.categorySelector}>
-              <Text style={styles.formLabel}>Category</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                {(categories || []).map(category => (
-                  <TouchableOpacity
-                    key={category.id}
-                    style={[
-                      styles.categoryChip,
-                      selectedCategory === category.id && styles.categoryChipActive
-                    ]}
-                    onPress={() => setSelectedCategory(category.id)}
-                  >
-                    <Text style={[
-                      styles.categoryChipText,
-                      selectedCategory === category.id && styles.categoryChipTextActive
-                    ]}>
-                      {category.name}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-          )}
-        </View>
+          {/* Divider */}
+          <View style={styles.divider} />
 
-        {/* Quick Templates Panel */}
-        <View style={styles.formPanel}>
-          <Text style={[styles.formLabel, { marginBottom: 12 }]}>Quick Templates</Text>
-          <View style={styles.quickTemplates}>
-            {[
-              { icon: '🏃', text: 'Exercise' },
-              { icon: '📚', text: 'Reading' },
-              { icon: '🧹', text: 'Chores' },
-              { icon: '🎮', text: 'Play Time' },
-            ].map((template, index) => (
-              <TouchableOpacity
-                key={index}
-                style={styles.quickTemplate}
-                onPress={() => {
-                  setActivityText(template.text);
-                  setActivityIcon(template.icon);
-                }}
-              >
-                <Text style={styles.quickTemplateIcon}>{template.icon}</Text>
-                <Text style={styles.quickTemplateText}>{template.text}</Text>
-              </TouchableOpacity>
-            ))}
+          {/* Action Buttons */}
+          <View style={[styles.formSection, { marginBottom: 0 }]}>
+            <TouchableOpacity
+              style={[styles.actionButton, { backgroundColor: theme.primary }]}
+              onPress={handleSaveAndReturn}
+              disabled={loading}
+            >
+              <Icon name="check" size={20} color="white" />
+              <Text style={styles.actionButtonText}>Add Activity</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.actionButton, styles.secondaryButton]}
+              onPress={handleSaveAndContinue}
+              disabled={loading}
+            >
+              <Icon name="add" size={20} color={theme.primary} />
+              <Text style={[styles.actionButtonText, { color: theme.primary }]}>Add & Continue</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </View>
       </ScrollView>
-
-      {/* Action Buttons */}
-      <ModalFooter
-        theme={theme}
-        primaryButton={{
-          label: 'Save & Return',
-          icon: 'check',
-          onPress: handleSaveAndReturn,
-          disabled: loading
-        }}
-        secondaryButton={{
-          label: 'Save & Continue',
-          icon: 'add',
-          onPress: handleSaveAndContinue,
-          disabled: loading
-        }}
-        loading={loading}
-        showOnDesktop={true}
-      />
 
       {/* Emoji Picker Modal */}
       {showEmojiPicker && (

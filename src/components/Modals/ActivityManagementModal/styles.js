@@ -14,7 +14,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
     marginVertical: SPACING.sm,
     ...(!IS_MOBILE && {
-      maxWidth: 800,
+      maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
     }),
@@ -25,7 +25,7 @@ export const styles = StyleSheet.create({
     paddingTop: IS_MOBILE ? 12 : 20,
     paddingBottom: 10,
     ...(!IS_MOBILE && {
-      maxWidth: 800,
+      maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
     }),
@@ -34,7 +34,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: IS_MOBILE ? 12 : 20,
     paddingBottom: 100,
     ...(!IS_MOBILE && {
-      maxWidth: 800,
+      maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
     }),
@@ -124,6 +124,18 @@ export const styles = StyleSheet.create({
     borderRadius: 16,
   },
   chooseButtonText: {
+    color: 'white',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  addAllButton: {
+    backgroundColor: '#4CAF50',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    marginRight: 8,
+  },
+  addAllButtonText: {
     color: 'white',
     fontSize: 13,
     fontWeight: '600',
@@ -225,6 +237,11 @@ export const styles = StyleSheet.create({
   addFormContainer: {
     paddingHorizontal: IS_MOBILE ? 12 : 20,
     paddingVertical: IS_MOBILE ? 12 : 20,
+    ...(!IS_MOBILE && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
   },
   formPanel: {
     backgroundColor: 'white',
@@ -337,5 +354,68 @@ export const styles = StyleSheet.create({
   quickTemplateText: {
     fontSize: 14,
     color: '#000',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: RADIUS.lg,
+    marginBottom: 12,
+    gap: 8,
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    } : Platform.OS === 'android' ? {
+      elevation: 2,
+    } : {
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    }),
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  secondaryButton: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 20,
+    marginHorizontal: -20,
+  },
+  notification: {
+    position: 'absolute',
+    top: 20,
+    left: 20,
+    right: 20,
+    backgroundColor: '#4CAF50',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: RADIUS.md,
+    zIndex: 9999,
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.25,
+      shadowRadius: 4,
+    } : Platform.OS === 'android' ? {
+      elevation: 5,
+    } : {
+      boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+    }),
+  },
+  notificationText: {
+    color: 'white',
+    fontSize: 14,
+    fontWeight: '600',
+    textAlign: 'center',
   },
 });

@@ -12,6 +12,7 @@ const ActivityManagementModal = ({
   categories,
   onSaveCategories,
   onSelectActivity,
+  onSelectMultipleActivities,
   onAddActivity,
   initialTab = 0,
   selectedCategory = null,
@@ -124,7 +125,7 @@ const ActivityManagementModal = ({
           categories={categories}
           onSaveCategories={onSaveCategories}
           onSelectActivity={onSelectActivity}
-          onChooseActivity={handleSelectFromLibrary}
+          onSelectMultipleActivities={onSelectMultipleActivities}
           showToast={showToast}
           loading={loading}
         />

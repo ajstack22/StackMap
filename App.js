@@ -3784,7 +3784,7 @@ const App = () => {
           const newActivity = {
             id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
-            icon: activity.emoji || activity.icon,
+            emoji: activity.emoji || activity.icon || DEFAULT_ACTIVITY_EMOJI,
             completed: false,
             pinned: false,
             deleted: false,
@@ -3792,6 +3792,25 @@ const App = () => {
           };
           setActivities([...activities, newActivity]);
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
+        }}
+        onSelectMultipleActivities={async (activitiesToAdd) => {
+          // Get device ID for enhanced activity IDs
+          const deviceId = await encryptionService.getDeviceId();
+          
+          // Create all new activities at once
+          const newActivities = activitiesToAdd.map((activity, index) => ({
+            id: `${deviceId}-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
+            text: activity.name || activity.text || '',
+            emoji: activity.emoji || activity.icon || DEFAULT_ACTIVITY_EMOJI,
+            completed: false,
+            pinned: false,
+            deleted: false,
+            type: 'task'
+          }));
+          
+          // Add all new activities at once
+          setActivities([...activities, ...newActivities]);
+          showToast({ message: `Added ${newActivities.length} activities to today!` });
         }}
         initialTab={activityManagementActiveTab}
       />

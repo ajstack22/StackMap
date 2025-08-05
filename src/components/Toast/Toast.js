@@ -93,6 +93,8 @@ const styles = StyleSheet.create({
     right: 0,
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
+    zIndex: 99999,
+    elevation: 99999, // For Android
   },
   toast: {
     flexDirection: 'row',
