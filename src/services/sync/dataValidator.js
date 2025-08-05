@@ -132,8 +132,10 @@ const validateActivity = (activity) => {
     return false;
   }
 
-  if (!activity.text || typeof activity.text !== 'string') {
-    console.error('Activity missing or invalid text:', activity);
+  // Check for text field (handle both 'text' and 'name' properties)
+  const activityText = activity.text || activity.name;
+  if (!activityText || typeof activityText !== 'string') {
+    console.error('Activity missing or invalid text/name:', activity);
     return false;
   }
 
@@ -211,8 +213,25 @@ export const repairSyncedData = (data) => {
           dayData.activities = [];
         }
 
-        // Filter out invalid activities
-        dayData.activities = dayData.activities.filter(activity => {
+        // Filter out invalid activities and repair them
+        dayData.activities = dayData.activities.map(activity => {
+          if (!activity || typeof activity !== 'object') return null;
+          
+          // Ensure text field exists (handle both 'text' and 'name')
+          if (!activity.text && activity.name) {
+            activity.text = activity.name;
+          }
+          
+          // Ensure required fields with defaults
+          return {
+            ...activity,
+            id: activity.id || `repaired_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            text: activity.text || activity.name || 'Untitled Activity',
+            completed: typeof activity.completed === 'boolean' ? activity.completed : false,
+            pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false
+          };
+        }).filter(activity => {
+          // Filter out null activities and validate
           return activity && 
                  activity.id && 
                  activity.text && 
