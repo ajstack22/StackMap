@@ -303,33 +303,30 @@ const SyncPreviewModal = ({
               </Text>
             </View>
           )}
+          {/* Action Panel */}
+          {connectionStatus === 'connected' && syncData && (
+            <View style={styles.actionPanel}>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  { backgroundColor: theme?.primary || '#5C7E9D' },
+                  loading && styles.disabledButton
+                ]}
+                onPress={handleConfirm}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <Icon name="file-download" size={20} color="white" />
+                    <Text style={styles.actionButtonText}>Import This Data</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
         </ScrollView>
-
-        <View style={styles.footer}>
-          <TouchableOpacity
-            style={[styles.button, styles.secondaryButton]}
-            onPress={onClose}
-            disabled={loading}
-          >
-            <Text style={styles.secondaryButtonText}>Cancel</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.button, 
-              styles.primaryButton,
-              { backgroundColor: theme?.primary || '#5C7E9D' },
-              (loading || connectionStatus !== 'connected') && styles.disabledButton
-            ]}
-            onPress={handleConfirm}
-            disabled={loading || connectionStatus !== 'connected'}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <Text style={styles.primaryButtonText}>Continue</Text>
-            )}
-          </TouchableOpacity>
-        </View>
       </View>
     </View>
   );

@@ -133,38 +133,24 @@ export const styles = StyleSheet.create({
     marginTop: SPACING.md,
     fontSize: TYPOGRAPHY.sizes.md,
   },
-  footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    padding: SPACING.lg,
-    gap: SPACING.md,
+  actionPanel: {
+    marginTop: SPACING.lg,
+    paddingTop: SPACING.lg,
     borderTopWidth: 1,
     borderTopColor: '#e5e7eb',
   },
-  button: {
-    flex: 1,
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
     borderRadius: RADIUS.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 44,
-  },
-  primaryButton: {
+    gap: SPACING.sm,
     ...SHADOWS.level1,
   },
-  secondaryButton: {
-    backgroundColor: '#f3f4f6',
-    borderWidth: 1,
-    borderColor: '#e5e7eb',
-  },
-  primaryButtonText: {
+  actionButtonText: {
     color: 'white',
-    fontSize: TYPOGRAPHY.sizes.md,
-    fontWeight: TYPOGRAPHY.weights.semibold || '600',
-  },
-  secondaryButtonText: {
-    color: '#374151',
     fontSize: TYPOGRAPHY.sizes.md,
     fontWeight: TYPOGRAPHY.weights.semibold || '600',
   },
