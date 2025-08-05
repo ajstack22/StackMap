@@ -135,7 +135,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       
       // For preview, we need to fetch without device ID or use a temporary one
       // Try to fetch sync data - for new devices, we might get 404 which is expected
-      const checkUrl = `${syncService.API_BASE_URL}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
+      const checkUrl = `${syncService.getApiUrl()}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
       const checkResponse = await fetch(checkUrl);
       
       let decryptedData;
@@ -797,7 +797,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             const deviceId = await syncService.encryptionService.getDeviceId();
             
             // Try to fetch existing sync data
-            const checkUrl = `${syncService.API_BASE_URL}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
+            const checkUrl = `${syncService.getApiUrl()}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
             const checkResponse = await fetch(checkUrl);
             
             if (checkResponse.status === 404) {

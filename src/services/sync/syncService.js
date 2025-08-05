@@ -1917,6 +1917,13 @@ class SyncService {
       throw error;
     }
   }
+  
+  /**
+   * Get the API URL for sync operations
+   */
+  getApiUrl() {
+    return API_BASE_URL;
+  }
 }
 
 const syncService = new SyncService();
