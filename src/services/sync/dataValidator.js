@@ -139,14 +139,14 @@ const validateActivity = (activity) => {
     return false;
   }
 
-  // Check boolean fields
-  if (typeof activity.completed !== 'boolean') {
-    console.error('Activity missing or invalid completed flag:', activity);
+  // Check boolean fields - allow undefined for repair to fix
+  if (activity.completed !== undefined && typeof activity.completed !== 'boolean') {
+    console.error('Activity has invalid completed flag:', activity);
     return false;
   }
 
-  if (typeof activity.pinned !== 'boolean') {
-    console.error('Activity missing or invalid pinned flag:', activity);
+  if (activity.pinned !== undefined && typeof activity.pinned !== 'boolean') {
+    console.error('Activity has invalid pinned flag:', activity);
     return false;
   }
 
