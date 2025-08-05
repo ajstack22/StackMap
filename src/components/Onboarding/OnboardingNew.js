@@ -14,6 +14,7 @@ import {
   ActivityIndicator,
   Linking,
   Clipboard,
+  Alert,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -201,16 +202,21 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       }
       
       // Show error and exit onboarding
-      Alert.alert(
-        'Sync Error',
-        errorMessage,
-        [
-          { 
-            text: 'OK', 
-            onPress: () => onComplete({ isAbbreviated: true })
-          }
-        ]
-      );
+      if (Platform.OS === 'web') {
+        window.alert(errorMessage);
+        onComplete({ isAbbreviated: true });
+      } else {
+        Alert.alert(
+          'Sync Error',
+          errorMessage,
+          [
+            { 
+              text: 'OK', 
+              onPress: () => onComplete({ isAbbreviated: true })
+            }
+          ]
+        );
+      }
     }
   };
 
