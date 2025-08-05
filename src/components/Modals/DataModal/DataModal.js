@@ -1212,7 +1212,10 @@ const DataModal = ({
                           icon="link"
                           onPress={() => {
                             // Use the current pathname to construct the correct sync URL
-                            const basePath = window.location.pathname.replace(/\/$/, ''); // Remove trailing slash
+                            // Ensure path ends with trailing slash to avoid redirects
+                            const basePath = window.location.pathname.endsWith('/') 
+                              ? window.location.pathname 
+                              : window.location.pathname + '/';
                             const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
                             if (Platform.OS === 'web') {
                               navigator.clipboard.writeText(syncUrl);
@@ -1245,7 +1248,10 @@ const DataModal = ({
                           icon="link"
                           onPress={() => {
                             // Use the current pathname to construct the correct sync URL
-                            const basePath = window.location.pathname.replace(/\/$/, ''); // Remove trailing slash
+                            // Ensure path ends with trailing slash to avoid redirects
+                            const basePath = window.location.pathname.endsWith('/') 
+                              ? window.location.pathname 
+                              : window.location.pathname + '/';
                             const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
                             const Clipboard = require('@react-native-clipboard/clipboard').default;
                             Clipboard.setString(syncUrl);
@@ -1262,7 +1268,10 @@ const DataModal = ({
                       <Text style={styles.qrCodeLabel}>Sync QR Code:</Text>
                       <QRCode
                         value={(() => {
-                          const basePath = window.location.pathname.replace(/\/$/, '');
+                          // Ensure path ends with trailing slash to avoid redirects
+                          const basePath = window.location.pathname.endsWith('/') 
+                            ? window.location.pathname 
+                            : window.location.pathname + '/';
                           return `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
                         })()}
                         size={200}
