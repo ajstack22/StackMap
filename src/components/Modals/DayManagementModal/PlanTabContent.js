@@ -231,12 +231,13 @@ const PlanTabContent = ({
           </View>
           </View>
 
-          {/* Divider */}
-          <View style={styles.divider} />
-
           {/* Day Selection - only show when view mode includes tomorrow */}
           {viewMode === 'both' && (
-          <View style={styles.planSelectionSection}>
+          <>
+            {/* Divider */}
+            <View style={styles.divider} />
+            
+            <View style={styles.planSelectionSection}>
             <Text style={styles.planSectionTitle}>Planning Day</Text>
             <Text style={styles.planSectionDescription}>
               Which day are you planning?
@@ -260,6 +261,7 @@ const PlanTabContent = ({
               </TouchableOpacity>
             </View>
           </View>
+          </>
           )}
 
           {/* Divider */}
