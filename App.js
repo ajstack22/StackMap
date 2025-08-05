@@ -528,12 +528,18 @@ const App = () => {
   // Handle sync setup from URL parameter
   useEffect(() => {
     if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
-      // Sync setup functionality moved to data modal
-      // TODO: Auto-open data modal for sync setup
+      // Auto-open data modal with sync setup
+      console.log('[App] Opening data modal for sync setup with phrase:', syncSetupPhrase);
+      setShowDataModal(true);
+      // Store the sync phrase for the data modal to use
+      window.pendingSyncPhrase = syncSetupPhrase;
+      
       // Clear the URL parameter
       if (Platform.OS === 'web') {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
+      // Clear the state as well
+      setSyncSetupPhrase(null);
     }
   }, [syncSetupPhrase, isHydrated, hasCompletedOnboarding, showOnboarding]);
   

@@ -13,6 +13,7 @@ const ENCRYPTION_VERSION = 2; // Bumped for compression support
 const SALT_LENGTH = 16;
 const KEY_LENGTH = 32;
 const COMPRESSION_THRESHOLD = 1024; // Only compress if data > 1KB
+const KEY_DERIVATION_ITERATIONS = 100000; // PBKDF2-like iterations for security
 
 class EncryptionService {
   constructor() {
@@ -47,10 +48,19 @@ class EncryptionService {
     combined.set(phraseBytes);
     combined.set(salt, phraseBytes.length);
     
-    // Hash multiple times for key stretching
+    // Hash multiple times for key stretching (PBKDF2-like)
     let key = nacl.hash(combined);
-    for (let i = 0; i < 1000; i++) {
+    
+    // Log progress for long operation (only in development)
+    const logInterval = KEY_DERIVATION_ITERATIONS / 10;
+    
+    for (let i = 0; i < KEY_DERIVATION_ITERATIONS; i++) {
       key = nacl.hash(key);
+      
+      // Log progress in development mode
+      if (__DEV__ && i % logInterval === 0 && i > 0) {
+        console.log(`Key derivation progress: ${Math.round((i / KEY_DERIVATION_ITERATIONS) * 100)}%`);
+      }
     }
     
     // Take first 32 bytes as the key

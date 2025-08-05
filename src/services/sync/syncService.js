@@ -10,7 +10,7 @@ import changeTracker from './changeTracker';
 import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
-import { validateSyncedData, repairSyncedData } from './dataValidator';
+import { validateSyncedData, repairSyncedData, validateIncrementalSync } from './dataValidator';
 
 // Determine API URL based on environment
 const getApiBaseUrl = () => {
@@ -533,17 +533,27 @@ class SyncService {
         // Decrypt remote data
         let decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
         
-        // Validate decrypted data (skip for incremental syncs)
-        if (decryptedData.type !== 'incremental' && !validateSyncedData(decryptedData)) {
-          console.error('sync: Remote data validation failed, attempting repair...');
-          const repairedData = repairSyncedData(decryptedData);
-          
-          if (!validateSyncedData(repairedData)) {
-            throw new Error('Remote data is corrupted and cannot be repaired');
+        // Validate decrypted data based on type
+        if (decryptedData.type === 'incremental') {
+          // Validate incremental sync data
+          if (!validateIncrementalSync(decryptedData)) {
+            console.error('sync: Incremental sync data validation failed');
+            throw new Error('Invalid incremental sync data received from server');
           }
-          
-          console.log('sync: Data repaired successfully');
-          decryptedData = repairedData;
+          console.log('sync: Incremental sync data validated successfully');
+        } else {
+          // Validate full sync data
+          if (!validateSyncedData(decryptedData)) {
+            console.error('sync: Remote data validation failed, attempting repair...');
+            const repairedData = repairSyncedData(decryptedData);
+            
+            if (!validateSyncedData(repairedData)) {
+              throw new Error('Remote data is corrupted and cannot be repaired');
+            }
+            
+            console.log('sync: Data repaired successfully');
+            decryptedData = repairedData;
+          }
         }
         
         // Get current local state

@@ -263,7 +263,112 @@ export const repairSyncedData = (data) => {
   }
 };
 
+/**
+ * Validate incremental sync data
+ * @param {Object} incrementalData - The incremental sync data to validate
+ * @returns {boolean} True if valid, false otherwise
+ */
+export const validateIncrementalSync = (incrementalData) => {
+  try {
+    // Check if data is an object
+    if (!incrementalData || typeof incrementalData !== 'object') {
+      console.error('Incremental sync validation failed: Data is not an object');
+      return false;
+    }
+
+    // Check required fields for incremental sync
+    if (incrementalData.type !== 'incremental') {
+      console.error('Incremental sync validation failed: Type is not "incremental"');
+      return false;
+    }
+
+    if (!incrementalData.timestamp || typeof incrementalData.timestamp !== 'number') {
+      console.error('Incremental sync validation failed: Invalid timestamp');
+      return false;
+    }
+
+    // Validate patch if present
+    if (incrementalData.patch) {
+      if (typeof incrementalData.patch !== 'object') {
+        console.error('Incremental sync validation failed: Patch is not an object');
+        return false;
+      }
+
+      // Validate patch contents based on field type
+      for (const [field, value] of Object.entries(incrementalData.patch)) {
+        switch (field) {
+          case 'users':
+            if (value && typeof value === 'object') {
+              // Validate each user in the patch
+              for (const [userId, user] of Object.entries(value)) {
+                if (!validateUser(userId, user)) {
+                  console.error(`Incremental sync validation failed: Invalid user ${userId} in patch`);
+                  return false;
+                }
+              }
+            }
+            break;
+          
+          case 'activities':
+            if (value && Array.isArray(value)) {
+              // Validate each activity in the patch
+              for (const activity of value) {
+                if (!validateActivity(activity)) {
+                  console.error('Incremental sync validation failed: Invalid activity in patch');
+                  return false;
+                }
+              }
+            }
+            break;
+          
+          case 'currentTheme':
+            if (!validateTheme(value)) {
+              console.error('Incremental sync validation failed: Invalid theme in patch');
+              return false;
+            }
+            break;
+          
+          // For scalar fields, just ensure they're not undefined
+          case 'currentUser':
+          case 'bannerPosition':
+          case 'soundEnabled':
+          case 'taskCelebration':
+          case 'routineCelebration':
+          case 'currentDay':
+            if (value === undefined) {
+              console.error(`Incremental sync validation failed: Undefined value for ${field}`);
+              return false;
+            }
+            break;
+        }
+      }
+    }
+
+    // Validate changes array if present
+    if (incrementalData.changes) {
+      if (!Array.isArray(incrementalData.changes)) {
+        console.error('Incremental sync validation failed: Changes is not an array');
+        return false;
+      }
+
+      // Each change should have required fields
+      for (const change of incrementalData.changes) {
+        if (!change.timestamp || typeof change.timestamp !== 'number') {
+          console.error('Incremental sync validation failed: Change missing timestamp');
+          return false;
+        }
+      }
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Incremental sync validation error:', error);
+    return false;
+  }
+};
+
 export default {
   validateSyncedData,
-  repairSyncedData
+  repairSyncedData,
+  validateIncrementalSync
 };
