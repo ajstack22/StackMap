@@ -624,11 +624,11 @@ class SyncService {
         this.updateSyncStatus('error', error.message);
         
         // Log error to sync history for debugging
-        await syncHistory.recordOperation({
-          type: 'sync',
-          direction: 'both',
-          status: 'error',
-          error: error.message,
+        await syncHistory.addError({
+          errorType: 'sync_failed',
+          message: error.message,
+          retryable: true,
+          networkError: false,
           details: {
             errorStack: error.stack,
             syncId: this.syncId,

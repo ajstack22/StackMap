@@ -132,10 +132,10 @@ const validateActivity = (activity) => {
     return false;
   }
 
-  // Check for text field (handle both 'text' and 'name' properties)
-  const activityText = activity.text || activity.name;
+  // Check for text field (handle 'text', 'name', or 'title' properties)
+  const activityText = activity.text || activity.name || activity.title;
   if (!activityText || typeof activityText !== 'string') {
-    console.error('Activity missing or invalid text/name:', activity);
+    console.error('Activity missing or invalid text/name/title:', activity);
     return false;
   }
 
@@ -166,20 +166,25 @@ const validateActivity = (activity) => {
 };
 
 /**
- * Validate theme object
+ * Validate theme - themes are stored as string names, not objects
  */
 const validateTheme = (theme) => {
-  if (!theme || typeof theme !== 'object') {
-    console.error('Data validation failed: Invalid theme object');
+  // Theme should be a string name like 'stackBlue', 'crimson', etc.
+  if (!theme || typeof theme !== 'string') {
+    console.error('Data validation failed: Theme should be a string');
     return false;
   }
 
-  const requiredColors = ['primary', 'background', 'surface', 'text'];
-  for (const color of requiredColors) {
-    if (!theme[color] || typeof theme[color] !== 'string') {
-      console.error(`Data validation failed: Theme missing or invalid ${color}`);
-      return false;
-    }
+  // List of valid theme names from constants/theme.js
+  const validThemes = [
+    'crimson', 'cherry', 'scarlet', 'rust', 'tangerine', 'amber', 'gold',
+    'olive', 'emerald', 'forest', 'ocean', 'sapphire', 'navy', 'indigo', 'plum',
+    'sage', 'dustyBlue', 'stackBlue', 'terracotta', 'lavender', 'slate'
+  ];
+
+  if (!validThemes.includes(theme)) {
+    console.error(`Data validation failed: Invalid theme name '${theme}'`);
+    return false;
   }
 
   return true;
@@ -217,16 +222,20 @@ export const repairSyncedData = (data) => {
         dayData.activities = dayData.activities.map(activity => {
           if (!activity || typeof activity !== 'object') return null;
           
-          // Ensure text field exists (handle both 'text' and 'name')
-          if (!activity.text && activity.name) {
-            activity.text = activity.name;
+          // Ensure text field exists (handle 'text', 'name', and 'title')
+          if (!activity.text) {
+            if (activity.name) {
+              activity.text = activity.name;
+            } else if (activity.title) {
+              activity.text = activity.title;
+            }
           }
           
           // Ensure required fields with defaults
           return {
             ...activity,
             id: activity.id || `repaired_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            text: activity.text || activity.name || 'Untitled Activity',
+            text: activity.text || activity.name || activity.title || 'Untitled Activity',
             completed: typeof activity.completed === 'boolean' ? activity.completed : false,
             pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false
           };
