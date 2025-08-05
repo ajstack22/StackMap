@@ -308,6 +308,7 @@ const App = () => {
     if (Platform.OS === 'web') {
       // Get the raw query string to handle + characters properly
       const search = window.location.search;
+      console.log('[App] Initial URL check:', search);
       const urlParams = new URLSearchParams(search);
       const token = urlParams.get('share');
       let syncPhrase = urlParams.get('sync');
@@ -3556,27 +3557,25 @@ const App = () => {
         onReset={resetApp}
       />
 
-      {/* Sync Preview Modal - only render if theme is available */}
-      {theme && (
-        <SyncPreviewModal
-          visible={showSyncPreviewModal}
-          onClose={() => {
-            setShowSyncPreviewModal(false);
-            setSyncPreviewPhrase(null);
-          }}
-          onConfirm={async () => {
-            setShowSyncPreviewModal(false);
-            setSyncPreviewPhrase(null);
-            // Reload the page to show the synced data
-            setTimeout(() => {
-              window.location.reload();
-            }, 1000);
-          }}
-          syncPhrase={syncPreviewPhrase}
-          theme={theme}
-          showToast={showToast}
-        />
-      )}
+      {/* Sync Preview Modal - always use stackBlue theme for consistency */}
+      <SyncPreviewModal
+        visible={showSyncPreviewModal}
+        onClose={() => {
+          setShowSyncPreviewModal(false);
+          setSyncPreviewPhrase(null);
+        }}
+        onConfirm={async () => {
+          setShowSyncPreviewModal(false);
+          setSyncPreviewPhrase(null);
+          // Reload the page to show the synced data
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }}
+        syncPhrase={syncPreviewPhrase}
+        theme={THEMES.stackBlue}
+        showToast={showToast}
+      />
       
       {/* Users & Security Modal */}
       <AccessModal
