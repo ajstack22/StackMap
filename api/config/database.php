@@ -1,29 +1,11 @@
 <?php
 /**
- * Database configuration singleton
- * Wraps the existing database.php connection
+ * Database configuration
+ * This just includes the existing database.php which already has the Database class
  */
 
 require_once __DIR__ . '/../sync/database.php';
 
-class Database {
-    private static $instance = null;
-    private $connection = null;
-
-    private function __construct() {
-        // Use the existing getDB function from sync/database.php
-        $this->connection = getDB();
-    }
-
-    public static function getInstance() {
-        if (self::$instance === null) {
-            self::$instance = new Database();
-        }
-        return self::$instance;
-    }
-
-    public function getConnection() {
-        return $this->connection;
-    }
-}
+// The Database class is already defined in sync/database.php
+// No need to redefine it here
 ?>
