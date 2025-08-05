@@ -1211,7 +1211,9 @@ const DataModal = ({
                           label="Copy URL"
                           icon="link"
                           onPress={() => {
-                            const syncUrl = `${window.location.origin}/sync?phrase=${encodeURIComponent(syncRecoveryPhrase)}`;
+                            // Use the current pathname to construct the correct sync URL
+                            const basePath = window.location.pathname.replace(/\/$/, ''); // Remove trailing slash
+                            const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
                             if (Platform.OS === 'web') {
                               navigator.clipboard.writeText(syncUrl);
                             } else {
@@ -1242,7 +1244,9 @@ const DataModal = ({
                           label="Copy URL"
                           icon="link"
                           onPress={() => {
-                            const syncUrl = `${window.location.origin}/sync?phrase=${encodeURIComponent(syncRecoveryPhrase)}`;
+                            // Use the current pathname to construct the correct sync URL
+                            const basePath = window.location.pathname.replace(/\/$/, ''); // Remove trailing slash
+                            const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
                             const Clipboard = require('@react-native-clipboard/clipboard').default;
                             Clipboard.setString(syncUrl);
                             showToast({ message: 'Sync URL copied to clipboard!' });
@@ -1257,7 +1261,10 @@ const DataModal = ({
                     <View style={styles.qrCodeContainer}>
                       <Text style={styles.qrCodeLabel}>Sync QR Code:</Text>
                       <QRCode
-                        value={`${window.location.origin}/sync?phrase=${encodeURIComponent(syncRecoveryPhrase)}`}
+                        value={(() => {
+                          const basePath = window.location.pathname.replace(/\/$/, '');
+                          return `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                        })()}
                         size={200}
                         backgroundColor="#ffffff"
                         color="#000000"
