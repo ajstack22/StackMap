@@ -128,6 +128,29 @@ onSelectMultipleActivities={(activities) => {
 
 **Why this happens:** React batches state updates for performance. When setState is called multiple times synchronously, React may only apply the last update because each call uses the stale state value.
 
+## 🔄 SYNC FUNCTIONALITY
+
+### ✅ Sync is Working!
+The zero-knowledge sync system is now fully functional with these features:
+- **Sync URL sharing**: Share `stackmap.app/?sync=recovery_phrase` to invite others
+- **Automatic sync preview**: URLs with sync parameter auto-fetch and preview data
+- **Data validation**: Auto-repairs missing user fields (icon/emoji)
+- **Streamlined onboarding**: Sync URLs skip welcome screen, go straight to preview
+- **Local data clearing**: Existing data cleared before importing synced data
+
+### Recovery Phrase Format
+- **32 character hexadecimal** (no spaces, no special chars)
+- Example: `a1b2c3d4e5f6789012345678901234567`
+- URL-safe, no encoding needed
+
+### Recent Sync Fixes (January 2025)
+- Fixed API 404 errors (outdated server files)
+- Fixed localStorage keys with "undefined" syncId
+- Fixed theme undefined crashes in modals
+- Fixed missing user icon validation errors
+- Fixed duplicate sync preview modals
+- Changed to panel-based modal design (no footer buttons)
+
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by removing automatic sorting
 - Added direct delete button to activity cards in edit mode

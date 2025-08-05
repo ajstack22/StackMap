@@ -79,6 +79,7 @@ const DayManagementModal = ({
       onClose={onClose}
       theme={theme}
       title="Day"
+      icon="event"
       tabs={tabs}
       activeTab={activeTab}
       onTabChange={setActiveTab}

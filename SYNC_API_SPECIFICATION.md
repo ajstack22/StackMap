@@ -1,8 +1,26 @@
 # StackMap Sync API Specification
 
+**Last Updated: January 2025**
+
 ## Overview
 
 The StackMap Sync API provides end-to-end encrypted synchronization of user data across devices. The server acts as a simple encrypted blob storage system with no knowledge of the actual data content.
+
+## Current Implementation Status
+
+✅ **Working Features:**
+- End-to-end encrypted sync via recovery phrases
+- Join sync groups via URL (?sync=recovery_phrase)
+- Automatic sync on data changes
+- Data validation and repair
+- Conflict detection (basic)
+- Device ID tracking
+- Version management
+
+🚧 **Known Issues:**
+- Conflict resolution UI needs improvement
+- Mobile sync performance optimization needed
+- Better error recovery mechanisms needed
 
 ## Core Principles
 
@@ -43,6 +61,7 @@ Client                                          Server
 
 ### 2. Joining an Existing Sync Group
 
+#### Via Manual Entry:
 ```
 Client                                          Server
   |                                               |
@@ -55,6 +74,25 @@ Client                                          Server
   |                                               |
   |-- Decrypt blob with derived key           -->|
   |-- Restore local state                     -->|
+```
+
+#### Via Sync URL:
+```
+Client                                          Server
+  |                                               |
+  |-- User visits ?sync=<recovery_phrase>     -->|
+  |-- Onboarding extracts phrase              -->|
+  |-- Auto-fetch sync preview                 -->|
+  |-- Derive sync_id from phrase              -->|
+  |                                               |
+  |-- GET /api/sync/pull.php?sync_id=...      -->|
+  |                                               |
+  |<-- 200 OK {encrypted_blob, version, ...}  ---|
+  |                                               |
+  |-- Decrypt and show preview                -->|
+  |-- User confirms import                    -->|
+  |-- Clear local data                        -->|
+  |-- Restore synced state                    -->|
 ```
 
 ### 3. Syncing Updates

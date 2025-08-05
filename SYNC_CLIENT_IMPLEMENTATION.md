@@ -1,8 +1,27 @@
 # StackMap Sync Client Implementation Guide
 
+**Last Updated: January 2025**
+
 ## Overview
 
 This document details how the StackMap client implements sync functionality, including initialization flow, URL handling, and API integration.
+
+## Current Implementation Status
+
+✅ **Working Features:**
+- Sync URL handling (?sync=recovery_phrase)
+- Automatic sync preview in onboarding
+- Data validation and auto-repair for missing fields
+- Local data clearing before import
+- Streamlined onboarding flow for sync URLs
+- Theme fallback handling
+- Device ID generation and tracking
+
+🚧 **Recent Fixes:**
+- Fixed missing user icon/emoji validation errors
+- Fixed theme structure mismatches
+- Removed duplicate sync preview modals
+- Fixed localStorage key generation with undefined syncId
 
 ## Application Initialization Flow
 
@@ -44,8 +63,24 @@ useEffect(() => {
 
 ### 4. Sync URL Processing Flow
 
+#### For New Users:
 ```javascript
-// Second useEffect - handles sync setup after hydration
+// Onboarding handles sync for new users
+if (showOnboarding) {
+  return <OnboardingNew 
+    isAbbreviated={!!syncSetupPhrase}
+    syncSetupPhrase={syncSetupPhrase}
+  />
+}
+```
+- Goes directly to sync setup screen
+- Auto-fetches sync preview
+- Handles import within onboarding
+- Clears syncSetupPhrase on completion
+
+#### For Existing Users:
+```javascript
+// SyncPreviewModal for returning users
 useEffect(() => {
   if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
     setTimeout(() => {
@@ -56,18 +91,19 @@ useEffect(() => {
 }, [syncSetupPhrase, isHydrated, hasCompletedOnboarding, showOnboarding, currentTheme]);
 ```
 
-## Critical Timing Issues
+## Data Validation and Repair
 
-### Problem: Race Condition
-The theme might not be available when the modal tries to render because:
-
-1. **Render Order**: 
-   - State updates trigger re-renders
-   - Theme is calculated in component body
-   - Modal might render before theme calculation
-
-2. **Multiple Renders**:
-   - Initial render (theme might be undefined)
+### Auto-Repair Missing Fields:
+```javascript
+// In syncService.getCurrentState()
+if (!user.icon && !user.emoji) {
+  repairedUsers[userId] = {
+    ...user,
+    icon: '😀' // Default user icon
+  };
+  needsRepair = true;
+}
+```
    - After state hydration (theme updates)
    - After URL param processing
    - After modal state change

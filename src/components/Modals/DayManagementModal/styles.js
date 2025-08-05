@@ -1,5 +1,5 @@
 import { StyleSheet, Platform, Dimensions } from 'react-native';
-import { SPACING, isMobile } from '../../../constants';
+import { SPACING, RADIUS, isMobile } from '../../../constants';
 
 const { width: screenWidth } = Dimensions.get('window');
 const IS_MOBILE = isMobile(screenWidth);
@@ -16,7 +16,7 @@ export const styles = StyleSheet.create({
     marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
     marginVertical: SPACING.sm,
     ...(!IS_MOBILE && {
-      maxWidth: 800,
+      maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
     }),
@@ -564,5 +564,61 @@ export const styles = StyleSheet.create({
   planHeaderDay: {
     fontSize: 14,
     color: '#666',
+  },
+  // Panel-based design styles
+  formPanel: {
+    backgroundColor: 'white',
+    borderRadius: RADIUS.lg,
+    padding: IS_MOBILE ? 16 : 20,
+    marginBottom: IS_MOBILE ? 16 : 20,
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    } : Platform.OS === 'android' ? {
+      elevation: 3,
+    } : {
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    }),
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    marginVertical: 20,
+    marginHorizontal: -20,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: RADIUS.lg,
+    marginBottom: 12,
+    gap: 8,
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+    } : Platform.OS === 'android' ? {
+      elevation: 2,
+    } : {
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    }),
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+  },
+  secondaryButton: {
+    backgroundColor: 'white',
+    borderWidth: 2,
+    borderColor: '#e0e0e0',
+  },
+  actionButtonsContainer: {
+    marginTop: 8,
   },
 });

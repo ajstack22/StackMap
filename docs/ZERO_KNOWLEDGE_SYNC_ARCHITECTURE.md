@@ -1,8 +1,25 @@
 # Zero-Knowledge Sync Architecture Documentation
 
+**Last Updated: January 2025**
+
 ## Overview
 
 StackMap implements a zero-knowledge, privacy-first synchronization system that allows users to sync their data across devices without creating accounts or exposing their data to the server. This document details the architecture, security design, and implementation patterns that can be modeled for similar systems.
+
+## Current Implementation Status
+
+✅ **Production Ready:**
+- End-to-end encrypted sync via recovery phrases
+- Zero-knowledge architecture fully implemented
+- Sync via URL sharing (?sync=recovery_phrase)
+- Automatic conflict detection
+- Data validation and repair
+- 6-month automatic cleanup for abandoned data
+
+🚧 **In Development:**
+- Advanced conflict resolution UI
+- Differential sync for better performance
+- Offline queue optimization
 
 ## Core Principles
 
@@ -108,6 +125,33 @@ CREATE TABLE sync_data (
 - `GET /pull.php` - Retrieve latest data
 - `POST /delete.php` - Delete all sync data
 - `GET /health.php` - Check server status
+
+### Sync URL Flow
+
+#### Sharing Process
+```
+User A (Sharer)                Server                 User B (Joiner)
+    |                            |                          |
+    |-- Create sync group ------>|                          |
+    |-- Generate share URL       |                          |
+    |   stackmap.app/?sync=xyz   |                          |
+    |                            |                          |
+    |-- Share URL -------------->|---------------------->   |
+    |                            |                          |
+    |                            |<-- GET /pull.php -----   |
+    |                            |-- Return encrypted ---    |
+    |                            |                          |
+    |                            |                       Decrypt
+    |                            |                    Show preview
+    |                            |                   Import data
+```
+
+#### Security Considerations
+- Recovery phrase transmitted via URL fragment (#) when possible
+- URL parameters (?sync=) used for compatibility
+- Phrases are URL-encoded for safe transmission
+- Server never logs recovery phrases
+- Client clears URL after processing
 
 ### Client Architecture
 

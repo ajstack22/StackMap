@@ -9,7 +9,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { FormInput, ModalFooter } from '../../ModalUtilities';
+import { FormInput } from '../../ModalUtilities';
 import { styles } from './styles';
 
 const PlanTabContent = ({
@@ -168,10 +168,12 @@ const PlanTabContent = ({
           style={{ flex: 1 }}
         >
         <View style={styles.contentSection}>
-        {/* Users Section */}
-        <View style={styles.planSelectionSection}>
-          <Text style={styles.planSectionTitle}>Select User</Text>
-          <View style={styles.usersList}>
+        {/* Main Panel */}
+        <View style={styles.formPanel}>
+          {/* Users Section */}
+          <View style={styles.planSelectionSection}>
+            <Text style={styles.planSectionTitle}>Select User</Text>
+            <View style={styles.usersList}>
             {Object.entries(users)
               .filter(([userId, user]) => !user.deleted)
               .map(([userId, user]) => (
@@ -196,10 +198,13 @@ const PlanTabContent = ({
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+          </View>
 
-        {/* View Mode */}
-        <View style={styles.planSelectionSection}>
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* View Mode */}
+          <View style={styles.planSelectionSection}>
           <Text style={styles.planSectionTitle}>View Mode</Text>
           <Text style={styles.planSectionDescription}>
             How many days should be visible?
@@ -224,10 +229,13 @@ const PlanTabContent = ({
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
+          </View>
 
-        {/* Day Selection - only show when view mode includes tomorrow */}
-        {viewMode === 'both' && (
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Day Selection - only show when view mode includes tomorrow */}
+          {viewMode === 'both' && (
           <View style={styles.planSelectionSection}>
             <Text style={styles.planSectionTitle}>Planning Day</Text>
             <Text style={styles.planSectionDescription}>
@@ -252,20 +260,22 @@ const PlanTabContent = ({
               </TouchableOpacity>
             </View>
           </View>
-        )}
+          )}
+
+          {/* Divider */}
+          <View style={styles.divider} />
+
+          {/* Action Button */}
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.primary }]}
+            onPress={handleStartPlanning}
+          >
+            <Icon name="arrow-forward" size={20} color="white" />
+            <Text style={styles.actionButtonText}>Start Planning</Text>
+          </TouchableOpacity>
+        </View>
         </View>
         </ScrollView>
-        
-        {/* Start Planning Button */}
-        <ModalFooter
-          theme={theme}
-          primaryButton={{
-            label: 'Start Planning',
-            icon: 'arrow-forward',
-            onPress: handleStartPlanning,
-          }}
-          showOnDesktop={true}
-        />
       </>
     );
   }
@@ -279,8 +289,9 @@ const PlanTabContent = ({
       contentContainerStyle={styles.scrollContainer}
     >
       <View style={styles.contentSection}>
-      {/* Back Button and Header */}
-      <View style={styles.planHeader}>
+      <View style={styles.formPanel}>
+        {/* Back Button and Header */}
+        <View style={styles.planHeader}>
         <TouchableOpacity
           style={styles.backButton}
           onPress={handleBackToSelection}
@@ -295,10 +306,13 @@ const PlanTabContent = ({
             {selectedDay === 'today' ? 'Today' : 'Tomorrow'}
           </Text>
         </View>
-      </View>
+        </View>
 
-      {/* Activities Section */}
-      <View style={styles.planSection}>
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Activities Section */}
+        <View style={styles.planSection}>
         <View style={styles.planSectionHeader}>
           <Text style={styles.planSectionTitle}>Activities</Text>
           <Text style={styles.planCount}>{activities.length} activities</Text>
@@ -315,10 +329,13 @@ const PlanTabContent = ({
             {activities.map((activity, index) => renderActivity(activity, index))}
           </ScrollView>
         )}
-      </View>
+        </View>
 
-      {/* Add from Templates */}
-      <TouchableOpacity
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Add from Templates */}
+        <TouchableOpacity
         style={styles.templateToggle}
         onPress={() => setShowTemplates(!showTemplates)}
       >
@@ -328,9 +345,9 @@ const PlanTabContent = ({
           size={24} 
           color="#666" 
         />
-      </TouchableOpacity>
+        </TouchableOpacity>
 
-      {showTemplates && (
+        {showTemplates && (
         <View style={styles.templateSection}>
           <FormInput
             placeholder="Search templates..."
@@ -364,27 +381,33 @@ const PlanTabContent = ({
             ))}
           </ScrollView>
         </View>
-      )}
+        )}
 
+        {/* Divider */}
+        <View style={styles.divider} />
+
+        {/* Action Buttons */}
+        <View style={styles.actionButtonsContainer}>
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.primary }]}
+            onPress={handleSave}
+            disabled={loading}
+          >
+            <Icon name="save" size={20} color="white" />
+            <Text style={styles.actionButtonText}>Save Plan</Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[styles.actionButton, styles.secondaryButton]}
+            onPress={handleBackToSelection}
+          >
+            <Icon name="arrow-back" size={20} color={theme.primary} />
+            <Text style={[styles.actionButtonText, { color: theme.primary }]}>Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
       </View>
       </ScrollView>
-
-      {/* Save Button */}
-      <ModalFooter
-        theme={theme}
-        primaryButton={{
-          label: "Save Plan",
-          icon: 'save',
-          onPress: handleSave,
-          disabled: loading
-        }}
-        secondaryButton={{
-          label: "Back",
-          onPress: handleBackToSelection,
-        }}
-        loading={loading}
-        showOnDesktop={true}
-      />
     </>
   );
 };
