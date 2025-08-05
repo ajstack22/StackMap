@@ -1,15 +1,25 @@
 <?php
-require_once '../config/cors.php';
-require_once '../config/database.php';
-require_once '../utils/response.php';
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
-setCorsHeaders();
-$data = getJsonInput();
+// Handle preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
 
-if (!isset($data['sync_id']) || !isset($data['encrypted_blob']) ||
-!isset($data['device_id'])) {
-    sendError('Missing required fields: sync_id, encrypted_blob, 
-device_id');
+require_once 'config.php';
+require_once 'database.php';
+
+// Get JSON input
+$input = file_get_contents('php://input');
+$data = json_decode($input, true);
+
+if (!$data || !isset($data['sync_id']) || !isset($data['encrypted_blob']) || !isset($data['device_id'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Missing required fields: sync_id, encrypted_blob, device_id']);
+    exit();
 }
 
 try {
@@ -45,16 +55,20 @@ sync_data WHERE sync_id = ?");
     $versionStmt->execute([$data['sync_id']]);
     $versionData = $versionStmt->fetch();
 
-    // Log metric
-    $metric = $db->prepare("INSERT INTO sync_metrics (event, metadata) 
-VALUES (?, ?)");
-    $metric->execute(['sync_push', json_encode([
-        'sync_id' => $data['sync_id'],
-        'device_id' => $data['device_id'],
-        'blob_size' => strlen($data['encrypted_blob'])
-    ])]);
+    // Try to log metric but don't fail if table doesn't exist
+    try {
+        $metric = $db->prepare("INSERT INTO sync_metrics (event, metadata) VALUES (?, ?)");
+        $metric->execute(['sync_push', json_encode([
+            'sync_id' => $data['sync_id'],
+            'device_id' => $data['device_id'],
+            'blob_size' => strlen($data['encrypted_blob'])
+        ])]);
+    } catch (Exception $e) {
+        // Ignore metrics errors
+    }
 
-    sendResponse([
+    // Return success response
+    echo json_encode([
         'success' => true,
         'version' => $versionData['version'],
         'last_modified' => $versionData['last_modified']
@@ -62,5 +76,6 @@ VALUES (?, ?)");
 
 } catch (Exception $e) {
     error_log("Push error: " . $e->getMessage());
-    sendError('Push failed', 500);
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Push failed: ' . $e->getMessage()]);
 }

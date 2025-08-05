@@ -1,16 +1,26 @@
 <?php
-require_once '../config/cors.php';
-require_once '../config/database.php';
-require_once '../utils/response.php';
+header('Content-Type: application/json');
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
 
-setCorsHeaders();
-$data = getJsonInput();
+// Handle preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    exit(0);
+}
+
+require_once 'config.php';
+require_once 'database.php';
+
+// Get JSON input
+$input = file_get_contents('php://input');
+$data = json_decode($input, true);
 
 // Validate required fields
-if (!isset($data['sync_id']) || !isset($data['encrypted_blob']) ||
-!isset($data['recovery_salt'])) {
-    sendError('Missing required fields: sync_id, encrypted_blob, 
-recovery_salt');
+if (!$data || !isset($data['sync_id']) || !isset($data['encrypted_blob']) || !isset($data['recovery_salt'])) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Missing required fields: sync_id, encrypted_blob, recovery_salt']);
+    exit();
 }
 
 try {
@@ -35,15 +45,20 @@ try {
         $data['recovery_salt']
     ]);
 
-    // Log metric
-    $metric = $db->prepare("INSERT INTO sync_metrics (event, metadata) 
-VALUES (?, ?)");
-    $metric->execute(['sync_created', json_encode(['sync_id' =>
-$data['sync_id']])]);
+    // Try to log metric but don't fail if table doesn't exist
+    try {
+        $metric = $db->prepare("INSERT INTO sync_metrics (event, metadata) VALUES (?, ?)");
+        $metric->execute(['sync_created', json_encode(['sync_id' => $data['sync_id']])]);
+    } catch (Exception $e) {
+        // Ignore metrics errors
+    }
 
-    sendResponse(['success' => true, 'sync_id' => $data['sync_id']], 201);
+    // Return success response
+    http_response_code(201);
+    echo json_encode(['success' => true, 'sync_id' => $data['sync_id']]);
 
 } catch (Exception $e) {
     error_log("Create sync error: " . $e->getMessage());
-    sendError('Failed to create sync group', 500);
+    http_response_code(500);
+    echo json_encode(['success' => false, 'error' => 'Failed to create sync group: ' . $e->getMessage()]);
 }
