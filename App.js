@@ -84,7 +84,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PrivacyModal, SupportModal, ReorderModal, DataModal, AccessModal, ToolbarCustomizeModal, ConfirmModal, DayManagementModal, ActivityManagementModal, BuyMeCoffeeButton } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PrivacyModal, SupportModal, ReorderModal, DataModal, AccessModal, ToolbarCustomizeModal, ConfirmModal, DayManagementModal, ActivityManagementModal, BuyMeCoffeeButton, SyncPreviewModal } from './src/components';
 import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -260,6 +260,8 @@ const App = () => {
   const [dayManagementActiveTab, setDayManagementActiveTab] = useState(0);
   const [showActivityManagementModal, setShowActivityManagementModal] = useState(false);
   const [activityManagementActiveTab, setActivityManagementActiveTab] = useState(0);
+  const [showSyncPreviewModal, setShowSyncPreviewModal] = useState(false);
+  const [syncPreviewPhrase, setSyncPreviewPhrase] = useState(null);
   
   
   // Screen dimensions state
@@ -528,11 +530,10 @@ const App = () => {
   // Handle sync setup from URL parameter
   useEffect(() => {
     if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
-      // Auto-open data modal with sync setup
-      console.log('[App] Opening data modal for sync setup with phrase:', syncSetupPhrase);
-      setShowDataModal(true);
-      // Store the sync phrase for the data modal to use
-      window.pendingSyncPhrase = syncSetupPhrase;
+      // Auto-open sync preview modal with sync setup
+      console.log('[App] Opening sync preview modal for sync setup with phrase:', syncSetupPhrase);
+      setSyncPreviewPhrase(syncSetupPhrase);
+      setShowSyncPreviewModal(true);
       
       // Clear the URL parameter
       if (Platform.OS === 'web') {
@@ -3549,6 +3550,26 @@ const App = () => {
           setTimeout(() => setShowSupportModal(true), 300);
         }}
         onReset={resetApp}
+      />
+
+      {/* Sync Preview Modal */}
+      <SyncPreviewModal
+        visible={showSyncPreviewModal}
+        onClose={() => {
+          setShowSyncPreviewModal(false);
+          setSyncPreviewPhrase(null);
+        }}
+        onConfirm={async () => {
+          setShowSyncPreviewModal(false);
+          setSyncPreviewPhrase(null);
+          // Reload the page to show the synced data
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
+        }}
+        syncPhrase={syncPreviewPhrase}
+        theme={theme}
+        showToast={showToast}
       />
       
       {/* Users & Security Modal */}

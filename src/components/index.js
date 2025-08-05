@@ -27,6 +27,7 @@ import ConfirmModal from './Modals/ConfirmModal/ConfirmModal';
 import DayManagementModal from './Modals/DayManagementModal/DayManagementModal';
 import ActivityManagementModal from './Modals/ActivityManagementModal/ActivityManagementModal';
 import AccessModal from './Modals/AccessModal/AccessModal';
+import SyncPreviewModal from './Modals/SyncPreviewModal/SyncPreviewModal';
 
 // Export the imported modal components
 export {
@@ -44,5 +45,6 @@ export {
   ConfirmModal,
   DayManagementModal,
   ActivityManagementModal,
-  AccessModal
+  AccessModal,
+  SyncPreviewModal
 };

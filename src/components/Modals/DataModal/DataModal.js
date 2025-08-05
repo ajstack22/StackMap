@@ -137,55 +137,9 @@ const DataModal = ({
     }
   }, [visible]);
   
-  // Check sync status on mount and handle pending sync phrase
+  // Check sync status on mount
   useEffect(() => {
     checkSyncStatus();
-    
-    // Check if we have a pending sync phrase from URL
-    if (visible && window.pendingSyncPhrase) {
-      console.log('[DataModal] Found pending sync phrase, initiating setup');
-      const phrase = window.pendingSyncPhrase;
-      window.pendingSyncPhrase = null; // Clear it
-      
-      // Auto-start sync setup with the phrase
-      setShowRecoveryInput(true);
-      setRecoveryInput(phrase);
-      // Trigger sync restore after a brief delay to let UI update
-      setTimeout(async () => {
-        try {
-          setSyncLoading(true);
-          setSyncError('');
-          
-          await syncService.initialize(phrase);
-          
-          setSyncEnabled(true);
-          const id = await syncService.getSyncId();
-          const storedPhrase = await syncService.getRecoveryPhrase();
-          setSyncId(id);
-          setSyncRecoveryPhrase(storedPhrase || phrase);
-          setShowRecoveryInput(false);
-          setRecoveryInput('');
-          
-          showToast('Sync enabled successfully!', 'success');
-          
-          // Notify parent of sync status change
-          if (onSyncStatusChange) {
-            onSyncStatusChange(true);
-          }
-          
-          // Reload the page to show synced data
-          // This ensures the UI reflects the restored state
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        } catch (error) {
-          console.error('Sync restore error:', error);
-          setSyncError(error.message || 'Failed to restore sync');
-        } finally {
-          setSyncLoading(false);
-        }
-      }, 100);
-    }
   }, [visible]);
   
   const checkSyncStatus = async () => {

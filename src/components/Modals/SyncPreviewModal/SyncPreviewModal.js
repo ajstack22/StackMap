@@ -1,0 +1,310 @@
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { styles } from './styles';
+import ModalFooter from '../../ModalUtilities/ModalFooter';
+import ModalButton from '../../ModalUtilities/ModalButton';
+import syncService from '../../../services/sync/syncService';
+import encryptionService from '../../../services/sync/encryptionService';
+
+const SyncPreviewModal = ({
+  visible,
+  onClose,
+  onConfirm,
+  syncPhrase,
+  theme,
+  showToast,
+}) => {
+  const insets = useSafeAreaInsets();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [syncData, setSyncData] = useState(null);
+  const [connectionStatus, setConnectionStatus] = useState('checking');
+
+  useEffect(() => {
+    if (visible && syncPhrase) {
+      checkSyncData();
+    }
+  }, [visible, syncPhrase]);
+
+  const checkSyncData = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      setConnectionStatus('checking');
+
+      // Decode the sync phrase properly
+      const decodedPhrase = decodeURIComponent(syncPhrase);
+      console.log('[SyncPreview] Checking sync with phrase:', decodedPhrase);
+
+      // Generate sync ID from phrase
+      const syncId = await syncService.generateSyncId(decodedPhrase);
+      console.log('[SyncPreview] Generated sync ID:', syncId);
+
+      // Try to fetch sync data
+      const deviceId = await encryptionService.getDeviceId();
+      const response = await fetch(
+        `${syncService.getApiUrl()}/pull.php?sync_id=${syncId}&device_id=${encodeURIComponent(deviceId)}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+
+      if (response.status === 404) {
+        setError('Sync group not found. The sync phrase may be incorrect.');
+        setConnectionStatus('not_found');
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(`Server error: ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Initialize encryption to decrypt the data
+      await encryptionService.initialize(decodedPhrase, syncId);
+      
+      // Decrypt and preview the data
+      const decryptedData = encryptionService.decryptData(data.encrypted_blob);
+      
+      // Extract preview information
+      const preview = {
+        users: [],
+        totalActivities: 0,
+        totalLibraryItems: 0,
+        lastUpdated: data.last_modified,
+      };
+
+      if (decryptedData.users) {
+        Object.entries(decryptedData.users).forEach(([userId, user]) => {
+          let activityCount = 0;
+          if (user.days) {
+            Object.values(user.days).forEach(day => {
+              activityCount += (day.activities || []).length;
+            });
+          }
+          
+          preview.users.push({
+            name: user.name,
+            icon: user.icon || user.emoji,
+            activityCount,
+          });
+          
+          preview.totalActivities += activityCount;
+        });
+      }
+
+      if (decryptedData.activityCategories) {
+        Object.values(decryptedData.activityCategories).forEach(category => {
+          preview.totalLibraryItems += (category.activities || []).length;
+        });
+      }
+
+      setSyncData(preview);
+      setConnectionStatus('connected');
+    } catch (error) {
+      console.error('[SyncPreview] Error checking sync:', error);
+      setError(error.message || 'Failed to connect to sync');
+      setConnectionStatus('error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleConfirm = async () => {
+    try {
+      setLoading(true);
+      
+      // Decode the sync phrase
+      const decodedPhrase = decodeURIComponent(syncPhrase);
+      
+      // Initialize sync with the decoded phrase
+      await syncService.initialize(decodedPhrase);
+      
+      showToast('Sync connected successfully!', 'success');
+      
+      // Let parent handle the success (likely reload)
+      onConfirm();
+    } catch (error) {
+      console.error('[SyncPreview] Error confirming sync:', error);
+      setError(error.message || 'Failed to connect to sync');
+      setLoading(false);
+    }
+  };
+
+  const getStatusIcon = () => {
+    switch (connectionStatus) {
+      case 'checking':
+        return <ActivityIndicator size="small" color={theme.colors.primary} />;
+      case 'connected':
+        return <Icon name="check-circle" size={24} color="#10b981" />;
+      case 'not_found':
+        return <Icon name="error" size={24} color="#ef4444" />;
+      case 'error':
+        return <Icon name="warning" size={24} color="#f59e0b" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusText = () => {
+    switch (connectionStatus) {
+      case 'checking':
+        return 'Checking connection...';
+      case 'connected':
+        return 'Connected to sync';
+      case 'not_found':
+        return 'Sync not found';
+      case 'error':
+        return 'Connection error';
+      default:
+        return '';
+    }
+  };
+
+  if (!visible) return null;
+
+  const isWeb = Platform.OS === 'web';
+
+  return (
+    <View style={styles.modalOverlay}>
+      <View style={[
+        styles.modalContainer,
+        { paddingBottom: isWeb ? 20 : insets.bottom + 20 }
+      ]}>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: theme.colors.text }]}>
+            Join Sync Group
+          </Text>
+        </View>
+
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Connection Status */}
+          <View style={styles.statusSection}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              Connection Status
+            </Text>
+            <View style={styles.statusRow}>
+              {getStatusIcon()}
+              <Text style={[styles.statusText, { color: theme.colors.text }]}>
+                {getStatusText()}
+              </Text>
+            </View>
+          </View>
+
+          {/* Error Message */}
+          {error && (
+            <View style={styles.errorContainer}>
+              <Icon name="error-outline" size={20} color="#ef4444" />
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
+          )}
+
+          {/* Data Preview */}
+          {syncData && connectionStatus === 'connected' && (
+            <View style={styles.previewSection}>
+              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+                Data to be imported:
+              </Text>
+
+              {/* Users */}
+              <View style={styles.previewItem}>
+                <Icon name="people" size={20} color={theme.colors.primary} />
+                <Text style={[styles.previewLabel, { color: theme.colors.text }]}>
+                  Users:
+                </Text>
+                <Text style={[styles.previewValue, { color: theme.colors.text }]}>
+                  {syncData.users.length}
+                </Text>
+              </View>
+
+              {syncData.users.map((user, index) => (
+                <View key={index} style={styles.userItem}>
+                  <Text style={styles.userIcon}>{user.icon}</Text>
+                  <Text style={[styles.userName, { color: theme.colors.text }]}>
+                    {user.name}
+                  </Text>
+                  <Text style={[styles.userActivities, { color: theme.colors.textSecondary }]}>
+                    {user.activityCount} activities
+                  </Text>
+                </View>
+              ))}
+
+              {/* Activity Cards */}
+              <View style={styles.previewItem}>
+                <Icon name="dashboard" size={20} color={theme.colors.primary} />
+                <Text style={[styles.previewLabel, { color: theme.colors.text }]}>
+                  Activity Cards:
+                </Text>
+                <Text style={[styles.previewValue, { color: theme.colors.text }]}>
+                  {syncData.totalActivities}
+                </Text>
+              </View>
+
+              {/* Library Items */}
+              {syncData.totalLibraryItems > 0 && (
+                <View style={styles.previewItem}>
+                  <Icon name="library-books" size={20} color={theme.colors.primary} />
+                  <Text style={[styles.previewLabel, { color: theme.colors.text }]}>
+                    Library Items:
+                  </Text>
+                  <Text style={[styles.previewValue, { color: theme.colors.text }]}>
+                    {syncData.totalLibraryItems}
+                  </Text>
+                </View>
+              )}
+
+              {/* Last Updated */}
+              <View style={styles.lastUpdated}>
+                <Text style={[styles.lastUpdatedText, { color: theme.colors.textSecondary }]}>
+                  Last updated: {new Date(syncData.lastUpdated).toLocaleString()}
+                </Text>
+              </View>
+            </View>
+          )}
+
+          {/* Loading State */}
+          {loading && !syncData && (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color={theme.colors.primary} />
+              <Text style={[styles.loadingText, { color: theme.colors.text }]}>
+                Checking sync data...
+              </Text>
+            </View>
+          )}
+        </ScrollView>
+
+        <ModalFooter>
+          <ModalButton
+            theme={theme}
+            variant="secondary"
+            label="Cancel"
+            onPress={onClose}
+            disabled={loading}
+          />
+          <ModalButton
+            theme={theme}
+            variant="primary"
+            label="Continue"
+            onPress={handleConfirm}
+            disabled={loading || connectionStatus !== 'connected'}
+            loading={loading}
+          />
+        </ModalFooter>
+      </View>
+    </View>
+  );
+};
+
+export default SyncPreviewModal;
