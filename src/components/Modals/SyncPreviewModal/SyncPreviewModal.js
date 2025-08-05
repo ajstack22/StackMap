@@ -5,6 +5,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Platform,
+  TouchableOpacity,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -201,6 +202,13 @@ const SyncPreviewModal = ({
           <Text style={[styles.title, { color: theme?.text || '#000000' }]}>
             Join Sync Group
           </Text>
+          <TouchableOpacity 
+            style={styles.closeButton}
+            onPress={onClose}
+            hitSlop={{ top: 10, right: 10, bottom: 10, left: 10 }}
+          >
+            <Icon name="close" size={24} color="#6b7280" />
+          </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>

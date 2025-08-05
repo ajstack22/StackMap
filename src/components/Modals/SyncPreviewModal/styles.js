@@ -19,12 +19,23 @@ export const styles = StyleSheet.create({
     width: Platform.OS === 'web' ? 480 : '90%',
     maxWidth: 480,
     maxHeight: '80%',
+    display: 'flex',
+    flexDirection: 'column',
     ...SHADOWS.level3,
   },
   header: {
     padding: SPACING.lg,
     borderBottomWidth: 1,
     borderBottomColor: '#e5e7eb',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  closeButton: {
+    position: 'absolute',
+    right: SPACING.md,
+    top: SPACING.md,
+    padding: SPACING.xs,
   },
   title: {
     fontSize: TYPOGRAPHY.sizes.xl,
