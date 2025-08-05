@@ -22,11 +22,6 @@ const SyncPreviewModal = ({
   theme,
   showToast,
 }) => {
-  // Safety check for theme
-  if (!theme || !theme.colors) {
-    console.error('[SyncPreviewModal] Theme not provided or invalid');
-    return null;
-  }
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

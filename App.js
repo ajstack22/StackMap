@@ -529,8 +529,8 @@ const App = () => {
   
   // Handle sync setup from URL parameter
   useEffect(() => {
-    if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding) {
-      // Add a small delay to ensure theme is initialized
+    if (syncSetupPhrase && isHydrated && hasCompletedOnboarding && !showOnboarding && currentTheme) {
+      // Add a small delay to ensure everything is initialized
       setTimeout(() => {
         // Auto-open sync preview modal with sync setup
         console.log('[App] Opening sync preview modal for sync setup with phrase:', syncSetupPhrase);
@@ -3556,25 +3556,27 @@ const App = () => {
         onReset={resetApp}
       />
 
-      {/* Sync Preview Modal */}
-      <SyncPreviewModal
-        visible={showSyncPreviewModal}
-        onClose={() => {
-          setShowSyncPreviewModal(false);
-          setSyncPreviewPhrase(null);
-        }}
-        onConfirm={async () => {
-          setShowSyncPreviewModal(false);
-          setSyncPreviewPhrase(null);
-          // Reload the page to show the synced data
-          setTimeout(() => {
-            window.location.reload();
-          }, 1000);
-        }}
-        syncPhrase={syncPreviewPhrase}
-        theme={theme}
-        showToast={showToast}
-      />
+      {/* Sync Preview Modal - only render if theme is available */}
+      {theme && (
+        <SyncPreviewModal
+          visible={showSyncPreviewModal}
+          onClose={() => {
+            setShowSyncPreviewModal(false);
+            setSyncPreviewPhrase(null);
+          }}
+          onConfirm={async () => {
+            setShowSyncPreviewModal(false);
+            setSyncPreviewPhrase(null);
+            // Reload the page to show the synced data
+            setTimeout(() => {
+              window.location.reload();
+            }, 1000);
+          }}
+          syncPhrase={syncPreviewPhrase}
+          theme={theme}
+          showToast={showToast}
+        />
+      )}
       
       {/* Users & Security Modal */}
       <AccessModal
