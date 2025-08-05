@@ -148,7 +148,7 @@ const SyncPreviewModal = ({
   const getStatusIcon = () => {
     switch (connectionStatus) {
       case 'checking':
-        return <ActivityIndicator size="small" color={theme.colors.primary} />;
+        return <ActivityIndicator size="small" color={theme?.primary || '#5C7E9D'} />;
       case 'connected':
         return <Icon name="check-circle" size={24} color="#10b981" />;
       case 'not_found':
@@ -186,7 +186,7 @@ const SyncPreviewModal = ({
         { paddingBottom: isWeb ? 20 : insets.bottom + 20 }
       ]}>
         <View style={styles.header}>
-          <Text style={[styles.title, { color: theme.colors.text }]}>
+          <Text style={[styles.title, { color: theme?.text || '#000000' }]}>
             Join Sync Group
           </Text>
         </View>
@@ -194,12 +194,12 @@ const SyncPreviewModal = ({
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
           {/* Connection Status */}
           <View style={styles.statusSection}>
-            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+            <Text style={[styles.sectionTitle, { color: theme?.text || '#000000' }]}>
               Connection Status
             </Text>
             <View style={styles.statusRow}>
               {getStatusIcon()}
-              <Text style={[styles.statusText, { color: theme.colors.text }]}>
+              <Text style={[styles.statusText, { color: theme?.text || '#000000' }]}>
                 {getStatusText()}
               </Text>
             </View>
@@ -216,17 +216,17 @@ const SyncPreviewModal = ({
           {/* Data Preview */}
           {syncData && connectionStatus === 'connected' && (
             <View style={styles.previewSection}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              <Text style={[styles.sectionTitle, { color: theme?.text || '#000000' }]}>
                 Data to be imported:
               </Text>
 
               {/* Users */}
               <View style={styles.previewItem}>
-                <Icon name="people" size={20} color={theme.colors.primary} />
-                <Text style={[styles.previewLabel, { color: theme.colors.text }]}>
+                <Icon name="people" size={20} color={theme?.primary || '#5C7E9D'} />
+                <Text style={[styles.previewLabel, { color: theme?.text || '#000000' }]}>
                   Users:
                 </Text>
-                <Text style={[styles.previewValue, { color: theme.colors.text }]}>
+                <Text style={[styles.previewValue, { color: theme?.text || '#000000' }]}>
                   {syncData.users.length}
                 </Text>
               </View>
@@ -234,10 +234,10 @@ const SyncPreviewModal = ({
               {syncData.users.map((user, index) => (
                 <View key={index} style={styles.userItem}>
                   <Text style={styles.userIcon}>{user.icon}</Text>
-                  <Text style={[styles.userName, { color: theme.colors.text }]}>
+                  <Text style={[styles.userName, { color: theme?.text || '#000000' }]}>
                     {user.name}
                   </Text>
-                  <Text style={[styles.userActivities, { color: theme.colors.textSecondary }]}>
+                  <Text style={[styles.userActivities, { color: theme?.textSecondary || '#666666' }]}>
                     {user.activityCount} activities
                   </Text>
                 </View>
@@ -245,11 +245,11 @@ const SyncPreviewModal = ({
 
               {/* Activity Cards */}
               <View style={styles.previewItem}>
-                <Icon name="dashboard" size={20} color={theme.colors.primary} />
-                <Text style={[styles.previewLabel, { color: theme.colors.text }]}>
+                <Icon name="dashboard" size={20} color={theme?.primary || '#5C7E9D'} />
+                <Text style={[styles.previewLabel, { color: theme?.text || '#000000' }]}>
                   Activity Cards:
                 </Text>
-                <Text style={[styles.previewValue, { color: theme.colors.text }]}>
+                <Text style={[styles.previewValue, { color: theme?.text || '#000000' }]}>
                   {syncData.totalActivities}
                 </Text>
               </View>
@@ -257,11 +257,11 @@ const SyncPreviewModal = ({
               {/* Library Items */}
               {syncData.totalLibraryItems > 0 && (
                 <View style={styles.previewItem}>
-                  <Icon name="library-books" size={20} color={theme.colors.primary} />
-                  <Text style={[styles.previewLabel, { color: theme.colors.text }]}>
+                  <Icon name="library-books" size={20} color={theme?.primary || '#5C7E9D'} />
+                  <Text style={[styles.previewLabel, { color: theme?.text || '#000000' }]}>
                     Library Items:
                   </Text>
-                  <Text style={[styles.previewValue, { color: theme.colors.text }]}>
+                  <Text style={[styles.previewValue, { color: theme?.text || '#000000' }]}>
                     {syncData.totalLibraryItems}
                   </Text>
                 </View>
@@ -269,7 +269,7 @@ const SyncPreviewModal = ({
 
               {/* Last Updated */}
               <View style={styles.lastUpdated}>
-                <Text style={[styles.lastUpdatedText, { color: theme.colors.textSecondary }]}>
+                <Text style={[styles.lastUpdatedText, { color: theme?.textSecondary || '#666666' }]}>
                   Last updated: {new Date(syncData.lastUpdated).toLocaleString()}
                 </Text>
               </View>
@@ -279,8 +279,8 @@ const SyncPreviewModal = ({
           {/* Loading State */}
           {loading && !syncData && (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={theme.colors.primary} />
-              <Text style={[styles.loadingText, { color: theme.colors.text }]}>
+              <ActivityIndicator size="large" color={theme?.primary || '#5C7E9D'} />
+              <Text style={[styles.loadingText, { color: theme?.text || '#000000' }]}>
                 Checking sync data...
               </Text>
             </View>

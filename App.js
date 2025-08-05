@@ -3601,7 +3601,15 @@ const App = () => {
           }, 1000);
         }}
         syncPhrase={syncPreviewPhrase}
-        theme={THEMES.stackBlue}
+        theme={{
+          primary: THEMES.stackBlue?.primary || '#5C7E9D',
+          dark: THEMES.stackBlue?.dark || '#4A6680',
+          light: THEMES.stackBlue?.light || '#7896B3',
+          text: '#000000',
+          textSecondary: '#666666',
+          background: '#FFFFFF',
+          card: '#F5F5F5'
+        }}
         showToast={showToast}
       />
       
