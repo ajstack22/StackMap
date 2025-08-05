@@ -10,8 +10,6 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
-import ModalFooter from '../../ModalUtilities/ModalFooter';
-import ModalButton from '../../ModalUtilities/ModalButton';
 import syncService from '../../../services/sync/syncService';
 import encryptionService from '../../../services/sync/encryptionService';
 
@@ -307,23 +305,31 @@ const SyncPreviewModal = ({
           )}
         </ScrollView>
 
-        <ModalFooter>
-          <ModalButton
-            theme={theme}
-            variant="secondary"
-            label="Cancel"
+        <View style={styles.footer}>
+          <TouchableOpacity
+            style={[styles.button, styles.secondaryButton]}
             onPress={onClose}
             disabled={loading}
-          />
-          <ModalButton
-            theme={theme}
-            variant="primary"
-            label="Continue"
+          >
+            <Text style={styles.secondaryButtonText}>Cancel</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[
+              styles.button, 
+              styles.primaryButton,
+              { backgroundColor: theme?.primary || '#5C7E9D' },
+              (loading || connectionStatus !== 'connected') && styles.disabledButton
+            ]}
             onPress={handleConfirm}
             disabled={loading || connectionStatus !== 'connected'}
-            loading={loading}
-          />
-        </ModalFooter>
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="white" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Continue</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
     </View>
   );

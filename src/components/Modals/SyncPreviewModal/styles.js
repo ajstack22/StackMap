@@ -18,9 +18,11 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     width: Platform.OS === 'web' ? 480 : '90%',
     maxWidth: 480,
-    maxHeight: '80%',
+    maxHeight: Platform.OS === 'web' ? '90vh' : '80%',
+    height: Platform.OS === 'web' ? 'auto' : undefined,
     display: 'flex',
     flexDirection: 'column',
+    overflow: 'hidden',
     ...SHADOWS.level3,
   },
   header: {
@@ -44,6 +46,7 @@ export const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: SPACING.lg,
+    minHeight: 0, // Important for flex children with scroll
   },
   statusSection: {
     marginBottom: SPACING.lg,
@@ -129,5 +132,43 @@ export const styles = StyleSheet.create({
   loadingText: {
     marginTop: SPACING.md,
     fontSize: TYPOGRAPHY.sizes.md,
+  },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: SPACING.lg,
+    gap: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  button: {
+    flex: 1,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 44,
+  },
+  primaryButton: {
+    ...SHADOWS.level1,
+  },
+  secondaryButton: {
+    backgroundColor: '#f3f4f6',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  primaryButtonText: {
+    color: 'white',
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontWeight: TYPOGRAPHY.weights.semibold || '600',
+  },
+  secondaryButtonText: {
+    color: '#374151',
+    fontSize: TYPOGRAPHY.sizes.md,
+    fontWeight: TYPOGRAPHY.weights.semibold || '600',
+  },
+  disabledButton: {
+    opacity: 0.5,
   },
 });
