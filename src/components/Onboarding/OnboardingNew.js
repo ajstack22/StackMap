@@ -124,26 +124,48 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     setSyncError('');
     
     try {
-      // Generate sync ID from recovery phrase
-      const syncId = await syncService.generateSyncId(recoveryInput.trim() || syncSetupPhrase);
-      const deviceId = await encryptionService.getDeviceId();
+      // Use the sync phrase from URL
+      const phraseToUse = recoveryInput.trim() || syncSetupPhrase;
+      console.log('Fetching sync preview with phrase:', phraseToUse);
       
-      // Try to fetch existing sync data
+      // Generate sync ID from recovery phrase
+      const syncId = await syncService.generateSyncId(phraseToUse);
+      const deviceId = await encryptionService.getDeviceId();
+      console.log('Generated sync ID:', syncId, 'Device ID:', deviceId);
+      
+      // For preview, we need to fetch without device ID or use a temporary one
+      // Try to fetch sync data - for new devices, we might get 404 which is expected
       const checkUrl = `${syncService.API_BASE_URL}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
       const checkResponse = await fetch(checkUrl);
       
+      let decryptedData;
+      
       if (checkResponse.status === 404) {
-        throw new Error('No sync group found with this recovery phrase');
+        // This is a new device, try to fetch the latest sync data without device ID
+        // or by using the sync service's join mechanism
+        console.log('New device detected, attempting to fetch sync group data...');
+        
+        // Initialize sync service temporarily to fetch data
+        await syncService.initialize(phraseToUse);
+        
+        // Try to pull data - this should work even for new devices
+        const pullResult = await syncService.pull();
+        
+        if (!pullResult || !pullResult.data) {
+          throw new Error('No sync group found with this recovery phrase');
+        }
+        
+        decryptedData = pullResult.data;
+      } else {
+        // Get the encrypted data
+        const encryptedData = await checkResponse.json();
+        
+        // Initialize encryption with the recovery phrase to decrypt
+        await encryptionService.initialize(phraseToUse);
+        
+        // Decrypt the data
+        decryptedData = encryptionService.decryptData(encryptedData.encrypted_blob);
       }
-      
-      // Get the encrypted data
-      const encryptedData = await checkResponse.json();
-      
-      // Initialize encryption with the recovery phrase to decrypt
-      await encryptionService.initialize(recoveryInput.trim() || syncSetupPhrase);
-      
-      // Decrypt the data
-      const decryptedData = encryptionService.decryptData(encryptedData.encrypted_blob);
       
       // Extract preview information
       const preview = {

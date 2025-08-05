@@ -62,8 +62,9 @@ const validateUser = (userId, user) => {
     return false;
   }
 
-  if (!user.icon || typeof user.icon !== 'string') {
-    console.error(`Data validation failed: User ${userId} missing or invalid icon`);
+  // Check for icon or emoji (users can have either)
+  if (!user.icon && !user.emoji) {
+    console.error(`Data validation failed: User ${userId} missing icon/emoji`);
     return false;
   }
 
@@ -208,7 +209,10 @@ export const repairSyncedData = (data) => {
     for (const [userId, user] of Object.entries(repaired.users)) {
       // Ensure required user fields
       if (!user.name) user.name = 'Unknown User';
-      if (!user.icon) user.icon = '👤';
+      // Ensure user has either icon or emoji
+      if (!user.icon && !user.emoji) {
+        user.icon = '👤';
+      }
       if (!user.days) user.days = {};
 
       // Repair each day
