@@ -172,6 +172,12 @@ const DataModal = ({
           if (onSyncStatusChange) {
             onSyncStatusChange(true);
           }
+          
+          // Reload the page to show synced data
+          // This ensures the UI reflects the restored state
+          setTimeout(() => {
+            window.location.reload();
+          }, 1000);
         } catch (error) {
           console.error('Sync restore error:', error);
           setSyncError(error.message || 'Failed to restore sync');
