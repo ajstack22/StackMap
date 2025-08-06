@@ -358,16 +358,14 @@ export const styles = StyleSheet.create({
     padding: SPACING.md,
     width: '100%',
     marginBottom: SPACING.md,
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'space-between',
   },
   recoveryPhrase: {
     fontSize: 14,
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     color: '#000',
-    flex: 1,
-    marginRight: SPACING.sm,
+    marginBottom: SPACING.sm,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -838,6 +836,7 @@ export const styles = StyleSheet.create({
   keyActionButtons: {
     flexDirection: 'row',
     gap: SPACING.xs,
+    justifyContent: 'center',
   },
   keyActionButton: {
     padding: SPACING.xs,
