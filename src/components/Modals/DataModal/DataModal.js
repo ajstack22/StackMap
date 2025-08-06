@@ -1162,7 +1162,6 @@ const DataModal = ({
                 <SyncStatusIndicator theme={theme} size="large" />
                 <View style={styles.syncStatusInfo}>
                   <Text style={styles.syncStatusTitle}>Sync Enabled</Text>
-                  <Text style={styles.syncStatusId}>ID: {syncId}</Text>
                 </View>
               </View>
               
