@@ -81,7 +81,6 @@ const DataModal = ({
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [syncStatusChecked, setSyncStatusChecked] = useState(false);
-  const [showSyncQR, setShowSyncQR] = useState(false);
   
   // Share state
   const [shareLoading, setShareLoading] = useState(false);
@@ -1226,19 +1225,6 @@ const DataModal = ({
                         color="#000000"
                       />
                   </View>
-                  
-                  <View style={styles.divider} />
-                  
-                  <ModalButton
-                    theme={theme}
-                    variant="primary"
-                    label="I've Saved It"
-                    onPress={() => {
-                      setShowRecoveryPhrase(false);
-                      setShowSyncQR(false);
-                    }}
-                    style={{ marginTop: 10 }}
-                  />
                 </View>
               )}
               
