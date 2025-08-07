@@ -29,8 +29,13 @@ if (Platform.OS === 'web') {
   RNFS = require('../../../utils/platformHelpers.web').default;
   DocumentPicker = require('../../../utils/platformHelpers.web').DocumentPicker;
 } else {
-  // Use native modules
-  DocumentPicker = require('react-native-document-picker').default;
+  // Use native modules - wrap in try/catch for missing modules
+  try {
+    DocumentPicker = require('react-native-document-picker').default;
+  } catch (e) {
+    console.warn('DocumentPicker not available on this platform');
+    DocumentPicker = null;
+  }
   RNFS = require('react-native-fs');
 }
 
@@ -39,6 +44,7 @@ const DataModal = ({
   onClose,
   theme,
   users,
+  currentUser,
   currentDay,
   templates,
   activityCategories,
@@ -50,6 +56,9 @@ const DataModal = ({
   onSyncStatusChange,
   onShowSupport,
   onReset,
+  isOnboarding = false,
+  onboardingImportData = null,
+  initialTab = 0,
 }) => {
   const insets = useSafeAreaInsets();
   const [loading, setLoading] = useState(false);
@@ -97,8 +106,10 @@ const DataModal = ({
   const [selectedShareUser, setSelectedShareUser] = useState(null);
   const [showShareQR, setShowShareQR] = useState(false);
   
-  // Tabs configuration
-  const tabs = [
+  // Tabs configuration - filter out unnecessary tabs for onboarding
+  const tabs = isOnboarding ? [
+    { key: 'import', label: 'Import', icon: 'file-download' },
+  ] : [
     { key: 'sync', label: 'Sync', icon: 'sync' },
     { key: 'share', label: 'Share', icon: 'share' },
     { key: 'import', label: 'Import', icon: 'file-download' },
@@ -106,7 +117,7 @@ const DataModal = ({
     { key: 'reset', label: 'Reset', icon: 'refresh' },
   ];
   
-  const [activeTab, setActiveTab] = useState(0); // Default to Sync tab
+  const [activeTab, setActiveTab] = useState(initialTab); // Use initialTab or default to 0
   
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -127,14 +138,24 @@ const DataModal = ({
       setAutoUpdate(true);
       setSelectedShareUser(null);
       // Reset to Import tab when modal closes
-      setActiveTab(0);
+      setActiveTab(initialTab);
     } else {
+      // If onboarding mode with import data, set it up
+      if (isOnboarding && onboardingImportData) {
+        setImportFile({ name: 'Imported Data' });
+        setImportData(onboardingImportData);
+        setImportMode('fresh'); // Always fresh for onboarding
+        initializeImportSelections(onboardingImportData);
+        setActiveTab(0); // Import is the only tab in onboarding
+      }
       // When opening, generate new share token and load active shares
-      const token = syncService.generateShareToken(true);
-      setShareToken(token);
-      loadActiveShares();
+      if (!isOnboarding) {
+        const token = syncService.generateShareToken(true);
+        setShareToken(token);
+        loadActiveShares();
+      }
     }
-  }, [visible]);
+  }, [visible, isOnboarding, onboardingImportData]);
   
   // Check sync status on mount
   useEffect(() => {
@@ -198,9 +219,43 @@ const DataModal = ({
       [key]: !prev[key]
     }));
   };
+
+  // Initialize import selections based on file data
+  const initializeImportSelections = (parsedData) => {
+    const selections = {};
+    
+    if (parsedData.users) {
+      Object.entries(parsedData.users).forEach(([userId, user]) => {
+        selections[`user_${userId}`] = true;
+      });
+    }
+    
+    if (parsedData.activityCards) {
+      parsedData.activityCards.forEach(activity => {
+        selections[`activity_${activity.id}`] = true;
+      });
+    }
+    
+    if (parsedData.templates) {
+      Object.entries(parsedData.templates).forEach(([categoryId, category]) => {
+        selections[`category_${categoryId}`] = true;
+        if (category.activities) {
+          category.activities.forEach(activity => {
+            selections[`template_${categoryId}_${activity.id}`] = true;
+          });
+        }
+      });
+    }
+    
+    setImportSelections(selections);
+  };
   
   // Handle export
   const handleExport = async () => {
+    console.log('Export button pressed');
+    console.log('Export selections:', exportSelections);
+    console.log('Users available:', users);
+    
     try {
       setLoading(true);
       
@@ -219,6 +274,7 @@ const DataModal = ({
       if (exportSelections.users) {
         exportData.users = users;
         exportData.currentDay = currentDay;
+        exportData.currentUser = currentUser; // Add current user to export
       }
       
       if (exportSelections.activityCards) {
@@ -281,13 +337,42 @@ const DataModal = ({
       
       // Platform-specific export
       if (Platform.OS === 'android') {
+        console.log('Android export starting');
+        console.log('File name:', fileName);
+        console.log('Data length:', jsonData.length);
+        
         try {
           const downloadsPath = RNFS.DownloadDirectoryPath;
           const filePath = `${downloadsPath}/${fileName}`;
-          await RNFS.writeFile(filePath, jsonData, 'utf8');
+          console.log('Writing to:', filePath);
           
-          showToast({ message: `Exported to Downloads/${fileName}` });
+          await RNFS.writeFile(filePath, jsonData, 'utf8');
+          console.log('File written successfully');
+          
+          // Show success dialog with options
+          Alert.alert(
+            'Export Complete',
+            `Data exported to Downloads/${fileName}`,
+            [
+              {
+                text: 'Share',
+                onPress: async () => {
+                  const { Share } = require('react-native');
+                  await Share.share({
+                    url: `file://${filePath}`,
+                    title: fileName,
+                  });
+                }
+              },
+              {
+                text: 'OK',
+                style: 'default'
+              }
+            ],
+            { cancelable: true }
+          );
         } catch (error) {
+          console.error('Write failed, using share fallback:', error);
           // Fallback to share
           const { Share } = require('react-native');
           await Share.share({
@@ -309,17 +394,56 @@ const DataModal = ({
         showToast({ message: 'Export downloaded successfully!' });
       } else {
         // iOS - use share sheet
-        const { Share } = require('react-native');
-        const documentsPath = RNFS.DocumentDirectoryPath;
-        const filePath = `${documentsPath}/${fileName}`;
-        await RNFS.writeFile(filePath, jsonData, 'utf8');
+        console.log('iOS export starting...');
+        console.log('File name:', fileName);
+        console.log('Data length:', jsonData.length);
+        console.log('Users:', users ? Object.keys(users).length : 'undefined');
+        console.log('Export selections:', exportSelections);
         
-        await Share.share({
-          url: `file://${filePath}`,
-          title: fileName,
-        });
-        
-        await RNFS.unlink(filePath);
+        try {
+          const { Share } = require('react-native');
+          const documentsPath = RNFS.DocumentDirectoryPath;
+          const filePath = `${documentsPath}/${fileName}`;
+          console.log('Writing to:', filePath);
+          
+          await RNFS.writeFile(filePath, jsonData, 'utf8');
+          console.log('File written successfully');
+          
+          // Verify file was written
+          const fileExists = await RNFS.exists(filePath);
+          console.log('File exists:', fileExists);
+          
+          if (!fileExists) {
+            throw new Error('File was not created successfully');
+          }
+          
+          const shareResult = await Share.share({
+            url: `file://${filePath}`,
+            title: fileName,
+          });
+          console.log('Share result:', shareResult);
+          
+          // Show feedback based on share result
+          if (shareResult.action === Share.sharedAction) {
+            showToast({ message: 'Export shared successfully!' });
+          } else if (shareResult.action === Share.dismissedAction) {
+            showToast({ message: 'Export cancelled' });
+          }
+          
+          // Clean up the temp file after a delay to ensure it was used
+          setTimeout(async () => {
+            try {
+              await RNFS.unlink(filePath);
+              console.log('Temp file cleaned up');
+            } catch (err) {
+              console.log('Clean up error (file may have been moved):', err);
+            }
+          }, 5000);
+        } catch (iosError) {
+          console.error('iOS export error:', iosError);
+          console.error('Error stack:', iosError.stack);
+          Alert.alert('Export Error', `Failed to export: ${iosError.message}`);
+        }
       }
     } catch (error) {
       console.error('Export error:', error);
@@ -333,6 +457,141 @@ const DataModal = ({
   const handleSelectFile = async () => {
     try {
       setLoading(true);
+      
+      // Android uses file system search
+      if (Platform.OS === 'android') {
+        // Search for StackMap export files in various directories
+        let jsonFiles = [];
+        
+        const searchPaths = [
+          RNFS.DownloadDirectoryPath,
+          RNFS.ExternalDirectoryPath,
+          `${RNFS.ExternalDirectoryPath}/Documents`,
+          RNFS.DocumentDirectoryPath,
+        ];
+        
+        for (const path of searchPaths) {
+          try {
+            const files = await RNFS.readDir(path);
+            const foundFiles = files.filter(f => 
+              f.name.endsWith('.json') && 
+              f.name.toLowerCase().includes('stackmap')
+            );
+            jsonFiles = jsonFiles.concat(foundFiles);
+          } catch (e) {
+            // Skip paths we can't access
+          }
+        }
+        
+        // Remove duplicates based on file name
+        const uniqueFiles = Array.from(new Map(jsonFiles.map(f => [f.name, f])).values());
+        
+        if (uniqueFiles.length === 0) {
+          Alert.alert(
+            'No StackMap Files Found',
+            'To import data:\n\n1. First export your data using the Export button\n2. The file will be saved to your Downloads folder\n3. Try importing again\n\nNote: On newer Android versions, apps have limited file access.',
+            [{ text: 'OK' }]
+          );
+          setLoading(false);
+          return;
+        }
+        
+        // Sort files by modified time (newest first)
+        uniqueFiles.sort((a, b) => b.mtime - a.mtime);
+        
+        // Helper function to load a file
+        const loadFile = async (file) => {
+          try {
+            const fileContent = await RNFS.readFile(file.path, 'utf8');
+            const parsedData = JSON.parse(fileContent);
+            
+            if (!parsedData.version) {
+              Alert.alert('Error', 'Invalid StackMap export file');
+              return;
+            }
+            
+            setImportFile({ name: file.name, path: file.path });
+            setImportData(parsedData);
+            initializeImportSelections(parsedData);
+          } catch (error) {
+            console.error('Error loading file:', error);
+            Alert.alert('Error', 'Failed to read file: ' + error.message);
+          }
+        };
+        
+        // If multiple files, show picker
+        if (uniqueFiles.length > 1) {
+          // Android Alert can only show 3 buttons max
+          if (uniqueFiles.length > 2) {
+            // Show only the 2 most recent files
+            const recentFiles = uniqueFiles.slice(0, 2);
+            const fileOptions = recentFiles.map(f => {
+              const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+              let displayName = f.name;
+              
+              if (match) {
+                const date = match[1];
+                const time = match[2] ? match[2].replace(/-/g, ':') : '';
+                displayName = time ? `${date} at ${time}` : date;
+                const sizeKB = Math.round(f.size / 1024);
+                displayName += ` (${sizeKB} KB)`;
+              }
+              
+              return {
+                text: displayName,
+                onPress: () => loadFile(f)
+              };
+            });
+            
+            Alert.alert(
+              'Select Backup to Import',
+              `Found ${uniqueFiles.length} backups. Showing 2 most recent:`,
+              [
+                ...fileOptions,
+                { text: 'Cancel', style: 'cancel', onPress: () => setLoading(false) }
+              ]
+            );
+          } else {
+            // 2 or fewer files, show them all
+            const fileOptions = uniqueFiles.map(f => {
+              const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+              let displayName = f.name;
+              
+              if (match) {
+                const date = match[1];
+                const time = match[2] ? match[2].replace(/-/g, ':') : '';
+                displayName = time ? `${date} at ${time}` : date;
+                const sizeKB = Math.round(f.size / 1024);
+                displayName += ` (${sizeKB} KB)`;
+              }
+              
+              return {
+                text: displayName,
+                onPress: () => loadFile(f)
+              };
+            });
+            
+            Alert.alert(
+              'Select Backup to Import',
+              `Found ${uniqueFiles.length} StackMap backups:`,
+              [...fileOptions, { text: 'Cancel', style: 'cancel', onPress: () => setLoading(false) }]
+            );
+          }
+        } else {
+          // Single file found - load it directly
+          await loadFile(uniqueFiles[0]);
+        }
+        
+        setLoading(false);
+        return;
+      }
+      
+      // iOS and Web use DocumentPicker
+      if (!DocumentPicker || !DocumentPicker.pick) {
+        Alert.alert('Error', 'File picker is not available on this platform.');
+        setLoading(false);
+        return;
+      }
       
       const result = await DocumentPicker.pick({
         type: Platform.OS === 'web' ? 'application/json' : [DocumentPicker.types.json],
@@ -362,34 +621,7 @@ const DataModal = ({
       
       setImportFile(result[0]);
       setImportData(parsedData);
-      
-      // Initialize import selections based on what's in the file
-      const selections = {};
-      
-      if (parsedData.users) {
-        Object.entries(parsedData.users).forEach(([userId, user]) => {
-          selections[`user_${userId}`] = true;
-        });
-      }
-      
-      if (parsedData.activityCards) {
-        parsedData.activityCards.forEach(activity => {
-          selections[`activity_${activity.id}`] = true;
-        });
-      }
-      
-      if (parsedData.templates) {
-        Object.entries(parsedData.templates).forEach(([categoryId, category]) => {
-          selections[`category_${categoryId}`] = true;
-          if (category.activities) {
-            category.activities.forEach(activity => {
-              selections[`template_${categoryId}_${activity.id}`] = true;
-            });
-          }
-        });
-      }
-      
-      setImportSelections(selections);
+      initializeImportSelections(parsedData);
       
     } catch (error) {
       if (error.code !== DocumentPicker.errorCodes?.cancelled && error.code !== 'DOCUMENT_PICKER_CANCELED') {
@@ -414,6 +646,10 @@ const DataModal = ({
     try {
       setLoading(true);
       
+      console.log('Import mode:', importMode);
+      console.log('Import data users:', importData.users ? Object.keys(importData.users) : 'none');
+      console.log('Import selections:', importSelections);
+      
       // Prepare imported data based on selections
       const dataToImport = {
         mode: importMode,
@@ -423,14 +659,43 @@ const DataModal = ({
         globalSettings: importData.globalSettings || {},
       };
       
-      // Process selected users
+      // Process selected users with validation
       if (importData.users) {
         Object.entries(importData.users).forEach(([userId, user]) => {
           if (importSelections[`user_${userId}`]) {
-            dataToImport.users[userId] = user;
+            // Validate user data before adding to import
+            const validatedUser = { ...user };
+            
+            // Ensure name is a string
+            if (!validatedUser.name || typeof validatedUser.name !== 'string') {
+              console.warn(`User ${userId} has invalid name:`, validatedUser.name);
+              if (typeof validatedUser.name === 'object' && validatedUser.name !== null) {
+                // Try to extract name from object
+                validatedUser.name = validatedUser.name.name || validatedUser.name.text || 'User';
+              } else {
+                validatedUser.name = 'User';
+              }
+            }
+            
+            // Ensure icon is a string
+            if (!validatedUser.icon || typeof validatedUser.icon !== 'string') {
+              console.warn(`User ${userId} has invalid icon:`, validatedUser.icon);
+              // Try emoji field or use default
+              validatedUser.icon = validatedUser.emoji || '👤';
+            }
+            
+            // Ensure emoji field exists if icon doesn't
+            if (!validatedUser.emoji && validatedUser.icon) {
+              validatedUser.emoji = validatedUser.icon;
+            }
+            
+            console.log(`Adding validated user ${userId} (${validatedUser.name}) to import`);
+            dataToImport.users[userId] = validatedUser;
           }
         });
       }
+      
+      console.log('Final dataToImport users:', Object.keys(dataToImport.users));
       
       // Process selected activity cards
       if (importData.activityCards) {
@@ -516,10 +781,10 @@ const DataModal = ({
         return;
       }
       
-      await syncService.restore(recoveryInput.trim());
+      // Use initialize method to join existing sync
+      const result = await syncService.initialize(recoveryInput.trim());
       
-      const id = await syncService.getSyncId();
-      setSyncId(id);
+      setSyncId(result.syncId);
       setSyncRecoveryPhrase(recoveryInput.trim());
       setSyncEnabled(true);
       setShowRecoveryInput(false);
@@ -529,7 +794,10 @@ const DataModal = ({
         onSyncStatusChange(true);
       }
       
-      showToast({ message: 'Sync restored successfully!' });
+      const message = result.isNewSync 
+        ? 'New sync created successfully!' 
+        : 'Joined existing sync successfully!';
+      showToast({ message });
     } catch (error) {
       setSyncError(error.message || 'Failed to restore sync');
     } finally {
@@ -683,10 +951,14 @@ const DataModal = ({
             <View style={styles.emptyStateContainer}>
               <Icon name="file-download" size={48} color={theme.primary} />
               <Text style={styles.emptyStateText}>
-                Select a StackMap export file to import
+                {Platform.OS === 'android' ? 
+                  'Search for StackMap export files' : 
+                  'Select a StackMap export file to import'}
               </Text>
               <Text style={styles.emptyStateDescription}>
-                Import your saved StackMap data from a backup file
+                {Platform.OS === 'android' ?
+                  'Will search Downloads folder for export files' :
+                  'Import your saved StackMap data from a backup file'}
               </Text>
             </View>
             
@@ -694,7 +966,7 @@ const DataModal = ({
               <ModalButton
                 theme={theme}
                 variant="primary"
-                label="Select File"
+                label={Platform.OS === 'android' ? "Search for Files" : "Select File"}
                 icon="folder-open"
                 onPress={handleSelectFile}
                 disabled={loading}
@@ -728,55 +1000,57 @@ const DataModal = ({
               </TouchableOpacity>
             </View>
             
-            <View style={styles.importModeContainer}>
-              <Text style={styles.importModeTitle}>Import Mode</Text>
-              <View style={styles.importModeOptions}>
-                <TouchableOpacity
-                  style={[
-                    styles.importModeOption,
-                    importMode === 'fresh' && styles.importModeOptionActive
-                  ]}
-                  onPress={() => setImportMode('fresh')}
-                >
-                  <Icon 
-                    name="refresh" 
-                    size={20} 
-                    color={importMode === 'fresh' ? theme.primary : '#666'} 
-                  />
-                  <Text style={[
-                    styles.importModeText,
-                    importMode === 'fresh' && styles.importModeTextActive
-                  ]}>
-                    Start Fresh
-                  </Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity
-                  style={[
-                    styles.importModeOption,
-                    importMode === 'merge' && styles.importModeOptionActive
-                  ]}
-                  onPress={() => setImportMode('merge')}
-                >
-                  <Icon 
-                    name="merge-type" 
-                    size={20} 
-                    color={importMode === 'merge' ? theme.primary : '#666'} 
-                  />
-                  <Text style={[
-                    styles.importModeText,
-                    importMode === 'merge' && styles.importModeTextActive
-                  ]}>
-                    Merge with Existing
-                  </Text>
-                </TouchableOpacity>
+            {!isOnboarding && (
+              <View style={styles.importModeContainer}>
+                <Text style={styles.importModeTitle}>Import Mode</Text>
+                <View style={styles.importModeOptions}>
+                  <TouchableOpacity
+                    style={[
+                      styles.importModeOption,
+                      importMode === 'fresh' && styles.importModeOptionActive
+                    ]}
+                    onPress={() => setImportMode('fresh')}
+                  >
+                    <Icon 
+                      name="refresh" 
+                      size={20} 
+                      color={importMode === 'fresh' ? theme.primary : '#666'} 
+                    />
+                    <Text style={[
+                      styles.importModeText,
+                      importMode === 'fresh' && styles.importModeTextActive
+                    ]}>
+                      Start Fresh
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.importModeOption,
+                      importMode === 'merge' && styles.importModeOptionActive
+                    ]}
+                    onPress={() => setImportMode('merge')}
+                  >
+                    <Icon 
+                      name="merge-type" 
+                      size={20} 
+                      color={importMode === 'merge' ? theme.primary : '#666'} 
+                    />
+                    <Text style={[
+                      styles.importModeText,
+                      importMode === 'merge' && styles.importModeTextActive
+                    ]}>
+                      Merge with Existing
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.importModeDescription}>
+                  {importMode === 'fresh' 
+                    ? 'Clear all existing data, then add only the selected items'
+                    : 'Keep existing data and add selected items'}
+                </Text>
               </View>
-              <Text style={styles.importModeDescription}>
-                {importMode === 'fresh' 
-                  ? 'Replace all current data with imported data'
-                  : 'Keep existing data and add selected items'}
-              </Text>
-            </View>
+            )}
             
             <View style={styles.importSelectionsContainer}>
               <Text style={styles.sectionTitle}>Select Items to Import</Text>
@@ -1090,32 +1364,42 @@ const DataModal = ({
             )}
             
             {showRecoveryInput && (
-              <View style={styles.recoveryInputContainer}>
-                <FormInput
-                  value={recoveryInput}
-                  onChangeText={setRecoveryInput}
-                  placeholder="Enter your sync key"
-                  multiline
-                  numberOfLines={3}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  theme={theme}
-                />
-              </View>
+              <>
+                <View style={styles.recoveryInputContainer}>
+                  <Text style={styles.inputLabel}>Enter your sync key:</Text>
+                  <Text style={styles.inputHelperText}>
+                    Your sync key is a 32-character code that looks like: 
+                    a1b2c3d4e5f6789012345678901234567
+                  </Text>
+                  <FormInput
+                    value={recoveryInput}
+                    onChangeText={setRecoveryInput}
+                    placeholder="Paste sync key"
+                    multiline
+                    numberOfLines={2}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    inputStyle={styles.recoveryInput}
+                    theme={theme}
+                  />
+                </View>
+              </>
             )}
             
             {!showRecoveryInput ? (
               <View style={styles.inPanelButtonContainer}>
-                <ModalButton
-                  theme={theme}
-                  variant="primary"
-                  label="Create New Sync"
-                  icon="add-circle"
-                  onPress={handleEnableSync}
-                  disabled={syncLoading}
-                  loading={syncLoading}
-                  fullWidth
-                />
+                {Platform.OS === 'web' && (
+                  <ModalButton
+                    theme={theme}
+                    variant="primary"
+                    label="Create New Sync"
+                    icon="add-circle"
+                    onPress={handleEnableSync}
+                    disabled={syncLoading}
+                    loading={syncLoading}
+                    fullWidth
+                  />
+                )}
                 
                 <ModalButton
                   theme={theme}
@@ -1192,13 +1476,16 @@ const DataModal = ({
                       <TouchableOpacity
                         style={styles.keyActionButton}
                         onPress={() => {
-                          const basePath = window.location.pathname.endsWith('/') 
-                            ? window.location.pathname 
-                            : window.location.pathname + '/';
-                          const syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
-                          if (Platform.OS === 'web') {
+                          let syncUrl;
+                          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                            const basePath = window.location.pathname.endsWith('/') 
+                              ? window.location.pathname 
+                              : window.location.pathname + '/';
+                            syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
                             navigator.clipboard.writeText(syncUrl);
                           } else {
+                            // For mobile, use a fixed URL
+                            syncUrl = `https://stackmap.app/?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
                             const Clipboard = require('@react-native-clipboard/clipboard').default;
                             Clipboard.setString(syncUrl);
                           }
@@ -1214,11 +1501,16 @@ const DataModal = ({
                   <View style={styles.qrCodeContainer}>
                     <QRCode
                         value={(() => {
-                          // Ensure path ends with trailing slash to avoid redirects
-                          const basePath = window.location.pathname.endsWith('/') 
-                            ? window.location.pathname 
-                            : window.location.pathname + '/';
-                          return `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                            // Ensure path ends with trailing slash to avoid redirects
+                            const basePath = window.location.pathname.endsWith('/') 
+                              ? window.location.pathname 
+                              : window.location.pathname + '/';
+                            return `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                          } else {
+                            // For mobile, use a fixed URL
+                            return `https://stackmap.app/?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                          }
                         })()}
                         size={200}
                         backgroundColor="#ffffff"
@@ -1547,21 +1839,31 @@ const DataModal = ({
         activeTab={activeTab}
         onTabChange={setActiveTab}
       >
-        <TabContent isActive={activeTab === 0} modalVisible={visible}>
-          {renderSyncContent()}
-        </TabContent>
-        <TabContent isActive={activeTab === 1} modalVisible={visible}>
-          {renderShareContent()}
-        </TabContent>
-        <TabContent isActive={activeTab === 2} modalVisible={visible}>
-          {renderImportContent()}
-        </TabContent>
-        <TabContent isActive={activeTab === 3} modalVisible={visible}>
-          {renderExportContent()}
-        </TabContent>
-        <TabContent isActive={activeTab === 4} modalVisible={visible}>
-          {renderResetContent()}
-        </TabContent>
+        {isOnboarding ? (
+          // In onboarding mode, only show import content
+          <TabContent isActive={activeTab === 0} modalVisible={visible}>
+            {renderImportContent()}
+          </TabContent>
+        ) : (
+          // Normal mode with all tabs - wrapped in View to avoid Fragment prop issue
+          [
+            <TabContent key="sync" isActive={activeTab === 0} modalVisible={visible}>
+              {renderSyncContent()}
+            </TabContent>,
+            <TabContent key="share" isActive={activeTab === 1} modalVisible={visible}>
+              {renderShareContent()}
+            </TabContent>,
+            <TabContent key="import" isActive={activeTab === 2} modalVisible={visible}>
+              {renderImportContent()}
+            </TabContent>,
+            <TabContent key="export" isActive={activeTab === 3} modalVisible={visible}>
+              {renderExportContent()}
+            </TabContent>,
+            <TabContent key="reset" isActive={activeTab === 4} modalVisible={visible}>
+              {renderResetContent()}
+            </TabContent>
+          ]
+        )}
       </TabbedModal>
       
       <ConfirmModal
@@ -1572,7 +1874,7 @@ const DataModal = ({
         title={importMode === 'fresh' ? 'Start Fresh Import' : 'Merge Import'}
         message={
           importMode === 'fresh'
-            ? 'This will replace all your current data with the selected items. This action cannot be undone.'
+            ? 'This will DELETE all your current data and replace it with only the selected items. This action cannot be undone.'
             : 'This will add the selected items to your existing data. Duplicate items will be skipped.'
         }
         confirmText="Import"

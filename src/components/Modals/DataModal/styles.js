@@ -372,18 +372,31 @@ export const styles = StyleSheet.create({
   
   recoveryInputContainer: {
     marginBottom: SPACING.md,
+    width: '100%',
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+    color: '#333',
+    marginBottom: SPACING.xs,
+  },
+  inputHelperText: {
+    fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
+    marginBottom: SPACING.sm,
+    lineHeight: 18,
   },
   recoveryInput: {
     backgroundColor: 'white',
     borderRadius: RADIUS.medium,
     padding: SPACING.md,
-    fontSize: 15,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    fontSize: Platform.OS === 'web' ? 14 : 13,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
     color: '#000',
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    minHeight: 80,
+    minHeight: Platform.OS === 'web' ? 60 : 50,
     textAlignVertical: 'top',
+    width: '100%',
   },
   
   syncActions: {
@@ -415,6 +428,8 @@ export const styles = StyleSheet.create({
   inPanelButtonContainer: {
     marginTop: SPACING.lg,
     gap: SPACING.sm,
+    alignItems: 'center',
+    width: '100%',
   },
   primaryButton: {
     flexDirection: 'row',

@@ -407,13 +407,31 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     style={[styles.secondaryButton, styles.secondaryButtonEqual]}
                     onPress={async () => {
                       try {
-                        await onImport();
-                        // If import was successful, mark it and go to features
-                        setImportSuccessful(true);
-                        transitionTo('features');
+                        const result = await onImport();
+                        // If import was successful, update local state and show summary
+                        if (result && result.success) {
+                          setImportSuccessful(true);
+                          // Convert imported users to local format for onboarding
+                          if (result.summary.userData) {
+                            const importedUsers = Object.entries(result.summary.userData).map(([id, user]) => ({
+                              name: user.name || 'User',
+                              emoji: user.icon || user.emoji || '😊'
+                            }));
+                            setUsers(importedUsers);
+                          }
+                          // Show import summary
+                          Alert.alert(
+                            'Import Successful',
+                            `Imported:\n• ${result.summary.users} user(s)\n• ${result.summary.activities} activity categories\n${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
+                            [{ text: 'Continue', onPress: () => transitionTo('features') }]
+                          );
+                        } else {
+                          // Import was cancelled or failed
+                          console.log('Import cancelled or failed');
+                        }
                       } catch (error) {
                         // Import was cancelled or failed, stay on welcome screen
-                        console.log('Import cancelled or failed');
+                        console.log('Import cancelled or failed:', error);
                       }
                     }}
                   >
@@ -656,7 +674,12 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                       syncCompleted: true 
                     });
                   } else if (users.length > 0) {
-                    transitionTo('setupPin');
+                    // If we have imported users, complete onboarding
+                    if (importSuccessful) {
+                      onComplete({ importedData: true });
+                    } else {
+                      transitionTo('setupPin');
+                    }
                   } else {
                     transitionTo('createUser');
                   }
@@ -668,7 +691,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                 </Text>
               </TouchableOpacity>
 
-              {!isAbbreviated && users.length < 3 && (
+              {!isAbbreviated && users.length > 0 && users.length < 3 && (
                 <TouchableOpacity 
                   style={styles.secondaryButton}
                   onPress={() => transitionTo('createUser')}
@@ -953,27 +976,32 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                       Join Existing Sync
                     </Text>
                   </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.syncModeButton, syncMode === 'create' && styles.syncModeButtonActive]}
-                    onPress={() => {
-                      setSyncMode('create');
-                      setSyncError('');
-                      if (!newSyncData) {
-                        createNewSync();
-                      }
-                    }}
-                  >
-                    <Text style={[styles.syncModeButtonText, syncMode === 'create' && styles.syncModeButtonTextActive]}>
-                      Create New Sync
-                    </Text>
-                  </TouchableOpacity>
+                  {Platform.OS === 'web' && (
+                    <TouchableOpacity 
+                      style={[styles.syncModeButton, syncMode === 'create' && styles.syncModeButtonActive]}
+                      onPress={() => {
+                        setSyncMode('create');
+                        setSyncError('');
+                        if (!newSyncData) {
+                          createNewSync();
+                        }
+                      }}
+                    >
+                      <Text style={[styles.syncModeButtonText, syncMode === 'create' && styles.syncModeButtonTextActive]}>
+                        Create New Sync
+                      </Text>
+                    </TouchableOpacity>
+                  )}
                 </View>
 
                 <Text style={styles.screenSubtitle}>
-                  {syncMode === 'join' ? 'Connect to your existing sync group' : 'Create a sync key for your device'}
+                  {Platform.OS === 'web' 
+                    ? (syncMode === 'join' ? 'Connect to your existing sync group' : 'Create a sync key for your device')
+                    : 'Connect to your existing sync group'
+                  }
                 </Text>
                 
-                {syncMode === 'join' ? (
+                {(Platform.OS !== 'web' || syncMode === 'join') ? (
                   <>
                     <View style={styles.syncFeatures}>
                   <View style={styles.syncFeature}>

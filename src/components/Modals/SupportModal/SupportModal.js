@@ -186,7 +186,7 @@ const SupportModal = ({
           </ScrollView>
         </View>
         <SafeAreaView style={{ backgroundColor: '#f0f4f8' }} />
-        {Platform.OS === 'android' && (
+        {Platform.OS === 'android' && getAndroidModalBottomHeight && insets && (
           <View style={{ backgroundColor: '#f0f4f8', height: getAndroidModalBottomHeight(insets) }} />
         )}
       </View>

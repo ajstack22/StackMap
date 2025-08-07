@@ -182,8 +182,11 @@ const TabbedModal = ({
     // Direction: negative when going to next tab (content slides left), positive when going to previous tab (content slides right)
     const direction = index > activeTabRef.current ? -1 : 1;
     
-    // Update the active tab immediately
-    handleTabPress(index);
+    // Defer the state update to avoid React Native's batching warning
+    // This prevents state updates during touch event processing
+    setTimeout(() => {
+      handleTabPress(index);
+    }, 0);
     
     // Material Design 3 shared axis transition - start from opposite direction
     swipeAnimation.setValue(-direction * screenWidth * 0.35);
@@ -301,42 +304,41 @@ const TabbedModal = ({
                 accessibilityState={{ selected: activeTab === index }}
                 accessibilityLabel={`${tab.label} tab`}
               >
-                <View style={{ alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
-                  {/* Modern rounded rectangle indicator behind content */}
-                  {activeTab === index && (
-                    <View style={{
-                      position: 'absolute',
-                      top: Platform.OS === 'web' ? 4 : 3,
-                      bottom: Platform.OS === 'web' ? 4 : 3,
-                      left: Platform.OS === 'web' ? 4 : 2,
-                      right: Platform.OS === 'web' ? 4 : 2,
-                      backgroundColor: '#FFFFFF',
-                      borderRadius: 12,
-                      opacity: 1,
-                      ...(Platform.OS === 'ios' && {
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.08,
-                        shadowRadius: 3,
-                      }),
-                      ...(Platform.OS === 'android' && {
-                        elevation: 2,
-                      }),
-                      ...(Platform.OS === 'web' && {
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                      }),
-                    }} />
+                {/* Modern rounded rectangle indicator behind content */}
+                {activeTab === index && (
+                  <View style={{
+                    position: 'absolute',
+                    top: Platform.OS === 'web' ? 4 : 3,
+                    bottom: Platform.OS === 'web' ? 4 : 3,
+                    left: Platform.OS === 'web' ? 4 : 2,
+                    right: Platform.OS === 'web' ? 4 : 2,
+                    backgroundColor: '#FFFFFF',
+                    borderRadius: 12,
+                    opacity: 1,
+                    ...(Platform.OS === 'ios' && {
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 3,
+                    }),
+                    ...(Platform.OS === 'android' && {
+                      elevation: 2,
+                    }),
+                    ...(Platform.OS === 'web' && {
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                    }),
+                  }} />
+                )}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Platform.OS === 'web' ? 4 : 3 }}>
+                  {tab.icon && (Platform.OS === 'web' || isTablet() || activeTab === index) && (
+                    <Icon 
+                      name={tab.icon} 
+                      size={Platform.OS === 'web' || isTablet() ? 18 : 16} 
+                      color={activeTab === index ? theme.primary : 'rgba(255,255,255,0.7)'} 
+                    />
                   )}
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    {tab.icon && (Platform.OS === 'web' || isTablet() || tabs.length <= 2) && (
-                      <Icon 
-                        name={tab.icon} 
-                        size={Platform.OS === 'web' || isTablet() ? 20 : 18} 
-                        color={activeTab === index ? theme.primary : 'rgba(255,255,255,0.7)'} 
-                      />
-                    )}
-                    <Text 
-                      style={[
+                  <Text 
+                    style={[
                         styles.tabText,
                         activeTab === index && styles.tabTextActive,
                         activeTab === index && { color: theme.primary }
@@ -357,7 +359,6 @@ const TabbedModal = ({
                       </View>
                     )}
                   </View>
-                </View>
               </TouchableOpacity>
             ))}
           </View>

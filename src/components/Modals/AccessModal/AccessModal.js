@@ -11,6 +11,7 @@ const AccessModal = ({
   users,
   currentUser,
   onAddUser,
+  onUpdateUser,
   onSelectUser,
   onDeleteUser,
   hasSecurePin,
@@ -19,6 +20,8 @@ const AccessModal = ({
   onRemovePin,
   onVerifyPin,
   initialTab = 0,
+  insets,
+  getAndroidModalBottomHeight,
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
@@ -52,11 +55,14 @@ const AccessModal = ({
           users={users}
           currentUser={currentUser}
           onAddUser={onAddUser}
+          onUpdateUser={onUpdateUser}
           onSelectUser={onSelectUser}
           onDeleteUser={onDeleteUser}
           showToast={showToast}
           loading={loading}
           setLoading={setLoading}
+          insets={insets}
+          getAndroidModalBottomHeight={getAndroidModalBottomHeight}
         />
       </TabContent>
       

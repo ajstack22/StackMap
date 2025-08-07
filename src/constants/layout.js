@@ -21,7 +21,7 @@ export const FONT_SCALE = {
 
 // Card layout constants
 export const CARD_LAYOUT = {
-  minWidth: 280, // Reduced to allow 2 columns on iPad portrait (768px)
+  minWidth: 320, // Increased for better readability
   maxWidth: 450, // Comfortable max width
   gap: 20, // Balanced gap for better column breakpoints
   containerPaddingMobile: 16, // 1rem
@@ -41,28 +41,44 @@ export const calculateColumns = (width = screenWidth) => {
   const containerPadding = getContainerPadding(width);
   const availableWidth = width - (containerPadding * 2);
   
+  // DEBUG: Log calculation details
+  console.log('📐 Column Calculation:', {
+    screenWidth: width,
+    containerPadding: containerPadding,
+    availableWidth: availableWidth,
+    isTablet: isTablet(width),
+    platform: Platform.OS
+  });
+  
   // Special handling for iPad devices
-  // Force 2 columns for iPad in portrait mode (width < height)
-  // This covers iPad Mini, iPad Air, iPad Pro in portrait
+  // Use simpler, more predictable breakpoints
   if (Platform.OS === 'ios' && isTablet(width)) {
-    // If it's a tablet and width is less than 1024 (portrait orientation)
-    if (width < 1024) {
+    // Use available width (after padding) for breakpoints
+    if (availableWidth < 650) {
+      console.log('📐 iPad: 1 column (available < 650)');
+      return 1;
+    }
+    if (availableWidth < 950) {
+      console.log('📐 iPad: 2 columns (available < 950)');
       return 2;
     }
+    if (availableWidth < 1250) {
+      console.log('📐 iPad: 3 columns (available < 1250)');
+      return 3;
+    }
+    console.log('📐 iPad: 4 columns (available >= 1250)');
+    return 4;
   }
   
-  // Better breakpoints for smoother transitions
-  // Single column up to 600px (gives cards room to breathe)
+  // Standard breakpoints for other platforms
   if (width < 600) {
     return 1;
   }
   
-  // Two columns from 600px to 900px
   if (width < 900) {
     return 2;
   }
   
-  // Three columns for 900px and above
   return 3;
 };
 
@@ -88,11 +104,13 @@ export const calculateCardWidth = (width = screenWidth) => {
 };
 
 export const getCardHeight = () => {
-  return isTablet() ? 320 : 280; // Good proportions with 350px width
+  // Reduce height for tablets to better fit when in 2-column layout
+  return isTablet() ? 240 : 280; // Reduced from 320 to 240 for tablets
 };
 
 export const getCardPadding = () => {
-  return isTablet() ? 45 : 35;
+  // Reduce padding on tablets to give more space for content
+  return isTablet() ? 25 : 35; // Reduced from 45 to 25 for tablets
 };
 
 // FAB dimensions

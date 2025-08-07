@@ -1,6 +1,15 @@
-import * as Keychain from 'react-native-keychain';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+
+let Keychain = null;
+// Only load Keychain on iOS - Android will use AsyncStorage fallback
+if (Platform.OS === 'ios') {
+  try {
+    Keychain = require('react-native-keychain');
+  } catch (e) {
+    console.log('[SecureStorage] react-native-keychain not available on iOS');
+  }
+}
 
 const PIN_SERVICE = 'StackMapPIN';
 const PIN_USERNAME = 'editModePin';
@@ -24,6 +33,24 @@ export const setSecurePin = async (pin) => {
       console.log('Could not remove disabled flag:', e);
     }
 
+    // Android: Use AsyncStorage
+    if (Platform.OS === 'android') {
+      await AsyncStorage.setItem('@stackmap_pin', pin);
+      return true;
+    }
+
+    // iOS: Use Keychain
+    if (!Keychain) {
+      console.log('[SecureStorage] Keychain module not available');
+      return false;
+    }
+    
+    // Check if the method exists
+    if (typeof Keychain.setInternetCredentials !== 'function') {
+      console.log('[SecureStorage] setInternetCredentials not available');
+      return false;
+    }
+
     // Store PIN securely
     const result = await Keychain.setInternetCredentials(
       PIN_SERVICE,
@@ -44,7 +71,25 @@ export const setSecurePin = async (pin) => {
  */
 export const getSecurePin = async () => {
   try {
-    // Get credentials using internet credentials (works on all platforms)
+    // Android: Use AsyncStorage as fallback
+    if (Platform.OS === 'android') {
+      const pin = await AsyncStorage.getItem('@stackmap_pin');
+      return pin || null;
+    }
+    
+    // iOS: Use Keychain
+    if (!Keychain) {
+      console.log('[SecureStorage] Keychain module not available');
+      return null;
+    }
+    
+    // Check if the method exists
+    if (typeof Keychain.getInternetCredentials !== 'function') {
+      console.log('[SecureStorage] getInternetCredentials not available');
+      return null;
+    }
+    
+    // Get credentials using internet credentials
     const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
     
     if (credentials && credentials.password) {
@@ -79,27 +124,40 @@ export const removeSecurePin = async () => {
       console.error('[SecureStorage] Failed to set disabled flag:', e);
     }
     
-    // Platform-specific PIN removal
+    // Android: Use AsyncStorage
     if (Platform.OS === 'android') {
-      // On Android, resetInternetCredentials can cause crashes
-      // Just overwrite with DELETED marker
       try {
-        await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
-        console.log('[SecureStorage] Android: Set DELETED marker successfully');
+        await AsyncStorage.removeItem('@stackmap_pin');
+        console.log('[SecureStorage] Android: Removed PIN from AsyncStorage');
       } catch (e) {
-        console.log('[SecureStorage] Android: Failed to set DELETED marker:', e.message);
-        // Don't throw - we already set the disabled flag
+        console.log('[SecureStorage] Android: Failed to remove PIN:', e.message);
       }
-    } else {
+      return true;
+    }
+    
+    // iOS: Use Keychain (iOS developer will handle)
+    if (!Keychain) {
+      console.log('[SecureStorage] Keychain not available on this platform');
+      return true; // Return true since we set the disabled flag
+    }
+    
+    if (Platform.OS === 'ios') {
       // iOS - try reset first, then fallback to DELETED
       try {
-        await Keychain.resetInternetCredentials(PIN_SERVICE);
-        console.log('[SecureStorage] iOS: Reset credentials successfully');
+        if (Keychain && typeof Keychain.resetInternetCredentials === 'function') {
+          await Keychain.resetInternetCredentials(PIN_SERVICE);
+          console.log('[SecureStorage] iOS: Reset credentials successfully');
+        } else if (Keychain && typeof Keychain.setInternetCredentials === 'function') {
+          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+          console.log('[SecureStorage] iOS: Set DELETED marker as fallback');
+        }
       } catch (e) {
         console.log('[SecureStorage] iOS: Reset failed, trying DELETED marker:', e.message);
         try {
-          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
-          console.log('[SecureStorage] iOS: Set DELETED marker successfully');
+          if (Keychain && typeof Keychain.setInternetCredentials === 'function') {
+            await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+            console.log('[SecureStorage] iOS: Set DELETED marker successfully');
+          }
         } catch (e2) {
           console.log('[SecureStorage] iOS: Failed to set DELETED marker:', e2.message);
         }

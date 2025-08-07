@@ -67,10 +67,6 @@ export const styles = StyleSheet.create({
     fontWeight: Platform.OS === 'ios' ? '600' : '500',
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: 'rgba(255, 255, 255, 0.8)',
-    ...(Platform.OS !== 'web' && !isTablet() && {
-      textAlign: 'center',
-      flex: 1,
-    }),
   },
   tabTextActive: {
     fontWeight: Platform.OS === 'ios' ? '700' : 'bold',

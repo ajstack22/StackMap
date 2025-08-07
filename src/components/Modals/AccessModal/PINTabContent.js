@@ -105,12 +105,7 @@ const PINTabContent = ({
     }
   };
 
-  // Handle PIN input completion
-  React.useEffect(() => {
-    if (pinInput.length === pinLength && showPinModal) {
-      handlePinSubmit();
-    }
-  }, [pinInput]);
+  // Handle PIN input completion - removed to avoid render-time state updates
 
   return (
     <ScrollView 
@@ -204,6 +199,7 @@ const PINTabContent = ({
         setPinInput={setPinInput}
         isSettingPin={isSettingPin}
         confirmPin={confirmPin}
+        onPinComplete={handlePinSubmit}
       />
     </ScrollView>
   );

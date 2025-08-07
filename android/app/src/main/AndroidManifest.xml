@@ -37,6 +37,25 @@
             <data android:mimeType="text/plain" />
             <data android:pathPattern=".*\\.json" />
         </intent-filter>
+        
+        <!-- Handle sync deep links from stackmap.app -->
+        <intent-filter android:autoVerify="true">
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="https" 
+                  android:host="stackmap.app" 
+                  android:pathPrefix="/sync" />
+        </intent-filter>
+        
+        <!-- Handle custom scheme sync links -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="stackmap" 
+                  android:host="sync" />
+        </intent-filter>
       </activity>
     </application>
 </manifest>

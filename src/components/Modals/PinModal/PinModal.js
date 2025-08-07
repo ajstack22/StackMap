@@ -19,18 +19,29 @@ const PinModal = ({
   setPinInput,
   isSettingPin,
   confirmPin,
+  onPinComplete,
 }) => {
   // No need to clear PIN on unmount - handled by parent
   const handleNumberPress = (num) => {
     if (isSettingPin && confirmPin) {
       // During confirmation, we still use pinInput
       if (pinInput.length < 4) {
-        setPinInput(pinInput + num);
+        const newPin = pinInput + num;
+        setPinInput(newPin);
+        // Check if PIN is complete and call callback
+        if (newPin.length === 4 && onPinComplete) {
+          setTimeout(() => onPinComplete(), 100);
+        }
       }
     } else {
       // Initial PIN entry
       if (pinInput.length < 4) {
-        setPinInput(pinInput + num);
+        const newPin = pinInput + num;
+        setPinInput(newPin);
+        // Check if PIN is complete and call callback
+        if (newPin.length === 4 && onPinComplete) {
+          setTimeout(() => onPinComplete(), 100);
+        }
       }
     }
   };

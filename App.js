@@ -47,8 +47,13 @@ if (Platform.OS === 'web') {
   RNFS = require('./src/utils/platformHelpers.web').default;
   DocumentPicker = require('./src/utils/platformHelpers.web').DocumentPicker;
 } else {
-  // Use native modules
-  DocumentPicker = Platform.OS === 'ios' ? require('react-native-document-picker').default : null;
+  // Use native modules for both iOS and Android
+  try {
+    DocumentPicker = require('react-native-document-picker').default;
+  } catch (e) {
+    console.warn('DocumentPicker not available:', e);
+    DocumentPicker = null;
+  }
   RNFS = require('react-native-fs');
 }
 
@@ -262,6 +267,8 @@ const App = () => {
   const [activityManagementActiveTab, setActivityManagementActiveTab] = useState(0);
   const [showSyncPreviewModal, setShowSyncPreviewModal] = useState(false);
   const [syncPreviewPhrase, setSyncPreviewPhrase] = useState(null);
+  const [showOnboardingImport, setShowOnboardingImport] = useState(false);
+  const [onboardingImportData, setOnboardingImportData] = useState(null);
   
   
   // Screen dimensions state
@@ -274,6 +281,17 @@ const App = () => {
   const numColumns = calculateColumns(screenDimensions.width);
   const cardWidth = calculateCardWidth(screenDimensions.width);
   const cardHeight = getCardHeight();
+  
+  // DEBUG: Log current layout calculations
+  console.log('🎯 Layout Debug:', {
+    screenWidth: screenDimensions.width,
+    screenHeight: screenDimensions.height,
+    numColumns: numColumns,
+    cardWidth: cardWidth,
+    cardHeight: cardHeight,
+    isTablet: isTablet(screenDimensions.width),
+    platform: Platform.OS,
+  });
   
   // Activity library state
   // activityCategories now in Zustand store
@@ -303,6 +321,7 @@ const App = () => {
   // Check for share token in URL (web only)
   const [shareToken, setShareToken] = useState(null);
   const [syncSetupPhrase, setSyncSetupPhrase] = useState(null);
+  const [isInitializing, setIsInitializing] = useState(false); // Prevent race conditions
   
   useEffect(() => {
     if (Platform.OS === 'web') {
@@ -426,7 +445,15 @@ const App = () => {
     
     if (!isHydrated) return;
     
+    // Prevent multiple initialization runs
+    if (isInitializing) {
+      console.log('[App] Already initializing, skipping duplicate run');
+      return;
+    }
+    
     const initializeApp = async () => {
+      setIsInitializing(true);
+      
       // Log Zustand store state for debugging
       console.log('[App] Zustand store after hydration:', {
         currentTheme,
@@ -446,32 +473,20 @@ const App = () => {
       if (!hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
         console.log('[App] Showing onboarding - no users and not completed');
         setShowOnboarding(true);
+        setIsInitializing(false);
         return; // Don't create default user, wait for onboarding
       }
       
       // Initialize default user if none exists and onboarding is complete
-      if (hasCompletedOnboarding && Object.keys(users).length === 0) {
-        console.log('[App] Creating default user - onboarding complete but no users');
-        const newUserId = `user_${Date.now()}`;
-        const newUser = {
-          id: newUserId,
-          name: 'My Activities',
-          icon: '😊',
-          days: {
-            today: { activities: [] },
-            tomorrow: { activities: [] }
-          },
-          settings: {
-            taskCelebration: 'rainbow',
-            routineCelebration: 'rainbow',
-            soundEnabled: true,
-            theme: 'stackBlue',
-          },
-          createdAt: new Date().toISOString(),
-          lastActive: new Date().toISOString()
-        };
-        addUser(newUserId, newUser);
-        setCurrentUser(newUserId);
+      // IMPORTANT: Never create a default user if we're showing onboarding
+      if (hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
+        console.log('[App] WARNING: hasCompletedOnboarding is true but no users exist');
+        // This is likely a bad state from a failed reset - fix it
+        console.log('[App] Fixing bad state - resetting hasCompletedOnboarding to false');
+        setHasCompletedOnboarding(false);
+        setShowOnboarding(true);
+        setIsInitializing(false);
+        return; // Don't create a default user
       }
       
       // Always check secure storage as the source of truth for PIN
@@ -485,6 +500,7 @@ const App = () => {
       }
       
       setHasPinProtection(hasPIN);
+      setIsInitializing(false);
     };
     
     initializeApp();
@@ -751,6 +767,58 @@ const App = () => {
     try {
       console.log('handleOnboardingComplete called with:', onboardingData);
       
+      // Check if we have imported data to restore
+      const importedDataStr = await AsyncStorage.getItem('@stackmap_import_temp');
+      if (importedDataStr) {
+        console.log('[ONBOARDING] Found imported data, applying it now...');
+        const importedData = JSON.parse(importedDataStr);
+        
+        // Apply all the imported data NOW that onboarding is complete
+        if (importedData.users) {
+          setUsers(importedData.users);
+          const currentUserId = importedData.currentUser || importedData.currentUserId || Object.keys(importedData.users)[0];
+          if (currentUserId && importedData.users[currentUserId]) {
+            setCurrentUser(currentUserId);
+            const userData = importedData.users[currentUserId];
+            setCurrentDay(userData.currentDay || importedData.currentDay || 'today');
+            const userActivities = userData.days?.[userData.currentDay || importedData.currentDay || 'today']?.activities || [];
+            setActivities(userActivities.filter(a => !a.deleted));
+            
+            // Restore user settings
+            if (userData.settings) {
+              if (userData.settings.theme) setCurrentTheme(userData.settings.theme);
+              if (userData.settings.displayMode) setDisplayMode(userData.settings.displayMode);
+              if (userData.settings.bannerPosition) setBannerPosition(userData.settings.bannerPosition);
+              if (userData.settings.taskCelebration) setTaskCelebration(userData.settings.taskCelebration);
+              if (userData.settings.routineCelebration) setRoutineCelebration(userData.settings.routineCelebration);
+            }
+          }
+        }
+        
+        // Restore global settings
+        if (importedData.globalSettings) {
+          if (importedData.globalSettings.currentTheme) setCurrentTheme(importedData.globalSettings.currentTheme);
+          if (importedData.globalSettings.displayMode) setDisplayMode(importedData.globalSettings.displayMode);
+          if (importedData.globalSettings.bannerPosition) setBannerPosition(importedData.globalSettings.bannerPosition);
+          if (importedData.globalSettings.taskCelebration) setTaskCelebration(importedData.globalSettings.taskCelebration);
+          if (importedData.globalSettings.routineCelebration) setRoutineCelebration(importedData.globalSettings.routineCelebration);
+        }
+        
+        // Restore activity categories
+        if (importedData.activityCategories) {
+          setActivityCategories(importedData.activityCategories);
+        }
+        
+        // Clean up temp storage
+        await AsyncStorage.removeItem('@stackmap_import_temp');
+        
+        // Mark onboarding as completed and show main app
+        setHasCompletedOnboarding(true);
+        setShowOnboarding(false);
+        showToast({ message: 'Data restored successfully' });
+        return;
+      }
+      
       // Mark onboarding as completed
       setHasCompletedOnboarding(true);
       
@@ -923,6 +991,54 @@ const App = () => {
       console.error('Error completing onboarding:', error);
       // Still hide onboarding on error
       setShowOnboarding(false);
+    }
+  };
+
+  const handleOnboardingImportComplete = async (selectedData) => {
+    try {
+      console.log('[IMPORT] Import selection complete, processing data...');
+      
+      // Save to temporary storage for onboarding to retrieve
+      console.log('[IMPORT] Saving import data temporarily for onboarding...');
+      await AsyncStorage.setItem('@stackmap_import_temp', JSON.stringify(selectedData));
+      
+      // Close the modal
+      setShowDataModal(false);
+      setShowOnboardingImport(false);
+      setOnboardingImportData(null);
+      
+      showToast({ message: 'Data imported successfully' });
+      
+      // Prepare summary for onboarding
+      const summary = {
+        users: selectedData.users ? Object.keys(selectedData.users).length : 0,
+        activities: selectedData.activityCards ? selectedData.activityCards.length : 0,
+        hasPin: selectedData.globalSettings?.pinEnabled || false,
+        userData: selectedData.users || {}
+      };
+      
+      console.log('[IMPORT] Returning summary to onboarding:', summary);
+      
+      // Resolve the promise from importDataForOnboarding
+      if (window.__onboardingImportResolve) {
+        window.__onboardingImportResolve({
+          success: true,
+          summary: summary
+        });
+        delete window.__onboardingImportResolve;
+      }
+    } catch (error) {
+      console.error('[IMPORT] Error completing import:', error);
+      showToast({ message: 'Failed to import data', type: 'error' });
+      
+      // Reject the promise
+      if (window.__onboardingImportResolve) {
+        window.__onboardingImportResolve({
+          success: false,
+          error: error.message
+        });
+        delete window.__onboardingImportResolve;
+      }
     }
   };
 
@@ -1510,11 +1626,13 @@ const App = () => {
   
   // Handle adding user from AddUserModal
   const handleAddUser = (userName, userEmoji) => {
+    console.log('handleAddUser called with:', { userName, userEmoji, emojiType: typeof userEmoji });
     const userId = `user_${Date.now()}`;
     const newUser = {
       id: userId,
       name: userName,
       icon: userEmoji,
+      emoji: userEmoji, // Also store in emoji field for compatibility
       days: {
         today: { activities: [] },
         tomorrow: { activities: [] }
@@ -1529,6 +1647,7 @@ const App = () => {
       lastActive: new Date().toISOString()
     };
     
+    console.log('Creating new user:', newUser);
     addUser(userId, newUser);
     
     setCurrentUser(userId);
@@ -1542,10 +1661,12 @@ const App = () => {
 
   // Handle updating user from AddUserModal
   const handleUpdateUser = (userId, userName, userEmoji) => {
+    console.log('handleUpdateUser called with:', { userId, userName, userEmoji, emojiType: typeof userEmoji });
     // Use the store's updateUser method to properly update the user
     updateUser(userId, {
       name: userName,
-      icon: userEmoji
+      icon: userEmoji,
+      emoji: userEmoji // Also update emoji field for compatibility
     });
     
     setNewUserName('');
@@ -1836,6 +1957,14 @@ const App = () => {
 
   // Import data function for onboarding (doesn't hide onboarding)
   const importDataForOnboarding = async () => {
+    console.log('[IMPORT] ========== STARTING IMPORT FLOW ==========');
+    console.log('[IMPORT] Current state:', {
+      hasCompletedOnboarding,
+      showOnboarding,
+      users: Object.keys(users).length,
+      currentUser
+    });
+    
     try {
       let fileContent;
       
@@ -1858,86 +1987,201 @@ const App = () => {
           };
           input.click();
         });
-      } else {
-        // Mobile implementation using DocumentPicker
-        const result = await DocumentPicker.getDocumentAsync({
-          type: 'application/json',
-          copyToCacheDirectory: true
-        });
+      } else if (Platform.OS === 'android') {
+        // Android: Search for StackMap export files
+        let jsonFiles = [];
         
-        if (!result.assets || result.assets.length === 0) {
-          return false; // User cancelled
-        }
+        const searchPaths = [
+          RNFS.DownloadDirectoryPath,
+          RNFS.ExternalDirectoryPath,
+          `${RNFS.ExternalDirectoryPath}/Documents`,
+          RNFS.DocumentDirectoryPath,
+        ];
         
-        const file = result.assets[0];
-        fileContent = await fetch(file.uri).then(r => r.text());
-      }
-      
-      const importedData = JSON.parse(fileContent);
-        
-        // Validate and restore the data
-        const migratedData = migrateData(importedData);
-        
-        // Restore users
-        if (migratedData.users) {
-          setUsers(migratedData.users);
-          if (migratedData.currentUserId && migratedData.users[migratedData.currentUserId]) {
-            setCurrentUser(migratedData.currentUserId);
-            const userData = migratedData.users[migratedData.currentUserId];
-            setCurrentDay(userData.currentDay || 'today');
-            const userActivities = userData.days?.[userData.currentDay || 'today']?.activities || [];
-            setActivities(userActivities.filter(a => !a.deleted));
-            
-            // Restore user settings
-            if (userData.settings) {
-              if (userData.settings.theme) setCurrentTheme(userData.settings.theme);
-              if (userData.settings.displayMode) setDisplayMode(userData.settings.displayMode);
-              if (userData.settings.bannerPosition) setBannerPosition(userData.settings.bannerPosition);
-              if (userData.settings.taskCelebration) setTaskCelebration(userData.settings.taskCelebration);
-              if (userData.settings.routineCelebration) setRoutineCelebration(userData.settings.routineCelebration);
+        for (const path of searchPaths) {
+          try {
+            // First check if the directory exists
+            const exists = await RNFS.exists(path);
+            if (!exists) {
+              console.log(`[Import] Directory does not exist: ${path}`);
+              continue;
             }
+            
+            const files = await RNFS.readDir(path);
+            const foundFiles = files.filter(f => 
+              f.name.endsWith('.json') && 
+              f.name.toLowerCase().includes('stackmap')
+            );
+            jsonFiles = jsonFiles.concat(foundFiles);
+            console.log(`[Import] Found ${foundFiles.length} files in ${path}`);
+          } catch (e) {
+            // Skip paths we can't access
+            console.log(`[Import] Cannot access directory: ${path}`, e.message);
           }
         }
         
-        // Restore global settings
-        if (migratedData.settings) {
-          if (migratedData.settings.pinEnabled) {
-            setHasPinProtection(true);
-          }
+        // Remove duplicates based on file name
+        const uniqueFiles = Array.from(new Map(jsonFiles.map(f => [f.name, f])).values());
+        
+        if (uniqueFiles.length === 0) {
+          Alert.alert(
+            'No Backup Files Found',
+            'No StackMap backup files were found. Please export a backup first from the Data modal.',
+            [{ text: 'OK' }]
+          );
+          return false;
         }
         
-        // Templates are now handled through activityCategories
+        // Sort files by modified time (newest first)
+        uniqueFiles.sort((a, b) => b.mtime - a.mtime);
         
-        // Restore activity categories
-        if (migratedData.activityCategories) {
-          setActivityCategories(migratedData.activityCategories);
-          
-          // Update addedToLibraryIds
-          const libraryIds = new Set();
-          Object.values(migratedData.activityCategories).forEach(category => {
-            if (category.activities) {
-              category.activities.forEach(activity => {
-                if (activity.id) {
-                  libraryIds.add(activity.id);
+        // If multiple files exist, let user choose
+        if (uniqueFiles.length > 1) {
+          // Show selection dialog
+          const selectedFile = await new Promise((resolve) => {
+            const fileOptions = uniqueFiles.slice(0, 5).map(f => {
+              // Parse the filename to get date and time
+              const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
+              let displayName = f.name;
+              
+              if (match) {
+                const date = match[1];
+                const time = match[2] ? match[2].replace(/-/g, ':') : '';
+                displayName = time ? `${date} at ${time}` : date;
+                
+                // Add file size
+                const sizeKB = Math.round(f.size / 1024);
+                displayName += ` (${sizeKB} KB)`;
+              }
+              
+              return {
+                text: displayName,
+                onPress: () => resolve(f)
+              };
+            });
+            
+            // Handle Android's button limit
+            const buttons = [...fileOptions];
+            
+            // If we have more than 5 files total, add a note about showing only the most recent
+            if (uniqueFiles.length > 5) {
+              buttons.push({
+                text: `More (${uniqueFiles.length - 5} older)`,
+                onPress: () => {
+                  Alert.alert(
+                    'Additional Files',
+                    `Showing only the 5 most recent backups. ${uniqueFiles.length - 5} older backup(s) not shown.\n\nTo use an older backup, delete some recent exports first.`,
+                    [{ text: 'OK', onPress: () => resolve(null) }]
+                  );
                 }
               });
             }
+            
+            buttons.push({ text: 'Cancel', style: 'cancel', onPress: () => resolve(null) });
+            
+            // Ensure we don't exceed Android's limit
+            while (buttons.length > 4) {
+              buttons.splice(buttons.length - 2, 1);
+            }
+            
+            Alert.alert(
+              'Select Backup to Import',
+              `Found ${uniqueFiles.length} backups. Showing ${Math.min(uniqueFiles.length, 5)} most recent:`,
+              buttons
+            );
           });
-          setAddedToLibraryIds(libraryIds);
+          
+          if (!selectedFile) {
+            console.log('[Import] User cancelled file selection');
+            return false;
+          }
+          
+          console.log(`[Import] User selected file: ${selectedFile.path}`);
+          try {
+            fileContent = await RNFS.readFile(selectedFile.path, 'utf8');
+            console.log(`[Import] Successfully read file, length: ${fileContent.length}`);
+          } catch (readError) {
+            console.error(`[Import] Failed to read file:`, readError);
+            Alert.alert('Error', `Could not read the backup file: ${readError.message}`);
+            return false;
+          }
+        } else {
+          // Single file - use it directly
+          const mostRecentFile = uniqueFiles[0];
+          console.log(`[Import] Only one file found, using: ${mostRecentFile.path}`);
+          console.log(`[Import] File details:`, mostRecentFile);
+          
+          try {
+            fileContent = await RNFS.readFile(mostRecentFile.path, 'utf8');
+            console.log(`[Import] Successfully read file, length: ${fileContent.length}`);
+          } catch (readError) {
+            console.error(`[Import] Failed to read file:`, readError);
+            Alert.alert('Error', `Could not read the backup file: ${readError.message}`);
+            return false;
+          }
         }
         
-        // Save to storage
-        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
+      } else if (Platform.OS === 'ios' && DocumentPicker) {
+        // iOS implementation using DocumentPicker
+        const result = await DocumentPicker.pick({
+          type: [DocumentPicker.types.json],
+          copyTo: 'cachesDirectory'
+        });
         
-        showToast({ message: 'Data imported successfully' });
+        if (!result || result.length === 0) {
+          return false; // User cancelled
+        }
         
-        // Return true to indicate success
-        return true;
+        const file = result[0];
+        if (file.fileCopyUri) {
+          fileContent = await RNFS.readFile(file.fileCopyUri, 'utf8');
+          await RNFS.unlink(file.fileCopyUri);
+        } else {
+          throw new Error('Could not read the selected file');
+        }
+      } else {
+        Alert.alert('Error', 'File import is not available on this platform');
+        return false;
+      }
       
-      // User cancelled if we get here (only for web when no file selected)
-      return false;
+      console.log(`[Import] Parsing JSON data...`);
+      let importedData;
+      try {
+        importedData = JSON.parse(fileContent);
+        console.log(`[Import] Successfully parsed JSON`);
+      } catch (parseError) {
+        console.error(`[Import] Failed to parse JSON:`, parseError);
+        Alert.alert('Error', 'The selected file is not a valid JSON file');
+        return false;
+      }
+      
+      console.log(`[Import] Running migration...`);
+      // Validate and restore the data
+      const migratedData = migrateDataStructure(importedData);
+      console.log(`[Import] Migration complete`);
+      
+      // IMPORTANT: During onboarding, we should NOT update the Zustand store
+      // The data will be set when onboarding completes
+      // Just validate that we have users to import
+      if (!migratedData.users || Object.keys(migratedData.users).length === 0) {
+        console.warn('[IMPORT] No users found in import data');
+      }
+      
+      // Set the import data and show DataModal
+      console.log('[IMPORT] Showing import selection modal...');
+      setOnboardingImportData(migratedData);
+      setShowOnboardingImport(true);
+      // Set DataModal to import tab
+      setShowDataModal(true);
+      
+      // Return a promise that will resolve when the modal completes
+      return new Promise((resolve) => {
+        // Store the resolve function to be called when import completes
+        window.__onboardingImportResolve = resolve;
+      });
     } catch (error) {
-      console.error('Import error:', error);
+      console.error('[IMPORT] Import error:', error);
+      console.error('[IMPORT] Error stack:', error.stack);
       showToast({ message: 'Failed to import data', type: 'error' });
       return false;
     }
@@ -1969,14 +2213,23 @@ const App = () => {
         
         for (const path of searchPaths) {
           try {
+            // First check if the directory exists
+            const exists = await RNFS.exists(path);
+            if (!exists) {
+              console.log(`[Import] Directory does not exist: ${path}`);
+              continue;
+            }
+            
             const files = await RNFS.readDir(path);
             const foundFiles = files.filter(f => 
               f.name.endsWith('.json') && 
               f.name.toLowerCase().includes('stackmap')
             );
             jsonFiles = jsonFiles.concat(foundFiles);
+            console.log(`[Import] Found ${foundFiles.length} files in ${path}`);
           } catch (e) {
             // Skip paths we can't access
+            console.log(`[Import] Cannot access directory: ${path}`, e.message);
           }
         }
         
@@ -2000,12 +2253,13 @@ const App = () => {
           // Sort files by modified time (newest first)
           uniqueFiles.sort((a, b) => b.mtime - a.mtime);
           
-          // Android Alert can only show 3 buttons max, so if we have more files,
-          // we need to show them in batches or use a different approach
-          if (uniqueFiles.length > 2) {
-            // Show only the 2 most recent files + a "Show More" option
-            const recentFiles = uniqueFiles.slice(0, 2);
-            const fileOptions = recentFiles.map(f => {
+          // Show file picker with cascading alerts to handle Android's 3-button limit
+          const showFilePicker = async (startIndex = 0) => {
+            const filesPerPage = 2; // Show 2 files + navigation options
+            const endIndex = Math.min(startIndex + filesPerPage, uniqueFiles.length);
+            const filesToShow = uniqueFiles.slice(startIndex, endIndex);
+            
+            const fileOptions = filesToShow.map(f => {
               // Parse the filename to get date and time
               const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
               let displayName = f.name;
@@ -2029,71 +2283,38 @@ const App = () => {
               };
             });
             
-            Alert.alert(
-              'Select Backup to Import',
-              `Found ${uniqueFiles.length} backups. Showing 2 most recent:`,
-              [
-                ...fileOptions,
-                {
-                  text: 'Show All Files',
-                  onPress: () => {
-                    // Show all files with their full paths
-                    const allFilesInfo = uniqueFiles.map((f, index) => {
-                      const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
-                      let info = `${index + 1}. `;
-                      if (match) {
-                        const date = match[1];
-                        const time = match[2] ? match[2].replace(/-/g, ':') : '';
-                        info += time ? `${date} at ${time}` : date;
-                      } else {
-                        info += f.name;
-                      }
-                      info += ` (${Math.round(f.size / 1024)} KB)`;
-                      return info;
-                    }).join('\n');
-                    
-                    Alert.alert(
-                      'All Backup Files',
-                      allFilesInfo + '\n\nTo import a specific file, use a file manager app to open it with StackMap.',
-                      [{ text: 'OK', onPress: () => importData() }]
-                    );
-                  }
-                },
-                { text: 'Cancel', style: 'cancel' }
-              ]
-            );
-          } else {
-            // 2 or fewer files, show them all
-            const fileOptions = uniqueFiles.map(f => {
-              // Parse the filename to get date and time
-              const match = f.name.match(/stackmap-export-(\d{4}-\d{2}-\d{2})-?(\d{2}-\d{2}-\d{2})?/);
-              let displayName = f.name;
-              
-              if (match) {
-                const date = match[1];
-                const time = match[2] ? match[2].replace(/-/g, ':') : '';
-                
-                // Just show the raw date and time from filename
-                // to avoid timezone confusion
-                displayName = time ? `${date} at ${time}` : date;
-                
-                // Add file size
-                const sizeKB = Math.round(f.size / 1024);
-                displayName += ` (${sizeKB} KB)`;
-              }
-              
-              return {
-                text: displayName,
-                onPress: () => importFromFile(f.path, f.name)
-              };
-            });
+            const buttons = [...fileOptions];
             
-            Alert.alert(
-              'Select Backup to Import',
-              `Found ${uniqueFiles.length} StackMap backups:`,
-              [...fileOptions, { text: 'Cancel', style: 'cancel' }]
-            );
-          }
+            // Add "More" button if there are more files
+            if (endIndex < uniqueFiles.length) {
+              buttons.push({
+                text: `Show More (${uniqueFiles.length - endIndex} more)`,
+                onPress: () => showFilePicker(endIndex)
+              });
+            } else if (startIndex > 0) {
+              // If we're not on the first page, add a "Back" option
+              buttons.push({
+                text: 'Show Previous',
+                onPress: () => showFilePicker(Math.max(0, startIndex - filesPerPage))
+              });
+            }
+            
+            // Always add cancel at the end
+            buttons.push({ text: 'Cancel', style: 'cancel' });
+            
+            // Ensure we don't exceed 4 buttons (Android limit)
+            while (buttons.length > 4) {
+              buttons.splice(buttons.length - 2, 1); // Remove the second-to-last button
+            }
+            
+            const pageInfo = uniqueFiles.length > filesPerPage 
+              ? `Showing ${startIndex + 1}-${endIndex} of ${uniqueFiles.length} backups:`
+              : `Found ${uniqueFiles.length} backups:`;
+            
+            Alert.alert('Select Backup to Import', pageInfo, buttons);
+          };
+          
+          await showFilePicker();
         } else {
           // Single file found - show confirmation
           const f = uniqueFiles[0];
@@ -2255,6 +2476,11 @@ const App = () => {
   // Handle import from DataModal
   const handleImportComplete = async (importData) => {
     try {
+      console.log('=== handleImportComplete called ===');
+      console.log('Import mode:', importData.mode);
+      console.log('Import users:', importData.users ? Object.keys(importData.users) : 'none');
+      console.log('Import users data:', importData.users);
+      
       // Disable sync before importing to prevent conflicts
       if (await syncService.isEnabled()) {
         console.log('Disabling sync before import...');
@@ -2262,17 +2488,46 @@ const App = () => {
       }
       
       if (importData.mode === 'fresh') {
-        // Fresh import - replace everything
+        console.log('FRESH IMPORT - clearing all data first');
+        // Fresh import - clear everything and replace with selected items only
         
-        // Restore users
+        // Clear ALL existing data comprehensively
+        setUsers({});
+        setActivityCategories([]);
+        setActivities([]);
+        setTemplates({});
+        setUserContextData({});
+        setCurrentUser(null);
+        setCurrentDay('today');
+        setDayMode('today');
+        
+        // Allow state to settle before importing new data
+        await new Promise(resolve => setTimeout(resolve, 50));
+        
+        // Restore selected users
         if (importData.users && Object.keys(importData.users).length > 0) {
-          setUsers(importData.users);
+          console.log('Restoring users from import:', Object.keys(importData.users));
           
-          // Set first user as current
-          const userIds = Object.keys(importData.users);
+          // Validate and clean user data before importing
+          const validatedUsers = {};
+          Object.entries(importData.users).forEach(([userId, user]) => {
+            // Ensure user has valid name and icon
+            const validatedUser = {
+              ...user,
+              name: user.name && typeof user.name === 'string' && user.name.trim() ? user.name : 'User',
+              icon: user.icon && typeof user.icon === 'string' ? user.icon : '👤'
+            };
+            validatedUsers[userId] = validatedUser;
+            console.log(`Validated user ${userId}: name="${validatedUser.name}", icon="${validatedUser.icon}"`);
+          });
+          
+          setUsers(validatedUsers);
+          
+          // Set first imported user as current
+          const userIds = Object.keys(validatedUsers);
           setCurrentUser(userIds[0]);
           
-          const userData = importData.users[userIds[0]];
+          const userData = validatedUsers[userIds[0]];
           setCurrentDay(userData.currentDay || 'today');
           
           const userActivities = userData.days?.[userData.currentDay || 'today']?.activities || [];
@@ -2282,6 +2537,19 @@ const App = () => {
           if (userData.settings?.theme) {
             setCurrentTheme(userData.settings.theme);
           }
+        } else {
+          console.log('WARNING: No users in import data, creating default user');
+          // No users imported, create a default one
+          const defaultUserId = Date.now().toString();
+          const defaultUser = {
+            id: defaultUserId,
+            name: 'User',
+            icon: '👤',
+            settings: { theme: 'stackBlue' },
+            days: { today: { activities: [] }, tomorrow: { activities: [] } }
+          };
+          setUsers({ [defaultUserId]: defaultUser });
+          setCurrentUser(defaultUserId);
         }
         
         // Restore templates by converting to activityCategories format
@@ -2316,17 +2584,63 @@ const App = () => {
         
         // Merge users
         if (importData.users && Object.keys(importData.users).length > 0) {
+          console.log('MERGE MODE - merging users');
           const mergedUsers = { ...users };
           
-          // Add imported users, avoiding duplicates by checking names
+          // Add imported users, creating unique names if duplicates exist
           Object.entries(importData.users).forEach(([userId, user]) => {
+            // Validate user data
+            const validatedUser = {
+              ...user,
+              name: user.name && typeof user.name === 'string' && user.name.trim() ? user.name : 'User',
+              icon: user.icon && typeof user.icon === 'string' ? user.icon : '👤'
+            };
+            
             // Check if user with same name already exists
-            const existingUser = Object.values(mergedUsers).find(u => u.name === user.name);
-            if (!existingUser) {
-              // Generate new ID to avoid conflicts
+            const existingUserEntry = Object.entries(mergedUsers).find(([id, u]) => u.name === validatedUser.name);
+            
+            if (existingUserEntry) {
+              const [existingUserId, existingUser] = existingUserEntry;
+              console.log(`User "${validatedUser.name}" already exists, merging data`);
+              
+              // Merge the user's days data (activities)
+              const mergedDays = { ...existingUser.days };
+              if (validatedUser.days) {
+                Object.entries(validatedUser.days).forEach(([day, dayData]) => {
+                  if (!mergedDays[day]) {
+                    mergedDays[day] = dayData;
+                  } else {
+                    // Merge activities for this day
+                    const existingActivities = mergedDays[day].activities || [];
+                    const newActivities = dayData.activities || [];
+                    
+                    // Add new activities that don't already exist (by ID)
+                    const existingIds = new Set(existingActivities.map(a => a.id));
+                    const uniqueNewActivities = newActivities.filter(a => !existingIds.has(a.id));
+                    
+                    mergedDays[day] = {
+                      ...dayData,
+                      activities: [...existingActivities, ...uniqueNewActivities]
+                    };
+                  }
+                });
+              }
+              
+              // Update the existing user with merged data
+              mergedUsers[existingUserId] = {
+                ...existingUser,
+                ...validatedUser,
+                days: mergedDays,
+                // Preserve existing user's ID and certain settings
+                id: existingUserId,
+                name: existingUser.name // Keep original name
+              };
+            } else {
+              // User doesn't exist, add as new
+              console.log(`Adding new user "${validatedUser.name}"`);
               const newUserId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
               mergedUsers[newUserId] = {
-                ...user,
+                ...validatedUser,
                 id: newUserId
               };
             }
@@ -2523,27 +2837,33 @@ const App = () => {
 
   const performReset = async () => {
       try {
-              console.log('[Reset] Starting app reset...');
+              console.log('[RESET] ========== STARTING RESET FLOW ==========');
+              console.log('[RESET] Current state before reset:', {
+                hasCompletedOnboarding,
+                showOnboarding,
+                users: Object.keys(users).length,
+                currentUser,
+                isHydrated
+              });
               
               // IMPORTANT: Disable sync FIRST to prevent syncing the reset state to other devices
               if (await syncService.isEnabled()) {
-                console.log('[Reset] Disabling sync before reset...');
+                console.log('[RESET] Disabling sync before reset...');
                 await syncService.disable();
               }
               
-              console.log('[Reset] Clearing AsyncStorage...');
-              // Clear all AsyncStorage including Zustand storage
-              await AsyncStorage.removeItem('@stackmap_data');
-              await AsyncStorage.removeItem('@stackmap_hasCompletedOnboarding');
-              await AsyncStorage.removeItem('@stackmap_pin_migrated');
-              await AsyncStorage.removeItem('userPin'); // Legacy PIN storage
-              await AsyncStorage.removeItem('stackMapData'); // Legacy storage key
-              await AsyncStorage.removeItem('stackmap-storage'); // Zustand storage
-              
-              // Clear sync-related storage
-              await AsyncStorage.removeItem('@sync_enabled');
-              await AsyncStorage.removeItem('@sync_id');
-              await AsyncStorage.removeItem('@sync_last_version');
+              console.log('[RESET] Step 1: Clearing AsyncStorage...');
+              // Clear ALL AsyncStorage keys to ensure complete reset
+              const allKeys = await AsyncStorage.getAllKeys();
+              console.log('[RESET] Found keys to clear:', allKeys);
+              if (allKeys.length > 0) {
+                await AsyncStorage.multiRemove(allKeys);
+                console.log('[RESET] Cleared all AsyncStorage keys');
+                
+                // Verify they're actually cleared
+                const keysAfterClear = await AsyncStorage.getAllKeys();
+                console.log('[RESET] Keys remaining after clear:', keysAfterClear);
+              }
               
               // Clear PIN on iOS (skip on Android due to keychain library issues)
               if (Platform.OS === 'ios') {
@@ -2557,7 +2877,10 @@ const App = () => {
                 }
               }
               
-              console.log('[Reset] Resetting Zustand store...');
+              console.log('[RESET] Step 2: Resetting Zustand store...');
+              // CRITICAL: Reset hasCompletedOnboarding FIRST to prevent race conditions
+              setHasCompletedOnboarding(false);
+              
               // Reset Zustand store to initial values
               setUsers({});
               setCurrentUser(null);
@@ -2570,7 +2893,13 @@ const App = () => {
               
               // Reset local state
               setDisplayMode('numbers');
-              setHasCompletedOnboarding(false);
+              
+              console.log('[RESET] Step 3: Store reset complete, verifying state...');
+              console.log('[RESET] State after store reset:', {
+                hasCompletedOnboarding: useAppStore.getState().hasCompletedOnboarding,
+                users: Object.keys(useAppStore.getState().users).length,
+                currentUser: useAppStore.getState().currentUser
+              });
               // Templates now handled through activityCategories
               setIsEditMode(false);
               setHasPinProtection(false);
@@ -2606,10 +2935,34 @@ const App = () => {
         // Show success toast
         showToast({ message: 'App reset successfully', type: 'success' });
         
-        // Show onboarding after a brief delay
-        setTimeout(() => {
+        console.log('[RESET] Step 4: Triggering onboarding display...');
+        console.log('[RESET] Current UI state:', {
+          showOnboarding,
+          showDataModal,
+          showAccessModal,
+          isHydrated
+        });
+        
+        // Force the app to reinitialize by setting hydrated to false briefly
+        setIsHydrated(false);
+        
+        // Show onboarding after a brief delay to ensure state is cleared
+        setTimeout(async () => {
+          console.log('[RESET] Step 5: Setting onboarding visible...');
+          setHasCompletedOnboarding(false);
           setShowOnboarding(true);
-        }, 500);
+          setIsHydrated(true);
+          
+          // Final verification
+          const finalKeys = await AsyncStorage.getAllKeys();
+          console.log('[RESET] Final AsyncStorage keys:', finalKeys);
+          console.log('[RESET] Final state:', {
+            hasCompletedOnboarding: useAppStore.getState().hasCompletedOnboarding,
+            showOnboarding,
+            users: Object.keys(useAppStore.getState().users).length
+          });
+          console.log('[RESET] ========== RESET FLOW COMPLETE ==========');
+        }, 100);
       } catch (error) {
         console.error('Reset error:', error);
         showToast({ message: 'Failed to reset app data', type: 'error' });
@@ -3063,7 +3416,11 @@ const App = () => {
                       marginRight: 'auto',
                     }),
                   } : {
-                    // No negative margins needed
+                    // Native flexbox layout for multi-column
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                    justifyContent: 'space-evenly',
+                    alignItems: 'flex-start',
                   }
                 ]}>
                   {activities.filter(a => !a.deleted).map((item, index) => {
@@ -3074,13 +3431,11 @@ const App = () => {
                           styles.cardWrapper,
                           Platform.OS !== 'web' && {
                             width: numColumns > 1 
-                              ? calculateCardWidth(screenDimensions.width) - CARD_LAYOUT.gap
+                              ? `${Math.floor(100 / numColumns) - 2}%` 
                               : calculateCardWidth(screenDimensions.width),
                             marginBottom: CARD_LAYOUT.gap,
-                            // Add horizontal margin only for multi-column layouts
-                            ...(numColumns > 1 && {
-                              marginHorizontal: CARD_LAYOUT.gap / 2,
-                            }),
+                            maxWidth: CARD_LAYOUT.maxWidth,
+                            minWidth: numColumns > 1 ? 280 : undefined,
                           },
                           numColumns === 1 && { 
                             maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
@@ -3570,9 +3925,24 @@ const App = () => {
       {/* Data Modal */}
       <DataModal
         visible={showDataModal}
-        onClose={() => setShowDataModal(false)}
+        onClose={() => {
+          setShowDataModal(false);
+          // If we're in onboarding import mode, cancel it
+          if (showOnboardingImport) {
+            setShowOnboardingImport(false);
+            setOnboardingImportData(null);
+            if (window.__onboardingImportResolve) {
+              window.__onboardingImportResolve({
+                success: false,
+                error: 'User cancelled'
+              });
+              delete window.__onboardingImportResolve;
+            }
+          }
+        }}
         theme={theme}
         users={users}
+        currentUser={currentUser}
         currentDay={currentDay}
         templates={templates}
         activityCategories={activityCategories}
@@ -3580,13 +3950,16 @@ const App = () => {
         bannerPosition={bannerPosition}
         hasSecurePin={hasSecurePin}
         showToast={showToast}
-        onImportComplete={handleImportComplete}
+        onImportComplete={showOnboardingImport ? handleOnboardingImportComplete : handleImportComplete}
         onSyncStatusChange={(enabled) => setSyncEnabled(enabled)}
         onShowSupport={() => {
           setShowDataModal(false);
           setTimeout(() => setShowSupportModal(true), 300);
         }}
         onReset={resetApp}
+        isOnboarding={showOnboardingImport}
+        onboardingImportData={onboardingImportData}
+        initialTab={showOnboardingImport ? 2 : undefined}
       />
 
       {/* Sync Preview Modal - always use stackBlue theme for consistency */}
@@ -3625,6 +3998,7 @@ const App = () => {
         users={users}
         currentUser={currentUser}
         onAddUser={handleAddUser}
+        onUpdateUser={handleUpdateUser}
         onSelectUser={(userId) => {
           setCurrentUser(userId);
           const userActivities = users[userId]?.days?.[currentDay]?.activities || [];
@@ -3639,6 +4013,8 @@ const App = () => {
         onRemovePin={handlePinRemove}
         onVerifyPin={handlePinVerify}
         showToast={showToast}
+        insets={insets}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
         initialTab={accessModalActiveTab}
         setNewUserEmoji={setNewUserEmoji}
         showUserEmojiPicker={showUserEmojiPicker}
@@ -3864,18 +4240,21 @@ const App = () => {
   }
   
   // Show onboarding if needed (kept for backward compatibility)
+  console.log('[RENDER] Checking showOnboarding:', showOnboarding, 'isHydrated:', isHydrated);
   if (showOnboarding) {
+    console.log('[RENDER] ========== RENDERING ONBOARDING ==========');
     return (
       <>
         <OnboardingNew
           onComplete={handleOnboardingComplete}
           onImport={async () => {
             // Create a version of importData that doesn't hide onboarding
-          const success = await importDataForOnboarding();
-          if (!success) {
-            throw new Error('Import cancelled or failed');
-          }
-        }}
+            const result = await importDataForOnboarding();
+            if (!result || !result.success) {
+              throw new Error('Import cancelled or failed');
+            }
+            return result; // RETURN THE RESULT SO ONBOARDING CAN USE IT!
+          }}
         isAbbreviated={!!syncSetupPhrase}
         syncSetupPhrase={syncSetupPhrase}
       />
@@ -3899,6 +4278,46 @@ const App = () => {
         onClose={() => setShowSupportModal(false)}
         showToast={showToast}
         theme={theme}
+      />
+      
+      {/* Data Modal - Available during onboarding for import */}
+      <DataModal
+        visible={showDataModal}
+        onClose={() => {
+          setShowDataModal(false);
+          // If we're in onboarding import mode, cancel it
+          if (showOnboardingImport) {
+            setShowOnboardingImport(false);
+            setOnboardingImportData(null);
+            if (window.__onboardingImportResolve) {
+              window.__onboardingImportResolve({
+                success: false,
+                error: 'User cancelled'
+              });
+              delete window.__onboardingImportResolve;
+            }
+          }
+        }}
+        theme={theme}
+        users={users}
+        currentUser={currentUser}
+        currentDay={currentDay}
+        templates={templates}
+        activityCategories={activityCategories}
+        currentTheme={currentTheme}
+        bannerPosition={bannerPosition}
+        hasSecurePin={hasSecurePin}
+        showToast={showToast}
+        onImportComplete={handleOnboardingImportComplete}
+        onSyncStatusChange={(enabled) => setSyncEnabled(enabled)}
+        onShowSupport={() => {
+          setShowDataModal(false);
+          setTimeout(() => setShowSupportModal(true), 300);
+        }}
+        onReset={resetApp}
+        isOnboarding={showOnboardingImport}
+        onboardingImportData={onboardingImportData}
+        initialTab={0}
       />
       </>
     );
@@ -4092,8 +4511,8 @@ const styles = StyleSheet.create({
   },
   completionCircle: {
     position: 'absolute',
-    top: isTablet() ? 20 : 15,
-    left: isTablet() ? 20 : 15,
+    top: isTablet() ? 15 : 15,
+    left: isTablet() ? 15 : 15,
     width: getBadgeDimensions().size,
     height: getBadgeDimensions().size,
     borderRadius: getBadgeDimensions().size / 2,
@@ -4118,8 +4537,8 @@ const styles = StyleSheet.create({
   },
   numberBadge: {
     position: 'absolute',
-    top: isTablet() ? 20 : 15,
-    right: isTablet() ? 20 : 15,
+    top: isTablet() ? 15 : 15,
+    right: isTablet() ? 15 : 15,
     width: getBadgeDimensions().size,
     height: getBadgeDimensions().size,
     borderRadius: getBadgeDimensions().size / 2,
@@ -4149,8 +4568,8 @@ const styles = StyleSheet.create({
     gap: 15,  // PWA uses 15px gap between elements
   },
   activityEmoji: {
-    fontSize: 64.8,  // Match PWA's 4.05rem = 64.8px
-    lineHeight: 81,  // Match PWA's height
+    fontSize: isTablet() ? 48 : 64.8,  // Smaller emoji on tablets for better fit
+    lineHeight: isTablet() ? 60 : 81,  // Adjusted line height for tablets
     marginBottom: 0,  // Gap is handled by parent
   },
   activityImage: {
@@ -4159,19 +4578,19 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   activityTitle: {
-    fontSize: 23,  // Match PWA's 1.44rem = 23.04px  
+    fontSize: isTablet() ? 18 : 23,  // Smaller text on tablets for better fit
     fontWeight: Platform.OS === 'android' ? 'normal' : '600',  // Android uses font file, not weight
     color: '#333',
     textAlign: 'center',
-    lineHeight: 23 * 1.2,  // Match PWA's line-height: 1.2
+    lineHeight: isTablet() ? 18 * 1.2 : 23 * 1.2,  // Adjusted line height
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     marginBottom: 4,  // PWA's 0.25rem
   },
   activityDescription: {
-    fontSize: 17.3,  // Match PWA's 1.08rem = 17.28px
+    fontSize: isTablet() ? 14 : 17.3,  // Smaller text on tablets for better fit
     color: '#666',
     textAlign: 'center',
-    lineHeight: 17.3 * 1.3,  // Match PWA's line-height: 1.3
+    lineHeight: isTablet() ? 14 * 1.3 : 17.3 * 1.3,  // Adjusted line height
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   completedText: {

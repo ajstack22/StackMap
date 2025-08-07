@@ -139,7 +139,7 @@ const AddUserModal = ({
           </KeyboardAvoidingView>
         </View>
         <SafeAreaView style={{ backgroundColor: theme.light }} />
-        {Platform.OS === 'android' && (
+        {Platform.OS === 'android' && getAndroidModalBottomHeight && insets && (
           <View style={{ backgroundColor: theme.light, height: getAndroidModalBottomHeight(insets) }} />
         )}
         

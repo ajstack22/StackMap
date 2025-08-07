@@ -16,11 +16,14 @@ const UsersTabContent = ({
   users,
   currentUser,
   onAddUser,
+  onUpdateUser,
   onSelectUser,
   onDeleteUser,
   showToast,
   loading,
   setLoading,
+  insets,
+  getAndroidModalBottomHeight,
 }) => {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
@@ -32,11 +35,16 @@ const UsersTabContent = ({
 
   const handleUserSelect = (userId) => {
     onSelectUser(userId);
-    showToast({ message: `Switched to ${users[userId].name}` });
+    const userName = typeof users[userId]?.name === 'string' 
+      ? users[userId].name 
+      : String(users[userId]?.name || 'User');
+    showToast({ message: `Switched to ${userName}` });
   };
 
   const handleUserDelete = (userId, userName) => {
-    setUserToDelete({ id: userId, name: userName });
+    // Ensure userName is a string
+    const name = typeof userName === 'string' ? userName : String(userName || 'User');
+    setUserToDelete({ id: userId, name: name });
     setShowDeleteConfirm(true);
   };
 
@@ -48,10 +56,11 @@ const UsersTabContent = ({
     }
   };
 
-  const handleAddUser = async (userData) => {
+  const handleAddUser = async (userName, userEmoji) => {
     setLoading(true);
     try {
-      await onAddUser(userData);
+      // Call onAddUser with both parameters as expected by App.js
+      await onAddUser(userName, userEmoji);
       setShowAddUserModal(false);
       setEditingUser(null);
     } catch (error) {
@@ -61,17 +70,19 @@ const UsersTabContent = ({
     }
   };
 
-  const handleUpdateUser = async (userId, userData) => {
+  const handleUpdateUser = async (userId, userName, userEmoji) => {
     setLoading(true);
     try {
-      // Implement user update logic
-      const updatedUsers = { ...users };
-      updatedUsers[userId] = { ...updatedUsers[userId], ...userData };
-      await onAddUser(updatedUsers); // This should be onUpdateUsers
-      setShowAddUserModal(false);
-      setEditingUser(null);
-      showToast({ message: 'User updated successfully' });
+      // Call the onUpdateUser prop passed from App.js
+      if (onUpdateUser) {
+        onUpdateUser(userId, userName, userEmoji);
+        setShowAddUserModal(false);
+        setEditingUser(null);
+        setNewUserName('');
+        setNewUserEmoji('😀');
+      }
     } catch (error) {
+      console.error('Failed to update user:', error);
       showToast({ message: 'Failed to update user', type: 'error' });
     } finally {
       setLoading(false);
@@ -102,12 +113,12 @@ const UsersTabContent = ({
                 ]}
                 onPress={() => handleUserSelect(userId)}
               >
-                <Text style={styles.userItemEmoji}>{user.icon}</Text>
+                <Text style={styles.userItemEmoji}>{user.icon || '👤'}</Text>
                 <Text style={[
                   styles.userItemName,
                   currentUser === userId && styles.userItemNameActive
                 ]}>
-                  {user.name}
+                  {typeof user.name === 'string' ? user.name : String(user.name || 'User')}
                 </Text>
                 {currentUser === userId && (
                   <View style={styles.enabledBadge}>
@@ -177,6 +188,7 @@ const UsersTabContent = ({
           setEditingUser(null);
         }}
         theme={theme}
+        insets={insets}
         newUserName={newUserName}
         setNewUserName={setNewUserName}
         newUserEmoji={newUserEmoji}
@@ -188,6 +200,7 @@ const UsersTabContent = ({
         onAddUser={handleAddUser}
         onUpdateUser={handleUpdateUser}
         showToast={showToast}
+        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
     </ScrollView>
   );

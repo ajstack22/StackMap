@@ -87,19 +87,75 @@ const useAppStore = create(
       
       setCurrentUser: (userId) => set({ currentUser: userId }, false, 'setCurrentUser'),
       
-      addUser: (userId, user) => set((state) => ({
-        users: {
-          ...state.users,
-          [userId]: user
+      addUser: (userId, user) => set((state) => {
+        // Validate user data
+        const sanitizedUser = { ...user };
+        
+        // Fix user name if it's not a string
+        if (!sanitizedUser.name || typeof sanitizedUser.name !== 'string') {
+          console.warn('Invalid user name in addUser:', sanitizedUser.name);
+          // If it's an object, try to extract a name from it
+          if (typeof sanitizedUser.name === 'object' && sanitizedUser.name !== null) {
+            sanitizedUser.name = sanitizedUser.name.name || sanitizedUser.name.text || sanitizedUser.name.value || 'User';
+          } else if (!sanitizedUser.name) {
+            sanitizedUser.name = 'User';
+          } else {
+            // Only use String() for primitive types, not objects
+            sanitizedUser.name = 'User';
+          }
         }
-      }), false, 'addUser'),
+        
+        // Fix user icon if it's not a string or doesn't exist
+        // IMPORTANT: Do NOT use .trim() on emoji strings as it can damage complex Unicode sequences
+        if (typeof sanitizedUser.icon !== 'string' || !sanitizedUser.icon || sanitizedUser.icon.length === 0) {
+          console.warn('Invalid user icon in addUser:', sanitizedUser.icon);
+          // Try to get icon from emoji field or use default
+          sanitizedUser.icon = sanitizedUser.emoji || '👤';
+        }
+        // If we have a valid emoji string, keep it as-is
+        // This preserves complex emojis like 🦍, ⛑️ that have multiple code points
+        
+        return {
+          users: {
+            ...state.users,
+            [userId]: sanitizedUser
+          }
+        };
+      }, false, 'addUser'),
       
       updateUser: (userId, updates) => set((state) => {
         // Special handling for arrays in settings to ensure they're replaced, not merged
         const currentUser = state.users[userId];
         if (!currentUser) return state;
         
-        let updatedUser = merge({}, currentUser, updates);
+        // Validate and sanitize updates
+        const sanitizedUpdates = { ...updates };
+        
+        // Fix user name if provided and not a string
+        if ('name' in sanitizedUpdates) {
+          if (!sanitizedUpdates.name || typeof sanitizedUpdates.name !== 'string') {
+            console.warn('Invalid user name in updateUser:', sanitizedUpdates.name);
+            // If it's an object, try to extract a name from it
+            if (typeof sanitizedUpdates.name === 'object' && sanitizedUpdates.name !== null) {
+              sanitizedUpdates.name = sanitizedUpdates.name.name || sanitizedUpdates.name.text || sanitizedUpdates.name.value || currentUser.name || 'User';
+            } else {
+              sanitizedUpdates.name = currentUser.name || 'User';
+            }
+          }
+        }
+        
+        // Fix user icon if provided and not a valid string
+        // IMPORTANT: Do NOT use .trim() on emoji strings as it can damage complex Unicode sequences
+        if ('icon' in sanitizedUpdates) {
+          if (typeof sanitizedUpdates.icon !== 'string' || !sanitizedUpdates.icon || sanitizedUpdates.icon.length === 0) {
+            console.warn('Invalid user icon in updateUser:', sanitizedUpdates.icon);
+            sanitizedUpdates.icon = sanitizedUpdates.emoji || currentUser.icon || '👤';
+          }
+          // Keep the icon as-is if it's a valid non-empty string
+          // This preserves complex emojis like 🦍, ⛑️ that have multiple code points
+        }
+        
+        let updatedUser = merge({}, currentUser, sanitizedUpdates);
         
         // If updating settings with arrays, replace them instead of merging
         if (updates.settings) {
@@ -107,6 +163,20 @@ const useAppStore = create(
             ...updatedUser.settings,
             ...updates.settings
           };
+        }
+        
+        // Final validation of the complete user object
+        if (!updatedUser.name || typeof updatedUser.name !== 'string') {
+          console.error('User name became non-string after merge:', updatedUser.name);
+          if (typeof updatedUser.name === 'object' && updatedUser.name !== null) {
+            updatedUser.name = updatedUser.name.name || updatedUser.name.text || currentUser.name || 'User';
+          } else {
+            updatedUser.name = currentUser.name || 'User';
+          }
+        }
+        if (typeof updatedUser.icon !== 'string' || updatedUser.icon.trim() === '') {
+          console.error('User icon became invalid after merge:', updatedUser.icon);
+          updatedUser.icon = updatedUser.emoji || currentUser.icon || '👤';
         }
         
         return {
