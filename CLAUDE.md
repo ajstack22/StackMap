@@ -1,3 +1,14 @@
+# 🚨 ACTIVE REFACTOR IN PROGRESS 🚨
+
+## ⚠️ CRITICAL: Major Data Structure Refactor Planned ⚠️
+**See [DATA_STRUCTURE_REFACTOR_PLAN.md](./DATA_STRUCTURE_REFACTOR_PLAN.md) for details**
+- Pre-refactor checkpoint: commit `0691741`
+- Activity Library bug: Shows 28 instead of 0 when empty
+- Root cause: `activities` field used for templates, not user activities
+- If continuing refactor, start with `/src/stores/useAppStore.js`
+
+---
+
 # 🚨 STACKMAP DEPLOYMENT - THE TRUTH 🚨
 
 ## 📚 Documentation Guide

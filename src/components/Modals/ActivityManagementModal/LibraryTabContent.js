@@ -16,62 +16,40 @@ import { ModalFooter, FormInput } from '../../ModalUtilities';
 import { styles } from './styles';
 import { DEFAULT_ACTIVITY_EMOJI } from '../../../constants';
 
-// Default activity categories with starter activities
+// Default activity categories - DEPRECATED
+// These are no longer automatically loaded to avoid the "28 activities" bug
+// Users start with empty library and can add their own
+/*
 const DEFAULT_CATEGORIES = [
   {
     id: 'my-templates',
     name: 'My Templates',
     activities: [],
   },
+  // ... rest of categories removed to prevent auto-population
+];
+*/
+
+// Empty template for new users
+const EMPTY_TEMPLATE = [
   {
-    id: 'daily-routines',
-    name: 'Daily Routines',
-    activities: [
-      { id: 'morning-routine', name: 'Morning Routine', emoji: '🌅' },
-      { id: 'bedtime', name: 'Bedtime', emoji: '🛏️' },
-      { id: 'brush-teeth', name: 'Brush Teeth', emoji: '🦷' },
-      { id: 'shower', name: 'Shower', emoji: '🚿' },
-      { id: 'get-dressed', name: 'Get Dressed', emoji: '👔' },
-    ],
-  },
-  {
-    id: 'meals',
-    name: 'Meals',
-    activities: [
-      { id: 'breakfast', name: 'Breakfast', emoji: '🥞' },
-      { id: 'lunch', name: 'Lunch', emoji: '🥪' },
-      { id: 'dinner', name: 'Dinner', emoji: '🍽️' },
-      { id: 'snack', name: 'Snack', emoji: '🍿' },
-      { id: 'cooking', name: 'Cooking', emoji: '👨‍🍳' },
-    ],
-  },
-  {
-    id: 'activities',
-    name: 'Activities',
-    activities: [
-      { id: 'playtime', name: 'Playtime', emoji: '🎮' },
-      { id: 'outside-play', name: 'Outside Play', emoji: '🏃' },
-      { id: 'reading', name: 'Reading', emoji: '📚' },
-      { id: 'screen-time', name: 'Screen Time', emoji: '📱' },
-      { id: 'homework', name: 'Homework', emoji: '📝' },
-      { id: 'chores', name: 'Chores', emoji: '🧹' },
-      { id: 'exercise', name: 'Exercise', emoji: '💪' },
-      { id: 'music', name: 'Music', emoji: '🎵' },
-      { id: 'art', name: 'Art & Crafts', emoji: '🎨' },
-    ],
+    id: 'my-templates',
+    name: 'My Templates',
+    activities: [],
   },
 ];
 
 const LibraryTabContent = ({
   theme,
-  categories = DEFAULT_CATEGORIES,
+  categories,
   onSaveCategories,
   onSelectActivity,
   onSelectMultipleActivities,
   showToast,
   loading,
 }) => {
-  const [localCategories, setLocalCategories] = useState(categories || DEFAULT_CATEGORIES);
+  // Start with empty categories if none provided
+  const [localCategories, setLocalCategories] = useState(categories || EMPTY_TEMPLATE);
   const [expandedCategories, setExpandedCategories] = useState({});
   const [editingCategory, setEditingCategory] = useState(null);
   const [editingActivity, setEditingActivity] = useState(null);

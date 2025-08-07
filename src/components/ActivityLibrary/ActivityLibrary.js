@@ -912,7 +912,8 @@ const ActivityLibrary = ({
   showToast,
 }) => {
   const insets = useSafeAreaInsets();
-  const [categories, setCategories] = useState(customCategories || DEFAULT_CATEGORIES);
+  // Start with empty categories if none provided, NOT DEFAULT_CATEGORIES
+  const [categories, setCategories] = useState(customCategories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]);
   const [editingItem, setEditingItem] = useState(null);
   const [editMode, setEditMode] = useState(null); // 'category', 'activity', 'new-category', 'new-activity'
   const [editName, setEditName] = useState('');
@@ -931,12 +932,10 @@ const ActivityLibrary = ({
   useEffect(() => {
     const hasMyTemplates = categories.some(cat => cat.id === 'my-templates');
     if (!hasMyTemplates) {
-      const myTemplatesCategory = DEFAULT_CATEGORIES.find(cat => cat.id === 'my-templates');
-      if (myTemplatesCategory) {
-        const newCategories = [...categories, myTemplatesCategory];
-        setCategories(newCategories);
-        if (onSaveCategories) onSaveCategories(newCategories);
-      }
+      const myTemplatesCategory = { id: 'my-templates', name: 'My Templates', activities: [] };
+      const newCategories = [...categories, myTemplatesCategory];
+      setCategories(newCategories);
+      if (onSaveCategories) onSaveCategories(newCategories);
     }
   }, []);
 
@@ -1814,6 +1813,12 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
   },
 });
+
+// Export a function to initialize with default categories if desired
+export const initializeWithDefaults = () => DEFAULT_CATEGORIES;
+
+// Export empty template for initialization
+export const EMPTY_CATEGORIES = [{ id: 'my-templates', name: 'My Templates', activities: [] }];
 
 export default ActivityLibrary;
 export { DEFAULT_CATEGORIES };

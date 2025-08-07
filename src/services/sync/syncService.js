@@ -757,7 +757,8 @@ class SyncService {
         taskCelebration: state.taskCelebration,
         routineCelebration: state.routineCelebration
       },
-      templates: state.activities, // activities are the templates
+      templates: state.libraryTemplates || state.activities || [], // Use new field, fallback to old
+      activityCategories: state.library?.categories || state.activityCategories || null, // Include library categories
       currentUser: state.currentUser,
       hasCompletedOnboarding: state.hasCompletedOnboarding,
       lastBackup: new Date().toISOString(),
@@ -806,6 +807,7 @@ class SyncService {
     const {
       users,
       templates,
+      activityCategories,
       currentUser,
       globalSettings,
       hasCompletedOnboarding,
@@ -823,7 +825,14 @@ class SyncService {
     
     // Update store with export format data
     const newState = {
+      // Map templates to both fields for backward compatibility
       activities: templates || [],
+      libraryTemplates: templates || [],
+      activityCategories: activityCategories || null,
+      library: {
+        categories: activityCategories || null,
+        userAddedActivityIds: []
+      },
       users: users || {},
       currentUser: currentUser || Object.keys(users || {})[0] || 'user_1',
       currentTheme: globalSettings?.currentTheme || 'stackBlue',

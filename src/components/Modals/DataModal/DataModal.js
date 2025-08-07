@@ -296,7 +296,10 @@ const DataModal = ({
       }
       
       if (exportSelections.activityLibrary) {
-        // Transform activityCategories array to templates object format
+        // Include activityCategories in new format
+        exportData.activityCategories = activityCategories;
+        
+        // Also transform to templates object format for backward compatibility
         const templatesObject = {};
         if (activityCategories && Array.isArray(activityCategories)) {
           activityCategories.forEach(category => {

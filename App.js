@@ -90,7 +90,7 @@ import {
 
 // Import components
 import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PrivacyModal, SupportModal, ReorderModal, DataModal, AccessModal, ToolbarCustomizeModal, ConfirmModal, DayManagementModal, ActivityManagementModal, BuyMeCoffeeButton, SyncPreviewModal } from './src/components';
-import { DEFAULT_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
+import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
 import PinModal from './src/components/Modals/PinModal';
@@ -1572,13 +1572,13 @@ const App = () => {
   };
 
   const addActivityToLibrary = (activity) => {
-    // Initialize with default categories if none exist
-    const categories = activityCategories || DEFAULT_CATEGORIES;
+    // Initialize with empty categories if none exist
+    const categories = activityCategories || EMPTY_CATEGORIES;
     
-    // If activityCategories was null, set it to defaults
+    // If activityCategories was null, set it to empty
     if (!activityCategories) {
-      console.log('Initializing activity categories with defaults');
-      setActivityCategories(DEFAULT_CATEGORIES);
+      console.log('Initializing activity categories with empty template');
+      setActivityCategories(EMPTY_CATEGORIES);
     }
     
     // Create a new array to avoid mutating state
