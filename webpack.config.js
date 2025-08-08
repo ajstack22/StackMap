@@ -70,6 +70,11 @@ module.exports = {
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
       process: { env: {} },
+      global: 'window',
+    }),
+    new webpack.ProvidePlugin({
+      setImmediate: ['setimmediate', 'setImmediate'],
+      clearImmediate: ['setimmediate', 'clearImmediate'],
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser',
