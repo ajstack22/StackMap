@@ -446,19 +446,34 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               </>
             )}
             
-            {/* Privacy Policy Link */}
-            <TouchableOpacity 
-              style={styles.privacyLink}
-              onPress={() => {
-
-                if (onShowPrivacy) {
-
-                  onShowPrivacy();
-                } else {}
-              }}
-            >
-              <Text style={styles.privacyLinkText}>Privacy Policy</Text>
-            </TouchableOpacity>
+            {/* Footer Links */}
+            <View style={styles.footerLinks}>
+              <TouchableOpacity 
+                style={styles.footerLink}
+                onPress={() => {
+                  if (onShowPrivacy) {
+                    onShowPrivacy();
+                  }
+                }}
+              >
+                <Text style={styles.footerLinkText}>Privacy Policy</Text>
+              </TouchableOpacity>
+              
+              <Text style={styles.footerSeparator}>•</Text>
+              
+              <TouchableOpacity 
+                style={styles.footerLink}
+                onPress={() => {
+                  if (Platform.OS === 'web') {
+                    window.open('https://stackmap.app?supportus', '_blank');
+                  } else {
+                    Linking.openURL('https://stackmap.app?supportus');
+                  }
+                }}
+              >
+                <Text style={styles.footerLinkText}>Support Us</Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
           </View>
         );
@@ -1360,8 +1375,8 @@ const styles = StyleSheet.create({
   },
   // New welcome page styles
   welcomeContent: {
-    paddingTop: Platform.OS === 'web' ? 60 : 40,
-    paddingBottom: Platform.OS === 'web' ? 40 : 20,
+    paddingTop: Platform.OS === 'web' ? 40 : 40,
+    paddingBottom: Platform.OS === 'web' ? 20 : 20,
     paddingHorizontal: Platform.OS === 'web' ? 40 : 16,
     alignItems: 'center',
     minHeight: Platform.OS === 'web' ? '100%' : undefined,
@@ -1382,16 +1397,16 @@ const styles = StyleSheet.create({
   cardsContainer: {
     flexDirection: isMobileWeb() || Platform.OS !== 'web' ? 'column' : 'row',
     gap: Platform.OS === 'web' ? 16 : 10,
-    marginTop: Platform.OS === 'web' ? 40 : 20,
-    marginBottom: Platform.OS === 'web' ? 40 : 20,
+    marginTop: Platform.OS === 'web' ? 30 : 20,
+    marginBottom: Platform.OS === 'web' ? 30 : 20,
     width: '100%',
     maxWidth: Platform.OS === 'web' ? 800 : '100%',
   },
   card: {
     flex: (Platform.OS === 'web' && !isMobileWeb()) ? 1 : undefined,
     backgroundColor: 'white',
-    paddingVertical: Platform.OS === 'web' ? 24 : 16,
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 18,
+    paddingVertical: Platform.OS === 'web' ? 20 : 16,
+    paddingHorizontal: Platform.OS === 'web' ? 20 : 18,
     borderRadius: Platform.OS === 'android' ? 8 : 12,
     alignItems: 'center',
     width: (Platform.OS === 'web' && !isMobileWeb()) ? undefined : '100%',
@@ -2252,7 +2267,29 @@ const styles = StyleSheet.create({
     color: COLORS.gray[700],
   },
   
-  // Privacy Policy Link
+  // Footer Links
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: Platform.OS === 'web' ? 16 : 12,
+    paddingVertical: 8,
+  },
+  footerLink: {
+    paddingHorizontal: 8,
+  },
+  footerLinkText: {
+    color: THEMES.stackBlue.primary,
+    fontSize: Platform.OS === 'web' ? 14 : 13,
+    textDecorationLine: 'underline',
+  },
+  footerSeparator: {
+    color: COLORS.gray[400],
+    fontSize: 14,
+    paddingHorizontal: 4,
+  },
+  
+  // Privacy Policy Link (kept for backward compatibility)
   privacyLink: {
     marginTop: SPACING.xl,
     paddingVertical: SPACING.sm,

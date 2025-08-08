@@ -10,7 +10,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'web/build'),
     filename: 'bundle.[contenthash].js',
-    publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
+    publicPath: process.env.NODE_ENV === 'production' ? '' : '/',
     clean: true,
   },
   module: {
@@ -62,6 +62,7 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: './web/public/index.html',
+      publicPath: process.env.NODE_ENV === 'production' ? './' : '/',
     }),
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
