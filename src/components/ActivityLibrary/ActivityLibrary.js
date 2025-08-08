@@ -21,22 +21,29 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmModal from '../Modals/ConfirmModal';
 
 // Conditionally import drag-and-drop libraries
-let DraggableFlatList, ScaleDecorator;
+let DraggableFlatList = null;
+let ScaleDecorator = null;
 
-if (Platform.OS === 'web') {
-  // Use web-compatible draggable list
-  const DraggableListWeb = require('./DraggableList.web');
-  DraggableFlatList = DraggableListWeb.DraggableList;
-  ScaleDecorator = DraggableListWeb.ScaleDecorator;
-} else if (Platform.OS === 'ios') {
-  // Use native iOS draggable list
-  DraggableFlatList = require('react-native-draggable-flatlist').default;
-  ScaleDecorator = require('react-native-draggable-flatlist').ScaleDecorator;
-} else {
-  // Android fallback to regular FlatList
-  DraggableFlatList = require('react-native').FlatList;
-  ScaleDecorator = ({ children }) => children;
-}
+// Lazy load drag-and-drop components to avoid module-level Platform.OS access
+const loadDragComponents = () => {
+  if (!DraggableFlatList || !ScaleDecorator) {
+    if (Platform.OS === 'web') {
+      // Use web-compatible draggable list
+      const DraggableListWeb = require('./DraggableList.web');
+      DraggableFlatList = DraggableListWeb.DraggableList;
+      ScaleDecorator = DraggableListWeb.ScaleDecorator;
+    } else if (Platform.OS === 'ios') {
+      // Use native iOS draggable list
+      DraggableFlatList = require('react-native-draggable-flatlist').default;
+      ScaleDecorator = require('react-native-draggable-flatlist').ScaleDecorator;
+    } else {
+      // Android fallback to regular FlatList
+      DraggableFlatList = require('react-native').FlatList;
+      ScaleDecorator = ({ children }) => children;
+    }
+  }
+  return { DraggableFlatList, ScaleDecorator };
+};
 import {
   SHADOWS,
   TYPOGRAPHY,
@@ -890,6 +897,11 @@ const ActivityLibrary = ({
   onCopyGroupToMyLibrary,
   showToast,
 }) => {
+  // Load drag components
+  const { DraggableFlatList: DraggableList, ScaleDecorator: Decorator } = loadDragComponents();
+  if (!DraggableFlatList) DraggableFlatList = DraggableList;
+  if (!ScaleDecorator) ScaleDecorator = Decorator;
+  
   const insets = useSafeAreaInsets();
   // Use myLibrary if provided, otherwise fall back to legacy categories
   const [categories, setCategories] = useState(

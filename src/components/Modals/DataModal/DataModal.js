@@ -25,20 +25,26 @@ import QRCode from 'react-native-qrcode-svg';
 let DocumentPicker = null;
 let RNFS = null;
 
-if (Platform.OS === 'web') {
-  // Use web polyfills
-  RNFS = require('../../../utils/platformHelpers.web').default;
-  DocumentPicker = require('../../../utils/platformHelpers.web').DocumentPicker;
-} else {
-  // Use native modules - wrap in try/catch for missing modules
-  try {
-    DocumentPicker = require('react-native-document-picker').default;
-  } catch (e) {
-//     console.warn('DocumentPicker not available on this platform');
-    DocumentPicker = null;
+// Lazy load file system modules to avoid module-level Platform.OS access
+const loadFileSystemModules = () => {
+  if (!RNFS || !DocumentPicker) {
+    if (Platform.OS === 'web') {
+      // Use web polyfills
+      RNFS = require('../../../utils/platformHelpers.web').default;
+      DocumentPicker = require('../../../utils/platformHelpers.web').DocumentPicker;
+    } else {
+      // Use native modules - wrap in try/catch for missing modules
+      try {
+        DocumentPicker = require('react-native-document-picker').default;
+      } catch (e) {
+//         console.warn('DocumentPicker not available on this platform');
+        DocumentPicker = null;
+      }
+      RNFS = require('react-native-fs');
+    }
   }
-  RNFS = require('react-native-fs');
-}
+  return { RNFS, DocumentPicker };
+};
 
 const DataModal = ({
   visible,
@@ -346,10 +352,16 @@ const DataModal = ({
       if (Platform.OS === 'android') {
 
         try {
-          const downloadsPath = RNFS.DownloadDirectoryPath;
+          // Load file system modules
+          const modules = loadFileSystemModules();
+          if (!modules.RNFS) {
+            throw new Error('File system not available');
+          }
+          
+          const downloadsPath = modules.RNFS.DownloadDirectoryPath;
           const filePath = `${downloadsPath}/${fileName}`;
 
-          await RNFS.writeFile(filePath, jsonData, 'utf8');
+          await modules.RNFS.writeFile(filePath, jsonData, 'utf8');
 
           // Show success message
           showToast({ 
@@ -395,13 +407,19 @@ const DataModal = ({
 
         try {
           const { Share } = require('react-native');
-          const documentsPath = RNFS.DocumentDirectoryPath;
+          // Load file system modules
+          const modules = loadFileSystemModules();
+          if (!modules.RNFS) {
+            throw new Error('File system not available');
+          }
+          
+          const documentsPath = modules.RNFS.DocumentDirectoryPath;
           const filePath = `${documentsPath}/${fileName}`;
 
-          await RNFS.writeFile(filePath, jsonData, 'utf8');
+          await modules.RNFS.writeFile(filePath, jsonData, 'utf8');
 
           // Verify file was written
-          const fileExists = await RNFS.exists(filePath);
+          const fileExists = await modules.RNFS.exists(filePath);
 
           if (!fileExists) {
             throw new Error('File was not created successfully');
@@ -422,7 +440,7 @@ const DataModal = ({
           // Clean up the temp file after a delay to ensure it was used
           setTimeout(async () => {
             try {
-              await RNFS.unlink(filePath);
+              await modules.RNFS.unlink(filePath);
 
             } catch (err) {
               console.log('Clean up error (file may have been moved):', err);
@@ -459,19 +477,25 @@ const DataModal = ({
       
       // Android uses file system search
       if (Platform.OS === 'android') {
+        // Load file system modules
+        const modules = loadFileSystemModules();
+        if (!modules.RNFS) {
+          throw new Error('File system not available');
+        }
+        
         // Search for StackMap export files in various directories
         let jsonFiles = [];
         
         const searchPaths = [
-          RNFS.DownloadDirectoryPath,
-          RNFS.ExternalDirectoryPath,
-          `${RNFS.ExternalDirectoryPath}/Documents`,
-          RNFS.DocumentDirectoryPath,
+          modules.RNFS.DownloadDirectoryPath,
+          modules.RNFS.ExternalDirectoryPath,
+          `${modules.RNFS.ExternalDirectoryPath}/Documents`,
+          modules.RNFS.DocumentDirectoryPath,
         ];
         
         for (const path of searchPaths) {
           try {
-            const files = await RNFS.readDir(path);
+            const files = await modules.RNFS.readDir(path);
             const foundFiles = files.filter(f => 
               f.name.endsWith('.json') && 
               f.name.toLowerCase().includes('stackmap')
@@ -501,7 +525,7 @@ const DataModal = ({
         // Helper function to load a file
         const loadFile = async (file) => {
           try {
-            const fileContent = await RNFS.readFile(file.path, 'utf8');
+            const fileContent = await modules.RNFS.readFile(file.path, 'utf8');
             const parsedData = JSON.parse(fileContent);
             
             if (!parsedData.version) {
@@ -586,14 +610,16 @@ const DataModal = ({
       }
       
       // iOS and Web use DocumentPicker
-      if (!DocumentPicker || !DocumentPicker.pick) {
+      // Load file system modules
+      const modules = loadFileSystemModules();
+      if (!modules.DocumentPicker || !modules.DocumentPicker.pick) {
         Alert.alert('Error', 'File picker is not available on this platform.');
         setLoading(false);
         return;
       }
       
-      const result = await DocumentPicker.pick({
-        type: Platform.OS === 'web' ? 'application/json' : [DocumentPicker.types.json],
+      const result = await modules.DocumentPicker.pick({
+        type: Platform.OS === 'web' ? 'application/json' : [modules.DocumentPicker.types.json],
         copyTo: 'cachesDirectory',
       });
       
@@ -602,8 +628,8 @@ const DataModal = ({
       if (Platform.OS === 'web' && result[0]?.content) {
         fileContent = result[0].content;
       } else if (result[0]?.fileCopyUri) {
-        fileContent = await RNFS.readFile(result[0].fileCopyUri, 'utf8');
-        await RNFS.unlink(result[0].fileCopyUri);
+        fileContent = await modules.RNFS.readFile(result[0].fileCopyUri, 'utf8');
+        await modules.RNFS.unlink(result[0].fileCopyUri);
       } else {
         Alert.alert('Error', 'Could not read the selected file');
         return;
@@ -623,7 +649,7 @@ const DataModal = ({
       initializeImportSelections(parsedData);
       
     } catch (error) {
-      if (error.code !== DocumentPicker.errorCodes?.cancelled && error.code !== 'DOCUMENT_PICKER_CANCELED') {
+      if (error.code !== modules.DocumentPicker?.errorCodes?.cancelled && error.code !== 'DOCUMENT_PICKER_CANCELED') {
 //         console.error('File selection error:', error);
         Alert.alert('Error', 'Failed to select file. Please try again.');
       }

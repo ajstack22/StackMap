@@ -36,20 +36,26 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 let DocumentPicker = null;
 let RNFS = null;
 
-if (Platform.OS === 'web') {
-  // Use web polyfills
-  RNFS = require('./src/utils/platformHelpers.web').default;
-  DocumentPicker = require('./src/utils/platformHelpers.web').DocumentPicker;
-} else {
-  // Use native modules for both iOS and Android
-  try {
-    DocumentPicker = require('react-native-document-picker').default;
-  } catch (e) {
-//     console.warn('DocumentPicker not available:', e);
-    DocumentPicker = null;
+// Lazy load platform-specific modules to avoid module-level Platform.OS access
+const loadPlatformModules = () => {
+  if (!RNFS || !DocumentPicker) {
+    if (Platform.OS === 'web') {
+      // Use web polyfills
+      RNFS = require('./src/utils/platformHelpers.web').default;
+      DocumentPicker = require('./src/utils/platformHelpers.web').DocumentPicker;
+    } else {
+      // Use native modules for both iOS and Android
+      try {
+        DocumentPicker = require('react-native-document-picker').default;
+      } catch (e) {
+//         console.warn('DocumentPicker not available:', e);
+        DocumentPicker = null;
+      }
+      RNFS = require('react-native-fs');
+    }
   }
-  RNFS = require('react-native-fs');
-}
+  return { RNFS, DocumentPicker };
+};
 
 import { Share, Linking } from 'react-native';
 
@@ -148,6 +154,12 @@ const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
 
 const App = () => {
   console.log('[APP STARTUP] App component first render at', Date.now());
+  
+  // Load platform-specific modules
+  const modules = loadPlatformModules();
+  if (!RNFS) RNFS = modules.RNFS;
+  if (!DocumentPicker) DocumentPicker = modules.DocumentPicker;
+  
   const insets = useSafeAreaInsets();
   
   // Use our custom hooks

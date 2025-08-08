@@ -16,15 +16,29 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../../constants';
 
-// Conditionally import gesture handler for iOS only
-const GestureHandlerModule = Platform.OS === 'ios' 
-  ? require('react-native-gesture-handler')
-  : null;
-const GestureHandlerRootView = GestureHandlerModule?.GestureHandlerRootView || View;
-const PanGestureHandler = GestureHandlerModule?.PanGestureHandler;
-const State = GestureHandlerModule?.State || {};
+// Lazy load gesture handler to avoid module-level Platform.OS access
+let GestureHandlerModule = null;
+let GestureHandlerRootView = View;
+let PanGestureHandler = null;
+let State = {};
+
+const loadGestureHandler = () => {
+  if (Platform.OS === 'ios' && !GestureHandlerModule) {
+    try {
+      GestureHandlerModule = require('react-native-gesture-handler');
+      GestureHandlerRootView = GestureHandlerModule.GestureHandlerRootView || View;
+      PanGestureHandler = GestureHandlerModule.PanGestureHandler;
+      State = GestureHandlerModule.State || {};
+    } catch (e) {
+      // Fallback if gesture handler not available
+      GestureHandlerRootView = View;
+    }
+  }
+};
 
 const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onUserChange }) => {
+  // Load gesture handler if needed
+  loadGestureHandler();
   const insets = useSafeAreaInsets();
   const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
   const isSmallScreen = screenWidth < 768;

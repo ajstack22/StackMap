@@ -4,9 +4,13 @@ import { Platform } from 'react-native';
 import merge from 'lodash/merge';
 
 // Storage adapter - Use MMKV for 30x faster storage on Android
-let storage;
+let storage = null;
 
-if (Platform.OS === 'web') {
+// Lazy load storage to avoid module-level Platform.OS access
+const initStorage = () => {
+  if (storage) return storage;
+  
+  if (Platform.OS === 'web') {
   // Use AsyncStorage for web
   const AsyncStorage = require('@react-native-async-storage/async-storage').default;
   storage = {
@@ -41,8 +45,8 @@ if (Platform.OS === 'web') {
       }
     },
   };
-} else {
-  // Use MMKV for native platforms (30x faster than AsyncStorage)
+  } else {
+    // Use MMKV for native platforms (30x faster than AsyncStorage)
 
   try {
     const { MMKV } = require('react-native-mmkv');
@@ -123,7 +127,17 @@ if (Platform.OS === 'web') {
       },
     };
   }
-}
+  }
+  return storage;
+};
+
+// Initialize storage on first use
+const getStorage = () => {
+  if (!storage) {
+    storage = initStorage();
+  }
+  return storage;
+};
 
 // Defer loading this large constant
 let STACKMAP_LIBRARY = null;
@@ -644,8 +658,8 @@ const useAppStore = create(
           try {
             // MMKV is synchronous on native, but we keep async for web compatibility
             const stored = Platform.OS === 'web' 
-              ? await storage.getItem('stackmap-storage')
-              : storage.getItem('stackmap-storage');
+              ? await getStorage().getItem('stackmap-storage')
+              : getStorage().getItem('stackmap-storage');
             
             if (stored) {
               const { state } = stored;
