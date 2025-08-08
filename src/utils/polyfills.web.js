@@ -1,5 +1,18 @@
 // Polyfills for web environment
 
+// Mock Platform - CRITICAL for React Native web
+if (typeof window !== 'undefined' && !window.Platform) {
+  window.Platform = {
+    OS: 'web',
+    Version: 1,
+    isPad: false,
+    isTV: false,
+    isTVOS: false,
+    isTesting: false,
+    select: (obj) => obj.web || obj.default,
+  };
+}
+
 // Mock native bridge config to prevent React Native errors
 global.__fbBatchedBridgeConfig = {
   remoteModuleConfig: [],
