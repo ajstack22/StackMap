@@ -69,6 +69,43 @@
       to { transform: rotate(360deg); }
     }
   </style>
+  
+  <!-- Critical: React Native Web Polyfills - MUST run before bundle -->
+  <script>
+    // Ensure global exists
+    if (typeof global === 'undefined') {
+      window.global = window;
+    }
+    
+    // Mock Platform - CRITICAL for React Native web
+    window.Platform = global.Platform = {
+      OS: 'web',
+      Version: 1,
+      isPad: false,
+      isTV: false,
+      isTVOS: false,
+      isTesting: false,
+      select: function(obj) { 
+        return obj.web || obj.default || Object.values(obj)[0];
+      }
+    };
+    
+    // Mock native bridge config
+    global.__fbBatchedBridgeConfig = {
+      remoteModuleConfig: [],
+      localModulesConfig: [],
+    };
+    
+    // Basic NativeModules mock
+    global.NativeModules = {};
+    
+    // TurboModule mock
+    global.__turboModuleProxy = function(name) {
+      return {
+        getConstants: function() { return {}; }
+      };
+    };
+  </script>
 </head>
 <body>
   <div id="root">
