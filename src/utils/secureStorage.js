@@ -1,13 +1,18 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
+// Lazy load Keychain only when needed to avoid module-level Platform.OS access
 let Keychain = null;
-// Only load Keychain on iOS - Android will use AsyncStorage fallback
-if (Platform.OS === 'ios') {
-  try {
-    Keychain = require('react-native-keychain');
-  } catch (e) {}
-}
+const getKeychain = () => {
+  if (Keychain === null && Platform.OS === 'ios') {
+    try {
+      Keychain = require('react-native-keychain');
+    } catch (e) {
+      Keychain = false; // Mark as attempted but failed
+    }
+  }
+  return Keychain;
+};
 
 const PIN_SERVICE = 'StackMapPIN';
 const PIN_USERNAME = 'editModePin';
@@ -42,13 +47,14 @@ export const setSecurePin = async (pin) => {
     }
     
     // Check if the method exists
-    if (typeof Keychain.setInternetCredentials !== 'function') {
+    const KeychainModule = getKeychain();
+    if (!KeychainModule || typeof KeychainModule.setInternetCredentials !== 'function') {
 
       return false;
     }
 
     // Store PIN securely
-    const result = await Keychain.setInternetCredentials(
+    const result = await KeychainModule.setInternetCredentials(
       PIN_SERVICE,
       PIN_USERNAME,
       pin,
@@ -80,13 +86,14 @@ export const getSecurePin = async () => {
     }
     
     // Check if the method exists
-    if (typeof Keychain.getInternetCredentials !== 'function') {
+    const KeychainModule = getKeychain();
+    if (!KeychainModule || typeof KeychainModule.getInternetCredentials !== 'function') {
 
       return null;
     }
     
     // Get credentials using internet credentials
-    const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
+    const credentials = await KeychainModule.getInternetCredentials(PIN_SERVICE);
     
     if (credentials && credentials.password) {
       // Check for our deletion marker or empty string
@@ -137,18 +144,20 @@ export const removeSecurePin = async () => {
     if (Platform.OS === 'ios') {
       // iOS - try reset first, then fallback to DELETED
       try {
-        if (Keychain && typeof Keychain.resetInternetCredentials === 'function') {
-          await Keychain.resetInternetCredentials(PIN_SERVICE);
+        const KeychainModule = getKeychain();
+        if (KeychainModule && typeof KeychainModule.resetInternetCredentials === 'function') {
+          await KeychainModule.resetInternetCredentials(PIN_SERVICE);
 
-        } else if (Keychain && typeof Keychain.setInternetCredentials === 'function') {
-          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+        } else if (KeychainModule && typeof KeychainModule.setInternetCredentials === 'function') {
+          await KeychainModule.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
 
         }
       } catch (e) {
 
         try {
-          if (Keychain && typeof Keychain.setInternetCredentials === 'function') {
-            await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+          const KeychainModule = getKeychain();
+          if (KeychainModule && typeof KeychainModule.setInternetCredentials === 'function') {
+            await KeychainModule.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
 
           }
         } catch (e2) {}

@@ -50,6 +50,7 @@ module.exports = {
     extensions: ['.web.js', '.js', '.jsx', '.ts', '.tsx'],
     alias: {
       'react-native$': 'react-native-web',
+      'react-native/Libraries/Utilities/Platform': path.resolve(__dirname, 'src/utils/Platform.web.js'),
       // Add aliases for RN packages that need web versions
       'react-native-svg': 'react-native-svg-web',
       'react-native-qrcode-svg': path.resolve(__dirname, 'src/utils/QRCode.web.js'),
