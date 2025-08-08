@@ -49,8 +49,9 @@ module.exports = {
   resolve: {
     extensions: ['.web.js', '.js', '.jsx', '.ts', '.tsx'],
     alias: {
+      // CRITICAL: Override Platform BEFORE react-native-web loads
+      'react-native/Libraries/Utilities/Platform': path.resolve(__dirname, 'src/utils/PlatformPolyfill.web.js'),
       'react-native$': 'react-native-web',
-      'react-native/Libraries/Utilities/Platform': path.resolve(__dirname, 'src/utils/Platform.web.js'),
       // Add aliases for RN packages that need web versions
       'react-native-svg': 'react-native-svg-web',
       'react-native-qrcode-svg': path.resolve(__dirname, 'src/utils/QRCode.web.js'),
@@ -75,6 +76,7 @@ module.exports = {
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser',
+      Platform: [path.resolve(__dirname, 'web-polyfills.js'), 'Platform'],
     }),
     new CopyWebpackPlugin({
       patterns: [
