@@ -73,10 +73,6 @@ module.exports = {
       global: 'window',
     }),
     new webpack.ProvidePlugin({
-      setImmediate: ['setimmediate', 'setImmediate'],
-      clearImmediate: ['setimmediate', 'clearImmediate'],
-    }),
-    new webpack.ProvidePlugin({
       process: 'process/browser',
     }),
     new CopyWebpackPlugin({

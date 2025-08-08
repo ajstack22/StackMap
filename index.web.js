@@ -1,3 +1,6 @@
+// Import polyfills first
+import './src/utils/polyfills.web';
+
 import { AppRegistry, Platform } from 'react-native';
 import App from './App';
 
