@@ -15,15 +15,20 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { SPACING } from '../../../constants';
 
-// Conditionally import DraggableFlatList for non-web platforms
-const DraggableFlatList = Platform.OS !== 'web' 
-  ? require('react-native-draggable-flatlist').default 
-  : null;
+// Lazy load these to avoid module-level Platform.OS access
+let DraggableFlatList = null;
+let GestureHandlerRootView = null;
 
-// Import GestureHandlerRootView for platforms that need it
-const GestureHandlerRootView = Platform.OS !== 'web' 
-  ? require('react-native-gesture-handler').GestureHandlerRootView
-  : null;
+const loadNativeModules = () => {
+  if (Platform.OS !== 'web') {
+    if (!DraggableFlatList) {
+      DraggableFlatList = require('react-native-draggable-flatlist').default;
+    }
+    if (!GestureHandlerRootView) {
+      GestureHandlerRootView = require('react-native-gesture-handler').GestureHandlerRootView;
+    }
+  }
+};
 
 const DEFAULT_TOOLBAR_ORDER = ['data', 'access', 'day', 'activities'];
 
@@ -44,6 +49,9 @@ const ToolbarCustomizeModal = ({
   onSaveMorePosition,
   showToast,
 }) => {
+  // Load native modules if needed
+  loadNativeModules();
+  
   const insets = useSafeAreaInsets();
   const [buttonOrder, setButtonOrder] = useState(() => {
     if (currentOrder && currentOrder.length > 0) {
