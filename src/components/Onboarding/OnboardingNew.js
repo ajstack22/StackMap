@@ -38,7 +38,7 @@ const isTablet = () => screenWidth >= 768;
 const isMobileWeb = () => Platform.OS === 'web' && Dimensions.get('window').width < 768;
 
 // Updated: 2025-07-18 16:45 - Fixed mobile layout
-const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupPhrase = null }) => {
+const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupPhrase = null, onShowPrivacy }) => {
   // Safety check for THEMES
   console.log('[OnboardingNew] THEMES object:', THEMES);
   console.log('[OnboardingNew] THEMES.stackBlue:', THEMES?.stackBlue);
@@ -450,6 +450,23 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                 </View>
               </>
             )}
+            
+            {/* Privacy Policy Link */}
+            <TouchableOpacity 
+              style={styles.privacyLink}
+              onPress={() => {
+                console.log('[OnboardingNew] Privacy link pressed');
+                console.log('[OnboardingNew] onShowPrivacy prop:', onShowPrivacy);
+                if (onShowPrivacy) {
+                  console.log('[OnboardingNew] Calling onShowPrivacy');
+                  onShowPrivacy();
+                } else {
+                  console.log('[OnboardingNew] onShowPrivacy prop is not defined');
+                }
+              }}
+            >
+              <Text style={styles.privacyLinkText}>Privacy Policy</Text>
+            </TouchableOpacity>
           </ScrollView>
           </View>
         );
@@ -2244,6 +2261,20 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: COLORS.gray[700],
+  },
+  
+  // Privacy Policy Link
+  privacyLink: {
+    marginTop: SPACING.xl,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  privacyLinkText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: THEMES.stackBlue.primary,
+    textDecorationLine: 'underline',
+    textAlign: 'center',
   },
 });
 

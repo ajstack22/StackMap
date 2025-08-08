@@ -29,7 +29,8 @@ const AddTabContent = ({
   const [activityDescription, setActivityDescription] = useState('');
   const [activityIcon, setActivityIcon] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [activityTime, setActivityTime] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('my-templates');
+  // Always use 'my-templates' for now since we're not implementing custom categories yet
+  const selectedCategory = 'my-templates';
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [saveToLibrary, setSaveToLibrary] = useState(false);
   const [errors, setErrors] = useState({});
@@ -40,9 +41,7 @@ const AddTabContent = ({
       setActivityText(prefilledActivity.name || prefilledActivity.text || '');
       setActivityDescription(prefilledActivity.description || '');
       setActivityIcon(prefilledActivity.emoji || prefilledActivity.icon || DEFAULT_ACTIVITY_EMOJI);
-      if (prefilledCategory) {
-        setSelectedCategory(prefilledCategory);
-      }
+      // Category selection removed - always uses My Templates
     }
   }, [prefilledActivity, prefilledCategory]);
 
@@ -89,9 +88,9 @@ const AddTabContent = ({
     // Add to current day
     await onAddActivity(activityData);
 
-    // Optionally save to library
-    if (saveToLibrary && selectedCategory) {
-      await onSaveToLibrary(activityData, selectedCategory);
+    // Optionally save to library (always to My Templates)
+    if (saveToLibrary) {
+      await onSaveToLibrary(activityData, 'my-templates');
     }
 
     // Close the modal
@@ -130,9 +129,9 @@ const AddTabContent = ({
     // Add to current day
     await onAddActivity(activityData);
 
-    // Optionally save to library
-    if (saveToLibrary && selectedCategory) {
-      await onSaveToLibrary(activityData, selectedCategory);
+    // Optionally save to library (always to My Templates)
+    if (saveToLibrary) {
+      await onSaveToLibrary(activityData, 'my-templates');
     }
 
     // Reset form for next activity
@@ -154,14 +153,20 @@ const AddTabContent = ({
     setShowEmojiPicker(false);
   };
 
+  // Wrap entire content in a gesture-capturing view for Android
+  const ContentWrapper = Platform.OS === 'android' ? View : React.Fragment;
+  const wrapperProps = Platform.OS === 'android' ? { style: { flex: 1 } } : {};
+  
   return (
-    <>
+    <ContentWrapper {...wrapperProps}>
       <ScrollView 
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
         style={{ flex: 1 }}
+        nestedScrollEnabled={Platform.OS === 'android'}
+        scrollEnabled={true}
       >
-      <View style={styles.addFormContainer}>
+      <View style={styles.addFormContainer} pointerEvents="box-none">
         {/* Single Consolidated Panel */}
         <View style={styles.formPanel}>
           {/* Activity Name */}
@@ -226,33 +231,8 @@ const AddTabContent = ({
               <View style={[styles.checkbox, saveToLibrary && styles.checkboxChecked]}>
                 {saveToLibrary && <Icon name="check" size={16} color="white" />}
               </View>
-              <Text style={styles.checkboxLabel}>Save to Activity Library</Text>
+              <Text style={styles.checkboxLabel}>Save to My Templates</Text>
             </TouchableOpacity>
-
-            {saveToLibrary && (
-              <View style={styles.categorySelector}>
-                <Text style={styles.formLabel}>Category</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-                  {(categories || []).map(category => (
-                    <TouchableOpacity
-                      key={category.id}
-                      style={[
-                        styles.categoryChip,
-                        selectedCategory === category.id && styles.categoryChipActive
-                      ]}
-                      onPress={() => setSelectedCategory(category.id)}
-                    >
-                      <Text style={[
-                        styles.categoryChipText,
-                        selectedCategory === category.id && styles.categoryChipTextActive
-                      ]}>
-                        {category.name}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
           </View>
 
           {/* Divider */}
@@ -320,7 +300,7 @@ const AddTabContent = ({
           theme={theme}
         />
       )}
-    </>
+    </ContentWrapper>
   );
 };
 

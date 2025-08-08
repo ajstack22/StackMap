@@ -16,28 +16,8 @@ import { ModalFooter, FormInput } from '../../ModalUtilities';
 import { styles } from './styles';
 import { DEFAULT_ACTIVITY_EMOJI } from '../../../constants';
 
-// Default activity categories - DEPRECATED
-// These are no longer automatically loaded to avoid the "28 activities" bug
-// Users start with empty library and can add their own
-/*
-const DEFAULT_CATEGORIES = [
-  {
-    id: 'my-templates',
-    name: 'My Templates',
-    activities: [],
-  },
-  // ... rest of categories removed to prevent auto-population
-];
-*/
-
-// Empty template for new users
-const EMPTY_TEMPLATE = [
-  {
-    id: 'my-templates',
-    name: 'My Templates',
-    activities: [],
-  },
-];
+// Empty template for new users - no pre-loaded activities
+const EMPTY_TEMPLATE = [];
 
 const LibraryTabContent = ({
   theme,
@@ -47,26 +27,27 @@ const LibraryTabContent = ({
   onSelectMultipleActivities,
   showToast,
   loading,
+  stackMapLibrary,
+  myLibrary,
 }) => {
   // Start with empty categories if none provided
-  const [localCategories, setLocalCategories] = useState(categories || EMPTY_TEMPLATE);
+  const [localCategories, setLocalCategories] = useState(
+    myLibrary?.activityGroups || categories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]
+  );
   const [expandedCategories, setExpandedCategories] = useState({});
   const [editingCategory, setEditingCategory] = useState(null);
-  const [editingActivity, setEditingActivity] = useState(null);
-  const [newCategoryName, setNewCategoryName] = useState('');
-  const [newActivityName, setNewActivityName] = useState('');
-  const [newActivityEmoji, setNewActivityEmoji] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [itemToDelete, setItemToDelete] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [showAddCategory, setShowAddCategory] = useState(false);
   const [notification, setNotification] = useState(null);
   const notificationOpacity = useRef(new Animated.Value(0)).current;
   const notificationTimer = useRef(null);
 
   useEffect(() => {
-    setLocalCategories(categories || DEFAULT_CATEGORIES);
-  }, [categories]);
+    setLocalCategories(
+      myLibrary?.activityGroups || categories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]
+    );
+  }, [categories, myLibrary]);
 
   const showNotification = (message) => {
     setNotification(message);
@@ -98,26 +79,6 @@ const LibraryTabContent = ({
     }));
   };
 
-  const handleAddCategory = () => {
-    if (!newCategoryName.trim()) {
-      showToast({ message: 'Please enter a category name', type: 'error' });
-      return;
-    }
-
-    const newCategory = {
-      id: `custom-${Date.now()}`,
-      name: newCategoryName.trim(),
-      activities: []
-    };
-
-    const updatedCategories = [...localCategories, newCategory];
-    setLocalCategories(updatedCategories);
-    onSaveCategories(updatedCategories);
-    setNewCategoryName('');
-    setShowAddCategory(false);
-    showToast({ message: 'Category added!' });
-  };
-
   const handleEditCategory = (categoryId, newName) => {
     const updatedCategories = localCategories.map(cat =>
       cat.id === categoryId ? { ...cat, name: newName } : cat
@@ -135,55 +96,6 @@ const LibraryTabContent = ({
     setShowDeleteConfirm(false);
     setItemToDelete(null);
     showToast({ message: 'Category deleted!' });
-  };
-
-  const handleAddActivity = (categoryId) => {
-    if (!newActivityName.trim()) {
-      showToast({ message: 'Please enter an activity name', type: 'error' });
-      return;
-    }
-
-    const newActivity = {
-      id: `activity-${Date.now()}`,
-      name: newActivityName.trim(),
-      emoji: newActivityEmoji
-    };
-
-    const updatedCategories = localCategories.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          activities: [...(cat.activities || []), newActivity]
-        };
-      }
-      return cat;
-    });
-
-    setLocalCategories(updatedCategories);
-    onSaveCategories(updatedCategories);
-    setEditingActivity(null);
-    setNewActivityName('');
-    setNewActivityEmoji(DEFAULT_ACTIVITY_EMOJI);
-    showToast({ message: 'Activity added!' });
-  };
-
-  const handleEditActivity = (categoryId, activityId, updates) => {
-    const updatedCategories = localCategories.map(cat => {
-      if (cat.id === categoryId) {
-        return {
-          ...cat,
-          activities: cat.activities.map(act =>
-            act.id === activityId ? { ...act, ...updates } : act
-          )
-        };
-      }
-      return cat;
-    });
-
-    setLocalCategories(updatedCategories);
-    onSaveCategories(updatedCategories);
-    setEditingActivity(null);
-    showToast({ message: 'Activity updated!' });
   };
 
   const handleDeleteActivity = (categoryId, activityId) => {
@@ -204,87 +116,43 @@ const LibraryTabContent = ({
     showToast({ message: 'Activity deleted!' });
   };
 
-  const getFilteredCategories = () => {
-    if (!searchQuery) return localCategories;
+  const getFilteredData = () => {
+    const myLibraryGroups = localCategories || [];
+    const stackMapGroups = stackMapLibrary?.activityGroups || [];
+    
+    if (!searchQuery) {
+      // Return all data when not searching
+      return [...myLibraryGroups, ...stackMapGroups];
+    }
+    
+    const query = searchQuery.toLowerCase();
+    
+    // Filter and combine both libraries
+    const filterGroups = (groups) => {
+      return groups.map(category => {
+        const matchingActivities = category.activities?.filter(activity =>
+          activity.name.toLowerCase().includes(query) ||
+          activity.emoji?.includes(query)
+        ) || [];
 
-    return localCategories.map(category => {
-      const matchingActivities = category.activities?.filter(activity =>
-        activity.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        activity.emoji.includes(searchQuery)
-      ) || [];
+        const categoryMatches = category.name.toLowerCase().includes(query);
 
-      const categoryMatches = category.name.toLowerCase().includes(searchQuery.toLowerCase());
-
-      if (categoryMatches || matchingActivities.length > 0) {
-        return {
-          ...category,
-          activities: matchingActivities,
-          expanded: true // Auto-expand matching categories
-        };
-      }
-      return null;
-    }).filter(Boolean);
+        if (categoryMatches || matchingActivities.length > 0) {
+          return {
+            ...category,
+            activities: matchingActivities,
+            expanded: true // Auto-expand matching categories
+          };
+        }
+        return null;
+      }).filter(Boolean);
+    };
+    
+    return [...filterGroups(myLibraryGroups), ...filterGroups(stackMapGroups)];
   };
 
   const renderActivity = (activity, categoryId) => {
-    const isEditing = editingActivity === `${categoryId}-${activity.id}`;
-
-    if (isEditing) {
-      return (
-        <View style={styles.editingActivity}>
-          <TextInput
-            style={styles.emojiInput}
-            value={activity.emoji}
-            onChangeText={(text) => {
-              const updatedCategories = localCategories.map(cat => {
-                if (cat.id === categoryId) {
-                  return {
-                    ...cat,
-                    activities: cat.activities.map(act =>
-                      act.id === activity.id ? { ...act, emoji: text } : act
-                    )
-                  };
-                }
-                return cat;
-              });
-              setLocalCategories(updatedCategories);
-            }}
-            maxLength={2}
-          />
-          <TextInput
-            style={styles.nameInput}
-            value={activity.name}
-            onChangeText={(text) => {
-              const updatedCategories = localCategories.map(cat => {
-                if (cat.id === categoryId) {
-                  return {
-                    ...cat,
-                    activities: cat.activities.map(act =>
-                      act.id === activity.id ? { ...act, name: text } : act
-                    )
-                  };
-                }
-                return cat;
-              });
-              setLocalCategories(updatedCategories);
-            }}
-            autoFocus
-          />
-          <TouchableOpacity
-            onPress={() => handleEditActivity(categoryId, activity.id, activity)}
-            style={styles.saveButton}
-          >
-            <Icon name="check" size={20} color={theme.primary} />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setEditingActivity(null)}
-            style={styles.cancelButton}
-          >
-            <Icon name="close" size={20} color="#000" />
-          </TouchableOpacity>
-        </View>
-      );
-    }
+    const isSystemProvided = stackMapLibrary?.activityGroups?.some(g => g.id === categoryId);
 
     return (
       <View style={styles.activityItem}>
@@ -298,25 +166,21 @@ const LibraryTabContent = ({
               onSelectActivity(activity);
               showNotification(`Added: ${activity.emoji} ${activity.name}`);
             }}
-            style={styles.actionButton}
+            style={styles.iconButton}
           >
-            <Icon name="add-circle" size={20} color={theme.primary} />
+            <Icon name="add" size={20} color={theme.primary} />
           </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => setEditingActivity(`${categoryId}-${activity.id}`)}
-            style={styles.actionButton}
-          >
-            <Icon name="edit" size={18} color="#000" />
-          </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => {
-              setItemToDelete({ type: 'activity', categoryId, activityId: activity.id });
-              setShowDeleteConfirm(true);
-            }}
-            style={styles.actionButton}
-          >
-            <Icon name="delete" size={18} color="#e53e3e" />
-          </TouchableOpacity>
+          {!isSystemProvided && (
+            <TouchableOpacity
+              onPress={() => {
+                setItemToDelete({ type: 'activity', categoryId, activityId: activity.id });
+                setShowDeleteConfirm(true);
+              }}
+              style={styles.iconButton}
+            >
+              <Icon name="delete" size={20} color="#e53e3e" />
+            </TouchableOpacity>
+          )}
         </View>
       </View>
     );
@@ -325,7 +189,7 @@ const LibraryTabContent = ({
   const renderCategory = ({ item: category }) => {
     const isExpanded = expandedCategories[category.id] || category.expanded;
     const isEditing = editingCategory === category.id;
-    const isAddingActivity = editingActivity === `${category.id}-new`;
+    const isSystemProvided = category.isSystemProvided || stackMapLibrary?.activityGroups?.some(g => g.id === category.id);
 
     return (
       <View style={styles.categoryContainer}>
@@ -373,27 +237,27 @@ const LibraryTabContent = ({
                   showNotification(`Added ${category.activities.length} activities!`);
                 }
               }}
-              style={styles.addAllButton}
+              style={[styles.addAllButton, { borderColor: theme.primary }]}
             >
-              <Text style={styles.addAllButtonText}>Add All</Text>
+              <Text style={[styles.addAllButtonText, { color: theme.primary }]}>Add All</Text>
             </TouchableOpacity>
           )}
-          {category.id !== 'my-templates' && (
+          {!isSystemProvided && category.id !== 'my-templates' && (
             <>
               <TouchableOpacity
                 onPress={() => setEditingCategory(category.id)}
-                style={styles.actionButton}
+                style={styles.iconButton}
               >
-                <Icon name="edit" size={18} color="#000" />
+                <Icon name="edit" size={20} color={theme.primary} />
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
                   setItemToDelete({ type: 'category', categoryId: category.id });
                   setShowDeleteConfirm(true);
                 }}
-                style={styles.actionButton}
+                style={styles.iconButton}
               >
-                <Icon name="delete" size={18} color="#e53e3e" />
+                <Icon name="delete" size={20} color="#e53e3e" />
               </TouchableOpacity>
             </>
           )}
@@ -406,51 +270,6 @@ const LibraryTabContent = ({
                 {renderActivity(activity, category.id)}
               </View>
             ))}
-            
-            {isAddingActivity ? (
-              <View style={styles.addActivityForm}>
-                <TextInput
-                  style={styles.emojiInput}
-                  value={newActivityEmoji}
-                  onChangeText={setNewActivityEmoji}
-                  placeholder="🎯"
-                  maxLength={2}
-                />
-                <TextInput
-                  style={styles.nameInput}
-                  value={newActivityName}
-                  onChangeText={setNewActivityName}
-                  placeholder="Activity name"
-                  autoFocus
-                />
-                <TouchableOpacity
-                  onPress={() => handleAddActivity(category.id)}
-                  style={styles.saveButton}
-                >
-                  <Icon name="check" size={20} color={theme.primary} />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={() => {
-                    setEditingActivity(null);
-                    setNewActivityName('');
-                    setNewActivityEmoji(DEFAULT_ACTIVITY_EMOJI);
-                  }}
-                  style={styles.cancelButton}
-                >
-                  <Icon name="close" size={20} color="#000" />
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <TouchableOpacity
-                style={styles.addActivityButton}
-                onPress={() => setEditingActivity(`${category.id}-new`)}
-              >
-                <Icon name="add" size={20} color={theme.primary} />
-                <Text style={[styles.addActivityText, { color: theme.primary }]}>
-                  Add Activity
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
         )}
       </View>
@@ -458,7 +277,7 @@ const LibraryTabContent = ({
   };
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: theme.light }}>
       {/* Inline Notification */}
       {notification && (
         <Animated.View
@@ -471,7 +290,8 @@ const LibraryTabContent = ({
         </Animated.View>
       )}
       
-      <View style={styles.searchContainer}>
+      <View style={styles.libraryContentPanel}>
+        <View style={styles.searchContainer}>
         <FormInput
           placeholder="Search activities..."
           value={searchQuery}
@@ -481,52 +301,97 @@ const LibraryTabContent = ({
         />
       </View>
 
-      <FlatList
-        data={getFilteredCategories()}
-        renderItem={renderCategory}
-        keyExtractor={(item) => item.id}
+      <ScrollView
         contentContainerStyle={[styles.listContainer, styles.scrollContainer]}
         showsVerticalScrollIndicator={false}
-      />
+        // Critical: Allow parent to handle horizontal swipes
+        directionalLockEnabled={true}
+        scrollEventThrottle={16}
+      >
+        {/* My Library Section */}
+        {localCategories.length > 0 && (
+          <>
+            <View style={styles.sectionHeader}>
+              <Icon name="folder" size={20} color="#000" />
+              <Text style={styles.sectionTitle}>My Library</Text>
+            </View>
+            {localCategories
+              .map(category => {
+                if (!searchQuery) return category;
+                const query = searchQuery.toLowerCase();
+                
+                // Filter activities within the category
+                const filteredActivities = category.activities?.filter(activity => 
+                  activity.name.toLowerCase().includes(query) ||
+                  activity.emoji?.includes(query)
+                ) || [];
+                
+                // Check if category name matches
+                const categoryMatches = category.name.toLowerCase().includes(query);
+                
+                // Include category if name matches or has matching activities
+                if (categoryMatches || filteredActivities.length > 0) {
+                  return {
+                    ...category,
+                    activities: categoryMatches ? category.activities : filteredActivities,
+                    expanded: true // Auto-expand when searching
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean)
+              .map(category => (
+                <View key={category.id}>
+                  {renderCategory({ item: category })}
+                </View>
+              ))}
+          </>
+        )}
+        
+        {/* StackMap Library Section */}
+        {stackMapLibrary?.activityGroups && stackMapLibrary.activityGroups.length > 0 && (
+          <>
+            <View style={[styles.sectionHeader, { marginTop: localCategories.length > 0 ? 20 : 0 }]}>
+              <Icon name="auto-awesome" size={20} color="#000" />
+              <Text style={styles.sectionTitle}>StackMap Library</Text>
+            </View>
+            {(stackMapLibrary.activityGroups || [])
+              .map(category => {
+                if (!searchQuery) return category;
+                const query = searchQuery.toLowerCase();
+                
+                // Filter activities within the category
+                const filteredActivities = category.activities?.filter(activity => 
+                  activity.name.toLowerCase().includes(query) ||
+                  activity.emoji?.includes(query)
+                ) || [];
+                
+                // Check if category name matches
+                const categoryMatches = category.name.toLowerCase().includes(query);
+                
+                // Include category if name matches or has matching activities
+                if (categoryMatches || filteredActivities.length > 0) {
+                  return {
+                    ...category,
+                    activities: categoryMatches ? category.activities : filteredActivities,
+                    expanded: true // Auto-expand when searching
+                  };
+                }
+                return null;
+              })
+              .filter(Boolean)
+              .map(category => (
+                <View key={category.id}>
+                  {renderCategory({ item: category })}
+                </View>
+              ))}
+          </>
+        )}
+      </ScrollView>
 
-      {showAddCategory ? (
-        <View style={styles.addCategoryForm}>
-          <FormInput
-            placeholder="Category name"
-            value={newCategoryName}
-            onChangeText={setNewCategoryName}
-            autoFocus
-            theme={theme}
-          />
-          <View style={styles.addCategoryActions}>
-            <TouchableOpacity
-              style={[styles.button, styles.cancelButton]}
-              onPress={() => {
-                setShowAddCategory(false);
-                setNewCategoryName('');
-              }}
-            >
-              <Text style={styles.cancelButtonText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.button, styles.primaryButton, { backgroundColor: theme.primary }]}
-              onPress={handleAddCategory}
-            >
-              <Text style={styles.primaryButtonText}>Add Category</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      ) : (
-        <ModalFooter
-          theme={theme}
-          primaryButton={{
-            label: 'Add Category',
-            icon: 'add',
-            onPress: () => setShowAddCategory(true),
-          }}
-          showOnDesktop={true}
-        />
-      )}
+      {/* Removed Add Category functionality for now */}
+
+      </View>
 
       <ConfirmModal
         visible={showDeleteConfirm}

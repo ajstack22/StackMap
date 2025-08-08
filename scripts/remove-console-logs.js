@@ -2,127 +2,135 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
 
-// console.log('🔍 Analyzing console.log statements...\n');
+// Files and directories to skip
+const SKIP_PATHS = [
+  'node_modules',
+  'android/build',
+  'ios/build',
+  'web/build',
+  '.git',
+  'bundle.js',
+  'scripts/remove-console-logs.js'
+];
 
-// Find all JS files (excluding node_modules and tests)
-const jsFiles = execSync('find . -name "*.js" -not -path "./node_modules/*" -not -path "./tests/*" -not -path "./.backup/*"')
-    .toString()
-    .trim()
-    .split('\n')
-    .filter(f => f);
+// File extensions to process
+const PROCESS_EXTENSIONS = ['.js', '.jsx', '.ts', '.tsx'];
 
-let totalCount = 0;
-let commentedCount = 0;
-let activeCount = 0;
-const filesToFix = [];
+let filesProcessed = 0;
+let consolesRemoved = 0;
 
-// Analyze each file
-jsFiles.forEach(file => {
-    if (!fs.existsSync(file)) return;
-    
-    const content = fs.readFileSync(file, 'utf8');
-    const lines = content.split('\n');
-    let fileHasActive = false;
-    
-    lines.forEach((line, index) => {
-        // if (line.includes('console.log')) {
-            totalCount++;
-            
-            // Check if it's already commented
-            const trimmed = line.trim();
-            if (trimmed.startsWith('//') || trimmed.startsWith('/*') || trimmed.startsWith('*')) {
-                commentedCount++;
-            } else {
-                activeCount++;
-                fileHasActive = true;
-            }
-        }
-    });
-    
-    if (fileHasActive) {
-        filesToFix.push(file);
-    }
-});
-
-// console.log(`Total console.log found: ${totalCount}`);
-// console.log(`Already commented: ${commentedCount}`);
-// console.log(`Active (need removal): ${activeCount}`);
-// console.log(`Files with active logs: ${filesToFix.length}\n`);
-
-if (activeCount === 0) {
-    // console.log('✅ No active console.log statements to remove!');
-    process.exit(0);
+function shouldSkipPath(filePath) {
+  return SKIP_PATHS.some(skip => filePath.includes(skip));
 }
 
-// Show files that need fixing
-// console.log('Files with active console.log statements:');
-// filesToFix.slice(0, 10).forEach(f => console.log(`  - ${f}`));
-if (filesToFix.length > 10) {
-    // console.log(`  ... and ${filesToFix.length - 10} more`);
-}
-
-// console.log('\nWould you like to:');
-// console.log('1. Comment out all console.log statements (preserves for debugging)');
-// console.log('2. Remove all console.log statements completely');
-// console.log('3. Cancel\n');
-
-const readline = require('readline');
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
-
-rl.question('Choose option (1-3): ', (answer) => {
-    if (answer === '3') {
-        // console.log('Cancelled.');
-        process.exit(0);
+function processFile(filePath) {
+  if (shouldSkipPath(filePath)) return;
+  
+  const ext = path.extname(filePath);
+  if (!PROCESS_EXTENSIONS.includes(ext)) return;
+  
+  try {
+    let content = fs.readFileSync(filePath, 'utf8');
+    const originalContent = content;
+    
+    // Count console statements before removal
+    const consoleMatches = content.match(/console\.(log|warn|error|debug|info|trace|time|timeEnd|group|groupEnd|table|assert|count|clear|dir|dirxml|profile|profileEnd|timeStamp)/g);
+    const beforeCount = consoleMatches ? consoleMatches.length : 0;
+    
+    // Remove standalone console.log statements (entire lines)
+    content = content.replace(/^\s*console\.(log|debug|info|trace|time|timeEnd|group|groupEnd|table|count|dir|dirxml|profile|profileEnd|timeStamp)\([^)]*\);?\s*$/gm, '');
+    
+    // Keep console.error and console.warn but wrap them in __DEV__ check if not already wrapped
+    // First, check if __DEV__ is imported/available
+    const hasDevCheck = content.includes('__DEV__');
+    
+    if (hasDevCheck) {
+      // Replace unwrapped console.error and console.warn with wrapped versions
+      content = content.replace(
+        /^(\s*)(console\.(error|warn)\([^)]*\);?)$/gm,
+        (match, indent, statement) => {
+          // Check if already wrapped (look at previous line)
+          const lines = originalContent.split('\n');
+          const currentLineIndex = lines.findIndex(line => line.includes(match));
+          if (currentLineIndex > 0) {
+            const prevLine = lines[currentLineIndex - 1];
+            if (prevLine.includes('__DEV__') || prevLine.includes('if (')) {
+              return match; // Already wrapped
+            }
+          }
+          return `${indent}if (__DEV__) {\n${indent}  ${statement}\n${indent}}`;
+        }
+      );
+    } else {
+      // If no __DEV__ available, just comment them out
+      content = content.replace(/^\s*console\.(error|warn)\([^)]*\);?\s*$/gm, '// $&');
     }
     
-    // Create backup
-    // console.log('\nCreating backup...');
-    execSync('mkdir -p .backup');
-    const backupName = `.backup/before-console-removal-${Date.now()}.tar.gz`;
-    execSync(`tar -czf ${backupName} --exclude=node_modules --exclude=.git --exclude=.backup .`);
-    // console.log(`Backup created: ${backupName}`);
+    // Remove console statements from JSX (be more careful here)
+    content = content.replace(/{console\.(log|debug|info|trace)\([^)]*\)}/g, '{null}');
     
-    // Process files
-    // console.log('\nProcessing files...');
-    let fixedCount = 0;
+    // Clean up empty blocks that might be left
+    content = content.replace(/{\s*}/g, '{}');
     
-    filesToFix.forEach(file => {
-        const content = fs.readFileSync(file, 'utf8');
-        const lines = content.split('\n');
-        let modified = false;
-        
-        const newLines = lines.map(line => {
-            // if (line.includes('console.log') && !line.trim().startsWith('//') && !line.trim().startsWith('/*')) {
-                modified = true;
-                
-                if (answer === '1') {
-                    // Comment out - preserve indentation
-                    const leadingWhitespace = line.match(/^(\s*)/)[1];
-                    return leadingWhitespace + '// ' + line.trim();
-                } else {
-                    // Remove completely - leave empty line to preserve line numbers
-                    return '';
-                }
-            }
-            return line;
-        });
-        
-        if (modified) {
-            fs.writeFileSync(file, newLines.join('\n'));
-            fixedCount++;
-        }
+    // Clean up multiple empty lines
+    content = content.replace(/\n\s*\n\s*\n/g, '\n\n');
+    
+    if (content !== originalContent) {
+      fs.writeFileSync(filePath, content);
+      const afterCount = (content.match(/console\./g) || []).length;
+      const removed = beforeCount - afterCount;
+      consolesRemoved += removed;
+      filesProcessed++;
+      console.log(`✓ ${filePath} - Removed ${removed} console statements`);
+    }
+  } catch (error) {
+    console.error(`Error processing ${filePath}:`, error.message);
+  }
+}
+
+function processDirectory(dirPath) {
+  if (shouldSkipPath(dirPath)) return;
+  
+  try {
+    const items = fs.readdirSync(dirPath);
+    
+    items.forEach(item => {
+      const fullPath = path.join(dirPath, item);
+      const stat = fs.statSync(fullPath);
+      
+      if (stat.isDirectory()) {
+        processDirectory(fullPath);
+      } else if (stat.isFile()) {
+        processFile(fullPath);
+      }
     });
-    
-    // console.log(`\n✅ Fixed ${fixedCount} files`);
-    // console.log('\nNext steps:');
-    // console.log('1. Review changes with: git diff');
-    // console.log('2. Run tests: npm test');
-    // console.log('3. Check deployment status: npm run tollgate:check');
-    
-    rl.close();
-});
+  } catch (error) {
+    console.error(`Error processing directory ${dirPath}:`, error.message);
+  }
+}
+
+// Start processing
+console.log('🧹 Starting console.log cleanup...\n');
+
+const srcPath = path.join(__dirname, '..', 'src');
+const appPath = path.join(__dirname, '..', 'App.js');
+
+// Process src directory
+if (fs.existsSync(srcPath)) {
+  processDirectory(srcPath);
+}
+
+// Process App.js
+if (fs.existsSync(appPath)) {
+  processFile(appPath);
+}
+
+console.log('\n' + '='.repeat(50));
+console.log(`✅ Cleanup complete!`);
+console.log(`📁 Files processed: ${filesProcessed}`);
+console.log(`🗑️  Console statements removed: ${consolesRemoved}`);
+console.log('='.repeat(50));
+
+console.log('\n⚠️  Note: console.error and console.warn statements have been wrapped in __DEV__ checks where possible');
+console.log('   Please review critical error handling to ensure proper user feedback');

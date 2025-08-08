@@ -218,7 +218,7 @@ const EditModeToolbar = ({
     >
       <Icon 
         name={item.icon} 
-        size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 32 : 28)} 
+        size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 34 : 30)} 
         color={item.disabled ? '#999' : 'white'} 
       />
       <Text style={[
@@ -306,7 +306,7 @@ const EditModeToolbar = ({
                   style={[styles.actionButton, showMoreMenu && styles.actionButtonActive]}
                   onPress={() => setShowMoreMenu(!showMoreMenu)}
                 >
-                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 32 : 28)} color="white" />
+                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 34 : 30)} color="white" />
                   <Text style={[styles.actionLabel, { color: 'white' }]}>
                     {showMoreMenu ? 'Less' : 'More'}
                   </Text>
@@ -326,7 +326,7 @@ const EditModeToolbar = ({
                   style={[styles.actionButton, showMoreMenu && styles.actionButtonActive]}
                   onPress={() => setShowMoreMenu(!showMoreMenu)}
                 >
-                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 32 : 28)} color="white" />
+                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 34 : 30)} color="white" />
                   <Text style={[styles.actionLabel, { color: 'white' }]}>
                     {showMoreMenu ? 'Less' : 'More'}
                   </Text>
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   },
   editModeLabel: {
     color: 'white',
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 16 : 15) : (isTablet() ? 18 : 15),
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 16 : 15) : (isTablet() ? 18 : 16),
     fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     opacity: 1,
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   actionLabel: {
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 12 : 9) : (isTablet() ? 13 : 9),
+    fontSize: Platform.OS === 'web' ? (isTablet() ? 12 : 9) : (isTablet() ? 13 : 11),
     fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',

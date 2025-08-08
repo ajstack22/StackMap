@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Platform } from 'react-native';
+import { Platform, InteractionManager } from 'react-native';
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import encryptionService from './encryptionService';
@@ -77,7 +77,17 @@ class SyncService {
     this.pendingConflicts = [];
     this.storeUnsubscribe = null;
     this.syncDebounceTimer = null;
-    this.syncDebounceDelay = 5000; // 5 seconds
+    this.syncDebounceDelay = 10000; // 10 seconds - increased to reduce sync frequency
+    this.hasCompletedInitialSync = false; // Track if initial sync has ever completed
+    
+    // User activity tracking
+    this.lastUserActivity = Date.now();
+    this.userActivityTimeout = null;
+    this.isUserActive = false;
+    
+    // Progress tracking callbacks
+    this.onStatusChange = null;
+    this.onProgressChange = null;
     
     // Sync lock mechanism
     this.syncInProgress = false;
@@ -102,10 +112,62 @@ class SyncService {
     // Initialize sync history
     syncHistory.initialize();
     
-    // Auto-restore state on construction (non-blocking)
-    // Using setTimeout to prevent blocking the constructor
-    // Wait 1 second to avoid interfering with onboarding
-    setTimeout(() => this.restoreState(), 1000);
+    // Schedule state restoration to run AFTER app renders
+    // This prevents blocking the UI during app startup
+    // Use setImmediate to ensure React can render first
+    setImmediate(() => {
+      this.restoreState().catch(err => {
+        console.error('Sync restore failed:', err);
+      });
+    });
+  }
+  
+  /**
+   * Mark user as active (called from App.js on any touch)
+   */
+  markUserActive() {
+    this.lastUserActivity = Date.now();
+    this.isUserActive = true;
+    
+    // Clear existing timeout
+    if (this.userActivityTimeout) {
+      clearTimeout(this.userActivityTimeout);
+    }
+    
+    // Consider user inactive after 2 seconds of no touches
+    this.userActivityTimeout = setTimeout(() => {
+      this.isUserActive = false;
+    }, 2000);
+  }
+  
+  // Helper methods for status updates
+  updateStatus(status) {
+    console.log('[SyncService] Updating status:', status);
+    if (this.onStatusChange) {
+      console.log('[SyncService] Calling onStatusChange callback');
+      this.onStatusChange(status);
+    } else {
+      console.log('[SyncService] No onStatusChange callback registered');
+    }
+  }
+  
+  updateProgress(progress) {
+    console.log('[SyncService] Updating progress:', progress);
+    if (this.onProgressChange) {
+      console.log('[SyncService] Calling onProgressChange callback');
+      this.onProgressChange(progress);
+    } else {
+      console.log('[SyncService] No onProgressChange callback registered');
+    }
+  }
+  
+  /**
+   * Check if it's safe to sync (user not actively interacting)
+   */
+  canSyncNow() {
+    // Don't sync if user has been active in last 2 seconds
+    const timeSinceActivity = Date.now() - this.lastUserActivity;
+    return !this.isUserActive && timeSinceActivity > 2000;
   }
   
   /**
@@ -117,6 +179,10 @@ class SyncService {
       console.log('SyncService: Already initialized, skipping restore');
       return;
     }
+    
+    // Mark as initializing to show UI indicator
+    this.isInitializing = true;
+    this.updateStatus({ phase: 'checking', details: 'Initializing sync...' });
     
     try {
       console.log('SyncService: Restoring state...');
@@ -138,9 +204,27 @@ class SyncService {
         const encryptionRestored = await this.restoreEncryptionFromStorage();
         
         if (encryptionRestored) {
-          // Start periodic sync now that we're restored
-          this.startPeriodicSync();
-          console.log('Sync fully restored and ready, periodic sync started');
+          // Schedule sync to run AFTER the app has rendered
+          // This prevents blocking the UI thread during app startup
+          console.log('Encryption restored, scheduling sync...');
+          
+          // Use setImmediate to run after current JS execution completes
+          // This allows React to render the UI first
+          setImmediate(() => {
+            this.updateStatus({ phase: 'pulling', details: 'Getting your latest data...' });
+            
+            // Run sync in background
+            this.sync().then(() => {
+              console.log('Initial sync completed successfully');
+            }).catch(syncError => {
+              console.error('Initial sync failed:', syncError);
+              // Don't throw - app should still work offline
+            });
+          });
+          
+          // Start periodic sync
+          this.startPeriodicSync(true); // Skip the delayed initial sync since we're syncing above
+          console.log('Sync scheduled for after UI render');
         } else {
           console.log('Sync state restored but encryption needs recovery phrase');
         }
@@ -149,9 +233,17 @@ class SyncService {
       }
       
       this.initialized = true;
+      this.isInitializing = false;
+      this.hasCompletedInitialSync = true; // Mark that initial sync is done
+      // Clear status once initialization is done
+      this.updateStatus(null);
     } catch (error) {
       console.error('Failed to restore sync state:', error);
       this.initialized = true;
+      this.isInitializing = false;
+      this.updateStatus({ phase: 'error', details: 'Failed to initialize sync' });
+      // Clear error after delay
+      setTimeout(() => this.updateStatus(null), 3000);
     }
   }
   
@@ -176,8 +268,8 @@ class SyncService {
       await encryptionService.initialize(storedPhrase, this.syncId, fixedSalt);
       console.log('Encryption restored automatically from stored phrase');
       
-      // Start periodic sync after successful restoration
-      this.startPeriodicSync();
+      // Don't start periodic sync here - it will be started in restoreState
+      // to avoid duplicate sync operations
       
       return true;
     } catch (error) {
@@ -470,7 +562,9 @@ class SyncService {
             });
           }
         } catch (e) {
-          console.error('[DEBUG] Failed to decrypt for debugging:', e);
+          // This is expected when encryption isn't initialized yet - not an error
+          // Happens during initial sync setup from onboarding
+          // console.log('[DEBUG] Decryption not available yet:', e.message);
         }
       }
       
@@ -495,6 +589,9 @@ class SyncService {
    * Sync data (pull, merge, push)
    */
   async sync() {
+    const syncStartTime = Date.now();
+    console.log('[SYNC TIMING] Starting sync operation');
+    
     // Check if sync is already in progress
     if (this.syncInProgress) {
       console.log('sync: Sync already in progress, queueing request');
@@ -506,10 +603,18 @@ class SyncService {
     // Set sync lock
     this.syncInProgress = true;
     
+    // Only emit sync status for initial sync or if explicitly requested
+    // Don't show blocking UI for incremental background syncs
+    if (this.isInitializing || !this.hasCompletedInitialSync) {
+      this.updateStatus({ phase: 'checking', details: 'Checking for updates...' });
+      this.updateProgress(10);
+    }
+    
     try {
-      // Wait for initialization if needed
+      // Don't wait for initialization - just skip if not ready
       if (!this.initialized) {
-        await this.restoreState();
+        console.log('sync: Skipping - not initialized yet');
+        return { success: false, reason: 'not_initialized' };
       }
       
       console.log('sync: Starting sync, enabled:', this.syncEnabled, 'syncId:', this.syncId);
@@ -536,8 +641,13 @@ class SyncService {
       this.updateSyncStatus('syncing');
       this.lastSyncAttempt = Date.now();
       // Pull latest data
+      this.updateStatus({ phase: 'pulling', details: 'Downloading latest data...' });
+      this.updateProgress(30);
+      
+      const pullStartTime = Date.now();
       console.log('sync: Pulling latest data...');
       const remoteData = await this.pullData();
+      console.log(`[SYNC TIMING] pullData took ${Date.now() - pullStartTime}ms`);
       
       // If pullData returns null and we have a lastSyncVersion > 0, it means the sync was deleted on server
       if (remoteData === null && this.lastSyncVersion > 0) {
@@ -551,6 +661,9 @@ class SyncService {
         console.log('sync: Remote data is newer, checking for conflicts...');
         
         // Decrypt remote data
+        this.updateStatus({ phase: 'decrypting', details: 'Decrypting data...' });
+        this.updateProgress(50);
+        
         let decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
         
         // Validate decrypted data based on type
@@ -623,6 +736,9 @@ class SyncService {
       }
       
       // Push our current state
+      this.updateStatus({ phase: 'pushing', details: 'Uploading changes...' });
+      this.updateProgress(80);
+      
       console.log('sync: Pushing current state...');
       const pushResult = await this.pushData();
       
@@ -638,6 +754,18 @@ class SyncService {
       // Mark changes as synced
       changeTracker.markAsSynced();
       
+      // Show sync complete (only for initial sync)
+      if (this.isInitializing || !this.hasCompletedInitialSync) {
+        this.updateStatus({ phase: 'complete' });
+        this.updateProgress(100);
+        
+        // Clear status after a delay
+        setTimeout(() => {
+          this.updateStatus(null);
+          this.updateProgress(0);
+        }, 2000);
+      }
+      
       return {
         success: true,
         version: pushResult.version,
@@ -645,6 +773,10 @@ class SyncService {
       };
     } catch (error) {
       console.error('Sync failed:', error);
+      
+      // Show error status
+      this.updateStatus({ phase: 'error', details: error.message });
+      this.updateProgress(0);
       
       // Check if it's a network error
       if (syncQueue.isNetworkError(error)) {
@@ -757,8 +889,10 @@ class SyncService {
         taskCelebration: state.taskCelebration,
         routineCelebration: state.routineCelebration
       },
-      templates: state.libraryTemplates || state.activities || [], // Use new field, fallback to old
-      activityCategories: state.library?.categories || state.activityCategories || null, // Include library categories
+      templates: state.libraryTemplates || state.activities || [], // Legacy field for backward compatibility
+      activityCategories: state.library?.categories || state.activityCategories || null, // Legacy field
+      myLibrary: state.myLibrary || null, // NEW v5: User's activity groups
+      stackMapLibrary: state.stackMapLibrary || null, // NEW v5: System library (not synced usually)
       currentUser: state.currentUser,
       hasCompletedOnboarding: state.hasCompletedOnboarding,
       lastBackup: new Date().toISOString(),
@@ -774,7 +908,13 @@ class SyncService {
    * Restore data to Zustand store
    */
   async restoreData(data) {
+    const restoreStartTime = Date.now();
     console.log('restoreData: Incoming data:', data);
+    console.log('[SYNC TIMING] Starting restoreData');
+    
+    // Emit restore status
+    this.updateStatus({ phase: 'restoring', details: 'Restoring data...' });
+    this.updateProgress(70);
     
     // Handle incremental sync data
     if (data.type === 'incremental' && data.patch) {
@@ -833,6 +973,9 @@ class SyncService {
         categories: activityCategories || null,
         userAddedActivityIds: []
       },
+      // NEW v5: Restore activity groups if present
+      myLibrary: data.myLibrary || null,
+      stackMapLibrary: data.stackMapLibrary || null,
       users: users || {},
       currentUser: currentUser || Object.keys(users || {})[0] || 'user_1',
       currentTheme: globalSettings?.currentTheme || 'stackBlue',
@@ -853,7 +996,22 @@ class SyncService {
     console.log('[DEBUG] - hasCompletedOnboarding:', newState.hasCompletedOnboarding);
     console.log('[DEBUG] - users count:', Object.keys(newState.users || {}).length);
     
-    useAppStore.setState(newState);
+    // Update state in a single operation for better performance
+    // Only use InteractionManager if we're in the middle of animations
+    const updateState = () => {
+      useAppStore.setState(newState);
+      console.log(`[SYNC TIMING] restoreData completed in ${Date.now() - restoreStartTime}ms`);
+    };
+    
+    // If app is initializing, update immediately
+    // Otherwise, wait for interactions to complete
+    if (!this.initialized || this.isInitializing) {
+      // During initialization, update immediately
+      updateState();
+    } else {
+      // During runtime, wait for UI to be ready
+      InteractionManager.runAfterInteractions(updateState);
+    }
     
     // DEBUG: Verify what was actually set
     const afterState = useAppStore.getState();
@@ -1025,11 +1183,8 @@ class SyncService {
    * Check if sync is enabled
    */
   async isEnabled() {
-    // Wait for initialization if needed
-    if (!this.initialized) {
-      await this.restoreState();
-    }
-    
+    // Don't block on initialization - just return current state
+    // The restoreState will happen in the background via the constructor timeout
     return this.syncEnabled;
   }
 
@@ -1148,7 +1303,7 @@ class SyncService {
   /**
    * Start periodic background sync
    */
-  startPeriodicSync() {
+  startPeriodicSync(skipInitialSync = false) {
     // Clear any existing interval
     this.stopPeriodicSync();
     
@@ -1163,12 +1318,29 @@ class SyncService {
     // Start transaction cleanup
     this.startTransactionCleanup();
     
-    // Run immediate sync
-    this.syncWithQueue();
+    // Only do initial sync if not skipped and we haven't synced recently
+    if (!skipInitialSync) {
+      const timeSinceLastSync = Date.now() - (this.lastSyncSuccess || 0);
+      const shouldSyncNow = timeSinceLastSync > 30000; // Only sync if last sync was >30s ago
+      
+      if (shouldSyncNow) {
+        // Do initial sync immediately - users need their data
+        this.syncWithQueue().catch(err => {
+          console.error('Background sync failed:', err);
+        });
+      } else {
+        console.log('Skipping initial sync - recently synced', Math.round(timeSinceLastSync / 1000), 'seconds ago');
+      }
+    }
     
     // Set up interval
     this.syncInterval = setInterval(() => {
-      this.syncWithQueue();
+      // Run sync only when UI is idle
+      InteractionManager.runAfterInteractions(() => {
+        this.syncWithQueue().catch(err => {
+          console.error('Periodic sync failed:', err);
+        });
+      });
     }, this.syncIntervalDuration);
   }
   
@@ -1264,7 +1436,10 @@ class SyncService {
     // Set new timer
     this.syncDebounceTimer = setTimeout(() => {
       console.log('Store change detected, triggering sync...');
-      this.requestSync({ priority: 'high', reason: 'store_change' });
+      // Run sync only when UI is idle
+      InteractionManager.runAfterInteractions(() => {
+        this.requestSync({ priority: 'high', reason: 'store_change' });
+      });
     }, this.syncDebounceDelay);
   }
   
@@ -1272,6 +1447,17 @@ class SyncService {
    * Sync with queue processing
    */
   async syncWithQueue() {
+    // Don't sync if user is active
+    if (!this.canSyncNow()) {
+      console.log('sync: User is active, deferring sync');
+      // Retry in 3 seconds
+      setTimeout(() => {
+        this.syncWithQueue().catch(err => {
+          console.error('Deferred sync failed:', err);
+        });
+      }, 3000);
+      return { success: false, reason: 'user_active' };
+    }
     try {
       // Check if sync is still enabled before processing
       if (!this.syncEnabled || !this.syncId) {

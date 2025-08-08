@@ -343,6 +343,8 @@ export const styles = StyleSheet.create({
     padding: SPACING.md,
     marginBottom: SPACING.md,
     alignItems: 'center',
+    flexDirection: 'column',  // Ensure vertical layout
+    width: '100%',
   },
   recoveryPhraseWarning: {
     fontSize: 14,
@@ -737,6 +739,7 @@ export const styles = StyleSheet.create({
     padding: SPACING.md,
     width: '100%',
     marginBottom: SPACING.md,
+    alignItems: 'center',
   },
   shareInfoLabel: {
     fontSize: 14,
@@ -749,6 +752,8 @@ export const styles = StyleSheet.create({
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
     color: '#000',
     lineHeight: 20,
+    textAlign: 'center',
+    marginBottom: SPACING.sm,
   },
   shareActionsContainer: {
     flexDirection: 'row',
@@ -850,13 +855,22 @@ export const styles = StyleSheet.create({
   },
   keyActionButtons: {
     flexDirection: 'row',
-    gap: SPACING.xs,
     justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: SPACING.md,
+    gap: SPACING.md,
   },
   keyActionButton: {
-    padding: SPACING.xs,
-    borderRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.sm,
+    borderRadius: 8,
     backgroundColor: '#f5f5f5',
+    gap: SPACING.xs,
+  },
+  keyActionButtonText: {
+    fontSize: 14,
+    color: '#333',
   },
   shareKeyContainer: {
     flexDirection: 'row',

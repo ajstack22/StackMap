@@ -75,10 +75,24 @@ class EncryptionService {
    * Initialize encryption with a recovery phrase
    */
   async initialize(recoveryPhrase, syncId, existingSalt = null) {
-    // Use existing salt if provided, otherwise generate new one
+    // Check if we have a cached key for this recovery phrase
+    const cachedKey = await this.getCachedKey(recoveryPhrase, syncId);
+    
+    if (cachedKey) {
+      console.log('[Encryption] Using cached key, skipping derivation');
+      this.masterKey = cachedKey.key;
+      this.syncId = syncId;
+      return { syncId, salt: cachedKey.salt };
+    }
+    
+    // No cached key, derive it
+    console.log('[Encryption] No cached key, deriving from recovery phrase...');
     const { key, salt } = await this.deriveKeyFromPhrase(recoveryPhrase, existingSalt);
     this.masterKey = key;
     this.syncId = syncId;
+    
+    // Cache the derived key for next time
+    await this.cacheKey(recoveryPhrase, syncId, key, salt);
     
     // Store salt for future key derivation
     await this.storeSalt(salt);
@@ -263,6 +277,66 @@ class EncryptionService {
       return `Web Browser`;
     }
     return 'Unknown Device';
+  }
+
+  /**
+   * Cache the derived key to avoid re-derivation on every startup
+   */
+  async cacheKey(recoveryPhrase, syncId, key, salt) {
+    try {
+      // Create a hash of the recovery phrase to use as cache key
+      const phraseHash = nacl.hash(util.decodeUTF8(recoveryPhrase));
+      const cacheKey = `@cached_key_${util.encodeBase64(phraseHash).substring(0, 16)}`;
+      
+      const cacheData = {
+        syncId,
+        key: util.encodeBase64(key),
+        salt: util.encodeBase64(salt),
+        timestamp: Date.now()
+      };
+      
+      await AsyncStorage.setItem(cacheKey, JSON.stringify(cacheData));
+      console.log('[Encryption] Cached derived key for faster startup');
+    } catch (error) {
+      console.warn('[Encryption] Failed to cache key:', error);
+    }
+  }
+
+  /**
+   * Get cached key if available and valid
+   */
+  async getCachedKey(recoveryPhrase, syncId) {
+    try {
+      // Create same hash to look up cache
+      const phraseHash = nacl.hash(util.decodeUTF8(recoveryPhrase));
+      const cacheKey = `@cached_key_${util.encodeBase64(phraseHash).substring(0, 16)}`;
+      
+      const cached = await AsyncStorage.getItem(cacheKey);
+      if (!cached) return null;
+      
+      const cacheData = JSON.parse(cached);
+      
+      // Verify syncId matches
+      if (cacheData.syncId !== syncId) {
+        console.log('[Encryption] Cached key syncId mismatch, re-deriving');
+        return null;
+      }
+      
+      // Cache is valid for 30 days
+      const cacheAge = Date.now() - cacheData.timestamp;
+      if (cacheAge > 30 * 24 * 60 * 60 * 1000) {
+        console.log('[Encryption] Cached key expired, re-deriving');
+        return null;
+      }
+      
+      return {
+        key: util.decodeBase64(cacheData.key),
+        salt: cacheData.salt
+      };
+    } catch (error) {
+      console.warn('[Encryption] Failed to get cached key:', error);
+      return null;
+    }
   }
 
   /**

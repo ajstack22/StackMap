@@ -18,6 +18,7 @@ import { TabbedModal, TabContent } from '../../../components';
 import { FormInput, ModalFooter, ModalButton } from '../../ModalUtilities';
 import SyncStatusIndicator from '../../SyncStatusIndicator';
 import syncService from '../../../services/sync/syncService';
+import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
 
 // Import platform-specific modules
@@ -130,6 +131,7 @@ const DataModal = ({
       setShowRecoveryInput(false);
       setRecoveryInput('');
       setShareUrl('');
+      setShareToken('');
       setRecipientName('');
       setShareNote('');
       setExpiresHours('168');
@@ -148,10 +150,8 @@ const DataModal = ({
         initializeImportSelections(onboardingImportData);
         setActiveTab(0); // Import is the only tab in onboarding
       }
-      // When opening, generate new share token and load active shares
+      // When opening, load active shares
       if (!isOnboarding) {
-        const token = syncService.generateShareToken(true);
-        setShareToken(token);
         loadActiveShares();
       }
     }
@@ -296,7 +296,14 @@ const DataModal = ({
       }
       
       if (exportSelections.activityLibrary) {
-        // Include activityCategories in new format
+        // Include v5 structure if available
+        const { myLibrary, stackMapLibrary } = useAppStore.getState();
+        
+        if (myLibrary) {
+          exportData.myLibrary = myLibrary;
+        }
+        
+        // Include legacy format for backward compatibility
         exportData.activityCategories = activityCategories;
         
         // Also transform to templates object format for backward compatibility
@@ -352,28 +359,24 @@ const DataModal = ({
           await RNFS.writeFile(filePath, jsonData, 'utf8');
           console.log('File written successfully');
           
-          // Show success dialog with options
-          Alert.alert(
-            'Export Complete',
-            `Data exported to Downloads/${fileName}`,
-            [
-              {
-                text: 'Share',
-                onPress: async () => {
-                  const { Share } = require('react-native');
-                  await Share.share({
-                    url: `file://${filePath}`,
-                    title: fileName,
-                  });
-                }
-              },
-              {
-                text: 'OK',
-                style: 'default'
-              }
-            ],
-            { cancelable: true }
-          );
+          // Show success message
+          showToast({ 
+            message: `Data exported to Downloads/${fileName}`,
+            type: 'success'
+          });
+          
+          // Auto-share the file
+          setTimeout(async () => {
+            const { Share } = require('react-native');
+            try {
+              await Share.share({
+                url: `file://${filePath}`,
+                title: fileName,
+              });
+            } catch (shareError) {
+              console.log('Share cancelled or failed:', shareError);
+            }
+          }, 500);
         } catch (error) {
           console.error('Write failed, using share fallback:', error);
           // Fallback to share
@@ -445,12 +448,22 @@ const DataModal = ({
         } catch (iosError) {
           console.error('iOS export error:', iosError);
           console.error('Error stack:', iosError.stack);
-          Alert.alert('Export Error', `Failed to export: ${iosError.message}`);
+          showToast({ 
+            message: `Failed to export: ${iosError.message}`, 
+            type: 'error' 
+          });
         }
       }
     } catch (error) {
       console.error('Export error:', error);
-      Alert.alert('Export Error', 'Failed to export data. Please try again.');
+      if (Platform.OS === 'web') {
+        showToast({ 
+          message: 'Failed to export data. Please try again.', 
+          type: 'error' 
+        });
+      } else {
+        Alert.alert('Export Error', 'Failed to export data. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -750,62 +763,71 @@ const DataModal = ({
   
   // Handle sync enable
   const handleEnableSync = async () => {
-    try {
-      setSyncLoading(true);
-      setSyncError('');
-      
-      const result = await syncService.enable();
-      
-      setSyncEnabled(true);
-      setSyncId(result.syncId);
-      setSyncRecoveryPhrase(result.recoveryPhrase);
-      setShowRecoveryPhrase(true);
-      
-      if (onSyncStatusChange) {
-        onSyncStatusChange(true);
+    // Set loading immediately to give instant feedback
+    setSyncLoading(true);
+    setSyncError('');
+    
+    // Use setTimeout to ensure the UI updates before the async operation
+    setTimeout(async () => {
+      try {
+        const result = await syncService.enable();
+        
+        setSyncEnabled(true);
+        setSyncId(result.syncId);
+        setSyncRecoveryPhrase(result.recoveryPhrase);
+        setShowRecoveryPhrase(true);
+        
+        if (onSyncStatusChange) {
+          onSyncStatusChange(true);
+        }
+        
+        showToast({ message: 'Sync enabled successfully!' });
+      } catch (error) {
+        setSyncError(error.message || 'Failed to enable sync');
+      } finally {
+        setSyncLoading(false);
       }
-      
-      showToast({ message: 'Sync enabled successfully!' });
-    } catch (error) {
-      setSyncError(error.message || 'Failed to enable sync');
-    } finally {
-      setSyncLoading(false);
-    }
+    }, 0);
   };
   
   // Handle sync restore
   const handleRestoreSync = async () => {
-    try {
-      setSyncLoading(true);
-      setSyncError('');
+    // Set loading immediately to give instant feedback
+    setSyncLoading(true);
+    setSyncError('');
+    
+    // Use setTimeout to ensure the UI updates before the async operation
+    setTimeout(async () => {
+      try {
+        if (!recoveryInput.trim()) {
+          setSyncError('Please enter your sync key');
+          setSyncLoading(false);
+          return;
+        }
+        
+        // Use initialize method to join existing sync
+        const result = await syncService.initialize(recoveryInput.trim());
       
-      if (!recoveryInput.trim()) {
-        setSyncError('Please enter your sync key');
-        return;
+        setSyncId(result.syncId);
+        setSyncRecoveryPhrase(recoveryInput.trim());
+        setSyncEnabled(true);
+        setShowRecoveryInput(false);
+        setRecoveryInput('');
+        
+        if (onSyncStatusChange) {
+          onSyncStatusChange(true);
+        }
+        
+        const message = result.isNewSync 
+          ? 'New sync created successfully!' 
+          : 'Joined existing sync successfully!';
+        showToast({ message });
+      } catch (error) {
+        setSyncError(error.message || 'Failed to restore sync');
+      } finally {
+        setSyncLoading(false);
       }
-      
-      // Use initialize method to join existing sync
-      const result = await syncService.initialize(recoveryInput.trim());
-      
-      setSyncId(result.syncId);
-      setSyncRecoveryPhrase(recoveryInput.trim());
-      setSyncEnabled(true);
-      setShowRecoveryInput(false);
-      setRecoveryInput('');
-      
-      if (onSyncStatusChange) {
-        onSyncStatusChange(true);
-      }
-      
-      const message = result.isNewSync 
-        ? 'New sync created successfully!' 
-        : 'Joined existing sync successfully!';
-      showToast({ message });
-    } catch (error) {
-      setSyncError(error.message || 'Failed to restore sync');
-    } finally {
-      setSyncLoading(false);
-    }
+    }, 0);
   };
   
   // Handle sync disable
@@ -894,6 +916,13 @@ const DataModal = ({
     
     setShareLoading(true);
     try {
+      // Generate token if not already generated
+      let token = shareToken;
+      if (!token) {
+        token = syncService.generateShareToken(true);
+        setShareToken(token);
+      }
+      
       const result = await syncService.createShareLink(selectedShareUser, {
         recipientName,
         shareNote,
@@ -901,10 +930,11 @@ const DataModal = ({
         includeTomorrow,
         autoUpdate,
         expiresHours: parseInt(expiresHours),
-        accessToken: shareToken
+        accessToken: token
       });
 
       setShareUrl(result.share_url);
+      setShareToken(result.access_token || token); // Save the token from the result
       showToast({ message: 'Share link created!' });
       loadActiveShares();
     } catch (error) {
@@ -1461,43 +1491,46 @@ const DataModal = ({
                     <Text style={styles.recoveryPhrase} selectable>
                       {syncRecoveryPhrase}
                     </Text>
-                    <View style={styles.keyActionButtons}>
-                      <TouchableOpacity
-                        style={styles.keyActionButton}
-                        onPress={() => {
-                          if (Platform.OS === 'web') {
-                            navigator.clipboard.writeText(syncRecoveryPhrase);
-                          } else {
-                            const Clipboard = require('@react-native-clipboard/clipboard').default;
-                            Clipboard.setString(syncRecoveryPhrase);
-                          }
-                          showToast({ message: 'Sync key copied!' });
-                        }}
-                      >
-                        <Icon name="content-copy" size={18} color={theme.primary} />
-                      </TouchableOpacity>
-                      <TouchableOpacity
-                        style={styles.keyActionButton}
-                        onPress={() => {
-                          let syncUrl;
-                          if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                            const basePath = window.location.pathname.endsWith('/') 
-                              ? window.location.pathname 
-                              : window.location.pathname + '/';
-                            syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
-                            navigator.clipboard.writeText(syncUrl);
-                          } else {
-                            // For mobile, use a fixed URL
-                            syncUrl = `https://stackmap.app/?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
-                            const Clipboard = require('@react-native-clipboard/clipboard').default;
-                            Clipboard.setString(syncUrl);
-                          }
-                          showToast({ message: 'Sync URL copied!' });
-                        }}
-                      >
-                        <Icon name="link" size={18} color={theme.primary} />
-                      </TouchableOpacity>
-                    </View>
+                  </View>
+                  
+                  <View style={styles.keyActionButtons}>
+                    <TouchableOpacity
+                      style={styles.keyActionButton}
+                      onPress={() => {
+                        if (Platform.OS === 'web') {
+                          navigator.clipboard.writeText(syncRecoveryPhrase);
+                        } else {
+                          const Clipboard = require('@react-native-clipboard/clipboard').default;
+                          Clipboard.setString(syncRecoveryPhrase);
+                        }
+                        showToast({ message: 'Sync key copied!' });
+                      }}
+                    >
+                      <Icon name="content-copy" size={18} color={theme.primary} />
+                      <Text style={styles.keyActionButtonText}>Copy Key</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.keyActionButton}
+                      onPress={() => {
+                        let syncUrl;
+                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                          const basePath = window.location.pathname.endsWith('/') 
+                            ? window.location.pathname 
+                            : window.location.pathname + '/';
+                          syncUrl = `${window.location.origin}${basePath}?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                          navigator.clipboard.writeText(syncUrl);
+                        } else {
+                          // For mobile, use a fixed URL
+                          syncUrl = `https://stackmap.app/?sync=${encodeURIComponent(syncRecoveryPhrase)}`;
+                          const Clipboard = require('@react-native-clipboard/clipboard').default;
+                          Clipboard.setString(syncUrl);
+                        }
+                        showToast({ message: 'Sync URL copied!' });
+                      }}
+                    >
+                      <Icon name="link" size={18} color={theme.primary} />
+                      <Text style={styles.keyActionButtonText}>Copy URL</Text>
+                    </TouchableOpacity>
                   </View>
                   
                   {/* QR Code - Always visible */}
@@ -1770,32 +1803,32 @@ const DataModal = ({
             
             <View style={styles.shareInfoBox}>
               <Text style={styles.shareInfoLabel}>Share Key:</Text>
-              <View style={styles.shareKeyContainer}>
-                <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
-                  {shareToken}
-                </Text>
-                <View style={styles.keyActionButtons}>
-                  <TouchableOpacity
-                    style={styles.keyActionButton}
-                    onPress={() => {
-                      if (Platform.OS === 'web') {
-                        navigator.clipboard.writeText(shareToken);
-                      } else {
-                        const Clipboard = require('@react-native-clipboard/clipboard').default;
-                        Clipboard.setString(shareToken);
-                      }
-                      showToast({ message: 'Share key copied!' });
-                    }}
-                  >
-                    <Icon name="content-copy" size={18} color={theme.primary} />
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={styles.keyActionButton}
-                    onPress={handleCopyShareUrl}
-                  >
-                    <Icon name="link" size={18} color={theme.primary} />
-                  </TouchableOpacity>
-                </View>
+              <Text style={styles.shareInfoValue} selectable numberOfLines={1}>
+                {shareToken}
+              </Text>
+              <View style={styles.keyActionButtons}>
+                <TouchableOpacity
+                  style={styles.keyActionButton}
+                  onPress={() => {
+                    if (Platform.OS === 'web') {
+                      navigator.clipboard.writeText(shareToken);
+                    } else {
+                      const Clipboard = require('@react-native-clipboard/clipboard').default;
+                      Clipboard.setString(shareToken);
+                    }
+                    showToast({ message: 'Share key copied!' });
+                  }}
+                >
+                  <Icon name="content-copy" size={18} color={theme.primary} />
+                  <Text style={styles.keyActionButtonText}>Copy Key</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.keyActionButton}
+                  onPress={handleCopyShareUrl}
+                >
+                  <Icon name="link" size={18} color={theme.primary} />
+                  <Text style={styles.keyActionButtonText}>Copy URL</Text>
+                </TouchableOpacity>
               </View>
             </View>
             
@@ -1818,9 +1851,15 @@ const DataModal = ({
               icon="add-circle"
               onPress={() => {
                 setShareUrl('');
+                setShareToken('');
                 setShowShareQR(false);
-                const token = syncService.generateShareToken(true);
-                setShareToken(token);
+                setSelectedShareUser(null);
+                setRecipientName('');
+                setShareNote('');
+                setExpiresHours('168');
+                setIncludeCompleted(true);
+                setIncludeTomorrow(true);
+                setAutoUpdate(true);
               }}
               style={{ marginTop: 20 }}
             />
@@ -1840,7 +1879,21 @@ const DataModal = ({
         icon="source"
         tabs={tabs}
         activeTab={activeTab}
-        onTabChange={setActiveTab}
+        onTabChange={(newTab) => {
+          // Reset share state when leaving share tab
+          if (activeTab === 1 && newTab !== 1) {
+            setShareUrl('');
+            setShareToken('');
+            setSelectedShareUser(null);
+            setRecipientName('');
+            setShareNote('');
+            setExpiresHours('168');
+            setIncludeCompleted(true);
+            setIncludeTomorrow(true);
+            setAutoUpdate(true);
+          }
+          setActiveTab(newTab);
+        }}
       >
         {isOnboarding ? (
           // In onboarding mode, only show import content

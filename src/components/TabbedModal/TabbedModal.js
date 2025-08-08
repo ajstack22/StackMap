@@ -7,7 +7,7 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
-  Animated,
+  Animated as RNAnimated,
   Dimensions,
   ScrollView,
   PanResponder,
@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { isTablet, SPACING } from '../../constants';
+import PagerView from 'react-native-pager-view';
 
 const TabbedModal = ({
   visible,
@@ -34,10 +35,12 @@ const TabbedModal = ({
 }) => {
   const insets = useSafeAreaInsets();
   const [internalActiveTab, setInternalActiveTab] = useState(defaultTab);
-  const swipeAnimation = useRef(new Animated.Value(0)).current;
-  const modalSlideAnimation = useRef(new Animated.Value(0)).current;
+  const swipeAnimation = useRef(new RNAnimated.Value(0)).current;
+  const modalSlideAnimation = useRef(new RNAnimated.Value(0)).current;
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const [isScrolling, setIsScrolling] = useState(false);
+  const gestureRef = useRef({ isActive: false });
+  const pagerRef = useRef(null);
   
   // Use controlled activeTab if provided, otherwise use internal state
   const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
@@ -47,6 +50,15 @@ const TabbedModal = ({
   const tabsRef = useRef(tabs);
   useEffect(() => {
     activeTabRef.current = activeTab;
+    // Sync PagerView with active tab on Android
+    if (Platform.OS === 'android' && pagerRef.current) {
+      pagerRef.current.setPage(activeTab);
+    }
+    // Reset swipe animation when tab changes on iOS
+    if (Platform.OS === 'ios') {
+      swipeAnimation.setValue(0);
+      gestureRef.current.isActive = false;
+    }
   }, [activeTab]);
   useEffect(() => {
     tabsRef.current = tabs;
@@ -55,15 +67,44 @@ const TabbedModal = ({
   // Create pan responder for horizontal swipe gestures (tab switching)
   const horizontalPanResponder = useRef(
     PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
+      onStartShouldSetPanResponder: (evt, gestureState) => {
+        // Don't capture on initial touch - wait for movement
+        return false;
+      },
+      onStartShouldSetPanResponderCapture: (evt, gestureState) => {
+        // Don't capture on initial touch for iOS
+        return false;
+      },
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Only respond to horizontal swipes when not scrolling
+        // Android: Be VERY aggressive about capturing horizontal movement
+        if (Platform.OS === 'android') {
+          const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+          const hasMovedEnough = Math.abs(gestureState.dx) > 5; // Lower threshold
+          return isHorizontalSwipe && hasMovedEnough;
+        }
+        // iOS: Standard behavior
         const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
-        const hasMovedEnough = Math.abs(gestureState.dx) > 5;
+        const hasMovedEnough = Math.abs(gestureState.dx) > 10;
         return isHorizontalSwipe && hasMovedEnough && !isScrolling;
+      },
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
+        // CRITICAL FOR ANDROID: Capture BEFORE ScrollView can!
+        if (Platform.OS === 'android') {
+          const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+          const hasMovedEnough = Math.abs(gestureState.dx) > 5; // Very low threshold
+          return isHorizontalSwipe && hasMovedEnough;
+        }
+        // iOS: Less aggressive
+        const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+        const hasMovedEnough = Math.abs(gestureState.dx) > 15;
+        return isHorizontalSwipe && hasMovedEnough;
       },
       onPanResponderGrant: () => {
         // Start gesture
+        gestureRef.current.isActive = true;
+        if (__DEV__ && Platform.OS === 'android') {
+          console.log('Horizontal swipe gesture started');
+        }
       },
       onPanResponderMove: (evt, gestureState) => {
         // Update swipe animation value with some resistance at edges
@@ -78,32 +119,67 @@ const TabbedModal = ({
         swipeAnimation.setValue(dx);
       },
       onPanResponderRelease: (evt, gestureState) => {
-        const swipeThreshold = screenWidth * 0.2; // 20% of screen width
-        const velocityThreshold = 0.5;
+        // Reset gesture state
+        gestureRef.current.isActive = false;
+        
+        const swipeThreshold = Platform.OS === 'android' ? screenWidth * 0.1 : screenWidth * 0.2; // Lower threshold for Android
+        const velocityThreshold = Platform.OS === 'android' ? 0.3 : 0.5; // Lower velocity threshold for Android
         
         // Check velocity for quick swipes
         const shouldSwipeLeft = gestureState.dx < -swipeThreshold || gestureState.vx < -velocityThreshold;
         const shouldSwipeRight = gestureState.dx > swipeThreshold || gestureState.vx > velocityThreshold;
         
+        if (__DEV__ && Platform.OS === 'android') {
+          console.log('Swipe release:', {
+            dx: gestureState.dx,
+            vx: gestureState.vx,
+            threshold: swipeThreshold,
+            shouldSwipeLeft,
+            shouldSwipeRight,
+            currentTab: activeTabRef.current,
+            totalTabs: tabsRef.current.length
+          });
+        }
+        
         if (shouldSwipeRight && activeTabRef.current > 0) {
           // Swipe right - go to previous tab
           animateToTab(activeTabRef.current - 1);
+          // Reset gesture state after animation on Android
+          if (Platform.OS === 'android') {
+            setTimeout(() => {
+              swipeAnimation.setValue(0);
+              gestureRef.current.isActive = false;
+            }, 300);
+          }
         } else if (shouldSwipeLeft && activeTabRef.current < tabsRef.current.length - 1) {
           // Swipe left - go to next tab
           animateToTab(activeTabRef.current + 1);
+          // Reset gesture state after animation on Android
+          if (Platform.OS === 'android') {
+            setTimeout(() => {
+              swipeAnimation.setValue(0);
+              gestureRef.current.isActive = false;
+            }, 300);
+          }
         } else {
           // Return to original position
-          Animated.timing(swipeAnimation, {
+          RNAnimated.timing(swipeAnimation, {
             toValue: 0,
             duration: 250,
             easing: Easing.bezier(0.2, 0, 0, 1),
             useNativeDriver: true,
-          }).start();
+          }).start(() => {
+            // Reset gesture state after animation completes
+            if (Platform.OS === 'android') {
+              gestureRef.current.isActive = false;
+            }
+          });
         }
       },
       onPanResponderTerminate: () => {
         // Handle gesture interruption
-        Animated.timing(swipeAnimation, {
+        gestureRef.current.isActive = false;
+        RNAnimated.timing(swipeAnimation, {
           toValue: 0,
           duration: 250,
           easing: Easing.bezier(0.2, 0, 0, 1),
@@ -120,7 +196,9 @@ const TabbedModal = ({
       onMoveShouldSetPanResponder: (evt, gestureState) => {
         // Only respond to downward swipes when not scrolling
         const isDownwardSwipe = gestureState.dy > 10 && Math.abs(gestureState.dx) < Math.abs(gestureState.dy);
-        return isDownwardSwipe && !isScrolling;
+        // On Android, be less strict about scrolling state for vertical swipes
+        const canSwipe = Platform.OS === 'android' ? true : !isScrolling;
+        return isDownwardSwipe && canSwipe;
       },
       onPanResponderGrant: () => {
         // Start gesture
@@ -138,7 +216,7 @@ const TabbedModal = ({
         // Check if should dismiss modal
         if (gestureState.dy > dismissThreshold || gestureState.vy > velocityThreshold) {
           // Animate out and close
-          Animated.timing(modalSlideAnimation, {
+          RNAnimated.timing(modalSlideAnimation, {
             toValue: screenHeight,
             duration: 250,
             easing: Easing.bezier(0.2, 0, 0, 1),
@@ -149,7 +227,7 @@ const TabbedModal = ({
           });
         } else {
           // Snap back to position
-          Animated.timing(modalSlideAnimation, {
+          RNAnimated.timing(modalSlideAnimation, {
             toValue: 0,
             duration: 250,
             easing: Easing.bezier(0.2, 0, 0, 1),
@@ -159,7 +237,7 @@ const TabbedModal = ({
       },
       onPanResponderTerminate: () => {
         // Handle gesture interruption
-        Animated.timing(modalSlideAnimation, {
+        RNAnimated.timing(modalSlideAnimation, {
             toValue: 0,
             duration: 250,
             easing: Easing.bezier(0.2, 0, 0, 1),
@@ -182,15 +260,22 @@ const TabbedModal = ({
     // Direction: negative when going to next tab (content slides left), positive when going to previous tab (content slides right)
     const direction = index > activeTabRef.current ? -1 : 1;
     
+    // Reset swipe animation first
+    swipeAnimation.setValue(0);
+    
     // Defer the state update to avoid React Native's batching warning
     // This prevents state updates during touch event processing
     setTimeout(() => {
       handleTabPress(index);
+      // Force a re-render on Android to reset gesture handlers
+      if (Platform.OS === 'android') {
+        swipeAnimation.setValue(0);
+      }
     }, 0);
     
     // Material Design 3 shared axis transition - start from opposite direction
     swipeAnimation.setValue(-direction * screenWidth * 0.35);
-    Animated.timing(swipeAnimation, {
+    RNAnimated.timing(swipeAnimation, {
       toValue: 0,
       duration: 300, // MD3 standard duration
       easing: Easing.bezier(0.2, 0, 0, 1), // MD3 emphasized easing
@@ -205,6 +290,10 @@ const TabbedModal = ({
       }
       if (onTabChange) {
         onTabChange(index);
+      }
+      // Control the PagerView on Android
+      if (Platform.OS === 'android' && pagerRef.current) {
+        pagerRef.current.setPage(index);
       }
     }
   };
@@ -248,7 +337,7 @@ const TabbedModal = ({
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <Animated.View 
+      <RNAnimated.View 
         style={[
           styles.modalContainer, 
           { 
@@ -364,36 +453,69 @@ const TabbedModal = ({
           </View>
         </SafeAreaView>
         
-        <View style={{ flex: 1, backgroundColor: theme.light }}>
-          <Animated.View 
-            style={[
-              styles.contentContainer,
-              {
-                transform: [
-                  {
-                    translateX: swipeAnimation.interpolate({
-                      inputRange: [-screenWidth, 0, screenWidth],
-                      outputRange: [-screenWidth * 0.35, 0, screenWidth * 0.35],
-                      extrapolate: 'clamp',
-                    })
-                  }
-                ]
+        {/* Use native PagerView for Android, fallback to PanResponder for iOS/Web */}
+        {Platform.OS === 'android' ? (
+          <PagerView 
+            style={{ flex: 1, backgroundColor: theme.light }}
+            initialPage={activeTab}
+            onPageSelected={(e) => {
+              const newIndex = e.nativeEvent.position;
+              if (newIndex !== activeTabRef.current) {
+                if (controlledActiveTab === undefined) {
+                  setInternalActiveTab(newIndex);
+                }
+                if (onTabChange) {
+                  onTabChange(newIndex);
+                }
               }
-            ]}
+            }}
+            ref={pagerRef}
+          >
+            {React.Children.map(children, (child, index) => (
+              <View key={index} style={{ flex: 1 }}>
+                {child}
+              </View>
+            ))}
+          </PagerView>
+        ) : (
+          <View 
+            style={{ flex: 1, backgroundColor: theme.light }}
             {...horizontalPanResponder.panHandlers}
           >
-            {React.Children.map(children, child => 
-              React.cloneElement(child, { 
-                onScrollStateChange: setIsScrolling 
-              })
-            )}
-          </Animated.View>
-        </View>
+            <RNAnimated.View 
+              style={[
+                { flex: 1 },
+                {
+                  transform: [
+                    {
+                      translateX: swipeAnimation.interpolate({
+                        inputRange: [-screenWidth, 0, screenWidth],
+                        outputRange: [-screenWidth * 0.35, 0, screenWidth * 0.35],
+                        extrapolate: 'clamp',
+                      })
+                    }
+                  ]
+                }
+              ]}
+            >
+              {React.Children.map(children, child => 
+                React.cloneElement(child, { 
+                  onScrollStateChange: (scrolling) => {
+                    // Only update if not in middle of gesture
+                    if (!gestureRef.current.isActive) {
+                      setIsScrolling(scrolling);
+                    }
+                  }
+                })
+              )}
+            </RNAnimated.View>
+          </View>
+        )}
         
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
         )}
-      </Animated.View>
+      </RNAnimated.View>
     </Modal>
   );
 };
@@ -403,6 +525,7 @@ export const TabContent = ({ children, isActive, modalVisible, onScrollStateChan
   const [hasBeenActive, setHasBeenActive] = useState(false);
   const scrollViewRef = useRef(null);
   const scrollOffset = useRef(0);
+  const horizontalPanRef = useRef(null);
   
   // Reset hasBeenActive when modal closes
   useEffect(() => {
@@ -422,35 +545,9 @@ export const TabContent = ({ children, isActive, modalVisible, onScrollStateChan
     return null;
   }
   
-  // Wrap children to intercept scroll events
-  const wrappedChildren = React.Children.map(children, child => {
-    // If child is a ScrollView, add scroll event handlers
-    if (child?.type === ScrollView || child?.props?.showsVerticalScrollIndicator !== undefined) {
-      return React.cloneElement(child, {
-        ref: scrollViewRef,
-        onScrollBeginDrag: (e) => {
-          onScrollStateChange?.(true);
-          child.props.onScrollBeginDrag?.(e);
-        },
-        onScrollEndDrag: (e) => {
-          scrollOffset.current = e.nativeEvent.contentOffset.y;
-          onScrollStateChange?.(false);
-          child.props.onScrollEndDrag?.(e);
-        },
-        onMomentumScrollEnd: (e) => {
-          scrollOffset.current = e.nativeEvent.contentOffset.y;
-          onScrollStateChange?.(false);
-          child.props.onMomentumScrollEnd?.(e);
-        },
-        scrollEventThrottle: 16,
-      });
-    }
-    return child;
-  });
-  
   return (
     <View style={[styles.tabContent, { display: isActive ? 'flex' : 'none' }]}>
-      {wrappedChildren}
+      {children}
     </View>
   );
 };

@@ -23,20 +23,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
-// Conditionally import drag-and-drop libraries for iOS only
-const DraggableFlatList = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').default 
-  : null;
-const ScaleDecorator = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').ScaleDecorator 
-  : null;
-// Conditionally import gesture handler for iOS only
-const GestureHandlerModule = Platform.OS === 'ios' 
-  ? require('react-native-gesture-handler')
-  : null;
-const GestureHandlerRootView = GestureHandlerModule?.GestureHandlerRootView;
-const PanGestureHandler = GestureHandlerModule?.PanGestureHandler;
-const State = GestureHandlerModule?.State;
+// Import drag-and-drop libraries for all platforms
+const DraggableFlatList = require('react-native-draggable-flatlist').default;
+const ScaleDecorator = require('react-native-draggable-flatlist').ScaleDecorator;
+// Import gesture handler for all platforms - REQUIRED for Android swipe gestures
+const GestureHandlerModule = require('react-native-gesture-handler');
+const GestureHandlerRootView = GestureHandlerModule.GestureHandlerRootView;
+const PanGestureHandler = GestureHandlerModule.PanGestureHandler;
+const State = GestureHandlerModule.State;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Import DocumentPicker and RNFS with platform handling
 let DocumentPicker = null;
@@ -85,6 +79,7 @@ import {
   getBadgeDimensions,
   FONT_SCALE,
   CUSTOM_IMAGE_SOURCES,
+  getCustomImageSource,
   FEATURE_FLAGS,
 } from './src/constants';
 
@@ -153,6 +148,7 @@ const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
 
 
 const App = () => {
+  console.log('[APP STARTUP] App component first render at', Date.now());
   const insets = useSafeAreaInsets();
   
   // Use our custom hooks
@@ -197,6 +193,16 @@ const App = () => {
     setTemplates,
     activityCategories,
     setActivityCategories,
+    stackMapLibrary,
+    setStackMapLibrary,
+    getStackMapLibrary,
+    myLibrary,
+    setMyLibrary,
+    createActivityGroup,
+    updateActivityGroup,
+    deleteActivityGroup,
+    addActivityToGroup,
+    copyGroupToMyLibrary,
     userContextData,
     setUserContextData,
     hasCompletedOnboarding,
@@ -370,32 +376,26 @@ const App = () => {
     }
   }, []);
 
-  // Wait for Zustand store to hydrate from AsyncStorage
+  // Hydrate store in background after UI renders
   useEffect(() => {
-    const checkHydration = async () => {
-      // Give Zustand time to load persisted state
-      await new Promise(resolve => setTimeout(resolve, 100));
+    // Use setTimeout to ensure this runs AFTER the UI has rendered
+    const timeoutId = setTimeout(() => {
+      const initializeApp = async () => {
+        console.log('[App] Starting background hydration...');
+        const startHydration = Date.now();
+        
+        // Hydrate in background - doesn't block UI
+        await useAppStore.getState().hydrateStore();
+        const hydrationTime = Date.now() - startHydration;
+        console.log(`[App] Store hydration completed in ${hydrationTime}ms on ${Platform.OS}`);
+        
+        setIsHydrated(true);
+      };
       
-      // Check Zustand persisted data directly
-      const zustandData = await AsyncStorage.getItem('stackmap-storage');
-      console.log('[App] Checking Zustand hydration:', zustandData ? 'Data exists' : 'No data');
-      
-      if (zustandData) {
-        try {
-          const parsed = JSON.parse(zustandData);
-          console.log('[App] Zustand persisted state:', {
-            hasCompletedOnboarding: parsed?.state?.hasCompletedOnboarding,
-            usersCount: Object.keys(parsed?.state?.users || {}).length
-          });
-        } catch (e) {
-          console.error('[App] Error parsing Zustand data:', e);
-        }
-      }
-      
-      setIsHydrated(true);
-    };
+      initializeApp();
+    }, 100); // Small delay to let UI render first
     
-    checkHydration();
+    return () => clearTimeout(timeoutId);
   }, []);
   
   // Handle URL parameter modals after hydration
@@ -1211,26 +1211,29 @@ const App = () => {
     }
   };
 
-  // Ensure theme is always defined, even if currentTheme is undefined
+  // ALWAYS use a valid theme immediately - don't wait for hydration
+  // This prevents the 20-second blue screen while AsyncStorage loads
   const theme = currentTheme && THEMES[currentTheme] ? THEMES[currentTheme] : THEMES.stackBlue;
   
   // Log for debugging
-  if (!currentTheme) {
-    console.warn('[App] currentTheme is undefined, using default stackBlue theme');
-    console.warn('[App] THEMES object:', THEMES);
-    console.warn('[App] isHydrated:', isHydrated);
+  if (!currentTheme && isHydrated) {
+    // Only warn if hydration is complete and theme is still undefined
+    console.warn('[App] currentTheme is undefined after hydration, using default stackBlue theme');
   }
   
-  // Double-check theme is valid
+  // Theme should always be valid now since we default to stackBlue
   if (!theme || typeof theme !== 'object') {
-    console.error('[App] Theme is invalid:', theme);
-    // Force a valid theme
-    return (
-      <View style={{ flex: 1, backgroundColor: '#0095FF', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-        <Text style={{ color: '#FFFFFF', marginTop: 20 }}>Loading theme...</Text>
-      </View>
-    );
+    console.error('[App] Critical error: Theme object is invalid:', theme);
+    // This should never happen now, but keep as safety net
+    const fallbackTheme = THEMES.stackBlue;
+    if (!fallbackTheme) {
+      // Absolute emergency fallback if constants are broken
+      return (
+        <View style={{ flex: 1, backgroundColor: '#5C7E9D' }}>
+          {/* Keep splash screen color visible */}
+        </View>
+      );
+    }
   }
 
   // Helper to update auto-update shares after activity changes
@@ -1572,37 +1575,32 @@ const App = () => {
   };
 
   const addActivityToLibrary = (activity) => {
-    // Initialize with empty categories if none exist
-    const categories = activityCategories || EMPTY_CATEGORIES;
-    
-    // If activityCategories was null, set it to empty
-    if (!activityCategories) {
-      console.log('Initializing activity categories with empty template');
-      setActivityCategories(EMPTY_CATEGORIES);
-    }
-    
-    // Create a new array to avoid mutating state
-    const updatedCategories = [...categories];
-    
-    // Find My Templates category
-    const myTemplatesIndex = updatedCategories.findIndex(cat => cat.id === 'my-templates');
-    
-    if (myTemplatesIndex !== -1) {
+    // Use new myLibrary structure if available, otherwise fall back to legacy
+    if (myLibrary && myLibrary.activityGroups) {
+      // Find My Templates group in myLibrary
+      const myTemplatesGroup = myLibrary.activityGroups.find(g => g.id === 'my-templates');
+      
       // Create a template from the activity
       const template = {
         id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: activity.text || activity.title || 'Untitled',
         emoji: activity.emoji || '🎯',
-        description: activity.description || '',
+        description: activity.description || ''
       };
       
-      // Add to My Templates
-      updatedCategories[myTemplatesIndex] = {
-        ...updatedCategories[myTemplatesIndex],
-        activities: [...(updatedCategories[myTemplatesIndex].activities || []), template]
-      };
-      
-      setActivityCategories(updatedCategories);
+      if (myTemplatesGroup) {
+        // Add to existing My Templates group
+        addActivityToGroup('my-templates', template);
+      } else {
+        // Create My Templates group if it doesn't exist (should not happen with proper migration)
+        console.warn('My Templates group not found, creating it');
+        createActivityGroup('My Templates', {
+          description: 'Your saved activity templates',
+          isProtected: true
+        });
+        // Then add the activity
+        setTimeout(() => addActivityToGroup('my-templates', template), 100);
+      }
       
       // Add to tracking set to show checkmark
       setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
@@ -1617,10 +1615,50 @@ const App = () => {
       }, 1500);
       
       showToast({ message: 'Added to My Templates' });
-      console.log('Added to library:', template);
     } else {
-      showToast({ message: 'Could not find My Templates category' });
-      console.error('My Templates category not found in:', categories);
+      // Fall back to legacy implementation
+      const categories = activityCategories || EMPTY_CATEGORIES;
+      
+      if (!activityCategories) {
+        console.log('Initializing activity categories with empty template');
+        setActivityCategories(EMPTY_CATEGORIES);
+      }
+      
+      const updatedCategories = [...categories];
+      const myTemplatesIndex = updatedCategories.findIndex(cat => cat.id === 'my-templates');
+      
+      if (myTemplatesIndex !== -1) {
+        const template = {
+          id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: activity.text || activity.title || 'Untitled',
+          emoji: activity.emoji || '🎯',
+          description: activity.description || ''
+        };
+        
+        updatedCategories[myTemplatesIndex] = {
+          ...updatedCategories[myTemplatesIndex],
+          activities: [...(updatedCategories[myTemplatesIndex].activities || []), template]
+        };
+        
+        setActivityCategories(updatedCategories);
+        
+        // Add to tracking set to show checkmark
+        setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
+        
+        // Remove from tracking after delay
+        setTimeout(() => {
+          setAddedToLibraryIds(prev => {
+            const newSet = new Set(prev);
+            newSet.delete(activity.id);
+            return newSet;
+          });
+        }, 1500);
+        
+        showToast({ message: 'Added to My Templates' });
+      } else {
+        showToast({ message: 'Could not find My Templates category' });
+        console.error('My Templates category not found in:', categories);
+      }
     }
   };
   
@@ -1720,24 +1758,31 @@ const App = () => {
     setShowPinModal(true);
   };
 
+  // PIN setting handler for AccessModal
   const handlePinSet = async (pin) => {
+    console.log('[App] handlePinSet called with PIN length:', pin?.length);
     try {
-      const hashedPin = hashPin(pin);
-      await storage.set('user.pin', hashedPin);
-      setHasPinProtection(true);
-      setIsSettingPin(false);
-      showToast({ message: 'PIN set successfully' });
+      const success = await setSecurePin(pin);
+      if (success) {
+        setHasPinProtection(true);
+        console.log('[App] PIN set successfully');
+        return true;
+      } else {
+        console.error('[App] Failed to set PIN');
+        return false;
+      }
     } catch (error) {
       console.error('[App] Error setting PIN:', error);
-      showToast({ message: 'Failed to set PIN', type: 'error' });
+      return false;
     }
   };
 
+  // PIN verification handler for AccessModal
   const handlePinVerify = async (pin) => {
+    console.log('[App] handlePinVerify called');
     try {
-      const hashedPin = await storage.get('user.pin');
-      const inputHash = hashPin(pin);
-      return hashedPin === inputHash;
+      const isValid = await verifyPin(pin);
+      return isValid;
     } catch (error) {
       console.error('[App] Error verifying PIN:', error);
       return false;
@@ -3071,7 +3116,7 @@ const App = () => {
         {/* Emoji or Custom Image */}
         {item.emoji && item.emoji.startsWith('image:') ? (
           <Image 
-            source={CUSTOM_IMAGE_SOURCES[item.emoji.substring(6)]}
+            source={getCustomImageSource(item.emoji.substring(6))}
             style={styles.activityImage}
             resizeMode="contain"
           />
@@ -3335,12 +3380,23 @@ const App = () => {
         backgroundColor={bannerPosition === 'top' ? theme.primary : theme.light} 
         translucent={false}
       />
-      <View style={[
-        styles.container, 
-        { 
-          backgroundColor: theme.light
+      <View 
+        style={[
+          styles.container, 
+          { 
+            backgroundColor: theme.light
         }
-      ]}>
+      ]}
+        onStartShouldSetResponder={() => {
+          // Track any touch on the app
+          syncService.markUserActive();
+          return false; // Don't capture the touch, just track it
+        }}
+        onMoveShouldSetResponder={() => {
+          // Track any movement
+          syncService.markUserActive();
+          return false;
+        }}>
         {/* Status Bar Background when banner is at bottom - not needed on web */}
         {bannerPosition === 'bottom' && Platform.OS !== 'web' && (
           Platform.OS === 'ios' ? (
@@ -3385,8 +3441,8 @@ const App = () => {
               contentContainerStyle={[
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 130 : 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 180 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
             >
@@ -3496,8 +3552,8 @@ const App = () => {
               }}
               contentContainerStyle={[
                 styles.listContent,
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 130 : 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 180 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
@@ -3527,8 +3583,8 @@ const App = () => {
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
                 Platform.OS === 'web' && { alignItems: 'center' },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 130 : 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 180 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
               ListEmptyComponent={
@@ -3730,6 +3786,10 @@ const App = () => {
             const tabIndex = tab === 'add' ? 0 : 1;
             console.log('Setting activityManagementActiveTab to:', tabIndex);
             setActivityManagementActiveTab(tabIndex);
+            // Load StackMap Library if not already loaded
+            if (!stackMapLibrary) {
+              getStackMapLibrary();
+            }
             // Use setTimeout to ensure state update happens first
             setTimeout(() => {
               console.log('Opening modal with tab index:', tabIndex);
@@ -3753,6 +3813,12 @@ const App = () => {
         showToast={showToast}
         categories={activityCategories}
         onSaveCategories={setActivityCategories}
+        stackMapLibrary={stackMapLibrary}
+        myLibrary={myLibrary}
+        onCopyGroupToMyLibrary={(group) => {
+          copyGroupToMyLibrary(group);
+          showToast({ message: `Copied "${group.name}" to My Library!` });
+        }}
         onSelectActivity={async (activity) => {
             // Get device ID for enhanced activity IDs
             const deviceId = await encryptionService.getDeviceId();
@@ -3888,10 +3954,9 @@ const App = () => {
       )}
       
       {/* Context Modal - Normal Mode */}
-      {!isEditMode && (
-        <ContextModal
-          visible={showUserDayModal}
-          onClose={() => setShowUserDayModal(false)}
+      <ContextModal
+        visible={showUserDayModal}
+        onClose={() => setShowUserDayModal(false)}
           currentUser={currentUser}
           users={users}
           theme={theme}
@@ -3918,7 +3983,6 @@ const App = () => {
             }
           }}
         />
-      )}
 
       
       
@@ -4136,6 +4200,98 @@ const App = () => {
         categories={activityCategories}
         showToast={showToast}
         onSaveCategories={setActivityCategories}
+        stackMapLibrary={stackMapLibrary}
+        myLibrary={myLibrary}
+        onSaveToMyLibrary={async (activityData) => {
+          // Ensure My Templates group exists
+          if (!myLibrary || !myLibrary.activityGroups) {
+            // Initialize myLibrary with My Templates group
+            const newLibrary = {
+              activityGroups: [{
+                id: 'my-templates',
+                name: 'My Templates',
+                activities: [{
+                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+                  name: activityData.text,
+                  emoji: activityData.icon,
+                }],
+                isUserCreated: true,
+                createdAt: Date.now(),
+                lastModified: Date.now(),
+                order: 0
+              }],
+              groupOrder: ['my-templates']
+            };
+            setMyLibrary(newLibrary);
+          } else {
+            // Find or create My Templates group
+            let myTemplatesGroup = myLibrary.activityGroups.find(g => g.id === 'my-templates');
+            
+            if (!myTemplatesGroup) {
+              // Create My Templates group
+              myTemplatesGroup = {
+                id: 'my-templates',
+                name: 'My Templates',
+                activities: [],
+                isUserCreated: true,
+                createdAt: Date.now(),
+                lastModified: Date.now(),
+                order: myLibrary.activityGroups.length
+              };
+              
+              const updatedLibrary = {
+                ...myLibrary,
+                activityGroups: [...myLibrary.activityGroups, myTemplatesGroup],
+                groupOrder: [...(myLibrary.groupOrder || []), 'my-templates']
+              };
+              setMyLibrary(updatedLibrary);
+            }
+            
+            // Add activity to My Templates
+            const newActivity = {
+              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+              name: activityData.text,
+              emoji: activityData.icon,
+            };
+            
+            const updatedGroups = myLibrary.activityGroups.map(group => {
+              if (group.id === 'my-templates') {
+                return {
+                  ...group,
+                  activities: [...(group.activities || []), newActivity],
+                  lastModified: Date.now()
+                };
+              }
+              return group;
+            });
+            
+            setMyLibrary({
+              ...myLibrary,
+              activityGroups: updatedGroups
+            });
+          }
+          
+          // Also update activityCategories for backward compatibility
+          const myTemplatesCategory = {
+            id: 'my-templates',
+            name: 'My Templates',
+            activities: activityCategories?.find(cat => cat.id === 'my-templates')?.activities || []
+          };
+          
+          const newActivity = {
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            name: activityData.text,
+            emoji: activityData.icon,
+          };
+          
+          myTemplatesCategory.activities.push(newActivity);
+          
+          const updatedCategories = activityCategories?.length > 0 
+            ? activityCategories.map(cat => cat.id === 'my-templates' ? myTemplatesCategory : cat)
+            : [myTemplatesCategory];
+          
+          setActivityCategories(updatedCategories);
+        }}
         onAddActivity={async (activity) => {
           // Get device ID for enhanced activity IDs
           const deviceId = await encryptionService.getDeviceId();
@@ -4143,6 +4299,7 @@ const App = () => {
           const newActivity = {
             id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
+            emoji: activity.emoji || activity.icon,
             icon: activity.emoji || activity.icon,
             completed: false,
             pinned: false,
@@ -4150,7 +4307,29 @@ const App = () => {
             type: 'task',
             ...(activity.isPersonal && { isPersonal: true })
           };
-          setActivities([...activities, newActivity]);
+          
+          // Update activities state
+          const updatedActivities = [...activities, newActivity];
+          setActivities(updatedActivities);
+          
+          // Save to persistent storage
+          if (currentUser && users[currentUser]) {
+            const updatedUsers = {
+              ...users,
+              [currentUser]: {
+                ...users[currentUser],
+                days: {
+                  ...users[currentUser].days,
+                  [currentDay]: {
+                    ...users[currentUser].days?.[currentDay],
+                    activities: updatedActivities
+                  }
+                }
+              }
+            };
+            setUsers(updatedUsers);
+          }
+          
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
         }}
         onSelectActivity={async (activity) => {
@@ -4166,7 +4345,29 @@ const App = () => {
             deleted: false,
             type: 'task'
           };
-          setActivities([...activities, newActivity]);
+          
+          // Update activities state
+          const updatedActivities = [...activities, newActivity];
+          setActivities(updatedActivities);
+          
+          // Save to persistent storage
+          if (currentUser && users[currentUser]) {
+            const updatedUsers = {
+              ...users,
+              [currentUser]: {
+                ...users[currentUser],
+                days: {
+                  ...users[currentUser].days,
+                  [currentDay]: {
+                    ...users[currentUser].days?.[currentDay],
+                    activities: updatedActivities
+                  }
+                }
+              }
+            };
+            setUsers(updatedUsers);
+          }
+          
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
         }}
         onSelectMultipleActivities={async (activitiesToAdd) => {
@@ -4184,8 +4385,28 @@ const App = () => {
             type: 'task'
           }));
           
-          // Add all new activities at once
-          setActivities([...activities, ...newActivities]);
+          // Update activities state
+          const updatedActivities = [...activities, ...newActivities];
+          setActivities(updatedActivities);
+          
+          // Save to persistent storage
+          if (currentUser && users[currentUser]) {
+            const updatedUsers = {
+              ...users,
+              [currentUser]: {
+                ...users[currentUser],
+                days: {
+                  ...users[currentUser].days,
+                  [currentDay]: {
+                    ...users[currentUser].days?.[currentDay],
+                    activities: updatedActivities
+                  }
+                }
+              }
+            };
+            setUsers(updatedUsers);
+          }
+          
           showToast({ message: `Added ${newActivities.length} activities to today!` });
         }}
         initialTab={activityManagementActiveTab}
@@ -4225,23 +4446,67 @@ const App = () => {
   //   );
   // }
   
-  // Don't render until store is hydrated
-  if (!isHydrated) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#0095FF', justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-      </View>
-    );
-  }
-  
   // Show share view if share token is present
   if (shareToken) {
     return <ShareView shareToken={shareToken} theme={theme} />;
   }
   
-  // Show onboarding if needed (kept for backward compatibility)
+  // Show loading screen while determining if we need onboarding
+  if (!isHydrated) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#FFFFFF" />
+      </View>
+    );
+  }
+
+  // Show onboarding if needed OR if no users exist yet (not hydrated)
   console.log('[RENDER] Checking showOnboarding:', showOnboarding, 'isHydrated:', isHydrated);
-  if (showOnboarding) {
+  
+  // If hydrated and still no users, show onboarding
+  if (isHydrated && !hasCompletedOnboarding && Object.keys(users).length === 0) {
+    return (
+      <>
+        <OnboardingNew
+          onComplete={handleOnboardingComplete}
+          onImport={async () => {
+            const result = await importDataForOnboarding();
+            if (!result || !result.success) {
+              throw new Error('Import cancelled or failed');
+            }
+            return result;
+          }}
+          isAbbreviated={!!syncSetupPhrase}
+          syncSetupPhrase={syncSetupPhrase}
+          onShowPrivacy={() => {
+            console.log('[App] onShowPrivacy called from onboarding');
+            setShowPrivacyModal(true);
+          }}
+        />
+        
+        {/* Privacy Policy Modal - Available during onboarding */}
+        <PrivacyModal
+          visible={showPrivacyModal}
+          onClose={() => setShowPrivacyModal(false)}
+          insets={insets}
+          onShowSupport={() => {
+            setShowPrivacyModal(false);
+            setTimeout(() => setShowSupportModal(true), 300);
+          }}
+        />
+        
+        {/* Support Modal - Available during onboarding */}
+        <SupportModal
+          visible={showSupportModal}
+          onClose={() => setShowSupportModal(false)}
+          insets={insets}
+        />
+      </>
+    );
+  }
+  
+  // Show onboarding immediately if needed
+  if (showOnboarding || (!hasCompletedOnboarding && Object.keys(users).length === 0)) {
     console.log('[RENDER] ========== RENDERING ONBOARDING ==========');
     return (
       <>
@@ -4255,9 +4520,13 @@ const App = () => {
             }
             return result; // RETURN THE RESULT SO ONBOARDING CAN USE IT!
           }}
-        isAbbreviated={!!syncSetupPhrase}
-        syncSetupPhrase={syncSetupPhrase}
-      />
+          isAbbreviated={!!syncSetupPhrase}
+          syncSetupPhrase={syncSetupPhrase}
+          onShowPrivacy={() => {
+            console.log('[App] onShowPrivacy called from onboarding');
+            setShowPrivacyModal(true);
+          }}
+        />
       
       {/* Privacy Policy Modal - Available during onboarding for App Store */}
       <PrivacyModal
@@ -4323,8 +4592,8 @@ const App = () => {
     );
   }
 
-  // Wrap with GestureHandlerRootView for iOS only (gesture handler not available on web)
-  if (Platform.OS === 'ios' && GestureHandlerRootView) {
+  // Wrap with GestureHandlerRootView for iOS and Android (required for swipe gestures)
+  if ((Platform.OS === 'ios' || Platform.OS === 'android') && GestureHandlerRootView) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         {AppContent}
@@ -4338,6 +4607,7 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#5C7E9D', // Match splash screen color to prevent flash
   },
   contentArea: {
     flex: 1,

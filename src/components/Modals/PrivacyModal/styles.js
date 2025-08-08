@@ -19,7 +19,6 @@ export const styles = StyleSheet.create({
     color: 'white',
   },
   privacyContent: {
-    flex: 1,
     padding: 20,
     ...(Platform.OS === 'web' && {
       maxWidth: 600,

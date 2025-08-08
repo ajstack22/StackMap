@@ -20,10 +20,33 @@ export const styles = StyleSheet.create({
     }),
   },
   // Library Tab Styles
+  libraryContentPanel: {
+    flex: 1,
+    backgroundColor: 'white',
+    marginHorizontal: IS_MOBILE ? 16 : 20,
+    marginVertical: IS_MOBILE ? 16 : 20,
+    borderRadius: RADIUS.lg,
+    overflow: 'hidden',
+    ...(!IS_MOBILE && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
+    ...(Platform.OS === 'ios' ? {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+    } : Platform.OS === 'android' ? {
+      elevation: 1,
+    } : {
+      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+    }),
+  },
   searchContainer: {
-    paddingHorizontal: IS_MOBILE ? 12 : 20,
-    paddingTop: IS_MOBILE ? 12 : 20,
-    paddingBottom: 10,
+    paddingHorizontal: IS_MOBILE ? 16 : 20,
+    paddingTop: IS_MOBILE ? 16 : 20,
+    paddingBottom: 12,
     ...(!IS_MOBILE && {
       maxWidth: 600,
       alignSelf: 'center',
@@ -31,7 +54,7 @@ export const styles = StyleSheet.create({
     }),
   },
   listContainer: {
-    paddingHorizontal: IS_MOBILE ? 12 : 20,
+    paddingHorizontal: IS_MOBILE ? 16 : 20,
     paddingBottom: 100,
     ...(!IS_MOBILE && {
       maxWidth: 600,
@@ -44,22 +67,30 @@ export const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: RADIUS.lg,
     overflow: 'hidden',
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    } : Platform.OS === 'android' ? {
-      elevation: 3,
-    } : {
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 6,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+      },
     }),
   },
   categoryHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
     backgroundColor: '#f8f8f8',
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
   },
   categoryName: {
     flex: 1,
@@ -84,8 +115,7 @@ export const styles = StyleSheet.create({
     marginRight: 12,
   },
   actionButton: {
-    padding: 8,
-    marginLeft: 4,
+    padding: 6,
   },
   activitiesList: {
     paddingBottom: 8,
@@ -115,29 +145,21 @@ export const styles = StyleSheet.create({
   activityActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 4,
   },
-  chooseButton: {
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-  },
-  chooseButtonText: {
-    color: 'white',
-    fontSize: 13,
-    fontWeight: '600',
+  iconButton: {
+    padding: 8,
   },
   addAllButton: {
-    backgroundColor: '#4CAF50',
     paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
+    paddingVertical: 4,
+    borderRadius: RADIUS.round,
+    backgroundColor: 'transparent',
+    borderWidth: 1.5,
     marginRight: 8,
   },
   addAllButtonText: {
-    color: 'white',
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '600',
   },
   editingActivity: {
@@ -267,8 +289,6 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#000',
     marginBottom: 8,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
   },
   emojiSelector: {
     flexDirection: 'row',
@@ -417,5 +437,54 @@ export const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     textAlign: 'center',
+  },
+  // Library tabs
+  libraryTabsContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: IS_MOBILE ? 12 : 20,
+    paddingTop: IS_MOBILE ? 8 : 12,
+    paddingBottom: 8,
+    gap: 8,
+    ...(!IS_MOBILE && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
+  },
+  libraryTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#f0f0f0',
+    borderRadius: RADIUS.md,
+    gap: 6,
+  },
+  activeLibraryTab: {
+    backgroundColor: '#007AFF',
+  },
+  libraryTabText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#666',
+  },
+  activeLibraryTabText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
+  // Section headers for library sections
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+    paddingHorizontal: 4,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
   },
 });

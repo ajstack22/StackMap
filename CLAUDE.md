@@ -1,3 +1,38 @@
+# 🚨 ANDROID SWIPE GESTURES - SOLVED 🚨
+
+## ✅ ANDROID TABBED MODALS SWIPE FIX ✅
+**Problem:** Swipe gestures between tabs only work on buttons, not on backgrounds/panels
+**Solution:** Use `react-native-pager-view` for Android (NOT PanResponder!)
+
+```javascript
+// TabbedModal.js - THIS IS THE ONLY SOLUTION THAT WORKS ON ANDROID
+import PagerView from 'react-native-pager-view';
+
+{Platform.OS === 'android' ? (
+  <PagerView>  // Native Android ViewPager2 - handles swipes at native level
+    {children}
+  </PagerView>
+) : (
+  // PanResponder works fine for iOS/Web
+)}
+```
+
+**Why PanResponder DOESN'T work on Android with ScrollView:**
+- ScrollView captures touches at the NATIVE level before JavaScript sees them
+- Only TouchableOpacity bypasses this (has its own native touch handling)
+- No amount of PanResponder tweaking will fix this - it's a fundamental Android limitation
+
+**DO NOT WASTE TIME TRYING:**
+- ❌ pointerEvents="box-none" (doesn't work reliably on Android)
+- ❌ Overlay layers with z-index tricks
+- ❌ Adjusting PanResponder thresholds
+- ❌ GestureHandlerRootView (necessary but not sufficient)
+- ❌ Capture phase handlers
+
+**Just use react-native-pager-view for Android. Period.**
+
+---
+
 # 🚨 ACTIVE REFACTOR IN PROGRESS 🚨
 
 ## ⚠️ CRITICAL: Major Data Structure Refactor Planned ⚠️

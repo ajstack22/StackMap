@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
   },
   summaryLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
   },
   summaryStats: {
     flexDirection: 'row',
@@ -64,7 +64,7 @@ export const styles = StyleSheet.create({
   },
   statLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#000',
   },
   statDivider: {
     width: 1,
@@ -74,7 +74,7 @@ export const styles = StyleSheet.create({
   },
   motivationalMessage: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -146,7 +146,7 @@ export const styles = StyleSheet.create({
   },
   archiveNote: {
     fontSize: 12,
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
     fontStyle: 'italic',
   },
@@ -170,7 +170,7 @@ export const styles = StyleSheet.create({
   },
   planCount: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
   },
   emptyState: {
     alignItems: 'center',
@@ -179,12 +179,12 @@ export const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     marginTop: 10,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: '#999',
+    color: '#000',
     marginTop: 5,
   },
   planActivityList: {
@@ -266,7 +266,7 @@ export const styles = StyleSheet.create({
   templateCategoryName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: '#000',
     marginBottom: 8,
     textTransform: 'uppercase',
   },
@@ -328,7 +328,7 @@ export const styles = StyleSheet.create({
   },
   completeExplanationSubtext: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     marginBottom: 16,
   },
   completeSection: {
@@ -377,12 +377,12 @@ export const styles = StyleSheet.create({
   },
   completeSectionCount: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     marginLeft: 8,
   },
   completeSectionDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     marginBottom: 12,
   },
   completeActivitiesContainer: {
@@ -409,7 +409,7 @@ export const styles = StyleSheet.create({
   },
   completeEmptyText: {
     fontSize: 14,
-    color: '#999',
+    color: '#000',
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 20,
@@ -453,7 +453,7 @@ export const styles = StyleSheet.create({
     gap: 12,
   },
   userCardActive: {
-    borderColor: '#000',
+    // borderColor will be set dynamically with theme.primary
     backgroundColor: '#f5f5f5',
   },
   userEmoji: {
@@ -470,7 +470,7 @@ export const styles = StyleSheet.create({
   },
   planSectionDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     marginBottom: 12,
   },
   viewModeContainer: {
@@ -501,7 +501,7 @@ export const styles = StyleSheet.create({
   viewModeText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
+    color: '#000',
   },
   viewModeTextActive: {
     color: '#000',
@@ -532,9 +532,77 @@ export const styles = StyleSheet.create({
   dayToggleText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#666',
+    color: '#000',
   },
   dayToggleTextActive: {
+    color: '#000',
+    fontWeight: '700',
+  },
+  
+  // Day mode toggle styles
+  dayModeToggle: {
+    flexDirection: 'row',
+    backgroundColor: '#f0f0f0',
+    borderRadius: 8,
+    padding: 4,
+    gap: 4,
+  },
+  dayModeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    gap: 8,
+  },
+  dayModeOptionActive: {
+    backgroundColor: 'white',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  dayModeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: '#000',
+  },
+  dayModeTextActive: {
+    color: '#000',
+    fontWeight: '700',
+  },
+  
+  // Day selection cards
+  dayCardsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  dayCard: {
+    flex: 1,
+    maxWidth: 150,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 16,
+    backgroundColor: '#f5f5f5',
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  dayCardActive: {
+    backgroundColor: '#fff',
+    // borderColor will be set dynamically with theme.primary
+  },
+  dayTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#000',
+    marginTop: 8,
+  },
+  dayTitleActive: {
     color: '#000',
     fontWeight: '700',
   },
@@ -563,7 +631,7 @@ export const styles = StyleSheet.create({
   },
   planHeaderDay: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
   },
   // Panel-based design styles
   formPanel: {

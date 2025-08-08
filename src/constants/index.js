@@ -31,17 +31,13 @@ export const ANIMATION_DURATIONS = {
   toastSlide: 300,
 };
 
-// Custom image sources mapping
-export const CUSTOM_IMAGE_SOURCES = {
-  'ChickenNuggets.png': require('../../assets/images/ChickenNuggets.png'),
-  'FishSticks.png': require('../../assets/images/FishSticks.png'),
-  'fish_sticks.png': require('../../assets/images/fish_sticks.png'),
-  'Fusion.png': require('../../assets/images/Fusion.png'),
-  'GoldenRetriever.png': require('../../assets/images/GoldenRetriever.png'),
-  'GoldfishCrackers.png': require('../../assets/images/GoldfishCrackers.png'),
-  'kart.png': require('../../assets/images/kart.png'),
-  'lambo.png': require('../../assets/images/lambo.png'),
-  'RAV4.png': require('../../assets/images/RAV4.png'),
-  'Swingset.png': require('../../assets/images/Swingset.png'),
-  'breakfast_dog.png': require('../../assets/images/breakfast_dog.png'),
+// Custom images have been archived and removed from the build
+// These 18MB of PNG files were causing 5+ second startup delays
+// Files moved to: /archive/unused-images/
+export const CUSTOM_IMAGE_SOURCES = {};
+
+// Export a stub function for backward compatibility
+export const getCustomImageSource = (imageName) => {
+  // Images have been archived - return null
+  return null;
 };

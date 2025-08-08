@@ -7,6 +7,8 @@ export { default as ActivityLibrary } from './ActivityLibrary';
 export { default as EmojiPicker } from './EmojiPicker';
 export { default as CelebrationView } from './CelebrationManager';
 export { default as SyncStatusIndicator } from './SyncStatusIndicator';
+export { default as SyncProgress } from './SyncProgress/SyncProgress';
+export { default as SyncBlockingIndicator } from './SyncBlockingIndicator/SyncBlockingIndicator';
 export { default as BuyMeCoffeeButton } from './BuyMeCoffeeButton';
 export { TabbedModal, TabContent } from './TabbedModal';
 export { default as TimePicker } from './TimePicker';

@@ -21,13 +21,9 @@ const DayManagementModal = ({
   completedCount = 0,
   totalCount = 0,
   onCompleteDay,
-  onPlanTomorrow,
   showToast,
-  templates = {},
   users = {},
   currentUser,
-  tomorrowActivities = [],
-  onUpdateTomorrowActivities,
   initialActiveTab = 0,
   dayMode,
   setDayMode,
@@ -61,17 +57,6 @@ const DayManagementModal = ({
     }
   };
 
-  const handleSavePlan = async (updatedActivities) => {
-    setLoading(true);
-    try {
-      await onUpdateTomorrowActivities(updatedActivities);
-      showToast({ message: 'Tomorrow\'s plan saved!' });
-    } catch (error) {
-      showToast({ message: 'Failed to save plan', type: 'error' });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <TabbedModal
@@ -87,16 +72,13 @@ const DayManagementModal = ({
       <TabContent isActive={activeTab === 0} modalVisible={visible}>
         <PlanTabContent
           theme={theme}
-          tomorrowActivities={tomorrowActivities}
-          templates={templates}
           users={users}
           currentUser={currentUser}
-          onSavePlan={onUpdateTomorrowActivities}
-          loading={loading}
           showToast={showToast}
           dayMode={dayMode}
           setDayMode={setDayMode}
           onSelectUserDay={onSelectUserDay}
+          onClose={onClose}
         />
       </TabContent>
       <TabContent isActive={activeTab === 1} modalVisible={visible}>

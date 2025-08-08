@@ -17,6 +17,9 @@ const ActivityManagementModal = ({
   initialTab = 0,
   selectedCategory = null,
   prefilledActivity = null,
+  stackMapLibrary,
+  myLibrary,
+  onSaveToMyLibrary,
 }) => {
   const [activeTab, setActiveTab] = useState(initialTab);
   const [loading, setLoading] = useState(false);
@@ -66,28 +69,38 @@ const ActivityManagementModal = ({
   const handleSaveToLibrary = async (activityData, categoryId) => {
     setLoading(true);
     try {
-      // Add activity to the specified category
-      const updatedCategories = [...categories];
-      const categoryIndex = updatedCategories.findIndex(cat => cat.id === categoryId);
-      
-      if (categoryIndex !== -1) {
+      // For now, we're only supporting 'my-templates' category
+      if (categoryId === 'my-templates' && onSaveToMyLibrary) {
+        // Call the parent function to save to myLibrary
+        await onSaveToMyLibrary(activityData);
+        showToast({ message: 'Activity saved to My Templates!' });
+      } else {
+        // Fallback to old categories method
+        const myTemplatesCategory = {
+          id: 'my-templates',
+          name: 'My Templates',
+          activities: categories?.find(cat => cat.id === 'my-templates')?.activities || []
+        };
+        
         const newActivity = {
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: activityData.text,
           emoji: activityData.icon,
         };
         
-        if (!updatedCategories[categoryIndex].activities) {
-          updatedCategories[categoryIndex].activities = [];
-        }
+        myTemplatesCategory.activities.push(newActivity);
         
-        updatedCategories[categoryIndex].activities.push(newActivity);
+        // Update categories - if no categories exist, create array with just My Templates
+        const updatedCategories = categories?.length > 0 
+          ? categories.map(cat => cat.id === 'my-templates' ? myTemplatesCategory : cat)
+          : [myTemplatesCategory];
+        
         await onSaveCategories(updatedCategories);
         
-        showToast({ message: 'Activity saved to library!' });
-        setActiveTab(0); // Switch back to Library tab
+        showToast({ message: 'Activity saved to My Templates!' });
       }
     } catch (error) {
+      console.error('Error saving to library:', error);
       showToast({ message: 'Failed to save to library', type: 'error' });
     } finally {
       setLoading(false);
@@ -128,6 +141,8 @@ const ActivityManagementModal = ({
           onSelectMultipleActivities={onSelectMultipleActivities}
           showToast={showToast}
           loading={loading}
+          stackMapLibrary={stackMapLibrary}
+          myLibrary={myLibrary}
         />
       </TabContent>
     </TabbedModal>

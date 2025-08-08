@@ -2,6 +2,8 @@
  * @format
  */
 
+console.log('[APP STARTUP] index.js loading at', Date.now());
+
 // Import Reanimated FIRST before any other imports
 import 'react-native-reanimated';
 

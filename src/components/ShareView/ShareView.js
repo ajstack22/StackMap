@@ -13,7 +13,7 @@ import { format } from 'date-fns';
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 import createStyles from './styles';
-import { CUSTOM_IMAGE_SOURCES } from '../../constants';
+import { CUSTOM_IMAGE_SOURCES, getCustomImageSource } from '../../constants';
 
 const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
   const [loading, setLoading] = useState(true);
@@ -135,7 +135,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
 
   const renderUserIcon = (user) => {
     if (user.icon && user.icon.includes('.png')) {
-      const imageSource = CUSTOM_IMAGE_SOURCES[user.icon];
+      const imageSource = getCustomImageSource(user.icon);
       if (imageSource) {
         return (
           <Image 
@@ -155,7 +155,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
 
     const renderActivityEmoji = () => {
       if (activity.emoji && activity.emoji.includes('.png')) {
-        const imageSource = CUSTOM_IMAGE_SOURCES[activity.emoji];
+        const imageSource = getCustomImageSource(activity.emoji);
         if (imageSource) {
           return (
             <Image 

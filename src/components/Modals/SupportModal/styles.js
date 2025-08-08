@@ -26,10 +26,6 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
   },
-  supportContent: {
-    flex: 1,
-    padding: 20,
-  },
   supportHeader: {
     alignItems: 'center',
     marginBottom: 24,
@@ -132,7 +128,6 @@ export const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     minWidth: 280,
-    flex: 1,
   },
   supportIconBig: {
     fontSize: 36,

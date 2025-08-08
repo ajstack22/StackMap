@@ -78,7 +78,7 @@ const PinModal = ({
                 style={[
                   styles.pinDot,
                   { borderColor: theme.primary },
-                  pinLength > index && [
+                  pinInput.length > index && [
                     styles.pinDotFilled,
                     { backgroundColor: theme.primary, borderColor: theme.primary }
                   ]
@@ -137,9 +137,9 @@ const PinModal = ({
             <Text style={styles.pinHelperText}>
               {!confirmPin ? 
                 'Enter a 4-digit PIN' : 
-                (pinLength === 4 ? 
+                (pinInput.length === 4 ? 
                   'PIN confirmed! Processing...' : 
-                  `Re-enter PIN to confirm (${pinLength}/4)`)}
+                  `Re-enter PIN to confirm (${pinInput.length}/4)`)}
             </Text>
           )}
           

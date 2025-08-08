@@ -14,7 +14,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, COLORS, isTablet, CUSTOM_IMAGE_SOURCES } from '../../constants';
+import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, COLORS, isTablet, CUSTOM_IMAGE_SOURCES, getCustomImageSource } from '../../constants';
 import emojiData from 'emoji-datasource-apple/emoji.json';
 
 const { width: screenWidth } = Dimensions.get('window');
@@ -275,7 +275,7 @@ const EmojiPicker = ({
           <Text style={styles.emoji}>{displayEmoji}</Text>
         ) : (
           <Image 
-            source={CUSTOM_IMAGE_SOURCES[item.src]}
+            source={getCustomImageSource(item.src)}
             style={styles.customImage}
             resizeMode="contain"
           />
@@ -308,7 +308,7 @@ const EmojiPicker = ({
           autoCorrect={false}
           autoCapitalize="none"
           returnKeyType="done"
-          keyboardType={Platform.OS === 'android' ? 'visible-password' : 'default'}
+          keyboardType="default"
           autoFocus={false}
           enablesReturnKeyAutomatically={true}
         />

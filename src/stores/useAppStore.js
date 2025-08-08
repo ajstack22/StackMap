@@ -1,52 +1,148 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import merge from 'lodash/merge';
 
-// Storage adapter for React Native AsyncStorage
-const storage = {
-  getItem: async (name) => {
-    try {
-      const value = await AsyncStorage.getItem(name);
-      if (!value) return null;
-      
-      // Try to parse JSON, but handle cases where value might not be valid JSON
+// Storage adapter - Use MMKV for 30x faster storage on Android
+let storage;
+
+if (Platform.OS === 'web') {
+  // Use AsyncStorage for web
+  const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  storage = {
+    getItem: async (name) => {
       try {
-        return JSON.parse(value);
-      } catch (parseError) {
-        console.error('Error parsing stored value, clearing corrupted data:', parseError);
-        // Clear corrupted data
-        await AsyncStorage.removeItem(name);
+        const value = await AsyncStorage.getItem(name);
+        if (!value) return null;
+        try {
+          return JSON.parse(value);
+        } catch (parseError) {
+          console.error('Error parsing stored value:', parseError);
+          await AsyncStorage.removeItem(name);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error reading from AsyncStorage:', error);
         return null;
       }
-    } catch (error) {
-      console.error('Error reading from AsyncStorage:', error);
-      return null;
-    }
-  },
-  setItem: async (name, value) => {
-    try {
-      await AsyncStorage.setItem(name, JSON.stringify(value));
-    } catch (error) {
-      console.error('Error writing to AsyncStorage:', error);
-    }
-  },
-  removeItem: async (name) => {
-    try {
-      await AsyncStorage.removeItem(name);
-    } catch (error) {
-      console.error('Error removing from AsyncStorage:', error);
-    }
-  },
+    },
+    setItem: async (name, value) => {
+      try {
+        await AsyncStorage.setItem(name, JSON.stringify(value));
+      } catch (error) {
+        console.error('Error writing to AsyncStorage:', error);
+      }
+    },
+    removeItem: async (name) => {
+      try {
+        await AsyncStorage.removeItem(name);
+      } catch (error) {
+        console.error('Error removing from AsyncStorage:', error);
+      }
+    },
+  };
+} else {
+  // Use MMKV for native platforms (30x faster than AsyncStorage)
+  console.log('[Storage] Attempting to load MMKV...');
+  try {
+    const { MMKV } = require('react-native-mmkv');
+    console.log('[Storage] MMKV loaded successfully');
+    const mmkvStorage = new MMKV({
+      id: 'stackmap-storage',
+      encryptionKey: undefined // We handle encryption at app level
+    });
+    console.log('[Storage] MMKV instance created');
+    
+    storage = {
+    getItem: (name) => {
+      try {
+        const value = mmkvStorage.getString(name);
+        if (!value) return null;
+        try {
+          return JSON.parse(value);
+        } catch (parseError) {
+          console.error('Error parsing stored value:', parseError);
+          mmkvStorage.delete(name);
+          return null;
+        }
+      } catch (error) {
+        console.error('Error reading from MMKV:', error);
+        return null;
+      }
+    },
+    setItem: (name, value) => {
+      try {
+        mmkvStorage.set(name, JSON.stringify(value));
+      } catch (error) {
+        console.error('Error writing to MMKV:', error);
+      }
+    },
+    removeItem: (name) => {
+      try {
+        mmkvStorage.delete(name);
+      } catch (error) {
+        console.error('Error removing from MMKV:', error);
+      }
+    },
+  };
+  
+  console.log('[Storage] Using MMKV for fast native storage');
+  } catch (error) {
+    console.error('[Storage] Failed to load MMKV:', error);
+    console.log('[Storage] Falling back to AsyncStorage');
+    // Fallback to AsyncStorage if MMKV fails
+    const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+    storage = {
+      getItem: async (name) => {
+        try {
+          const value = await AsyncStorage.getItem(name);
+          if (!value) return null;
+          try {
+            return JSON.parse(value);
+          } catch (parseError) {
+            console.error('Error parsing stored value:', parseError);
+            await AsyncStorage.removeItem(name);
+            return null;
+          }
+        } catch (error) {
+          console.error('Error reading from AsyncStorage:', error);
+          return null;
+        }
+      },
+      setItem: async (name, value) => {
+        try {
+          await AsyncStorage.setItem(name, JSON.stringify(value));
+        } catch (error) {
+          console.error('Error writing to AsyncStorage:', error);
+        }
+      },
+      removeItem: async (name) => {
+        try {
+          await AsyncStorage.removeItem(name);
+        } catch (error) {
+          console.error('Error removing from AsyncStorage:', error);
+        }
+      },
+    };
+  }
+}
+
+// Defer loading this large constant
+let STACKMAP_LIBRARY = null;
+const loadStackMapLibrary = () => {
+  if (!STACKMAP_LIBRARY) {
+    STACKMAP_LIBRARY = require('../constants/stackMapLibrary').STACKMAP_LIBRARY;
+  }
+  return STACKMAP_LIBRARY;
 };
 
-// Migration function for v3 to v4 data structure
+// Migration function for v4 to v5 data structure (Activity Groups)
 const migrateDataStructure = (state) => {
-  // If library structure doesn't exist, migrate from old structure
+  
+  // First run v3 to v4 migration if needed
   if (!state.library || !state.library.categories) {
     console.log('[Migration] Migrating data structure to v4...');
     
-    // Initialize library if it doesn't exist
     if (!state.library) {
       state.library = {
         categories: null,
@@ -54,21 +150,96 @@ const migrateDataStructure = (state) => {
       };
     }
     
-    // Migrate activityCategories to library.categories
     if (state.activityCategories && !state.library.categories) {
       state.library.categories = state.activityCategories;
     }
     
-    // Ensure libraryTemplates is in sync with activities
     if (state.activities && !state.libraryTemplates) {
       state.libraryTemplates = state.activities;
     }
+  }
+  
+  // Now run v4 to v5 migration (Activity Groups)
+  if (!state.stackMapLibrary || !state.myLibrary) {
+    console.log('[Migration] Migrating to v5 Activity Groups structure...');
     
-    console.log('[Migration] Data structure migration complete');
+    // DEFER: Don't load the large STACKMAP_LIBRARY during initial hydration
+    // It will be loaded lazily when actually needed
+    if (!state.stackMapLibrary) {
+      // Just mark that it needs to be loaded later
+      state.stackMapLibrary = null; // Will be loaded on demand
+    }
+    
+    // Migrate existing user categories to My Library
+    if (!state.myLibrary) {
+      const existingCategories = state.library?.categories || state.activityCategories || [];
+      
+      // Convert categories to activity groups
+      const userGroups = existingCategories
+        .filter(cat => cat.activities && cat.activities.length > 0) // Only migrate non-empty categories
+        .map(cat => ({
+          ...cat,
+          isUserCreated: true,
+          createdAt: Date.now(),
+          lastModified: Date.now(),
+          order: cat.order || 999,
+          metadata: {
+            description: '',
+            color: null
+          }
+        }));
+      
+      // Always ensure My Templates exists
+      const hasMyTemplates = userGroups.some(g => g.id === 'my-templates');
+      if (!hasMyTemplates) {
+        userGroups.push({
+          id: 'my-templates',
+          name: 'My Templates',
+          activities: [],
+          isUserCreated: false,
+          isProtected: true,
+          createdAt: Date.now(),
+          lastModified: Date.now(),
+          order: 0,
+          metadata: {
+            description: 'Your saved activity templates',
+            color: null
+          }
+        });
+      }
+      
+      state.myLibrary = {
+        activityGroups: userGroups,
+        groupOrder: userGroups.map(g => g.id)
+      };
+    }
+    
+    console.log('[Migration] v5 Activity Groups migration complete');
   }
   
   return state;
 };
+
+// Track if store has been hydrated
+let isHydrated = false;
+let hydrationPromise = null;
+
+// Create a minimal initial state for immediate app startup
+const getInitialState = () => ({
+  // Critical state needed immediately
+  currentTheme: 'stackBlue',
+  bannerPosition: 'top',
+  soundEnabled: true,
+  users: {},
+  currentUser: null,
+  hasCompletedOnboarding: false,
+  // Non-critical state can be null initially
+  activities: [],
+  libraryTemplates: [],
+  stackMapLibrary: null,
+  myLibrary: null,
+  library: { categories: null, userAddedActivityIds: [] }
+});
 
 // Create the store with devtools and persistence
 const useAppStore = create(
@@ -233,18 +404,22 @@ const useAppStore = create(
       
       // Activities and Days
       activities: [], // DEPRECATED: Will be renamed to libraryTemplates
-      libraryTemplates: [], // NEW: Renamed from activities for clarity
+      libraryTemplates: [], // DEPRECATED: Legacy field for backward compatibility
       currentDay: 'today',
       displayMode: 'numbers',
       dayMode: 'today',
       templates: {}, // DEPRECATED: Legacy field
-      activityCategories: null, // DEPRECATED: Will be moved to library.categories
+      activityCategories: null, // DEPRECATED: Legacy field for backward compatibility
       
-      // NEW: Properly structured library data
+      // DEPRECATED: Old library structure
       library: {
-        categories: null, // Will replace activityCategories
-        userAddedActivityIds: [] // Track user-added activities
+        categories: null,
+        userAddedActivityIds: []
       },
+      
+      // NEW v5: Activity Groups structure
+      stackMapLibrary: null, // System-provided activity groups (read-only)
+      myLibrary: null, // User's custom activity groups
       
       userContextData: {},
       hasCompletedOnboarding: false,
@@ -294,6 +469,123 @@ const useAppStore = create(
           userAddedActivityIds: [...(state.library.userAddedActivityIds || []), activityId]
         }
       }), false, 'addUserActivityToLibrary'),
+      
+      // NEW v5: Activity Group Management Actions
+      setStackMapLibrary: (library) => set({ stackMapLibrary: library }, false, 'setStackMapLibrary'),
+      
+      setMyLibrary: (library) => set({ myLibrary: library }, false, 'setMyLibrary'),
+      
+      // Lazy load the StackMap Library when needed
+      getStackMapLibrary: () => {
+        const state = get();
+        if (!state.stackMapLibrary) {
+          console.log('[LAZY LOAD] Loading StackMap Library on demand');
+          // Load the library lazily
+          const library = loadStackMapLibrary();
+          set({ stackMapLibrary: library }, false, 'lazyLoadStackMapLibrary');
+          return library;
+        }
+        return state.stackMapLibrary;
+      },
+      
+      createActivityGroup: (name, metadata = {}) => set((state) => {
+        const newGroup = {
+          id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name,
+          activities: [],
+          isUserCreated: true,
+          createdAt: Date.now(),
+          lastModified: Date.now(),
+          order: state.myLibrary?.activityGroups?.length || 0,
+          metadata: {
+            description: metadata.description || '',
+            color: metadata.color || null,
+            ...metadata
+          }
+        };
+        
+        const currentLibrary = state.myLibrary || { activityGroups: [], groupOrder: [] };
+        return {
+          myLibrary: {
+            ...currentLibrary,
+            activityGroups: [...currentLibrary.activityGroups, newGroup],
+            groupOrder: [...currentLibrary.groupOrder, newGroup.id]
+          }
+        };
+      }, false, 'createActivityGroup'),
+      
+      updateActivityGroup: (groupId, updates) => set((state) => {
+        if (!state.myLibrary) return state;
+        
+        return {
+          myLibrary: {
+            ...state.myLibrary,
+            activityGroups: state.myLibrary.activityGroups.map(group =>
+              group.id === groupId
+                ? { ...group, ...updates, lastModified: Date.now() }
+                : group
+            )
+          }
+        };
+      }, false, 'updateActivityGroup'),
+      
+      deleteActivityGroup: (groupId) => set((state) => {
+        if (!state.myLibrary) return state;
+        
+        // Don't allow deletion of protected groups
+        const group = state.myLibrary.activityGroups.find(g => g.id === groupId);
+        if (group?.isProtected) return state;
+        
+        return {
+          myLibrary: {
+            ...state.myLibrary,
+            activityGroups: state.myLibrary.activityGroups.filter(g => g.id !== groupId),
+            groupOrder: state.myLibrary.groupOrder.filter(id => id !== groupId)
+          }
+        };
+      }, false, 'deleteActivityGroup'),
+      
+      addActivityToGroup: (groupId, activity) => set((state) => {
+        if (!state.myLibrary) return state;
+        
+        return {
+          myLibrary: {
+            ...state.myLibrary,
+            activityGroups: state.myLibrary.activityGroups.map(group =>
+              group.id === groupId
+                ? {
+                    ...group,
+                    activities: [...group.activities, activity],
+                    lastModified: Date.now()
+                  }
+                : group
+            )
+          }
+        };
+      }, false, 'addActivityToGroup'),
+      
+      copyGroupToMyLibrary: (sourceGroup) => set((state) => {
+        const newGroup = {
+          ...sourceGroup,
+          id: `group-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          name: `${sourceGroup.name} (Copy)`,
+          isUserCreated: true,
+          isSystemProvided: false,
+          isProtected: false,
+          createdAt: Date.now(),
+          lastModified: Date.now(),
+          order: state.myLibrary?.activityGroups?.length || 0
+        };
+        
+        const currentLibrary = state.myLibrary || { activityGroups: [], groupOrder: [] };
+        return {
+          myLibrary: {
+            ...currentLibrary,
+            activityGroups: [...currentLibrary.activityGroups, newGroup],
+            groupOrder: [...currentLibrary.groupOrder, newGroup.id]
+          }
+        };
+      }, false, 'copyGroupToMyLibrary'),
       
       setUserContextData: (data) => set({ userContextData: data }, false, 'setUserContextData'),
       
@@ -347,15 +639,48 @@ const useAppStore = create(
           }
         };
       }, false, 'updateUserActivities'),
+      
+      // Manual hydration trigger for deferred loading
+      hydrateStore: async () => {
+        if (isHydrated) return;
+        if (hydrationPromise) return hydrationPromise;
+        
+        hydrationPromise = (async () => {
+          try {
+            // MMKV is synchronous on native, but we keep async for web compatibility
+            const stored = Platform.OS === 'web' 
+              ? await storage.getItem('stackmap-storage')
+              : storage.getItem('stackmap-storage');
+            
+            if (stored) {
+              const { state } = stored;
+              if (state) {
+                // Apply all state at once - faster than chunking
+                // Migration happens synchronously
+                const migratedState = migrateDataStructure(state);
+                set(migratedState, false, 'hydrateStore');
+              }
+            }
+            isHydrated = true;
+          } catch (error) {
+            console.error('[STORE HYDRATION] Hydration failed:', error);
+            isHydrated = true; // Mark as hydrated even on error to unblock UI
+          }
+        })();
+        
+        return hydrationPromise;
+      },
     }),
     {
       name: 'stackmap-storage', // unique name for storage
       storage, // use our AsyncStorage adapter
+      // CRITICAL: Skip automatic hydration to prevent blocking app startup
+      skipHydration: true, // Hydration will be triggered manually after app renders
+      
       onRehydrateStorage: () => (state) => {
-        // Run migration after rehydration
-        if (state) {
-          migrateDataStructure(state);
-        }
+        // This won't be called with skipHydration: true
+        // Hydration is handled manually in hydrateStore()
+        console.log('[STORE HYDRATION] onRehydrateStorage called (should not happen with skipHydration)');
       },
       partialize: (state) => ({
         // Only persist specific parts of the state
@@ -373,8 +698,10 @@ const useAppStore = create(
         dayMode: state.dayMode,
         templates: state.templates,
         activityCategories: state.activityCategories,
-        library: state.library, // NEW: Persist library structure
-        libraryTemplates: state.libraryTemplates, // NEW: Persist renamed field
+        library: state.library, // Keep for backward compatibility
+        libraryTemplates: state.libraryTemplates, // Keep for backward compatibility
+        stackMapLibrary: state.stackMapLibrary, // NEW v5: System library
+        myLibrary: state.myLibrary, // NEW v5: User library
         userContextData: state.userContextData,
         hasCompletedOnboarding: state.hasCompletedOnboarding,
         // Note: activities are stored per user, so we don't persist them here

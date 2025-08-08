@@ -13,8 +13,8 @@ import {
   Image,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { EmojiPicker } from '../../';
-import { CUSTOM_IMAGE_SOURCES, FEATURE_FLAGS } from '../../../constants';
+import { EmojiPicker, TimePicker } from '../../';
+import { CUSTOM_IMAGE_SOURCES, getCustomImageSource, FEATURE_FLAGS } from '../../../constants';
 import { styles } from './styles';
 
 const ActivityModal = ({
@@ -111,7 +111,7 @@ const ActivityModal = ({
                 >
                   {activityEmoji && activityEmoji.startsWith('image:') ? (
                     <Image 
-                      source={CUSTOM_IMAGE_SOURCES[activityEmoji.substring(6)]}
+                      source={getCustomImageSource(activityEmoji.substring(6))}
                       style={styles.selectedEmojiImage}
                       resizeMode="contain"
                     />
@@ -146,11 +146,11 @@ const ActivityModal = ({
                 
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Time (optional)</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="e.g. 9:00 AM"
+                  <TimePicker
                     value={activityTime}
-                    onChangeText={setActivityTime}
+                    onChange={setActivityTime}
+                    placeholder="Select time"
+                    theme={theme}
                   />
                 </View>
                 

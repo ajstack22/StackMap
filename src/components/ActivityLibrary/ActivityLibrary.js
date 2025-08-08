@@ -46,62 +46,13 @@ import {
   isTablet,
   DEFAULT_ACTIVITY_EMOJI,
   CUSTOM_IMAGE_SOURCES,
+  getCustomImageSource,
 } from '../../constants';
 import EmojiPicker from '../EmojiPicker';
 
-// Default activity categories with starter activities
-const DEFAULT_CATEGORIES = [
-  {
-    id: 'my-templates',
-    name: 'My Templates',
-    activities: [],
-  },
-  {
-    id: 'daily-routines',
-    name: 'Daily Routines',
-    activities: [
-      { id: 'morning-routine', name: 'Morning Routine', emoji: '🌅' },
-      { id: 'bedtime', name: 'Bedtime', emoji: '🛏️' },
-      { id: 'brush-teeth', name: 'Brush Teeth', emoji: '🦷' },
-      { id: 'shower', name: 'Shower', emoji: '🚿' },
-      { id: 'get-dressed', name: 'Get Dressed', emoji: '👔' },
-    ],
-  },
-  {
-    id: 'meals',
-    name: 'Meals',
-    activities: [
-      { id: 'breakfast', name: 'Breakfast', emoji: '🥞' },
-      { id: 'lunch', name: 'Lunch', emoji: '🥪' },
-      { id: 'dinner', name: 'Dinner', emoji: '🍽️' },
-      { id: 'snack', name: 'Snack', emoji: '🍿' },
-      { id: 'cooking', name: 'Cooking', emoji: '👨‍🍳' },
-    ],
-  },
-  {
-    id: 'activities',
-    name: 'Activities',
-    activities: [
-      { id: 'playtime', name: 'Playtime', emoji: '🎮' },
-      { id: 'outside-play', name: 'Outside Play', emoji: '🏃' },
-      { id: 'reading', name: 'Reading', emoji: '📚' },
-      { id: 'screen-time', name: 'Screen Time', emoji: '📱' },
-      { id: 'homework', name: 'Homework', emoji: '📝' },
-      { id: 'chores', name: 'Chores', emoji: '🧹' },
-      { id: 'exercise', name: 'Exercise', emoji: '💪' },
-      { id: 'music', name: 'Music', emoji: '🎵' },
-      { id: 'art', name: 'Art & Crafts', emoji: '🎨' },
-      { id: 'occupational-therapy', name: 'Occupational Therapy', emoji: '🏥' },
-      { id: 'speech-therapy', name: 'Speech Therapy', emoji: '💬' },
-      { id: 'sensory-break', name: 'Sensory Break', emoji: '🌈' },
-      { id: 'doctor-appointment', name: 'Doctor\'s Appointment', emoji: '👨‍⚕️' },
-      { id: 'dentist-appointment', name: 'Dentist Appointment', emoji: '🦷' },
-      { id: 'school', name: 'School', emoji: '🏫' },
-      { id: 'work', name: 'Work', emoji: '💼' },
-      { id: 'stim-time', name: 'Stim Time', emoji: '✨' },
-    ],
-  },
-];
+// Empty template for new users - no pre-loaded activities
+// Users can create their own activity groups in My Library
+// StackMap Library provides curated activity groups separately
 
 const ActivityRow = ({ 
   activity, 
@@ -146,7 +97,7 @@ const ActivityRow = ({
       <View style={styles.activityInfo}>
         {activity.emoji && activity.emoji.startsWith('image:') ? (
           <Image 
-            source={CUSTOM_IMAGE_SOURCES[activity.emoji.substring(6)]}
+            source={getCustomImageSource(activity.emoji.substring(6))}
             style={styles.activityImage}
             resizeMode="contain"
           />
@@ -332,6 +283,7 @@ const CategorySection = ({
   onAddActivity,
   onAddAllFromCategory,
   onUpdateCategory,
+  onCopyToMyLibrary,
   theme,
   editingCategoryId,
   onStartEditCategory,
@@ -343,6 +295,7 @@ const CategorySection = ({
   onExpandedChange,
   searchQuery,
   isSortMode,
+  isReadOnly,
 }) => {
   const isEditingCategory = editingCategoryId === category.id;
   const [isExpanded, setIsExpanded] = useState(expandedState !== undefined ? expandedState : true);
@@ -521,7 +474,7 @@ const CategorySection = ({
       disabled={isActive || !isSortMode}
     >
       <View style={[styles.categoryHeader, { backgroundColor: theme.primary }]}>
-        {isSortMode && (
+        {isSortMode && !isReadOnly && (
           <View style={styles.categoryDragHandle}>
             <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
           </View>
@@ -581,7 +534,31 @@ const CategorySection = ({
             </TouchableOpacity>
             
             <View style={styles.categoryActions}>
-              {isMobile ? (
+              {isReadOnly ? (
+                // Read-only actions for StackMap Library
+                <>
+                  <TouchableOpacity
+                    style={styles.iconButton}
+                    onPress={() => onCopyToMyLibrary && onCopyToMyLibrary(category)}
+                    title="Copy to My Library"
+                  >
+                    <Icon name="content-copy" size={20} color="white" />
+                  </TouchableOpacity>
+                  {category.activities.length > 0 && (
+                    <TouchableOpacity
+                      style={styles.iconButton}
+                      onPress={handleAddAll}
+                      disabled={justAddedAll}
+                    >
+                      <Icon 
+                        name={justAddedAll ? "done-all" : "add-circle-outline"} 
+                        size={20} 
+                        color="white" 
+                      />
+                    </TouchableOpacity>
+                  )}
+                </>
+              ) : isMobile ? (
                 <>
                   <TouchableOpacity
                     ref={menuButtonRef}
@@ -816,7 +793,7 @@ const CategorySection = ({
                     <View style={styles.activityInfo}>
                       {item.emoji && item.emoji.startsWith('image:') ? (
                         <Image 
-                          source={CUSTOM_IMAGE_SOURCES[item.emoji.substring(6)]}
+                          source={getCustomImageSource(item.emoji.substring(6))}
                           style={styles.activityImage}
                           resizeMode="contain"
                         />
@@ -909,11 +886,17 @@ const ActivityLibrary = ({
   theme,
   categories: customCategories,
   onSaveCategories,
+  stackMapLibrary,
+  myLibrary,
+  onCopyGroupToMyLibrary,
   showToast,
 }) => {
   const insets = useSafeAreaInsets();
-  // Start with empty categories if none provided, NOT DEFAULT_CATEGORIES
-  const [categories, setCategories] = useState(customCategories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]);
+  // Use myLibrary if provided, otherwise fall back to legacy categories
+  const [categories, setCategories] = useState(
+    myLibrary?.activityGroups || customCategories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]
+  );
+  const [activeTab, setActiveTab] = useState('stackmap'); // 'stackmap' or 'mylibrary'
   const [editingItem, setEditingItem] = useState(null);
   const [editMode, setEditMode] = useState(null); // 'category', 'activity', 'new-category', 'new-activity'
   const [editName, setEditName] = useState('');
@@ -1232,6 +1215,49 @@ const ActivityLibrary = ({
         </SafeAreaView>
 
       <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
+        {/* Tab Selector */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeTab === 'stackmap' && [styles.activeTab, { backgroundColor: theme.primary }]
+            ]}
+            onPress={() => setActiveTab('stackmap')}
+          >
+            <Icon 
+              name="auto-awesome" 
+              size={20} 
+              color={activeTab === 'stackmap' ? 'white' : theme.primary} 
+            />
+            <Text style={[
+              styles.tabText,
+              activeTab === 'stackmap' && styles.activeTabText
+            ]}>
+              StackMap Library
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={[
+              styles.tab,
+              activeTab === 'mylibrary' && [styles.activeTab, { backgroundColor: theme.primary }]
+            ]}
+            onPress={() => setActiveTab('mylibrary')}
+          >
+            <Icon 
+              name="folder" 
+              size={20} 
+              color={activeTab === 'mylibrary' ? 'white' : theme.primary} 
+            />
+            <Text style={[
+              styles.tabText,
+              activeTab === 'mylibrary' && styles.activeTabText
+            ]}>
+              My Library
+            </Text>
+          </TouchableOpacity>
+        </View>
+        
         {/* Search and Sort Bar */}
         <View style={styles.controlsBar}>
           <View style={[styles.searchContainer, { backgroundColor: 'white' }]}>
@@ -1289,7 +1315,10 @@ const ActivityLibrary = ({
           </TouchableOpacity>
         </View>
         <DraggableFlatList
-          data={categories.filter(category => {
+          data={(activeTab === 'stackmap' ? 
+            (stackMapLibrary?.activityGroups || []) : 
+            categories
+          ).filter(category => {
             if (!searchQuery) return true;
             const query = searchQuery.toLowerCase();
             // Check category name
@@ -1300,7 +1329,7 @@ const ActivityLibrary = ({
               activity.emoji.includes(searchQuery)
             );
           })}
-          onDragBegin={Platform.OS === 'android' ? undefined : (index) => {
+          onDragBegin={Platform.OS === 'android' || activeTab === 'stackmap' ? undefined : (index) => {
             const draggedItem = categories[index];
             if (draggedItem) {
               handleCategoryDragStart(draggedItem.id);
@@ -1310,24 +1339,26 @@ const ActivityLibrary = ({
             // This fires when items actually move positions
             hasActuallyDragged.current = true;
           }}
-          onDragEnd={Platform.OS === 'android' ? undefined : handleCategoryDragEnd}
+          onDragEnd={Platform.OS === 'android' || activeTab === 'stackmap' ? undefined : handleCategoryDragEnd}
           keyExtractor={(item) => item.id}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ paddingBottom: SPACING.lg }}
           scrollEnabled={!isDraggingAnyCategory && !isSortMode}
-          activationDistance={isSortMode ? 0 : 20}
+          activationDistance={activeTab === 'stackmap' ? 999999 : (isSortMode ? 0 : 20)}
           renderItem={({ item, drag, isActive }) => (
             <ScaleDecorator activeScale={0.98}>
               <CategorySection
                 category={item}
-                onEditCategory={handleEditCategory}
-                onDeleteCategory={handleDeleteCategory}
-                onEditActivity={handleEditActivity}
-                onDeleteActivity={handleDeleteActivity}
+                onEditCategory={activeTab === 'mylibrary' ? handleEditCategory : undefined}
+                onDeleteCategory={activeTab === 'mylibrary' ? handleDeleteCategory : undefined}
+                onEditActivity={activeTab === 'mylibrary' ? handleEditActivity : undefined}
+                onDeleteActivity={activeTab === 'mylibrary' ? handleDeleteActivity : undefined}
                 onQuickAdd={handleQuickAdd}
-                onAddActivity={handleAddActivity}
+                onAddActivity={activeTab === 'mylibrary' ? handleAddActivity : undefined}
                 onAddAllFromCategory={handleAddAllFromCategory}
-                onUpdateCategory={handleUpdateCategory}
+                onUpdateCategory={activeTab === 'mylibrary' ? handleUpdateCategory : undefined}
+                onCopyToMyLibrary={activeTab === 'stackmap' ? onCopyGroupToMyLibrary : undefined}
+                isReadOnly={activeTab === 'stackmap'}
                 theme={theme}
                 editingCategoryId={editingCategoryId}
                 onStartEditCategory={handleStartEditCategory}
@@ -1342,17 +1373,17 @@ const ActivityLibrary = ({
               />
             </ScaleDecorator>
           )}
-          ListFooterComponent={() => (
+          ListFooterComponent={() => activeTab === 'mylibrary' ? (
             <TouchableOpacity
               style={[styles.addCategoryButton, { borderColor: 'white' }]}
               onPress={handleAddCategory}
             >
               <Icon name="add" size={20} color="white" />
               <Text style={[styles.addCategoryText, { color: 'white' }]}>
-                Add New Category
+                Add New Activity Group
               </Text>
             </TouchableOpacity>
-          )}
+          ) : null}
         />
       </View>
 
@@ -1393,7 +1424,7 @@ const ActivityLibrary = ({
                 >
                   {editEmoji && editEmoji.startsWith('image:') ? (
                     <Image 
-                      source={CUSTOM_IMAGE_SOURCES[editEmoji.substring(6)]}
+                      source={getCustomImageSource(editEmoji.substring(6))}
                       style={styles.selectedEmojiImage}
                       resizeMode="contain"
                     />
@@ -1457,6 +1488,36 @@ const styles = StyleSheet.create({
   contentWrapper: {
     flex: 1,
     padding: SPACING.md,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: SPACING.md,
+    backgroundColor: 'white',
+    borderRadius: RADIUS.lg,
+    padding: 4,
+    ...SHADOWS.level1,
+  },
+  tab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    gap: SPACING.xs,
+  },
+  activeTab: {
+    ...SHADOWS.level1,
+  },
+  tabText: {
+    fontSize: isTablet() ? 15 : 13,
+    fontWeight: '600',
+    color: '#666',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+  },
+  activeTabText: {
+    color: 'white',
   },
   controlsBar: {
     flexDirection: 'row',
@@ -1814,11 +1875,7 @@ const styles = StyleSheet.create({
   },
 });
 
-// Export a function to initialize with default categories if desired
-export const initializeWithDefaults = () => DEFAULT_CATEGORIES;
-
 // Export empty template for initialization
-export const EMPTY_CATEGORIES = [{ id: 'my-templates', name: 'My Templates', activities: [] }];
+export const EMPTY_CATEGORIES = [];
 
 export default ActivityLibrary;
-export { DEFAULT_CATEGORIES };
