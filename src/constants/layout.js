@@ -113,8 +113,8 @@ export const getCardPadding = () => {
   return isTablet() ? 25 : 35; // Reduced from 45 to 25 for tablets
 };
 
-// FAB dimensions
-export const FAB_DIMENSIONS = {
+// FAB dimensions - use function to avoid module-level Platform.OS access
+export const getFABDimensions = () => ({
   mobile: {
     size: Platform.OS === 'web' ? 60 : 72,
     iconSize: Platform.OS === 'web' ? 26 : 31,
@@ -123,6 +123,12 @@ export const FAB_DIMENSIONS = {
     size: Platform.OS === 'web' ? 60 : 96,
     iconSize: Platform.OS === 'web' ? 26 : 38,
   },
+});
+
+// For backward compatibility
+export const FAB_DIMENSIONS = {
+  mobile: { size: 72, iconSize: 31 },
+  tablet: { size: 96, iconSize: 38 },
 };
 
 // Badge dimensions (number and completion circles)

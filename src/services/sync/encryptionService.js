@@ -1,8 +1,13 @@
 // Import crypto polyfill for React Native BEFORE tweetnacl
 import { Platform } from 'react-native';
-if (Platform.OS !== 'web') {
-  require('react-native-get-random-values');
-}
+// Lazy load crypto polyfill to avoid module-level Platform.OS access
+let cryptoLoaded = false;
+const ensureCrypto = () => {
+  if (!cryptoLoaded && Platform.OS !== 'web') {
+    require('react-native-get-random-values');
+    cryptoLoaded = true;
+  }
+};
 
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
@@ -25,6 +30,7 @@ class EncryptionService {
    * Generate a random recovery phrase (12 words from a wordlist)
    */
   generateRecoveryPhrase() {
+    ensureCrypto(); // Ensure crypto is loaded before using nacl
     // Generate a random 128-bit seed and convert to hex
     // In production, use BIP39 wordlist for better UX
     const seedBytes = nacl.randomBytes(16);

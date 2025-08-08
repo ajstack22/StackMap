@@ -33,7 +33,14 @@ const getApiBaseUrl = () => {
   return 'https://stackmap.app/api/sync';
 };
 
-const API_BASE_URL = getApiBaseUrl();
+// Delay API_BASE_URL initialization to avoid module-level Platform.OS access
+let API_BASE_URL = null;
+const getApiUrl = () => {
+  if (!API_BASE_URL) {
+    API_BASE_URL = getApiBaseUrl();
+  }
+  return API_BASE_URL;
+};
 
 // Share endpoints use environment-specific API for testing
 const getShareApiUrl = () => {
@@ -381,7 +388,7 @@ class SyncService {
     const currentState = this.getCurrentState();
     const encryptedBlob = encryptionService.encryptData(currentState);
     
-    const response = await fetch(`${API_BASE_URL}/create.php`, {
+    const response = await fetch(`${getApiUrl()}/create.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -465,7 +472,7 @@ class SyncService {
     // Track this transaction
     this.processedTransactions.add(transactionId);
     
-    const response = await fetch(`${API_BASE_URL}/push.php`, {
+    const response = await fetch(`${getApiUrl()}/push.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -504,7 +511,7 @@ class SyncService {
 
     const deviceId = await encryptionService.getDeviceId();
 
-    const url = `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+    const url = `${getApiUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
     
     const response = await fetch(url);
 
@@ -1123,7 +1130,7 @@ class SyncService {
 
     const deviceId = await encryptionService.getDeviceId();
     
-    const response = await fetch(`${API_BASE_URL}/delete.php`, {
+    const response = await fetch(`${getApiUrl()}/delete.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1166,7 +1173,7 @@ class SyncService {
 
     try {
       const deviceId = await encryptionService.getDeviceId();
-      const response = await fetch(`${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
+      const response = await fetch(`${getApiUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
       
       if (response.status === 404) {
         // Sync doesn't exist on server, disable locally
@@ -2165,13 +2172,13 @@ class SyncService {
    * Get the API URL for sync operations
    */
   getApiUrl() {
-    return API_BASE_URL;
+    return getApiUrl();
   }
 }
 
 const syncService = new SyncService();
 syncService.generateSyncId = syncService.generateSyncId.bind(syncService);
-syncService.API_BASE_URL = API_BASE_URL;
+syncService.API_BASE_URL = getApiUrl();
 syncService.encryptionService = encryptionService;
 
 export default syncService;
