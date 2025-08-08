@@ -380,8 +380,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
   },
-  safeArea: {
-  },
+  safeArea: {},
   topPosition: {
     top: 0,
   },

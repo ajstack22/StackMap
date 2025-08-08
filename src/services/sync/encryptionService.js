@@ -79,14 +79,14 @@ class EncryptionService {
     const cachedKey = await this.getCachedKey(recoveryPhrase, syncId);
     
     if (cachedKey) {
-      console.log('[Encryption] Using cached key, skipping derivation');
+
       this.masterKey = cachedKey.key;
       this.syncId = syncId;
       return { syncId, salt: cachedKey.salt };
     }
     
     // No cached key, derive it
-    console.log('[Encryption] No cached key, deriving from recovery phrase...');
+
     const { key, salt } = await this.deriveKeyFromPhrase(recoveryPhrase, existingSalt);
     this.masterKey = key;
     this.syncId = syncId;
@@ -127,7 +127,9 @@ class EncryptionService {
           console.log(`Compression saved ${Math.round((1 - compressed.length / util.decodeUTF8(dataString).length) * 100)}%`);
         }
       } catch (error) {
-        console.warn('Compression failed, using uncompressed data:', error);
+        if (__DEV__) {
+          console.warn('Compression failed, using uncompressed data:', error);
+        }
       }
     }
 
@@ -201,7 +203,7 @@ class EncryptionService {
             if (metadata.compressed) {
               try {
                 dataBytes = pako.inflate(dataBytes);
-                console.log(`Decompressed from ${metadata.compressedSize} to ${metadata.originalSize} bytes`);
+
               } catch (error) {
                 throw new Error('Decompression failed');
               }
@@ -212,7 +214,7 @@ class EncryptionService {
           }
         } catch (error) {
           // Fall back to version 1 format
-          console.log('Failed to parse as v2, trying v1 format:', error);
+
         }
       }
     }
@@ -296,9 +298,11 @@ class EncryptionService {
       };
       
       await AsyncStorage.setItem(cacheKey, JSON.stringify(cacheData));
-      console.log('[Encryption] Cached derived key for faster startup');
+
     } catch (error) {
-      console.warn('[Encryption] Failed to cache key:', error);
+      if (__DEV__) {
+        console.warn('[Encryption] Failed to cache key:', error);
+      }
     }
   }
 
@@ -318,14 +322,14 @@ class EncryptionService {
       
       // Verify syncId matches
       if (cacheData.syncId !== syncId) {
-        console.log('[Encryption] Cached key syncId mismatch, re-deriving');
+
         return null;
       }
       
       // Cache is valid for 30 days
       const cacheAge = Date.now() - cacheData.timestamp;
       if (cacheAge > 30 * 24 * 60 * 60 * 1000) {
-        console.log('[Encryption] Cached key expired, re-deriving');
+
         return null;
       }
       
@@ -334,7 +338,9 @@ class EncryptionService {
         salt: cacheData.salt
       };
     } catch (error) {
-      console.warn('[Encryption] Failed to get cached key:', error);
+      if (__DEV__) {
+        console.warn('[Encryption] Failed to get cached key:', error);
+      }
       return null;
     }
   }
@@ -360,7 +366,9 @@ class EncryptionService {
       // Store encrypted phrase
       await AsyncStorage.setItem(`@sync_phrase_${syncId}`, util.encodeBase64(combined));
     } catch (error) {
-      console.error('Failed to store recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to store recovery phrase:', error);
+      }
     }
   }
   
@@ -385,7 +393,9 @@ class EncryptionService {
       
       return util.encodeUTF8(decrypted);
     } catch (error) {
-      console.error('Failed to retrieve recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to retrieve recovery phrase:', error);
+      }
       return null;
     }
   }

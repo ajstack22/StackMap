@@ -70,7 +70,7 @@ const ActivityRow = ({
   const isMobile = screenWidth < 480;
   const insets = useSafeAreaInsets();
   const handleDelete = () => {
-    console.log('handleDelete in ActivityRow called for:', activity.name);
+
     if (Platform.OS === 'web') {
       setShowDeleteConfirm(true);
     } else {
@@ -83,7 +83,7 @@ const ActivityRow = ({
             text: 'Delete', 
             style: 'destructive', 
             onPress: () => {
-              console.log('Delete confirmed, calling onDelete');
+
               onDelete(activity);
             }
           },
@@ -256,7 +256,7 @@ const ActivityRow = ({
           visible={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           onConfirm={() => {
-            console.log('Delete confirmed in ConfirmModal, calling onDelete');
+
             onDelete(activity);
             setShowDeleteConfirm(false);
           }}
@@ -463,7 +463,6 @@ const CategorySection = ({
   const animatedStyles = animatedStylesRef.current;
 
   // Remove slide animations since we simplified ActivityRow
-
 
   return (
     <TouchableOpacity
@@ -954,7 +953,7 @@ const ActivityLibrary = ({
   };
 
   const handleDeleteActivity = (categoryId, activity) => {
-    console.log('handleDeleteActivity called:', { categoryId, activity, onSaveCategories: !!onSaveCategories });
+
     const newCategories = categories.map(cat => {
       if (cat.id === categoryId) {
         return {
@@ -964,14 +963,12 @@ const ActivityLibrary = ({
       }
       return cat;
     });
-    console.log('New categories:', newCategories);
+
     setCategories(newCategories);
     if (onSaveCategories) {
-      console.log('Calling onSaveCategories');
+
       onSaveCategories(newCategories);
-    } else {
-      console.log('onSaveCategories is not defined!');
-    }
+    } else {}
   };
 
   const handleAddCategory = () => {

@@ -32,14 +32,13 @@ export const useSyncOnChange = () => {
         // Check if state actually changed
         if (lastStateRef.current && 
             JSON.stringify(lastStateRef.current) !== JSON.stringify(currentState)) {
-          console.log('State changed, requesting sync');
-          
+
           // Request debounced sync
           syncService.requestSync({ 
             priority: 'normal',
             immediate: false 
           }).catch(error => {
-            console.error('Auto-sync failed:', error);
+//             console.error('Auto-sync failed:', error);
           });
         }
         

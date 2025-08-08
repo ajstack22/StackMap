@@ -25,7 +25,7 @@ class ChangeTracker {
         this.changes = JSON.parse(stored);
       }
     } catch (error) {
-      console.error('Failed to load change log:', error);
+//       console.error('Failed to load change log:', error);
     }
 
     // Subscribe to store changes
@@ -35,7 +35,7 @@ class ChangeTracker {
     );
 
     this.tracking = true;
-    console.log('ChangeTracker: Started tracking');
+
   }
 
   /**
@@ -47,7 +47,7 @@ class ChangeTracker {
       this.unsubscribe = null;
     }
     this.tracking = false;
-    console.log('ChangeTracker: Stopped tracking');
+
   }
 
   /**
@@ -188,7 +188,7 @@ class ChangeTracker {
     try {
       await AsyncStorage.setItem(CHANGE_LOG_KEY, JSON.stringify(this.changes));
     } catch (error) {
-      console.error('Failed to persist change log:', error);
+//       console.error('Failed to persist change log:', error);
     }
   }
 

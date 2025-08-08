@@ -48,7 +48,6 @@ function decryptData(encryptedData, masterKey) {
 }
 
 async function runIntegrationTest() {
-  console.log('🧪 Running Sync Integration Test...\n');
 
   const API_BASE_URL = 'https://stackmap.app/api/sync';
   
@@ -70,7 +69,7 @@ async function runIntegrationTest() {
 
   try {
     // 1. Create sync group
-    console.log('1️⃣ Creating sync group...');
+
     const encryptedBlob = encryptData(testData, masterKey);
     
     const createResponse = await fetch(`${API_BASE_URL}/create.php`, {
@@ -84,30 +83,21 @@ async function runIntegrationTest() {
     });
 
     const createResult = await createResponse.json();
-    console.log('✅ Create response:', createResult);
 
     // 2. Pull data back
-    console.log('\n2️⃣ Pulling data...');
+
     const pullResponse = await fetch(
       `${API_BASE_URL}/pull.php?sync_id=${testSyncId}&device_id=${deviceId}`
     );
     
     const pullResult = await pullResponse.json();
-    console.log('✅ Pull response:', {
-      version: pullResult.version,
-      last_modified: pullResult.last_modified,
-      blob_length: pullResult.encrypted_blob.length
-    });
 
     // 3. Decrypt and verify
-    console.log('\n3️⃣ Decrypting data...');
+
     const decryptedData = decryptData(pullResult.encrypted_blob, masterKey);
-    console.log('✅ Decrypted successfully!');
-    console.log('Activities:', decryptedData.activities.length);
-    console.log('Categories:', decryptedData.categories);
 
     // 4. Push updated data
-    console.log('\n4️⃣ Pushing updated data...');
+
     const updatedData = {
       ...testData,
       activities: [...testData.activities, 
@@ -129,27 +119,18 @@ async function runIntegrationTest() {
     });
 
     const pushResult = await pushResponse.json();
-    console.log('✅ Push response:', pushResult);
 
     // 5. Pull again to verify update
-    console.log('\n5️⃣ Verifying update...');
+
     const verifyResponse = await fetch(
       `${API_BASE_URL}/pull.php?sync_id=${testSyncId}&device_id=${deviceId}`
     );
     
     const verifyResult = await verifyResponse.json();
     const verifyData = decryptData(verifyResult.encrypted_blob, masterKey);
-    console.log('✅ Verified! Activities count:', verifyData.activities.length);
-
-    console.log('\n🎉 Integration test passed! All sync operations working correctly.');
-    console.log('\nSummary:');
-    console.log('- Created sync group with encrypted data');
-    console.log('- Successfully pulled and decrypted data');
-    console.log('- Pushed updates with version tracking');
-    console.log('- End-to-end encryption verified');
 
   } catch (error) {
-    console.error('❌ Integration test failed:', error);
+//     console.error('❌ Integration test failed:', error);
     process.exit(1);
   }
 }

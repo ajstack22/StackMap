@@ -17,12 +17,12 @@ if (Platform.OS === 'web') {
         try {
           return JSON.parse(value);
         } catch (parseError) {
-          console.error('Error parsing stored value:', parseError);
+//           console.error('Error parsing stored value:', parseError);
           await AsyncStorage.removeItem(name);
           return null;
         }
       } catch (error) {
-        console.error('Error reading from AsyncStorage:', error);
+//         console.error('Error reading from AsyncStorage:', error);
         return null;
       }
     },
@@ -30,29 +30,28 @@ if (Platform.OS === 'web') {
       try {
         await AsyncStorage.setItem(name, JSON.stringify(value));
       } catch (error) {
-        console.error('Error writing to AsyncStorage:', error);
+//         console.error('Error writing to AsyncStorage:', error);
       }
     },
     removeItem: async (name) => {
       try {
         await AsyncStorage.removeItem(name);
       } catch (error) {
-        console.error('Error removing from AsyncStorage:', error);
+//         console.error('Error removing from AsyncStorage:', error);
       }
     },
   };
 } else {
   // Use MMKV for native platforms (30x faster than AsyncStorage)
-  console.log('[Storage] Attempting to load MMKV...');
+
   try {
     const { MMKV } = require('react-native-mmkv');
-    console.log('[Storage] MMKV loaded successfully');
+
     const mmkvStorage = new MMKV({
       id: 'stackmap-storage',
       encryptionKey: undefined // We handle encryption at app level
     });
-    console.log('[Storage] MMKV instance created');
-    
+
     storage = {
     getItem: (name) => {
       try {
@@ -61,12 +60,12 @@ if (Platform.OS === 'web') {
         try {
           return JSON.parse(value);
         } catch (parseError) {
-          console.error('Error parsing stored value:', parseError);
+//           console.error('Error parsing stored value:', parseError);
           mmkvStorage.delete(name);
           return null;
         }
       } catch (error) {
-        console.error('Error reading from MMKV:', error);
+//         console.error('Error reading from MMKV:', error);
         return null;
       }
     },
@@ -74,22 +73,21 @@ if (Platform.OS === 'web') {
       try {
         mmkvStorage.set(name, JSON.stringify(value));
       } catch (error) {
-        console.error('Error writing to MMKV:', error);
+//         console.error('Error writing to MMKV:', error);
       }
     },
     removeItem: (name) => {
       try {
         mmkvStorage.delete(name);
       } catch (error) {
-        console.error('Error removing from MMKV:', error);
+//         console.error('Error removing from MMKV:', error);
       }
     },
   };
-  
-  console.log('[Storage] Using MMKV for fast native storage');
+
   } catch (error) {
-    console.error('[Storage] Failed to load MMKV:', error);
-    console.log('[Storage] Falling back to AsyncStorage');
+//     console.error('[Storage] Failed to load MMKV:', error);
+
     // Fallback to AsyncStorage if MMKV fails
     const AsyncStorage = require('@react-native-async-storage/async-storage').default;
     storage = {
@@ -100,12 +98,12 @@ if (Platform.OS === 'web') {
           try {
             return JSON.parse(value);
           } catch (parseError) {
-            console.error('Error parsing stored value:', parseError);
+//             console.error('Error parsing stored value:', parseError);
             await AsyncStorage.removeItem(name);
             return null;
           }
         } catch (error) {
-          console.error('Error reading from AsyncStorage:', error);
+//           console.error('Error reading from AsyncStorage:', error);
           return null;
         }
       },
@@ -113,14 +111,14 @@ if (Platform.OS === 'web') {
         try {
           await AsyncStorage.setItem(name, JSON.stringify(value));
         } catch (error) {
-          console.error('Error writing to AsyncStorage:', error);
+//           console.error('Error writing to AsyncStorage:', error);
         }
       },
       removeItem: async (name) => {
         try {
           await AsyncStorage.removeItem(name);
         } catch (error) {
-          console.error('Error removing from AsyncStorage:', error);
+//           console.error('Error removing from AsyncStorage:', error);
         }
       },
     };
@@ -141,8 +139,7 @@ const migrateDataStructure = (state) => {
   
   // First run v3 to v4 migration if needed
   if (!state.library || !state.library.categories) {
-    console.log('[Migration] Migrating data structure to v4...');
-    
+
     if (!state.library) {
       state.library = {
         categories: null,
@@ -161,8 +158,7 @@ const migrateDataStructure = (state) => {
   
   // Now run v4 to v5 migration (Activity Groups)
   if (!state.stackMapLibrary || !state.myLibrary) {
-    console.log('[Migration] Migrating to v5 Activity Groups structure...');
-    
+
     // DEFER: Don't load the large STACKMAP_LIBRARY during initial hydration
     // It will be loaded lazily when actually needed
     if (!state.stackMapLibrary) {
@@ -213,8 +209,7 @@ const migrateDataStructure = (state) => {
         groupOrder: userGroups.map(g => g.id)
       };
     }
-    
-    console.log('[Migration] v5 Activity Groups migration complete');
+
   }
   
   return state;
@@ -294,7 +289,7 @@ const useAppStore = create(
         
         // Fix user name if it's not a string
         if (!sanitizedUser.name || typeof sanitizedUser.name !== 'string') {
-          console.warn('Invalid user name in addUser:', sanitizedUser.name);
+//           console.warn('Invalid user name in addUser:', sanitizedUser.name);
           // If it's an object, try to extract a name from it
           if (typeof sanitizedUser.name === 'object' && sanitizedUser.name !== null) {
             sanitizedUser.name = sanitizedUser.name.name || sanitizedUser.name.text || sanitizedUser.name.value || 'User';
@@ -309,7 +304,7 @@ const useAppStore = create(
         // Fix user icon if it's not a string or doesn't exist
         // IMPORTANT: Do NOT use .trim() on emoji strings as it can damage complex Unicode sequences
         if (typeof sanitizedUser.icon !== 'string' || !sanitizedUser.icon || sanitizedUser.icon.length === 0) {
-          console.warn('Invalid user icon in addUser:', sanitizedUser.icon);
+//           console.warn('Invalid user icon in addUser:', sanitizedUser.icon);
           // Try to get icon from emoji field or use default
           sanitizedUser.icon = sanitizedUser.emoji || '👤';
         }
@@ -335,7 +330,7 @@ const useAppStore = create(
         // Fix user name if provided and not a string
         if ('name' in sanitizedUpdates) {
           if (!sanitizedUpdates.name || typeof sanitizedUpdates.name !== 'string') {
-            console.warn('Invalid user name in updateUser:', sanitizedUpdates.name);
+//             console.warn('Invalid user name in updateUser:', sanitizedUpdates.name);
             // If it's an object, try to extract a name from it
             if (typeof sanitizedUpdates.name === 'object' && sanitizedUpdates.name !== null) {
               sanitizedUpdates.name = sanitizedUpdates.name.name || sanitizedUpdates.name.text || sanitizedUpdates.name.value || currentUser.name || 'User';
@@ -349,7 +344,7 @@ const useAppStore = create(
         // IMPORTANT: Do NOT use .trim() on emoji strings as it can damage complex Unicode sequences
         if ('icon' in sanitizedUpdates) {
           if (typeof sanitizedUpdates.icon !== 'string' || !sanitizedUpdates.icon || sanitizedUpdates.icon.length === 0) {
-            console.warn('Invalid user icon in updateUser:', sanitizedUpdates.icon);
+//             console.warn('Invalid user icon in updateUser:', sanitizedUpdates.icon);
             sanitizedUpdates.icon = sanitizedUpdates.emoji || currentUser.icon || '👤';
           }
           // Keep the icon as-is if it's a valid non-empty string
@@ -368,7 +363,7 @@ const useAppStore = create(
         
         // Final validation of the complete user object
         if (!updatedUser.name || typeof updatedUser.name !== 'string') {
-          console.error('User name became non-string after merge:', updatedUser.name);
+//           console.error('User name became non-string after merge:', updatedUser.name);
           if (typeof updatedUser.name === 'object' && updatedUser.name !== null) {
             updatedUser.name = updatedUser.name.name || updatedUser.name.text || currentUser.name || 'User';
           } else {
@@ -376,7 +371,7 @@ const useAppStore = create(
           }
         }
         if (typeof updatedUser.icon !== 'string' || updatedUser.icon.trim() === '') {
-          console.error('User icon became invalid after merge:', updatedUser.icon);
+//           console.error('User icon became invalid after merge:', updatedUser.icon);
           updatedUser.icon = updatedUser.emoji || currentUser.icon || '👤';
         }
         
@@ -479,7 +474,7 @@ const useAppStore = create(
       getStackMapLibrary: () => {
         const state = get();
         if (!state.stackMapLibrary) {
-          console.log('[LAZY LOAD] Loading StackMap Library on demand');
+
           // Load the library lazily
           const library = loadStackMapLibrary();
           set({ stackMapLibrary: library }, false, 'lazyLoadStackMapLibrary');
@@ -663,7 +658,7 @@ const useAppStore = create(
             }
             isHydrated = true;
           } catch (error) {
-            console.error('[STORE HYDRATION] Hydration failed:', error);
+//             console.error('[STORE HYDRATION] Hydration failed:', error);
             isHydrated = true; // Mark as hydrated even on error to unblock UI
           }
         })();

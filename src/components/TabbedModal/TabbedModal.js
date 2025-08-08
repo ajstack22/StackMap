@@ -102,9 +102,7 @@ const TabbedModal = ({
       onPanResponderGrant: () => {
         // Start gesture
         gestureRef.current.isActive = true;
-        if (__DEV__ && Platform.OS === 'android') {
-          console.log('Horizontal swipe gesture started');
-        }
+        if (__DEV__ && Platform.OS === 'android') {}
       },
       onPanResponderMove: (evt, gestureState) => {
         // Update swipe animation value with some resistance at edges
@@ -129,17 +127,7 @@ const TabbedModal = ({
         const shouldSwipeLeft = gestureState.dx < -swipeThreshold || gestureState.vx < -velocityThreshold;
         const shouldSwipeRight = gestureState.dx > swipeThreshold || gestureState.vx > velocityThreshold;
         
-        if (__DEV__ && Platform.OS === 'android') {
-          console.log('Swipe release:', {
-            dx: gestureState.dx,
-            vx: gestureState.vx,
-            threshold: swipeThreshold,
-            shouldSwipeLeft,
-            shouldSwipeRight,
-            currentTab: activeTabRef.current,
-            totalTabs: tabsRef.current.length
-          });
-        }
+        if (__DEV__ && Platform.OS === 'android') {}
         
         if (shouldSwipeRight && activeTabRef.current > 0) {
           // Swipe right - go to previous tab

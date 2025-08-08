@@ -12,13 +12,13 @@ export const validateSyncedData = (data) => {
   try {
     // Check if data is an object
     if (!data || typeof data !== 'object') {
-      console.error('Data validation failed: Data is not an object', data);
+//       console.error('Data validation failed: Data is not an object', data);
       return false;
     }
 
     // Check required top-level fields
     if (!data.users || typeof data.users !== 'object') {
-      console.error('Data validation failed: Missing or invalid users object', data);
+//       console.error('Data validation failed: Missing or invalid users object', data);
       return false;
     }
 
@@ -36,13 +36,13 @@ export const validateSyncedData = (data) => {
 
     // Validate currentUser if present
     if (data.currentUser && !data.users[data.currentUser]) {
-      console.error(`Data validation failed: currentUser ${data.currentUser} not found in users`);
+//       console.error(`Data validation failed: currentUser ${data.currentUser} not found in users`);
       return false;
     }
 
     return true;
   } catch (error) {
-    console.error('Data validation error:', error);
+//     console.error('Data validation error:', error);
     return false;
   }
 };
@@ -52,25 +52,25 @@ export const validateSyncedData = (data) => {
  */
 const validateUser = (userId, user) => {
   if (!user || typeof user !== 'object') {
-    console.error(`Data validation failed: Invalid user object for ${userId}`);
+//     console.error(`Data validation failed: Invalid user object for ${userId}`);
     return false;
   }
 
   // Check required user fields
   if (!user.name || typeof user.name !== 'string') {
-    console.error(`Data validation failed: User ${userId} missing or invalid name`);
+//     console.error(`Data validation failed: User ${userId} missing or invalid name`);
     return false;
   }
 
   // Check for icon or emoji (users can have either)
   if (!user.icon && !user.emoji) {
-    console.error(`Data validation failed: User ${userId} missing icon/emoji`);
+//     console.error(`Data validation failed: User ${userId} missing icon/emoji`);
     return false;
   }
 
   // Validate days object
   if (!user.days || typeof user.days !== 'object') {
-    console.error(`Data validation failed: User ${userId} missing or invalid days object`);
+//     console.error(`Data validation failed: User ${userId} missing or invalid days object`);
     return false;
   }
 
@@ -89,13 +89,13 @@ const validateUser = (userId, user) => {
  */
 const validateDay = (userId, day, dayData) => {
   if (!dayData || typeof dayData !== 'object') {
-    console.error(`Data validation failed: Invalid day data for user ${userId}, day ${day}`);
+//     console.error(`Data validation failed: Invalid day data for user ${userId}, day ${day}`);
     return false;
   }
 
   // Validate activities array
   if (!Array.isArray(dayData.activities)) {
-    console.error(`Data validation failed: Activities not an array for user ${userId}, day ${day}`);
+//     console.error(`Data validation failed: Activities not an array for user ${userId}, day ${day}`);
     return false;
   }
 
@@ -103,12 +103,12 @@ const validateDay = (userId, day, dayData) => {
   const activityIds = new Set();
   for (const activity of dayData.activities) {
     if (!validateActivity(activity)) {
-      console.error(`Data validation failed: Invalid activity in user ${userId}, day ${day}`);
+//       console.error(`Data validation failed: Invalid activity in user ${userId}, day ${day}`);
       return false;
     }
 
     if (activityIds.has(activity.id)) {
-      console.error(`Data validation failed: Duplicate activity ID ${activity.id} in user ${userId}, day ${day}`);
+//       console.error(`Data validation failed: Duplicate activity ID ${activity.id} in user ${userId}, day ${day}`);
       return false;
     }
     activityIds.add(activity.id);
@@ -129,36 +129,36 @@ const validateActivity = (activity) => {
 
   // Check required fields
   if (!activity.id || typeof activity.id !== 'string') {
-    console.error('Activity missing or invalid ID:', activity);
+//     console.error('Activity missing or invalid ID:', activity);
     return false;
   }
 
   // Check for text field (handle 'text', 'name', or 'title' properties)
   const activityText = activity.text || activity.name || activity.title;
   if (!activityText || typeof activityText !== 'string') {
-    console.error('Activity missing or invalid text/name/title:', activity);
+//     console.error('Activity missing or invalid text/name/title:', activity);
     return false;
   }
 
   // Check boolean fields - allow undefined for repair to fix
   if (activity.completed !== undefined && typeof activity.completed !== 'boolean') {
-    console.error('Activity has invalid completed flag:', activity);
+//     console.error('Activity has invalid completed flag:', activity);
     return false;
   }
 
   if (activity.pinned !== undefined && typeof activity.pinned !== 'boolean') {
-    console.error('Activity has invalid pinned flag:', activity);
+//     console.error('Activity has invalid pinned flag:', activity);
     return false;
   }
 
   // Validate completion timestamp fields if present
   if (activity.completed) {
     if (activity.completedAt && typeof activity.completedAt !== 'number') {
-      console.error('Activity has invalid completedAt timestamp:', activity);
+//       console.error('Activity has invalid completedAt timestamp:', activity);
       return false;
     }
     if (activity.completedBy && typeof activity.completedBy !== 'string') {
-      console.error('Activity has invalid completedBy device ID:', activity);
+//       console.error('Activity has invalid completedBy device ID:', activity);
       return false;
     }
   }
@@ -172,7 +172,7 @@ const validateActivity = (activity) => {
 const validateTheme = (theme) => {
   // Theme should be a string name like 'stackBlue', 'crimson', etc.
   if (!theme || typeof theme !== 'string') {
-    console.error('Data validation failed: Theme should be a string');
+//     console.error('Data validation failed: Theme should be a string');
     return false;
   }
 
@@ -184,7 +184,7 @@ const validateTheme = (theme) => {
   ];
 
   if (!validThemes.includes(theme)) {
-    console.error(`Data validation failed: Invalid theme name '${theme}'`);
+//     console.error(`Data validation failed: Invalid theme name '${theme}'`);
     return false;
   }
 
@@ -258,7 +258,7 @@ export const repairSyncedData = (data) => {
 
     return repaired;
   } catch (error) {
-    console.error('Data repair error:', error);
+//     console.error('Data repair error:', error);
     return data; // Return original if repair fails
   }
 };
@@ -272,25 +272,25 @@ export const validateIncrementalSync = (incrementalData) => {
   try {
     // Check if data is an object
     if (!incrementalData || typeof incrementalData !== 'object') {
-      console.error('Incremental sync validation failed: Data is not an object');
+//       console.error('Incremental sync validation failed: Data is not an object');
       return false;
     }
 
     // Check required fields for incremental sync
     if (incrementalData.type !== 'incremental') {
-      console.error('Incremental sync validation failed: Type is not "incremental"');
+//       console.error('Incremental sync validation failed: Type is not "incremental"');
       return false;
     }
 
     if (!incrementalData.timestamp || typeof incrementalData.timestamp !== 'number') {
-      console.error('Incremental sync validation failed: Invalid timestamp');
+//       console.error('Incremental sync validation failed: Invalid timestamp');
       return false;
     }
 
     // Validate patch if present
     if (incrementalData.patch) {
       if (typeof incrementalData.patch !== 'object') {
-        console.error('Incremental sync validation failed: Patch is not an object');
+//         console.error('Incremental sync validation failed: Patch is not an object');
         return false;
       }
 
@@ -302,7 +302,7 @@ export const validateIncrementalSync = (incrementalData) => {
               // Validate each user in the patch
               for (const [userId, user] of Object.entries(value)) {
                 if (!validateUser(userId, user)) {
-                  console.error(`Incremental sync validation failed: Invalid user ${userId} in patch`);
+//                   console.error(`Incremental sync validation failed: Invalid user ${userId} in patch`);
                   return false;
                 }
               }
@@ -314,7 +314,7 @@ export const validateIncrementalSync = (incrementalData) => {
               // Validate each activity in the patch
               for (const activity of value) {
                 if (!validateActivity(activity)) {
-                  console.error('Incremental sync validation failed: Invalid activity in patch');
+//                   console.error('Incremental sync validation failed: Invalid activity in patch');
                   return false;
                 }
               }
@@ -323,7 +323,7 @@ export const validateIncrementalSync = (incrementalData) => {
           
           case 'currentTheme':
             if (!validateTheme(value)) {
-              console.error('Incremental sync validation failed: Invalid theme in patch');
+//               console.error('Incremental sync validation failed: Invalid theme in patch');
               return false;
             }
             break;
@@ -336,7 +336,7 @@ export const validateIncrementalSync = (incrementalData) => {
           case 'routineCelebration':
           case 'currentDay':
             if (value === undefined) {
-              console.error(`Incremental sync validation failed: Undefined value for ${field}`);
+//               console.error(`Incremental sync validation failed: Undefined value for ${field}`);
               return false;
             }
             break;
@@ -347,14 +347,14 @@ export const validateIncrementalSync = (incrementalData) => {
     // Validate changes array if present
     if (incrementalData.changes) {
       if (!Array.isArray(incrementalData.changes)) {
-        console.error('Incremental sync validation failed: Changes is not an array');
+//         console.error('Incremental sync validation failed: Changes is not an array');
         return false;
       }
 
       // Each change should have required fields
       for (const change of incrementalData.changes) {
         if (!change.timestamp || typeof change.timestamp !== 'number') {
-          console.error('Incremental sync validation failed: Change missing timestamp');
+//           console.error('Incremental sync validation failed: Change missing timestamp');
           return false;
         }
       }
@@ -362,7 +362,7 @@ export const validateIncrementalSync = (incrementalData) => {
 
     return true;
   } catch (error) {
-    console.error('Incremental sync validation error:', error);
+//     console.error('Incremental sync validation error:', error);
     return false;
   }
 };

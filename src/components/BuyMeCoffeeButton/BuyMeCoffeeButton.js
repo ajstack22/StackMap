@@ -11,11 +11,9 @@ const BuyMeCoffeeButton = ({
 }) => {
   // Only render on web
   if (Platform.OS !== 'web') {
-    console.log('BuyMeCoffeeButton: Not rendering - platform is', Platform.OS);
+
     return null;
   }
-  
-  console.log('BuyMeCoffeeButton: Rendering on web with style:', style);
 
   // Widget style - loads the official Buy Me a Coffee widget script
   if (style === 'widget') {

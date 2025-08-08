@@ -337,9 +337,7 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.medium,
     backgroundColor: '#f5f5f5',
   },
-  periodItemSelected: {
-    
-  },
+  periodItemSelected: {},
   periodItemText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -387,9 +385,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
   },
-  doneButton: {
-    
-  },
+  doneButton: {},
   doneButtonText: {
     fontSize: 16,
     fontWeight: Platform.OS === 'ios' ? '600' : '700',

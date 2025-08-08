@@ -256,13 +256,13 @@ class ConflictResolver {
     
     // Validate the final state
     if (!validateSyncedData(newState)) {
-      console.error('Conflict resolution resulted in invalid state:', newState);
-      console.error('Current state:', currentState);
-      console.error('Resolutions applied:', resolutions);
+//       console.error('Conflict resolution resulted in invalid state:', newState);
+//       console.error('Current state:', currentState);
+//       console.error('Resolutions applied:', resolutions);
       
       // On initial sync, the state might be minimal - try to ensure required fields
       if (!newState.users || Object.keys(newState.users).length === 0) {
-        console.log('No users in resolved state, using current state users');
+
         newState.users = currentState.users || {};
       }
       
@@ -403,8 +403,7 @@ class ConflictResolver {
         
         if (duplicates.length > 1) {
           // Found duplicates - merge them into one user
-          console.log(`[Sync] Detected duplicate users with name="${user.name}" and icon="${user.icon}"`);
-          
+
           // Choose the oldest user ID as the primary one
           const sortedDuplicates = duplicates.sort((a, b) => {
             const aId = a.userId;

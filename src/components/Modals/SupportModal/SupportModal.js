@@ -148,8 +148,7 @@ const SupportModal = ({
           support@stackmap.app
         </Text>
       </View>
-      
-      
+
       <View style={styles.supportFooter}>
         <Text style={styles.supportFooterText}>
           Thank you for being part of StackMap

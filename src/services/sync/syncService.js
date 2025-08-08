@@ -34,7 +34,6 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
-console.log('[SyncService] Using API_BASE_URL:', API_BASE_URL);
 
 // Share endpoints use environment-specific API for testing
 const getShareApiUrl = () => {
@@ -58,7 +57,6 @@ const getShareApiUrl = () => {
 };
 
 const SHARE_API_URL = getShareApiUrl();
-console.log('[SyncService] Using SHARE_API_URL:', SHARE_API_URL);
 
 class SyncService {
   constructor() {
@@ -117,7 +115,9 @@ class SyncService {
     // Use setImmediate to ensure React can render first
     setImmediate(() => {
       this.restoreState().catch(err => {
-        console.error('Sync restore failed:', err);
+        if (__DEV__) {
+          console.error('Sync restore failed:', err);
+        }
       });
     });
   }
@@ -142,23 +142,19 @@ class SyncService {
   
   // Helper methods for status updates
   updateStatus(status) {
-    console.log('[SyncService] Updating status:', status);
+
     if (this.onStatusChange) {
-      console.log('[SyncService] Calling onStatusChange callback');
+
       this.onStatusChange(status);
-    } else {
-      console.log('[SyncService] No onStatusChange callback registered');
-    }
+    } else {}
   }
   
   updateProgress(progress) {
-    console.log('[SyncService] Updating progress:', progress);
+
     if (this.onProgressChange) {
-      console.log('[SyncService] Calling onProgressChange callback');
+
       this.onProgressChange(progress);
-    } else {
-      console.log('[SyncService] No onProgressChange callback registered');
-    }
+    } else {}
   }
   
   /**
@@ -176,7 +172,7 @@ class SyncService {
   async restoreState() {
     // Prevent multiple restores
     if (this.initialized) {
-      console.log('SyncService: Already initialized, skipping restore');
+
       return;
     }
     
@@ -185,52 +181,44 @@ class SyncService {
     this.updateStatus({ phase: 'checking', details: 'Initializing sync...' });
     
     try {
-      console.log('SyncService: Restoring state...');
+
       const enabled = await AsyncStorage.getItem('@sync_enabled');
       const syncId = await AsyncStorage.getItem('@sync_id');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
       const lastSyncSuccess = await AsyncStorage.getItem('@sync_last_success');
-      
-      console.log('SyncService: Loaded from storage - enabled:', enabled, 'syncId:', syncId);
-      
+
       if (enabled === 'true' && syncId) {
         this.syncEnabled = true;
         this.syncId = syncId;
         this.lastSyncVersion = parseInt(lastVersion || '0', 10);
         this.lastSyncSuccess = lastSyncSuccess ? parseInt(lastSyncSuccess, 10) : null;
-        console.log('SyncService: State restored, syncId:', syncId, 'version:', this.lastSyncVersion);
-        
+
         // Try to restore encryption automatically
         const encryptionRestored = await this.restoreEncryptionFromStorage();
         
         if (encryptionRestored) {
           // Schedule sync to run AFTER the app has rendered
           // This prevents blocking the UI thread during app startup
-          console.log('Encryption restored, scheduling sync...');
-          
+
           // Use setImmediate to run after current JS execution completes
           // This allows React to render the UI first
           setImmediate(() => {
             this.updateStatus({ phase: 'pulling', details: 'Getting your latest data...' });
             
             // Run sync in background
-            this.sync().then(() => {
-              console.log('Initial sync completed successfully');
-            }).catch(syncError => {
-              console.error('Initial sync failed:', syncError);
+            this.sync().then(() => {}).catch(syncError => {
+              if (__DEV__) {
+                console.error('Initial sync failed:', syncError);
+              }
               // Don't throw - app should still work offline
             });
           });
           
           // Start periodic sync
           this.startPeriodicSync(true); // Skip the delayed initial sync since we're syncing above
-          console.log('Sync scheduled for after UI render');
-        } else {
-          console.log('Sync state restored but encryption needs recovery phrase');
-        }
-      } else {
-        console.log('SyncService: No sync state to restore');
-      }
+
+        } else {}
+      } else {}
       
       this.initialized = true;
       this.isInitializing = false;
@@ -238,7 +226,9 @@ class SyncService {
       // Clear status once initialization is done
       this.updateStatus(null);
     } catch (error) {
-      console.error('Failed to restore sync state:', error);
+      if (__DEV__) {
+        console.error('Failed to restore sync state:', error);
+      }
       this.initialized = true;
       this.isInitializing = false;
       this.updateStatus({ phase: 'error', details: 'Failed to initialize sync' });
@@ -257,7 +247,7 @@ class SyncService {
       // Try to get stored recovery phrase
       const storedPhrase = await encryptionService.getStoredRecoveryPhrase(this.syncId);
       if (!storedPhrase) {
-        console.log('No stored recovery phrase found');
+
         return false;
       }
       
@@ -266,14 +256,15 @@ class SyncService {
       
       // Initialize encryption with the stored phrase and fixed salt
       await encryptionService.initialize(storedPhrase, this.syncId, fixedSalt);
-      console.log('Encryption restored automatically from stored phrase');
-      
+
       // Don't start periodic sync here - it will be started in restoreState
       // to avoid duplicate sync operations
       
       return true;
     } catch (error) {
-      console.error('Failed to restore encryption from storage:', error);
+      if (__DEV__) {
+        console.error('Failed to restore encryption from storage:', error);
+      }
     }
     
     return false;
@@ -359,7 +350,9 @@ class SyncService {
         isNewSync: !existingData 
       };
     } catch (error) {
-      console.error('Sync initialization failed:', error);
+      if (__DEV__) {
+        console.error('Sync initialization failed:', error);
+      }
       // Reset state on failure
       this.syncId = null;
       throw error;
@@ -429,7 +422,7 @@ class SyncService {
       if (incrementalUpdate) {
         syncData = incrementalUpdate;
         syncType = 'incremental';
-        console.log('Using incremental sync with', incrementalUpdate.changes.length, 'changes');
+
       }
     }
     
@@ -505,13 +498,12 @@ class SyncService {
    */
   async pullData() {
     if (!this.syncId) {
-      console.log('pullData: No syncId available');
+
       return null;
     }
 
     const deviceId = await encryptionService.getDeviceId();
-    console.log('pullData: syncId:', this.syncId, 'deviceId:', deviceId);
-    
+
     const url = `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
     
     const response = await fetch(url);
@@ -520,8 +512,6 @@ class SyncService {
       // This is expected during sync creation - don't log as error
       return null; // Sync group doesn't exist
     }
-    
-    console.log('pullData: response status', response.status);
 
     // Get response text first to check if it's JSON
     const responseText = await response.text();
@@ -530,7 +520,9 @@ class SyncService {
       // Try to parse as JSON, but handle HTML responses
       try {
         const error = JSON.parse(responseText);
-        console.error('pullData error:', error);
+        if (__DEV__) {
+          console.error('pullData error:', error);
+        }
         throw new Error(error.message || 'Failed to pull data');
       } catch (e) {
         // Response is not JSON (likely HTML error page)
@@ -545,8 +537,7 @@ class SyncService {
     // Parse successful response
     try {
       const data = JSON.parse(responseText);
-      console.log('pullData: received data', data);
-      
+
       // Debug: Log the decrypted data if available
       if (data && data.encrypted_blob) {
         try {
@@ -590,11 +581,10 @@ class SyncService {
    */
   async sync() {
     const syncStartTime = Date.now();
-    console.log('[SYNC TIMING] Starting sync operation');
-    
+
     // Check if sync is already in progress
     if (this.syncInProgress) {
-      console.log('sync: Sync already in progress, queueing request');
+
       return new Promise((resolve, reject) => {
         this.syncQueue.push({ resolve, reject });
       });
@@ -613,19 +603,17 @@ class SyncService {
     try {
       // Don't wait for initialization - just skip if not ready
       if (!this.initialized) {
-        console.log('sync: Skipping - not initialized yet');
+
         return { success: false, reason: 'not_initialized' };
       }
-      
-      console.log('sync: Starting sync, enabled:', this.syncEnabled, 'syncId:', this.syncId);
-      
+
       if (!this.syncEnabled) {
         throw new Error('Sync not enabled');
       }
 
       // Check network status first
       if (!networkMonitor.isOnline) {
-        console.log('sync: Offline, queueing sync operation');
+
         await syncQueue.enqueue({ type: 'sync', timestamp: Date.now() });
         this.updateSyncStatus('offline', 'No network connection');
         throw new Error('No network connection. Changes will sync when online.');
@@ -633,7 +621,7 @@ class SyncService {
 
       // Ensure encryption is initialized
       if (!encryptionService.masterKey) {
-        console.log('sync: Encryption not initialized, need recovery phrase');
+
         throw new Error('Encryption not initialized. Please re-enter your recovery phrase.');
       }
 
@@ -645,21 +633,20 @@ class SyncService {
       this.updateProgress(30);
       
       const pullStartTime = Date.now();
-      console.log('sync: Pulling latest data...');
+
       const remoteData = await this.pullData();
       console.log(`[SYNC TIMING] pullData took ${Date.now() - pullStartTime}ms`);
       
       // If pullData returns null and we have a lastSyncVersion > 0, it means the sync was deleted on server
       if (remoteData === null && this.lastSyncVersion > 0) {
-        console.log('sync: Sync data not found on server, disabling sync');
+
         await this.disable();
         this.updateSyncStatus('error', 'Sync data not found on server');
         throw new Error('Sync data not found on server. Sync has been disabled.');
       }
       
       if (remoteData && remoteData.version > this.lastSyncVersion) {
-        console.log('sync: Remote data is newer, checking for conflicts...');
-        
+
         // Decrypt remote data
         this.updateStatus({ phase: 'decrypting', details: 'Decrypting data...' });
         this.updateProgress(50);
@@ -673,7 +660,7 @@ class SyncService {
             console.error('sync: Incremental sync data validation failed');
             throw new Error('Invalid incremental sync data received from server');
           }
-          console.log('sync: Incremental sync data validated successfully');
+
         } else {
           // Validate full sync data
           if (!validateSyncedData(decryptedData)) {
@@ -683,8 +670,7 @@ class SyncService {
             if (!validateSyncedData(repairedData)) {
               throw new Error('Remote data is corrupted and cannot be repaired');
             }
-            
-            console.log('sync: Data repaired successfully');
+
             decryptedData = repairedData;
           }
         }
@@ -700,8 +686,7 @@ class SyncService {
         );
         
         if (conflicts.length > 0) {
-          console.log('sync: Found', conflicts.length, 'conflicts');
-          
+
           // Try automatic resolution
           const resolutions = await conflictResolver.resolveConflicts(conflicts);
           
@@ -721,29 +706,24 @@ class SyncService {
             throw new Error('Sync paused: conflicts need resolution');
           } else {
             // All conflicts auto-resolved
-            console.log('sync: Auto-resolved all conflicts');
+
             await this.applyState(resolutions.finalState);
           }
         } else {
           // No conflicts, simple merge
-          console.log('sync: No conflicts, merging data');
+
           await this.mergeData(decryptedData);
         }
         
         this.lastSyncVersion = remoteData.version;
-      } else {
-        console.log('sync: No newer remote data');
-      }
+      } else {}
       
       // Push our current state
       this.updateStatus({ phase: 'pushing', details: 'Uploading changes...' });
       this.updateProgress(80);
-      
-      console.log('sync: Pushing current state...');
+
       const pushResult = await this.pushData();
-      
-      console.log('sync: Sync complete!', pushResult);
-      
+
       // Update success status
       this.lastSyncSuccess = Date.now();
       this.updateSyncStatus('success');
@@ -772,7 +752,9 @@ class SyncService {
         lastModified: pushResult.last_modified
       };
     } catch (error) {
-      console.error('Sync failed:', error);
+      if (__DEV__) {
+        console.error('Sync failed:', error);
+      }
       
       // Show error status
       this.updateStatus({ phase: 'error', details: error.message });
@@ -801,7 +783,7 @@ class SyncService {
         // Don't let errors break the sync loop entirely
         // Schedule a retry after a delay
         if (this.syncEnabled) {
-          console.log('Scheduling sync retry after error in 30 seconds...');
+
           setTimeout(() => {
             if (this.syncEnabled) {
               this.requestSync({ priority: 'low', reason: 'error_recovery' });
@@ -821,7 +803,7 @@ class SyncService {
       
       // Process queued sync requests
       if (this.syncQueue.length > 0) {
-        console.log(`sync: Processing ${this.syncQueue.length} queued sync requests`);
+
         const queuedRequests = this.syncQueue.splice(0); // Get all and clear queue
         
         // Process the next sync asynchronously to avoid recursion issues
@@ -870,7 +852,7 @@ class SyncService {
     
     // If we repaired any users, update the store
     if (needsRepair) {
-      console.log('[DEBUG] Repairing users with missing icons...');
+
       useAppStore.getState().setUsers(repairedUsers);
     }
     
@@ -898,9 +880,7 @@ class SyncService {
       lastBackup: new Date().toISOString(),
       lastModified: Date.now() // Add timestamp for conflict resolution
     };
-    
-    console.log('getCurrentState: Full export-style state:', currentState);
-    
+
     return currentState;
   }
 
@@ -909,16 +889,14 @@ class SyncService {
    */
   async restoreData(data) {
     const restoreStartTime = Date.now();
-    console.log('restoreData: Incoming data:', data);
-    console.log('[SYNC TIMING] Starting restoreData');
-    
+
     // Emit restore status
     this.updateStatus({ phase: 'restoring', details: 'Restoring data...' });
     this.updateProgress(70);
     
     // Handle incremental sync data
     if (data.type === 'incremental' && data.patch) {
-      console.log('restoreData: Applying incremental patch');
+
       const currentState = useAppStore.getState();
       
       // Apply patch to current state
@@ -937,8 +915,7 @@ class SyncService {
       if (!data.patch.hasOwnProperty('hasCompletedOnboarding')) {
         patchedState.hasCompletedOnboarding = currentState.hasCompletedOnboarding;
       }
-      
-      console.log('restoreData: Patched state:', patchedState);
+
       useAppStore.setState(patchedState);
       return;
     }
@@ -953,10 +930,7 @@ class SyncService {
       hasCompletedOnboarding,
       currentDay
     } = data;
-    
-    console.log('restoreData: Export format data - Users:', users);
-    console.log('restoreData: Export format data - Templates:', templates);
-    
+
     // DEBUG: Log full incoming data
     console.log('[DEBUG] Full sync data being restored:', JSON.stringify(data, null, 2));
     
@@ -987,13 +961,9 @@ class SyncService {
       hasCompletedOnboarding: hasCompletedOnboarding !== undefined ? hasCompletedOnboarding : currentState.hasCompletedOnboarding,
       currentDay: currentDay || 'today'
     };
-    
-    console.log('restoreData: Setting export format state:', newState);
-    
+
     // DEBUG: Log what we're about to set
-    console.log('[DEBUG] About to set state with:');
-    console.log('[DEBUG] - currentTheme:', newState.currentTheme);
-    console.log('[DEBUG] - hasCompletedOnboarding:', newState.hasCompletedOnboarding);
+
     console.log('[DEBUG] - users count:', Object.keys(newState.users || {}).length);
     
     // Update state in a single operation for better performance
@@ -1015,9 +985,7 @@ class SyncService {
     
     // DEBUG: Verify what was actually set
     const afterState = useAppStore.getState();
-    console.log('[DEBUG] State after setState:');
-    console.log('[DEBUG] - currentTheme:', afterState.currentTheme);
-    console.log('[DEBUG] - hasCompletedOnboarding:', afterState.hasCompletedOnboarding);
+
   }
 
   /**
@@ -1202,14 +1170,16 @@ class SyncService {
       
       if (response.status === 404) {
         // Sync doesn't exist on server, disable locally
-        console.log('SyncService: Sync not found on server, disabling locally');
+
         await this.disable();
         return false;
       }
       
       return response.ok;
     } catch (error) {
-      console.error('SyncService: Error verifying sync:', error);
+      if (__DEV__) {
+        console.error('SyncService: Error verifying sync:', error);
+      }
       // Don't disable on network errors
       return this.syncEnabled;
     }
@@ -1241,7 +1211,9 @@ class SyncService {
     try {
       return await encryptionService.getStoredRecoveryPhrase(this.syncId);
     } catch (error) {
-      console.error('Failed to get recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to get recovery phrase:', error);
+      }
       return null;
     }
   }
@@ -1272,8 +1244,7 @@ class SyncService {
         const decrypted = encryptionService.decryptData(testData.encrypted_blob);
         
         // If successful, the key is correct
-        console.log('Encryption restored successfully');
-        
+
         // Store the recovery phrase for future automatic restoration
         await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
         
@@ -1295,7 +1266,9 @@ class SyncService {
         return true;
       }
     } catch (error) {
-      console.error('Failed to restore encryption:', error);
+      if (__DEV__) {
+        console.error('Failed to restore encryption:', error);
+      }
       throw new Error('Invalid recovery phrase');
     }
   }
@@ -1309,9 +1282,7 @@ class SyncService {
     
     // Only start if sync is enabled
     if (!this.syncEnabled) return;
-    
-    console.log('Starting periodic sync every', this.syncIntervalDuration / 1000, 'seconds');
-    
+
     // Subscribe to store changes for immediate sync
     this.subscribeToStoreChanges();
     
@@ -1326,7 +1297,9 @@ class SyncService {
       if (shouldSyncNow) {
         // Do initial sync immediately - users need their data
         this.syncWithQueue().catch(err => {
-          console.error('Background sync failed:', err);
+          if (__DEV__) {
+            console.error('Background sync failed:', err);
+          }
         });
       } else {
         console.log('Skipping initial sync - recently synced', Math.round(timeSinceLastSync / 1000), 'seconds ago');
@@ -1338,7 +1311,9 @@ class SyncService {
       // Run sync only when UI is idle
       InteractionManager.runAfterInteractions(() => {
         this.syncWithQueue().catch(err => {
-          console.error('Periodic sync failed:', err);
+          if (__DEV__) {
+            console.error('Periodic sync failed:', err);
+          }
         });
       });
     }, this.syncIntervalDuration);
@@ -1397,9 +1372,7 @@ class SyncService {
       this.processedTransactions.delete(id);
     }
     
-    if (toRemove.length > 0) {
-      console.log(`Cleaned up ${toRemove.length} old transaction IDs`);
-    }
+    if (toRemove.length > 0) {}
   }
   
   /**
@@ -1420,8 +1393,7 @@ class SyncService {
         }
       }
     );
-    
-    console.log('Subscribed to store changes for automatic sync');
+
   }
   
   /**
@@ -1435,7 +1407,7 @@ class SyncService {
     
     // Set new timer
     this.syncDebounceTimer = setTimeout(() => {
-      console.log('Store change detected, triggering sync...');
+
       // Run sync only when UI is idle
       InteractionManager.runAfterInteractions(() => {
         this.requestSync({ priority: 'high', reason: 'store_change' });
@@ -1449,11 +1421,13 @@ class SyncService {
   async syncWithQueue() {
     // Don't sync if user is active
     if (!this.canSyncNow()) {
-      console.log('sync: User is active, deferring sync');
+
       // Retry in 3 seconds
       setTimeout(() => {
         this.syncWithQueue().catch(err => {
-          console.error('Deferred sync failed:', err);
+          if (__DEV__) {
+            console.error('Deferred sync failed:', err);
+          }
         });
       }, 3000);
       return { success: false, reason: 'user_active' };
@@ -1461,7 +1435,7 @@ class SyncService {
     try {
       // Check if sync is still enabled before processing
       if (!this.syncEnabled || !this.syncId) {
-        console.log('Sync is disabled, skipping queue processing');
+
         return;
       }
       
@@ -1473,7 +1447,9 @@ class SyncService {
       // Then do regular sync with throttling
       await this.requestSync({ priority: 'normal' });
     } catch (error) {
-      console.error('Sync with queue failed:', error);
+      if (__DEV__) {
+        console.error('Sync with queue failed:', error);
+      }
     }
   }
   
@@ -1484,7 +1460,7 @@ class SyncService {
     if (this.syncInterval) {
       clearInterval(this.syncInterval);
       this.syncInterval = null;
-      console.log('Stopped periodic sync');
+
     }
     
     // Stop transaction cleanup
@@ -1494,7 +1470,7 @@ class SyncService {
     if (this.storeUnsubscribe) {
       this.storeUnsubscribe();
       this.storeUnsubscribe = null;
-      console.log('Unsubscribed from store changes');
+
     }
     
     // Clear any pending sync timer
@@ -1508,12 +1484,10 @@ class SyncService {
    * Handle network status changes
    */
   handleNetworkChange({ isOnline, wasOnline }) {
-    if (__DEV__) {
-      console.log('SyncService: Network changed', { isOnline, wasOnline });
-    }
+    if (__DEV__) {}
     
     if (!wasOnline && isOnline && this.syncEnabled) {
-      console.log('SyncService: Back online, processing queue');
+
       // We're back online - process the queue
       setTimeout(() => {
         this.syncWithQueue();
@@ -1546,7 +1520,9 @@ class SyncService {
       try {
         callback(statusData);
       } catch (err) {
-        console.error('Status listener error:', err);
+        if (__DEV__) {
+          console.error('Status listener error:', err);
+        }
       }
     });
   }
@@ -1596,7 +1572,9 @@ class SyncService {
       try {
         callback(conflicts);
       } catch (err) {
-        console.error('Conflict listener error:', err);
+        if (__DEV__) {
+          console.error('Conflict listener error:', err);
+        }
       }
     });
   }
@@ -1640,7 +1618,7 @@ class SyncService {
       this.pendingConflicts = [];
       
       // Push the resolved state
-      console.log('sync: Pushing resolved state...');
+
       const pushResult = await this.pushData();
       
       // Update success status
@@ -1659,7 +1637,9 @@ class SyncService {
         lastModified: pushResult.last_modified
       };
     } catch (error) {
-      console.error('Failed to complete sync after conflict resolution:', error);
+      if (__DEV__) {
+        console.error('Failed to complete sync after conflict resolution:', error);
+      }
       this.updateSyncStatus('error', error.message);
       throw error;
     }
@@ -1820,8 +1800,6 @@ class SyncService {
       };
 
       const shareUrl = `${SHARE_API_URL}/create_share.php`;
-      console.log('Creating share at URL:', shareUrl);
-      console.log('Share API URL base:', SHARE_API_URL);
 
       const response = await fetch(shareUrl, {
         method: 'POST',
@@ -1876,7 +1854,9 @@ class SyncService {
 
       return result;
     } catch (error) {
-      console.error('Failed to create share link:', error);
+      if (__DEV__) {
+        console.error('Failed to create share link:', error);
+      }
       throw error;
     }
   }
@@ -2006,7 +1986,7 @@ class SyncService {
       // For local development, skip API call
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
         if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-          console.log('Share update skipped in local development');
+
           return;
         }
       }
@@ -2030,7 +2010,9 @@ class SyncService {
 
       console.log(`Share ${token.substring(0, 6)}... updated successfully`);
     } catch (error) {
-      console.error('Failed to update share:', error);
+      if (__DEV__) {
+        console.error('Failed to update share:', error);
+      }
       // Don't throw - we don't want share updates to break the app
     }
   }
@@ -2112,7 +2094,9 @@ class SyncService {
       // Filter out null entries (shares past grace period)
       return processedShares.filter(share => share !== null);
     } catch (error) {
-      console.error('Failed to get active shares:', error);
+      if (__DEV__) {
+        console.error('Failed to get active shares:', error);
+      }
       return [];
     }
   }
@@ -2131,7 +2115,9 @@ class SyncService {
       // Could also call API to revoke the share early
       // But for now, let them expire naturally
     } catch (error) {
-      console.error('Failed to delete share:', error);
+      if (__DEV__) {
+        console.error('Failed to delete share:', error);
+      }
     }
   }
 
@@ -2165,11 +2151,12 @@ class SyncService {
       await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
       
       // In production, would also update the server
-      console.log(`Extended share ${shareId} by ${additionalHours} hours`);
-      
+
       return shares[shareIndex];
     } catch (error) {
-      console.error('Failed to extend share:', error);
+      if (__DEV__) {
+        console.error('Failed to extend share:', error);
+      }
       throw error;
     }
   }

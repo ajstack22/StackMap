@@ -27,13 +27,13 @@ export const migrateFromAsyncStorage = async () => {
     const existingData = await AsyncStorage.getItem('stackmap-storage');
     
     if (existingData && !storage.contains('migrated')) {
-      console.log('[MMKV] Migrating from AsyncStorage...');
+
       storage.set('stackmap-storage', existingData);
       storage.set('migrated', true);
       await AsyncStorage.removeItem('stackmap-storage');
-      console.log('[MMKV] Migration complete!');
+
     }
   } catch (error) {
-    console.error('[MMKV] Migration failed:', error);
+//     console.error('[MMKV] Migration failed:', error);
   }
 };

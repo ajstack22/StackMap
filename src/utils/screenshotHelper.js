@@ -14,7 +14,7 @@ class ScreenshotHelper {
    */
   enableScreenshotMode() {
     this.isScreenshotMode = true;
-    console.log('📸 Screenshot mode enabled');
+
   }
 
   /**
@@ -32,8 +32,6 @@ class ScreenshotHelper {
   async captureScreenshot(name, delay = 1000) {
     if (!this.isScreenshotMode) return;
 
-    console.log(`📸 Preparing screenshot: ${name}`);
-    
     // Wait for any animations to complete
     await new Promise(resolve => setTimeout(resolve, delay));
     
@@ -45,10 +43,10 @@ class ScreenshotHelper {
     // Signal to the test runner that we're ready for a screenshot
     if (Platform.OS === 'ios') {
       // For iOS, we'll use accessibility labels that the UI test can find
-      console.log(`SCREENSHOT_READY: ${name}`);
+
     } else {
       // For Android, we can use a similar approach
-      console.log(`SCREENSHOT_READY: ${name}`);
+
     }
 
     // Give the test runner time to capture

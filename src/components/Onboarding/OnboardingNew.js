@@ -40,9 +40,7 @@ const isMobileWeb = () => Platform.OS === 'web' && Dimensions.get('window').widt
 // Updated: 2025-07-18 16:45 - Fixed mobile layout
 const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupPhrase = null, onShowPrivacy }) => {
   // Safety check for THEMES
-  console.log('[OnboardingNew] THEMES object:', THEMES);
-  console.log('[OnboardingNew] THEMES.stackBlue:', THEMES?.stackBlue);
-  
+
   // Create a proper theme object with expected properties
   const defaultTheme = {
     primary: THEMES?.stackBlue?.primary || '#5C7E9D',
@@ -149,13 +147,11 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     try {
       // Use the sync phrase from URL
       const phraseToUse = recoveryInput.trim() || syncSetupPhrase;
-      console.log('Fetching sync preview with phrase:', phraseToUse);
-      
+
       // Generate sync ID from recovery phrase
       const syncId = await syncService.generateSyncId(phraseToUse);
       const deviceId = await encryptionService.getDeviceId();
-      console.log('Generated sync ID:', syncId, 'Device ID:', deviceId);
-      
+
       // For preview, we need to fetch without device ID or use a temporary one
       // Try to fetch sync data - for new devices, we might get 404 which is expected
       const checkUrl = `${syncService.getApiUrl()}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
@@ -166,8 +162,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       if (checkResponse.status === 404) {
         // This is a new device, try to fetch the latest sync data without device ID
         // or by using the sync service's join mechanism
-        console.log('New device detected, attempting to fetch sync group data...');
-        
+
         // Initialize sync service temporarily to fetch data
         await syncService.initialize(phraseToUse);
         
@@ -427,11 +422,11 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                           );
                         } else {
                           // Import was cancelled or failed
-                          console.log('Import cancelled or failed');
+
                         }
                       } catch (error) {
                         // Import was cancelled or failed, stay on welcome screen
-                        console.log('Import cancelled or failed:', error);
+
                       }
                     }}
                   >
@@ -455,14 +450,11 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             <TouchableOpacity 
               style={styles.privacyLink}
               onPress={() => {
-                console.log('[OnboardingNew] Privacy link pressed');
-                console.log('[OnboardingNew] onShowPrivacy prop:', onShowPrivacy);
+
                 if (onShowPrivacy) {
-                  console.log('[OnboardingNew] Calling onShowPrivacy');
+
                   onShowPrivacy();
-                } else {
-                  console.log('[OnboardingNew] onShowPrivacy prop is not defined');
-                }
+                } else {}
               }}
             >
               <Text style={styles.privacyLinkText}>Privacy Policy</Text>
@@ -795,10 +787,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                         
                         // DEBUG: Log entire state after sync
                         console.log('[DEBUG] Full Zustand state after sync:', JSON.stringify(fullState, null, 2));
-                        console.log('[DEBUG] currentTheme:', fullState.currentTheme);
-                        console.log('[DEBUG] users:', fullState.users);
-                        console.log('[DEBUG] hasCompletedOnboarding:', fullState.hasCompletedOnboarding);
-                        
+
                         if (syncedUsers && Object.keys(syncedUsers).length > 0) {
                           // Users already exist from sync
                           const userList = Object.values(syncedUsers);
@@ -943,7 +932,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               qrData: `stackmap://sync/${recoveryPhrase}`,
             });
           } catch (err) {
-            console.error('Error creating sync:', err);
+//             console.error('Error creating sync:', err);
             setSyncError('Failed to create sync. Please try again.');
           } finally {
             setSyncLoading(false);
@@ -1392,17 +1381,17 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     flexDirection: isMobileWeb() || Platform.OS !== 'web' ? 'column' : 'row',
-    gap: Platform.OS === 'web' ? 16 : 12,
-    marginTop: Platform.OS === 'web' ? 40 : 24,
-    marginBottom: Platform.OS === 'web' ? 40 : 24,
+    gap: Platform.OS === 'web' ? 16 : 10,
+    marginTop: Platform.OS === 'web' ? 40 : 20,
+    marginBottom: Platform.OS === 'web' ? 40 : 20,
     width: '100%',
     maxWidth: Platform.OS === 'web' ? 800 : '100%',
   },
   card: {
     flex: (Platform.OS === 'web' && !isMobileWeb()) ? 1 : undefined,
     backgroundColor: 'white',
-    paddingVertical: Platform.OS === 'web' ? 24 : 20,
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 20,
+    paddingVertical: Platform.OS === 'web' ? 24 : 16,
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 18,
     borderRadius: Platform.OS === 'android' ? 8 : 12,
     alignItems: 'center',
     width: (Platform.OS === 'web' && !isMobileWeb()) ? undefined : '100%',
@@ -1451,8 +1440,8 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: 'white',
-    paddingHorizontal: Platform.OS === 'web' ? 16 : 14,
-    paddingVertical: Platform.OS === 'web' ? 12 : 10,
+    paddingHorizontal: Platform.OS === 'web' ? 16 : 12,
+    paddingVertical: Platform.OS === 'web' ? 12 : 9,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: THEMES.stackBlue.primary,
@@ -1463,7 +1452,7 @@ const styles = StyleSheet.create({
   },
   secondaryButtonText: {
     color: THEMES.stackBlue.primary,
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     textAlign: 'center',
   },
@@ -1694,14 +1683,14 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: THEMES.stackBlue.primary,
-    paddingHorizontal: Platform.OS === 'web' ? 32 : 28,
-    paddingVertical: Platform.OS === 'web' ? 14 : (Platform.OS === 'ios' ? 16 : 14),
+    paddingHorizontal: Platform.OS === 'web' ? 32 : 24,
+    paddingVertical: Platform.OS === 'web' ? 14 : (Platform.OS === 'ios' ? 14 : 12),
     borderRadius: Platform.OS === 'android' ? 4 : 8,
     alignItems: 'center',
     justifyContent: 'center',
     display: 'flex',
     flexDirection: 'row',
-    marginTop: Platform.OS === 'web' ? 16 : 16,
+    marginTop: Platform.OS === 'web' ? 16 : 12,
     width: Platform.OS === 'web' ? 'auto' : '100%',
     maxWidth: 300,
     minWidth: Platform.OS === 'web' ? 150 : undefined,
@@ -1710,7 +1699,7 @@ const styles = StyleSheet.create({
     elevation: Platform.OS === 'android' ? 3 : undefined,
   },
   primaryButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: 'white',
     textAlign: 'center',

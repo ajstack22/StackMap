@@ -34,7 +34,7 @@ if (Platform.OS === 'web') {
   try {
     DocumentPicker = require('react-native-document-picker').default;
   } catch (e) {
-    console.warn('DocumentPicker not available on this platform');
+//     console.warn('DocumentPicker not available on this platform');
     DocumentPicker = null;
   }
   RNFS = require('react-native-fs');
@@ -183,7 +183,7 @@ const DataModal = ({
       
       setSyncStatusChecked(true);
     } catch (error) {
-      console.error('Error checking sync status:', error);
+//       console.error('Error checking sync status:', error);
       setSyncStatusChecked(true);
     }
   };
@@ -208,7 +208,7 @@ const DataModal = ({
       
       setActiveShares(userShares);
     } catch (error) {
-      console.error('Error loading active shares:', error);
+//       console.error('Error loading active shares:', error);
     }
   };
   
@@ -252,10 +252,7 @@ const DataModal = ({
   
   // Handle export
   const handleExport = async () => {
-    console.log('Export button pressed');
-    console.log('Export selections:', exportSelections);
-    console.log('Users available:', users);
-    
+
     try {
       setLoading(true);
       
@@ -347,18 +344,13 @@ const DataModal = ({
       
       // Platform-specific export
       if (Platform.OS === 'android') {
-        console.log('Android export starting');
-        console.log('File name:', fileName);
-        console.log('Data length:', jsonData.length);
-        
+
         try {
           const downloadsPath = RNFS.DownloadDirectoryPath;
           const filePath = `${downloadsPath}/${fileName}`;
-          console.log('Writing to:', filePath);
-          
+
           await RNFS.writeFile(filePath, jsonData, 'utf8');
-          console.log('File written successfully');
-          
+
           // Show success message
           showToast({ 
             message: `Data exported to Downloads/${fileName}`,
@@ -373,12 +365,10 @@ const DataModal = ({
                 url: `file://${filePath}`,
                 title: fileName,
               });
-            } catch (shareError) {
-              console.log('Share cancelled or failed:', shareError);
-            }
+            } catch (shareError) {}
           }, 500);
         } catch (error) {
-          console.error('Write failed, using share fallback:', error);
+//           console.error('Write failed, using share fallback:', error);
           // Fallback to share
           const { Share } = require('react-native');
           await Share.share({
@@ -400,25 +390,19 @@ const DataModal = ({
         showToast({ message: 'Export downloaded successfully!' });
       } else {
         // iOS - use share sheet
-        console.log('iOS export starting...');
-        console.log('File name:', fileName);
-        console.log('Data length:', jsonData.length);
+
         console.log('Users:', users ? Object.keys(users).length : 'undefined');
-        console.log('Export selections:', exportSelections);
-        
+
         try {
           const { Share } = require('react-native');
           const documentsPath = RNFS.DocumentDirectoryPath;
           const filePath = `${documentsPath}/${fileName}`;
-          console.log('Writing to:', filePath);
-          
+
           await RNFS.writeFile(filePath, jsonData, 'utf8');
-          console.log('File written successfully');
-          
+
           // Verify file was written
           const fileExists = await RNFS.exists(filePath);
-          console.log('File exists:', fileExists);
-          
+
           if (!fileExists) {
             throw new Error('File was not created successfully');
           }
@@ -427,8 +411,7 @@ const DataModal = ({
             url: `file://${filePath}`,
             title: fileName,
           });
-          console.log('Share result:', shareResult);
-          
+
           // Show feedback based on share result
           if (shareResult.action === Share.sharedAction) {
             showToast({ message: 'Export shared successfully!' });
@@ -440,14 +423,14 @@ const DataModal = ({
           setTimeout(async () => {
             try {
               await RNFS.unlink(filePath);
-              console.log('Temp file cleaned up');
+
             } catch (err) {
               console.log('Clean up error (file may have been moved):', err);
             }
           }, 5000);
         } catch (iosError) {
-          console.error('iOS export error:', iosError);
-          console.error('Error stack:', iosError.stack);
+//           console.error('iOS export error:', iosError);
+//           console.error('Error stack:', iosError.stack);
           showToast({ 
             message: `Failed to export: ${iosError.message}`, 
             type: 'error' 
@@ -455,7 +438,7 @@ const DataModal = ({
         }
       }
     } catch (error) {
-      console.error('Export error:', error);
+//       console.error('Export error:', error);
       if (Platform.OS === 'web') {
         showToast({ 
           message: 'Failed to export data. Please try again.', 
@@ -530,7 +513,7 @@ const DataModal = ({
             setImportData(parsedData);
             initializeImportSelections(parsedData);
           } catch (error) {
-            console.error('Error loading file:', error);
+//             console.error('Error loading file:', error);
             Alert.alert('Error', 'Failed to read file: ' + error.message);
           }
         };
@@ -641,7 +624,7 @@ const DataModal = ({
       
     } catch (error) {
       if (error.code !== DocumentPicker.errorCodes?.cancelled && error.code !== 'DOCUMENT_PICKER_CANCELED') {
-        console.error('File selection error:', error);
+//         console.error('File selection error:', error);
         Alert.alert('Error', 'Failed to select file. Please try again.');
       }
     } finally {
@@ -661,11 +644,9 @@ const DataModal = ({
   const handleImportConfirm = async () => {
     try {
       setLoading(true);
-      
-      console.log('Import mode:', importMode);
+
       console.log('Import data users:', importData.users ? Object.keys(importData.users) : 'none');
-      console.log('Import selections:', importSelections);
-      
+
       // Prepare imported data based on selections
       const dataToImport = {
         mode: importMode,
@@ -684,7 +665,7 @@ const DataModal = ({
             
             // Ensure name is a string
             if (!validatedUser.name || typeof validatedUser.name !== 'string') {
-              console.warn(`User ${userId} has invalid name:`, validatedUser.name);
+//               console.warn(`User ${userId} has invalid name:`, validatedUser.name);
               if (typeof validatedUser.name === 'object' && validatedUser.name !== null) {
                 // Try to extract name from object
                 validatedUser.name = validatedUser.name.name || validatedUser.name.text || 'User';
@@ -695,7 +676,7 @@ const DataModal = ({
             
             // Ensure icon is a string
             if (!validatedUser.icon || typeof validatedUser.icon !== 'string') {
-              console.warn(`User ${userId} has invalid icon:`, validatedUser.icon);
+//               console.warn(`User ${userId} has invalid icon:`, validatedUser.icon);
               // Try emoji field or use default
               validatedUser.icon = validatedUser.emoji || '👤';
             }
@@ -753,7 +734,7 @@ const DataModal = ({
       onClose();
       
     } catch (error) {
-      console.error('Import error:', error);
+//       console.error('Import error:', error);
       Alert.alert('Import Error', 'Failed to import data. Please try again.');
     } finally {
       setLoading(false);

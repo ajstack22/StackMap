@@ -7,7 +7,7 @@ const Keychain = {
       localStorage.setItem(key, password);
       return true;
     } catch (error) {
-      console.error('Keychain setInternetCredentials error:', error);
+//       console.error('Keychain setInternetCredentials error:', error);
       return false;
     }
   },
@@ -25,28 +25,28 @@ const Keychain = {
       }
       return false;
     } catch (error) {
-      console.error('Keychain getInternetCredentials error:', error);
+//       console.error('Keychain getInternetCredentials error:', error);
       return false;
     }
   },
   
   resetInternetCredentials: async (server) => {
     try {
-      console.log('Keychain.web resetInternetCredentials: server:', server);
+
       const keys = Object.keys(localStorage);
-      console.log('Keychain.web resetInternetCredentials: all keys:', keys);
+
       let removed = false;
       for (const key of keys) {
         if (key.startsWith(`keychain_${server}_`)) {
-          console.log('Keychain.web resetInternetCredentials: removing key:', key);
+
           localStorage.removeItem(key);
           removed = true;
         }
       }
-      console.log('Keychain.web resetInternetCredentials: removed any?', removed);
+
       return true;
     } catch (error) {
-      console.error('Keychain resetInternetCredentials error:', error);
+//       console.error('Keychain resetInternetCredentials error:', error);
       return false;
     }
   }

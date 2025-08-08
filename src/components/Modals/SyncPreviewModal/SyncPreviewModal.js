@@ -41,11 +41,9 @@ const SyncPreviewModal = ({
 
       // Decode the sync phrase properly
       const decodedPhrase = decodeURIComponent(syncPhrase);
-      console.log('[SyncPreview] Checking sync with phrase:', decodedPhrase);
 
       // Generate sync ID from phrase
       const syncId = await syncService.generateSyncId(decodedPhrase);
-      console.log('[SyncPreview] Generated sync ID:', syncId);
 
       // Try to fetch sync data
       const deviceId = await encryptionService.getDeviceId();
@@ -115,7 +113,7 @@ const SyncPreviewModal = ({
       setSyncData(preview);
       setConnectionStatus('connected');
     } catch (error) {
-      console.error('[SyncPreview] Error checking sync:', error);
+//       console.error('[SyncPreview] Error checking sync:', error);
       setError(error.message || 'Failed to connect to sync');
       setConnectionStatus('error');
     } finally {
@@ -134,8 +132,7 @@ const SyncPreviewModal = ({
       // This ensures we don't have conflicts with existing users
       const { useAppStore } = require('../../../stores');
       const store = useAppStore.getState();
-      
-      console.log('[SyncPreview] Clearing local data before sync import...');
+
       store.setUsers({});
       store.setCurrentUser(null);
       store.setActivities([]);
@@ -150,7 +147,7 @@ const SyncPreviewModal = ({
       // Let parent handle the success (likely reload)
       onConfirm();
     } catch (error) {
-      console.error('[SyncPreview] Error confirming sync:', error);
+//       console.error('[SyncPreview] Error confirming sync:', error);
       setError(error.message || 'Failed to connect to sync');
       setLoading(false);
     }

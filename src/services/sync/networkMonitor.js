@@ -28,9 +28,7 @@ class NetworkMonitor {
       this.handleNetworkChange(state);
     });
 
-    if (__DEV__) {
-      console.log('NetworkMonitor: Started monitoring');
-    }
+    if (__DEV__) {}
   }
 
   /**
@@ -40,9 +38,7 @@ class NetworkMonitor {
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
-      if (__DEV__) {
-        console.log('NetworkMonitor: Stopped monitoring');
-      }
+      if (__DEV__) {}
     }
   }
 
@@ -57,13 +53,7 @@ class NetworkMonitor {
     this.connectionType = state.type;
     this.isInternetReachable = state.isInternetReachable !== false;
 
-    if (__DEV__) {
-      console.log('NetworkMonitor: Network state changed', {
-        isOnline: this.isOnline,
-        type: this.connectionType,
-        isInternetReachable: this.isInternetReachable
-      });
-    }
+    if (__DEV__) {}
 
     // Notify listeners if online status changed
     if (wasOnline !== this.isOnline) {
@@ -84,7 +74,9 @@ class NetworkMonitor {
       this.handleNetworkChange(state);
       return this.isOnline;
     } catch (error) {
-      console.error('NetworkMonitor: Failed to check connection', error);
+      if (__DEV__) {
+        console.error('NetworkMonitor: Failed to check connection', error);
+      }
       return this.isOnline;
     }
   }
@@ -109,9 +101,7 @@ class NetworkMonitor {
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
-      if (__DEV__) {
-        console.log('NetworkMonitor: Server unreachable', error.message);
-      }
+      if (__DEV__) {}
       return false;
     }
   }
@@ -141,7 +131,9 @@ class NetworkMonitor {
       try {
         callback(event);
       } catch (error) {
-        console.error('NetworkMonitor: Listener error', error);
+        if (__DEV__) {
+          console.error('NetworkMonitor: Listener error', error);
+        }
       }
     });
   }

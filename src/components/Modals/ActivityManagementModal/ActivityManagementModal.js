@@ -25,13 +25,11 @@ const ActivityManagementModal = ({
   const [loading, setLoading] = useState(false);
   const [selectedFromLibrary, setSelectedFromLibrary] = useState(null);
 
-  console.log('ActivityManagementModal render - initialTab:', initialTab, 'activeTab:', activeTab, 'visible:', visible);
-
   // Reset state when modal opens
   useEffect(() => {
-    console.log('ActivityManagementModal useEffect - visible:', visible, 'initialTab:', initialTab);
+
     if (visible) {
-      console.log('Setting activeTab to:', initialTab);
+
       setActiveTab(initialTab);
       setSelectedFromLibrary(null);
     }
@@ -100,7 +98,7 @@ const ActivityManagementModal = ({
         showToast({ message: 'Activity saved to My Templates!' });
       }
     } catch (error) {
-      console.error('Error saving to library:', error);
+//       console.error('Error saving to library:', error);
       showToast({ message: 'Failed to save to library', type: 'error' });
     } finally {
       setLoading(false);

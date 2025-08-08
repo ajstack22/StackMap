@@ -21,7 +21,7 @@ class SyncThrottle {
 
     // If sync is in progress, queue this request
     if (this.syncInProgress) {
-      console.log('SyncThrottle: Sync in progress, queueing request');
+
       return this.queueSync(syncFunction, options);
     }
 
@@ -29,7 +29,7 @@ class SyncThrottle {
     if (immediate) {
       const timeSinceLastSync = Date.now() - this.lastSyncTime;
       if (timeSinceLastSync < this.minSyncInterval) {
-        console.log(`SyncThrottle: Throttled, wait ${this.minSyncInterval - timeSinceLastSync}ms`);
+
         return this.scheduleSync(syncFunction, this.minSyncInterval - timeSinceLastSync, options);
       }
       
@@ -131,7 +131,7 @@ class SyncThrottle {
     this.pendingSync = null;
     this.syncInProgress = false;
     this.debounceStartTime = 0;
-    console.log('SyncThrottle: Cleared all pending syncs');
+
   }
 
   /**
@@ -150,13 +150,12 @@ class SyncThrottle {
     const startTime = Date.now();
 
     try {
-      console.log('SyncThrottle: Executing sync');
+
       const result = await syncFunction();
       
       this.lastSyncTime = Date.now();
       const duration = this.lastSyncTime - startTime;
-      console.log(`SyncThrottle: Sync completed in ${duration}ms`);
-      
+
       // Process any pending sync
       if (this.pendingSync) {
         const pending = this.pendingSync;

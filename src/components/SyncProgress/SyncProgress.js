@@ -16,11 +16,10 @@ const SyncProgress = ({ theme }) => {
   const slideAnim = useRef(new Animated.Value(-100)).current;
   
   useEffect(() => {
-    console.log('[SyncProgress] Component mounted, setting up listeners');
-    
+
     // Subscribe to sync status updates
     const updateStatus = (status) => {
-      console.log('[SyncProgress] Status update received:', status);
+
       setSyncStatus(status);
       
       if (status) {
@@ -57,15 +56,14 @@ const SyncProgress = ({ theme }) => {
     };
     
     const updateProgress = (value) => {
-      console.log('[SyncProgress] Progress update received:', value);
+
       setProgress(value);
     };
     
     // Set up listeners
     syncService.onStatusChange = updateStatus;
     syncService.onProgressChange = updateProgress;
-    console.log('[SyncProgress] Listeners attached to syncService');
-    
+
     return () => {
       // Clean up listeners
       syncService.onStatusChange = null;

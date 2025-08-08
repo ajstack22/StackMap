@@ -21,11 +21,11 @@ class SyncQueue {
       const stored = await AsyncStorage.getItem(SYNC_QUEUE_KEY);
       if (stored) {
         this.queue = JSON.parse(stored);
-        console.log('SyncQueue: Loaded', this.queue.length, 'pending items');
+
       }
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to load sync queue:', error);
+//       console.error('Failed to load sync queue:', error);
       this.queue = [];
       this.initialized = true;
     }
@@ -64,7 +64,6 @@ class SyncQueue {
     // Notify listeners
     this.notifyListeners();
 
-    console.log('SyncQueue: Enqueued operation', queueItem.id);
     return queueItem.id;
   }
 
@@ -97,7 +96,6 @@ class SyncQueue {
     }
 
     this.isProcessing = true;
-    console.log('SyncQueue: Processing', this.queue.length, 'items');
 
     try {
       // Get items that can be retried
@@ -110,8 +108,6 @@ class SyncQueue {
             continue;
           }
 
-          console.log('SyncQueue: Processing item', item.id);
-          
           // Update attempt info
           item.attempts++;
           item.lastAttempt = Date.now();
@@ -122,16 +118,13 @@ class SyncQueue {
           // Mark as completed
           item.completed = true;
           item.error = null;
-          
-          console.log('SyncQueue: Successfully processed', item.id);
+
         } catch (error) {
-          console.error('SyncQueue: Failed to process', item.id, error);
+//           console.error('SyncQueue: Failed to process', item.id, error);
           item.error = error.message || 'Sync failed';
           
           // If it's a network error, we'll retry later
-          if (this.isNetworkError(error)) {
-            console.log('SyncQueue: Network error, will retry later');
-          }
+          if (this.isNetworkError(error)) {}
         }
       }
 
@@ -225,7 +218,7 @@ class SyncQueue {
     try {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(this.queue));
     } catch (error) {
-      console.error('Failed to persist sync queue:', error);
+//       console.error('Failed to persist sync queue:', error);
     }
   }
 
@@ -246,7 +239,7 @@ class SyncQueue {
       try {
         callback(status);
       } catch (error) {
-        console.error('SyncQueue: Listener error', error);
+//         console.error('SyncQueue: Listener error', error);
       }
     });
   }

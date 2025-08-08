@@ -220,7 +220,6 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     { name: 'Friday', emoji: '🎉', description: 'TGIF!' },
     { name: 'Saturday', emoji: '🎯', description: 'Weekend fun!' },
   ];
-  
 
   const cycleDay = (direction) => {
     animateDayChange();
@@ -246,7 +245,6 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
       }),
     ]).start();
   };
-
 
   const handleSave = () => {
     const contextData = {
@@ -276,7 +274,6 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
       setSelectedWeather((prev) => (prev - 1 + weatherOptions.length) % weatherOptions.length);
     }
   };
-
 
   // Weather Carousel Component
   const WeatherCarousel = () => {

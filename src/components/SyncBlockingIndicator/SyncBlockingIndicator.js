@@ -16,12 +16,11 @@ const SyncBlockingIndicator = ({ theme }) => {
   const [progress, setProgress] = useState(0);
   
   useEffect(() => {
-    console.log('[SyncBlockingIndicator] Component mounted');
-    
+
     // Check if sync is initializing on mount
     const checkInitialSync = async () => {
       const isInitializing = syncService.isInitializing || syncService.syncInProgress;
-      console.log('[SyncBlockingIndicator] Initial sync check:', isInitializing);
+
       if (isInitializing) {
         setIsVisible(true);
       }
@@ -30,8 +29,7 @@ const SyncBlockingIndicator = ({ theme }) => {
     
     // Subscribe to sync status updates
     const updateStatus = (status) => {
-      console.log('[SyncBlockingIndicator] Status update:', status);
-      
+
       // ONLY show blocking indicator during initial sync or when explicitly restoring
       // Don't show for incremental syncs
       const shouldShowBlockingUI = status && (
@@ -80,7 +78,7 @@ const SyncBlockingIndicator = ({ theme }) => {
     };
     
     const updateProgress = (value) => {
-      console.log('[SyncBlockingIndicator] Progress:', value);
+
       setProgress(value);
     };
     

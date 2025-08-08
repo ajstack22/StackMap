@@ -70,7 +70,7 @@ const AddTabContent = ({
         const encryptionService = (await import('../../../services/sync/encryptionService')).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
-        console.warn('Could not get device ID, using fallback:', error);
+//         console.warn('Could not get device ID, using fallback:', error);
         return 'unknown';
       }
     })();
@@ -111,7 +111,7 @@ const AddTabContent = ({
         const encryptionService = (await import('../../../services/sync/encryptionService')).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
-        console.warn('Could not get device ID, using fallback:', error);
+//         console.warn('Could not get device ID, using fallback:', error);
         return 'unknown';
       }
     })();

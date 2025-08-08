@@ -36,8 +36,7 @@ export const cleanupGhostUsers = () => {
   
   usersByKey.forEach((userList, key) => {
     if (userList.length > 1) {
-      console.log(`[Cleanup] Found ${userList.length} duplicate users with key: ${key}`);
-      
+
       // Sort by user ID timestamp to find the oldest
       const sorted = userList.sort((a, b) => {
         const aTimestamp = parseInt(a.userId.split('_')[1]) || 0;
@@ -100,8 +99,7 @@ export const cleanupGhostUsers = () => {
   });
   
   if (duplicates.length > 0) {
-    console.log('[Cleanup] Cleaning up ghost users:', duplicates);
-    
+
     // Update the store
     useAppStore.setState({
       users: cleanedUsers,

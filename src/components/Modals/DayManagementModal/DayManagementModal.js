@@ -57,7 +57,6 @@ const DayManagementModal = ({
     }
   };
 
-
   return (
     <TabbedModal
       visible={visible}

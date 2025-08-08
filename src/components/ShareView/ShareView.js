@@ -119,7 +119,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
             read_only: true
           });
         } catch (decryptError) {
-          console.error('Decryption failed:', decryptError);
+//           console.error('Decryption failed:', decryptError);
           throw new Error('Failed to decrypt share data. The link may be corrupted.');
         }
       } else {
