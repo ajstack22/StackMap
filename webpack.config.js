@@ -11,7 +11,7 @@ module.exports = {
     path: path.resolve(__dirname, 'web/build'),
     filename: 'bundle.[contenthash].js',
     publicPath: process.env.NODE_ENV === 'production' ? '' : '/',
-    clean: true,
+    clean: false,
   },
   module: {
     rules: [
@@ -24,12 +24,15 @@ module.exports = {
       },
       {
         test: /\.(js|jsx|ts|tsx)$/,
-        exclude: /node_modules\/(?!(react-native-.*|@react-native.*)\/).*/,
+        exclude: /node_modules\/(?!(react-native.*|@react-native.*)\/).*/,
         use: {
           loader: 'babel-loader',
           options: {
             presets: ['module:@react-native/babel-preset'],
-            plugins: ['react-native-web'],
+            plugins: [
+              'react-native-web',
+              '@babel/plugin-transform-flow-strip-types'
+            ],
           },
         },
       },
