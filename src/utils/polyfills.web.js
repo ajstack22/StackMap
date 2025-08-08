@@ -7,7 +7,70 @@ global.__fbBatchedBridgeConfig = {
 };
 
 // Mock NativeModules
-global.NativeModules = {};
+global.NativeModules = {
+  SourceCode: {
+    scriptURL: 'http://localhost:8081/index.bundle?platform=web',
+  },
+  PlatformConstants: {
+    getConstants: () => ({
+      reactNativeVersion: { major: 0, minor: 72, patch: 0 },
+    }),
+  },
+  DeviceInfo: {
+    Dimensions: {
+      window: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        scale: 1,
+        fontScale: 1,
+      },
+      screen: {
+        width: window.innerWidth,
+        height: window.innerHeight,
+        scale: 1,
+        fontScale: 1,
+      },
+    },
+  },
+};
+
+// Mock TurboModuleRegistry
+global.__turboModuleProxy = function(name) {
+  const mockModule = {
+    SourceCode: {
+      getConstants: () => ({
+        scriptURL: 'http://localhost:8081/index.bundle?platform=web',
+      }),
+    },
+    PlatformConstants: {
+      getConstants: () => ({
+        reactNativeVersion: { major: 0, minor: 72, patch: 0 },
+        isTesting: false,
+        forceTouchAvailable: false,
+      }),
+    },
+    DeviceInfo: {
+      getConstants: () => ({
+        Dimensions: {
+          window: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            scale: 1,
+            fontScale: 1,
+          },
+          screen: {
+            width: window.innerWidth,
+            height: window.innerHeight,
+            scale: 1,
+            fontScale: 1,
+          },
+        },
+      }),
+    },
+  };
+  
+  return mockModule[name] || {};
+};
 
 // setImmediate polyfill
 if (typeof setImmediate === 'undefined') {
