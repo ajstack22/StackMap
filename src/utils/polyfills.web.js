@@ -1,18 +1,23 @@
 // Polyfills for web environment
+// These MUST be set synchronously before any React Native code loads
+
+// Ensure global exists
+if (typeof global === 'undefined') {
+  window.global = window;
+}
 
 // Mock Platform - CRITICAL for React Native web
-if (typeof window !== 'undefined') {
-  // Platform must be global for React Native
-  global.Platform = window.Platform = {
-    OS: 'web',
-    Version: 1,
-    isPad: false,
-    isTV: false,
-    isTVOS: false,
-    isTesting: false,
-    select: (obj) => obj.web || obj.default || Object.values(obj)[0],
-  };
-}
+// Must be set on both global and window BEFORE any imports
+global.Platform = {
+  OS: 'web',
+  Version: 1,
+  isPad: false,
+  isTV: false,
+  isTVOS: false,
+  isTesting: false,
+  select: (obj) => obj.web || obj.default || Object.values(obj)[0],
+};
+window.Platform = global.Platform;
 
 // Mock native bridge config to prevent React Native errors
 global.__fbBatchedBridgeConfig = {
