@@ -47,7 +47,7 @@ import {
   PixelRatio as RNWPixelRatio,
   Share,
   StyleSheet,
-  UIManager,
+  // UIManager, // DON'T import UIManager - it uses TurboModules!
   Vibration,
 } from 'react-native-web';
 
@@ -89,7 +89,7 @@ export {
   RNWPixelRatio,
   Share,
   StyleSheet,
-  UIManager,
+  // UIManager, // We'll export our own below
   Vibration,
 };
 
@@ -99,6 +99,7 @@ export { default as Dimensions } from './Dimensions';
 export { default as Platform } from './Platform';
 export { default as Linking } from './Linking';
 export { default as NativeModules } from './NativeModules';
+export { default as UIManager } from './UIManager';
 
 // Custom Alert and PixelRatio to override RNW's if needed, or to provide a default
 export const Alert = {
