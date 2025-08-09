@@ -51,6 +51,10 @@ module.exports = {
       'react-native$': path.resolve(__dirname, 'src/utils/react-native-web-modules/index.js'),
       'react-native/Libraries/Utilities/Dimensions': path.resolve(__dirname, 'src/utils/react-native-web-modules/Dimensions.js'),
       'react-native/Libraries/Utilities/Platform': path.resolve(__dirname, 'src/utils/react-native-web-modules/Platform.js'),
+      // Add more specific paths to catch internal imports
+      'react-native/Libraries/ReactNative/UIManager': path.resolve(__dirname, 'src/utils/react-native-web-modules/UIManager.js'),
+      'react-native/src/private/specs_DEPRECATED/modules/NativeUIManager': path.resolve(__dirname, 'src/utils/react-native-web-modules/UIManager.js'),
+      'react-native/Libraries/TurboModule/TurboModuleRegistry': path.resolve(__dirname, 'src/utils/react-native-web-modules/TurboModuleRegistry.js'),
       
       // Add aliases for RN packages that need web versions
       'react-native-svg': 'react-native-svg-web',
