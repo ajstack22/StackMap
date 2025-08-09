@@ -9,6 +9,8 @@ export const styles = StyleSheet.create({
   scrollContainer: {
     paddingVertical: SPACING.sm,
     // Remove horizontal padding - handled by addFormContainer
+    // iOS constraint to prevent overgrowth
+    ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
   },
   contentSection: {
     marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
@@ -31,6 +33,10 @@ export const styles = StyleSheet.create({
       maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
+    }),
+    // iOS max height constraint to prevent oversized panels
+    ...(Platform.OS === 'ios' && IS_MOBILE && {
+      maxHeight: '80%',
     }),
     ...(Platform.OS === 'ios' ? {
       shadowColor: '#000',
@@ -60,6 +66,12 @@ export const styles = StyleSheet.create({
       maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
+    }),
+    // iOS constraints to prevent panels from being too large
+    ...(Platform.OS === 'ios' && { 
+      flex: 0, 
+      flexGrow: 0, 
+      flexShrink: 1 
     }),
   },
   categoryContainer: {
@@ -127,6 +139,11 @@ export const styles = StyleSheet.create({
     paddingVertical: 12,
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
+    // iOS height constraint to prevent oversized cards
+    ...(Platform.OS === 'ios' && { 
+      height: 48, 
+      maxHeight: 48 
+    }),
   },
   activityContent: {
     flex: 1,
