@@ -6,7 +6,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
-  entry: ['./web-polyfills.js', './index.web.js'],
+  entry: './index.web.js',
   output: {
     path: path.resolve(__dirname, 'web/build'),
     filename: 'bundle.[contenthash].js',
