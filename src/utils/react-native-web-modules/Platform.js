@@ -3,7 +3,7 @@
  * Provides consistent Platform API without TurboModule dependencies
  */
 
-const PlatformWeb = {
+const Platform = {
   OS: 'web',
   Version: 1,
   isPad: false,
@@ -12,10 +12,15 @@ const PlatformWeb = {
   isTesting: false,
   
   select: (obj) => {
-    if ('web' in obj) return obj.web;
-    if ('default' in obj) return obj.default;
-    // Return first available value
-    return Object.values(obj)[0];
+    // Use 'web' key if it exists, otherwise fall back to 'default'
+    if (obj.web !== undefined) {
+      return obj.web;
+    }
+    if (obj.default !== undefined) {
+      return obj.default;
+    }
+    // If neither is present, return undefined to match native behavior more closely
+    return undefined;
   },
   
   // Constants for web environment
@@ -26,5 +31,4 @@ const PlatformWeb = {
   },
 };
 
-export default PlatformWeb;
-export const Platform = PlatformWeb;
+export default Platform;

@@ -22,7 +22,8 @@ const Dimensions = {
         fontScale: 1,
       };
     }
-    throw new Error(`No dimension set for key ${dim}`);
+    // Return null for unsupported dimensions
+    return null;
   },
 
   addEventListener(type, handler) {
@@ -45,14 +46,6 @@ const Dimensions = {
       };
     }
     return { remove: () => {} };
-  },
-
-  removeEventListener(type, handler) {
-    // For backward compatibility
-    if (type === 'change') {
-      window.removeEventListener('resize', handler);
-      window.removeEventListener('orientationchange', handler);
-    }
   },
 
   set() {

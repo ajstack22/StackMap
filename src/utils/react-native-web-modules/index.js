@@ -3,98 +3,37 @@
  * These avoid TurboModule dependencies that cause errors on web
  */
 
-// First, set up our overrides on the global scope to intercept TurboModule calls
-if (typeof window !== 'undefined') {
-  // Mock TurboModuleRegistry before anything else loads
-  window.__turboModuleProxy = function(name) {
-    // Return our mock modules
-    const modules = {
-      DeviceInfo: {
-        getConstants: () => ({
-          Dimensions: {
-            window: {
-              width: window.innerWidth || 1024,
-              height: window.innerHeight || 768,
-              scale: window.devicePixelRatio || 1,
-              fontScale: 1,
-            },
-            screen: {
-              width: window.screen?.width || window.innerWidth || 1024,
-              height: window.screen?.height || window.innerHeight || 768,
-              scale: window.devicePixelRatio || 1,
-              fontScale: 1,
-            },
-          },
-          isTablet: window.innerWidth >= 768,
-          isEmulator: false,
-        }),
-      },
-      UIManager: {
-        getConstants: () => ({}),
-        getViewManagerConfig: () => null,
-        measure: () => {},
-        measureInWindow: () => {},
-        measureLayout: () => {},
-        measureLayoutRelativeToParent: () => {},
-        dispatchViewManagerCommand: () => {},
-        RCTView: {
-          directEventTypes: {},
-        },
-      },
-      SourceCode: {
-        getConstants: () => ({
-          scriptURL: window.location.href,
-        }),
-      },
-      PlatformConstants: {
-        getConstants: () => ({
-          reactNativeVersion: { major: 0, minor: 72, patch: 0 },
-          isTesting: false,
-          forceTouchAvailable: false,
-        }),
-      },
-      StatusBarManager: {
-        HEIGHT: 0,
-        getHeight: (callback) => callback && callback({ height: 0 }),
-        setHidden: () => {},
-        setStyle: () => {},
-        setBackgroundColor: () => {},
-        setTranslucent: () => {},
-      },
-    };
-    
-    return modules[name] || null;
-  };
-}
+// Import all exports from react-native-web
+import * as ReactNativeWeb from 'react-native-web';
 
-// Re-export everything from react-native-web
+// Explicitly delete the modules we want to override
+// This prevents them from being re-exported by the wildcard export
+delete ReactNativeWeb.Dimensions;
+delete ReactNativeWeb.Platform;
+delete ReactNativeWeb.Linking;
+delete ReactNativeWeb.NativeModules;
+
+// Re-export everything from react-native-web EXCEPT the modules we deleted
 export * from 'react-native-web';
 
-// Override problematic modules with our web-safe versions
+// Now, export our own web-safe versions
+// These will be the only versions available to the bundler
 export { default as Dimensions } from './Dimensions';
 export { default as Platform } from './Platform';
-export { default as NativeModules } from './NativeModules';
 export { default as Linking } from './Linking';
+export { default as NativeModules } from './NativeModules';
 
-// Additional exports that might be needed
+// --- Other polyfills can remain as they are ---
+
 export const Alert = {
-  alert: (title, message, buttons, options) => {
-    // Simple web implementation
+  alert: (title, message, buttons) => {
     if (buttons && buttons.length > 0) {
       const confirmButton = buttons.find(b => b.style !== 'cancel');
-      const cancelButton = buttons.find(b => b.style === 'cancel');
-      
-      if (confirmButton && cancelButton) {
-        if (window.confirm(`${title}\n\n${message}`)) {
-          confirmButton.onPress && confirmButton.onPress();
-        } else {
-          cancelButton.onPress && cancelButton.onPress();
-        }
-      } else if (confirmButton) {
-        window.alert(`${title}\n\n${message}`);
+      if (confirmButton && window.confirm(`${title}\n\n${message}`)) {
         confirmButton.onPress && confirmButton.onPress();
       } else {
-        window.alert(`${title}\n\n${message}`);
+        const cancelButton = buttons.find(b => b.style === 'cancel');
+        cancelButton && cancelButton.onPress && cancelButton.onPress();
       }
     } else {
       window.alert(`${title}\n\n${message}`);
