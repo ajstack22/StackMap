@@ -18,7 +18,11 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { isTablet, SPACING } from '../../constants';
-import PagerView from 'react-native-pager-view';
+// Only import PagerView on Android
+let PagerView = null;
+if (Platform.OS === 'android') {
+  PagerView = require('react-native-pager-view').default;
+}
 
 const TabbedModal = ({
   visible,

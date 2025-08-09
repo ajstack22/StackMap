@@ -46,17 +46,25 @@ module.exports = {
   resolve: {
     extensions: ['.web.js', '.js', '.jsx', '.ts', '.tsx'],
     alias: {
-      // CRITICAL: Override react-native with our web-safe modules
-      // This must come BEFORE react-native-web to intercept imports
-      'react-native$': path.resolve(__dirname, 'src/utils/react-native-web-modules/index.js'),
+      // CRITICAL: Override react-native with our complete replacement
+      // This catches ALL imports from 'react-native'
+      'react-native$': path.resolve(__dirname, 'react-native.web.js'),
+      'react-native': path.resolve(__dirname, 'react-native.web.js'),
       'react-native/Libraries/Utilities/Dimensions': path.resolve(__dirname, 'src/utils/react-native-web-modules/Dimensions.js'),
       'react-native/Libraries/Utilities/Platform': path.resolve(__dirname, 'src/utils/react-native-web-modules/Platform.js'),
       // Add more specific paths to catch internal imports
       'react-native/Libraries/ReactNative/UIManager': path.resolve(__dirname, 'src/utils/react-native-web-modules/UIManager.js'),
       'react-native/src/private/specs_DEPRECATED/modules/NativeUIManager': path.resolve(__dirname, 'src/utils/react-native-web-modules/UIManager.js'),
       'react-native/Libraries/TurboModule/TurboModuleRegistry': path.resolve(__dirname, 'src/utils/react-native-web-modules/TurboModuleRegistry.js'),
+      // Mock codegen and native component paths for pager-view
+      'react-native/Libraries/Utilities/codegenNativeCommands': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
+      'react-native/Libraries/Utilities/codegenNativeComponent': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
+      'react-native/Libraries/NativeComponent/NativeComponentRegistry': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
+      'react-native/Libraries/NativeComponent/ViewConfigIgnore': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
+      'react-native/Libraries/ReactNative/RendererProxy': path.resolve(__dirname, 'src/utils/react-native-web-modules/mocks.js'),
       
       // Add aliases for RN packages that need web versions
+      'react-native-pager-view': path.resolve(__dirname, 'src/utils/PagerView.web.js'),
       'react-native-svg': 'react-native-svg-web',
       'react-native-qrcode-svg': path.resolve(__dirname, 'src/utils/QRCode.web.js'),
       '@react-native-async-storage/async-storage': path.resolve(__dirname, 'src/utils/AsyncStorage.web.js'),
