@@ -82,6 +82,18 @@
       remoteModuleConfig: [],
       localModulesConfig: [],
     };
+    
+    // Mock TurboModuleRegistry for SourceCode module
+    window.__turboModuleProxy = function(name) {
+      if (name === 'SourceCode') {
+        return {
+          getConstants: () => ({
+            scriptURL: 'http://localhost:8081/index.bundle?platform=web',
+          }),
+        };
+      }
+      return null;
+    };
   </script>
 </head>
 <body>
