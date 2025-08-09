@@ -69,6 +69,20 @@
       to { transform: rotate(360deg); }
     }
   </style>
+  
+  <!-- Minimal polyfills for React Native Web -->
+  <script>
+    // Set up global object
+    if (typeof global === 'undefined') {
+      window.global = window;
+    }
+    
+    // Mock native bridge to prevent React Native errors
+    window.__fbBatchedBridgeConfig = {
+      remoteModuleConfig: [],
+      localModulesConfig: [],
+    };
+  </script>
 </head>
 <body>
   <div id="root">

@@ -37,4 +37,13 @@
     
     @keyframes spin {
       to { transform: rotate(360deg); }
-    }</style><script defer="defer" src="./bundle.4597b1787ccca25c7ac4.js"></script></head><body><div id="root"><div class="loading"><div class="spinner"></div></div></div></body></html>
+    }</style><script>// Set up global object
+    if (typeof global === 'undefined') {
+      window.global = window;
+    }
+    
+    // Mock native bridge to prevent React Native errors
+    window.__fbBatchedBridgeConfig = {
+      remoteModuleConfig: [],
+      localModulesConfig: [],
+    };</script><script defer="defer" src="./bundle.4597b1787ccca25c7ac4.js"></script></head><body><div id="root"><div class="loading"><div class="spinner"></div></div></div></body></html>
