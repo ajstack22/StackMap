@@ -37,36 +37,4 @@
     
     @keyframes spin {
       to { transform: rotate(360deg); }
-    }</style><script>// Ensure global exists
-    if (typeof global === 'undefined') {
-      window.global = window;
-    }
-    
-    // Mock Platform - CRITICAL for React Native web
-    window.Platform = global.Platform = {
-      OS: 'web',
-      Version: 1,
-      isPad: false,
-      isTV: false,
-      isTVOS: false,
-      isTesting: false,
-      select: function(obj) { 
-        return obj.web || obj.default || Object.values(obj)[0];
-      }
-    };
-    
-    // Mock native bridge config
-    global.__fbBatchedBridgeConfig = {
-      remoteModuleConfig: [],
-      localModulesConfig: [],
-    };
-    
-    // Basic NativeModules mock
-    global.NativeModules = {};
-    
-    // TurboModule mock
-    global.__turboModuleProxy = function(name) {
-      return {
-        getConstants: function() { return {}; }
-      };
-    };</script><script defer="defer" src="./bundle.4597b1787ccca25c7ac4.js"></script></head><body><div id="root"><div class="loading"><div class="spinner"></div></div></div></body></html>
+    }</style><script defer="defer" src="./bundle.4597b1787ccca25c7ac4.js"></script></head><body><div id="root"><div class="loading"><div class="spinner"></div></div></div></body></html>
