@@ -1,10 +1,11 @@
 /**
  * Web-safe replacement for react-native's Dimensions module
  * Avoids TurboModule dependency that causes errors on web
+ * This version exports a plain object to mimic the native API directly.
  */
 
-class DimensionsWeb {
-  static get(dim) {
+const Dimensions = {
+  get(dim) {
     if (dim === 'window') {
       return {
         width: window.innerWidth || 1024,
@@ -22,14 +23,14 @@ class DimensionsWeb {
       };
     }
     throw new Error(`No dimension set for key ${dim}`);
-  }
+  },
 
-  static addEventListener(type, handler) {
+  addEventListener(type, handler) {
     if (type === 'change') {
       const listener = () => {
         handler({
-          window: DimensionsWeb.get('window'),
-          screen: DimensionsWeb.get('screen'),
+          window: this.get('window'),
+          screen: this.get('screen'),
         });
       };
       window.addEventListener('resize', listener);
@@ -44,21 +45,20 @@ class DimensionsWeb {
       };
     }
     return { remove: () => {} };
-  }
+  },
 
-  static removeEventListener(type, handler) {
+  removeEventListener(type, handler) {
     // For backward compatibility
     if (type === 'change') {
       window.removeEventListener('resize', handler);
       window.removeEventListener('orientationchange', handler);
     }
-  }
+  },
 
-  static set() {
+  set() {
     // Not used on web
     console.warn('Dimensions.set is not supported on web');
   }
-}
+};
 
-export default DimensionsWeb;
-export const Dimensions = DimensionsWeb;
+export default Dimensions;
