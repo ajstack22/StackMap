@@ -94,6 +94,7 @@ import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibra
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
 import PinModal from './src/components/Modals/PinModal';
+import { STACKMAP_LIBRARY } from './src/constants/stackMapLibrary';
 
 // Component imports verified - all components are properly imported
 
@@ -4136,6 +4137,7 @@ const App = () => {
         categories={activityCategories}
         showToast={showToast}
         onSaveCategories={setActivityCategories}
+        stackMapLibrary={STACKMAP_LIBRARY}
         onAddActivity={async (activity) => {
           // Get device ID for enhanced activity IDs
           const deviceId = await encryptionService.getDeviceId();
