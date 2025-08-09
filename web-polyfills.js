@@ -1,39 +1,163 @@
-// This file MUST be loaded before any React Native code
-// It sets up the global environment for React Native Web
+/**
+ * Critical polyfills that MUST run before any React Native code
+ * This file is loaded as the first entry point in webpack
+ */
 
 // Ensure global exists
 if (typeof global === 'undefined') {
   window.global = window;
 }
 
-// Create a mock react-native module with Platform already defined
-const Platform = {
+// Mock the native bridge
+window.__fbBatchedBridgeConfig = {
+  remoteModuleConfig: [],
+  localModulesConfig: [],
+};
+
+// The KEY fix - mock TurboModuleRegistry BEFORE react-native loads
+window.__turboModuleProxy = function(name) {
+  const modules = {
+    DeviceInfo: {
+      getConstants: () => ({
+        Dimensions: {
+          window: {
+            width: window.innerWidth || 1024,
+            height: window.innerHeight || 768,
+            scale: window.devicePixelRatio || 1,
+            fontScale: 1,
+          },
+          screen: {
+            width: window.screen?.width || window.innerWidth || 1024,
+            height: window.screen?.height || window.innerHeight || 768,
+            scale: window.devicePixelRatio || 1,
+            fontScale: 1,
+          },
+        },
+        isTablet: window.innerWidth >= 768,
+        isEmulator: false,
+      }),
+    },
+    UIManager: {
+      getConstants: () => ({
+        Dimensions: {
+          window: {
+            width: window.innerWidth || 1024,
+            height: window.innerHeight || 768,
+          },
+          screen: {
+            width: window.screen?.width || window.innerWidth || 1024,
+            height: window.screen?.height || window.innerHeight || 768,
+          },
+        },
+      }),
+      getViewManagerConfig: () => null,
+      hasViewManagerConfig: () => false,
+      measure: () => {},
+      measureInWindow: () => {},
+      measureLayout: () => {},
+      measureLayoutRelativeToParent: () => {},
+      dispatchViewManagerCommand: () => {},
+      RCTView: {
+        directEventTypes: {},
+      },
+    },
+    SourceCode: {
+      getConstants: () => ({
+        scriptURL: window.location.href,
+      }),
+    },
+    PlatformConstants: {
+      getConstants: () => ({
+        reactNativeVersion: { major: 0, minor: 72, patch: 0 },
+        isTesting: false,
+        forceTouchAvailable: false,
+      }),
+    },
+    StatusBarManager: {
+      HEIGHT: 0,
+      getHeight: (callback) => callback && callback({ height: 0 }),
+      setHidden: () => {},
+      setStyle: () => {},
+      setBackgroundColor: () => {},
+      setTranslucent: () => {},
+    },
+    AppState: {
+      getCurrentAppState: (callback) => callback && callback({ app_state: 'active' }),
+      addEventListener: () => ({ remove: () => {} }),
+      removeEventListener: () => {},
+    },
+    Clipboard: {
+      setString: () => {},
+      getString: () => Promise.resolve(''),
+    },
+    Networking: {
+      addListener: () => {},
+      removeListeners: () => {},
+    },
+    I18nManager: {
+      localeIdentifier: navigator.language || 'en-US',
+      getConstants: () => ({
+        isRTL: false,
+        doLeftAndRightSwapInRTL: true,
+        localeIdentifier: navigator.language || 'en-US',
+      }),
+    },
+    KeyboardObserver: {
+      addListener: () => ({ remove: () => {} }),
+    },
+    Appearance: {
+      getColorScheme: () => 'light',
+      addChangeListener: () => ({ remove: () => {} }),
+    },
+    AccessibilityInfo: {
+      addEventListener: () => ({ remove: () => {} }),
+      removeEventListener: () => {},
+      isScreenReaderEnabled: () => Promise.resolve(false),
+      fetch: () => Promise.resolve(false),
+    },
+    Settings: {
+      get: () => ({}),
+      set: () => {},
+      watchKeys: () => {},
+    },
+    Linking: {
+      getInitialURL: () => Promise.resolve(null),
+      addEventListener: () => ({ remove: () => {} }),
+      removeEventListener: () => {},
+      canOpenURL: () => Promise.resolve(true),
+      openURL: (url) => window.open(url, '_blank'),
+    },
+  };
+  
+  // Return the module if we have it, otherwise return a generic mock
+  return modules[name] || {
+    getConstants: () => ({}),
+    addListener: () => ({ remove: () => {} }),
+    removeEventListener: () => {},
+  };
+};
+
+// Platform polyfill
+window.Platform = {
   OS: 'web',
   Version: 1,
   isPad: false,
   isTV: false,
   isTVOS: false,
   isTesting: false,
-  select: function(obj) { 
-    return obj.web || obj.default || Object.values(obj)[0];
-  }
+  select: (obj) => obj.web || obj.default || Object.values(obj)[0],
 };
 
-// Set Platform globally in every possible way
-window.Platform = Platform;
-global.Platform = Platform;
-
-// Try to inject into require cache before react-native loads
-if (typeof require !== 'undefined' && require.cache) {
-  try {
-    // Mock the Platform module directly
-    require.cache[require.resolve('react-native/Libraries/Utilities/Platform')] = {
-      exports: Platform
-    };
-  } catch (e) {
-    // Ignore if module not found
-  }
+// setImmediate polyfill
+if (typeof setImmediate === 'undefined') {
+  global.setImmediate = (fn) => setTimeout(fn, 0);
+  global.clearImmediate = clearTimeout;
 }
 
-// Export Platform
-module.exports = { Platform };
+// requestAnimationFrame polyfill
+if (typeof requestAnimationFrame === 'undefined') {
+  global.requestAnimationFrame = (fn) => setTimeout(fn, 16);
+  global.cancelAnimationFrame = clearTimeout;
+}
+
+console.log('[Polyfills] React Native web polyfills loaded');

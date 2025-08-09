@@ -3,6 +3,70 @@
  * These avoid TurboModule dependencies that cause errors on web
  */
 
+// First, set up our overrides on the global scope to intercept TurboModule calls
+if (typeof window !== 'undefined') {
+  // Mock TurboModuleRegistry before anything else loads
+  window.__turboModuleProxy = function(name) {
+    // Return our mock modules
+    const modules = {
+      DeviceInfo: {
+        getConstants: () => ({
+          Dimensions: {
+            window: {
+              width: window.innerWidth || 1024,
+              height: window.innerHeight || 768,
+              scale: window.devicePixelRatio || 1,
+              fontScale: 1,
+            },
+            screen: {
+              width: window.screen?.width || window.innerWidth || 1024,
+              height: window.screen?.height || window.innerHeight || 768,
+              scale: window.devicePixelRatio || 1,
+              fontScale: 1,
+            },
+          },
+          isTablet: window.innerWidth >= 768,
+          isEmulator: false,
+        }),
+      },
+      UIManager: {
+        getConstants: () => ({}),
+        getViewManagerConfig: () => null,
+        measure: () => {},
+        measureInWindow: () => {},
+        measureLayout: () => {},
+        measureLayoutRelativeToParent: () => {},
+        dispatchViewManagerCommand: () => {},
+        RCTView: {
+          directEventTypes: {},
+        },
+      },
+      SourceCode: {
+        getConstants: () => ({
+          scriptURL: window.location.href,
+        }),
+      },
+      PlatformConstants: {
+        getConstants: () => ({
+          reactNativeVersion: { major: 0, minor: 72, patch: 0 },
+          isTesting: false,
+          forceTouchAvailable: false,
+        }),
+      },
+      StatusBarManager: {
+        HEIGHT: 0,
+        getHeight: (callback) => callback && callback({ height: 0 }),
+        setHidden: () => {},
+        setStyle: () => {},
+        setBackgroundColor: () => {},
+        setTranslucent: () => {},
+      },
+    };
+    
+    return modules[name] || null;
+  };
+}
+
 // Re-export everything from react-native-web
 export * from 'react-native-web';
 
