@@ -1,30 +1,106 @@
 /**
- * Web-safe replacements for React Native modules
- * These avoid TurboModule dependencies that cause errors on web
+ * Web-safe replacements for React Native modules.
+ * This file explicitly imports and re-exports all APIs from react-native-web
+ * to ensure our custom shims for Platform, Dimensions, etc., are the only
+ * versions that get bundled.
  */
 
-// Import all exports from react-native-web
-import * as ReactNativeWeb from 'react-native-web';
+// Explicitly import all known APIs from react-native-web
+import {
+  // Components
+  ActivityIndicator,
+  Button,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  SectionList,
+  StatusBar,
+  Switch,
+  Text,
+  TextInput,
+  TouchableHighlight,
+  TouchableOpacity,
+  View,
+  // Android
+  BackHandler,
+  DrawerLayoutAndroid,
+  PermissionsAndroid,
+  ToastAndroid,
+  // iOS
+  InputAccessoryView,
+  SafeAreaView,
+  // Other APIs
+  Alert as RNWAlert,
+  Animated,
+  Appearance,
+  AppRegistry,
+  AppState,
+  DevSettings,
+  Easing,
+  InteractionManager,
+  LayoutAnimation,
+  PanResponder,
+  PixelRatio as RNWPixelRatio,
+  Share,
+  StyleSheet,
+  UIManager,
+  Vibration,
+} from 'react-native-web';
 
-// Explicitly delete the modules we want to override
-// This prevents them from being re-exported by the wildcard export
-delete ReactNativeWeb.Dimensions;
-delete ReactNativeWeb.Platform;
-delete ReactNativeWeb.Linking;
-delete ReactNativeWeb.NativeModules;
+// Re-export them all
+export {
+  ActivityIndicator,
+  Button,
+  FlatList,
+  Image,
+  KeyboardAvoidingView,
+  Modal,
+  Pressable,
+  RefreshControl,
+  ScrollView,
+  SectionList,
+  StatusBar,
+  Switch,
+  Text,
+  TextInput,
+  TouchableHighlight,
+  TouchableOpacity,
+  View,
+  BackHandler,
+  DrawerLayoutAndroid,
+  PermissionsAndroid,
+  ToastAndroid,
+  InputAccessoryView,
+  SafeAreaView,
+  RNWAlert,
+  Animated,
+  Appearance,
+  AppRegistry,
+  AppState,
+  DevSettings,
+  Easing,
+  InteractionManager,
+  LayoutAnimation,
+  PanResponder,
+  RNWPixelRatio,
+  Share,
+  StyleSheet,
+  UIManager,
+  Vibration,
+};
 
-// Re-export everything from react-native-web EXCEPT the modules we deleted
-export * from 'react-native-web';
-
-// Now, export our own web-safe versions
-// These will be the only versions available to the bundler
+// --- Custom Shims ---
+// Now, export our own web-safe versions. These will be the only ones available.
 export { default as Dimensions } from './Dimensions';
 export { default as Platform } from './Platform';
 export { default as Linking } from './Linking';
 export { default as NativeModules } from './NativeModules';
 
-// --- Other polyfills can remain as they are ---
-
+// Custom Alert and PixelRatio to override RNW's if needed, or to provide a default
 export const Alert = {
   alert: (title, message, buttons) => {
     if (buttons && buttons.length > 0) {
