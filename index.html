@@ -48,7 +48,7 @@
       localModulesConfig: [],
     };
     
-    // Mock TurboModuleRegistry for SourceCode module
+    // Mock TurboModuleRegistry for native modules
     window.__turboModuleProxy = function(name) {
       if (name === 'SourceCode') {
         return {
@@ -57,5 +57,27 @@
           }),
         };
       }
+      if (name === 'DeviceInfo') {
+        return {
+          getConstants: () => ({
+            Dimensions: {
+              window: {
+                width: window.innerWidth || 1024,
+                height: window.innerHeight || 768,
+                scale: 1,
+                fontScale: 1,
+              },
+              screen: {
+                width: window.screen?.width || window.innerWidth || 1024,
+                height: window.screen?.height || window.innerHeight || 768,
+                scale: 1,
+                fontScale: 1,
+              },
+            },
+            isTablet: false,
+            isEmulator: false,
+          }),
+        };
+      }
       return null;
-    };</script><script defer="defer" src="./bundle.4597b1787ccca25c7ac4.js"></script></head><body><div id="root"><div class="loading"><div class="spinner"></div></div></div></body></html>
+    };</script><script defer="defer" src="./bundle.547016e76c0e2ea557bc.js"></script></head><body><div id="root"><div class="loading"><div class="spinner"></div></div></div></body></html>

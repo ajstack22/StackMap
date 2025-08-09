@@ -83,12 +83,34 @@
       localModulesConfig: [],
     };
     
-    // Mock TurboModuleRegistry for SourceCode module
+    // Mock TurboModuleRegistry for native modules
     window.__turboModuleProxy = function(name) {
       if (name === 'SourceCode') {
         return {
           getConstants: () => ({
             scriptURL: 'http://localhost:8081/index.bundle?platform=web',
+          }),
+        };
+      }
+      if (name === 'DeviceInfo') {
+        return {
+          getConstants: () => ({
+            Dimensions: {
+              window: {
+                width: window.innerWidth || 1024,
+                height: window.innerHeight || 768,
+                scale: 1,
+                fontScale: 1,
+              },
+              screen: {
+                width: window.screen?.width || window.innerWidth || 1024,
+                height: window.screen?.height || window.innerHeight || 768,
+                scale: 1,
+                fontScale: 1,
+              },
+            },
+            isTablet: false,
+            isEmulator: false,
           }),
         };
       }

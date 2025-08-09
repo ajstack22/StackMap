@@ -46,7 +46,12 @@ module.exports = {
   resolve: {
     extensions: ['.web.js', '.js', '.jsx', '.ts', '.tsx'],
     alias: {
-      'react-native$': 'react-native-web',
+      // CRITICAL: Override react-native with our web-safe modules
+      // This must come BEFORE react-native-web to intercept imports
+      'react-native$': path.resolve(__dirname, 'src/utils/react-native-web-modules/index.js'),
+      'react-native/Libraries/Utilities/Dimensions': path.resolve(__dirname, 'src/utils/react-native-web-modules/Dimensions.js'),
+      'react-native/Libraries/Utilities/Platform': path.resolve(__dirname, 'src/utils/react-native-web-modules/Platform.js'),
+      
       // Add aliases for RN packages that need web versions
       'react-native-svg': 'react-native-svg-web',
       'react-native-qrcode-svg': path.resolve(__dirname, 'src/utils/QRCode.web.js'),
