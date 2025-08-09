@@ -1,46 +1,38 @@
-// Import polyfills first
-import './src/utils/polyfills.web';
-
 import { AppRegistry, Platform } from 'react-native';
 import App from './App';
 
-// Function to disable useNativeDriver warnings on web
-const setupConsoleForWeb = () => {
-  if (Platform.OS === 'web') {
-    // Store the original console methods
-    const originalWarn = console.warn;
-    const originalLog = console.log;
-    const originalInfo = console.info;
-    const originalDebug = console.debug;
-    
-    // In production, disable all console outputs except errors
-    if (process.env.NODE_ENV === 'production') {
-      console.log = () => {};
-      console.info = () => {};
-      console.debug = () => {};
-      console.warn = (...args) => {
-        // Still suppress useNativeDriver warnings in production
-        if (args[0] && typeof args[0] === 'string' && 
-            args[0].includes('useNativeDriver')) {
-          return;
-        }
-        // Suppress other warnings in production too
-      };
-    } else {
-      // In development, only suppress useNativeDriver warnings
-      console.warn = (...args) => {
-        if (args[0] && typeof args[0] === 'string' && 
-            args[0].includes('useNativeDriver')) {
-          return; // Suppress useNativeDriver warnings
-        }
-        originalWarn.apply(console, args);
-      };
-    }
+// Disable useNativeDriver warnings on web
+if (Platform.OS === 'web') {
+  // Store the original console methods
+  const originalWarn = console.warn;
+  const originalLog = console.log;
+  const originalInfo = console.info;
+  const originalDebug = console.debug;
+  
+  // In production, disable all console outputs except errors
+  if (process.env.NODE_ENV === 'production') {
+    console.log = () => {};
+    console.info = () => {};
+    console.debug = () => {};
+    console.warn = (...args) => {
+      // Still suppress useNativeDriver warnings in production
+      if (args[0] && typeof args[0] === 'string' && 
+          args[0].includes('useNativeDriver')) {
+        return;
+      }
+      // Suppress other warnings in production too
+    };
+  } else {
+    // In development, only suppress useNativeDriver warnings
+    console.warn = (...args) => {
+      if (args[0] && typeof args[0] === 'string' && 
+          args[0].includes('useNativeDriver')) {
+        return; // Suppress useNativeDriver warnings
+      }
+      originalWarn.apply(console, args);
+    };
   }
-};
-
-// Call the setup function
-setupConsoleForWeb();
+}
 
 // Import Comic Relief fonts
 import ComicReliefRegular from './fonts/ComicRelief-Regular.ttf';

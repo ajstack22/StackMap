@@ -1,18 +1,15 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-// Lazy load Keychain only when needed to avoid module-level Platform.OS access
 let Keychain = null;
-const getKeychain = () => {
-  if (Keychain === null && Platform.OS === 'ios') {
-    try {
-      Keychain = require('react-native-keychain');
-    } catch (e) {
-      Keychain = false; // Mark as attempted but failed
-    }
+// Only load Keychain on iOS - Android will use AsyncStorage fallback
+if (Platform.OS === 'ios') {
+  try {
+    Keychain = require('react-native-keychain');
+  } catch (e) {
+    console.log('[SecureStorage] react-native-keychain not available on iOS');
   }
-  return Keychain;
-};
+}
 
 const PIN_SERVICE = 'StackMapPIN';
 const PIN_USERNAME = 'editModePin';
@@ -32,7 +29,9 @@ export const setSecurePin = async (pin) => {
     // Clear the disabled flag when setting a new PIN
     try {
       await AsyncStorage.removeItem('@stackmap_pin_disabled');
-    } catch (e) {}
+    } catch (e) {
+      console.log('Could not remove disabled flag:', e);
+    }
 
     // Android: Use AsyncStorage
     if (Platform.OS === 'android') {
@@ -42,19 +41,18 @@ export const setSecurePin = async (pin) => {
 
     // iOS: Use Keychain
     if (!Keychain) {
-
+      console.log('[SecureStorage] Keychain module not available');
       return false;
     }
     
     // Check if the method exists
-    const KeychainModule = getKeychain();
-    if (!KeychainModule || typeof KeychainModule.setInternetCredentials !== 'function') {
-
+    if (typeof Keychain.setInternetCredentials !== 'function') {
+      console.log('[SecureStorage] setInternetCredentials not available');
       return false;
     }
 
     // Store PIN securely
-    const result = await KeychainModule.setInternetCredentials(
+    const result = await Keychain.setInternetCredentials(
       PIN_SERVICE,
       PIN_USERNAME,
       pin,
@@ -62,7 +60,7 @@ export const setSecurePin = async (pin) => {
     );
     return result !== false;
   } catch (error) {
-//     console.error('Error storing PIN securely:', error);
+    console.error('Error storing PIN securely:', error);
     return false;
   }
 };
@@ -81,19 +79,18 @@ export const getSecurePin = async () => {
     
     // iOS: Use Keychain
     if (!Keychain) {
-
+      console.log('[SecureStorage] Keychain module not available');
       return null;
     }
     
     // Check if the method exists
-    const KeychainModule = getKeychain();
-    if (!KeychainModule || typeof KeychainModule.getInternetCredentials !== 'function') {
-
+    if (typeof Keychain.getInternetCredentials !== 'function') {
+      console.log('[SecureStorage] getInternetCredentials not available');
       return null;
     }
     
     // Get credentials using internet credentials
-    const credentials = await KeychainModule.getInternetCredentials(PIN_SERVICE);
+    const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
     
     if (credentials && credentials.password) {
       // Check for our deletion marker or empty string
@@ -106,7 +103,7 @@ export const getSecurePin = async () => {
     
     return null;
   } catch (error) {
-//     console.error('Error retrieving PIN:', error);
+    console.error('Error retrieving PIN:', error);
     return null;
   }
 };
@@ -117,61 +114,65 @@ export const getSecurePin = async () => {
  */
 export const removeSecurePin = async () => {
   try {
-
+    console.log('[SecureStorage] Starting PIN removal for platform:', Platform.OS);
+    
     // First, set the disabled flag to prevent any PIN checks
     try {
       await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
-
+      console.log('[SecureStorage] Set PIN disabled flag successfully');
     } catch (e) {
-//       console.error('[SecureStorage] Failed to set disabled flag:', e);
+      console.error('[SecureStorage] Failed to set disabled flag:', e);
     }
     
     // Android: Use AsyncStorage
     if (Platform.OS === 'android') {
       try {
         await AsyncStorage.removeItem('@stackmap_pin');
-
-      } catch (e) {}
+        console.log('[SecureStorage] Android: Removed PIN from AsyncStorage');
+      } catch (e) {
+        console.log('[SecureStorage] Android: Failed to remove PIN:', e.message);
+      }
       return true;
     }
     
     // iOS: Use Keychain (iOS developer will handle)
     if (!Keychain) {
-
+      console.log('[SecureStorage] Keychain not available on this platform');
       return true; // Return true since we set the disabled flag
     }
     
     if (Platform.OS === 'ios') {
       // iOS - try reset first, then fallback to DELETED
       try {
-        const KeychainModule = getKeychain();
-        if (KeychainModule && typeof KeychainModule.resetInternetCredentials === 'function') {
-          await KeychainModule.resetInternetCredentials(PIN_SERVICE);
-
-        } else if (KeychainModule && typeof KeychainModule.setInternetCredentials === 'function') {
-          await KeychainModule.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
-
+        if (Keychain && typeof Keychain.resetInternetCredentials === 'function') {
+          await Keychain.resetInternetCredentials(PIN_SERVICE);
+          console.log('[SecureStorage] iOS: Reset credentials successfully');
+        } else if (Keychain && typeof Keychain.setInternetCredentials === 'function') {
+          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+          console.log('[SecureStorage] iOS: Set DELETED marker as fallback');
         }
       } catch (e) {
-
+        console.log('[SecureStorage] iOS: Reset failed, trying DELETED marker:', e.message);
         try {
-          const KeychainModule = getKeychain();
-          if (KeychainModule && typeof KeychainModule.setInternetCredentials === 'function') {
-            await KeychainModule.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
-
+          if (Keychain && typeof Keychain.setInternetCredentials === 'function') {
+            await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+            console.log('[SecureStorage] iOS: Set DELETED marker successfully');
           }
-        } catch (e2) {}
+        } catch (e2) {
+          console.log('[SecureStorage] iOS: Failed to set DELETED marker:', e2.message);
+        }
       }
     }
-
+    
+    console.log('[SecureStorage] PIN removal completed');
     return true;
   } catch (error) {
-//     console.error('[SecureStorage] Critical error in removeSecurePin:', error);
+    console.error('[SecureStorage] Critical error in removeSecurePin:', error);
     // Even on error, ensure the disabled flag is set
     try {
       await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
     } catch (e) {
-//       console.error('[SecureStorage] Failed to set disabled flag in catch:', e);
+      console.error('[SecureStorage] Failed to set disabled flag in catch:', e);
     }
     return true; // Return true to allow UI update
   }
@@ -186,7 +187,7 @@ export const hasSecurePin = async () => {
     // First check if PIN is disabled
     const disabled = await AsyncStorage.getItem('@stackmap_pin_disabled');
     if (disabled === 'true') {
-
+      console.log('[SecureStorage] PIN is disabled via flag');
       return false;
     }
     
@@ -195,10 +196,11 @@ export const hasSecurePin = async () => {
     
     // More explicit check for PIN existence
     const hasPin = pin !== null && pin !== '' && pin !== undefined && pin.length > 0 && pin !== 'DELETED';
-
+    console.log('[SecureStorage] hasSecurePin result:', hasPin);
+    
     return hasPin;
   } catch (error) {
-//     console.error('[SecureStorage] Error in hasSecurePin:', error);
+    console.error('[SecureStorage] Error in hasSecurePin:', error);
     // If there's an error getting the PIN, assume it doesn't exist
     return false;
   }
@@ -214,12 +216,12 @@ export const verifyPin = async (inputPin) => {
   
   // If there's no stored PIN, verification should always fail
   if (!storedPin || storedPin === '' || storedPin === 'DELETED') {
-
+    console.log('[SecureStorage] No valid PIN stored, verification failed');
     return false;
   }
   
   const isValid = storedPin === inputPin;
-
+  console.log('[SecureStorage] PIN verification:', isValid ? 'success' : 'failed');
   return isValid;
 };
 
@@ -258,6 +260,6 @@ export const migratePinToSecureStorage = async () => {
     // Mark migration as complete
     await AsyncStorage.setItem(migrationKey, 'true');
   } catch (error) {
-//     console.error('Error migrating PIN:', error);
+    console.error('Error migrating PIN:', error);
   }
 };

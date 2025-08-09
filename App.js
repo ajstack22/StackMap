@@ -23,39 +23,39 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
-// Import drag-and-drop libraries for all platforms
-const DraggableFlatList = require('react-native-draggable-flatlist').default;
-const ScaleDecorator = require('react-native-draggable-flatlist').ScaleDecorator;
-// Import gesture handler for all platforms - REQUIRED for Android swipe gestures
-const GestureHandlerModule = require('react-native-gesture-handler');
-const GestureHandlerRootView = GestureHandlerModule.GestureHandlerRootView;
-const PanGestureHandler = GestureHandlerModule.PanGestureHandler;
-const State = GestureHandlerModule.State;
+// Conditionally import drag-and-drop libraries for iOS only
+const DraggableFlatList = Platform.OS === 'ios' 
+  ? require('react-native-draggable-flatlist').default 
+  : null;
+const ScaleDecorator = Platform.OS === 'ios' 
+  ? require('react-native-draggable-flatlist').ScaleDecorator 
+  : null;
+// Conditionally import gesture handler for iOS only
+const GestureHandlerModule = Platform.OS === 'ios' 
+  ? require('react-native-gesture-handler')
+  : null;
+const GestureHandlerRootView = GestureHandlerModule?.GestureHandlerRootView;
+const PanGestureHandler = GestureHandlerModule?.PanGestureHandler;
+const State = GestureHandlerModule?.State;
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 // Import DocumentPicker and RNFS with platform handling
 let DocumentPicker = null;
 let RNFS = null;
 
-// Lazy load platform-specific modules to avoid module-level Platform.OS access
-const loadPlatformModules = () => {
-  if (!RNFS || !DocumentPicker) {
-    if (Platform.OS === 'web') {
-      // Use web polyfills
-      RNFS = require('./src/utils/platformHelpers.web').default;
-      DocumentPicker = require('./src/utils/platformHelpers.web').DocumentPicker;
-    } else {
-      // Use native modules for both iOS and Android
-      try {
-        DocumentPicker = require('react-native-document-picker').default;
-      } catch (e) {
-//         console.warn('DocumentPicker not available:', e);
-        DocumentPicker = null;
-      }
-      RNFS = require('react-native-fs');
-    }
+if (Platform.OS === 'web') {
+  // Use web polyfills
+  RNFS = require('./src/utils/platformHelpers.web').default;
+  DocumentPicker = require('./src/utils/platformHelpers.web').DocumentPicker;
+} else {
+  // Use native modules for both iOS and Android
+  try {
+    DocumentPicker = require('react-native-document-picker').default;
+  } catch (e) {
+    console.warn('DocumentPicker not available:', e);
+    DocumentPicker = null;
   }
-  return { RNFS, DocumentPicker };
-};
+  RNFS = require('react-native-fs');
+}
 
 import { Share, Linking } from 'react-native';
 
@@ -85,7 +85,6 @@ import {
   getBadgeDimensions,
   FONT_SCALE,
   CUSTOM_IMAGE_SOURCES,
-  getCustomImageSource,
   FEATURE_FLAGS,
 } from './src/constants';
 
@@ -152,14 +151,8 @@ const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
   );
 });
 
+
 const App = () => {
-  console.log('[APP STARTUP] App component first render at', Date.now());
-  
-  // Load platform-specific modules
-  const modules = loadPlatformModules();
-  if (!RNFS) RNFS = modules.RNFS;
-  if (!DocumentPicker) DocumentPicker = modules.DocumentPicker;
-  
   const insets = useSafeAreaInsets();
   
   // Use our custom hooks
@@ -204,16 +197,6 @@ const App = () => {
     setTemplates,
     activityCategories,
     setActivityCategories,
-    stackMapLibrary,
-    setStackMapLibrary,
-    getStackMapLibrary,
-    myLibrary,
-    setMyLibrary,
-    createActivityGroup,
-    updateActivityGroup,
-    deleteActivityGroup,
-    addActivityToGroup,
-    copyGroupToMyLibrary,
     userContextData,
     setUserContextData,
     hasCompletedOnboarding,
@@ -286,7 +269,8 @@ const App = () => {
   const [syncPreviewPhrase, setSyncPreviewPhrase] = useState(null);
   const [showOnboardingImport, setShowOnboardingImport] = useState(false);
   const [onboardingImportData, setOnboardingImportData] = useState(null);
-
+  
+  
   // Screen dimensions state
   const [screenDimensions, setScreenDimensions] = useState(() => {
     const { width, height } = Dimensions.get('window');
@@ -343,7 +327,7 @@ const App = () => {
     if (Platform.OS === 'web') {
       // Get the raw query string to handle + characters properly
       const search = window.location.search;
-
+      console.log('[App] Initial URL check:', search);
       const urlParams = new URLSearchParams(search);
       const token = urlParams.get('share');
       let syncPhrase = urlParams.get('sync');
@@ -386,25 +370,32 @@ const App = () => {
     }
   }, []);
 
-  // Hydrate store in background after UI renders
+  // Wait for Zustand store to hydrate from AsyncStorage
   useEffect(() => {
-    // Use setTimeout to ensure this runs AFTER the UI has rendered
-    const timeoutId = setTimeout(() => {
-      const initializeApp = async () => {
-
-        const startHydration = Date.now();
-        
-        // Hydrate in background - doesn't block UI
-        await useAppStore.getState().hydrateStore();
-        const hydrationTime = Date.now() - startHydration;
-
-        setIsHydrated(true);
-      };
+    const checkHydration = async () => {
+      // Give Zustand time to load persisted state
+      await new Promise(resolve => setTimeout(resolve, 100));
       
-      initializeApp();
-    }, 100); // Small delay to let UI render first
+      // Check Zustand persisted data directly
+      const zustandData = await AsyncStorage.getItem('stackmap-storage');
+      console.log('[App] Checking Zustand hydration:', zustandData ? 'Data exists' : 'No data');
+      
+      if (zustandData) {
+        try {
+          const parsed = JSON.parse(zustandData);
+          console.log('[App] Zustand persisted state:', {
+            hasCompletedOnboarding: parsed?.state?.hasCompletedOnboarding,
+            usersCount: Object.keys(parsed?.state?.users || {}).length
+          });
+        } catch (e) {
+          console.error('[App] Error parsing Zustand data:', e);
+        }
+      }
+      
+      setIsHydrated(true);
+    };
     
-    return () => clearTimeout(timeoutId);
+    checkHydration();
   }, []);
   
   // Handle URL parameter modals after hydration
@@ -416,12 +407,12 @@ const App = () => {
       // Use a longer delay to ensure everything is mounted
       setTimeout(() => {
         if (window.urlOpenPrivacy) {
-
+          console.log('[App] Opening privacy modal from URL param');
           setShowPrivacyModal(true);
           window.urlOpenPrivacy = false;
         }
         if (window.urlOpenSupport) {
-
+          console.log('[App] Opening support modal from URL param');
           setShowSupportModal(true);
           window.urlOpenSupport = false;
         }
@@ -448,7 +439,7 @@ const App = () => {
   useEffect(() => {
     // If onboarding is already showing, don't run initialization
     if (showOnboarding) {
-
+      console.log('[App] Onboarding already active, skipping initialization');
       return;
     }
     
@@ -456,7 +447,7 @@ const App = () => {
     
     // Prevent multiple initialization runs
     if (isInitializing) {
-
+      console.log('[App] Already initializing, skipping duplicate run');
       return;
     }
     
@@ -473,13 +464,14 @@ const App = () => {
         currentDay,
         hasCompletedOnboarding
       });
-
+      
+      
       await migratePinToSecureStorage();
       
       // Check if we should show onboarding
       // IMPORTANT: Only show onboarding on initial load, not if already showing
       if (!hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
-
+        console.log('[App] Showing onboarding - no users and not completed');
         setShowOnboarding(true);
         setIsInitializing(false);
         return; // Don't create default user, wait for onboarding
@@ -488,9 +480,9 @@ const App = () => {
       // Initialize default user if none exists and onboarding is complete
       // IMPORTANT: Never create a default user if we're showing onboarding
       if (hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
-
+        console.log('[App] WARNING: hasCompletedOnboarding is true but no users exist');
         // This is likely a bad state from a failed reset - fix it
-
+        console.log('[App] Fixing bad state - resetting hasCompletedOnboarding to false');
         setHasCompletedOnboarding(false);
         setShowOnboarding(true);
         setIsInitializing(false);
@@ -499,7 +491,8 @@ const App = () => {
       
       // Always check secure storage as the source of truth for PIN
       const hasPIN = await hasSecurePin();
-
+      console.log('[App] Checking for PIN on startup:', hasPIN);
+      
       // Debug: Check what's in the keychain
       if (hasPIN) {
         const pin = await getSecurePin();
@@ -516,7 +509,7 @@ const App = () => {
     // This is a workaround for iOS simulators that might persist keychain data
     if (Platform.OS === 'ios' && !hasCompletedOnboarding) {
       // If user hasn't completed onboarding, they shouldn't have a PIN
-
+      console.log('[App] New user on iOS, clearing any existing PIN');
       removeSecurePin().then(() => {
         setHasPinProtection(false);
       });
@@ -559,7 +552,8 @@ const App = () => {
       // If they're a new user, onboarding will handle the sync
       setTimeout(() => {
         // Auto-open sync preview modal with sync setup
-
+        console.log('[App] Opening sync preview modal for sync setup with phrase:', syncSetupPhrase);
+        console.log('[App] Current theme:', currentTheme, THEMES[currentTheme]);
         setSyncPreviewPhrase(syncSetupPhrase);
         setShowSyncPreviewModal(true);
       }, 100);
@@ -656,7 +650,7 @@ const App = () => {
           const actuallyHasPin = await hasSecurePin();
           if (!actuallyHasPin) {
             // No PIN exists, so just enter edit mode
-
+            console.log('[App] No PIN actually exists, entering edit mode');
             setHasPinProtection(false);
             setIsEditMode(true);
             setShowPinModal(false);
@@ -771,11 +765,12 @@ const App = () => {
 
   const handleOnboardingComplete = async (onboardingData) => {
     try {
-
+      console.log('handleOnboardingComplete called with:', onboardingData);
+      
       // Check if we have imported data to restore
       const importedDataStr = await AsyncStorage.getItem('@stackmap_import_temp');
       if (importedDataStr) {
-
+        console.log('[ONBOARDING] Found imported data, applying it now...');
         const importedData = JSON.parse(importedDataStr);
         
         // Apply all the imported data NOW that onboarding is complete
@@ -829,14 +824,15 @@ const App = () => {
       
       // Handle abbreviated onboarding (sync URL flow)
       if (onboardingData?.isAbbreviated && onboardingData?.syncSetupPhrase) {
-
+        console.log('Abbreviated onboarding completed - sync already handled');
+        
         // Clear the sync setup phrase to prevent duplicate modal
         setSyncSetupPhrase(null);
         
         // Ensure theme is set before showing main app
         const storeState = useAppStore.getState();
         if (!storeState.currentTheme) {
-
+          console.log('Setting default theme after sync onboarding');
           setCurrentTheme('stackBlue');
         }
         
@@ -847,7 +843,7 @@ const App = () => {
       
       // If no onboarding data provided (shouldn't happen), create default user
       if (!onboardingData || !onboardingData.users || onboardingData.users.length === 0) {
-//         console.warn('No users provided from onboarding, creating default user');
+        console.warn('No users provided from onboarding, creating default user');
         const newUserId = `user_${Date.now()}`;
         const newUser = {
           id: newUserId,
@@ -992,7 +988,7 @@ const App = () => {
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
-//       console.error('Error completing onboarding:', error);
+      console.error('Error completing onboarding:', error);
       // Still hide onboarding on error
       setShowOnboarding(false);
     }
@@ -1000,9 +996,10 @@ const App = () => {
 
   const handleOnboardingImportComplete = async (selectedData) => {
     try {
-
+      console.log('[IMPORT] Import selection complete, processing data...');
+      
       // Save to temporary storage for onboarding to retrieve
-
+      console.log('[IMPORT] Saving import data temporarily for onboarding...');
       await AsyncStorage.setItem('@stackmap_import_temp', JSON.stringify(selectedData));
       
       // Close the modal
@@ -1019,7 +1016,9 @@ const App = () => {
         hasPin: selectedData.globalSettings?.pinEnabled || false,
         userData: selectedData.users || {}
       };
-
+      
+      console.log('[IMPORT] Returning summary to onboarding:', summary);
+      
       // Resolve the promise from importDataForOnboarding
       if (window.__onboardingImportResolve) {
         window.__onboardingImportResolve({
@@ -1029,7 +1028,7 @@ const App = () => {
         delete window.__onboardingImportResolve;
       }
     } catch (error) {
-//       console.error('[IMPORT] Error completing import:', error);
+      console.error('[IMPORT] Error completing import:', error);
       showToast({ message: 'Failed to import data', type: 'error' });
       
       // Reject the promise
@@ -1149,7 +1148,7 @@ const App = () => {
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
-//       console.error('Error completing setup wizard:', error);
+      console.error('Error completing setup wizard:', error);
       // Still hide setup wizard on error
       setShowSetupWizard(false);
     }
@@ -1205,36 +1204,33 @@ const App = () => {
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
-//       console.error('Error skipping onboarding:', error);
+      console.error('Error skipping onboarding:', error);
       // Still hide onboarding on error
       setShowOnboarding(false);
       setShowSetupWizard(false);
     }
   };
 
-  // ALWAYS use a valid theme immediately - don't wait for hydration
-  // This prevents the 20-second blue screen while AsyncStorage loads
+  // Ensure theme is always defined, even if currentTheme is undefined
   const theme = currentTheme && THEMES[currentTheme] ? THEMES[currentTheme] : THEMES.stackBlue;
   
   // Log for debugging
-  if (!currentTheme && isHydrated) {
-    // Only warn if hydration is complete and theme is still undefined
-//     console.warn('[App] currentTheme is undefined after hydration, using default stackBlue theme');
+  if (!currentTheme) {
+    console.warn('[App] currentTheme is undefined, using default stackBlue theme');
+    console.warn('[App] THEMES object:', THEMES);
+    console.warn('[App] isHydrated:', isHydrated);
   }
   
-  // Theme should always be valid now since we default to stackBlue
+  // Double-check theme is valid
   if (!theme || typeof theme !== 'object') {
-//     console.error('[App] Critical error: Theme object is invalid:', theme);
-    // This should never happen now, but keep as safety net
-    const fallbackTheme = THEMES.stackBlue;
-    if (!fallbackTheme) {
-      // Absolute emergency fallback if constants are broken
-      return (
-        <View style={{ flex: 1, backgroundColor: '#5C7E9D' }}>
-          {/* Keep splash screen color visible */}
-        </View>
-      );
-    }
+    console.error('[App] Theme is invalid:', theme);
+    // Force a valid theme
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0095FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#FFFFFF" />
+        <Text style={{ color: '#FFFFFF', marginTop: 20 }}>Loading theme...</Text>
+      </View>
+    );
   }
 
   // Helper to update auto-update shares after activity changes
@@ -1247,10 +1243,12 @@ const App = () => {
         }
         updateAutoUpdateShares.timeout = setTimeout(async () => {
           await syncService.updateActiveShares(userId);
-
+          console.log('Auto-update shares refreshed');
         }, 1000); // 1 second delay to batch updates
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log('Share update skipped:', error.message);
+    }
   };
 
   const toggleActivity = async (id) => {
@@ -1574,32 +1572,37 @@ const App = () => {
   };
 
   const addActivityToLibrary = (activity) => {
-    // Use new myLibrary structure if available, otherwise fall back to legacy
-    if (myLibrary && myLibrary.activityGroups) {
-      // Find My Templates group in myLibrary
-      const myTemplatesGroup = myLibrary.activityGroups.find(g => g.id === 'my-templates');
-      
+    // Initialize with empty categories if none exist
+    const categories = activityCategories || EMPTY_CATEGORIES;
+    
+    // If activityCategories was null, set it to empty
+    if (!activityCategories) {
+      console.log('Initializing activity categories with empty template');
+      setActivityCategories(EMPTY_CATEGORIES);
+    }
+    
+    // Create a new array to avoid mutating state
+    const updatedCategories = [...categories];
+    
+    // Find My Templates category
+    const myTemplatesIndex = updatedCategories.findIndex(cat => cat.id === 'my-templates');
+    
+    if (myTemplatesIndex !== -1) {
       // Create a template from the activity
       const template = {
         id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: activity.text || activity.title || 'Untitled',
         emoji: activity.emoji || '🎯',
-        description: activity.description || ''
+        description: activity.description || '',
       };
       
-      if (myTemplatesGroup) {
-        // Add to existing My Templates group
-        addActivityToGroup('my-templates', template);
-      } else {
-        // Create My Templates group if it doesn't exist (should not happen with proper migration)
-//         console.warn('My Templates group not found, creating it');
-        createActivityGroup('My Templates', {
-          description: 'Your saved activity templates',
-          isProtected: true
-        });
-        // Then add the activity
-        setTimeout(() => addActivityToGroup('my-templates', template), 100);
-      }
+      // Add to My Templates
+      updatedCategories[myTemplatesIndex] = {
+        ...updatedCategories[myTemplatesIndex],
+        activities: [...(updatedCategories[myTemplatesIndex].activities || []), template]
+      };
+      
+      setActivityCategories(updatedCategories);
       
       // Add to tracking set to show checkmark
       setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
@@ -1614,56 +1617,16 @@ const App = () => {
       }, 1500);
       
       showToast({ message: 'Added to My Templates' });
+      console.log('Added to library:', template);
     } else {
-      // Fall back to legacy implementation
-      const categories = activityCategories || EMPTY_CATEGORIES;
-      
-      if (!activityCategories) {
-
-        setActivityCategories(EMPTY_CATEGORIES);
-      }
-      
-      const updatedCategories = [...categories];
-      const myTemplatesIndex = updatedCategories.findIndex(cat => cat.id === 'my-templates');
-      
-      if (myTemplatesIndex !== -1) {
-        const template = {
-          id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-          name: activity.text || activity.title || 'Untitled',
-          emoji: activity.emoji || '🎯',
-          description: activity.description || ''
-        };
-        
-        updatedCategories[myTemplatesIndex] = {
-          ...updatedCategories[myTemplatesIndex],
-          activities: [...(updatedCategories[myTemplatesIndex].activities || []), template]
-        };
-        
-        setActivityCategories(updatedCategories);
-        
-        // Add to tracking set to show checkmark
-        setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
-        
-        // Remove from tracking after delay
-        setTimeout(() => {
-          setAddedToLibraryIds(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(activity.id);
-            return newSet;
-          });
-        }, 1500);
-        
-        showToast({ message: 'Added to My Templates' });
-      } else {
-        showToast({ message: 'Could not find My Templates category' });
-//         console.error('My Templates category not found in:', categories);
-      }
+      showToast({ message: 'Could not find My Templates category' });
+      console.error('My Templates category not found in:', categories);
     }
   };
   
   // Handle adding user from AddUserModal
   const handleAddUser = (userName, userEmoji) => {
-
+    console.log('handleAddUser called with:', { userName, userEmoji, emojiType: typeof userEmoji });
     const userId = `user_${Date.now()}`;
     const newUser = {
       id: userId,
@@ -1683,7 +1646,8 @@ const App = () => {
       createdAt: new Date().toISOString(),
       lastActive: new Date().toISOString()
     };
-
+    
+    console.log('Creating new user:', newUser);
     addUser(userId, newUser);
     
     setCurrentUser(userId);
@@ -1697,7 +1661,7 @@ const App = () => {
 
   // Handle updating user from AddUserModal
   const handleUpdateUser = (userId, userName, userEmoji) => {
-
+    console.log('handleUpdateUser called with:', { userId, userName, userEmoji, emojiType: typeof userEmoji });
     // Use the store's updateUser method to properly update the user
     updateUser(userId, {
       name: userName,
@@ -1719,10 +1683,11 @@ const App = () => {
   };
 
   const handlePinRemove = async () => {
-
+    console.log('[App] Starting PIN removal...');
     try {
       const removed = await removeSecurePin();
-
+      console.log('[App] removeSecurePin returned:', removed);
+      
       // Small delay to ensure async operations complete on Android
       if (Platform.OS === 'android') {
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -1730,19 +1695,20 @@ const App = () => {
       
       // Always check if PIN was actually removed
       const stillHasPin = await hasSecurePin();
-
+      console.log('[App] hasSecurePin after removal:', stillHasPin);
+      
       if (!stillHasPin) {
         setHasPinProtection(false);
         showToast({ message: 'PIN protection removed' });
-
+        console.log('[App] PIN successfully removed');
       } else {
-//         console.error('[App] PIN still exists after removal attempt');
+        console.error('[App] PIN still exists after removal attempt');
         // Force UI update even if removal check failed
         setHasPinProtection(false);
         showToast({ message: 'PIN removed (please restart app if issues persist)' });
       }
     } catch (error) {
-//       console.error('[App] Error removing PIN:', error);
+      console.error('[App] Error removing PIN:', error);
       // Force UI update even on error to prevent crash
       setHasPinProtection(false);
       showToast({ message: 'PIN removed (please restart app if issues persist)' });
@@ -1754,33 +1720,26 @@ const App = () => {
     setShowPinModal(true);
   };
 
-  // PIN setting handler for AccessModal
   const handlePinSet = async (pin) => {
-
     try {
-      const success = await setSecurePin(pin);
-      if (success) {
-        setHasPinProtection(true);
-
-        return true;
-      } else {
-//         console.error('[App] Failed to set PIN');
-        return false;
-      }
+      const hashedPin = hashPin(pin);
+      await storage.set('user.pin', hashedPin);
+      setHasPinProtection(true);
+      setIsSettingPin(false);
+      showToast({ message: 'PIN set successfully' });
     } catch (error) {
-//       console.error('[App] Error setting PIN:', error);
-      return false;
+      console.error('[App] Error setting PIN:', error);
+      showToast({ message: 'Failed to set PIN', type: 'error' });
     }
   };
 
-  // PIN verification handler for AccessModal
   const handlePinVerify = async (pin) => {
-
     try {
-      const isValid = await verifyPin(pin);
-      return isValid;
+      const hashedPin = await storage.get('user.pin');
+      const inputHash = hashPin(pin);
+      return hashedPin === inputHash;
     } catch (error) {
-//       console.error('[App] Error verifying PIN:', error);
+      console.error('[App] Error verifying PIN:', error);
       return false;
     }
   };
@@ -1895,13 +1854,15 @@ const App = () => {
                       title: 'StackMap Export',
                       message: `Exported: ${fileName}`,
                     });
-                  } catch (shareError) {}
+                  } catch (shareError) {
+                    console.log('Share cancelled:', shareError);
+                  }
                 }
               }
             ]
           );
         } catch (error) {
-//           console.error('Export error:', error);
+          console.error('Export error:', error);
           // Try app's external directory as fallback
           try {
             const externalPath = `${RNFS.ExternalDirectoryPath}/${fileName}`;
@@ -1952,7 +1913,7 @@ const App = () => {
         }
       }
     } catch (error) {
-//       console.error('Export error:', error);
+      console.error('Export error:', error);
       Alert.alert('Export Error', 'Failed to export data. Please check app permissions.');
     }
   };
@@ -1996,7 +1957,7 @@ const App = () => {
 
   // Import data function for onboarding (doesn't hide onboarding)
   const importDataForOnboarding = async () => {
-
+    console.log('[IMPORT] ========== STARTING IMPORT FLOW ==========');
     console.log('[IMPORT] Current state:', {
       hasCompletedOnboarding,
       showOnboarding,
@@ -2042,7 +2003,7 @@ const App = () => {
             // First check if the directory exists
             const exists = await RNFS.exists(path);
             if (!exists) {
-
+              console.log(`[Import] Directory does not exist: ${path}`);
               continue;
             }
             
@@ -2052,10 +2013,10 @@ const App = () => {
               f.name.toLowerCase().includes('stackmap')
             );
             jsonFiles = jsonFiles.concat(foundFiles);
-
+            console.log(`[Import] Found ${foundFiles.length} files in ${path}`);
           } catch (e) {
             // Skip paths we can't access
-
+            console.log(`[Import] Cannot access directory: ${path}`, e.message);
           }
         }
         
@@ -2131,27 +2092,30 @@ const App = () => {
           });
           
           if (!selectedFile) {
-
+            console.log('[Import] User cancelled file selection');
             return false;
           }
-
+          
+          console.log(`[Import] User selected file: ${selectedFile.path}`);
           try {
             fileContent = await RNFS.readFile(selectedFile.path, 'utf8');
-
+            console.log(`[Import] Successfully read file, length: ${fileContent.length}`);
           } catch (readError) {
-//             console.error(`[Import] Failed to read file:`, readError);
+            console.error(`[Import] Failed to read file:`, readError);
             Alert.alert('Error', `Could not read the backup file: ${readError.message}`);
             return false;
           }
         } else {
           // Single file - use it directly
           const mostRecentFile = uniqueFiles[0];
-
+          console.log(`[Import] Only one file found, using: ${mostRecentFile.path}`);
+          console.log(`[Import] File details:`, mostRecentFile);
+          
           try {
             fileContent = await RNFS.readFile(mostRecentFile.path, 'utf8');
-
+            console.log(`[Import] Successfully read file, length: ${fileContent.length}`);
           } catch (readError) {
-//             console.error(`[Import] Failed to read file:`, readError);
+            console.error(`[Import] Failed to read file:`, readError);
             Alert.alert('Error', `Could not read the backup file: ${readError.message}`);
             return false;
           }
@@ -2179,29 +2143,32 @@ const App = () => {
         Alert.alert('Error', 'File import is not available on this platform');
         return false;
       }
-
+      
+      console.log(`[Import] Parsing JSON data...`);
       let importedData;
       try {
         importedData = JSON.parse(fileContent);
-
+        console.log(`[Import] Successfully parsed JSON`);
       } catch (parseError) {
-//         console.error(`[Import] Failed to parse JSON:`, parseError);
+        console.error(`[Import] Failed to parse JSON:`, parseError);
         Alert.alert('Error', 'The selected file is not a valid JSON file');
         return false;
       }
-
+      
+      console.log(`[Import] Running migration...`);
       // Validate and restore the data
       const migratedData = migrateDataStructure(importedData);
-
+      console.log(`[Import] Migration complete`);
+      
       // IMPORTANT: During onboarding, we should NOT update the Zustand store
       // The data will be set when onboarding completes
       // Just validate that we have users to import
       if (!migratedData.users || Object.keys(migratedData.users).length === 0) {
-//         console.warn('[IMPORT] No users found in import data');
+        console.warn('[IMPORT] No users found in import data');
       }
       
       // Set the import data and show DataModal
-
+      console.log('[IMPORT] Showing import selection modal...');
       setOnboardingImportData(migratedData);
       setShowOnboardingImport(true);
       // Set DataModal to import tab
@@ -2213,8 +2180,8 @@ const App = () => {
         window.__onboardingImportResolve = resolve;
       });
     } catch (error) {
-//       console.error('[IMPORT] Import error:', error);
-//       console.error('[IMPORT] Error stack:', error.stack);
+      console.error('[IMPORT] Import error:', error);
+      console.error('[IMPORT] Error stack:', error.stack);
       showToast({ message: 'Failed to import data', type: 'error' });
       return false;
     }
@@ -2249,7 +2216,7 @@ const App = () => {
             // First check if the directory exists
             const exists = await RNFS.exists(path);
             if (!exists) {
-
+              console.log(`[Import] Directory does not exist: ${path}`);
               continue;
             }
             
@@ -2259,10 +2226,10 @@ const App = () => {
               f.name.toLowerCase().includes('stackmap')
             );
             jsonFiles = jsonFiles.concat(foundFiles);
-
+            console.log(`[Import] Found ${foundFiles.length} files in ${path}`);
           } catch (e) {
             // Skip paths we can't access
-
+            console.log(`[Import] Cannot access directory: ${path}`, e.message);
           }
         }
         
@@ -2270,7 +2237,8 @@ const App = () => {
         // This ensures we don't show the same backup file multiple times
         // even if it exists in different directories
         const uniqueFiles = Array.from(new Map(jsonFiles.map(f => [f.name, f])).values());
-
+        
+        
         if (uniqueFiles.length === 0) {
           Alert.alert(
             'No StackMap Files Found',
@@ -2373,7 +2341,7 @@ const App = () => {
           );
         }
       } catch (error) {
-//         console.error('Import error:', error);
+        console.error('Import error:', error);
         Alert.alert(
           'Import Error', 
           'Unable to access files. This is normal on newer Android versions due to storage restrictions.\n\nTry using a file manager app to share the JSON file with StackMap.'
@@ -2384,53 +2352,60 @@ const App = () => {
     
     // iOS uses DocumentPicker
     try {
-
+      console.log('Starting import process...');
       const result = await DocumentPicker.pick({
         type: Platform.OS === 'web' ? 'application/json' : [DocumentPicker.types.json],
         copyTo: 'cachesDirectory',
       });
-
+      
+      console.log('DocumentPicker result:', result);
+      
       let fileContent;
       
       // Web implementation includes content directly
       if (Platform.OS === 'web' && result[0]?.content) {
-
+        console.log('Using web content path');
         fileContent = result[0].content;
       } else if (result[0]?.fileCopyUri) {
         // Native implementation needs to read the file
-
+        console.log('Using native file path');
         fileContent = await RNFS.readFile(result[0].fileCopyUri, 'utf8');
         // Clean up temporary file
         await RNFS.unlink(result[0].fileCopyUri);
       } else {
-//         console.error('No valid file content found in result:', result);
+        console.error('No valid file content found in result:', result);
         Alert.alert('Error', 'Could not read the selected file');
         return;
       }
-
+      
+      console.log('File content length:', fileContent?.length);
+      
       // Parse and validate the data
       let importedData;
       try {
-
+        console.log('Parsing JSON...');
         importedData = JSON.parse(fileContent);
-
+        console.log('Parsed data:', importedData);
       } catch (e) {
-//         console.error('JSON parse error:', e);
+        console.error('JSON parse error:', e);
         Alert.alert('Error', 'Invalid file format. Please select a valid StackMap export file.');
         return;
       }
       
       // Migrate data if needed
-
+      console.log('Migrating data structure...');
       const migratedData = migrateDataStructure(importedData);
-
+      console.log('Migrated data:', migratedData);
+      
       // Confirm import
-
+      console.log('Showing import confirmation dialog...');
+      
       const confirmImport = async () => {
-
+        console.log('User confirmed import, applying data...');
+        
         // Disable sync before importing to prevent conflicts
         if (await syncService.isEnabled()) {
-
+          console.log('Disabling sync before import...');
           await syncService.disable();
         }
         
@@ -2487,12 +2462,12 @@ const App = () => {
         );
       }
     } catch (error) {
-//       console.error('Import catch block - error:', error);
+      console.error('Import catch block - error:', error);
       if (DocumentPicker && DocumentPicker.isCancel && DocumentPicker.isCancel(error)) {
         // User cancelled the picker
-
+        console.log('User cancelled file picker');
       } else {
-//         console.error('Import error details:', error.message, error.stack);
+        console.error('Import error details:', error.message, error.stack);
         Alert.alert('Import Error', `Failed to import data: ${error.message}`);
       }
     }
@@ -2501,17 +2476,19 @@ const App = () => {
   // Handle import from DataModal
   const handleImportComplete = async (importData) => {
     try {
-
+      console.log('=== handleImportComplete called ===');
+      console.log('Import mode:', importData.mode);
       console.log('Import users:', importData.users ? Object.keys(importData.users) : 'none');
-
+      console.log('Import users data:', importData.users);
+      
       // Disable sync before importing to prevent conflicts
       if (await syncService.isEnabled()) {
-
+        console.log('Disabling sync before import...');
         await syncService.disable();
       }
       
       if (importData.mode === 'fresh') {
-
+        console.log('FRESH IMPORT - clearing all data first');
         // Fresh import - clear everything and replace with selected items only
         
         // Clear ALL existing data comprehensively
@@ -2541,7 +2518,7 @@ const App = () => {
               icon: user.icon && typeof user.icon === 'string' ? user.icon : '👤'
             };
             validatedUsers[userId] = validatedUser;
-
+            console.log(`Validated user ${userId}: name="${validatedUser.name}", icon="${validatedUser.icon}"`);
           });
           
           setUsers(validatedUsers);
@@ -2561,7 +2538,7 @@ const App = () => {
             setCurrentTheme(userData.settings.theme);
           }
         } else {
-
+          console.log('WARNING: No users in import data, creating default user');
           // No users imported, create a default one
           const defaultUserId = Date.now().toString();
           const defaultUser = {
@@ -2607,7 +2584,7 @@ const App = () => {
         
         // Merge users
         if (importData.users && Object.keys(importData.users).length > 0) {
-
+          console.log('MERGE MODE - merging users');
           const mergedUsers = { ...users };
           
           // Add imported users, creating unique names if duplicates exist
@@ -2624,7 +2601,8 @@ const App = () => {
             
             if (existingUserEntry) {
               const [existingUserId, existingUser] = existingUserEntry;
-
+              console.log(`User "${validatedUser.name}" already exists, merging data`);
+              
               // Merge the user's days data (activities)
               const mergedDays = { ...existingUser.days };
               if (validatedUser.days) {
@@ -2659,7 +2637,7 @@ const App = () => {
               };
             } else {
               // User doesn't exist, add as new
-
+              console.log(`Adding new user "${validatedUser.name}"`);
               const newUserId = Date.now() + '_' + Math.random().toString(36).substr(2, 9);
               mergedUsers[newUserId] = {
                 ...validatedUser,
@@ -2759,7 +2737,7 @@ const App = () => {
       }
       
     } catch (error) {
-//       console.error('Import error:', error);
+      console.error('Import error:', error);
       Alert.alert('Import Error', 'Failed to import data. Please try again.');
     }
   };
@@ -2807,7 +2785,7 @@ const App = () => {
             onPress: async () => {
               // Disable sync before importing to prevent conflicts
               if (await syncService.isEnabled()) {
-
+                console.log('Disabling sync before import...');
                 await syncService.disable();
               }
               
@@ -2847,19 +2825,19 @@ const App = () => {
         ]
       );
     } catch (error) {
-//       console.error('Import from file error:', error);
+      console.error('Import from file error:', error);
       Alert.alert('Import Error', 'Failed to read or process the file');
     }
   };
 
   const resetApp = async () => {
-
+    console.log('[Reset] User confirmed reset, performing reset...');
     await performReset();
   };
 
   const performReset = async () => {
       try {
-
+              console.log('[RESET] ========== STARTING RESET FLOW ==========');
               console.log('[RESET] Current state before reset:', {
                 hasCompletedOnboarding,
                 showOnboarding,
@@ -2870,33 +2848,36 @@ const App = () => {
               
               // IMPORTANT: Disable sync FIRST to prevent syncing the reset state to other devices
               if (await syncService.isEnabled()) {
-
+                console.log('[RESET] Disabling sync before reset...');
                 await syncService.disable();
               }
-
+              
+              console.log('[RESET] Step 1: Clearing AsyncStorage...');
               // Clear ALL AsyncStorage keys to ensure complete reset
               const allKeys = await AsyncStorage.getAllKeys();
-
+              console.log('[RESET] Found keys to clear:', allKeys);
               if (allKeys.length > 0) {
                 await AsyncStorage.multiRemove(allKeys);
-
+                console.log('[RESET] Cleared all AsyncStorage keys');
+                
                 // Verify they're actually cleared
                 const keysAfterClear = await AsyncStorage.getAllKeys();
-
+                console.log('[RESET] Keys remaining after clear:', keysAfterClear);
               }
               
               // Clear PIN on iOS (skip on Android due to keychain library issues)
               if (Platform.OS === 'ios') {
                 try {
-
+                  console.log('[Reset] Attempting to clear PIN...');
                   await Keychain.resetInternetCredentials('com.stackmap.pin');
-
+                  console.log('[Reset] PIN cleared successfully on iOS');
                 } catch (keychainError) {
-
+                  console.log('[Reset] Error clearing PIN on iOS:', keychainError);
                   // Continue with reset even if PIN clearing fails
                 }
               }
-
+              
+              console.log('[RESET] Step 2: Resetting Zustand store...');
               // CRITICAL: Reset hasCompletedOnboarding FIRST to prevent race conditions
               setHasCompletedOnboarding(false);
               
@@ -2912,7 +2893,8 @@ const App = () => {
               
               // Reset local state
               setDisplayMode('numbers');
-
+              
+              console.log('[RESET] Step 3: Store reset complete, verifying state...');
               console.log('[RESET] State after store reset:', {
                 hasCompletedOnboarding: useAppStore.getState().hasCompletedOnboarding,
                 users: Object.keys(useAppStore.getState().users).length,
@@ -2952,29 +2934,37 @@ const App = () => {
               
         // Show success toast
         showToast({ message: 'App reset successfully', type: 'success' });
-
+        
+        console.log('[RESET] Step 4: Triggering onboarding display...');
+        console.log('[RESET] Current UI state:', {
+          showOnboarding,
+          showDataModal,
+          showAccessModal,
+          isHydrated
+        });
+        
         // Force the app to reinitialize by setting hydrated to false briefly
         setIsHydrated(false);
         
         // Show onboarding after a brief delay to ensure state is cleared
         setTimeout(async () => {
-
+          console.log('[RESET] Step 5: Setting onboarding visible...');
           setHasCompletedOnboarding(false);
           setShowOnboarding(true);
           setIsHydrated(true);
           
           // Final verification
           const finalKeys = await AsyncStorage.getAllKeys();
-
+          console.log('[RESET] Final AsyncStorage keys:', finalKeys);
           console.log('[RESET] Final state:', {
             hasCompletedOnboarding: useAppStore.getState().hasCompletedOnboarding,
             showOnboarding,
             users: Object.keys(useAppStore.getState().users).length
           });
-
+          console.log('[RESET] ========== RESET FLOW COMPLETE ==========');
         }, 100);
       } catch (error) {
-//         console.error('Reset error:', error);
+        console.error('Reset error:', error);
         showToast({ message: 'Failed to reset app data', type: 'error' });
       }
   };
@@ -3081,7 +3071,7 @@ const App = () => {
         {/* Emoji or Custom Image */}
         {item.emoji && item.emoji.startsWith('image:') ? (
           <Image 
-            source={getCustomImageSource(item.emoji.substring(6))}
+            source={CUSTOM_IMAGE_SOURCES[item.emoji.substring(6)]}
             style={styles.activityImage}
             resizeMode="contain"
           />
@@ -3242,6 +3232,7 @@ const App = () => {
     
     return CardContent;
   };
+  
 
   const Header = ({ position = 'top' }) => {
     const handleSwipeGesture = ({ nativeEvent }) => {
@@ -3315,6 +3306,7 @@ const App = () => {
     );
   };
 
+
   // Calculate FAB position - they should always sit on the banner
   // For iPhone in bottom banner mode: center on header content area
   // The FABs need to be lower, centered on the banner content
@@ -3343,23 +3335,12 @@ const App = () => {
         backgroundColor={bannerPosition === 'top' ? theme.primary : theme.light} 
         translucent={false}
       />
-      <View 
-        style={[
-          styles.container, 
-          { 
-            backgroundColor: theme.light
+      <View style={[
+        styles.container, 
+        { 
+          backgroundColor: theme.light
         }
-      ]}
-        onStartShouldSetResponder={() => {
-          // Track any touch on the app
-          syncService.markUserActive();
-          return false; // Don't capture the touch, just track it
-        }}
-        onMoveShouldSetResponder={() => {
-          // Track any movement
-          syncService.markUserActive();
-          return false;
-        }}>
+      ]}>
         {/* Status Bar Background when banner is at bottom - not needed on web */}
         {bannerPosition === 'bottom' && Platform.OS !== 'web' && (
           Platform.OS === 'ios' ? (
@@ -3404,8 +3385,8 @@ const App = () => {
               contentContainerStyle={[
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 130 : 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 180 : 110 },
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
             >
@@ -3515,8 +3496,8 @@ const App = () => {
               }}
               contentContainerStyle={[
                 styles.listContent,
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 130 : 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 180 : 110 },
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
@@ -3546,8 +3527,8 @@ const App = () => {
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
                 Platform.OS === 'web' && { alignItems: 'center' },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 130 : 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 180 : 110 },
+                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
+                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
               ]}
               ListEmptyComponent={
@@ -3619,7 +3600,11 @@ const App = () => {
         <FAB
           icon={isEditMode ? "edit-off" : "edit"}
           onPress={() => {
-
+            console.log('[FAB] Edit button pressed', {
+              isEditMode,
+              hasPinProtection,
+              showPinModal
+            });
             if (isEditMode) {
               setIsEditMode(false);
               // Switch to today when exiting edit mode
@@ -3629,14 +3614,14 @@ const App = () => {
               // The toolbar will be removed after animation completes
             } else {
               if (hasPinProtection) {
-
+                console.log('[FAB] Has PIN protection, showing PIN modal');
                 // Ensure we're in verification mode, not setup mode
                 setIsSettingPin(false);
                 setPinInput('');
                 setConfirmPin('');
                 setShowPinModal(true);
               } else {
-
+                console.log('[FAB] No PIN protection, entering edit mode');
                 setIsEditMode(true);
               }
             }
@@ -3709,7 +3694,8 @@ const App = () => {
         // Android specific
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
-
+      
+      
       {/* EditModeSettingsModal removed - functionality distributed to specific modals */}
       
       {/* Edit Mode Toolbar */}
@@ -3740,17 +3726,13 @@ const App = () => {
             }, 0);
           }}
           onActivityManagement={(tab) => {
-
+            console.log('EditModeToolbar clicked:', tab);
             const tabIndex = tab === 'add' ? 0 : 1;
-
+            console.log('Setting activityManagementActiveTab to:', tabIndex);
             setActivityManagementActiveTab(tabIndex);
-            // Load StackMap Library if not already loaded
-            if (!stackMapLibrary) {
-              getStackMapLibrary();
-            }
             // Use setTimeout to ensure state update happens first
             setTimeout(() => {
-
+              console.log('Opening modal with tab index:', tabIndex);
               setShowActivityManagementModal(true);
             }, 0);
           }}
@@ -3771,12 +3753,6 @@ const App = () => {
         showToast={showToast}
         categories={activityCategories}
         onSaveCategories={setActivityCategories}
-        stackMapLibrary={stackMapLibrary}
-        myLibrary={myLibrary}
-        onCopyGroupToMyLibrary={(group) => {
-          copyGroupToMyLibrary(group);
-          showToast({ message: `Copied "${group.name}" to My Library!` });
-        }}
         onSelectActivity={async (activity) => {
             // Get device ID for enhanced activity IDs
             const deviceId = await encryptionService.getDeviceId();
@@ -3912,9 +3888,10 @@ const App = () => {
       )}
       
       {/* Context Modal - Normal Mode */}
-      <ContextModal
-        visible={showUserDayModal}
-        onClose={() => setShowUserDayModal(false)}
+      {!isEditMode && (
+        <ContextModal
+          visible={showUserDayModal}
+          onClose={() => setShowUserDayModal(false)}
           currentUser={currentUser}
           users={users}
           theme={theme}
@@ -3941,7 +3918,10 @@ const App = () => {
             }
           }}
         />
+      )}
 
+      
+      
       {/* Data Modal */}
       <DataModal
         visible={showDataModal}
@@ -4156,98 +4136,6 @@ const App = () => {
         categories={activityCategories}
         showToast={showToast}
         onSaveCategories={setActivityCategories}
-        stackMapLibrary={stackMapLibrary}
-        myLibrary={myLibrary}
-        onSaveToMyLibrary={async (activityData) => {
-          // Ensure My Templates group exists
-          if (!myLibrary || !myLibrary.activityGroups) {
-            // Initialize myLibrary with My Templates group
-            const newLibrary = {
-              activityGroups: [{
-                id: 'my-templates',
-                name: 'My Templates',
-                activities: [{
-                  id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-                  name: activityData.text,
-                  emoji: activityData.icon,
-                }],
-                isUserCreated: true,
-                createdAt: Date.now(),
-                lastModified: Date.now(),
-                order: 0
-              }],
-              groupOrder: ['my-templates']
-            };
-            setMyLibrary(newLibrary);
-          } else {
-            // Find or create My Templates group
-            let myTemplatesGroup = myLibrary.activityGroups.find(g => g.id === 'my-templates');
-            
-            if (!myTemplatesGroup) {
-              // Create My Templates group
-              myTemplatesGroup = {
-                id: 'my-templates',
-                name: 'My Templates',
-                activities: [],
-                isUserCreated: true,
-                createdAt: Date.now(),
-                lastModified: Date.now(),
-                order: myLibrary.activityGroups.length
-              };
-              
-              const updatedLibrary = {
-                ...myLibrary,
-                activityGroups: [...myLibrary.activityGroups, myTemplatesGroup],
-                groupOrder: [...(myLibrary.groupOrder || []), 'my-templates']
-              };
-              setMyLibrary(updatedLibrary);
-            }
-            
-            // Add activity to My Templates
-            const newActivity = {
-              id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              name: activityData.text,
-              emoji: activityData.icon,
-            };
-            
-            const updatedGroups = myLibrary.activityGroups.map(group => {
-              if (group.id === 'my-templates') {
-                return {
-                  ...group,
-                  activities: [...(group.activities || []), newActivity],
-                  lastModified: Date.now()
-                };
-              }
-              return group;
-            });
-            
-            setMyLibrary({
-              ...myLibrary,
-              activityGroups: updatedGroups
-            });
-          }
-          
-          // Also update activityCategories for backward compatibility
-          const myTemplatesCategory = {
-            id: 'my-templates',
-            name: 'My Templates',
-            activities: activityCategories?.find(cat => cat.id === 'my-templates')?.activities || []
-          };
-          
-          const newActivity = {
-            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            name: activityData.text,
-            emoji: activityData.icon,
-          };
-          
-          myTemplatesCategory.activities.push(newActivity);
-          
-          const updatedCategories = activityCategories?.length > 0 
-            ? activityCategories.map(cat => cat.id === 'my-templates' ? myTemplatesCategory : cat)
-            : [myTemplatesCategory];
-          
-          setActivityCategories(updatedCategories);
-        }}
         onAddActivity={async (activity) => {
           // Get device ID for enhanced activity IDs
           const deviceId = await encryptionService.getDeviceId();
@@ -4255,7 +4143,6 @@ const App = () => {
           const newActivity = {
             id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
-            emoji: activity.emoji || activity.icon,
             icon: activity.emoji || activity.icon,
             completed: false,
             pinned: false,
@@ -4263,29 +4150,7 @@ const App = () => {
             type: 'task',
             ...(activity.isPersonal && { isPersonal: true })
           };
-          
-          // Update activities state
-          const updatedActivities = [...activities, newActivity];
-          setActivities(updatedActivities);
-          
-          // Save to persistent storage
-          if (currentUser && users[currentUser]) {
-            const updatedUsers = {
-              ...users,
-              [currentUser]: {
-                ...users[currentUser],
-                days: {
-                  ...users[currentUser].days,
-                  [currentDay]: {
-                    ...users[currentUser].days?.[currentDay],
-                    activities: updatedActivities
-                  }
-                }
-              }
-            };
-            setUsers(updatedUsers);
-          }
-          
+          setActivities([...activities, newActivity]);
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
         }}
         onSelectActivity={async (activity) => {
@@ -4301,29 +4166,7 @@ const App = () => {
             deleted: false,
             type: 'task'
           };
-          
-          // Update activities state
-          const updatedActivities = [...activities, newActivity];
-          setActivities(updatedActivities);
-          
-          // Save to persistent storage
-          if (currentUser && users[currentUser]) {
-            const updatedUsers = {
-              ...users,
-              [currentUser]: {
-                ...users[currentUser],
-                days: {
-                  ...users[currentUser].days,
-                  [currentDay]: {
-                    ...users[currentUser].days?.[currentDay],
-                    activities: updatedActivities
-                  }
-                }
-              }
-            };
-            setUsers(updatedUsers);
-          }
-          
+          setActivities([...activities, newActivity]);
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
         }}
         onSelectMultipleActivities={async (activitiesToAdd) => {
@@ -4341,33 +4184,14 @@ const App = () => {
             type: 'task'
           }));
           
-          // Update activities state
-          const updatedActivities = [...activities, ...newActivities];
-          setActivities(updatedActivities);
-          
-          // Save to persistent storage
-          if (currentUser && users[currentUser]) {
-            const updatedUsers = {
-              ...users,
-              [currentUser]: {
-                ...users[currentUser],
-                days: {
-                  ...users[currentUser].days,
-                  [currentDay]: {
-                    ...users[currentUser].days?.[currentDay],
-                    activities: updatedActivities
-                  }
-                }
-              }
-            };
-            setUsers(updatedUsers);
-          }
-          
+          // Add all new activities at once
+          setActivities([...activities, ...newActivities]);
           showToast({ message: `Added ${newActivities.length} activities to today!` });
         }}
         initialTab={activityManagementActiveTab}
       />
-
+      
+      
       {/* PIN Modal for Edit Mode - Standalone for when not in Users & Security modal */}
       {showPinModal && !showAccessModal && (
         <PinModal
@@ -4401,67 +4225,24 @@ const App = () => {
   //   );
   // }
   
+  // Don't render until store is hydrated
+  if (!isHydrated) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#0095FF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#FFFFFF" />
+      </View>
+    );
+  }
+  
   // Show share view if share token is present
   if (shareToken) {
     return <ShareView shareToken={shareToken} theme={theme} />;
   }
   
-  // Show loading screen while determining if we need onboarding
-  if (!isHydrated) {
-    return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#FFFFFF" />
-      </View>
-    );
-  }
-
-  // Show onboarding if needed OR if no users exist yet (not hydrated)
-
-  // If hydrated and still no users, show onboarding
-  if (isHydrated && !hasCompletedOnboarding && Object.keys(users).length === 0) {
-    return (
-      <>
-        <OnboardingNew
-          onComplete={handleOnboardingComplete}
-          onImport={async () => {
-            const result = await importDataForOnboarding();
-            if (!result || !result.success) {
-              throw new Error('Import cancelled or failed');
-            }
-            return result;
-          }}
-          isAbbreviated={!!syncSetupPhrase}
-          syncSetupPhrase={syncSetupPhrase}
-          onShowPrivacy={() => {
-
-            setShowPrivacyModal(true);
-          }}
-        />
-        
-        {/* Privacy Policy Modal - Available during onboarding */}
-        <PrivacyModal
-          visible={showPrivacyModal}
-          onClose={() => setShowPrivacyModal(false)}
-          insets={insets}
-          onShowSupport={() => {
-            setShowPrivacyModal(false);
-            setTimeout(() => setShowSupportModal(true), 300);
-          }}
-        />
-        
-        {/* Support Modal - Available during onboarding */}
-        <SupportModal
-          visible={showSupportModal}
-          onClose={() => setShowSupportModal(false)}
-          insets={insets}
-        />
-      </>
-    );
-  }
-  
-  // Show onboarding immediately if needed
-  if (showOnboarding || (!hasCompletedOnboarding && Object.keys(users).length === 0)) {
-
+  // Show onboarding if needed (kept for backward compatibility)
+  console.log('[RENDER] Checking showOnboarding:', showOnboarding, 'isHydrated:', isHydrated);
+  if (showOnboarding) {
+    console.log('[RENDER] ========== RENDERING ONBOARDING ==========');
     return (
       <>
         <OnboardingNew
@@ -4474,13 +4255,9 @@ const App = () => {
             }
             return result; // RETURN THE RESULT SO ONBOARDING CAN USE IT!
           }}
-          isAbbreviated={!!syncSetupPhrase}
-          syncSetupPhrase={syncSetupPhrase}
-          onShowPrivacy={() => {
-
-            setShowPrivacyModal(true);
-          }}
-        />
+        isAbbreviated={!!syncSetupPhrase}
+        syncSetupPhrase={syncSetupPhrase}
+      />
       
       {/* Privacy Policy Modal - Available during onboarding for App Store */}
       <PrivacyModal
@@ -4546,8 +4323,8 @@ const App = () => {
     );
   }
 
-  // Wrap with GestureHandlerRootView for iOS and Android (required for swipe gestures)
-  if ((Platform.OS === 'ios' || Platform.OS === 'android') && GestureHandlerRootView) {
+  // Wrap with GestureHandlerRootView for iOS only (gesture handler not available on web)
+  if (Platform.OS === 'ios' && GestureHandlerRootView) {
     return (
       <GestureHandlerRootView style={{ flex: 1 }}>
         {AppContent}
@@ -4561,7 +4338,6 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#5C7E9D', // Match splash screen color to prevent flash
   },
   contentArea: {
     flex: 1,

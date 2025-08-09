@@ -1,13 +1,8 @@
 // Import crypto polyfill for React Native BEFORE tweetnacl
 import { Platform } from 'react-native';
-// Lazy load crypto polyfill to avoid module-level Platform.OS access
-let cryptoLoaded = false;
-const ensureCrypto = () => {
-  if (!cryptoLoaded && Platform.OS !== 'web') {
-    require('react-native-get-random-values');
-    cryptoLoaded = true;
-  }
-};
+if (Platform.OS !== 'web') {
+  require('react-native-get-random-values');
+}
 
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
@@ -30,7 +25,6 @@ class EncryptionService {
    * Generate a random recovery phrase (12 words from a wordlist)
    */
   generateRecoveryPhrase() {
-    ensureCrypto(); // Ensure crypto is loaded before using nacl
     // Generate a random 128-bit seed and convert to hex
     // In production, use BIP39 wordlist for better UX
     const seedBytes = nacl.randomBytes(16);
@@ -81,24 +75,10 @@ class EncryptionService {
    * Initialize encryption with a recovery phrase
    */
   async initialize(recoveryPhrase, syncId, existingSalt = null) {
-    // Check if we have a cached key for this recovery phrase
-    const cachedKey = await this.getCachedKey(recoveryPhrase, syncId);
-    
-    if (cachedKey) {
-
-      this.masterKey = cachedKey.key;
-      this.syncId = syncId;
-      return { syncId, salt: cachedKey.salt };
-    }
-    
-    // No cached key, derive it
-
+    // Use existing salt if provided, otherwise generate new one
     const { key, salt } = await this.deriveKeyFromPhrase(recoveryPhrase, existingSalt);
     this.masterKey = key;
     this.syncId = syncId;
-    
-    // Cache the derived key for next time
-    await this.cacheKey(recoveryPhrase, syncId, key, salt);
     
     // Store salt for future key derivation
     await this.storeSalt(salt);
@@ -133,9 +113,7 @@ class EncryptionService {
           console.log(`Compression saved ${Math.round((1 - compressed.length / util.decodeUTF8(dataString).length) * 100)}%`);
         }
       } catch (error) {
-        if (__DEV__) {
-          console.warn('Compression failed, using uncompressed data:', error);
-        }
+        console.warn('Compression failed, using uncompressed data:', error);
       }
     }
 
@@ -209,7 +187,7 @@ class EncryptionService {
             if (metadata.compressed) {
               try {
                 dataBytes = pako.inflate(dataBytes);
-
+                console.log(`Decompressed from ${metadata.compressedSize} to ${metadata.originalSize} bytes`);
               } catch (error) {
                 throw new Error('Decompression failed');
               }
@@ -220,7 +198,7 @@ class EncryptionService {
           }
         } catch (error) {
           // Fall back to version 1 format
-
+          console.log('Failed to parse as v2, trying v1 format:', error);
         }
       }
     }
@@ -288,70 +266,6 @@ class EncryptionService {
   }
 
   /**
-   * Cache the derived key to avoid re-derivation on every startup
-   */
-  async cacheKey(recoveryPhrase, syncId, key, salt) {
-    try {
-      // Create a hash of the recovery phrase to use as cache key
-      const phraseHash = nacl.hash(util.decodeUTF8(recoveryPhrase));
-      const cacheKey = `@cached_key_${util.encodeBase64(phraseHash).substring(0, 16)}`;
-      
-      const cacheData = {
-        syncId,
-        key: util.encodeBase64(key),
-        salt: util.encodeBase64(salt),
-        timestamp: Date.now()
-      };
-      
-      await AsyncStorage.setItem(cacheKey, JSON.stringify(cacheData));
-
-    } catch (error) {
-      if (__DEV__) {
-        console.warn('[Encryption] Failed to cache key:', error);
-      }
-    }
-  }
-
-  /**
-   * Get cached key if available and valid
-   */
-  async getCachedKey(recoveryPhrase, syncId) {
-    try {
-      // Create same hash to look up cache
-      const phraseHash = nacl.hash(util.decodeUTF8(recoveryPhrase));
-      const cacheKey = `@cached_key_${util.encodeBase64(phraseHash).substring(0, 16)}`;
-      
-      const cached = await AsyncStorage.getItem(cacheKey);
-      if (!cached) return null;
-      
-      const cacheData = JSON.parse(cached);
-      
-      // Verify syncId matches
-      if (cacheData.syncId !== syncId) {
-
-        return null;
-      }
-      
-      // Cache is valid for 30 days
-      const cacheAge = Date.now() - cacheData.timestamp;
-      if (cacheAge > 30 * 24 * 60 * 60 * 1000) {
-
-        return null;
-      }
-      
-      return {
-        key: util.decodeBase64(cacheData.key),
-        salt: cacheData.salt
-      };
-    } catch (error) {
-      if (__DEV__) {
-        console.warn('[Encryption] Failed to get cached key:', error);
-      }
-      return null;
-    }
-  }
-
-  /**
    * Store recovery phrase encrypted with device key
    */
   async storeRecoveryPhrase(recoveryPhrase, syncId) {
@@ -372,9 +286,7 @@ class EncryptionService {
       // Store encrypted phrase
       await AsyncStorage.setItem(`@sync_phrase_${syncId}`, util.encodeBase64(combined));
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to store recovery phrase:', error);
-      }
+      console.error('Failed to store recovery phrase:', error);
     }
   }
   
@@ -399,9 +311,7 @@ class EncryptionService {
       
       return util.encodeUTF8(decrypted);
     } catch (error) {
-      if (__DEV__) {
-        console.error('Failed to retrieve recovery phrase:', error);
-      }
+      console.error('Failed to retrieve recovery phrase:', error);
       return null;
     }
   }
