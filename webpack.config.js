@@ -6,7 +6,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
-  entry: ['./web-polyfills.js', './index.web.js'],
+  entry: './index.web.js',
   output: {
     path: path.resolve(__dirname, 'web/build'),
     filename: 'bundle.[contenthash].js',
@@ -29,10 +29,7 @@ module.exports = {
           loader: 'babel-loader',
           options: {
             presets: ['module:@react-native/babel-preset'],
-            plugins: [
-              'react-native-web',
-              '@babel/plugin-transform-flow-strip-types'
-            ],
+            plugins: ['react-native-web'],
           },
         },
       },
@@ -49,11 +46,7 @@ module.exports = {
   resolve: {
     extensions: ['.web.js', '.js', '.jsx', '.ts', '.tsx'],
     alias: {
-      // Override react-native with react-native-web
       'react-native$': 'react-native-web',
-      // Override Platform imports to use our polyfill
-      'react-native-web/dist/exports/Platform': path.resolve(__dirname, 'src/utils/PlatformPolyfill.web.js'),
-      'react-native/Libraries/Utilities/Platform': path.resolve(__dirname, 'src/utils/PlatformPolyfill.web.js'),
       // Add aliases for RN packages that need web versions
       'react-native-svg': 'react-native-svg-web',
       'react-native-qrcode-svg': path.resolve(__dirname, 'src/utils/QRCode.web.js'),
@@ -74,33 +67,9 @@ module.exports = {
     new webpack.DefinePlugin({
       __DEV__: JSON.stringify(process.env.NODE_ENV !== 'production'),
       process: { env: {} },
-      global: 'window',
     }),
     new webpack.ProvidePlugin({
       process: 'process/browser',
-      Platform: [path.resolve(__dirname, 'src/utils/PlatformPolyfill.web.js'), 'Platform'],
-    }),
-    new webpack.BannerPlugin({
-      banner: `
-        // Initialize Platform immediately before any modules load
-        if (typeof window !== 'undefined' && !window.Platform) {
-          window.Platform = {
-            OS: 'web',
-            Version: 1,
-            isPad: false,
-            isTV: false,
-            isTVOS: false,
-            isTesting: false,
-            constants: { reactNativeVersion: { major: 0, minor: 72, patch: 0 } },
-            select: function(obj) {
-              return obj.web || obj.default || Object.values(obj)[0];
-            }
-          };
-          if (typeof global !== 'undefined') global.Platform = window.Platform;
-        }
-      `,
-      raw: true,
-      entryOnly: true,
     }),
     new CopyWebpackPlugin({
       patterns: [
