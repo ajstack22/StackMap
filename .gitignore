@@ -3,7 +3,7 @@
 .DS_Store
 
 # Web Build
-# web/build/ - temporarily allowing for deployment
+web/build/
 .deployment-manifest
 
 # Xcode
@@ -96,16 +96,23 @@ ios/*.ips
 icon-color-preview.html
 
 # Build artifacts that shouldn't be committed
-# /bundle.*.js
-# # /bundle.*.js.LICENSE.txt
+/bundle.*.js
+/bundle.*.js.LICENSE.txt
 /temp/
-# /index.html
-# /service-worker.js
-# 🚨 DO NOT UNCOMMENT - NEEDED FOR DEPLOYMENT 🚨
-# /workbox-*.js
-# /manifest.json
-# 🚨 DO NOT UNCOMMENT - NEEDED FOR DEPLOYMENT 🚨
-# /*.png
+/index.html
+/service-worker.js
+/workbox-*.js
+/manifest.json
+/*.png
+/fonts/
+/icons/
+
+# Android bundle files (generated during build)
+/android/app/src/main/assets/index.android.bundle
+/android/app/src/main/assets/index.android.bundle.map
+
+# Duplicate android directory
+/android/android/
 
 # Test/debug files
 /test-*.html
@@ -114,10 +121,5 @@ icon-color-preview.html
 /show-*.php
 /clear-cache.html
 
-# Duplicate directories (keep originals only)
-# 🚨 DO NOT UNCOMMENT - NEEDED FOR DEPLOYMENT 🚨
-# /fonts/
-# 🚨 DO NOT UNCOMMENT - NEEDED FOR DEPLOYMENT 🚨
-# /icons/
-
-# Keep web/build for deployment but don't copy to root
+# Web build should be in web/build/, not root
+# Files should be deployed from web/build/, not copied to root
