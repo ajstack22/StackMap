@@ -567,7 +567,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
     gap: SPACING.sm,
-    minWidth: 120,
+    minWidth: 150,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -593,6 +593,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
     flex: 1,
+    minWidth: 60,
   },
   
   shareField: {
