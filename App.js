@@ -3463,11 +3463,11 @@ const App = () => {
                         key={item.id} 
                         style={[
                           styles.cardWrapper,
-                          Platform.OS !== 'web' && {
+                          {
                             width: calculateCardWidth(screenDimensions.width),
                             marginBottom: CARD_LAYOUT.gap,
                             marginHorizontal: CARD_LAYOUT.gap / 2,  // Use consistent gap spacing
-                            // Don't apply maxWidth here since calculateCardWidth already handles it
+                            // Apply for all platforms including web
                           },
                           numColumns === 1 && { 
                             maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
