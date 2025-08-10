@@ -70,10 +70,8 @@ export const calculateCardWidth = (width = screenWidth) => {
     return Math.min(CARD_LAYOUT.singleColumnMaxWidth, availableWidth);
   }
   
-  // For web with CSS Grid, we don't need to calculate exact widths
-  if (Platform.OS === 'web') {
-    return 'auto';
-  }
+  // For web, we still need to calculate proper widths
+  // Remove this web-specific check to use same calculation as native
   
   // For native, calculate exact widths
   const totalGaps = (numColumns - 1) * CARD_LAYOUT.gap;
