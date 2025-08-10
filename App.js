@@ -919,14 +919,30 @@ const App = () => {
         },
         { 
           id: `activity_${timestamp}_3`, 
-          text: 'Preferences',
-          title: 'Preferences',  // Keep title for backward compatibility
-          emoji: '⚙️',
-          description: 'Tap the gear icon to customize colors, animations, and display',
+          text: 'Share Your Stack',
+          title: 'Share Your Stack',  // Keep title for backward compatibility
+          emoji: '🔗',
+          description: 'Share your activities with others via QR code or link',
           pinned: false 
         },
         { 
           id: `activity_${timestamp}_4`, 
+          text: 'Sync Across Devices',
+          title: 'Sync Across Devices',  // Keep title for backward compatibility
+          emoji: '🔄',
+          description: 'Keep your data synced with zero-knowledge encryption',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_5`, 
+          text: 'Preferences',
+          title: 'Preferences',  // Keep title for backward compatibility
+          emoji: '🎨',
+          description: 'Tap the palette icon to customize colors, animations, and display',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_6`, 
           text: 'Activities',
           title: 'Activities',  // Keep title for backward compatibility
           emoji: '📋',
@@ -934,7 +950,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_5`, 
+          id: `activity_${timestamp}_7`, 
           text: 'Day',
           title: 'Day',  // Keep title for backward compatibility
           emoji: '📅',
@@ -942,7 +958,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_6`, 
+          id: `activity_${timestamp}_8`, 
           text: 'Access',
           title: 'Access',  // Keep title for backward compatibility
           emoji: '👥',
@@ -950,7 +966,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_7`, 
+          id: `activity_${timestamp}_9`, 
           text: 'Data',
           title: 'Data',  // Keep title for backward compatibility
           emoji: '💾',
@@ -958,7 +974,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_8`, 
+          id: `activity_${timestamp}_10`, 
           text: 'Explore the Library',
           title: 'Explore the Library',  // Keep title for backward compatibility
           emoji: '📚',
@@ -1122,12 +1138,14 @@ const App = () => {
           description: 'Use the edit button to add, remove, and organize activities',
           pinned: false 
         },
-        { id: `activity_${timestamp}_3`, text: 'Preferences', title: 'Preferences', emoji: '⚙️', description: 'Tap the gear icon to customize colors, animations, and display', pinned: false },
-        { id: `activity_${timestamp}_4`, text: 'Activities', title: 'Activities', emoji: '📋', description: 'Tap the + icon to add new activities and build your library', pinned: false },
-        { id: `activity_${timestamp}_5`, text: 'Day', title: 'Day', emoji: '📅', description: 'Use the calendar icon to plan tomorrow or review past days', pinned: false },
-        { id: `activity_${timestamp}_6`, text: 'Access', title: 'Access', emoji: '👥', description: 'Manage users and set a PIN to protect Edit Mode', pinned: false },
-        { id: `activity_${timestamp}_7`, text: 'Data', title: 'Data', emoji: '💾', description: 'Backup, restore, sync, and manage your StackMap data', pinned: false },
-        { id: `activity_${timestamp}_8`, text: 'Explore the Library', title: 'Explore the Library', emoji: '📚', description: 'Check out pre-made activity templates in the StackMap Library', pinned: false },
+        { id: `activity_${timestamp}_3`, text: 'Share Your Stack', title: 'Share Your Stack', emoji: '🔗', description: 'Share your activities with others via QR code or link', pinned: false },
+        { id: `activity_${timestamp}_4`, text: 'Sync Across Devices', title: 'Sync Across Devices', emoji: '🔄', description: 'Keep your data synced with zero-knowledge encryption', pinned: false },
+        { id: `activity_${timestamp}_5`, text: 'Preferences', title: 'Preferences', emoji: '🎨', description: 'Tap the palette icon to customize colors, animations, and display', pinned: false },
+        { id: `activity_${timestamp}_6`, text: 'Activities', title: 'Activities', emoji: '📋', description: 'Tap the + icon to add new activities and build your library', pinned: false },
+        { id: `activity_${timestamp}_7`, text: 'Day', title: 'Day', emoji: '📅', description: 'Use the calendar icon to plan tomorrow or review past days', pinned: false },
+        { id: `activity_${timestamp}_8`, text: 'Access', title: 'Access', emoji: '👥', description: 'Manage users and set a PIN to protect Edit Mode', pinned: false },
+        { id: `activity_${timestamp}_9`, text: 'Data', title: 'Data', emoji: '💾', description: 'Backup, restore, sync, and manage your StackMap data', pinned: false },
+        { id: `activity_${timestamp}_10`, text: 'Explore the Library', title: 'Explore the Library', emoji: '📚', description: 'Check out pre-made activity templates in the StackMap Library', pinned: false },
       ];
       
       // Create each user from the setup data
