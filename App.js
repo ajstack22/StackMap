@@ -899,7 +899,7 @@ const App = () => {
       const newUsers = {};
       let firstUserId = null;
       
-      // Create starter activities - mix of welcome cards and common routines
+      // Create starter activities - explain StackMap features
       const starterActivities = [
         { 
           id: `activity_${timestamp}_1`, 
@@ -914,21 +914,57 @@ const App = () => {
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
           emoji: '✏️',
-          description: 'Use the edit button to add your own activities',
+          description: 'Use the edit button to add, remove, and organize activities',
           pinned: false 
         },
-        { id: `activity_${timestamp}_3`, text: 'Morning Routine', title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
-        { id: `activity_${timestamp}_4`, text: 'Brush Teeth', title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
-        { id: `activity_${timestamp}_5`, text: 'Take Medication', title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
-        { id: `activity_${timestamp}_6`, text: 'Breakfast', title: 'Breakfast', emoji: '🥞', pinned: false },
-        { id: `activity_${timestamp}_7`, text: 'Exercise', title: 'Exercise', emoji: '🏃', pinned: false },
-        { id: `activity_${timestamp}_8`, text: 'Work/Study', title: 'Work/Study', emoji: '💻', pinned: false },
-        { id: `activity_${timestamp}_9`, text: 'Lunch', title: 'Lunch', emoji: '🥗', pinned: false },
-        { id: `activity_${timestamp}_10`, text: 'Take a Break', title: 'Take a Break', emoji: '☕', pinned: false },
-        { id: `activity_${timestamp}_11`, text: 'Dinner', title: 'Dinner', emoji: '🍽️', pinned: false },
-        { id: `activity_${timestamp}_12`, text: 'Relax', title: 'Relax', emoji: '🎮', pinned: false },
-        { id: `activity_${timestamp}_13`, text: 'Bedtime Routine', title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
-        { id: `activity_${timestamp}_14`, text: 'Sleep', title: 'Sleep', emoji: '😴', pinned: false },
+        { 
+          id: `activity_${timestamp}_3`, 
+          text: 'Preferences',
+          title: 'Preferences',  // Keep title for backward compatibility
+          emoji: '⚙️',
+          description: 'Tap the gear icon to customize colors, animations, and display',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_4`, 
+          text: 'Activities',
+          title: 'Activities',  // Keep title for backward compatibility
+          emoji: '📋',
+          description: 'Tap the + icon to add new activities and build your library',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_5`, 
+          text: 'Day',
+          title: 'Day',  // Keep title for backward compatibility
+          emoji: '📅',
+          description: 'Use the calendar icon to plan tomorrow or review past days',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_6`, 
+          text: 'Access',
+          title: 'Access',  // Keep title for backward compatibility
+          emoji: '👥',
+          description: 'Manage users and set a PIN to protect Edit Mode',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_7`, 
+          text: 'Data',
+          title: 'Data',  // Keep title for backward compatibility
+          emoji: '💾',
+          description: 'Backup, restore, sync, and manage your StackMap data',
+          pinned: false 
+        },
+        { 
+          id: `activity_${timestamp}_8`, 
+          text: 'Explore the Library',
+          title: 'Explore the Library',  // Keep title for backward compatibility
+          emoji: '📚',
+          description: 'Check out pre-made activity templates in the StackMap Library',
+          pinned: false 
+        },
       ];
       
       // Create each user from onboarding
@@ -1067,7 +1103,7 @@ const App = () => {
       const newUsers = {};
       let firstUserId = null;
       
-      // Create starter activities - mix of welcome cards and common routines
+      // Create starter activities - educational cards explaining StackMap features
       const timestamp = Date.now();
       const starterActivities = [
         { 
@@ -1083,21 +1119,15 @@ const App = () => {
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
           emoji: '✏️',
-          description: 'Use the edit button to add your own activities',
+          description: 'Use the edit button to add, remove, and organize activities',
           pinned: false 
         },
-        { id: `activity_${timestamp}_3`, text: 'Morning Routine', title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
-        { id: `activity_${timestamp}_4`, text: 'Brush Teeth', title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
-        { id: `activity_${timestamp}_5`, text: 'Take Medication', title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
-        { id: `activity_${timestamp}_6`, text: 'Breakfast', title: 'Breakfast', emoji: '🥞', pinned: false },
-        { id: `activity_${timestamp}_7`, text: 'Exercise', title: 'Exercise', emoji: '🏃', pinned: false },
-        { id: `activity_${timestamp}_8`, text: 'Work/Study', title: 'Work/Study', emoji: '💻', pinned: false },
-        { id: `activity_${timestamp}_9`, text: 'Lunch', title: 'Lunch', emoji: '🥗', pinned: false },
-        { id: `activity_${timestamp}_10`, text: 'Take a Break', title: 'Take a Break', emoji: '☕', pinned: false },
-        { id: `activity_${timestamp}_11`, text: 'Dinner', title: 'Dinner', emoji: '🍽️', pinned: false },
-        { id: `activity_${timestamp}_12`, text: 'Relax', title: 'Relax', emoji: '🎮', pinned: false },
-        { id: `activity_${timestamp}_13`, text: 'Bedtime Routine', title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
-        { id: `activity_${timestamp}_14`, text: 'Sleep', title: 'Sleep', emoji: '😴', pinned: false },
+        { id: `activity_${timestamp}_3`, text: 'Preferences', title: 'Preferences', emoji: '⚙️', description: 'Tap the gear icon to customize colors, animations, and display', pinned: false },
+        { id: `activity_${timestamp}_4`, text: 'Activities', title: 'Activities', emoji: '📋', description: 'Tap the + icon to add new activities and build your library', pinned: false },
+        { id: `activity_${timestamp}_5`, text: 'Day', title: 'Day', emoji: '📅', description: 'Use the calendar icon to plan tomorrow or review past days', pinned: false },
+        { id: `activity_${timestamp}_6`, text: 'Access', title: 'Access', emoji: '👥', description: 'Manage users and set a PIN to protect Edit Mode', pinned: false },
+        { id: `activity_${timestamp}_7`, text: 'Data', title: 'Data', emoji: '💾', description: 'Backup, restore, sync, and manage your StackMap data', pinned: false },
+        { id: `activity_${timestamp}_8`, text: 'Explore the Library', title: 'Explore the Library', emoji: '📚', description: 'Check out pre-made activity templates in the StackMap Library', pinned: false },
       ];
       
       // Create each user from the setup data

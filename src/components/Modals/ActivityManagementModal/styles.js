@@ -7,7 +7,8 @@ const IS_MOBILE = isMobile(screenWidth);
 export const styles = StyleSheet.create({
   // Container styles
   scrollContainer: {
-    paddingVertical: SPACING.sm,
+    paddingTop: SPACING.md,  // Standardized top padding (16px)
+    paddingBottom: 80,       // Consistent bottom padding for all tabs
     // Remove horizontal padding - handled by addFormContainer
     // iOS constraint to prevent overgrowth
     ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
@@ -61,7 +62,7 @@ export const styles = StyleSheet.create({
   },
   listContainer: {
     paddingHorizontal: IS_MOBILE ? 16 : 20,
-    paddingBottom: 100,
+    // paddingBottom handled by scrollContainer
     ...(!IS_MOBILE && {
       maxWidth: 600,
       alignSelf: 'center',
@@ -275,7 +276,8 @@ export const styles = StyleSheet.create({
   // Add Tab Styles
   addFormContainer: {
     paddingHorizontal: IS_MOBILE ? 12 : 20,
-    paddingVertical: IS_MOBILE ? 12 : 20,
+    paddingTop: 0,  // Content already has padding from scrollContainer
+    paddingBottom: IS_MOBILE ? 12 : 20,
     ...(!IS_MOBILE && {
       maxWidth: 600,
       alignSelf: 'center',

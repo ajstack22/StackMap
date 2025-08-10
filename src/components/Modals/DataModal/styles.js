@@ -7,7 +7,8 @@ const IS_MOBILE = isMobile(screenWidth);
 export const styles = StyleSheet.create({
   // Container styles
   scrollContainer: {
-    paddingVertical: SPACING.sm,
+    paddingTop: SPACING.md,  // Standardized top padding (16px)
+    paddingBottom: 80,       // Consistent bottom padding for all tabs
     ...(Platform.OS === 'web' && {
       paddingHorizontal: SPACING.lg,
     }),

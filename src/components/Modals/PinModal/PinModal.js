@@ -98,11 +98,15 @@ const PinModal = ({
                 // Only allow numeric input up to 4 digits
                 const numericText = text.replace(/[^0-9]/g, '').slice(0, 4);
                 setPinInput(numericText);
+                // Auto-submit when 4 digits are entered
+                if (numericText.length === 4 && onPinComplete) {
+                  onPinComplete(numericText);
+                }
               }}
               onSubmitEditing={() => {
                 // Handle Enter key press - trigger PIN verification if 4 digits entered
-                if (pinInput.length === 4) {
-                  // The useEffect will handle the verification automatically
+                if (pinInput.length === 4 && onPinComplete) {
+                  onPinComplete(pinInput);
                 }
               }}
               placeholder="Enter 4-digit PIN"
@@ -146,6 +150,15 @@ const PinModal = ({
           )}
           
           <View style={styles.pinModalButtonContainer}>
+            {/* Add Submit button for web */}
+            {Platform.OS === 'web' && pinInput.length === 4 && (
+              <TouchableOpacity
+                style={[styles.pinSubmitButton, { backgroundColor: theme.primary }]}
+                onPress={() => onPinComplete && onPinComplete(pinInput)}
+              >
+                <Text style={styles.pinSubmitText}>Submit</Text>
+              </TouchableOpacity>
+            )}
             <TouchableOpacity
               style={styles.pinCancelButton}
               onPress={handleCancel}

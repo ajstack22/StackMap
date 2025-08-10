@@ -135,23 +135,23 @@ const TabbedModal = ({
         
         if (shouldSwipeRight && activeTabRef.current > 0) {
           // Swipe right - go to previous tab
-          animateToTab(activeTabRef.current - 1);
+          animateToTab(activeTabRef.current - 1, true); // Pass true for fromSwipe
           // Reset gesture state after animation on Android
           if (Platform.OS === 'android') {
             setTimeout(() => {
               swipeAnimation.setValue(0);
               gestureRef.current.isActive = false;
-            }, 300);
+            }, 200); // Match the faster animation duration
           }
         } else if (shouldSwipeLeft && activeTabRef.current < tabsRef.current.length - 1) {
           // Swipe left - go to next tab
-          animateToTab(activeTabRef.current + 1);
+          animateToTab(activeTabRef.current + 1, true); // Pass true for fromSwipe
           // Reset gesture state after animation on Android
           if (Platform.OS === 'android') {
             setTimeout(() => {
               swipeAnimation.setValue(0);
               gestureRef.current.isActive = false;
-            }, 300);
+            }, 200); // Match the faster animation duration
           }
         } else {
           // Return to original position
@@ -246,30 +246,34 @@ const TabbedModal = ({
     }
   }, [visible, defaultTab, controlledActiveTab]);
   
-  const animateToTab = (index) => {
+  const animateToTab = (index, fromSwipe = false) => {
     if (index === activeTabRef.current) return;
     
     // Direction: negative when going to next tab (content slides left), positive when going to previous tab (content slides right)
     const direction = index > activeTabRef.current ? -1 : 1;
     
-    // Reset swipe animation first
-    swipeAnimation.setValue(0);
+    // If not from swipe (e.g., tab press), use the original animation
+    if (!fromSwipe) {
+      swipeAnimation.setValue(0);
+      // Material Design 3 shared axis transition - start from opposite direction
+      swipeAnimation.setValue(-direction * screenWidth * 0.35);
+    }
+    // If from swipe, continue from current position for smooth transition
     
     // Defer the state update to avoid React Native's batching warning
     // This prevents state updates during touch event processing
     setTimeout(() => {
       handleTabPress(index);
       // Force a re-render on Android to reset gesture handlers
-      if (Platform.OS === 'android') {
+      if (Platform.OS === 'android' && !fromSwipe) {
         swipeAnimation.setValue(0);
       }
     }, 0);
     
-    // Material Design 3 shared axis transition - start from opposite direction
-    swipeAnimation.setValue(-direction * screenWidth * 0.35);
+    // Animate to the new tab position
     RNAnimated.timing(swipeAnimation, {
       toValue: 0,
-      duration: 300, // MD3 standard duration
+      duration: fromSwipe ? 200 : 300, // Faster when continuing from swipe
       easing: Easing.bezier(0.2, 0, 0, 1), // MD3 emphasized easing
       useNativeDriver: true,
     }).start();

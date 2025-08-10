@@ -7,14 +7,16 @@ const IS_MOBILE = isMobile(screenWidth);
 export const styles = StyleSheet.create({
   // Container styles
   scrollContainer: {
-    paddingVertical: SPACING.sm,
+    paddingTop: SPACING.md,  // Standardized top padding (16px)
+    paddingBottom: 80,       // Consistent bottom padding for all tabs
     ...(Platform.OS === 'web' && {
       paddingHorizontal: SPACING.lg,
     }),
   },
   contentSection: {
     marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
-    marginVertical: SPACING.sm,
+    marginTop: 0,  // Content already has padding from scrollContainer
+    marginBottom: SPACING.sm,
     ...(!IS_MOBILE && {
       maxWidth: 600,
       alignSelf: 'center',
@@ -304,7 +306,7 @@ export const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 20,
-    marginTop: 20,
+    marginTop: 0,  // Removed extra top margin for consistency
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -436,7 +438,7 @@ export const styles = StyleSheet.create({
   // Plan Tab Selection Mode Styles
   planSelectionSection: {
     marginHorizontal: 20,
-    marginTop: 20,
+    marginTop: 0,  // Removed extra top margin for consistency
     marginBottom: 10,
   },
   usersList: {

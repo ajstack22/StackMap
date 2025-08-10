@@ -4,7 +4,9 @@ import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants
 export const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
-    padding: 20,
+    paddingTop: SPACING.md,  // Standardized top padding (16px)
+    paddingHorizontal: 20,
+    paddingBottom: 80,       // Consistent bottom padding for all tabs
     ...(Platform.OS === 'web' && {
       maxWidth: 600,
       alignSelf: 'center',

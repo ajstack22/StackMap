@@ -97,4 +97,16 @@ export const styles = StyleSheet.create({
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
+  pinSubmitButton: {
+    paddingVertical: 10,
+    paddingHorizontal: 30,
+    borderRadius: RADIUS.md,
+    backgroundColor: '#667eea',
+  },
+  pinSubmitText: {
+    fontSize: 16,
+    color: '#FFFFFF',
+    fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
 });

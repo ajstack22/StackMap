@@ -93,7 +93,7 @@ const UsersTabContent = ({
     <ScrollView 
       style={styles.tabContent} 
       showsVerticalScrollIndicator={false}
-      contentContainerStyle={{ paddingBottom: 20 }}
+      contentContainerStyle={{ flexGrow: 1 }}
     >
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Users</Text>

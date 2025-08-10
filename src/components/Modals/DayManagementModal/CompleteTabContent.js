@@ -215,7 +215,7 @@ const CompleteTabContent = ({
     <>
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={[{ flexGrow: 1, paddingBottom: 80 }, styles.scrollContainer]}
+        contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
       >
         <View style={styles.contentSection}>
         {/* Complete Day Info */}
