@@ -455,24 +455,24 @@ class SyncService {
       const data = JSON.parse(responseText);
       console.log('pullData: received data', data);
       
-      // Debug: Log the decrypted data if available
-      if (data && data.encrypted_blob) {
-        try {
-          const decrypted = encryptionService.decryptData(data.encrypted_blob);
-          console.log('[DEBUG] Decrypted sync data structure:', JSON.stringify(decrypted, null, 2));
-          
-          // Check users for missing icons
-          if (decrypted.users) {
-            Object.entries(decrypted.users).forEach(([userId, user]) => {
-              if (!user.icon && !user.emoji) {
-                console.warn(`[DEBUG] User ${userId} is missing icon/emoji:`, user);
-              }
-            });
-          }
-        } catch (e) {
-          console.error('[DEBUG] Failed to decrypt for debugging:', e);
-        }
-      }
+      // Debug: Log the decrypted data if available (commented out to avoid errors before encryption init)
+      // if (data && data.encrypted_blob) {
+      //   try {
+      //     const decrypted = encryptionService.decryptData(data.encrypted_blob);
+      //     console.log('[DEBUG] Decrypted sync data structure:', JSON.stringify(decrypted, null, 2));
+      //     
+      //     // Check users for missing icons
+      //     if (decrypted.users) {
+      //       Object.entries(decrypted.users).forEach(([userId, user]) => {
+      //         if (!user.icon && !user.emoji) {
+      //           console.warn(`[DEBUG] User ${userId} is missing icon/emoji:`, user);
+      //         }
+      //       });
+      //     }
+      //   } catch (e) {
+      //     console.error('[DEBUG] Failed to decrypt for debugging:', e);
+      //   }
+      // }
       
       return data;
     } catch (e) {
