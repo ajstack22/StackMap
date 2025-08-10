@@ -259,7 +259,9 @@ const DataModal = ({
   
   // Handle export
   const handleExport = async () => {
-
+    console.log('handleExport called on platform:', Platform.OS);
+    console.log('Export selections:', exportSelections);
+    
     try {
       setLoading(true);
       
@@ -390,6 +392,10 @@ const DataModal = ({
           });
         }
       } else if (Platform.OS === 'web') {
+        console.log('Web export starting...');
+        console.log('Data length:', jsonData.length);
+        console.log('Filename:', fileName);
+        
         const blob = new Blob([jsonData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -400,6 +406,7 @@ const DataModal = ({
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
+        console.log('Web export completed');
         showToast({ message: 'Export downloaded successfully!' });
       } else {
         // iOS - use share sheet
@@ -457,10 +464,10 @@ const DataModal = ({
         }
       }
     } catch (error) {
-//       console.error('Export error:', error);
+      console.error('Export error:', error);
       if (Platform.OS === 'web') {
         showToast({ 
-          message: 'Failed to export data. Please try again.', 
+          message: `Failed to export: ${error.message}`, 
           type: 'error' 
         });
       } else {
