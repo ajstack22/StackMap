@@ -301,6 +301,9 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
               size={24} 
               color={isDarkMode ? '#fff' : '#666'} 
             />
+            <Text style={[styles.darkModeText, { color: isDarkMode ? '#fff' : '#666' }]}>
+              {isDarkMode ? 'Light' : 'Dark'}
+            </Text>
           </TouchableOpacity>
           {/* Try StackMap button - desktop only */}
           {Platform.OS === 'web' && windowWidth > 768 && (
@@ -384,7 +387,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
       {/* Footer */}
       <View style={styles.footer}>
         <Text style={styles.footerText}>
-          Powered by StackMap - Visual task management for everyone
+          Powered by StackMap - Better days through shared understanding
         </Text>
       </View>
       

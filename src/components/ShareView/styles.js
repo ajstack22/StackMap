@@ -96,8 +96,15 @@ const createStyles = (isDarkMode) => StyleSheet.create({
     alignItems: 'center',
   },
   darkModeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
     padding: 8,
     marginRight: 8,
+  },
+  darkModeText: {
+    fontSize: 14,
+    fontWeight: '500',
+    marginLeft: 4,
   },
   userIconContainer: {
     width: 48,
