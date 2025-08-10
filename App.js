@@ -3463,11 +3463,17 @@ const App = () => {
                         key={item.id} 
                         style={[
                           styles.cardWrapper,
-                          {
+                          Platform.OS === 'web' ? {
+                            // Web uses flexbox with gaps
+                            margin: CARD_LAYOUT.gap / 2,
+                            flex: numColumns > 1 ? '0 0 auto' : '0 0 100%',
+                            width: numColumns === 1 ? '100%' : `calc(${100/numColumns}% - ${CARD_LAYOUT.gap}px)`,
+                            maxWidth: numColumns === 1 ? CARD_LAYOUT.singleColumnMaxWidth : CARD_LAYOUT.maxWidth,
+                          } : {
+                            // Native platforms use calculated width
                             width: calculateCardWidth(screenDimensions.width),
                             marginBottom: CARD_LAYOUT.gap,
-                            marginHorizontal: CARD_LAYOUT.gap / 2,  // Use consistent gap spacing
-                            // Apply for all platforms including web
+                            marginHorizontal: CARD_LAYOUT.gap / 2,
                           },
                           numColumns === 1 && { 
                             maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
