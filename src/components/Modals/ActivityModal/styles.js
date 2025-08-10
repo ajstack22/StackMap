@@ -53,7 +53,7 @@ export const styles = StyleSheet.create({
   },
   emojiSelectorLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   inputGroup: {
@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#000',
     marginBottom: 6,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },

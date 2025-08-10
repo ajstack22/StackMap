@@ -55,7 +55,7 @@ const SupportModal = ({
                   <Icon name="lock" size={24} color="#5C7E9D" />
                 </View>
                 <View style={styles.impactContent}>
-                  <Text style={styles.impactTitle}>100% Private & Ad-Free</Text>
+                  <Text style={styles.impactTitle}>Private & Ad-Free Solutions</Text>
                   <Text style={styles.impactDescription}>No ads, no tracking, your data stays yours</Text>
                 </View>
               </View>
@@ -97,7 +97,7 @@ const SupportModal = ({
       </View>
       
       <View style={styles.supportWaysSection}>
-        <Text style={styles.supportSectionTitle}>Other Ways to Help</Text>
+        <Text style={styles.supportSectionTitle}>Ways to Contribute</Text>
         
         <View style={styles.supportOptionsGrid}>
           <View style={styles.supportOptionFun}>
@@ -212,7 +212,7 @@ const SupportModal = ({
               key={scrollKey}
               data={[{ key: 'content' }]}
               renderItem={() => (
-                <View style={{ padding: 20 }}>
+                <View style={{ padding: 20, paddingTop: 40 }}>
                   {renderContent()}
                 </View>
               )}
@@ -223,7 +223,7 @@ const SupportModal = ({
           ) : (
             <ScrollView 
               style={styles.supportContent}
-              contentContainerStyle={{ paddingBottom: 40 }}
+              contentContainerStyle={{ paddingBottom: 40, paddingTop: 20 }}
               showsVerticalScrollIndicator={false}
               bounces={true}
             >

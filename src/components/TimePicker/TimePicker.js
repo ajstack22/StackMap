@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   placeholder: {
-    color: '#999',
+    color: '#000',
   },
   errorText: {
     fontSize: 14,
@@ -299,7 +299,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: Platform.OS === 'ios' ? '600' : '700',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
     marginBottom: SPACING.sm,
   },
@@ -320,7 +320,7 @@ const styles = StyleSheet.create({
   pickerItemText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
   },
   pickerItemTextSelected: {
     fontWeight: Platform.OS === 'ios' ? '600' : '700',
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
   periodItemText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
   },
   periodItemTextSelected: {
     color: 'white',
@@ -358,7 +358,7 @@ const styles = StyleSheet.create({
   previewLabel: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
     marginBottom: SPACING.xs,
   },
   previewTime: {
@@ -383,7 +383,7 @@ const styles = StyleSheet.create({
   clearButtonText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
   },
   doneButton: {},
   doneButtonText: {

@@ -18,9 +18,9 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { isTablet, SPACING } from '../../constants';
-// Only import PagerView on Android
+// Import PagerView for both Android and iOS (not Web)
 let PagerView = null;
-if (Platform.OS === 'android') {
+if (Platform.OS !== 'web') {
   PagerView = require('react-native-pager-view').default;
 }
 
@@ -54,12 +54,12 @@ const TabbedModal = ({
   const tabsRef = useRef(tabs);
   useEffect(() => {
     activeTabRef.current = activeTab;
-    // Sync PagerView with active tab on Android
-    if (Platform.OS === 'android' && pagerRef.current) {
+    // Sync PagerView with active tab on mobile platforms
+    if (Platform.OS !== 'web' && pagerRef.current) {
       pagerRef.current.setPage(activeTab);
     }
-    // Reset swipe animation when tab changes on iOS
-    if (Platform.OS === 'ios') {
+    // Reset swipe animation when tab changes on web
+    if (Platform.OS === 'web') {
       swipeAnimation.setValue(0);
       gestureRef.current.isActive = false;
     }
@@ -283,8 +283,8 @@ const TabbedModal = ({
       if (onTabChange) {
         onTabChange(index);
       }
-      // Control the PagerView on Android
-      if (Platform.OS === 'android' && pagerRef.current) {
+      // Control the PagerView on mobile platforms
+      if (Platform.OS !== 'web' && pagerRef.current) {
         pagerRef.current.setPage(index);
       }
     }
@@ -324,8 +324,8 @@ const TabbedModal = ({
   return (
     <Modal
       visible={visible}
-      animationType="none"
-      transparent={true}
+      animationType="slide"
+      transparent={false}
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
@@ -445,8 +445,8 @@ const TabbedModal = ({
           </View>
         </SafeAreaView>
         
-        {/* Use native PagerView for Android, fallback to PanResponder for iOS/Web */}
-        {Platform.OS === 'android' ? (
+        {/* Use native PagerView for Android and iOS, fallback to PanResponder for Web only */}
+        {Platform.OS !== 'web' ? (
           <PagerView 
             style={{ flex: 1, backgroundColor: theme.light }}
             initialPage={activeTab}

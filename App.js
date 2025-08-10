@@ -116,7 +116,9 @@ import {
   verifyPin,
   migratePinToSecureStorage,
   removeSecurePin,
-} from './src/utils/secureStorage';
+  debugPinStorage,
+} from './src/utils/securePinStorage';
+import { debugPINStatus } from './DEBUG_PIN';
 
 // Get initial screen dimensions
 const { width: initialScreenWidth, height: initialScreenHeight } = Dimensions.get('window');
@@ -283,16 +285,6 @@ const App = () => {
   const cardWidth = calculateCardWidth(screenDimensions.width);
   const cardHeight = getCardHeight();
   
-  // DEBUG: Log current layout calculations
-  console.log('🎯 Layout Debug:', {
-    screenWidth: screenDimensions.width,
-    screenHeight: screenDimensions.height,
-    numColumns: numColumns,
-    cardWidth: cardWidth,
-    cardHeight: cardHeight,
-    isTablet: isTablet(screenDimensions.width),
-    platform: Platform.OS,
-  });
   
   // Activity library state
   // activityCategories now in Zustand store
@@ -328,7 +320,7 @@ const App = () => {
     if (Platform.OS === 'web') {
       // Get the raw query string to handle + characters properly
       const search = window.location.search;
-      console.log('[App] Initial URL check:', search);
+      // Initial URL check
       const urlParams = new URLSearchParams(search);
       const token = urlParams.get('share');
       let syncPhrase = urlParams.get('sync');
@@ -379,7 +371,7 @@ const App = () => {
       
       // Check Zustand persisted data directly
       const zustandData = await AsyncStorage.getItem('stackmap-storage');
-      console.log('[App] Checking Zustand hydration:', zustandData ? 'Data exists' : 'No data');
+      // Checking Zustand hydration
       
       if (zustandData) {
         try {
@@ -440,7 +432,7 @@ const App = () => {
   useEffect(() => {
     // If onboarding is already showing, don't run initialization
     if (showOnboarding) {
-      console.log('[App] Onboarding already active, skipping initialization');
+      // Onboarding already active, skipping initialization
       return;
     }
     
@@ -448,7 +440,7 @@ const App = () => {
     
     // Prevent multiple initialization runs
     if (isInitializing) {
-      console.log('[App] Already initializing, skipping duplicate run');
+      // Already initializing, skipping duplicate run
       return;
     }
     
@@ -466,13 +458,12 @@ const App = () => {
         hasCompletedOnboarding
       });
       
-      
       await migratePinToSecureStorage();
       
       // Check if we should show onboarding
       // IMPORTANT: Only show onboarding on initial load, not if already showing
       if (!hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
-        console.log('[App] Showing onboarding - no users and not completed');
+        // Showing onboarding - no users and not completed
         setShowOnboarding(true);
         setIsInitializing(false);
         return; // Don't create default user, wait for onboarding
@@ -481,9 +472,9 @@ const App = () => {
       // Initialize default user if none exists and onboarding is complete
       // IMPORTANT: Never create a default user if we're showing onboarding
       if (hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
-        console.log('[App] WARNING: hasCompletedOnboarding is true but no users exist');
+        // WARNING: hasCompletedOnboarding is true but no users exist
         // This is likely a bad state from a failed reset - fix it
-        console.log('[App] Fixing bad state - resetting hasCompletedOnboarding to false');
+        // Fixing bad state - resetting hasCompletedOnboarding to false
         setHasCompletedOnboarding(false);
         setShowOnboarding(true);
         setIsInitializing(false);
@@ -492,13 +483,6 @@ const App = () => {
       
       // Always check secure storage as the source of truth for PIN
       const hasPIN = await hasSecurePin();
-      console.log('[App] Checking for PIN on startup:', hasPIN);
-      
-      // Debug: Check what's in the keychain
-      if (hasPIN) {
-        const pin = await getSecurePin();
-        console.log('[App] Found PIN in keychain:', pin ? 'Yes (length: ' + pin.length + ')' : 'No');
-      }
       
       setHasPinProtection(hasPIN);
       setIsInitializing(false);
@@ -506,15 +490,8 @@ const App = () => {
     
     initializeApp();
     
-    // Force clear PIN if there's a stuck PIN from previous installations
-    // This is a workaround for iOS simulators that might persist keychain data
-    if (Platform.OS === 'ios' && !hasCompletedOnboarding) {
-      // If user hasn't completed onboarding, they shouldn't have a PIN
-      console.log('[App] New user on iOS, clearing any existing PIN');
-      removeSecurePin().then(() => {
-        setHasPinProtection(false);
-      });
-    }
+    // Removed automatic PIN clearing - this was causing issues with onboarding PIN setup
+    // Users can set PIN during onboarding, so we shouldn't clear it automatically
     
     // Listen for orientation changes
     const subscription = Dimensions.addEventListener('change', ({ window }) => {
@@ -541,6 +518,12 @@ const App = () => {
   useEffect(() => {
     if (currentUser && users[currentUser]) {
       const rawActivities = users[currentUser]?.days?.[currentDay]?.activities || [];
+      
+      // Debug log for iOS
+      if (Platform.OS === 'ios' && rawActivities.length > 0) {
+        console.log('🔍 iOS: Loading activities:', JSON.stringify(rawActivities.slice(0, 3), null, 2));
+      }
+      
       setActivities(cleanupActivities(rawActivities));
     }
   }, [currentDay, currentUser, users, setActivities]);
@@ -553,8 +536,8 @@ const App = () => {
       // If they're a new user, onboarding will handle the sync
       setTimeout(() => {
         // Auto-open sync preview modal with sync setup
-        console.log('[App] Opening sync preview modal for sync setup with phrase:', syncSetupPhrase);
-        console.log('[App] Current theme:', currentTheme, THEMES[currentTheme]);
+        // Opening sync preview modal for sync setup
+        // Current theme set
         setSyncPreviewPhrase(syncSetupPhrase);
         setShowSyncPreviewModal(true);
       }, 100);
@@ -639,24 +622,35 @@ const App = () => {
   // Handle PIN input
   useEffect(() => {
     if (pinInput.length === PIN_LENGTH && !isSettingPin) {
+      console.log('[App] Verifying PIN, input:', pinInput);
+      
+      // Run debug when PIN verification happens
+      debugPINStatus().then(() => {
+        console.log('[App] Debug complete, now verifying PIN...');
+      });
+      
       // Verify PIN
       verifyPin(pinInput).then(async (isValid) => {
+        console.log('[App] PIN verification result:', isValid);
         if (isValid) {
           // PIN for main edit mode
+          console.log('[App] PIN valid, entering edit mode');
           setIsEditMode(true);
           setShowPinModal(false);
           setPinInput('');
         } else {
           // Double-check if there's actually a PIN set
           const actuallyHasPin = await hasSecurePin();
+          console.log('[App] Actually has PIN?:', actuallyHasPin);
           if (!actuallyHasPin) {
             // No PIN exists, so just enter edit mode
-            console.log('[App] No PIN actually exists, entering edit mode');
+            console.log('[App] No PIN set, entering edit mode anyway');
             setHasPinProtection(false);
             setIsEditMode(true);
             setShowPinModal(false);
             setPinInput('');
           } else {
+            console.log('[App] Invalid PIN entered');
             Alert.alert('Incorrect PIN', 'Please try again');
             setPinInput('');
           }
@@ -669,14 +663,18 @@ const App = () => {
   useEffect(() => {
     if (isSettingPin) {
       if (!confirmPin && pinInput.length === PIN_LENGTH) {
+        console.log('[App] PIN setting - first entry:', pinInput);
         // Move to confirm step
         setConfirmPin(pinInput);
         setPinInput('');
         showToast({ message: 'Now re-enter PIN to confirm' });
       } else if (confirmPin && pinInput.length === PIN_LENGTH) {
+        console.log('[App] PIN setting - confirmation:', pinInput, 'matches?', pinInput === confirmPin);
         // Verify confirmation
         if (pinInput === confirmPin) {
+          console.log('[App] PINs match, saving...');
           setSecurePin(pinInput).then(success => {
+            console.log('[App] PIN save result:', success);
             if (success) {
               setShowPinModal(false);
               setPinInput('');
@@ -684,6 +682,10 @@ const App = () => {
               setIsSettingPin(false);
               setHasPinProtection(true);
               showToast({ message: 'PIN set successfully' });
+              // Verify it was saved
+              hasSecurePin().then(hasPin => {
+                console.log('[App] Verification after save - has PIN?:', hasPin);
+              });
             } else {
               Alert.alert('Error', 'Failed to save PIN. Please try again.');
               setPinInput('');
@@ -901,36 +903,43 @@ const App = () => {
       const starterActivities = [
         { 
           id: `activity_${timestamp}_1`, 
-          title: 'Welcome to StackMap!', 
+          text: 'Welcome to StackMap!',
+          title: 'Welcome to StackMap!',  // Keep title for backward compatibility
           emoji: '👋',
           description: 'Tap activities to mark them complete',
           pinned: false 
         },
         { 
           id: `activity_${timestamp}_2`, 
-          title: 'Try Edit Mode', 
+          text: 'Try Edit Mode',
+          title: 'Try Edit Mode',  // Keep title for backward compatibility
           emoji: '✏️',
           description: 'Use the edit button to add your own activities',
           pinned: false 
         },
-        { id: `activity_${timestamp}_3`, title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
-        { id: `activity_${timestamp}_4`, title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
-        { id: `activity_${timestamp}_5`, title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
-        { id: `activity_${timestamp}_6`, title: 'Breakfast', emoji: '🥞', pinned: false },
-        { id: `activity_${timestamp}_7`, title: 'Exercise', emoji: '🏃', pinned: false },
-        { id: `activity_${timestamp}_8`, title: 'Work/Study', emoji: '💻', pinned: false },
-        { id: `activity_${timestamp}_9`, title: 'Lunch', emoji: '🥗', pinned: false },
-        { id: `activity_${timestamp}_10`, title: 'Take a Break', emoji: '☕', pinned: false },
-        { id: `activity_${timestamp}_11`, title: 'Dinner', emoji: '🍽️', pinned: false },
-        { id: `activity_${timestamp}_12`, title: 'Relax', emoji: '🎮', pinned: false },
-        { id: `activity_${timestamp}_13`, title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
-        { id: `activity_${timestamp}_14`, title: 'Sleep', emoji: '😴', pinned: false },
+        { id: `activity_${timestamp}_3`, text: 'Morning Routine', title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
+        { id: `activity_${timestamp}_4`, text: 'Brush Teeth', title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
+        { id: `activity_${timestamp}_5`, text: 'Take Medication', title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
+        { id: `activity_${timestamp}_6`, text: 'Breakfast', title: 'Breakfast', emoji: '🥞', pinned: false },
+        { id: `activity_${timestamp}_7`, text: 'Exercise', title: 'Exercise', emoji: '🏃', pinned: false },
+        { id: `activity_${timestamp}_8`, text: 'Work/Study', title: 'Work/Study', emoji: '💻', pinned: false },
+        { id: `activity_${timestamp}_9`, text: 'Lunch', title: 'Lunch', emoji: '🥗', pinned: false },
+        { id: `activity_${timestamp}_10`, text: 'Take a Break', title: 'Take a Break', emoji: '☕', pinned: false },
+        { id: `activity_${timestamp}_11`, text: 'Dinner', title: 'Dinner', emoji: '🍽️', pinned: false },
+        { id: `activity_${timestamp}_12`, text: 'Relax', title: 'Relax', emoji: '🎮', pinned: false },
+        { id: `activity_${timestamp}_13`, text: 'Bedtime Routine', title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
+        { id: `activity_${timestamp}_14`, text: 'Sleep', title: 'Sleep', emoji: '😴', pinned: false },
       ];
       
       // Create each user from onboarding
       onboardingData.users.forEach((userData, index) => {
         const userId = `user_${timestamp}_${index}`;
         if (index === 0) firstUserId = userId;
+        
+        // Debug log for iOS
+        if (Platform.OS === 'ios' && index === 0) {
+          console.log('🔍 iOS: Starter activities being saved:', JSON.stringify(starterActivities.slice(0, 3), null, 2));
+        }
         
         const newUser = {
           id: userId,
@@ -1063,30 +1072,32 @@ const App = () => {
       const starterActivities = [
         { 
           id: `activity_${timestamp}_1`, 
-          title: 'Welcome to StackMap!', 
+          text: 'Welcome to StackMap!',
+          title: 'Welcome to StackMap!',  // Keep title for backward compatibility
           emoji: '👋',
           description: 'Tap activities to mark them complete',
           pinned: false 
         },
         { 
           id: `activity_${timestamp}_2`, 
-          title: 'Try Edit Mode', 
+          text: 'Try Edit Mode',
+          title: 'Try Edit Mode',  // Keep title for backward compatibility
           emoji: '✏️',
           description: 'Use the edit button to add your own activities',
           pinned: false 
         },
-        { id: `activity_${timestamp}_3`, title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
-        { id: `activity_${timestamp}_4`, title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
-        { id: `activity_${timestamp}_5`, title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
-        { id: `activity_${timestamp}_6`, title: 'Breakfast', emoji: '🥞', pinned: false },
-        { id: `activity_${timestamp}_7`, title: 'Exercise', emoji: '🏃', pinned: false },
-        { id: `activity_${timestamp}_8`, title: 'Work/Study', emoji: '💻', pinned: false },
-        { id: `activity_${timestamp}_9`, title: 'Lunch', emoji: '🥗', pinned: false },
-        { id: `activity_${timestamp}_10`, title: 'Take a Break', emoji: '☕', pinned: false },
-        { id: `activity_${timestamp}_11`, title: 'Dinner', emoji: '🍽️', pinned: false },
-        { id: `activity_${timestamp}_12`, title: 'Relax', emoji: '🎮', pinned: false },
-        { id: `activity_${timestamp}_13`, title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
-        { id: `activity_${timestamp}_14`, title: 'Sleep', emoji: '😴', pinned: false },
+        { id: `activity_${timestamp}_3`, text: 'Morning Routine', title: 'Morning Routine', emoji: '🌅', pinned: true, pinnedOrder: 0 },
+        { id: `activity_${timestamp}_4`, text: 'Brush Teeth', title: 'Brush Teeth', emoji: '🦷', pinned: true, pinnedOrder: 1 },
+        { id: `activity_${timestamp}_5`, text: 'Take Medication', title: 'Take Medication', emoji: '💊', pinned: true, pinnedOrder: 2 },
+        { id: `activity_${timestamp}_6`, text: 'Breakfast', title: 'Breakfast', emoji: '🥞', pinned: false },
+        { id: `activity_${timestamp}_7`, text: 'Exercise', title: 'Exercise', emoji: '🏃', pinned: false },
+        { id: `activity_${timestamp}_8`, text: 'Work/Study', title: 'Work/Study', emoji: '💻', pinned: false },
+        { id: `activity_${timestamp}_9`, text: 'Lunch', title: 'Lunch', emoji: '🥗', pinned: false },
+        { id: `activity_${timestamp}_10`, text: 'Take a Break', title: 'Take a Break', emoji: '☕', pinned: false },
+        { id: `activity_${timestamp}_11`, text: 'Dinner', title: 'Dinner', emoji: '🍽️', pinned: false },
+        { id: `activity_${timestamp}_12`, text: 'Relax', title: 'Relax', emoji: '🎮', pinned: false },
+        { id: `activity_${timestamp}_13`, text: 'Bedtime Routine', title: 'Bedtime Routine', emoji: '🛏️', pinned: false },
+        { id: `activity_${timestamp}_14`, text: 'Sleep', title: 'Sleep', emoji: '😴', pinned: false },
       ];
       
       // Create each user from the setup data
@@ -1217,9 +1228,9 @@ const App = () => {
   
   // Log for debugging
   if (!currentTheme) {
-    console.warn('[App] currentTheme is undefined, using default stackBlue theme');
-    console.warn('[App] THEMES object:', THEMES);
-    console.warn('[App] isHydrated:', isHydrated);
+    // currentTheme is undefined, using default stackBlue theme
+    // THEMES object available
+    // isHydrated checked
   }
   
   // Double-check theme is valid
@@ -1684,10 +1695,9 @@ const App = () => {
   };
 
   const handlePinRemove = async () => {
-    console.log('[App] Starting PIN removal...');
     try {
       const removed = await removeSecurePin();
-      console.log('[App] removeSecurePin returned:', removed);
+      // PIN removal attempted
       
       // Small delay to ensure async operations complete on Android
       if (Platform.OS === 'android') {
@@ -1696,20 +1706,19 @@ const App = () => {
       
       // Always check if PIN was actually removed
       const stillHasPin = await hasSecurePin();
-      console.log('[App] hasSecurePin after removal:', stillHasPin);
+      // PIN removal verified
       
       if (!stillHasPin) {
         setHasPinProtection(false);
         showToast({ message: 'PIN protection removed' });
-        console.log('[App] PIN successfully removed');
       } else {
-        console.error('[App] PIN still exists after removal attempt');
+        // PIN still exists after removal attempt
         // Force UI update even if removal check failed
         setHasPinProtection(false);
         showToast({ message: 'PIN removed (please restart app if issues persist)' });
       }
     } catch (error) {
-      console.error('[App] Error removing PIN:', error);
+      // Error removing PIN
       // Force UI update even on error to prevent crash
       setHasPinProtection(false);
       showToast({ message: 'PIN removed (please restart app if issues persist)' });
@@ -1723,24 +1732,35 @@ const App = () => {
 
   const handlePinSet = async (pin) => {
     try {
-      const hashedPin = hashPin(pin);
-      await storage.set('user.pin', hashedPin);
-      setHasPinProtection(true);
-      setIsSettingPin(false);
-      showToast({ message: 'PIN set successfully' });
+      console.log('[App] Setting PIN, length:', pin?.length);
+      // Use secure storage to save PIN
+      const success = await setSecurePin(pin);
+      console.log('[App] setSecurePin result:', success);
+      
+      if (success) {
+        // Immediately verify the PIN was stored
+        const verifyStored = await hasSecurePin();
+        console.log('[App] Verification after set - hasSecurePin:', verifyStored);
+        
+        setHasPinProtection(true);
+        setIsSettingPin(false);
+        showToast({ message: 'PIN set successfully' });
+      } else {
+        showToast({ message: 'Failed to set PIN', type: 'error' });
+      }
     } catch (error) {
-      console.error('[App] Error setting PIN:', error);
+      console.log('[App] Error setting PIN:', error);
       showToast({ message: 'Failed to set PIN', type: 'error' });
     }
   };
 
   const handlePinVerify = async (pin) => {
     try {
-      const hashedPin = await storage.get('user.pin');
-      const inputHash = hashPin(pin);
-      return hashedPin === inputHash;
+      // Use secure storage to verify PIN
+      const isValid = await verifyPin(pin);
+      return isValid;
     } catch (error) {
-      console.error('[App] Error verifying PIN:', error);
+      // Error verifying PIN
       return false;
     }
   };
@@ -2832,53 +2852,69 @@ const App = () => {
   };
 
   const resetApp = async () => {
-    console.log('[Reset] User confirmed reset, performing reset...');
-    await performReset();
+    console.log('[Reset] resetApp called - Starting reset process...');
+    // User confirmed reset, performing reset
+    try {
+      await performReset();
+      console.log('[Reset] Reset completed successfully');
+    } catch (error) {
+      console.error('[Reset] Reset failed:', error);
+      // Show error to user
+      showToast({ message: 'Reset failed: ' + (error.message || 'Unknown error'), type: 'error' });
+    }
   };
 
   const performReset = async () => {
       try {
-              console.log('[RESET] ========== STARTING RESET FLOW ==========');
-              console.log('[RESET] Current state before reset:', {
-                hasCompletedOnboarding,
-                showOnboarding,
-                users: Object.keys(users).length,
-                currentUser,
-                isHydrated
-              });
+              // Starting reset flow
+              showToast({ message: 'Starting reset...', type: 'info' });
               
               // IMPORTANT: Disable sync FIRST to prevent syncing the reset state to other devices
               if (await syncService.isEnabled()) {
-                console.log('[RESET] Disabling sync before reset...');
+                // Disabling sync before reset
                 await syncService.disable();
               }
               
-              console.log('[RESET] Step 1: Clearing AsyncStorage...');
+              // Step 1: Clearing AsyncStorage
+              showToast({ message: 'Clearing data...', type: 'info' });
               // Clear ALL AsyncStorage keys to ensure complete reset
               const allKeys = await AsyncStorage.getAllKeys();
-              console.log('[RESET] Found keys to clear:', allKeys);
               if (allKeys.length > 0) {
                 await AsyncStorage.multiRemove(allKeys);
-                console.log('[RESET] Cleared all AsyncStorage keys');
-                
                 // Verify they're actually cleared
                 const keysAfterClear = await AsyncStorage.getAllKeys();
-                console.log('[RESET] Keys remaining after clear:', keysAfterClear);
               }
               
-              // Clear PIN on iOS (skip on Android due to keychain library issues)
-              if (Platform.OS === 'ios') {
+              // Clear MMKV storage if it exists
+              if (Platform.OS !== 'web') {
                 try {
-                  console.log('[Reset] Attempting to clear PIN...');
-                  await Keychain.resetInternetCredentials('com.stackmap.pin');
-                  console.log('[Reset] PIN cleared successfully on iOS');
-                } catch (keychainError) {
-                  console.log('[Reset] Error clearing PIN on iOS:', keychainError);
-                  // Continue with reset even if PIN clearing fails
+                  const { MMKV } = require('react-native-mmkv');
+                  // Clear main storage
+                  const mainStorage = new MMKV({ id: 'stackmap-storage' });
+                  mainStorage.clearAll();
+                  
+                  // Clear PIN storage
+                  const pinStorage = new MMKV({ 
+                    id: 'stackmap-pin-storage',
+                    encryptionKey: 'StackMap-PIN-2025-Secure-Key'
+                  });
+                  pinStorage.clearAll();
+                } catch (mmkvError) {
+                  console.log('MMKV clear error (may not be initialized):', mmkvError);
                 }
               }
               
-              console.log('[RESET] Step 2: Resetting Zustand store...');
+              // Clear PIN using our secure storage utility
+              try {
+                // Use our secure storage utility to remove PIN
+                await removeSecurePin();
+                // PIN cleared successfully
+              } catch (pinError) {
+                // Continue with reset even if PIN clearing fails
+              }
+              
+              // Step 2: Resetting Zustand store
+              showToast({ message: 'Resetting app state...', type: 'info' });
               // CRITICAL: Reset hasCompletedOnboarding FIRST to prevent race conditions
               setHasCompletedOnboarding(false);
               
@@ -2895,12 +2931,7 @@ const App = () => {
               // Reset local state
               setDisplayMode('numbers');
               
-              console.log('[RESET] Step 3: Store reset complete, verifying state...');
-              console.log('[RESET] State after store reset:', {
-                hasCompletedOnboarding: useAppStore.getState().hasCompletedOnboarding,
-                users: Object.keys(useAppStore.getState().users).length,
-                currentUser: useAppStore.getState().currentUser
-              });
+              // Step 3: Store reset complete
               // Templates now handled through activityCategories
               setIsEditMode(false);
               setHasPinProtection(false);
@@ -2929,44 +2960,42 @@ const App = () => {
               setShowSupportModal(false);
               setShowReorderModal(false);
               setShowPinModal(false);
-              setShowDataModal(false);
+              // Don't close DataModal here - it handles its own closing
+              // setShowDataModal(false);
               setShowAccessModal(false);
               setShowResetAppConfirm(false);
               
         // Show success toast
         showToast({ message: 'App reset successfully', type: 'success' });
         
-        console.log('[RESET] Step 4: Triggering onboarding display...');
-        console.log('[RESET] Current UI state:', {
-          showOnboarding,
-          showDataModal,
-          showAccessModal,
-          isHydrated
-        });
+        // Step 4: Triggering onboarding display
         
         // Force the app to reinitialize by setting hydrated to false briefly
         setIsHydrated(false);
         
         // Show onboarding after a brief delay to ensure state is cleared
         setTimeout(async () => {
-          console.log('[RESET] Step 5: Setting onboarding visible...');
+          // Step 5: Setting onboarding visible
           setHasCompletedOnboarding(false);
           setShowOnboarding(true);
           setIsHydrated(true);
           
           // Final verification
           const finalKeys = await AsyncStorage.getAllKeys();
-          console.log('[RESET] Final AsyncStorage keys:', finalKeys);
-          console.log('[RESET] Final state:', {
-            hasCompletedOnboarding: useAppStore.getState().hasCompletedOnboarding,
-            showOnboarding,
-            users: Object.keys(useAppStore.getState().users).length
-          });
-          console.log('[RESET] ========== RESET FLOW COMPLETE ==========');
+          console.log('[Reset] Final AsyncStorage keys:', finalKeys);
+          
+          // On iOS, we may need to force a refresh
+          if (Platform.OS === 'ios') {
+            // Force re-render by updating a dummy state
+            setCurrentTheme('stackBlue');
+          }
+          
+          // Reset flow complete
         }, 100);
       } catch (error) {
-        console.error('Reset error:', error);
-        showToast({ message: 'Failed to reset app data', type: 'error' });
+        // Reset error occurred
+        showToast({ message: 'Reset error: ' + (error.message || error.toString()), type: 'error' });
+        throw error; // Re-throw to handle in resetApp
       }
   };
 
@@ -3000,11 +3029,11 @@ const App = () => {
     }
   };
 
-  const renderActivity = ({ item, drag, isActive, customWidth }) => {
-    // Get the actual index in the filtered activities array
-    const visibleActivities = activities.filter(a => a && !a.deleted);
-    const index = visibleActivities.findIndex(a => a.id === item.id);
+  const renderActivity = ({ item, index = 0, drag, isActive, customWidth }) => {
+    // Ensure index is defined (FlatList provides it, but let's be safe)
+    
     const CardContent = (
+      <View style={{ position: 'relative' }}>
       <TouchableOpacity
         style={[
           styles.activityCard,
@@ -3035,38 +3064,6 @@ const App = () => {
         ]}>✓</Text>
       </View>
 
-      {/* Number/Time Badge */}
-      {displayMode !== 'none' && (
-        <TouchableOpacity
-          style={[
-            styles.numberBadge, 
-            { backgroundColor: theme.primary },
-            displayMode === 'time' && styles.timeBadge
-          ]}
-          onPress={() => {
-            if (isEditMode && displayMode === 'numbers') {
-              promptReorderActivity(item, index + 1);
-            }
-          }}
-          disabled={!isEditMode || displayMode !== 'numbers'}
-        >
-          <Text style={displayMode === 'time' ? [
-            styles.numberText,
-            styles.timeText,
-            { 
-              textShadowColor: 'rgba(255, 255, 255, 0.8)',
-              textShadowOffset: { width: 0.5, height: 0.5 },
-              textShadowRadius: 0.5
-            }
-          ] : styles.numberText}>
-            {displayMode === 'time' 
-              ? (item.time || '--:--')
-              : index + 1
-            }
-          </Text>
-        </TouchableOpacity>
-      )}
-
       {/* Card Content */}
       <View style={styles.cardContent}>
         {/* Emoji or Custom Image */}
@@ -3077,16 +3074,30 @@ const App = () => {
             resizeMode="contain"
           />
         ) : (
-          <Text style={styles.activityEmoji}>{item.emoji || '🎯'}</Text>
+          <Text 
+            style={[
+              styles.activityEmoji
+            ]}
+            accessible={false}
+            importantForAccessibility="no"
+          >
+            {item.emoji || item.icon || '🎯'}
+          </Text>
         )}
         
         {/* Title */}
-        <Text style={[
-          styles.activityTitle,
-          item.completed && [styles.completedText, { color: 'white' }]
-        ]}>
-          {item.text || item.title || item.name || ''}
-        </Text>
+        <View style={{ width: '100%', alignItems: 'center' }}>
+          <Text 
+            style={[
+              styles.activityTitle,
+              item.completed && [styles.completedText, { color: 'white' }]
+            ]}
+            numberOfLines={2}
+            allowFontScaling={false}
+          >
+            {item.text || item.title || item.name || 'Untitled Activity'}
+          </Text>
+        </View>
         
         {/* Description */}
         {item.description ? (
@@ -3223,10 +3234,44 @@ const App = () => {
         </>
       )}
       </TouchableOpacity>
+      
+      {/* Number/Time Badge - moved outside card TouchableOpacity */}
+      {displayMode !== 'none' && (
+        <TouchableOpacity
+          style={[
+            styles.numberBadge, 
+            { backgroundColor: theme.primary },
+            displayMode === 'time' && styles.timeBadge
+          ]}
+          onPress={() => {
+            if (isEditMode && displayMode === 'numbers') {
+              promptReorderActivity(item, index + 1);
+            }
+          }}
+          disabled={!isEditMode || displayMode !== 'numbers'}
+        >
+          <Text style={displayMode === 'time' ? [
+            styles.numberText,
+            styles.timeText,
+            { 
+              textShadowColor: 'rgba(255, 255, 255, 0.8)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 2
+            }
+          ] : styles.numberText}>
+            {displayMode === 'time' 
+              ? (item.time || '--:--')
+              : index + 1
+            }
+          </Text>
+        </TouchableOpacity>
+      )}
+      </View>
     );
     
     // Wrap with ScaleDecorator only when drag functionality is available and we're in DraggableFlatList on iOS
-    if (drag && typeof drag === 'function' && !customWidth && Platform.OS === 'ios' && ScaleDecorator) {
+    // Additional check: only use if we're in single column mode (DraggableFlatList is only used then)
+    if (drag && typeof drag === 'function' && !customWidth && Platform.OS === 'ios' && ScaleDecorator && numColumns === 1) {
       const ValidScaleDecorator = ScaleDecorator;
       return <ValidScaleDecorator>{CardContent}</ValidScaleDecorator>;
     }
@@ -3339,9 +3384,10 @@ const App = () => {
       <View style={[
         styles.container, 
         { 
-          backgroundColor: theme.light
+          backgroundColor: theme.light,
         }
       ]}>
+        
         {/* Status Bar Background when banner is at bottom - not needed on web */}
         {bannerPosition === 'bottom' && Platform.OS !== 'web' && (
           Platform.OS === 'ios' ? (
@@ -3378,14 +3424,13 @@ const App = () => {
         <View style={styles.contentArea}>
           {(numColumns > 1) ? (
             <ScrollView
-              style={Platform.OS === 'web' ? { 
-                flex: 1,
-                height: '100%',
-              } : undefined}
+              style={{ flex: 1 }}
               showsVerticalScrollIndicator={true}
               contentContainerStyle={[
                 styles.listContent,
-                { paddingHorizontal: getContainerPadding(screenDimensions.width) },
+                { 
+                  paddingHorizontal: getContainerPadding(screenDimensions.width),
+                },
                 isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
                 isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
                 isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
@@ -3400,28 +3445,16 @@ const App = () => {
                   </Text>
                 </View>
               ) : (
-                <View style={[
-                  styles.gridContainer, 
-                  Platform.OS === 'web' ? {
-                    display: 'grid',
-                    gridTemplateColumns: numColumns === 1 
-                      ? '1fr' 
-                      : `repeat(${numColumns}, minmax(0, ${CARD_LAYOUT.singleColumnMaxWidth}px))`,
-                    rowGap: CARD_LAYOUT.gap,
-                    columnGap: CARD_LAYOUT.gap,
-                    justifyContent: 'center',
-                    ...(numColumns === 1 && {
-                      justifyItems: 'center',
-                      maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
-                      marginLeft: 'auto',
-                      marginRight: 'auto',
-                    }),
-                  } : {
-                    // Native flexbox layout for multi-column
+                <View 
+                  style={[
+                  styles.gridContainer,
+                  {
+                    // Simplified layout for all platforms
                     flexDirection: 'row',
                     flexWrap: 'wrap',
-                    justifyContent: 'space-evenly',
+                    justifyContent: 'center',
                     alignItems: 'flex-start',
+                    width: '100%',
                   }
                 ]}>
                   {activities.filter(a => !a.deleted).map((item, index) => {
@@ -3431,12 +3464,10 @@ const App = () => {
                         style={[
                           styles.cardWrapper,
                           Platform.OS !== 'web' && {
-                            width: numColumns > 1 
-                              ? `${Math.floor(100 / numColumns) - 2}%` 
-                              : calculateCardWidth(screenDimensions.width),
+                            width: calculateCardWidth(screenDimensions.width),
                             marginBottom: CARD_LAYOUT.gap,
-                            maxWidth: CARD_LAYOUT.maxWidth,
-                            minWidth: numColumns > 1 ? 280 : undefined,
+                            marginHorizontal: CARD_LAYOUT.gap / 2,  // Use consistent gap spacing
+                            // Don't apply maxWidth here since calculateCardWidth already handles it
                           },
                           numColumns === 1 && { 
                             maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
@@ -3447,9 +3478,9 @@ const App = () => {
                       >
                         {renderActivity({ 
                           item, 
-                          drag: () => {}, 
-                          isActive: false,
-                          customWidth: true
+                          index,
+                          drag: null, 
+                          isActive: false
                         })}
                       </View>
                     );
@@ -3615,14 +3646,12 @@ const App = () => {
               // The toolbar will be removed after animation completes
             } else {
               if (hasPinProtection) {
-                console.log('[FAB] Has PIN protection, showing PIN modal');
                 // Ensure we're in verification mode, not setup mode
                 setIsSettingPin(false);
                 setPinInput('');
                 setConfirmPin('');
                 setShowPinModal(true);
               } else {
-                console.log('[FAB] No PIN protection, entering edit mode');
                 setIsEditMode(true);
               }
             }
@@ -3949,7 +3978,7 @@ const App = () => {
         activityCategories={activityCategories}
         currentTheme={currentTheme}
         bannerPosition={bannerPosition}
-        hasSecurePin={hasSecurePin}
+        hasSecurePin={hasPinProtection}
         showToast={showToast}
         onImportComplete={showOnboardingImport ? handleOnboardingImportComplete : handleImportComplete}
         onSyncStatusChange={(enabled) => setSyncEnabled(enabled)}
@@ -4257,9 +4286,10 @@ const App = () => {
             }
             return result; // RETURN THE RESULT SO ONBOARDING CAN USE IT!
           }}
-        isAbbreviated={!!syncSetupPhrase}
-        syncSetupPhrase={syncSetupPhrase}
-      />
+          onShowPrivacy={() => setShowPrivacyModal(true)}
+          isAbbreviated={!!syncSetupPhrase}
+          syncSetupPhrase={syncSetupPhrase}
+        />
       
       {/* Privacy Policy Modal - Available during onboarding for App Store */}
       <PrivacyModal
@@ -4308,7 +4338,7 @@ const App = () => {
         activityCategories={activityCategories}
         currentTheme={currentTheme}
         bannerPosition={bannerPosition}
-        hasSecurePin={hasSecurePin}
+        hasSecurePin={hasPinProtection}
         showToast={showToast}
         onImportComplete={handleOnboardingImportComplete}
         onSyncStatusChange={(enabled) => setSyncEnabled(enabled)}
@@ -4430,12 +4460,12 @@ const styles = StyleSheet.create({
   subtitleText: {
     fontSize: Platform.OS === 'web' ? (isTablet() ? 15 : 12) : (isTablet() ? 18 : 14),
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   subtitleDay: {
     fontSize: isTablet() ? 18 : 14,
-    color: '#333',
+    color: '#000',
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -4483,7 +4513,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? {
       maxWidth: CARD_LAYOUT.maxWidth,
     } : {
-      width: calculateCardWidth(),
+      // Width is set dynamically in the component, not here
       marginBottom: CARD_LAYOUT.gap,
       marginLeft: CARD_LAYOUT.gap / 2,
       marginRight: CARD_LAYOUT.gap / 2,
@@ -4535,7 +4565,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   checkmarkIncomplete: {
-    color: '#666',
+    color: '#000',
   },
   numberBadge: {
     position: 'absolute',
@@ -4548,6 +4578,8 @@ const styles = StyleSheet.create({
     borderColor: 'rgba(0, 0, 0, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
+    zIndex: 10,
+    elevation: 10,
     ...SHADOWS.level2,
   },
   timeBadge: {
@@ -4566,12 +4598,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 35,  // Match PWA's 35px padding
-    gap: 15,  // PWA uses 15px gap between elements
+    padding: 35,  // Use same padding for all devices
+    gap: 15,  // Use same gap for all devices
   },
   activityEmoji: {
-    fontSize: isTablet() ? 48 : 64.8,  // Smaller emoji on tablets for better fit
-    lineHeight: isTablet() ? 60 : 81,  // Adjusted line height for tablets
+    fontSize: isTablet() ? 62 : 64.8,  // 30% larger for tablets (was 48, now 62)
+    lineHeight: isTablet() ? 78 : 81,  // Adjusted line height for tablets
     marginBottom: 0,  // Gap is handled by parent
   },
   activityImage: {
@@ -4580,20 +4612,29 @@ const styles = StyleSheet.create({
     marginBottom: 0,
   },
   activityTitle: {
-    fontSize: isTablet() ? 18 : 23,  // Smaller text on tablets for better fit
+    fontSize: isTablet() ? 23 : 23,  // 30% larger for tablets (was 18, now 23)
+    fontFamily: Platform.select({
+      ios: 'ComicRelief-Bold',
+      android: 'ComicRelief-Bold',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
     fontWeight: Platform.OS === 'android' ? 'normal' : '600',  // Android uses font file, not weight
-    color: '#333',
+    color: '#000',
     textAlign: 'center',
-    lineHeight: isTablet() ? 18 * 1.2 : 23 * 1.2,  // Adjusted line height
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    lineHeight: isTablet() ? 23 * 1.2 : 23 * 1.2,  // Adjusted line height
+    // fontFamily: TYPOGRAPHY.fontFamily.bold, // TEMPORARILY DISABLED TO TEST
     marginBottom: 4,  // PWA's 0.25rem
+    ...(isTablet() && { 
+      minHeight: 25,
+      width: '100%',
+    }),
   },
   activityDescription: {
     fontSize: isTablet() ? 14 : 17.3,  // Smaller text on tablets for better fit
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
     lineHeight: isTablet() ? 14 * 1.3 : 17.3 * 1.3,  // Adjusted line height
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    // fontFamily: TYPOGRAPHY.fontFamily.regular, // TEMPORARILY DISABLED TO TEST
   },
   completedText: {
     color: 'white',
@@ -4611,7 +4652,7 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 20,
     fontWeight: '600',
-    color: '#666',
+    color: '#000',
     marginBottom: 8,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -4700,7 +4741,7 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#333',
+    color: '#000',
     marginBottom: 6,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
@@ -4742,7 +4783,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
-    color: '#333',
+    color: '#000',
     marginBottom: 15,
     marginTop: 20,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -4763,7 +4804,7 @@ const styles = StyleSheet.create({
   },
   colorSelected: {
     borderWidth: 3,
-    borderColor: '#333',
+    borderColor: '#000',
   },
   toggleContainer: {
     flexDirection: 'row',
@@ -4782,11 +4823,11 @@ const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   toggleTextActive: {
-    color: '#333',
+    color: '#000',
     fontWeight: 'bold',
   },
   modalBackdrop: {
@@ -4811,7 +4852,7 @@ const styles = StyleSheet.create({
   emojiPickerTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   emojiGrid: {
@@ -4857,7 +4898,7 @@ const styles = StyleSheet.create({
   userItemName: {
     fontSize: 16,
     flex: 1,
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userItemNameActive: {
@@ -4895,7 +4936,7 @@ const styles = StyleSheet.create({
   },
   pinStatus: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -4977,7 +5018,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#333',
+    color: '#000',
   },
   celebrationTextActive: {
     color: 'white',
@@ -5246,7 +5287,7 @@ const styles = StyleSheet.create({
   reorderActivityText: {
     fontSize: 16,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -5286,7 +5327,7 @@ const styles = StyleSheet.create({
   positionButtonText: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   positionPreview: {
@@ -5297,7 +5338,7 @@ const styles = StyleSheet.create({
   },
   positionPreviewText: {
     fontSize: 14,
-    color: '#333',
+    color: '#000',
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
@@ -5318,7 +5359,7 @@ const styles = StyleSheet.create({
   reorderModalButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
 });

@@ -34,13 +34,13 @@ const ConfirmModal = ({
 
   return (
     <Modal
-      visible={visible}
-      animationType="fade"
-      transparent={true}
-      onRequestClose={handleCancel}
-      presentationStyle="overFullScreen"
-      statusBarTranslucent={true}
-    >
+        visible={visible}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={handleCancel}
+        presentationStyle="overFullScreen"
+        statusBarTranslucent={true}
+      >
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={1}

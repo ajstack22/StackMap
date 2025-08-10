@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: Platform.OS === 'ios' ? '600' : 'bold',
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     marginBottom: SPACING.xs,
   },

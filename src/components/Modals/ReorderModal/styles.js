@@ -38,7 +38,7 @@ export const styles = StyleSheet.create({
   reorderActivityText: {
     fontSize: 18,
     fontWeight: '500',
-    color: '#333',
+    color: '#000',
   },
   reorderModalLabel: {
     fontSize: 16,
@@ -73,7 +73,7 @@ export const styles = StyleSheet.create({
   positionButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#666',
+    color: '#000',
   },
   positionPreview: {
     alignItems: 'center',
@@ -81,7 +81,7 @@ export const styles = StyleSheet.create({
   },
   positionPreviewText: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
   },
   modalHeader: {
     flexDirection: 'row',
@@ -97,7 +97,7 @@ export const styles = StyleSheet.create({
   },
   closeButtonText: {
     fontSize: 20,
-    color: '#999',
+    color: '#000',
   },
   formPanel: {
     backgroundColor: '#f9f9f9',

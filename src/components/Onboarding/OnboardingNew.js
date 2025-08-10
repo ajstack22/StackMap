@@ -458,21 +458,6 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               >
                 <Text style={styles.footerLinkText}>Privacy Policy</Text>
               </TouchableOpacity>
-              
-              <Text style={styles.footerSeparator}>•</Text>
-              
-              <TouchableOpacity 
-                style={styles.footerLink}
-                onPress={() => {
-                  if (Platform.OS === 'web') {
-                    window.open('https://stackmap.app?supportus', '_blank');
-                  } else {
-                    Linking.openURL('https://stackmap.app?supportus');
-                  }
-                }}
-              >
-                <Text style={styles.footerLinkText}>Support Us</Text>
-              </TouchableOpacity>
             </View>
           </ScrollView>
           </View>
@@ -481,17 +466,24 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       case 'createUser':
         return (
           <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.createUserContainer, {
-              paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
-            }]}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
           >
-            <Text style={styles.screenTitle}>
-              {users.length === 0 ? "Let's create your first user" : "Add another user"}
-            </Text>
-            
-            <View style={styles.formSection}>
+            <ScrollView 
+              contentContainerStyle={[styles.createUserScrollContainer, {
+                paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
+                paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
+              }]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
+            >
+              <View style={styles.createUserContent}>
+              <Text style={styles.screenTitle}>
+                {users.length === 0 ? "Let's create your first user" : "Add another user"}
+              </Text>
+              
+              <View style={styles.formSection}>
               <Text style={styles.inputLabel}>Name</Text>
               <TextInput
                 style={styles.textInput}
@@ -576,14 +568,15 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
             </TouchableOpacity>
 
             {users.length === 0 && (
-              <TouchableOpacity 
-                style={[styles.secondaryButton, { marginTop: SPACING.md }]}
-                onPress={() => transitionTo('welcome')}
-              >
-                <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
-              </TouchableOpacity>
-            )}
-
+                <TouchableOpacity 
+                  style={[styles.secondaryButton, { marginTop: SPACING.md }]}
+                  onPress={() => transitionTo('welcome')}
+                >
+                  <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+                </TouchableOpacity>
+              )}
+              </View>
+            </ScrollView>
           </KeyboardAvoidingView>
         );
 
@@ -969,8 +962,9 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         return (
           <View style={styles.container}>
             <KeyboardAvoidingView 
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+              behavior={Platform.OS === 'ios' ? 'padding' : undefined}
               style={{ flex: 1 }}
+              keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
             >
               <ScrollView 
                 style={styles.scrollContent} 
@@ -1228,9 +1222,22 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         );
 
       case 'setupPin':
-        const handlePinSetup = () => {
+        const handlePinSetup = async () => {
           if (pin && pin === confirmPin) {
-            transitionTo('complete');
+            // Save the PIN using secure storage
+            try {
+              const { setSecurePin } = require('../../utils/securePinStorage');
+              const success = await setSecurePin(pin);
+              if (success) {
+                console.log('[Onboarding] PIN saved successfully');
+                transitionTo('complete');
+              } else {
+                setPinError('Failed to save PIN. Please try again.');
+              }
+            } catch (error) {
+              console.error('[Onboarding] Error saving PIN:', error);
+              setPinError('Failed to save PIN. Please try again.');
+            }
           } else if (pin !== confirmPin) {
             setPinError('PINs do not match');
           }
@@ -1238,74 +1245,94 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         
         return (
           <KeyboardAvoidingView 
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={[styles.createUserContainer, {
-              paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-              paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
-            }]}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            style={{ flex: 1 }}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
           >
-            <Text style={styles.screenTitle}>Secure Your StackMap</Text>
-            <Text style={styles.screenSubtitle}>
-              Set up a PIN to protect your edit mode and settings (optional)
-            </Text>
-            
-            <View style={styles.formSection}>
-              <Text style={styles.inputLabel}>Create PIN</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter 4-6 digit PIN"
-                placeholderTextColor={COLORS.gray[400]}
-                value={pin}
-                onChangeText={(text) => {
-                  setPinError('');
-                  setPin(text.replace(/\D/g, ''));
-                }}
-                keyboardType="numeric"
-                secureTextEntry={true}
-                maxLength={6}
-                autoFocus
-              />
-              
-              <Text style={[styles.inputLabel, { marginTop: 20 }]}>Confirm PIN</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Re-enter PIN"
-                placeholderTextColor={COLORS.gray[400]}
-                value={confirmPin}
-                onChangeText={(text) => {
-                  setPinError('');
-                  setConfirmPin(text.replace(/\D/g, ''));
-                }}
-                keyboardType="numeric"
-                secureTextEntry={true}
-                maxLength={6}
-              />
-              
-              {pinError ? (
-                <Text style={styles.errorText}>{pinError}</Text>
-              ) : null}
-            </View>
-            
-            <TouchableOpacity 
-              style={[styles.primaryButton, (!pin || pin.length < 4 || !confirmPin) && styles.disabledButton]}
-              onPress={handlePinSetup}
-              disabled={!pin || pin.length < 4 || !confirmPin}
+            <ScrollView 
+              contentContainerStyle={[styles.createUserScrollContainer, {
+                paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
+                paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
+              }]}
+              keyboardShouldPersistTaps="handled"
+              showsVerticalScrollIndicator={false}
             >
-              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                Set PIN
-              </Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity 
-              style={[styles.secondaryButton, { marginTop: 10 }]}
-              onPress={() => {
-                setPin('');
-                setConfirmPin('');
-                transitionTo('complete');
-              }}
-            >
-              <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip for Now</Text>
-            </TouchableOpacity>
+              <View style={styles.createUserContent}>
+                <View>
+                  <Text style={styles.screenTitle}>Secure Your StackMap</Text>
+                  <Text style={styles.screenSubtitle}>
+                    Set up a 4-digit PIN to protect your edit mode
+                  </Text>
+                  <Text style={[styles.screenSubtitle, { fontSize: 14, marginTop: -10 }]}>
+                    This is optional but recommended
+                  </Text>
+                  
+                  <View style={[styles.formSection, { paddingHorizontal: 0, marginTop: 60 }]}>
+                    <View style={{ alignItems: 'center', width: '100%' }}>
+                      <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Create PIN</Text>
+                      <TextInput
+                        style={styles.pinInput}
+                        placeholder="• • • •"
+                        placeholderTextColor={COLORS.gray[400]}
+                        value={pin}
+                        onChangeText={(text) => {
+                          setPinError('');
+                          setPin(text.replace(/\D/g, ''));
+                        }}
+                        keyboardType="numeric"
+                        secureTextEntry={true}
+                        maxLength={4}
+                        autoFocus
+                      />
+                    </View>
+                    
+                    <View style={{ alignItems: 'center', marginTop: 20, width: '100%' }}>
+                      <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Confirm PIN</Text>
+                      <TextInput
+                        style={styles.pinInput}
+                        placeholder="• • • •"
+                        placeholderTextColor={COLORS.gray[400]}
+                        value={confirmPin}
+                        onChangeText={(text) => {
+                          setPinError('');
+                          setConfirmPin(text.replace(/\D/g, ''));
+                        }}
+                        keyboardType="numeric"
+                        secureTextEntry={true}
+                        maxLength={4}
+                      />
+                    </View>
+                    
+                    {pinError ? (
+                      <Text style={styles.errorText}>{pinError}</Text>
+                    ) : null}
+                  </View>
+                </View>
+                
+                <View>
+                  <TouchableOpacity 
+                    style={[styles.primaryButton, (!pin || pin.length < 4 || !confirmPin) && styles.disabledButton]}
+                    onPress={handlePinSetup}
+                    disabled={!pin || pin.length < 4 || !confirmPin}
+                  >
+                    <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
+                      Set PIN
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.secondaryButton, { marginTop: 10 }]}
+                    onPress={() => {
+                      setPin('');
+                      setConfirmPin('');
+                      transitionTo('complete');
+                    }}
+                  >
+                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip for Now</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </ScrollView>
           </KeyboardAvoidingView>
         );
 
@@ -1587,7 +1614,9 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
+    alignSelf: 'center',
     marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md,
   },
   createUserContainer: {
     flex: 1,
@@ -1595,6 +1624,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.xxl,
+  },
+  createUserScrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: SPACING.xl,
+  },
+  createUserContent: {
+    flex: 1,
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    minHeight: 600,
   },
   inputLabel: {
     fontSize: 16,
@@ -1604,6 +1643,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   textInput: {
+    width: '100%',
     height: 48,
     borderWidth: 2,
     borderColor: COLORS.gray[300],
@@ -1614,8 +1654,24 @@ const styles = StyleSheet.create({
     color: COLORS.gray[900],
     backgroundColor: 'white',
     marginBottom: SPACING.lg,
-    width: '100%',
     textAlign: 'center',
+    ...SHADOWS.level1,
+  },
+  pinInput: {
+    width: 200,
+    height: 56,
+    borderWidth: 2,
+    borderColor: COLORS.gray[300],
+    borderRadius: RADIUS.lg,
+    paddingHorizontal: SPACING.lg,
+    fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: COLORS.gray[900],
+    backgroundColor: 'white',
+    marginBottom: SPACING.lg,
+    textAlign: 'center',
+    letterSpacing: 8,
+    alignSelf: 'center',
     ...SHADOWS.level1,
   },
   emojiSelection: {

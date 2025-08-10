@@ -22,7 +22,7 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#000',
     marginBottom: 10,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
@@ -62,7 +62,7 @@ export const styles = StyleSheet.create({
   userItemName: {
     flex: 1,
     fontSize: 16,
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userItemNameActive: {
@@ -127,7 +127,7 @@ export const styles = StyleSheet.create({
   pinStatusText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     marginBottom: 2,
   },

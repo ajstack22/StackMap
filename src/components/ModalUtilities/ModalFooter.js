@@ -151,10 +151,10 @@ const styles = StyleSheet.create({
     color: 'white',
   },
   secondaryButtonText: {
-    color: '#333',
+    color: '#000',
   },
   disabledButtonText: {
-    color: '#999',
+    color: '#000',
   },
   buttonIcon: {
     marginRight: SPACING.xs,

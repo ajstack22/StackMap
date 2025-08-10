@@ -1522,7 +1522,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: isTablet() ? 15 : 13,
     fontWeight: '600',
-    color: '#666',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   activeTabText: {
@@ -1651,7 +1651,7 @@ const styles = StyleSheet.create({
   activityName: {
     fontSize: isTablet() ? 16 : 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#333',
+    color: '#000',
   },
   activityActions: {
     flexDirection: 'row',

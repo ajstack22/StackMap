@@ -135,17 +135,17 @@ export const ANIMATION = {
 export const TYPOGRAPHY = {
   fontFamily: {
     regular: Platform.select({
-      ios: 'Comic Relief',
+      ios: 'ComicRelief-Regular',
       android: 'ComicRelief-Regular',
       web: "'Comic Relief', 'Comic Sans MS', cursive"
     }),
     medium: Platform.select({
-      ios: 'Comic Relief',
+      ios: 'ComicRelief-Regular',
       android: 'ComicRelief-Regular',
       web: "'Comic Relief', 'Comic Sans MS', cursive"
     }),
     bold: Platform.select({
-      ios: 'Comic Relief', // iOS uses same family with fontWeight
+      ios: 'ComicRelief-Bold',
       android: 'ComicRelief-Bold',
       web: "'Comic Relief', 'Comic Sans MS', cursive"
     }),

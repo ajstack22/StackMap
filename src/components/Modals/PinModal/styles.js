@@ -23,7 +23,7 @@ export const styles = StyleSheet.create({
   pinModalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
     marginBottom: 40,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
@@ -61,7 +61,7 @@ export const styles = StyleSheet.create({
   pinKeyText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   pinTextInput: {
@@ -77,7 +77,7 @@ export const styles = StyleSheet.create({
   },
   pinHelperText: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 20,
     textAlign: 'center',

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
+  Modal,
   View,
   Text,
   ScrollView,
@@ -183,17 +184,22 @@ const SyncPreviewModal = ({
     }
   };
 
-  if (!visible) return null;
-
   const isWeb = Platform.OS === 'web';
 
   return (
-    <View style={styles.modalOverlay}>
-      <View style={[
-        styles.modalContainer,
-        { paddingBottom: isWeb ? 20 : insets.bottom + 20 }
-      ]}>
-        <View style={styles.header}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent={true}
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[
+          styles.modalContainer,
+          { paddingBottom: isWeb ? 20 : insets.bottom + 20 }
+        ]}>
+          <View style={styles.header}>
           <Text style={[styles.title, { color: theme?.text || '#000000' }]}>
             Join Sync Group
           </Text>
@@ -323,9 +329,10 @@ const SyncPreviewModal = ({
               </TouchableOpacity>
             </View>
           )}
-        </ScrollView>
+          </ScrollView>
+        </View>
       </View>
-    </View>
+    </Modal>
   );
 };
 

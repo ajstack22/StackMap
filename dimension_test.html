@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dimension Test - StackMap</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 20px;
+            line-height: 1.5;
+        }
+        .metric {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            background: #e0e0e0;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>iPad Layout Dimension Test</h1>
+    
+    <div class="metric">
+        <strong>Window dimensions:</strong>
+        <span id="window-dims"></span>
+    </div>
+    
+    <div class="metric">
+        <strong>Screen dimensions:</strong>
+        <span id="screen-dims"></span>
+    </div>
+    
+    <div class="metric">
+        <strong>User Agent:</strong>
+        <span id="user-agent"></span>
+    </div>
+    
+    <div class="metric">
+        <strong>Device Pixel Ratio:</strong>
+        <span id="pixel-ratio"></span>
+    </div>
+    
+    <div class="metric">
+        <strong>Platform Detection:</strong>
+        <span id="platform"></span>
+    </div>
+    
+    <div class="metric">
+        <strong>Calculated Columns (RN Web Logic):</strong>
+        <span id="columns"></span>
+    </div>
+
+    <h2>CSS Grid Test (this is how web renders):</h2>
+    <div class="grid">
+        <div class="card">Card 1</div>
+        <div class="card">Card 2</div>
+        <div class="card">Card 3</div>
+        <div class="card">Card 4</div>
+        <div class="card">Card 5</div>
+        <div class="card">Card 6</div>
+    </div>
+
+    <script>
+        function updateDimensions() {
+            // Basic dimensions
+            document.getElementById('window-dims').textContent = 
+                `${window.innerWidth} × ${window.innerHeight}`;
+            document.getElementById('screen-dims').textContent = 
+                `${screen.width} × ${screen.height}`;
+            document.getElementById('user-agent').textContent = navigator.userAgent;
+            document.getElementById('pixel-ratio').textContent = window.devicePixelRatio;
+
+            // Platform detection like React Native would do
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+            const isTablet = window.innerWidth >= 768;
+            document.getElementById('platform').textContent = 
+                `iOS: ${isIOS}, Tablet: ${isTablet}`;
+
+            // Calculate columns using StackMap logic
+            const width = window.innerWidth;
+            const getContainerPadding = (width) => {
+                if (width <= 600) return 16;
+                if (width <= 1024) return 24;
+                return 48;
+            };
+
+            const containerPadding = getContainerPadding(width);
+            const availableWidth = width - (containerPadding * 2);
+            
+            let numColumns;
+            if (isIOS && isTablet) {
+                // Special iPad handling from current code
+                if (availableWidth < 700) {
+                    numColumns = 1;
+                } else if (availableWidth >= 900) {
+                    numColumns = 3;
+                } else {
+                    numColumns = 2;
+                }
+            } else {
+                // Standard breakpoints
+                if (width < 600) {
+                    numColumns = 1;
+                } else if (width < 900) {
+                    numColumns = 2;
+                } else {
+                    numColumns = 3;
+                }
+            }
+
+            document.getElementById('columns').textContent = 
+                `${numColumns} columns (available: ${availableWidth}px, padding: ${containerPadding}px)`;
+        }
+
+        // Update on load and resize
+        updateDimensions();
+        window.addEventListener('resize', updateDimensions);
+    </script>
+</body>
+</html>

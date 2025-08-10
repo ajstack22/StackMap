@@ -40,7 +40,7 @@ export const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#000',
     marginTop: 10,
     marginBottom: 15,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
@@ -59,7 +59,7 @@ export const styles = StyleSheet.create({
   },
   colorSelected: {
     borderWidth: 3,
-    borderColor: '#333',
+    borderColor: '#000',
   },
   toggleContainer: {
     flexDirection: 'row',
@@ -80,11 +80,11 @@ export const styles = StyleSheet.create({
   },
   toggleText: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   toggleTextActive: {
-    color: '#333',
+    color: '#000',
     fontWeight: '600',
     fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
@@ -109,7 +109,7 @@ export const styles = StyleSheet.create({
   },
   celebrationText: {
     fontSize: 14,
-    color: '#666',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   celebrationTextActive: {

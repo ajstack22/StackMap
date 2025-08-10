@@ -1,35 +1,36 @@
-# 🚨 ANDROID SWIPE GESTURES - SOLVED 🚨
+# 🚨 MOBILE SWIPE GESTURES - SOLVED 🚨
 
-## ✅ ANDROID TABBED MODALS SWIPE FIX ✅
+## ✅ ANDROID & iOS TABBED MODALS SWIPE FIX ✅
 **Problem:** Swipe gestures between tabs only work on buttons, not on backgrounds/panels
-**Solution:** Use `react-native-pager-view` for Android (NOT PanResponder!)
+**Solution:** Use `react-native-pager-view` for BOTH Android and iOS (NOT PanResponder!)
 
 ```javascript
-// TabbedModal.js - THIS IS THE ONLY SOLUTION THAT WORKS ON ANDROID
+// TabbedModal.js - THIS IS THE ONLY SOLUTION THAT WORKS ON MOBILE
 import PagerView from 'react-native-pager-view';
 
-{Platform.OS === 'android' ? (
-  <PagerView>  // Native Android ViewPager2 - handles swipes at native level
+{Platform.OS !== 'web' ? (
+  <PagerView>  // Native ViewPager2 (Android) / UIPageViewController (iOS)
     {children}
   </PagerView>
 ) : (
-  // PanResponder works fine for iOS/Web
+  // PanResponder only for Web
 )}
 ```
 
-**Why PanResponder DOESN'T work on Android with ScrollView:**
+**Why PanResponder DOESN'T work on mobile with ScrollView:**
 - ScrollView captures touches at the NATIVE level before JavaScript sees them
 - Only TouchableOpacity bypasses this (has its own native touch handling)
-- No amount of PanResponder tweaking will fix this - it's a fundamental Android limitation
+- This affects BOTH Android AND iOS (as of iOS 18.5)
+- No amount of PanResponder tweaking will fix this - it's a fundamental limitation
 
 **DO NOT WASTE TIME TRYING:**
-- ❌ pointerEvents="box-none" (doesn't work reliably on Android)
+- ❌ pointerEvents="box-none" (doesn't work reliably)
 - ❌ Overlay layers with z-index tricks
 - ❌ Adjusting PanResponder thresholds
 - ❌ GestureHandlerRootView (necessary but not sufficient)
 - ❌ Capture phase handlers
 
-**Just use react-native-pager-view for Android. Period.**
+**Just use react-native-pager-view for mobile platforms. Period.**
 
 ---
 

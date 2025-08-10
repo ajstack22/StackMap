@@ -8,6 +8,7 @@ import {
   TextInput,
   ActivityIndicator,
   Alert,
+  Modal,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -894,17 +895,25 @@ const DataModal = ({
   
   // Handle app reset
   const handleReset = async () => {
+    console.log('[DataModal] handleReset called');
+    console.log('[DataModal] onReset exists:', !!onReset);
+    
     try {
       setLoading(true);
       
       // Call the onReset function passed from parent
       if (onReset) {
+        console.log('[DataModal] Calling onReset...');
         await onReset();
+        console.log('[DataModal] onReset completed');
+      } else {
+        console.error('[DataModal] No onReset function provided!');
       }
       
       setShowResetConfirm(false);
       onClose();
     } catch (error) {
+      console.error('[DataModal] Reset error:', error);
       showToast({ 
         message: error.message || 'Failed to reset app',
         type: 'error'
@@ -1356,7 +1365,31 @@ const DataModal = ({
             variant="danger"
             label="Reset App"
             icon="refresh"
-            onPress={() => setShowResetConfirm(true)}
+            onPress={() => {
+              console.log('[DataModal] Reset App button clicked');
+              
+              // iOS 18.5 fix: Use Alert.alert instead of nested modal
+              if (Platform.OS === 'ios') {
+                Alert.alert(
+                  'Reset StackMap',
+                  'This will delete all data and return the app to its initial state. This action cannot be undone.',
+                  [
+                    {
+                      text: 'Cancel',
+                      style: 'cancel'
+                    },
+                    {
+                      text: 'Reset App',
+                      style: 'destructive',
+                      onPress: handleReset
+                    }
+                  ]
+                );
+              } else {
+                // Android and Web: Use ConfirmModal as before
+                setShowResetConfirm(true);
+              }
+            }}
             loading={loading}
             fullWidth
           />

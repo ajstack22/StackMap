@@ -36,7 +36,7 @@ const ReorderModal = ({
         <View style={[styles.reorderModalContent, { backgroundColor: theme.light }]}>
           {/* Header with close button */}
           <View style={styles.modalHeader}>
-            <Text style={[styles.reorderModalTitle, { color: theme.primary }]}>
+            <Text style={[styles.reorderModalTitle, { color: '#000' }]}>
               Move Activity
             </Text>
             <TouchableOpacity

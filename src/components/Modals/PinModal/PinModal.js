@@ -30,7 +30,8 @@ const PinModal = ({
         setPinInput(newPin);
         // Check if PIN is complete and call callback
         if (newPin.length === 4 && onPinComplete) {
-          setTimeout(() => onPinComplete(), 100);
+          // Pass the PIN directly to avoid state sync issues
+          onPinComplete(newPin);
         }
       }
     } else {
@@ -40,7 +41,8 @@ const PinModal = ({
         setPinInput(newPin);
         // Check if PIN is complete and call callback
         if (newPin.length === 4 && onPinComplete) {
-          setTimeout(() => onPinComplete(), 100);
+          // Pass the PIN directly to avoid state sync issues
+          onPinComplete(newPin);
         }
       }
     }

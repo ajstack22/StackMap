@@ -67,17 +67,20 @@ const PINTabContent = ({
     setIsSettingPin(false);
   };
 
-  const handlePinSubmit = async () => {
+  const handlePinSubmit = async (enteredPin) => {
+    // Use the PIN passed from the callback, not the state
+    const pinToUse = enteredPin || pinInput;
+    
     if (isSettingPin) {
       if (!confirmPin) {
         // First entry, ask for confirmation
-        setConfirmPin(pinInput);
+        setConfirmPin(pinToUse);
         setPinInput('');
         showToast({ message: 'Enter PIN again to confirm' });
       } else {
         // Confirming PIN
-        if (pinInput === confirmPin) {
-          await onSetPin(pinInput);
+        if (pinToUse === confirmPin) {
+          await onSetPin(pinToUse);
           handlePinModalClose();
           showToast({ message: 'PIN set successfully' });
         } else {
@@ -88,7 +91,7 @@ const PINTabContent = ({
       }
     } else {
       // Verifying existing PIN
-      const isValid = await onVerifyPin(pinInput);
+      const isValid = await onVerifyPin(pinToUse);
       if (isValid) {
         handlePinModalClose();
         // If changing PIN, show the set PIN modal

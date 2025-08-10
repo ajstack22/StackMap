@@ -65,14 +65,14 @@ export const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    color: '#333',
+    color: '#000',
     marginTop: SPACING.md,
     textAlign: 'center',
   },
   emptyStateDescription: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#999',
+    color: '#000',
     marginTop: SPACING.sm,
     textAlign: 'center',
     paddingHorizontal: SPACING.xl,
@@ -118,7 +118,7 @@ export const styles = StyleSheet.create({
   selectionDescription: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
   },
   selectionCount: {
     flexDirection: 'row',
@@ -154,7 +154,7 @@ export const styles = StyleSheet.create({
   fileInfoDate: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
     marginTop: 2,
   },
   
@@ -191,7 +191,7 @@ export const styles = StyleSheet.create({
   importModeText: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
-    color: '#666',
+    color: '#000',
   },
   importModeTextActive: {
     color: '#000',
@@ -201,7 +201,7 @@ export const styles = StyleSheet.create({
   importModeDescription: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
     textAlign: 'center',
   },
   
@@ -237,7 +237,7 @@ export const styles = StyleSheet.create({
   importItemCount: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: '#666',
+    color: '#000',
   },
   selectAllButton: {
     alignSelf: 'flex-start',

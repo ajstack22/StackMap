@@ -50,7 +50,7 @@ export const styles = StyleSheet.create({
   },
   emojiSelectorLabel: {
     fontSize: 16,
-    color: '#666',
+    color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   input: {

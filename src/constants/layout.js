@@ -21,7 +21,7 @@ export const FONT_SCALE = {
 
 // Card layout constants
 export const CARD_LAYOUT = {
-  minWidth: 320, // Increased for better readability
+  minWidth: 280, // Reduced to allow 3 columns on iPad landscape
   maxWidth: 450, // Comfortable max width
   gap: 20, // Balanced gap for better column breakpoints
   containerPaddingMobile: 16, // 1rem
@@ -41,33 +41,11 @@ export const calculateColumns = (width = screenWidth) => {
   const containerPadding = getContainerPadding(width);
   const availableWidth = width - (containerPadding * 2);
   
-  // DEBUG: Log calculation details
-  console.log('📐 Column Calculation:', {
-    screenWidth: width,
-    containerPadding: containerPadding,
-    availableWidth: availableWidth,
-    isTablet: isTablet(width),
-    platform: Platform.OS
-  });
-  
   // Special handling for iPad devices
-  // Use simpler, more predictable breakpoints
+  // Always use 2 columns for iPad regardless of orientation
   if (Platform.OS === 'ios' && isTablet(width)) {
-    // Use available width (after padding) for breakpoints
-    if (availableWidth < 650) {
-      console.log('📐 iPad: 1 column (available < 650)');
-      return 1;
-    }
-    if (availableWidth < 950) {
-      console.log('📐 iPad: 2 columns (available < 950)');
-      return 2;
-    }
-    if (availableWidth < 1250) {
-      console.log('📐 iPad: 3 columns (available < 1250)');
-      return 3;
-    }
-    console.log('📐 iPad: 4 columns (available >= 1250)');
-    return 4;
+    // Always return 2 columns for iPad
+    return 2;
   }
   
   // Standard breakpoints for other platforms
@@ -100,17 +78,29 @@ export const calculateCardWidth = (width = screenWidth) => {
   // For native, calculate exact widths
   const totalGaps = (numColumns - 1) * CARD_LAYOUT.gap;
   const cardWidth = (availableWidth - totalGaps) / numColumns;
-  return Math.min(cardWidth, CARD_LAYOUT.maxWidth);
+  
+  // For iPad portrait (2 columns), ensure cards have good minimum width
+  if (Platform.OS === 'ios' && isTablet(width) && numColumns === 2) {
+    return Math.min(Math.max(cardWidth, 350), CARD_LAYOUT.maxWidth);
+  }
+  
+  // For landscape (3 columns), let cards be narrower to fit
+  if (numColumns === 3) {
+    return Math.min(cardWidth, CARD_LAYOUT.maxWidth);
+  }
+  
+  // Default: enforce minimum width
+  return Math.min(Math.max(cardWidth, CARD_LAYOUT.minWidth), CARD_LAYOUT.maxWidth);
 };
 
 export const getCardHeight = () => {
-  // Reduce height for tablets to better fit when in 2-column layout
-  return isTablet() ? 240 : 280; // Reduced from 320 to 240 for tablets
+  // Use generous height for all devices
+  return 320; // Increased height for better content display
 };
 
 export const getCardPadding = () => {
-  // Reduce padding on tablets to give more space for content
-  return isTablet() ? 25 : 35; // Reduced from 45 to 25 for tablets
+  // Use same padding for all devices
+  return 35; // Generous padding
 };
 
 // FAB dimensions
