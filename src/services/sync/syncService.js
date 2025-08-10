@@ -1936,16 +1936,39 @@ class SyncService {
    */
   async deleteShare(shareId) {
     try {
-      // Get all shares from storage directly (not just active ones)
+      // First, delete from server
+      const deleteUrl = `${SHARE_API_URL}/delete_share.php`;
+      console.log('Deleting share from server:', shareId);
+      
+      const response = await fetch(deleteUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          share_id: shareId
+        })
+      });
+      
+      const result = await response.json();
+      
+      if (!response.ok) {
+        console.error('Server error deleting share:', result);
+        // Continue to remove from local storage even if server fails
+      } else {
+        console.log('Share deleted from server successfully');
+      }
+      
+      // Then remove from local storage
       const stored = await AsyncStorage.getItem('@stackmap_shares');
       const shares = stored ? JSON.parse(stored) : [];
       const filtered = shares.filter(share => share.shareId !== shareId);
       await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(filtered));
       
-      // Could also call API to revoke the share early
-      // But for now, let them expire naturally
+      return true;
     } catch (error) {
       console.error('Failed to delete share:', error);
+      throw error;
     }
   }
 
