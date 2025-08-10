@@ -330,13 +330,21 @@ const DataModal = ({
       }
       
       // Add global settings
+      // Handle hasSecurePin being either a function or a boolean
+      let pinEnabled = false;
+      if (typeof hasSecurePin === 'function') {
+        pinEnabled = await hasSecurePin();
+      } else if (typeof hasSecurePin === 'boolean') {
+        pinEnabled = hasSecurePin;
+      }
+      
       exportData.globalSettings = {
         currentTheme,
         bannerPosition,
         defaultView: 'normal',
         displayMode: 'numbers',
         enableDayManagement: true,
-        pinEnabled: await hasSecurePin()
+        pinEnabled
       };
       
       // Convert to JSON
