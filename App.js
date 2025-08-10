@@ -927,10 +927,10 @@ const App = () => {
         },
         { 
           id: `activity_${timestamp}_4`, 
-          text: 'Share Your Stack',
-          title: 'Share Your Stack',  // Keep title for backward compatibility
+          text: 'Share with Providers',
+          title: 'Share with Providers',  // Keep title for backward compatibility
           emoji: '🔗',
-          description: 'Share your activities with others via QR code or link',
+          description: 'Share your activities with caregivers via QR code or link',
           pinned: false 
         },
         { 
@@ -1155,7 +1155,7 @@ const App = () => {
           pinned: false 
         },
         { id: `activity_${timestamp}_3`, text: 'Switch Users', title: 'Switch Users', emoji: '👤', description: 'Tap your user pill to switch users or check-in', pinned: false },
-        { id: `activity_${timestamp}_4`, text: 'Share Your Stack', title: 'Share Your Stack', emoji: '🔗', description: 'Share your activities with others via QR code or link', pinned: false },
+        { id: `activity_${timestamp}_4`, text: 'Share with Providers', title: 'Share with Providers', emoji: '🔗', description: 'Share your activities with caregivers via QR code or link', pinned: false },
         { id: `activity_${timestamp}_5`, text: 'Sync Across Devices', title: 'Sync Across Devices', emoji: '🔄', description: 'Keep your data synced with zero-knowledge encryption', pinned: false },
         { id: `activity_${timestamp}_6`, text: 'Import & Export', title: 'Import & Export', emoji: '📦', description: 'Backup your data or transfer between devices', pinned: false },
         { id: `activity_${timestamp}_7`, text: 'Preferences', title: 'Preferences', emoji: '🎨', description: 'Tap the palette icon to customize colors, animations, and display', pinned: false },
