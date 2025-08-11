@@ -556,6 +556,7 @@ const styles = StyleSheet.create({
   },
   emoji: {
     fontSize: Platform.OS === 'web' ? 28 : (isTablet() ? 42 : (Platform.OS === 'android' ? 28 : 32)),
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
   },
   customImage: {
@@ -585,6 +586,7 @@ const styles = StyleSheet.create({
   },
   skinToneEmoji: {
     fontSize: isTablet() ? 26 : 22,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   detectedEmojiContainer: {
     paddingHorizontal: isTablet() ? SPACING.xl : SPACING.md,
@@ -610,6 +612,7 @@ const styles = StyleSheet.create({
   },
   detectedEmoji: {
     fontSize: isTablet() ? 48 : 40,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   detectedEmojiHint: {
     fontSize: isTablet() ? TYPOGRAPHY.sizes.xs : 11,

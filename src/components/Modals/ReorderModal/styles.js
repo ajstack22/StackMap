@@ -19,6 +19,7 @@ export const styles = StyleSheet.create({
   reorderModalTitle: {
     fontSize: 24,
     fontWeight: '700',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -38,10 +39,12 @@ export const styles = StyleSheet.create({
   reorderActivityText: {
     fontSize: 18,
     fontWeight: '500',
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
   },
   reorderModalLabel: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 16,
     textAlign: 'center',
   },
@@ -52,6 +55,7 @@ export const styles = StyleSheet.create({
   positionSelectorContent: {
     flexDirection: 'row',
     paddingHorizontal: 10,
+    alignItems: 'center',
   },
   positionButton: {
     width: 48,
@@ -73,6 +77,7 @@ export const styles = StyleSheet.create({
   positionButtonText: {
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
   },
   positionPreview: {
@@ -81,6 +86,7 @@ export const styles = StyleSheet.create({
   },
   positionPreviewText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   modalHeader: {
@@ -88,15 +94,14 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
+    position: 'relative',
   },
   closeButton: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
     padding: 4,
   },
   closeButtonText: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   formPanel: {
@@ -122,5 +127,6 @@ export const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 16,
     fontWeight: '600',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
 });

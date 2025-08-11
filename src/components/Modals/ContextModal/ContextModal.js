@@ -765,6 +765,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
   },
   userCarouselEmoji: {
     fontSize: 64,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: SPACING.sm,
   },
   userCarouselName: {
@@ -855,6 +856,7 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
   },
   carouselEmoji: {
     fontSize: 64,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: SPACING.sm,
   },
   carouselLabel: {
