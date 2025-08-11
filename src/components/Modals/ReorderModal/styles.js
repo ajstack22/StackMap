@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import { TYPOGRAPHY, SPACING, RADIUS, COLORS, SHADOWS } from '../../../constants';
 
 export const styles = StyleSheet.create({
@@ -14,6 +14,7 @@ export const styles = StyleSheet.create({
     maxWidth: 400,
     borderRadius: RADIUS.lg,
     padding: 24,
+    overflow: 'hidden',
     ...SHADOWS.level3,
   },
   reorderModalTitle: {
@@ -22,6 +23,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',
     marginBottom: 20,
+    width: '100%',
   },
   reorderActivityPreview: {
     flexDirection: 'row',
@@ -49,13 +51,15 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
   },
   positionSelector: {
-    maxHeight: 60,
+    height: 60,
     marginBottom: 20,
+    overflow: 'hidden',
   },
   positionSelectorContent: {
     flexDirection: 'row',
     paddingHorizontal: 10,
     alignItems: 'center',
+    minHeight: 60,
   },
   positionButton: {
     width: 48,
@@ -94,7 +98,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 20,
-    position: 'relative',
+    width: '100%',
   },
   closeButton: {
     padding: 4,
@@ -108,9 +112,11 @@ export const styles = StyleSheet.create({
     backgroundColor: '#f9f9f9',
     borderRadius: RADIUS.md,
     padding: 20,
+    overflow: 'hidden',
   },
   positionSection: {
     alignItems: 'center',
+    width: '100%',
   },
   divider: {
     height: 1,
