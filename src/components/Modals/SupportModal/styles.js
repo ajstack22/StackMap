@@ -26,6 +26,7 @@ export const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
   },
@@ -69,20 +70,24 @@ export const styles = StyleSheet.create({
   },
   supportHeart: {
     fontSize: 60,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 16,
   },
   supportTitle: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: '700',
     color: '#5C7E9D',
     marginBottom: 8,
   },
   supportSubtitle: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#8FA5B8',
   },
   teamCaption: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#5C7E9D',
     fontWeight: '500',
     marginTop: 8,
@@ -114,6 +119,7 @@ export const styles = StyleSheet.create({
   },
   stackMapText: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: '700',
     color: '#5C7E9D',
     marginBottom: 10,
@@ -131,6 +137,7 @@ export const styles = StyleSheet.create({
   },
   supportMessage: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 24,
     color: '#4a5568',
     textAlign: 'center',
@@ -140,6 +147,7 @@ export const styles = StyleSheet.create({
   },
   supportSectionTitle: {
     fontSize: 22,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#5C7E9D',
     textAlign: 'center',
@@ -168,6 +176,7 @@ export const styles = StyleSheet.create({
   },
   supportIconBig: {
     fontSize: 36,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 16,
   },
   supportOptionContent: {
@@ -175,12 +184,14 @@ export const styles = StyleSheet.create({
   },
   supportOptionTitleFun: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#5C7E9D',
     marginBottom: 4,
   },
   supportOptionTextFun: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 20,
     color: '#4a5568',
   },
@@ -193,12 +204,14 @@ export const styles = StyleSheet.create({
   },
   supportContactTitle: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
     marginBottom: 8,
   },
   supportContactText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: 'white',
   },
   supportFooter: {
@@ -207,6 +220,7 @@ export const styles = StyleSheet.create({
   },
   supportFooterText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#8FA5B8',
     textAlign: 'center',
   },
@@ -215,6 +229,7 @@ export const styles = StyleSheet.create({
   },
   contributionItem: {
     fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 24,
     color: '#4a5568',
     textAlign: 'center',
@@ -223,6 +238,7 @@ export const styles = StyleSheet.create({
   },
   contributionHeader: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     color: '#2d3748',
     textAlign: 'center',
@@ -251,12 +267,14 @@ export const styles = StyleSheet.create({
   },
   impactTitle: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#2c3e50',
     marginBottom: 4,
   },
   impactDescription: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#718096',
     lineHeight: 22,
   },

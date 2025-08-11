@@ -17,12 +17,14 @@ export const styles = StyleSheet.create({
   
   title: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
   },
   
   subtitle: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 2,
   },
@@ -46,6 +48,7 @@ export const styles = StyleSheet.create({
   
   conflictTitle: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#333',
     marginTop: SPACING.sm,
@@ -54,6 +57,7 @@ export const styles = StyleSheet.create({
   
   conflictDescription: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     textAlign: 'center',
     lineHeight: 20,
@@ -91,6 +95,7 @@ export const styles = StyleSheet.create({
   
   choiceLabel: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#333',
   },
@@ -108,6 +113,7 @@ export const styles = StyleSheet.create({
   
   arrayCount: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     fontWeight: '500',
   },
@@ -124,17 +130,20 @@ export const styles = StyleSheet.create({
   
   activityIcon: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: SPACING.xs,
   },
   
   activityName: {
     fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#333',
     flex: 1,
   },
   
   moreText: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#999',
     fontStyle: 'italic',
     marginTop: 4,
@@ -142,6 +151,7 @@ export const styles = StyleSheet.create({
   
   completedCount: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     marginTop: 4,
   },
@@ -154,12 +164,14 @@ export const styles = StyleSheet.create({
   
   scalarValue: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#333',
     fontWeight: '500',
   },
   
   mergeNote: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#4caf50',
     fontStyle: 'italic',
     marginTop: SPACING.xs,
@@ -180,6 +192,7 @@ export const styles = StyleSheet.create({
   resolvingText: {
     marginTop: SPACING.sm,
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
   },
   
@@ -192,6 +205,7 @@ export const styles = StyleSheet.create({
   
   footerText: {
     fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     textAlign: 'center',
     fontStyle: 'italic',

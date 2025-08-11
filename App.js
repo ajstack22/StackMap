@@ -4525,6 +4525,7 @@ const styles = StyleSheet.create({
     fontSize: Platform.OS === 'web' 
       ? (isTablet() ? 21 : 21)  // Reduced by 15% from 24.5px
       : (isTablet() ? 31 : 20), // Keep native sizes unchanged
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   subtitleEmojiEdit: {
     // No change needed for emoji in edit mode
@@ -4675,6 +4676,7 @@ const styles = StyleSheet.create({
   },
   activityEmoji: {
     fontSize: isTablet() ? 62 : 64.8,  // 30% larger for tablets (was 48, now 62)
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: isTablet() ? 78 : 81,  // Adjusted line height for tablets
     marginBottom: 0,  // Gap is handled by parent
   },
@@ -4724,6 +4726,7 @@ const styles = StyleSheet.create({
   },
   emptyIcon: {
     fontSize: 60,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 20,
   },
   emptyText: {
@@ -4945,6 +4948,7 @@ const styles = StyleSheet.create({
   },
   emojiOptionText: {
     fontSize: 30,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   emojiPickerInline: {
     backgroundColor: '#f5f5f5',
@@ -4971,6 +4975,7 @@ const styles = StyleSheet.create({
   },
   userItemEmoji: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userItemName: {
     fontSize: 16,
@@ -5208,6 +5213,7 @@ const styles = StyleSheet.create({
   },
   supportHeart: {
     fontSize: 48,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 12,
   },
   supportTitle: {
@@ -5271,6 +5277,7 @@ const styles = StyleSheet.create({
   },
   supportIconBig: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 16,
     width: 40,
     textAlign: 'center',
@@ -5359,6 +5366,7 @@ const styles = StyleSheet.create({
   },
   reorderActivityEmoji: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 8,
   },
   reorderActivityText: {

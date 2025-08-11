@@ -72,6 +72,7 @@ export const styles = StyleSheet.create({
     fontWeight: Platform.OS === 'ios' ? '700' : 'bold',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     letterSpacing: 0,
   },
   badge: {
@@ -83,6 +84,7 @@ export const styles = StyleSheet.create({
   },
   badgeText: {
     fontSize: 11,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
   },

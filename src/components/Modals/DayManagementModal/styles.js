@@ -42,11 +42,13 @@ export const styles = StyleSheet.create({
   },
   summaryPercentage: {
     fontSize: 36,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     color: '#000',
   },
   summaryLabel: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   summaryStats: {
@@ -60,12 +62,14 @@ export const styles = StyleSheet.create({
   },
   statNumber: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     color: '#000',
     marginVertical: 5,
   },
   statLabel: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   statDivider: {
@@ -76,6 +80,7 @@ export const styles = StyleSheet.create({
   },
   motivationalMessage: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     textAlign: 'center',
     fontStyle: 'italic',
@@ -86,6 +91,7 @@ export const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     color: '#000',
     marginBottom: 10,
@@ -114,11 +120,13 @@ export const styles = StyleSheet.create({
   },
   activityIcon: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 10,
   },
   activityText: {
     flex: 1,
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   buttonContainer: {
@@ -137,17 +145,20 @@ export const styles = StyleSheet.create({
   completeButtonText: {
     color: 'white',
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     marginBottom: 10,
   },
   buttonText: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
     marginLeft: 8,
   },
   archiveNote: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     textAlign: 'center',
     fontStyle: 'italic',
@@ -167,11 +178,13 @@ export const styles = StyleSheet.create({
   },
   planSectionTitle: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     color: '#000',
   },
   planCount: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   emptyState: {
@@ -181,11 +194,13 @@ export const styles = StyleSheet.create({
   },
   emptyStateText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     marginTop: 10,
   },
   emptyStateSubtext: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     marginTop: 5,
   },
@@ -219,11 +234,13 @@ export const styles = StyleSheet.create({
   },
   planActivityIcon: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginHorizontal: 10,
   },
   planActivityText: {
     flex: 1,
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   removeButton: {
@@ -241,6 +258,7 @@ export const styles = StyleSheet.create({
   },
   templateToggleText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
   },
@@ -254,6 +272,7 @@ export const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#e0e0e0',
@@ -267,6 +286,7 @@ export const styles = StyleSheet.create({
   },
   templateCategoryName: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
     marginBottom: 8,
@@ -285,11 +305,13 @@ export const styles = StyleSheet.create({
   },
   templateActivityIcon: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 8,
   },
   templateActivityText: {
     flex: 1,
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   saveButton: {
@@ -324,12 +346,14 @@ export const styles = StyleSheet.create({
   },
   completeExplanationText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
     flex: 1,
   },
   completeExplanationSubtext: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     marginBottom: 16,
   },
@@ -374,16 +398,19 @@ export const styles = StyleSheet.create({
   },
   completeSectionTitle: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
   },
   completeSectionCount: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     marginLeft: 8,
   },
   completeSectionDescription: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     marginBottom: 12,
   },
@@ -400,10 +427,12 @@ export const styles = StyleSheet.create({
   },
   completeActivityEmoji: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 12,
   },
   completeActivityTitle: {
     fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   completeActionIcon: {
@@ -411,6 +440,7 @@ export const styles = StyleSheet.create({
   },
   completeEmptyText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     fontStyle: 'italic',
     textAlign: 'center',
@@ -460,9 +490,11 @@ export const styles = StyleSheet.create({
   },
   userEmoji: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userName: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
     color: '#000',
     flex: 1,
@@ -472,6 +504,7 @@ export const styles = StyleSheet.create({
   },
   planSectionDescription: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
     marginBottom: 12,
   },
@@ -502,6 +535,7 @@ export const styles = StyleSheet.create({
   },
   viewModeText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
     color: '#000',
   },
@@ -533,6 +567,7 @@ export const styles = StyleSheet.create({
   },
   dayToggleText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
     color: '#000',
   },
@@ -569,6 +604,7 @@ export const styles = StyleSheet.create({
   },
   dayModeText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
     color: '#000',
   },
@@ -600,6 +636,7 @@ export const styles = StyleSheet.create({
   },
   dayTitle: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
     marginTop: 8,
@@ -628,11 +665,13 @@ export const styles = StyleSheet.create({
   },
   planHeaderUser: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: '700',
     color: '#000',
   },
   planHeaderDay: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   // Panel-based design styles
@@ -680,6 +719,7 @@ export const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
   },

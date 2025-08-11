@@ -1,4 +1,5 @@
 import { StyleSheet, Platform } from 'react-native';
+import { TYPOGRAPHY } from '../../constants';
 
 const createStyles = (isDarkMode) => StyleSheet.create({
   container: {
@@ -30,6 +31,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   errorTitle: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: '700',
     color: isDarkMode ? '#f7fafc' : '#1a202c',
     marginTop: 16,
@@ -103,6 +105,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   darkModeText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
     marginLeft: 4,
   },
@@ -117,6 +120,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   userIcon: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userImage: {
     width: 40,
@@ -281,6 +285,7 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   activityEmoji: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   activityImage: {
     width: 30,
@@ -397,23 +402,27 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   infoTitle: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     marginBottom: 8,
     color: isDarkMode ? '#f7fafc' : '#333',
   },
   infoText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: isDarkMode ? '#a0aec0' : '#666',
     marginBottom: 4,
   },
   message: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
     marginVertical: 16,
     color: isDarkMode ? '#f7fafc' : '#333',
   },
   successNote: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
     marginTop: 20,
     padding: 16,

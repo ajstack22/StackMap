@@ -78,6 +78,7 @@ export const styles = StyleSheet.create({
   },
   userItemEmoji: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 12,
   },
   userItemName: {

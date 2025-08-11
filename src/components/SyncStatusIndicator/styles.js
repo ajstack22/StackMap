@@ -35,6 +35,7 @@ export const styles = StyleSheet.create({
   
   statusText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
   },
   
@@ -55,17 +56,20 @@ export const styles = StyleSheet.create({
   
   detailLabel: {
     fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   
   detailValue: {
     fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     fontWeight: '500',
   },
   
   errorText: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#f44336',
     marginTop: SPACING.xs,
     lineHeight: 16,
@@ -73,6 +77,7 @@ export const styles = StyleSheet.create({
   
   offlineText: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#ff9800',
     marginTop: SPACING.xs,
     fontStyle: 'italic',
@@ -92,6 +97,7 @@ export const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
   },
 });

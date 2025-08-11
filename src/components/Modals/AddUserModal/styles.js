@@ -46,6 +46,7 @@ export const styles = StyleSheet.create({
   },
   selectedEmoji: {
     fontSize: 80,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 10,
   },
   emojiSelectorLabel: {

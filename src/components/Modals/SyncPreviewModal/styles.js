@@ -41,6 +41,7 @@ export const styles = StyleSheet.create({
   },
   title: {
     fontSize: TYPOGRAPHY.sizes.xl,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: TYPOGRAPHY.weights.bold,
   },
   content: {
@@ -53,6 +54,7 @@ export const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: TYPOGRAPHY.weights.semibold || '600',
     marginBottom: SPACING.sm,
   },
@@ -66,6 +68,7 @@ export const styles = StyleSheet.create({
   statusText: {
     marginLeft: SPACING.sm,
     fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   errorContainer: {
     flexDirection: 'row',
@@ -79,6 +82,7 @@ export const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
     color: '#dc2626',
     fontSize: TYPOGRAPHY.sizes.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     flex: 1,
   },
   previewSection: {
@@ -92,10 +96,12 @@ export const styles = StyleSheet.create({
   previewLabel: {
     marginLeft: SPACING.sm,
     fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     flex: 1,
   },
   previewValue: {
     fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: TYPOGRAPHY.weights.semibold || '600',
   },
   userItem: {
@@ -106,14 +112,17 @@ export const styles = StyleSheet.create({
   },
   userIcon: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: SPACING.sm,
   },
   userName: {
     fontSize: TYPOGRAPHY.sizes.sm,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     flex: 1,
   },
   userActivities: {
     fontSize: TYPOGRAPHY.sizes.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   lastUpdated: {
     marginTop: SPACING.md,
@@ -123,6 +132,7 @@ export const styles = StyleSheet.create({
   },
   lastUpdatedText: {
     fontSize: TYPOGRAPHY.sizes.xs,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
   },
   loadingContainer: {
@@ -132,6 +142,7 @@ export const styles = StyleSheet.create({
   loadingText: {
     marginTop: SPACING.md,
     fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   actionPanel: {
     marginTop: SPACING.lg,
@@ -152,6 +163,7 @@ export const styles = StyleSheet.create({
   actionButtonText: {
     color: 'white',
     fontSize: TYPOGRAPHY.sizes.md,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: TYPOGRAPHY.weights.semibold || '600',
   },
   disabledButton: {

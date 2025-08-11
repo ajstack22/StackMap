@@ -108,6 +108,7 @@ export const styles = StyleSheet.create({
   categoryName: {
     flex: 1,
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
     marginLeft: 12,
@@ -115,6 +116,7 @@ export const styles = StyleSheet.create({
   categoryNameInput: {
     flex: 1,
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
     marginLeft: 12,
@@ -124,6 +126,7 @@ export const styles = StyleSheet.create({
   },
   activityCount: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     marginRight: 12,
   },
@@ -153,10 +156,12 @@ export const styles = StyleSheet.create({
   },
   activityEmoji: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 12,
   },
   activityName: {
     fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     flex: 1,
   },
@@ -178,6 +183,7 @@ export const styles = StyleSheet.create({
   },
   addAllButtonText: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
   },
   editingActivity: {
@@ -190,6 +196,7 @@ export const styles = StyleSheet.create({
   },
   emojiInput: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     width: 40,
     textAlign: 'center',
     marginRight: 12,
@@ -197,6 +204,7 @@ export const styles = StyleSheet.create({
   nameInput: {
     flex: 1,
     fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     borderBottomWidth: 1,
     borderBottomColor: '#ddd',
     padding: 4,
@@ -219,6 +227,7 @@ export const styles = StyleSheet.create({
   },
   addActivityText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     marginLeft: 8,
   },
@@ -265,11 +274,13 @@ export const styles = StyleSheet.create({
   primaryButtonText: {
     color: 'white',
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
   },
   cancelButtonText: {
     color: '#000',
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
   },
 
@@ -305,6 +316,7 @@ export const styles = StyleSheet.create({
   },
   formLabel: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
     marginBottom: 8,
@@ -320,10 +332,12 @@ export const styles = StyleSheet.create({
   },
   selectedEmoji: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 12,
   },
   emojiSelectorText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   checkboxContainer: {
@@ -347,6 +361,7 @@ export const styles = StyleSheet.create({
   },
   checkboxLabel: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   categorySelector: {
@@ -367,6 +382,7 @@ export const styles = StyleSheet.create({
   },
   categoryChipText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   categoryChipTextActive: {
@@ -389,9 +405,11 @@ export const styles = StyleSheet.create({
   },
   quickTemplateIcon: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   quickTemplateText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
   actionButton: {
@@ -416,6 +434,7 @@ export const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
   },
@@ -454,6 +473,7 @@ export const styles = StyleSheet.create({
   notificationText: {
     color: 'white',
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     textAlign: 'center',
   },
@@ -486,6 +506,7 @@ export const styles = StyleSheet.create({
   },
   libraryTabText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
     color: '#666',
   },
@@ -503,6 +524,7 @@ export const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#000',
   },

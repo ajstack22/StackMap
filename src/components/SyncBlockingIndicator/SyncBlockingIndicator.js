@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import syncService from '../../services/sync/syncService';
+import { TYPOGRAPHY } from '../../constants';
 
 const SyncBlockingIndicator = ({ theme }) => {
   const [isVisible, setIsVisible] = useState(false);
@@ -172,18 +173,21 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#333',
     marginBottom: 8,
   },
   message: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     textAlign: 'center',
     marginBottom: 20,
   },
   hint: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#999',
     fontStyle: 'italic',
     marginTop: 16,
@@ -204,6 +208,7 @@ const styles = StyleSheet.create({
   },
   progressText: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     textAlign: 'center',
     marginTop: 8,

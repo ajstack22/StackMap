@@ -15,6 +15,7 @@ export const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
   },
@@ -32,12 +33,14 @@ export const styles = StyleSheet.create({
   },
   privacyTitle: {
     fontSize: 28,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: '700',
     color: '#2c3e50',
     marginBottom: 8,
   },
   privacyDate: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#7f8c8d',
   },
   privacySection: {
@@ -45,12 +48,14 @@ export const styles = StyleSheet.create({
   },
   privacySubtitle: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#2c3e50',
     marginBottom: 12,
   },
   privacyText: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 24,
     color: '#34495e',
   },
@@ -62,6 +67,7 @@ export const styles = StyleSheet.create({
   },
   privacyListItem: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 24,
     color: '#34495e',
     marginBottom: 8,
@@ -75,6 +81,7 @@ export const styles = StyleSheet.create({
   },
   privacyFooterText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 20,
     color: '#7f8c8d',
     textAlign: 'center',

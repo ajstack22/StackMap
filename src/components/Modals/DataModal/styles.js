@@ -228,6 +228,7 @@ export const styles = StyleSheet.create({
   },
   importItemEmoji: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   importItemText: {
     flex: 1,
@@ -587,6 +588,7 @@ export const styles = StyleSheet.create({
   },
   userSelectionEmoji: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userSelectionName: {
     fontSize: 15,
@@ -671,6 +673,7 @@ export const styles = StyleSheet.create({
   },
   userSharesEmoji: {
     fontSize: 20,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userSharesName: {
     fontSize: 16,
@@ -872,6 +875,7 @@ export const styles = StyleSheet.create({
   },
   keyActionButtonText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#333',
   },
   shareKeyContainer: {

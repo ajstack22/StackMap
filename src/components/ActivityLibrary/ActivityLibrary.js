@@ -1641,6 +1641,7 @@ const styles = StyleSheet.create({
   },
   activityEmoji: {
     fontSize: isTablet() ? 28 : 24,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: SPACING.sm,
   },
   activityImage: {
@@ -1782,6 +1783,7 @@ const styles = StyleSheet.create({
   },
   selectedEmoji: {
     fontSize: 48,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: SPACING.xs,
   },
   selectedEmojiImage: {

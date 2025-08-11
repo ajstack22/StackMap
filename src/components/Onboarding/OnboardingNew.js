@@ -1442,6 +1442,7 @@ const styles = StyleSheet.create({
   },
   cardIcon: {
     fontSize: Platform.OS === 'web' ? 32 : 28,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: 8,
   },
   cardDescription: {
@@ -1583,6 +1584,7 @@ const styles = StyleSheet.create({
   },
   cardEmoji: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginBottom: SPACING.sm,
   },
   cardText: {
@@ -1698,6 +1700,7 @@ const styles = StyleSheet.create({
   },
   emojiText: {
     fontSize: 28,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   emojiInput: {
     height: 60,
@@ -1705,6 +1708,7 @@ const styles = StyleSheet.create({
     borderColor: THEMES.stackBlue.primary,
     borderRadius: RADIUS.lg,
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[700],
     backgroundColor: 'white',
     textAlign: 'center',
@@ -1746,6 +1750,7 @@ const styles = StyleSheet.create({
   },
   pillEmoji: {
     fontSize: Platform.OS === 'web' ? 24 : (isTablet() ? 28 : 24),
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   pillName: {
     fontSize: Platform.OS === 'web' ? 16 : (isTablet() ? 18 : 16),
@@ -1891,6 +1896,7 @@ const styles = StyleSheet.create({
   },
   bulletPoint: {
     fontSize: Platform.OS === 'web' ? 18 : 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: THEMES.stackBlue.primary,
     marginRight: Platform.OS === 'web' ? SPACING.md : SPACING.sm,
     flexShrink: 0,
@@ -2067,6 +2073,7 @@ const styles = StyleSheet.create({
   },
   syncModeButtonText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: COLORS.gray[600],
   },
@@ -2083,6 +2090,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   errorContainer: {
     flex: 1,
@@ -2100,10 +2108,12 @@ const styles = StyleSheet.create({
   retryButtonText: {
     color: 'white',
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: 'bold',
   },
   description: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 24,
     textAlign: 'center',
     marginBottom: 24,
@@ -2142,6 +2152,7 @@ const styles = StyleSheet.create({
   },
   codeLabel: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     marginBottom: 8,
   },
   codeText: {
@@ -2161,6 +2172,7 @@ const styles = StyleSheet.create({
   copyButtonText: {
     color: 'white',
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: 'bold',
   },
   instructionsContainer: {
@@ -2168,6 +2180,7 @@ const styles = StyleSheet.create({
   },
   instructionsTitle: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     marginBottom: 12,
   },
@@ -2178,6 +2191,7 @@ const styles = StyleSheet.create({
   },
   instructionNumber: {
     fontSize: 18,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: 'bold',
     marginRight: 12,
     width: 24,
@@ -2185,6 +2199,7 @@ const styles = StyleSheet.create({
   instructionText: {
     flex: 1,
     fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 22,
   },
   supportButton: {
@@ -2201,10 +2216,12 @@ const styles = StyleSheet.create({
   supportButtonText: {
     color: 'white',
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: 'bold',
   },
   supportText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -2216,6 +2233,7 @@ const styles = StyleSheet.create({
   },
   contributionItem: {
     fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     lineHeight: 20,
     marginVertical: 2,
   },
@@ -2237,6 +2255,7 @@ const styles = StyleSheet.create({
   toastText: {
     color: 'white',
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: 'bold',
   },
   // Sync preview styles
@@ -2266,6 +2285,7 @@ const styles = StyleSheet.create({
   },
   syncPreviewEmoji: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   syncPreviewUserInfo: {
     flex: 1,

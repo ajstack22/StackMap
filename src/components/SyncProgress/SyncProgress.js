@@ -7,6 +7,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { TYPOGRAPHY } from '../../constants';
 import syncService from '../../services/sync/syncService';
 
 const SyncProgress = ({ theme }) => {
@@ -209,11 +210,13 @@ const styles = StyleSheet.create({
   },
   statusText: {
     fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '500',
     color: '#333',
   },
   detailsText: {
     fontSize: 12,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     marginTop: 2,
   },
