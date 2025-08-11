@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { Text } from '../Typography';
 import {
   Modal,
   View,
-  Text,
   ScrollView,
   ActivityIndicator,
   Platform,
   TouchableOpacity,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

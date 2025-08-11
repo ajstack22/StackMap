@@ -1,18 +1,13 @@
-// Import default font setup FIRST before any components
-import './src/utils/setupDefaultFont';
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   SafeAreaView,
   StyleSheet,
   View,
-  Text,
   ScrollView,
   TouchableOpacity,
   Platform,
   StatusBar,
   Alert,
-  TextInput,
   Modal,
   FlatList,
   KeyboardAvoidingView,
@@ -22,6 +17,9 @@ import {
   PermissionsAndroid,
   ActivityIndicator,
 } from 'react-native';
+
+// Import our custom Text and TextInput components that use Comic Relief
+import { Text, TextInput } from './src/components/Typography';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';

@@ -1,11 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Text, TextInput } from '../Typography';
 import {
   View,
-  Text,
   StyleSheet,
   TouchableOpacity,
   FlatList,
-  TextInput,
   Alert,
   Animated,
   ScrollView,
@@ -15,6 +14,7 @@ import {
   StatusBar,
   Dimensions,
   Modal,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

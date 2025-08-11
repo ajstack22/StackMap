@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { Text } from '../Typography';
 import {
   Modal,
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
   Platform,
   Dimensions,
   StatusBar,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

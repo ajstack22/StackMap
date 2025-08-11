@@ -1,11 +1,6 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  Platform,
-} from 'react-native';
+import { Text } from '../Typography';
+import { View, TouchableOpacity, ScrollView, Platform,  } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import ConfirmModal from '../../Modals/ConfirmModal';

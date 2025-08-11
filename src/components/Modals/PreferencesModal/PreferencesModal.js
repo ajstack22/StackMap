@@ -1,14 +1,15 @@
 import React, { useRef, useEffect } from 'react';
+import { Text } from '../Typography';
 import {
   Modal,
   View,
-  Text,
   TouchableOpacity,
   ScrollView,
   SafeAreaView,
   Platform,
   StatusBar,
   FlatList,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { THEMES } from '../../../constants';

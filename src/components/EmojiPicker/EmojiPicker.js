@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
+import { Text, TextInput } from './Typography';
 import {
   View,
-  Text,
   TouchableOpacity,
   Modal,
   ScrollView,
-  TextInput,
   StyleSheet,
   Image,
   FlatList,
   SafeAreaView,
   Dimensions,
   Platform,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, COLORS, isTablet, CUSTOM_IMAGE_SOURCES, getCustomImageSource } from '../../constants';

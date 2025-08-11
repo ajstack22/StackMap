@@ -1,12 +1,6 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  Platform,
-} from 'react-native';
+import { Text, TextInput } from './Typography';
+import { View, TouchableOpacity, StyleSheet, Platform,  } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../constants';
 

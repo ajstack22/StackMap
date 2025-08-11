@@ -1,12 +1,13 @@
 import React from 'react';
+import { Text } from './Typography';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
   Platform,
   StatusBar,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING } from '../../constants';

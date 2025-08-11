@@ -1,12 +1,6 @@
 import React, { useEffect } from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  TextInput,
-  Platform,
-} from 'react-native';
+import { Text, TextInput } from '../Typography';
+import { Modal, View, TouchableOpacity, Platform,  } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 

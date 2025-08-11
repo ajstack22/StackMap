@@ -1,12 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  TextInput,
-  Platform,
-} from 'react-native';
+import { Text, TextInput } from '../Typography';
+import { View, TouchableOpacity, ScrollView, Platform,  } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FormInput } from '../../ModalUtilities';
 import EmojiPicker from '../../EmojiPicker';

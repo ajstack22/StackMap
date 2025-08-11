@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { Text } from './Typography';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   SafeAreaView,
@@ -11,6 +11,7 @@ import {
   Platform,
   StatusBar,
   Dimensions,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet, getContainerPadding } from '../../constants';

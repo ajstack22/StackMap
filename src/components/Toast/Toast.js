@@ -1,11 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  Animated,
-  StyleSheet,
-} from 'react-native';
+import { Text } from './Typography';
+import { View, TouchableOpacity, Animated, StyleSheet,  } from 'react-native';
 import { SHADOWS, TYPOGRAPHY, RADIUS, SPACING } from '../../constants';
 
 const Toast = ({ 

@@ -1,16 +1,16 @@
 import React from 'react';
+import { Text, TextInput } from '../Typography';
 import {
   Modal,
   View,
-  Text,
   TouchableOpacity,
-  TextInput,
   ScrollView,
   KeyboardAvoidingView,
   SafeAreaView,
   Platform,
   StatusBar,
   Image,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { EmojiPicker, TimePicker } from '../../';

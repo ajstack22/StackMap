@@ -1,11 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-  ActivityIndicator,
-} from 'react-native';
+import { Text } from '../Typography';
+import { View, TouchableOpacity, ScrollView, ActivityIndicator,  } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import TabbedModal from '../../TabbedModal';
 import { TabContent } from '../../TabbedModal';

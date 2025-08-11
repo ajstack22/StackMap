@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
+import { Text } from '../Typography';
 import {
   View,
-  Text,
   ActivityIndicator,
   StyleSheet,
   Modal,
   Platform,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import syncService from '../../services/sync/syncService';

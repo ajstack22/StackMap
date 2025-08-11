@@ -1,11 +1,12 @@
 import React from 'react';
+import { Text } from './Typography';
 import {
   TouchableOpacity,
-  Text,
   ActivityIndicator,
   StyleSheet,
   Platform,
   View,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING } from '../../constants';

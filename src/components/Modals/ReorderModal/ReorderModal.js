@@ -1,11 +1,6 @@
 import React from 'react';
-import {
-  Modal,
-  View,
-  Text,
-  TouchableOpacity,
-  ScrollView,
-} from 'react-native';
+import { Text } from '../Typography';
+import { Modal, View, TouchableOpacity, ScrollView,  } from 'react-native';
 import { styles } from './styles';
 
 const ReorderModal = ({

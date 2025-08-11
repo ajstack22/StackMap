@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Text } from '../Typography';
 import {
   View,
-  Text,
   Modal,
   TouchableOpacity,
   ScrollView,
@@ -11,6 +11,7 @@ import {
   Animated,
   Dimensions,
   Picker,
+  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

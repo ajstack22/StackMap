@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { Text, TextInput } from '../Typography';
 import {
   View,
-  Text,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
   Platform,
-  TextInput,
   KeyboardAvoidingView,
   ScrollView,
   Animated,
@@ -15,6 +14,7 @@ import {
   Linking,
   Clipboard,
   Alert,
+  
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';

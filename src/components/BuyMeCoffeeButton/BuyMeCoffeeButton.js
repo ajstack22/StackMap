@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
-import { View, TouchableOpacity, Text, Platform, Linking } from 'react-native';
+import { Text } from './Typography';
+import { View, TouchableOpacity, Platform, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
 const BuyMeCoffeeButton = ({ 
