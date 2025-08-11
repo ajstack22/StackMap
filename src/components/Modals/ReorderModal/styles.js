@@ -36,6 +36,7 @@ export const styles = StyleSheet.create({
   },
   reorderActivityEmoji: {
     fontSize: 32,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: 12,
   },
   reorderActivityText: {

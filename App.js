@@ -4664,6 +4664,7 @@ const styles = StyleSheet.create({
   numberText: {
     color: 'white',
     fontSize: getBadgeDimensions().iconSize, // Match checkmark size
+    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Bold' : 'Comic Relief',
     fontWeight: 'bold',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
@@ -4705,6 +4706,7 @@ const styles = StyleSheet.create({
   },
   activityDescription: {
     fontSize: isTablet() ? 14 : 17.3,  // Smaller text on tablets for better fit
+    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Regular' : 'Comic Relief',
     color: '#000',
     textAlign: 'center',
     lineHeight: isTablet() ? 14 * 1.3 : 17.3 * 1.3,  // Adjusted line height

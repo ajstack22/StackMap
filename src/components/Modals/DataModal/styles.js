@@ -111,6 +111,7 @@ export const styles = StyleSheet.create({
   },
   selectionTitle: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: Platform.OS === 'ios' ? '600' : '700',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
@@ -164,6 +165,7 @@ export const styles = StyleSheet.create({
   },
   importModeTitle: {
     fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: Platform.OS === 'ios' ? '600' : '700',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
@@ -214,6 +216,7 @@ export const styles = StyleSheet.create({
   },
   importCategoryTitle: {
     fontSize: 15,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: Platform.OS === 'ios' ? '600' : '700',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
@@ -892,6 +895,7 @@ export const styles = StyleSheet.create({
   },
   resetWarningTitle: {
     fontSize: 24,
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: Platform.OS === 'ios' ? '700' : '800',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
