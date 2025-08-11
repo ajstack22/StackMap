@@ -72,8 +72,9 @@ const PreferencesModal = ({
   const renderContent = () => (
     <>
       {/* Theme Color Section */}
-      <Text style={styles.sectionTitle}>Theme Color</Text>
-      <View style={styles.colorGrid}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Theme Color</Text>
+        <View style={styles.colorGrid}>
         {(() => {
           // Put stackBlue (default) first, then all other themes
           const themeKeys = Object.keys(THEMES);
@@ -97,11 +98,13 @@ const PreferencesModal = ({
           </View>
         ))
       })()}
+        </View>
       </View>
       
       {/* Banner Position Section */}
-      <Text style={styles.sectionTitle}>Banner Position</Text>
-      <View style={styles.toggleContainer}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Banner Position</Text>
+        <View style={styles.toggleContainer}>
         <TouchableOpacity
           style={[styles.toggle, bannerPosition === 'top' && styles.toggleActive]}
           onPress={() => handleBannerPositionChange('top')}
@@ -118,11 +121,13 @@ const PreferencesModal = ({
             Bottom
           </Text>
         </TouchableOpacity>
+        </View>
       </View>
       
       {/* Display Mode Section */}
-      <Text style={styles.sectionTitle}>Activity Display</Text>
-      <View style={styles.toggleContainer}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Activity Display</Text>
+        <View style={styles.toggleContainer}>
         <TouchableOpacity
           style={[styles.toggle, displayMode === 'none' && styles.toggleActive]}
           onPress={() => handleDisplayModeChange('none')}
@@ -147,11 +152,13 @@ const PreferencesModal = ({
             Time
           </Text>
         </TouchableOpacity>
+        </View>
       </View>
       
       {/* Celebrations Section */}
-      <Text style={styles.sectionTitle}>Task Celebration</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Task Celebration</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
         <View style={styles.celebrationOptions}>
           {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
             <TouchableOpacity
@@ -171,10 +178,10 @@ const PreferencesModal = ({
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
-      
-      <Text style={styles.sectionTitle}>Routine Celebration</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
+        </ScrollView>
+        
+        <Text style={styles.sectionTitle}>Routine Celebration</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
         <View style={styles.celebrationOptions}>
           {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
             <TouchableOpacity
@@ -194,10 +201,11 @@ const PreferencesModal = ({
             </TouchableOpacity>
           ))}
         </View>
-      </ScrollView>
+        </ScrollView>
+      </View>
       
       {/* Info Section */}
-      <View style={styles.infoSection}>
+      <View style={[styles.section, styles.infoSection]}>
         <TouchableOpacity 
           style={styles.infoButton}
           onPress={onPrivacyPress}

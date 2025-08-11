@@ -4710,7 +4710,12 @@ const styles = StyleSheet.create({
   },
   completedText: {
     color: 'white',
-    fontWeight: '700',
+    fontWeight: Platform.OS === 'android' ? 'normal' : '700',  // Android uses font file, not weight
+    fontFamily: Platform.select({
+      ios: 'ComicRelief-Bold',
+      android: 'ComicRelief-Bold',
+      web: "'Comic Relief', 'Comic Sans MS', cursive"
+    }),
   },
   emptyState: {
     alignItems: 'center',

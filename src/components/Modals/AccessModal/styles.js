@@ -1,21 +1,40 @@
-import { StyleSheet, Platform } from 'react-native';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, isMobile } from '../../../constants';
+
+const { width: screenWidth } = Dimensions.get('window');
+const IS_MOBILE = isMobile(screenWidth);
 
 export const styles = StyleSheet.create({
   tabContent: {
     flex: 1,
-    paddingTop: SPACING.md,  // Standardized top padding (16px)
-    paddingHorizontal: 20,
-    paddingBottom: 80,       // Consistent bottom padding for all tabs
+    paddingTop: SPACING.md,
+    paddingBottom: 80,
+    paddingHorizontal: 0,
     ...(Platform.OS === 'web' && {
-      maxWidth: 600,
-      alignSelf: 'center',
-      width: '100%',
+      paddingHorizontal: SPACING.lg,
     }),
   },
   section: {
-    marginBottom: 30,
-    ...(Platform.OS === 'web' && {
+    marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
+    marginVertical: SPACING.sm,
+    padding: IS_MOBILE ? SPACING.sm : SPACING.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      },
+    }),
+    ...(!IS_MOBILE && {
       maxWidth: 600,
       alignSelf: 'center',
       width: '100%',

@@ -1,5 +1,8 @@
-import { StyleSheet } from 'react-native';
-import { TYPOGRAPHY, SPACING, RADIUS, COLORS } from '../../../constants';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { TYPOGRAPHY, SPACING, RADIUS, COLORS, isMobile } from '../../../constants';
+
+const { width: screenWidth } = Dimensions.get('window');
+const IS_MOBILE = isMobile(screenWidth);
 
 export const styles = StyleSheet.create({
   modalContainer: {
@@ -25,6 +28,40 @@ export const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: 'white',
+  },
+  section: {
+    marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
+    marginVertical: SPACING.sm,
+    padding: IS_MOBILE ? SPACING.sm : SPACING.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      },
+    }),
+    ...(!IS_MOBILE && {
+      maxWidth: 600,
+      alignSelf: 'center',
+      width: '100%',
+    }),
+  },
+  supportContent: {
+    paddingTop: SPACING.md,
+    paddingBottom: 80,
+    paddingHorizontal: 0,
+    ...(Platform.OS === 'web' && {
+      paddingHorizontal: SPACING.lg,
+    }),
   },
   supportHeader: {
     alignItems: 'center',

@@ -139,10 +139,13 @@ const EditModeToolbar = ({
   // Default order if none provided - R->L: Activities, Day, Access, Data
   const defaultOrder = ['data', 'access', 'day', 'activities'];
   
-  // Validate and use toolbar order
-  const currentOrder = (Array.isArray(toolbarOrder) && toolbarOrder.length > 0) 
-    ? toolbarOrder 
-    : defaultOrder;
+  // Validate toolbar order - filter out invalid IDs
+  const validIds = Object.keys(actionMap);
+  const validatedOrder = toolbarOrder ? toolbarOrder.filter(id => validIds.includes(id)) : [];
+  
+  // Use validated order only if it has at least 3 valid buttons, otherwise use default
+  // This prevents using an incomplete/corrupted toolbar order
+  const currentOrder = validatedOrder.length >= 3 ? validatedOrder : defaultOrder;
 
   // Create actions array based on custom order (excluding special buttons like sort)
   const actions = currentOrder
@@ -159,9 +162,9 @@ const EditModeToolbar = ({
     const availableWidth = screenWidth - containerPadding;
     
     // Button width calculation - adjusted for Galaxy S25+ and similar phones
-    const buttonWidth = isTablet() ? 65 : 44; // Reduced from 45 to 44 for phones
+    const buttonWidth = isTablet(screenWidth) ? 65 : 44; // Reduced from 45 to 44 for phones
     const buttonGap = Platform.OS === 'web' ? 5 : 5; // Reduced gap from 6 to 5 for phones
-    const editModeTextWidth = isTablet() ? 85 : 58; // Reduced from 60 to 58
+    const editModeTextWidth = isTablet(screenWidth) ? 85 : 58; // Reduced from 60 to 58
     const moreButtonWidth = buttonWidth; // Same as regular buttons
     
     // Always reserve space for More button since Sort is always in overflow
@@ -170,6 +173,11 @@ const EditModeToolbar = ({
     
     // Calculate how many buttons fit (including gaps)
     const maxButtons = Math.floor((usableWidth + buttonGap) / (buttonWidth + buttonGap));
+    
+    // Android tablets should always show all 4 buttons
+    if (Platform.OS === 'android' && isTablet(screenWidth)) {
+      return 4; // Force all 4 action buttons to be visible
+    }
     
     // Force 4 buttons on phones with reasonable screen width (like Galaxy S25+)
     // Only drop to 3 on very small screens
@@ -180,6 +188,7 @@ const EditModeToolbar = ({
   };
 
   const visibleButtonCount = calculateVisibleButtons();
+  
   const visibleActions = moreButtonPosition === 'left' 
     ? actions.slice(-visibleButtonCount) // Take from the end when More is on left
     : actions.slice(0, visibleButtonCount); // Take from the beginning when More is on right
@@ -414,7 +423,7 @@ const styles = StyleSheet.create({
   },
   editModeLabel: {
     color: 'white',
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 16 : 15) : (isTablet() ? 18 : 16),
+    fontSize: Platform.OS === 'web' ? (isTablet(Dimensions.get('window').width) ? 16 : 15) : (isTablet(Dimensions.get('window').width) ? 18 : 16),
     fontWeight: Platform.OS === 'ios' ? '700' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     opacity: 1,
@@ -425,15 +434,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     width: '100%',
-    gap: Platform.OS === 'web' ? 5 : 5,
+    // Gap is not supported on Android, use margin on buttons instead
+    ...(Platform.OS === 'web' && { gap: 5 }),
   },
   actionButton: {
     flexDirection: 'column',
     alignItems: 'center',
     paddingHorizontal: Platform.OS === 'web' ? 5 : 4,
     paddingVertical: Platform.OS === 'web' ? 4 : 5,
-    gap: Platform.OS === 'web' ? 1 : 2,
-    minWidth: isTablet() ? 65 : 44,
+    // Gap is not supported on Android
+    ...(Platform.OS === 'web' ? { gap: 1 } : Platform.OS === 'ios' ? { gap: 2 } : {}),
+    // Add margin for Android to replace gap
+    ...(Platform.OS === 'android' && { marginHorizontal: 2.5 }),
+    minWidth: isTablet(Dimensions.get('window').width) ? 65 : 44,
   },
   disabledButton: {
     opacity: 0.6,
@@ -443,7 +456,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   actionLabel: {
-    fontSize: Platform.OS === 'web' ? (isTablet() ? 12 : 9) : (isTablet() ? 13 : 11),
+    fontSize: Platform.OS === 'web' ? (isTablet(Dimensions.get('window').width) ? 12 : 9) : (isTablet(Dimensions.get('window').width) ? 13 : 11),
     fontWeight: Platform.OS === 'ios' ? '600' : 'normal',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     textAlign: 'center',

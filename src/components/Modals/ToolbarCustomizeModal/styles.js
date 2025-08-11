@@ -1,5 +1,8 @@
-import { StyleSheet, Platform } from 'react-native';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS } from '../../../constants';
+import { StyleSheet, Platform, Dimensions } from 'react-native';
+import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, isMobile } from '../../../constants';
+
+const { width: screenWidth } = Dimensions.get('window');
+const IS_MOBILE = isMobile(screenWidth);
 
 export const styles = StyleSheet.create({
   modalContainer: {
@@ -26,12 +29,37 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   modalContent: {
-    padding: 20,
+    paddingTop: SPACING.md,
+    paddingBottom: 80,
+    paddingHorizontal: 0,
     ...(Platform.OS === 'web' && {
+      paddingHorizontal: SPACING.lg,
+    }),
+  },
+  section: {
+    marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
+    marginVertical: SPACING.sm,
+    padding: IS_MOBILE ? SPACING.sm : SPACING.md,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.05,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
+      },
+    }),
+    ...(!IS_MOBILE && {
       maxWidth: 600,
       alignSelf: 'center',
       width: '100%',
-      margin: '0 auto',
     }),
   },
   description: {
@@ -43,6 +71,10 @@ export const styles = StyleSheet.create({
   },
   buttonsList: {
     marginBottom: SPACING.lg,
+    // Ensure all buttons are visible on Android
+    ...(Platform.OS === 'android' && {
+      minHeight: 300,
+    }),
     ...(Platform.OS === 'web' && {
       maxWidth: 600,
       alignSelf: 'center',
@@ -245,5 +277,11 @@ export const styles = StyleSheet.create({
   },
   closeButton: {
     padding: SPACING.xs,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: COLORS.gray[200],
+    marginVertical: SPACING.lg,
+    marginHorizontal: -SPACING.md,
   },
 });

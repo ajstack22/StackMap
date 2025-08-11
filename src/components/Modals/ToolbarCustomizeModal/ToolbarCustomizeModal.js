@@ -88,6 +88,7 @@ const ToolbarCustomizeModal = ({
   
   const visibleButtonCount = calculateVisibleButtonCount();
   
+  
   // Update screen width on dimension change
   useEffect(() => {
     const updateDimensions = ({ window }) => {
@@ -100,9 +101,32 @@ const ToolbarCustomizeModal = ({
 
   useEffect(() => {
     if (currentOrder && currentOrder.length > 0) {
-      // Filter out 'settings' and 'more' if they exist in saved order
-      const filteredOrder = currentOrder.filter(id => id !== 'settings' && id !== 'more' && TOOLBAR_BUTTONS[id]);
-      setButtonOrder(filteredOrder.length > 0 ? filteredOrder : DEFAULT_TOOLBAR_ORDER);
+      // Filter out 'settings', 'more', and invalid old button names
+      const filteredOrder = currentOrder.filter(id => {
+        // Filter out special buttons and invalid IDs
+        if (id === 'settings' || id === 'more') return false;
+        // Check if it's a valid button ID
+        if (!TOOLBAR_BUTTONS[id]) {
+          // Map old IDs to new ones if possible
+          const idMap = {
+            'users': 'access',
+            'share': 'data',
+            'complete': 'day',
+            'plan': 'day',
+            'library': 'activities',
+            'add': 'activities'
+          };
+          return false;
+        }
+        return true;
+      });
+      
+      // On Android tablets, force default if we get a suspicious result
+      if (Platform.OS === 'android' && filteredOrder.length < 3) {
+        setButtonOrder(DEFAULT_TOOLBAR_ORDER);
+      } else {
+        setButtonOrder(filteredOrder.length > 0 ? filteredOrder : DEFAULT_TOOLBAR_ORDER);
+      }
     } else {
       // Reset to default if no custom order
       setButtonOrder(DEFAULT_TOOLBAR_ORDER);
@@ -232,8 +256,9 @@ const ToolbarCustomizeModal = ({
         
         <View style={{ flex: 1, backgroundColor: theme.light }}>
           <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
-            {/* More Button Position Section */}
-            <View style={styles.morePositionSection}>
+            {/* Single combined section */}
+            <View style={styles.section}>
+              {/* More Button Position */}
               <Text style={styles.sectionTitle}>More Button Position</Text>
               <View style={styles.toggleContainer}>
                 <TouchableOpacity
@@ -253,9 +278,8 @@ const ToolbarCustomizeModal = ({
                   </Text>
                 </TouchableOpacity>
               </View>
-            </View>
-
-            <Text style={styles.description}>
+              
+              <Text style={styles.description}>
               {Platform.OS === 'web' 
                 ? morePosition === 'left'
                   ? `Use the arrows to reorder buttons. The last ${visibleButtonCount} buttons will be visible, the first ones will be in the overflow menu (plus the Sort button).`
@@ -264,12 +288,18 @@ const ToolbarCustomizeModal = ({
                   ? `Drag buttons to reorder them. The last ${visibleButtonCount} buttons will be visible, the first ones will be in the overflow menu (plus the Sort button).`
                   : `Drag buttons to reorder them. The first ${visibleButtonCount} buttons will be visible, the rest will be in the overflow menu (plus the Sort button).`
               }
-            </Text>
+              </Text>
 
-            {Platform.OS !== 'ios' ? (
+              {/* Divider */}
+              <View style={styles.divider} />
+
+              {/* Button Order */}
+              <Text style={styles.sectionTitle}>Button Order</Text>
+              
+              {Platform.OS !== 'ios' ? (
               // Web and Android use arrow controls instead of drag-and-drop
               <View style={styles.buttonsList}>
-                {buttonOrder.map((buttonId, index) => {
+                {buttonOrder && buttonOrder.length > 0 && buttonOrder.map((buttonId, index) => {
                   const button = TOOLBAR_BUTTONS[buttonId];
                   const isInOverflow = morePosition === 'left' 
                     ? index < (buttonOrder.length - visibleButtonCount) // Overflow from beginning when More is on left
@@ -319,17 +349,19 @@ const ToolbarCustomizeModal = ({
               </GestureHandlerRootView>
             )}
 
-            <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
-              <Icon name="restore" size={20} color="#000" />
-              <Text style={styles.resetButtonText}>Reset to Default</Text>
-            </TouchableOpacity>
+              {/* Action Buttons */}
+              <TouchableOpacity style={styles.resetButton} onPress={handleReset}>
+                <Icon name="restore" size={20} color="#000" />
+                <Text style={styles.resetButtonText}>Reset to Default</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              style={[styles.saveButton, { backgroundColor: theme.primary }]}
-              onPress={handleSave}
-            >
-              <Text style={styles.saveButtonText}>Save Order</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.saveButton, { backgroundColor: theme.primary }]}
+                onPress={handleSave}
+              >
+                <Text style={styles.saveButtonText}>Save Order</Text>
+              </TouchableOpacity>
+            </View>
           </ScrollView>
         </View>
         {Platform.OS === 'android' && (
