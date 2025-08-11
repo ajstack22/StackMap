@@ -10,6 +10,9 @@ import 'react-native-reanimated';
 // Import crypto polyfill for React Native BEFORE any other imports that might use it
 import 'react-native-get-random-values';
 
+// Set up default font for ALL Text components (must be before React Native imports)
+import './src/utils/setupDefaultFont';
+
 import React from 'react';
 import { AppRegistry, Text, TextInput, Platform, LogBox } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -57,29 +60,40 @@ LogBox.ignoreLogs([
 // Optionally, disable all yellow box warnings in development (not recommended for production)
 // LogBox.ignoreAllLogs(true);
 
-// Set default font for all Text components
-Text.defaultProps = Text.defaultProps || {};
-Text.defaultProps.style = [
-  {
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular'
-    })
-  },
-  Text.defaultProps.style
-];
-
-// Set default font for all TextInput components
-TextInput.defaultProps = TextInput.defaultProps || {};
-TextInput.defaultProps.style = [
-  {
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular'
-    })
-  },
-  TextInput.defaultProps.style
-];
+// Also set defaultProps as a fallback (the setupDefaultFont handles the main logic)
+if (Platform.OS === 'android') {
+  Text.defaultProps = Text.defaultProps || {};
+  Text.defaultProps.style = [
+    {
+      fontFamily: 'ComicRelief-Regular'
+    },
+    Text.defaultProps.style
+  ];
+  
+  TextInput.defaultProps = TextInput.defaultProps || {};
+  TextInput.defaultProps.style = [
+    {
+      fontFamily: 'ComicRelief-Regular'
+    },
+    TextInput.defaultProps.style
+  ];
+} else if (Platform.OS === 'ios') {
+  Text.defaultProps = Text.defaultProps || {};
+  Text.defaultProps.style = [
+    {
+      fontFamily: 'Comic Relief'
+    },
+    Text.defaultProps.style
+  ];
+  
+  TextInput.defaultProps = TextInput.defaultProps || {};
+  TextInput.defaultProps.style = [
+    {
+      fontFamily: 'Comic Relief'
+    },
+    TextInput.defaultProps.style
+  ];
+}
 
 const AppWithSafeArea = () => (
   <SafeAreaProvider>

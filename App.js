@@ -1,3 +1,6 @@
+// Import default font setup FIRST before any components
+import './src/utils/setupDefaultFont';
+
 import React, { useState, useEffect, useRef } from 'react';
 import {
   SafeAreaView,
