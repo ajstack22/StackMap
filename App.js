@@ -3114,7 +3114,7 @@ const App = () => {
           ],
           isActive && styles.draggingCard
         ]}
-        onPress={() => !isEditMode && toggleActivity(item.id)}
+        onPress={() => toggleActivity(item.id)}
         onLongPress={() => isEditMode && drag && Platform.OS === 'ios' ? drag() : null}
         disabled={isActive}
         activeOpacity={0.9}
