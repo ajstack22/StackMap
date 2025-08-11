@@ -3516,10 +3516,10 @@ const App = () => {
                   style={[
                   styles.gridContainer,
                   {
-                    // Simplified layout for all platforms
+                    // Multi-column layout for all platforms
                     flexDirection: 'row',
                     flexWrap: 'wrap',
-                    justifyContent: 'center',
+                    justifyContent: Platform.OS === 'web' ? 'center' : (numColumns === 1 ? 'center' : 'flex-start'),
                     alignItems: 'flex-start',
                     width: '100%',
                   }

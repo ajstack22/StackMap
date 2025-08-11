@@ -42,9 +42,9 @@ export const calculateColumns = (width = screenWidth) => {
   const availableWidth = width - (containerPadding * 2);
   
   // Special handling for iPad devices
-  // Always use 2 columns for iPad regardless of orientation
-  if (Platform.OS === 'ios' && isTablet(width)) {
-    // Always return 2 columns for iPad
+  // Force 2 columns for iPad in portrait (width 768-900)
+  if (Platform.OS === 'ios' && width >= 768 && width < 900) {
+    // iPad portrait mode - force 2 columns
     return 2;
   }
   
@@ -77,9 +77,11 @@ export const calculateCardWidth = (width = screenWidth) => {
   const totalGaps = (numColumns - 1) * CARD_LAYOUT.gap;
   const cardWidth = (availableWidth - totalGaps) / numColumns;
   
-  // For iPad portrait (2 columns), ensure cards have good minimum width
+  // For iPad portrait (2 columns), account for margins to ensure proper fit
   if (Platform.OS === 'ios' && isTablet(width) && numColumns === 2) {
-    return Math.min(Math.max(cardWidth, 350), CARD_LAYOUT.maxWidth);
+    // Subtract margin space from card width so cards + margins fit properly
+    const cardWithMargins = Math.min(Math.max(cardWidth, 350), CARD_LAYOUT.maxWidth) - CARD_LAYOUT.gap;
+    return Math.max(cardWithMargins, 320); // Ensure minimum usable width
   }
   
   // For landscape (3 columns), let cards be narrower to fit
