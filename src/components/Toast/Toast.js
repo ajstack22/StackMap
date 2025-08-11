@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Text } from './Typography';
+import { Text } from '../Typography';
 import { View, TouchableOpacity, Animated, StyleSheet,  } from 'react-native';
 import { SHADOWS, TYPOGRAPHY, RADIUS, SPACING } from '../../constants';
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text } from './Typography';
+import { Text } from '../Typography';
 import {
   Modal,
   View,

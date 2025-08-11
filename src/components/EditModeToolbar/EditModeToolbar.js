@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Text } from './Typography';
+import { Text } from '../Typography';
 import {
   View,
   TouchableOpacity,

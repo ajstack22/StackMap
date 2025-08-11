@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Text } from './Typography';
+import { Text } from '../Typography';
 import { View, TouchableOpacity, Platform, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 

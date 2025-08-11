@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Text } from './Typography';
+import { Text } from '../Typography';
 import { View, TouchableOpacity, FlatList } from 'react-native';
 
 // Web-compatible draggable list implementation
