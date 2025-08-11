@@ -41,14 +41,19 @@ export const calculateColumns = (width = screenWidth) => {
   const containerPadding = getContainerPadding(width);
   const availableWidth = width - (containerPadding * 2);
   
-  // Special handling for iPad devices
+  // Android tablets: Always 2 columns (portrait ~800px, landscape ~1280px)
+  if (Platform.OS === 'android' && width >= 768) {
+    return 2;
+  }
+  
+  // Special handling for iOS tablets
   // Force 2 columns for iPad in portrait (width 768-900)
   if (Platform.OS === 'ios' && width >= 768 && width < 900) {
     // iPad portrait mode - force 2 columns
     return 2;
   }
   
-  // Standard breakpoints for other platforms
+  // Standard breakpoints for all platforms
   if (width < 600) {
     return 1;
   }

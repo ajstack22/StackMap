@@ -70,7 +70,6 @@ export const styles = StyleSheet.create({
   },
   tabTextActive: {
     fontWeight: Platform.OS === 'ios' ? '700' : 'bold',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontSize: 15,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     letterSpacing: 0,

@@ -28,32 +28,41 @@ const getFontFamily = (weight = 'regular') => {
 
 // Custom Text component that ensures Comic Relief is used everywhere
 export const Text = React.forwardRef((props, ref) => {
-  const { style, ...restProps } = props;
+  const { style, children, ...restProps } = props;
   
-  // Extract fontWeight from style to determine which font variant to use
+  // Extract fontWeight from all styles
   let fontWeight = 'regular';
+  
   if (style) {
     const styles = Array.isArray(style) ? style : [style];
     for (const s of styles) {
       if (s && s.fontWeight) {
         fontWeight = s.fontWeight;
-        break;
       }
     }
   }
   
-  // Apply Comic Relief font family
+  // Apply Comic Relief font family based on weight - THIS ALWAYS WINS
   const fontFamily = getFontFamily(fontWeight);
+  
+  // On Android, having both fontWeight and fontFamily can cause issues
+  // Remove fontWeight when applying custom font
+  const finalStyle = [
+    style, // User styles
+    { 
+      fontFamily, // Comic Relief ALWAYS overrides any fontFamily in user styles
+      ...(Platform.OS === 'android' && { fontWeight: 'normal' }) // Reset fontWeight on Android
+    }
+  ];
   
   return (
     <RNText
       ref={ref}
       {...restProps}
-      style={[
-        { fontFamily },
-        style
-      ]}
-    />
+      style={finalStyle}
+    >
+      {children}
+    </RNText>
   );
 });
 
@@ -82,8 +91,8 @@ export const TextInput = React.forwardRef((props, ref) => {
       ref={ref}
       {...restProps}
       style={[
-        { fontFamily },
-        style
+        style,
+        { fontFamily } // Apply Comic Relief AFTER user styles to ensure it always wins
       ]}
     />
   );

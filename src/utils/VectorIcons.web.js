@@ -1,6 +1,5 @@
 import React from 'react';
-import { Text } from './components/Typography';
-;
+import { Text } from '../components/Typography';
 
 // Web implementation of react-native-vector-icons using Material Icons font
 // Now using ligatures instead of unicode for better compatibility

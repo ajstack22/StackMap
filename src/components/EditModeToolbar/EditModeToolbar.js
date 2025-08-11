@@ -445,8 +445,10 @@ const styles = StyleSheet.create({
     paddingVertical: Platform.OS === 'web' ? 4 : 5,
     // Gap is not supported on Android
     ...(Platform.OS === 'web' ? { gap: 1 } : Platform.OS === 'ios' ? { gap: 2 } : {}),
-    // Add margin for Android to replace gap
-    ...(Platform.OS === 'android' && { marginHorizontal: 2.5 }),
+    // Add margin for Android to replace gap - increased for better spacing
+    ...(Platform.OS === 'android' && { marginHorizontal: 5 }),
+    // Also add margin for iOS for consistent spacing
+    ...(Platform.OS === 'ios' && { marginHorizontal: 4 }),
     minWidth: isTablet(Dimensions.get('window').width) ? 65 : 44,
   },
   disabledButton: {

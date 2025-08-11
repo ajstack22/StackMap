@@ -283,8 +283,28 @@ const App = () => {
   
   // Calculate layout values based on current screen dimensions
   const numColumns = calculateColumns(screenDimensions.width);
+  // Debug logging for Android tablets
+  if (Platform.OS === 'android' && screenDimensions.width >= 600) {
+    console.warn(`Android tablet dimensions - width: ${screenDimensions.width}, columns: ${numColumns}`);
+  }
   const cardWidth = calculateCardWidth(screenDimensions.width);
+  
+  // Debug logging for Android tablet issue
+  if (Platform.OS === 'android') {
+    console.log(`[App.js] Android width: ${screenDimensions.width}, numColumns: ${numColumns}, cardWidth: ${cardWidth}`);
+  }
   const cardHeight = getCardHeight();
+  
+  // DEBUG for Android tablet  
+  if (Platform.OS === 'android') {
+    console.warn('Android debug:', {
+      width: screenDimensions.width,
+      numColumns,
+      cardWidth,
+      isTablet: isTablet(screenDimensions.width)
+    });
+  }
+  
   
   
   // Activity library state
@@ -3489,7 +3509,10 @@ const App = () => {
         
         {/* Main Content Area */}
         <View style={styles.contentArea}>
+          {(Platform.OS === 'android' && numColumns === 2) && console.warn(`Android: Should render 2 columns! Width: ${screenDimensions.width}`)}
           {(numColumns > 1) ? (
+            <>
+            {Platform.OS === 'android' && console.warn(`Android: ENTERING multi-column branch with ${numColumns} columns`)}
             <ScrollView
               style={{ flex: 1 }}
               showsVerticalScrollIndicator={true}
@@ -3519,9 +3542,12 @@ const App = () => {
                     // Multi-column layout for all platforms
                     flexDirection: 'row',
                     flexWrap: 'wrap',
-                    justifyContent: Platform.OS === 'web' ? 'center' : (numColumns === 1 ? 'center' : 'flex-start'),
+                    justifyContent: Platform.OS === 'web' ? 'center' : 
+                      (Platform.OS === 'android' && numColumns === 2 ? 'space-evenly' : 'flex-start'),
                     alignItems: 'flex-start',
+                    alignContent: 'flex-start', // CRITICAL for Android flexWrap to work!
                     width: '100%',
+                    ...(Platform.OS === 'android' && { minHeight: 200 }), // Android needs height for flexWrap
                   }
                 ]}>
                   {activities.filter(a => !a.deleted).map((item, index) => {
@@ -3537,10 +3563,20 @@ const App = () => {
                             width: numColumns === 1 ? '100%' : `calc(${100/numColumns}% - ${CARD_LAYOUT.gap}px)`,
                             maxWidth: numColumns === 1 ? CARD_LAYOUT.singleColumnMaxWidth : CARD_LAYOUT.maxWidth,
                           } : {
-                            // Native platforms use calculated width
-                            width: calculateCardWidth(screenDimensions.width),
+                            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            // CRITICAL FOR ANDROID TABLETS - DO NOT CHANGE THIS!!!!!!!
+                            // Android tablets MUST use percentage widths (48%) for flexWrap to work
+                            // calculateCardWidth() DOES NOT WORK on Android with flexWrap
+                            // This took HOURS to figure out - Android's flexWrap is broken with calculated widths
+                            // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                            width: Platform.OS === 'android' && numColumns === 2 
+                              ? '48%'  // MUST BE PERCENTAGE FOR ANDROID FLEXWRAP TO WORK!!!
+                              : calculateCardWidth(screenDimensions.width),
                             marginBottom: CARD_LAYOUT.gap,
-                            marginHorizontal: CARD_LAYOUT.gap / 2,
+                            marginRight: Platform.OS === 'android' && numColumns === 2 
+                              ? 0  // No margin needed with percentage widths on Android
+                              : (numColumns > 1 ? CARD_LAYOUT.gap : 0),
+                            maxWidth: CARD_LAYOUT.maxWidth, // Enforce max width of 450px
                           },
                           numColumns === 1 && { 
                             maxWidth: CARD_LAYOUT.singleColumnMaxWidth,
@@ -3579,6 +3615,7 @@ const App = () => {
                 </View>
               )}
             </ScrollView>
+            </>
           ) : Platform.OS === 'ios' ? (
             <DraggableFlatList
               data={activities.filter(a => !a.deleted)}
@@ -3865,6 +3902,7 @@ const App = () => {
               ...activity,
               id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
               text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
+              description: activity.description || '', // Explicitly preserve description
               completed: false,
               pinned: false,
             };
@@ -3902,6 +3940,7 @@ const App = () => {
               ...activity,
               id: `${deviceId}-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
               text: activity.name || activity.text || '', // Map 'name' to 'text' for consistency
+              description: activity.description || '', // Explicitly preserve description
               completed: false,
               pinned: false,
             }));
@@ -4247,6 +4286,7 @@ const App = () => {
           const newActivity = {
             id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
+            description: activity.description || '', // Preserve description from library
             icon: activity.emoji || activity.icon,
             completed: false,
             pinned: false,
@@ -4264,6 +4304,7 @@ const App = () => {
           const newActivity = {
             id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
+            description: activity.description || '', // Preserve description from library
             emoji: activity.emoji || activity.icon || DEFAULT_ACTIVITY_EMOJI,
             completed: false,
             pinned: false,
@@ -4281,6 +4322,7 @@ const App = () => {
           const newActivities = activitiesToAdd.map((activity, index) => ({
             id: `${deviceId}-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text || '',
+            description: activity.description || '', // Preserve description from library
             emoji: activity.emoji || activity.icon || DEFAULT_ACTIVITY_EMOJI,
             completed: false,
             pinned: false,
@@ -4579,7 +4621,7 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'center',
+    justifyContent: Platform.OS === 'web' ? 'center' : 'flex-start', // center on web, flex-start on native for proper multi-column
     alignItems: 'flex-start',
     width: '100%',
   },
@@ -4665,7 +4707,6 @@ const styles = StyleSheet.create({
   numberText: {
     color: 'white',
     fontSize: getBadgeDimensions().iconSize, // Match checkmark size
-    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Bold' : 'Comic Relief',
     fontWeight: 'bold',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
@@ -4694,7 +4735,7 @@ const styles = StyleSheet.create({
       android: 'ComicRelief-Bold',
       web: "'Comic Relief', 'Comic Sans MS', cursive"
     }),
-    fontWeight: Platform.OS === 'android' ? 'normal' : '600',  // Android uses font file, not weight
+    fontWeight: Platform.OS === 'android' ? 'normal' : 'bold',  // Made bolder - was '600', now 'bold'
     color: '#000',
     textAlign: 'center',
     lineHeight: isTablet() ? 23 * 1.2 : 23 * 1.2,  // Adjusted line height

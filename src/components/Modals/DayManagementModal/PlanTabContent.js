@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Text } from '../Typography';
+import { Text } from '../../Typography';
 import { View, TouchableOpacity, ScrollView,  } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';

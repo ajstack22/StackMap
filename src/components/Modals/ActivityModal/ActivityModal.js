@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, TextInput } from '../Typography';
+import { Text, TextInput } from '../../Typography';
 import {
   Modal,
   View,
