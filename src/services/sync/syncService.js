@@ -253,7 +253,22 @@ class SyncService {
         // Verify we can decrypt the data
         try {
           const decryptedData = encryptionService.decryptData(existingData.encrypted_blob);
-          await this.restoreData(decryptedData);
+          
+          // Check if the sync group is essentially empty (just created from web with no real data)
+          const isEmptySync = !decryptedData.users || Object.keys(decryptedData.users).length === 0;
+          const currentState = this.getCurrentState();
+          const hasLocalData = currentState.users && Object.keys(currentState.users).length > 0;
+          
+          if (isEmptySync && hasLocalData) {
+            // The sync group is empty but we have local data - push our data instead of pulling
+            console.log('Sync group is empty but we have local data - pushing instead of pulling');
+            // Don't restore the empty data, just keep our local data
+            // The subsequent sync() call will push our data to the server
+          } else {
+            // Normal case - restore data from server
+            await this.restoreData(decryptedData);
+          }
+          
           this.lastSyncVersion = existingData.version;
         } catch (decryptError) {
           // If decryption fails, the recovery phrase is wrong
