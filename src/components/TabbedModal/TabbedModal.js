@@ -47,6 +47,20 @@ const TabbedModal = ({
   const gestureRef = useRef({ isActive: false });
   const pagerRef = useRef(null);
   
+  // New: Scroll position tracking infrastructure
+  const scrollPositions = useRef({});
+  const scrollOffsetsRef = useRef({});
+  const isAtTopRef = useRef(true);
+  
+  // Track scroll position per tab
+  const updateScrollPosition = (tabKey, offset) => {
+    scrollOffsetsRef.current[tabKey] = offset;
+    const currentTabKey = tabs[activeTab]?.key;
+    if (tabKey === currentTabKey) {
+      isAtTopRef.current = offset <= 0;
+    }
+  };
+  
   // Use controlled activeTab if provided, otherwise use internal state
   const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
   
@@ -495,14 +509,16 @@ const TabbedModal = ({
                 }
               ]}
             >
-              {React.Children.map(children, child => 
+              {React.Children.map(children, (child, index) => 
                 React.cloneElement(child, { 
                   onScrollStateChange: (scrolling) => {
                     // Only update if not in middle of gesture
                     if (!gestureRef.current.isActive) {
                       setIsScrolling(scrolling);
                     }
-                  }
+                  },
+                  onScrollPositionChange: updateScrollPosition,
+                  tabKey: tabs[index]?.key || index
                 })
               )}
             </RNAnimated.View>
@@ -518,7 +534,7 @@ const TabbedModal = ({
 };
 
 // Tab Content Wrapper Component
-export const TabContent = ({ children, isActive, modalVisible, onScrollStateChange }) => {
+export const TabContent = ({ children, isActive, modalVisible, onScrollStateChange, onScrollPositionChange, tabKey }) => {
   const [hasBeenActive, setHasBeenActive] = useState(false);
   const scrollViewRef = useRef(null);
   const scrollOffset = useRef(0);
@@ -542,9 +558,42 @@ export const TabContent = ({ children, isActive, modalVisible, onScrollStateChan
     return null;
   }
   
+  // Clone children with enhanced scroll tracking
+  const enhancedChildren = React.Children.map(children, child => {
+    if (child?.type === ScrollView || child?.props?.scrollable) {
+      return React.cloneElement(child, {
+        onScroll: (event) => {
+          const offset = event.nativeEvent.contentOffset.y;
+          scrollOffset.current = offset;
+          onScrollPositionChange?.(tabKey, offset);
+          onScrollStateChange?.(offset > 0);
+          child.props.onScroll?.(event);
+        },
+        onScrollBeginDrag: (event) => {
+          onScrollStateChange?.(true);
+          child.props.onScrollBeginDrag?.(event);
+        },
+        onScrollEndDrag: (event) => {
+          const offset = event.nativeEvent.contentOffset.y;
+          setTimeout(() => {
+            onScrollStateChange?.(offset > 0);
+          }, 100);
+          child.props.onScrollEndDrag?.(event);
+        },
+        onMomentumScrollEnd: (event) => {
+          const offset = event.nativeEvent.contentOffset.y;
+          onScrollStateChange?.(offset > 0);
+          child.props.onMomentumScrollEnd?.(event);
+        },
+        scrollEventThrottle: 16
+      });
+    }
+    return child;
+  });
+  
   return (
     <View style={[styles.tabContent, { display: isActive ? 'flex' : 'none' }]}>
-      {children}
+      {enhancedChildren}
     </View>
   );
 };
