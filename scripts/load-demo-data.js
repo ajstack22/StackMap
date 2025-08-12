@@ -32,7 +32,7 @@ const loadDemoData = async (AsyncStorage) => {
     const dataToStore = {
       'stackmap_users': JSON.stringify(DEMO_DATA.users),
       'stackmap_currentUser': DEMO_DATA.currentUser,
-      'stackmap_activities': JSON.stringify(DEMO_DATA.activities),
+      'stackmap_activities': JSON.stringify(DEMO_DATA.activityCards),
       'stackmap_myLibrary': JSON.stringify(DEMO_DATA.myLibrary),
       'stackmap_settings': JSON.stringify(DEMO_DATA.settings),
       'stackmap_syncData': JSON.stringify(DEMO_DATA.syncData),
@@ -100,7 +100,7 @@ const getUserData = (userName) => {
   
   return {
     user: DEMO_DATA.users[userId],
-    activities: DEMO_DATA.activities.filter(a => a.userId === userId),
+    activities: DEMO_DATA.activityCards.filter(a => a.userId === userId),
     library: DEMO_DATA.myLibrary[userId],
     settings: DEMO_DATA.settings[userId]
   };
@@ -116,15 +116,15 @@ const getDemoSummary = () => {
       name: u.name,
       icon: u.icon,
       theme: u.theme,
-      activities: DEMO_DATA.activities.filter(a => a.userId === u.id).length,
+      activities: DEMO_DATA.activityCards.filter(a => a.userId === u.id).length,
       libraryCategories: DEMO_DATA.myLibrary[u.id]?.activityGroups?.length || 0
     })),
     features: {
       multiUser: true,
       sync: DEMO_DATA.syncData.syncEnabled,
       themes: [...new Set(Object.values(DEMO_DATA.users).map(u => u.theme))],
-      pinnedActivities: DEMO_DATA.activities.filter(a => a.pinned).length,
-      completedActivities: DEMO_DATA.activities.filter(a => a.completed).length
+      pinnedActivities: DEMO_DATA.activityCards.filter(a => a.pinned).length,
+      completedActivities: DEMO_DATA.activityCards.filter(a => a.completed).length
     }
   };
   

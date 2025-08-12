@@ -1202,7 +1202,28 @@ const DataModal = ({
                   variant="primary"
                   label="Import Selected Items"
                   icon="file-download"
-                  onPress={() => setShowImportConfirm(true)}
+                  onPress={() => {
+                    if (Platform.OS === 'ios') {
+                      // Use native iOS alert
+                      Alert.alert(
+                        importMode === 'fresh' ? 'Start Fresh Import' : 'Merge Import',
+                        importMode === 'fresh'
+                          ? 'This will DELETE all your current data and replace it with only the selected items. This action cannot be undone.'
+                          : 'This will add the selected items to your existing data. Duplicate items will be skipped.',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { 
+                            text: 'Import', 
+                            style: 'destructive',
+                            onPress: handleImportConfirm
+                          }
+                        ]
+                      );
+                    } else {
+                      // Use ConfirmModal for Android/Web
+                      setShowImportConfirm(true);
+                    }
+                  }}
                   disabled={!Object.values(importSelections).some(v => v) || loading}
                   loading={loading}
                   fullWidth

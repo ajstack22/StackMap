@@ -28,7 +28,7 @@
     }
   },
   "currentUser": "user-alex",
-  "activities": [
+  "activityCards": [
     {
       "id": "alex-1",
       "userId": "user-alex",
