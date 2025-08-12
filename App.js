@@ -3564,7 +3564,7 @@ const App = () => {
                     flexDirection: 'row',
                     flexWrap: 'wrap',
                     justifyContent: Platform.OS === 'web' ? 'center' : 
-                      (Platform.OS === 'android' && numColumns === 2 ? 'space-evenly' : 'flex-start'),
+                      ((Platform.OS === 'android' || (Platform.OS === 'ios' && isTablet(screenDimensions.width))) && numColumns === 2 ? 'space-evenly' : 'flex-start'),
                     alignItems: 'flex-start',
                     alignContent: 'flex-start', // CRITICAL for Android flexWrap to work!
                     width: '100%',
@@ -3589,13 +3589,14 @@ const App = () => {
                             // Android tablets MUST use percentage widths (48%) for flexWrap to work
                             // calculateCardWidth() DOES NOT WORK on Android with flexWrap
                             // This took HOURS to figure out - Android's flexWrap is broken with calculated widths
+                            // iPad portrait also benefits from percentage widths for consistent layout
                             // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-                            width: Platform.OS === 'android' && numColumns === 2 
-                              ? '48%'  // MUST BE PERCENTAGE FOR ANDROID FLEXWRAP TO WORK!!!
+                            width: (Platform.OS === 'android' || (Platform.OS === 'ios' && isTablet(screenDimensions.width))) && numColumns === 2 
+                              ? '48%'  // MUST BE PERCENTAGE FOR ANDROID AND IPAD FLEXWRAP TO WORK!!!
                               : calculateCardWidth(screenDimensions.width),
                             marginBottom: CARD_LAYOUT.gap,
-                            marginRight: Platform.OS === 'android' && numColumns === 2 
-                              ? 0  // No margin needed with percentage widths on Android
+                            marginRight: (Platform.OS === 'android' || (Platform.OS === 'ios' && isTablet(screenDimensions.width))) && numColumns === 2 
+                              ? 0  // No margin needed with percentage widths on Android and iPad
                               : (numColumns > 1 ? CARD_LAYOUT.gap : 0),
                             maxWidth: CARD_LAYOUT.maxWidth, // Enforce max width of 450px
                           },
