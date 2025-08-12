@@ -293,6 +293,38 @@ src/
 4. Document in CHANGELOG
 5. Notify in deployment notes
 
+## Deployment Standards
+
+### Version Management
+- **Format**: `YYYY.MM.DD.BUILD`
+- **Automatic**: All deployment scripts increment version
+- **Unified**: Single version across all platforms
+- **Files Updated**: `package.json`, `app.json`, iOS `Info.plist`
+
+### Deployment Scripts
+Always use automated scripts in `/scripts/`:
+- `deploy-all.sh` - Master deployment for all platforms
+- `deploy-android-all.sh` - Android standalone + Metro
+- `deploy-ios.sh` - iOS simulator/device
+- `deploy-web.sh` - Web qual/production
+- `version-increment.sh` - Shared version logic
+
+### Platform-Specific Requirements
+**Android**:
+- Physical devices: Standalone APK with bundled JS
+- Emulators: Metro development build
+- Version in `package.json` and `app.json`
+
+**iOS**:
+- Simulator or device builds
+- Version in `Info.plist` (CFBundleShortVersionString)
+- Build number without dots (CFBundleVersion)
+
+**Web**:
+- Production build with NODE_ENV=production
+- Files copied to root for qual deployment
+- Version in `package.json`
+
 ## AI Assistant Guidelines
 
 When working with Claude or other AI assistants:
@@ -315,6 +347,7 @@ When working with Claude or other AI assistants:
 - Verify generated code
 - Test before committing
 - Update documentation after changes
+- Use deployment scripts for consistency
 
 ## Maintenance
 
@@ -324,6 +357,7 @@ This document should be updated when:
 - Standards change
 - New platforms are added
 - Team agreements are made
+- Deployment processes change
 
-Last Updated: 2025-01-08
+Last Updated: 2025-01-12
 Version: 1.0.0

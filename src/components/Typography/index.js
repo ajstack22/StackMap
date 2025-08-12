@@ -92,7 +92,10 @@ export const TextInput = React.forwardRef((props, ref) => {
       {...restProps}
       style={[
         style,
-        { fontFamily } // Apply Comic Relief AFTER user styles to ensure it always wins
+        { 
+          fontFamily, // Apply Comic Relief AFTER user styles to ensure it always wins
+          ...(Platform.OS === 'android' && { color: '#000000' }) // Ensure black text on Android
+        }
       ]}
     />
   );

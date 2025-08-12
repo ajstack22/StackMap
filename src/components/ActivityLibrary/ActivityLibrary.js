@@ -1411,6 +1411,7 @@ const ActivityLibrary = ({
               value={editName}
               onChangeText={setEditName}
               placeholder="Name"
+              placeholderTextColor="#999999"
               autoFocus
             />
             
@@ -1421,6 +1422,7 @@ const ActivityLibrary = ({
                   value={editDescription}
                   onChangeText={setEditDescription}
                   placeholder="Description (optional)"
+                  placeholderTextColor="#999999"
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
@@ -1763,6 +1765,8 @@ const styles = StyleSheet.create({
     fontSize: isTablet() ? 16 : 14,
     marginBottom: SPACING.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000000', // Explicit black text color for Android devices
+    backgroundColor: 'white', // Ensure white background
   },
   descriptionInput: {
     minHeight: 80,
@@ -1831,7 +1835,11 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     ...SHADOWS.level3,
     minWidth: 220,
+    maxHeight: 300,
     paddingVertical: SPACING.sm,
+    ...(Platform.OS === 'web' && {
+      overflowY: 'auto',
+    }),
   },
   centerMenuContainer: {
     flex: 1,

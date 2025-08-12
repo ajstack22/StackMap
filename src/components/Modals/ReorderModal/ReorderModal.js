@@ -65,9 +65,10 @@ const ReorderModal = ({
               
               <ScrollView 
                 horizontal 
-                showsHorizontalScrollIndicator={false}
+                showsHorizontalScrollIndicator={Platform.OS !== 'web'}
                 style={styles.positionSelector}
                 contentContainerStyle={styles.positionSelectorContent}
+                nestedScrollEnabled={true}
               >
                 {activities.map((_, index) => {
                   const position = index + 1;

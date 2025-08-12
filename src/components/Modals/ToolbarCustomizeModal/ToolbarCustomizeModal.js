@@ -256,7 +256,11 @@ const ToolbarCustomizeModal = ({
         </SafeAreaView>
         
         <View style={{ flex: 1, backgroundColor: theme.light }}>
-          <ScrollView style={styles.modalContent} showsVerticalScrollIndicator={false}>
+          <ScrollView 
+            style={styles.modalContent} 
+            showsVerticalScrollIndicator={false}
+            nestedScrollEnabled={true}
+          >
             {/* Single combined section */}
             <View style={styles.section}>
               {/* More Button Position */}
@@ -282,12 +286,8 @@ const ToolbarCustomizeModal = ({
               
               <Text style={styles.description}>
               {Platform.OS === 'web' 
-                ? morePosition === 'left'
-                  ? `Use the arrows to reorder buttons. The last ${visibleButtonCount} buttons will be visible, the first ones will be in the overflow menu (plus the Sort button).`
-                  : `Use the arrows to reorder buttons. The first ${visibleButtonCount} buttons will be visible, the rest will be in the overflow menu (plus the Sort button).`
-                : morePosition === 'left'
-                  ? `Drag buttons to reorder them. The last ${visibleButtonCount} buttons will be visible, the first ones will be in the overflow menu (plus the Sort button).`
-                  : `Drag buttons to reorder them. The first ${visibleButtonCount} buttons will be visible, the rest will be in the overflow menu (plus the Sort button).`
+                ? `Use the arrows to reorder buttons. All buttons are always visible, but their order determines their position in the toolbar. The More button contains Sort${Platform.OS === 'web' ? ' and Support' : ''} options.`
+                : `Drag buttons to reorder them. All buttons are always visible, but their order determines their position in the toolbar. If the screen can't fit all ${buttonOrder.length} buttons plus the More button, some will automatically move into the More menu.`
               }
               </Text>
 

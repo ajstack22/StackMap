@@ -54,7 +54,12 @@ export const styles = StyleSheet.create({
   positionSelector: {
     height: 60,
     marginBottom: 20,
-    overflow: 'hidden',
+    ...(Platform.OS === 'web' ? {
+      overflowX: 'auto',
+      overflowY: 'hidden',
+    } : {
+      overflow: 'hidden',
+    }),
   },
   positionSelectorContent: {
     flexDirection: 'row',
