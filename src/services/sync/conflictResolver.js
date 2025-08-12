@@ -282,6 +282,49 @@ class ConflictResolver {
       }
     }
     
+    // Ensure each user has required fields
+    if (newState.users && typeof newState.users === 'object') {
+      for (const [userId, user] of Object.entries(newState.users)) {
+        if (user && typeof user === 'object' && !user.deleted) {
+          // Ensure user has name
+          if (!user.name) {
+            user.name = 'User';
+          }
+          // Ensure user has icon or emoji
+          if (!user.icon && !user.emoji) {
+            user.icon = '👤';
+          }
+          // Ensure user has days object
+          if (!user.days || typeof user.days !== 'object') {
+            user.days = {};
+          }
+        }
+      }
+    }
+    
+    // Ensure currentUser is valid
+    if (newState.currentUser && newState.users) {
+      if (!newState.users[newState.currentUser]) {
+        // Current user doesn't exist, find or create one
+        const validUserIds = Object.keys(newState.users).filter(id => 
+          newState.users[id] && !newState.users[id].deleted
+        );
+        
+        if (validUserIds.length > 0) {
+          newState.currentUser = validUserIds[0];
+        } else {
+          // No valid users, create a default one
+          const defaultUserId = 'user_1';
+          newState.users[defaultUserId] = {
+            name: 'User',
+            icon: '👤',
+            days: {}
+          };
+          newState.currentUser = defaultUserId;
+        }
+      }
+    }
+    
     // Validate the final state
     if (!validateSyncedData(newState)) {
       console.error('Conflict resolution resulted in invalid state, attempting repair');

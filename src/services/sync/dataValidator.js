@@ -36,7 +36,7 @@ export const validateSyncedData = (data) => {
 
     // Validate currentUser if present
     if (data.currentUser && !data.users[data.currentUser]) {
-//       console.error(`Data validation failed: currentUser ${data.currentUser} not found in users`);
+      console.error(`Data validation failed: currentUser ${data.currentUser} not found in users`, Object.keys(data.users));
       return false;
     }
 
@@ -52,25 +52,25 @@ export const validateSyncedData = (data) => {
  */
 const validateUser = (userId, user) => {
   if (!user || typeof user !== 'object') {
-//     console.error(`Data validation failed: Invalid user object for ${userId}`);
+    console.error(`Data validation failed: Invalid user object for ${userId}`, user);
     return false;
   }
 
   // Check required user fields
   if (!user.name || typeof user.name !== 'string') {
-//     console.error(`Data validation failed: User ${userId} missing or invalid name`);
+    console.error(`Data validation failed: User ${userId} missing or invalid name`, user);
     return false;
   }
 
   // Check for icon or emoji (users can have either)
   if (!user.icon && !user.emoji) {
-//     console.error(`Data validation failed: User ${userId} missing icon/emoji`);
+    console.error(`Data validation failed: User ${userId} missing icon/emoji`, user);
     return false;
   }
 
   // Validate days object
   if (!user.days || typeof user.days !== 'object') {
-//     console.error(`Data validation failed: User ${userId} missing or invalid days object`);
+    console.error(`Data validation failed: User ${userId} missing or invalid days object`, user);
     return false;
   }
 
