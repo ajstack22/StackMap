@@ -558,9 +558,7 @@ const TabbedModal = ({
 // Tab Content Wrapper Component
 export const TabContent = ({ children, isActive, modalVisible, onScrollStateChange, onScrollPositionChange, tabKey }) => {
   const [hasBeenActive, setHasBeenActive] = useState(false);
-  const scrollViewRef = useRef(null);
   const scrollOffset = useRef(0);
-  const horizontalPanRef = useRef(null);
   
   // Reset hasBeenActive when modal closes
   useEffect(() => {
@@ -582,7 +580,8 @@ export const TabContent = ({ children, isActive, modalVisible, onScrollStateChan
   
   // Clone children with enhanced scroll tracking
   const enhancedChildren = React.Children.map(children, child => {
-    if (child?.type === ScrollView || child?.props?.scrollable) {
+    // Check if child is a ScrollView (imported from react-native)
+    if (child?.type === ScrollView || child?.type?.displayName === 'ScrollView' || child?.props?.scrollable) {
       return React.cloneElement(child, {
         onScroll: (event) => {
           const offset = event.nativeEvent.contentOffset.y;

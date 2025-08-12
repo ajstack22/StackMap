@@ -307,6 +307,7 @@ const LibraryTabContent = ({
         // Critical: Allow parent to handle horizontal swipes
         directionalLockEnabled={true}
         scrollEventThrottle={16}
+        // ScrollView events will be enhanced by TabContent wrapper
       >
         {/* My Library Section */}
         {localCategories.length > 0 && (
