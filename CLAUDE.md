@@ -67,6 +67,43 @@ import PagerView from 'react-native-pager-view';
 
 **Just use react-native-pager-view for mobile platforms. Period.**
 
+## ✅ SWIPE-TO-DISMISS vs SCROLL CONFLICT - FIXED (January 2025) ✅
+**Problem:** Modal dismisses unintentionally when users scroll up from middle of content
+**Root Cause:** Modal only tracked binary scroll state (scrolling/not), not actual scroll position
+**Solution:** Track exact scroll position and only allow dismiss when ScrollView is at top (offset = 0)
+
+**Key Fixes:**
+```javascript
+// TabbedModal.js - Track scroll position per tab
+const scrollOffsetsRef = useRef({});
+const isAtTopRef = useRef(true);
+
+const updateScrollPosition = (tabKey, offset) => {
+  scrollOffsetsRef.current[tabKey] = offset;
+  const currentTabKey = tabs[activeTab]?.key;
+  if (tabKey === currentTabKey) {
+    isAtTopRef.current = offset <= 0;
+  }
+};
+
+// Vertical PanResponder - NEVER capture upward swipes
+onMoveShouldSetPanResponder: (evt, gestureState) => {
+  // CRITICAL: Never capture upward swipes
+  if (gestureState.dy < 0) {
+    return false;
+  }
+  
+  // Only capture downward swipes when at top
+  const isDownwardSwipe = gestureState.dy > 10;
+  const isVerticalGesture = Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+  const canDismiss = isAtTopRef.current && !isScrolling;
+  
+  return isDownwardSwipe && isVerticalGesture && canDismiss;
+}
+```
+
+**Implementation:** TabContent automatically enhances ScrollView children with position tracking
+
 ---
 
 # 🚨 MATERIAL ICONS WEB RENDERING FIX 🚨
