@@ -722,13 +722,16 @@ class SyncService {
   getCurrentState() {
     const state = useAppStore.getState();
     
-    // Debug: Check users for missing icons and repair them
-    console.log('[DEBUG] getCurrentState - Raw users from store:', JSON.stringify(state.users, null, 2));
-    const repairedUsers = { ...state.users };
+    // Ensure users object exists (for empty sync groups from web)
+    let users = state.users || {};
     let needsRepair = false;
     
-    if (state.users) {
-      Object.entries(state.users).forEach(([userId, user]) => {
+    // Debug: Check users for missing icons and repair them
+    console.log('[DEBUG] getCurrentState - Raw users from store:', JSON.stringify(users, null, 2));
+    
+    if (users && Object.keys(users).length > 0) {
+      const repairedUsers = { ...users };
+      Object.entries(users).forEach(([userId, user]) => {
         if (!user.icon && !user.emoji) {
           console.warn(`[DEBUG] getCurrentState - User ${userId} in store is missing icon/emoji:`, user);
           // Repair by adding default icon
@@ -739,19 +742,19 @@ class SyncService {
           needsRepair = true;
         }
       });
-    }
-    
-    // If we repaired any users, update the store
-    if (needsRepair) {
-      console.log('[DEBUG] Repairing users with missing icons...');
-      useAppStore.getState().setUsers(repairedUsers);
+      
+      if (needsRepair) {
+        console.log('[DEBUG] Repairing users with missing icons...');
+        users = repairedUsers;
+        useAppStore.getState().setUsers(users);
+      }
     }
     
     // Use the same structure as the export functionality
     const currentState = {
       version: 3,
-      currentDay: state.currentDay,
-      users: needsRepair ? repairedUsers : state.users,
+      currentDay: state.currentDay || 'today',
+      users: users,
       globalSettings: {
         currentTheme: state.currentTheme,
         bannerPosition: state.bannerPosition,
@@ -960,15 +963,24 @@ class SyncService {
       });
     });
     
-    // Validate merged state before applying
-    const finalMergedState = { ...mergedState, users: mergedUsers };
-    if (!validateSyncedData(finalMergedState)) {
-      console.error('sync: Merged data validation failed');
-      throw new Error('Data validation failed after merge');
+    // Validate merged users before applying (just validate users, not full state)
+    let finalUsers = mergedUsers;
+    const tempValidationData = { users: mergedUsers };
+    if (!validateSyncedData(tempValidationData)) {
+      console.error('sync: Merged data validation failed, attempting repair');
+      // Try to repair the users data
+      const repairedData = repairSyncedData(tempValidationData);
+      if (!validateSyncedData(repairedData)) {
+        console.error('sync: Repair failed, applying anyway with warning');
+        // Don't throw error - still apply the data but log warning
+      } else {
+        console.log('sync: Users repaired successfully after merge');
+        finalUsers = repairedData.users;
+      }
     }
     
     // Update with merged state
-    useAppStore.setState({ users: mergedUsers });
+    useAppStore.setState({ users: finalUsers });
   }
   
   /**

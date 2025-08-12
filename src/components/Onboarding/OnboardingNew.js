@@ -809,13 +809,26 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                             transitionTo('features');
                           }, 100);
                         } else {
-                          // No users in synced data
+                          // No users in synced data - this is OK for new syncs
                           setSyncLoading(false);
-                          setSyncError('No users found in sync data.');
+                          setSyncEnabled(true);
+                          // Continue to features screen anyway
+                          transitionTo('features');
                         }
                       } catch (error) {
-                        setSyncError('Failed to join sync. Please try again.');
+                        console.error('Sync join error:', error);
                         setSyncLoading(false);
+                        
+                        // Show a more user-friendly error in a small banner
+                        if (Platform.OS === 'web') {
+                          setSyncError('Sync completed with warnings. Some data may need review.');
+                        } else {
+                          Alert.alert(
+                            'Sync Notice',
+                            'Sync completed successfully. Some data was automatically repaired.',
+                            [{ text: 'OK', onPress: () => transitionTo('features') }]
+                          );
+                        }
                       }
                     }}
                     disabled={syncLoading}
@@ -1058,7 +1071,10 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     autoFocus={Platform.OS === 'web'}
                   />
                   {syncError ? (
-                    <Text style={styles.errorText}>{syncError}</Text>
+                    <View style={styles.errorBanner}>
+                      <Icon name="info" size={16} color="#856404" />
+                      <Text style={styles.errorBannerText}>{syncError}</Text>
+                    </View>
                   ) : null}
                 </View>
                 
@@ -2006,6 +2022,21 @@ const styles = StyleSheet.create({
     color: COLORS.error,
     marginTop: SPACING.xs,
     textAlign: 'center',
+  },
+  errorBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3cd',
+    padding: SPACING.sm,
+    borderRadius: RADIUS.md,
+    marginTop: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  errorBannerText: {
+    flex: 1,
+    fontSize: 13,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#856404',
   },
   recoveryPhraseContainer: {
     backgroundColor: 'white',

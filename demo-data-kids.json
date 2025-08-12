@@ -7,20 +7,20 @@
     "activityLibrary": true
   },
   "users": {
-    "user-emma": {
-      "id": "user-emma",
-      "name": "Emma",
-      "icon": "🦄",
+    "user-atlas": {
+      "id": "user-atlas",
+      "name": "Atlas",
+      "icon": "🌎",
       "createdAt": "2025-01-01T09:00:00.000Z",
       "lastActive": "2025-01-12T15:00:00.000Z",
       "settings": {
-        "theme": "#E91E63"
+        "theme": "#2196F3"
       },
       "days": {
         "today": {
           "activities": [
             {
-              "id": "emma-1",
+              "id": "atlas-1",
               "text": "Brush teeth",
               "icon": "🦷",
               "completed": true,
@@ -28,7 +28,7 @@
               "order": 0
             },
             {
-              "id": "emma-2",
+              "id": "atlas-2",
               "text": "Get dressed",
               "icon": "👕",
               "completed": true,
@@ -36,7 +36,7 @@
               "order": 1
             },
             {
-              "id": "emma-3",
+              "id": "atlas-3",
               "text": "Eat breakfast",
               "icon": "🥞",
               "completed": true,
@@ -44,7 +44,7 @@
               "order": 2
             },
             {
-              "id": "emma-4",
+              "id": "atlas-4",
               "text": "Take medicine",
               "icon": "💊",
               "completed": false,
@@ -52,7 +52,7 @@
               "order": 3
             },
             {
-              "id": "emma-5",
+              "id": "atlas-5",
               "text": "Reading time",
               "icon": "📖",
               "completed": false,
@@ -60,7 +60,7 @@
               "order": 4
             },
             {
-              "id": "emma-6",
+              "id": "atlas-6",
               "text": "Math practice",
               "icon": "🔢",
               "completed": false,
@@ -68,7 +68,7 @@
               "order": 5
             },
             {
-              "id": "emma-7",
+              "id": "atlas-7",
               "text": "Snack time",
               "icon": "🍎",
               "completed": false,
@@ -76,7 +76,7 @@
               "order": 6
             },
             {
-              "id": "emma-8",
+              "id": "atlas-8",
               "text": "Art class",
               "icon": "🎨",
               "completed": false,
@@ -84,7 +84,7 @@
               "order": 7
             },
             {
-              "id": "emma-9",
+              "id": "atlas-9",
               "text": "Playground",
               "icon": "🛝",
               "completed": false,
@@ -92,7 +92,7 @@
               "order": 8
             },
             {
-              "id": "emma-10",
+              "id": "atlas-10",
               "text": "Speech therapy",
               "icon": "💬",
               "completed": false,
@@ -100,7 +100,7 @@
               "order": 9
             },
             {
-              "id": "emma-11",
+              "id": "atlas-11",
               "text": "Quiet time",
               "icon": "🧘",
               "completed": false,
@@ -108,7 +108,7 @@
               "order": 10
             },
             {
-              "id": "emma-12",
+              "id": "atlas-12",
               "text": "Bedtime routine",
               "icon": "🌙",
               "completed": false,
@@ -122,14 +122,14 @@
         }
       }
     },
-    "user-liam": {
-      "id": "user-liam",
-      "name": "Liam",
-      "icon": "🦖",
+    "user-mappy": {
+      "id": "user-mappy",
+      "name": "Mappy",
+      "icon": "🗺️",
       "createdAt": "2025-01-05T14:30:00.000Z",
       "lastActive": "2025-01-12T10:00:00.000Z",
       "settings": {
-        "theme": "#2196F3"
+        "theme": "#4CAF50"
       },
       "days": {
         "today": {
@@ -140,14 +140,14 @@
         }
       }
     },
-    "user-sofia": {
-      "id": "user-sofia",
-      "name": "Sofia",
-      "icon": "🌈",
+    "user-desty": {
+      "id": "user-desty",
+      "name": "Desty",
+      "icon": "📍",
       "createdAt": "2025-01-08T08:00:00.000Z",
       "lastActive": "2025-01-11T20:00:00.000Z",
       "settings": {
-        "theme": "#9C27B0"
+        "theme": "#F44336"
       },
       "days": {
         "today": {
@@ -159,100 +159,100 @@
       }
     }
   },
-  "currentUser": "user-emma",
+  "currentUser": "user-atlas",
   "currentDay": "today",
   "activityCards": [
     {
-      "id": "emma-1",
-      "userId": "user-emma",
+      "id": "atlas-1",
+      "userId": "user-atlas",
       "text": "Brush teeth",
       "icon": "🦷",
       "completed": true,
       "pinned": false
     },
     {
-      "id": "emma-2",
-      "userId": "user-emma",
+      "id": "atlas-2",
+      "userId": "user-atlas",
       "text": "Get dressed",
       "icon": "👕",
       "completed": true,
       "pinned": false
     },
     {
-      "id": "emma-3",
-      "userId": "user-emma",
+      "id": "atlas-3",
+      "userId": "user-atlas",
       "text": "Eat breakfast",
       "icon": "🥞",
       "completed": true,
       "pinned": true
     },
     {
-      "id": "emma-4",
-      "userId": "user-emma",
+      "id": "atlas-4",
+      "userId": "user-atlas",
       "text": "Take medicine",
       "icon": "💊",
       "completed": false,
       "pinned": true
     },
     {
-      "id": "emma-5",
-      "userId": "user-emma",
+      "id": "atlas-5",
+      "userId": "user-atlas",
       "text": "Reading time",
       "icon": "📖",
       "completed": false,
       "pinned": false
     },
     {
-      "id": "emma-6",
-      "userId": "user-emma",
+      "id": "atlas-6",
+      "userId": "user-atlas",
       "text": "Math practice",
       "icon": "🔢",
       "completed": false,
       "pinned": false
     },
     {
-      "id": "emma-7",
-      "userId": "user-emma",
+      "id": "atlas-7",
+      "userId": "user-atlas",
       "text": "Snack time",
       "icon": "🍎",
       "completed": false,
       "pinned": false
     },
     {
-      "id": "emma-8",
-      "userId": "user-emma",
+      "id": "atlas-8",
+      "userId": "user-atlas",
       "text": "Art class",
       "icon": "🎨",
       "completed": false,
       "pinned": false
     },
     {
-      "id": "emma-9",
-      "userId": "user-emma",
+      "id": "atlas-9",
+      "userId": "user-atlas",
       "text": "Playground",
       "icon": "🛝",
       "completed": false,
       "pinned": false
     },
     {
-      "id": "emma-10",
-      "userId": "user-emma",
+      "id": "atlas-10",
+      "userId": "user-atlas",
       "text": "Speech therapy",
       "icon": "💬",
       "completed": false,
       "pinned": false
     },
     {
-      "id": "emma-11",
-      "userId": "user-emma",
+      "id": "atlas-11",
+      "userId": "user-atlas",
       "text": "Quiet time",
       "icon": "🧘",
       "completed": false,
       "pinned": false
     },
     {
-      "id": "emma-12",
-      "userId": "user-emma",
+      "id": "atlas-12",
+      "userId": "user-atlas",
       "text": "Bedtime routine",
       "icon": "🌙",
       "completed": false,
@@ -513,7 +513,7 @@
     }
   ],
   "globalSettings": {
-    "currentTheme": "#E91E63",
+    "currentTheme": "#2196F3",
     "bannerPosition": "top",
     "defaultView": "normal",
     "displayMode": "numbers",
