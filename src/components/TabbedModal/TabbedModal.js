@@ -200,27 +200,48 @@ const TabbedModal = ({
   const verticalPanResponder = useRef(
     PanResponder.create({
       onStartShouldSetPanResponder: () => false,
+      
       onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // Only respond to downward swipes when not scrolling
-        const isDownwardSwipe = gestureState.dy > 10 && Math.abs(gestureState.dx) < Math.abs(gestureState.dy);
-        // On Android, be less strict about scrolling state for vertical swipes
-        const canSwipe = Platform.OS === 'android' ? true : !isScrolling;
-        return isDownwardSwipe && canSwipe;
+        // CRITICAL: Never capture upward swipes
+        if (gestureState.dy < 0) {
+          return false;
+        }
+        
+        // Only capture downward swipes when at top
+        const isDownwardSwipe = gestureState.dy > 10;
+        const isVerticalGesture = Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
+        const canDismiss = isAtTopRef.current && !isScrolling;
+        
+        return isDownwardSwipe && isVerticalGesture && canDismiss;
       },
+      
+      onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
+        // More conservative capture for modal dismissal
+        if (gestureState.dy < 0) return false;
+        
+        const isStrongDownwardSwipe = gestureState.dy > 20;
+        const isVertical = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5;
+        const canDismiss = isAtTopRef.current && !isScrolling;
+        
+        return isStrongDownwardSwipe && isVertical && canDismiss;
+      },
+      
       onPanResponderGrant: () => {
-        // Start gesture
+        // Visual feedback that dismiss gesture is recognized
+        // Could add haptic feedback here on mobile
       },
+      
       onPanResponderMove: (evt, gestureState) => {
-        // Only allow downward movement
-        if (gestureState.dy > 0) {
+        // Only allow downward movement when at top
+        if (gestureState.dy > 0 && isAtTopRef.current) {
           modalSlideAnimation.setValue(gestureState.dy);
         }
       },
+      
       onPanResponderRelease: (evt, gestureState) => {
-        const dismissThreshold = screenHeight * 0.2; // 20% of screen height
+        const dismissThreshold = screenHeight * 0.2;
         const velocityThreshold = 0.5;
         
-        // Check if should dismiss modal
         if (gestureState.dy > dismissThreshold || gestureState.vy > velocityThreshold) {
           // Animate out and close
           RNAnimated.timing(modalSlideAnimation, {
@@ -233,7 +254,7 @@ const TabbedModal = ({
             onClose();
           });
         } else {
-          // Snap back to position
+          // Snap back
           RNAnimated.timing(modalSlideAnimation, {
             toValue: 0,
             duration: 250,
@@ -242,6 +263,7 @@ const TabbedModal = ({
           }).start();
         }
       },
+      
       onPanResponderTerminate: () => {
         // Handle gesture interruption
         RNAnimated.timing(modalSlideAnimation, {
