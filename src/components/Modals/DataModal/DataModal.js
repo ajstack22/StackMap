@@ -1626,7 +1626,29 @@ const DataModal = ({
                   variant="danger"
                   label="Disable Sync"
                   icon="sync-disabled"
-                  onPress={() => setShowDisableSyncConfirm(true)}
+                  onPress={() => {
+                    // iOS: Use Alert.alert instead of nested modal
+                    if (Platform.OS === 'ios') {
+                      Alert.alert(
+                        'Disable Sync',
+                        'This will stop syncing your data. Your local data will remain unchanged. You can re-enable sync later with your sync key.',
+                        [
+                          {
+                            text: 'Cancel',
+                            style: 'cancel'
+                          },
+                          {
+                            text: 'Disable',
+                            style: 'destructive',
+                            onPress: handleDisableSync
+                          }
+                        ]
+                      );
+                    } else {
+                      // Android and Web: Use ConfirmModal
+                      setShowDisableSyncConfirm(true);
+                    }
+                  }}
                   fullWidth
                 />
                 
@@ -1635,7 +1657,29 @@ const DataModal = ({
                   variant="danger"
                   label="Delete Server Data"
                   icon="delete-forever"
-                  onPress={() => setShowDeleteServerDataConfirm(true)}
+                  onPress={() => {
+                    // iOS: Use Alert.alert instead of nested modal
+                    if (Platform.OS === 'ios') {
+                      Alert.alert(
+                        'Delete Server Data',
+                        'This will permanently delete all your data from the server and disable sync. Your local data will remain unchanged. This action cannot be undone.',
+                        [
+                          {
+                            text: 'Cancel',
+                            style: 'cancel'
+                          },
+                          {
+                            text: 'Delete Server Data',
+                            style: 'destructive',
+                            onPress: handleDeleteServerData
+                          }
+                        ]
+                      );
+                    } else {
+                      // Android and Web: Use ConfirmModal
+                      setShowDeleteServerDataConfirm(true);
+                    }
+                  }}
                   fullWidth
                 />
               </View>

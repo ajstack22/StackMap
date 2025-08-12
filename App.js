@@ -3116,8 +3116,29 @@ const App = () => {
     }
   };
 
-  const renderActivity = ({ item, index = 0, drag, isActive, customWidth }) => {
-    // Ensure index is defined (FlatList provides it, but let's be safe)
+  const renderActivity = ({ item, index, drag, isActive, customWidth }) => {
+    // Get the actual index from the filtered activities array
+    const filteredActivities = activities.filter(a => !a.deleted);
+    
+    // Debug log to verify this function is being called
+    if (Platform.OS === 'ios') {
+      console.log('renderActivity called - item:', item.text, 'provided index:', index);
+    }
+    
+    // Use the provided index if available, otherwise calculate from filtered array
+    let actualIndex;
+    if (index !== undefined && index !== null) {
+      // Trust the index provided by FlatList/DraggableFlatList
+      actualIndex = index;
+    } else {
+      // Fallback: calculate from filtered array
+      actualIndex = filteredActivities.findIndex(a => a.id === item.id);
+      
+      // Debug warning if we had to fallback
+      if (__DEV__ && Platform.OS === 'ios') {
+        console.warn('Had to calculate index for:', item.text, 'Found:', actualIndex);
+      }
+    }
     
     const CardContent = (
       <View style={{ position: 'relative' }}>
@@ -3332,7 +3353,7 @@ const App = () => {
           ]}
           onPress={() => {
             if (isEditMode && displayMode === 'numbers') {
-              promptReorderActivity(item, index + 1);
+              promptReorderActivity(item, actualIndex + 1);
             }
           }}
           disabled={!isEditMode || displayMode !== 'numbers'}
@@ -3348,7 +3369,7 @@ const App = () => {
           ] : styles.numberText}>
             {displayMode === 'time' 
               ? (item.time || '--:--')
-              : index + 1
+              : actualIndex + 1
             }
           </Text>
         </TouchableOpacity>
@@ -3617,10 +3638,30 @@ const App = () => {
             </ScrollView>
             </>
           ) : Platform.OS === 'ios' ? (
-            <DraggableFlatList
-              data={activities.filter(a => !a.deleted)}
-              renderItem={renderActivity}
-              keyExtractor={item => item.id}
+            (() => {
+              // Pre-filter the data once
+              const filteredData = activities.filter(a => !a.deleted);
+              
+              // Create a map of item IDs to their indices for O(1) lookup
+              const indexMap = {};
+              filteredData.forEach((item, idx) => {
+                indexMap[item.id] = idx;
+              });
+              
+              return (
+                <DraggableFlatList
+                  data={filteredData}
+                  renderItem={({ item, drag, isActive }) => {
+                    // Use the pre-calculated index map
+                    const correctIndex = indexMap[item.id] ?? 0;
+                    
+                    // Always log for debugging
+                    console.log('iOS DraggableFlatList - item:', item.text, 'id:', item.id, 'correctIndex:', correctIndex);
+                    console.log('indexMap:', JSON.stringify(indexMap));
+                    
+                    return renderActivity({ item, index: correctIndex, drag, isActive });
+                  }}
+                  keyExtractor={item => item.id}
               onDragEnd={({ data }) => {
                 setActivities(data);
                 // Save immediately after reordering
@@ -3653,6 +3694,8 @@ const App = () => {
                 </View>
               }
             />
+              );
+            })()
           ) : (
             // Android/Web fallback - regular FlatList with reorder buttons
             <FlatList

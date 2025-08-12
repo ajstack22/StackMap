@@ -87,10 +87,10 @@ class SyncService {
     this.processedTransactions = new Set();
     this.transactionCleanupInterval = null;
     
-    // Initialize network monitoring
+    // Initialize network monitoring (now safely disabled internally for iOS)
     networkMonitor.start();
     
-    // Listen for network changes
+    // Listen for network changes (won't actually do anything on iOS now)
     this.networkUnsubscribe = networkMonitor.addListener(this.handleNetworkChange.bind(this));
     
     // Initialize sync queue
@@ -112,6 +112,9 @@ class SyncService {
    * Restore sync state from AsyncStorage
    */
   async restoreState() {
+    const startTime = Date.now();
+    console.log('[SYNC TIMING] restoreState started');
+    
     // Prevent multiple restores
     if (this.initialized) {
       console.log('SyncService: Already initialized, skipping restore');
@@ -120,10 +123,12 @@ class SyncService {
     
     try {
       console.log('SyncService: Restoring state...');
+      const t1 = Date.now();
       const enabled = await AsyncStorage.getItem('@sync_enabled');
       const syncId = await AsyncStorage.getItem('@sync_id');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
       const lastSyncSuccess = await AsyncStorage.getItem('@sync_last_success');
+      console.log(`[SYNC TIMING] AsyncStorage reads took ${Date.now() - t1}ms`);
       
       console.log('SyncService: Loaded from storage - enabled:', enabled, 'syncId:', syncId);
       
@@ -135,11 +140,15 @@ class SyncService {
         console.log('SyncService: State restored, syncId:', syncId, 'version:', this.lastSyncVersion);
         
         // Try to restore encryption automatically
+        const t2 = Date.now();
         const encryptionRestored = await this.restoreEncryptionFromStorage();
+        console.log(`[SYNC TIMING] restoreEncryptionFromStorage took ${Date.now() - t2}ms`);
         
         if (encryptionRestored) {
           // Start periodic sync now that we're restored
+          const t3 = Date.now();
           this.startPeriodicSync();
+          console.log(`[SYNC TIMING] startPeriodicSync took ${Date.now() - t3}ms`);
           console.log('Sync fully restored and ready, periodic sync started');
         } else {
           console.log('Sync state restored but encryption needs recovery phrase');
@@ -149,6 +158,7 @@ class SyncService {
       }
       
       this.initialized = true;
+      console.log(`[SYNC TIMING] TOTAL restoreState took ${Date.now() - startTime}ms`);
     } catch (error) {
       console.error('Failed to restore sync state:', error);
       this.initialized = true;
@@ -160,6 +170,12 @@ class SyncService {
    */
   async restoreEncryptionFromStorage() {
     if (!this.syncId) return false;
+    
+    // Check if encryption is already initialized (key is cached in memory)
+    if (encryptionService.masterKey && encryptionService.syncId === this.syncId) {
+      console.log('Encryption already initialized (using cached key)');
+      return true;
+    }
     
     try {
       // Try to get stored recovery phrase
@@ -587,29 +603,18 @@ class SyncService {
         );
         
         if (conflicts.length > 0) {
-          console.log('sync: Found', conflicts.length, 'conflicts');
+          console.log('sync: Found', conflicts.length, 'conflicts - auto-resolving...');
           
-          // Try automatic resolution
-          const resolutions = await conflictResolver.resolveConflicts(conflicts);
+          // Auto-resolve all conflicts (no user intervention)
+          const resolutions = await conflictResolver.resolveConflicts(conflicts, { autoResolveAll: true });
           
-          if (resolutions.pending.length > 0) {
-            // Need user input
-            this.pendingConflicts = resolutions.pending;
-            this.updateSyncStatus('conflicts', `${resolutions.pending.length} conflicts need your attention`);
-            this.notifyConflictListeners(resolutions.pending);
-            
-            // Apply auto-resolved conflicts
-            if (resolutions.resolved.length > 0) {
-              const partialState = conflictResolver.applyResolutions(resolutions.resolved);
-              await this.applyState(partialState);
-            }
-            
-            // Don't complete sync until conflicts are resolved
-            throw new Error('Sync paused: conflicts need resolution');
-          } else {
-            // All conflicts auto-resolved
+          // Apply all resolutions
+          if (resolutions.finalState) {
             console.log('sync: Auto-resolved all conflicts');
             await this.applyState(resolutions.finalState);
+          } else if (resolutions.resolved && resolutions.resolved.length > 0) {
+            const partialState = conflictResolver.applyResolutions(resolutions.resolved);
+            await this.applyState(partialState);
           }
         } else {
           // No conflicts, simple merge

@@ -13,7 +13,7 @@ const ENCRYPTION_VERSION = 2; // Bumped for compression support
 const SALT_LENGTH = 16;
 const KEY_LENGTH = 32;
 const COMPRESSION_THRESHOLD = 1024; // Only compress if data > 1KB
-const KEY_DERIVATION_ITERATIONS = 100000; // PBKDF2-like iterations for security
+const KEY_DERIVATION_ITERATIONS = 100000; // TEMPORARY: Reverted to match server data encryption
 
 class EncryptionService {
   constructor() {

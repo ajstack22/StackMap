@@ -101,7 +101,7 @@ class ConflictResolver {
     for (const conflict of conflicts) {
       const resolution = await this.resolveConflict(conflict, options);
       
-      if (resolution.requiresUserInput) {
+      if (resolution.requiresUserInput && !options.autoResolveAll) {
         needsUserInput.push(conflict);
       } else {
         resolved.push(resolution);
@@ -110,11 +110,11 @@ class ConflictResolver {
     
     // Add to history
     this.conflictHistory.push(...resolved);
-    this.pendingConflicts = needsUserInput;
+    this.pendingConflicts = options.autoResolveAll ? [] : needsUserInput;
     
     return {
       resolved,
-      pending: needsUserInput,
+      pending: options.autoResolveAll ? [] : needsUserInput,
       finalState: this.applyResolutions(resolved)
     };
   }
@@ -123,7 +123,7 @@ class ConflictResolver {
    * Resolve a single conflict
    */
   async resolveConflict(conflict, options = {}) {
-    const { strategy = conflict.strategy, preferLocal = false } = options;
+    const { strategy = conflict.strategy, preferLocal = false, autoResolveAll = false } = options;
     
     let resolution = {
       conflictId: conflict.id,
@@ -155,12 +155,21 @@ class ConflictResolver {
         break;
         
       case STRATEGIES.USER_CHOICE:
-        resolution.requiresUserInput = true;
-        resolution.choices = {
-          local: conflict.localValue,
-          remote: conflict.remoteValue,
-          merge: this.mergeValues(conflict.field, conflict.localValue, conflict.remoteValue)
-        };
+        if (autoResolveAll) {
+          // Auto-resolve using last-write-wins when autoResolveAll is true
+          resolution.resolvedValue = conflict.remoteTimestamp > conflict.localTimestamp 
+            ? conflict.remoteValue 
+            : conflict.localValue;
+          resolution.winner = conflict.remoteTimestamp > conflict.localTimestamp ? 'remote' : 'local';
+          resolution.autoResolved = true;
+        } else {
+          resolution.requiresUserInput = true;
+          resolution.choices = {
+            local: conflict.localValue,
+            remote: conflict.remoteValue,
+            merge: this.mergeValues(conflict.field, conflict.localValue, conflict.remoteValue)
+          };
+        }
         break;
         
       case STRATEGIES.CUSTOM:

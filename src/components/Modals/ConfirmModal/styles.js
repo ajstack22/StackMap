@@ -7,8 +7,8 @@ export const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
-    zIndex: 9999,
-    elevation: 9999,
+    zIndex: 999999,
+    elevation: 999999,
   },
   modalContent: {
     backgroundColor: 'white',
@@ -17,8 +17,8 @@ export const styles = StyleSheet.create({
     width: '90%',
     maxWidth: 400,
     alignItems: 'center',
-    zIndex: 10000,
-    elevation: 10000,
+    zIndex: 1000000,
+    elevation: 1000000,
     ...SHADOWS.level3,
   },
   iconContainer: {
