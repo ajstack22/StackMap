@@ -4073,38 +4073,36 @@ const App = () => {
         />
       )}
       
-      {/* Context Modal - Normal Mode */}
-      {!isEditMode && (
-        <ContextModal
-          visible={showUserDayModal}
-          onClose={() => setShowUserDayModal(false)}
-          currentUser={currentUser}
-          users={users}
-          theme={theme}
-          onUserChange={(userId) => {
-            setCurrentUser(userId);
-            if (users[userId]?.settings?.theme) {
-              setCurrentTheme(users[userId].settings.theme);
-            }
-          }}
-          onSave={(contextData) => {
-            // Save context data for the selected user
-            const userToSave = contextData.user || currentUser;
-            const updatedContextData = {
-              ...userContextData,
-              [userToSave]: contextData
-            };
-            setUserContextData(updatedContextData);
-            // User context is now persisted automatically through Zustand
-            showToast({ message: 'Context saved!' });
-            
-            // Only close modal if it's not an auto-save
-            if (!contextData.autoSave) {
-              setShowUserDayModal(false);
-            }
-          }}
-        />
-      )}
+      {/* Context Modal - Available in both normal and edit modes */}
+      <ContextModal
+        visible={showUserDayModal}
+        onClose={() => setShowUserDayModal(false)}
+        currentUser={currentUser}
+        users={users}
+        theme={theme}
+        onUserChange={(userId) => {
+          setCurrentUser(userId);
+          if (users[userId]?.settings?.theme) {
+            setCurrentTheme(users[userId].settings.theme);
+          }
+        }}
+        onSave={(contextData) => {
+          // Save context data for the selected user
+          const userToSave = contextData.user || currentUser;
+          const updatedContextData = {
+            ...userContextData,
+            [userToSave]: contextData
+          };
+          setUserContextData(updatedContextData);
+          // User context is now persisted automatically through Zustand
+          showToast({ message: 'Context saved!' });
+          
+          // Only close modal if it's not an auto-save
+          if (!contextData.autoSave) {
+            setShowUserDayModal(false);
+          }
+        }}
+      />
 
       
       

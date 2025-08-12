@@ -1,0 +1,523 @@
+{
+  "version": 3,
+  "exportDate": "2025-01-12T15:00:00.000Z",
+  "exportedItems": {
+    "users": true,
+    "activityCards": true,
+    "activityLibrary": true
+  },
+  "users": {
+    "user-emma": {
+      "id": "user-emma",
+      "name": "Emma",
+      "icon": "🦄",
+      "createdAt": "2025-01-01T09:00:00.000Z",
+      "lastActive": "2025-01-12T15:00:00.000Z",
+      "settings": {
+        "theme": "#E91E63"
+      },
+      "days": {
+        "today": {
+          "activities": [
+            {
+              "id": "emma-1",
+              "text": "Brush teeth",
+              "icon": "🦷",
+              "completed": true,
+              "pinned": false,
+              "order": 0
+            },
+            {
+              "id": "emma-2",
+              "text": "Get dressed",
+              "icon": "👕",
+              "completed": true,
+              "pinned": false,
+              "order": 1
+            },
+            {
+              "id": "emma-3",
+              "text": "Eat breakfast",
+              "icon": "🥞",
+              "completed": true,
+              "pinned": true,
+              "order": 2
+            },
+            {
+              "id": "emma-4",
+              "text": "Take medicine",
+              "icon": "💊",
+              "completed": false,
+              "pinned": true,
+              "order": 3
+            },
+            {
+              "id": "emma-5",
+              "text": "Reading time",
+              "icon": "📖",
+              "completed": false,
+              "pinned": false,
+              "order": 4
+            },
+            {
+              "id": "emma-6",
+              "text": "Math practice",
+              "icon": "🔢",
+              "completed": false,
+              "pinned": false,
+              "order": 5
+            },
+            {
+              "id": "emma-7",
+              "text": "Snack time",
+              "icon": "🍎",
+              "completed": false,
+              "pinned": false,
+              "order": 6
+            },
+            {
+              "id": "emma-8",
+              "text": "Art class",
+              "icon": "🎨",
+              "completed": false,
+              "pinned": false,
+              "order": 7
+            },
+            {
+              "id": "emma-9",
+              "text": "Playground",
+              "icon": "🛝",
+              "completed": false,
+              "pinned": false,
+              "order": 8
+            },
+            {
+              "id": "emma-10",
+              "text": "Speech therapy",
+              "icon": "💬",
+              "completed": false,
+              "pinned": false,
+              "order": 9
+            },
+            {
+              "id": "emma-11",
+              "text": "Quiet time",
+              "icon": "🧘",
+              "completed": false,
+              "pinned": false,
+              "order": 10
+            },
+            {
+              "id": "emma-12",
+              "text": "Bedtime routine",
+              "icon": "🌙",
+              "completed": false,
+              "pinned": false,
+              "order": 11
+            }
+          ]
+        },
+        "tomorrow": {
+          "activities": []
+        }
+      }
+    },
+    "user-liam": {
+      "id": "user-liam",
+      "name": "Liam",
+      "icon": "🦖",
+      "createdAt": "2025-01-05T14:30:00.000Z",
+      "lastActive": "2025-01-12T10:00:00.000Z",
+      "settings": {
+        "theme": "#2196F3"
+      },
+      "days": {
+        "today": {
+          "activities": []
+        },
+        "tomorrow": {
+          "activities": []
+        }
+      }
+    },
+    "user-sofia": {
+      "id": "user-sofia",
+      "name": "Sofia",
+      "icon": "🌈",
+      "createdAt": "2025-01-08T08:00:00.000Z",
+      "lastActive": "2025-01-11T20:00:00.000Z",
+      "settings": {
+        "theme": "#9C27B0"
+      },
+      "days": {
+        "today": {
+          "activities": []
+        },
+        "tomorrow": {
+          "activities": []
+        }
+      }
+    }
+  },
+  "currentUser": "user-emma",
+  "currentDay": "today",
+  "activityCards": [
+    {
+      "id": "emma-1",
+      "userId": "user-emma",
+      "text": "Brush teeth",
+      "icon": "🦷",
+      "completed": true,
+      "pinned": false
+    },
+    {
+      "id": "emma-2",
+      "userId": "user-emma",
+      "text": "Get dressed",
+      "icon": "👕",
+      "completed": true,
+      "pinned": false
+    },
+    {
+      "id": "emma-3",
+      "userId": "user-emma",
+      "text": "Eat breakfast",
+      "icon": "🥞",
+      "completed": true,
+      "pinned": true
+    },
+    {
+      "id": "emma-4",
+      "userId": "user-emma",
+      "text": "Take medicine",
+      "icon": "💊",
+      "completed": false,
+      "pinned": true
+    },
+    {
+      "id": "emma-5",
+      "userId": "user-emma",
+      "text": "Reading time",
+      "icon": "📖",
+      "completed": false,
+      "pinned": false
+    },
+    {
+      "id": "emma-6",
+      "userId": "user-emma",
+      "text": "Math practice",
+      "icon": "🔢",
+      "completed": false,
+      "pinned": false
+    },
+    {
+      "id": "emma-7",
+      "userId": "user-emma",
+      "text": "Snack time",
+      "icon": "🍎",
+      "completed": false,
+      "pinned": false
+    },
+    {
+      "id": "emma-8",
+      "userId": "user-emma",
+      "text": "Art class",
+      "icon": "🎨",
+      "completed": false,
+      "pinned": false
+    },
+    {
+      "id": "emma-9",
+      "userId": "user-emma",
+      "text": "Playground",
+      "icon": "🛝",
+      "completed": false,
+      "pinned": false
+    },
+    {
+      "id": "emma-10",
+      "userId": "user-emma",
+      "text": "Speech therapy",
+      "icon": "💬",
+      "completed": false,
+      "pinned": false
+    },
+    {
+      "id": "emma-11",
+      "userId": "user-emma",
+      "text": "Quiet time",
+      "icon": "🧘",
+      "completed": false,
+      "pinned": false
+    },
+    {
+      "id": "emma-12",
+      "userId": "user-emma",
+      "text": "Bedtime routine",
+      "icon": "🌙",
+      "completed": false,
+      "pinned": false
+    }
+  ],
+  "activityCategories": [
+    {
+      "id": "morning-routine",
+      "name": "Morning Routine",
+      "activities": [
+        {
+          "id": "template-1",
+          "name": "Wake up",
+          "emoji": "☀️"
+        },
+        {
+          "id": "template-2",
+          "name": "Use bathroom",
+          "emoji": "🚽"
+        },
+        {
+          "id": "template-3",
+          "name": "Wash face",
+          "emoji": "💦"
+        },
+        {
+          "id": "template-4",
+          "name": "Brush teeth",
+          "emoji": "🦷"
+        },
+        {
+          "id": "template-5",
+          "name": "Get dressed",
+          "emoji": "👕"
+        },
+        {
+          "id": "template-6",
+          "name": "Eat breakfast",
+          "emoji": "🥣"
+        },
+        {
+          "id": "template-7",
+          "name": "Pack backpack",
+          "emoji": "🎒"
+        }
+      ]
+    },
+    {
+      "id": "school-activities",
+      "name": "School Activities",
+      "activities": [
+        {
+          "id": "template-8",
+          "name": "Circle time",
+          "emoji": "⭕"
+        },
+        {
+          "id": "template-9",
+          "name": "Reading",
+          "emoji": "📚"
+        },
+        {
+          "id": "template-10",
+          "name": "Writing practice",
+          "emoji": "✏️"
+        },
+        {
+          "id": "template-11",
+          "name": "Math",
+          "emoji": "➕"
+        },
+        {
+          "id": "template-12",
+          "name": "Science",
+          "emoji": "🔬"
+        },
+        {
+          "id": "template-13",
+          "name": "Music class",
+          "emoji": "🎵"
+        },
+        {
+          "id": "template-14",
+          "name": "PE/Gym",
+          "emoji": "🏃"
+        },
+        {
+          "id": "template-15",
+          "name": "Lunch",
+          "emoji": "🍱"
+        },
+        {
+          "id": "template-16",
+          "name": "Recess",
+          "emoji": "🏀"
+        }
+      ]
+    },
+    {
+      "id": "therapy-support",
+      "name": "Therapy & Support",
+      "activities": [
+        {
+          "id": "template-17",
+          "name": "Speech therapy",
+          "emoji": "🗣️"
+        },
+        {
+          "id": "template-18",
+          "name": "OT exercises",
+          "emoji": "✋"
+        },
+        {
+          "id": "template-19",
+          "name": "Physical therapy",
+          "emoji": "🦵"
+        },
+        {
+          "id": "template-20",
+          "name": "Sensory break",
+          "emoji": "🫧"
+        },
+        {
+          "id": "template-21",
+          "name": "Deep breathing",
+          "emoji": "🌬️"
+        },
+        {
+          "id": "template-22",
+          "name": "Stretching",
+          "emoji": "🤸"
+        }
+      ]
+    },
+    {
+      "id": "self-care",
+      "name": "Self Care",
+      "activities": [
+        {
+          "id": "template-23",
+          "name": "Wash hands",
+          "emoji": "🧼"
+        },
+        {
+          "id": "template-24",
+          "name": "Drink water",
+          "emoji": "💧"
+        },
+        {
+          "id": "template-25",
+          "name": "Healthy snack",
+          "emoji": "🥕"
+        },
+        {
+          "id": "template-26",
+          "name": "Take medicine",
+          "emoji": "💊"
+        },
+        {
+          "id": "template-27",
+          "name": "Rest time",
+          "emoji": "😴"
+        },
+        {
+          "id": "template-28",
+          "name": "Use bathroom",
+          "emoji": "🚽"
+        }
+      ]
+    },
+    {
+      "id": "fun-activities",
+      "name": "Fun Activities",
+      "activities": [
+        {
+          "id": "template-29",
+          "name": "Play games",
+          "emoji": "🎮"
+        },
+        {
+          "id": "template-30",
+          "name": "Watch TV",
+          "emoji": "📺"
+        },
+        {
+          "id": "template-31",
+          "name": "Play outside",
+          "emoji": "⚽"
+        },
+        {
+          "id": "template-32",
+          "name": "Draw/Color",
+          "emoji": "🖍️"
+        },
+        {
+          "id": "template-33",
+          "name": "Build blocks",
+          "emoji": "🧱"
+        },
+        {
+          "id": "template-34",
+          "name": "Play with toys",
+          "emoji": "🧸"
+        },
+        {
+          "id": "template-35",
+          "name": "Dance",
+          "emoji": "💃"
+        },
+        {
+          "id": "template-36",
+          "name": "Sing songs",
+          "emoji": "🎤"
+        }
+      ]
+    },
+    {
+      "id": "evening-routine",
+      "name": "Evening Routine",
+      "activities": [
+        {
+          "id": "template-37",
+          "name": "Dinner",
+          "emoji": "🍽️"
+        },
+        {
+          "id": "template-38",
+          "name": "Bath time",
+          "emoji": "🛁"
+        },
+        {
+          "id": "template-39",
+          "name": "Put on pajamas",
+          "emoji": "👔"
+        },
+        {
+          "id": "template-40",
+          "name": "Brush teeth",
+          "emoji": "🦷"
+        },
+        {
+          "id": "template-41",
+          "name": "Story time",
+          "emoji": "📖"
+        },
+        {
+          "id": "template-42",
+          "name": "Goodnight hugs",
+          "emoji": "🤗"
+        },
+        {
+          "id": "template-43",
+          "name": "Lights out",
+          "emoji": "💤"
+        }
+      ]
+    }
+  ],
+  "globalSettings": {
+    "currentTheme": "#E91E63",
+    "bannerPosition": "top",
+    "defaultView": "normal",
+    "displayMode": "numbers",
+    "enableDayManagement": true,
+    "pinEnabled": false
+  }
+}
