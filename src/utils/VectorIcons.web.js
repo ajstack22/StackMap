@@ -1,5 +1,4 @@
 import React from 'react';
-import { Text } from '../components/Typography';
 
 // Web implementation of react-native-vector-icons using Material Icons font
 // Now using ligatures instead of unicode for better compatibility
@@ -69,13 +68,14 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
     fontFamily: 'Material Icons, -apple-system, BlinkMacSystemFont, sans-serif',
     fontSize: size,
     color: color,
-    lineHeight: size,
+    lineHeight: `${size}px`,
     height: size,
     width: size,
     textAlign: 'center',
-    // Fix for proper icon centering
-    display: 'inline-block',
-    verticalAlign: 'middle',
+    // Fix for proper icon centering - use flex to match React Native behavior
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     // Material Icons specific settings
     fontWeight: 'normal',
     fontStyle: 'normal',
@@ -131,9 +131,9 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
   const iconContent = iconMap[name] || iconName;
   
   return (
-    <Text style={iconStyle}>
+    <span style={iconStyle}>
       {iconContent}
-    </Text>
+    </span>
   );
 };
 
