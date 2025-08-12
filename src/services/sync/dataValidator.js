@@ -18,7 +18,7 @@ export const validateSyncedData = (data) => {
 
     // Check required top-level fields
     if (!data.users || typeof data.users !== 'object') {
-//       console.error('Data validation failed: Missing or invalid users object', data);
+      console.error('Data validation failed: Missing or invalid users object', data);
       return false;
     }
 
@@ -201,8 +201,22 @@ export const repairSyncedData = (data) => {
     const repaired = JSON.parse(JSON.stringify(data)); // Deep clone
 
     // Ensure users object exists
-    if (!repaired.users) {
+    if (!repaired.users || typeof repaired.users !== 'object') {
       repaired.users = {};
+    }
+    
+    // If no users exist, create a default user
+    if (Object.keys(repaired.users).length === 0) {
+      const defaultUserId = repaired.currentUser || 'user_1';
+      repaired.users[defaultUserId] = {
+        name: 'User',
+        icon: '👤',
+        days: {}
+      };
+      // Ensure currentUser points to a valid user
+      if (!repaired.currentUser) {
+        repaired.currentUser = defaultUserId;
+      }
     }
 
     // Repair each user

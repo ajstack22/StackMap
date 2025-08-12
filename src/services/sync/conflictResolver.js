@@ -263,6 +263,25 @@ class ConflictResolver {
       }
     }
     
+    // Ensure users object exists (critical for validation)
+    if (!newState.users || typeof newState.users !== 'object') {
+      console.log('Conflict resolution: Adding missing users object');
+      newState.users = currentState.users || {};
+      
+      // If still no users, create a default structure
+      if (Object.keys(newState.users).length === 0) {
+        const defaultUserId = newState.currentUser || 'user_1';
+        newState.users = {
+          [defaultUserId]: {
+            name: 'User',
+            icon: '👤',
+            days: {}
+          }
+        };
+        newState.currentUser = defaultUserId;
+      }
+    }
+    
     // Validate the final state
     if (!validateSyncedData(newState)) {
       console.error('Conflict resolution resulted in invalid state, attempting repair');
