@@ -127,3 +127,6 @@ icon-color-preview.html
 
 # Development prompt packs (local documentation)
 /prompts/
+
+# Build information file
+.build-info.json

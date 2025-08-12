@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { Text } from '../../Typography';
 import {
   Modal,
@@ -14,6 +14,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { THEMES } from '../../../constants';
 import { styles } from './styles';
+import { BUILD_VERSION } from '../../../utils/version';
 
 const PreferencesModal = ({
   visible,
@@ -219,6 +220,11 @@ const PreferencesModal = ({
         >
           <Text style={styles.infoButtonText}>Support Us</Text>
         </TouchableOpacity>
+      </View>
+      
+      {/* Version Number - Subtle display at bottom */}
+      <View style={styles.versionContainer}>
+        <Text style={styles.versionText}>v{BUILD_VERSION}</Text>
       </View>
     </>
   );

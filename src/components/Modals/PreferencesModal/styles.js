@@ -161,4 +161,14 @@ export const styles = StyleSheet.create({
     color: '#007AFF',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
+  versionContainer: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 10,
+  },
+  versionText: {
+    fontSize: 14,
+    color: '#000',
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
 });
