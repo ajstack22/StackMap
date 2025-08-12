@@ -99,6 +99,21 @@ else {
 }
 ```
 
+### Swipe-to-Dismiss Gesture Handling
+```javascript
+// Track exact scroll position, not just binary state
+const scrollOffsetsRef = useRef({});
+const isAtTopRef = useRef(true);
+
+// CRITICAL: Never capture upward swipes
+if (gestureState.dy < 0) {
+  return false;
+}
+
+// Only allow dismiss when ScrollView is at top (offset = 0)
+const canDismiss = isAtTopRef.current && !isScrolling;
+```
+
 ### Colors & Themes
 - User themes are preferences, not accessibility features
 - Text must always be readable regardless of theme
