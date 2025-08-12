@@ -17,12 +17,12 @@ npm run web                               # Terminal 2
 
 | Platform | Device | Resolution | Columns | Key Tests |
 |----------|--------|------------|---------|-----------|
-| Web Desktop | Chrome | 1920x1080 | 3 | Responsive grid, hover states |
-| Web Mobile | Chrome DevTools | 393x852 | 1 | Touch targets, PWA install |
+| Web Desktop | Brave/Safari | 1920x1080 | 3 | Responsive grid, hover states |
+| Web Mobile | Brave DevTools/Safari Responsive | 393x852 | 1 | Touch targets, PWA install |
 | iOS Phone | iPhone 16 Pro Max | 1290x2796 | 1 (2 landscape) | Swipe gestures, haptics |
-| iOS Tablet | iPad Pro 12.9" | 2048x2732 | 2 (3 landscape) | Split view, multitasking |
-| Android Phone | Pixel 8 Pro | 1080x2400 | 1 (2 landscape) | Back button, material design |
-| Android Tablet | Pixel Tablet | 2560x1600 | 2 (3 landscape) | Large screens, foldables |
+| iOS Tablet | iPad Air 11" M3 | 1640x2360 | 2 (3 landscape) | Split view, multitasking |
+| Android Phone | Pixel 9 | 1080x2424 | 1 (2 landscape) | Back button, material design |
+| Android Tablet | Pixel Tablet | 2560x1600 | 2 (3 landscape) | Large screens |
 
 ## ✅ Core Functionality Tests
 

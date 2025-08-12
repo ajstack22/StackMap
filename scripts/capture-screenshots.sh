@@ -23,54 +23,60 @@ capture_all() {
     local screen_name=$1
     echo -e "${BLUE}📸 Capturing: $screen_name${NC}"
     
-    # iOS Phone
+    # iOS Phone (iPhone 16 Pro Max)
     if xcrun simctl list | grep -q "iPhone 16 Pro Max.*Booted"; then
         xcrun simctl io "iPhone 16 Pro Max" screenshot "$SCREENSHOT_DIR/ios_phone/${screen_name}.png" 2>/dev/null &&
-        echo -e "${GREEN}  ✓ iOS Phone${NC}" || echo -e "${RED}  ✗ iOS Phone failed${NC}"
+        echo -e "${GREEN}  ✓ iOS Phone (iPhone 16 Pro Max)${NC}" || echo -e "${RED}  ✗ iOS Phone failed${NC}"
     else
-        echo -e "${YELLOW}  ⚠ iOS Phone not running${NC}"
+        echo -e "${YELLOW}  ⚠ iPhone 16 Pro Max not running${NC}"
     fi
     
-    # iOS Tablet
-    if xcrun simctl list | grep -q "iPad Pro.*Booted"; then
-        xcrun simctl io "iPad Pro (12.9-inch) (6th generation)" screenshot "$SCREENSHOT_DIR/ios_tablet/${screen_name}.png" 2>/dev/null &&
-        echo -e "${GREEN}  ✓ iOS Tablet${NC}" || echo -e "${RED}  ✗ iOS Tablet failed${NC}"
+    # iOS Tablet (iPad Air 11-inch M3)
+    if xcrun simctl list | grep -q "iPad Air 11-inch (M3).*Booted"; then
+        xcrun simctl io "iPad Air 11-inch (M3)" screenshot "$SCREENSHOT_DIR/ios_tablet/${screen_name}.png" 2>/dev/null &&
+        echo -e "${GREEN}  ✓ iOS Tablet (iPad Air 11-inch)${NC}" || echo -e "${RED}  ✗ iOS Tablet failed${NC}"
     else
-        echo -e "${YELLOW}  ⚠ iOS Tablet not running${NC}"
+        echo -e "${YELLOW}  ⚠ iPad Air 11-inch not running${NC}"
     fi
     
     # Android devices
     ANDROID_DEVICES=($(adb devices | grep emulator | cut -f1))
     
     if [ ${#ANDROID_DEVICES[@]} -ge 1 ]; then
-        # Android Phone (first emulator)
+        # Android Phone (Pixel 9 - first emulator)
         adb -s ${ANDROID_DEVICES[0]} shell screencap -p /sdcard/screenshot.png 2>/dev/null &&
         adb -s ${ANDROID_DEVICES[0]} pull /sdcard/screenshot.png "$SCREENSHOT_DIR/android_phone/${screen_name}.png" > /dev/null 2>&1 &&
-        echo -e "${GREEN}  ✓ Android Phone${NC}" || echo -e "${RED}  ✗ Android Phone failed${NC}"
+        echo -e "${GREEN}  ✓ Android Phone (Pixel 9)${NC}" || echo -e "${RED}  ✗ Android Phone failed${NC}"
     else
-        echo -e "${YELLOW}  ⚠ Android Phone not running${NC}"
+        echo -e "${YELLOW}  ⚠ Pixel 9 not running${NC}"
     fi
     
     if [ ${#ANDROID_DEVICES[@]} -ge 2 ]; then
-        # Android Tablet (second emulator)
+        # Android Tablet (Pixel Tablet - second emulator)
         adb -s ${ANDROID_DEVICES[1]} shell screencap -p /sdcard/screenshot.png 2>/dev/null &&
         adb -s ${ANDROID_DEVICES[1]} pull /sdcard/screenshot.png "$SCREENSHOT_DIR/android_tablet/${screen_name}.png" > /dev/null 2>&1 &&
-        echo -e "${GREEN}  ✓ Android Tablet${NC}" || echo -e "${RED}  ✗ Android Tablet failed${NC}"
+        echo -e "${GREEN}  ✓ Android Tablet (Pixel Tablet)${NC}" || echo -e "${RED}  ✗ Android Tablet failed${NC}"
     else
-        echo -e "${YELLOW}  ⚠ Android Tablet not running${NC}"
+        echo -e "${YELLOW}  ⚠ Pixel Tablet not running${NC}"
     fi
     
-    # Web screenshots (using Chrome)
-    if pgrep -x "Google Chrome" > /dev/null; then
-        # Web Desktop
-        osascript -e 'tell application "Google Chrome" to tell active tab of window 1 to capture screenshot' \
-                  -e "do shell script \"screencapture -x '$SCREENSHOT_DIR/web_desktop/${screen_name}.png'\"" 2>/dev/null &&
-        echo -e "${GREEN}  ✓ Web Desktop${NC}" || echo -e "${RED}  ✗ Web Desktop failed${NC}"
+    # Web screenshots (using Brave or Safari)
+    if pgrep -x "Brave Browser" > /dev/null; then
+        # Web Desktop (Brave)
+        screencapture -x -o -l$(osascript -e 'tell app "Brave Browser" to id of window 1') "$SCREENSHOT_DIR/web_desktop/${screen_name}.png" 2>/dev/null &&
+        echo -e "${GREEN}  ✓ Web Desktop (Brave)${NC}" || echo -e "${RED}  ✗ Web Desktop failed${NC}"
         
-        # Note: Web mobile would need Chrome DevTools or Puppeteer
-        echo -e "${YELLOW}  ⚠ Web Mobile (manual capture needed)${NC}"
+        # Web Mobile - Brave DevTools
+        echo -e "${YELLOW}  ⚠ Web Mobile (Open DevTools > Toggle device toolbar > Capture manually)${NC}"
+    elif pgrep -x "Safari" > /dev/null; then
+        # Web Desktop (Safari)
+        screencapture -x -o -l$(osascript -e 'tell app "Safari" to id of window 1') "$SCREENSHOT_DIR/web_desktop/${screen_name}.png" 2>/dev/null &&
+        echo -e "${GREEN}  ✓ Web Desktop (Safari)${NC}" || echo -e "${RED}  ✗ Web Desktop failed${NC}"
+        
+        # Web Mobile - Safari Responsive Design Mode
+        echo -e "${YELLOW}  ⚠ Web Mobile (Develop > Enter Responsive Design Mode > Capture manually)${NC}"
     else
-        echo -e "${YELLOW}  ⚠ Chrome not running${NC}"
+        echo -e "${YELLOW}  ⚠ No browser running (Brave or Safari)${NC}"
     fi
     
     echo -e "${GREEN}✅ Captured: $screen_name${NC}\n"
@@ -82,7 +88,7 @@ show_status() {
     
     # iOS Status
     echo -e "${BLUE}iOS Devices:${NC}"
-    xcrun simctl list devices | grep -E "(iPhone 16 Pro Max|iPad Pro)" | grep -E "(Booted|Shutdown)"
+    xcrun simctl list devices | grep -E "(iPhone 16 Pro Max|iPad Air 11-inch)" | grep -E "(Booted|Shutdown)"
     
     # Android Status
     echo -e "${BLUE}Android Devices:${NC}"

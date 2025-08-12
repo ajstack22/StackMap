@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo "🚀 Launching all test devices for StackMap testing..."
+echo "🚀 Verifying StackMap on all test devices..."
 
 # Colors for output
 RED='\033[0;31m'
@@ -8,62 +8,80 @@ GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
-# iOS Devices
-echo -e "${YELLOW}📱 Starting iOS devices...${NC}"
+# Check device status
+echo -e "${YELLOW}📱 Checking device status...${NC}"
 
-# iPhone
-echo "Starting iPhone 16 Pro Max..."
-xcrun simctl boot "iPhone 16 Pro Max" 2>/dev/null || echo "iPhone already booted"
-
-# iPad
-echo "Starting iPad Pro..."
-xcrun simctl boot "iPad Pro (12.9-inch) (6th generation)" 2>/dev/null || echo "iPad already booted"
-
-# Open Simulator app
-open -a Simulator
-
-# Android Devices
-echo -e "${YELLOW}🤖 Starting Android devices...${NC}"
-
-# Check if emulators exist
-if emulator -list-avds | grep -q "Pixel_8_Pro"; then
-    echo "Starting Pixel 8 Pro..."
-    emulator -avd Pixel_8_Pro_API_34 > /dev/null 2>&1 &
+# iOS Devices (Simulators that are already running)
+echo -e "${GREEN}iOS Simulators:${NC}"
+if xcrun simctl list | grep -q "iPhone 16 Pro Max.*Booted"; then
+    echo "✅ iPhone 16 Pro Max - Running"
 else
-    echo -e "${RED}Warning: Pixel_8_Pro_API_34 not found${NC}"
+    echo "⚠️  iPhone 16 Pro Max - Not running (starting...)"
+    xcrun simctl boot "iPhone 16 Pro Max" 2>/dev/null
 fi
 
-if emulator -list-avds | grep -q "Pixel_Tablet"; then
-    echo "Starting Pixel Tablet..."
-    emulator -avd Pixel_Tablet_API_34 > /dev/null 2>&1 &
+if xcrun simctl list | grep -q "iPad Air 11-inch (M3).*Booted"; then
+    echo "✅ iPad Air 11-inch (M3) - Running"
 else
-    echo -e "${RED}Warning: Pixel_Tablet_API_34 not found${NC}"
+    echo "⚠️  iPad Air 11-inch (M3) - Not running (starting...)"
+    xcrun simctl boot "iPad Air 11-inch (M3)" 2>/dev/null
 fi
 
-# Wait for devices to boot
-echo -e "${YELLOW}⏳ Waiting for devices to boot...${NC}"
-sleep 15
+# Android Devices (Emulators)
+echo -e "${GREEN}Android Emulators:${NC}"
+ANDROID_DEVICES=($(adb devices | grep -v "List" | cut -f1))
+if [ ${#ANDROID_DEVICES[@]} -ge 1 ]; then
+    echo "✅ Pixel 9 (Phone) - Connected as ${ANDROID_DEVICES[0]}"
+else
+    echo "⚠️  Pixel 9 - Not detected"
+fi
 
-# Install apps
-echo -e "${YELLOW}📦 Installing apps on devices...${NC}"
+if [ ${#ANDROID_DEVICES[@]} -ge 2 ]; then
+    echo "✅ Pixel Tablet - Connected as ${ANDROID_DEVICES[1]}"
+else
+    echo "⚠️  Pixel Tablet - Not detected"
+fi
+
+# Web Browser
+echo -e "${GREEN}Web Browser:${NC}"
+if pgrep -x "Brave Browser" > /dev/null; then
+    echo "✅ Brave Browser - Running"
+elif pgrep -x "Safari" > /dev/null; then
+    echo "✅ Safari - Running"
+else
+    echo "⚠️  No supported browser running (Brave or Safari recommended)"
+fi
+
+# Install/Update apps
+echo ""
+echo -e "${YELLOW}📦 Installing/Updating StackMap on devices...${NC}"
 
 # iOS installations
-echo "Installing on iPhone..."
+echo "Updating on iPhone 16 Pro Max..."
 npx react-native run-ios --simulator="iPhone 16 Pro Max" --no-packager > /dev/null 2>&1 &
 
-echo "Installing on iPad..."
-npx react-native run-ios --simulator="iPad Pro (12.9-inch) (6th generation)" --no-packager > /dev/null 2>&1 &
+echo "Updating on iPad Air 11-inch..."
+npx react-native run-ios --simulator="iPad Air 11-inch (M3)" --no-packager > /dev/null 2>&1 &
 
-# Android installation (will install on all running emulators)
-echo "Installing on Android devices..."
+# Android installation (will install on all connected devices)
+echo "Updating on Android devices..."
 npx react-native run-android --no-packager > /dev/null 2>&1 &
 
 # Wait for installations
 wait
 
-echo -e "${GREEN}✅ All devices ready for testing!${NC}"
+echo ""
+echo -e "${GREEN}✅ All devices verified and updated!${NC}"
+echo ""
+echo "Your testing setup:"
+echo "  📱 iOS Phone: iPhone 16 Pro Max (Simulator)"
+echo "  📱 iOS Tablet: iPad Air 11-inch M3 (Simulator)"
+echo "  🤖 Android Phone: Pixel 9 (Emulator)"
+echo "  🤖 Android Tablet: Pixel Tablet (Emulator)"
+echo "  🌐 Web Browser: Brave (or Safari)"
 echo ""
 echo "Next steps:"
 echo "1. Start Metro bundler: npx react-native start"
 echo "2. Start web server: npm run web"
-echo "3. Run screenshot capture: ./scripts/capture-screenshots.sh"
+echo "3. Open Brave/Safari to: http://localhost:3000"
+echo "4. Run screenshot capture: ./scripts/capture-screenshots.sh"
