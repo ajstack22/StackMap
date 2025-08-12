@@ -1,3 +1,38 @@
+# 🚨 SYNC PERFORMANCE & VALIDATION FIXES - January 2025 🚨
+
+## ✅ FIXED: 20+ Second UI Freeze on Sync Join ✅
+**Problem:** App would freeze for 20+ seconds when joining sync, making it unresponsive
+**Root Cause:** AsyncStorage.setItem was blocking the UI thread during Zustand state persistence
+**Solution:** Added 1-second debounce to AsyncStorage writes in useAppStore.js
+
+**Key Fix:**
+```javascript
+// useAppStore.js - Debounced storage adapter
+const storage = {
+  setItem: async (name, value) => {
+    // Debounce writes by 1 second to prevent UI blocking
+    clearTimeout(storageWriteTimer);
+    storageWriteTimer = setTimeout(async () => {
+      await AsyncStorage.setItem(name, JSON.stringify(value));
+    }, 1000);
+  }
+}
+```
+
+## ✅ FIXED: Sync Validation Errors ✅
+**Problem:** "Conflict resolution failed validation" errors during sync
+**Root Cause:** Missing users object in state during conflict resolution
+**Solution:** Ensure users object always exists in conflictResolver and dataValidator
+
+**Key Fixes:**
+1. conflictResolver.js - Always ensure users object exists
+2. dataValidator.js - Create default user if none exist
+3. Better incremental sync validation for patches
+
+**Important:** Sync blobs are tiny (~4KB) - performance issues are NOT from data size!
+
+---
+
 # 🚨 MOBILE SWIPE GESTURES - SOLVED 🚨
 
 ## ✅ ANDROID & iOS TABBED MODALS SWIPE FIX ✅
