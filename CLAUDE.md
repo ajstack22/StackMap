@@ -198,6 +198,42 @@ The zero-knowledge sync system is now fully functional with these features:
 - Fixed duplicate sync preview modals
 - Changed to panel-based modal design (no footer buttons)
 
+## 🛑 CRITICAL: PREVENTING REGRESSION CYCLES 🛑
+
+### Before Making ANY Changes:
+1. **CHECK GIT HISTORY FIRST**: `git log -p --grep="<feature>" -- <file>` to see if it was already solved
+2. **TEST ON ALL PLATFORMS**: Web, iOS (phone/tablet), Android (phone/tablet) 
+3. **NEVER CHANGE SHARED CODE** without understanding ALL platform impacts
+4. **DOCUMENT WHY**: Add comments explaining WHY code is written a certain way, not just what it does
+
+### Platform Testing Matrix (MUST TEST ALL):
+- [ ] Web Desktop (3 columns)
+- [ ] Web Mobile (1 column)  
+- [ ] iOS Phone (1 column portrait, 2 landscape)
+- [ ] iOS Tablet/iPad (2 columns portrait, 3 landscape)
+- [ ] Android Phone (1 column portrait, 2 landscape)
+- [ ] Android Tablet (2 columns portrait, 3 landscape)
+
+### Known Platform-Specific Solutions (DO NOT CHANGE):
+1. **Android FlexWrap**: MUST use percentage widths (48%) + alignContent: 'flex-start'
+2. **iOS Storage**: AsyncStorage causes 20+ second freeze - use default for now
+3. **iOS Network**: NetInfo.fetch() DISABLED - causes freezes, just assumes online
+4. **Mobile Swipe**: PagerView only, PanResponder doesn't work with ScrollView
+5. **Typography**: Comic Relief forced everywhere via custom component
+
+### Integration Points to NEVER Change Without Full Testing:
+- `calculateCardWidth()` - affects ALL platform layouts
+- `useAppStore` storage adapter - platform-specific implementations
+- `networkMonitor.js` - disabled on iOS to prevent freezes
+- Activity card width calculations - Android needs percentages
+- ScrollView/PanResponder interactions - breaks on mobile
+
+### When Bug Appears "Fixed":
+1. STOP and test all 6 platform configurations
+2. Check if you broke something that was previously working
+3. Look for platform-specific code you may have removed
+4. Review recent commits for unintended side effects
+
 ## Recent Changes (December 28, 2024)
 - Fixed drag and drop by removing automatic sorting
 - Added direct delete button to activity cards in edit mode

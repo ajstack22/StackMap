@@ -36,6 +36,9 @@ class EncryptionService {
    * Derive encryption key from recovery phrase using PBKDF2-like approach
    */
   async deriveKeyFromPhrase(recoveryPhrase, salt = null) {
+    const startTime = Date.now();
+    console.log('[KEY DERIVATION] Starting key derivation with', KEY_DERIVATION_ITERATIONS, 'iterations');
+    
     // If no salt provided, generate one
     if (!salt) {
       salt = nacl.randomBytes(SALT_LENGTH);
@@ -54,15 +57,31 @@ class EncryptionService {
     
     // Log progress for long operation (only in development)
     const logInterval = KEY_DERIVATION_ITERATIONS / 10;
+    const batchSize = 5000; // Process 5000 iterations at a time (increased for better performance)
     
+    // Process in batches to avoid blocking the UI thread
     for (let i = 0; i < KEY_DERIVATION_ITERATIONS; i++) {
       key = nacl.hash(key);
+      
+      // Yield control back to the event loop periodically
+      if (i % batchSize === 0 && i > 0) {
+        // Use setTimeout to allow UI updates and other events to process
+        await new Promise(resolve => setTimeout(resolve, 0));
+        
+        // Log timing info
+        const elapsed = Date.now() - startTime;
+        const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
+        console.log(`[KEY DERIVATION] Progress: ${progress.toFixed(1)}% (${elapsed}ms elapsed)`);
+      }
       
       // Log progress in development mode
       if (__DEV__ && i % logInterval === 0 && i > 0) {
         console.log(`Key derivation progress: ${Math.round((i / KEY_DERIVATION_ITERATIONS) * 100)}%`);
       }
     }
+    
+    const totalTime = Date.now() - startTime;
+    console.log(`[KEY DERIVATION] Completed in ${totalTime}ms`);
     
     // Take first 32 bytes as the key
     return {

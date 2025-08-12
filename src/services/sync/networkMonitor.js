@@ -14,6 +14,14 @@ class NetworkMonitor {
    * Start monitoring network status
    */
   start() {
+    // DISABLED: NetInfo.fetch() causes 20+ second freeze on iOS
+    // Just assume we're online and skip all network checking
+    console.log('NetworkMonitor: DISABLED on iOS - assuming online');
+    this.isOnline = true;
+    this.isInternetReachable = true;
+    return;
+    
+    /* ORIGINAL CODE - DO NOT DELETE - CAUSES iOS FREEZE
     if (this.unsubscribe) {
       return; // Already monitoring
     }
@@ -29,6 +37,7 @@ class NetworkMonitor {
     });
 
     if (__DEV__) {}
+    */
   }
 
   /**

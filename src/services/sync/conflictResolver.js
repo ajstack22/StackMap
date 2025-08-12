@@ -1,5 +1,5 @@
 import { useAppStore } from '../../stores';
-import { validateSyncedData } from './dataValidator';
+import { validateSyncedData, repairSyncedData } from './dataValidator';
 
 // Conflict resolution strategies
 const STRATEGIES = {
@@ -265,20 +265,22 @@ class ConflictResolver {
     
     // Validate the final state
     if (!validateSyncedData(newState)) {
-//       console.error('Conflict resolution resulted in invalid state:', newState);
-//       console.error('Current state:', currentState);
-//       console.error('Resolutions applied:', resolutions);
+      console.error('Conflict resolution resulted in invalid state, attempting repair');
       
-      // On initial sync, the state might be minimal - try to ensure required fields
-      if (!newState.users || Object.keys(newState.users).length === 0) {
-
-        newState.users = currentState.users || {};
-      }
+      // Try to repair the state
+      const repairedState = repairSyncedData(newState);
       
-      // Try validation again
-      if (!validateSyncedData(newState)) {
+      if (!validateSyncedData(repairedState)) {
+        console.error('Conflict resolution repair failed, state still invalid');
+        // Log more details for debugging
+        console.error('Current state:', currentState);
+        console.error('Resolutions applied:', resolutions);
+        console.error('Failed state:', newState);
         throw new Error('Conflict resolution failed validation');
       }
+      
+      console.log('Conflict resolution state repaired successfully');
+      return repairedState;
     }
     
     return newState;

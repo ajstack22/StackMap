@@ -3,7 +3,11 @@ import { devtools, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import merge from 'lodash/merge';
 
-// Storage adapter for React Native AsyncStorage
+// Debounce timer for storage writes
+let storageWriteTimer = null;
+let pendingWrite = null;
+
+// Storage adapter for React Native AsyncStorage with debounced writes
 const storage = {
   getItem: async (name) => {
     try {
@@ -25,11 +29,31 @@ const storage = {
     }
   },
   setItem: async (name, value) => {
-    try {
-      await AsyncStorage.setItem(name, JSON.stringify(value));
-    } catch (error) {
-      console.error('Error writing to AsyncStorage:', error);
+    // Store the pending write
+    pendingWrite = { name, value };
+    
+    // Clear any existing timer
+    if (storageWriteTimer) {
+      clearTimeout(storageWriteTimer);
     }
+    
+    // Debounce the write operation by 1 second
+    // This prevents blocking during rapid state updates (like sync)
+    storageWriteTimer = setTimeout(async () => {
+      if (pendingWrite) {
+        try {
+          const startTime = Date.now();
+          await AsyncStorage.setItem(pendingWrite.name, JSON.stringify(pendingWrite.value));
+          const duration = Date.now() - startTime;
+          if (duration > 100) {
+            console.log(`[STORAGE] AsyncStorage write took ${duration}ms`);
+          }
+        } catch (error) {
+          console.error('Error writing to AsyncStorage:', error);
+        }
+        pendingWrite = null;
+      }
+    }, 1000); // 1 second debounce
   },
   removeItem: async (name) => {
     try {

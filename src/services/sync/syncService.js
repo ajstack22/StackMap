@@ -779,7 +779,9 @@ class SyncService {
    * Restore data to Zustand store
    */
   async restoreData(data) {
-    console.log('restoreData: Incoming data:', data);
+    // Don't log full data as it could be huge
+    const dataInfo = data ? `type: ${data.type}, size: ~${Math.round(JSON.stringify(data).length / 1024)}KB` : 'null';
+    console.log('restoreData: Incoming data info:', dataInfo);
     
     // Handle incremental sync data
     if (data.type === 'incremental' && data.patch) {
@@ -803,7 +805,7 @@ class SyncService {
         patchedState.hasCompletedOnboarding = currentState.hasCompletedOnboarding;
       }
       
-      console.log('restoreData: Patched state:', patchedState);
+      console.log('restoreData: Applied patch to state');
       useAppStore.setState(patchedState);
       return;
     }
@@ -819,11 +821,12 @@ class SyncService {
       currentDay
     } = data;
     
-    console.log('restoreData: Export format data - Users:', users);
-    console.log('restoreData: Export format data - Templates:', templates);
+    console.log('restoreData: Export format data - Users count:', Object.keys(users || {}).length);
+    console.log('restoreData: Export format data - Templates count:', (templates || []).length);
     
-    // DEBUG: Log full incoming data
-    console.log('[DEBUG] Full sync data being restored:', JSON.stringify(data, null, 2));
+    // DEBUG: Log data size without stringifying the whole thing
+    const dataSize = JSON.stringify(data).length;
+    console.log('[DEBUG] Full sync data size:', Math.round(dataSize / 1024), 'KB');
     
     // Get current state to preserve certain values
     const currentState = useAppStore.getState();
@@ -850,7 +853,7 @@ class SyncService {
       currentDay: currentDay || 'today'
     };
     
-    console.log('restoreData: Setting export format state:', newState);
+    console.log('restoreData: Setting export format state');
     
     // DEBUG: Log what we're about to set
     console.log('[DEBUG] About to set state with:');
@@ -871,6 +874,28 @@ class SyncService {
    * Merge remote data with local data
    */
   async mergeData(remoteData) {
+    // For incremental syncs, the restoreData already handles the merge
+    if (remoteData.type === 'incremental') {
+      console.log('sync: Applying incremental update');
+      await this.restoreData(remoteData);
+      
+      // Validate the state after incremental update
+      const updatedState = useAppStore.getState();
+      if (!validateSyncedData(updatedState)) {
+        console.error('sync: State validation failed after incremental update, attempting repair');
+        // Try to repair the state
+        const repairedState = repairSyncedData(updatedState);
+        if (!validateSyncedData(repairedState)) {
+          console.error('sync: Repair failed, state still invalid');
+          throw new Error('Data validation failed after incremental sync');
+        }
+        console.log('sync: State repaired successfully after incremental update');
+        useAppStore.setState(repairedState);
+      }
+      return;
+    }
+    
+    // For full syncs, do the merge with local completion tracking
     // Get current local state before applying remote
     const currentState = useAppStore.getState();
     const currentUsers = currentState.users || {};
@@ -936,7 +961,7 @@ class SyncService {
     });
     
     // Validate merged state before applying
-    const finalMergedState = { ...currentState, users: mergedUsers };
+    const finalMergedState = { ...mergedState, users: mergedUsers };
     if (!validateSyncedData(finalMergedState)) {
       console.error('sync: Merged data validation failed');
       throw new Error('Data validation failed after merge');

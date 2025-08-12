@@ -159,6 +159,9 @@ class ChangeTracker {
             patch[subChange.path] = subChange.newValue;
           }
         }
+      } else if (change.newValue !== undefined) {
+        // Direct field change
+        patch[change.path] = change.newValue;
       }
     }
 

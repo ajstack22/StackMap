@@ -272,39 +272,56 @@ export const validateIncrementalSync = (incrementalData) => {
   try {
     // Check if data is an object
     if (!incrementalData || typeof incrementalData !== 'object') {
-//       console.error('Incremental sync validation failed: Data is not an object');
+      console.error('Incremental sync validation failed: Data is not an object', incrementalData);
       return false;
     }
 
     // Check required fields for incremental sync
     if (incrementalData.type !== 'incremental') {
-//       console.error('Incremental sync validation failed: Type is not "incremental"');
+      console.error('Incremental sync validation failed: Type is not "incremental"', incrementalData.type);
       return false;
     }
 
     if (!incrementalData.timestamp || typeof incrementalData.timestamp !== 'number') {
-//       console.error('Incremental sync validation failed: Invalid timestamp');
+      console.error('Incremental sync validation failed: Invalid timestamp', incrementalData.timestamp);
       return false;
     }
 
     // Validate patch if present
     if (incrementalData.patch) {
       if (typeof incrementalData.patch !== 'object') {
-//         console.error('Incremental sync validation failed: Patch is not an object');
+        console.error('Incremental sync validation failed: Patch is not an object', typeof incrementalData.patch);
         return false;
       }
 
+      console.log('Incremental sync patch structure:', JSON.stringify(incrementalData.patch, null, 2));
+      
       // Validate patch contents based on field type
       for (const [field, value] of Object.entries(incrementalData.patch)) {
         switch (field) {
           case 'users':
             if (value && typeof value === 'object') {
-              // Validate each user in the patch
+              // For incremental patches, users might be partial updates or full replacements
+              // We need to validate the structure but be more lenient
               for (const [userId, user] of Object.entries(value)) {
-                if (!validateUser(userId, user)) {
-//                   console.error(`Incremental sync validation failed: Invalid user ${userId} in patch`);
+                // Allow null to indicate deletion
+                if (user === null) {
+                  continue;
+                }
+                // For incremental patches, just check it's an object with valid structure
+                if (!user || typeof user !== 'object') {
+                  console.error(`Incremental sync validation failed: Invalid user object for ${userId} in patch`, user);
                   return false;
                 }
+                // If it's a full user object, validate it properly
+                // If it has name and (icon or emoji), it's a full user
+                if (user.name && (user.icon || user.emoji) && user.days) {
+                  if (!validateUser(userId, user)) {
+                    console.error(`Incremental sync validation failed: Invalid full user ${userId} in patch`, user);
+                    return false;
+                  }
+                }
+                // Otherwise, it's a partial update and that's okay for patches
               }
             }
             break;
@@ -314,7 +331,7 @@ export const validateIncrementalSync = (incrementalData) => {
               // Validate each activity in the patch
               for (const activity of value) {
                 if (!validateActivity(activity)) {
-//                   console.error('Incremental sync validation failed: Invalid activity in patch');
+                  console.error('Incremental sync validation failed: Invalid activity in patch', activity);
                   return false;
                 }
               }
@@ -323,7 +340,7 @@ export const validateIncrementalSync = (incrementalData) => {
           
           case 'currentTheme':
             if (!validateTheme(value)) {
-//               console.error('Incremental sync validation failed: Invalid theme in patch');
+              console.error('Incremental sync validation failed: Invalid theme in patch', value);
               return false;
             }
             break;
@@ -336,7 +353,7 @@ export const validateIncrementalSync = (incrementalData) => {
           case 'routineCelebration':
           case 'currentDay':
             if (value === undefined) {
-//               console.error(`Incremental sync validation failed: Undefined value for ${field}`);
+              console.error(`Incremental sync validation failed: Undefined value for ${field}`);
               return false;
             }
             break;

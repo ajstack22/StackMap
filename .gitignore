@@ -123,3 +123,6 @@ icon-color-preview.html
 
 # Web build should be in web/build/, not root
 # Files should be deployed from web/build/, not copied to root
+
+# Development prompt packs (local documentation)
+/prompts/
