@@ -178,10 +178,16 @@ class ConflictResolver {
           this.lastLocalTimestamp = conflict.localTimestamp;
           this.lastRemoteTimestamp = conflict.remoteTimestamp;
           
-          resolution.resolvedValue = this.mergeUsersPreservingCompleted(
+          const mergeResult = this.mergeUsersPreservingCompleted(
             conflict.localValue,
             conflict.remoteValue
           );
+          
+          resolution.resolvedValue = mergeResult.users || mergeResult;
+          // Store the deduplication mapping if available
+          if (mergeResult.deduplicationMap) {
+            resolution.deduplicationMap = mergeResult.deduplicationMap;
+          }
           
           // Clear timestamps
           this.lastLocalTimestamp = null;
@@ -257,9 +263,19 @@ class ConflictResolver {
     const currentState = useAppStore.getState();
     const newState = { ...currentState };
     
+    // Track if users field was resolved and any deduplication mapping
+    let usersWasResolved = false;
+    let deduplicationMap = null;
+    
     for (const resolution of resolutions) {
       if (!resolution.requiresUserInput && resolution.resolvedValue !== undefined) {
         newState[resolution.field] = resolution.resolvedValue;
+        if (resolution.field === 'users') {
+          usersWasResolved = true;
+          if (resolution.deduplicationMap) {
+            deduplicationMap = resolution.deduplicationMap;
+          }
+        }
       }
     }
     
@@ -302,18 +318,72 @@ class ConflictResolver {
       }
     }
     
-    // Ensure currentUser is valid
-    if (newState.currentUser && newState.users) {
-      if (!newState.users[newState.currentUser]) {
-        // Current user doesn't exist, find or create one
+    // Ensure currentUser is valid - this is critical after user deduplication
+    if (newState.users) {
+      // First check if currentUser exists in users
+      if (newState.currentUser && !newState.users[newState.currentUser]) {
+        console.log(`Current user ${newState.currentUser} not found in users after resolution, finding replacement`);
+        
+        // Check if there's a deduplication mapping for the current user
+        if (deduplicationMap && deduplicationMap[newState.currentUser]) {
+          const newUserId = deduplicationMap[newState.currentUser];
+          console.log(`Found deduplication mapping: ${newState.currentUser} -> ${newUserId}`);
+          if (newState.users[newUserId] && !newState.users[newUserId].deleted) {
+            newState.currentUser = newUserId;
+          }
+        }
+        
+        // If still not found and users were merged, try to find the matching user by name/icon
+        if (!newState.users[newState.currentUser] && usersWasResolved && 
+            currentState.currentUser && currentState.users && currentState.users[currentState.currentUser]) {
+          const oldUser = currentState.users[currentState.currentUser];
+          const matchKey = `${oldUser.name}|${oldUser.icon || oldUser.emoji}`;
+          
+          // Find user with matching name and icon
+          for (const [userId, user] of Object.entries(newState.users)) {
+            if (user && !user.deleted) {
+              const userKey = `${user.name}|${user.icon || user.emoji}`;
+              if (userKey === matchKey) {
+                console.log(`Found matching user ${userId} for old currentUser ${currentState.currentUser}`);
+                newState.currentUser = userId;
+                break;
+              }
+            }
+          }
+        }
+        
+        // If still no valid currentUser, find or create one
+        if (!newState.users[newState.currentUser]) {
+          const validUserIds = Object.keys(newState.users).filter(id => 
+            newState.users[id] && !newState.users[id].deleted
+          );
+          
+          if (validUserIds.length > 0) {
+            console.log(`Setting currentUser to first valid user: ${validUserIds[0]}`);
+            newState.currentUser = validUserIds[0];
+          } else {
+            // No valid users, create a default one
+            const defaultUserId = 'user_1';
+            console.log('No valid users found, creating default user');
+            newState.users[defaultUserId] = {
+              name: 'User',
+              icon: '👤',
+              days: {}
+            };
+            newState.currentUser = defaultUserId;
+          }
+        }
+      } else if (!newState.currentUser) {
+        // No currentUser set at all, find one
         const validUserIds = Object.keys(newState.users).filter(id => 
           newState.users[id] && !newState.users[id].deleted
         );
         
         if (validUserIds.length > 0) {
+          console.log(`No currentUser set, using first valid user: ${validUserIds[0]}`);
           newState.currentUser = validUserIds[0];
         } else {
-          // No valid users, create a default one
+          // Create default user
           const defaultUserId = 'user_1';
           newState.users[defaultUserId] = {
             name: 'User',
@@ -440,6 +510,7 @@ class ConflictResolver {
    */
   mergeUsersPreservingCompleted(localUsers, remoteUsers) {
     const mergedUsers = {};
+    const deduplicationMap = {}; // Maps old user IDs to new ones
     
     // Track users by name and emoji to detect duplicates
     const usersByNameAndEmoji = new Map();
@@ -489,9 +560,10 @@ class ConflictResolver {
           
           const primaryUserId = sortedDuplicates[0].userId;
           
-          // If this is not the primary user, skip it
+          // If this is not the primary user, skip it but record the mapping
           if (userId !== primaryUserId) {
             processedUserIds.add(userId);
+            deduplicationMap[userId] = primaryUserId;
             return;
           }
           
@@ -663,6 +735,10 @@ class ConflictResolver {
       }
     });
     
+    // Return merged users with deduplication map if any deduplication occurred
+    if (Object.keys(deduplicationMap).length > 0) {
+      return { users: mergedUsers, deduplicationMap };
+    }
     return mergedUsers;
   }
 }
