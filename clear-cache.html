@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Clear StackMap Cache</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #5a67d8;
+        }
+        .log {
+            background: #f0f0f0;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+    <h1>Clear StackMap Cache</h1>
+    <p>Use this page to completely clear all StackMap caches when testing icon changes.</p>
+    
+    <button onclick="clearEverything()">Clear All Caches & Service Workers</button>
+    
+    <div id="log"></div>
+    
+    <script>
+        function log(message, type = 'info') {
+            const logDiv = document.getElementById('log');
+            const entry = document.createElement('div');
+            entry.className = `log ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            logDiv.appendChild(entry);
+        }
+        
+        async function clearEverything() {
+            log('Starting cache clear process...');
+            
+            try {
+                // 1. Unregister all service workers
+                log('Unregistering service workers...');
+                const registrations = await navigator.serviceWorker.getRegistrations();
+                for(let registration of registrations) {
+                    await registration.unregister();
+                    log(`Unregistered service worker: ${registration.scope}`, 'success');
+                }
+                
+                // 2. Delete all caches
+                log('Deleting all caches...');
+                const cacheNames = await caches.keys();
+                for(let name of cacheNames) {
+                    await caches.delete(name);
+                    log(`Deleted cache: ${name}`, 'success');
+                }
+                
+                // 3. Clear local storage
+                log('Clearing local storage...');
+                localStorage.clear();
+                log('Local storage cleared', 'success');
+                
+                // 4. Clear session storage
+                log('Clearing session storage...');
+                sessionStorage.clear();
+                log('Session storage cleared', 'success');
+                
+                // 5. Clear IndexedDB (if used)
+                log('Checking IndexedDB...');
+                if ('indexedDB' in window) {
+                    const databases = await indexedDB.databases();
+                    for(let db of databases) {
+                        indexedDB.deleteDatabase(db.name);
+                        log(`Deleted IndexedDB: ${db.name}`, 'success');
+                    }
+                }
+                
+                log('✅ All caches cleared successfully!', 'success');
+                log('Please close all StackMap tabs and reopen to see changes.', 'success');
+                
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
