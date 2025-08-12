@@ -96,8 +96,9 @@ ios/*.ips
 icon-color-preview.html
 
 # Build artifacts that shouldn't be committed
-/bundle.*.js
-/bundle.*.js.LICENSE.txt
+# Note: bundle files need to be committed for qual deployment
+# /bundle.*.js
+# /bundle.*.js.LICENSE.txt
 /temp/
 /index.html
 /service-worker.js
