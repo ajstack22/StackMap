@@ -69,6 +69,25 @@ import PagerView from 'react-native-pager-view';
 
 ---
 
+# 🚨 MATERIAL ICONS WEB RENDERING FIX 🚨
+
+## ✅ FIXED: Material Icons Not Showing on Web ✅
+**Problem:** Material Icons display as empty spaces or broken on web
+**Root Cause:** VectorIcons.web.js was using Typography Text component which forces Comic Relief font
+**Solution:** Use plain HTML span element that preserves Material Icons font
+
+**Key Fix:**
+```javascript
+// VectorIcons.web.js - DON'T use Typography component!
+// ❌ BAD: import { Text } from '../components/Typography';
+// ✅ GOOD: Use plain span with Material Icons font
+return <span style={{fontFamily: 'Material Icons', ...}}>{icon}</span>
+```
+
+**This has happened multiple times - always check VectorIcons.web.js uses span, not Text!**
+
+---
+
 # 🚨 ACTIVE REFACTOR IN PROGRESS 🚨
 
 ## ⚠️ CRITICAL: Major Data Structure Refactor Planned ⚠️
