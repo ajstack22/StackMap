@@ -183,11 +183,7 @@ class ConflictResolver {
             conflict.remoteValue
           );
           
-          resolution.resolvedValue = mergeResult.users || mergeResult;
-          // Store the deduplication mapping if available
-          if (mergeResult.deduplicationMap) {
-            resolution.deduplicationMap = mergeResult.deduplicationMap;
-          }
+          resolution.resolvedValue = mergeResult;
           
           // Clear timestamps
           this.lastLocalTimestamp = null;
@@ -263,19 +259,9 @@ class ConflictResolver {
     const currentState = useAppStore.getState();
     const newState = { ...currentState };
     
-    // Track if users field was resolved and any deduplication mapping
-    let usersWasResolved = false;
-    let deduplicationMap = null;
-    
     for (const resolution of resolutions) {
       if (!resolution.requiresUserInput && resolution.resolvedValue !== undefined) {
         newState[resolution.field] = resolution.resolvedValue;
-        if (resolution.field === 'users') {
-          usersWasResolved = true;
-          if (resolution.deduplicationMap) {
-            deduplicationMap = resolution.deduplicationMap;
-          }
-        }
       }
     }
     
@@ -318,60 +304,30 @@ class ConflictResolver {
       }
     }
     
-    // Ensure currentUser is valid - this is critical after user deduplication
+    // Ensure currentUser is valid
     if (newState.users) {
       // First check if currentUser exists in users
       if (newState.currentUser && !newState.users[newState.currentUser]) {
         console.log(`Current user ${newState.currentUser} not found in users after resolution, finding replacement`);
         
-        // Check if there's a deduplication mapping for the current user
-        if (deduplicationMap && deduplicationMap[newState.currentUser]) {
-          const newUserId = deduplicationMap[newState.currentUser];
-          console.log(`Found deduplication mapping: ${newState.currentUser} -> ${newUserId}`);
-          if (newState.users[newUserId] && !newState.users[newUserId].deleted) {
-            newState.currentUser = newUserId;
-          }
-        }
+        // Find a valid user to set as current
+        const validUserIds = Object.keys(newState.users).filter(id => 
+          newState.users[id] && !newState.users[id].deleted
+        );
         
-        // If still not found and users were merged, try to find the matching user by name/icon
-        if (!newState.users[newState.currentUser] && usersWasResolved && 
-            currentState.currentUser && currentState.users && currentState.users[currentState.currentUser]) {
-          const oldUser = currentState.users[currentState.currentUser];
-          const matchKey = `${oldUser.name}|${oldUser.icon || oldUser.emoji}`;
-          
-          // Find user with matching name and icon
-          for (const [userId, user] of Object.entries(newState.users)) {
-            if (user && !user.deleted) {
-              const userKey = `${user.name}|${user.icon || user.emoji}`;
-              if (userKey === matchKey) {
-                console.log(`Found matching user ${userId} for old currentUser ${currentState.currentUser}`);
-                newState.currentUser = userId;
-                break;
-              }
-            }
-          }
-        }
-        
-        // If still no valid currentUser, find or create one
-        if (!newState.users[newState.currentUser]) {
-          const validUserIds = Object.keys(newState.users).filter(id => 
-            newState.users[id] && !newState.users[id].deleted
-          );
-          
-          if (validUserIds.length > 0) {
-            console.log(`Setting currentUser to first valid user: ${validUserIds[0]}`);
-            newState.currentUser = validUserIds[0];
-          } else {
-            // No valid users, create a default one
-            const defaultUserId = 'user_1';
-            console.log('No valid users found, creating default user');
-            newState.users[defaultUserId] = {
-              name: 'User',
-              icon: '👤',
-              days: {}
-            };
-            newState.currentUser = defaultUserId;
-          }
+        if (validUserIds.length > 0) {
+          console.log(`Setting currentUser to first valid user: ${validUserIds[0]}`);
+          newState.currentUser = validUserIds[0];
+        } else {
+          // No valid users, create a default one
+          const defaultUserId = 'user_1';
+          console.log('No valid users found, creating default user');
+          newState.users[defaultUserId] = {
+            name: 'User',
+            icon: '👤',
+            days: {}
+          };
+          newState.currentUser = defaultUserId;
         }
       } else if (!newState.currentUser) {
         // No currentUser set at all, find one
@@ -510,101 +466,14 @@ class ConflictResolver {
    */
   mergeUsersPreservingCompleted(localUsers, remoteUsers) {
     const mergedUsers = {};
-    const deduplicationMap = {}; // Maps old user IDs to new ones
     
-    // Track users by name and emoji to detect duplicates
-    const usersByNameAndEmoji = new Map();
-    const processedUserIds = new Set();
-    
-    // First, process all users from both local and remote
+    // Process all users from both local and remote - NO DEDUPLICATION
+    // Users should be unique by ID, not by name+icon
     const allUserIds = new Set([...Object.keys(localUsers), ...Object.keys(remoteUsers)]);
     
-    // Build a map of existing users by name+emoji to detect duplicates
     allUserIds.forEach(userId => {
-      const user = localUsers[userId] || remoteUsers[userId];
-      if (user && !user.deleted) {
-        const key = `${user.name}|${user.icon}`;
-        if (!usersByNameAndEmoji.has(key)) {
-          usersByNameAndEmoji.set(key, []);
-        }
-        usersByNameAndEmoji.get(key).push({ userId, source: localUsers[userId] ? 'local' : 'remote' });
-      }
-    });
-    
-    allUserIds.forEach(userId => {
-      // Skip if already processed as part of deduplication
-      if (processedUserIds.has(userId)) {
-        return;
-      }
       const localUser = localUsers[userId];
       const remoteUser = remoteUsers[userId];
-      
-      // Check for duplicates before processing
-      if (localUser && !localUser.deleted || remoteUser && !remoteUser.deleted) {
-        const user = localUser || remoteUser;
-        const key = `${user.name}|${user.icon}`;
-        const duplicates = usersByNameAndEmoji.get(key) || [];
-        
-        if (duplicates.length > 1) {
-          // Found duplicates - merge them into one user
-
-          // Choose the oldest user ID as the primary one
-          const sortedDuplicates = duplicates.sort((a, b) => {
-            const aId = a.userId;
-            const bId = b.userId;
-            // Extract timestamp from user ID (user_<timestamp>_<index>)
-            const aTimestamp = parseInt(aId.split('_')[1]) || 0;
-            const bTimestamp = parseInt(bId.split('_')[1]) || 0;
-            return aTimestamp - bTimestamp;
-          });
-          
-          const primaryUserId = sortedDuplicates[0].userId;
-          
-          // If this is not the primary user, skip it but record the mapping
-          if (userId !== primaryUserId) {
-            processedUserIds.add(userId);
-            deduplicationMap[userId] = primaryUserId;
-            return;
-          }
-          
-          // Merge all duplicate users into the primary one
-          let mergedUser = null;
-          const mergedDays = {};
-          
-          duplicates.forEach(dup => {
-            processedUserIds.add(dup.userId);
-            const dupUser = localUsers[dup.userId] || remoteUsers[dup.userId];
-            
-            if (!mergedUser) {
-              mergedUser = JSON.parse(JSON.stringify(dupUser));
-              mergedUser.id = primaryUserId;
-            }
-            
-            // Merge activities from all duplicates
-            const dupDays = dupUser.days || {};
-            Object.keys(dupDays).forEach(day => {
-              if (!mergedDays[day]) {
-                mergedDays[day] = { activities: [] };
-              }
-              
-              const activities = dupDays[day]?.activities || [];
-              // Add activities, avoiding duplicates by ID
-              const existingIds = new Set(mergedDays[day].activities.map(a => a.id));
-              activities.forEach(activity => {
-                if (!existingIds.has(activity.id) && !activity.deleted) {
-                  mergedDays[day].activities.push(activity);
-                }
-              });
-            });
-          });
-          
-          if (mergedUser) {
-            mergedUser.days = mergedDays;
-            mergedUsers[primaryUserId] = mergedUser;
-          }
-          return;
-        }
-      }
       
       // Handle deletion conflicts
       if (localUser?.deleted && remoteUser?.deleted) {
@@ -675,9 +544,11 @@ class ConflictResolver {
             // Merge activities while handling deletions and completed states
             const activityMap = new Map();
             
-            // Add remote activities first
+            // Add remote activities first (don't duplicate - use ID as key)
             mergedActivities.forEach(activity => {
-              activityMap.set(activity.id, { ...activity });
+              if (!activity.deleted) {
+                activityMap.set(activity.id, { ...activity });
+              }
             });
             
             // Process local activities
@@ -685,19 +556,19 @@ class ConflictResolver {
               const remoteActivity = activityMap.get(localActivity.id);
               
               if (localActivity.deleted) {
-                // If locally deleted recently, keep the deletion
+                // If locally deleted recently, remove from map
                 if ((Date.now() - (localActivity.deletedAt || 0)) < 30000) {
-                  activityMap.set(localActivity.id, localActivity);
+                  activityMap.delete(localActivity.id);
                 }
-                // Otherwise, if remote has it non-deleted, keep remote version
+                // Otherwise, if remote has it non-deleted, keep remote version (already in map)
               } else if (!remoteActivity) {
-                // Activity only exists locally
+                // Activity only exists locally - add it
                 activityMap.set(localActivity.id, localActivity);
               } else {
-                // Activity exists in both - merge states
+                // Activity exists in both - merge states (prefer newer data)
                 const merged = { ...remoteActivity };
                 
-                // Preserve local completed state
+                // Preserve local completed state if it's true
                 if (localActivity.completed) {
                   merged.completed = true;
                 }
@@ -707,16 +578,17 @@ class ConflictResolver {
                   // Remote deleted but local is active
                   if ((Date.now() - (remoteActivity.deletedAt || 0)) < 30000) {
                     // Recent remote deletion - respect it
-                    merged.deleted = true;
-                    merged.deletedAt = remoteActivity.deletedAt;
+                    activityMap.delete(localActivity.id);
                   } else {
                     // Old deletion - keep local active state
                     delete merged.deleted;
                     delete merged.deletedAt;
+                    activityMap.set(localActivity.id, merged);
                   }
+                } else {
+                  // Update with merged data
+                  activityMap.set(localActivity.id, merged);
                 }
-                
-                activityMap.set(localActivity.id, merged);
               }
             });
             
@@ -735,10 +607,7 @@ class ConflictResolver {
       }
     });
     
-    // Return merged users with deduplication map if any deduplication occurred
-    if (Object.keys(deduplicationMap).length > 0) {
-      return { users: mergedUsers, deduplicationMap };
-    }
+    // Return merged users directly - no deduplication needed
     return mergedUsers;
   }
 }
