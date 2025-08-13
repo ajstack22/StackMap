@@ -91,6 +91,7 @@ import {
 
 // Import components
 import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PrivacyModal, SupportModal, ReorderModal, DataModal, AccessModal, ToolbarCustomizeModal, ConfirmModal, DayManagementModal, ActivityManagementModal, BuyMeCoffeeButton, SyncPreviewModal } from './src/components';
+import EditModeList from './src/components/EditModeList';
 import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import ShareView from './src/components/ShareView/ShareView';
@@ -247,6 +248,7 @@ const App = () => {
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [showReorderModal, setShowReorderModal] = useState(false);
   const [reorderingActivity, setReorderingActivity] = useState(null);
+  const [deleteConfirmActivity, setDeleteConfirmActivity] = useState(null);
   const [newPosition, setNewPosition] = useState('');
   
   // PIN protection state
@@ -3531,7 +3533,75 @@ const App = () => {
         {/* Main Content Area */}
         <View style={styles.contentArea}>
           {(Platform.OS === 'android' && numColumns === 2) && console.warn(`Android: Should render 2 columns! Width: ${screenDimensions.width}`)}
-          {(numColumns > 1) ? (
+          {/* Use EditModeList when in edit mode for unified experience */}
+          {isEditMode ? (
+            <EditModeList
+              activities={activities.filter(a => !a.deleted)}
+              onUpdate={(newActivities) => {
+                // Filter out deleted items before saving
+                const activeActivities = newActivities.filter(a => !a.deleted);
+                setActivities(newActivities);
+                // Update the users state to persist the change
+                if (currentUser && users[currentUser]) {
+                  const updatedUsers = { ...users };
+                  if (!updatedUsers[currentUser].days) {
+                    updatedUsers[currentUser].days = {};
+                  }
+                  if (!updatedUsers[currentUser].days[currentDay]) {
+                    updatedUsers[currentUser].days[currentDay] = { activities: [] };
+                  }
+                  updatedUsers[currentUser].days[currentDay].activities = activeActivities;
+                  setUsers(updatedUsers);
+                }
+              }}
+              onEdit={(item) => {
+                setEditingActivity(item);
+                setActivityTitle(item.text || '');
+                setActivityDescription(item.description || '');
+                setActivityEmoji(item.emoji || DEFAULT_ACTIVITY_EMOJI);
+                setActivityTime(item.time || '');
+                setShowActivityModal(true);
+              }}
+              onLibrary={addActivityToLibrary}
+              onToggle={(item) => toggleActivity(item.id)}
+              onDelete={(item) => {
+                // For iOS, the EditModeListItem will handle Alert.alert
+                // For Android/Web, show the ConfirmModal
+                if (Platform.OS === 'ios') {
+                  deleteActivity(item.id);
+                } else {
+                  setDeleteConfirmActivity(item);
+                }
+              }}
+              onMove={dayMode === 'both' ? (item) => {
+                // Move between today and tomorrow
+                const targetDay = currentDay === 'today' ? 'tomorrow' : 'today';
+                const newActivities = activities.filter(a => a.id !== item.id);
+                setActivities(newActivities);
+                
+                // Add to target day
+                if (currentUser && users[currentUser]) {
+                  const updatedUsers = { ...users };
+                  if (!updatedUsers[currentUser].days) {
+                    updatedUsers[currentUser].days = {};
+                  }
+                  if (!updatedUsers[currentUser].days[targetDay]) {
+                    updatedUsers[currentUser].days[targetDay] = { activities: [] };
+                  }
+                  updatedUsers[currentUser].days[targetDay].activities.push(item);
+                  setUsers(updatedUsers);
+                  
+                  // Show toast notification
+                  Toast.show({
+                    text: `Moved to ${targetDay}`,
+                    type: 'success',
+                    duration: 2000,
+                  });
+                }
+              } : null}
+              theme={theme}
+            />
+          ) : (numColumns > 1) ? (
             <>
             {Platform.OS === 'android' && console.warn(`Android: ENTERING multi-column branch with ${numColumns} columns`)}
             <ScrollView
@@ -3879,6 +3949,26 @@ const App = () => {
         getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
       
+      {/* Delete Activity Confirmation Modal */}
+      {Platform.OS !== 'ios' && (
+        <ConfirmModal
+          visible={!!deleteConfirmActivity}
+          onClose={() => setDeleteConfirmActivity(null)}
+          onConfirm={() => {
+            if (deleteConfirmActivity) {
+              deleteActivity(deleteConfirmActivity.id);
+              setDeleteConfirmActivity(null);
+            }
+          }}
+          theme={theme}
+          title="Delete Activity"
+          message={`Are you sure you want to delete "${deleteConfirmActivity?.text || deleteConfirmActivity?.title || 'this activity'}"?`}
+          confirmText="Delete"
+          confirmButtonColor="#e53e3e"
+          icon="delete"
+          iconColor="#e53e3e"
+        />
+      )}
       
       {/* EditModeSettingsModal removed - functionality distributed to specific modals */}
       
