@@ -10,48 +10,52 @@ const BuyMeCoffeeButton = ({
   textStyle,
   onPress, // Optional custom onPress handler
 }) => {
+  // Hook must always be called in the same order
+  useEffect(() => {
+    if (Platform.OS !== 'web' || style !== 'widget') {
+      return;
+    }
+
+    const script = document.createElement('script');
+    const div = document.getElementById('buymeacoffee-widget');
+    
+    if (!div) return;
+
+    script.src = 'https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js';
+    script.setAttribute('data-name', 'bmc-button');
+    script.setAttribute('data-slug', 'stackmap');
+    script.setAttribute('data-color', '#5c7e9d');
+    script.setAttribute('data-emoji', '💖');
+    script.setAttribute('data-font', 'Comic');
+    script.setAttribute('data-text', 'Help Keep StackMap Free');
+    script.setAttribute('data-outline-color', '#ffffff');
+    script.setAttribute('data-font-color', '#ffffff');
+    script.setAttribute('data-coffee-color', '#FFDD00');
+    
+    script.async = true;
+    
+    script.onload = function () {
+      var evt = document.createEvent('Event');
+      evt.initEvent('DOMContentLoaded', false, false);
+      window.dispatchEvent(evt);
+    };
+    
+    div.appendChild(script);
+
+    return () => {
+      if (div && script.parentNode === div) {
+        div.removeChild(script);
+      }
+    };
+  }, [style]);
+
   // Only render on web
   if (Platform.OS !== 'web') {
-
     return null;
   }
 
-  // Widget style - loads the official Buy Me a Coffee widget script
+  // Widget style - renders the widget container
   if (style === 'widget') {
-    useEffect(() => {
-      const script = document.createElement('script');
-      const div = document.getElementById('buymeacoffee-widget');
-      
-      if (!div) return;
-
-      script.src = 'https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js';
-      script.setAttribute('data-name', 'bmc-button');
-      script.setAttribute('data-slug', 'stackmap');
-      script.setAttribute('data-color', '#5c7e9d');
-      script.setAttribute('data-emoji', '💖');
-      script.setAttribute('data-font', 'Comic');
-      script.setAttribute('data-text', 'Help Keep StackMap Free');
-      script.setAttribute('data-outline-color', '#ffffff');
-      script.setAttribute('data-font-color', '#ffffff');
-      script.setAttribute('data-coffee-color', '#FFDD00');
-      
-      script.async = true;
-      
-      script.onload = function () {
-        var evt = document.createEvent('Event');
-        evt.initEvent('DOMContentLoaded', false, false);
-        window.dispatchEvent(evt);
-      };
-      
-      div.appendChild(script);
-
-      return () => {
-        if (div && script.parentNode === div) {
-          div.removeChild(script);
-        }
-      };
-    }, []);
-
     return <div id="buymeacoffee-widget" style={containerStyle} />;
   }
 

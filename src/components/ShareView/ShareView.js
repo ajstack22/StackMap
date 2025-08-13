@@ -32,6 +32,8 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
       window.addEventListener('resize', handleResize);
       return () => window.removeEventListener('resize', handleResize);
     }
+    // Return empty cleanup function for non-web platforms
+    return () => {};
   }, []);
 
   useEffect(() => {

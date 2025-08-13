@@ -31,7 +31,6 @@ const createStyles = (isDarkMode) => StyleSheet.create({
   },
   errorTitle: {
     fontSize: 24,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
     fontWeight: '700',
     color: isDarkMode ? '#f7fafc' : '#1a202c',
     marginTop: 16,
