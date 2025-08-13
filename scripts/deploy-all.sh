@@ -79,6 +79,19 @@ echo ""
 
 # Run sanity checks before deployment
 echo "🔍 Running pre-deployment sanity checks..."
+
+# Security audit
+echo "- Running security audit..."
+npm run security:audit || {
+    echo ""
+    echo "❌ Security vulnerabilities detected!"
+    echo "Please fix critical vulnerabilities before deploying."
+    echo "Run 'npm audit' for details."
+    exit 1
+}
+echo "✅ Security audit passed!"
+
+# Lint check
 echo "- Running lint check..."
 npm run lint || {
     echo ""
