@@ -73,7 +73,7 @@ increment_version
 # Commit version increment immediately so deploy-with-tracking.sh has clean git
 echo "Committing version increment..."
 git add package.json app.json src/utils/version.js ios/StackMapNative/Info.plist 2>/dev/null || true
-git commit -m "Version bump to $NEW_VERSION for deployment" || {
+git commit -m "$NEW_VERSION - Deployment version bump" || {
     echo "Version already committed or no changes"
 }
 
