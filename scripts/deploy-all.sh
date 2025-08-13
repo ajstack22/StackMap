@@ -70,6 +70,13 @@ fi
 source "$SCRIPT_DIR/version-increment.sh"
 increment_version
 
+# Commit version increment immediately so deploy-with-tracking.sh has clean git
+echo "Committing version increment..."
+git add package.json app.json src/utils/version.js ios/StackMapNative/Info.plist 2>/dev/null || true
+git commit -m "Version bump to $NEW_VERSION for deployment" || {
+    echo "Version already committed or no changes"
+}
+
 echo ""
 echo "========================================="
 echo "   Unified Deployment"
@@ -212,11 +219,4 @@ echo "========================================="
 echo -e "$DEPLOYMENT_STATUS"
 echo "========================================="
 
-# Commit version increment if not already committed
-if git diff --quiet package.json app.json; then
-    echo "Version files already committed"
-else
-    echo "Committing version increment..."
-    git add package.json app.json ios/StackMap/Info.plist 2>/dev/null || true
-    git commit -m "Increment version to v$NEW_VERSION" || true
-fi
+# Version already committed at the beginning of the script
