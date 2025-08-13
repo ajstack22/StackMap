@@ -53,15 +53,27 @@ export const generateId = () => {
  * Platform-specific haptic feedback
  */
 export const triggerHaptic = (type = 'selection') => {
-  if (Platform.OS === 'ios') {
-    // Note: Expo haptics would be used here if available
-    // For now, we'll use vibration as fallback
-    Vibration.vibrate(10);
-  } else if (Platform.OS === 'android') {
-    // Android vibration
-    Vibration.vibrate(10);
-  } else if (Platform.OS === 'web' && navigator.vibrate) {
-    // Web vibration API
-    navigator.vibrate(10);
+  // Haptic feedback disabled until VIBRATE permission is added to AndroidManifest.xml
+  // To enable:
+  // 1. Add <uses-permission android:name="android.permission.VIBRATE" /> to AndroidManifest.xml
+  // 2. Uncomment the code below
+  
+  /*
+  try {
+    if (Platform.OS === 'ios') {
+      // Note: Expo haptics would be used here if available
+      // For now, we'll use vibration as fallback
+      Vibration.vibrate(10);
+    } else if (Platform.OS === 'android') {
+      // Android vibration
+      Vibration.vibrate(10);
+    } else if (Platform.OS === 'web' && navigator.vibrate) {
+      // Web vibration API
+      navigator.vibrate(10);
+    }
+  } catch (error) {
+    // Silently fail if vibration permission is not granted
+    console.log('Haptic feedback not available:', error.message);
   }
+  */
 };
