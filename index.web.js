@@ -35,8 +35,8 @@ if (Platform.OS === 'web') {
 }
 
 // Import Comic Relief fonts
-import ComicReliefRegular from './fonts/ComicRelief-Regular.ttf';
-import ComicReliefBold from './fonts/ComicRelief-Bold.ttf';
+import ComicReliefRegular from './assets/fonts/ComicRelief-Regular.ttf';
+import ComicReliefBold from './assets/fonts/ComicRelief-Bold.ttf';
 
 // Create font face styles
 const fontStyles = document.createElement('style');

@@ -119,7 +119,7 @@ import {
   removeSecurePin,
   debugPinStorage,
 } from './src/utils/securePinStorage';
-import { debugPINStatus } from './DEBUG_PIN';
+import { debugPINStatus } from './tools/DEBUG_PIN';
 
 // Get initial screen dimensions
 const { width: initialScreenWidth, height: initialScreenHeight } = Dimensions.get('window');
