@@ -24,13 +24,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
-// Conditionally import drag-and-drop libraries for iOS only
-const DraggableFlatList = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').default 
-  : null;
-const ScaleDecorator = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').ScaleDecorator 
-  : null;
+// Drag-and-drop removed - using unified ReorderModal for all platforms
 // Conditionally import gesture handler for iOS only
 const GestureHandlerModule = Platform.OS === 'ios' 
   ? require('react-native-gesture-handler')
@@ -3116,7 +3110,7 @@ const App = () => {
     }
   };
 
-  const renderActivity = ({ item, index, drag, isActive, customWidth }) => {
+  const renderActivity = ({ item, index, customWidth }) => {
     // Get the actual index from the filtered activities array
     const filteredActivities = activities.filter(a => !a.deleted);
     
@@ -3154,11 +3148,8 @@ const App = () => {
               borderColor: theme.primary,
             }
           ],
-          isActive && styles.draggingCard
         ]}
         onPress={() => toggleActivity(item.id)}
-        onLongPress={() => isEditMode && drag && Platform.OS === 'ios' ? drag() : null}
-        disabled={isActive}
         activeOpacity={0.9}
       >
       {/* Completion Circle */}
@@ -3376,13 +3367,6 @@ const App = () => {
       )}
       </View>
     );
-    
-    // Wrap with ScaleDecorator only when drag functionality is available and we're in DraggableFlatList on iOS
-    // Additional check: only use if we're in single column mode (DraggableFlatList is only used then)
-    if (drag && typeof drag === 'function' && !customWidth && Platform.OS === 'ios' && ScaleDecorator && numColumns === 1) {
-      const ValidScaleDecorator = ScaleDecorator;
-      return <ValidScaleDecorator>{CardContent}</ValidScaleDecorator>;
-    }
     
     return CardContent;
   };
@@ -3609,9 +3593,7 @@ const App = () => {
                       >
                         {renderActivity({ 
                           item, 
-                          index,
-                          drag: null, 
-                          isActive: false
+                          index
                         })}
                       </View>
                     );
@@ -3638,67 +3620,8 @@ const App = () => {
               )}
             </ScrollView>
             </>
-          ) : Platform.OS === 'ios' ? (
-            (() => {
-              // Pre-filter the data once
-              const filteredData = activities.filter(a => !a.deleted);
-              
-              // Create a map of item IDs to their indices for O(1) lookup
-              const indexMap = {};
-              filteredData.forEach((item, idx) => {
-                indexMap[item.id] = idx;
-              });
-              
-              return (
-                <DraggableFlatList
-                  data={filteredData}
-                  renderItem={({ item, drag, isActive }) => {
-                    // Use the pre-calculated index map
-                    const correctIndex = indexMap[item.id] ?? 0;
-                    
-                    // Always log for debugging
-                    console.log('iOS DraggableFlatList - item:', item.text, 'id:', item.id, 'correctIndex:', correctIndex);
-                    console.log('indexMap:', JSON.stringify(indexMap));
-                    
-                    return renderActivity({ item, index: correctIndex, drag, isActive });
-                  }}
-                  keyExtractor={item => item.id}
-              onDragEnd={({ data }) => {
-                setActivities(data);
-                // Save immediately after reordering
-                if (currentUser && users[currentUser]) {
-                  const updatedUsers = { ...users };
-                  if (!updatedUsers[currentUser].days) {
-                    updatedUsers[currentUser].days = {};
-                  }
-                  if (!updatedUsers[currentUser].days[currentDay]) {
-                    updatedUsers[currentUser].days[currentDay] = { activities: [] };
-                  }
-                  updatedUsers[currentUser].days[currentDay].activities = data;
-                  setUsers(updatedUsers);
-                }
-              }}
-              contentContainerStyle={[
-                styles.listContent,
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
-                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
-              ]}
-              ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
-              ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyIcon}>📋</Text>
-                  <Text style={styles.emptyText}>No activities yet</Text>
-                  <Text style={styles.emptySubtext}>
-                    {isEditMode ? 'Tap Add to create an activity' : 'Tap the edit button to add your first activity'}
-                  </Text>
-                </View>
-              }
-            />
-              );
-            })()
           ) : (
-            // Android/Web fallback - regular FlatList with reorder buttons
+            // All platforms now use regular FlatList with reorder buttons
             <FlatList
               data={activities.filter(a => !a.deleted)}
               renderItem={renderActivity}
@@ -4695,10 +4618,6 @@ const styles = StyleSheet.create({
     ...SHADOWS.level3, // Slightly stronger shadow for completed cards
     elevation: 8, // Ensure Android shadow is visible
   },
-  draggingCard: {
-    opacity: 0.9,
-    ...SHADOWS.level4,
-  },
   completionCircle: {
     position: 'absolute',
     top: isTablet() ? 15 : 15,
@@ -5418,9 +5337,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontWeight: '500',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  draggableGrid: {
-    flex: 1,
   },
   reorderModalOverlay: {
     flex: 1,

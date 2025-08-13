@@ -1,6 +1,17 @@
-import React from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Text } from '../../Typography';
-import { Modal, View, TouchableOpacity, ScrollView, Platform, Text as RNText } from 'react-native';
+import { 
+  Modal, 
+  View, 
+  TouchableOpacity, 
+  Platform, 
+  Text as RNText,
+  TextInput,
+  Vibration,
+  Animated
+} from 'react-native';
+import Slider from '@react-native-community/slider';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 
 const ReorderModal = ({
@@ -9,121 +20,322 @@ const ReorderModal = ({
   theme,
   reorderingActivity,
   activities,
-  newPosition,
   setNewPosition,
   onReorder,
 }) => {
-  const handleCancel = () => {
-    onClose();
-    setNewPosition('');
+  const [localPosition, setLocalPosition] = useState(1);
+  const [inputValue, setInputValue] = useState('');
+  const [lastHapticValue, setLastHapticValue] = useState(1);
+  const slideAnimation = useRef(new Animated.Value(0)).current;
+  
+  const totalActivities = activities.filter(a => !a.deleted).length;
+  const currentPosition = reorderingActivity?.currentPosition || 1;
+
+  // Get activities before and after the new position
+  const getNeighborActivities = (position) => {
+    const filteredActivities = activities.filter(a => !a.deleted);
+    const beforeActivity = position > 1 ? filteredActivities[position - 2] : null;
+    const afterActivity = position < filteredActivities.length ? filteredActivities[position] : null;
+    return { beforeActivity, afterActivity };
   };
 
-  const isReorderDisabled = !newPosition || newPosition === reorderingActivity?.currentPosition.toString();
+  useEffect(() => {
+    if (visible) {
+      // Initialize with current position
+      setLocalPosition(currentPosition);
+      setInputValue(currentPosition.toString());
+      setLastHapticValue(currentPosition);
+      
+      // Animate modal sliding up
+      Animated.timing(slideAnimation, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      // Reset animation
+      slideAnimation.setValue(0);
+    }
+  }, [visible, currentPosition]);
+
+  const handleSliderChange = (value) => {
+    const newValue = Math.round(value);
+    setLocalPosition(newValue);
+    setInputValue(newValue.toString());
+    setNewPosition(newValue.toString());
+    
+    // Haptic feedback on each step change
+    if (newValue !== lastHapticValue) {
+      setLastHapticValue(newValue);
+      if (Platform.OS !== 'web') {
+        Vibration.vibrate(10);
+      }
+    }
+  };
+
+  const handleInputChange = (text) => {
+    setInputValue(text);
+    const num = parseInt(text);
+    if (!isNaN(num) && num >= 1 && num <= totalActivities) {
+      setLocalPosition(num);
+      setNewPosition(text);
+    }
+  };
+
+  const handleMoveToTop = () => {
+    setLocalPosition(1);
+    setInputValue('1');
+    setNewPosition('1');
+    if (Platform.OS !== 'web') {
+      Vibration.vibrate(20);
+    }
+  };
+
+  const handleMoveToBottom = () => {
+    setLocalPosition(totalActivities);
+    setInputValue(totalActivities.toString());
+    setNewPosition(totalActivities.toString());
+    if (Platform.OS !== 'web') {
+      Vibration.vibrate(20);
+    }
+  };
+
+  const handleCancel = () => {
+    Animated.timing(slideAnimation, {
+      toValue: 0,
+      duration: 250,
+      useNativeDriver: true,
+    }).start(() => {
+      onClose();
+      setNewPosition('');
+    });
+  };
+
+  const handleConfirm = () => {
+    if (Platform.OS !== 'web') {
+      Vibration.vibrate(30);
+    }
+    onReorder();
+  };
+
+  const isReorderDisabled = localPosition === currentPosition;
+  const { beforeActivity, afterActivity } = getNeighborActivities(localPosition);
+
+  const modalTranslateY = slideAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [600, 0],
+  });
+
+  if (!visible) return null;
 
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="none"
       transparent={true}
       onRequestClose={handleCancel}
     >
-      <View style={styles.reorderModalOverlay}>
-        <View style={[styles.reorderModalContent, { backgroundColor: theme.light }]}>
-          {/* Header with close button */}
-          <View style={styles.modalHeader}>
-            <Text style={[styles.reorderModalTitle, { color: '#000' }]}>
-              Move Activity
-            </Text>
-            <TouchableOpacity
-              style={styles.closeButton}
-              onPress={handleCancel}
-            >
-              <RNText style={styles.closeButtonText}>✕</RNText>
+      <TouchableOpacity 
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={handleCancel}
+      >
+        <Animated.View 
+          style={[
+            styles.bottomSheetContainer,
+            { 
+              backgroundColor: theme.light,
+              transform: [{ translateY: modalTranslateY }]
+            }
+          ]}
+          onStartShouldSetResponder={() => true}
+        >
+          {/* Header */}
+          <View style={[styles.bottomSheetHeader, { backgroundColor: theme.primary }]}>
+            <Text style={styles.bottomSheetTitle}>Move Activity</Text>
+            <TouchableOpacity onPress={handleCancel}>
+              <Icon name="close" size={24} color="white" />
             </TouchableOpacity>
           </View>
-          
-          {/* Main panel */}
-          <View style={styles.formPanel}>
-            {reorderingActivity && (
-              <View style={styles.reorderActivityPreview}>
-                <RNText style={styles.reorderActivityEmoji}>
-                  {reorderingActivity.activity.emoji || '🎯'}
-                </RNText>
-                <Text style={styles.reorderActivityText}>
-                  {reorderingActivity.activity.text || reorderingActivity.activity.title || ''}
-                </Text>
-              </View>
-            )}
-            
-            {/* Divider */}
-            <View style={styles.divider} />
-            
-            <View style={styles.positionSection}>
-              <Text style={[styles.reorderModalLabel, { color: '#000' }]}>
-                Select new position:
-              </Text>
-              
-              <ScrollView 
-                horizontal 
-                showsHorizontalScrollIndicator={Platform.OS !== 'web'}
-                style={styles.positionSelector}
-                contentContainerStyle={styles.positionSelectorContent}
-                nestedScrollEnabled={true}
-              >
-                {activities.map((_, index) => {
-                  const position = index + 1;
-                  const isCurrentPosition = position === reorderingActivity?.currentPosition;
-                  const isSelectedPosition = position === parseInt(newPosition);
-                  
-                  return (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        styles.positionButton,
-                        isCurrentPosition && [styles.positionButtonCurrent, { borderColor: theme.primary }],
-                        isSelectedPosition && [styles.positionButtonSelected, { backgroundColor: theme.primary }]
-                      ]}
-                      onPress={() => setNewPosition(position.toString())}
-                    >
-                      <Text style={[
-                        styles.positionButtonText,
-                        isCurrentPosition && { color: theme.primary },
-                        isSelectedPosition && { color: 'white' }
-                      ]}>
-                        {position}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-              
-              {newPosition && (
-                <View style={styles.positionPreview}>
-                  <Text style={styles.positionPreviewText}>
-                    Move from position {reorderingActivity?.currentPosition} → {newPosition}
+
+          {/* Content */}
+          <View style={styles.bottomSheetContent}>
+            {/* Activity Preview Panel */}
+            <View style={styles.whitePanel}>
+              <Text style={styles.panelTitle}>Moving Activity</Text>
+              {reorderingActivity && (
+                <View style={styles.activityCard}>
+                  <RNText style={styles.activityEmoji}>
+                    {reorderingActivity.activity.emoji || '🎯'}
+                  </RNText>
+                  <Text style={styles.activityTitle} numberOfLines={2}>
+                    {reorderingActivity.activity.text || reorderingActivity.activity.title || ''}
                   </Text>
                 </View>
               )}
             </View>
-            
-            {/* Divider */}
-            <View style={styles.divider} />
-            
-            {/* Action button within the panel */}
-            <TouchableOpacity
-              style={[
-                styles.actionButton, 
-                { backgroundColor: theme.primary },
-                isReorderDisabled && { backgroundColor: '#ccc' }
-              ]}
-              onPress={onReorder}
-              disabled={isReorderDisabled}
-            >
-              <Text style={[styles.actionButtonText, { color: 'white' }]}>Move to Position {newPosition || '?'}</Text>
-            </TouchableOpacity>
+
+            {/* Position Neighbors Panel */}
+            <View style={styles.whitePanel}>
+              <Text style={styles.panelTitle}>New Position Preview</Text>
+              
+              <View style={styles.neighborsContainer}>
+                {/* Before Activity */}
+                <View style={styles.neighborSection}>
+                  <Text style={styles.neighborLabel}>Will come after:</Text>
+                  {beforeActivity ? (
+                    <View style={[styles.neighborCard, { borderColor: theme.primary + '40' }]}>
+                      <RNText style={styles.neighborEmoji}>
+                        {beforeActivity.emoji || '📋'}
+                      </RNText>
+                      <Text style={styles.neighborText} numberOfLines={1}>
+                        {beforeActivity.text || beforeActivity.title || ''}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.neighborPlaceholder}>
+                      {localPosition === 1 ? 'First position' : 'No activity'}
+                    </Text>
+                  )}
+                </View>
+
+                {/* Current Activity Indicator */}
+                <View style={[styles.currentPositionIndicator, { backgroundColor: theme.primary }]}>
+                  <Icon name="drag-indicator" size={20} color="white" />
+                  <Text style={styles.currentPositionText}>New Position {localPosition}</Text>
+                </View>
+
+                {/* After Activity */}
+                <View style={styles.neighborSection}>
+                  <Text style={styles.neighborLabel}>Will come before:</Text>
+                  {afterActivity ? (
+                    <View style={[styles.neighborCard, { borderColor: theme.primary + '40' }]}>
+                      <RNText style={styles.neighborEmoji}>
+                        {afterActivity.emoji || '📋'}
+                      </RNText>
+                      <Text style={styles.neighborText} numberOfLines={1}>
+                        {afterActivity.text || afterActivity.title || ''}
+                      </Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.neighborPlaceholder}>
+                      {localPosition === totalActivities ? 'Last position' : 'No activity'}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            </View>
+
+            {/* Position Controls Panel */}
+            <View style={styles.whitePanel}>
+              <Text style={styles.panelTitle}>Select Position</Text>
+              
+              {/* Position Display */}
+              <View style={styles.positionDisplay}>
+                <View style={styles.positionIndicator}>
+                  <Text style={styles.positionLabel}>Current</Text>
+                  <Text style={[styles.positionNumber, { color: '#666' }]}>
+                    {currentPosition}
+                  </Text>
+                </View>
+                
+                <Icon 
+                  name="arrow-forward" 
+                  size={24} 
+                  color={theme.primary} 
+                  style={styles.arrowIcon}
+                />
+                
+                <View style={styles.positionIndicator}>
+                  <Text style={styles.positionLabel}>New</Text>
+                  <Text style={[styles.positionNumber, { color: theme.primary }]}>
+                    {localPosition}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Slider */}
+              <View style={styles.sliderContainer}>
+                <Text style={styles.sliderLabel}>1</Text>
+                <Slider
+                  style={styles.slider}
+                  minimumValue={1}
+                  maximumValue={totalActivities}
+                  value={localPosition}
+                  onValueChange={handleSliderChange}
+                  step={1}
+                  minimumTrackTintColor={theme.primary}
+                  maximumTrackTintColor="#E0E0E0"
+                  thumbTintColor={theme.primary}
+                />
+                <Text style={styles.sliderLabel}>{totalActivities}</Text>
+              </View>
+
+              {/* Direct Input */}
+              <View style={styles.inputContainer}>
+                <Text style={styles.inputLabel}>Or type position:</Text>
+                <TextInput
+                  style={[styles.positionInput, { borderColor: theme.primary + '40' }]}
+                  value={inputValue}
+                  onChangeText={handleInputChange}
+                  keyboardType="numeric"
+                  maxLength={3}
+                  selectTextOnFocus
+                />
+              </View>
+
+              {/* Quick Actions */}
+              <View style={styles.quickActions}>
+                <TouchableOpacity
+                  style={[styles.quickButton, localPosition === 1 && styles.quickButtonDisabled]}
+                  onPress={handleMoveToTop}
+                  disabled={localPosition === 1}
+                >
+                  <Icon name="vertical-align-top" size={20} color={localPosition === 1 ? '#ccc' : theme.primary} />
+                  <Text style={[styles.quickButtonText, { color: localPosition === 1 ? '#ccc' : theme.primary }]}>
+                    Move to Top
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[styles.quickButton, localPosition === totalActivities && styles.quickButtonDisabled]}
+                  onPress={handleMoveToBottom}
+                  disabled={localPosition === totalActivities}
+                >
+                  <Icon name="vertical-align-bottom" size={20} color={localPosition === totalActivities ? '#ccc' : theme.primary} />
+                  <Text style={[styles.quickButtonText, { color: localPosition === totalActivities ? '#ccc' : theme.primary }]}>
+                    Move to Bottom
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Action Buttons */}
+            <View style={styles.actions}>
+              <TouchableOpacity
+                style={[styles.button, styles.cancelButton]}
+                onPress={handleCancel}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.button, 
+                  styles.confirmButton,
+                  { backgroundColor: isReorderDisabled ? '#ccc' : theme.primary }
+                ]}
+                onPress={handleConfirm}
+                disabled={isReorderDisabled}
+              >
+                <Text style={styles.confirmButtonText}>
+                  Move to Position {localPosition}
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
-      </View>
+        </Animated.View>
+      </TouchableOpacity>
     </Modal>
   );
 };
