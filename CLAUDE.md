@@ -1,30 +1,3 @@
-# 🚨 DEPLOYMENT - ALWAYS USE THIS SCRIPT 🚨
-
-## ⚠️ CRITICAL: ONLY ONE WAY TO DEPLOY ⚠️
-**ALWAYS USE: `./scripts/deploy-all.sh`**
-- This script AUTOMATICALLY increments version numbers
-- Deploys to ALL platforms (iOS, Android, Web/Qual) 
-- Keeps all build numbers synchronized
-- NEVER manually build or deploy individual platforms
-- NEVER manually increment version numbers
-- NEVER use individual deploy scripts (deploy-web.sh, deploy-ios.sh, etc.)
-
-**THE ONLY DEPLOYMENT COMMAND YOU SHOULD EVER RUN:**
-```bash
-./scripts/deploy-all.sh
-```
-
-**DO NOT:**
-- ❌ Run `npm run build:web` manually
-- ❌ Run `npx react-native run-ios` for production
-- ❌ Run `./gradlew assembleRelease` manually
-- ❌ Edit version in package.json manually
-- ❌ Use any other deployment script
-
-**This is the ONLY way. No exceptions. Ever.**
-
----
-
 # 🚨 SYNC PERFORMANCE & VALIDATION FIXES - January 2025 🚨
 
 ## ✅ FIXED: 20+ Second UI Freeze on Sync Join ✅
