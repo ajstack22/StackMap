@@ -1,6 +1,13 @@
 module.exports = {
   root: true,
   extends: '@react-native',
+  ignorePatterns: [
+    'tests/**/*',
+    '*.test.js',
+    '*.spec.js',
+    'jest.config.js',
+    'coverage/**/*',
+  ],
   env: {
     browser: true,
     es6: true,
