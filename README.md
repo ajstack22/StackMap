@@ -95,13 +95,20 @@ cd ios && pod install && cd ..
 
 ## 🚀 Deployment
 
-### Web Deployment
+We use a branch-based deployment system. Build artifacts are kept separate from source code.
+
+### Quick Deploy
 ```bash
-./scripts/build-web.sh  # Build for production
-git add -A && git commit -m "Deploy"
-git push origin main
-# Then sync to production server
+# Deploy to staging (qual)
+./scripts/deploy-with-tracking.sh qual
+
+# Deploy to production
+./scripts/deploy-with-tracking.sh prod
 ```
+
+### Documentation
+- [Deployment System](./docs/deployment/) - Full deployment documentation
+- [Build Setup](./docs/deployment/DEPLOYMENT_BRANCH_SYSTEM.md) - Technical details
 
 ### Mobile Deployment
 - iOS: See [App Store Distribution](./docs/deployment/DISTRIBUTION_GUIDE.md)

@@ -1,3 +1,29 @@
+# 🚀 Branch-Based Deployment System (January 13, 2025) 🚀
+
+## The Problem We Solved
+- Had 87 old bundle files accumulating in main branch
+- Couldn't use .gitignore for build files (caused 403 errors)
+- Messy git history with build artifacts mixed with source
+
+## The Solution
+- Separate `deploy-qual` and `deploy-prod` branches for build artifacts
+- Main branch contains only source code
+- Deployment script handles everything automatically
+
+## How to Deploy
+```bash
+./scripts/deploy-with-tracking.sh qual  # For staging
+./scripts/deploy-with-tracking.sh prod  # For production
+```
+
+## What Changed
+- Build files no longer in main branch
+- Each deployment creates a tagged commit in deploy branches
+- Full rollback capability with deployment history
+- Clean git history in main branch
+
+---
+
 # 🚨 SYNC PERFORMANCE & VALIDATION FIXES - January 2025 🚨
 
 ## ✅ FIXED: 20+ Second UI Freeze on Sync Join ✅
