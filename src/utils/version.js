@@ -121,4 +121,5 @@ export const setVersion = async (version) => {
 
 // Export a static version for builds
 // This will be updated by the build script
-export const BUILD_VERSION = '2025.08.12.12';
+export const BUILD_VERSION = '2025.08.13.3';
+// Deployment system test - 2025-01-13
