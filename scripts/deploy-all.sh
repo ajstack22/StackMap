@@ -170,10 +170,8 @@ if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_IOS_DEVICE" = true ]; then
     BUILD_NUMBER=$(echo $NEW_VERSION | tr -d '.')
     /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/StackMapNative/Info.plist 2>/dev/null || true
     
-    # Pod install
-    cd ios
-    pod install --silent
-    cd ..
+    # Note: pod install removed - deprecated and not needed unless dependencies change
+    # If pods need updating, run manually: cd ios && pod install
     
     # Build and deploy
     if [ "$DEPLOY_IOS_DEVICE" = true ]; then
