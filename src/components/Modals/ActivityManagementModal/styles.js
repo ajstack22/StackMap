@@ -130,9 +130,6 @@ export const styles = StyleSheet.create({
     color: '#000',
     marginRight: 12,
   },
-  actionButton: {
-    padding: 6,
-  },
   activitiesList: {
     paddingBottom: 8,
   },

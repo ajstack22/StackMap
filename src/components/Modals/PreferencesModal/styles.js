@@ -73,7 +73,6 @@ export const styles = StyleSheet.create({
     color: '#000',
     marginTop: 10,
     marginBottom: 15,
-    fontFamily: TYPOGRAPHY.fontFamily.medium,
   },
   colorGrid: {
     flexDirection: 'row',

@@ -488,13 +488,14 @@ const DataModal = ({
   
   // Handle file selection
   const handleSelectFile = async () => {
+    // Load file system modules at function start for error handling
+    const modules = loadFileSystemModules();
+    
     try {
       setLoading(true);
       
       // Android uses file system search
       if (Platform.OS === 'android') {
-        // Load file system modules
-        const modules = loadFileSystemModules();
         if (!modules.RNFS) {
           throw new Error('File system not available');
         }
@@ -626,8 +627,6 @@ const DataModal = ({
       }
       
       // iOS and Web use DocumentPicker
-      // Load file system modules
-      const modules = loadFileSystemModules();
       if (!modules.DocumentPicker || !modules.DocumentPicker.pick) {
         Alert.alert('Error', 'File picker is not available on this platform.');
         setLoading(false);

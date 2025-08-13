@@ -1557,11 +1557,11 @@ class SyncService {
       includeCompleted = true,
       includeTomorrow = true,
       expiresHours = 24,
-      accessToken = null,
       autoUpdate = false
     } = options;
     
     // Always generate V2 secure token
+    let accessToken = options.accessToken;
     if (!accessToken) {
       accessToken = this.generateShareToken();
     }

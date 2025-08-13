@@ -1796,7 +1796,7 @@ const styles = StyleSheet.create({
     color: 'white',
     textAlign: 'center',
   },
-  secondaryButton: {
+  altSecondaryButton: {
     backgroundColor: 'white',
     paddingHorizontal: Platform.OS === 'web' ? 32 : 28,
     paddingVertical: Platform.OS === 'web' ? 14 : 16,
@@ -1814,7 +1814,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     ...SHADOWS.level1,
   },
-  secondaryButtonText: {
+  altSecondaryButtonText: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: THEMES.stackBlue.primary,

@@ -27,8 +27,8 @@ const ConflictResolutionModal = ({
   const [selectedChoice, setSelectedChoice] = useState(null);
   const [previewChoice, setPreviewChoice] = useState(null);
 
-  const currentConflict = conflicts[currentIndex];
-  const hasMore = currentIndex < conflicts.length - 1;
+  const currentConflict = conflicts?.[currentIndex];
+  const hasMore = currentIndex < (conflicts?.length || 0) - 1;
 
   useEffect(() => {
     if (visible) {
@@ -165,7 +165,7 @@ const ConflictResolutionModal = ({
     return descriptions[field] || field;
   };
 
-  if (!currentConflict) return null;
+  if (!currentConflict || !conflicts?.length) return null;
 
   return (
     <Modal

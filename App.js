@@ -4207,7 +4207,6 @@ const App = () => {
         setEditingUser={setEditingUser}
         handleAddUser={handleAddUser}
         handleUpdateUser={handleUpdateUser}
-        getAndroidModalBottomHeight={getAndroidModalBottomHeight}
       />
       
       {/* Add/Edit User Modal - Only render when AccessModal is not visible */}

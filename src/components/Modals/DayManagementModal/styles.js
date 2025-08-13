@@ -647,7 +647,7 @@ export const styles = StyleSheet.create({
   },
   
   // Plan Tab Planning Mode Header Styles
-  planHeader: {
+  planModeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
