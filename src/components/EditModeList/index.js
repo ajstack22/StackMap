@@ -55,7 +55,13 @@ export default function EditModeList({
       renderItem={renderItem}
       keyExtractor={keyExtractor}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
-      contentContainerStyle={styles.listContainer}
+      contentContainerStyle={[
+        styles.listContainer,
+        { 
+          flexGrow: 1,
+          ...(Platform.OS === 'web' && { alignItems: 'stretch' })
+        }
+      ]}
       removeClippedSubviews={true}
       maxToRenderPerBatch={10}
       updateCellsBatchingPeriod={50}

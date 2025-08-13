@@ -4,12 +4,19 @@ import { StyleSheet, Platform } from 'react-native';
 const baseStyles = {
   listContainer: {
     paddingVertical: 8,
+    paddingHorizontal: Platform.select({
+      web: 16,
+      default: 0
+    }),
   },
   
   separator: {
     height: 1,
     backgroundColor: '#f0f0f0',
-    marginHorizontal: 8,
+    marginHorizontal: 'auto',
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
   },
   
   listItem: {
@@ -18,6 +25,9 @@ const baseStyles = {
     marginVertical: 4,
     borderRadius: 8,
     padding: 12,
+    maxWidth: 800,
+    width: '100%',
+    alignSelf: 'center',
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -131,6 +141,7 @@ export const getTabletStyles = () => {
       padding: 16,
       marginHorizontal: 12,
       marginVertical: 6,
+      maxWidth: 900,
     },
     emoji: {
       ...baseStyles.emoji,
