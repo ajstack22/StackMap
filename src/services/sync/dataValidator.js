@@ -213,17 +213,27 @@ export const repairSyncedData = (data) => {
       repaired.users = {};
     }
     
-    // If no users exist, create a default user
-    if (Object.keys(repaired.users).length === 0) {
+    // Check if we have any valid (non-deleted) users
+    const validUserIds = Object.keys(repaired.users).filter(id => 
+      repaired.users[id] && !repaired.users[id].deleted
+    );
+    
+    // If no valid users exist, create a default user
+    if (validUserIds.length === 0) {
       const defaultUserId = repaired.currentUser || 'user_1';
       repaired.users[defaultUserId] = {
         name: 'User',
         icon: '👤',
         days: {}
       };
-      // Ensure currentUser points to a valid user
-      if (!repaired.currentUser) {
-        repaired.currentUser = defaultUserId;
+      repaired.currentUser = defaultUserId;
+    } else {
+      // Ensure currentUser points to a valid (non-deleted) user
+      if (!repaired.currentUser || 
+          !repaired.users[repaired.currentUser] || 
+          repaired.users[repaired.currentUser].deleted) {
+        // Set to first valid user
+        repaired.currentUser = validUserIds[0];
       }
     }
 
