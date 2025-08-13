@@ -14,7 +14,6 @@ export default function EditModeList({
   onEdit,
   onLibrary,
   onToggle,
-  onMove,
   onDelete,
   theme 
 }) {
@@ -40,7 +39,6 @@ export default function EditModeList({
       onDelete={() => onDelete ? onDelete(item) : handleDelete(item)}
       onToggle={() => onToggle(item)}
       onLibrary={() => onLibrary(item)}
-      onMove={onMove ? () => onMove(item) : null}
       onMoveUp={handleMoveUp}
       onMoveDown={handleMoveDown}
       theme={theme}

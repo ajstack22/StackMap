@@ -3586,32 +3586,6 @@ const App = () => {
                   setDeleteConfirmActivity(item);
                 }
               }}
-              onMove={dayMode === 'both' ? (item) => {
-                // Move between today and tomorrow
-                const targetDay = currentDay === 'today' ? 'tomorrow' : 'today';
-                const newActivities = activities.filter(a => a.id !== item.id);
-                setActivities(newActivities);
-                
-                // Add to target day
-                if (currentUser && users[currentUser]) {
-                  const updatedUsers = { ...users };
-                  if (!updatedUsers[currentUser].days) {
-                    updatedUsers[currentUser].days = {};
-                  }
-                  if (!updatedUsers[currentUser].days[targetDay]) {
-                    updatedUsers[currentUser].days[targetDay] = { activities: [] };
-                  }
-                  updatedUsers[currentUser].days[targetDay].activities.push(item);
-                  setUsers(updatedUsers);
-                  
-                  // Show toast notification
-                  Toast.show({
-                    text: `Moved to ${targetDay}`,
-                    type: 'success',
-                    duration: 2000,
-                  });
-                }
-              } : null}
               theme={theme}
             />
           ) : (numColumns > 1) ? (

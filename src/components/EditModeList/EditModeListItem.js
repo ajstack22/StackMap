@@ -17,7 +17,6 @@ export const EditModeListItem = React.memo(({
   onDelete,
   onToggle,
   onLibrary,
-  onMove,
   onMoveUp,
   onMoveDown,
   theme,
@@ -130,20 +129,6 @@ export const EditModeListItem = React.memo(({
             />
           </TouchableOpacity>
           
-          {onMove && (
-            <TouchableOpacity
-              onPress={onMove}
-              style={itemStyles.actionButton}
-              accessibilityLabel="Move to tomorrow"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <Icon 
-                name="swap-horiz" 
-                size={isTablet ? 28 : 24} 
-                color={theme.primary} 
-              />
-            </TouchableOpacity>
-          )}
           
           <TouchableOpacity
             onPress={handleDelete}
