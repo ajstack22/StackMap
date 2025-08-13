@@ -1,10 +1,9 @@
-import React, { useMemo, useEffect, useRef } from 'react';
+import React, { useMemo } from 'react';
 import { 
   FlatList, 
   View,
   Dimensions,
-  Platform,
-  Animated 
+  Platform
 } from 'react-native';
 import { EditModeListItem } from './EditModeListItem';
 import { styles } from './styles';
@@ -19,30 +18,11 @@ export default function EditModeList({
   onDelete,
   theme 
 }) {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(50)).current;
-  
   const {
     handleMoveUp,
     handleMoveDown,
     handleDelete,
   } = useEditMode(activities, onUpdate);
-  
-  // Animate in on mount
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, []);
   
   // Detect if we need to adjust for tablets
   const isTablet = () => {
@@ -71,31 +51,23 @@ export default function EditModeList({
   const keyExtractor = useMemo(() => (item) => item.id, []);
   
   return (
-    <Animated.View 
-      style={{
-        flex: 1,
-        opacity: fadeAnim,
-        transform: [{ translateY: slideAnim }],
-      }}
-    >
-      <FlatList
-        data={activities}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-        contentContainerStyle={[
-          styles.listContainer,
-          { 
-            flexGrow: 1,
-            ...(Platform.OS === 'web' && { alignItems: 'stretch' })
-          }
-        ]}
-        removeClippedSubviews={true}
-        maxToRenderPerBatch={10}
-        updateCellsBatchingPeriod={50}
-        windowSize={10}
-        initialNumToRender={10}
-      />
-    </Animated.View>
+    <FlatList
+      data={activities}
+      renderItem={renderItem}
+      keyExtractor={keyExtractor}
+      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      contentContainerStyle={[
+        styles.listContainer,
+        { 
+          flexGrow: 1,
+          ...(Platform.OS === 'web' && { alignItems: 'stretch' })
+        }
+      ]}
+      removeClippedSubviews={true}
+      maxToRenderPerBatch={10}
+      updateCellsBatchingPeriod={50}
+      windowSize={10}
+      initialNumToRender={10}
+    />
   );
 }

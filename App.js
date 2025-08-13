@@ -229,6 +229,7 @@ const App = () => {
   const [activityEmoji, setActivityEmoji] = useState(DEFAULT_ACTIVITY_EMOJI);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showEditToolbar, setShowEditToolbar] = useState(false);
+  const [showEditModeList, setShowEditModeList] = useState(false);
   const [showEditIcons, setShowEditIcons] = useState(false);
   const [syncEnabled, setSyncEnabled] = useState(false);
   
@@ -318,6 +319,8 @@ const App = () => {
   const [editModeToolbarTranslate] = useState(() => new Animated.Value(100));
   const [editIconsTranslateY] = useState(() => new Animated.Value(0));
   const [editIconsOpacity] = useState(() => new Animated.Value(0));
+  const [contentFadeAnim] = useState(() => new Animated.Value(1));
+  const [editListFadeAnim] = useState(() => new Animated.Value(0));
   
   // ScrollView refs for forcing measurement on Android
   
@@ -578,39 +581,60 @@ const App = () => {
   useEffect(() => {
     if (isEditMode) {
       // Entering edit mode with smooth transition
-      // Animate the main edit mode icon
-      Animated.timing(editModeIconRotation, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: Platform.OS !== 'web',
-      }).start();
+      setShowEditModeList(true);
       
-      // Show the edit toolbar with fade in
+      // Crossfade from regular content to edit list
+      Animated.parallel([
+        // Fade out regular content
+        Animated.timing(contentFadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        // Fade in edit list
+        Animated.timing(editListFadeAnim, {
+          toValue: 1,
+          duration: 300,
+          delay: 100,
+          useNativeDriver: true,
+        }),
+        // Rotate edit mode icon
+        Animated.timing(editModeIconRotation, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start();
+      
+      // Show the edit toolbar
       setShowEditToolbar(true);
-      
-      // Animate content fade for smooth transition
-      Animated.timing(editIconsOpacity, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: Platform.OS !== 'web',
-      }).start();
     } else {
       // Exiting edit mode with smooth transition
-      // Animate the main edit mode icon
-      Animated.timing(editModeIconRotation, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: Platform.OS !== 'web',
-      }).start();
-      
-      // Fade out content
-      Animated.timing(editIconsOpacity, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: Platform.OS !== 'web',
-      }).start(() => {
-        // Hide toolbar after animation
+      // Crossfade from edit list back to regular content
+      Animated.parallel([
+        // Fade out edit list
+        Animated.timing(editListFadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        // Fade in regular content
+        Animated.timing(contentFadeAnim, {
+          toValue: 1,
+          duration: 300,
+          delay: 100,
+          useNativeDriver: true,
+        }),
+        // Rotate edit mode icon back
+        Animated.timing(editModeIconRotation, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+      ]).start(() => {
+        // Hide toolbar and list after animation completes
         setShowEditToolbar(false);
+        setShowEditModeList(false);
       });
     }
   }, [isEditMode]);
@@ -3519,9 +3543,19 @@ const App = () => {
         {/* Main Content Area */}
         <View style={styles.contentArea}>
           {(Platform.OS === 'android' && numColumns === 2) && console.warn(`Android: Should render 2 columns! Width: ${screenDimensions.width}`)}
-          {/* Use EditModeList when in edit mode for unified experience */}
-          {isEditMode ? (
-            <EditModeList
+          
+          {/* Edit Mode List - Positioned absolutely for crossfade */}
+          {showEditModeList && (
+            <Animated.View style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              opacity: editListFadeAnim,
+              zIndex: isEditMode ? 2 : 0,
+            }}>
+              <EditModeList
               activities={activities.filter(a => !a.deleted)}
               onUpdate={(newActivities) => {
                 // Filter out deleted items before saving
@@ -3561,7 +3595,15 @@ const App = () => {
               }}
               theme={theme}
             />
-          ) : (numColumns > 1) ? (
+            </Animated.View>
+          )}
+          
+          {/* Regular Content - Also animated for crossfade */}
+          <Animated.View style={{
+            flex: 1,
+            opacity: contentFadeAnim,
+          }}>
+          {(numColumns > 1) ? (
             <>
             {Platform.OS === 'android' && console.warn(`Android: ENTERING multi-column branch with ${numColumns} columns`)}
             <ScrollView
@@ -3758,6 +3800,7 @@ const App = () => {
               }
             />
           )}
+          </Animated.View>
         </View>
 
         {/* Bottom Banner */}
