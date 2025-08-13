@@ -95,18 +95,18 @@ ios/*.ips
 # Temporary tools
 icon-color-preview.html
 
-# Build artifacts that shouldn't be committed
-# Note: bundle files need to be committed for qual deployment
-# /bundle.*.js
-# /bundle.*.js.LICENSE.txt
-/temp/
+# Build artifacts (now handled by deploy branches)
 /index.html
+/bundle.*.js
+/bundle.*.js.LICENSE.txt
+/manifest.json
 /service-worker.js
 /workbox-*.js
-/manifest.json
 /*.png
+/*.jpg
 /fonts/
 /icons/
+/temp/
 
 # Android bundle files (generated during build)
 /android/app/src/main/assets/index.android.bundle
@@ -130,3 +130,9 @@ icon-color-preview.html
 
 # Build information file
 .build-info.json
+
+# Local development
+*.log
+
+# Old bundle backup directory
+/build-artifacts/
