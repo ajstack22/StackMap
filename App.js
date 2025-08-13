@@ -1674,11 +1674,12 @@ const App = () => {
 
   const addActivityToLibrary = (activity) => {
     // Initialize with empty categories if none exist
-    const categories = activityCategories || EMPTY_CATEGORIES;
+    let categories = activityCategories || EMPTY_CATEGORIES;
     
-    // If activityCategories was null, set it to empty
-    if (!activityCategories) {
-      console.log('Initializing activity categories with empty template');
+    // If activityCategories was null or empty array, set it to default
+    if (!activityCategories || activityCategories.length === 0) {
+      console.log('Initializing activity categories with default template');
+      categories = EMPTY_CATEGORIES;
       setActivityCategories(EMPTY_CATEGORIES);
     }
     
@@ -1686,7 +1687,19 @@ const App = () => {
     const updatedCategories = [...categories];
     
     // Find My Templates category
-    const myTemplatesIndex = updatedCategories.findIndex(cat => cat.id === 'my-templates');
+    let myTemplatesIndex = updatedCategories.findIndex(cat => cat.id === 'my-templates');
+    
+    // If My Templates doesn't exist, create it
+    if (myTemplatesIndex === -1) {
+      console.log('Creating My Templates category');
+      updatedCategories.push({
+        id: 'my-templates',
+        name: 'My Templates',
+        icon: '⭐',
+        activities: []
+      });
+      myTemplatesIndex = updatedCategories.length - 1;
+    }
     
     if (myTemplatesIndex !== -1) {
       // Create a template from the activity

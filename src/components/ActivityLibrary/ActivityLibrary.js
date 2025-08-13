@@ -1894,7 +1894,14 @@ const styles = StyleSheet.create({
   },
 });
 
-// Export empty template for initialization
-export const EMPTY_CATEGORIES = [];
+// Export empty template for initialization with My Templates category
+export const EMPTY_CATEGORIES = [
+  {
+    id: 'my-templates',
+    name: 'My Templates',
+    icon: '⭐',
+    activities: []
+  }
+];
 
 export default ActivityLibrary;
