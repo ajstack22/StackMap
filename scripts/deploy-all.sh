@@ -152,37 +152,21 @@ fi
 if [ "$DEPLOY_WEB" = true ] || [ "$DEPLOY_PROD" = true ]; then
     echo "🌐 Deploying to Web..."
     
-    # Build web
-    NODE_ENV=production npm run build:web
-    
     if [ "$DEPLOY_WEB" = true ]; then
-        # Deploy to qual
+        # Deploy to qual using new branch-based deployment
         echo "Deploying to Qual..."
-        cp web/build/*.* .
-        cp -r web/build/fonts . 2>/dev/null || true
-        cp -r web/build/icons . 2>/dev/null || true
-        
-        git add -A
-        git commit -m "Deploy v$NEW_VERSION to qual" || true
-        git push origin main
-        
-        ssh stackmap-cpanel "cd ~/public_html/qual && git pull" 2>/dev/null || {
-            echo "⚠️  SSH deployment failed. Manual pull required on server."
-        }
+        "$SCRIPT_DIR/deploy-with-tracking.sh" qual
         
         DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Web Qual: v$NEW_VERSION"
         echo "✅ Qual deployment complete"
     fi
     
     if [ "$DEPLOY_PROD" = true ]; then
-        # Deploy to production
+        # Deploy to production using new branch-based deployment
         echo "Deploying to Production..."
-        if [ -f "./scripts/simple-deploy.sh" ]; then
-            ./scripts/simple-deploy.sh
-            DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Web Prod: v$NEW_VERSION"
-        else
-            echo "⚠️  Production deployment script not found"
-        fi
+        "$SCRIPT_DIR/deploy-with-tracking.sh" prod
+        
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Web Prod: v$NEW_VERSION"
         echo "✅ Production deployment complete"
     fi
     
