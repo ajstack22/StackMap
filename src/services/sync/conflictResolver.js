@@ -306,9 +306,15 @@ class ConflictResolver {
     
     // Ensure currentUser is valid
     if (newState.users) {
-      // First check if currentUser exists in users
-      if (newState.currentUser && !newState.users[newState.currentUser]) {
-        console.log(`Current user ${newState.currentUser} not found in users after resolution, finding replacement`);
+      const currentUserData = newState.users[newState.currentUser];
+      
+      // Check if currentUser exists and is not deleted
+      if (!newState.currentUser || !currentUserData || currentUserData.deleted) {
+        if (newState.currentUser) {
+          console.log(`Current user ${newState.currentUser} is missing or deleted, finding replacement`);
+        } else {
+          console.log('No currentUser set, finding a valid user');
+        }
         
         // Find a valid user to set as current
         const validUserIds = Object.keys(newState.users).filter(id => 
@@ -329,31 +335,14 @@ class ConflictResolver {
           };
           newState.currentUser = defaultUserId;
         }
-      } else if (!newState.currentUser) {
-        // No currentUser set at all, find one
-        const validUserIds = Object.keys(newState.users).filter(id => 
-          newState.users[id] && !newState.users[id].deleted
-        );
-        
-        if (validUserIds.length > 0) {
-          console.log(`No currentUser set, using first valid user: ${validUserIds[0]}`);
-          newState.currentUser = validUserIds[0];
-        } else {
-          // Create default user
-          const defaultUserId = 'user_1';
-          newState.users[defaultUserId] = {
-            name: 'User',
-            icon: '👤',
-            days: {}
-          };
-          newState.currentUser = defaultUserId;
-        }
       }
     }
     
     // Validate the final state
     if (!validateSyncedData(newState)) {
       console.error('Conflict resolution resulted in invalid state, attempting repair');
+      console.error('newState.users:', JSON.stringify(newState.users, null, 2));
+      console.error('newState.currentUser:', newState.currentUser);
       
       // Try to repair the state
       const repairedState = repairSyncedData(newState);
@@ -361,9 +350,13 @@ class ConflictResolver {
       if (!validateSyncedData(repairedState)) {
         console.error('Conflict resolution repair failed, state still invalid');
         // Log more details for debugging
-        console.error('Current state:', currentState);
+        console.error('Current state users:', JSON.stringify(currentState.users, null, 2));
+        console.error('Current state currentUser:', currentState.currentUser);
         console.error('Resolutions applied:', resolutions);
-        console.error('Failed state:', newState);
+        console.error('Failed state users:', JSON.stringify(newState.users, null, 2));
+        console.error('Failed state currentUser:', newState.currentUser);
+        console.error('Repaired state users:', JSON.stringify(repairedState.users, null, 2));
+        console.error('Repaired state currentUser:', repairedState.currentUser);
         throw new Error('Conflict resolution failed validation');
       }
       

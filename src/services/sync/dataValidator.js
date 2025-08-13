@@ -22,8 +22,12 @@ export const validateSyncedData = (data) => {
       return false;
     }
 
-    // Validate each user
+    // Validate each user (skip deleted users)
     for (const [userId, user] of Object.entries(data.users)) {
+      // Skip validation for deleted users
+      if (user && user.deleted) {
+        continue;
+      }
       if (!validateUser(userId, user)) {
         return false;
       }
@@ -35,9 +39,13 @@ export const validateSyncedData = (data) => {
     }
 
     // Validate currentUser if present
-    if (data.currentUser && !data.users[data.currentUser]) {
-      console.error(`Data validation failed: currentUser ${data.currentUser} not found in users`, Object.keys(data.users));
-      return false;
+    if (data.currentUser) {
+      const currentUserData = data.users[data.currentUser];
+      // Current user must exist and not be deleted
+      if (!currentUserData || currentUserData.deleted) {
+        console.error(`Data validation failed: currentUser ${data.currentUser} is missing or deleted`, currentUserData);
+        return false;
+      }
     }
 
     return true;
@@ -221,6 +229,11 @@ export const repairSyncedData = (data) => {
 
     // Repair each user
     for (const [userId, user] of Object.entries(repaired.users)) {
+      // Skip deleted users - they don't need repair
+      if (user && user.deleted) {
+        continue;
+      }
+      
       // Ensure required user fields
       if (!user.name) user.name = 'Unknown User';
       // Ensure user has either icon or emoji

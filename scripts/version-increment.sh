@@ -31,15 +31,23 @@ increment_version() {
     NEW_VERSION="$NEW_YEAR.$NEW_MONTH.$NEW_DAY.$NEW_BUILD"
     echo "📈 New version: $NEW_VERSION"
     
-    # Update package.json
+    # Update package.json and app.json
     if [[ "$OSTYPE" == "darwin"* ]]; then
         # macOS
         sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
         sed -i '' "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/app.json"
+        # Also update version.js for web builds
+        if [ -f "$PROJECT_ROOT/src/utils/version.js" ]; then
+            sed -i '' "s/BUILD_VERSION = '[^']*'/BUILD_VERSION = '$NEW_VERSION'/" "$PROJECT_ROOT/src/utils/version.js"
+        fi
     else
         # Linux
         sed -i "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/package.json"
         sed -i "s/\"version\": \"$CURRENT_VERSION\"/\"version\": \"$NEW_VERSION\"/" "$PROJECT_ROOT/app.json"
+        # Also update version.js for web builds
+        if [ -f "$PROJECT_ROOT/src/utils/version.js" ]; then
+            sed -i "s/BUILD_VERSION = '[^']*'/BUILD_VERSION = '$NEW_VERSION'/" "$PROJECT_ROOT/src/utils/version.js"
+        fi
     fi
     
     echo "✅ Version updated to $NEW_VERSION"

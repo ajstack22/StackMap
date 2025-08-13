@@ -54,11 +54,11 @@ increment_version
 echo "📝 Updating iOS Info.plist versions..."
 
 # Update CFBundleShortVersionString (display version)
-/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW_VERSION" ios/StackMap/Info.plist
+/usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW_VERSION" ios/StackMapNative/Info.plist
 
 # Generate build number (remove dots for iOS)
 BUILD_NUMBER=$(echo $NEW_VERSION | tr -d '.')
-/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/StackMap/Info.plist
+/usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/StackMapNative/Info.plist
 
 echo "✅ iOS version updated"
 

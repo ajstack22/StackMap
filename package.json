@@ -1,6 +1,6 @@
 {
   "name": "StackMap",
-  "version": "25.08.12.7",
+  "version": "2025.08.12.9",
   "private": true,
   "scripts": {
     "android": "react-native run-android",
@@ -9,7 +9,7 @@
     "start": "react-native start",
     "test": "jest",
     "web": "webpack serve --mode development",
-    "build:web": "node scripts/update-version.js && webpack --mode production",
+    "build:web": "webpack --mode production",
     "web:build": "node scripts/update-version.js && NODE_ENV=production webpack --mode production",
     "deploy:qual": "echo '🚨 BUILD AND COPY FILES FOR QUAL DEPLOYMENT' && node scripts/update-version.js && NODE_ENV=production npm run build:web && cp web/build/*.* . && cp -r web/build/fonts . && cp -r web/build/icons . && echo '✅ Files copied to root - NOW: git add -A && git commit && git push'",
     "security:audit": "npm audit --audit-level=moderate",

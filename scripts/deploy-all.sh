@@ -124,9 +124,9 @@ if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_IOS_DEVICE" = true ]; then
     echo "🍎 Deploying to iOS..."
     
     # Update iOS version
-    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW_VERSION" ios/StackMap/Info.plist 2>/dev/null || true
+    /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $NEW_VERSION" ios/StackMapNative/Info.plist 2>/dev/null || true
     BUILD_NUMBER=$(echo $NEW_VERSION | tr -d '.')
-    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/StackMap/Info.plist 2>/dev/null || true
+    /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" ios/StackMapNative/Info.plist 2>/dev/null || true
     
     # Pod install
     cd ios
