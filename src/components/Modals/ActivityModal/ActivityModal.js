@@ -100,10 +100,10 @@ const ActivityModal = ({
           >
             <ScrollView 
               style={{ flex: 1 }}
-              contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
+              contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
               showsVerticalScrollIndicator={false}
             >
-              <>
+              <View style={styles.formPanel}>
                 {/* Emoji Selector */}
                 <TouchableOpacity 
                   style={styles.emojiSelector}
@@ -162,7 +162,7 @@ const ActivityModal = ({
                     {editingActivity ? 'Save Changes' : 'Add Activity'}
                   </Text>
                 </TouchableOpacity>
-              </>
+              </View>
             </ScrollView>
           </KeyboardAvoidingView>
         </View>
