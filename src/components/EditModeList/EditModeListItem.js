@@ -6,7 +6,7 @@ import {
   Platform,
   Alert
 } from 'react-native';
-import MaterialIcons from '../VectorIcons';
+import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles, getTabletStyles } from './styles';
 
 export const EditModeListItem = React.memo(({
@@ -79,7 +79,7 @@ export const EditModeListItem = React.memo(({
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialIcons 
+            <Icon 
               name="arrow-upward" 
               size={isTablet ? 24 : 20} 
               color={index === 0 ? '#ccc' : theme.primary} 
@@ -94,7 +94,7 @@ export const EditModeListItem = React.memo(({
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialIcons 
+            <Icon 
               name="arrow-downward" 
               size={isTablet ? 24 : 20} 
               color={index === totalCount - 1 ? '#ccc' : theme.primary} 
@@ -110,7 +110,7 @@ export const EditModeListItem = React.memo(({
             accessibilityLabel={item.completed ? "Mark incomplete" : "Mark complete"}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialIcons 
+            <Icon 
               name={item.completed ? "check-box" : "check-box-outline-blank"} 
               size={isTablet ? 28 : 24} 
               color={theme.primary} 
@@ -123,7 +123,7 @@ export const EditModeListItem = React.memo(({
             accessibilityLabel="Add to library"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialIcons 
+            <Icon 
               name="library-add" 
               size={isTablet ? 28 : 24} 
               color={theme.primary} 
@@ -137,7 +137,7 @@ export const EditModeListItem = React.memo(({
               accessibilityLabel="Move to tomorrow"
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
             >
-              <MaterialIcons 
+              <Icon 
                 name="swap-horiz" 
                 size={isTablet ? 28 : 24} 
                 color={theme.primary} 
@@ -151,7 +151,7 @@ export const EditModeListItem = React.memo(({
             accessibilityLabel="Delete activity"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <MaterialIcons 
+            <Icon 
               name="delete" 
               size={isTablet ? 28 : 24} 
               color="#e53e3e" 
