@@ -96,8 +96,9 @@ echo "- Running lint check..."
 npm run lint 2>&1 | tee /tmp/lint-output.txt
 LINT_EXIT_CODE=${PIPESTATUS[0]}
 
-# Check if there are actual errors (not just warnings)
-if grep -q "error" /tmp/lint-output.txt; then
+# Check if there are actual errors by looking for lines with "error" level
+# (not the summary line that says "0 errors")
+if grep -E "^\s+[0-9]+:[0-9]+\s+error\s" /tmp/lint-output.txt > /dev/null; then
     echo ""
     echo "❌ Lint errors found!"
     echo "Please fix the errors before deploying."
