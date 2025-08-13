@@ -574,71 +574,48 @@ const App = () => {
     }
   }, [syncSetupPhrase, isHydrated, hasCompletedOnboarding, showOnboarding, currentTheme]);
   
-  // Animate icons when edit mode changes
+  // Animate edit mode transition
   useEffect(() => {
     if (isEditMode) {
-      // Entering edit mode: slide up from below with fade in
-      // IMPORTANT: Set initial opacity to 0 BEFORE showing the icons to prevent flash
-      editIconsOpacity.setValue(0);
-      editIconsTranslateY.setValue(0);
-      
-      // Now show the edit icons (they'll be invisible due to opacity: 0)
-      setShowEditIcons(true);
-      
-      // Small delay to ensure the opacity is applied before animation starts
-      setTimeout(() => {
-        // Animate both translation and opacity together
-        Animated.parallel([
-          Animated.timing(editIconsTranslateY, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: Platform.OS !== 'web',
-          }),
-          Animated.timing(editIconsOpacity, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: Platform.OS !== 'web',
-          }),
-        ]).start();
-      }, 10);
-      
-      // Also animate the main edit mode icon
+      // Entering edit mode with smooth transition
+      // Animate the main edit mode icon
       Animated.timing(editModeIconRotation, {
         toValue: 1,
         duration: 300,
+        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start();
       
-      // Show the edit toolbar
+      // Show the edit toolbar with fade in
       setShowEditToolbar(true);
-    } else {
-      // Exiting edit mode: slide back down with delayed fade out
-      // Start slide down immediately
-      Animated.timing(editIconsTranslateY, {
-        toValue: 0,
+      
+      // Animate content fade for smooth transition
+      Animated.timing(editIconsOpacity, {
+        toValue: 1,
         duration: 300,
+        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
         useNativeDriver: Platform.OS !== 'web',
-      }).start(() => {
-        // Hide the edit icons after animation completes
-        setShowEditIcons(false);
-      });
-      
-      // Delay the fade out by 200ms, then fade for 100ms
-      Animated.sequence([
-        Animated.delay(200),
-        Animated.timing(editIconsOpacity, {
-          toValue: 0,
-          duration: 100,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]).start();
-      
-      // Also animate the main edit mode icon
+      }).start();
+    } else {
+      // Exiting edit mode with smooth transition
+      // Animate the main edit mode icon
       Animated.timing(editModeIconRotation, {
         toValue: 0,
         duration: 300,
+        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start();
+      
+      // Fade out content
+      Animated.timing(editIconsOpacity, {
+        toValue: 0,
+        duration: 200,
+        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
+        useNativeDriver: Platform.OS !== 'web',
+      }).start(() => {
+        // Hide toolbar after animation
+        setShowEditToolbar(false);
+      });
     }
   }, [isEditMode]);
   
@@ -3233,8 +3210,8 @@ const App = () => {
         ) : null}
       </View>
 
-      {/* Edit Mode Actions */}
-      {showEditIcons && (
+      {/* Edit Mode Actions - Removed: Using EditModeList instead */}
+      {false && (
         <>
           {/* Reorder buttons for Android and Web */}
           {(Platform.OS === 'android' || Platform.OS === 'web') && !customWidth && (
