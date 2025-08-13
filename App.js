@@ -582,7 +582,6 @@ const App = () => {
       Animated.timing(editModeIconRotation, {
         toValue: 1,
         duration: 300,
-        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start();
       
@@ -593,7 +592,6 @@ const App = () => {
       Animated.timing(editIconsOpacity, {
         toValue: 1,
         duration: 300,
-        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start();
     } else {
@@ -602,7 +600,6 @@ const App = () => {
       Animated.timing(editModeIconRotation, {
         toValue: 0,
         duration: 300,
-        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start();
       
@@ -610,7 +607,6 @@ const App = () => {
       Animated.timing(editIconsOpacity, {
         toValue: 0,
         duration: 200,
-        easing: Animated.Easing.bezier(0.4, 0.0, 0.2, 1),
         useNativeDriver: Platform.OS !== 'web',
       }).start(() => {
         // Hide toolbar after animation
