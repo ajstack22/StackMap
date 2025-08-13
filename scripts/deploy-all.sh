@@ -77,6 +77,19 @@ echo "   Version: $NEW_VERSION"
 echo "========================================="
 echo ""
 
+# Run sanity checks before deployment
+echo "🔍 Running pre-deployment sanity checks..."
+echo "- Running lint check..."
+npm run lint || {
+    echo ""
+    echo "❌ Lint check failed!"
+    echo "Please fix the issues above before deploying."
+    echo "Run 'npm run lint' to see the issues again."
+    exit 1
+}
+echo "✅ Lint check passed!"
+echo ""
+
 # Track deployment status
 DEPLOYMENT_STATUS=""
 
