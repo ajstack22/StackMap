@@ -70,10 +70,15 @@ const validateUser = (userId, user) => {
     return false;
   }
 
-  // Check for icon or emoji (users can have either)
-  if (!user.icon && !user.emoji) {
-    console.error(`Data validation failed: User ${userId} missing icon/emoji`, user);
-    return false;
+  // Check for icon field (normalize emoji to icon if needed)
+  if (!user.icon) {
+    if (user.emoji) {
+      // Accept emoji field but it will be normalized to icon during repair
+      console.log(`Data validation: User ${userId} has emoji but no icon - will normalize`);
+    } else {
+      console.error(`Data validation failed: User ${userId} missing icon`, user);
+      return false;
+    }
   }
 
   // Validate days object
@@ -246,9 +251,18 @@ export const repairSyncedData = (data) => {
       
       // Ensure required user fields
       if (!user.name) user.name = 'Unknown User';
-      // Ensure user has either icon or emoji
-      if (!user.icon && !user.emoji) {
-        user.icon = '👤';
+      // Normalize icon field
+      if (!user.icon) {
+        if (user.emoji) {
+          // Migrate emoji to icon field
+          user.icon = user.emoji;
+          delete user.emoji; // Remove redundant field
+        } else {
+          user.icon = '👤'; // Default user icon
+        }
+      } else if (user.emoji) {
+        // Remove redundant emoji field if icon exists
+        delete user.emoji;
       }
       if (!user.days) user.days = {};
 
@@ -351,7 +365,8 @@ export const validateIncrementalSync = (incrementalData) => {
                   return false;
                 }
                 // If it's a full user object, validate it properly
-                // If it has name and (icon or emoji), it's a full user
+                // If it has name and icon, it's a full user
+                // Also accept emoji field for backwards compatibility
                 if (user.name && (user.icon || user.emoji) && user.days) {
                   if (!validateUser(userId, user)) {
                     console.error(`Incremental sync validation failed: Invalid full user ${userId} in patch`, user);

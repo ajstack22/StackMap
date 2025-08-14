@@ -159,14 +159,22 @@ const useAppStore = create(
           }
         }
         
-        // Fix user icon if it's not a string or doesn't exist
+        // Normalize icon field - always use 'icon', not 'emoji'
         // IMPORTANT: Do NOT use .trim() on emoji strings as it can damage complex Unicode sequences
-        if (typeof sanitizedUser.icon !== 'string' || !sanitizedUser.icon || sanitizedUser.icon.length === 0) {
-          console.warn('Invalid user icon in addUser:', sanitizedUser.icon);
-          // Try to get icon from emoji field or use default
-          sanitizedUser.icon = sanitizedUser.emoji || '👤';
+        if (!sanitizedUser.icon || typeof sanitizedUser.icon !== 'string' || sanitizedUser.icon.length === 0) {
+          if (sanitizedUser.emoji && typeof sanitizedUser.emoji === 'string') {
+            console.log('addUser: Migrating emoji to icon field for user');
+            sanitizedUser.icon = sanitizedUser.emoji;
+          } else {
+            console.warn('Invalid user icon in addUser:', sanitizedUser.icon);
+            sanitizedUser.icon = '👤'; // Default user icon
+          }
         }
-        // If we have a valid emoji string, keep it as-is
+        
+        // Remove redundant emoji field to prevent confusion
+        if (sanitizedUser.emoji) {
+          delete sanitizedUser.emoji;
+        }
         // This preserves complex emojis like 🦍, ⛑️ that have multiple code points
         
         return {
@@ -198,15 +206,25 @@ const useAppStore = create(
           }
         }
         
-        // Fix user icon if provided and not a valid string
+        // Normalize icon field when updating
         // IMPORTANT: Do NOT use .trim() on emoji strings as it can damage complex Unicode sequences
         if ('icon' in sanitizedUpdates) {
           if (typeof sanitizedUpdates.icon !== 'string' || !sanitizedUpdates.icon || sanitizedUpdates.icon.length === 0) {
             console.warn('Invalid user icon in updateUser:', sanitizedUpdates.icon);
-            sanitizedUpdates.icon = sanitizedUpdates.emoji || currentUser.icon || '👤';
+            sanitizedUpdates.icon = currentUser.icon || '👤';
           }
           // Keep the icon as-is if it's a valid non-empty string
           // This preserves complex emojis like 🦍, ⛑️ that have multiple code points
+        }
+        
+        // Handle emoji field migration
+        if ('emoji' in sanitizedUpdates) {
+          if (!sanitizedUpdates.icon && sanitizedUpdates.emoji) {
+            console.log('updateUser: Migrating emoji to icon field');
+            sanitizedUpdates.icon = sanitizedUpdates.emoji;
+          }
+          // Always remove emoji field to prevent confusion
+          delete sanitizedUpdates.emoji;
         }
         
         let updatedUser = merge({}, currentUser, sanitizedUpdates);

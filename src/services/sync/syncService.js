@@ -779,12 +779,30 @@ class SyncService {
     if (users && Object.keys(users).length > 0) {
       const repairedUsers = { ...users };
       Object.entries(users).forEach(([userId, user]) => {
-        if (!user.icon && !user.emoji) {
-          console.warn(`[DEBUG] getCurrentState - User ${userId} in store is missing icon/emoji:`, user);
-          // Repair by adding default icon
+        // Normalize emoji/icon fields - always use 'icon' field
+        if (!user.icon) {
+          if (user.emoji) {
+            console.log(`[DEBUG] getCurrentState - Migrating user ${userId} emoji to icon field`);
+            repairedUsers[userId] = {
+              ...user,
+              icon: user.emoji,
+              emoji: undefined // Remove redundant field
+            };
+            needsRepair = true;
+          } else {
+            console.warn(`[DEBUG] getCurrentState - User ${userId} missing icon, using default`);
+            repairedUsers[userId] = {
+              ...user,
+              icon: '😀' // Default user icon
+            };
+            needsRepair = true;
+          }
+        } else if (user.emoji && user.emoji !== user.icon) {
+          // Remove redundant emoji field if it exists
+          console.log(`[DEBUG] getCurrentState - Removing redundant emoji field for user ${userId}`);
           repairedUsers[userId] = {
             ...user,
-            icon: '😀' // Default user icon
+            emoji: undefined
           };
           needsRepair = true;
         }

@@ -746,16 +746,20 @@ const DataModal = ({
               }
             }
             
-            // Ensure icon is a string
+            // Normalize icon field - always use 'icon', not 'emoji'
             if (!validatedUser.icon || typeof validatedUser.icon !== 'string') {
-//               console.warn(`User ${userId} has invalid icon:`, validatedUser.icon);
-              // Try emoji field or use default
-              validatedUser.icon = validatedUser.emoji || '👤';
+              if (validatedUser.emoji && typeof validatedUser.emoji === 'string') {
+                console.log(`Import: Migrating user ${userId} emoji to icon field`);
+                validatedUser.icon = validatedUser.emoji;
+              } else {
+                console.warn(`Import: User ${userId} has no valid icon, using default`);
+                validatedUser.icon = '👤';
+              }
             }
             
-            // Ensure emoji field exists if icon doesn't
-            if (!validatedUser.emoji && validatedUser.icon) {
-              validatedUser.emoji = validatedUser.icon;
+            // Remove redundant emoji field to prevent confusion
+            if (validatedUser.emoji) {
+              delete validatedUser.emoji;
             }
             
             console.log(`Adding validated user ${userId} (${validatedUser.name}) to import`);

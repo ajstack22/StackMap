@@ -292,9 +292,18 @@ class ConflictResolver {
           if (!user.name) {
             user.name = 'User';
           }
-          // Ensure user has icon or emoji
-          if (!user.icon && !user.emoji) {
-            user.icon = '👤';
+          // Normalize icon field
+          if (!user.icon) {
+            if (user.emoji) {
+              // Migrate emoji to icon field
+              user.icon = user.emoji;
+              delete user.emoji; // Remove redundant field
+            } else {
+              user.icon = '👤'; // Default user icon
+            }
+          } else if (user.emoji) {
+            // Remove redundant emoji field if icon exists
+            delete user.emoji;
           }
           // Ensure user has days object
           if (!user.days || typeof user.days !== 'object') {
