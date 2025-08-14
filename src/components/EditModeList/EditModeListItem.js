@@ -142,7 +142,6 @@ export const EditModeListItem = React.memo(({
             </View>
           </TouchableOpacity>
           
-          
           <TouchableOpacity
             onPress={handleDelete}
             style={itemStyles.actionButton}
