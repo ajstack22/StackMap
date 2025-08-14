@@ -297,9 +297,18 @@ const SettingsModal = ({
         
         <View style={{ flex: 1, backgroundColor: theme.light }}>
           <ScrollView 
-            style={styles.modalContent} 
+            style={[styles.modalContent, Platform.OS === 'android' && { flex: 1 }]}
+            contentContainerStyle={{ 
+              flexGrow: 1,
+              paddingBottom: Platform.OS === 'android' ? 100 : 80
+            }}
             showsVerticalScrollIndicator={false}
+            showsHorizontalScrollIndicator={false}
             nestedScrollEnabled={true}
+            removeClippedSubviews={false}
+            keyboardShouldPersistTaps="handled"
+            scrollEventThrottle={16}
+            bounces={Platform.OS === 'ios'}
           >
             {/* Single consolidated panel */}
             <View style={styles.section}>
@@ -468,7 +477,13 @@ const SettingsModal = ({
             <Text style={styles.settingDescription}>
               Animation when completing activities
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              nestedScrollEnabled={true}
+              removeClippedSubviews={false}
+              style={styles.celebrationScrollView}
+            >
               <View style={styles.celebrationOptions}>
                 {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
                   <TouchableOpacity
@@ -494,7 +509,13 @@ const SettingsModal = ({
             <Text style={styles.settingDescription}>
               Animation when completing all activities
             </Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false} 
+              nestedScrollEnabled={true}
+              removeClippedSubviews={false}
+              style={styles.celebrationScrollView}
+            >
               <View style={styles.celebrationOptions}>
                 {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
                   <TouchableOpacity

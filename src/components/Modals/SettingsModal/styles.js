@@ -30,10 +30,13 @@ export const styles = StyleSheet.create({
   },
   modalContent: {
     paddingTop: SPACING.md,
-    paddingBottom: 80,
     paddingHorizontal: 0,
     ...(Platform.OS === 'web' && {
       paddingHorizontal: SPACING.lg,
+      paddingBottom: 80,
+    }),
+    ...(Platform.OS === 'android' && {
+      flex: 1,
     }),
   },
   section: {
