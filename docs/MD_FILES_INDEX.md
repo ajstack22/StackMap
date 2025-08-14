@@ -14,12 +14,10 @@
 - **[/docs/data/data-import-service.md](./data/data-import-service.md)** - Import procedures & normalization
 - **[/docs/data/data-export-service.md](./data/data-export-service.md)** - Export formats & sanitization
 - **[/docs/data/data-reset-service.md](./data/data-reset-service.md)** - Reset operations & recovery
-- **[/docs/LEGACY_DOCUMENTATION_NOTICE.md](./LEGACY_DOCUMENTATION_NOTICE.md)** - ⚠️ Which docs are outdated
 
 ### Deployment & Infrastructure
 - **[CLAUDE.md](./CLAUDE.md)** - 🔴 THE deployment truth - read this first!
-- **[README_DEPLOYMENT.md](./README_DEPLOYMENT.md)** - Step-by-step deployment guide
-- **[DO_NOT_IGNORE_BUILD_FILES.md](./DO_NOT_IGNORE_BUILD_FILES.md)** - Prevents 403 errors
+- **[/prompts/deployment.md](/prompts/deployment.md)** - Comprehensive deployment guide
 
 ### Quick References
 - **[QUICK_TEST_CHECKLIST.md](./QUICK_TEST_CHECKLIST.md)** - Test before deploying
@@ -35,7 +33,6 @@
 - **[MODAL_PATTERNS.md](./MODAL_PATTERNS.md)** - Standard modal implementation patterns
 
 ### System Architecture
-- **[docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md](./docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md)** - Full system documentation
 - **[docs/CROSS_PLATFORM_DEVELOPMENT.md](./docs/CROSS_PLATFORM_DEVELOPMENT.md)** - Platform differences
 
 ### Component Systems
@@ -66,7 +63,6 @@
 
 - **[api/sync/README.md](./api/sync/README.md)** - Sync system overview
 - **[docs/SYNC_API_REFERENCE.md](./docs/SYNC_API_REFERENCE.md)** - API endpoints
-- **[docs/SYNC_IMPLEMENTATION_PLAN.md](./docs/SYNC_IMPLEMENTATION_PLAN.md)** - Implementation details
 - **[docs/ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md](./docs/ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md)** - Security architecture
 
 ---
@@ -98,11 +94,11 @@
 
 ### "I need to deploy"
 1. Start with [CLAUDE.md](./CLAUDE.md)
-2. Follow [README_DEPLOYMENT.md](./README_DEPLOYMENT.md)
-3. Check [DO_NOT_IGNORE_BUILD_FILES.md](./DO_NOT_IGNORE_BUILD_FILES.md)
+2. Follow [/prompts/deployment.md](/prompts/deployment.md)
+3. Use `./scripts/deploy-all.sh` for automated deployment
 
 ### "I need to add a feature"
-1. Check [docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md](./docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md)
+1. Check canonical data docs in [/docs/data/](./data/)
 2. Review similar features (e.g., [COMPLETE_DAY_MODAL_PROMPT.md](./COMPLETE_DAY_MODAL_PROMPT.md))
 3. Follow platform guidelines in platform-specific guides
 
@@ -112,7 +108,7 @@
 3. Test on all platforms using [docs/CROSS_PLATFORM_DEVELOPMENT.md](./docs/CROSS_PLATFORM_DEVELOPMENT.md)
 
 ### "I need to understand the architecture"
-1. Start with [docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md](./docs/STACKMAP_COMPREHENSIVE_DOCUMENTATION.md)
+1. Start with [/docs/data/data-overview.md](./data/data-overview.md) for data architecture
 2. Review [EDIT_MODE_MENU_STRATEGY.md](./EDIT_MODE_MENU_STRATEGY.md) for UI patterns
 3. Check component relationships in [docs/COMPONENT_INTERACTION_DIAGRAMS.md](./docs/COMPONENT_INTERACTION_DIAGRAMS.md)
 

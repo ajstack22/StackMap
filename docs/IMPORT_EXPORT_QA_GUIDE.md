@@ -273,8 +273,9 @@ npm test -- --suite=import-export
 - Check if import went through without preview (fallback mode)
 
 ### Legacy Import Creates Wrong User Name
-- Verify the `settings.title` field in legacy file
-- Default should be "My StackMap" if missing
+- Check if `currentUser` field exists in the export
+- For legacy files, verify the `globalSettings` fields
+- Default should be "My Activities" if missing
 
 ## Regression Testing
 

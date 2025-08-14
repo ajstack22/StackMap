@@ -27,7 +27,7 @@ user = {
 
 #### Critical Rules
 1. **User IDs are ALWAYS dynamically generated** - No static IDs
-2. **Never use .trim() on emoji strings** - It damages complex Unicode sequences
+2. **Never use string manipulation on emoji fields** - It damages complex Unicode sequences
 3. **Default user name is context-dependent:**
    - Onboarding skip: "My Activities"
    - Failed validation: "User"
@@ -35,7 +35,7 @@ user = {
 
 #### Emoji Handling
 - **Problem**: Complex emojis (🦍, ⛑️) contain multiple Unicode code points
-- **Solution**: Never use string manipulation methods (.trim(), .slice()) on emoji
+- **Solution**: Never use string manipulation methods (trim(), slice(), etc.) on emoji
 - **Validation**: Check `typeof icon === 'string' && icon.length > 0`
 - **Fallback**: Use '👤' only when icon is truly invalid
 
@@ -120,7 +120,7 @@ user = {
 
 #### Import Rules
 1. **Clear existing data before import** (optional user choice)
-2. **Validate all emoji fields** - Don't use .trim()
+2. **Validate all emoji fields** - Don't use string manipulation
 3. **Show import summary** with user count, activities, PIN status
 4. **Handle missing currentUser**: Use first user as fallback
 
@@ -155,8 +155,8 @@ user = {
 ## Common Issues & Solutions
 
 ### Issue 1: Complex Emojis Become 👤
-**Cause**: `.trim()` damages Unicode sequences
-**Solution**: Remove `.trim()` from validation, check `icon.length > 0`
+**Cause**: String manipulation methods damage Unicode sequences
+**Solution**: Never use string manipulation on emoji fields, check `icon.length > 0`
 
 ### Issue 2: Username Shows as "User" After Import
 **Cause**: Missing `currentUser` field in export
