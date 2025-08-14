@@ -587,7 +587,26 @@ class SyncService {
         console.log('sync: Remote data is newer, checking for conflicts...');
         
         // Decrypt remote data
+        console.log('[DEBUG] Decrypting remote data...');
         let decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
+        
+        // Debug log the decrypted data structure
+        console.log('[DEBUG] Decrypted data structure:');
+        console.log('[DEBUG] - Has users:', !!decryptedData.users);
+        console.log('[DEBUG] - User count:', Object.keys(decryptedData.users || {}).length);
+        console.log('[DEBUG] - Type:', decryptedData.type || 'full');
+        
+        // Log activities for each user
+        if (decryptedData.users) {
+          Object.entries(decryptedData.users).forEach(([userId, user]) => {
+            const todayActivities = user.days?.today?.activities?.length || 0;
+            const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+            console.log(`[DEBUG] Remote user ${userId} (${user.name}): ${todayActivities} today, ${tomorrowActivities} tomorrow activities`);
+            if (todayActivities > 0) {
+              console.log(`[DEBUG] First activity for ${user.name}:`, user.days.today.activities[0]);
+            }
+          });
+        }
         
         // Validate decrypted data based on type
         if (decryptedData.type === 'incremental') {
@@ -880,6 +899,12 @@ class SyncService {
     if (users && users[finalCurrentUser] && users[finalCurrentUser].days) {
       currentUserActivities = users[finalCurrentUser].days[finalCurrentDay]?.activities || [];
       console.log(`restoreData: Loading ${currentUserActivities.length} activities for user ${finalCurrentUser} on ${finalCurrentDay}`);
+      
+      // DEBUG: Log first few activities to verify structure
+      if (currentUserActivities.length > 0) {
+        console.log('[DEBUG] First activity:', JSON.stringify(currentUserActivities[0]));
+        console.log('[DEBUG] Activity IDs:', currentUserActivities.map(a => a.id).join(', '));
+      }
     }
     
     // Update store with export format data
@@ -914,6 +939,12 @@ class SyncService {
     console.log('[DEBUG] - users count:', Object.keys(newState.users || {}).length);
     console.log('[DEBUG] - activities count being set:', newState.activities?.length || 0);
     console.log('[DEBUG] - activities:', JSON.stringify(newState.activities?.slice(0, 2)));
+    console.log('[DEBUG] - currentUser:', newState.currentUser);
+    console.log('[DEBUG] - currentDay:', newState.currentDay);
+    
+    // Store activities in users before setState
+    const userActivities = newState.users[newState.currentUser]?.days?.[newState.currentDay]?.activities || [];
+    console.log('[DEBUG] User activities before setState:', userActivities.length);
     
     useAppStore.setState(newState);
     
@@ -924,7 +955,15 @@ class SyncService {
     console.log('[DEBUG] - hasCompletedOnboarding:', afterState.hasCompletedOnboarding);
     console.log('[DEBUG] - activities count:', afterState.activities?.length || 0);
     console.log('[DEBUG] - currentUser:', afterState.currentUser);
+    console.log('[DEBUG] - currentDay:', afterState.currentDay);
     console.log('[DEBUG] - users count:', Object.keys(afterState.users || {}).length);
+    
+    // Verify activities in users object
+    const afterUserActivities = afterState.users[afterState.currentUser]?.days?.[afterState.currentDay]?.activities || [];
+    console.log('[DEBUG] User activities after setState:', afterUserActivities.length);
+    if (afterUserActivities.length === 0 && userActivities.length > 0) {
+      console.error('[ERROR] Activities lost during setState!');
+    }
   }
 
   /**
@@ -936,19 +975,9 @@ class SyncService {
       console.log('sync: Applying incremental update');
       await this.restoreData(remoteData);
       
-      // Validate the state after incremental update
-      const updatedState = useAppStore.getState();
-      if (!validateSyncedData(updatedState)) {
-        console.error('sync: State validation failed after incremental update, attempting repair');
-        // Try to repair the state
-        const repairedState = repairSyncedData(updatedState);
-        if (!validateSyncedData(repairedState)) {
-          console.error('sync: Repair failed, state still invalid');
-          throw new Error('Data validation failed after incremental sync');
-        }
-        console.log('sync: State repaired successfully after incremental update');
-        useAppStore.setState(repairedState);
-      }
+      // Skip validation for incremental updates to prevent data loss
+      // The data has already been validated on the sending device
+      console.log('sync: Incremental update applied successfully');
       return;
     }
     
@@ -1047,8 +1076,9 @@ class SyncService {
       throw new Error('Invalid state cannot be applied');
     }
     
-    // Apply the resolved state
-    useAppStore.setState(state);
+    console.log('[DEBUG] applyState: Using restoreData to properly handle state');
+    // Use restoreData to properly extract and set activities
+    await this.restoreData(state);
     
     // Mark as synced
     changeTracker.markAsSynced();

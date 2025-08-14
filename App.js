@@ -543,15 +543,31 @@ const App = () => {
 
   // Load activities when day changes
   useEffect(() => {
+    console.log('[DEBUG App.js] Activity loading effect triggered');
+    console.log('[DEBUG App.js] - currentUser:', currentUser);
+    console.log('[DEBUG App.js] - currentDay:', currentDay);
+    console.log('[DEBUG App.js] - users exist:', !!users);
+    console.log('[DEBUG App.js] - user keys:', Object.keys(users || {}));
+    
     if (currentUser && users[currentUser]) {
       const rawActivities = users[currentUser]?.days?.[currentDay]?.activities || [];
+      console.log(`[DEBUG App.js] Found ${rawActivities.length} activities for user ${currentUser} on ${currentDay}`);
       
       // Debug log for iOS
       if (Platform.OS === 'ios' && rawActivities.length > 0) {
         console.log('🔍 iOS: Loading activities:', JSON.stringify(rawActivities.slice(0, 3), null, 2));
       }
       
+      // Log if activities will be cleared
+      if (rawActivities.length === 0) {
+        console.log('[DEBUG App.js] No activities found, will show default cards');
+      } else {
+        console.log('[DEBUG App.js] First activity:', rawActivities[0]?.text || rawActivities[0]?.name);
+      }
+      
       setActivities(cleanupActivities(rawActivities));
+    } else {
+      console.log('[DEBUG App.js] User not found or not ready:', { currentUser, userExists: !!users[currentUser] });
     }
   }, [currentDay, currentUser, users, setActivities]);
   
