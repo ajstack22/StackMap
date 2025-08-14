@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from '../../Typography';
-import { Modal, View, TouchableOpacity, ScrollView, Platform, Text as RNText } from 'react-native';
+import { Modal, View, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import { styles } from './styles';
 
 const ReorderModal = ({
@@ -38,7 +38,7 @@ const ReorderModal = ({
               style={styles.closeButton}
               onPress={handleCancel}
             >
-              <RNText style={styles.closeButtonText}>✕</RNText>
+              <Text style={styles.closeButtonText}>✕</Text>
             </TouchableOpacity>
           </View>
           
@@ -46,9 +46,9 @@ const ReorderModal = ({
           <View style={styles.formPanel}>
             {reorderingActivity && (
               <View style={styles.reorderActivityPreview}>
-                <RNText style={styles.reorderActivityEmoji}>
+                <Text style={styles.reorderActivityEmoji}>
                   {reorderingActivity.activity.emoji || '🎯'}
-                </RNText>
+                </Text>
                 <Text style={styles.reorderActivityText}>
                   {reorderingActivity.activity.text || reorderingActivity.activity.title || ''}
                 </Text>

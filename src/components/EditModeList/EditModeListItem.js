@@ -1,11 +1,11 @@
 import React from 'react';
 import {
   View,
-  Text,
   TouchableOpacity,
   Platform,
   Alert
 } from 'react-native';
+import { Text } from '../Typography';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles, getTabletStyles } from './styles';
 
