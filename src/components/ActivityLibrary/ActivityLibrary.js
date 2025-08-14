@@ -102,14 +102,14 @@ const ActivityRow = ({
   return (
     <View style={styles.activityRow}>
       <View style={styles.activityInfo}>
-        {activity.emoji && activity.emoji.startsWith('image:') ? (
+        {(activity.icon || activity.emoji) && (activity.icon || activity.emoji).startsWith('image:') ? (
           <Image 
-            source={getCustomImageSource(activity.emoji.substring(6))}
+            source={getCustomImageSource((activity.icon || activity.emoji).substring(6))}
             style={styles.activityImage}
             resizeMode="contain"
           />
         ) : (
-          <Text style={styles.activityEmoji}>{activity.emoji}</Text>
+          <Text style={styles.activityEmoji}>{activity.icon || activity.emoji}</Text>
         )}
         <Text style={styles.activityName}>{activity.name}</Text>
       </View>
@@ -826,8 +826,9 @@ const CategorySection = ({
               .map((activity, originalIndex) => {
                 if (searchQuery) {
                   const query = searchQuery.toLowerCase();
+                  const activityIcon = activity.icon || activity.emoji || '';
                   const matches = activity.name.toLowerCase().includes(query) ||
-                                activity.emoji.includes(searchQuery);
+                                activityIcon.includes(searchQuery);
                   if (!matches) return null;
                 }
                 
@@ -944,7 +945,8 @@ const ActivityLibrary = ({
     setEditingItem(activity);
     setEditMode('activity');
     setEditName(activity.name);
-    setEditEmoji(activity.emoji);
+    // Use icon field, fallback to emoji for backwards compatibility
+    setEditEmoji(activity.icon || activity.emoji || '');
     setEditDescription(activity.description || '');
   };
 
@@ -1016,7 +1018,7 @@ const ActivityLibrary = ({
           ...cat,
           activities: cat.activities.map(act =>
             act.id === editingItem.id 
-              ? { ...act, name: editName, emoji: editEmoji || DEFAULT_ACTIVITY_EMOJI, description: editDescription }
+              ? { ...act, name: editName, icon: editEmoji || DEFAULT_ACTIVITY_EMOJI, description: editDescription }
               : act
           ),
         }));
@@ -1044,7 +1046,7 @@ const ActivityLibrary = ({
                 activities: [...cat.activities, {
                   id: newActivityId,
                   name: editName,
-                  emoji: editEmoji,
+                  icon: editEmoji || DEFAULT_ACTIVITY_EMOJI,
                   description: editDescription,
                 }],
               }
