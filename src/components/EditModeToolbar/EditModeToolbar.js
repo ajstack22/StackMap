@@ -384,10 +384,10 @@ const styles = StyleSheet.create({
     right: 0,
   },
   topPosition: {
-    top: 110, // Position below the top banner
+    top: 0,
   },
   bottomPosition: {
-    bottom: 110, // Position above the bottom banner
+    bottom: 0,
   },
   toolbarContainer: {
     position: 'relative',

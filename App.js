@@ -3560,9 +3560,10 @@ const App = () => {
               contentPadding={{
                 // Use same 24px padding as standard mode cards
                 // Base 124px when toolbar visible, 184px when More is expanded
-                paddingTop: bannerPosition === 'top' ? 
+                // Edit mode toolbar is OPPOSITE from banner, so flip the padding
+                paddingTop: bannerPosition === 'bottom' ? 
                   (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 24,
-                paddingBottom: bannerPosition === 'bottom' ? 
+                paddingBottom: bannerPosition === 'top' ? 
                   (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 24
               }}
               onUpdate={(newActivities) => {
@@ -4013,7 +4014,7 @@ const App = () => {
             }, 0);
           }}
           theme={theme}
-          position={bannerPosition === 'top' ? 'top' : 'bottom'}
+          position={bannerPosition === 'top' ? 'bottom' : 'top'}
           onAnimationComplete={() => {
             if (!isEditMode) {
               setShowEditToolbar(false);
