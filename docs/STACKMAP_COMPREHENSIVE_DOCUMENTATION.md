@@ -1,5 +1,13 @@
 # StackMap Comprehensive Application Documentation
 
+> ⚠️ **IMPORTANT**: This document contains some outdated field references. 
+> For current data specifications, see `/docs/data/data-dictionary.md`
+> 
+> Key changes:
+> - Use `text` not `title` or `name` for activities
+> - Use `icon` not `emoji` for all icons
+> - See `/docs/LEGACY_DOCUMENTATION_NOTICE.md` for details
+
 ## Table of Contents
 
 1. [Executive Summary](#executive-summary)

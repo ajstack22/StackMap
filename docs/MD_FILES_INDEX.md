@@ -1,11 +1,20 @@
 # 📚 StackMap Documentation Index
 
-> **Last Updated**: 2024-12-28  
+> **Last Updated**: 2025-08-14  
 > **Purpose**: Central index for all active documentation to prevent confusion and ensure easy discovery
 
 ---
 
 ## 🚨 Critical Documentation (Start Here!)
+
+### 📊 Data Specifications (CANONICAL - Updated 2025-08-14)
+- **[/docs/data/data-dictionary.md](./data/data-dictionary.md)** - 🔴 Canonical data structures & field definitions
+- **[/docs/data/data-overview.md](./data/data-overview.md)** - Architecture overview & compliance checklist
+- **[/docs/data/data-sync-service.md](./data/data-sync-service.md)** - Zero-knowledge sync implementation
+- **[/docs/data/data-import-service.md](./data/data-import-service.md)** - Import procedures & normalization
+- **[/docs/data/data-export-service.md](./data/data-export-service.md)** - Export formats & sanitization
+- **[/docs/data/data-reset-service.md](./data/data-reset-service.md)** - Reset operations & recovery
+- **[/docs/LEGACY_DOCUMENTATION_NOTICE.md](./LEGACY_DOCUMENTATION_NOTICE.md)** - ⚠️ Which docs are outdated
 
 ### Deployment & Infrastructure
 - **[CLAUDE.md](./CLAUDE.md)** - 🔴 THE deployment truth - read this first!
