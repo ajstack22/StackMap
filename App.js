@@ -3604,9 +3604,9 @@ const App = () => {
               }}
               onEdit={(item) => {
                 setEditingActivity(item);
-                setActivityTitle(item.text || '');
+                setActivityTitle(item.text || item.name || item.title || '');
                 setActivityDescription(item.description || '');
-                setActivityEmoji(item.emoji || DEFAULT_ACTIVITY_EMOJI);
+                setActivityEmoji(item.icon || item.emoji || DEFAULT_ACTIVITY_EMOJI);
                 setActivityTime(item.time || '');
                 setShowActivityModal(true);
               }}

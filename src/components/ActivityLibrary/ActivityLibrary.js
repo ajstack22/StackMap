@@ -944,7 +944,8 @@ const ActivityLibrary = ({
   const handleEditActivity = (activity) => {
     setEditingItem(activity);
     setEditMode('activity');
-    setEditName(activity.name);
+    // Use text field, fallback to name for backwards compatibility
+    setEditName(activity.text || activity.name || '');
     // Use icon field, fallback to emoji for backwards compatibility
     setEditEmoji(activity.icon || activity.emoji || '');
     setEditDescription(activity.description || '');
