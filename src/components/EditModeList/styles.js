@@ -91,9 +91,8 @@ const baseStyles = {
   },
   
   reorderButton: {
-    padding: 8,
+    padding: 4,
     borderRadius: 4,
-    backgroundColor: '#f5f5f5',
     minWidth: 44,
     minHeight: 44,
     alignItems: 'center',
@@ -106,12 +105,87 @@ const baseStyles = {
   },
   
   actionButton: {
-    padding: 8,
+    padding: 4,
     borderRadius: 4,
     minWidth: 44,
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  
+  actionCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      }
+    })
+  },
+  
+  disabledCircle: {
+    opacity: 0.5,
+  },
+  
+  bookmarkAdded: {
+    borderWidth: 0,
+    // backgroundColor set dynamically via inline style (theme.primary)
+  },
+  
+  completionCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      }
+    })
+  },
+  
+  completionCircleCompleted: {
+    borderWidth: 0,
+    // backgroundColor is set dynamically via inline style (theme.primary)
+  },
+  
+  checkmark: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+    fontFamily: 'ComicRelief',
+  },
+  
+  checkmarkIncomplete: {
+    // color will be set dynamically to theme.primary
   },
   
   disabled: {
@@ -150,15 +224,31 @@ export const getTabletStyles = () => {
     },
     reorderButton: {
       ...baseStyles.reorderButton,
-      padding: 10,
+      padding: 6,
       minWidth: 48,
       minHeight: 48,
     },
     actionButton: {
       ...baseStyles.actionButton,
-      padding: 10,
+      padding: 6,
       minWidth: 48,
       minHeight: 48,
+    },
+    actionCircle: {
+      ...baseStyles.actionCircle,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+    },
+    completionCircle: {
+      ...baseStyles.completionCircle,
+      width: 36,
+      height: 36,
+      borderRadius: 18,
+    },
+    checkmark: {
+      ...baseStyles.checkmark,
+      fontSize: 20,
     }
   });
 };

@@ -78,11 +78,13 @@ export const EditModeListItem = React.memo(({
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Icon 
-              name="arrow-upward" 
-              size={isTablet ? 24 : 20} 
-              color={index === 0 ? '#ccc' : theme.primary} 
-            />
+            <View style={[itemStyles.actionCircle, index === 0 && itemStyles.disabledCircle]}>
+              <Icon 
+                name="arrow-upward" 
+                size={isTablet ? 24 : 20} 
+                color={index === 0 ? '#ccc' : theme.primary} 
+              />
+            </View>
           </TouchableOpacity>
           
           <TouchableOpacity
@@ -93,11 +95,13 @@ export const EditModeListItem = React.memo(({
             accessibilityRole="button"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Icon 
-              name="arrow-downward" 
-              size={isTablet ? 24 : 20} 
-              color={index === totalCount - 1 ? '#ccc' : theme.primary} 
-            />
+            <View style={[itemStyles.actionCircle, index === totalCount - 1 && itemStyles.disabledCircle]}>
+              <Icon 
+                name="arrow-downward" 
+                size={isTablet ? 24 : 20} 
+                color={index === totalCount - 1 ? '#ccc' : theme.primary} 
+              />
+            </View>
           </TouchableOpacity>
         </View>
         
@@ -109,24 +113,33 @@ export const EditModeListItem = React.memo(({
             accessibilityLabel={item.completed ? "Mark incomplete" : "Mark complete"}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Icon 
-              name={item.completed ? "check-box" : "check-box-outline-blank"} 
-              size={isTablet ? 28 : 24} 
-              color={theme.primary} 
-            />
+            <View style={[
+              itemStyles.completionCircle,
+              item.completed && [itemStyles.completionCircleCompleted, { backgroundColor: theme.primary }]
+            ]}>
+              <Text style={[
+                itemStyles.checkmark,
+                !item.completed && [itemStyles.checkmarkIncomplete, { color: theme.primary }]
+              ]}>✓</Text>
+            </View>
           </TouchableOpacity>
           
           <TouchableOpacity
             onPress={onLibrary}
             style={itemStyles.actionButton}
-            accessibilityLabel="Add to library"
+            accessibilityLabel={item.addedToLibrary ? "Already in library" : "Add to library"}
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Icon 
-              name="library-add" 
-              size={isTablet ? 28 : 24} 
-              color={theme.primary} 
-            />
+            <View style={[
+              itemStyles.actionCircle,
+              item.addedToLibrary && [itemStyles.bookmarkAdded, { backgroundColor: theme.primary }]
+            ]}>
+              <Icon 
+                name="bookmark" 
+                size={isTablet ? 24 : 20} 
+                color={item.addedToLibrary ? '#fff' : theme.primary} 
+              />
+            </View>
           </TouchableOpacity>
           
           
@@ -136,11 +149,13 @@ export const EditModeListItem = React.memo(({
             accessibilityLabel="Delete activity"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
-            <Icon 
-              name="delete" 
-              size={isTablet ? 28 : 24} 
-              color="#e53e3e" 
-            />
+            <View style={itemStyles.actionCircle}>
+              <Icon 
+                name="delete" 
+                size={isTablet ? 24 : 20} 
+                color="#e53e3e" 
+              />
+            </View>
           </TouchableOpacity>
         </View>
       </View>

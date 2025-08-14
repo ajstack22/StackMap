@@ -4,7 +4,7 @@
 ```bash
 ./scripts/deploy-all.sh  # Deploys to ALL platforms with auto version increment
 ```
-**For specific platforms or details:** See `prompts/deployment.md`
+**For all deployment details:** See `prompts/deployment.md`
 
 ---
 

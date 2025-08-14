@@ -1725,7 +1725,7 @@ const App = () => {
           newSet.delete(activity.id);
           return newSet;
         });
-      }, 1500);
+      }, 10000);
       
       showToast({ message: 'Added to My Templates' });
       console.log('Added to library:', template);
@@ -3556,7 +3556,10 @@ const App = () => {
               zIndex: isEditMode ? 2 : 0,
             }}>
               <EditModeList
-              activities={activities.filter(a => !a.deleted)}
+              activities={activities.filter(a => !a.deleted).map(a => ({
+                ...a,
+                addedToLibrary: addedToLibraryIds.has(a.id)
+              }))}
               contentPadding={{
                 // Use 8px padding to match the gap between cards (4px marginVertical × 2)
                 // Base 124px when toolbar visible, 184px when More is expanded
