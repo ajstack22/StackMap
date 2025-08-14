@@ -405,7 +405,6 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                         const result = await onImport();
                         // If import was successful, update local state and show summary
                         if (result && result.success) {
-                          setImportSuccessful(true);
                           // Convert imported users to local format for onboarding
                           if (result.summary.userData) {
                             const importedUsers = Object.entries(result.summary.userData).map(([id, user]) => ({
@@ -414,12 +413,17 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                             }));
                             setUsers(importedUsers);
                           }
-                          // Show import summary
-                          Alert.alert(
-                            'Import Successful',
-                            `Imported:\n• ${result.summary.users} user(s)\n• ${result.summary.activities} activity categories\n${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
-                            [{ text: 'Continue', onPress: () => transitionTo('features') }]
-                          );
+                          // Immediately transition to features page  
+                          setImportSuccessful(true);
+                          transitionTo('features');
+                          
+                          // Show import summary after transition
+                          setTimeout(() => {
+                            Alert.alert(
+                              'Import Successful',
+                              `Imported:\n• ${result.summary.users} user(s)\n• ${result.summary.activities} activity categories\n${result.summary.hasPin ? '• PIN protection enabled' : ''}`
+                            );
+                          }, 100);
                         } else {
                           // Import was cancelled or failed
 
@@ -710,7 +714,15 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
 
               {!isAbbreviated && users.length > 0 && users.length < 3 && (
                 <TouchableOpacity 
-                  style={styles.secondaryButton}
+                  style={[styles.secondaryButton, { 
+                    marginTop: 12,
+                    paddingHorizontal: Platform.OS === 'web' ? 32 : 24,
+                    paddingVertical: Platform.OS === 'web' ? 14 : (Platform.OS === 'ios' ? 14 : 12),
+                    alignSelf: 'center',
+                    width: 'auto',
+                    maxWidth: 300,
+                    minWidth: Platform.OS === 'web' ? 150 : undefined,
+                  }]}
                   onPress={() => transitionTo('createUser')}
                 >
                   <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Add Another User</Text>

@@ -1703,7 +1703,7 @@ const App = () => {
       const template = {
         id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         name: activity.text || activity.title || 'Untitled',
-        emoji: activity.emoji || '🎯',
+        emoji: activity.emoji || activity.icon || '🎯',  // Check both emoji and icon fields
         description: activity.description || '',
       };
       
