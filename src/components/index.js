@@ -25,7 +25,7 @@ import SupportModal from './Modals/SupportModal/SupportModal';
 import ReorderModal from './Modals/ReorderModal/ReorderModal';
 import ConflictResolutionModal from './ConflictResolutionModal/ConflictResolutionModal';
 import DataModal from './Modals/DataModal/DataModal';
-import ToolbarCustomizeModal from './Modals/ToolbarCustomizeModal/ToolbarCustomizeModal';
+import SettingsModal from './Modals/SettingsModal/SettingsModal';
 import ConfirmModal from './Modals/ConfirmModal/ConfirmModal';
 import DayManagementModal from './Modals/DayManagementModal/DayManagementModal';
 import ActivityManagementModal from './Modals/ActivityManagementModal/ActivityManagementModal';
@@ -44,7 +44,7 @@ export {
   ReorderModal,
   ConflictResolutionModal,
   DataModal,
-  ToolbarCustomizeModal,
+  SettingsModal,
   ConfirmModal,
   DayManagementModal,
   ActivityManagementModal,

@@ -173,6 +173,13 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.md,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
+  settingDescription: {
+    fontSize: 13,
+    color: COLORS.gray[600],
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.lg,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+  },
   toggleContainer: {
     flexDirection: 'row',
     backgroundColor: COLORS.gray[100],
@@ -283,5 +290,58 @@ export const styles = StyleSheet.create({
     backgroundColor: COLORS.gray[200],
     marginVertical: SPACING.lg,
     marginHorizontal: -SPACING.md,
+  },
+  celebrationScrollView: {
+    marginBottom: SPACING.md,
+  },
+  celebrationOptions: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+    paddingVertical: SPACING.xs,
+  },
+  celebrationOption: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: RADIUS.md,
+    borderWidth: 2,
+    borderColor: COLORS.gray[300],
+    backgroundColor: 'white',
+    minWidth: 70,
+    alignItems: 'center',
+  },
+  celebrationActive: {
+    borderColor: COLORS.primary,
+    backgroundColor: COLORS.primary,
+  },
+  celebrationText: {
+    fontSize: 14,
+    color: COLORS.gray[700],
+    fontFamily: TYPOGRAPHY.fontFamily.medium,
+  },
+  celebrationTextActive: {
+    color: 'white',
+    fontWeight: '600',
+  },
+  // Standardized tab header
+  standardTabContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  standardTabTitle: {
+    fontSize: 24,
+    fontWeight: Platform.OS === 'ios' ? '700' : '800',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: '#000',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  standardTabDescription: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+    textAlign: 'center',
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
   },
 });

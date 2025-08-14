@@ -98,6 +98,8 @@ const DataModal = ({
   const [showDeleteServerDataConfirm, setShowDeleteServerDataConfirm] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
   const [syncStatusChecked, setSyncStatusChecked] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState(null);
+  const [syncStatus, setSyncStatus] = useState('idle');
   
   // Share state
   const [shareLoading, setShareLoading] = useState(false);
@@ -164,10 +166,39 @@ const DataModal = ({
     }
   }, [visible, isOnboarding, onboardingImportData]);
   
+  // Format time ago helper
+  const formatTimeAgo = (timestamp) => {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    
+    if (seconds < 60) return 'just now';
+    if (minutes < 60) return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+    if (hours < 24) return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+    return `${days} day${days > 1 ? 's' : ''} ago`;
+  };
+  
   // Check sync status on mount
   useEffect(() => {
     checkSyncStatus();
   }, [visible]);
+  
+  // Listen to sync status updates
+  useEffect(() => {
+    if (!syncEnabled) return;
+    
+    const unsubscribe = syncService.addStatusListener((status) => {
+      setSyncStatus(status.status);
+      if (status.lastSuccess) {
+        setLastSyncTime(status.lastSuccess);
+      }
+    });
+    
+    return () => unsubscribe();
+  }, [syncEnabled]);
   
   const checkSyncStatus = async () => {
     try {
@@ -1011,14 +1042,10 @@ const DataModal = ({
       {!importData ? (
         <>
           <View style={styles.section}>
-            <View style={styles.emptyStateContainer}>
+            <View style={styles.standardTabContainer}>
               <Icon name="file-download" size={48} color={theme.primary} />
-              <Text style={styles.emptyStateText}>
-                {Platform.OS === 'android' ? 
-                  'Search for StackMap export files' : 
-                  'Select a StackMap export file to import'}
-              </Text>
-              <Text style={styles.emptyStateDescription}>
+              <Text style={styles.standardTabTitle}>Import Data</Text>
+              <Text style={styles.standardTabDescription}>
                 {Platform.OS === 'android' ?
                   'Will search Downloads folder for export files' :
                   'Import your saved StackMap data from a backup file'}
@@ -1243,9 +1270,10 @@ const DataModal = ({
       style={{ flex: 1 }}
     >
       <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Icon name="file-upload" size={20} color={theme.primary} />
-          <Text style={styles.sectionTitle}>Select Data to Export</Text>
+        <View style={styles.standardTabContainer}>
+          <Icon name="file-upload" size={48} color={theme.primary} />
+          <Text style={styles.standardTabTitle}>Export Data</Text>
+          <Text style={styles.standardTabDescription}>Select data to save as a backup file</Text>
         </View>
         
         <TouchableOpacity
@@ -1442,10 +1470,10 @@ const DataModal = ({
     >
       {!syncEnabled ? (
         <View style={styles.section}>
-          <View style={styles.syncInfoContainer}>
+          <View style={styles.standardTabContainer}>
             <Icon name="sync" size={48} color={theme.primary} />
-            <Text style={styles.syncTitle}>Sync Your Data</Text>
-            <Text style={styles.syncDescription}>
+            <Text style={styles.standardTabTitle}>Sync Your Data</Text>
+            <Text style={styles.standardTabDescription}>
               Keep your data synchronized across devices with end-to-end encryption
             </Text>
             
@@ -1548,13 +1576,13 @@ const DataModal = ({
         </View>
       ) : (
           <View style={styles.section}>
-            <View style={styles.syncStatusCard}>
-              <View style={styles.syncStatusHeader}>
-                <SyncStatusIndicator theme={theme} size="large" />
-                <View style={styles.syncStatusInfo}>
-                  <Text style={styles.syncStatusTitle}>Sync Enabled</Text>
-                </View>
-              </View>
+            <View style={styles.standardTabContainer}>
+              <Icon name="cloud-done" size={48} color={theme.primary} />
+              <Text style={styles.standardTabTitle}>Sync Enabled</Text>
+              <Text style={styles.standardTabDescription}>
+                Your data is syncing across devices
+              </Text>
+            </View>
               
               {showRecoveryPhrase && (
                 <View style={styles.recoveryPhraseCard}>
@@ -1631,7 +1659,7 @@ const DataModal = ({
                 </View>
               )}
               
-              <View style={styles.inPanelButtonContainer}>
+            <View style={styles.inPanelButtonContainer}>
                 <ModalButton
                   theme={theme}
                   variant="secondary"
@@ -1703,7 +1731,21 @@ const DataModal = ({
                   fullWidth
                 />
               </View>
-            </View>
+              
+              {/* Sync Status Info at bottom */}
+              <View style={styles.syncStatusInfo}>
+                <View style={styles.syncStatusRow}>
+                  <Icon 
+                    name={syncStatus === 'syncing' ? 'sync' : 'cloud-done'} 
+                    size={20} 
+                    color={syncStatus === 'syncing' ? theme.primary : '#4caf50'} 
+                  />
+                  <Text style={styles.syncStatusText}>
+                    {syncStatus === 'syncing' ? 'Syncing...' : 
+                     lastSyncTime ? `Last synced ${formatTimeAgo(lastSyncTime)}` : 'Sync active'}
+                  </Text>
+                </View>
+              </View>
           </View>
         )}
     </ScrollView>
@@ -1718,10 +1760,10 @@ const DataModal = ({
     >
       {!syncEnabled ? (
         <View style={styles.section}>
-          <View style={styles.syncRequiredContainer}>
+          <View style={styles.standardTabContainer}>
             <Icon name="sync-disabled" size={48} color="#ff9800" />
-            <Text style={styles.syncRequiredTitle}>Sync Required</Text>
-            <Text style={styles.syncRequiredText}>
+            <Text style={styles.standardTabTitle}>Sync Required</Text>
+            <Text style={styles.standardTabDescription}>
               You need to enable sync before you can share your activities
             </Text>
             <ModalButton
@@ -1736,10 +1778,17 @@ const DataModal = ({
         </View>
       ) : !shareUrl ? (
         <View style={styles.section}>
+          {/* Header */}
+          <View style={styles.standardTabContainer}>
+            <Icon name="share" size={48} color={theme.primary} />
+            <Text style={styles.standardTabTitle}>Share Activities</Text>
+            <Text style={styles.standardTabDescription}>Create a link to share your activities</Text>
+          </View>
+          
           {/* User Selection */}
           <View style={styles.shareSection}>
-            <Text style={styles.shareSectionTitle}>Select User to Share</Text>
-            <View style={styles.userSelectionGrid}>
+            <Text style={[styles.shareSectionTitle, { textAlign: 'center' }]}>Select User to Share</Text>
+            <View style={[styles.userSelectionGrid, { justifyContent: 'center' }]}>
               {users && Object.entries(users).map(([userId, user]) => (
                 <TouchableOpacity
                   key={userId}
@@ -1749,11 +1798,13 @@ const DataModal = ({
                   ]}
                   onPress={() => setSelectedShareUser(userId)}
                 >
-                  <Text style={styles.userSelectionEmoji}>{user.icon || '😀'}</Text>
-                  <Text style={styles.userSelectionName}>{user.name}</Text>
                   {selectedShareUser === userId && (
-                    <Icon name="check-circle" size={20} color={theme.primary} />
+                    <View style={{ position: 'absolute', top: 8, right: 8 }}>
+                      <Icon name="check-circle" size={20} color={theme.primary} />
+                    </View>
                   )}
+                  <Text style={styles.userSelectionEmoji}>{user.icon || '😀'}</Text>
+                  <Text style={[styles.userSelectionName, { textAlign: 'center' }]}>{user.name}</Text>
                 </TouchableOpacity>
               ))}
             </View>

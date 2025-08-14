@@ -113,10 +113,17 @@ const PINTabContent = ({
       contentContainerStyle={{ flexGrow: 1 }}
     >
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Security</Text>
-        <Text style={styles.sectionDescription}>
-          Add a simple PIN to prevent accidental changes.
-        </Text>
+        {/* Header */}
+        <View style={styles.standardTabContainer}>
+          <Icon name="lock" size={48} color={theme.primary} />
+          <Text style={styles.standardTabTitle}>PIN Security</Text>
+          <Text style={styles.standardTabDescription}>
+            Add a simple PIN to prevent accidental changes
+          </Text>
+        </View>
+        
+        {/* Divider */}
+        <View style={styles.divider} />
 
         <View style={[styles.pinStatus, { borderColor: hasSecurePin ? COLORS.success : COLORS.gray[300] }]}>
           <Icon 

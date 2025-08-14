@@ -254,7 +254,30 @@ export const styles = StyleSheet.create({
     color: '#000',
   },
   
-  // Sync styles
+  // Standardized tab header for all tabs
+  standardTabContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  standardTabTitle: {
+    fontSize: 24,
+    fontWeight: Platform.OS === 'ios' ? '700' : '800',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: '#000',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  standardTabDescription: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+    textAlign: 'center',
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
+  },
+  
+  // Sync styles (legacy - kept for compatibility)
   syncInfoContainer: {
     alignItems: 'center',
     paddingVertical: SPACING.xl,
@@ -324,7 +347,21 @@ export const styles = StyleSheet.create({
     gap: SPACING.md,
   },
   syncStatusInfo: {
-    flex: 1,
+    alignItems: 'center',
+    marginTop: SPACING.xl,
+    paddingTop: SPACING.md,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
+  },
+  syncStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
+  },
+  syncStatusText: {
+    fontSize: 14,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#666',
   },
   syncStatusTitle: {
     fontSize: 18,
@@ -551,6 +588,8 @@ export const styles = StyleSheet.create({
     fontWeight: Platform.OS === 'ios' ? '600' : '700',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
+    textAlign: 'center',
+    marginBottom: SPACING.sm,
   },
   
   userSelectionGrid: {
@@ -558,17 +597,18 @@ export const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: SPACING.sm,
     marginTop: SPACING.sm,
+    justifyContent: 'center',
   },
   userSelectionCard: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 12,
     padding: SPACING.md,
     borderWidth: 1,
     borderColor: '#E0E0E0',
-    gap: SPACING.sm,
-    minWidth: 150,
+    gap: SPACING.xs,
+    minWidth: 120,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -587,15 +627,15 @@ export const styles = StyleSheet.create({
     elevation: 2,
   },
   userSelectionEmoji: {
-    fontSize: 24,
+    fontSize: 32,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   userSelectionName: {
     fontSize: 15,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
-    flex: 1,
-    minWidth: 60,
+    textAlign: 'center',
+    marginTop: SPACING.xs,
   },
   
   shareField: {

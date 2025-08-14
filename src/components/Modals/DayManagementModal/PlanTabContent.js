@@ -3,6 +3,7 @@ import { Text } from '../../Typography';
 import { View, TouchableOpacity, ScrollView,  } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
+import { SPACING } from '../../../constants';
 
 const PlanTabContent = ({
   theme,
@@ -56,8 +57,19 @@ const PlanTabContent = ({
         style={{ flex: 1 }}
       >
       <View style={styles.contentSection}>
-      {/* Main Panel */}
+      {/* Single Consolidated Panel */}
       <View style={styles.formPanel}>
+        {/* Header */}
+        <View style={styles.standardTabContainer}>
+          <Icon name="event" size={48} color={theme.primary} />
+          <Text style={styles.standardTabTitle}>Plan Your Day</Text>
+          <Text style={styles.standardTabDescription}>
+            Choose which user and day to manage
+          </Text>
+        </View>
+        
+        {/* Divider */}
+        <View style={styles.divider} />
         {/* Users Section */}
         <View style={styles.planSelectionSection}>
           <Text style={styles.planSectionTitle}>Select User</Text>

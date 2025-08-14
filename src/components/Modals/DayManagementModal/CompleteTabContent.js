@@ -219,38 +219,41 @@ const CompleteTabContent = ({
         contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
       >
         <View style={styles.contentSection}>
-        {/* Complete Day Info */}
-        <View style={[styles.completeTopActionContainer, { alignItems: 'center' }]}>
-          <View style={[styles.completeSummaryHeader, { justifyContent: 'center' }]}>
-            <Icon name="event-available" size={20} color={theme.primary} style={styles.completeSummaryIcon} />
-            <Text style={[styles.completeExplanationText, { textAlign: 'center' }]}>
-              {hasTomorrowActivities 
-                ? 'Review and organize your activities'
-                : 'Complete today and clean up your day'}
-            </Text>
+        {/* Header Panel */}
+        <View style={styles.completeSection}>
+          <View style={styles.completeSectionInner}>
+            <View style={styles.standardTabContainer}>
+              <Icon name="check-circle" size={48} color={theme.primary} />
+              <Text style={styles.standardTabTitle}>Complete Day</Text>
+              <Text style={styles.standardTabDescription}>
+                {hasTomorrowActivities 
+                  ? 'Review and organize your activities'
+                  : 'Complete today and clean up your day'}
+              </Text>
+              <Text style={[styles.completeExplanationSubtext, { textAlign: 'center' }]}>
+                Tap activities to move them between sections
+              </Text>
+              
+              {/* Complete Day Button */}
+              <TouchableOpacity
+                style={[
+                  styles.completeButton,
+                  { backgroundColor: theme.primary, marginTop: 20 }
+                ]}
+                onPress={handleCompleteDay}
+                disabled={loading}
+              >
+                {loading ? (
+                  <ActivityIndicator size="small" color="white" />
+                ) : (
+                  <>
+                    <Icon name="check-circle" size={20} color="white" />
+                    <Text style={styles.completeButtonText}>Complete Day</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-          <Text style={[styles.completeExplanationSubtext, { textAlign: 'center' }]}>
-            Tap activities to move them between sections
-          </Text>
-          
-          {/* Complete Day Button */}
-          <TouchableOpacity
-            style={[
-              styles.completeButton,
-              { backgroundColor: theme.primary, marginTop: 20 }
-            ]}
-            onPress={handleCompleteDay}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator size="small" color="white" />
-            ) : (
-              <>
-                <Icon name="check-circle" size={20} color="white" />
-                <Text style={styles.completeButtonText}>Complete Day</Text>
-              </>
-            )}
-          </TouchableOpacity>
         </View>
         
         {/* Sections Container - Grid or Stack based on width */}

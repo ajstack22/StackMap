@@ -13,6 +13,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmModal from '../../Modals/ConfirmModal';
 import { ModalFooter, FormInput } from '../../ModalUtilities';
+import Logo from '../../Logo';
 import { styles } from './styles';
 import { DEFAULT_ACTIVITY_EMOJI } from '../../../constants';
 
@@ -290,109 +291,118 @@ const LibraryTabContent = ({
         </Animated.View>
       )}
       
-      <View style={styles.libraryContentPanel}>
-        <View style={styles.searchContainer}>
-        <FormInput
-          placeholder="Search activities..."
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          leftIcon="search"
-          theme={theme}
-        />
-      </View>
-
       <ScrollView
-        contentContainerStyle={[styles.listContainer, styles.scrollContainer]}
         showsVerticalScrollIndicator={false}
-        // Critical: Allow parent to handle horizontal swipes
-        directionalLockEnabled={true}
-        scrollEventThrottle={16}
-        // ScrollView events will be enhanced by TabContent wrapper
+        contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
+        style={{ flex: 1 }}
+        nestedScrollEnabled={Platform.OS === 'android'}
+        scrollEnabled={true}
       >
-        {/* My Library Section */}
-        {localCategories.length > 0 && (
-          <>
-            <View style={styles.sectionHeader}>
-              <Icon name="folder" size={20} color="#000" />
-              <Text style={styles.sectionTitle}>My Library</Text>
-            </View>
-            {localCategories
-              .map(category => {
-                if (!searchQuery) return category;
-                const query = searchQuery.toLowerCase();
-                
-                // Filter activities within the category
-                const filteredActivities = category.activities?.filter(activity => 
-                  activity.name.toLowerCase().includes(query) ||
-                  activity.emoji?.includes(query)
-                ) || [];
-                
-                // Check if category name matches
-                const categoryMatches = category.name.toLowerCase().includes(query);
-                
-                // Include category if name matches or has matching activities
-                if (categoryMatches || filteredActivities.length > 0) {
-                  return {
-                    ...category,
-                    activities: categoryMatches ? category.activities : filteredActivities,
-                    expanded: true // Auto-expand when searching
-                  };
-                }
-                return null;
-              })
-              .filter(Boolean)
-              .map(category => (
-                <View key={category.id}>
-                  {renderCategory({ item: category })}
-                </View>
-              ))}
-          </>
-        )}
-        
-        {/* StackMap Library Section */}
-        {stackMapLibrary?.activityGroups && stackMapLibrary.activityGroups.length > 0 && (
-          <>
-            <View style={[styles.sectionHeader, { marginTop: localCategories.length > 0 ? 20 : 0 }]}>
-              <Icon name="auto-awesome" size={20} color="#000" />
-              <Text style={styles.sectionTitle}>StackMap Library</Text>
-            </View>
-            {(stackMapLibrary.activityGroups || [])
-              .map(category => {
-                if (!searchQuery) return category;
-                const query = searchQuery.toLowerCase();
-                
-                // Filter activities within the category
-                const filteredActivities = category.activities?.filter(activity => 
-                  activity.name.toLowerCase().includes(query) ||
-                  activity.emoji?.includes(query)
-                ) || [];
-                
-                // Check if category name matches
-                const categoryMatches = category.name.toLowerCase().includes(query);
-                
-                // Include category if name matches or has matching activities
-                if (categoryMatches || filteredActivities.length > 0) {
-                  return {
-                    ...category,
-                    activities: categoryMatches ? category.activities : filteredActivities,
-                    expanded: true // Auto-expand when searching
-                  };
-                }
-                return null;
-              })
-              .filter(Boolean)
-              .map(category => (
-                <View key={category.id}>
-                  {renderCategory({ item: category })}
-                </View>
-              ))}
-          </>
-        )}
+        {/* Single Consolidated Panel */}
+        <View style={styles.libraryContentPanel}>
+          {/* Header */}
+          <View style={styles.standardTabContainer}>
+            <Icon name="folder" size={48} color={theme.primary} />
+            <Text style={styles.standardTabTitle}>Activity Library</Text>
+            <Text style={styles.standardTabDescription}>
+              Browse and select from saved activities
+            </Text>
+          </View>
+          
+          {/* Divider */}
+          <View style={styles.divider} />
+          <View style={styles.searchContainer}>
+            <FormInput
+              placeholder="Search activities..."
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              leftIcon="search"
+              theme={theme}
+            />
+          </View>
+          {/* My Library Section */}
+          {localCategories.length > 0 && (
+            <>
+              <View style={styles.sectionHeader}>
+                <Icon name="folder" size={20} color="#000" />
+                <Text style={styles.sectionTitle}>My Library</Text>
+              </View>
+              {localCategories
+                .map(category => {
+                  if (!searchQuery) return category;
+                  const query = searchQuery.toLowerCase();
+                  
+                  // Filter activities within the category
+                  const filteredActivities = category.activities?.filter(activity => 
+                    activity.name.toLowerCase().includes(query) ||
+                    activity.emoji?.includes(query)
+                  ) || [];
+                  
+                  // Check if category name matches
+                  const categoryMatches = category.name.toLowerCase().includes(query);
+                  
+                  // Include category if name matches or has matching activities
+                  if (categoryMatches || filteredActivities.length > 0) {
+                    return {
+                      ...category,
+                      activities: categoryMatches ? category.activities : filteredActivities,
+                      expanded: true // Auto-expand when searching
+                    };
+                  }
+                  return null;
+                })
+                .filter(Boolean)
+                .map(category => (
+                  <View key={category.id}>
+                    {renderCategory({ item: category })}
+                  </View>
+                ))}
+            </>
+          )}
+          
+          {/* StackMap Library Section */}
+          {stackMapLibrary?.activityGroups && stackMapLibrary.activityGroups.length > 0 && (
+            <>
+              <View style={[styles.sectionHeader, { marginTop: localCategories.length > 0 ? 20 : 0 }]}>
+                <Logo size={20} color="#000" theme={theme} />
+                <Text style={styles.sectionTitle}>StackMap Library</Text>
+              </View>
+              {(stackMapLibrary.activityGroups || [])
+                .map(category => {
+                  if (!searchQuery) return category;
+                  const query = searchQuery.toLowerCase();
+                  
+                  // Filter activities within the category
+                  const filteredActivities = category.activities?.filter(activity => 
+                    activity.name.toLowerCase().includes(query) ||
+                    activity.emoji?.includes(query)
+                  ) || [];
+                  
+                  // Check if category name matches
+                  const categoryMatches = category.name.toLowerCase().includes(query);
+                  
+                  // Include category if name matches or has matching activities
+                  if (categoryMatches || filteredActivities.length > 0) {
+                    return {
+                      ...category,
+                      activities: categoryMatches ? category.activities : filteredActivities,
+                      expanded: true // Auto-expand when searching
+                    };
+                  }
+                  return null;
+                })
+                .filter(Boolean)
+                .map(category => (
+                  <View key={category.id}>
+                    {renderCategory({ item: category })}
+                  </View>
+                ))}
+            </>
+          )}
+
+          {/* Removed Add Category functionality for now */}
+        </View>
       </ScrollView>
-
-      {/* Removed Add Category functionality for now */}
-
-      </View>
 
       <ConfirmModal
         visible={showDeleteConfirm}

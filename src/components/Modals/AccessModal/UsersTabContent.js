@@ -91,10 +91,17 @@ const UsersTabContent = ({
       contentContainerStyle={{ flexGrow: 1 }}
     >
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Users</Text>
-        <Text style={styles.sectionDescription}>
-          Manage users and switch between them.
-        </Text>
+        {/* Header */}
+        <View style={styles.standardTabContainer}>
+          <Icon name="group" size={48} color={theme.primary} />
+          <Text style={styles.standardTabTitle}>Manage Users</Text>
+          <Text style={styles.standardTabDescription}>
+            Switch between users or add new ones
+          </Text>
+        </View>
+        
+        {/* Divider */}
+        <View style={styles.divider} />
 
         <View style={styles.usersList}>
           {Object.entries(users)

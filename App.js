@@ -90,7 +90,7 @@ import {
 } from './src/constants';
 
 // Import components
-import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PrivacyModal, SupportModal, ReorderModal, DataModal, AccessModal, ToolbarCustomizeModal, ConfirmModal, DayManagementModal, ActivityManagementModal, BuyMeCoffeeButton, SyncPreviewModal } from './src/components';
+import { Toast, FAB, EditModeToolbar, Logo, ActivityLibrary, EmojiPicker, CelebrationView, ActivityModal, PreferencesModal, AddUserModal, ContextModal, PrivacyModal, SupportModal, ReorderModal, DataModal, AccessModal, SettingsModal, ConfirmModal, DayManagementModal, ActivityManagementModal, BuyMeCoffeeButton, SyncPreviewModal } from './src/components';
 import EditModeList from './src/components/EditModeList';
 import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
@@ -230,6 +230,7 @@ const App = () => {
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [showEditToolbar, setShowEditToolbar] = useState(false);
   const [showEditModeList, setShowEditModeList] = useState(false);
+  const [editToolbarMoreExpanded, setEditToolbarMoreExpanded] = useState(false);
   const [showEditIcons, setShowEditIcons] = useState(false);
   const [syncEnabled, setSyncEnabled] = useState(false);
   
@@ -267,7 +268,7 @@ const App = () => {
   const [showDataModal, setShowDataModal] = useState(false);
   const [showAccessModal, setShowAccessModal] = useState(false);
   const [accessModalActiveTab, setAccessModalActiveTab] = useState(0);
-  const [showToolbarCustomizeModal, setShowToolbarCustomizeModal] = useState(false);
+  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showDayManagementModal, setShowDayManagementModal] = useState(false);
   const [dayManagementActiveTab, setDayManagementActiveTab] = useState(0);
   const [showActivityManagementModal, setShowActivityManagementModal] = useState(false);
@@ -583,19 +584,18 @@ const App = () => {
       // Entering edit mode with smooth transition
       setShowEditModeList(true);
       
-      // Crossfade from regular content to edit list
+      // Smooth crossfade from regular content to edit list
       Animated.parallel([
         // Fade out regular content
         Animated.timing(contentFadeAnim, {
           toValue: 0,
-          duration: 200,
+          duration: 300,
           useNativeDriver: true,
         }),
-        // Fade in edit list
+        // Fade in edit list at the same time
         Animated.timing(editListFadeAnim, {
           toValue: 1,
           duration: 300,
-          delay: 100,
           useNativeDriver: true,
         }),
         // Rotate edit mode icon
@@ -610,19 +610,18 @@ const App = () => {
       setShowEditToolbar(true);
     } else {
       // Exiting edit mode with smooth transition
-      // Crossfade from edit list back to regular content
+      // Smooth crossfade from edit list back to regular content
       Animated.parallel([
         // Fade out edit list
         Animated.timing(editListFadeAnim, {
           toValue: 0,
-          duration: 200,
+          duration: 300,
           useNativeDriver: true,
         }),
-        // Fade in regular content
+        // Fade in regular content at the same time
         Animated.timing(contentFadeAnim, {
           toValue: 1,
           duration: 300,
-          delay: 100,
           useNativeDriver: true,
         }),
         // Rotate edit mode icon back
@@ -635,6 +634,7 @@ const App = () => {
         // Hide toolbar and list after animation completes
         setShowEditToolbar(false);
         setShowEditModeList(false);
+        setEditToolbarMoreExpanded(false);
       });
     }
   }, [isEditMode]);
@@ -1399,8 +1399,8 @@ const App = () => {
       updateAutoUpdateShares(currentUser);
     }
     
-    // Check if we just completed an activity
-    if (!wasCompleted && activity) {
+    // Check if we just completed an activity (skip animations in edit mode)
+    if (!wasCompleted && activity && !isEditMode) {
       // Check if all activities are now completed
       const allCompleted = newActivities.every(a => a.completed);
       
@@ -3557,6 +3557,14 @@ const App = () => {
             }}>
               <EditModeList
               activities={activities.filter(a => !a.deleted)}
+              contentPadding={{
+                // Use same 24px padding as standard mode cards
+                // Base 124px when toolbar visible, 184px when More is expanded
+                paddingTop: bannerPosition === 'top' ? 
+                  (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 24,
+                paddingBottom: bannerPosition === 'bottom' ? 
+                  (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 24
+              }}
               onUpdate={(newActivities) => {
                 // Filter out deleted items before saving
                 const activeActivities = newActivities.filter(a => !a.deleted);
@@ -3613,10 +3621,7 @@ const App = () => {
                 styles.listContent,
                 { 
                   paddingHorizontal: getContainerPadding(screenDimensions.width),
-                },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
-                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
+                }
               ]}
             >
               {activities.length === 0 ? (
@@ -3751,10 +3756,7 @@ const App = () => {
                 }
               }}
               contentContainerStyle={[
-                styles.listContent,
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
-                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
+                styles.listContent
               ]}
               ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
               ListEmptyComponent={
@@ -3784,10 +3786,7 @@ const App = () => {
               contentContainerStyle={[
                 styles.listContent,
                 { paddingHorizontal: getContainerPadding(screenDimensions.width) },
-                Platform.OS === 'web' && { alignItems: 'center' },
-                isEditMode && bannerPosition === 'bottom' && { paddingTop: 70 },
-                isEditMode && showEditToolbar && bannerPosition === 'bottom' && { paddingTop: Platform.OS === 'android' ? 120 : 110 },
-                isEditMode && showEditToolbar && bannerPosition === 'top' && { paddingBottom: Platform.OS === 'android' ? 120 : 110 }
+                Platform.OS === 'web' && { alignItems: 'center' }
               ]}
               ListEmptyComponent={
                 <View style={styles.emptyState}>
@@ -3991,7 +3990,7 @@ const App = () => {
             setAccessModalActiveTab(0);
             setShowAccessModal(true);
           }}
-          onCustomize={() => setShowToolbarCustomizeModal(true)}
+          onCustomize={() => setShowSettingsModal(true)}
           onSupport={() => setShowSupportModal(true)}
           toolbarOrder={toolbarOrder}
           moreButtonPosition={moreButtonPosition}
@@ -4014,12 +4013,13 @@ const App = () => {
             }, 0);
           }}
           theme={theme}
-          position={bannerPosition === 'top' ? 'bottom' : 'top'}
+          position={bannerPosition === 'top' ? 'top' : 'bottom'}
           onAnimationComplete={() => {
             if (!isEditMode) {
               setShowEditToolbar(false);
             }
           }}
+          onMoreToggle={(expanded) => setEditToolbarMoreExpanded(expanded)}
         />
       )}
       
@@ -4328,16 +4328,28 @@ const App = () => {
         />
       )}
       
-      {/* Toolbar Customize Modal */}
-      <ToolbarCustomizeModal
-        visible={showToolbarCustomizeModal}
-        onClose={() => setShowToolbarCustomizeModal(false)}
+      {/* Settings Modal */}
+      <SettingsModal
+        visible={showSettingsModal}
+        onClose={() => setShowSettingsModal(false)}
         theme={theme}
         currentOrder={toolbarOrder}
         moreButtonPosition={moreButtonPosition}
         onSaveOrder={setToolbarOrder}
         onSaveMorePosition={setMoreButtonPosition}
         showToast={showToast}
+        // Display settings
+        bannerPosition={bannerPosition}
+        setBannerPosition={setBannerPosition}
+        displayMode={displayMode}
+        setDisplayMode={setDisplayMode}
+        taskCelebration={taskCelebration}
+        setTaskCelebration={setTaskCelebration}
+        routineCelebration={routineCelebration}
+        setRoutineCelebration={setRoutineCelebration}
+        onSaveBannerPosition={saveBannerPositionPreference}
+        onSaveDisplayMode={saveDisplayModePreference}
+        onSaveCelebration={saveCelebrationPreference}
       />
       
       {/* Day Management Modal */}

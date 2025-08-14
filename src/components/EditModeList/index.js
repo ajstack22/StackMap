@@ -16,7 +16,8 @@ export default function EditModeList({
   onLibrary,
   onToggle,
   onDelete,
-  theme 
+  theme,
+  contentPadding 
 }) {
   const {
     handleMoveUp,
@@ -60,7 +61,8 @@ export default function EditModeList({
         styles.listContainer,
         { 
           flexGrow: 1,
-          ...(Platform.OS === 'web' && { alignItems: 'stretch' })
+          ...(Platform.OS === 'web' && { alignItems: 'stretch' }),
+          ...contentPadding
         }
       ]}
       removeClippedSubviews={true}

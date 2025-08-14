@@ -27,12 +27,12 @@ const SupportModal = ({
 
   const renderContent = () => (
     <>
-      <View style={styles.supportHeader}>
-        <Logo size={80} color="#5C7E9D" style={{ marginBottom: 8 }} />
-        <Text style={styles.stackMapText}>StackMap</Text>
-      </View>
-      
       <View style={styles.supportMessageBox}>
+        <View style={styles.supportHeader}>
+          <Logo size={80} color="#5C7E9D" style={{ marginBottom: 8 }} />
+          <Text style={styles.stackMapText}>StackMap</Text>
+        </View>
+        
         <Text style={[styles.supportMessage, { fontSize: 17, marginBottom: 20 }]}>
           StackMap is free and always will be. Built by parents, for families everywhere.
         </Text>

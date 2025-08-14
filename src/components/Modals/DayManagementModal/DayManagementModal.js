@@ -39,10 +39,10 @@ const DayManagementModal = ({
     { id: 'complete', label: 'Complete', icon: 'check-circle' },
   ];
 
-  const handleCompleteDay = async () => {
+  const handleCompleteDay = async (organizedActivities) => {
     setLoading(true);
     try {
-      await onCompleteDay();
+      await onCompleteDay(organizedActivities);
       showToast({ message: 'Day completed successfully!' });
       onClose();
     } catch (error) {

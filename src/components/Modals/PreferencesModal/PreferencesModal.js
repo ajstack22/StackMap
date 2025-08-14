@@ -8,8 +8,7 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
-  FlatList,
-  
+  FlatList
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { THEMES } from '../../../constants';
@@ -24,21 +23,10 @@ const PreferencesModal = ({
   // State
   currentTheme,
   setCurrentTheme,
-  bannerPosition,
-  setBannerPosition,
-  displayMode,
-  setDisplayMode,
-  taskCelebration,
-  setTaskCelebration,
-  routineCelebration,
-  setRoutineCelebration,
   preferencesScrollKey,
   setPreferencesScrollKey,
   // Actions
   onSaveTheme,
-  onSaveBannerPosition,
-  onSaveDisplayMode,
-  onSaveCelebration,
   onPrivacyPress,
   onSupportPress,
   // Android specific
@@ -51,31 +39,21 @@ const PreferencesModal = ({
     onSaveTheme(color);
   };
 
-  const handleBannerPositionChange = (position) => {
-    setBannerPosition(position);
-    onSaveBannerPosition(position);
-  };
-
-  const handleDisplayModeChange = (mode) => {
-    setDisplayMode(mode);
-    onSaveDisplayMode(mode);
-  };
-
-  const handleTaskCelebrationChange = (celebration) => {
-    setTaskCelebration(celebration);
-    onSaveCelebration('task', celebration);
-  };
-
-  const handleRoutineCelebrationChange = (celebration) => {
-    setRoutineCelebration(celebration);
-    onSaveCelebration('routine', celebration);
-  };
-
   const renderContent = () => (
     <>
-      {/* Theme Color Section */}
+      {/* Single Consolidated Panel */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Theme Color</Text>
+        {/* Header */}
+        <View style={styles.standardTabContainer}>
+          <Icon name="palette" size={48} color={theme.primary} />
+          <Text style={styles.standardTabTitle}>Theme</Text>
+          <Text style={styles.standardTabDescription}>
+            Choose your preferred color theme
+          </Text>
+        </View>
+        
+        {/* Divider */}
+        <View style={styles.divider} />
         <View style={styles.colorGrid}>
         {(() => {
           // Put stackBlue (default) first, then all other themes
@@ -101,109 +79,6 @@ const PreferencesModal = ({
         ))
       })()}
         </View>
-      </View>
-      
-      {/* Banner Position Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Banner Position</Text>
-        <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.toggle, bannerPosition === 'top' && styles.toggleActive]}
-          onPress={() => handleBannerPositionChange('top')}
-        >
-          <Text style={[styles.toggleText, bannerPosition === 'top' && styles.toggleTextActive]}>
-            Top
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggle, bannerPosition === 'bottom' && styles.toggleActive]}
-          onPress={() => handleBannerPositionChange('bottom')}
-        >
-          <Text style={[styles.toggleText, bannerPosition === 'bottom' && styles.toggleTextActive]}>
-            Bottom
-          </Text>
-        </TouchableOpacity>
-        </View>
-      </View>
-      
-      {/* Display Mode Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Activity Display</Text>
-        <View style={styles.toggleContainer}>
-        <TouchableOpacity
-          style={[styles.toggle, displayMode === 'none' && styles.toggleActive]}
-          onPress={() => handleDisplayModeChange('none')}
-        >
-          <Text style={[styles.toggleText, displayMode === 'none' && styles.toggleTextActive]}>
-            None
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggle, displayMode === 'numbers' && styles.toggleActive]}
-          onPress={() => handleDisplayModeChange('numbers')}
-        >
-          <Text style={[styles.toggleText, displayMode === 'numbers' && styles.toggleTextActive]}>
-            Numbers
-          </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggle, displayMode === 'time' && styles.toggleActive]}
-          onPress={() => handleDisplayModeChange('time')}
-        >
-          <Text style={[styles.toggleText, displayMode === 'time' && styles.toggleTextActive]}>
-            Time
-          </Text>
-        </TouchableOpacity>
-        </View>
-      </View>
-      
-      {/* Celebrations Section */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Task Celebration</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
-        <View style={styles.celebrationOptions}>
-          {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
-            <TouchableOpacity
-              key={celebration}
-              style={[
-                styles.celebrationOption,
-                taskCelebration === celebration && [styles.celebrationActive, { backgroundColor: theme.primary, borderColor: theme.primary }]
-              ]}
-              onPress={() => handleTaskCelebrationChange(celebration)}
-            >
-              <Text style={[
-                styles.celebrationText,
-                taskCelebration === celebration && styles.celebrationTextActive
-              ]}>
-                {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        </ScrollView>
-        
-        <Text style={styles.sectionTitle}>Routine Celebration</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.celebrationScrollView}>
-        <View style={styles.celebrationOptions}>
-          {['none', 'random', 'rainbow', 'blue', 'orange', 'pink', 'purple', 'gold', 'green'].map((celebration) => (
-            <TouchableOpacity
-              key={celebration}
-              style={[
-                styles.celebrationOption,
-                routineCelebration === celebration && [styles.celebrationActive, { backgroundColor: theme.primary, borderColor: theme.primary }]
-              ]}
-              onPress={() => handleRoutineCelebrationChange(celebration)}
-            >
-              <Text style={[
-                styles.celebrationText,
-                routineCelebration === celebration && styles.celebrationTextActive
-              ]}>
-                {celebration.charAt(0).toUpperCase() + celebration.slice(1)}
-              </Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-        </ScrollView>
       </View>
       
       {/* Info Section */}
@@ -260,7 +135,7 @@ const PreferencesModal = ({
           <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
             <View style={styles.headerLeft}>
               <Icon name="palette" size={24} color="white" style={styles.headerIcon} />
-              <Text style={styles.modalTitle}>Preferences</Text>
+              <Text style={styles.modalTitle}>Theme</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
               <View style={{

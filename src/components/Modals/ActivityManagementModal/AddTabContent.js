@@ -163,6 +163,17 @@ const AddTabContent = ({
       <View style={styles.addFormContainer} pointerEvents="box-none">
         {/* Single Consolidated Panel */}
         <View style={styles.formPanel}>
+          {/* Header */}
+          <View style={styles.standardTabContainer}>
+            <Icon name="add-circle" size={48} color={theme.primary} />
+            <Text style={styles.standardTabTitle}>Add Activity</Text>
+            <Text style={styles.standardTabDescription}>
+              Create a new activity for your day
+            </Text>
+          </View>
+          
+          {/* Divider */}
+          <View style={styles.divider} />
           {/* Activity Name */}
           <View style={styles.formSection}>
             <Text style={styles.formLabel}>Activity Name</Text>

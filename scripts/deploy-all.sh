@@ -66,6 +66,14 @@ if [ "$DEPLOY_ALL" = true ]; then
     DEPLOY_WEB=true
 fi
 
+# Check for uncommitted changes and auto-commit them
+if [[ -n $(git status --porcelain) ]]; then
+    echo "📝 Found uncommitted changes. Auto-committing before deployment..."
+    git add -A
+    git commit -m "Auto-commit: Pre-deployment changes $(date +%Y-%m-%d_%H:%M:%S)"
+    echo "✅ Changes committed successfully"
+fi
+
 # Source and run version increment once
 source "$SCRIPT_DIR/version-increment.sh"
 increment_version

@@ -10,8 +10,7 @@ import {
   Animated,
   Platform,
   StatusBar,
-  Dimensions,
-  
+  Dimensions
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet, getContainerPadding } from '../../constants';
@@ -30,6 +29,7 @@ const EditModeToolbar = ({
   onAnimationComplete,
   toolbarOrder,
   moreButtonPosition = 'right',
+  onMoreToggle,
 }) => {
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [translateY] = useState(() => new Animated.Value(position === 'top' ? -100 : 100));
@@ -126,7 +126,7 @@ const EditModeToolbar = ({
       onPress: onData 
     },
     // Overflow items
-    sort: { label: 'Sort', icon: 'sort', onPress: onCustomize, alwaysOverflow: true },
+    settings: { label: 'Settings', icon: 'settings', onPress: onCustomize, alwaysOverflow: true },
     ...(Platform.OS === 'web' && onSupport && { 
       contribute: { 
         label: 'Support', 
@@ -197,15 +197,15 @@ const EditModeToolbar = ({
     ? actions.slice(0, -visibleButtonCount) // Overflow from the beginning when More is on left
     : actions.slice(visibleButtonCount); // Overflow from the end when More is on right
   
-  // Add Sort button to overflow actions
-  const sortAction = {
-    id: 'sort',
-    ...actionMap.sort,
+  // Add Settings button to overflow actions
+  const settingsAction = {
+    id: 'settings',
+    ...actionMap.settings,
     color: theme.primary
   };
   
   // Add Contribute button for web only
-  const alwaysOverflowActions = [sortAction];
+  const alwaysOverflowActions = [settingsAction];
   if (Platform.OS === 'web' && actionMap.contribute) {
     alwaysOverflowActions.push({
       id: 'contribute',
@@ -276,7 +276,7 @@ const EditModeToolbar = ({
                 },
               ]}
             >
-              {/* Edit Mode label at top when position is top, at bottom when position is bottom */}
+              {/* Edit Mode label at top when position is top */}
               {position === 'top' && (
                 <View style={styles.editModeLabelContainer}>
                   <Text style={styles.editModeLabel}>Edit Mode</Text>
@@ -314,9 +314,13 @@ const EditModeToolbar = ({
               {showMore && moreButtonPosition === 'left' && (
                 <TouchableOpacity
                   style={[styles.actionButton, showMoreMenu && styles.actionButtonActive]}
-                  onPress={() => setShowMoreMenu(!showMoreMenu)}
+                  onPress={() => {
+                    const newState = !showMoreMenu;
+                    setShowMoreMenu(newState);
+                    if (onMoreToggle) onMoreToggle(newState);
+                  }}
                 >
-                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 34 : 30)} color="white" />
+                  <Icon name={showMoreMenu ? (position === 'top' ? "expand-less" : "expand-more") : (position === 'top' ? "expand-more" : "expand-less")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 34 : 30)} color="white" />
                   <Text style={[styles.actionLabel, { color: 'white' }]}>
                     {showMoreMenu ? 'Less' : 'More'}
                   </Text>
@@ -334,9 +338,13 @@ const EditModeToolbar = ({
               {showMore && moreButtonPosition === 'right' && (
                 <TouchableOpacity
                   style={[styles.actionButton, showMoreMenu && styles.actionButtonActive]}
-                  onPress={() => setShowMoreMenu(!showMoreMenu)}
+                  onPress={() => {
+                    const newState = !showMoreMenu;
+                    setShowMoreMenu(newState);
+                    if (onMoreToggle) onMoreToggle(newState);
+                  }}
                 >
-                  <Icon name={showMoreMenu ? (position === 'bottom' ? "expand-more" : "expand-less") : (position === 'bottom' ? "expand-less" : "expand-more")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 34 : 30)} color="white" />
+                  <Icon name={showMoreMenu ? (position === 'top' ? "expand-less" : "expand-more") : (position === 'top' ? "expand-more" : "expand-less")} size={Platform.OS === 'web' ? (isTablet() ? 28 : 24) : (isTablet() ? 34 : 30)} color="white" />
                   <Text style={[styles.actionLabel, { color: 'white' }]}>
                     {showMoreMenu ? 'Less' : 'More'}
                   </Text>
@@ -392,10 +400,10 @@ const styles = StyleSheet.create({
   },
   safeArea: {},
   topPosition: {
-    top: 0,
+    top: 110, // Position below the top banner
   },
   bottomPosition: {
-    bottom: 0,
+    bottom: 110, // Position above the bottom banner
   },
   toolbarContainer: {
     position: 'relative',

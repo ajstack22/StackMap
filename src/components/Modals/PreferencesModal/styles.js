@@ -170,4 +170,31 @@ export const styles = StyleSheet.create({
     color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
+  // Standardized tab header
+  standardTabContainer: {
+    alignItems: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  standardTabTitle: {
+    fontSize: 24,
+    fontWeight: Platform.OS === 'ios' ? '700' : '800',
+    fontFamily: TYPOGRAPHY.fontFamily.bold,
+    color: '#000',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
+  },
+  standardTabDescription: {
+    fontSize: 16,
+    fontFamily: TYPOGRAPHY.fontFamily.regular,
+    color: '#000',
+    textAlign: 'center',
+    paddingHorizontal: SPACING.xl,
+    marginBottom: SPACING.md,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    marginVertical: SPACING.md,
+  },
 });

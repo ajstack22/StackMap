@@ -67,6 +67,7 @@ export const styles = StyleSheet.create({
   supportHeader: {
     alignItems: 'center',
     marginBottom: 24,
+    paddingTop: 20,
   },
   supportHeart: {
     fontSize: 60,
