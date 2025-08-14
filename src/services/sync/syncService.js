@@ -884,9 +884,9 @@ class SyncService {
     
     // Update store with export format data
     const newState = {
-      // Map templates to both fields for backward compatibility
-      // Handle templates as either array or object
-      activities: Array.isArray(templates) ? templates : [],
+      // Set activities from the current user's current day (not templates!)
+      activities: currentUserActivities,
+      // Map templates to library templates
       libraryTemplates: Array.isArray(templates) ? templates : [],
       activityCategories: activityCategories || null,
       library: {
