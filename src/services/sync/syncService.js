@@ -636,13 +636,17 @@ class SyncService {
           }
         }
         
-        // Get current local state
+        // Get current local state (already normalized by getCurrentState)
         const localState = this.getCurrentState();
+        
+        // Normalize the decrypted data before conflict detection
+        const normalizedRemoteData = normalizeSyncData(decryptedData) || decryptedData;
+        console.log('[DEBUG] Normalized remote data before conflict detection');
         
         // Detect conflicts
         const conflicts = conflictResolver.detectConflicts(
           localState,
-          decryptedData,
+          normalizedRemoteData,
           this.lastSyncSuccess || 0
         );
         
@@ -663,7 +667,7 @@ class SyncService {
         } else {
           // No conflicts, simple merge
           console.log('sync: No conflicts, merging data');
-          await this.mergeData(decryptedData);
+          await this.mergeData(normalizedRemoteData);
         }
         
         this.lastSyncVersion = remoteData.version;
@@ -845,7 +849,11 @@ class SyncService {
     
     console.log('getCurrentState: Full export-style state:', currentState);
     
-    return currentState;
+    // Normalize the state before returning to ensure consistent field names
+    const normalizedState = normalizeSyncData(currentState) || currentState;
+    console.log('[DEBUG] getCurrentState - State normalized for sync');
+    
+    return normalizedState;
   }
 
   /**

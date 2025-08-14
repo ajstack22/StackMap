@@ -21,7 +21,7 @@
           "activities": [
             {
               "id": "atlas-1",
-              "name": "Brush teeth",
+              "text": "Brush teeth",
               "icon": "🦷",
               "completed": true,
               "pinned": false,
@@ -29,7 +29,7 @@
             },
             {
               "id": "atlas-2",
-              "name": "Get dressed",
+              "text": "Get dressed",
               "icon": "👕",
               "completed": true,
               "pinned": false,
@@ -37,7 +37,7 @@
             },
             {
               "id": "atlas-3",
-              "name": "Eat breakfast",
+              "text": "Eat breakfast",
               "icon": "🥞",
               "completed": true,
               "pinned": true,
@@ -45,7 +45,7 @@
             },
             {
               "id": "atlas-4",
-              "name": "Take medicine",
+              "text": "Take medicine",
               "icon": "💊",
               "completed": false,
               "pinned": true,
@@ -53,7 +53,7 @@
             },
             {
               "id": "atlas-5",
-              "name": "Reading time",
+              "text": "Reading time",
               "icon": "📖",
               "completed": false,
               "pinned": false,
@@ -61,7 +61,7 @@
             },
             {
               "id": "atlas-6",
-              "name": "Math practice",
+              "text": "Math practice",
               "icon": "🔢",
               "completed": false,
               "pinned": false,
@@ -69,7 +69,7 @@
             },
             {
               "id": "atlas-7",
-              "name": "Snack time",
+              "text": "Snack time",
               "icon": "🍎",
               "completed": false,
               "pinned": false,
@@ -77,7 +77,7 @@
             },
             {
               "id": "atlas-8",
-              "name": "Art class",
+              "text": "Art class",
               "icon": "🎨",
               "completed": false,
               "pinned": false,
@@ -85,7 +85,7 @@
             },
             {
               "id": "atlas-9",
-              "name": "Playground",
+              "text": "Playground",
               "icon": "🛝",
               "completed": false,
               "pinned": false,
@@ -93,7 +93,7 @@
             },
             {
               "id": "atlas-10",
-              "name": "Speech therapy",
+              "text": "Speech therapy",
               "icon": "💬",
               "completed": false,
               "pinned": false,
@@ -101,7 +101,7 @@
             },
             {
               "id": "atlas-11",
-              "name": "Quiet time",
+              "text": "Quiet time",
               "icon": "🧘",
               "completed": false,
               "pinned": false,
@@ -109,7 +109,7 @@
             },
             {
               "id": "atlas-12",
-              "name": "Bedtime routine",
+              "text": "Bedtime routine",
               "icon": "🌙",
               "completed": false,
               "pinned": false,
