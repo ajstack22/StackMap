@@ -944,7 +944,7 @@ const App = () => {
           id: `activity_${timestamp}_1_${randomId}`, 
           text: 'Welcome to StackMap!',
           title: 'Welcome to StackMap!',  // Keep title for backward compatibility
-          emoji: '👋',
+          icon: '👋',
           description: 'Tap activities to mark them complete',
           pinned: false 
         },
@@ -952,7 +952,7 @@ const App = () => {
           id: `activity_${timestamp}_2_${randomId}`, 
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
-          emoji: '✏️',
+          icon: '✏️',
           description: 'Use the edit button to add, remove, and organize activities',
           pinned: false 
         },
@@ -960,7 +960,7 @@ const App = () => {
           id: `activity_${timestamp}_3_${randomId}`, 
           text: 'Switch Users',
           title: 'Switch Users',  // Keep title for backward compatibility
-          emoji: '👤',
+          icon: '👤',
           description: 'Tap your user pill to switch users or check-in',
           pinned: false 
         },
@@ -968,7 +968,7 @@ const App = () => {
           id: `activity_${timestamp}_4_${randomId}`, 
           text: 'Share with Providers',
           title: 'Share with Providers',  // Keep title for backward compatibility
-          emoji: '🔗',
+          icon: '🔗',
           description: 'Share your activities with caregivers via QR code or link',
           pinned: false 
         },
@@ -976,7 +976,7 @@ const App = () => {
           id: `activity_${timestamp}_5_${randomId}`, 
           text: 'Sync Across Devices',
           title: 'Sync Across Devices',  // Keep title for backward compatibility
-          emoji: '🔄',
+          icon: '🔄',
           description: 'Keep your data synced with zero-knowledge encryption',
           pinned: false 
         },
@@ -984,7 +984,7 @@ const App = () => {
           id: `activity_${timestamp}_6_${randomId}`, 
           text: 'Import & Export',
           title: 'Import & Export',  // Keep title for backward compatibility
-          emoji: '📦',
+          icon: '📦',
           description: 'Backup your data or transfer between devices',
           pinned: false 
         },
@@ -992,7 +992,7 @@ const App = () => {
           id: `activity_${timestamp}_7_${randomId}`, 
           text: 'Preferences',
           title: 'Preferences',  // Keep title for backward compatibility
-          emoji: '🎨',
+          icon: '🎨',
           description: 'Tap the palette icon to customize colors, animations, and display',
           pinned: false 
         },
@@ -1000,7 +1000,7 @@ const App = () => {
           id: `activity_${timestamp}_8_${randomId}`, 
           text: 'Activities',
           title: 'Activities',  // Keep title for backward compatibility
-          emoji: '📋',
+          icon: '📋',
           description: 'Tap the + icon to add new activities and build your library',
           pinned: false 
         },
@@ -1008,7 +1008,7 @@ const App = () => {
           id: `activity_${timestamp}_9_${randomId}`, 
           text: 'Day',
           title: 'Day',  // Keep title for backward compatibility
-          emoji: '📅',
+          icon: '📅',
           description: 'Use the calendar icon to plan tomorrow or review past days',
           pinned: false 
         },
@@ -1016,7 +1016,7 @@ const App = () => {
           id: `activity_${timestamp}_10_${randomId}`, 
           text: 'Access',
           title: 'Access',  // Keep title for backward compatibility
-          emoji: '👥',
+          icon: '👥',
           description: 'Manage users and set a PIN to protect Edit Mode',
           pinned: false 
         },
@@ -1024,7 +1024,7 @@ const App = () => {
           id: `activity_${timestamp}_11_${randomId}`, 
           text: 'Data',
           title: 'Data',  // Keep title for backward compatibility
-          emoji: '💾',
+          icon: '💾',
           description: 'Backup, restore, sync, and manage your StackMap data',
           pinned: false 
         },
@@ -1032,7 +1032,7 @@ const App = () => {
           id: `activity_${timestamp}_12_${randomId}`, 
           text: 'Explore the Library',
           title: 'Explore the Library',  // Keep title for backward compatibility
-          emoji: '📚',
+          icon: '📚',
           description: 'Check out pre-made activity templates in the StackMap Library',
           pinned: false 
         },
@@ -1190,7 +1190,7 @@ const App = () => {
           id: `activity_${timestamp}_1_${randomId}`, 
           text: 'Welcome to StackMap!',
           title: 'Welcome to StackMap!',  // Keep title for backward compatibility
-          emoji: '👋',
+          icon: '👋',
           description: 'Tap activities to mark them complete',
           pinned: false 
         },
@@ -1198,7 +1198,7 @@ const App = () => {
           id: `activity_${timestamp}_2_${randomId}`, 
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
-          emoji: '✏️',
+          icon: '✏️',
           description: 'Use the edit button to add, remove, and organize activities',
           pinned: false 
         },
@@ -1548,7 +1548,7 @@ const App = () => {
       id: `activity_${deviceId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       text: activityTitle,
       description: activityDescription || '',
-      emoji: activityEmoji,
+      icon: activityEmoji,
       completed: false,
       pinned: false,
       activityType: 'normal',
@@ -1560,7 +1560,7 @@ const App = () => {
     if (editingActivity) {
       newActivities = activities.map(a => 
         a.id === editingActivity.id 
-          ? { ...a, text: activityTitle, description: activityDescription || '', emoji: activityEmoji, time: activityTime || null } 
+          ? { ...a, text: activityTitle, description: activityDescription || '', icon: activityEmoji, time: activityTime || null } 
           : a
       );
     } else {
@@ -1774,7 +1774,7 @@ const App = () => {
       id: userId,
       name: userName,
       icon: userEmoji,
-      emoji: userEmoji, // Also store in emoji field for compatibility
+      // Only use icon field per spec
       days: {
         today: { activities: [] },
         tomorrow: { activities: [] }
@@ -1808,7 +1808,7 @@ const App = () => {
     updateUser(userId, {
       name: userName,
       icon: userEmoji,
-      emoji: userEmoji // Also update emoji field for compatibility
+      // Only use icon field per spec
     });
     
     setNewUserName('');
@@ -4099,7 +4099,7 @@ const App = () => {
             setUsers(updatedUsers);
             setActivities(updatedActivities);
             showToast({ 
-              message: `✅ Added: ${activity.emoji} ${newActivity.text}`,
+              message: `✅ Added: ${activity.icon} ${newActivity.text}`,
               duration: 2000,
             });
           }}

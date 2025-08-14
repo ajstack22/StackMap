@@ -804,7 +804,7 @@ const CategorySection = ({
                           resizeMode="contain"
                         />
                       ) : (
-                        <Text style={styles.activityEmoji}>{item.emoji}</Text>
+                        <Text style={styles.activityEmoji}>{item.icon || item.emoji}</Text>
                       )}
                       <Text style={styles.activityName}>{item.name}</Text>
                     </View>

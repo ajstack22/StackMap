@@ -1,0 +1,200 @@
+# Data Dictionary
+
+## Overview
+This document defines the canonical data structure for StackMap. All services MUST conform to these definitions.
+
+## Core Data Types
+
+### User
+```typescript
+interface User {
+  id: string;           // Format: `user_${timestamp}_${index}_${randomId}`
+  name: string;         // Display name (required, non-empty)
+  icon: string;         // Single emoji character (required)
+  days: {
+    [dayKey: string]: Day;  // Keys: 'today', 'tomorrow', 'yesterday', ISO dates
+  };
+  deleted?: boolean;    // Soft delete flag
+  deletedAt?: number;   // Timestamp of deletion
+  createdAt?: string;   // ISO 8601 timestamp
+  lastActive?: string;  // ISO 8601 timestamp
+  settings?: UserSettings;
+}
+```
+
+### Activity
+```typescript
+interface Activity {
+  id: string;           // Format: `activity_${deviceId}_${timestamp}_${randomId}`
+  text: string;         // Display text (required, non-empty)
+  icon: string;         // Single emoji character (required)
+  completed: boolean;   // Completion status (default: false)
+  pinned: boolean;      // Pin status (default: false)
+  deleted?: boolean;    // Soft delete flag
+  deletedAt?: number;   // Timestamp of deletion
+  lastModified?: number; // Unix timestamp for sync conflict resolution
+  
+  // Optional fields
+  description?: string; // Extended description
+  order?: number;       // Display order
+  
+  // DEPRECATED - for backward compatibility only
+  title?: string;       // Use 'text' instead
+  emoji?: string;       // Use 'icon' instead
+  name?: string;        // Use 'text' instead
+}
+```
+
+### Day
+```typescript
+interface Day {
+  activities: Activity[];  // Array of activities for this day
+  lastModified?: number;   // Unix timestamp
+}
+```
+
+### UserSettings
+```typescript
+interface UserSettings {
+  theme?: string;              // Theme identifier
+  taskCelebration?: string;    // Celebration animation type
+  routineCelebration?: string; // Routine celebration type
+  soundEnabled?: boolean;      // Sound effects enabled
+  displayMode?: string;        // Display mode preference
+  bannerPosition?: string;     // Banner position preference
+}
+```
+
+### AppState
+```typescript
+interface AppState {
+  // User Management
+  users: { [userId: string]: User };  // All users keyed by ID
+  currentUser: string;                // Current user ID (required)
+  currentDay: string;                  // Active day key (default: 'today')
+  
+  // Top-level Activities (for current user/day)
+  activities: Activity[];              // Denormalized for performance
+  
+  // UI Settings
+  currentTheme: string;                // Active theme
+  displayMode: string;                 // Display mode
+  bannerPosition: string;              // Banner position
+  soundEnabled: boolean;               // Sound effects
+  taskCelebration: string;             // Task celebration type
+  routineCelebration: string;          // Routine celebration type
+  
+  // Activity Library
+  activityCategories?: ActivityCategory[];
+  templates?: Template[];
+  
+  // Sync State
+  syncPhrase?: string;                 // 32-char hex sync identifier
+  lastSyncTime?: number;               // Unix timestamp
+  
+  // App Metadata
+  version?: number;                    // Data structure version
+  lastModified?: number;               // Unix timestamp
+  hasCompletedOnboarding?: boolean;   // Onboarding complete flag
+}
+```
+
+### ActivityCategory
+```typescript
+interface ActivityCategory {
+  id: string;                     // Unique identifier
+  name: string;                   // Category name
+  icon: string;                   // Category emoji
+  activities: LibraryActivity[];  // Activities in this category
+  order?: number;                 // Display order
+}
+```
+
+### LibraryActivity
+```typescript
+interface LibraryActivity {
+  id: string;           // Unique identifier
+  text: string;         // Display text
+  icon: string;         // Emoji icon
+  description?: string; // Optional description
+}
+```
+
+## ID Generation Rules
+
+### User IDs
+- Format: `user_${timestamp}_${index}_${randomId}`
+- `timestamp`: Date.now() when created
+- `index`: Sequential index for batch creation
+- `randomId`: 9-character random string from Math.random().toString(36).substr(2, 9)
+- Example: `user_1736879400000_0_x3k9m2n7p`
+
+### Activity IDs
+- Format: `activity_${deviceId}_${timestamp}_${randomId}`
+- `deviceId`: Unique device identifier (generated once per device)
+- `timestamp`: Date.now() when created
+- `randomId`: 9-character random string
+- Example: `activity_device1_1736879400000_a9k3m2n7p`
+
+## Field Normalization Rules
+
+### Required Field Mapping
+When importing or syncing data, normalize fields as follows:
+
+1. **User fields**:
+   - `emoji` → `icon` (preferred field)
+   - Remove `emoji` if `icon` exists
+   
+2. **Activity fields**:
+   - `name` → `text` (preferred field)
+   - `title` → `text` (preferred field)
+   - `emoji` → `icon` (preferred field)
+   - Remove deprecated fields after copying
+
+### Default Values
+- `User.icon`: '👤' if missing
+- `User.name`: 'User' if missing
+- `Activity.icon`: '📌' if missing
+- `Activity.completed`: false if missing
+- `Activity.pinned`: false if missing
+- `Day.activities`: [] if missing
+
+## Validation Rules
+
+### Required Fields
+The following fields MUST be present and valid:
+1. `AppState.users` - must be an object (can be empty)
+2. `AppState.currentUser` - must reference a valid, non-deleted user
+3. `User.id` - must be non-empty string
+4. `User.name` - must be non-empty string
+5. `User.icon` - must be single character (emoji)
+6. `Activity.id` - must be non-empty string
+7. `Activity.text` - must be non-empty string
+8. `Activity.icon` - must be single character (emoji)
+
+### Data Integrity
+1. `currentUser` must point to an existing user in `users` object
+2. Deleted users (`deleted: true`) cannot be current user
+3. Activities in top-level `activities` array must match current user's current day
+4. Soft-deleted items should be excluded from UI but preserved for sync
+
+## Sync Data Structure
+```typescript
+interface SyncData extends AppState {
+  deviceId: string;     // Unique device identifier
+  syncVersion: number;  // Sync protocol version
+  timestamp: number;    // Unix timestamp of sync
+}
+```
+
+## Import/Export Format
+Import/export uses the full `AppState` structure in JSON format with the following requirements:
+- Must include `version` field (current: 3)
+- Must pass validation before import
+- Should normalize fields on import
+- Should exclude sensitive data (PIN, encryption keys)
+
+## Migration Notes
+- Version 1: Original format with `emoji` fields
+- Version 2: Added user management
+- Version 3: Current format with `icon` fields and full normalization
