@@ -13,9 +13,12 @@
 ### Key Directories
 - `/prompts/` - **CHECK FIRST** for all documentation
   - `deployment.md` - Complete deployment guide
+  - `field-conventions.md` - **CRITICAL** field naming standards
+  - `sync-troubleshooting.md` - Sync debugging guide
   - `editmoderefactor/` - Edit mode implementation specs
 - `/scripts/` - All automation scripts
 - `/src/components/EditModeList/` - New unified edit mode (Jan 2025)
+- `/src/utils/dataNormalizer.js` - Field normalization logic
 
 ### Branch Strategy (Jan 13, 2025)
 - `main` - Source code only (no build files)
@@ -50,6 +53,13 @@
 1. **NO GRAY TEXT** - All text must be black (#000) for accessibility
 2. **High contrast** required - test with all theme colors
 3. **Typography**: Comic Relief font forced everywhere via custom component
+
+## ⚠️ FIELD NAMING STANDARDS (CRITICAL)
+- **Activities**: Use `text` (not name/title), `icon` (not emoji)
+- **Users**: Use `icon` (not emoji), `name` as string only
+- **Always include fallbacks**: `activity.text || activity.name || activity.title`
+- **Normalizer**: `/src/utils/dataNormalizer.js` handles variations
+- **See**: `/prompts/field-conventions.md` for full details
 
 ---
 
