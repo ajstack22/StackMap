@@ -5,6 +5,58 @@
 
 ---
 
+## CONTEXT TO PROVIDE
+**Copy this context block at the start of your migration chat:**
+
+```
+CONTEXT: This is a pre-launch app undergoing data structure migration to remove tech debt before launch.
+
+CURRENT STATE (Transitional):
+- Store has BOTH old fields (activities, activityCategories) AND new fields (libraryTemplates, library.categories)
+- Migration code keeps them in sync
+- All fallback patterns like: state.libraryTemplates || state.activities || []
+
+TARGET STATE (Clean):
+- ONLY new fields: libraryTemplates, library.categories
+- NO migration code
+- NO fallback patterns
+- NO backward compatibility
+
+FINAL STORE STRUCTURE SHOULD BE:
+{
+  // User data
+  users: {},
+  currentUser: null,
+  
+  // Library (replaces activities/activityCategories)
+  libraryTemplates: [],
+  library: {
+    categories: {},
+    userAddedActivityIds: []
+  },
+  
+  // Settings
+  currentTheme: 'stackBlue',
+  bannerPosition: 'top',
+  displayMode: 'numbers',
+  
+  // State flags
+  hasCompletedOnboarding: false,
+  
+  // NO activities, activityCategories, or templates fields!
+}
+
+KEY FILES:
+- /src/stores/useAppStore.js - Zustand store with migration code
+- /src/services/sync/syncService.js - Sync with fallbacks
+- /src/components/Modals/DataModal/DataModal.js - Import/export
+- /data/demo-data-kids.json - Sample data to migrate
+
+IMPORTANT: This is a BREAKING CHANGE. We have no users yet, so backward compatibility is not needed.
+```
+
+---
+
 ## PHASE 1: Data Migration & Backup (30 minutes)
 **Run this FIRST in a new chat**
 
@@ -275,7 +327,11 @@ If you prefer to run everything in ONE chat session, use this combined prompt:
 
 ### Complete Migration Prompt
 ```
+[First provide the CONTEXT block from above]
+
 I need to complete a data structure migration for a pre-launch app. We're removing ALL backward compatibility and migration code since we have no users yet.
+
+For reference, the canonical data structure is documented in /docs/data/data-dictionary.md
 
 Please execute these tasks IN ORDER:
 
