@@ -395,24 +395,24 @@ const styles = StyleSheet.create({
   },
   backgroundBar: {
     position: 'absolute',
-    top: 0,
+    top: Platform.OS === 'android' ? 8 : 0,
     left: 0,
     right: 0,
     bottom: 0,
   },
   toolbarWrapper: {
     alignItems: 'center',
-    paddingTop: Platform.OS === 'web' ? 4 : (Platform.OS === 'android' ? 8 : 4),
-    paddingBottom: Platform.OS === 'web' ? 4 : (Platform.OS === 'android' ? 8 : 4),
+    paddingTop: Platform.OS === 'web' ? 8 : (Platform.OS === 'android' ? 0 : 12),
+    paddingBottom: Platform.OS === 'web' ? 8 : (Platform.OS === 'android' ? 10 : 12),
     position: 'relative',
     zIndex: 1,
   },
   editModeLabelContainer: {
-    marginBottom: Platform.OS === 'web' ? 2 : 3,
+    marginBottom: Platform.OS === 'web' ? 1 : 1,
   },
   editModeLabelBottom: {
-    marginBottom: 0,
-    marginTop: Platform.OS === 'web' ? 2 : 3,
+    marginBottom: Platform.OS === 'android' ? 2 : 0,
+    marginTop: Platform.OS === 'web' ? 1 : 1,
   },
   editModeLabel: {
     color: 'white',
