@@ -806,10 +806,11 @@ const App = () => {
     try {
       console.log('handleOnboardingComplete called with:', onboardingData);
       
-      // Check if we have imported data to restore
+      // Check if we have imported data to restore - BYPASS ALL USER CREATION IF IMPORTING
       const importedDataStr = await AsyncStorage.getItem('@stackmap_import_temp');
       if (importedDataStr) {
         console.log('[ONBOARDING] Found imported data, applying it now...');
+        console.log('[ONBOARDING] Bypassing user creation - using imported data only');
         const importedData = JSON.parse(importedDataStr);
         
         // Apply all the imported data NOW that onboarding is complete
@@ -855,7 +856,7 @@ const App = () => {
         setHasCompletedOnboarding(true);
         setShowOnboarding(false);
         showToast({ message: 'Data restored successfully' });
-        return;
+        return;  // CRITICAL: Return here to prevent creating duplicate users below
       }
       
       // Mark onboarding as completed
@@ -1036,6 +1037,14 @@ const App = () => {
       ];
       
       // Create each user from onboarding
+      // SAFETY CHECK: Only create users if we didn't import any
+      const currentUsers = useAppStore.getState().users;
+      if (currentUsers && Object.keys(currentUsers).length > 0) {
+        console.log('[ONBOARDING] Users already exist, skipping user creation');
+        setShowOnboarding(false);
+        return;
+      }
+      
       onboardingData.users.forEach((userData, index) => {
         const userId = `user_${timestamp}_${index}`;
         if (index === 0) firstUserId = userId;
