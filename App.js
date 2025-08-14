@@ -884,7 +884,8 @@ const App = () => {
       // If no onboarding data provided (shouldn't happen), create default user
       if (!onboardingData || !onboardingData.users || onboardingData.users.length === 0) {
         console.warn('No users provided from onboarding, creating default user');
-        const newUserId = `user_${Date.now()}`;
+        const randomId = Math.random().toString(36).substr(2, 9);
+        const newUserId = `user_${Date.now()}_${randomId}`;
         const newUser = {
           id: newUserId,
           name: 'My Activities',
@@ -933,13 +934,14 @@ const App = () => {
       
       // Create users from onboarding data
       const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substr(2, 9);
       const newUsers = {};
       let firstUserId = null;
       
-      // Create starter activities - explain StackMap features
+      // Create starter activities - explain StackMap features  
       const starterActivities = [
         { 
-          id: `activity_${timestamp}_1`, 
+          id: `activity_${timestamp}_1_${randomId}`, 
           text: 'Welcome to StackMap!',
           title: 'Welcome to StackMap!',  // Keep title for backward compatibility
           emoji: '👋',
@@ -947,7 +949,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_2`, 
+          id: `activity_${timestamp}_2_${randomId}`, 
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
           emoji: '✏️',
@@ -955,7 +957,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_3`, 
+          id: `activity_${timestamp}_3_${randomId}`, 
           text: 'Switch Users',
           title: 'Switch Users',  // Keep title for backward compatibility
           emoji: '👤',
@@ -963,7 +965,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_4`, 
+          id: `activity_${timestamp}_4_${randomId}`, 
           text: 'Share with Providers',
           title: 'Share with Providers',  // Keep title for backward compatibility
           emoji: '🔗',
@@ -971,7 +973,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_5`, 
+          id: `activity_${timestamp}_5_${randomId}`, 
           text: 'Sync Across Devices',
           title: 'Sync Across Devices',  // Keep title for backward compatibility
           emoji: '🔄',
@@ -979,7 +981,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_6`, 
+          id: `activity_${timestamp}_6_${randomId}`, 
           text: 'Import & Export',
           title: 'Import & Export',  // Keep title for backward compatibility
           emoji: '📦',
@@ -987,7 +989,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_7`, 
+          id: `activity_${timestamp}_7_${randomId}`, 
           text: 'Preferences',
           title: 'Preferences',  // Keep title for backward compatibility
           emoji: '🎨',
@@ -995,7 +997,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_8`, 
+          id: `activity_${timestamp}_8_${randomId}`, 
           text: 'Activities',
           title: 'Activities',  // Keep title for backward compatibility
           emoji: '📋',
@@ -1003,7 +1005,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_9`, 
+          id: `activity_${timestamp}_9_${randomId}`, 
           text: 'Day',
           title: 'Day',  // Keep title for backward compatibility
           emoji: '📅',
@@ -1011,7 +1013,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_10`, 
+          id: `activity_${timestamp}_10_${randomId}`, 
           text: 'Access',
           title: 'Access',  // Keep title for backward compatibility
           emoji: '👥',
@@ -1019,7 +1021,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_11`, 
+          id: `activity_${timestamp}_11_${randomId}`, 
           text: 'Data',
           title: 'Data',  // Keep title for backward compatibility
           emoji: '💾',
@@ -1027,7 +1029,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_12`, 
+          id: `activity_${timestamp}_12_${randomId}`, 
           text: 'Explore the Library',
           title: 'Explore the Library',  // Keep title for backward compatibility
           emoji: '📚',
@@ -1182,9 +1184,10 @@ const App = () => {
       
       // Create starter activities - educational cards explaining StackMap features
       const timestamp = Date.now();
+      const randomId = Math.random().toString(36).substr(2, 9);
       const starterActivities = [
         { 
-          id: `activity_${timestamp}_1`, 
+          id: `activity_${timestamp}_1_${randomId}`, 
           text: 'Welcome to StackMap!',
           title: 'Welcome to StackMap!',  // Keep title for backward compatibility
           emoji: '👋',
@@ -1192,7 +1195,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_2`, 
+          id: `activity_${timestamp}_2_${randomId}`, 
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
           emoji: '✏️',
@@ -1213,7 +1216,8 @@ const App = () => {
       
       // Create each user from the setup data
       setupData.users.forEach((userData, index) => {
-        const userId = `user_${Date.now()}_${index}`;
+        const randomId = Math.random().toString(36).substr(2, 9);
+        const userId = `user_${Date.now()}_${index}_${randomId}`;
         if (index === 0) firstUserId = userId;
         
         // Only give starter activities to the first user
@@ -1283,7 +1287,8 @@ const App = () => {
       setHasCompletedOnboarding(true);
       
       // Create default user without starter activities
-      const newUserId = `user_${Date.now()}`;
+      const randomId = Math.random().toString(36).substr(2, 9);
+      const newUserId = `user_${Date.now()}_${randomId}`;
       const newUser = {
         id: newUserId,
         name: 'My Activities',
@@ -1763,7 +1768,8 @@ const App = () => {
   // Handle adding user from AddUserModal
   const handleAddUser = (userName, userEmoji) => {
     console.log('handleAddUser called with:', { userName, userEmoji, emojiType: typeof userEmoji });
-    const userId = `user_${Date.now()}`;
+    const randomId = Math.random().toString(36).substr(2, 9);
+    const userId = `user_${Date.now()}_${randomId}`;
     const newUser = {
       id: userId,
       name: userName,
