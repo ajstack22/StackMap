@@ -56,7 +56,7 @@ export default function EditModeList({
       data={activities}
       renderItem={renderItem}
       keyExtractor={keyExtractor}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
+      // No separator between items
       contentContainerStyle={[
         styles.listContainer,
         { 

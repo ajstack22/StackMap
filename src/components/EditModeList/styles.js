@@ -10,15 +10,6 @@ const baseStyles = {
     }),
   },
   
-  separator: {
-    height: 1,
-    backgroundColor: '#f0f0f0',
-    marginHorizontal: 'auto',
-    maxWidth: 800,
-    width: '100%',
-    alignSelf: 'center',
-  },
-  
   listItem: {
     backgroundColor: '#fff',
     marginHorizontal: 8,
@@ -92,8 +83,6 @@ const baseStyles = {
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#f0f0f0',
   },
   
   reorderButtons: {

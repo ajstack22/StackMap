@@ -3558,13 +3558,13 @@ const App = () => {
               <EditModeList
               activities={activities.filter(a => !a.deleted)}
               contentPadding={{
-                // Use same 24px padding as standard mode cards
+                // Use 8px padding to match the gap between cards (4px marginVertical × 2)
                 // Base 124px when toolbar visible, 184px when More is expanded
                 // Edit mode toolbar is OPPOSITE from banner, so flip the padding
                 paddingTop: bannerPosition === 'bottom' ? 
-                  (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 24,
+                  (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 8,
                 paddingBottom: bannerPosition === 'top' ? 
-                  (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 24
+                  (showEditToolbar ? (editToolbarMoreExpanded ? 184 : 124) : 94) : 8
               }}
               onUpdate={(newActivities) => {
                 // Filter out deleted items before saving
