@@ -325,6 +325,11 @@ class SyncService {
     
     // Get current state and encrypt it
     const currentState = this.getCurrentState();
+    console.log('[DEBUG] createSyncGroup - Creating sync with state:', {
+      userCount: Object.keys(currentState.users || {}).length,
+      hasTemplates: !!currentState.templates && currentState.templates.length > 0,
+      hasCategories: !!currentState.activityCategories
+    });
     const encryptedBlob = encryptionService.encryptData(currentState);
     
     const response = await fetch(`${API_BASE_URL}/create.php`, {
@@ -743,6 +748,14 @@ class SyncService {
     
     // Debug: Check users for missing icons and repair them
     console.log('[DEBUG] getCurrentState - Raw users from store:', JSON.stringify(users, null, 2));
+    console.log('[DEBUG] getCurrentState - User count:', Object.keys(users).length);
+    
+    // Debug: Log activities for each user
+    Object.entries(users).forEach(([userId, user]) => {
+      const todayActivities = user.days?.today?.activities?.length || 0;
+      const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+      console.log(`[DEBUG] User ${userId} (${user.name}): ${todayActivities} today activities, ${tomorrowActivities} tomorrow activities`);
+    });
     
     if (users && Object.keys(users).length > 0) {
       const repairedUsers = { ...users };
@@ -842,6 +855,15 @@ class SyncService {
     console.log('restoreData: Export format data - Users count:', Object.keys(users || {}).length);
     console.log('restoreData: Export format data - Templates count:', (templates || []).length);
     
+    // Debug: Log user activities
+    if (users) {
+      Object.entries(users).forEach(([userId, user]) => {
+        const todayActivities = user.days?.today?.activities?.length || 0;
+        const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+        console.log(`[DEBUG] restoreData - User ${userId} (${user.name}): ${todayActivities} today activities, ${tomorrowActivities} tomorrow activities`);
+      });
+    }
+    
     // DEBUG: Log data size without stringifying the whole thing
     const dataSize = JSON.stringify(data).length;
     console.log('[DEBUG] Full sync data size:', Math.round(dataSize / 1024), 'KB');
@@ -849,18 +871,30 @@ class SyncService {
     // Get current state to preserve certain values
     const currentState = useAppStore.getState();
     
+    // Determine the current user and day
+    const finalCurrentUser = currentUser || Object.keys(users || {})[0] || 'user_1';
+    const finalCurrentDay = currentDay || 'today';
+    
+    // Extract activities from the current user's current day
+    let currentUserActivities = [];
+    if (users && users[finalCurrentUser] && users[finalCurrentUser].days) {
+      currentUserActivities = users[finalCurrentUser].days[finalCurrentDay]?.activities || [];
+      console.log(`restoreData: Loading ${currentUserActivities.length} activities for user ${finalCurrentUser} on ${finalCurrentDay}`);
+    }
+    
     // Update store with export format data
     const newState = {
       // Map templates to both fields for backward compatibility
-      activities: templates || [],
-      libraryTemplates: templates || [],
+      // Handle templates as either array or object
+      activities: Array.isArray(templates) ? templates : [],
+      libraryTemplates: Array.isArray(templates) ? templates : [],
       activityCategories: activityCategories || null,
       library: {
         categories: activityCategories || null,
         userAddedActivityIds: []
       },
       users: users || {},
-      currentUser: currentUser || Object.keys(users || {})[0] || 'user_1',
+      currentUser: finalCurrentUser,
       currentTheme: globalSettings?.currentTheme || 'stackBlue',
       bannerPosition: globalSettings?.bannerPosition || 'top',
       soundEnabled: globalSettings?.soundEnabled !== false,
@@ -868,7 +902,7 @@ class SyncService {
       routineCelebration: globalSettings?.routineCelebration || 'rainbow',
       // Preserve local hasCompletedOnboarding if not explicitly set in sync data
       hasCompletedOnboarding: hasCompletedOnboarding !== undefined ? hasCompletedOnboarding : currentState.hasCompletedOnboarding,
-      currentDay: currentDay || 'today'
+      currentDay: finalCurrentDay
     };
     
     console.log('restoreData: Setting export format state');
