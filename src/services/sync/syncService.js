@@ -912,6 +912,8 @@ class SyncService {
     console.log('[DEBUG] - currentTheme:', newState.currentTheme);
     console.log('[DEBUG] - hasCompletedOnboarding:', newState.hasCompletedOnboarding);
     console.log('[DEBUG] - users count:', Object.keys(newState.users || {}).length);
+    console.log('[DEBUG] - activities count being set:', newState.activities?.length || 0);
+    console.log('[DEBUG] - activities:', JSON.stringify(newState.activities?.slice(0, 2)));
     
     useAppStore.setState(newState);
     
@@ -920,6 +922,9 @@ class SyncService {
     console.log('[DEBUG] State after setState:');
     console.log('[DEBUG] - currentTheme:', afterState.currentTheme);
     console.log('[DEBUG] - hasCompletedOnboarding:', afterState.hasCompletedOnboarding);
+    console.log('[DEBUG] - activities count:', afterState.activities?.length || 0);
+    console.log('[DEBUG] - currentUser:', afterState.currentUser);
+    console.log('[DEBUG] - users count:', Object.keys(afterState.users || {}).length);
   }
 
   /**
