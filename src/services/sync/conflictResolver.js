@@ -300,6 +300,27 @@ class ConflictResolver {
           if (!user.days || typeof user.days !== 'object') {
             user.days = {};
           }
+          
+          // Ensure activities have required fields
+          if (user.days) {
+            for (const [dayKey, dayData] of Object.entries(user.days)) {
+              if (dayData && dayData.activities && Array.isArray(dayData.activities)) {
+                dayData.activities = dayData.activities.map(activity => {
+                  if (activity && typeof activity === 'object') {
+                    // Ensure completed field exists
+                    if (activity.completed === undefined) {
+                      activity.completed = false;
+                    }
+                    // Ensure pinned field exists
+                    if (activity.pinned === undefined) {
+                      activity.pinned = false;
+                    }
+                  }
+                  return activity;
+                });
+              }
+            }
+          }
         }
       }
     }
