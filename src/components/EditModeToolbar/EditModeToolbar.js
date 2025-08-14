@@ -4,7 +4,6 @@ import {
   View,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   Modal,
   FlatList,
   Animated,
@@ -246,11 +245,8 @@ const EditModeToolbar = ({
       <View style={[
         styles.container,
         position === 'top' ? styles.topPosition : styles.bottomPosition,
+        { backgroundColor: theme.primary },
       ]}>
-        <SafeAreaView style={[
-          styles.safeArea,
-          { backgroundColor: theme.primary },
-        ]}>
           <View style={styles.toolbarContainer}>
             {/* Theme-colored background with fade animation */}
             <Animated.View style={[styles.backgroundBar, { backgroundColor: theme.primary, opacity: backgroundOpacity }]} />
@@ -262,17 +258,7 @@ const EditModeToolbar = ({
                 {
                   transform: [{ translateY }],
                   opacity,
-                  // Add extra padding for Android to avoid camera
-                  ...(Platform.OS === 'android' && {
-                    // When toolbar is at top (banner at bottom), add top padding
-                    ...(position === 'top' && {
-                      paddingTop: (StatusBar.currentHeight || 24) + 8,
-                    }),
-                    // When toolbar is at bottom (banner at top), add bottom padding to avoid camera
-                    ...(position === 'bottom' && {
-                      paddingBottom: 16, // Extra padding to avoid camera cutout
-                    }),
-                  }),
+                  // No extra padding needed since toolbar is now positioned 110px from edge
                 },
               ]}
             >
@@ -385,7 +371,6 @@ const EditModeToolbar = ({
               )}
             </Animated.View>
           </View>
-        </SafeAreaView>
       </View>
 
     </>
@@ -398,7 +383,6 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
   },
-  safeArea: {},
   topPosition: {
     top: 110, // Position below the top banner
   },
