@@ -12,6 +12,7 @@ import {
   Dimensions
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { SHADOWS, TYPOGRAPHY, SPACING, RADIUS, isTablet, getContainerPadding } from '../../constants';
 
 const EditModeToolbar = ({
@@ -30,6 +31,7 @@ const EditModeToolbar = ({
   moreButtonPosition = 'right',
   onMoreToggle,
 }) => {
+  const insets = useSafeAreaInsets();
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [translateY] = useState(() => new Animated.Value(position === 'top' ? -100 : 100));
   const [opacity] = useState(() => new Animated.Value(0));
@@ -240,12 +242,22 @@ const EditModeToolbar = ({
     </TouchableOpacity>
   );
 
+  // Calculate top padding for safe area
+  const topPadding = position === 'top' ? (
+    Platform.OS === 'ios' ? insets.top :
+    Platform.OS === 'android' ? (StatusBar.currentHeight || 24) :
+    0
+  ) : 0;
+
   return (
     <>
       <View style={[
         styles.container,
         position === 'top' ? styles.topPosition : styles.bottomPosition,
-        { backgroundColor: theme.primary },
+        { 
+          backgroundColor: theme.primary,
+          paddingTop: topPadding 
+        },
       ]}>
           <View style={styles.toolbarContainer}>
             {/* Theme-colored background with fade animation */}
