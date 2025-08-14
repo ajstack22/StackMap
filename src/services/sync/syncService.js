@@ -1106,11 +1106,11 @@ class SyncService {
     useAppStore.setState({ users: finalUsers });
     
     // Now update the activities for the current user/day
-    const currentState = useAppStore.getState();
-    const currentUserActivities = finalUsers[currentState.currentUser]?.days?.[currentState.currentDay]?.activities || [];
+    const storeState = useAppStore.getState();
+    const currentUserActivities = finalUsers[storeState.currentUser]?.days?.[storeState.currentDay]?.activities || [];
     if (currentUserActivities.length > 0) {
       console.log('[DEBUG] mergeData: Setting activities for current user/day');
-      currentState.setActivities(currentUserActivities.filter(a => !a.deleted));
+      storeState.setActivities(currentUserActivities.filter(a => !a.deleted));
     }
   }
   
