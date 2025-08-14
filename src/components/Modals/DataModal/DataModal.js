@@ -21,6 +21,7 @@ import SyncStatusIndicator from '../../SyncStatusIndicator';
 import syncService from '../../../services/sync/syncService';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
+import { normalizeExportData } from '../../../utils/dataNormalizer';
 
 // Import platform-specific modules
 let DocumentPicker = null;
@@ -574,12 +575,15 @@ const DataModal = ({
         const loadFile = async (file) => {
           try {
             const fileContent = await modules.RNFS.readFile(file.path, 'utf8');
-            const parsedData = JSON.parse(fileContent);
+            let parsedData = JSON.parse(fileContent);
             
             if (!parsedData.version) {
               Alert.alert('Error', 'Invalid StackMap export file');
               return;
             }
+            
+            // Normalize the imported data
+            parsedData = normalizeExportData(parsedData);
             
             setImportFile({ name: file.name, path: file.path });
             setImportData(parsedData);
@@ -682,13 +686,16 @@ const DataModal = ({
       }
       
       // Parse and validate
-      const parsedData = JSON.parse(fileContent);
+      let parsedData = JSON.parse(fileContent);
       
       // Validate data structure
       if (!parsedData.version) {
         Alert.alert('Error', 'Invalid StackMap export file');
         return;
       }
+      
+      // Normalize the imported data
+      parsedData = normalizeExportData(parsedData);
       
       setImportFile(result[0]);
       setImportData(parsedData);

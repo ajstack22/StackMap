@@ -146,10 +146,16 @@ const validateActivity = (activity) => {
     return false;
   }
 
-  // Check for text field (handle 'text', 'name', or 'title' properties)
-  const activityText = activity.text || activity.name || activity.title;
-  if (!activityText || typeof activityText !== 'string') {
-//     console.error('Activity missing or invalid text/name/title:', activity);
+  // Check for text field (normalize from name/title if needed)
+  if (!activity.text) {
+    // Accept name or title for backwards compatibility, but will normalize
+    const activityText = activity.name || activity.title;
+    if (!activityText || typeof activityText !== 'string') {
+//       console.error('Activity missing text field:', activity);
+      return false;
+    }
+  } else if (typeof activity.text !== 'string') {
+//     console.error('Activity text field is not a string:', activity);
     return false;
   }
 
@@ -277,22 +283,28 @@ export const repairSyncedData = (data) => {
         dayData.activities = dayData.activities.map(activity => {
           if (!activity || typeof activity !== 'object') return null;
           
-          // Ensure text field exists (handle 'text', 'name', and 'title')
+          // Normalize text field from name/title if needed
           if (!activity.text) {
-            if (activity.name) {
-              activity.text = activity.name;
-            } else if (activity.title) {
-              activity.text = activity.title;
-            }
+            activity.text = activity.name || activity.title || 'Untitled Activity';
+          }
+          
+          // Normalize icon field from emoji if needed
+          if (!activity.icon && activity.emoji) {
+            activity.icon = activity.emoji;
           }
           
           // Ensure required fields with defaults
           return {
             ...activity,
             id: activity.id || `repaired_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            text: activity.text || activity.name || activity.title || 'Untitled Activity',
+            text: activity.text,
+            icon: activity.icon || activity.emoji || '',
             completed: typeof activity.completed === 'boolean' ? activity.completed : false,
-            pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false
+            pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false,
+            // Remove redundant fields
+            name: undefined,
+            title: undefined,
+            emoji: undefined
           };
         }).filter(activity => {
           // Filter out null activities and validate

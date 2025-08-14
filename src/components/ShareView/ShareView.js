@@ -157,8 +157,9 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
     if (activity.deleted) return null;
 
     const renderActivityEmoji = () => {
-      if (activity.emoji && activity.emoji.includes('.png')) {
-        const imageSource = getCustomImageSource(activity.emoji);
+      const activityIcon = activity.icon || activity.emoji;
+      if (activityIcon && activityIcon.includes('.png')) {
+        const imageSource = getCustomImageSource(activityIcon);
         if (imageSource) {
           return (
             <Image 
@@ -169,7 +170,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
           );
         }
       }
-      return <Text style={styles.activityEmoji}>{activity.emoji || '🎯'}</Text>;
+      return <Text style={styles.activityEmoji}>{activityIcon || '🎯'}</Text>;
     };
 
     return (
@@ -179,7 +180,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
             {renderActivityEmoji()}
           </View>
           <View style={styles.activityTextContainer}>
-            <Text style={styles.activityTitle}>{activity.title}</Text>
+            <Text style={styles.activityTitle}>{activity.text || activity.title || activity.name}</Text>
             {activity.description && (
               <Text style={styles.activityDescription}>{activity.description}</Text>
             )}

@@ -28,7 +28,7 @@ export const EditModeListItem = React.memo(({
     if (Platform.OS === 'ios') {
       Alert.alert(
         'Delete Activity',
-        `Are you sure you want to delete "${item.text || item.title}"?`,
+        `Are you sure you want to delete "${item.text || item.name || item.title}"?`,
         [
           { text: 'Cancel', style: 'cancel' },
           { text: 'Delete', style: 'destructive', onPress: onDelete }
@@ -48,10 +48,10 @@ export const EditModeListItem = React.memo(({
     >
       {/* Main content area */}
       <View style={itemStyles.contentRow}>
-        <Text style={itemStyles.emoji}>{item.emoji || item.icon || '📝'}</Text>
+        <Text style={itemStyles.emoji}>{item.icon || item.emoji || '📝'}</Text>
         <View style={itemStyles.textContent}>
           <Text style={itemStyles.title} numberOfLines={1}>
-            {item.text || item.title || 'Untitled'}
+            {item.text || item.name || item.title || 'Untitled'}
           </Text>
           {item.description && (
             <Text style={itemStyles.description} numberOfLines={1}>

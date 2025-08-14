@@ -11,6 +11,7 @@ import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
 import { validateSyncedData, repairSyncedData, validateIncrementalSync } from './dataValidator';
+import { normalizeSyncData } from '../../utils/dataNormalizer';
 
 // Determine API URL based on environment
 const getApiBaseUrl = () => {
@@ -589,6 +590,10 @@ class SyncService {
         // Decrypt remote data
         console.log('[DEBUG] Decrypting remote data...');
         let decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
+        
+        // Normalize the decrypted data to ensure consistent field names
+        console.log('[DEBUG] Normalizing sync data...');
+        decryptedData = normalizeSyncData(decryptedData);
         
         // Debug log the decrypted data structure
         console.log('[DEBUG] Decrypted data structure:');
