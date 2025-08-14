@@ -29,6 +29,9 @@ tmp/
 *.bundle.js
 *.chunk.js
 *.min.js
+bundle.*.js
+workbox-*.js
+service-worker.js
 
 # Test artifacts
 test-results/
