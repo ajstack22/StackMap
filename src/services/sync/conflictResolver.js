@@ -258,7 +258,7 @@ class ConflictResolver {
    */
   applyResolutions(resolutions) {
     const currentState = useAppStore.getState();
-    const newState = { ...currentState };
+    let newState = { ...currentState };
     
     for (const resolution of resolutions) {
       if (!resolution.requiresUserInput && resolution.resolvedValue !== undefined) {
