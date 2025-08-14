@@ -977,7 +977,16 @@ class SyncService {
     const userActivities = newState.users[newState.currentUser]?.days?.[newState.currentDay]?.activities || [];
     console.log('[DEBUG] User activities before setState:', userActivities.length);
     
+    // First set the state with users and other data
     useAppStore.setState(newState);
+    
+    // Then explicitly set the activities for the current user/day
+    // This is critical - the app expects activities in the top-level activities field
+    const { setActivities } = useAppStore.getState();
+    if (setActivities && userActivities.length > 0) {
+      console.log('[DEBUG] Explicitly setting activities via setActivities()');
+      setActivities(userActivities.filter(a => !a.deleted));
+    }
     
     // DEBUG: Verify what was actually set
     const afterState = useAppStore.getState();
@@ -1095,6 +1104,14 @@ class SyncService {
     
     // Update with merged state
     useAppStore.setState({ users: finalUsers });
+    
+    // Now update the activities for the current user/day
+    const currentState = useAppStore.getState();
+    const currentUserActivities = finalUsers[currentState.currentUser]?.days?.[currentState.currentDay]?.activities || [];
+    if (currentUserActivities.length > 0) {
+      console.log('[DEBUG] mergeData: Setting activities for current user/day');
+      currentState.setActivities(currentUserActivities.filter(a => !a.deleted));
+    }
   }
   
   /**
