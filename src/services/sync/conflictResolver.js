@@ -622,12 +622,32 @@ class ConflictResolver {
               } else {
                 // Activity exists in both - merge states (prefer newer data)
                 console.log(`[SYNC-MERGE] Merging activity ${localActivity.id}:`);
-                console.log(`  Local: completed=${localActivity.completed}, completedAt=${localActivity.completedAt}, uncompletedAt=${localActivity.uncompletedAt}`);
-                console.log(`  Remote: completed=${remoteActivity.completed}, completedAt=${remoteActivity.completedAt}, uncompletedAt=${remoteActivity.uncompletedAt}`);
+                console.log(`  Local: completed=${localActivity.completed}, completedAt=${localActivity.completedAt}, uncompletedAt=${localActivity.uncompletedAt}, modifiedAt=${localActivity.modifiedAt}`);
+                console.log(`  Remote: completed=${remoteActivity.completed}, completedAt=${remoteActivity.completedAt}, uncompletedAt=${remoteActivity.uncompletedAt}, modifiedAt=${remoteActivity.modifiedAt}`);
                 
-                // Start with a clean activity without completion fields
-                const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanActivity } = remoteActivity;
-                const merged = { ...cleanActivity, completed: false }; // Default to incomplete
+                // Determine which version has newer text/icon changes based on modifiedAt timestamp
+                let baseActivity;
+                const localModified = localActivity.modifiedAt || localActivity.lastModified || 0;
+                const remoteModified = remoteActivity.modifiedAt || remoteActivity.lastModified || 0;
+                
+                if (localModified > remoteModified) {
+                  // Local has newer changes - use local as base for non-completion fields
+                  console.log(`  Using local as base (modifiedAt: ${localModified} > ${remoteModified})`);
+                  const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanLocal } = localActivity;
+                  baseActivity = cleanLocal;
+                } else if (remoteModified > localModified) {
+                  // Remote has newer changes - use remote as base for non-completion fields
+                  console.log(`  Using remote as base (modifiedAt: ${remoteModified} > ${localModified})`);
+                  const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanRemote } = remoteActivity;
+                  baseActivity = cleanRemote;
+                } else {
+                  // Same timestamp or both missing - prefer local (current state)
+                  console.log(`  Using local as base (same or no timestamps)`);
+                  const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanLocal } = localActivity;
+                  baseActivity = cleanLocal;
+                }
+                
+                const merged = { ...baseActivity, completed: false }; // Default to incomplete
                 
                 // Handle completion state based on timestamps
                 // Compare all timestamp types to determine the most recent action

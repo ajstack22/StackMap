@@ -292,32 +292,128 @@ const useAppStore = create(
       
       setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }, false, 'setHasCompletedOnboarding'),
       
-      addActivity: (activity) => set((state) => ({
-        activities: [...state.activities, activity],
-        libraryTemplates: [...state.libraryTemplates, activity] // Keep both in sync
-      }), false, 'addActivity'),
+      addActivity: (activity) => set((state) => {
+        const newActivity = {
+          ...activity,
+          // Ensure new activities have a modifiedAt timestamp
+          modifiedAt: activity.modifiedAt || Date.now()
+        };
+        
+        const updatedActivities = [...state.activities, newActivity];
+        
+        const newState = {
+          activities: updatedActivities,
+          libraryTemplates: [...state.libraryTemplates, newActivity] // Keep both in sync
+        };
+        
+        // If we have a current user and day, also update in users
+        if (state.currentUser && state.currentDay && state.users[state.currentUser]) {
+          newState.users = {
+            ...state.users,
+            [state.currentUser]: {
+              ...state.users[state.currentUser],
+              days: {
+                ...state.users[state.currentUser].days || {},
+                [state.currentDay]: {
+                  ...state.users[state.currentUser].days?.[state.currentDay] || {},
+                  activities: updatedActivities
+                }
+              }
+            }
+          };
+        }
+        
+        return newState;
+      }, false, 'addActivity'),
       
       updateActivity: (activityId, updates) => set((state) => {
         const updatedActivities = state.activities.map(activity => 
-          activity.id === activityId ? { ...activity, ...updates } : activity
+          activity.id === activityId ? { 
+            ...activity, 
+            ...updates,
+            // Add modifiedAt timestamp for sync conflict resolution
+            modifiedAt: Date.now()
+          } : activity
         );
-        return {
+        
+        // Also update in users.days to ensure sync persists the changes
+        const newState = {
           activities: updatedActivities,
           libraryTemplates: updatedActivities // Keep both in sync
         };
+        
+        // If we have a current user and day, also update in users
+        if (state.currentUser && state.currentDay && state.users[state.currentUser]) {
+          newState.users = {
+            ...state.users,
+            [state.currentUser]: {
+              ...state.users[state.currentUser],
+              days: {
+                ...state.users[state.currentUser].days || {},
+                [state.currentDay]: {
+                  ...state.users[state.currentUser].days?.[state.currentDay] || {},
+                  activities: updatedActivities
+                }
+              }
+            }
+          };
+        }
+        
+        return newState;
       }, false, 'updateActivity'),
       
       deleteActivity: (activityId) => set((state) => {
         const filteredActivities = state.activities.filter(activity => activity.id !== activityId);
-        return {
+        
+        const newState = {
           activities: filteredActivities,
           libraryTemplates: filteredActivities // Keep both in sync
         };
+        
+        // If we have a current user and day, also update in users
+        if (state.currentUser && state.currentDay && state.users[state.currentUser]) {
+          newState.users = {
+            ...state.users,
+            [state.currentUser]: {
+              ...state.users[state.currentUser],
+              days: {
+                ...state.users[state.currentUser].days || {},
+                [state.currentDay]: {
+                  ...state.users[state.currentUser].days?.[state.currentDay] || {},
+                  activities: filteredActivities
+                }
+              }
+            }
+          };
+        }
+        
+        return newState;
       }, false, 'deleteActivity'),
       
-      reorderActivities: (newOrder) => set({ 
-        activities: newOrder,
-        libraryTemplates: newOrder // Keep both in sync
+      reorderActivities: (newOrder) => set((state) => {
+        const newState = { 
+          activities: newOrder,
+          libraryTemplates: newOrder // Keep both in sync
+        };
+        
+        // If we have a current user and day, also update in users
+        if (state.currentUser && state.currentDay && state.users[state.currentUser]) {
+          newState.users = {
+            ...state.users,
+            [state.currentUser]: {
+              ...state.users[state.currentUser],
+              days: {
+                ...state.users[state.currentUser].days || {},
+                [state.currentDay]: {
+                  ...state.users[state.currentUser].days?.[state.currentDay] || {},
+                  activities: newOrder
+                }
+              }
+            }
+          };
+        }
+        
+        return newState;
       }, false, 'reorderActivities'),
       
       // Helper function for updating user activities with proper null checking
