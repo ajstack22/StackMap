@@ -136,3 +136,4 @@ icon-color-preview.html
 
 # Old bundle backup directory
 /build-artifacts/
+tsconfig.tsbuildinfo
