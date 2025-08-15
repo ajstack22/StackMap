@@ -1539,14 +1539,22 @@ const App = () => {
       pinned: false,
       activityType: 'normal',
       time: activityTime || null,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
+      modifiedAt: Date.now() // Add timestamp for sync conflict resolution
     };
     
     let newActivities;
     if (editingActivity) {
       newActivities = activities.map(a => 
         a.id === editingActivity.id 
-          ? { ...a, text: activityTitle, description: activityDescription || '', icon: activityEmoji, time: activityTime || null } 
+          ? { 
+              ...a, 
+              text: activityTitle, 
+              description: activityDescription || '', 
+              icon: activityEmoji, 
+              time: activityTime || null,
+              modifiedAt: Date.now() // Add timestamp for sync conflict resolution
+            } 
           : a
       );
     } else {
