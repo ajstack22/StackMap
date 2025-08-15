@@ -1934,7 +1934,7 @@ const App = () => {
           enableDayManagement: true,
           pinEnabled: await hasSecurePin()
         },
-        templates,
+        templates: libraryTemplates,
         exportDate: new Date().toISOString()
       };
 
