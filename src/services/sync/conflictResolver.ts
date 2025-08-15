@@ -1,5 +1,5 @@
-import { useAppStore } from '../../stores';
-import { validateSyncedData, repairSyncedData } from './dataValidator';
+// import { useAppStore } from '../../stores';
+// import { validateSyncedData, repairSyncedData } from './dataValidator';
 import { User, Activity, AppState } from '../../../types/common';
 
 // Conflict resolution strategies
@@ -61,7 +61,7 @@ class ConflictResolver {
   /**
    * Detect conflicts between local and remote state
    */
-  detectConflicts(localState: SyncState, remoteState: SyncState, lastSyncTime?: number): Conflict[] {
+  detectConflicts(localState: SyncState, remoteState: SyncState, _lastSyncTime?: number): Conflict[] {
     const conflicts: Conflict[] = [];
     
     // Get timestamps
