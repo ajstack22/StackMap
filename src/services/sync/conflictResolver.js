@@ -638,19 +638,30 @@ class ConflictResolver {
                     merged.completedBy = remoteActivity.completedBy;
                   }
                 } else if (localActivity.completedAt && !remoteActivity.completedAt) {
-                  // Only local has completion timestamp - preserve it
+                  // Only local has completion timestamp - always preserve it
                   merged.completed = true;
                   merged.completedAt = localActivity.completedAt;
                   merged.completedBy = localActivity.completedBy;
                 } else if (!localActivity.completedAt && remoteActivity.completedAt) {
-                  // Only remote has completion timestamp (already in merged)
-                  merged.completed = remoteActivity.completed;
-                  merged.completedAt = remoteActivity.completedAt;
-                  merged.completedBy = remoteActivity.completedBy;
+                  // Only remote has completion timestamp - check if local explicitly uncompleted it
+                  if (localActivity.completed === false && remoteActivity.completed === true) {
+                    // Local explicitly uncompleted - this is newer, remove completion
+                    merged.completed = false;
+                    delete merged.completedAt;
+                    delete merged.completedBy;
+                  } else {
+                    // Keep remote completion state
+                    merged.completed = remoteActivity.completed;
+                    merged.completedAt = remoteActivity.completedAt;
+                    merged.completedBy = remoteActivity.completedBy;
+                  }
                 } else {
-                  // Neither has completion timestamp - preserve local if true
-                  if (localActivity.completed) {
-                    merged.completed = true;
+                  // Neither has completion timestamp - use local state as it's the current action
+                  merged.completed = localActivity.completed || false;
+                  if (localActivity.completed && !localActivity.completedAt) {
+                    // Add timestamp if missing (for backwards compatibility)
+                    merged.completedAt = Date.now();
+                    merged.completedBy = localActivity.completedBy || 'unknown';
                   }
                 }
                 
