@@ -159,7 +159,7 @@ const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
 
 
 const App = () => {
-  console.log('🚨 STACKMAP APP STARTED - Version 2025.08.15.5 - Console logging is working!');
+  console.log('🚨 STACKMAP APP STARTED - Version 2025.08.15.7 - Console logging is working!');
   const insets = useSafeAreaInsets();
   
   // Use our custom hooks
