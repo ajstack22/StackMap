@@ -1372,11 +1372,13 @@ const App = () => {
             completedBy: deviceId
           };
         } else {
-          // Uncompleting the activity - remove timestamp and device info
+          // Uncompleting the activity - remove completion info but track when it was uncompleted
           const { completedAt, completedBy, ...activityWithoutCompletion } = activity;
           return {
             ...activityWithoutCompletion,
-            completed: false
+            completed: false,
+            uncompletedAt: Date.now(), // Track when it was marked incomplete for sync
+            uncompletedBy: deviceId
           };
         }
       }
