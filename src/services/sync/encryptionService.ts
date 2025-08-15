@@ -44,7 +44,7 @@ class EncryptionService {
    * Derive encryption key from recovery phrase using PBKDF2-like approach
    */
   async deriveKeyFromPhrase(recoveryPhrase: string, salt: Uint8Array | string | null = null): Promise<DerivedKey> {
-    const startTime = Date.now();
+    // const startTime = Date.now(); // Commented out to avoid lint error
         
     // If no salt provided, generate one
     let saltBytes: Uint8Array;
@@ -78,9 +78,9 @@ class EncryptionService {
         // Use setTimeout to allow UI updates and other events to process
         await new Promise(resolve => setTimeout(resolve, 0));
         
-        // Log timing info
-        const elapsed = Date.now() - startTime;
-        const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
+        // Log timing info (commented out to avoid lint errors)
+        // const elapsed = Date.now() - startTime;
+        // const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
       }
       
       // Log progress in development mode

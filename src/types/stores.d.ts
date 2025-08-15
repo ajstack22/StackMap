@@ -6,7 +6,6 @@ import {
   LibraryCategory, 
   ThemeName, 
   CelebrationType,
-  SyncData,
   ExportData
 } from './index';
 

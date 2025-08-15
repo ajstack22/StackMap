@@ -101,7 +101,7 @@ const applySkinTone = (icon, skinTone) => {
   
   // Simply concatenate the skin tone modifier
   // React Native should handle the rendering
-  return emoji + skinTone;
+  return icon + skinTone;
 };
 
 // Helper function to detect if a string contains emoji
