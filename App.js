@@ -1,3 +1,4 @@
+// @ts-check
 import React, { useState, useEffect, useRef } from 'react';
 import {
   SafeAreaView,
@@ -108,6 +109,7 @@ import { useAppStore } from './src/stores';
 
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
+import syncService from './src/services/sync/syncService';
 
 // Import utilities
 import {
@@ -1959,7 +1961,10 @@ const App = () => {
           // Show success dialog with share option
           Alert.alert(
             'Export Successful!',
-            `Your data has been saved to:\nDownloads/${fileName}\n\nWould you like to share it to another app?`,
+            `Your data has been saved to:
+Downloads/${fileName}
+
+Would you like to share it to another app?`,
             [
               {
                 text: 'No Thanks',
@@ -2193,7 +2198,9 @@ const App = () => {
                 onPress: () => {
                   Alert.alert(
                     'Additional Files',
-                    `Showing only the 5 most recent backups. ${uniqueFiles.length - 5} older backup(s) not shown.\n\nTo use an older backup, delete some recent exports first.`,
+                    `Showing only the 5 most recent backups. ${uniqueFiles.length - 5} older backup(s) not shown.
+
+To use an older backup, delete some recent exports first.`,
                     [{ text: 'OK', onPress: () => resolve(null) }]
                   );
                 }
@@ -2452,7 +2459,9 @@ const App = () => {
           
           Alert.alert(
             'Import Backup?',
-            `Found backup from ${fileInfo}\n\nThis will replace all your current data.`,
+            `Found backup from ${fileInfo}
+
+This will replace all your current data.`,
             [
               { text: 'Cancel', style: 'cancel' },
               { 
@@ -2899,7 +2908,10 @@ const App = () => {
       // Confirm import
       Alert.alert(
         'Import Backup',
-        `From: ${fileDisplayName}\nUsers: ${userNames} (${userCount} total)\n\n⚠️ This will replace all your current data.`,
+        `From: ${fileDisplayName}
+Users: ${userNames} (${userCount} total)
+
+⚠️ This will replace all your current data.`,
         [
           { text: 'Cancel', style: 'cancel' },
           {

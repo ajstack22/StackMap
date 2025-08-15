@@ -1,3 +1,4 @@
+// @ts-check
 import React, { useState, useRef, useEffect } from 'react';
 import { Text, TextInput } from '../Typography';
 import {
@@ -421,7 +422,10 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                           setTimeout(() => {
                             Alert.alert(
                               'Import Successful',
-                              `Imported:\n• ${result.summary.users} user(s)\n• ${result.summary.activities} activity categories\n${result.summary.hasPin ? '• PIN protection enabled' : ''}`
+                              `Imported:
+• ${result.summary.users} user(s)
+• ${result.summary.activities} activity categories
+${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                             );
                           }, 100);
                         } else {
@@ -536,7 +540,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                     }
                     
                     // Check if the text contains only ASCII characters (reject these)
-                    if (/^[a-zA-Z0-9\s\.,!?@#$%^&*()_+\-=\[\]{};':"\\|<>\/~`]+$/.test(text)) {
+                    if (/^[a-zA-Z0-9\s\.,!?@#$%^&*()_+\-=\[\]{};':"\|<>\/~`]+$/.test(text)) {
                       // It's only regular characters - keep previous value
                       return;
                     }

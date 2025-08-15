@@ -1,3 +1,4 @@
+// @ts-check
 import { useAppStore } from '../../stores';
 import { validateSyncedData, repairSyncedData } from './dataValidator';
 import { normalizeSyncData } from '../../utils/dataNormalizer';

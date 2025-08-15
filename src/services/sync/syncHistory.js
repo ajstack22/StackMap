@@ -1,3 +1,4 @@
+// @ts-check
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HISTORY_KEY = '@sync_history';

@@ -1,3 +1,4 @@
+// @ts-check
 // Import crypto polyfill for React Native BEFORE tweetnacl
 import { Platform } from 'react-native';
 if (Platform.OS !== 'web') {

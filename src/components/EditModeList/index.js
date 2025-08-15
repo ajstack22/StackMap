@@ -1,3 +1,4 @@
+// @ts-check
 import React, { useMemo } from 'react';
 import { 
   FlatList, 

@@ -130,6 +130,49 @@ else
     echo "✅ Lint check passed (warnings are OK)!"
 fi
 
+# TypeScript check (if available)
+echo "- Running TypeScript checks..."
+if [ -f "tsconfig.json" ] && command -v npx &> /dev/null; then
+    # Count critical type errors (exclude minor ones for gradual migration)
+    npx tsc --noEmit 2>&1 | tee /tmp/tsc-output.txt
+    TSC_EXIT_CODE=${PIPESTATUS[0]}
+    
+    # Check for critical errors (undefined methods, missing imports)
+    # Exclude DOM-related errors which are expected in React Native
+    if grep -E "(Cannot find name|is not a function|does not exist on type.*services)" /tmp/tsc-output.txt | grep -v "document\|navigator\|window\.location" > /dev/null; then
+        echo ""
+        echo "❌ Critical TypeScript errors found!"
+        echo "These errors may cause runtime crashes. Please fix before deploying."
+        echo "Run 'npm run typecheck' to see the issues again."
+        exit 1
+    else
+        ERROR_COUNT=$(grep -c "error TS" /tmp/tsc-output.txt 2>/dev/null || echo "0")
+        if [ "$ERROR_COUNT" -gt "0" ]; then
+            echo "⚠️  TypeScript check found $ERROR_COUNT errors (non-critical, migration in progress)"
+        else
+            echo "✅ TypeScript check passed!"
+        fi
+    fi
+else
+    echo "⚠️  TypeScript check skipped (tsconfig.json not found)"
+fi
+
+# Check for undefined method calls
+echo "- Checking for undefined method calls..."
+if [ -f "scripts/check-methods-improved.js" ]; then
+    node scripts/check-methods-improved.js 2>&1 | tee /tmp/method-check.txt
+    if grep -q "❌ Error:" /tmp/method-check.txt; then
+        echo ""
+        echo "❌ Undefined method calls found!"
+        echo "These will cause runtime crashes. Please fix before deploying."
+        exit 1
+    else
+        echo "✅ Method check passed!"
+    fi
+else
+    echo "⚠️  Method check skipped (check script not found)"
+fi
+
 # Run essential tests (unless skipped)
 if [ "$SKIP_TESTS" = false ]; then
     echo ""

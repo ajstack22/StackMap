@@ -187,6 +187,8 @@ const ActivityCard = React.memo(({ activity }) => {
 
 ### Before Committing
 - [ ] Lint passes: `npm run lint`
+- [ ] TypeScript check passes: `npm run typecheck`
+- [ ] Method check passes: `npm run check:methods`
 - [ ] Works on iOS simulator
 - [ ] Works on Android emulator  
 - [ ] Works in Chrome/Safari
@@ -198,6 +200,53 @@ const ActivityCard = React.memo(({ activity }) => {
 - **Android**: Test on phone and tablet
 - **Web**: Test on desktop and mobile browsers
 - **All**: Test offline functionality
+
+## TypeScript Standards
+
+### Migration Strategy
+- All new files MUST be TypeScript (.ts/.tsx)
+- Existing files should add `// @ts-check` during any modification
+- Critical services must be converted to TypeScript
+- Run `npm run typecheck` before committing
+
+### Type Safety Requirements
+- No `any` types without explicit justification
+- All function parameters must be typed
+- Return types should be explicit for public APIs
+- Use interface over type for object shapes
+- Prefer strict null checks where possible
+
+### File Organization
+- Type definitions in `/types` directory
+- Component types co-located with components
+- Shared types in `types/common.d.ts`
+- Service types in `types/services.d.ts`
+
+### Common Patterns
+```typescript
+// ✅ GOOD: Explicit types
+interface Activity {
+  id: string;
+  text: string;
+  icon: string;
+  completed: boolean;
+}
+
+function updateActivity(activity: Activity): Activity {
+  return { ...activity, completed: true };
+}
+
+// ❌ BAD: Implicit any
+function updateActivity(activity) {
+  return { ...activity, completed: true };
+}
+```
+
+### Gradual Migration Rules
+1. Add `// @ts-check` to any file you modify
+2. Fix critical type errors (undefined methods, missing imports)
+3. Document non-critical errors for future fixing
+4. Convert to .ts/.tsx when doing major refactors
 
 ## Build & Deployment
 

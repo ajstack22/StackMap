@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Data validation utility for sync operations
  * Ensures data integrity and prevents corruption

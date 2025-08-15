@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Cleanup duplicate/ghost users in the store
  * This utility can be run to clean up existing duplicate users

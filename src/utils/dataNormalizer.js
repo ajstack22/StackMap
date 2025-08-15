@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Data normalization utilities to ensure consistent field naming
  * across the application, handling historical variations.

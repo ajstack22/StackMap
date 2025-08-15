@@ -76,6 +76,12 @@
 
 ## 🛠️ ACTIVE DEVELOPMENT
 
+### TypeScript Migration (Jan 2025)
+- Gradual migration strategy with @ts-check
+- Type checking integrated into deployment
+- See `/prompts/typescript-migration.md` for full strategy
+- Run `npm run typecheck` before committing
+
 ### Edit Mode Refactor (Jan 2025)
 - Unified list-based interface across all platforms
 - Button-based reordering (no drag & drop)

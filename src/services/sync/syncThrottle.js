@@ -1,3 +1,4 @@
+// @ts-check
 class SyncThrottle {
   constructor() {
     this.lastSyncTime = 0;
