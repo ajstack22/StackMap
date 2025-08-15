@@ -25,6 +25,15 @@
     "resolveJsonModule": true,
     "skipLibCheck": true,
     
+    // Include DOM types for web platform
+    "lib": ["ES2020", "DOM"],
+    "target": "ES2020",
+    
+    // Enable interop for default imports
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "downlevelIteration": true,
+    
     // Only type-check, don't emit
     "noEmit": true,
     

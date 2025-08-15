@@ -953,6 +953,10 @@ class SyncService {
       }
     }
     
+    // Get theme from current user's settings, fallback to global or default
+    const currentUserSettings = users?.[finalCurrentUser]?.settings || {};
+    const userTheme = currentUserSettings.theme || globalSettings?.currentTheme || 'stackBlue';
+    
     // Update store with export format data
     const newState = {
       // Set activities from the current user's current day (not templates!)
@@ -966,7 +970,7 @@ class SyncService {
       },
       users: users || {},
       currentUser: finalCurrentUser,
-      currentTheme: globalSettings?.currentTheme || 'stackBlue',
+      currentTheme: userTheme,  // Use user-specific theme
       bannerPosition: globalSettings?.bannerPosition || 'top',
       soundEnabled: globalSettings?.soundEnabled !== false,
       taskCelebration: globalSettings?.taskCelebration || 'rainbow',

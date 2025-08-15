@@ -34,6 +34,12 @@ interface Activity {
   deletedAt?: number;   // Timestamp of deletion
   lastModified?: number; // Unix timestamp for sync conflict resolution
   
+  // Completion tracking fields (for sync conflict resolution)
+  completedAt?: number;    // Unix timestamp when marked complete
+  completedBy?: string;    // Device ID that marked complete
+  uncompletedAt?: number;  // Unix timestamp when marked incomplete
+  uncompletedBy?: string;  // Device ID that marked incomplete
+  
   // Optional fields
   description?: string; // Extended description
   order?: number;       // Display order
@@ -160,6 +166,8 @@ When importing or syncing data, normalize fields as follows:
 - `Activity.completed`: false if missing
 - `Activity.completedAt`: not set when completed is false
 - `Activity.completedBy`: not set when completed is false
+- `Activity.uncompletedAt`: not set when completed is true
+- `Activity.uncompletedBy`: not set when completed is true
 - `Activity.pinned`: false if missing
 - `Day.activities`: [] if missing
 
@@ -177,8 +185,10 @@ The following fields MUST be present and valid:
    - `Activity.id` - must be non-empty string
    - `Activity.text` OR `Activity.name` OR `Activity.title` - at least one must exist
    - `Activity.completed` - must be boolean (defaults to false if missing)
-   - `Activity.completedAt` - optional, Unix timestamp when completed/uncompleted
-   - `Activity.completedBy` - optional, device ID that made the completion change
+   - `Activity.completedAt` - optional, Unix timestamp when marked complete
+   - `Activity.completedBy` - optional, device ID that marked complete
+   - `Activity.uncompletedAt` - optional, Unix timestamp when marked incomplete
+   - `Activity.uncompletedBy` - optional, device ID that marked incomplete
    - `Activity.pinned` - must be boolean (defaults to false if missing)
 
 ### Data Integrity

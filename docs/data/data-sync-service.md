@@ -120,16 +120,57 @@ if (hasLocalChanges() || await hasRemoteChanges()) {
 
 ### Activity Merge Rules
 1. **Unique by ID** - Activities identified by ID
-2. **Completed State** - Determined by `completedAt` timestamp:
-   - Both have timestamps: Most recent timestamp wins
-   - One has timestamp: That completion state is preserved
-   - No timestamps: Local completion preserved (legacy fallback)
-3. **Deletion Priority** - Recent deletions (< 30 seconds) respected
-4. **Field Updates** - Latest modified version wins
-5. **Completion Tracking** - Each completion includes:
+2. **Completion State Resolution** - Uses "last action wins" based on timestamps:
+   - Compares both `completedAt` and `uncompletedAt` timestamps
+   - The most recent timestamp determines the final state
+   - If activity is marked complete: Sets `completedAt` and `completedBy`
+   - If activity is marked incomplete: Sets `uncompletedAt` and `uncompletedBy`
+3. **Timestamp Comparison Logic**:
+   - Both have `completedAt`: Most recent `completedAt` wins
+   - One has `completedAt`, other has `uncompletedAt`: Most recent timestamp wins
+   - No timestamps: Local state preserved (legacy fallback)
+4. **Field Cleanup**:
+   - When marked complete: Removes `uncompletedAt` and `uncompletedBy`
+   - When marked incomplete: Removes `completedAt` and `completedBy`
+   - Ensures only one set of timestamps exists at a time
+5. **Deletion Priority** - Recent deletions (< 30 seconds) respected
+6. **Field Updates** - Latest `modifiedAt` timestamp determines non-completion field values
+7. **Completion Tracking Fields**:
    - `completed`: boolean state
-   - `completedAt`: Unix timestamp when completed/uncompleted
-   - `completedBy`: Device ID that made the change
+   - `completedAt`: Unix timestamp when marked complete
+   - `completedBy`: Device ID that marked complete
+   - `uncompletedAt`: Unix timestamp when marked incomplete
+   - `uncompletedBy`: Device ID that marked incomplete
+
+### Completion State Example
+```javascript
+// Device A marks activity complete at 10:00 AM
+activityOnDeviceA = {
+  id: "activity_123",
+  completed: true,
+  completedAt: 1736879400000,  // 10:00 AM
+  completedBy: "deviceA",
+  // uncompletedAt and uncompletedBy are removed
+}
+
+// Device B marks same activity incomplete at 10:05 AM
+activityOnDeviceB = {
+  id: "activity_123",
+  completed: false,
+  uncompletedAt: 1736879700000,  // 10:05 AM
+  uncompletedBy: "deviceB",
+  // completedAt and completedBy are removed
+}
+
+// During sync: Device B's uncompletion (10:05 AM) is newer than Device A's completion (10:00 AM)
+// Result: Activity is marked as incomplete on both devices
+mergedActivity = {
+  id: "activity_123",
+  completed: false,
+  uncompletedAt: 1736879700000,
+  uncompletedBy: "deviceB"
+}
+```
 
 ## Data Normalization
 
