@@ -144,7 +144,7 @@ describe('useAppStore', () => {
 
     it('should return state unchanged for non-existent user', () => {
       const initialUsers = { 'user1': { name: 'Test User' } };
-      useAppStore.getState().setUsers(initialUsers);
+      useAppStore.setState({ users: initialUsers });
 
       // Try to update non-existent user
       useAppStore.getState().updateUserActivities('user999', 'today', []);

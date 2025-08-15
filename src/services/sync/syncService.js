@@ -820,7 +820,7 @@ class SyncService {
       if (needsRepair) {
         console.log('[DEBUG] Repairing users with missing icons...');
         users = repairedUsers;
-        useAppStore.getState().setUsers(users);
+        useAppStore.setState({ users });
       }
     }
     
@@ -982,10 +982,9 @@ class SyncService {
     
     // Then explicitly set the activities for the current user/day
     // This is critical - the app expects activities in the top-level activities field
-    const { setActivities } = useAppStore.getState();
-    if (setActivities && userActivities.length > 0) {
-      console.log('[DEBUG] Explicitly setting activities via setActivities()');
-      setActivities(userActivities.filter(a => !a.deleted));
+    if (userActivities.length > 0) {
+      console.log('[DEBUG] Explicitly setting activities in state');
+      useAppStore.setState({ activities: userActivities.filter(a => !a.deleted) });
     }
     
     // DEBUG: Verify what was actually set
@@ -1110,7 +1109,7 @@ class SyncService {
     const currentUserActivities = finalUsers[storeState.currentUser]?.days?.[storeState.currentDay]?.activities || [];
     if (currentUserActivities.length > 0) {
       console.log('[DEBUG] mergeData: Setting activities for current user/day');
-      storeState.setActivities(currentUserActivities.filter(a => !a.deleted));
+      useAppStore.setState({ activities: currentUserActivities.filter(a => !a.deleted) });
     }
   }
   

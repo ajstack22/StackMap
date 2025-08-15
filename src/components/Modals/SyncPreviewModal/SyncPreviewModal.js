@@ -133,13 +133,14 @@ const SyncPreviewModal = ({
       // Clear existing local data before syncing
       // This ensures we don't have conflicts with existing users
       const { useAppStore } = require('../../../stores');
-      const store = useAppStore.getState();
-
-      store.setUsers({});
-      store.setCurrentUser(null);
-      store.setActivities([]);
-      store.setActivityCategories({});
-      store.setTemplates([]);
+      
+      // Clear existing data using setState directly
+      useAppStore.setState({
+        users: {},
+        currentUser: null,
+        activities: [],
+        libraryTemplates: []
+      });
       
       // Initialize sync with the decoded phrase
       await syncService.initialize(decodedPhrase);
