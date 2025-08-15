@@ -31,6 +31,8 @@ export const normalizeActivity = (activity) => {
   if (activity.order !== undefined) normalized.order = activity.order;
   if (activity.completedAt) normalized.completedAt = activity.completedAt;
   if (activity.completedBy) normalized.completedBy = activity.completedBy;
+  if (activity.uncompletedAt) normalized.uncompletedAt = activity.uncompletedAt;
+  if (activity.uncompletedBy) normalized.uncompletedBy = activity.uncompletedBy;
   if (activity.description) normalized.description = activity.description;
   
   return normalized;
