@@ -1,7 +1,7 @@
 // @ts-check
 import { useAppStore } from '../../stores';
 import { validateSyncedData, repairSyncedData } from './dataValidator';
-import { normalizeSyncData } from '../../utils/dataNormalizer';
+// import { normalizeSyncData } from '../../utils/dataNormalizer'; // DISABLED: was stripping critical fields
 
 // Conflict resolution strategies
 const STRATEGIES = {
@@ -393,9 +393,9 @@ class ConflictResolver {
       }
     }
     
-    // Normalize the state before validation to ensure consistent field names
-    console.log('Normalizing resolved state before validation...');
-    newState = normalizeSyncData(newState) || newState;
+    // DISABLED: Normalization was stripping critical fields
+    // console.log('Normalizing resolved state before validation...');
+    // newState = normalizeSyncData(newState) || newState;
     
     // Validate the final state
     if (!validateSyncedData(newState)) {

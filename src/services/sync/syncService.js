@@ -12,7 +12,7 @@ import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
 import { validateSyncedData, repairSyncedData, validateIncrementalSync } from './dataValidator';
-import { normalizeSyncData } from '../../utils/dataNormalizer';
+// import { normalizeSyncData } from '../../utils/dataNormalizer'; // DISABLED: was stripping critical fields
 
 // Determine API URL based on environment
 const getApiBaseUrl = () => {
@@ -592,9 +592,9 @@ class SyncService {
         console.log('[DEBUG] Decrypting remote data...');
         let decryptedData = encryptionService.decryptData(remoteData.encrypted_blob);
         
-        // Normalize the decrypted data to ensure consistent field names
-        console.log('[DEBUG] Normalizing sync data...');
-        decryptedData = normalizeSyncData(decryptedData);
+        // DISABLED: Normalization was stripping critical fields like uncompletedAt, deletedAt
+        // console.log('[DEBUG] Normalizing sync data...');
+        // decryptedData = normalizeSyncData(decryptedData);
         
         // Debug log the decrypted data structure
         console.log('[DEBUG] Decrypted data structure:');
@@ -640,8 +640,9 @@ class SyncService {
         // Get current local state (already normalized by getCurrentState)
         const localState = this.getCurrentState();
         
-        // Normalize the decrypted data before conflict detection
-        const normalizedRemoteData = normalizeSyncData(decryptedData) || decryptedData;
+        // DISABLED: Normalization was stripping critical fields
+        // const normalizedRemoteData = normalizeSyncData(decryptedData) || decryptedData;
+        const normalizedRemoteData = decryptedData;
         console.log('[SYNC] Remote version:', decryptedData.version, 'Local version:', this.lastSyncVersion);
         console.log('[SYNC] Remote timestamp:', decryptedData.lastModified, 'Local last sync:', this.lastSyncSuccess);
         
@@ -863,11 +864,11 @@ class SyncService {
     
     console.log('getCurrentState: Full export-style state:', currentState);
     
-    // Normalize the state before returning to ensure consistent field names
-    const normalizedState = normalizeSyncData(currentState) || currentState;
-    console.log('[DEBUG] getCurrentState - State normalized for sync');
+    // DISABLED: Normalization was stripping critical fields
+    // const normalizedState = normalizeSyncData(currentState) || currentState;
+    // console.log('[DEBUG] getCurrentState - State normalized for sync');
     
-    return normalizedState;
+    return currentState;
   }
 
   /**
