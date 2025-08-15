@@ -26,6 +26,7 @@ DEPLOY_IOS_DEVICE=false
 DEPLOY_WEB=false
 DEPLOY_PROD=false
 DEPLOY_ALL=false
+SKIP_TESTS=false
 
 if [ $# -eq 0 ]; then
     DEPLOY_ALL=true
@@ -51,9 +52,12 @@ for arg in "$@"; do
         --all)
             DEPLOY_ALL=true
             ;;
+        --skip-tests)
+            SKIP_TESTS=true
+            ;;
         *)
             echo "Unknown option: $arg"
-            echo "Usage: $0 [--android] [--ios] [--ios-device] [--web] [--prod] [--all]"
+            echo "Usage: $0 [--android] [--ios] [--ios-device] [--web] [--prod] [--all] [--skip-tests]"
             exit 1
             ;;
     esac
@@ -124,6 +128,52 @@ if grep -E "^\s+[0-9]+:[0-9]+\s+error\s" /tmp/lint-output.txt > /dev/null; then
     exit 1
 else
     echo "✅ Lint check passed (warnings are OK)!"
+fi
+
+# Run essential tests (unless skipped)
+if [ "$SKIP_TESTS" = false ]; then
+    echo ""
+    echo "🧪 Running essential tests..."
+    
+    # Test 1: Check if App.js exists and has basic structure
+    echo "- Testing app structure..."
+    if [ ! -f "App.js" ]; then
+        echo "❌ App.js not found!"
+        exit 1
+    fi
+    if ! grep -q "import React" App.js; then
+        echo "❌ App.js missing React import"
+        exit 1
+    fi
+    if ! grep -q "export default" App.js; then
+        echo "❌ App.js missing default export"
+        exit 1
+    fi
+    echo "✅ App.js structure OK"
+    
+    # Test 2: Check critical services exist
+    echo "- Checking critical services..."
+    if [ ! -f "src/services/sync/syncService.js" ]; then
+        echo "❌ Missing critical service: syncService.js"
+        exit 1
+    fi
+    if [ ! -f "src/stores/useAppStore.js" ]; then
+        echo "❌ Missing critical service: useAppStore.js"
+        exit 1
+    fi
+    echo "✅ Critical services present"
+    
+    # Test 3: Check for common issues (just warnings)
+    echo "- Checking for common issues..."
+    CONSOLE_COUNT=$(grep -r "console\.log" src/ --include="*.js" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$CONSOLE_COUNT" -gt "100" ]; then
+        echo "⚠️  Warning: $CONSOLE_COUNT console.log statements found"
+    fi
+    
+    echo "✅ All essential tests passed!"
+else
+    echo ""
+    echo "⚠️  Tests skipped (--skip-tests flag used)"
 fi
 echo ""
 
