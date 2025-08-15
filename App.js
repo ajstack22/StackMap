@@ -24,6 +24,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
+import syncService from './src/services/sync/syncService';
+
+// Temporary: Expose syncService for debugging (REMOVE IN PRODUCTION)
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  window.syncService = syncService;
+  window.useAppStore = useAppStore;
+  console.log('🔍 Debug mode: syncService and useAppStore exposed to window');
+}
+
 // Conditionally import drag-and-drop libraries for iOS only
 const DraggableFlatList = Platform.OS === 'ios' 
   ? require('react-native-draggable-flatlist').default 
