@@ -104,8 +104,9 @@ if (hasLocalChanges() || await hasRemoteChanges()) {
 
 ### Resolution Strategies
 1. **Last Write Wins** - For scalar values (theme, currentUser, etc.)
-2. **Merge** - For arrays (activities, combine unique items)
-3. **Custom** - For complex objects (users, special merge logic)
+2. **Timestamp-Based** - For activity completion states (most recent `completedAt` wins)
+3. **Merge** - For arrays (activities, combine unique items)
+4. **Custom** - For complex objects (users, special merge logic)
 
 ### User Merge Rules
 1. **Unique by ID** - Users are identified by their ID, not name/icon
@@ -119,9 +120,16 @@ if (hasLocalChanges() || await hasRemoteChanges()) {
 
 ### Activity Merge Rules
 1. **Unique by ID** - Activities identified by ID
-2. **Completed State** - Local completion always preserved
+2. **Completed State** - Determined by `completedAt` timestamp:
+   - Both have timestamps: Most recent timestamp wins
+   - One has timestamp: That completion state is preserved
+   - No timestamps: Local completion preserved (legacy fallback)
 3. **Deletion Priority** - Recent deletions (< 30 seconds) respected
 4. **Field Updates** - Latest modified version wins
+5. **Completion Tracking** - Each completion includes:
+   - `completed`: boolean state
+   - `completedAt`: Unix timestamp when completed/uncompleted
+   - `completedBy`: Device ID that made the change
 
 ## Data Normalization
 

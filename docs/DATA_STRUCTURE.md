@@ -81,6 +81,8 @@ interface Activity {
   text: string;        // Display name
   icon: string;        // Emoji character
   completed: boolean;
+  completedAt?: number;    // Unix timestamp when completed/uncompleted
+  completedBy?: string;    // Device ID that made the completion change
   pinned?: boolean;
   deleted?: boolean;
   deletedAt?: number;

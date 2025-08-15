@@ -222,11 +222,34 @@ class ConflictResolver {
           activityMap.set(activity.id, activity);
         }
         
-        // Merge remote activities (overwrites if same ID)
+        // Merge remote activities (smart merge for completion states)
         for (const activity of remoteValue) {
           const existing = activityMap.get(activity.id);
-          if (!existing || (activity.lastModified || 0) > (existing.lastModified || 0)) {
+          if (!existing) {
+            // New activity from remote
             activityMap.set(activity.id, activity);
+          } else {
+            // Activity exists in both - merge based on completion timestamps
+            let merged = { ...activity };
+            
+            // Handle completion state based on timestamps
+            if (existing.completedAt && activity.completedAt) {
+              // Both have completion timestamps - use the most recent
+              if (existing.completedAt > activity.completedAt) {
+                merged.completed = existing.completed;
+                merged.completedAt = existing.completedAt;
+                merged.completedBy = existing.completedBy;
+              }
+              // else use activity's values (already in merged)
+            } else if (existing.completedAt && !activity.completedAt) {
+              // Only existing has completion - preserve it
+              merged.completed = true;
+              merged.completedAt = existing.completedAt;
+              merged.completedBy = existing.completedBy;
+            }
+            // else use activity's values (already in merged)
+            
+            activityMap.set(activity.id, merged);
           }
         }
         
@@ -599,9 +622,35 @@ class ConflictResolver {
                 // Activity exists in both - merge states (prefer newer data)
                 const merged = { ...remoteActivity };
                 
-                // Preserve local completed state if it's true
-                if (localActivity.completed) {
+                // Handle completion state based on timestamps
+                // If both have completion timestamps, use the most recent one
+                if (localActivity.completedAt && remoteActivity.completedAt) {
+                  if (localActivity.completedAt > remoteActivity.completedAt) {
+                    // Local completion is newer
+                    merged.completed = localActivity.completed;
+                    merged.completedAt = localActivity.completedAt;
+                    merged.completedBy = localActivity.completedBy;
+                  } else {
+                    // Remote completion is newer (already in merged from ...remoteActivity)
+                    merged.completed = remoteActivity.completed;
+                    merged.completedAt = remoteActivity.completedAt;
+                    merged.completedBy = remoteActivity.completedBy;
+                  }
+                } else if (localActivity.completedAt && !remoteActivity.completedAt) {
+                  // Only local has completion timestamp - preserve it
                   merged.completed = true;
+                  merged.completedAt = localActivity.completedAt;
+                  merged.completedBy = localActivity.completedBy;
+                } else if (!localActivity.completedAt && remoteActivity.completedAt) {
+                  // Only remote has completion timestamp (already in merged)
+                  merged.completed = remoteActivity.completed;
+                  merged.completedAt = remoteActivity.completedAt;
+                  merged.completedBy = remoteActivity.completedBy;
+                } else {
+                  // Neither has completion timestamp - preserve local if true
+                  if (localActivity.completed) {
+                    merged.completed = true;
+                  }
                 }
                 
                 // Handle deletion conflicts

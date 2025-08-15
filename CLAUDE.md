@@ -70,6 +70,7 @@
 - **Recovery phrase**: 32 character hexadecimal (no spaces)
 - **Validation**: Auto-repairs missing user fields
 - **Performance**: Sync blobs are tiny (~4KB)
+- **Completion Sync**: Uses timestamps (`completedAt`) for true "last action wins"
 
 ---
 

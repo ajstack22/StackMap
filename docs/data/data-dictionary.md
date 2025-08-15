@@ -158,6 +158,8 @@ When importing or syncing data, normalize fields as follows:
 - `User.name`: 'User' if missing
 - `Activity.icon`: '📌' if missing
 - `Activity.completed`: false if missing
+- `Activity.completedAt`: not set when completed is false
+- `Activity.completedBy`: not set when completed is false
 - `Activity.pinned`: false if missing
 - `Day.activities`: [] if missing
 
@@ -175,6 +177,8 @@ The following fields MUST be present and valid:
    - `Activity.id` - must be non-empty string
    - `Activity.text` OR `Activity.name` OR `Activity.title` - at least one must exist
    - `Activity.completed` - must be boolean (defaults to false if missing)
+   - `Activity.completedAt` - optional, Unix timestamp when completed/uncompleted
+   - `Activity.completedBy` - optional, device ID that made the completion change
    - `Activity.pinned` - must be boolean (defaults to false if missing)
 
 ### Data Integrity
