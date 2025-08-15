@@ -2,9 +2,11 @@
 
 ## 🚀 DEPLOYMENT - ALWAYS USE THIS
 ```bash
-./scripts/deploy-all.sh  # Deploys to ALL platforms with auto version increment
+./scripts/deploy-all.sh  # Deploys to ALL platforms with auto version increment + tests
+./scripts/deploy-all.sh --skip-tests  # Emergency deploy without tests
 ```
 **For all deployment details:** See `prompts/deployment.md`
+**Testing approach:** See `docs/SIMPLE_TESTING_GUIDE.md`
 
 ---
 

@@ -15,7 +15,11 @@
     "security:audit": "npm audit --audit-level=moderate",
     "prebuild:web": "npm run security:audit",
     "build:secure": "npm run security:audit && npm run build:web",
-    "version:update": "node scripts/update-version.js"
+    "version:update": "node scripts/update-version.js",
+    "typecheck": "tsc --noEmit",
+    "typecheck:watch": "tsc --noEmit --watch",
+    "check:methods": "./scripts/check-method-calls.sh",
+    "check:all": "npm run lint && npm run typecheck && npm run check:methods"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",

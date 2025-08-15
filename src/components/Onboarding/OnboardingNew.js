@@ -167,7 +167,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         await syncService.initialize(phraseToUse);
         
         // Try to pull data - this should work even for new devices
-        const pullResult = await syncService.pull();
+        const pullResult = await syncService.pullData();
         
         if (!pullResult || !pullResult.data) {
           throw new Error('No sync group found with this sync key');
