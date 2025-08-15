@@ -642,7 +642,8 @@ class SyncService {
         
         // Normalize the decrypted data before conflict detection
         const normalizedRemoteData = normalizeSyncData(decryptedData) || decryptedData;
-        console.log('[DEBUG] Normalized remote data before conflict detection');
+        console.log('[SYNC] Remote version:', decryptedData.version, 'Local version:', this.lastSyncVersion);
+        console.log('[SYNC] Remote timestamp:', decryptedData.lastModified, 'Local last sync:', this.lastSyncSuccess);
         
         // Detect conflicts
         const conflicts = conflictResolver.detectConflicts(
@@ -652,7 +653,7 @@ class SyncService {
         );
         
         if (conflicts.length > 0) {
-          console.log('sync: Found', conflicts.length, 'conflicts - auto-resolving...');
+          console.log('[SYNC] Found', conflicts.length, 'conflicts - auto-resolving...');
           
           try {
             // Auto-resolve all conflicts (no user intervention)
@@ -660,9 +661,10 @@ class SyncService {
             
             // Apply all resolutions
             if (resolutions.finalState) {
-              console.log('sync: Auto-resolved all conflicts');
+              console.log('[SYNC] Auto-resolved all conflicts, applying merged state');
               await this.applyState(resolutions.finalState);
             } else if (resolutions.resolved && resolutions.resolved.length > 0) {
+              console.log('[SYNC] Applying partial resolutions');
               const partialState = conflictResolver.applyResolutions(resolutions.resolved);
               await this.applyState(partialState);
             }
@@ -1131,7 +1133,19 @@ class SyncService {
       throw new Error('Invalid state cannot be applied');
     }
     
-    console.log('[DEBUG] applyState: Using restoreData to properly handle state');
+    console.log('[SYNC-APPLY] Applying state with users:', Object.keys(state.users || {}));
+    
+    // Log activities for current user/day
+    const currentUser = state.currentUser || useAppStore.getState().currentUser;
+    const currentDay = state.currentDay || useAppStore.getState().currentDay;
+    if (state.users && state.users[currentUser] && state.users[currentUser].days && state.users[currentUser].days[currentDay]) {
+      const activities = state.users[currentUser].days[currentDay].activities || [];
+      console.log('[SYNC-APPLY] Activities for current day:');
+      activities.forEach(a => {
+        console.log(`  - ${a.id}: completed=${a.completed}, completedAt=${a.completedAt}, uncompletedAt=${a.uncompletedAt}`);
+      });
+    }
+    
     // Use restoreData to properly extract and set activities
     await this.restoreData(state);
     

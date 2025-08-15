@@ -621,6 +621,10 @@ class ConflictResolver {
                 activityMap.set(localActivity.id, localActivity);
               } else {
                 // Activity exists in both - merge states (prefer newer data)
+                console.log(`[SYNC-MERGE] Merging activity ${localActivity.id}:`);
+                console.log(`  Local: completed=${localActivity.completed}, completedAt=${localActivity.completedAt}, uncompletedAt=${localActivity.uncompletedAt}`);
+                console.log(`  Remote: completed=${remoteActivity.completed}, completedAt=${remoteActivity.completedAt}, uncompletedAt=${remoteActivity.uncompletedAt}`);
+                
                 // Start with a clean activity without completion fields
                 const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanActivity } = remoteActivity;
                 const merged = { ...cleanActivity, completed: false }; // Default to incomplete
@@ -629,6 +633,8 @@ class ConflictResolver {
                 // Compare all timestamp types to determine the most recent action
                 const localTimestamp = localActivity.completedAt || localActivity.uncompletedAt || 0;
                 const remoteTimestamp = remoteActivity.completedAt || remoteActivity.uncompletedAt || 0;
+                
+                console.log(`  Timestamps - Local: ${localTimestamp}, Remote: ${remoteTimestamp}`);
                 
                 // If both have completion timestamps, use the most recent one
                 if (localActivity.completedAt && remoteActivity.completedAt) {
@@ -705,6 +711,7 @@ class ConflictResolver {
                     delete merged.completedBy;
                   } else {
                     // No timestamps at all or equal - use local state as it's current
+                    console.log(`  No clear timestamp winner - using local state: completed=${localActivity.completed}`);
                     merged.completed = localActivity.completed || false;
                     if (localActivity.completed && !localActivity.completedAt) {
                       // Add timestamp if missing (for backwards compatibility)
@@ -723,6 +730,8 @@ class ConflictResolver {
                     }
                   }
                 }
+                
+                console.log(`  Final merged state: completed=${merged.completed}, completedAt=${merged.completedAt}, uncompletedAt=${merged.uncompletedAt}`);
                 
                 // Handle deletion conflicts
                 if (remoteActivity.deleted && !localActivity.deleted) {

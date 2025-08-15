@@ -1363,23 +1363,29 @@ const App = () => {
     
     const newActivities = activities.map(activity => {
       if (activity.id === id) {
+        console.log(`[TOGGLE] Activity ${id} - Previous: completed=${activity.completed}, completedAt=${activity.completedAt}, uncompletedAt=${activity.uncompletedAt}`);
+        
         if (!activity.completed) {
           // Completing the activity - add timestamp and device info
-          return { 
+          const newActivity = { 
             ...activity, 
             completed: true,
             completedAt: Date.now(),
             completedBy: deviceId
           };
+          console.log(`[TOGGLE] Marking complete - New: completed=true, completedAt=${newActivity.completedAt}`);
+          return newActivity;
         } else {
           // Uncompleting the activity - remove completion info but track when it was uncompleted
           const { completedAt, completedBy, ...activityWithoutCompletion } = activity;
-          return {
+          const newActivity = {
             ...activityWithoutCompletion,
             completed: false,
             uncompletedAt: Date.now(), // Track when it was marked incomplete for sync
             uncompletedBy: deviceId
           };
+          console.log(`[TOGGLE] Marking incomplete - New: completed=false, uncompletedAt=${newActivity.uncompletedAt}`);
+          return newActivity;
         }
       }
       return activity;
