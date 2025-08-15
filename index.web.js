@@ -11,10 +11,10 @@ if (Platform.OS === 'web') {
   
   // In production, disable all console outputs except errors
   if (process.env.NODE_ENV === 'production') {
-    // TEMPORARILY ENABLED FOR DEBUGGING SYNC ISSUES
-    // console.log = () => {};
-    // console.info = () => {};
-    // console.debug = () => {};
+    // Disable console logging in production
+    console.log = () => {};
+    console.info = () => {};
+    console.debug = () => {};
     console.warn = (...args) => {
       // Still suppress useNativeDriver warnings in production
       if (args[0] && typeof args[0] === 'string' && 
