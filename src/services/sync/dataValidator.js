@@ -236,9 +236,14 @@ export const repairSyncedData = (data) => {
       if (!user.name) {
         user.name = 'Unknown User';
       }
-      // Ensure icon field
+      // Migrate emoji to icon field for standardization
       if (!user.icon) {
-        user.icon = '👤'; // Default user icon
+        if (user.emoji) {
+          user.icon = user.emoji;
+          delete user.emoji; // Remove old field
+        } else {
+          user.icon = '👤'; // Default user icon
+        }
       }
       if (!user.days) {
         user.days = {};

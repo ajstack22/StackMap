@@ -730,10 +730,10 @@ class SyncService {
       Object.entries(users).forEach(([userId, user]) => {
         // Normalize emoji/icon fields - always use 'icon' field
         if (!user.icon) {
-          if (user.icon) {
-                        repairedUsers[userId] = {
+          if (user.emoji) {
+            repairedUsers[userId] = {
               ...user,
-              icon: user.icon,
+              icon: user.emoji,
               emoji: undefined // Remove redundant field
             };
             needsRepair = true;
@@ -745,9 +745,9 @@ class SyncService {
             };
             needsRepair = true;
           }
-        } else if (user.icon && user.icon !== user.icon) {
+        } else if (user.icon && user.emoji && user.icon !== user.emoji) {
           // Remove redundant emoji field if it exists
-                    repairedUsers[userId] = {
+          repairedUsers[userId] = {
             ...user,
             emoji: undefined
           };
