@@ -3,6 +3,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 const { GenerateSW } = require('workbox-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const TerserPlugin = require('terser-webpack-plugin');
 
 module.exports = {
   mode: process.env.NODE_ENV || 'development',
@@ -151,6 +152,18 @@ module.exports = {
       }),
     ] : []),
   ],
+  optimization: isProduction ? {
+    minimizer: [
+      '...',  // Keep default minimizers
+      new TerserPlugin({
+        terserOptions: {
+          compress: {
+            drop_console: false,  // Keep console.log for debugging
+          },
+        },
+      }),
+    ],
+  } : {},
   devServer: {
     static: {
       directory: path.join(__dirname, 'web/public'),
