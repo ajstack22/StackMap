@@ -159,6 +159,7 @@ const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
 
 
 const App = () => {
+  console.log('🚨 STACKMAP APP STARTED - Version 2025.08.15.20 - Console logging is working!');
   const insets = useSafeAreaInsets();
   
   // Use our custom hooks
@@ -347,7 +348,9 @@ const App = () => {
   const [isInitializing, setIsInitializing] = useState(false); // Prevent race conditions
   
   useEffect(() => {
+    console.log('🔥 App useEffect running - checking for URL params');
     if (Platform.OS === 'web') {
+      console.log('🌐 Running on web platform - Version check');
       // Get the raw query string to handle + characters properly
       const search = window.location.search;
       // Initial URL check
