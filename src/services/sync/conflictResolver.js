@@ -621,7 +621,9 @@ class ConflictResolver {
                 activityMap.set(localActivity.id, localActivity);
               } else {
                 // Activity exists in both - merge states (prefer newer data)
-                const merged = { ...remoteActivity };
+                // Start with a clean activity without completion fields
+                const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanActivity } = remoteActivity;
+                const merged = { ...cleanActivity, completed: false }; // Default to incomplete
                 
                 // Handle completion state based on timestamps
                 // Compare all timestamp types to determine the most recent action
@@ -683,12 +685,42 @@ class ConflictResolver {
                     merged.completedBy = remoteActivity.completedBy;
                   }
                 } else {
-                  // Neither has completion timestamp - use local state as it's the current action
-                  merged.completed = localActivity.completed || false;
-                  if (localActivity.completed && !localActivity.completedAt) {
-                    // Add timestamp if missing (for backwards compatibility)
-                    merged.completedAt = Date.now();
-                    merged.completedBy = localActivity.completedBy || 'unknown';
+                  // Neither has completion timestamp - check for uncompleted timestamps
+                  const localUncompletedAt = localActivity.uncompletedAt || 0;
+                  const remoteUncompletedAt = remoteActivity.uncompletedAt || 0;
+                  
+                  if (localUncompletedAt > remoteUncompletedAt) {
+                    // Local uncompleted is newer
+                    merged.completed = false;
+                    merged.uncompletedAt = localActivity.uncompletedAt;
+                    merged.uncompletedBy = localActivity.uncompletedBy;
+                    delete merged.completedAt;
+                    delete merged.completedBy;
+                  } else if (remoteUncompletedAt > localUncompletedAt) {
+                    // Remote uncompleted is newer
+                    merged.completed = false;
+                    merged.uncompletedAt = remoteActivity.uncompletedAt;
+                    merged.uncompletedBy = remoteActivity.uncompletedBy;
+                    delete merged.completedAt;
+                    delete merged.completedBy;
+                  } else {
+                    // No timestamps at all or equal - use local state as it's current
+                    merged.completed = localActivity.completed || false;
+                    if (localActivity.completed && !localActivity.completedAt) {
+                      // Add timestamp if missing (for backwards compatibility)
+                      merged.completedAt = Date.now();
+                      merged.completedBy = localActivity.completedBy || 'unknown';
+                      delete merged.uncompletedAt;
+                      delete merged.uncompletedBy;
+                    } else if (!localActivity.completed) {
+                      // Ensure incomplete state is clean
+                      delete merged.completedAt;
+                      delete merged.completedBy;
+                      if (localActivity.uncompletedAt) {
+                        merged.uncompletedAt = localActivity.uncompletedAt;
+                        merged.uncompletedBy = localActivity.uncompletedBy;
+                      }
+                    }
                   }
                 }
                 
