@@ -1,3 +1,4 @@
+// @ts-check
 import { MMKV } from 'react-native-mmkv';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -218,7 +219,6 @@ export const debugPinStorage = async () => {
       pinLength: retrievedPin?.length || 0
     };
     
-    console.log('[SecurePinStorage] Debug Info:', JSON.stringify(debugInfo, null, 2));
     return debugInfo;
   } catch (error) {
     console.error('[SecurePinStorage] Debug error:', error);

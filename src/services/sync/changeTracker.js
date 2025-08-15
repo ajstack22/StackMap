@@ -26,7 +26,6 @@ class ChangeTracker {
         this.changes = JSON.parse(stored);
       }
     } catch (error) {
-//       console.error('Failed to load change log:', error);
     }
 
     // Subscribe to store changes
@@ -192,7 +191,6 @@ class ChangeTracker {
     try {
       await AsyncStorage.setItem(CHANGE_LOG_KEY, JSON.stringify(this.changes));
     } catch (error) {
-//       console.error('Failed to persist change log:', error);
     }
   }
 

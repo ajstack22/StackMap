@@ -3221,9 +3221,9 @@ Users: ${userNames} (${userCount} total)
       {/* Card Content */}
       <View style={styles.cardContent}>
         {/* Emoji or Custom Image */}
-        {item.emoji && item.emoji.startsWith('image:') ? (
+        {(item.icon || item.emoji) && (item.icon || item.emoji).startsWith('image:') ? (
           <Image 
-            source={CUSTOM_IMAGE_SOURCES[item.emoji.substring(6)]}
+            source={CUSTOM_IMAGE_SOURCES[(item.icon || item.emoji).substring(6)]}
             style={styles.activityImage}
             resizeMode="contain"
           />
@@ -3235,7 +3235,7 @@ Users: ${userNames} (${userCount} total)
             accessible={false}
             importantForAccessibility="no"
           >
-            {item.emoji || item.icon || '🎯'}
+            {item.icon || item.emoji || '🎯'}
           </Text>
         )}
         

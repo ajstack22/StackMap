@@ -13,7 +13,6 @@ export const validateSyncedData = (data) => {
   try {
     // Check if data is an object
     if (!data || typeof data !== 'object') {
-//       console.error('Data validation failed: Data is not an object', data);
       return false;
     }
 
@@ -51,7 +50,6 @@ export const validateSyncedData = (data) => {
 
     return true;
   } catch (error) {
-//     console.error('Data validation error:', error);
     return false;
   }
 };
@@ -72,16 +70,10 @@ const validateUser = (userId, user) => {
     return false;
   }
 
-  // Check for icon field (normalize emoji to icon if needed)
+  // Check for icon field
   if (!user.icon) {
-    if (user.emoji) {
-      // Accept emoji field but it will be normalized to icon during repair
-      console.log(`Data validation: User ${userId} has emoji but no icon - will normalize`);
-    } else {
-      console.error(`Data validation failed: User ${userId} missing icon`, user);
-      console.error('Icon value:', user.icon, 'Emoji value:', user.emoji);
-      return false;
-    }
+    console.error(`Data validation failed: User ${userId} missing icon`, user);
+    return false;
   }
 
   // Validate days object
@@ -105,13 +97,11 @@ const validateUser = (userId, user) => {
  */
 const validateDay = (userId, day, dayData) => {
   if (!dayData || typeof dayData !== 'object') {
-//     console.error(`Data validation failed: Invalid day data for user ${userId}, day ${day}`);
     return false;
   }
 
   // Validate activities array
   if (!Array.isArray(dayData.activities)) {
-//     console.error(`Data validation failed: Activities not an array for user ${userId}, day ${day}`);
     return false;
   }
 
@@ -119,12 +109,10 @@ const validateDay = (userId, day, dayData) => {
   const activityIds = new Set();
   for (const activity of dayData.activities) {
     if (!validateActivity(activity)) {
-//       console.error(`Data validation failed: Invalid activity in user ${userId}, day ${day}`);
       return false;
     }
 
     if (activityIds.has(activity.id)) {
-//       console.error(`Data validation failed: Duplicate activity ID ${activity.id} in user ${userId}, day ${day}`);
       return false;
     }
     activityIds.add(activity.id);
@@ -145,42 +133,29 @@ const validateActivity = (activity) => {
 
   // Check required fields
   if (!activity.id || typeof activity.id !== 'string') {
-//     console.error('Activity missing or invalid ID:', activity);
     return false;
   }
 
-  // Check for text field (normalize from name/title if needed)
-  if (!activity.text) {
-    // Accept name or title for backwards compatibility, but will normalize
-    const activityText = activity.name || activity.title;
-    if (!activityText || typeof activityText !== 'string') {
-//       console.error('Activity missing text field:', activity);
-      return false;
-    }
-  } else if (typeof activity.text !== 'string') {
-//     console.error('Activity text field is not a string:', activity);
+  // Check for text field
+  if (!activity.text || typeof activity.text !== 'string') {
     return false;
   }
 
   // Check boolean fields - allow undefined for repair to fix
   if (activity.completed !== undefined && typeof activity.completed !== 'boolean') {
-//     console.error('Activity has invalid completed flag:', activity);
     return false;
   }
 
   if (activity.pinned !== undefined && typeof activity.pinned !== 'boolean') {
-//     console.error('Activity has invalid pinned flag:', activity);
     return false;
   }
 
   // Validate completion timestamp fields if present
   if (activity.completed) {
     if (activity.completedAt && typeof activity.completedAt !== 'number') {
-//       console.error('Activity has invalid completedAt timestamp:', activity);
       return false;
     }
     if (activity.completedBy && typeof activity.completedBy !== 'string') {
-//       console.error('Activity has invalid completedBy device ID:', activity);
       return false;
     }
   }
@@ -194,7 +169,6 @@ const validateActivity = (activity) => {
 const validateTheme = (theme) => {
   // Theme should be a string name like 'stackBlue', 'crimson', etc.
   if (!theme || typeof theme !== 'string') {
-//     console.error('Data validation failed: Theme should be a string');
     return false;
   }
 
@@ -206,7 +180,6 @@ const validateTheme = (theme) => {
   ];
 
   if (!validThemes.includes(theme)) {
-//     console.error(`Data validation failed: Invalid theme name '${theme}'`);
     return false;
   }
 
@@ -220,9 +193,6 @@ const validateTheme = (theme) => {
  */
 export const repairSyncedData = (data) => {
   try {
-    console.log('Repair: Starting data repair process');
-    console.log('Repair: Input data has', Object.keys(data.users || {}).length, 'users');
-    console.log('Repair: Current user is', data.currentUser);
     
     const repaired = JSON.parse(JSON.stringify(data)); // Deep clone
 
@@ -264,27 +234,13 @@ export const repairSyncedData = (data) => {
       
       // Ensure required user fields
       if (!user.name) {
-        console.log(`Repair: User ${userId} missing name, setting to 'Unknown User'`);
         user.name = 'Unknown User';
       }
-      // Normalize icon field
+      // Ensure icon field
       if (!user.icon) {
-        if (user.emoji) {
-          // Migrate emoji to icon field
-          console.log(`Repair: User ${userId} migrating emoji to icon field`);
-          user.icon = user.emoji;
-          delete user.emoji; // Remove redundant field
-        } else {
-          console.log(`Repair: User ${userId} missing icon, setting default`);
-          user.icon = '👤'; // Default user icon
-        }
-      } else if (user.emoji) {
-        // Remove redundant emoji field if icon exists
-        console.log(`Repair: User ${userId} removing redundant emoji field`);
-        delete user.emoji;
+        user.icon = '👤'; // Default user icon
       }
       if (!user.days) {
-        console.log(`Repair: User ${userId} missing days object, creating empty`);
         user.days = {};
       }
 
@@ -299,21 +255,16 @@ export const repairSyncedData = (data) => {
         dayData.activities = dayData.activities.map(activity => {
           if (!activity || typeof activity !== 'object') return null;
           
-          // Normalize text field from name/title if needed
+          // Ensure text field
           if (!activity.text) {
-            activity.text = activity.name || activity.title || 'Untitled Activity';
-          }
-          
-          // Normalize icon field from emoji if needed
-          if (!activity.icon && activity.emoji) {
-            activity.icon = activity.emoji;
+            activity.text = 'Untitled Activity';
           }
           
           // Ensure required fields with defaults
           const cleanActivity = {
             id: activity.id || `repaired_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             text: activity.text,
-            icon: activity.icon || activity.emoji || '',
+            icon: activity.icon || '',
             completed: typeof activity.completed === 'boolean' ? activity.completed : false,
             pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false
           };
@@ -324,7 +275,6 @@ export const repairSyncedData = (data) => {
           if (activity.completedBy !== undefined) cleanActivity.completedBy = activity.completedBy;
           if (activity.description !== undefined) cleanActivity.description = activity.description;
           
-          // Don't copy redundant fields (name, title, emoji)
           return cleanActivity;
         }).filter(activity => {
           // Filter out null activities and validate
@@ -341,7 +291,6 @@ export const repairSyncedData = (data) => {
 
     return repaired;
   } catch (error) {
-//     console.error('Data repair error:', error);
     return data; // Return original if repair fails
   }
 };
@@ -377,8 +326,6 @@ export const validateIncrementalSync = (incrementalData) => {
         return false;
       }
 
-      console.log('Incremental sync patch structure:', JSON.stringify(incrementalData.patch, null, 2));
-      
       // Validate patch contents based on field type
       for (const [field, value] of Object.entries(incrementalData.patch)) {
         switch (field) {
@@ -398,8 +345,8 @@ export const validateIncrementalSync = (incrementalData) => {
                 }
                 // If it's a full user object, validate it properly
                 // If it has name and icon, it's a full user
-                // Also accept emoji field for backwards compatibility
-                if (user.name && (user.icon || user.emoji) && user.days) {
+                // Check for full user object
+                if (user.name && user.icon && user.days) {
                   if (!validateUser(userId, user)) {
                     console.error(`Incremental sync validation failed: Invalid full user ${userId} in patch`, user);
                     return false;
@@ -448,14 +395,12 @@ export const validateIncrementalSync = (incrementalData) => {
     // Validate changes array if present
     if (incrementalData.changes) {
       if (!Array.isArray(incrementalData.changes)) {
-//         console.error('Incremental sync validation failed: Changes is not an array');
         return false;
       }
 
       // Each change should have required fields
       for (const change of incrementalData.changes) {
         if (!change.timestamp || typeof change.timestamp !== 'number') {
-//           console.error('Incremental sync validation failed: Change missing timestamp');
           return false;
         }
       }
@@ -463,7 +408,6 @@ export const validateIncrementalSync = (incrementalData) => {
 
     return true;
   } catch (error) {
-//     console.error('Incremental sync validation error:', error);
     return false;
   }
 };

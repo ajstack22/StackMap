@@ -130,7 +130,6 @@ async function runIntegrationTest() {
     const verifyData = decryptData(verifyResult.encrypted_blob, masterKey);
 
   } catch (error) {
-//     console.error('❌ Integration test failed:', error);
     process.exit(1);
   }
 }

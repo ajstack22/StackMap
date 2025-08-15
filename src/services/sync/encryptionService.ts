@@ -45,8 +45,7 @@ class EncryptionService {
    */
   async deriveKeyFromPhrase(recoveryPhrase: string, salt: Uint8Array | string | null = null): Promise<DerivedKey> {
     const startTime = Date.now();
-    console.log('[KEY DERIVATION] Starting key derivation with', KEY_DERIVATION_ITERATIONS, 'iterations');
-    
+        
     // If no salt provided, generate one
     let saltBytes: Uint8Array;
     if (!salt) {
@@ -82,19 +81,15 @@ class EncryptionService {
         // Log timing info
         const elapsed = Date.now() - startTime;
         const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
-        console.log(`[KEY DERIVATION] Progress: ${progress.toFixed(1)}% (${elapsed}ms elapsed)`);
       }
       
       // Log progress in development mode
       if (__DEV__ && i % logInterval === 0 && i > 0) {
-        console.log(`Key derivation progress: ${Math.round((i / KEY_DERIVATION_ITERATIONS) * 100)}%`);
+        // Progress logged
       }
     }
     
     const derivedKey = key.slice(0, KEY_LENGTH);
-    const elapsed = Date.now() - startTime;
-    console.log(`[KEY DERIVATION] Completed in ${elapsed}ms`);
-    
     return {
       key: derivedKey,
       salt: util.encodeBase64(saltBytes)
@@ -139,7 +134,6 @@ class EncryptionService {
         if (compressed.length < dataBytes.length * 0.9) {
           dataBytes = compressed;
           metadata.compressed = true;
-          console.log(`[ENCRYPTION] Compressed data from ${util.decodeUTF8(dataStr).length} to ${compressed.length} bytes`);
         }
       } catch (error) {
         console.warn('[ENCRYPTION] Compression failed, using uncompressed data:', error);
@@ -204,8 +198,7 @@ class EncryptionService {
               if (metadata.compressed) {
                 try {
                   dataBytes = pako.inflate(dataBytes);
-                  console.log('[DECRYPTION] Decompressed data');
-                } catch (error) {
+                                  } catch (error) {
                   console.error('[DECRYPTION] Decompression failed:', error);
                   throw new Error('Failed to decompress data');
                 }
@@ -215,8 +208,7 @@ class EncryptionService {
             const dataStr = util.encodeUTF8(dataBytes);
             return JSON.parse(dataStr);
           } catch (error) {
-            console.log('[DECRYPTION] Failed to parse metadata, treating as legacy format');
-          }
+                      }
         }
       }
       

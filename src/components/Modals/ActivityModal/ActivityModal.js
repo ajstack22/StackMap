@@ -177,8 +177,8 @@ const ActivityModal = ({
             mode="modal"
             visible={true}
             onClose={() => setShowEmojiPicker(false)}
-            onSelect={(emoji) => {
-              setActivityEmoji(emoji);
+            onSelect={(icon) => {
+              setActivityEmoji(icon);
               setShowEmojiPicker(false);
             }}
             showCustomImages={FEATURE_FLAGS.ENABLE_CUSTOM_EMOJIS}

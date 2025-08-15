@@ -21,7 +21,6 @@ class SyncHistory {
       }
       this.initialized = true;
     } catch (error) {
-//       console.error('Failed to load sync history:', error);
       this.history = [];
       this.initialized = true;
     }
@@ -242,7 +241,6 @@ class SyncHistory {
     try {
       await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(this.history));
     } catch (error) {
-//       console.error('Failed to persist sync history:', error);
     }
   }
 

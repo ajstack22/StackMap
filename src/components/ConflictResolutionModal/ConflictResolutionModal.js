@@ -64,7 +64,6 @@ const ConflictResolutionModal = ({
         }, 500);
       }
     } catch (error) {
-//       console.error('Failed to resolve conflict:', error);
       setResolving(false);
     }
   };

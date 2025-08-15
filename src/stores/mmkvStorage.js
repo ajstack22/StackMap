@@ -34,6 +34,5 @@ export const migrateFromAsyncStorage = async () => {
 
     }
   } catch (error) {
-//     console.error('[MMKV] Migration failed:', error);
   }
 };

@@ -1,3 +1,4 @@
+// @ts-check
 // Web-specific implementations for native modules
 
 // Default export for react-native-fs

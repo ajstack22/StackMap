@@ -12,11 +12,9 @@
 export const normalizeActivity = (activity) => {
   if (!activity || typeof activity !== 'object') return null;
   
-  // Normalize text field (from name/title)
-  const text = activity.text || activity.name || activity.title || 'Untitled';
-  
-  // Normalize icon field (from emoji)
-  const icon = activity.icon || activity.emoji || '';
+  // All activities should have text and icon fields now
+  const text = activity.text || 'Untitled';
+  const icon = activity.icon || '';
   
   // Build normalized activity with only valid fields
   const normalized = {
@@ -56,8 +54,8 @@ export const normalizeUser = (user) => {
     }
   }
   
-  // Normalize icon field (from emoji)
-  const icon = user.icon || user.emoji || '👤';
+  // All users should have icon field now
+  const icon = user.icon || '👤';
   
   // Normalize days with activities
   const days = {};
@@ -81,9 +79,9 @@ export const normalizeUser = (user) => {
     days
   };
   
-  // Copy over other valid fields (except emoji)
+  // Copy over other valid fields
   Object.keys(user).forEach(key => {
-    if (key !== 'emoji' && key !== 'name' && key !== 'icon' && key !== 'days') {
+    if (key !== 'name' && key !== 'icon' && key !== 'days') {
       cleanUser[key] = user[key];
     }
   });
@@ -138,7 +136,7 @@ export const normalizeExportData = (data) => {
             ? category.activities.map(activity => ({
                 ...normalizeActivity(activity),
                 // Templates use 'name' field
-                name: activity.text || activity.name || activity.title
+                name: activity.text
               }))
             : []
         };

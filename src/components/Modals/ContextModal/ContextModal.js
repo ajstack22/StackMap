@@ -103,7 +103,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
       dayOfWeek: selectedDayOfWeek,
       weather: weatherOptions[selectedWeather].id,
       temperature: temperatureOptions[selectedTemperature].id,
-      mood: moods[selectedMood].emoji,
+      mood: moods[selectedMood].icon,
       autoSave: true, // Mark this as an auto-save
     };
     onSave(contextData);
@@ -143,12 +143,12 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   };
 
   const temperatureOptions = [
-    { id: 'freezing', emoji: '🧊', label: 'Freezing', color: '#2266dd', bgColor: '#E8F3FF', description: 'Brrr! Bundle up!' },
-    { id: 'cold', emoji: '☃️', label: 'Cold', color: '#4488ff', bgColor: '#F0F7FF', description: 'Chilly weather!' },
-    { id: 'cool', emoji: '🌬️', label: 'Cool', color: '#88aaff', bgColor: '#F5F9FF', description: 'Nice and fresh!' },
-    { id: 'warm', emoji: '😊', label: 'Warm', color: '#ffaa88', bgColor: '#FFF8F3', description: 'Perfectly cozy!' },
-    { id: 'hot', emoji: '🥵', label: 'Hot', color: '#ff4444', bgColor: '#FFE8E8', description: 'Getting toasty!' },
-    { id: 'very-hot', emoji: '🔥', label: 'Very Hot', color: '#dd2222', bgColor: '#FFD8D8', description: 'Too hot to handle!' },
+    { id: 'freezing', icon: '🧊', label: 'Freezing', color: '#2266dd', bgColor: '#E8F3FF', description: 'Brrr! Bundle up!' },
+    { id: 'cold', icon: '☃️', label: 'Cold', color: '#4488ff', bgColor: '#F0F7FF', description: 'Chilly weather!' },
+    { id: 'cool', icon: '🌬️', label: 'Cool', color: '#88aaff', bgColor: '#F5F9FF', description: 'Nice and fresh!' },
+    { id: 'warm', icon: '😊', label: 'Warm', color: '#ffaa88', bgColor: '#FFF8F3', description: 'Perfectly cozy!' },
+    { id: 'hot', icon: '🥵', label: 'Hot', color: '#ff4444', bgColor: '#FFE8E8', description: 'Getting toasty!' },
+    { id: 'very-hot', icon: '🔥', label: 'Very Hot', color: '#dd2222', bgColor: '#FFD8D8', description: 'Too hot to handle!' },
   ];
 
   const cycleTemperature = (direction) => {
@@ -187,16 +187,16 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   ];
 
   const moods = [
-    { emoji: '😢', label: 'Sad', color: '#5DADE2', bgColor: '#E8F4F8', description: 'Feeling blue' },
-    { emoji: '😖', label: 'Frustrated', color: '#E74C3C', bgColor: '#FADBD8', description: 'Feeling stuck' },
-    { emoji: '😟', label: 'Unhappy', color: '#85929E', bgColor: '#F0F1F2', description: 'Not great' },
-    { emoji: '🥱', label: 'Tired', color: '#AF7AC5', bgColor: '#F4ECF7', description: 'Need some rest' },
-    { emoji: '😐', label: 'Okay', color: '#F4D03F', bgColor: '#FEFCE8', description: 'Doing alright' },
-    { emoji: '🤒', label: 'Sick', color: '#DC7633', bgColor: '#FAE5D3', description: 'Not feeling well' },
-    { emoji: '😊', label: 'Happy', color: '#58D68D', bgColor: '#E8F8F0', description: 'Feeling good!' },
-    { emoji: '🤪', label: 'Silly', color: '#F06292', bgColor: '#FCE4EC', description: 'Feeling playful!' },
-    { emoji: '😄', label: 'Excited', color: '#EC7063', bgColor: '#FDEDEC', description: 'Super happy!' },
-    { emoji: '😴', label: 'Bored', color: '#5499C7', bgColor: '#D6EAF8', description: 'Need something fun' },
+    { icon: '😢', label: 'Sad', color: '#5DADE2', bgColor: '#E8F4F8', description: 'Feeling blue' },
+    { icon: '😖', label: 'Frustrated', color: '#E74C3C', bgColor: '#FADBD8', description: 'Feeling stuck' },
+    { icon: '😟', label: 'Unhappy', color: '#85929E', bgColor: '#F0F1F2', description: 'Not great' },
+    { icon: '🥱', label: 'Tired', color: '#AF7AC5', bgColor: '#F4ECF7', description: 'Need some rest' },
+    { icon: '😐', label: 'Okay', color: '#F4D03F', bgColor: '#FEFCE8', description: 'Doing alright' },
+    { icon: '🤒', label: 'Sick', color: '#DC7633', bgColor: '#FAE5D3', description: 'Not feeling well' },
+    { icon: '😊', label: 'Happy', color: '#58D68D', bgColor: '#E8F8F0', description: 'Feeling good!' },
+    { icon: '🤪', label: 'Silly', color: '#F06292', bgColor: '#FCE4EC', description: 'Feeling playful!' },
+    { icon: '😄', label: 'Excited', color: '#EC7063', bgColor: '#FDEDEC', description: 'Super happy!' },
+    { icon: '😴', label: 'Bored', color: '#5499C7', bgColor: '#D6EAF8', description: 'Need something fun' },
   ];
 
   const moodScale = useRef(new Animated.Value(1)).current;
@@ -227,13 +227,13 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   };
 
   const dayOptions = [
-    { name: 'Sunday', emoji: '☀️', description: 'Start of the week!' },
-    { name: 'Monday', emoji: '🌙', description: 'Moon-day!' },
-    { name: 'Tuesday', emoji: '🌮', description: 'Taco Tuesday!' },
-    { name: 'Wednesday', emoji: '🐪', description: 'Hump day!' },
-    { name: 'Thursday', emoji: '⚡', description: 'Thunder day!' },
-    { name: 'Friday', emoji: '🎉', description: 'TGIF!' },
-    { name: 'Saturday', emoji: '🎯', description: 'Weekend fun!' },
+    { name: 'Sunday', icon: '☀️', description: 'Start of the week!' },
+    { name: 'Monday', icon: '🌙', description: 'Moon-day!' },
+    { name: 'Tuesday', icon: '🌮', description: 'Taco Tuesday!' },
+    { name: 'Wednesday', icon: '🐪', description: 'Hump day!' },
+    { name: 'Thursday', icon: '⚡', description: 'Thunder day!' },
+    { name: 'Friday', icon: '🎉', description: 'TGIF!' },
+    { name: 'Saturday', icon: '🎯', description: 'Weekend fun!' },
   ];
 
   const cycleDay = (direction) => {
@@ -267,7 +267,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
       dayOfWeek: selectedDayOfWeek,
       weather: weatherOptions[selectedWeather].id,
       temperature: temperatureOptions[selectedTemperature].id,
-      mood: moods[selectedMood].emoji,
+      mood: moods[selectedMood].icon,
     };
     onSave(contextData);
     onClose();

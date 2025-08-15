@@ -38,7 +38,6 @@ export const useSyncOnChange = () => {
             priority: 'normal',
             immediate: false 
           }).catch(error => {
-//             console.error('Auto-sync failed:', error);
           });
         }
         

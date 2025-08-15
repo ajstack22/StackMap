@@ -34,7 +34,7 @@ const AddTabContent = ({
     if (prefilledActivity) {
       setActivityText(prefilledActivity.name || prefilledActivity.text || '');
       setActivityDescription(prefilledActivity.description || '');
-      setActivityIcon(prefilledActivity.emoji || prefilledActivity.icon || DEFAULT_ACTIVITY_EMOJI);
+      setActivityIcon(prefilledActivity.icon || prefilledActivity.icon || DEFAULT_ACTIVITY_EMOJI);
       // Category selection removed - always uses My Templates
     }
   }, [prefilledActivity, prefilledCategory]);
@@ -64,7 +64,6 @@ const AddTabContent = ({
         const encryptionService = (await import('../../../services/sync/encryptionService')).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
-//         console.warn('Could not get device ID, using fallback:', error);
         return 'unknown';
       }
     })();
@@ -105,7 +104,6 @@ const AddTabContent = ({
         const encryptionService = (await import('../../../services/sync/encryptionService')).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
-//         console.warn('Could not get device ID, using fallback:', error);
         return 'unknown';
       }
     })();
@@ -142,8 +140,8 @@ const AddTabContent = ({
     // Don't reset category or saveToLibrary preference
   };
 
-  const handleEmojiSelect = (emoji) => {
-    setActivityIcon(emoji);
+  const handleEmojiSelect = (icon) => {
+    setActivityIcon(icon);
     setShowEmojiPicker(false);
   };
 

@@ -7,7 +7,6 @@ const Keychain = {
       localStorage.setItem(key, password);
       return true;
     } catch (error) {
-//       console.error('Keychain setInternetCredentials error:', error);
       return false;
     }
   },
@@ -25,7 +24,6 @@ const Keychain = {
       }
       return false;
     } catch (error) {
-//       console.error('Keychain getInternetCredentials error:', error);
       return false;
     }
   },
@@ -46,7 +44,6 @@ const Keychain = {
 
       return true;
     } catch (error) {
-//       console.error('Keychain resetInternetCredentials error:', error);
       return false;
     }
   }

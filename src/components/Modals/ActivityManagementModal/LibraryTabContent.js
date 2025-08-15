@@ -132,8 +132,8 @@ const LibraryTabContent = ({
     const filterGroups = (groups) => {
       return groups.map(category => {
         const matchingActivities = category.activities?.filter(activity =>
-          activity.name.toLowerCase().includes(query) ||
-          activity.emoji?.includes(query)
+          (activity.text || activity.name || '').toLowerCase().includes(query) ||
+          (activity.icon || activity.emoji || '')?.includes(query)
         ) || [];
 
         const categoryMatches = category.name.toLowerCase().includes(query);
@@ -158,14 +158,14 @@ const LibraryTabContent = ({
     return (
       <View style={styles.activityItem}>
         <View style={styles.activityContent}>
-          <Text style={styles.activityEmoji}>{activity.emoji}</Text>
-          <Text style={styles.activityName}>{activity.name}</Text>
+          <Text style={styles.activityEmoji}>{activity.icon || activity.emoji}</Text>
+          <Text style={styles.activityName}>{activity.text || activity.name}</Text>
         </View>
         <View style={styles.activityActions}>
           <TouchableOpacity
             onPress={() => {
               onSelectActivity(activity);
-              showNotification(`Added: ${activity.emoji} ${activity.name}`);
+              showNotification(`Added: ${activity.icon || activity.emoji || ''} ${activity.text || activity.name || ''}`);
             }}
             style={styles.iconButton}
           >
@@ -334,8 +334,8 @@ const LibraryTabContent = ({
                   
                   // Filter activities within the category
                   const filteredActivities = category.activities?.filter(activity => 
-                    activity.name.toLowerCase().includes(query) ||
-                    activity.emoji?.includes(query)
+                    (activity.text || activity.name || '').toLowerCase().includes(query) ||
+                    (activity.icon || activity.emoji || '')?.includes(query)
                   ) || [];
                   
                   // Check if category name matches
@@ -374,8 +374,8 @@ const LibraryTabContent = ({
                   
                   // Filter activities within the category
                   const filteredActivities = category.activities?.filter(activity => 
-                    activity.name.toLowerCase().includes(query) ||
-                    activity.emoji?.includes(query)
+                    (activity.text || activity.name || '').toLowerCase().includes(query) ||
+                    (activity.icon || activity.emoji || '')?.includes(query)
                   ) || [];
                   
                   // Check if category name matches

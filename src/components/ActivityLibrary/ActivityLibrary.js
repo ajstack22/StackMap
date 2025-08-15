@@ -83,7 +83,7 @@ const ActivityRow = ({
     } else {
       Alert.alert(
         'Delete Activity',
-        `Are you sure you want to delete "${activity.name}"?`,
+        `Are you sure you want to delete "${activity.text || activity.name}"?`,
         [
           { text: 'Cancel', style: 'cancel' },
           { 
@@ -111,7 +111,7 @@ const ActivityRow = ({
         ) : (
           <Text style={styles.activityEmoji}>{activity.icon || activity.emoji}</Text>
         )}
-        <Text style={styles.activityName}>{activity.name}</Text>
+        <Text style={styles.activityName}>{activity.text || activity.name}</Text>
       </View>
       
       <View style={styles.activityActions}>
@@ -193,7 +193,7 @@ const ActivityRow = ({
                   ) : (
                     <View style={styles.centerMenuContainer}>
                       <View style={styles.centerMenuCard}>
-                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{activity.name}</Text>
+                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{activity.text || activity.name}</Text>
                         
                         <TouchableOpacity
                           style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
@@ -269,7 +269,7 @@ const ActivityRow = ({
           }}
           theme={theme}
           title="Delete Activity"
-          message={`Are you sure you want to delete "${activity.name}"?`}
+          message={`Are you sure you want to delete "${activity.text || activity.name}"?`}
           confirmText="Delete"
           confirmButtonColor="#e53e3e"
           icon="delete"
@@ -797,7 +797,7 @@ const CategorySection = ({
                     ]}
                   >
                     <View style={styles.activityInfo}>
-                      {item.emoji && item.emoji.startsWith('image:') ? (
+                      {item.icon && item.emoji.startsWith('image:') ? (
                         <Image 
                           source={getCustomImageSource(item.emoji.substring(6))}
                           style={styles.activityImage}
@@ -827,7 +827,7 @@ const CategorySection = ({
                 if (searchQuery) {
                   const query = searchQuery.toLowerCase();
                   const activityIcon = activity.icon || activity.emoji || '';
-                  const matches = activity.name.toLowerCase().includes(query) ||
+                  const matches = (activity.text || activity.name || '').toLowerCase().includes(query) ||
                                 activityIcon.includes(searchQuery);
                   if (!matches) return null;
                 }
@@ -853,8 +853,8 @@ const CategorySection = ({
              category.activities.filter(activity => {
                if (!searchQuery) return true;
                const query = searchQuery.toLowerCase();
-               return activity.name.toLowerCase().includes(query) ||
-                      activity.emoji.includes(searchQuery);
+               return (activity.text || activity.name || '').toLowerCase().includes(query) ||
+                      (activity.icon || activity.emoji || '').includes(searchQuery);
              }).length === 0 && (
               <Text style={styles.emptyMessage}>
                 No activities match your search.
@@ -1070,9 +1070,8 @@ const ActivityLibrary = ({
     if (onSelectActivity) {
       // Transform library activity to match expected format
       onSelectActivity({
-        emoji: activity.emoji,
-        text: activity.name, // Map 'name' to 'text'
-        title: activity.name, // Also include as 'title' for compatibility
+        icon: activity.icon,
+        text: activity.text,
         description: activity.description || '', // Include description if present
       });
       // Don't close the modal - user likely wants to add more activities
@@ -1085,9 +1084,8 @@ const ActivityLibrary = ({
       if (onSelectMultipleActivities) {
         // Use batch method for better performance
         const activitiesToAdd = category.activities.map(activity => ({
-          emoji: activity.emoji,
-          text: activity.name,
-          title: activity.name,
+          icon: activity.icon,
+          text: activity.text,
           description: activity.description || '',
         }));
         
@@ -1096,9 +1094,8 @@ const ActivityLibrary = ({
         // Fallback to individual adds
         category.activities.forEach((activity) => {
           onSelectActivity({
-            emoji: activity.emoji,
-            text: activity.name,
-            title: activity.name,
+            icon: activity.icon,
+            text: activity.text,
             description: activity.description || '',
           });
         });
@@ -1337,8 +1334,8 @@ const ActivityLibrary = ({
             if (category.name.toLowerCase().includes(query)) return true;
             // Check activities within category
             return category.activities.some(activity => 
-              activity.name.toLowerCase().includes(query) ||
-              activity.emoji.includes(searchQuery)
+              (activity.text || activity.name || '').toLowerCase().includes(query) ||
+              (activity.icon || activity.emoji || '').includes(searchQuery)
             );
           })}
           onDragBegin={Platform.OS === 'android' || activeTab === 'stackmap' ? undefined : (index) => {
@@ -1478,8 +1475,8 @@ const ActivityLibrary = ({
         mode="modal"
         visible={showEmojiPicker}
         onClose={() => setShowEmojiPicker(false)}
-        onSelect={(emoji) => {
-          setEditEmoji(emoji);
+        onSelect={(icon) => {
+          setEditEmoji(icon);
           setShowEmojiPicker(false);
         }}
         theme={theme}

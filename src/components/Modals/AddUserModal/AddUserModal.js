@@ -149,8 +149,8 @@ const AddUserModal = ({
             mode="modal"
             visible={true}
             onClose={() => setShowUserEmojiPicker(false)}
-            onSelect={(emoji) => {
-              setNewUserEmoji(emoji);
+            onSelect={(icon) => {
+              setNewUserEmoji(icon);
               setShowUserEmojiPicker(false);
             }}
             theme={theme}

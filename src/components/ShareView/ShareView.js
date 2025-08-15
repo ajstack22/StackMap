@@ -122,7 +122,6 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
             read_only: true
           });
         } catch (decryptError) {
-//           console.error('Decryption failed:', decryptError);
           throw new Error('Failed to decrypt share data. The link may be corrupted.');
         }
       } else {
@@ -157,7 +156,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
     if (activity.deleted) return null;
 
     const renderActivityEmoji = () => {
-      const activityIcon = activity.icon || activity.emoji;
+      const activityIcon = activity.icon || activity.icon;
       if (activityIcon && activityIcon.includes('.png')) {
         const imageSource = getCustomImageSource(activityIcon);
         if (imageSource) {
@@ -180,7 +179,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
             {renderActivityEmoji()}
           </View>
           <View style={styles.activityTextContainer}>
-            <Text style={styles.activityTitle}>{activity.text || activity.title || activity.name}</Text>
+            <Text style={styles.activityTitle}>{activity.text || activity.text || activity.name}</Text>
             {activity.description && (
               <Text style={styles.activityDescription}>{activity.description}</Text>
             )}

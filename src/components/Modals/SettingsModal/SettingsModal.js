@@ -99,8 +99,7 @@ const SettingsModal = ({
   };
   
   const visibleButtonCount = calculateVisibleButtonCount();
-  
-  
+
   // Update screen width on dimension change
   useEffect(() => {
     const updateDimensions = ({ window }) => {

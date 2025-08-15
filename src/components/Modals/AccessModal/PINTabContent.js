@@ -49,7 +49,6 @@ const PINTabContent = ({
       await onRemovePin();
       showToast({ message: 'PIN removed successfully' });
     } catch (error) {
-//       console.error('[PINTabContent] Error removing PIN:', error);
       showToast({ message: 'Failed to remove PIN. Please try again.', type: 'error' });
     } finally {
       setLoading(false);

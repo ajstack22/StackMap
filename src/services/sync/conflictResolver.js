@@ -1,7 +1,6 @@
 // @ts-check
 import { useAppStore } from '../../stores';
 import { validateSyncedData, repairSyncedData } from './dataValidator';
-// import { normalizeSyncData } from '../../utils/dataNormalizer'; // DISABLED: was stripping critical fields
 
 // Conflict resolution strategies
 const STRATEGIES = {
@@ -292,8 +291,7 @@ class ConflictResolver {
     
     // Ensure users object exists (critical for validation)
     if (!newState.users || typeof newState.users !== 'object') {
-      console.log('Conflict resolution: Adding missing users object');
-      newState.users = currentState.users || {};
+            newState.users = currentState.users || {};
       
       // If still no users, create a default structure
       if (Object.keys(newState.users).length === 0) {
@@ -319,16 +317,16 @@ class ConflictResolver {
           }
           // Normalize icon field
           if (!user.icon) {
-            if (user.emoji) {
+            if (user.icon) {
               // Migrate emoji to icon field
-              user.icon = user.emoji;
-              delete user.emoji; // Remove redundant field
+              user.icon = user.icon;
+              delete user.icon; // Remove redundant field
             } else {
               user.icon = '👤'; // Default user icon
             }
-          } else if (user.emoji) {
+          } else if (user.icon) {
             // Remove redundant emoji field if icon exists
-            delete user.emoji;
+            delete user.icon;
           }
           // Ensure user has days object
           if (!user.days || typeof user.days !== 'object') {
@@ -366,9 +364,7 @@ class ConflictResolver {
       // Check if currentUser exists and is not deleted
       if (!newState.currentUser || !currentUserData || currentUserData.deleted) {
         if (newState.currentUser) {
-          console.log(`Current user ${newState.currentUser} is missing or deleted, finding replacement`);
         } else {
-          console.log('No currentUser set, finding a valid user');
         }
         
         // Find a valid user to set as current
@@ -377,12 +373,10 @@ class ConflictResolver {
         );
         
         if (validUserIds.length > 0) {
-          console.log(`Setting currentUser to first valid user: ${validUserIds[0]}`);
           newState.currentUser = validUserIds[0];
         } else {
           // No valid users, create a default one
           const defaultUserId = 'user_1';
-          console.log('No valid users found, creating default user');
           newState.users[defaultUserId] = {
             name: 'User',
             icon: '👤',
@@ -394,7 +388,6 @@ class ConflictResolver {
     }
     
     // DISABLED: Normalization was stripping critical fields
-    // console.log('Normalizing resolved state before validation...');
     // newState = normalizeSyncData(newState) || newState;
     
     // Validate the final state
@@ -422,8 +415,7 @@ class ConflictResolver {
         return currentState;
       }
       
-      console.log('Conflict resolution state repaired successfully');
-      return repairedState;
+            return repairedState;
     }
     
     return newState;
@@ -621,9 +613,6 @@ class ConflictResolver {
                 activityMap.set(localActivity.id, localActivity);
               } else {
                 // Activity exists in both - merge states (prefer newer data)
-                // console.log(`[SYNC-MERGE] Merging activity ${localActivity.id}:`);
-                // console.log(`  Local: completed=${localActivity.completed}, completedAt=${localActivity.completedAt}, uncompletedAt=${localActivity.uncompletedAt}, modifiedAt=${localActivity.modifiedAt}`);
-                // console.log(`  Remote: completed=${remoteActivity.completed}, completedAt=${remoteActivity.completedAt}, uncompletedAt=${remoteActivity.uncompletedAt}, modifiedAt=${remoteActivity.modifiedAt}`);
                 
                 // Determine which version has newer text/icon changes based on modifiedAt timestamp
                 let baseActivity;
@@ -632,17 +621,14 @@ class ConflictResolver {
                 
                 if (localModified > remoteModified) {
                   // Local has newer changes - use local as base for non-completion fields
-                  // console.log(`  Using local as base (modifiedAt: ${localModified} > ${remoteModified}`);
                   const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanLocal } = localActivity;
                   baseActivity = cleanLocal;
                 } else if (remoteModified > localModified) {
                   // Remote has newer changes - use remote as base for non-completion fields
-                  // console.log(`  Using remote as base (modifiedAt: ${remoteModified} > ${localModified}`);
                   const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanRemote } = remoteActivity;
                   baseActivity = cleanRemote;
                 } else {
                   // Same timestamp or both missing - prefer local (current state)
-                  // console.log(`  Using local as base (same or no timestamps)`);
                   const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanLocal } = localActivity;
                   baseActivity = cleanLocal;
                 }
@@ -653,9 +639,7 @@ class ConflictResolver {
                 // Compare all timestamp types to determine the most recent action
                 const localTimestamp = localActivity.completedAt || localActivity.uncompletedAt || 0;
                 const remoteTimestamp = remoteActivity.completedAt || remoteActivity.uncompletedAt || 0;
-                
-                // console.log(`  Timestamps - Local: ${localTimestamp}, Remote: ${remoteTimestamp}`);
-                
+
                 // If both have completion timestamps, use the most recent one
                 if (localActivity.completedAt && remoteActivity.completedAt) {
                   if (localActivity.completedAt > remoteActivity.completedAt) {
@@ -731,7 +715,6 @@ class ConflictResolver {
                     delete merged.completedBy;
                   } else {
                     // No timestamps at all or equal - use local state as it's current
-                    // console.log(`  No clear timestamp winner - using local state: completed=${localActivity.completed}`);
                     merged.completed = localActivity.completed || false;
                     if (localActivity.completed && !localActivity.completedAt) {
                       // Add timestamp if missing (for backwards compatibility)
@@ -750,9 +733,7 @@ class ConflictResolver {
                     }
                   }
                 }
-                
-                // console.log(`  Final merged state: completed=${merged.completed}, completedAt=${merged.completedAt}, uncompletedAt=${merged.uncompletedAt}`);
-                
+
                 // Handle deletion conflicts
                 if (remoteActivity.deleted && !localActivity.deleted) {
                   // Remote deleted but local is active

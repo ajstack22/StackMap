@@ -77,7 +77,6 @@ const UsersTabContent = ({
         setNewUserEmoji('😀');
       }
     } catch (error) {
-//       console.error('Failed to update user:', error);
       showToast({ message: 'Failed to update user', type: 'error' });
     } finally {
       setLoading(false);

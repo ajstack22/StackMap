@@ -26,7 +26,6 @@ class SyncQueue {
       }
       this.initialized = true;
     } catch (error) {
-//       console.error('Failed to load sync queue:', error);
       this.queue = [];
       this.initialized = true;
     }
@@ -121,7 +120,6 @@ class SyncQueue {
           item.error = null;
 
         } catch (error) {
-//           console.error('SyncQueue: Failed to process', item.id, error);
           item.error = error.message || 'Sync failed';
           
           // If it's a network error, we'll retry later
@@ -219,7 +217,6 @@ class SyncQueue {
     try {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(this.queue));
     } catch (error) {
-//       console.error('Failed to persist sync queue:', error);
     }
   }
 
@@ -240,7 +237,6 @@ class SyncQueue {
       try {
         callback(status);
       } catch (error) {
-//         console.error('SyncQueue: Listener error', error);
       }
     });
   }

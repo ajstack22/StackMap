@@ -150,9 +150,9 @@ const CompleteTabContent = ({
     
     const CardContent = (
       <>
-        <Text style={styles.completeActivityEmoji}>{activity.emoji || activity.icon || '🎯'}</Text>
+        <Text style={styles.completeActivityEmoji}>{activity.icon || activity.icon || '🎯'}</Text>
         <Text style={[styles.completeActivityTitle, { flex: 1 }]} numberOfLines={2}>
-          {activity.text || activity.title || activity.name || ''}
+          {activity.text || activity.text || activity.text || ''}
         </Text>
         {showActions && category !== 'newTomorrow' && (
           <Icon name={iconName} size={18} color={iconColor} style={styles.completeActionIcon} />

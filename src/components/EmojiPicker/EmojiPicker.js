@@ -89,14 +89,14 @@ const SKIN_TONE_SUPPORTED = [
 ];
 
 // Helper function to check if emoji supports skin tone
-const supportsSkinTone = (emoji) => {
-  return SKIN_TONE_SUPPORTED.includes(emoji);
+const supportsSkinTone = (icon) => {
+  return SKIN_TONE_SUPPORTED.includes(icon);
 };
 
 // Helper function to apply skin tone to emoji
-const applySkinTone = (emoji, skinTone) => {
-  if (!skinTone || !supportsSkinTone(emoji)) {
-    return emoji;
+const applySkinTone = (icon, skinTone) => {
+  if (!skinTone || !supportsSkinTone(icon)) {
+    return icon;
   }
   
   // Simply concatenate the skin tone modifier
@@ -208,7 +208,7 @@ const EmojiPicker = ({
             if (emojiInfo) {
               const matches = emojiInfo.searchTerms.some(term => term.includes(query));
               if (matches || item.includes(searchQuery)) {
-                filtered.push({ type: 'emoji', emoji: item, category });
+                filtered.push({ type: 'emoji', icon: item, category });
               }
             }
           } else {
@@ -228,7 +228,7 @@ const EmojiPicker = ({
       setFilteredItems(
         items.map(item => 
           typeof item === 'string' 
-            ? { type: 'emoji', emoji: item, category: selectedCategory }
+            ? { type: 'emoji', icon: item, category: selectedCategory }
             : { type: 'image', ...item, category: selectedCategory }
         )
       );
@@ -237,7 +237,7 @@ const EmojiPicker = ({
   
   const handleSelect = (item) => {
     if (item.type === 'emoji') {
-      onSelect(item.emoji);
+      onSelect(item.icon);
     } else {
       // For custom images, we'll use a special format
       onSelect(`image:${item.src}`);
@@ -254,9 +254,9 @@ const EmojiPicker = ({
     }
     
     // Apply skin tone if applicable
-    let displayEmoji = item.emoji;
-    if (item.type === 'emoji' && selectedCategory === 'People' && selectedSkinTone && supportsSkinTone(item.emoji)) {
-      displayEmoji = applySkinTone(item.emoji, selectedSkinTone);
+    let displayEmoji = item.icon;
+    if (item.type === 'emoji' && selectedCategory === 'People' && selectedSkinTone && supportsSkinTone(item.icon)) {
+      displayEmoji = applySkinTone(item.icon, selectedSkinTone);
     }
     
     const isSelected = item.type === 'emoji' 
@@ -266,7 +266,7 @@ const EmojiPicker = ({
     return (
       <TouchableOpacity
         style={[styles.emojiItem, isSelected && styles.selectedItem]}
-        onPress={() => handleSelect(item.type === 'emoji' ? { ...item, emoji: displayEmoji } : item)}
+        onPress={() => handleSelect(item.type === 'emoji' ? { ...item, icon: displayEmoji } : item)}
       >
         {item.type === 'emoji' ? (
           <Text style={styles.emoji}>{displayEmoji}</Text>
@@ -373,7 +373,7 @@ const EmojiPicker = ({
           <Text style={styles.detectedEmojiLabel}>Tap to use your emoji:</Text>
           <TouchableOpacity
             style={[styles.detectedEmojiButton, { backgroundColor: theme?.light || '#E8F0FE' }]}
-            onPress={() => handleSelect({ type: 'emoji', emoji: detectedEmoji })}
+            onPress={() => handleSelect({ type: 'emoji', icon: detectedEmoji })}
             activeOpacity={0.7}
           >
             <Text style={styles.detectedEmoji}>{detectedEmoji}</Text>
@@ -400,7 +400,7 @@ const EmojiPicker = ({
             })()}
             renderItem={renderItem}
             keyExtractor={(item, index) => 
-              item.type === 'emoji' ? item.emoji : 
+              item.type === 'emoji' ? item.icon : 
               item.type === 'placeholder' ? item.id : item.src
             }
             numColumns={numColumns}

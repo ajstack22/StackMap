@@ -76,10 +76,16 @@
 
 ## 🛠️ ACTIVE DEVELOPMENT
 
-### TypeScript Migration (Jan 2025)
+### Store Refactoring (COMPLETED Aug 15, 2025)
+- ✅ Split monolithic store into 4 focused stores
+- ⚠️ **CRITICAL BUG:** Theme switching broken (reactivity issue)
+- See `/docs/STORE_ARCHITECTURE.md` for new structure
+- See `/prompts/tech-debt-handoff.md` for completion details
+
+### TypeScript Migration (Jan 2025 - In Progress)
 - Gradual migration strategy with @ts-check
 - Type checking integrated into deployment
-- See `/prompts/typescript-migration.md` for full strategy
+- See `/prompts/typescript-migration-status.md` for current status
 - Run `npm run typecheck` before committing
 
 ### Edit Mode Refactor (Jan 2025)

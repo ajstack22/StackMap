@@ -207,7 +207,7 @@ export const getTabletStyles = () => {
       maxWidth: 900,
     },
     emoji: {
-      ...baseStyles.emoji,
+      ...baseStyles.icon,
       fontSize: 32,
     },
     title: {

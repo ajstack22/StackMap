@@ -38,8 +38,7 @@ class EncryptionService {
    */
   async deriveKeyFromPhrase(recoveryPhrase, salt = null) {
     const startTime = Date.now();
-    console.log('[KEY DERIVATION] Starting key derivation with', KEY_DERIVATION_ITERATIONS, 'iterations');
-    
+        
     // If no salt provided, generate one
     if (!salt) {
       salt = nacl.randomBytes(SALT_LENGTH);
@@ -72,18 +71,16 @@ class EncryptionService {
         // Log timing info
         const elapsed = Date.now() - startTime;
         const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
-        console.log(`[KEY DERIVATION] Progress: ${progress.toFixed(1)}% (${elapsed}ms elapsed)`);
       }
       
       // Log progress in development mode
       if (__DEV__ && i % logInterval === 0 && i > 0) {
-        console.log(`Key derivation progress: ${Math.round((i / KEY_DERIVATION_ITERATIONS) * 100)}%`);
+        // Progress logged
       }
     }
     
     const totalTime = Date.now() - startTime;
-    console.log(`[KEY DERIVATION] Completed in ${totalTime}ms`);
-    
+        
     // Take first 32 bytes as the key
     return {
       key: key.slice(0, KEY_LENGTH),
@@ -130,7 +127,6 @@ class EncryptionService {
         if (compressed.length < dataBytes.length * 0.9) {
           dataBytes = compressed;
           isCompressed = true;
-          console.log(`Compression saved ${Math.round((1 - compressed.length / util.decodeUTF8(dataString).length) * 100)}%`);
         }
       } catch (error) {
         console.warn('Compression failed, using uncompressed data:', error);
@@ -207,7 +203,6 @@ class EncryptionService {
             if (metadata.compressed) {
               try {
                 dataBytes = pako.inflate(dataBytes);
-                console.log(`Decompressed from ${metadata.compressedSize} to ${metadata.originalSize} bytes`);
               } catch (error) {
                 throw new Error('Decompression failed');
               }
@@ -218,7 +213,6 @@ class EncryptionService {
           }
         } catch (error) {
           // Fall back to version 1 format
-          console.log('Failed to parse as v2, trying v1 format:', error);
         }
       }
     }

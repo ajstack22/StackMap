@@ -107,12 +107,10 @@ const modules = {
 // Mock the TurboModuleRegistry
 const TurboModuleRegistry = {
   get(name) {
-    console.log(`[TurboModuleRegistry] Module requested: ${name}`);
     return modules[name] || null;
   },
   
   getEnforcing(name) {
-    console.log(`[TurboModuleRegistry] Module enforced: ${name}`);
     const module = modules[name];
     if (!module) {
       // Instead of throwing, return a mock module

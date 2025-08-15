@@ -40,7 +40,6 @@ const loadFileSystemModules = () => {
       try {
         DocumentPicker = require('react-native-document-picker').default;
       } catch (e) {
-//         console.warn('DocumentPicker not available on this platform');
         DocumentPicker = null;
       }
       RNFS = require('react-native-fs');
@@ -223,7 +222,6 @@ const DataModal = ({
       
       setSyncStatusChecked(true);
     } catch (error) {
-//       console.error('Error checking sync status:', error);
       setSyncStatusChecked(true);
     }
   };
@@ -248,7 +246,6 @@ const DataModal = ({
       
       setActiveShares(userShares);
     } catch (error) {
-//       console.error('Error loading active shares:', error);
     }
   };
   
@@ -292,8 +289,6 @@ const DataModal = ({
   
   // Handle export
   const handleExport = async () => {
-    console.log('handleExport called on platform:', Platform.OS);
-    console.log('Export selections:', exportSelections);
     
     try {
       setLoading(true);
@@ -353,8 +348,8 @@ const DataModal = ({
               name: category.name,
               activities: (category.activities || []).map(activity => ({
                 id: activity.id,
-                text: activity.name,
-                icon: activity.emoji
+                text: activity.text,
+                icon: activity.icon
               }))
             };
           });
@@ -424,7 +419,6 @@ const DataModal = ({
             } catch (shareError) {}
           }, 500);
         } catch (error) {
-//           console.error('Write failed, using share fallback:', error);
           // Fallback to share
           const { Share } = require('react-native');
           await Share.share({
@@ -433,9 +427,6 @@ const DataModal = ({
           });
         }
       } else if (Platform.OS === 'web') {
-        console.log('Web export starting...');
-        console.log('Data length:', jsonData.length);
-        console.log('Filename:', fileName);
         
         const blob = new Blob([jsonData], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
@@ -447,12 +438,9 @@ const DataModal = ({
         document.body.removeChild(a);
         URL.revokeObjectURL(url);
         
-        console.log('Web export completed');
         showToast({ message: 'Export downloaded successfully!' });
       } else {
         // iOS - use share sheet
-
-        console.log('Users:', users ? Object.keys(users).length : 'undefined');
 
         try {
           const { Share } = require('react-native');
@@ -492,12 +480,9 @@ const DataModal = ({
               await modules.RNFS.unlink(filePath);
 
             } catch (err) {
-              console.log('Clean up error (file may have been moved):', err);
             }
           }, 5000);
         } catch (iosError) {
-//           console.error('iOS export error:', iosError);
-//           console.error('Error stack:', iosError.stack);
           showToast({ 
             message: `Failed to export: ${iosError.message}`, 
             type: 'error' 
@@ -590,7 +575,6 @@ const DataModal = ({
             setImportData(parsedData);
             initializeImportSelections(parsedData);
           } catch (error) {
-//             console.error('Error loading file:', error);
             Alert.alert('Error', 'Failed to read file: ' + error.message);
           }
         };
@@ -704,7 +688,6 @@ const DataModal = ({
       
     } catch (error) {
       if (error.code !== modules.DocumentPicker?.errorCodes?.cancelled && error.code !== 'DOCUMENT_PICKER_CANCELED') {
-//         console.error('File selection error:', error);
         Alert.alert('Error', 'Failed to select file. Please try again.');
       }
     } finally {
@@ -725,8 +708,6 @@ const DataModal = ({
     try {
       setLoading(true);
 
-      console.log('Import data users:', importData.users ? Object.keys(importData.users) : 'none');
-
       // Prepare imported data based on selections
       const dataToImport = {
         mode: importMode,
@@ -745,7 +726,6 @@ const DataModal = ({
             
             // Ensure name is a string
             if (!validatedUser.name || typeof validatedUser.name !== 'string') {
-//               console.warn(`User ${userId} has invalid name:`, validatedUser.name);
               if (typeof validatedUser.name === 'object' && validatedUser.name !== null) {
                 // Try to extract name from object
                 validatedUser.name = validatedUser.name.name || validatedUser.name.text || 'User';
@@ -756,9 +736,8 @@ const DataModal = ({
             
             // Normalize icon field - always use 'icon', not 'emoji'
             if (!validatedUser.icon || typeof validatedUser.icon !== 'string') {
-              if (validatedUser.emoji && typeof validatedUser.emoji === 'string') {
-                console.log(`Import: Migrating user ${userId} emoji to icon field`);
-                validatedUser.icon = validatedUser.emoji;
+              if (validatedUser.icon && typeof validatedUser.icon === 'string') {
+                validatedUser.icon = validatedUser.icon;
               } else {
                 console.warn(`Import: User ${userId} has no valid icon, using default`);
                 validatedUser.icon = '👤';
@@ -766,18 +745,15 @@ const DataModal = ({
             }
             
             // Remove redundant emoji field to prevent confusion
-            if (validatedUser.emoji) {
-              delete validatedUser.emoji;
+            if (validatedUser.icon) {
+              delete validatedUser.icon;
             }
             
-            console.log(`Adding validated user ${userId} (${validatedUser.name}) to import`);
             dataToImport.users[userId] = validatedUser;
           }
         });
       }
-      
-      console.log('Final dataToImport users:', Object.keys(dataToImport.users));
-      
+
       // Process selected activity cards
       if (importData.activityCards) {
         importData.activityCards.forEach(activity => {
@@ -818,7 +794,6 @@ const DataModal = ({
       onClose();
       
     } catch (error) {
-//       console.error('Import error:', error);
       Alert.alert('Import Error', 'Failed to import data. Please try again.');
     } finally {
       setLoading(false);
@@ -952,17 +927,13 @@ const DataModal = ({
   
   // Handle app reset
   const handleReset = async () => {
-    console.log('[DataModal] handleReset called');
-    console.log('[DataModal] onReset exists:', !!onReset);
     
     try {
       setLoading(true);
       
       // Call the onReset function passed from parent
       if (onReset) {
-        console.log('[DataModal] Calling onReset...');
         await onReset();
-        console.log('[DataModal] onReset completed');
       } else {
         console.error('[DataModal] No onReset function provided!');
       }
@@ -1441,7 +1412,6 @@ const DataModal = ({
             label="Reset App"
             icon="refresh"
             onPress={() => {
-              console.log('[DataModal] Reset App button clicked');
               
               // iOS 18.5 fix: Use Alert.alert instead of nested modal
               if (Platform.OS === 'ios') {

@@ -98,7 +98,7 @@ const SyncPreviewModal = ({
           
           preview.users.push({
             name: user.name,
-            icon: user.icon || user.emoji,
+            icon: user.icon || user.icon,
             activityCount,
           });
           
@@ -115,7 +115,6 @@ const SyncPreviewModal = ({
       setSyncData(preview);
       setConnectionStatus('connected');
     } catch (error) {
-//       console.error('[SyncPreview] Error checking sync:', error);
       setError(error.message || 'Failed to connect to sync');
       setConnectionStatus('error');
     } finally {
@@ -150,7 +149,6 @@ const SyncPreviewModal = ({
       // Let parent handle the success (likely reload)
       onConfirm();
     } catch (error) {
-//       console.error('[SyncPreview] Error confirming sync:', error);
       setError(error.message || 'Failed to connect to sync');
       setLoading(false);
     }

@@ -211,7 +211,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
           
           preview.users[userId] = {
             name: user.name || 'Unknown User',
-            icon: user.icon || user.emoji || '😊',
+            icon: user.icon || user.icon || '😊',
             activityCount
           };
           
@@ -410,7 +410,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                           if (result.summary.userData) {
                             const importedUsers = Object.entries(result.summary.userData).map(([id, user]) => ({
                               name: user.name || 'User',
-                              emoji: user.icon || user.emoji || '😊'
+                              emoji: user.icon || user.icon || '😊'
                             }));
                             setUsers(importedUsers);
                           }
@@ -507,19 +507,19 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
               
               <Text style={styles.inputLabel}>Choose an emoji</Text>
               <View style={styles.emojiSelection}>
-                {quickEmojis.map((emoji) => (
+                {quickEmojis.map((icon) => (
                   <TouchableOpacity
-                    key={emoji}
+                    key={icon}
                     style={[
                       styles.emojiOption,
-                      selectedEmoji === emoji && styles.emojiSelected
+                      selectedEmoji === icon && styles.emojiSelected
                     ]}
                     onPress={() => {
-                      setSelectedEmoji(emoji);
+                      setSelectedEmoji(icon);
                       setEmojiInputValue('');
                     }}
                   >
-                    <Text style={styles.emojiText}>{emoji}</Text>
+                    <Text style={styles.emojiText}>{icon}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -641,7 +641,7 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                         styles.userPill,
                         activeFeature === index && styles.activeUserPill
                       ]}>
-                        <Text style={styles.pillEmoji}>{users[0]?.emoji || '😊'}</Text>
+                        <Text style={styles.pillEmoji}>{users[0]?.icon || '😊'}</Text>
                         <Text style={[
                           styles.pillName,
                           activeFeature === index && styles.activePillName
@@ -809,8 +809,7 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                         const fullState = useAppStore.getState();
                         const syncedUsers = fullState.users;
                         
-                        // DEBUG: Log entire state after sync
-                        console.log('[DEBUG] Full Zustand state after sync:', JSON.stringify(fullState, null, 2));
+                        // State restored from sync
 
                         if (syncedUsers && Object.keys(syncedUsers).length > 0) {
                           // Users already exist from sync
@@ -969,7 +968,6 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
               qrData: `stackmap://sync/${recoveryPhrase}`,
             });
           } catch (err) {
-//             console.error('Error creating sync:', err);
             setSyncError('Failed to create sync. Please try again.');
           } finally {
             setSyncLoading(false);
@@ -1261,7 +1259,6 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
               const { setSecurePin } = require('../../utils/securePinStorage');
               const success = await setSecurePin(pin);
               if (success) {
-                console.log('[Onboarding] PIN saved successfully');
                 transitionTo('complete');
               } else {
                 setPinError('Failed to save PIN. Please try again.');

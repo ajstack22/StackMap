@@ -128,7 +128,6 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
     try {
       await syncService.retryFailed();
     } catch (error) {
-//       console.error('Failed to retry sync:', error);
     }
   };
 

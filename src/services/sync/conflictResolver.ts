@@ -1,5 +1,3 @@
-// import { useAppStore } from '../../stores';
-// import { validateSyncedData, repairSyncedData } from './dataValidator';
 import { User, Activity, AppState } from '../../../types/common';
 
 // Conflict resolution strategies

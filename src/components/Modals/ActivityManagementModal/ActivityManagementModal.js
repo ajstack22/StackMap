@@ -83,7 +83,7 @@ const ActivityManagementModal = ({
         const newActivity = {
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           name: activityData.text,
-          emoji: activityData.icon,
+          icon: activityData.icon,
         };
         
         myTemplatesCategory.activities.push(newActivity);
@@ -98,7 +98,6 @@ const ActivityManagementModal = ({
         showToast({ message: 'Activity saved to My Templates!' });
       }
     } catch (error) {
-//       console.error('Error saving to library:', error);
       showToast({ message: 'Failed to save to library', type: 'error' });
     } finally {
       setLoading(false);
