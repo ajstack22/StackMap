@@ -64,35 +64,6 @@ const storage = {
   },
 };
 
-// Migration function for v3 to v4 data structure
-const migrateDataStructure = (state) => {
-  // If library structure doesn't exist, migrate from old structure
-  if (!state.library || !state.library.categories) {
-    console.log('[Migration] Migrating data structure to v4...');
-    
-    // Initialize library if it doesn't exist
-    if (!state.library) {
-      state.library = {
-        categories: null,
-        userAddedActivityIds: []
-      };
-    }
-    
-    // Migrate activityCategories to library.categories
-    if (state.activityCategories && !state.library.categories) {
-      state.library.categories = state.activityCategories;
-    }
-    
-    // Ensure libraryTemplates is in sync with activities
-    if (state.activities && !state.libraryTemplates) {
-      state.libraryTemplates = state.activities;
-    }
-    
-    console.log('[Migration] Data structure migration complete');
-  }
-  
-  return state;
-};
 
 // Create the store with devtools and persistence
 const useAppStore = create(
@@ -273,34 +244,24 @@ const useAppStore = create(
         return { users: newUsers };
       }, false, 'deleteUser'),
       
-      // Activities and Days
-      activities: [], // DEPRECATED: Will be renamed to libraryTemplates
-      libraryTemplates: [], // NEW: Renamed from activities for clarity
+      // Library data
+      libraryTemplates: [],
+      library: {
+        categories: null,
+        userAddedActivityIds: []
+      },
+      
+      // Days and display
       currentDay: 'today',
       displayMode: 'numbers',
       dayMode: 'today',
-      templates: {}, // DEPRECATED: Legacy field
-      activityCategories: null, // DEPRECATED: Will be moved to library.categories
-      
-      // NEW: Properly structured library data
-      library: {
-        categories: null, // Will replace activityCategories
-        userAddedActivityIds: [] // Track user-added activities
-      },
       
       userContextData: {},
       hasCompletedOnboarding: false,
       
-      // Activity Actions
-      setActivities: (activities) => set({ 
-        activities,
-        libraryTemplates: activities // Keep both in sync during migration
-      }, false, 'setActivities'),
-      
-      // NEW: Library template actions
+      // Library Actions
       setLibraryTemplates: (templates) => set({ 
-        libraryTemplates: templates,
-        activities: templates // Keep both in sync during migration
+        libraryTemplates: templates
       }, false, 'setLibraryTemplates'),
       
       setCurrentDay: (day) => set({ currentDay: day }, false, 'setCurrentDay'),
@@ -309,16 +270,6 @@ const useAppStore = create(
       
       setDayMode: (mode) => set({ dayMode: mode }, false, 'setDayMode'),
       
-      setTemplates: (templates) => set({ templates }, false, 'setTemplates'),
-      
-      setActivityCategories: (categories) => set({ 
-        activityCategories: categories,
-        library: {
-          ...get().library,
-          categories: categories // Keep both in sync during migration
-        }
-      }, false, 'setActivityCategories'),
-      
       // NEW: Library actions
       setLibrary: (library) => set({ library }, false, 'setLibrary'),
       
@@ -326,8 +277,7 @@ const useAppStore = create(
         library: {
           ...state.library,
           categories
-        },
-        activityCategories: categories // Keep both in sync during migration
+        }
       }), false, 'setLibraryCategories'),
       
       addUserActivityToLibrary: (activityId) => set((state) => ({
@@ -393,12 +343,6 @@ const useAppStore = create(
     {
       name: 'stackmap-storage', // unique name for storage
       storage, // use our AsyncStorage adapter
-      onRehydrateStorage: () => (state) => {
-        // Run migration after rehydration
-        if (state) {
-          migrateDataStructure(state);
-        }
-      },
       partialize: (state) => ({
         // Only persist specific parts of the state
         currentTheme: state.currentTheme,
@@ -413,15 +357,10 @@ const useAppStore = create(
         currentDay: state.currentDay,
         displayMode: state.displayMode,
         dayMode: state.dayMode,
-        templates: state.templates,
-        activityCategories: state.activityCategories,
-        library: state.library, // NEW: Persist library structure
-        libraryTemplates: state.libraryTemplates, // NEW: Persist renamed field
+        library: state.library,
+        libraryTemplates: state.libraryTemplates,
         userContextData: state.userContextData,
-        hasCompletedOnboarding: state.hasCompletedOnboarding,
-        // Note: activities are stored per user, so we don't persist them here
-        // MIGRATION: Keep activities field for backward compatibility
-        activities: state.activities
+        hasCompletedOnboarding: state.hasCompletedOnboarding
       }),
     }
     ),

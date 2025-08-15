@@ -839,8 +839,8 @@ class SyncService {
         taskCelebration: state.taskCelebration,
         routineCelebration: state.routineCelebration
       },
-      templates: state.libraryTemplates || state.activities || [], // Use new field, fallback to old
-      activityCategories: state.library?.categories || state.activityCategories || null, // Include library categories
+      templates: state.libraryTemplates || [],
+      activityCategories: state.library?.categories || null,
       currentUser: state.currentUser,
       hasCompletedOnboarding: state.hasCompletedOnboarding,
       lastBackup: new Date().toISOString(),

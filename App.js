@@ -190,18 +190,17 @@ const App = () => {
     deleteUser: deleteUserFromStore,
     currentUser,
     setCurrentUser,
-    activities,
-    setActivities,
+    libraryTemplates,
+    setLibraryTemplates,
+    library,
+    setLibrary,
+    setLibraryCategories,
     currentDay,
     setCurrentDay,
     displayMode,
     setDisplayMode,
     dayMode,
     setDayMode,
-    templates,
-    setTemplates,
-    activityCategories,
-    setActivityCategories,
     userContextData,
     setUserContextData,
     hasCompletedOnboarding,
@@ -214,6 +213,9 @@ const App = () => {
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   // Removed - now using Zustand store
   const [isEditMode, setIsEditMode] = useState(false);
+  
+  // Derive current user's activities from the store
+  const activities = currentUser && users[currentUser]?.days?.[currentDay]?.activities || [];
   const [showUserModal, setShowUserModal] = useState(false);
   const [showUserDayModal, setShowUserDayModal] = useState(false);
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -541,35 +543,6 @@ const App = () => {
     return validActivities;
   };
 
-  // Load activities when day changes
-  useEffect(() => {
-    console.log('[DEBUG App.js] Activity loading effect triggered');
-    console.log('[DEBUG App.js] - currentUser:', currentUser);
-    console.log('[DEBUG App.js] - currentDay:', currentDay);
-    console.log('[DEBUG App.js] - users exist:', !!users);
-    console.log('[DEBUG App.js] - user keys:', Object.keys(users || {}));
-    
-    if (currentUser && users[currentUser]) {
-      const rawActivities = users[currentUser]?.days?.[currentDay]?.activities || [];
-      console.log(`[DEBUG App.js] Found ${rawActivities.length} activities for user ${currentUser} on ${currentDay}`);
-      
-      // Debug log for iOS
-      if (Platform.OS === 'ios' && rawActivities.length > 0) {
-        console.log('🔍 iOS: Loading activities:', JSON.stringify(rawActivities.slice(0, 3), null, 2));
-      }
-      
-      // Log if activities will be cleared
-      if (rawActivities.length === 0) {
-        console.log('[DEBUG App.js] No activities found, will show default cards');
-      } else {
-        console.log('[DEBUG App.js] First activity:', rawActivities[0]?.text || rawActivities[0]?.name);
-      }
-      
-      setActivities(cleanupActivities(rawActivities));
-    } else {
-      console.log('[DEBUG App.js] User not found or not ready:', { currentUser, userExists: !!users[currentUser] });
-    }
-  }, [currentDay, currentUser, users, setActivities]);
   
   // Handle sync setup from URL parameter
   useEffect(() => {
@@ -822,7 +795,7 @@ const App = () => {
             const userData = importedData.users[currentUserId];
             setCurrentDay(userData.currentDay || importedData.currentDay || 'today');
             const userActivities = userData.days?.[userData.currentDay || importedData.currentDay || 'today']?.activities || [];
-            setActivities(userActivities.filter(a => !a.deleted));
+            // Activities are now derived from users state, no need to set them separately
             
             // Restore user settings
             if (userData.settings) {
@@ -846,7 +819,7 @@ const App = () => {
         
         // Restore activity categories
         if (importedData.activityCategories) {
-          setActivityCategories(importedData.activityCategories);
+          setLibraryCategories(importedData.activityCategories);
         }
         
         // Clean up temp storage
@@ -907,7 +880,7 @@ const App = () => {
         const newUsers = { [newUserId]: newUser };
         setUsers(newUsers);
         setCurrentUser(newUserId);
-        setActivities([]);
+        // Activities are now derived from users state, no need to set them separately
         setShowOnboarding(false);
         
         // Save the data
@@ -925,8 +898,8 @@ const App = () => {
             pinEnabled: onboardingData?.pin ? true : false,
             pin: onboardingData?.pin || null
           },
-          templates: templates,
-          activityCategories: activityCategories
+          libraryTemplates: libraryTemplates,
+          library: library
         };
         // Data is now persisted automatically through Zustand
         return;
@@ -1080,7 +1053,7 @@ const App = () => {
       // Set state with the new users
       setUsers(newUsers);
       setCurrentUser(firstUserId);
-      setActivities(starterActivities);
+      // Activities are already set in the user's data structure
       setShowOnboarding(false);
       
       // Handle PIN if provided
@@ -1108,8 +1081,8 @@ const App = () => {
           routineCelebration: routineCelebration,
           pinEnabled: onboardingData.pin ? true : false
         },
-        templates: templates,
-        activityCategories: activityCategories
+        libraryTemplates: libraryTemplates,
+        library: library
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
@@ -1244,7 +1217,7 @@ const App = () => {
       
       setUsers(newUsers);
       setCurrentUser(firstUserId);
-      setActivities(newUsers[firstUserId].days.today.activities);
+      // Activities are now derived from users state, no need to set them separately
       setShowSetupWizard(false);
       
       // Show welcome message after a short delay
@@ -1270,8 +1243,8 @@ const App = () => {
           routineCelebration: routineCelebration,
           pinEnabled: setupData.pin ? true : hasPinProtection
         },
-        templates: templates,
-        activityCategories: activityCategories
+        libraryTemplates: libraryTemplates,
+        library: library
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
@@ -1310,7 +1283,7 @@ const App = () => {
       const newUsers = { [newUserId]: newUser };
       setUsers(newUsers);
       setCurrentUser(newUserId);
-      setActivities([]);
+      // Activities are now derived from users state, no need to set them separately
       setShowOnboarding(false);
       
       // Save the data with the new values
@@ -1327,8 +1300,8 @@ const App = () => {
           routineCelebration: routineCelebration,
           pinEnabled: hasPinProtection
         },
-        templates: templates,
-        activityCategories: activityCategories
+        libraryTemplates: libraryTemplates,
+        library: library
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
@@ -1407,7 +1380,7 @@ const App = () => {
       }
       return activity;
     });
-    setActivities(newActivities);
+    updateUserActivities(currentUser, currentDay, newActivities);
     
     // Update the users state to persist the change
     if (currentUser && users[currentUser]) {
@@ -1457,7 +1430,7 @@ const App = () => {
     // Swap activities
     [newActivities[index], newActivities[newIndex]] = [newActivities[newIndex], newActivities[index]];
     
-    setActivities(newActivities);
+    updateUserActivities(currentUser, currentDay, newActivities);
     
     // Save immediately after reordering
     if (currentUser && users[currentUser]) {
@@ -1483,7 +1456,7 @@ const App = () => {
     const updatedActivities = activities.map(a => 
       a.id === id ? { ...a, pinned: newPinnedState } : a
     );
-    setActivities(updatedActivities);
+    updateUserActivities(currentUser, currentDay, updatedActivities);
     
     // Update tomorrow's matching activity
     const tomorrowActivities = users[currentUser]?.days?.tomorrow?.activities || [];
@@ -1567,7 +1540,7 @@ const App = () => {
       newActivities = [...activities, newActivity];
     }
     
-    setActivities(newActivities);
+    updateUserActivities(currentUser, currentDay, newActivities);
     
     // Update the users state to persist the change
     if (currentUser && users[currentUser]) {
@@ -1609,7 +1582,7 @@ const App = () => {
     const updatedActivities = activities.map(a => 
       a.id === id ? { ...a, deleted: true, deletedAt: Date.now() } : a
     );
-    setActivities(updatedActivities);
+    updateUserActivities(currentUser, currentDay, updatedActivities);
     
     // Update the users state to persist the change
     if (currentUser && users[currentUser]) {
@@ -1638,11 +1611,10 @@ const App = () => {
         label: 'Undo',
         onPress: () => {
           // Restore the activity by removing the deleted flag
-          setActivities(prevActivities => 
-            prevActivities.map(a => 
-              a.id === id ? { ...a, deleted: false, deletedAt: undefined } : a
-            )
+          const restoredActivities = activities.map(a => 
+            a.id === id ? { ...a, deleted: false, deletedAt: undefined } : a
           );
+          updateUserActivities(currentUser, currentDay, restoredActivities);
           
           // Also restore in users state
           if (currentUser && users[currentUser]) {
@@ -1670,7 +1642,7 @@ const App = () => {
     const newActivities = [...activities];
     const [movedActivity] = newActivities.splice(fromIndex, 1);
     newActivities.splice(toIndex, 0, movedActivity);
-    setActivities(newActivities);
+    updateUserActivities(currentUser, currentDay, newActivities);
     
     // Save immediately
     if (currentUser && users[currentUser]) {
@@ -1701,13 +1673,13 @@ const App = () => {
 
   const addActivityToLibrary = (activity) => {
     // Initialize with empty categories if none exist
-    let categories = activityCategories || EMPTY_CATEGORIES;
+    let categories = library?.categories || EMPTY_CATEGORIES;
     
-    // If activityCategories was null or empty array, set it to default
-    if (!activityCategories || activityCategories.length === 0) {
+    // If library?.categories was null or empty array, set it to default
+    if (!library?.categories || library?.categories.length === 0) {
       console.log('Initializing activity categories with default template');
       categories = EMPTY_CATEGORIES;
-      setActivityCategories(EMPTY_CATEGORIES);
+      setLibraryCategories(EMPTY_CATEGORIES);
     }
     
     // Create a new array to avoid mutating state
@@ -1743,7 +1715,7 @@ const App = () => {
         activities: [...(updatedCategories[myTemplatesIndex].activities || []), template]
       };
       
-      setActivityCategories(updatedCategories);
+      setLibraryCategories(updatedCategories);
       
       // Add to tracking set to show checkmark
       setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
@@ -1793,7 +1765,7 @@ const App = () => {
     addUser(userId, newUser);
     
     setCurrentUser(userId);
-    setActivities([]);
+    // Activities are now derived from users state, no need to reset
     setNewUserName('');
     setNewUserEmoji('😀');
     setEditingUser(null);
@@ -1928,7 +1900,7 @@ const App = () => {
         
         // Load the new user's activities for current day
         const newUserActivities = newUser?.days?.[currentDay]?.activities || [];
-        setActivities(newUserActivities);
+        // Activities are now derived from users state, no need to set them separately
         
         // Load the new user's theme
         if (newUser?.settings?.theme) {
@@ -2094,7 +2066,7 @@ const App = () => {
     };
     
     setUsers(updatedUsers);
-    setActivities(newTodayActivities);
+    // Activities are already updated through setUsers, no need to set them separately
     
     // Exit edit mode
     setIsEditMode(false);
@@ -2575,7 +2547,7 @@ const App = () => {
         if (userIds.length > 0) {
           setCurrentUser(userIds[0]);
           const rawActivities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
-          setActivities(cleanupActivities(rawActivities));
+          // Activities are now derived from users state, no need to set them separately
           // Load the first user's theme
           if (migratedData.users[userIds[0]]?.settings?.theme) {
             setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
@@ -2644,9 +2616,9 @@ const App = () => {
         
         // Clear ALL existing data comprehensively
         setUsers({});
-        setActivityCategories([]);
-        setActivities([]);
-        setTemplates({});
+        setLibraryCategories([]);
+        // Activities are now derived from users state, no need to reset
+        // Templates field no longer exists
         setUserContextData({});
         setCurrentUser(null);
         setCurrentDay('today');
@@ -2682,7 +2654,7 @@ const App = () => {
           setCurrentDay(userData.currentDay || 'today');
           
           const userActivities = userData.days?.[userData.currentDay || 'today']?.activities || [];
-          setActivities(cleanupActivities(userActivities));
+          // Activities are now derived from users state, no need to set them separately
           
           // Restore user theme
           if (userData.settings?.theme) {
@@ -2717,7 +2689,7 @@ const App = () => {
               }))
             });
           });
-          setActivityCategories(categoriesArray);
+          setLibraryCategories(categoriesArray);
         }
         
         // Restore global settings
@@ -2817,7 +2789,7 @@ const App = () => {
               currentActivities.push(newActivity);
             });
             
-            setActivities(currentActivities);
+            // Activities are now derived from users state, no need to set them separately
             
             // Update user data
             const updatedUsers = { ...users };
@@ -2837,7 +2809,7 @@ const App = () => {
         
         // Merge templates
         if (importData.templates && Object.keys(importData.templates).length > 0) {
-          const currentCategories = [...(activityCategories || [])];
+          const currentCategories = [...(library?.categories || [])];
           
           Object.entries(importData.templates).forEach(([categoryId, category]) => {
             // Check if category already exists
@@ -2878,7 +2850,7 @@ const App = () => {
             }
           });
           
-          setActivityCategories(currentCategories);
+          setLibraryCategories(currentCategories);
         }
       }
       
@@ -2955,7 +2927,7 @@ const App = () => {
               if (userIds.length > 0) {
                 setCurrentUser(userIds[0]);
                 const activities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
-          setActivities(activities.filter(a => !a.deleted));
+                // Activities are now derived from users state, no need to set them separately
                 // Load the first user's theme
                 if (migratedData.users[userIds[0]]?.settings?.theme) {
                   setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
@@ -3051,7 +3023,7 @@ const App = () => {
               // Reset Zustand store to initial values
               setUsers({});
               setCurrentUser(null);
-              setActivities([]);
+              // Activities are now derived from users state, no need to reset
               setCurrentTheme('stackBlue');
               setBannerPosition('top');
               setTaskCelebration('rainbow');
@@ -3065,7 +3037,7 @@ const App = () => {
               // Templates now handled through activityCategories
               setIsEditMode(false);
               setHasPinProtection(false);
-              setActivityCategories(null);
+              setLibraryCategories(null);
               setAddedToLibraryIds(new Set());
               
               // Reset form states
@@ -3442,7 +3414,7 @@ const App = () => {
           const newDay = currentDay === 'today' ? 'tomorrow' : 'today';
           setCurrentDay(newDay);
           const rawActivities = users[currentUser]?.days?.[newDay]?.activities || [];
-          setActivities(cleanupActivities(rawActivities));
+          // Activities are now derived from users state, no need to set them separately
           
           // Show a quick toast to confirm the change
           showToast({ 
@@ -3538,7 +3510,6 @@ const App = () => {
           backgroundColor: theme.light,
         }
       ]}>
-        
         {/* Status Bar Background when banner is at bottom - not needed on web */}
         {bannerPosition === 'bottom' && Platform.OS !== 'web' && (
           Platform.OS === 'ios' ? (
@@ -3603,7 +3574,7 @@ const App = () => {
               onUpdate={(newActivities) => {
                 // Filter out deleted items before saving
                 const activeActivities = newActivities.filter(a => !a.deleted);
-                setActivities(newActivities);
+                updateUserActivities(currentUser, currentDay, newActivities);
                 // Update the users state to persist the change
                 if (currentUser && users[currentUser]) {
                   const updatedUsers = { ...users };
@@ -3776,7 +3747,7 @@ const App = () => {
                   }}
                   keyExtractor={item => item.id}
               onDragEnd={({ data }) => {
-                setActivities(data);
+                updateUserActivities(currentUser, currentDay, data);
                 // Save immediately after reordering
                 if (currentUser && users[currentUser]) {
                   const updatedUsers = { ...users };
@@ -4063,8 +4034,8 @@ const App = () => {
         visible={showActivityLibrary}
         onClose={() => setShowActivityLibrary(false)}
         showToast={showToast}
-        categories={activityCategories}
-        onSaveCategories={setActivityCategories}
+        categories={library?.categories}
+        onSaveCategories={setLibraryCategories}
         onSelectActivity={async (activity) => {
             // Get device ID for enhanced activity IDs
             const deviceId = await encryptionService.getDeviceId();
@@ -4097,7 +4068,7 @@ const App = () => {
             };
             
             setUsers(updatedUsers);
-            setActivities(updatedActivities);
+            // Activities already updated through setUsers
             showToast({ 
               message: `✅ Added: ${activity.icon} ${newActivity.text}`,
               duration: 2000,
@@ -4137,7 +4108,7 @@ const App = () => {
             };
             
             setUsers(updatedUsers);
-            setActivities(updatedActivities);
+            // Activities already updated through setUsers
             showToast({ 
               message: `✅ Added ${newActivities.length} activities`,
               duration: 2000,
@@ -4256,8 +4227,8 @@ const App = () => {
         users={users}
         currentUser={currentUser}
         currentDay={currentDay}
-        templates={templates}
-        activityCategories={activityCategories}
+        templates={libraryTemplates}
+        activityCategories={library?.categories}
         currentTheme={currentTheme}
         bannerPosition={bannerPosition}
         hasSecurePin={hasPinProtection}
@@ -4314,7 +4285,7 @@ const App = () => {
         onSelectUser={(userId) => {
           setCurrentUser(userId);
           const userActivities = users[userId]?.days?.[currentDay]?.activities || [];
-          setActivities(userActivities.filter(a => !a.deleted));
+          // Activities are now derived from users state, no need to set them separately
           if (users[userId]?.settings?.theme) {
             setCurrentTheme(users[userId].settings.theme);
           }
@@ -4399,10 +4370,10 @@ const App = () => {
         onPlanTomorrow={() => {/* TODO: Implement plan tomorrow */}}
         showToast={showToast}
         templates={(() => {
-          // Transform activityCategories to templates format
+          // Transform library?.categories to templates format
           const templatesObject = {};
-          if (activityCategories && Array.isArray(activityCategories)) {
-            activityCategories.forEach(category => {
+          if (library?.categories && Array.isArray(library?.categories)) {
+            library?.categories.forEach(category => {
               templatesObject[category.id] = {
                 name: category.name,
                 activities: (category.activities || []).map(activity => ({
@@ -4443,7 +4414,7 @@ const App = () => {
           setCurrentUser(userId);
           setCurrentDay(day);
           const dayActivities = users[userId]?.days?.[day]?.activities || [];
-          setActivities(dayActivities.filter(a => !a.deleted));
+          // Activities are now derived from users state, no need to set them separately
           // Load the selected user's theme
           if (users[userId]?.settings?.theme) {
             setCurrentTheme(users[userId].settings.theme);
@@ -4456,9 +4427,9 @@ const App = () => {
         visible={showActivityManagementModal}
         onClose={() => setShowActivityManagementModal(false)}
         theme={theme}
-        categories={activityCategories}
+        categories={library?.categories}
         showToast={showToast}
-        onSaveCategories={setActivityCategories}
+        onSaveCategories={setLibraryCategories}
         stackMapLibrary={STACKMAP_LIBRARY}
         onAddActivity={async (activity) => {
           // Get device ID for enhanced activity IDs
@@ -4475,7 +4446,7 @@ const App = () => {
             type: 'task',
             ...(activity.isPersonal && { isPersonal: true })
           };
-          setActivities([...activities, newActivity]);
+          updateUserActivities(currentUser, currentDay, [...activities, newActivity]);
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
         }}
         onSelectActivity={async (activity) => {
@@ -4492,7 +4463,7 @@ const App = () => {
             deleted: false,
             type: 'task'
           };
-          setActivities([...activities, newActivity]);
+          updateUserActivities(currentUser, currentDay, [...activities, newActivity]);
           showToast({ message: `Added "${newActivity.text}" to today's activities` });
         }}
         onSelectMultipleActivities={async (activitiesToAdd) => {
@@ -4512,7 +4483,7 @@ const App = () => {
           }));
           
           // Add all new activities at once
-          setActivities([...activities, ...newActivities]);
+          updateUserActivities(currentUser, currentDay, [...activities, ...newActivities]);
           showToast({ message: `Added ${newActivities.length} activities to today!` });
         }}
         initialTab={activityManagementActiveTab}
@@ -4630,8 +4601,8 @@ const App = () => {
         users={users}
         currentUser={currentUser}
         currentDay={currentDay}
-        templates={templates}
-        activityCategories={activityCategories}
+        templates={libraryTemplates}
+        activityCategories={library?.categories}
         currentTheme={currentTheme}
         bannerPosition={bannerPosition}
         hasSecurePin={hasPinProtection}

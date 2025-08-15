@@ -79,9 +79,10 @@
 - Max width constraints for readability
 - See `/prompts/editmoderefactor/` for full specs
 
-### Data Structure Refactor (PLANNED)
-- See `DATA_STRUCTURE_REFACTOR_PLAN.md`
-- Pre-refactor checkpoint: commit `0691741`
+### Data Structure (COMPLETED Jan 2025)
+- See `/docs/DATA_STRUCTURE.md` for complete documentation
+- Migration completed: commit `[current]`
+- Pre-migration checkpoint: commit `0691741`
 
 ---
 
