@@ -744,6 +744,7 @@ const App = () => {
               ...activity,
               id: activity.id?.startsWith('activity_') ? activity.id : `activity_${activity.id}`,
               text: activity.text || activity.title || '',
+              icon: activity.icon || activity.emoji || '',
               description: activity.description || '',
               pinned: activity.pinned !== undefined ? activity.pinned : false,
               activityType: activity.activityType || 'normal',

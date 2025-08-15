@@ -159,16 +159,6 @@ const validateActivity = (activity) => {
     return false;
   }
 
-  // Check for icon field (normalize from emoji if needed)
-  // Icon can be empty string but must exist
-  if (activity.icon === undefined) {
-    // Accept emoji field for backwards compatibility, but will normalize
-    if (activity.emoji === undefined) {
-      console.error('Activity missing icon field:', activity);
-      return false;
-    }
-  }
-
   // Check boolean fields - allow undefined for repair to fix
   if (activity.completed !== undefined && typeof activity.completed !== 'boolean') {
 //     console.error('Activity has invalid completed flag:', activity);
@@ -321,7 +311,6 @@ export const repairSyncedData = (data) => {
           return activity && 
                  activity.id && 
                  activity.text && 
-                 activity.icon !== undefined && // Icon can be empty string but must exist
                  typeof activity.completed === 'boolean' &&
                  typeof activity.pinned === 'boolean';
         });
