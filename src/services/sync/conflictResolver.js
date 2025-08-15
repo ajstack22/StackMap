@@ -392,7 +392,10 @@ class ConflictResolver {
         console.error('Failed state currentUser:', newState.currentUser);
         console.error('Repaired state users:', JSON.stringify(repairedState.users, null, 2));
         console.error('Repaired state currentUser:', repairedState.currentUser);
-        throw new Error('Conflict resolution failed validation');
+        
+        // Instead of throwing, return the current state as fallback
+        console.error('Falling back to current state to prevent sync failure');
+        return currentState;
       }
       
       console.log('Conflict resolution state repaired successfully');

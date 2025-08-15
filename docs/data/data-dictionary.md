@@ -143,13 +143,15 @@ When importing or syncing data, normalize fields as follows:
 
 1. **User fields**:
    - `emoji` → `icon` (preferred field)
-   - Remove `emoji` if `icon` exists
+   - Fields are cleaned - no `undefined` values preserved
+   - Clean object created with only valid fields
    
 2. **Activity fields**:
    - `name` → `text` (preferred field)
    - `title` → `text` (preferred field)
    - `emoji` → `icon` (preferred field)
-   - Remove deprecated fields after copying
+   - Deprecated fields are completely removed (not set to undefined)
+   - Clean objects created to prevent validation issues
 
 ### Default Values
 - `User.icon`: '👤' if missing
@@ -165,12 +167,15 @@ When importing or syncing data, normalize fields as follows:
 The following fields MUST be present and valid:
 1. `AppState.users` - must be an object (can be empty)
 2. `AppState.currentUser` - must reference a valid, non-deleted user
-3. `User.id` - must be non-empty string
-4. `User.name` - must be non-empty string
-5. `User.icon` - must be single character (emoji)
-6. `Activity.id` - must be non-empty string
-7. `Activity.text` - must be non-empty string
-8. `Activity.icon` - must be single character (emoji)
+3. For non-deleted users:
+   - `User.name` - must be non-empty string
+   - `User.icon` OR `User.emoji` - at least one must exist (emoji accepted for backwards compatibility)
+   - `User.days` - must be an object
+4. For activities:
+   - `Activity.id` - must be non-empty string
+   - `Activity.text` OR `Activity.name` OR `Activity.title` - at least one must exist
+   - `Activity.completed` - must be boolean (defaults to false if missing)
+   - `Activity.pinned` - must be boolean (defaults to false if missing)
 
 ### Data Integrity
 1. `currentUser` must point to an existing user in `users` object
@@ -198,3 +203,11 @@ Import/export uses the full `AppState` structure in JSON format with the followi
 - Version 1: Original format with `emoji` fields
 - Version 2: Added user management
 - Version 3: Current format with `icon` fields and full normalization
+
+## Data Repair Process
+The sync service includes automatic data repair that:
+1. Migrates deprecated fields (`emoji` → `icon`, `name/title` → `text`)
+2. Adds missing required fields with sensible defaults
+3. Removes redundant fields completely (not set to undefined)
+4. Creates clean objects to prevent validation issues
+5. Falls back to local state if repair fails to prevent sync loops

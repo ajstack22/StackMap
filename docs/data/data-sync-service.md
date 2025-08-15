@@ -185,7 +185,7 @@ function restoreData(syncData) {
 1. **Invalid Data** - Attempt repair, fall back to local state
 2. **Network Failure** - Retry with exponential backoff
 3. **Decryption Failure** - Verify sync phrase, prompt user
-4. **Conflict Resolution Failure** - Log details, use local state
+4. **Conflict Resolution Failure** - Log details, fall back to current local state (prevents infinite loops)
 
 ### Validation Checks
 ```javascript
@@ -200,13 +200,24 @@ function validateSyncedData(data) {
   
   // All users must have required fields
   for (const [userId, user] of Object.entries(data.users)) {
-    if (!user.id || !user.name || !user.icon) return false;
-    if (!user.days || typeof user.days !== 'object') return false;
+    if (!user.deleted) { // Skip validation for deleted users
+      if (!user.name || typeof user.name !== 'string') return false;
+      if (!user.icon && !user.emoji) return false; // Accept emoji for backwards compatibility
+      if (!user.days || typeof user.days !== 'object') return false;
+    }
   }
   
   return true;
 }
 ```
+
+### Conflict Resolution Error Handling
+When conflict resolution fails validation:
+1. The error is caught and logged (not thrown)
+2. The system falls back to the current local state
+3. The sync continues without applying remote changes
+4. The next sync attempt will retry conflict resolution
+5. This prevents infinite validation loops that could freeze the UI
 
 ## Security Considerations
 1. **Zero-Knowledge** - Server never sees decrypted data

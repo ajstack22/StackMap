@@ -67,6 +67,7 @@ const validateUser = (userId, user) => {
   // Check required user fields
   if (!user.name || typeof user.name !== 'string') {
     console.error(`Data validation failed: User ${userId} missing or invalid name`, user);
+    console.error('Name value:', user.name, 'Type:', typeof user.name);
     return false;
   }
 
@@ -77,6 +78,7 @@ const validateUser = (userId, user) => {
       console.log(`Data validation: User ${userId} has emoji but no icon - will normalize`);
     } else {
       console.error(`Data validation failed: User ${userId} missing icon`, user);
+      console.error('Icon value:', user.icon, 'Emoji value:', user.emoji);
       return false;
     }
   }
@@ -217,6 +219,10 @@ const validateTheme = (theme) => {
  */
 export const repairSyncedData = (data) => {
   try {
+    console.log('Repair: Starting data repair process');
+    console.log('Repair: Input data has', Object.keys(data.users || {}).length, 'users');
+    console.log('Repair: Current user is', data.currentUser);
+    
     const repaired = JSON.parse(JSON.stringify(data)); // Deep clone
 
     // Ensure users object exists
@@ -256,21 +262,30 @@ export const repairSyncedData = (data) => {
       }
       
       // Ensure required user fields
-      if (!user.name) user.name = 'Unknown User';
+      if (!user.name) {
+        console.log(`Repair: User ${userId} missing name, setting to 'Unknown User'`);
+        user.name = 'Unknown User';
+      }
       // Normalize icon field
       if (!user.icon) {
         if (user.emoji) {
           // Migrate emoji to icon field
+          console.log(`Repair: User ${userId} migrating emoji to icon field`);
           user.icon = user.emoji;
           delete user.emoji; // Remove redundant field
         } else {
+          console.log(`Repair: User ${userId} missing icon, setting default`);
           user.icon = '👤'; // Default user icon
         }
       } else if (user.emoji) {
         // Remove redundant emoji field if icon exists
+        console.log(`Repair: User ${userId} removing redundant emoji field`);
         delete user.emoji;
       }
-      if (!user.days) user.days = {};
+      if (!user.days) {
+        console.log(`Repair: User ${userId} missing days object, creating empty`);
+        user.days = {};
+      }
 
       // Repair each day
       for (const [day, dayData] of Object.entries(user.days)) {
@@ -294,18 +309,22 @@ export const repairSyncedData = (data) => {
           }
           
           // Ensure required fields with defaults
-          return {
-            ...activity,
+          const cleanActivity = {
             id: activity.id || `repaired_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
             text: activity.text,
             icon: activity.icon || activity.emoji || '',
             completed: typeof activity.completed === 'boolean' ? activity.completed : false,
-            pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false,
-            // Remove redundant fields
-            name: undefined,
-            title: undefined,
-            emoji: undefined
+            pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false
           };
+          
+          // Copy over any other valid fields (like order, completedAt, etc)
+          if (activity.order !== undefined) cleanActivity.order = activity.order;
+          if (activity.completedAt !== undefined) cleanActivity.completedAt = activity.completedAt;
+          if (activity.completedBy !== undefined) cleanActivity.completedBy = activity.completedBy;
+          if (activity.description !== undefined) cleanActivity.description = activity.description;
+          
+          // Don't copy redundant fields (name, title, emoji)
+          return cleanActivity;
         }).filter(activity => {
           // Filter out null activities and validate
           return activity && 

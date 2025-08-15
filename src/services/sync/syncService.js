@@ -653,16 +653,27 @@ class SyncService {
         if (conflicts.length > 0) {
           console.log('sync: Found', conflicts.length, 'conflicts - auto-resolving...');
           
-          // Auto-resolve all conflicts (no user intervention)
-          const resolutions = await conflictResolver.resolveConflicts(conflicts, { autoResolveAll: true });
-          
-          // Apply all resolutions
-          if (resolutions.finalState) {
-            console.log('sync: Auto-resolved all conflicts');
-            await this.applyState(resolutions.finalState);
-          } else if (resolutions.resolved && resolutions.resolved.length > 0) {
-            const partialState = conflictResolver.applyResolutions(resolutions.resolved);
-            await this.applyState(partialState);
+          try {
+            // Auto-resolve all conflicts (no user intervention)
+            const resolutions = await conflictResolver.resolveConflicts(conflicts, { autoResolveAll: true });
+            
+            // Apply all resolutions
+            if (resolutions.finalState) {
+              console.log('sync: Auto-resolved all conflicts');
+              await this.applyState(resolutions.finalState);
+            } else if (resolutions.resolved && resolutions.resolved.length > 0) {
+              const partialState = conflictResolver.applyResolutions(resolutions.resolved);
+              await this.applyState(partialState);
+            }
+          } catch (conflictError) {
+            console.error('sync: Conflict resolution failed:', conflictError);
+            
+            // If conflict resolution fails due to validation, try to use local state
+            console.log('sync: Falling back to local state due to conflict resolution failure');
+            
+            // Don't throw the error - just continue with local state
+            // This prevents the infinite loop
+            // The next sync will try again
           }
         } else {
           // No conflicts, simple merge

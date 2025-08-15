@@ -17,19 +17,22 @@ export const normalizeActivity = (activity) => {
   // Normalize icon field (from emoji)
   const icon = activity.icon || activity.emoji || '';
   
-  // Build normalized activity
-  return {
+  // Build normalized activity with only valid fields
+  const normalized = {
     id: activity.id || `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     text,
     icon,
     completed: activity.completed === true,
-    pinned: activity.pinned === true,
-    // Preserve optional fields
-    ...(activity.order !== undefined && { order: activity.order }),
-    ...(activity.completedAt && { completedAt: activity.completedAt }),
-    ...(activity.completedBy && { completedBy: activity.completedBy }),
-    ...(activity.description && { description: activity.description })
+    pinned: activity.pinned === true
   };
+  
+  // Add optional fields if they exist
+  if (activity.order !== undefined) normalized.order = activity.order;
+  if (activity.completedAt) normalized.completedAt = activity.completedAt;
+  if (activity.completedBy) normalized.completedBy = activity.completedBy;
+  if (activity.description) normalized.description = activity.description;
+  
+  return normalized;
 };
 
 /**
@@ -68,14 +71,21 @@ export const normalizeUser = (user) => {
     });
   }
   
-  return {
-    ...user,
+  // Build clean user object without redundant fields
+  const cleanUser = {
     name,
     icon,
-    days,
-    // Remove redundant fields
-    emoji: undefined
+    days
   };
+  
+  // Copy over other valid fields (except emoji)
+  Object.keys(user).forEach(key => {
+    if (key !== 'emoji' && key !== 'name' && key !== 'icon' && key !== 'days') {
+      cleanUser[key] = user[key];
+    }
+  });
+  
+  return cleanUser;
 };
 
 /**
