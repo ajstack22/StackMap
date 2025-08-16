@@ -704,18 +704,24 @@ class SyncService {
               // Apply the resolved conflicts to create merged state
               const mergedState = conflictResolver.applyResolvedConflicts(
                 resolutions,
-                { ...localState, ...normalizedRemoteData }
+                localState  // Use local state as base, not a merge
               );
               
-              // Ensure merged state has valid users
+              // Ensure merged state has valid users with icons preserved
               if (mergedState.users) {
                 Object.keys(mergedState.users).forEach(userId => {
                   const user = mergedState.users[userId];
+                  const localUser = localState.users?.[userId];
+                  const remoteUser = normalizedRemoteData.users?.[userId];
+                  
+                  // Preserve icon from either local or remote if missing in merged
                   if (!user.icon && !user.emoji) {
-                    console.warn(`Conflict resolution: User ${userId} missing icon, adding default`);
+                    const icon = localUser?.icon || remoteUser?.icon || 
+                                localUser?.emoji || remoteUser?.emoji || '👤';
+                    console.warn(`Conflict resolution: User ${userId} missing icon, using: ${icon}`);
                     mergedState.users[userId] = {
                       ...user,
-                      icon: '👤'
+                      icon: icon
                     };
                   }
                 });

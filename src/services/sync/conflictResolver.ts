@@ -282,39 +282,56 @@ class ConflictResolver {
     const baseUser = (localUser.lastModified || 0) > (remoteUser.lastModified || 0) 
       ? localUser 
       : remoteUser;
+    const otherUser = baseUser === localUser ? remoteUser : localUser;
     
+    // Start with all fields from base user
     const mergedUser: User = { ...baseUser };
 
-    // Merge days (activities)
+    // Merge days (activities) from both users
     if (localUser.days && remoteUser.days) {
       mergedUser.days = this.mergeUserDays(localUser.days, remoteUser.days);
+    } else if (!mergedUser.days) {
+      mergedUser.days = localUser.days || remoteUser.days || {};
     }
 
-    // Ensure critical fields are preserved
-    // Name: Use non-empty name, preferring local if both exist
+    // Ensure critical fields are preserved - ALWAYS preserve existing values
+    // Name: Keep the most meaningful name
     if (!mergedUser.name || mergedUser.name === 'User') {
-      if (localUser.name && localUser.name !== 'User') {
-        mergedUser.name = localUser.name;
-      } else if (remoteUser.name && remoteUser.name !== 'User') {
-        mergedUser.name = remoteUser.name;
-      } else {
-        mergedUser.name = 'User'; // Fallback
-      }
+      const bestName = (localUser.name && localUser.name !== 'User' ? localUser.name : null) ||
+                       (remoteUser.name && remoteUser.name !== 'User' ? remoteUser.name : null) ||
+                       mergedUser.name || 'User';
+      mergedUser.name = bestName;
     }
 
-    // Icon: Ensure we always have an icon
-    if (!mergedUser.icon) {
-      if (localUser.icon) {
-        mergedUser.icon = localUser.icon;
-      } else if (remoteUser.icon) {
-        mergedUser.icon = remoteUser.icon;
-      } else if (localUser.emoji) {
-        mergedUser.icon = localUser.emoji;
-      } else if (remoteUser.emoji) {
-        mergedUser.icon = remoteUser.emoji;
+    // Icon: CRITICAL - always ensure icon exists and prefer actual icons over defaults
+    const localIcon = localUser.icon || (localUser as any).emoji;
+    const remoteIcon = remoteUser.icon || (remoteUser as any).emoji;
+    
+    // Prefer non-default icons
+    if (!mergedUser.icon || mergedUser.icon === '👤' || mergedUser.icon === '😀') {
+      if (localIcon && localIcon !== '👤' && localIcon !== '😀') {
+        mergedUser.icon = localIcon;
+      } else if (remoteIcon && remoteIcon !== '👤' && remoteIcon !== '😀') {
+        mergedUser.icon = remoteIcon;
       } else {
-        mergedUser.icon = '👤'; // Default fallback
+        // Use any available icon, even if default
+        mergedUser.icon = mergedUser.icon || localIcon || remoteIcon || '👤';
       }
+    }
+    
+    // Ensure icon is always present
+    if (!mergedUser.icon) {
+      console.error('CRITICAL: User merge resulted in no icon!', { 
+        localIcon, 
+        remoteIcon, 
+        baseUser: baseUser.icon 
+      });
+      mergedUser.icon = localIcon || remoteIcon || '👤';
+    }
+
+    // Clean up any emoji field if present
+    if ((mergedUser as any).emoji) {
+      delete (mergedUser as any).emoji;
     }
 
     return mergedUser;
