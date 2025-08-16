@@ -6,7 +6,7 @@ import util from 'tweetnacl-util';
 // Type helpers for tweetnacl-util with proper casting
 const encodeBase64 = (arr: Uint8Array): string => (util as any).encodeBase64(arr);
 const decodeBase64 = (str: string): Uint8Array => (util as any).decodeBase64(str);
-const encodeUTF8 = (arr: Uint8Array): string => (util as any).encodeUTF8(arr);
+// const encodeUTF8 = (arr: Uint8Array): string => (util as any).encodeUTF8(arr); // Unused
 const decodeUTF8 = (str: string): Uint8Array => (util as any).decodeUTF8(str);
 
 import encryptionService from './encryptionService';
