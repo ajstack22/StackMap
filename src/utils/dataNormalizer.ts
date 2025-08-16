@@ -166,7 +166,28 @@ export const normalizeExportData = (data: RawExportData | null | undefined): Rec
     });
   }
   
-  // Normalize templates/library activities
+  // Normalize library (v4 format)
+  if (data.library && typeof data.library === 'object') {
+    normalized.library = {
+      ...data.library,
+      categories: Array.isArray(data.library.categories)
+        ? data.library.categories.map((category: any) => ({
+            ...category,
+            activities: Array.isArray(category.activities)
+              ? category.activities.map((activity: any) => normalizeActivity(activity))
+              : []
+          }))
+        : [],
+      userAddedActivityIds: data.library.userAddedActivityIds || []
+    };
+  }
+  
+  // Normalize libraryTemplates (v4 format)
+  if (data.libraryTemplates && Array.isArray(data.libraryTemplates)) {
+    normalized.libraryTemplates = data.libraryTemplates;
+  }
+  
+  // Normalize templates/library activities (v3 format - backward compatibility)
   if (data.templates && typeof data.templates === 'object') {
     normalized.templates = {};
     Object.entries(data.templates).forEach(([categoryId, category]) => {

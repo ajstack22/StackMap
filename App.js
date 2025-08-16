@@ -754,12 +754,33 @@ const App = () => {
   const migrateDataStructure = (data) => {
     if (!data) return data;
     
-    // If already version 3 with correct structure, return as-is
-    if (data.version === 3 && data.templates !== undefined) {
+    // Version 4 is the current version - no migration needed
+    if (data.version === 4) {
       return data;
     }
     
-    // Migrate users
+    // Version 3 with correct structure also doesn't need migration
+    if (data.version === 3 && (data.templates !== undefined || data.libraryTemplates !== undefined)) {
+      // But we should upgrade v3 to v4 structure
+      return {
+        ...data,
+        version: 4,
+        libraryTemplates: data.libraryTemplates || data.templates || [],
+        library: data.library || {
+          categories: data.activityCategories || [
+            {
+              id: "my-templates",
+              name: "My Templates", 
+              icon: "⭐",
+              activities: []
+            }
+          ],
+          userAddedActivityIds: []
+        }
+      };
+    }
+    
+    // Migrate older versions (v1, v2, or malformed v3)
     const migratedUsers = {};
     Object.entries(data.users || {}).forEach(([userId, user]) => {
       migratedUsers[userId] = {
@@ -776,20 +797,20 @@ const App = () => {
         lastActive: user.lastActive || new Date().toISOString()
       };
       
-      // Migrate activities
+      // Migrate activities - only add missing required fields, don't transform IDs
       if (user.days) {
         Object.keys(user.days).forEach(day => {
           if (user.days[day].activities) {
             migratedUsers[userId].days[day].activities = user.days[day].activities.map(activity => ({
               ...activity,
-              id: activity.id?.startsWith('activity_') ? activity.id : `activity_${activity.id}`,
-              text: activity.text || activity.title || '',
-              icon: activity.icon || activity.emoji || '',
-              description: activity.description || '',
+              // Keep existing ID as-is, only add one if missing
+              id: activity.id || `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+              text: activity.text || activity.title || activity.name || '',
+              icon: activity.icon || activity.emoji || '📌',
               pinned: activity.pinned !== undefined ? activity.pinned : false,
-              activityType: activity.activityType || 'normal',
-              time: activity.time || null,
-              createdAt: activity.createdAt || activity.created || new Date().toISOString()
+              completed: activity.completed !== undefined ? activity.completed : false
+              // Don't add unnecessary fields like description, activityType, time, createdAt
+              // unless they already exist in the source data
             }));
           }
         });
@@ -798,17 +819,28 @@ const App = () => {
     
     return {
       ...data,
-      version: 3,
+      version: 4,
       currentDay: data.currentDay || 'today',
       users: migratedUsers,
+      libraryTemplates: data.libraryTemplates || data.templates || [],
+      library: data.library || {
+        categories: data.activityCategories || [
+          {
+            id: "my-templates",
+            name: "My Templates",
+            icon: "⭐", 
+            activities: []
+          }
+        ],
+        userAddedActivityIds: []
+      },
       globalSettings: {
         ...data.globalSettings,
         enableDayManagement: data.globalSettings?.enableDayManagement !== undefined ? 
           data.globalSettings.enableDayManagement : true,
         pinEnabled: data.globalSettings?.pinEnabled !== undefined ? 
           data.globalSettings.pinEnabled : (data.globalSettings?.editModePin !== null)
-      },
-      templates: data.templates || []
+      }
     };
   };
 
@@ -1980,9 +2012,12 @@ const App = () => {
   const exportData = async () => {
     try {
       const data = {
-        version: 3,
+        version: 4,
         currentDay,
+        currentUser,
         users,
+        libraryTemplates,
+        library,
         globalSettings: {
           currentTheme,
           bannerPosition,
@@ -1991,7 +2026,6 @@ const App = () => {
           enableDayManagement: true,
           pinEnabled: await hasSecurePin()
         },
-        templates: libraryTemplates,
         exportDate: new Date().toISOString()
       };
 
@@ -2746,21 +2780,34 @@ This will replace all your current data.`,
           setCurrentUser(defaultUserId);
         }
         
-        // Restore templates by converting to activityCategories format
-        if (importData.templates) {
+        // Restore library (v4 format)
+        if (importData.library) {
+          // v4 format with library object
+          setLibrary(importData.library);
+          if (importData.library.categories) {
+            updateLibraryCategories(importData.library.categories);
+          }
+        } else if (importData.templates) {
+          // v3 format fallback - convert templates to categories
           const categoriesArray = [];
           Object.entries(importData.templates).forEach(([categoryId, category]) => {
             categoriesArray.push({
               id: categoryId,
               name: category.name,
+              icon: category.icon || '📚',
               activities: (category.activities || []).map(activity => ({
                 id: activity.id,
-                name: activity.text,
-                emoji: activity.icon
+                text: activity.text || activity.name,
+                icon: activity.icon || activity.emoji || '📌'
               }))
             });
           });
           updateLibraryCategories(categoriesArray);
+        }
+        
+        // Restore library templates if present
+        if (importData.libraryTemplates) {
+          setLibraryTemplates(importData.libraryTemplates);
         }
         
         // Restore global settings
@@ -2878,27 +2925,27 @@ This will replace all your current data.`,
           }
         }
         
-        // Merge templates
-        if (importData.templates && Object.keys(importData.templates).length > 0) {
+        // Merge library (v4 format)
+        if (importData.library && importData.library.categories) {
           const currentCategories = [...(library?.categories || [])];
           
-          Object.entries(importData.templates).forEach(([categoryId, category]) => {
-            // Check if category already exists
-            const existingCategoryIndex = currentCategories.findIndex(c => c.name === category.name);
+          importData.library.categories.forEach(importCategory => {
+            // Check if category already exists by name
+            const existingCategoryIndex = currentCategories.findIndex(c => c.name === importCategory.name);
             
             if (existingCategoryIndex !== -1) {
               // Merge activities into existing category
               const existingCategory = currentCategories[existingCategoryIndex];
               const existingActivities = existingCategory.activities || [];
-              const newActivities = category.activities || [];
+              const newActivities = importCategory.activities || [];
               
               newActivities.forEach(newActivity => {
-                // Check if activity already exists by name
-                if (!existingActivities.some(a => a.name === newActivity.text)) {
+                // Check if activity already exists by text
+                if (!existingActivities.some(a => a.text === newActivity.text)) {
                   existingActivities.push({
                     id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                    name: newActivity.text,
-                    emoji: newActivity.icon
+                    text: newActivity.text,
+                    icon: newActivity.icon
                   });
                 }
               });
@@ -2910,18 +2957,36 @@ This will replace all your current data.`,
             } else {
               // Add new category
               currentCategories.push({
-                id: categoryId,
-                name: category.name,
-                activities: (category.activities || []).map(activity => ({
+                id: importCategory.id || Date.now().toString(),
+                name: importCategory.name,
+                icon: importCategory.icon || '📚',
+                activities: (importCategory.activities || []).map(activity => ({
                   id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                  name: activity.text,
-                  emoji: activity.icon
+                  text: activity.text,
+                  icon: activity.icon
                 }))
               });
             }
           });
           
           updateLibraryCategories(currentCategories);
+          
+          // Also update the full library object
+          setLibrary({
+            ...library,
+            categories: currentCategories,
+            userAddedActivityIds: [
+              ...(library?.userAddedActivityIds || []),
+              ...(importData.library?.userAddedActivityIds || [])
+            ]
+          });
+        }
+        
+        // Merge library templates if present
+        if (importData.libraryTemplates) {
+          const currentTemplates = libraryTemplates || [];
+          const mergedTemplates = [...currentTemplates, ...importData.libraryTemplates];
+          setLibraryTemplates(mergedTemplates);
         }
       }
       

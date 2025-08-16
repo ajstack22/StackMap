@@ -18,6 +18,7 @@ import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
 import { validateSyncedData, repairSyncedData, validateIncrementalSync } from './dataValidator';
+import { normalizeExportData } from '../../utils/dataNormalizer';
 // Types imported but not all used directly - kept for documentation
 
 /**
@@ -681,8 +682,9 @@ class SyncService {
         // Get current local state (already normalized by getCurrentState)
         const localState = this.getCurrentState();
         
-        // DISABLED: Normalization was stripping critical fields
-        const normalizedRemoteData = decryptedData;
+        // Normalize remote data to ensure consistent field names
+        // This handles v3→v4 migration and field name variations
+        const normalizedRemoteData = normalizeExportData(decryptedData) || decryptedData;
                         
         // Detect conflicts
         const conflicts = conflictResolver.detectConflicts(
@@ -880,11 +882,24 @@ class SyncService {
       }
     }
     
-    // Use the same structure as the export functionality
+    // Use v4 structure matching the export functionality
     const currentState = {
-      version: 3,
+      version: 4,
       currentDay: state.currentDay || 'today',
+      currentUser: state.currentUser,
       users: users,
+      library: state.library || {
+        categories: [
+          {
+            id: "my-templates",
+            name: "My Templates",
+            icon: "⭐",
+            activities: []
+          }
+        ],
+        userAddedActivityIds: []
+      },
+      libraryTemplates: state.libraryTemplates || [],
       globalSettings: {
         currentTheme: state.currentTheme,
         bannerPosition: state.bannerPosition,
@@ -895,9 +910,6 @@ class SyncService {
         taskCelebration: state.taskCelebration,
         routineCelebration: state.routineCelebration
       },
-      templates: state.libraryTemplates || [],
-      activityCategories: state.library?.categories || null,
-      currentUser: state.currentUser,
       hasCompletedOnboarding: state.hasCompletedOnboarding,
       lastBackup: new Date().toISOString(),
       lastModified: Date.now() // Add timestamp for conflict resolution
@@ -973,11 +985,13 @@ class SyncService {
       return;
     }
     
-    // Handle full sync data (only support v3 format)
+    // Handle full sync data (support both v3 and v4 formats)
     const {
       users,
-      templates,
-      activityCategories,
+      library,           // v4 format
+      libraryTemplates,  // v4 format
+      templates,         // v3 format fallback
+      activityCategories,// v3 format fallback
       currentUser,
       globalSettings,
       hasCompletedOnboarding,
@@ -1018,15 +1032,15 @@ class SyncService {
     const currentUserSettings = users?.[finalCurrentUser]?.settings || {};
     const userTheme = currentUserSettings.theme || globalSettings?.currentTheme || 'stackBlue';
     
-    // Update store with export format data
+    // Update store with data (handle both v3 and v4 formats)
     const newState = {
       // Set activities from the current user's current day (not templates!)
       activities: currentUserActivities,
-      // Map templates to library templates
-      libraryTemplates: Array.isArray(templates) ? templates : [],
-      activityCategories: activityCategories || null,
-      library: {
-        categories: activityCategories || null,
+      // Handle v4 format
+      libraryTemplates: libraryTemplates || templates || [],
+      activityCategories: activityCategories || library?.categories || null,
+      library: library || {
+        categories: activityCategories || [],
         userAddedActivityIds: []
       },
       users: users || {},

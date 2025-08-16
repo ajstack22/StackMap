@@ -295,7 +295,7 @@ const DataModal = ({
       
       // Build export data based on selections
       const exportData = {
-        version: 3,
+        version: 4,
         exportDate: new Date().toISOString(),
         exportedItems: {
           users: exportSelections.users,
@@ -330,31 +330,23 @@ const DataModal = ({
       }
       
       if (exportSelections.activityLibrary) {
-        // Include v5 structure if available
-        const { myLibrary, stackMapLibrary } = useAppStore.getState();
+        // Get library data from store
+        const { library, libraryTemplates } = useAppStore.getState();
         
-        if (myLibrary) {
-          exportData.myLibrary = myLibrary;
-        }
+        // Include v4 library structure
+        exportData.library = library || {
+          categories: activityCategories || [
+            {
+              id: "my-templates",
+              name: "My Templates",
+              icon: "⭐",
+              activities: []
+            }
+          ],
+          userAddedActivityIds: []
+        };
         
-        // Include legacy format for backward compatibility
-        exportData.activityCategories = activityCategories;
-        
-        // Also transform to templates object format for backward compatibility
-        const templatesObject = {};
-        if (activityCategories && Array.isArray(activityCategories)) {
-          activityCategories.forEach(category => {
-            templatesObject[category.id] = {
-              name: category.name,
-              activities: (category.activities || []).map(activity => ({
-                id: activity.id,
-                text: activity.text,
-                icon: activity.icon
-              }))
-            };
-          });
-        }
-        exportData.templates = templatesObject;
+        exportData.libraryTemplates = libraryTemplates || [];
       }
       
       // Add global settings
