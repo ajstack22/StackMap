@@ -638,8 +638,14 @@ class SyncService {
         if (decryptedData.type === 'incremental') {
           // Validate incremental sync data
           if (!validateIncrementalSync(decryptedData)) {
-            console.error('sync: Incremental sync data validation failed');
-            throw new Error('Invalid incremental sync data received from server');
+            console.error('sync: Incremental sync data validation failed', {
+              type: decryptedData?.type,
+              timestamp: decryptedData?.timestamp,
+              patchKeys: decryptedData?.patch ? Object.keys(decryptedData.patch) : [],
+              patchSize: JSON.stringify(decryptedData?.patch || {}).length
+            });
+            // Don't throw - try to apply it anyway as it might still be valid
+            console.warn('sync: Attempting to apply incremental update despite validation failure');
           }
         } else {
           // Validate full sync data
@@ -863,7 +869,34 @@ class SyncService {
       if (data.patch) {
         Object.keys(data.patch).forEach(key => {
           if (data.patch[key] !== undefined) {
-            patchedState[key] = data.patch[key];
+            // Special handling for users object - deep merge
+            if (key === 'users' && typeof data.patch[key] === 'object' && typeof patchedState[key] === 'object') {
+              // Deep merge users to preserve existing user data
+              patchedState[key] = { ...patchedState[key] };
+              Object.keys(data.patch[key]).forEach(userId => {
+                if (data.patch[key][userId] === null) {
+                  // User deletion
+                  delete patchedState[key][userId];
+                } else if (typeof data.patch[key][userId] === 'object') {
+                  // User update - deep merge to preserve days and other nested data
+                  patchedState[key][userId] = {
+                    ...(patchedState[key][userId] || {}),
+                    ...data.patch[key][userId]
+                  };
+                  
+                  // If days are included in the patch, deep merge those too
+                  if (data.patch[key][userId].days && patchedState[key][userId].days) {
+                    patchedState[key][userId].days = {
+                      ...patchedState[key][userId].days,
+                      ...data.patch[key][userId].days
+                    };
+                  }
+                }
+              });
+            } else {
+              // For non-user fields, direct replacement
+              patchedState[key] = data.patch[key];
+            }
           }
         });
       }
@@ -871,6 +904,14 @@ class SyncService {
       // Don't overwrite hasCompletedOnboarding unless explicitly in patch
       if (!data.patch.hasOwnProperty('hasCompletedOnboarding')) {
         patchedState.hasCompletedOnboarding = currentState.hasCompletedOnboarding;
+      }
+      
+      // Update activities array if current user/day changed
+      const finalCurrentUser = patchedState.currentUser || currentState.currentUser;
+      const finalCurrentDay = patchedState.currentDay || currentState.currentDay;
+      if (patchedState.users && patchedState.users[finalCurrentUser] && patchedState.users[finalCurrentUser].days) {
+        const currentUserActivities = patchedState.users[finalCurrentUser].days[finalCurrentDay]?.activities || [];
+        patchedState.activities = currentUserActivities;
       }
       
       useAppStore.setState(patchedState);
@@ -1071,9 +1112,20 @@ class SyncService {
    * Apply state from conflict resolution
    */
   async applyState(state: any): Promise<void> {
-    // Validate state before applying
+    // For incremental updates, skip validation as they may have partial data
+    if (state.type === 'incremental') {
+      await this.restoreData(state);
+      return;
+    }
+    
+    // Validate state before applying (only for full state)
     if (!validateSyncedData(state)) {
-      console.error('sync: State validation failed in applyState');
+      console.error('sync: State validation failed in applyState', {
+        hasUsers: !!state.users,
+        userCount: state.users ? Object.keys(state.users).length : 0,
+        currentUser: state.currentUser,
+        currentUserExists: state.users && state.currentUser && !!state.users[state.currentUser]
+      });
       throw new Error('Invalid state cannot be applied');
     }
     

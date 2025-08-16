@@ -3788,62 +3788,6 @@ Users: ${userNames} (${userCount} total)
               )}
             </ScrollView>
             </>
-          ) : Platform.OS === 'ios' ? (
-            (() => {
-              // Pre-filter the data once
-              const filteredData = activities.filter(a => !a.deleted);
-              
-              // Create a map of item IDs to their indices for O(1) lookup
-              const indexMap = {};
-              filteredData.forEach((item, idx) => {
-                indexMap[item.id] = idx;
-              });
-              
-              return (
-                <DraggableFlatList
-                  data={filteredData}
-                  renderItem={({ item, drag, isActive }) => {
-                    // Use the pre-calculated index map
-                    const correctIndex = indexMap[item.id] ?? 0;
-                    
-                    // Always log for debugging
-                    console.log('iOS DraggableFlatList - item:', item.text, 'id:', item.id, 'correctIndex:', correctIndex);
-                    console.log('indexMap:', JSON.stringify(indexMap));
-                    
-                    return renderActivity({ item, index: correctIndex, drag, isActive });
-                  }}
-                  keyExtractor={item => item.id}
-              onDragEnd={({ data }) => {
-                updateUserActivities(currentUser, currentDay, data);
-                // Save immediately after reordering
-                if (currentUser && users[currentUser]) {
-                  const updatedUsers = { ...users };
-                  if (!updatedUsers[currentUser].days) {
-                    updatedUsers[currentUser].days = {};
-                  }
-                  if (!updatedUsers[currentUser].days[currentDay]) {
-                    updatedUsers[currentUser].days[currentDay] = { activities: [] };
-                  }
-                  updatedUsers[currentUser].days[currentDay].activities = data;
-                  setUsers(updatedUsers);
-                }
-              }}
-              contentContainerStyle={[
-                styles.listContent
-              ]}
-              ItemSeparatorComponent={() => <View style={{ height: CARD_LAYOUT.gap }} />}
-              ListEmptyComponent={
-                <View style={styles.emptyState}>
-                  <Text style={styles.emptyIcon}>📋</Text>
-                  <Text style={styles.emptyText}>No activities yet</Text>
-                  <Text style={styles.emptySubtext}>
-                    {isEditMode ? 'Tap Add to create an activity' : 'Tap the edit button to add your first activity'}
-                  </Text>
-                </View>
-              }
-            />
-              );
-            })()
           ) : (
             // Android/Web fallback - regular FlatList with reorder buttons
             <FlatList
