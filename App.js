@@ -141,6 +141,13 @@ const getAndroidModalBottomHeight = (insets) => {
 const commonEmojis = COMMON_EMOJIS;
 
 // AnimatedIcon component for slide-up animation
+/**
+ * @param {Object} props
+ * @param {string} props.name - Icon name
+ * @param {number} props.size - Icon size
+ * @param {string} props.color - Icon color
+ * @param {any} props.translateY - Animated value
+ */
 const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
   const slideY = React.useMemo(() => 
     translateY.interpolate({
