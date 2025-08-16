@@ -41,25 +41,10 @@ const TabbedModal = ({
   const insets = useSafeAreaInsets();
   const [internalActiveTab, setInternalActiveTab] = useState(defaultTab);
   const swipeAnimation = useRef(new RNAnimated.Value(0)).current;
-  const modalSlideAnimation = useRef(new RNAnimated.Value(0)).current;
   const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
   const [isScrolling, setIsScrolling] = useState(false);
   const gestureRef = useRef({ isActive: false });
   const pagerRef = useRef(null);
-  
-  // New: Scroll position tracking infrastructure
-  const scrollPositions = useRef({});
-  const scrollOffsetsRef = useRef({});
-  const isAtTopRef = useRef(true);
-  
-  // Track scroll position per tab
-  const updateScrollPosition = (tabKey, offset) => {
-    scrollOffsetsRef.current[tabKey] = offset;
-    const currentTabKey = tabs[activeTab]?.key;
-    if (tabKey === currentTabKey) {
-      isAtTopRef.current = offset <= 0;
-    }
-  };
   
   // Use controlled activeTab if provided, otherwise use internal state
   const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
@@ -196,86 +181,6 @@ const TabbedModal = ({
     })
   ).current;
   
-  // Create pan responder for vertical swipe gestures (modal dismissal)
-  const verticalPanResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => false,
-      
-      onMoveShouldSetPanResponder: (evt, gestureState) => {
-        // CRITICAL: Never capture upward swipes
-        if (gestureState.dy < 0) {
-          return false;
-        }
-        
-        // Only capture downward swipes when at top
-        const isDownwardSwipe = gestureState.dy > 10;
-        const isVerticalGesture = Math.abs(gestureState.dy) > Math.abs(gestureState.dx);
-        const canDismiss = isAtTopRef.current && !isScrolling;
-        
-        return isDownwardSwipe && isVerticalGesture && canDismiss;
-      },
-      
-      onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
-        // More conservative capture for modal dismissal
-        if (gestureState.dy < 0) return false;
-        
-        const isStrongDownwardSwipe = gestureState.dy > 20;
-        const isVertical = Math.abs(gestureState.dy) > Math.abs(gestureState.dx) * 1.5;
-        const canDismiss = isAtTopRef.current && !isScrolling;
-        
-        return isStrongDownwardSwipe && isVertical && canDismiss;
-      },
-      
-      onPanResponderGrant: () => {
-        // Visual feedback that dismiss gesture is recognized
-        // Could add haptic feedback here on mobile
-      },
-      
-      onPanResponderMove: (evt, gestureState) => {
-        // Only allow downward movement when at top
-        if (gestureState.dy > 0 && isAtTopRef.current) {
-          modalSlideAnimation.setValue(gestureState.dy);
-        }
-      },
-      
-      onPanResponderRelease: (evt, gestureState) => {
-        const dismissThreshold = screenHeight * 0.2;
-        const velocityThreshold = 0.5;
-        
-        if (gestureState.dy > dismissThreshold || gestureState.vy > velocityThreshold) {
-          // Animate out and close
-          RNAnimated.timing(modalSlideAnimation, {
-            toValue: screenHeight,
-            duration: 250,
-            easing: Easing.bezier(0.2, 0, 0, 1),
-            useNativeDriver: true,
-          }).start(() => {
-            modalSlideAnimation.setValue(0);
-            onClose();
-          });
-        } else {
-          // Snap back
-          RNAnimated.timing(modalSlideAnimation, {
-            toValue: 0,
-            duration: 250,
-            easing: Easing.bezier(0.2, 0, 0, 1),
-            useNativeDriver: true,
-          }).start();
-        }
-      },
-      
-      onPanResponderTerminate: () => {
-        // Handle gesture interruption
-        RNAnimated.timing(modalSlideAnimation, {
-            toValue: 0,
-            duration: 250,
-            easing: Easing.bezier(0.2, 0, 0, 1),
-            useNativeDriver: true,
-          }).start();
-      },
-    })
-  ).current;
-  
   // Reset to default tab when modal opens (only if not controlled)
   useEffect(() => {
     if (visible && controlledActiveTab === undefined) {
@@ -370,21 +275,13 @@ const TabbedModal = ({
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <RNAnimated.View 
+      <View 
         style={[
           styles.modalContainer, 
           { 
-            backgroundColor: theme.light,
-            transform: [{
-              translateY: modalSlideAnimation.interpolate({
-                inputRange: [0, screenHeight],
-                outputRange: [0, screenHeight],
-                extrapolate: 'clamp',
-              })
-            }]
+            backgroundColor: theme.light
           }
         ]}
-        {...verticalPanResponder.panHandlers}
       >
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
@@ -538,9 +435,7 @@ const TabbedModal = ({
                     if (!gestureRef.current.isActive) {
                       setIsScrolling(scrolling);
                     }
-                  },
-                  onScrollPositionChange: updateScrollPosition,
-                  tabKey: tabs[index]?.key || index
+                  }
                 })
               )}
             </RNAnimated.View>
@@ -550,15 +445,14 @@ const TabbedModal = ({
         {Platform.OS === 'android' && (
           <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
         )}
-      </RNAnimated.View>
+      </View>
     </Modal>
   );
 };
 
 // Tab Content Wrapper Component
-export const TabContent = ({ children, isActive, modalVisible, onScrollStateChange, onScrollPositionChange, tabKey }) => {
+export const TabContent = ({ children, isActive, modalVisible, onScrollStateChange }) => {
   const [hasBeenActive, setHasBeenActive] = useState(false);
-  const scrollOffset = useRef(0);
   
   // Reset hasBeenActive when modal closes
   useEffect(() => {
@@ -578,32 +472,23 @@ export const TabContent = ({ children, isActive, modalVisible, onScrollStateChan
     return null;
   }
   
-  // Clone children with enhanced scroll tracking
+  // Clone children with scroll tracking for horizontal swipe gesture coordination
   const enhancedChildren = React.Children.map(children, child => {
     // Check if child is a ScrollView (imported from react-native)
     if (child?.type === ScrollView || child?.type?.displayName === 'ScrollView' || child?.props?.scrollable) {
       return React.cloneElement(child, {
-        onScroll: (event) => {
-          const offset = event.nativeEvent.contentOffset.y;
-          scrollOffset.current = offset;
-          onScrollPositionChange?.(tabKey, offset);
-          onScrollStateChange?.(offset > 0);
-          child.props.onScroll?.(event);
-        },
         onScrollBeginDrag: (event) => {
           onScrollStateChange?.(true);
           child.props.onScrollBeginDrag?.(event);
         },
         onScrollEndDrag: (event) => {
-          const offset = event.nativeEvent.contentOffset.y;
           setTimeout(() => {
-            onScrollStateChange?.(offset > 0);
+            onScrollStateChange?.(false);
           }, 100);
           child.props.onScrollEndDrag?.(event);
         },
         onMomentumScrollEnd: (event) => {
-          const offset = event.nativeEvent.contentOffset.y;
-          onScrollStateChange?.(offset > 0);
+          onScrollStateChange?.(false);
           child.props.onMomentumScrollEnd?.(event);
         },
         scrollEventThrottle: 16

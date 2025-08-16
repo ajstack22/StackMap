@@ -1,4 +1,3 @@
-// @ts-check
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '../../stores';
 
@@ -6,23 +5,56 @@ const SYNC_QUEUE_KEY = '@sync_queue';
 const MAX_QUEUE_SIZE = 100; // Prevent unbounded growth
 const MAX_RETRY_ATTEMPTS = 5;
 
+// Types for sync queue
+interface QueueOperation {
+  type: string;
+  timestamp: number;
+  [key: string]: any;
+}
+
+interface QueueItem {
+  id: string;
+  operation: QueueOperation;
+  timestamp: number;
+  attempts: number;
+  lastAttempt: number | null;
+  error: string | null;
+  state: any; // Store state snapshot
+  completed?: boolean;
+}
+
+interface QueueStatus {
+  pending: number;
+  failed: number;
+  total: number;
+  isProcessing: boolean;
+  oldestPending?: number;
+  items: QueueItem[];
+}
+
+interface SyncService {
+  sync(): Promise<any>;
+}
+
+/**
+ * Manages a queue of sync operations for offline support and retry logic
+ * Persists queue to AsyncStorage for recovery after app restart
+ */
 class SyncQueue {
-  constructor() {
-    this.queue = [];
-    this.isProcessing = false;
-    this.initialized = false;
-    this.listeners = new Set();
-  }
+  private queue: QueueItem[] = [];
+  private isProcessing: boolean = false;
+  private initialized: boolean = false;
+  private listeners: Set<(status: QueueStatus) => void> = new Set();
 
   /**
    * Initialize the queue from storage
+   * Restores any pending sync operations from previous sessions
    */
-  async initialize() {
+  async initialize(): Promise<void> {
     try {
       const stored = await AsyncStorage.getItem(SYNC_QUEUE_KEY);
       if (stored) {
         this.queue = JSON.parse(stored);
-
       }
       this.initialized = true;
     } catch (error) {
@@ -33,14 +65,16 @@ class SyncQueue {
 
   /**
    * Add a sync operation to the queue
+   * @param operation - The sync operation to queue
+   * @returns The ID of the queued item
    */
-  async enqueue(operation) {
+  async enqueue(operation: QueueOperation): Promise<string> {
     if (!this.initialized) {
       await this.initialize();
     }
 
     // Create queue item with metadata
-    const queueItem = {
+    const queueItem: QueueItem = {
       id: `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       operation,
       timestamp: Date.now(),
@@ -69,8 +103,9 @@ class SyncQueue {
 
   /**
    * Get all pending operations
+   * @returns Array of pending queue items
    */
-  getPending() {
+  getPending(): QueueItem[] {
     return this.queue.filter(item => 
       item.attempts < MAX_RETRY_ATTEMPTS && 
       !item.completed
@@ -79,8 +114,9 @@ class SyncQueue {
 
   /**
    * Get failed operations (exceeded retry limit)
+   * @returns Array of failed queue items
    */
-  getFailed() {
+  getFailed(): QueueItem[] {
     return this.queue.filter(item => 
       item.attempts >= MAX_RETRY_ATTEMPTS && 
       !item.completed
@@ -89,8 +125,10 @@ class SyncQueue {
 
   /**
    * Process the queue
+   * Attempts to sync all pending items with exponential backoff
+   * @param syncService - The sync service to use for processing
    */
-  async process(syncService) {
+  async process(syncService: SyncService): Promise<void> {
     if (this.isProcessing || this.queue.length === 0) {
       return;
     }
@@ -119,11 +157,13 @@ class SyncQueue {
           item.completed = true;
           item.error = null;
 
-        } catch (error) {
+        } catch (error: any) {
           item.error = error.message || 'Sync failed';
           
           // If it's a network error, we'll retry later
-          if (this.isNetworkError(error)) {}
+          if (this.isNetworkError(error)) {
+            // Network error - will retry with backoff
+          }
         }
       }
 
@@ -143,8 +183,10 @@ class SyncQueue {
 
   /**
    * Check if we should retry based on exponential backoff
+   * @param item - The queue item to check
+   * @returns True if enough time has passed for retry
    */
-  shouldRetry(item) {
+  shouldRetry(item: QueueItem): boolean {
     if (item.attempts === 0) return true;
     
     const backoffMs = Math.min(
@@ -152,14 +194,16 @@ class SyncQueue {
       300000 // Max 5 minutes
     );
     
-    const timeSinceLastAttempt = Date.now() - item.lastAttempt;
+    const timeSinceLastAttempt = Date.now() - (item.lastAttempt || 0);
     return timeSinceLastAttempt >= backoffMs;
   }
 
   /**
    * Check if error is network-related
+   * @param error - The error to check
+   * @returns True if error appears to be network-related
    */
-  isNetworkError(error) {
+  isNetworkError(error: Error | any): boolean {
     const message = error.message || error.toString();
     const networkErrors = [
       'network',
@@ -177,18 +221,18 @@ class SyncQueue {
   }
 
   /**
-   * Clear the queue
+   * Clear the entire queue
    */
-  async clear() {
+  async clear(): Promise<void> {
     this.queue = [];
     await this.persist();
     this.notifyListeners();
   }
 
   /**
-   * Clear failed items
+   * Clear failed items from the queue
    */
-  async clearFailed() {
+  async clearFailed(): Promise<void> {
     this.queue = this.queue.filter(item => 
       item.attempts < MAX_RETRY_ATTEMPTS || item.completed
     );
@@ -197,9 +241,10 @@ class SyncQueue {
   }
 
   /**
-   * Retry a specific item
+   * Retry a specific item by resetting its attempt counter
+   * @param itemId - The ID of the item to retry
    */
-  async retry(itemId) {
+  async retry(itemId: string): Promise<void> {
     const item = this.queue.find(i => i.id === itemId);
     if (item) {
       item.attempts = 0;
@@ -213,17 +258,20 @@ class SyncQueue {
   /**
    * Persist queue to storage
    */
-  async persist() {
+  private async persist(): Promise<void> {
     try {
       await AsyncStorage.setItem(SYNC_QUEUE_KEY, JSON.stringify(this.queue));
     } catch (error) {
+      // Silent fail - queue will be lost on restart but app continues
     }
   }
 
   /**
    * Add a listener for queue changes
+   * @param callback - Function to call when queue changes
+   * @returns Unsubscribe function
    */
-  addListener(callback) {
+  addListener(callback: (status: QueueStatus) => void): () => void {
     this.listeners.add(callback);
     return () => this.listeners.delete(callback);
   }
@@ -231,20 +279,22 @@ class SyncQueue {
   /**
    * Notify all listeners of queue changes
    */
-  notifyListeners() {
+  private notifyListeners(): void {
     const status = this.getStatus();
     this.listeners.forEach(callback => {
       try {
         callback(status);
       } catch (error) {
+        // Ignore listener errors
       }
     });
   }
 
   /**
-   * Get queue status
+   * Get current queue status
+   * @returns Status object with queue metrics
    */
-  getStatus() {
+  getStatus(): QueueStatus {
     const pending = this.getPending();
     const failed = this.getFailed();
     

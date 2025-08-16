@@ -1,15 +1,37 @@
-// @ts-check
+import type { User, Activity, ThemeName } from '../../types';
+
 /**
  * Data validation utility for sync operations
- * Ensures data integrity and prevents corruption
+ * Ensures data integrity and prevents corruption during sync
  */
+
+// Define types for validation
+interface SyncData {
+  users: Record<string, User | null>;
+  currentUser?: string;
+  currentTheme?: ThemeName | string;
+  [key: string]: any;
+}
+
+interface DayData {
+  activities: Activity[];
+  [key: string]: any;
+}
+
+interface IncrementalSyncData {
+  type: 'incremental';
+  timestamp: number;
+  patch?: Record<string, any>;
+  changes?: Array<{ timestamp: number; [key: string]: any }>;
+  [key: string]: any;
+}
 
 /**
  * Validate the structure and integrity of synced data
- * @param {Object} data - The data to validate
- * @returns {boolean} True if valid, false otherwise
+ * @param data - The data to validate
+ * @returns True if valid, false otherwise
  */
-export const validateSyncedData = (data) => {
+export const validateSyncedData = (data: any): data is SyncData => {
   try {
     // Check if data is an object
     if (!data || typeof data !== 'object') {
@@ -23,7 +45,7 @@ export const validateSyncedData = (data) => {
     }
 
     // Validate each user (skip deleted users)
-    for (const [userId, user] of Object.entries(data.users)) {
+    for (const [userId, user] of Object.entries(data.users) as [string, any][]) {
       // Skip validation for deleted users
       if (user && user.deleted) {
         continue;
@@ -56,8 +78,11 @@ export const validateSyncedData = (data) => {
 
 /**
  * Validate a single user object
+ * @param userId - The user's ID
+ * @param user - The user object to validate
+ * @returns True if valid, false otherwise
  */
-const validateUser = (userId, user) => {
+const validateUser = (userId: string, user: any): boolean => {
   if (!user || typeof user !== 'object') {
     console.error(`Data validation failed: Invalid user object for ${userId}`, user);
     return false;
@@ -83,7 +108,7 @@ const validateUser = (userId, user) => {
   }
 
   // Validate each day
-  for (const [day, dayData] of Object.entries(user.days)) {
+  for (const [day, dayData] of Object.entries(user.days) as [string, any][]) {
     if (!validateDay(userId, day, dayData)) {
       return false;
     }
@@ -94,8 +119,12 @@ const validateUser = (userId, user) => {
 
 /**
  * Validate a single day's data
+ * @param userId - The user's ID for error reporting
+ * @param day - The day name (e.g., 'today', 'tomorrow')
+ * @param dayData - The day's data to validate
+ * @returns True if valid, false otherwise
  */
-const validateDay = (userId, day, dayData) => {
+const validateDay = (userId: string, day: string, dayData: any): boolean => {
   if (!dayData || typeof dayData !== 'object') {
     return false;
   }
@@ -106,7 +135,7 @@ const validateDay = (userId, day, dayData) => {
   }
 
   // Check for duplicate activity IDs
-  const activityIds = new Set();
+  const activityIds = new Set<string>();
   for (const activity of dayData.activities) {
     if (!validateActivity(activity)) {
       return false;
@@ -125,8 +154,10 @@ const validateDay = (userId, day, dayData) => {
 
 /**
  * Validate a single activity
+ * @param activity - The activity to validate
+ * @returns True if valid, false otherwise
  */
-const validateActivity = (activity) => {
+const validateActivity = (activity: any): boolean => {
   if (!activity || typeof activity !== 'object') {
     return false;
   }
@@ -165,8 +196,10 @@ const validateActivity = (activity) => {
 
 /**
  * Validate theme - themes are stored as string names, not objects
+ * @param theme - The theme name to validate
+ * @returns True if valid, false otherwise
  */
-const validateTheme = (theme) => {
+const validateTheme = (theme: any): boolean => {
   // Theme should be a string name like 'stackBlue', 'crimson', etc.
   if (!theme || typeof theme !== 'string') {
     return false;
@@ -188,10 +221,11 @@ const validateTheme = (theme) => {
 
 /**
  * Repair common data issues
- * @param {Object} data - The data to repair
- * @returns {Object} Repaired data
+ * Attempts to fix corrupted or malformed sync data
+ * @param data - The data to repair
+ * @returns Repaired data
  */
-export const repairSyncedData = (data) => {
+export const repairSyncedData = (data: any): SyncData => {
   try {
     
     const repaired = JSON.parse(JSON.stringify(data)); // Deep clone
@@ -226,7 +260,7 @@ export const repairSyncedData = (data) => {
     }
 
     // Repair each user
-    for (const [userId, user] of Object.entries(repaired.users)) {
+    for (const [userId, user] of Object.entries(repaired.users) as [string, any][]) {
       // Skip deleted users - they don't need repair
       if (user && user.deleted) {
         continue;
@@ -250,14 +284,14 @@ export const repairSyncedData = (data) => {
       }
 
       // Repair each day
-      for (const [day, dayData] of Object.entries(user.days)) {
+      for (const [day, dayData] of Object.entries(user.days) as [string, any][]) {
         // Ensure activities array
         if (!Array.isArray(dayData.activities)) {
           dayData.activities = [];
         }
 
         // Filter out invalid activities and repair them
-        dayData.activities = dayData.activities.map(activity => {
+        dayData.activities = dayData.activities.map((activity: any) => {
           if (!activity || typeof activity !== 'object') return null;
           
           // Ensure text field
@@ -275,13 +309,13 @@ export const repairSyncedData = (data) => {
           };
           
           // Copy over any other valid fields (like order, completedAt, etc)
-          if (activity.order !== undefined) cleanActivity.order = activity.order;
-          if (activity.completedAt !== undefined) cleanActivity.completedAt = activity.completedAt;
-          if (activity.completedBy !== undefined) cleanActivity.completedBy = activity.completedBy;
-          if (activity.description !== undefined) cleanActivity.description = activity.description;
+          if (activity.order !== undefined) (cleanActivity as any).order = activity.order;
+          if (activity.completedAt !== undefined) (cleanActivity as any).completedAt = activity.completedAt;
+          if (activity.completedBy !== undefined) (cleanActivity as any).completedBy = activity.completedBy;
+          if (activity.description !== undefined) (cleanActivity as any).description = activity.description;
           
           return cleanActivity;
-        }).filter(activity => {
+        }).filter((activity: any) => {
           // Filter out null activities and validate
           return activity && 
                  activity.id && 
@@ -302,10 +336,11 @@ export const repairSyncedData = (data) => {
 
 /**
  * Validate incremental sync data
- * @param {Object} incrementalData - The incremental sync data to validate
- * @returns {boolean} True if valid, false otherwise
+ * Ensures incremental updates have proper structure
+ * @param incrementalData - The incremental sync data to validate
+ * @returns True if valid, false otherwise
  */
-export const validateIncrementalSync = (incrementalData) => {
+export const validateIncrementalSync = (incrementalData: any): incrementalData is IncrementalSyncData => {
   try {
     // Check if data is an object
     if (!incrementalData || typeof incrementalData !== 'object') {
@@ -338,7 +373,7 @@ export const validateIncrementalSync = (incrementalData) => {
             if (value && typeof value === 'object') {
               // For incremental patches, users might be partial updates or full replacements
               // We need to validate the structure but be more lenient
-              for (const [userId, user] of Object.entries(value)) {
+              for (const [userId, user] of Object.entries(value) as [string, any][]) {
                 // Allow null to indicate deletion
                 if (user === null) {
                   continue;

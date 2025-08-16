@@ -1,43 +1,64 @@
-// @ts-check
 import { Platform } from 'react-native';
-import NetInfo from '@react-native-community/netinfo';
+import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 
+// Types for network monitoring
+interface NetworkEvent {
+  isOnline: boolean;
+  wasOnline: boolean;
+  connectionType: string;
+}
+
+interface NetworkStatus {
+  isOnline: boolean;
+  connectionType: string;
+  isInternetReachable: boolean;
+  isMonitoring: boolean;
+}
+
+type NetworkListener = (event: NetworkEvent) => void;
+
+/**
+ * Monitors network connectivity status
+ * NOTE: NetInfo.fetch() is disabled on iOS due to 20+ second freeze issues
+ * The service assumes connectivity is always available on iOS
+ */
 class NetworkMonitor {
-  constructor() {
-    this.isOnline = true;
-    this.listeners = new Set();
-    this.unsubscribe = null;
-    this.connectionType = 'unknown';
-    this.isInternetReachable = true;
-  }
+  isOnline: boolean = true;
+  private listeners: Set<NetworkListener> = new Set();
+  private unsubscribe: (() => void) | null = null;
+  private connectionType: string = 'unknown';
+  private isInternetReachable: boolean = true;
 
   /**
    * Start monitoring network status
+   * DISABLED on iOS - assumes always online to avoid performance issues
    */
-  start() {
+  start(): void {
     // DISABLED: NetInfo.fetch() causes 20+ second freeze on iOS
     // Just assume we're online and skip all network checking
     this.isOnline = true;
     this.isInternetReachable = true;
     return;
-    
   }
 
   /**
    * Stop monitoring network status
    */
-  stop() {
+  stop(): void {
     if (this.unsubscribe) {
       this.unsubscribe();
       this.unsubscribe = null;
-      if (__DEV__) {}
+      if (__DEV__) {
+        // Monitoring stopped
+      }
     }
   }
 
   /**
    * Handle network state changes
+   * @param state - The network state from NetInfo
    */
-  handleNetworkChange(state) {
+  private handleNetworkChange(state: NetInfoState): void {
     const wasOnline = this.isOnline;
     
     // Update connection state
@@ -45,7 +66,9 @@ class NetworkMonitor {
     this.connectionType = state.type;
     this.isInternetReachable = state.isInternetReachable !== false;
 
-    if (__DEV__) {}
+    if (__DEV__) {
+      // Network state updated
+    }
 
     // Notify listeners if online status changed
     if (wasOnline !== this.isOnline) {
@@ -59,8 +82,9 @@ class NetworkMonitor {
 
   /**
    * Check if currently online
+   * @returns Promise resolving to online status
    */
-  async checkConnection() {
+  async checkConnection(): Promise<boolean> {
     try {
       const state = await NetInfo.fetch();
       this.handleNetworkChange(state);
@@ -75,8 +99,10 @@ class NetworkMonitor {
 
   /**
    * Test actual connectivity by pinging the sync server
+   * @param apiUrl - The API URL to test connectivity against
+   * @returns Promise resolving to true if server is reachable
    */
-  async testServerConnection(apiUrl) {
+  async testServerConnection(apiUrl: string): Promise<boolean> {
     if (!this.isOnline) {
       return false;
     }
@@ -93,15 +119,19 @@ class NetworkMonitor {
       clearTimeout(timeoutId);
       return response.ok;
     } catch (error) {
-      if (__DEV__) {}
+      if (__DEV__) {
+        // Server connection test failed
+      }
       return false;
     }
   }
 
   /**
    * Add a listener for network status changes
+   * @param callback - Function to call when network status changes
+   * @returns Unsubscribe function
    */
-  addListener(callback) {
+  addListener(callback: NetworkListener): () => void {
     this.listeners.add(callback);
     
     // Immediately notify with current state
@@ -116,9 +146,10 @@ class NetworkMonitor {
   }
 
   /**
-   * Notify all listeners
+   * Notify all listeners of network status change
+   * @param event - The network event to broadcast
    */
-  notifyListeners(event) {
+  private notifyListeners(event: NetworkEvent): void {
     this.listeners.forEach(callback => {
       try {
         callback(event);
@@ -132,8 +163,9 @@ class NetworkMonitor {
 
   /**
    * Get current network status
+   * @returns Current network status object
    */
-  getStatus() {
+  getStatus(): NetworkStatus {
     return {
       isOnline: this.isOnline,
       connectionType: this.connectionType,
@@ -144,16 +176,18 @@ class NetworkMonitor {
 
   /**
    * Wait for online status (with timeout)
+   * @param timeoutMs - Maximum time to wait in milliseconds
+   * @returns Promise that resolves when online or rejects on timeout
    */
-  waitForOnline(timeoutMs = 30000) {
+  waitForOnline(timeoutMs: number = 30000): Promise<boolean> {
     return new Promise((resolve, reject) => {
       if (this.isOnline) {
         resolve(true);
         return;
       }
 
-      let unsubscribe;
-      let timeoutId;
+      let unsubscribe: (() => void) | undefined;
+      let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
       const cleanup = () => {
         if (unsubscribe) unsubscribe();

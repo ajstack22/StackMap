@@ -99,14 +99,16 @@ class EncryptionService {
   /**
    * Initialize encryption with recovery phrase
    */
-  async initialize(recoveryPhrase: string, syncId: string, existingSalt: string | null = null): Promise<void> {
+  async initialize(recoveryPhrase: string, syncId: string, existingSalt: string | null = null): Promise<{ salt: string }> {
     const { key, salt } = await this.deriveKeyFromPhrase(recoveryPhrase, existingSalt);
     this.masterKey = key;
     this.syncId = syncId;
     
     // Store the recovery phrase and salt securely
-    await this.storeRecoveryPhrase(recoveryPhrase);
+    await this.storeRecoveryPhrase(recoveryPhrase, syncId);
     await AsyncStorage.setItem('encryption_salt', salt);
+    
+    return { salt };
   }
 
   /**
@@ -224,9 +226,10 @@ class EncryptionService {
   /**
    * Store recovery phrase securely
    */
-  async storeRecoveryPhrase(phrase: string): Promise<void> {
+  async storeRecoveryPhrase(phrase: string, syncId?: string): Promise<void> {
     try {
-      await AsyncStorage.setItem('recovery_phrase', phrase);
+      const key = syncId ? `recovery_phrase_${syncId}` : 'recovery_phrase';
+      await AsyncStorage.setItem(key, phrase);
     } catch (error) {
       console.error('Failed to store recovery phrase:', error);
     }
@@ -235,9 +238,10 @@ class EncryptionService {
   /**
    * Get stored recovery phrase
    */
-  async getStoredRecoveryPhrase(): Promise<string | null> {
+  async getStoredRecoveryPhrase(syncId?: string): Promise<string | null> {
     try {
-      return await AsyncStorage.getItem('recovery_phrase');
+      const key = syncId ? `recovery_phrase_${syncId}` : 'recovery_phrase';
+      return await AsyncStorage.getItem(key);
     } catch (error) {
       console.error('Failed to get recovery phrase:', error);
       return null;

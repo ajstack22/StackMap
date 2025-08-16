@@ -1,15 +1,56 @@
-// @ts-check
+import type { Activity, User } from '../types';
+
 /**
  * Data normalization utilities to ensure consistent field naming
  * across the application, handling historical variations.
  */
 
+// Extended types for raw data that might have variations
+interface RawActivity {
+  id?: string;
+  text?: string;
+  name?: string;
+  title?: string;
+  icon?: string;
+  emoji?: string;
+  completed?: boolean;
+  pinned?: boolean;
+  order?: number;
+  completedAt?: number;
+  completedBy?: string;
+  uncompletedAt?: number;
+  uncompletedBy?: string;
+  description?: string;
+  [key: string]: any;
+}
+
+interface RawUser {
+  name?: string | { name?: string; text?: string; value?: string };
+  icon?: string;
+  emoji?: string;
+  days?: Record<string, any>;
+  [key: string]: any;
+}
+
+interface RawExportData {
+  users?: Record<string, any>;
+  activities?: any[];
+  activityCards?: Record<string, any[]>;
+  templates?: Record<string, any>;
+  last_modified?: number;
+  lastModified?: number;
+  created_at?: string;
+  createdAt?: string;
+  [key: string]: any;
+}
+
 /**
  * Normalize an activity object to use consistent field names
- * @param {Object} activity - Raw activity object
- * @returns {Object} Normalized activity
+ * Handles variations like name/text/title and icon/emoji
+ * @param activity - Raw activity object
+ * @returns Normalized activity or null if invalid
  */
-export const normalizeActivity = (activity) => {
+export const normalizeActivity = (activity: RawActivity | null | undefined): Partial<Activity> | null => {
   if (!activity || typeof activity !== 'object') return null;
   
   // All activities should have text and icon fields now
@@ -17,7 +58,7 @@ export const normalizeActivity = (activity) => {
   const icon = activity.icon || '';
   
   // Build normalized activity with only valid fields
-  const normalized = {
+  const normalized: Partial<Activity> = {
     id: activity.id || `activity-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
     text,
     icon,
@@ -29,8 +70,8 @@ export const normalizeActivity = (activity) => {
   if (activity.order !== undefined) normalized.order = activity.order;
   if (activity.completedAt) normalized.completedAt = activity.completedAt;
   if (activity.completedBy) normalized.completedBy = activity.completedBy;
-  if (activity.uncompletedAt) normalized.uncompletedAt = activity.uncompletedAt;
-  if (activity.uncompletedBy) normalized.uncompletedBy = activity.uncompletedBy;
+  if (activity.uncompletedAt) (normalized as any).uncompletedAt = activity.uncompletedAt;
+  if (activity.uncompletedBy) (normalized as any).uncompletedBy = activity.uncompletedBy;
   if (activity.description) normalized.description = activity.description;
   
   return normalized;
@@ -38,27 +79,28 @@ export const normalizeActivity = (activity) => {
 
 /**
  * Normalize a user object to use consistent field names
- * @param {Object} user - Raw user object
- * @returns {Object} Normalized user
+ * Handles variations in name field and emoji/icon fields
+ * @param user - Raw user object
+ * @returns Normalized user or null if invalid
  */
-export const normalizeUser = (user) => {
+export const normalizeUser = (user: RawUser | null | undefined): Partial<User> | null => {
   if (!user || typeof user !== 'object') return null;
   
   // Normalize name field
-  let name = user.name;
-  if (!name || typeof name !== 'string') {
-    if (typeof name === 'object' && name !== null) {
-      name = name.name || name.text || name.value || 'User';
-    } else {
-      name = 'User';
-    }
+  let name: string = '';
+  if (typeof user.name === 'string') {
+    name = user.name;
+  } else if (typeof user.name === 'object' && user.name !== null) {
+    name = user.name.name || user.name.text || user.name.value || 'User';
+  } else {
+    name = 'User';
   }
   
   // All users should have icon field now
   const icon = user.icon || '👤';
   
   // Normalize days with activities
-  const days = {};
+  const days: Record<string, any> = {};
   if (user.days && typeof user.days === 'object') {
     Object.entries(user.days).forEach(([dayKey, dayData]) => {
       if (dayData && typeof dayData === 'object') {
@@ -73,7 +115,7 @@ export const normalizeUser = (user) => {
   }
   
   // Build clean user object without redundant fields
-  const cleanUser = {
+  const cleanUser: any = {
     name,
     icon,
     days
@@ -91,13 +133,14 @@ export const normalizeUser = (user) => {
 
 /**
  * Normalize export/import data to use consistent field names
- * @param {Object} data - Raw export/import data
- * @returns {Object} Normalized data
+ * Handles variations in field naming across different versions
+ * @param data - Raw export/import data
+ * @returns Normalized data or null if invalid
  */
-export const normalizeExportData = (data) => {
+export const normalizeExportData = (data: RawExportData | null | undefined): Record<string, any> | null => {
   if (!data || typeof data !== 'object') return null;
   
-  const normalized = { ...data };
+  const normalized: Record<string, any> = { ...data };
   
   // Normalize users
   if (data.users && typeof data.users === 'object') {
@@ -133,7 +176,7 @@ export const normalizeExportData = (data) => {
         normalized.templates[categoryId] = {
           ...category,
           activities: Array.isArray(category.activities)
-            ? category.activities.map(activity => ({
+            ? category.activities.map((activity: any) => ({
                 ...normalizeActivity(activity),
                 // Templates use 'name' field
                 name: activity.text
@@ -159,10 +202,11 @@ export const normalizeExportData = (data) => {
 
 /**
  * Normalize sync data before applying to state
- * @param {Object} data - Raw sync data
- * @returns {Object} Normalized sync data
+ * Uses the same normalization as export data for consistency
+ * @param data - Raw sync data
+ * @returns Normalized sync data or null if invalid
  */
-export const normalizeSyncData = (data) => {
+export const normalizeSyncData = (data: RawExportData | null | undefined): Record<string, any> | null => {
   // Use the same normalization as export data
   return normalizeExportData(data);
 };

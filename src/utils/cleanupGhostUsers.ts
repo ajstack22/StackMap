@@ -1,43 +1,71 @@
-// @ts-check
+import { useAppStore } from '../stores';
+import type { User } from '../types';
+
 /**
  * Cleanup duplicate/ghost users in the store
  * This utility can be run to clean up existing duplicate users
+ * by merging their activities and marking duplicates as deleted
  */
 
-import { useAppStore } from '../stores';
+// Result types for cleanup operation
+interface UserEntry {
+  userId: string;
+  user: User;
+}
 
-export const cleanupGhostUsers = () => {
+interface DuplicateInfo {
+  duplicateId: string;
+  primaryId: string;
+  name: string;
+}
+
+interface CleanupResult {
+  success: boolean;
+  duplicatesRemoved: number;
+  details?: DuplicateInfo[];
+  message?: string;
+}
+
+/**
+ * Clean up duplicate/ghost users in the app store
+ * Merges activities from duplicates into the primary user
+ * @returns Result object with cleanup details
+ */
+export const cleanupGhostUsers = (): CleanupResult => {
   const state = useAppStore.getState();
   const { users, currentUser } = state;
   
   if (!users || Object.keys(users).length === 0) {
-    return;
+    return {
+      success: true,
+      duplicatesRemoved: 0,
+      message: 'No users to process'
+    };
   }
   
   // Track users by name+emoji
-  const usersByKey = new Map();
-  const duplicates = [];
+  const usersByKey = new Map<string, UserEntry[]>();
+  const duplicates: DuplicateInfo[] = [];
   
   // Find all duplicates
   Object.entries(users).forEach(([userId, user]) => {
-    if (user && !user.deleted) {
+    if (user && !(user as any).deleted) {
       const key = `${user.name}|${user.icon}`;
       
       if (!usersByKey.has(key)) {
         usersByKey.set(key, []);
       }
       
-      usersByKey.get(key).push({ userId, user });
+      usersByKey.get(key)!.push({ userId, user });
     }
   });
   
   // Process duplicates
-  const cleanedUsers = { ...users };
+  const cleanedUsers: Record<string, any> = { ...users };
   let newCurrentUser = currentUser;
   
   usersByKey.forEach((userList, key) => {
     if (userList.length > 1) {
-
       // Sort by user ID timestamp to find the oldest
       const sorted = userList.sort((a, b) => {
         const aTimestamp = parseInt(a.userId.split('_')[1]) || 0;
@@ -62,9 +90,9 @@ export const cleanupGhostUsers = () => {
           }
           
           const activities = dupDays[day]?.activities || [];
-          const existingIds = new Set(mergedDays[day].activities.map(a => a.id));
+          const existingIds = new Set(mergedDays[day].activities.map((a: any) => a.id));
           
-          activities.forEach(activity => {
+          activities.forEach((activity: any) => {
             if (!existingIds.has(activity.id) && !activity.deleted) {
               mergedDays[day].activities.push(activity);
             }
@@ -100,7 +128,6 @@ export const cleanupGhostUsers = () => {
   });
   
   if (duplicates.length > 0) {
-
     // Update the store
     useAppStore.setState({
       users: cleanedUsers,
@@ -123,5 +150,5 @@ export const cleanupGhostUsers = () => {
 
 // Export a function that can be called from the console
 if (typeof window !== 'undefined') {
-  window.cleanupGhostUsers = cleanupGhostUsers;
+  (window as any).cleanupGhostUsers = cleanupGhostUsers;
 }
