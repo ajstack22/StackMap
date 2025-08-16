@@ -1,4 +1,37 @@
-import { User, Activity, AppState } from '../../../types/common';
+// Type definitions
+interface User {
+  id?: string;
+  name?: string;
+  icon?: string;
+  emoji?: string;
+  deleted?: boolean;
+  lastModified?: number;
+  days?: Record<string, { date?: string; activities: Activity[] }>;
+  settings?: any;
+  [key: string]: any;
+}
+
+interface Activity {
+  id: string;
+  text?: string;
+  icon?: string;
+  completed?: boolean;
+  completedAt?: number;
+  completedBy?: string;
+  lastModified?: number;
+  deleted?: boolean;
+  order?: number;
+  pinned?: boolean;
+  [key: string]: any;
+}
+
+interface AppState {
+  users?: Record<string, User>;
+  currentUser?: string;
+  currentTheme?: string;
+  activities?: Activity[];
+  [key: string]: any;
+}
 
 // Conflict resolution strategies
 enum Strategy {
@@ -341,10 +374,10 @@ class ConflictResolver {
    * Merge user days (activities)
    */
   private mergeUserDays(
-    localDays: Record<string, { date: string; activities: Activity[] }>,
-    remoteDays: Record<string, { date: string; activities: Activity[] }>
-  ): Record<string, { date: string; activities: Activity[] }> {
-    const mergedDays: Record<string, { date: string; activities: Activity[] }> = {};
+    localDays: Record<string, { date?: string; activities: Activity[] }>,
+    remoteDays: Record<string, { date?: string; activities: Activity[] }>
+  ): Record<string, { date?: string; activities: Activity[] }> {
+    const mergedDays: Record<string, { date?: string; activities: Activity[] }> = {};
     
     // Get all unique day keys
     const allDayKeys = new Set([
