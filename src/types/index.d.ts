@@ -3,7 +3,7 @@
 // User and Activity Types
 export interface User {
   name: string;
-  icon: string; // Standardized from 'emoji'
+  icon: string;
   days: Record<string, Day>;
   settings?: UserSettings;
   lastModified?: number;
@@ -22,7 +22,7 @@ export interface UserSettings {
 export interface Activity {
   id: string;
   text: string; // Standardized from 'name' or 'title'
-  icon: string; // Standardized from 'emoji'
+  icon: string;
   completed: boolean;
   pinned: boolean;
   completedAt?: number;
@@ -51,7 +51,7 @@ export interface LibraryCategory {
 export interface LibraryActivity {
   id: string;
   text: string; // Standardized from 'name'
-  icon: string; // Standardized from 'emoji'
+  icon: string;
   description?: string;
   category?: string;
   tags?: string[];

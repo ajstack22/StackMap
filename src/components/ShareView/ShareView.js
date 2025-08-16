@@ -179,7 +179,7 @@ const ShareView = ({ shareToken, theme = { primary: '#667eea' } }) => {
             {renderActivityEmoji()}
           </View>
           <View style={styles.activityTextContainer}>
-            <Text style={styles.activityTitle}>{activity.text || activity.text || activity.name}</Text>
+            <Text style={styles.activityTitle}>{activity.text}</Text>
             {activity.description && (
               <Text style={styles.activityDescription}>{activity.description}</Text>
             )}

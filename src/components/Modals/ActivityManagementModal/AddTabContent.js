@@ -32,9 +32,9 @@ const AddTabContent = ({
   // Prefill form when coming from library
   useEffect(() => {
     if (prefilledActivity) {
-      setActivityText(prefilledActivity.name || prefilledActivity.text || '');
+      setActivityText(prefilledActivity.text || '');
       setActivityDescription(prefilledActivity.description || '');
-      setActivityIcon(prefilledActivity.icon || prefilledActivity.icon || DEFAULT_ACTIVITY_EMOJI);
+      setActivityIcon(prefilledActivity.icon || DEFAULT_ACTIVITY_EMOJI);
       // Category selection removed - always uses My Templates
     }
   }, [prefilledActivity, prefilledCategory]);

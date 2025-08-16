@@ -12,7 +12,6 @@ interface RawActivity {
   name?: string;
   title?: string;
   icon?: string;
-  emoji?: string;
   completed?: boolean;
   pinned?: boolean;
   order?: number;
@@ -27,7 +26,6 @@ interface RawActivity {
 interface RawUser {
   name?: string | { name?: string; text?: string; value?: string };
   icon?: string;
-  emoji?: string;
   days?: Record<string, any>;
   [key: string]: any;
 }
@@ -46,7 +44,7 @@ interface RawExportData {
 
 /**
  * Normalize an activity object to use consistent field names
- * Handles variations like name/text/title and icon/emoji
+ * Handles variations like name/text/title for activity naming
  * @param activity - Raw activity object
  * @returns Normalized activity or null if invalid
  */
@@ -79,7 +77,7 @@ export const normalizeActivity = (activity: RawActivity | null | undefined): Par
 
 /**
  * Normalize a user object to use consistent field names
- * Handles variations in name field and emoji/icon fields
+ * Handles variations in name field
  * @param user - Raw user object
  * @returns Normalized user or null if invalid
  */
@@ -176,11 +174,7 @@ export const normalizeExportData = (data: RawExportData | null | undefined): Rec
         normalized.templates[categoryId] = {
           ...category,
           activities: Array.isArray(category.activities)
-            ? category.activities.map((activity: any) => ({
-                ...normalizeActivity(activity),
-                // Templates use 'name' field
-                name: activity.text
-              }))
+            ? category.activities.map((activity: any) => normalizeActivity(activity))
             : []
         };
       }

@@ -117,7 +117,7 @@ const ConflictResolutionModal = ({
                 <View key={index} style={styles.activityItem}>
                   <Text style={styles.activityIcon}>{activity.icon}</Text>
                   <Text style={styles.activityName} numberOfLines={1}>
-                    {activity.name}
+                    {activity.text}
                   </Text>
                 </View>
               ))}

@@ -132,7 +132,7 @@ const LibraryTabContent = ({
     const filterGroups = (groups) => {
       return groups.map(category => {
         const matchingActivities = category.activities?.filter(activity =>
-          (activity.text || activity.name || '').toLowerCase().includes(query) ||
+          (activity.text || '').toLowerCase().includes(query) ||
           (activity.icon || activity.emoji || '')?.includes(query)
         ) || [];
 
@@ -159,13 +159,13 @@ const LibraryTabContent = ({
       <View style={styles.activityItem}>
         <View style={styles.activityContent}>
           <Text style={styles.activityEmoji}>{activity.icon || activity.emoji}</Text>
-          <Text style={styles.activityName}>{activity.text || activity.name}</Text>
+          <Text style={styles.activityName}>{activity.text}</Text>
         </View>
         <View style={styles.activityActions}>
           <TouchableOpacity
             onPress={() => {
               onSelectActivity(activity);
-              showNotification(`Added: ${activity.icon || activity.emoji || ''} ${activity.text || activity.name || ''}`);
+              showNotification(`Added: ${activity.icon || ''} ${activity.text || ''}`);
             }}
             style={styles.iconButton}
           >
@@ -334,7 +334,7 @@ const LibraryTabContent = ({
                   
                   // Filter activities within the category
                   const filteredActivities = category.activities?.filter(activity => 
-                    (activity.text || activity.name || '').toLowerCase().includes(query) ||
+                    (activity.text || '').toLowerCase().includes(query) ||
                     (activity.icon || activity.emoji || '')?.includes(query)
                   ) || [];
                   
@@ -374,7 +374,7 @@ const LibraryTabContent = ({
                   
                   // Filter activities within the category
                   const filteredActivities = category.activities?.filter(activity => 
-                    (activity.text || activity.name || '').toLowerCase().includes(query) ||
+                    (activity.text || '').toLowerCase().includes(query) ||
                     (activity.icon || activity.emoji || '')?.includes(query)
                   ) || [];
                   

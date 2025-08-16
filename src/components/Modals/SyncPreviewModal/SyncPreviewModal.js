@@ -84,7 +84,7 @@ const SyncPreviewModal = ({
         users: [],
         totalActivities: 0,
         totalLibraryItems: 0,
-        lastUpdated: data.last_modified,
+        lastUpdated: data.lastModified || data.last_modified,  // Use camelCase, fallback for old data
       };
 
       if (decryptedData.users) {
@@ -98,7 +98,7 @@ const SyncPreviewModal = ({
           
           preview.users.push({
             name: user.name,
-            icon: user.icon || user.icon,
+            icon: user.icon || '👤',  // Modern icon field only
             activityCount,
           });
           

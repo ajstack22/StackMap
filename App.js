@@ -500,6 +500,30 @@ const App = () => {
       
       await migratePinToSecureStorage();
       
+      // Migrate existing users to ensure they have icon field
+      if (Object.keys(users).length > 0) {
+        let needsUpdate = false;
+        const updatedUsers = {};
+        Object.entries(users).forEach(([userId, user]) => {
+          if (!user.icon || user.icon === '👤') {
+            // User missing icon or has default placeholder, give them a proper one
+            needsUpdate = true;
+            updatedUsers[userId] = {
+              ...user,
+              icon: user.emoji || user.icon || '😊'
+            };
+            // Remove emoji field if it exists
+            delete updatedUsers[userId].emoji;
+          } else {
+            updatedUsers[userId] = user;
+          }
+        });
+        if (needsUpdate) {
+          console.log('Migrating user icons:', updatedUsers);
+          setUsers(updatedUsers);
+        }
+      }
+      
       // Check if we should show onboarding
       // IMPORTANT: Only show onboarding on initial load, not if already showing
       if (!hasCompletedOnboarding && Object.keys(users).length === 0 && !showOnboarding) {
@@ -1732,8 +1756,8 @@ const App = () => {
       // Create a template from the activity
       const template = {
         id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        name: activity.text || activity.title || 'Untitled',
-        emoji: activity.emoji || activity.icon || '🎯',  // Check both emoji and icon fields
+        text: activity.text || activity.title || activity.name || 'Untitled',
+        icon: activity.icon || activity.emoji || '🎯',  // Check both icon and emoji fields
         description: activity.description || '',
       };
       
@@ -3488,7 +3512,7 @@ Users: ${userNames} (${userCount} total)
                 onPress={() => setShowUserDayModal(true)}
               >
                 <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
-                  {users[currentUser]?.icon || DEFAULT_USER_ICON}
+                  {users[currentUser]?.icon || users[currentUser]?.emoji || DEFAULT_USER_ICON}
                 </Text>
                 <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
                   {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}
@@ -3501,7 +3525,7 @@ Users: ${userNames} (${userCount} total)
               onPress={() => setShowUserDayModal(true)}
             >
               <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
-                {users[currentUser]?.icon || DEFAULT_USER_ICON}
+                {users[currentUser]?.icon || users[currentUser]?.emoji || DEFAULT_USER_ICON}
               </Text>
               <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
                 {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}

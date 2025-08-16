@@ -212,7 +212,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
           
           preview.users[userId] = {
             name: user.name || 'Unknown User',
-            icon: user.icon || user.emoji || DEFAULT_USER_ICON,
+            icon: user.icon || DEFAULT_USER_ICON,
             activityCount
           };
           

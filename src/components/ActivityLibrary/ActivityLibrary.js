@@ -83,7 +83,7 @@ const ActivityRow = ({
     } else {
       Alert.alert(
         'Delete Activity',
-        `Are you sure you want to delete "${activity.text || activity.name}"?`,
+        `Are you sure you want to delete "${activity.text}"?`,
         [
           { text: 'Cancel', style: 'cancel' },
           { 
@@ -102,16 +102,16 @@ const ActivityRow = ({
   return (
     <View style={styles.activityRow}>
       <View style={styles.activityInfo}>
-        {(activity.icon || activity.emoji) && (activity.icon || activity.emoji).startsWith('image:') ? (
+        {activity.icon && activity.icon.startsWith('image:') ? (
           <Image 
-            source={getCustomImageSource((activity.icon || activity.emoji).substring(6))}
+            source={getCustomImageSource(activity.icon.substring(6))}
             style={styles.activityImage}
             resizeMode="contain"
           />
         ) : (
-          <Text style={styles.activityEmoji}>{activity.icon || activity.emoji}</Text>
+          <Text style={styles.activityEmoji}>{activity.icon || ''}</Text>
         )}
-        <Text style={styles.activityName}>{activity.text || activity.name}</Text>
+        <Text style={styles.activityName}>{activity.text}</Text>
       </View>
       
       <View style={styles.activityActions}>
@@ -193,7 +193,7 @@ const ActivityRow = ({
                   ) : (
                     <View style={styles.centerMenuContainer}>
                       <View style={styles.centerMenuCard}>
-                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{activity.text || activity.name}</Text>
+                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{activity.text}</Text>
                         
                         <TouchableOpacity
                           style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
@@ -269,7 +269,7 @@ const ActivityRow = ({
           }}
           theme={theme}
           title="Delete Activity"
-          message={`Are you sure you want to delete "${activity.text || activity.name}"?`}
+          message={`Are you sure you want to delete "${activity.text}"?`}
           confirmText="Delete"
           confirmButtonColor="#e53e3e"
           icon="delete"
@@ -797,16 +797,16 @@ const CategorySection = ({
                     ]}
                   >
                     <View style={styles.activityInfo}>
-                      {item.icon && item.emoji.startsWith('image:') ? (
+                      {item.icon && item.icon.startsWith('image:') ? (
                         <Image 
-                          source={getCustomImageSource(item.emoji.substring(6))}
+                          source={getCustomImageSource(item.icon.substring(6))}
                           style={styles.activityImage}
                           resizeMode="contain"
                         />
                       ) : (
-                        <Text style={styles.activityEmoji}>{item.icon || item.emoji}</Text>
+                        <Text style={styles.activityEmoji}>{item.icon || ''}</Text>
                       )}
-                      <Text style={styles.activityName}>{item.name}</Text>
+                      <Text style={styles.activityName}>{item.text}</Text>
                     </View>
                     <View style={styles.dragHandle}>
                       <Icon name="drag-handle" size={24} color={COLORS.gray[400]} />
@@ -826,8 +826,8 @@ const CategorySection = ({
               .map((activity, originalIndex) => {
                 if (searchQuery) {
                   const query = searchQuery.toLowerCase();
-                  const activityIcon = activity.icon || activity.emoji || '';
-                  const matches = (activity.text || activity.name || '').toLowerCase().includes(query) ||
+                  const activityIcon = activity.icon || '';
+                  const matches = (activity.text || '').toLowerCase().includes(query) ||
                                 activityIcon.includes(searchQuery);
                   if (!matches) return null;
                 }
@@ -853,8 +853,8 @@ const CategorySection = ({
              category.activities.filter(activity => {
                if (!searchQuery) return true;
                const query = searchQuery.toLowerCase();
-               return (activity.text || activity.name || '').toLowerCase().includes(query) ||
-                      (activity.icon || activity.emoji || '').includes(searchQuery);
+               return (activity.text || '').toLowerCase().includes(query) ||
+                      (activity.icon || '').includes(searchQuery);
              }).length === 0 && (
               <Text style={styles.emptyMessage}>
                 No activities match your search.
@@ -944,10 +944,10 @@ const ActivityLibrary = ({
   const handleEditActivity = (activity) => {
     setEditingItem(activity);
     setEditMode('activity');
-    // Use text field, fallback to name for backwards compatibility
-    setEditName(activity.text || activity.name || '');
-    // Use icon field, fallback to emoji for backwards compatibility
-    setEditEmoji(activity.icon || activity.emoji || '');
+    // Use text field only
+    setEditName(activity.text || '');
+    // Use icon field only
+    setEditEmoji(activity.icon || '');
     setEditDescription(activity.description || '');
   };
 
@@ -1334,8 +1334,8 @@ const ActivityLibrary = ({
             if (category.name.toLowerCase().includes(query)) return true;
             // Check activities within category
             return category.activities.some(activity => 
-              (activity.text || activity.name || '').toLowerCase().includes(query) ||
-              (activity.icon || activity.emoji || '').includes(searchQuery)
+              (activity.text || '').toLowerCase().includes(query) ||
+              (activity.icon || '').includes(searchQuery)
             );
           })}
           onDragBegin={Platform.OS === 'android' || activeTab === 'stackmap' ? undefined : (index) => {

@@ -802,28 +802,12 @@ class SyncService {
     if (users && Object.keys(users).length > 0) {
       const repairedUsers = { ...users };
       Object.entries(users).forEach(([userId, user]: [string, any]) => {
-        // Normalize emoji/icon fields - always use 'icon' field
+        // Ensure all users have icon field
         if (!user.icon) {
-          if (user.emoji) {
-            repairedUsers[userId] = {
-              ...user,
-              icon: user.emoji,
-              emoji: undefined // Remove redundant field
-            };
-            needsRepair = true;
-          } else {
-            console.warn(`[DEBUG] getCurrentState - User ${userId} missing icon, using default`);
-            repairedUsers[userId] = {
-              ...user,
-              icon: '😀' // Default user icon
-            };
-            needsRepair = true;
-          }
-        } else if (user.icon && user.emoji && user.icon !== user.emoji) {
-          // Remove redundant emoji field if it exists
+          console.warn(`[DEBUG] getCurrentState - User ${userId} missing icon, using default`);
           repairedUsers[userId] = {
             ...user,
-            emoji: undefined
+            icon: '😀' // Default user icon
           };
           needsRepair = true;
         }

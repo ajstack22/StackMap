@@ -43,7 +43,7 @@ export const cleanupGhostUsers = (): CleanupResult => {
     };
   }
   
-  // Track users by name+emoji
+  // Track users by name+icon
   const usersByKey = new Map<string, UserEntry[]>();
   const duplicates: DuplicateInfo[] = [];
   

@@ -541,7 +541,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           }
         ]}
       >
-        <Text style={styles.userCarouselEmoji}>{currentUserData?.icon || '😀'}</Text>
+        <Text style={styles.userCarouselEmoji}>{currentUserData?.icon || currentUserData?.emoji || '😊'}</Text>
         <Text style={[styles.userCarouselName, { color: COLORS.white }]}>
           {currentUserData?.name || 'User'}
         </Text>
