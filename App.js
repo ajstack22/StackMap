@@ -729,7 +729,7 @@ const App = () => {
       migratedUsers[userId] = {
         ...user,
         id: user.id || userId,
-        icon: user.icon || '😊',
+        icon: user.icon || DEFAULT_USER_ICON,
         settings: user.settings || {
           taskCelebration: 'rainbow',
           routineCelebration: 'rainbow',
@@ -1037,7 +1037,7 @@ const App = () => {
         const newUser = {
           id: userId,
           name: userData.name,
-          icon: userData.emoji,
+          icon: userData.icon,
           days: {
             today: { activities: index === 0 ? starterActivities : [] },
             tomorrow: { activities: [] }
@@ -2666,7 +2666,7 @@ This will replace all your current data.`,
             const validatedUser = {
               ...user,
               name: user.name && typeof user.name === 'string' && user.name.trim() ? user.name : 'User',
-              icon: user.icon && typeof user.icon === 'string' ? user.icon : '👤'
+              icon: user.icon && typeof user.icon === 'string' ? user.icon : DEFAULT_USER_ICON
             };
             validatedUsers[userId] = validatedUser;
             console.log(`Validated user ${userId}: name="${validatedUser.name}", icon="${validatedUser.icon}"`);
@@ -2744,7 +2744,7 @@ This will replace all your current data.`,
             const validatedUser = {
               ...user,
               name: user.name && typeof user.name === 'string' && user.name.trim() ? user.name : 'User',
-              icon: user.icon && typeof user.icon === 'string' ? user.icon : '👤'
+              icon: user.icon && typeof user.icon === 'string' ? user.icon : DEFAULT_USER_ICON
             };
             
             // Check if user with same name already exists
@@ -3481,7 +3481,7 @@ Users: ${userNames} (${userCount} total)
                 onPress={() => setShowUserDayModal(true)}
               >
                 <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
-                  {users[currentUser]?.icon || '😀'}
+                  {users[currentUser]?.icon || DEFAULT_USER_ICON}
                 </Text>
                 <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
                   {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}
@@ -3494,7 +3494,7 @@ Users: ${userNames} (${userCount} total)
               onPress={() => setShowUserDayModal(true)}
             >
               <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
-                {users[currentUser]?.icon || '😀'}
+                {users[currentUser]?.icon || DEFAULT_USER_ICON}
               </Text>
               <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
                 {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}
@@ -4470,7 +4470,7 @@ Users: ${userNames} (${userCount} total)
             id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
             description: activity.description || '', // Preserve description from library
-            icon: activity.emoji || activity.icon,
+            icon: activity.icon || activity.emoji,
             completed: false,
             pinned: false,
             deleted: false,
@@ -4488,7 +4488,7 @@ Users: ${userNames} (${userCount} total)
             id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text,
             description: activity.description || '', // Preserve description from library
-            emoji: activity.emoji || activity.icon || DEFAULT_ACTIVITY_EMOJI,
+            icon: activity.icon || activity.emoji || DEFAULT_ACTIVITY_EMOJI,
             completed: false,
             pinned: false,
             deleted: false,
@@ -4506,7 +4506,7 @@ Users: ${userNames} (${userCount} total)
             id: `${deviceId}-${Date.now()}-${index}-${Math.random().toString(36).substr(2, 9)}`,
             text: activity.name || activity.text || '',
             description: activity.description || '', // Preserve description from library
-            emoji: activity.emoji || activity.icon || DEFAULT_ACTIVITY_EMOJI,
+            icon: activity.icon || activity.emoji || DEFAULT_ACTIVITY_EMOJI,
             completed: false,
             pinned: false,
             deleted: false,

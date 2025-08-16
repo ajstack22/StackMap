@@ -369,7 +369,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           }
         ]}
       >
-        <Text style={styles.carouselEmoji}>{currentDay.emoji}</Text>
+        <Text style={styles.carouselEmoji}>{currentDay.icon}</Text>
         <Text style={styles.carouselLabel}>{currentDay.name}</Text>
         <Text style={styles.carouselDescription}>{currentDay.description}</Text>
       </Animated.View>
@@ -425,7 +425,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           }
         ]}
       >
-        <Text style={styles.carouselEmoji}>{currentTemp.emoji}</Text>
+        <Text style={styles.carouselEmoji}>{currentTemp.icon}</Text>
         <Text style={styles.carouselLabel}>{currentTemp.label}</Text>
         <Text style={styles.carouselDescription}>{currentTemp.description}</Text>
       </Animated.View>
@@ -481,7 +481,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           }
         ]}
       >
-        <Text style={styles.carouselEmoji}>{currentMood.emoji}</Text>
+        <Text style={styles.carouselEmoji}>{currentMood.icon}</Text>
         <Text style={styles.carouselLabel}>{currentMood.label}</Text>
         <Text style={styles.carouselDescription}>{currentMood.description}</Text>
       </Animated.View>

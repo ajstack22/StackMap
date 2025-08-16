@@ -5,6 +5,7 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import ConfirmModal from '../../Modals/ConfirmModal';
 import AddUserModal from '../../Modals/AddUserModal/AddUserModal';
+import { DEFAULT_USER_ICON } from '../../../constants';
 
 const UsersTabContent = ({
   theme,
@@ -23,7 +24,7 @@ const UsersTabContent = ({
   const [showAddUserModal, setShowAddUserModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [newUserName, setNewUserName] = useState('');
-  const [newUserEmoji, setNewUserEmoji] = useState('😀');
+  const [newUserEmoji, setNewUserEmoji] = useState(DEFAULT_USER_ICON);
   const [showUserEmojiPicker, setShowUserEmojiPicker] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
@@ -74,7 +75,7 @@ const UsersTabContent = ({
         setShowAddUserModal(false);
         setEditingUser(null);
         setNewUserName('');
-        setNewUserEmoji('😀');
+        setNewUserEmoji(DEFAULT_USER_ICON);
       }
     } catch (error) {
       showToast({ message: 'Failed to update user', type: 'error' });
@@ -114,7 +115,7 @@ const UsersTabContent = ({
                 ]}
                 onPress={() => handleUserSelect(userId)}
               >
-                <Text style={styles.userItemEmoji}>{user.icon || '👤'}</Text>
+                <Text style={styles.userItemEmoji}>{user.icon || DEFAULT_USER_ICON}</Text>
                 <Text style={[
                   styles.userItemName,
                   currentUser === userId && styles.userItemNameActive
@@ -157,7 +158,7 @@ const UsersTabContent = ({
             onPress={() => {
               setEditingUser(null);
               setNewUserName('');
-              setNewUserEmoji('😀');
+              setNewUserEmoji(DEFAULT_USER_ICON);
               setShowAddUserModal(true);
             }}
           >

@@ -18,6 +18,7 @@ import {
   
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { DEFAULT_USER_ICON } from '../../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
@@ -55,7 +56,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   
   const [currentScreen, setCurrentScreen] = useState(isAbbreviated && syncSetupPhrase ? 'syncSetup' : 'welcome');
   const [userName, setUserName] = useState('');
-  const [selectedEmoji, setSelectedEmoji] = useState('😊');
+  const [selectedEmoji, setSelectedEmoji] = useState(DEFAULT_USER_ICON);
   const [users, setUsers] = useState([]);
   const [emojiInputValue, setEmojiInputValue] = useState('');
   const [importSuccessful, setImportSuccessful] = useState(false);
@@ -105,7 +106,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     }).start();
   }, []);
 
-  const quickEmojis = ['😊', '😎', '🎯', '⭐', '🚀'];
+  const quickEmojis = [DEFAULT_USER_ICON, '😎', '🎯', '⭐', '🚀'];
   
   const features = [
     {
@@ -211,7 +212,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
           
           preview.users[userId] = {
             name: user.name || 'Unknown User',
-            icon: user.icon || user.icon || '😊',
+            icon: user.icon || user.emoji || DEFAULT_USER_ICON,
             activityCount
           };
           
@@ -303,9 +304,9 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
 
   const addUser = () => {
     if (userName.trim()) {
-      setUsers([...users, { name: userName.trim(), emoji: selectedEmoji }]);
+      setUsers([...users, { name: userName.trim(), icon: selectedEmoji }]);
       setUserName('');
-      setSelectedEmoji('😊');
+      setSelectedEmoji(DEFAULT_USER_ICON);
       
       if (users.length === 0) {
         transitionTo('features');
@@ -410,7 +411,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
                           if (result.summary.userData) {
                             const importedUsers = Object.entries(result.summary.userData).map(([id, user]) => ({
                               name: user.name || 'User',
-                              emoji: user.icon || user.icon || '😊'
+                              icon: user.icon || user.emoji || DEFAULT_USER_ICON
                             }));
                             setUsers(importedUsers);
                           }
@@ -641,7 +642,7 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                         styles.userPill,
                         activeFeature === index && styles.activeUserPill
                       ]}>
-                        <Text style={styles.pillEmoji}>{users[0]?.icon || '😊'}</Text>
+                        <Text style={styles.pillEmoji}>{users[0]?.icon || DEFAULT_USER_ICON}</Text>
                         <Text style={[
                           styles.pillName,
                           activeFeature === index && styles.activePillName
@@ -1383,7 +1384,7 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
             <View style={styles.usersList}>
               {users.map((user, index) => (
                 <View key={index} style={styles.userPill}>
-                  <Text style={styles.pillEmoji}>{user.emoji}</Text>
+                  <Text style={styles.pillEmoji}>{user.icon}</Text>
                   <Text style={styles.pillName}>{user.name}</Text>
                 </View>
               ))}
