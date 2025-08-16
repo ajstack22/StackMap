@@ -2,6 +2,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
+
+// Type helpers for tweetnacl-util with proper casting
+const encodeBase64 = (arr: Uint8Array): string => (util as any).encodeBase64(arr);
+const decodeBase64 = (str: string): Uint8Array => (util as any).decodeBase64(str);
+const encodeUTF8 = (arr: Uint8Array): string => (util as any).encodeUTF8(arr);
+const decodeUTF8 = (str: string): Uint8Array => (util as any).decodeUTF8(str);
+
 import encryptionService from './encryptionService';
 import { useAppStore } from '../../stores';
 import syncQueue from './syncQueue';
@@ -1724,20 +1731,20 @@ class SyncService {
         // Add padding if needed
         const padding = (4 - (paddedToken.length % 4)) % 4;
         const fullToken = paddedToken + '='.repeat(padding);
-        shareKey = util.decodeBase64(fullToken);
+        shareKey = decodeBase64(fullToken);
       }
       
       // Use a simplified encryption for shares
       const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-      const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
-      const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+      const messageBytes = decodeUTF8(JSON.stringify(shareData));
+      const encrypted = (nacl.secretbox as any)(messageBytes, nonce, shareKey);
       
       // Combine nonce and ciphertext
       const combined = new Uint8Array(nonce.length + encrypted.length);
       combined.set(nonce);
       combined.set(encrypted, nonce.length);
       
-      const encryptedData = util.encodeBase64(combined);
+      const encryptedData = encodeBase64(combined);
       
       const requestBody = {
         sync_id: this.syncId,
@@ -1912,7 +1919,7 @@ class SyncService {
         const padding = paddedToken.length % 4;
         const finalToken = paddedToken + (padding ? '='.repeat(4 - padding) : '');
         
-        shareKey = util.decodeBase64(finalToken);
+        shareKey = decodeBase64(finalToken);
         
         // Verify key length for secretbox
         if (shareKey.length !== 32) {
@@ -1923,14 +1930,14 @@ class SyncService {
       }
       
       const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-      const messageBytes = util.decodeUTF8(JSON.stringify(shareData));
-      const encrypted = nacl.secretbox(messageBytes, nonce, shareKey);
+      const messageBytes = decodeUTF8(JSON.stringify(shareData));
+      const encrypted = (nacl.secretbox as any)(messageBytes, nonce, shareKey);
       
       const combined = new Uint8Array(nonce.length + encrypted.length);
       combined.set(nonce);
       combined.set(encrypted, nonce.length);
       
-      const encryptedData = util.encodeBase64(combined);
+      const encryptedData = encodeBase64(combined);
 
       // For local development, skip API call
       if (Platform.OS === 'web' && typeof window !== 'undefined') {
@@ -1998,7 +2005,7 @@ class SyncService {
     // Generate a secure token for v2 shares (encryption key)
     // We need 32 bytes for nacl.secretbox key
     const bytes = nacl.randomBytes(32); // 32 bytes for secretbox key
-    const token = util.encodeBase64(bytes)
+    const token = encodeBase64(bytes)
       .replace(/\+/g, '-')  // URL-safe
       .replace(/\//g, '_')
       .replace(/=/g, '');   // Remove padding

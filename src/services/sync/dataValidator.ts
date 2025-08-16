@@ -47,7 +47,7 @@ export const validateSyncedData = (data: any): data is SyncData => {
       if (user && user.deleted) {
         continue;
       }
-      if (!validateUser(userId, user)) {
+      if (!validateUser(_userId, user)) {
         return false;
       }
     }

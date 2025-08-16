@@ -9,6 +9,12 @@ import util from 'tweetnacl-util';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
 
+// Type helpers for tweetnacl-util with proper casting
+const encodeBase64 = (arr: Uint8Array): string => (util as any).encodeBase64(arr);
+const decodeBase64 = (str: string): Uint8Array => (util as any).decodeBase64(str);
+const encodeUTF8 = (arr: Uint8Array): string => (util as any).encodeUTF8(arr);
+const decodeUTF8 = (str: string): Uint8Array => (util as any).decodeUTF8(str);
+
 const ENCRYPTION_VERSION = 2; // Bumped for compression support
 const SALT_LENGTH = 16;
 const KEY_LENGTH = 32;
@@ -51,13 +57,13 @@ class EncryptionService {
     if (!salt) {
       saltBytes = nacl.randomBytes(SALT_LENGTH);
     } else if (typeof salt === 'string') {
-      saltBytes = util.decodeBase64(salt);
+      saltBytes = decodeBase64(salt);
     } else {
       saltBytes = salt;
     }
 
     // Simple key derivation (in production, use proper PBKDF2)
-    const phraseBytes = util.decodeUTF8(recoveryPhrase);
+    const phraseBytes = decodeUTF8(recoveryPhrase);
     const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
     combined.set(phraseBytes);
     combined.set(saltBytes, phraseBytes.length);
@@ -92,7 +98,7 @@ class EncryptionService {
     const derivedKey = key.slice(0, KEY_LENGTH);
     return {
       key: derivedKey,
-      salt: util.encodeBase64(saltBytes)
+      salt: encodeBase64(saltBytes)
     };
   }
 
@@ -121,7 +127,7 @@ class EncryptionService {
 
     // Convert data to bytes
     const dataStr = JSON.stringify(data);
-    let dataBytes = util.decodeUTF8(dataStr);
+    let dataBytes = decodeUTF8(dataStr);
     
     // Prepare metadata
     const metadata: EncryptionMetadata = {
@@ -143,7 +149,7 @@ class EncryptionService {
     }
     
     // Encode metadata
-    const metadataBytes = util.decodeUTF8(JSON.stringify(metadata));
+    const metadataBytes = decodeUTF8(JSON.stringify(metadata));
     const metadataLength = new Uint8Array(4);
     new DataView(metadataLength.buffer).setUint32(0, metadataBytes.length, false);
     
@@ -155,14 +161,14 @@ class EncryptionService {
     
     // Generate nonce and encrypt
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
-    const encrypted = nacl.secretbox(combined, nonce, this.masterKey);
+    const encrypted = (nacl.secretbox as any)(combined, nonce, this.masterKey);
     
     // Combine nonce and encrypted data
     const result = new Uint8Array(nonce.length + encrypted.length);
     result.set(nonce);
     result.set(encrypted, nonce.length);
     
-    return util.encodeBase64(result);
+    return encodeBase64(result);
   }
 
   /**
@@ -174,7 +180,7 @@ class EncryptionService {
     }
 
     try {
-      const combined = util.decodeBase64(encryptedData);
+      const combined = decodeBase64(encryptedData);
       
       // Extract nonce and encrypted data
       const nonce = combined.slice(0, nacl.secretbox.nonceLength);
@@ -192,7 +198,7 @@ class EncryptionService {
         if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
-            const metadata: EncryptionMetadata = JSON.parse(util.encodeUTF8(metadataBytes));
+            const metadata: EncryptionMetadata = JSON.parse(encodeUTF8(metadataBytes));
             let dataBytes = decrypted.slice(4 + metadataLength);
             
             // Handle decompression if needed
@@ -207,7 +213,7 @@ class EncryptionService {
               }
             }
             
-            const dataStr = util.encodeUTF8(dataBytes);
+            const dataStr = encodeUTF8(dataBytes);
             return JSON.parse(dataStr);
           } catch (error) {
                       }
@@ -215,7 +221,7 @@ class EncryptionService {
       }
       
       // Legacy format (no metadata)
-      const decryptedStr = util.encodeUTF8(decrypted);
+      const decryptedStr = encodeUTF8(decrypted);
       return JSON.parse(decryptedStr);
     } catch (error) {
       console.error('[DECRYPTION] Decryption error:', error);
@@ -271,7 +277,7 @@ class EncryptionService {
       if (!deviceId) {
         // Generate a new device ID
         const randomBytes = nacl.randomBytes(16);
-        deviceId = util.encodeBase64(randomBytes).replace(/[+/=]/g, '');
+        deviceId = encodeBase64(randomBytes).replace(/[+/=]/g, '');
         await AsyncStorage.setItem('device_id', deviceId);
       }
       return deviceId;

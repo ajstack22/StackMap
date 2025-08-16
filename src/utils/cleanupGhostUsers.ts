@@ -49,14 +49,15 @@ export const cleanupGhostUsers = (): CleanupResult => {
   
   // Find all duplicates
   Object.entries(users).forEach(([userId, user]) => {
-    if (user && !(user as any).deleted) {
-      const key = `${user.name}|${user.icon}`;
+    const typedUser = user as User | null;
+    if (typedUser && !(typedUser as any).deleted) {
+      const key = `${typedUser.name}|${typedUser.icon}`;
       
       if (!usersByKey.has(key)) {
         usersByKey.set(key, []);
       }
       
-      usersByKey.get(key)!.push({ userId, user });
+      usersByKey.get(key)!.push({ userId, user: typedUser });
     }
   });
   

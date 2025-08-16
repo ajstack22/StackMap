@@ -49,7 +49,7 @@ const DocumentPicker = {
       input.accept = options?.type === 'application/json' ? '.json' : '*/*';
       
       input.onchange = async (e) => {
-        const file = e.target.files[0];
+        const file = /** @type {HTMLInputElement} */(e.target).files?.[0];
         if (file) {
           try {
             const text = await file.text();
@@ -64,7 +64,7 @@ const DocumentPicker = {
           }
         } else {
           const cancelError = new Error('No file selected');
-          cancelError.code = 'DOCUMENT_PICKER_CANCELED';
+          /** @type {any} */(cancelError).code = 'DOCUMENT_PICKER_CANCELED';
           reject(cancelError);
         }
       };
@@ -72,7 +72,7 @@ const DocumentPicker = {
       // Handle cancellation
       input.oncancel = () => {
         const cancelError = new Error('User cancelled');
-        cancelError.code = 'DOCUMENT_PICKER_CANCELED';
+        /** @type {any} */(cancelError).code = 'DOCUMENT_PICKER_CANCELED';
         reject(cancelError);
       };
       
