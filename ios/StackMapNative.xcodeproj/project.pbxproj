@@ -9,11 +9,11 @@
 /* Begin PBXBuildFile section */
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1F3426D727DD49DB96E597F2 /* ComicRelief-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CF367D3422A94B10883D3ACD /* ComicRelief-Regular.ttf */; };
+		496865E8C24A2949CBF597E4 /* libPods-StackMap.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5A2126B957295A6BC7C56FC1 /* libPods-StackMap.a */; };
 		52139873F7714AC3B85AC47B /* ComicRelief-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 25CFBD72FF9140DB97B8765D /* ComicRelief-Bold.ttf */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		7AC8E0672247E329B39B7113 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
-		D54B0F6C0C77697F9A34368B /* libPods-StackMap.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 247B574C766F72B972CB4B45 /* libPods-StackMap.a */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -21,12 +21,12 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = StackMapNative/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = StackMapNative/Info.plist; sourceTree = "<group>"; };
 		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = StackMapNative/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		19AB454B23553E8CF0AACCDF /* Pods-StackMap.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.release.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.release.xcconfig"; sourceTree = "<group>"; };
-		247B574C766F72B972CB4B45 /* libPods-StackMap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StackMap.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		25CFBD72FF9140DB97B8765D /* ComicRelief-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicRelief-Bold.ttf"; path = "../assets/fonts/ComicRelief-Bold.ttf"; sourceTree = "<group>"; };
+		43A1D38EBE32086017C0688C /* Pods-StackMap.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.release.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.release.xcconfig"; sourceTree = "<group>"; };
+		5A2126B957295A6BC7C56FC1 /* libPods-StackMap.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-StackMap.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = StackMapNative/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = StackMapNative/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		BE963905965A45F46933D41A /* Pods-StackMap.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.debug.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.debug.xcconfig"; sourceTree = "<group>"; };
+		BB748644C34D1A15487676F0 /* Pods-StackMap.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-StackMap.debug.xcconfig"; path = "Target Support Files/Pods-StackMap/Pods-StackMap.debug.xcconfig"; sourceTree = "<group>"; };
 		CF367D3422A94B10883D3ACD /* ComicRelief-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "ComicRelief-Regular.ttf"; path = "../assets/fonts/ComicRelief-Regular.ttf"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
@@ -36,7 +36,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				D54B0F6C0C77697F9A34368B /* libPods-StackMap.a in Frameworks */,
+				496865E8C24A2949CBF597E4 /* libPods-StackMap.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -59,7 +59,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				247B574C766F72B972CB4B45 /* libPods-StackMap.a */,
+				5A2126B957295A6BC7C56FC1 /* libPods-StackMap.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -67,8 +67,8 @@
 		6CCE57F778B1386967347150 /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				BE963905965A45F46933D41A /* Pods-StackMap.debug.xcconfig */,
-				19AB454B23553E8CF0AACCDF /* Pods-StackMap.release.xcconfig */,
+				BB748644C34D1A15487676F0 /* Pods-StackMap.debug.xcconfig */,
+				43A1D38EBE32086017C0688C /* Pods-StackMap.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -119,13 +119,13 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "StackMap" */;
 			buildPhases = (
-				625B3EB03E1D9C3A820E2E02 /* [CP] Check Pods Manifest.lock */,
+				71DE68412D481329C8057760 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				0F732B229FE36002D582011E /* Frameworks */,
-				18C268862A25325DE0639C21 /* [CP] Embed Pods Frameworks */,
-				FEE9272140195A9D0D4196E2 /* [CP] Copy Pods Resources */,
+				5FDFC7365266119579C783E8 /* [CP] Embed Pods Frameworks */,
+				6D7F2E85FCCFD174118D7B4F /* [CP] Copy Pods Resources */,
 			);
 			buildRules = (
 			);
@@ -200,7 +200,7 @@
 			shellPath = /bin/sh;
 			shellScript = "set -e\n\nWITH_ENVIRONMENT=\"$REACT_NATIVE_PATH/scripts/xcode/with-environment.sh\"\nREACT_NATIVE_XCODE=\"$REACT_NATIVE_PATH/scripts/react-native-xcode.sh\"\n\n/bin/sh -c \"$WITH_ENVIRONMENT $REACT_NATIVE_XCODE\"\n";
 		};
-		18C268862A25325DE0639C21 /* [CP] Embed Pods Frameworks */ = {
+		5FDFC7365266119579C783E8 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -217,7 +217,24 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		625B3EB03E1D9C3A820E2E02 /* [CP] Check Pods Manifest.lock */ = {
+		6D7F2E85FCCFD174118D7B4F /* [CP] Copy Pods Resources */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources-${CONFIGURATION}-input-files.xcfilelist",
+			);
+			name = "[CP] Copy Pods Resources";
+			outputFileListPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources-${CONFIGURATION}-output-files.xcfilelist",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources.sh\"\n";
+			showEnvVarsInLog = 0;
+		};
+		71DE68412D481329C8057760 /* [CP] Check Pods Manifest.lock */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -239,23 +256,6 @@
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 			showEnvVarsInLog = 0;
 		};
-		FEE9272140195A9D0D4196E2 /* [CP] Copy Pods Resources */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources-${CONFIGURATION}-input-files.xcfilelist",
-			);
-			name = "[CP] Copy Pods Resources";
-			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources-${CONFIGURATION}-output-files.xcfilelist",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-StackMap/Pods-StackMap-resources.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -272,7 +272,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = BE963905965A45F46933D41A /* Pods-StackMap.debug.xcconfig */;
+			baseConfigurationReference = BB748644C34D1A15487676F0 /* Pods-StackMap.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -305,7 +305,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 19AB454B23553E8CF0AACCDF /* Pods-StackMap.release.xcconfig */;
+			baseConfigurationReference = 43A1D38EBE32086017C0688C /* Pods-StackMap.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
