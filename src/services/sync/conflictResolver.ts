@@ -315,7 +315,6 @@ class ConflictResolver {
     const baseUser = (localUser.lastModified || 0) > (remoteUser.lastModified || 0) 
       ? localUser 
       : remoteUser;
-    const otherUser = baseUser === localUser ? remoteUser : localUser;
     
     // Start with all fields from base user
     const mergedUser: User = { ...baseUser };
