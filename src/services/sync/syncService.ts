@@ -11,7 +11,7 @@ import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
 import { validateSyncedData, repairSyncedData, validateIncrementalSync } from './dataValidator';
-import type { User, SyncData, AppState } from '../../types';
+// Types imported but not all used directly - kept for documentation
 
 /**
  * Get API base URL based on environment
@@ -193,7 +193,7 @@ class SyncService {
    * Restore sync state from AsyncStorage
    */
   async restoreState(): Promise<void> {
-    const startTime = Date.now();
+    // const startTime = Date.now(); // For performance logging if needed
         
     // Prevent multiple restores
     if (this.initialized) {
@@ -201,7 +201,7 @@ class SyncService {
     }
     
     try {
-      const t1 = Date.now();
+      // const t1 = Date.now(); // For performance logging
       const enabled = await AsyncStorage.getItem('@sync_enabled');
       const syncId = await AsyncStorage.getItem('@sync_id');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
@@ -214,12 +214,12 @@ class SyncService {
         this.lastSyncSuccess = lastSyncSuccess ? parseInt(lastSyncSuccess, 10) : null;
                 
         // Try to restore encryption automatically
-        const t2 = Date.now();
+        // const t2 = Date.now(); // For performance logging
         const encryptionRestored = await this.restoreEncryptionFromStorage();
         
         if (encryptionRestored) {
           // Start periodic sync now that we're restored
-          const t3 = Date.now();
+          // const t3 = Date.now(); // For performance logging
           this.startPeriodicSync();
         }
       }
@@ -618,9 +618,9 @@ class SyncService {
         
         // Log activities for each user
         if (decryptedData.users) {
-          Object.entries(decryptedData.users).forEach(([userId, user]: [string, any]) => {
+          Object.entries(decryptedData.users).forEach(([_userId, user]: [string, any]) => {
             const todayActivities = user.days?.today?.activities?.length || 0;
-            const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+            // const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
             if (todayActivities > 0) {
               // Activities exist
             }
@@ -785,9 +785,11 @@ class SyncService {
     let needsRepair = false;
     
     // Debug: Log activities for each user
-    Object.entries(users).forEach(([userId, user]: [string, any]) => {
-      const todayActivities = user.days?.today?.activities?.length || 0;
-      const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+    Object.entries(users).forEach(([_userId, user]: [string, any]) => {
+      // const todayActivities = user.days?.today?.activities?.length || 0;
+      // const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+      // Logging removed but code kept for future debugging
+      user.days?.today?.activities?.length || 0;
     });
     
     if (users && Object.keys(users).length > 0) {
@@ -857,7 +859,7 @@ class SyncService {
    */
   async restoreData(data: any): Promise<void> {
     // Don't log full data as it could be huge
-    const dataInfo = data ? `type: ${data.type}, size: ~${Math.round(JSON.stringify(data).length / 1024)}KB` : 'null';
+    // const dataInfo = data ? `type: ${data.type}, size: ~${Math.round(JSON.stringify(data).length / 1024)}KB` : 'null';
     
     // Handle incremental sync data
     if (data.type === 'incremental' && data.patch) {
@@ -897,14 +899,15 @@ class SyncService {
 
     // Debug: Log user activities
     if (users) {
-      Object.entries(users).forEach(([userId, user]: [string, any]) => {
-        const todayActivities = user.days?.today?.activities?.length || 0;
-        const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+      Object.entries(users).forEach(([_userId, user]: [string, any]) => {
+        // const todayActivities = user.days?.today?.activities?.length || 0;
+        // const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
+        user.days?.today?.activities?.length || 0;
       });
     }
     
     // DEBUG: Log data size without stringifying the whole thing
-    const dataSize = JSON.stringify(data).length;
+    // const dataSize = JSON.stringify(data).length;
     
     // Get current state to preserve certain values
     const currentState = useAppStore.getState();
@@ -1087,8 +1090,9 @@ class SyncService {
     const currentUser = state.currentUser || useAppStore.getState().currentUser;
     const currentDay = state.currentDay || useAppStore.getState().currentDay;
     if (state.users && state.users[currentUser] && state.users[currentUser].days && state.users[currentUser].days[currentDay]) {
-      const activities = state.users[currentUser].days[currentDay].activities || [];
+      // const activities = state.users[currentUser].days[currentDay].activities || [];
       // Activities processed
+      state.users[currentUser].days[currentDay].activities || [];
     }
     
     // Use restoreData to properly extract and set activities
@@ -1252,8 +1256,8 @@ class SyncService {
         encryptionService.masterKey = key;
         encryptionService.syncId = this.syncId;
         
-        // Try to decrypt
-        const decrypted = encryptionService.decryptData(testData.encrypted_blob);
+        // Try to decrypt to verify key
+        encryptionService.decryptData(testData.encrypted_blob);
         
         // Store the recovery phrase for future automatic restoration
         await encryptionService.storeRecoveryPhrase(recoveryPhrase, this.syncId);
@@ -1371,7 +1375,7 @@ class SyncService {
     
     // Subscribe to all state changes
     this.storeUnsubscribe = useAppStore.subscribe(
-      (state) => {
+      (_state) => {
         // Only trigger sync if we're enabled and have a sync ID
         if (this.syncEnabled && this.syncId && networkMonitor.isOnline) {
           this.debouncedSync();
@@ -1563,7 +1567,7 @@ class SyncService {
   /**
    * Resolve conflicts and continue sync
    */
-  async resolveConflictsAndContinue(resolutions: any[]): Promise<SyncResult> {
+  async resolveConflictsAndContinue(_resolutions: any[]): Promise<SyncResult> {
     try {
       // For now, just clear conflicts and continue with local state
       // TODO: Implement proper conflict resolution application
@@ -1671,7 +1675,7 @@ class SyncService {
         });
       }
 
-      const deviceId = await encryptionService.getDeviceId();
+      // const deviceId = await encryptionService.getDeviceId();
       const deviceName = encryptionService.getDeviceName();
 
       // Always use V2: Zero-knowledge encrypted share

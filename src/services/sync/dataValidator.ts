@@ -1,4 +1,4 @@
-import type { User, Activity, ThemeName } from '../../types';
+import type { User, ThemeName } from '../../types';
 
 /**
  * Data validation utility for sync operations
@@ -13,10 +13,7 @@ interface SyncData {
   [key: string]: any;
 }
 
-interface DayData {
-  activities: Activity[];
-  [key: string]: any;
-}
+// DayData interface removed - not needed
 
 interface IncrementalSyncData {
   type: 'incremental';
@@ -45,7 +42,7 @@ export const validateSyncedData = (data: any): data is SyncData => {
     }
 
     // Validate each user (skip deleted users)
-    for (const [userId, user] of Object.entries(data.users) as [string, any][]) {
+    for (const [_userId, user] of Object.entries(data.users) as [string, any][]) {
       // Skip validation for deleted users
       if (user && user.deleted) {
         continue;
@@ -260,7 +257,7 @@ export const repairSyncedData = (data: any): SyncData => {
     }
 
     // Repair each user
-    for (const [userId, user] of Object.entries(repaired.users) as [string, any][]) {
+    for (const [_userId, user] of Object.entries(repaired.users) as [string, any][]) {
       // Skip deleted users - they don't need repair
       if (user && user.deleted) {
         continue;
@@ -284,7 +281,7 @@ export const repairSyncedData = (data: any): SyncData => {
       }
 
       // Repair each day
-      for (const [day, dayData] of Object.entries(user.days) as [string, any][]) {
+      for (const [_day, dayData] of Object.entries(user.days) as [string, any][]) {
         // Ensure activities array
         if (!Array.isArray(dayData.activities)) {
           dayData.activities = [];

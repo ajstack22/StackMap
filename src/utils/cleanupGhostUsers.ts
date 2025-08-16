@@ -64,7 +64,7 @@ export const cleanupGhostUsers = (): CleanupResult => {
   const cleanedUsers: Record<string, any> = { ...users };
   let newCurrentUser = currentUser;
   
-  usersByKey.forEach((userList, key) => {
+  usersByKey.forEach((userList, _key) => {
     if (userList.length > 1) {
       // Sort by user ID timestamp to find the oldest
       const sorted = userList.sort((a, b) => {

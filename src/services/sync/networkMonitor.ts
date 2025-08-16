@@ -1,4 +1,4 @@
-import { Platform } from 'react-native';
+// Platform import removed - not needed since NetInfo is disabled
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 
 // Types for network monitoring
