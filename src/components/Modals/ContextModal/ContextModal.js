@@ -17,24 +17,13 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../../constants';
 
-// Lazy load gesture handler to avoid module-level Platform.OS access
-let GestureHandlerModule = null;
+// Gesture handler removed - using standard components
 let GestureHandlerRootView = View;
 let PanGestureHandler = null;
 let State = {};
 
 const loadGestureHandler = () => {
-  if (Platform.OS === 'ios' && !GestureHandlerModule) {
-    try {
-      GestureHandlerModule = require('react-native-gesture-handler');
-      GestureHandlerRootView = GestureHandlerModule.GestureHandlerRootView || View;
-      PanGestureHandler = GestureHandlerModule.PanGestureHandler;
-      State = GestureHandlerModule.State || {};
-    } catch (e) {
-      // Fallback if gesture handler not available
-      GestureHandlerRootView = View;
-    }
-  }
+  // Gesture handler functionality removed
 };
 
 const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onUserChange }) => {
@@ -595,7 +584,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
       statusBarTranslucent={true}
       onRequestClose={handleClose}
     >
-      <GestureHandlerRootView style={{ flex: 1 }}>
+      <View style={{ flex: 1 }}>
         {Platform.OS === 'android' && (
           <StatusBar 
             backgroundColor={currentUserTheme.primary} 
@@ -690,7 +679,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
           }} />
         )}
       </View>
-      </GestureHandlerRootView>
+      </View>
     </Modal>
   );
 };

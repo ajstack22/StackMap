@@ -407,11 +407,7 @@ const SettingsModal = ({
                 );
               })}
             </View>
-            ) : (
-            <View style={{ flex: 1 }}>
-              {/* Draggable list removed - using button-based reordering */}
-            </View>
-            )}
+            ) : null}
 
             {/* Divider */}
             <View style={styles.divider} />
