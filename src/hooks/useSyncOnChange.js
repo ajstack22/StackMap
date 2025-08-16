@@ -32,12 +32,20 @@ export const useSyncOnChange = () => {
         // Check if state actually changed
         if (lastStateRef.current && 
             JSON.stringify(lastStateRef.current) !== JSON.stringify(currentState)) {
+          
+          // Log what changed for debugging
+          console.log('[useSyncOnChange] State changed, requesting sync', {
+            usersChanged: JSON.stringify(lastStateRef.current.users) !== JSON.stringify(currentState.users),
+            activitiesChanged: JSON.stringify(lastStateRef.current.activities) !== JSON.stringify(currentState.activities),
+            syncEnabled: syncService.syncEnabled
+          });
 
           // Request debounced sync
           syncService.requestSync({ 
             priority: 'normal',
             immediate: false 
           }).catch(error => {
+            console.error('[useSyncOnChange] Sync request failed:', error);
           });
         }
         

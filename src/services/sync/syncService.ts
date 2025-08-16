@@ -439,8 +439,15 @@ class SyncService {
     if (this.lastSyncSuccess && changeTracker.shouldUseIncremental(this.lastSyncSuccess)) {
       const incrementalUpdate = changeTracker.createIncrementalUpdate(this.lastSyncSuccess);
       if (incrementalUpdate) {
+        console.log('[sync] Creating incremental update', {
+          changeCount: incrementalUpdate.changes?.length || 0,
+          patchKeys: Object.keys(incrementalUpdate.patch || {}),
+          timestamp: incrementalUpdate.timestamp
+        });
         syncData = incrementalUpdate;
         syncType = 'incremental';
+      } else {
+        console.log('[sync] No changes for incremental update, using full sync');
       }
     }
     
