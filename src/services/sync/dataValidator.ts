@@ -93,9 +93,9 @@ const validateUser = (userId: string, user: any): boolean => {
     return false;
   }
 
-  // Check for icon field
-  if (!user.icon) {
-    console.error(`Data validation failed: User ${userId} missing icon`, user);
+  // Check for icon field (also check emoji for legacy support)
+  if (!user.icon && !user.emoji) {
+    console.error(`Data validation failed: User ${userId} missing icon or emoji`, user);
     return false;
   }
 

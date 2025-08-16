@@ -290,11 +290,31 @@ class ConflictResolver {
       mergedUser.days = this.mergeUserDays(localUser.days, remoteUser.days);
     }
 
-    // Always keep the most recent icon
-    if (localUser.icon && remoteUser.icon) {
-      mergedUser.icon = (localUser.lastModified || 0) > (remoteUser.lastModified || 0)
-        ? localUser.icon
-        : remoteUser.icon;
+    // Ensure critical fields are preserved
+    // Name: Use non-empty name, preferring local if both exist
+    if (!mergedUser.name || mergedUser.name === 'User') {
+      if (localUser.name && localUser.name !== 'User') {
+        mergedUser.name = localUser.name;
+      } else if (remoteUser.name && remoteUser.name !== 'User') {
+        mergedUser.name = remoteUser.name;
+      } else {
+        mergedUser.name = 'User'; // Fallback
+      }
+    }
+
+    // Icon: Ensure we always have an icon
+    if (!mergedUser.icon) {
+      if (localUser.icon) {
+        mergedUser.icon = localUser.icon;
+      } else if (remoteUser.icon) {
+        mergedUser.icon = remoteUser.icon;
+      } else if (localUser.emoji) {
+        mergedUser.icon = localUser.emoji;
+      } else if (remoteUser.emoji) {
+        mergedUser.icon = remoteUser.emoji;
+      } else {
+        mergedUser.icon = '👤'; // Default fallback
+      }
     }
 
     return mergedUser;

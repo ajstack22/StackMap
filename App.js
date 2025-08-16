@@ -2708,7 +2708,14 @@ This will replace all your current data.`,
             console.log(`Validated user ${userId}: name="${validatedUser.name}", icon="${validatedUser.icon}"`);
           });
           
+          console.log('Setting validated users:', JSON.stringify(validatedUsers, null, 2));
           setUsers(validatedUsers);
+          
+          // Verify the users were set correctly
+          setTimeout(() => {
+            const storeState = useAppStore.getState();
+            console.log('Verified users in store after setUsers:', JSON.stringify(storeState.users, null, 2));
+          }, 100);
           
           // Set first imported user as current
           const userIds = Object.keys(validatedUsers);

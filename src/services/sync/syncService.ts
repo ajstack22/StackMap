@@ -480,8 +480,18 @@ class SyncService {
     
     // Validate data before pushing (only for full syncs)
     if (syncType === 'full' && !validateSyncedData(syncData)) {
-      console.error('sync: Local data validation failed before push');
-      throw new Error('Cannot push invalid data to server');
+      console.error('sync: Local data validation failed before push, attempting repair...');
+      
+      // Try to repair the data
+      const repairedData = repairSyncedData(syncData);
+      
+      if (!validateSyncedData(repairedData)) {
+        console.error('sync: Cannot repair local data for push');
+        throw new Error('Cannot push invalid data to server');
+      }
+      
+      console.log('sync: Successfully repaired local data before push');
+      syncData = repairedData;
     }
     
     // Encrypt the data (compression happens inside if beneficial)
@@ -689,9 +699,30 @@ class SyncService {
             
             // Apply resolutions if any
             if (resolutions && resolutions.length > 0) {
-              // For now, just use local state when conflicts are resolved
-              // This prevents the sync loop issue
               console.log(`Resolved ${resolutions.length} conflicts automatically`);
+              
+              // Apply the resolved conflicts to create merged state
+              const mergedState = conflictResolver.applyResolvedConflicts(
+                resolutions,
+                { ...localState, ...normalizedRemoteData }
+              );
+              
+              // Ensure merged state has valid users
+              if (mergedState.users) {
+                Object.keys(mergedState.users).forEach(userId => {
+                  const user = mergedState.users[userId];
+                  if (!user.icon && !user.emoji) {
+                    console.warn(`Conflict resolution: User ${userId} missing icon, adding default`);
+                    mergedState.users[userId] = {
+                      ...user,
+                      icon: '👤'
+                    };
+                  }
+                });
+              }
+              
+              // Apply the merged state
+              await this.restoreData(mergedState);
             }
           } catch (conflictError) {
             console.error('sync: Conflict resolution failed:', conflictError);
@@ -818,15 +849,26 @@ class SyncService {
         // Ensure all users have icon field
         if (!user.icon) {
           console.warn(`[DEBUG] getCurrentState - User ${userId} missing icon, using default`);
+          
+          // Check for emoji field (legacy support)
+          const icon = user.emoji && typeof user.emoji === 'string' ? user.emoji : '👤';
+          
           repairedUsers[userId] = {
             ...user,
-            icon: '😀' // Default user icon
+            icon: icon
           };
+          
+          // Remove emoji field if present to avoid confusion
+          if (repairedUsers[userId].emoji) {
+            delete repairedUsers[userId].emoji;
+          }
+          
           needsRepair = true;
         }
       });
       
       if (needsRepair) {
+        console.log('sync: Repaired users in getCurrentState, updating store');
         users = repairedUsers;
         useAppStore.setState({ users });
       }
