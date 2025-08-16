@@ -736,8 +736,9 @@ const DataModal = ({
             
             // Normalize icon field - always use 'icon', not 'emoji'
             if (!validatedUser.icon || typeof validatedUser.icon !== 'string') {
-              if (validatedUser.icon && typeof validatedUser.icon === 'string') {
-                validatedUser.icon = validatedUser.icon;
+              if (validatedUser.emoji && typeof validatedUser.emoji === 'string') {
+                // Legacy support - migrate emoji to icon
+                validatedUser.icon = validatedUser.emoji;
               } else {
                 console.warn(`Import: User ${userId} has no valid icon, using default`);
                 validatedUser.icon = '👤';
@@ -745,8 +746,8 @@ const DataModal = ({
             }
             
             // Remove redundant emoji field to prevent confusion
-            if (validatedUser.icon) {
-              delete validatedUser.icon;
+            if (validatedUser.emoji) {
+              delete validatedUser.emoji;
             }
             
             dataToImport.users[userId] = validatedUser;
