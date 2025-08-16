@@ -196,7 +196,7 @@ const App = () => {
     setLibraryTemplates,
     library,
     setLibrary,
-    setLibraryCategories,
+    updateLibraryCategories,
     currentDay,
     setCurrentDay,
     displayMode,
@@ -824,7 +824,7 @@ const App = () => {
         
         // Restore activity categories
         if (importedData.activityCategories) {
-          setLibraryCategories(importedData.activityCategories);
+          updateLibraryCategories(importedData.activityCategories);
         }
         
         // Clean up temp storage
@@ -1700,7 +1700,7 @@ const App = () => {
     if (!library?.categories || library?.categories.length === 0) {
       console.log('Initializing activity categories with default template');
       categories = EMPTY_CATEGORIES;
-      setLibraryCategories(EMPTY_CATEGORIES);
+      updateLibraryCategories(EMPTY_CATEGORIES);
     }
     
     // Create a new array to avoid mutating state
@@ -1736,7 +1736,7 @@ const App = () => {
         activities: [...(updatedCategories[myTemplatesIndex].activities || []), template]
       };
       
-      setLibraryCategories(updatedCategories);
+      updateLibraryCategories(updatedCategories);
       
       // Add to tracking set to show checkmark
       setAddedToLibraryIds(prev => new Set([...prev, activity.id]));
@@ -2644,7 +2644,7 @@ This will replace all your current data.`,
         
         // Clear ALL existing data comprehensively
         setUsers({});
-        setLibraryCategories([]);
+        updateLibraryCategories([]);
         // Activities are now derived from users state, no need to reset
         // Templates field no longer exists
         setUserContextData({});
@@ -2717,7 +2717,7 @@ This will replace all your current data.`,
               }))
             });
           });
-          setLibraryCategories(categoriesArray);
+          updateLibraryCategories(categoriesArray);
         }
         
         // Restore global settings
@@ -2878,7 +2878,7 @@ This will replace all your current data.`,
             }
           });
           
-          setLibraryCategories(currentCategories);
+          updateLibraryCategories(currentCategories);
         }
       }
       
@@ -3068,7 +3068,7 @@ Users: ${userNames} (${userCount} total)
               // Templates now handled through activityCategories
               setIsEditMode(false);
               setHasPinProtection(false);
-              setLibraryCategories(null);
+              updateLibraryCategories(null);
               setAddedToLibraryIds(new Set());
               
               // Reset form states
@@ -4066,7 +4066,7 @@ Users: ${userNames} (${userCount} total)
         onClose={() => setShowActivityLibrary(false)}
         showToast={showToast}
         categories={library?.categories}
-        onSaveCategories={setLibraryCategories}
+        onSaveCategories={updateLibraryCategories}
         onSelectActivity={async (activity) => {
             // Get device ID for enhanced activity IDs
             const deviceId = await encryptionService.getDeviceId();
@@ -4460,7 +4460,7 @@ Users: ${userNames} (${userCount} total)
         theme={theme}
         categories={library?.categories}
         showToast={showToast}
-        onSaveCategories={setLibraryCategories}
+        onSaveCategories={updateLibraryCategories}
         stackMapLibrary={STACKMAP_LIBRARY}
         onAddActivity={async (activity) => {
           // Get device ID for enhanced activity IDs
