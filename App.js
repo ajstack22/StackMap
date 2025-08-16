@@ -505,21 +505,35 @@ const App = () => {
         let needsUpdate = false;
         const updatedUsers = {};
         Object.entries(users).forEach(([userId, user]) => {
-          if (!user.icon || user.icon === '👤') {
-            // User missing icon or has default placeholder, give them a proper one
-            needsUpdate = true;
-            updatedUsers[userId] = {
-              ...user,
-              icon: user.emoji || user.icon || '😊'
-            };
-            // Remove emoji field if it exists
-            delete updatedUsers[userId].emoji;
-          } else {
-            updatedUsers[userId] = user;
+          let userUpdated = false;
+          const updatedUser = { ...user };
+          
+          // Check if user has icon field or if it's the default placeholder
+          if (!updatedUser.icon || updatedUser.icon === '👤') {
+            // User missing icon or has default placeholder, check for emoji field
+            if (updatedUser.emoji && typeof updatedUser.emoji === 'string' && updatedUser.emoji !== '👤') {
+              updatedUser.icon = updatedUser.emoji;
+            } else {
+              // Give them a friendly default
+              updatedUser.icon = '😊';
+            }
+            userUpdated = true;
           }
+          
+          // Remove legacy emoji field if it exists
+          if (updatedUser.emoji) {
+            delete updatedUser.emoji;
+            userUpdated = true;
+          }
+          
+          if (userUpdated) {
+            needsUpdate = true;
+          }
+          updatedUsers[userId] = updatedUser;
         });
+        
         if (needsUpdate) {
-          console.log('Migrating user icons:', updatedUsers);
+          console.log('Migrating user icons - updating', Object.keys(updatedUsers).length, 'users');
           setUsers(updatedUsers);
         }
       }
