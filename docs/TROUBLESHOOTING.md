@@ -1,334 +1,389 @@
 # StackMap Troubleshooting Guide
 
-## Common Issues and Solutions
+> **Last Updated**: 2024-12-28  
+> **Purpose**: Quick solutions to common issues
 
-### App Issues
+---
 
-#### App Won't Start
-**Symptoms**: App crashes on launch or shows white screen
+## 🚨 Most Common Issues
 
-**Solutions**:
-1. Clear app data/cache
-2. Reinstall the app
-3. Check for app updates
-4. For web: Clear browser cache and cookies
+### 1. 403 Forbidden Error After Deployment
 
-#### Data Not Saving
-**Symptoms**: Activities disappear after closing app
+**Symptoms:**
+- Site shows "403 Forbidden" after git pull
+- "Access to this resource on the server is denied!"
 
-**Solutions**:
-1. Check storage permissions
-2. Ensure sufficient device storage
-3. Try export/import to backup data
-4. Check AsyncStorage is working:
-   ```javascript
-   // In console
-   AsyncStorage.getAllKeys().then(console.log)
-   ```
+**Cause:**
+Build files are in .gitignore, so they don't exist on the server after git pull.
 
-#### Theme Not Changing
-**Symptoms**: Theme selection doesn't apply
+**Solution:**
+```bash
+# 1. Check .gitignore - these should be COMMENTED OUT:
+# /index.html
+# /bundle.*.js
+# /manifest.json
+# /service-worker.js
+# /workbox-*.js
+# /fonts/
+# /icons/
 
-**Solutions**:
-1. Force close and restart app
-2. Clear app cache
-3. Check if theme is saved in settings
-4. Known issue: Theme reactivity bug after store refactor
+# 2. Ensure build files are in git:
+git add -f index.html bundle.*.js manifest.json service-worker.js workbox-*.js fonts icons *.png
+git commit -m "Add build files"
+git push
 
-### Sync Issues
+# 3. Pull again on server
+```
 
-#### "Sync not enabled" Error
-**Symptoms**: Can't enable sync feature
+**Prevention:**
+- Always use `npm run deploy:qual` script
+- Read [DO_NOT_IGNORE_BUILD_FILES.md](./DO_NOT_IGNORE_BUILD_FILES.md)
 
-**Solutions**:
-1. Check internet connection
-2. Verify recovery phrase format (32 hex characters)
-3. Try disabling and re-enabling sync
-4. Clear sync credentials and re-initialize
+---
 
-#### Sync Data Not Appearing
-**Symptoms**: Data doesn't sync between devices
+### 2. Old Bundle Loading (Cache Issues)
 
-**Solutions**:
-1. Ensure same recovery phrase on all devices
-2. Check internet connection on both devices
-3. Force sync: Pull to refresh
-4. Verify sync status in settings
-5. Check server status at `/api/sync/health.php`
+**Symptoms:**
+- Browser loads old JavaScript bundle
+- "Cannot read properties of undefined" errors
+- App doesn't reflect recent changes
 
-#### "Invalid recovery phrase" Error
-**Symptoms**: Can't join existing sync
+**Cause:**
+Service worker or browser caching old files.
 
-**Solutions**:
-1. Verify phrase is exactly 32 characters
-2. Check for spaces or special characters
-3. Ensure lowercase hexadecimal only
-4. Try copy/paste instead of typing
+**Solution:**
+```bash
+# 1. Clear browser cache completely
+# 2. Open in incognito/private window
+# 3. Visit /force-refresh.html if available
+# 4. Unregister service worker in DevTools > Application > Service Workers
+```
 
-#### Sync Conflicts
-**Symptoms**: Different data on different devices
+---
 
-**Solutions**:
-1. Pull latest data before making changes
-2. Choose "Keep Local" or "Keep Remote" when prompted
-3. Export data as backup before resolving
-4. Disable sync, clear data, re-enable with same phrase
+### 3. MIME Type Errors
 
-### Platform-Specific Issues
+**Symptoms:**
+- "Refused to execute script... MIME type ('text/html') is not executable"
+- JavaScript files returning 404
 
-#### iOS Issues
+**Cause:**
+Server can't find the JavaScript file, returns HTML 404 page instead.
 
-**Xcode Build Fails**
+**Solution:**
+```bash
+# 1. Verify file exists on server
+# 2. Check file permissions (should be 644)
+# 3. Ensure .htaccess has correct MIME types:
+AddType application/javascript .js
+```
+
+---
+
+### 4. Icons/Fonts Not Loading
+
+**Symptoms:**
+- Missing icons or wrong fonts
+- 404 errors for font files
+
+**Cause:**
+Font/icon directories not copied to root or wrong paths.
+
+**Solution:**
+```bash
+# Copy directories to root:
+cp -r web/build/fonts .
+cp -r web/build/icons .
+git add fonts icons
+git commit -m "Add font and icon directories"
+git push
+```
+
+---
+
+### 5. iOS Modal Panels Expanding Too Large 🚨 CRITICAL FIX 🚨
+
+**Symptoms:**
+- Modal panels expand beyond their content on iOS
+- Sections appear "too big" or "too large"
+- Content doesn't fit properly within modal boundaries
+
+**Cause:**
+iOS handles flex properties differently in ScrollView. Without proper constraints, panels will expand to fill all available space.
+
+**Solution - MUST FOLLOW EXACTLY:**
+```javascript
+// 1. ScrollView MUST have flex: 1
+modalScrollView: {
+  flex: 1,  // REQUIRED for iOS
+},
+
+// 2. scrollContent MUST NOT have flexGrow on iOS
+scrollContent: {
+  ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
+},
+
+// 3. sectionInner MUST have iOS constraints
+sectionInner: {
+  ...(Platform.OS === 'ios' && {
+    flex: 0,      // CRITICAL: Prevents expansion
+    flexGrow: 0,  // CRITICAL: No growing
+    flexShrink: 1,// CRITICAL: Can shrink if needed
+  }),
+},
+
+// 4. Activity cards MUST have explicit height on iOS
+activityCard: {
+  ...(Platform.OS === 'ios' && {
+    height: 32,    // CRITICAL: Fixed height
+    maxHeight: 32, // CRITICAL: Prevent expansion
+  }),
+}
+```
+
+**⚠️ NEVER DO THIS:**
+- Don't use inline styles like `{ minHeight: 0, height: 'auto' }` on iOS
+- Don't remove the iOS-specific flex constraints
+- Don't use flexGrow on iOS ScrollView content
+- Don't forget the wrapper View with flex: 1
+
+**This fix has caused hours of debugging. DO NOT CHANGE without understanding why each constraint exists!**
+
+---
+
+### 6. Platform-Specific Issues
+
+### iOS Issues
+- **White screen**: Check Xcode console for errors
+- **Font not loading**: Ensure ComicRelief is in Copy Bundle Resources
+- **Build fails**: Clean build folder (Cmd+Shift+K)
+
+### Android Issues
+- **APK won't install**: Check keystore signing
+- **Gradle errors**: Run `cd android && ./gradlew clean`
+- **Metro bundler**: Kill all node processes and restart
+
+### Web Issues
+- **Scroll not working**: Check overflow CSS properties
+- **Touch events**: Ensure proper event handlers for web
+- **PWA not installing**: Check manifest.json paths
+- **Alert.alert not working**: React Native's Alert doesn't work on web, use `window.confirm()` instead (see Common Issues in CLAUDE.md)
+- **React State Batching**: Multiple rapid setState calls may only apply the last update. Use batch updates instead (see issue #6 below)
+
+---
+
+## 🔧 Debugging Commands
+
+### Check Current State
+```bash
+# See what files are ignored
+git status --ignored
+
+# Check what's in the bundle
+grep -c "COLORS.gray\[100\]" bundle.*.js
+
+# Verify deployment
+curl -I https://stackmap.app/qual/index.html
+```
+
+### Force Rebuilds
+```bash
+# Clean everything
+rm -rf node_modules web/build
+npm install
+
+# Full rebuild
+NODE_ENV=production npm run build:web
+```
+
+### Service Worker Issues
+```javascript
+// In browser console
+navigator.serviceWorker.getRegistrations().then(regs => {
+  regs.forEach(reg => reg.unregister());
+});
+```
+
+---
+
+## 📱 Platform Build Issues
+
+### iOS Build Failures
 ```bash
 cd ios
 pod deintegrate
-pod cache clean --all
 pod install
+cd ..
+npx react-native run-ios
 ```
 
-**App Freezes for 20+ Seconds**
-- Known issue with AsyncStorage
-- Fix: Already debounced in code
-- Workaround: Wait for freeze to resolve
-
-**Simulator Issues**
-```bash
-# Reset simulator
-xcrun simctl erase all
-
-# Clean build
-rm -rf ~/Library/Developer/Xcode/DerivedData
-```
-
-#### Android Issues
-
-**Build Failed - SDK Not Found**
-```bash
-# Set ANDROID_HOME
-export ANDROID_HOME=$HOME/Library/Android/sdk
-export PATH=$PATH:$ANDROID_HOME/emulator
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/tools/bin
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-```
-
-**Gradle Build Fails**
+### Android Build Failures
 ```bash
 cd android
 ./gradlew clean
-./gradlew --stop
-rm -rf ~/.gradle/caches/
+cd ..
+npx react-native run-android
 ```
 
-**APK Not Installing**
+### Web Build Issues
 ```bash
-# Uninstall existing version
-adb uninstall com.stackmap
+# Check webpack config
+npm run build:web -- --verbose
 
-# Install fresh
-adb install android/app/build/outputs/apk/debug/app-debug.apk
+# Test locally
+npm run web
 ```
 
-#### Web Issues
+---
 
-**Blank White Screen**
-1. Check browser console for errors
-2. Clear browser cache
-3. Disable browser extensions
-4. Try incognito/private mode
+## 🚀 Deployment Issues
 
-**Icons Not Showing**
-- Ensure Material Icons font is loaded
-- Check network tab for font files
-- Clear browser cache
+### Git Push Rejected
+```bash
+# Force push (CAREFUL!)
+git push --force-with-lease
 
-**Local Storage Issues**
+# Or pull and merge
+git pull --rebase
+git push
+```
+
+### Namecheap Specific
+- .cpanel.yml does NOT work - ignore it
+- Must copy build files to root for qual
+- Use simple-deploy.sh for production only
+
+---
+
+## 🆘 When All Else Fails
+
+1. **Check the docs index**: [MD_FILES_INDEX.md](./MD_FILES_INDEX.md)
+2. **Read deployment truth**: [CLAUDE.md](./CLAUDE.md)
+3. **Check recent changes**: `git log --oneline -10`
+4. **Test locally first**: `npm run web`
+5. **Use incognito mode**: Eliminates cache issues
+6. **Check server logs**: Look for PHP/Apache errors
+
+---
+
+### 6. React State Batching Issues
+
+**Symptoms:**
+- "Add All" button only adds one item instead of all
+- Multiple items processed but only last one appears
+- forEach loops with setState only applying last change
+
+**Cause:**
+React batches multiple setState calls for performance. When calling setState in a loop, only the last update may be applied because each setState uses the current state, not the updated state from previous iterations.
+
+**Solution:**
 ```javascript
-// Clear all local storage
-localStorage.clear()
-sessionStorage.clear()
+// ❌ BAD: Multiple setState calls in a loop
+items.forEach(item => {
+  setActivities([...activities, createNewItem(item)]);
+});
+
+// ✅ GOOD: Batch all updates into one setState
+const newItems = items.map(item => createNewItem(item));
+setActivities([...activities, ...newItems]);
+
+// ✅ ALSO GOOD: Use functional setState for sequential updates
+setActivities(prevActivities => {
+  const newItems = items.map(item => createNewItem(item));
+  return [...prevActivities, ...newItems];
+});
 ```
 
-### Development Issues
+**Best Practice:**
+- Always batch multiple state updates into a single setState call
+- Use functional setState when the new state depends on the previous state
+- Create separate handlers for single vs multiple item operations
 
-#### Metro Bundler Errors
+---
 
-**"Module not found"**
-```bash
-npx react-native start --reset-cache
-watchman watch-del-all
+### 8. Card Numbering Gaps (Cards Starting at 5 Instead of 1)
+
+**Symptoms:**
+- Card numbers don't start at 1
+- Missing card numbers (e.g., no cards 1-4, first card shows as 5)
+- Gaps in card numbering sequence
+- Issue often occurs after using "Add All" from Activity Library
+
+**Cause:**
+Card numbers are based on the array index position. If the activities array has null/undefined values or gaps, the numbering will be incorrect.
+
+**Solution:**
+The app now includes a `cleanupActivities()` helper function that:
+```javascript
+// Filters out any null, undefined, or deleted items
+const validActivities = activitiesArray.filter(a => a && !a.deleted);
 ```
 
-**"Port 8081 already in use"**
-```bash
-# Find and kill process
-lsof -i :8081
-kill -9 <PID>
+This is automatically applied when:
+- Loading activities on app start
+- Switching between today/tomorrow
+- Adding multiple activities via "Add All"
 
-# Or use different port
-npx react-native start --port 8082
+**Prevention:**
+- Always use the batch handler `onSelectMultipleActivities` for adding multiple items
+- The app automatically cleans up the activities array to prevent gaps
+- Card numbers are calculated based on visible (non-deleted) activities only
+
+---
+
+### 7. "no PRNG" Error in Sync Initialization
+
+**Symptoms:**
+- Error: "no PRNG" when trying to enable sync
+- Sync initialization fails on mobile devices
+- Error appears in console: `Sync initialization failed: Error: no PRNG`
+
+**Cause:**
+React Native doesn't have the Web Crypto API available by default. The TweetNaCl encryption library requires a proper random number generator for cryptographic operations.
+
+**Solution:**
+This has been fixed by installing `react-native-get-random-values` and importing it before any crypto-dependent libraries:
+
+```javascript
+// In index.js - Import this BEFORE any other imports
+import 'react-native-get-random-values';
+
+// Also in encryptionService.js
+if (Platform.OS !== 'web') {
+  require('react-native-get-random-values');
+}
 ```
 
-#### TypeScript Errors
+**If the error persists:**
+1. Run `cd ios && pod install` for iOS
+2. Rebuild the app: `npx react-native run-ios` or `npx react-native run-android`
+3. Clear Metro cache: `npx react-native start --reset-cache`
 
-**"Cannot find module"**
+---
+
+## 📞 Getting Help
+
+When reporting issues, include:
+1. Exact error message
+2. Browser/platform
+3. Steps to reproduce
+4. What you've already tried
+5. Output of `git status` and `git log -1`
+
+---
+
+## 🔄 Quick Fixes
+
+### "Just Make It Work"
 ```bash
-# Regenerate types
-npm run typecheck
-
-# Clear TypeScript cache
-rm -rf node_modules/.cache/typescript
-```
-
-**Type errors in .js files**
-- Add `// @ts-nocheck` at file top
-- Or fix the type errors
-- Components remain in JS (gradual migration)
-
-#### Node Modules Issues
-
-**"Module version mismatch"**
-```bash
-rm -rf node_modules
-rm package-lock.json
-npm cache clean --force
+# Nuclear option - full rebuild and deploy
+rm -rf node_modules web/build
 npm install
+npm run deploy:qual
+git add -A
+git commit -m "Full rebuild"
+git push
+ssh stackmap-cpanel "cd ~/public_html/qual && git pull"
 ```
 
-**iOS Pods Issues**
-```bash
-cd ios
-rm -rf Pods Podfile.lock
-pod repo update
-pod install
-```
-
-### Import/Export Issues
-
-#### Import Fails
-**Symptoms**: Can't import backup file
-
-**Solutions**:
-1. Verify file is valid JSON
-2. Check file isn't corrupted
-3. Ensure version compatibility
-4. Try creating new export and comparing format
-
-#### Export Not Working
-**Symptoms**: Can't create backup
-
-**Solutions**:
-1. Check storage permissions
-2. Ensure sufficient storage space
-3. For iOS: Check iCloud Drive is enabled
-4. For Android: Check Downloads folder access
-
-#### "User shows as 'User'" After Import
-- Export missing `currentUser` field
-- Fix: Re-export with updated app version
-- Workaround: Edit user name after import
-
-### Performance Issues
-
-#### App Running Slowly
-1. Clear app cache
-2. Reduce number of activities
-3. Disable animations in device settings
-4. Close other apps
-5. Restart device
-
-#### High Battery Usage
-1. Disable background sync
-2. Reduce sync frequency
-3. Turn off sound effects
-4. Use static theme (not dynamic)
-
-### Data Issues
-
-#### Duplicate Users Appearing
-```javascript
-// Run in console
-window.cleanupGhostUsers()
-```
-
-#### Activities Not Completing
-1. Check if tap is registering
-2. Try long-press instead
-3. Verify completion timestamp is saved
-4. Check if activity is pinned (can't complete)
-
-#### Lost Activities
-1. Check if viewing correct day
-2. Check if correct user is selected
-3. Try switching days and back
-4. Check if activities were deleted
-
-## Debug Commands
-
-### Check App State
-```javascript
-// In browser console or React Native Debugger
-useAppStore.getState()
-```
-
-### Check Sync Status
-```javascript
-// Check if sync is enabled
-syncService.isEnabled()
-
-// Get sync status
-syncService.getStatus()
-```
-
-### Force Sync
-```javascript
-// Trigger manual sync
-syncService.sync()
-```
-
-### Clear All Data
-```javascript
-// WARNING: This deletes everything
-AsyncStorage.clear()
-```
-
-### Export Debug Info
-```javascript
-// Get all stored keys
-AsyncStorage.getAllKeys().then(keys => {
-  console.log('Stored keys:', keys)
-})
-
-// Get storage size
-AsyncStorage.getAllKeys().then(keys => {
-  Promise.all(keys.map(key => 
-    AsyncStorage.getItem(key)
-  )).then(values => {
-    const size = values.join('').length
-    console.log(`Storage size: ${size} bytes`)
-  })
-})
-```
-
-## Getting Help
-
-If these solutions don't resolve your issue:
-
-1. **Check GitHub Issues**: Look for similar problems
-2. **Create New Issue**: Include:
-   - Device and OS version
-   - App version
-   - Steps to reproduce
-   - Error messages
-   - Screenshots if applicable
-
-3. **Provide Debug Info**:
-   - Export your data first (backup)
-   - Include console logs
-   - Share sync status if relevant
-
-4. **Emergency Recovery**:
-   - Export data if possible
-   - Screenshot important information
-   - Reinstall app
-   - Import backup or rejoin sync
+Remember: Most issues are caused by caching or missing files. When in doubt, clear caches and verify files exist!

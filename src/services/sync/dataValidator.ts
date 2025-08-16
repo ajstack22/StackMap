@@ -1,4 +1,5 @@
 import type { User, ThemeName } from '../../types';
+import { DEFAULT_USER_ICON } from '../../constants';
 
 /**
  * Data validation utility for sync operations
@@ -273,7 +274,7 @@ export const repairSyncedData = (data: any): SyncData => {
           user.icon = (user as any).emoji;
           delete (user as any).emoji; // Remove legacy field
         } else {
-          user.icon = '😊'; // Default user icon with friendly emoji
+          user.icon = DEFAULT_USER_ICON; // Default user icon
         }
       }
       if (!user.days) {

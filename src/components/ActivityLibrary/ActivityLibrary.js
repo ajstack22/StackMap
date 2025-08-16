@@ -20,29 +20,13 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import ConfirmModal from '../Modals/ConfirmModal';
 
-// Conditionally import drag-and-drop libraries
-let DraggableFlatList = null;
-let ScaleDecorator = null;
+// Use standard FlatList for all platforms (draggable functionality removed)
+let DraggableFlatList = FlatList;
+let ScaleDecorator = ({ children }) => children;
 
-// Lazy load drag-and-drop components to avoid module-level Platform.OS access
+// Simplified loader function for compatibility
 const loadDragComponents = () => {
-  if (!DraggableFlatList || !ScaleDecorator) {
-    if (Platform.OS === 'web') {
-      // Use web-compatible draggable list
-      const DraggableListWeb = require('./DraggableList.web');
-      DraggableFlatList = DraggableListWeb.DraggableList;
-      ScaleDecorator = DraggableListWeb.ScaleDecorator;
-    } else if (Platform.OS === 'ios') {
-      // Use native iOS draggable list
-      DraggableFlatList = require('react-native-draggable-flatlist').default;
-      ScaleDecorator = require('react-native-draggable-flatlist').ScaleDecorator;
-    } else {
-      // Android fallback to regular FlatList
-      DraggableFlatList = require('react-native').FlatList;
-      ScaleDecorator = ({ children }) => children;
-    }
-  }
-  return { DraggableFlatList, ScaleDecorator };
+  return { DraggableFlatList: FlatList, ScaleDecorator: ({ children }) => children };
 };
 import {
   SHADOWS,

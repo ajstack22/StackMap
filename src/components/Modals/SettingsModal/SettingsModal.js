@@ -15,20 +15,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
 import { SPACING } from '../../../constants';
 
-// Lazy load these to avoid module-level Platform.OS access
-let DraggableFlatList = null;
-let GestureHandlerRootView = null;
-
-const loadNativeModules = () => {
-  if (Platform.OS !== 'web') {
-    if (!DraggableFlatList) {
-      DraggableFlatList = require('react-native-draggable-flatlist').default;
-    }
-    if (!GestureHandlerRootView) {
-      GestureHandlerRootView = require('react-native-gesture-handler').GestureHandlerRootView;
-    }
-  }
-};
+// Note: Draggable functionality has been removed in favor of button-based reordering
 
 const DEFAULT_TOOLBAR_ORDER = ['data', 'access', 'day', 'activities'];
 
@@ -61,8 +48,7 @@ const SettingsModal = ({
   onSaveDisplayMode,
   onSaveCelebration,
 }) => {
-  // Load native modules if needed
-  loadNativeModules();
+  // Native modules removed - using standard components
   
   const insets = useSafeAreaInsets();
   const [buttonOrder, setButtonOrder] = useState(() => {
@@ -422,15 +408,9 @@ const SettingsModal = ({
               })}
             </View>
             ) : (
-            <GestureHandlerRootView style={{ flex: 1 }}>
-              <DraggableFlatList
-                data={buttonOrder}
-                renderItem={renderButton}
-                keyExtractor={(item) => item}
-                onDragEnd={({ data }) => setButtonOrder(data)}
-                style={styles.buttonsList}
-              />
-            </GestureHandlerRootView>
+            <View style={{ flex: 1 }}>
+              {/* Draggable list removed - using button-based reordering */}
+            </View>
             )}
 
             {/* Divider */}

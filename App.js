@@ -25,13 +25,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
-// Conditionally import drag-and-drop libraries for iOS only
-const DraggableFlatList = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').default 
-  : null;
-const ScaleDecorator = Platform.OS === 'ios' 
-  ? require('react-native-draggable-flatlist').ScaleDecorator 
-  : null;
+// Draggable functionality removed - using button-based reordering
+const DraggableFlatList = null;
+const ScaleDecorator = null;
 // Conditionally import gesture handler for iOS only
 const GestureHandlerModule = Platform.OS === 'ios' 
   ? require('react-native-gesture-handler')
@@ -500,40 +496,35 @@ const App = () => {
       
       await migratePinToSecureStorage();
       
-      // Migrate existing users to ensure they have icon field
+      // Simple migration: if user has NO icon at all, copy from emoji field
       if (Object.keys(users).length > 0) {
         let needsUpdate = false;
         const updatedUsers = {};
         Object.entries(users).forEach(([userId, user]) => {
-          let userUpdated = false;
           const updatedUser = { ...user };
           
-          // Check if user has icon field or if it's the default placeholder
-          if (!updatedUser.icon || updatedUser.icon === '👤') {
-            // User missing icon or has default placeholder, check for emoji field
-            if (updatedUser.emoji && typeof updatedUser.emoji === 'string' && updatedUser.emoji !== '👤') {
+          // Only migrate if icon field is completely missing or empty
+          if (!updatedUser.icon || updatedUser.icon === '') {
+            // Try to use emoji field if it exists
+            if (updatedUser.emoji && typeof updatedUser.emoji === 'string' && updatedUser.emoji.length > 0) {
+              console.log(`Migrating user ${userId}: emoji "${updatedUser.emoji}" -> icon`);
               updatedUser.icon = updatedUser.emoji;
+              needsUpdate = true;
             } else {
-              // Give them a friendly default
-              updatedUser.icon = '😊';
+              // No emoji either, use default
+              console.log(`No icon or emoji for user ${userId}, using default`);
+              updatedUser.icon = DEFAULT_USER_ICON;
+              needsUpdate = true;
             }
-            userUpdated = true;
           }
           
-          // Remove legacy emoji field if it exists
-          if (updatedUser.emoji) {
-            delete updatedUser.emoji;
-            userUpdated = true;
-          }
-          
-          if (userUpdated) {
-            needsUpdate = true;
-          }
           updatedUsers[userId] = updatedUser;
         });
         
         if (needsUpdate) {
-          console.log('Migrating user icons - updating', Object.keys(updatedUsers).length, 'users');
+          console.log('Updated user icons for', Object.keys(updatedUsers).filter(id => 
+            updatedUsers[id].icon !== users[id]?.icon
+          ).length, 'users');
           setUsers(updatedUsers);
         }
       }
@@ -912,7 +903,7 @@ const App = () => {
         const newUser = {
           id: newUserId,
           name: 'My Activities',
-          icon: '😊',
+          icon: DEFAULT_USER_ICON,
           days: {
             today: { activities: [] },
             tomorrow: { activities: [] }
@@ -1315,7 +1306,7 @@ const App = () => {
       const newUser = {
         id: newUserId,
         name: 'My Activities',
-        icon: '😊',
+        icon: DEFAULT_USER_ICON,
         days: {
           today: { activities: [] },
           tomorrow: { activities: [] }
@@ -3526,7 +3517,7 @@ Users: ${userNames} (${userCount} total)
                 onPress={() => setShowUserDayModal(true)}
               >
                 <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
-                  {users[currentUser]?.icon || users[currentUser]?.emoji || DEFAULT_USER_ICON}
+                  {users[currentUser]?.icon || DEFAULT_USER_ICON}
                 </Text>
                 <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
                   {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}
@@ -3539,7 +3530,7 @@ Users: ${userNames} (${userCount} total)
               onPress={() => setShowUserDayModal(true)}
             >
               <Text style={[styles.subtitleEmoji, isEditMode && styles.subtitleEmojiEdit]}>
-                {users[currentUser]?.icon || users[currentUser]?.emoji || DEFAULT_USER_ICON}
+                {users[currentUser]?.icon || DEFAULT_USER_ICON}
               </Text>
               <Text style={[styles.subtitleDay, isEditMode && styles.subtitleDayEdit]}>
                 {isEditMode ? (currentDay === 'today' ? 'Today' : 'Tomorrow') : (users[currentUser]?.name || 'User')}
@@ -3620,7 +3611,7 @@ Users: ${userNames} (${userCount} total)
         
         {/* Main Content Area */}
         <View style={styles.contentArea}>
-          {(Platform.OS === 'android' && numColumns === 2) && console.warn(`Android: Should render 2 columns! Width: ${screenDimensions.width}`)}
+          {(Platform.OS === 'android' && numColumns === 2) && console.warn(`Android: Should render 2 columns! Width: ${screenDimensions.width}`) && null}
           
           {/* Edit Mode List - Positioned absolutely for crossfade */}
           {showEditModeList && (

@@ -2,7 +2,19 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import merge from 'lodash/merge';
+// Deep merge utility to replace lodash
+const deepMerge = (target, source) => {
+  const output = { ...target };
+  for (const key in source) {
+    if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+      output[key] = deepMerge(target[key] || {}, source[key]);
+    } else {
+      output[key] = source[key];
+    }
+  }
+  return output;
+};
+import { DEFAULT_USER_ICON } from '../constants';
 
 // Debounce timer for storage writes
 let storageWriteTimer = null;
@@ -103,10 +115,15 @@ const useUserStore = create(
             }
           }
           
-          // Ensure icon field exists
+          // Ensure icon field exists - use emoji as fallback
           if (!sanitizedUser.icon || typeof sanitizedUser.icon !== 'string' || sanitizedUser.icon.length === 0) {
-            console.warn('Invalid user icon in addUser:', sanitizedUser.icon);
-            sanitizedUser.icon = '👤';
+            // Try to use emoji field as fallback
+            if (sanitizedUser.emoji && typeof sanitizedUser.emoji === 'string' && sanitizedUser.emoji.length > 0) {
+              sanitizedUser.icon = sanitizedUser.emoji;
+            } else {
+              console.warn('Invalid user icon in addUser:', sanitizedUser.icon);
+              sanitizedUser.icon = DEFAULT_USER_ICON;
+            }
           }
           
           return {
@@ -129,14 +146,19 @@ const useUserStore = create(
               if (currentUser.icon && typeof currentUser.icon === 'string' && currentUser.icon.length > 0) {
                 delete sanitizedUpdates.icon;
               } else {
-                sanitizedUpdates.icon = '👤';
+                // Try emoji field as fallback
+                if (currentUser.emoji && typeof currentUser.emoji === 'string' && currentUser.emoji.length > 0) {
+                  sanitizedUpdates.icon = currentUser.emoji;
+                } else {
+                  sanitizedUpdates.icon = DEFAULT_USER_ICON;
+                }
               }
             }
           }
           
           // Icon field validation handled above
           
-          let updatedUser = merge({}, currentUser, sanitizedUpdates);
+          let updatedUser = deepMerge(currentUser, sanitizedUpdates);
           
           // Handle deep property updates
           if (updates.days && updates.days[updates.dayToUpdate]) {
@@ -144,8 +166,7 @@ const useUserStore = create(
             if (!updatedUser.days) updatedUser.days = {};
             if (!updatedUser.days[dayToUpdate]) updatedUser.days[dayToUpdate] = {};
             
-            updatedUser.days[dayToUpdate] = merge(
-              {},
+            updatedUser.days[dayToUpdate] = deepMerge(
               updatedUser.days[dayToUpdate],
               updates.days[dayToUpdate]
             );
