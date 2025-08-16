@@ -196,8 +196,9 @@ if [ "$SKIP_TESTS" = false ]; then
     
     # Test 2: Check critical services exist
     echo "- Checking critical services..."
-    if [ ! -f "src/services/sync/syncService.js" ]; then
-        echo "❌ Missing critical service: syncService.js"
+    # Check for either .js or .ts version (TypeScript migration in progress)
+    if [ ! -f "src/services/sync/syncService.js" ] && [ ! -f "src/services/sync/syncService.ts" ]; then
+        echo "❌ Missing critical service: syncService.js or syncService.ts"
         exit 1
     fi
     if [ ! -f "src/stores/useAppStore.js" ]; then
@@ -208,7 +209,7 @@ if [ "$SKIP_TESTS" = false ]; then
     
     # Test 3: Check for common issues (just warnings)
     echo "- Checking for common issues..."
-    CONSOLE_COUNT=$(grep -r "console\.log" src/ --include="*.js" 2>/dev/null | wc -l | tr -d ' ')
+    CONSOLE_COUNT=$(grep -r "console\.log" src/ --include="*.js" --include="*.ts" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$CONSOLE_COUNT" -gt "100" ]; then
         echo "⚠️  Warning: $CONSOLE_COUNT console.log statements found"
     fi
