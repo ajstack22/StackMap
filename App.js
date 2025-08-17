@@ -751,97 +751,48 @@ const App = () => {
   }, [pinInput, confirmPin, isSettingPin, showToast]);
 
   // Migrate data from old RN format to PWA format
-  const migrateDataStructure = (data) => {
-    if (!data) return data;
-    
-    // Version 4 is the current version - no migration needed
-    if (data.version === 4) {
-      return data;
+  const validateDataStructure = (data) => {
+    // ONLY accept v4 data - reject everything else
+    if (!data) {
+      throw new Error('No data provided');
     }
     
-    // Version 3 with correct structure also doesn't need migration
-    if (data.version === 3 && (data.templates !== undefined || data.libraryTemplates !== undefined)) {
-      // But we should upgrade v3 to v4 structure
-      return {
-        ...data,
-        version: 4,
-        libraryTemplates: data.libraryTemplates || data.templates || [],
-        library: data.library || {
-          categories: data.activityCategories || [
-            {
-              id: "my-templates",
-              name: "My Templates", 
-              icon: "⭐",
-              activities: []
-            }
-          ],
-          userAddedActivityIds: []
-        }
-      };
+    if (data.version !== 4) {
+      throw new Error(`Invalid data version: ${data.version}. Only version 4 is supported. Please export your data from the latest version.`);
     }
     
-    // Migrate older versions (v1, v2, or malformed v3)
-    const migratedUsers = {};
-    Object.entries(data.users || {}).forEach(([userId, user]) => {
-      migratedUsers[userId] = {
-        ...user,
-        id: user.id || userId,
-        icon: user.icon || DEFAULT_USER_ICON,
-        settings: user.settings || {
-          taskCelebration: 'rainbow',
-          routineCelebration: 'rainbow',
-          soundEnabled: true,
-          theme: 'stackBlue'
-        },
-        createdAt: user.createdAt || new Date().toISOString(),
-        lastActive: user.lastActive || new Date().toISOString()
-      };
-      
-      // Migrate activities - only add missing required fields, don't transform IDs
-      if (user.days) {
-        Object.keys(user.days).forEach(day => {
-          if (user.days[day].activities) {
-            migratedUsers[userId].days[day].activities = user.days[day].activities.map(activity => ({
-              ...activity,
-              // Keep existing ID as-is, only add one if missing
-              id: activity.id || `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-              text: activity.text || activity.title || activity.name || '',
-              icon: activity.icon || activity.emoji || '📌',
-              pinned: activity.pinned !== undefined ? activity.pinned : false,
-              completed: activity.completed !== undefined ? activity.completed : false
-              // Don't add unnecessary fields like description, activityType, time, createdAt
-              // unless they already exist in the source data
-            }));
-          }
-        });
-      }
-    });
+    // Validate required v4 fields
+    if (!data.users || typeof data.users !== 'object') {
+      throw new Error('Invalid data: missing users field');
+    }
     
-    return {
-      ...data,
+    if (!data.library || typeof data.library !== 'object') {
+      throw new Error('Invalid data: missing library field');
+    }
+    
+    if (!Array.isArray(data.libraryTemplates)) {
+      throw new Error('Invalid data: libraryTemplates must be an array');
+    }
+    
+    // Clean up any legacy fields that shouldn't exist in v4
+    const cleanData = {
       version: 4,
+      exportDate: data.exportDate,
       currentDay: data.currentDay || 'today',
-      users: migratedUsers,
-      libraryTemplates: data.libraryTemplates || data.templates || [],
-      library: data.library || {
-        categories: data.activityCategories || [
-          {
-            id: "my-templates",
-            name: "My Templates",
-            icon: "⭐", 
-            activities: []
-          }
-        ],
-        userAddedActivityIds: []
-      },
-      globalSettings: {
-        ...data.globalSettings,
-        enableDayManagement: data.globalSettings?.enableDayManagement !== undefined ? 
-          data.globalSettings.enableDayManagement : true,
-        pinEnabled: data.globalSettings?.pinEnabled !== undefined ? 
-          data.globalSettings.pinEnabled : (data.globalSettings?.editModePin !== null)
-      }
+      currentUser: data.currentUser,
+      users: data.users,
+      library: data.library,
+      libraryTemplates: data.libraryTemplates,
+      globalSettings: data.globalSettings,
+      hasCompletedOnboarding: data.hasCompletedOnboarding
     };
+    
+    // Remove any v3 fields if they somehow exist
+    delete cleanData.templates;
+    delete cleanData.activityCategories;
+    delete cleanData.activities;
+    
+    return cleanData;
   };
 
   // Removed loadData - now using Zustand persistence
@@ -890,9 +841,9 @@ const App = () => {
           if (importedData.globalSettings.routineCelebration) setRoutineCelebration(importedData.globalSettings.routineCelebration);
         }
         
-        // Restore activity categories
-        if (importedData.activityCategories) {
-          updateLibraryCategories(importedData.activityCategories);
+        // Restore library categories (v4 only)
+        if (importedData.library && importedData.library.categories) {
+          updateLibraryCategories(importedData.library.categories);
         }
         
         // Clean up temp storage
@@ -958,7 +909,7 @@ const App = () => {
         
         // Save the data
         const dataToSave = {
-          version: 3,
+          version: 4,
           currentUserId: newUserId,
           currentDay: 'today',
           users: newUsers,
@@ -987,7 +938,7 @@ const App = () => {
       // Create starter activities - explain StackMap features  
       const starterActivities = [
         { 
-          id: `activity_${timestamp}_1_${randomId}`, 
+          id: `${timestamp}_1_${randomId}`, 
           text: 'Welcome to StackMap!',
           title: 'Welcome to StackMap!',  // Keep title for backward compatibility
           icon: '👋',
@@ -995,7 +946,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_2_${randomId}`, 
+          id: `${timestamp}_2_${randomId}`, 
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
           icon: '✏️',
@@ -1003,7 +954,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_3_${randomId}`, 
+          id: `${timestamp}_3_${randomId}`, 
           text: 'Switch Users',
           title: 'Switch Users',  // Keep title for backward compatibility
           icon: '👤',
@@ -1011,7 +962,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_4_${randomId}`, 
+          id: `${timestamp}_4_${randomId}`, 
           text: 'Share with Providers',
           title: 'Share with Providers',  // Keep title for backward compatibility
           icon: '🔗',
@@ -1019,7 +970,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_5_${randomId}`, 
+          id: `${timestamp}_5_${randomId}`, 
           text: 'Sync Across Devices',
           title: 'Sync Across Devices',  // Keep title for backward compatibility
           icon: '🔄',
@@ -1027,7 +978,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_6_${randomId}`, 
+          id: `${timestamp}_6_${randomId}`, 
           text: 'Import & Export',
           title: 'Import & Export',  // Keep title for backward compatibility
           icon: '📦',
@@ -1035,7 +986,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_7_${randomId}`, 
+          id: `${timestamp}_7_${randomId}`, 
           text: 'Preferences',
           title: 'Preferences',  // Keep title for backward compatibility
           icon: '🎨',
@@ -1043,7 +994,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_8_${randomId}`, 
+          id: `${timestamp}_8_${randomId}`, 
           text: 'Activities',
           title: 'Activities',  // Keep title for backward compatibility
           icon: '📋',
@@ -1051,7 +1002,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_9_${randomId}`, 
+          id: `${timestamp}_9_${randomId}`, 
           text: 'Day',
           title: 'Day',  // Keep title for backward compatibility
           icon: '📅',
@@ -1059,7 +1010,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_10_${randomId}`, 
+          id: `${timestamp}_10_${randomId}`, 
           text: 'Access',
           title: 'Access',  // Keep title for backward compatibility
           icon: '👥',
@@ -1067,7 +1018,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_11_${randomId}`, 
+          id: `${timestamp}_11_${randomId}`, 
           text: 'Data',
           title: 'Data',  // Keep title for backward compatibility
           icon: '💾',
@@ -1075,7 +1026,7 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_12_${randomId}`, 
+          id: `${timestamp}_12_${randomId}`, 
           text: 'Explore the Library',
           title: 'Explore the Library',  // Keep title for backward compatibility
           icon: '📚',
@@ -1142,7 +1093,7 @@ const App = () => {
       
       // Save the data with the new values
       const dataToSave = {
-        version: 3,
+        version: 4,
         currentUserId: firstUserId,
         currentDay: 'today',
         users: newUsers,
@@ -1233,7 +1184,7 @@ const App = () => {
       const randomId = Math.random().toString(36).substr(2, 9);
       const starterActivities = [
         { 
-          id: `activity_${timestamp}_1_${randomId}`, 
+          id: `${timestamp}_1_${randomId}`, 
           text: 'Welcome to StackMap!',
           title: 'Welcome to StackMap!',  // Keep title for backward compatibility
           icon: '👋',
@@ -1241,23 +1192,23 @@ const App = () => {
           pinned: false 
         },
         { 
-          id: `activity_${timestamp}_2_${randomId}`, 
+          id: `${timestamp}_2_${randomId}`, 
           text: 'Try Edit Mode',
           title: 'Try Edit Mode',  // Keep title for backward compatibility
           icon: '✏️',
           description: 'Use the edit button to add, remove, and organize activities',
           pinned: false 
         },
-        { id: `activity_${timestamp}_3`, text: 'Switch Users', title: 'Switch Users', emoji: '👤', description: 'Tap your user pill to switch users or check-in', pinned: false },
-        { id: `activity_${timestamp}_4`, text: 'Share with Providers', title: 'Share with Providers', emoji: '🔗', description: 'Share your activities with caregivers via QR code or link', pinned: false },
-        { id: `activity_${timestamp}_5`, text: 'Sync Across Devices', title: 'Sync Across Devices', emoji: '🔄', description: 'Keep your data synced with zero-knowledge encryption', pinned: false },
-        { id: `activity_${timestamp}_6`, text: 'Import & Export', title: 'Import & Export', emoji: '📦', description: 'Backup your data or transfer between devices', pinned: false },
-        { id: `activity_${timestamp}_7`, text: 'Preferences', title: 'Preferences', emoji: '🎨', description: 'Tap the palette icon to customize colors, animations, and display', pinned: false },
-        { id: `activity_${timestamp}_8`, text: 'Activities', title: 'Activities', emoji: '📋', description: 'Tap the + icon to add new activities and build your library', pinned: false },
-        { id: `activity_${timestamp}_9`, text: 'Day', title: 'Day', emoji: '📅', description: 'Use the calendar icon to plan tomorrow or review past days', pinned: false },
-        { id: `activity_${timestamp}_10`, text: 'Access', title: 'Access', emoji: '👥', description: 'Manage users and set a PIN to protect Edit Mode', pinned: false },
-        { id: `activity_${timestamp}_11`, text: 'Data', title: 'Data', emoji: '💾', description: 'Backup, restore, sync, and manage your StackMap data', pinned: false },
-        { id: `activity_${timestamp}_12`, text: 'Explore the Library', title: 'Explore the Library', emoji: '📚', description: 'Check out pre-made activity templates in the StackMap Library', pinned: false },
+        { id: `${timestamp}_3`, text: 'Switch Users', title: 'Switch Users', emoji: '👤', description: 'Tap your user pill to switch users or check-in', pinned: false },
+        { id: `${timestamp}_4`, text: 'Share with Providers', title: 'Share with Providers', emoji: '🔗', description: 'Share your activities with caregivers via QR code or link', pinned: false },
+        { id: `${timestamp}_5`, text: 'Sync Across Devices', title: 'Sync Across Devices', emoji: '🔄', description: 'Keep your data synced with zero-knowledge encryption', pinned: false },
+        { id: `${timestamp}_6`, text: 'Import & Export', title: 'Import & Export', emoji: '📦', description: 'Backup your data or transfer between devices', pinned: false },
+        { id: `${timestamp}_7`, text: 'Preferences', title: 'Preferences', emoji: '🎨', description: 'Tap the palette icon to customize colors, animations, and display', pinned: false },
+        { id: `${timestamp}_8`, text: 'Activities', title: 'Activities', emoji: '📋', description: 'Tap the + icon to add new activities and build your library', pinned: false },
+        { id: `${timestamp}_9`, text: 'Day', title: 'Day', emoji: '📅', description: 'Use the calendar icon to plan tomorrow or review past days', pinned: false },
+        { id: `${timestamp}_10`, text: 'Access', title: 'Access', emoji: '👥', description: 'Manage users and set a PIN to protect Edit Mode', pinned: false },
+        { id: `${timestamp}_11`, text: 'Data', title: 'Data', emoji: '💾', description: 'Backup, restore, sync, and manage your StackMap data', pinned: false },
+        { id: `${timestamp}_12`, text: 'Explore the Library', title: 'Explore the Library', emoji: '📚', description: 'Check out pre-made activity templates in the StackMap Library', pinned: false },
       ];
       
       // Create each user from the setup data
@@ -1304,7 +1255,7 @@ const App = () => {
       
       // Save the data with the new values
       const dataToSave = {
-        version: 3,
+        version: 4,
         currentUserId: firstUserId,
         currentDay: 'today',
         users: newUsers,
@@ -1361,7 +1312,7 @@ const App = () => {
       
       // Save the data with the new values
       const dataToSave = {
-        version: 3,
+        version: 4,
         currentUserId: newUserId,
         currentDay: 'today',
         users: newUsers,
@@ -1549,7 +1500,7 @@ const App = () => {
       // Pin: Create on tomorrow if doesn't exist
       const newTomorrowActivity = {
         ...activity,
-        id: 'activity_' + Date.now() + '_tomorrow',
+        id: Date.now() + '_tomorrow',
         completed: false,
         pinned: true,
         createdAt: new Date().toISOString()
@@ -1599,17 +1550,21 @@ const App = () => {
     const deviceId = await encryptionService.getDeviceId();
     
     const newActivity = {
-      id: `activity_${deviceId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `${deviceId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       text: activityTitle,
-      description: activityDescription || '',
       icon: activityEmoji,
       completed: false,
-      pinned: false,
-      activityType: 'normal',
-      time: activityTime || null,
-      createdAt: new Date().toISOString(),
-      modifiedAt: Date.now() // Add timestamp for sync conflict resolution
+      pinned: false
+      // Only add optional fields if they have values
     };
+    
+    // Add optional fields only if they have meaningful values
+    if (activityDescription && activityDescription.trim()) {
+      newActivity.description = activityDescription;
+    }
+    if (activityTime) {
+      newActivity.time = activityTime;
+    }
     
     let newActivities;
     if (editingActivity) {
@@ -2374,21 +2329,21 @@ To use an older backup, delete some recent exports first.`,
         return false;
       }
       
-      console.log(`[Import] Running migration...`);
-      // Validate and restore the data
-      const migratedData = migrateDataStructure(importedData);
-      console.log(`[Import] Migration complete`);
+      console.log(`[Import] Validating data structure...`);
+      // Validate data is v4
+      const validatedData = validateDataStructure(importedData);
+      console.log(`[Import] Validation complete - v4 data confirmed`);
       
       // IMPORTANT: During onboarding, we should NOT update the Zustand store
       // The data will be set when onboarding completes
       // Just validate that we have users to import
-      if (!migratedData.users || Object.keys(migratedData.users).length === 0) {
+      if (!validatedData.users || Object.keys(validatedData.users).length === 0) {
         console.warn('[IMPORT] No users found in import data');
       }
       
       // Set the import data and show DataModal
       console.log('[IMPORT] Showing import selection modal...');
-      setOnboardingImportData(migratedData);
+      setOnboardingImportData(validatedData);
       setShowOnboardingImport(true);
       // Set DataModal to import tab
       setShowDataModal(true);
@@ -2615,8 +2570,8 @@ This will replace all your current data.`,
       
       // Migrate data if needed
       console.log('Migrating data structure...');
-      const migratedData = migrateDataStructure(importedData);
-      console.log('Migrated data:', migratedData);
+      const validatedData = validateDataStructure(importedData);
+      console.log('Migrated data:', validatedData);
       
       // Confirm import
       console.log('Showing import confirmation dialog...');
@@ -2631,29 +2586,28 @@ This will replace all your current data.`,
         }
         
         // Update state with imported data
-        const importedCurrentDay = migratedData.currentDay || 'today';
+        const importedCurrentDay = validatedData.currentDay || 'today';
         
-        setUsers(migratedData.users || {});
-        setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
-        setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
+        setUsers(validatedData.users || {});
+        setCurrentTheme(validatedData.globalSettings?.currentTheme || 'stackBlue');
+        setBannerPosition(validatedData.globalSettings?.bannerPosition || 'top');
         // PIN is now handled by secure storage, not imported
-        // Templates now handled through activityCategories
         setCurrentDay(importedCurrentDay);
         
         // Set first user as current if available
-        const userIds = Object.keys(migratedData.users || {});
+        const userIds = Object.keys(validatedData.users || {});
         if (userIds.length > 0) {
           setCurrentUser(userIds[0]);
-          const rawActivities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
+          const rawActivities = validatedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
           // Activities are now derived from users state, no need to set them separately
           // Load the first user's theme
-          if (migratedData.users[userIds[0]]?.settings?.theme) {
-            setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
+          if (validatedData.users[userIds[0]]?.settings?.theme) {
+            setCurrentTheme(validatedData.users[userIds[0]].settings.theme);
           }
         }
         
         // Save to storage
-        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
+        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(validatedData));
         
         showToast({ message: 'Data imported successfully' });
         
@@ -2787,23 +2741,8 @@ This will replace all your current data.`,
           if (importData.library.categories) {
             updateLibraryCategories(importData.library.categories);
           }
-        } else if (importData.templates) {
-          // v3 format fallback - convert templates to categories
-          const categoriesArray = [];
-          Object.entries(importData.templates).forEach(([categoryId, category]) => {
-            categoriesArray.push({
-              id: categoryId,
-              name: category.name,
-              icon: category.icon || '📚',
-              activities: (category.activities || []).map(activity => ({
-                id: activity.id,
-                text: activity.text || activity.name,
-                icon: activity.icon || activity.emoji || '📌'
-              }))
-            });
-          });
-          updateLibraryCategories(categoriesArray);
         }
+        // NO v3 SUPPORT - templates field should not exist
         
         // Restore library templates if present
         if (importData.libraryTemplates) {
@@ -3017,7 +2956,7 @@ This will replace all your current data.`,
       }
       
       // Migrate data if needed
-      const migratedData = migrateDataStructure(importedData);
+      const validatedData = validateDataStructure(importedData);
       
       // Parse file info for better display
       let fileDisplayName = fileName;
@@ -3029,8 +2968,8 @@ This will replace all your current data.`,
       }
       
       // Show import preview
-      const userCount = Object.keys(migratedData.users || {}).length;
-      const userNames = Object.values(migratedData.users || {}).map(u => u.name).join(', ');
+      const userCount = Object.keys(validatedData.users || {}).length;
+      const userNames = Object.values(validatedData.users || {}).map(u => u.name).join(', ');
       
       // Confirm import
       Alert.alert(
@@ -3052,29 +2991,28 @@ Users: ${userNames} (${userCount} total)
               }
               
               // Update state with imported data
-              const importedCurrentDay = migratedData.currentDay || 'today';
+              const importedCurrentDay = validatedData.currentDay || 'today';
               
-              setUsers(migratedData.users || {});
-              setCurrentTheme(migratedData.globalSettings?.currentTheme || 'stackBlue');
-              setBannerPosition(migratedData.globalSettings?.bannerPosition || 'top');
+              setUsers(validatedData.users || {});
+              setCurrentTheme(validatedData.globalSettings?.currentTheme || 'stackBlue');
+              setBannerPosition(validatedData.globalSettings?.bannerPosition || 'top');
               // PIN is now handled by secure storage, not imported
-              // Templates now handled through activityCategories
-              setCurrentDay(importedCurrentDay);
+                    setCurrentDay(importedCurrentDay);
               
               // Set first user as current if available
-              const userIds = Object.keys(migratedData.users || {});
+              const userIds = Object.keys(validatedData.users || {});
               if (userIds.length > 0) {
                 setCurrentUser(userIds[0]);
-                const activities = migratedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
+                const activities = validatedData.users[userIds[0]].days?.[importedCurrentDay]?.activities || [];
                 // Activities are now derived from users state, no need to set them separately
                 // Load the first user's theme
-                if (migratedData.users[userIds[0]]?.settings?.theme) {
-                  setCurrentTheme(migratedData.users[userIds[0]].settings.theme);
+                if (validatedData.users[userIds[0]]?.settings?.theme) {
+                  setCurrentTheme(validatedData.users[userIds[0]].settings.theme);
                 }
               }
               
               // Save to storage
-              await AsyncStorage.setItem('@stackmap_data', JSON.stringify(migratedData));
+              await AsyncStorage.setItem('@stackmap_data', JSON.stringify(validatedData));
               
               showToast({ message: 'Data imported successfully' });
         
@@ -3173,8 +3111,7 @@ Users: ${userNames} (${userCount} total)
               setDisplayMode('numbers');
               
               // Step 3: Store reset complete
-              // Templates now handled through activityCategories
-              setIsEditMode(false);
+                    setIsEditMode(false);
               setHasPinProtection(false);
               updateLibraryCategories(null);
               setAddedToLibraryIds(new Set());
@@ -4311,7 +4248,7 @@ Users: ${userNames} (${userCount} total)
         currentUser={currentUser}
         currentDay={currentDay}
         templates={libraryTemplates}
-        activityCategories={library?.categories}
+        libraryCategories={library?.categories}
         currentTheme={currentTheme}
         bannerPosition={bannerPosition}
         hasSecurePin={hasPinProtection}
@@ -4685,7 +4622,7 @@ Users: ${userNames} (${userCount} total)
         currentUser={currentUser}
         currentDay={currentDay}
         templates={libraryTemplates}
-        activityCategories={library?.categories}
+        libraryCategories={library?.categories}
         currentTheme={currentTheme}
         bannerPosition={bannerPosition}
         hasSecurePin={hasPinProtection}

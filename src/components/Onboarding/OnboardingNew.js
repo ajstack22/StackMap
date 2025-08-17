@@ -220,9 +220,9 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
         });
       }
       
-      // Count activity library items
-      if (decryptedData.activityCategories) {
-        Object.values(decryptedData.activityCategories).forEach(category => {
+      // Count activity library items (v4 format)
+      if (decryptedData.library && decryptedData.library.categories) {
+        decryptedData.library.categories.forEach(category => {
           if (category.activities && Array.isArray(category.activities)) {
             preview.activityLibraryCount += category.activities.length;
           }

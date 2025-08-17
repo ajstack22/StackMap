@@ -184,7 +184,7 @@ function emergencyCacheClear() {
     }
     
     // Clear all localStorage except user data
-    const preserveKeys = ['stackmap_data_v3', 'stackmap_backup_pre_migration', 'stackmap_migration_completed'];
+    const preserveKeys = ['stackmap_data_v4', 'stackmap_backup', 'stackmap_state'];
     const allKeys = Object.keys(localStorage);
     
     allKeys.forEach(key => {

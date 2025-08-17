@@ -34,7 +34,8 @@ interface RawExportData {
   users?: Record<string, any>;
   activities?: any[];
   activityCards?: Record<string, any[]>;
-  templates?: Record<string, any>;
+  library?: any;
+  libraryTemplates?: any[];
   last_modified?: number;
   lastModified?: number;
   created_at?: string;
@@ -185,21 +186,6 @@ export const normalizeExportData = (data: RawExportData | null | undefined): Rec
   // Normalize libraryTemplates (v4 format)
   if (data.libraryTemplates && Array.isArray(data.libraryTemplates)) {
     normalized.libraryTemplates = data.libraryTemplates;
-  }
-  
-  // Normalize templates/library activities (v3 format - backward compatibility)
-  if (data.templates && typeof data.templates === 'object') {
-    normalized.templates = {};
-    Object.entries(data.templates).forEach(([categoryId, category]) => {
-      if (category && typeof category === 'object') {
-        normalized.templates[categoryId] = {
-          ...category,
-          activities: Array.isArray(category.activities)
-            ? category.activities.map((activity: any) => normalizeActivity(activity))
-            : []
-        };
-      }
-    });
   }
   
   // Handle camelCase vs snake_case for timestamps

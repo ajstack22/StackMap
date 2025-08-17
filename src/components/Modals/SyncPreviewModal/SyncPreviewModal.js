@@ -106,8 +106,9 @@ const SyncPreviewModal = ({
         });
       }
 
-      if (decryptedData.activityCategories) {
-        Object.values(decryptedData.activityCategories).forEach(category => {
+      // Count library items (v4 format only)
+      if (decryptedData.library && decryptedData.library.categories) {
+        decryptedData.library.categories.forEach(category => {
           preview.totalLibraryItems += (category.activities || []).length;
         });
       }

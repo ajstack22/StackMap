@@ -75,10 +75,10 @@ user = {
 
 ### 3. EXPORT SYSTEM
 
-#### Export Structure (v3)
+#### Export Structure (v4)
 ```javascript
 {
-  version: 3,
+  version: 4,
   exportDate: ISO_string,
   exportedItems: {
     users: boolean,
@@ -89,7 +89,11 @@ user = {
   currentUser: string, // CRITICAL: Must be included!
   currentDay: string,
   activityCards: [],   // Flattened activities
-  templates: {},
+  library: {           // Library structure
+    categories: [],
+    userAddedActivityIds: []
+  },
+  libraryTemplates: [], // Template activities
   globalSettings: {
     currentTheme: string,
     bannerPosition: string,

@@ -190,23 +190,24 @@ const activities = users[currentUser]?.days?.[currentDay]?.activities || [];
 }
 ```
 
-## Migration Notes
+## Current Version
 
-### Removed Fields (v3 → v4)
-- ❌ `activities` (root level) → Now in `users[id].days[day].activities`
-- ❌ `activityCategories` → Now `library.categories`
-- ❌ `templates` → Now `libraryTemplates`
-- ❌ `setActivities()` → Use `updateUserActivities(userId, day, activities)`
-- ❌ `setActivityCategories()` → Use `setLibraryCategories()`
-- ❌ `setTemplates()` → Field no longer exists
+**Version 4** is the ONLY supported version. The app will reject any data that is not version 4.
+
+### Version 4 Structure
+- ✅ Activities are stored in `users[id].days[day].activities`
+- ✅ Library categories in `library.categories`
+- ✅ Library templates in `libraryTemplates`
+- ✅ No `activity_` prefix on IDs
+- ✅ Clean, normalized field names
 
 ### Store Methods
 
 ```javascript
-// Old (removed)
-setActivities(activities)
-setActivityCategories(categories)
-setTemplates(templates)
+// Current methods
+updateUserActivities(userId, day, activities)
+setLibrary(library)
+setLibraryTemplates(templates)
 
 // New
 updateUserActivities(userId, day, activities)
@@ -266,10 +267,10 @@ setCurrentDay('tomorrow');
 // In browser console
 const state = window.__zustand_store__.getState();
 
-// Verify migration
-console.assert(state.activities === undefined, 'Old activities field still exists!');
-console.assert(state.activityCategories === undefined, 'Old categories field still exists!');
-console.assert(state.templates === undefined, 'Old templates field still exists!');
+// Verify v4 structure
+console.assert(state.version === 4, 'Must be version 4!');
+console.assert(state.library !== undefined, 'Library field must exist!');
+console.assert(state.libraryTemplates !== undefined, 'LibraryTemplates field must exist!');
 
 // Check current structure
 console.log('Users:', state.users);

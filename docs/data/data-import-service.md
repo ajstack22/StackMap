@@ -53,7 +53,7 @@ graph TD
 ### Required Structure
 ```javascript
 {
-  "version": 3,              // Required for compatibility check
+  "version": 4,              // Required for compatibility check
   "users": {                 // Required, can be empty object
     "[userId]": {
       "id": "string",        // Required
@@ -79,7 +79,8 @@ graph TD
   "routineCelebration": "string",
   
   // Optional library data
-  "activityCategories": [],
+  "library": { "categories": [], "userAddedActivityIds": [] },
+  "libraryTemplates": [],
   "templates": []
 }
 ```
@@ -176,14 +177,14 @@ async function mergeImportData(importData, existingData) {
   
   // Merge categories (check for duplicates by name)
   const mergedCategories = mergeCategories(
-    existingData.activityCategories,
-    remappedData.activityCategories
+    existingData.library,
+    remappedData.library
   );
   
   return {
     ...existingData,
     users: mergedUsers,
-    activityCategories: mergedCategories
+    library: mergedLibrary
   };
 }
 ```
@@ -296,16 +297,16 @@ function getImportErrorMessage(error) {
 
 ### Structure Requirements
 Demo data files must:
-1. Use current version format (version: 3)
+1. Use current version format (version: 4)
 2. Include at least one user with activities
-3. Use `text` and `icon` fields (not deprecated names)
+3. Use `text` and `icon` fields consistently
 4. Include variety of completed/uncompleted states
 5. Have meaningful descriptions for learning
 
 ### Example Demo Data
 ```json
 {
-  "version": 3,
+  "version": 4,
   "users": {
     "demo-user-1": {
       "id": "demo-user-1",

@@ -330,7 +330,7 @@ src/
 ## Breaking Changes
 
 ### Never Break
-- Sync data format (version 3)
+- Sync data format (version 4)
 - Encryption iterations (100,000)
 - API contract without versioning
 - Storage keys without migration

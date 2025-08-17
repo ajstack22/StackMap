@@ -55,8 +55,7 @@ const DataModal = ({
   users,
   currentUser,
   currentDay,
-  templates,
-  activityCategories,
+  libraryCategories,
   currentTheme,
   bannerPosition,
   hasSecurePin,
@@ -273,12 +272,13 @@ const DataModal = ({
       });
     }
     
-    if (parsedData.templates) {
-      Object.entries(parsedData.templates).forEach(([categoryId, category]) => {
-        selections[`category_${categoryId}`] = true;
+    // v4 only - no templates support
+    if (parsedData.library && parsedData.library.categories) {
+      parsedData.library.categories.forEach(category => {
+        selections[`category_${category.id}`] = true;
         if (category.activities) {
           category.activities.forEach(activity => {
-            selections[`template_${categoryId}_${activity.id}`] = true;
+            selections[`template_${category.id}_${activity.id}`] = true;
           });
         }
       });
@@ -333,9 +333,9 @@ const DataModal = ({
         // Get library data from store
         const { library, libraryTemplates } = useAppStore.getState();
         
-        // Include v4 library structure
+        // Include v4 library structure ONLY
         exportData.library = library || {
-          categories: activityCategories || [
+          categories: libraryCategories || [
             {
               id: "my-templates",
               name: "My Templates",
@@ -705,7 +705,8 @@ const DataModal = ({
         mode: importMode,
         users: {},
         activityCards: [],
-        templates: {},
+        library: null,
+        libraryTemplates: [],
         globalSettings: importData.globalSettings || {},
       };
       
@@ -756,23 +757,32 @@ const DataModal = ({
         });
       }
       
-      // Process selected templates
-      if (importData.templates) {
-        Object.entries(importData.templates).forEach(([categoryId, category]) => {
-          if (importSelections[`category_${categoryId}`]) {
+      // Process selected library (v4 only)
+      if (importData.library && importData.library.categories) {
+        const selectedCategories = [];
+        importData.library.categories.forEach(category => {
+          if (importSelections[`category_${category.id}`]) {
             const categoryToImport = { ...category, activities: [] };
             
             if (category.activities) {
               category.activities.forEach(activity => {
-                if (importSelections[`template_${categoryId}_${activity.id}`]) {
+                if (importSelections[`template_${category.id}_${activity.id}`]) {
                   categoryToImport.activities.push(activity);
                 }
               });
             }
             
-            dataToImport.templates[categoryId] = categoryToImport;
+            selectedCategories.push(categoryToImport);
           }
         });
+        dataToImport.library = {
+          categories: selectedCategories,
+          userAddedActivityIds: importData.library.userAddedActivityIds || []
+        };
+      }
+      
+      if (importData.libraryTemplates) {
+        dataToImport.libraryTemplates = importData.libraryTemplates;
       }
       
       // Call parent import handler
@@ -1170,10 +1180,10 @@ const DataModal = ({
                 </View>
               )}
               
-              {importData.templates && Object.keys(importData.templates).length > 0 && (
+              {importData.library && importData.library.categories && importData.library.categories.length > 0 && (
                 <View style={styles.importCategory}>
                   <Text style={styles.importCategoryTitle}>Activity Library</Text>
-                  {Object.entries(importData.templates).map(([categoryId, category]) => (
+                  {importData.library.categories.map(category => (
                     <View key={categoryId}>
                       <TouchableOpacity
                         style={styles.importItem}

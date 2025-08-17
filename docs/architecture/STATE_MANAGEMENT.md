@@ -302,25 +302,25 @@ const selectCompletedCount = state =>
 
 ## State Migration System
 
-### Version Migration
+### Version Validation
 ```javascript
-const migrateDataStructure = (state) => {
-  // v3 to v4 migration
-  if (!state.library || !state.library.categories) {
-    state.library = {
-      categories: state.activityCategories || null,
-      userAddedActivityIds: []
-    };
-    delete state.activityCategories;
+const validateDataStructure = (data) => {
+  // ONLY accept v4 data - reject everything else
+  if (!data || data.version !== 4) {
+    throw new Error(`Invalid data version: ${data.version}. Only version 4 is supported.`);
   }
   
-  // v4 to v5 migration (future)
-  if (state.dataVersion < 5) {
-    // Migration logic here
-    state.dataVersion = 5;
+  // Validate required v4 fields
+  if (!data.library || !data.libraryTemplates) {
+    throw new Error('Invalid v4 data structure: missing required library fields');
   }
   
-  return state;
+  // Reject v3 fields if present
+  if (data.templates || data.activityCategories) {
+    throw new Error('Version 3 data detected. Please upgrade to version 4.');
+  }
+  
+  return data;
 };
 ```
 

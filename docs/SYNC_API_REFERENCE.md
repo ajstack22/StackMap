@@ -183,7 +183,7 @@ The encrypted blob is a base64-encoded string containing:
 When decrypted, the data structure is:
 ```json
 {
-  "version": 3,
+  "version": 4,
   "syncType": "full|incremental",
   "syncTimestamp": 1705761296000,
   "deviceInfo": {

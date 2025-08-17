@@ -91,7 +91,8 @@ interface AppState {
   routineCelebration: string;          // Routine celebration type
   
   // Activity Library
-  activityCategories?: ActivityCategory[];
+  library?: { categories: ActivityCategory[], userAddedActivityIds: string[] };
+  libraryTemplates?: ActivityTemplate[];
   templates?: Template[];
   
   // Sync State
@@ -208,15 +209,16 @@ interface SyncData extends AppState {
 
 ## Import/Export Format
 Import/export uses the full `AppState` structure in JSON format with the following requirements:
-- Must include `version` field (current: 3)
+- Must include `version` field (current: 4)
 - Must pass validation before import
 - Should normalize fields on import
 - Should exclude sensitive data (PIN, encryption keys)
 
-## Migration Notes
+## Version Information
 - Version 1: Original format with `emoji` fields
-- Version 2: Added user management
-- Version 3: Current format with `icon` fields and full normalization
+- Version 2: Added user management  
+- Version 3: Deprecated (used templates/activityCategories)
+- Version 4: **CURRENT** - Library structure, clean IDs, no `activity_` prefix
 
 ## Data Repair Process
 The sync service includes automatic data repair that:

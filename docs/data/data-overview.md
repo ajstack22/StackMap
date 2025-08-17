@@ -266,7 +266,8 @@ Activities: activity_${deviceId}_${timestamp}_${randomId}
 ### Version History
 - **v1**: Original format (emoji fields)
 - **v2**: Added multi-user support
-- **v3**: Current (icon fields, normalized)
+- **v3**: Deprecated (templates/activityCategories)
+- **v4**: Current (library structure, clean IDs)
 
 ### Future Considerations
 - Differential sync for large datasets

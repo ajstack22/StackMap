@@ -79,7 +79,7 @@ Retrieves latest encrypted data from sync group.
 {
   "sync_id": "16-byte-hex-string",
   "encrypted_blob": "base64-encrypted-data",
-  "version": 3,
+  "version": 4,
   "last_modified": "2024-01-01T12:00:00Z",
   "device_count": 2
 }
@@ -194,10 +194,11 @@ Removes a share link.
 Encrypted blob contains:
 ```javascript
 {
-  version: 3,
+  version: 4,
   users: { /* user data */ },
   globalSettings: { /* settings */ },
-  templates: { /* activity templates */ },
+  library: { /* library data */ },
+  libraryTemplates: [ /* templates */ ],
   lastModified: 1234567890
 }
 ```
@@ -223,7 +224,7 @@ Encrypted blob contains:
 {
   "error": "Version conflict",
   "current_version": 5,
-  "your_version": 3
+  "your_version": 4
 }
 ```
 

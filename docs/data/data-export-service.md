@@ -99,7 +99,7 @@ function exportFullBackup() {
   const state = getAppState();
   
   const exportData = {
-    version: 3,
+    version: 4,
     exportDate: new Date().toISOString(),
     exportType: 'full_backup',
     
@@ -117,8 +117,8 @@ function exportFullBackup() {
     routineCelebration: state.routineCelebration,
     
     // Library data
-    activityCategories: state.activityCategories || [],
-    templates: state.templates || [],
+    library: state.library || { categories: [], userAddedActivityIds: [] },
+    libraryTemplates: state.libraryTemplates || [],
     
     // Metadata
     hasCompletedOnboarding: state.hasCompletedOnboarding
@@ -139,7 +139,7 @@ function exportUser(userId) {
   }
   
   const exportData = {
-    version: 3,
+    version: 4,
     exportDate: new Date().toISOString(),
     exportType: 'single_user',
     
@@ -163,11 +163,12 @@ function exportActivityLibrary() {
   const state = getAppState();
   
   const exportData = {
-    version: 3,
+    version: 4,
     exportDate: new Date().toISOString(),
     exportType: 'activity_library',
     
-    activityCategories: (state.activityCategories || []).map(category => ({
+    library: state.library || { categories: [], userAddedActivityIds: [] },
+    libraryTemplates: (state.libraryTemplates || []).map(template => ({
       id: category.id,
       name: category.name,
       icon: category.icon,
@@ -338,7 +339,7 @@ function decompressImport(compressed) {
 ### Included Metadata
 ```javascript
 {
-  "version": 3,                    // Data structure version
+  "version": 4,                    // Data structure version
   "exportDate": "2024-01-15T10:30:00Z",  // ISO 8601 timestamp
   "exportType": "full_backup",     // Type of export
   "appVersion": "2025.08.14.26",   // App version at export

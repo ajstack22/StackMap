@@ -1,6 +1,7 @@
-# StackMap Migration - COMPLETED ✅
-**Status:** 100% Complete - All components migrated to new data structure
-**Completed Date:** 2025-08-14
+# StackMap Data Structure - Version 4 ONLY
+**Status:** Version 4 is the ONLY supported version
+**Updated:** 2025-08-17
+**Important:** All v3 support has been removed. Any v3 data will be rejected.
 
 ---
 

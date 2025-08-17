@@ -985,18 +985,21 @@ class SyncService {
       return;
     }
     
-    // Handle full sync data (support both v3 and v4 formats)
+    // Handle full sync data (v4 format ONLY)
     const {
       users,
       library,           // v4 format
       libraryTemplates,  // v4 format
-      templates,         // v3 format fallback
-      activityCategories,// v3 format fallback
       currentUser,
       globalSettings,
       hasCompletedOnboarding,
       currentDay
     } = data;
+    
+    // REJECT v3 data
+    if ('templates' in data || 'activityCategories' in data) {
+      throw new Error('Version 3 data detected. Please upgrade to version 4.');
+    }
 
     // Debug: Log user activities
     if (users) {
@@ -1032,15 +1035,14 @@ class SyncService {
     const currentUserSettings = users?.[finalCurrentUser]?.settings || {};
     const userTheme = currentUserSettings.theme || globalSettings?.currentTheme || 'stackBlue';
     
-    // Update store with data (handle both v3 and v4 formats)
+    // Update store with v4 data ONLY
     const newState = {
-      // Set activities from the current user's current day (not templates!)
+      // Set activities from the current user's current day
       activities: currentUserActivities,
-      // Handle v4 format
-      libraryTemplates: libraryTemplates || templates || [],
-      activityCategories: activityCategories || library?.categories || null,
+      // v4 format fields ONLY
+      libraryTemplates: libraryTemplates || [],
       library: library || {
-        categories: activityCategories || [],
+        categories: [],
         userAddedActivityIds: []
       },
       users: users || {},
