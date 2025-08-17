@@ -341,6 +341,9 @@ export const repairSyncedData = (data: any): SyncData => {
         dayData.activities = dayData.activities
           .map((activity: any) => {
             if (!activity || typeof activity !== 'object') return null;
+            
+            // Skip deleted activities
+            if (activity.deleted) return null;
 
             // Ensure text field
             if (!activity.text) {
@@ -377,13 +380,14 @@ export const repairSyncedData = (data: any): SyncData => {
             return cleanActivity;
           })
           .filter((activity: any) => {
-            // Filter out null activities and validate
+            // Filter out null activities, deleted activities, and validate
             return (
               activity &&
               activity.id &&
               activity.text &&
               typeof activity.completed === 'boolean' &&
-              typeof activity.pinned === 'boolean'
+              typeof activity.pinned === 'boolean' &&
+              !activity.deleted // Filter out deleted activities
             );
           });
 
