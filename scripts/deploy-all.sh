@@ -73,9 +73,42 @@ fi
 # Check for uncommitted changes and auto-commit them
 if [[ -n $(git status --porcelain) ]]; then
     echo "📝 Found uncommitted changes. Auto-committing before deployment..."
-    git add -A
-    git commit -m "Auto-commit: Pre-deployment changes $(date +%Y-%m-%d_%H:%M:%S)"
-    echo "✅ Changes committed successfully"
+    
+    # Check if PENDING_CHANGES.md exists and use it for commit message
+    if [ -f "PENDING_CHANGES.md" ]; then
+        # Extract the title (first line starting with "## Title:")
+        COMMIT_TITLE=$(grep "^## Title:" PENDING_CHANGES.md | sed 's/## Title: //')
+        
+        # Extract the full content for the commit body
+        COMMIT_BODY=$(cat PENDING_CHANGES.md)
+        
+        if [ -n "$COMMIT_TITLE" ]; then
+            echo "📋 Using descriptive commit message from PENDING_CHANGES.md"
+            git add -A
+            # Use the title as the commit message and the full content as the body
+            git commit -m "$COMMIT_TITLE" -m "$COMMIT_BODY"
+            
+            # Clear the pending changes file after successful commit
+            echo "# Pending Changes" > PENDING_CHANGES.md
+            echo "" >> PENDING_CHANGES.md
+            echo "## Title: " >> PENDING_CHANGES.md
+            echo "" >> PENDING_CHANGES.md
+            echo "### Changes Made:" >> PENDING_CHANGES.md
+            echo "" >> PENDING_CHANGES.md
+            git add PENDING_CHANGES.md
+            echo "✅ Changes committed with descriptive message"
+        else
+            # Fallback to timestamp if no title found
+            git add -A
+            git commit -m "Auto-commit: Pre-deployment changes $(date +%Y-%m-%d_%H:%M:%S)"
+            echo "✅ Changes committed successfully"
+        fi
+    else
+        # Fallback to timestamp if no PENDING_CHANGES.md
+        git add -A
+        git commit -m "Auto-commit: Pre-deployment changes $(date +%Y-%m-%d_%H:%M:%S)"
+        echo "✅ Changes committed successfully"
+    fi
 fi
 
 # Source and run version increment once
