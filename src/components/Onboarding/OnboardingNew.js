@@ -463,7 +463,7 @@ const OnboardingNew = ({
                               ).map(([id, user]) => ({
                                 name: user.name || 'User',
                                 icon:
-                                  user.icon || user.emoji || DEFAULT_USER_ICON,
+                                  user.icon || DEFAULT_USER_ICON,
                               }));
                               setUsers(importedUsers);
                             }

@@ -535,23 +535,10 @@ const App = () => {
 
           // Only migrate if icon field is completely missing or empty
           if (!updatedUser.icon || updatedUser.icon === '') {
-            // Try to use emoji field if it exists
-            if (
-              updatedUser.emoji &&
-              typeof updatedUser.emoji === 'string' &&
-              updatedUser.emoji.length > 0
-            ) {
-              console.log(
-                `Migrating user ${userId}: emoji "${updatedUser.emoji}" -> icon`,
-              );
-              updatedUser.icon = updatedUser.emoji;
-              needsUpdate = true;
-            } else {
-              // No emoji either, use default
-              console.log(`No icon or emoji for user ${userId}, using default`);
-              updatedUser.icon = DEFAULT_USER_ICON;
-              needsUpdate = true;
-            }
+            // NO BACKWARD COMPATIBILITY - must have icon field
+            console.log(`User ${userId} missing icon field, using default`);
+            updatedUser.icon = DEFAULT_USER_ICON;
+            needsUpdate = true;
           }
 
           updatedUsers[userId] = updatedUser;
@@ -1432,7 +1419,7 @@ const App = () => {
         newUsers[userId] = {
           id: userId,
           name: userData.name,
-          icon: userData.emoji,
+          icon: userData.icon,
           days: {
             today: { activities: userActivities },
             tomorrow: { activities: [] },
@@ -1723,7 +1710,7 @@ const App = () => {
     const tomorrowActivities =
       users[currentUser]?.days?.tomorrow?.activities || [];
     const matchingActivity = tomorrowActivities.find(
-      a => a.emoji === activity.emoji && a.text === activity.text,
+      a => a.icon === activity.icon && a.text === activity.text,
     );
 
     if (newPinnedState && !matchingActivity) {
@@ -1752,7 +1739,7 @@ const App = () => {
     } else if (matchingActivity) {
       // Update existing matching activity's pinned state
       const updatedTomorrowActivities = tomorrowActivities.map(a =>
-        a.emoji === activity.emoji && a.text === activity.text
+        a.icon === activity.icon && a.text === activity.text
           ? { ...a, pinned: newPinnedState }
           : a,
       );
@@ -1991,7 +1978,7 @@ const App = () => {
       const template = {
         id: `template-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         text: activity.text || activity.title || activity.name || 'Untitled',
-        icon: activity.icon || activity.emoji || '🎯', // Check both icon and emoji fields
+        icon: activity.icon || '🎯',
         description: activity.description || '',
       };
 
@@ -3708,11 +3695,11 @@ Users: ${userNames} (${userCount} total)
           {/* Card Content */}
           <View style={styles.cardContent}>
             {/* Emoji or Custom Image */}
-            {(item.icon || item.emoji) &&
-            (item.icon || item.emoji).startsWith('image:') ? (
+            {item.icon &&
+            item.icon.startsWith('image:') ? (
               <Image
                 source={
-                  CUSTOM_IMAGE_SOURCES[(item.icon || item.emoji).substring(6)]
+                  CUSTOM_IMAGE_SOURCES[item.icon.substring(6)]
                 }
                 style={styles.activityImage}
                 resizeMode="contain"
@@ -3723,7 +3710,7 @@ Users: ${userNames} (${userCount} total)
                 accessible={false}
                 importantForAccessibility="no"
               >
-                {item.icon || item.emoji || '🎯'}
+                {item.icon || '🎯'}
               </Text>
             )}
 
@@ -3814,7 +3801,7 @@ Users: ${userNames} (${userCount} total)
                       setEditingActivity(item);
                       setActivityTitle(item.text || item.title || '');
                       setActivityDescription(item.description || '');
-                      setActivityEmoji(item.emoji || '🎯');
+                      setActivityEmoji(item.icon || '🎯');
                       setActivityTime(item.time || '');
                       setShowActivityModal(true);
                     }}
@@ -4229,7 +4216,7 @@ Users: ${userNames} (${userCount} total)
                   setActivityTitle(item.text || item.name || item.title || '');
                   setActivityDescription(item.description || '');
                   setActivityEmoji(
-                    item.icon || item.emoji || DEFAULT_ACTIVITY_EMOJI,
+                    item.icon || DEFAULT_ACTIVITY_EMOJI,
                   );
                   setActivityTime(item.time || '');
                   setShowActivityModal(true);
@@ -5037,7 +5024,7 @@ Users: ${userNames} (${userCount} total)
                 activities: (category.activities || []).map(activity => ({
                   id: activity.id,
                   text: activity.name,
-                  icon: activity.emoji,
+                  icon: activity.icon,
                 })),
               };
             });
@@ -5102,7 +5089,7 @@ Users: ${userNames} (${userCount} total)
               .substr(2, 9)}`,
             text: activity.name || activity.text,
             description: activity.description || '', // Preserve description from library
-            icon: activity.icon || activity.emoji,
+            icon: activity.icon,
             completed: false,
             pinned: false,
             deleted: false,
@@ -5127,7 +5114,7 @@ Users: ${userNames} (${userCount} total)
               .substr(2, 9)}`,
             text: activity.name || activity.text,
             description: activity.description || '', // Preserve description from library
-            icon: activity.icon || activity.emoji || DEFAULT_ACTIVITY_EMOJI,
+            icon: activity.icon || DEFAULT_ACTIVITY_EMOJI,
             completed: false,
             pinned: false,
             deleted: false,
@@ -5152,7 +5139,7 @@ Users: ${userNames} (${userCount} total)
               .substr(2, 9)}`,
             text: activity.name || activity.text || '',
             description: activity.description || '', // Preserve description from library
-            icon: activity.icon || activity.emoji || DEFAULT_ACTIVITY_EMOJI,
+            icon: activity.icon || DEFAULT_ACTIVITY_EMOJI,
             completed: false,
             pinned: false,
             deleted: false,

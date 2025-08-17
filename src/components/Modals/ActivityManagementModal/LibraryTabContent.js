@@ -143,7 +143,7 @@ const LibraryTabContent = ({
             category.activities?.filter(
               activity =>
                 (activity.text || '').toLowerCase().includes(query) ||
-                (activity.icon || activity.emoji || '')?.includes(query),
+                (activity.icon || '')?.includes(query),
             ) || [];
 
           const categoryMatches = category.name.toLowerCase().includes(query);
