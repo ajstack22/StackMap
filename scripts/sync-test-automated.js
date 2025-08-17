@@ -166,10 +166,9 @@ async function testCreateSync() {
     }
   } catch (error) {
     console.log(`❌ Create sync failed: ${error.message}`);
+    console.log('');
     return null;
   }
-  
-  console.log('');
 }
 
 async function testPullSync(syncId) {
