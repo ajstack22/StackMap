@@ -210,7 +210,9 @@ class SyncService {
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && this.syncEnabled) {
           console.log('sync: Tab became visible, triggering sync');
-          this.syncWithQueue();
+          // Reset network state and trigger sync with delay
+          networkMonitor.isOnline = navigator.onLine;
+          setTimeout(() => this.syncWithQueue(), 1000); // Delay to let network stabilize
         }
       });
       
@@ -218,6 +220,8 @@ class SyncService {
       window.addEventListener('focus', () => {
         if (this.syncEnabled) {
           console.log('sync: Window gained focus, triggering sync');
+          // Reset network state and trigger sync
+          networkMonitor.isOnline = navigator.onLine;
           this.syncWithQueue();
         }
       });
@@ -226,8 +230,16 @@ class SyncService {
       window.addEventListener('online', () => {
         if (this.syncEnabled) {
           console.log('sync: Network connection restored, triggering sync');
+          networkMonitor.isOnline = true;
           setTimeout(() => this.syncWithQueue(), 2000); // Small delay for network stability
         }
+      });
+      
+      // Listen for offline event to update status immediately
+      window.addEventListener('offline', () => {
+        console.log('sync: Network connection lost');
+        networkMonitor.isOnline = false;
+        this.updateSyncStatus('offline', 'No network connection');
       });
     }
 
@@ -491,7 +503,7 @@ class SyncService {
   /**
    * Push local changes to server
    */
-  async pushData(): Promise<SyncResult> {
+  async pushData(retryCount = 0): Promise<SyncResult> {
     if (!this.syncEnabled || !this.syncId) {
       throw new Error('Sync not initialized');
     }
@@ -578,95 +590,152 @@ class SyncService {
     // Track this transaction
     this.processedTransactions.add(transactionId);
 
-    const response = await fetch(`${API_BASE_URL}/push.php`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        sync_id: this.syncId,
-        device_id: deviceId,
-        device_name: deviceName,
-        encrypted_blob: encryptedBlob,
-        sync_type: syncType,
-      }),
-    });
+    try {
+      const response = await fetch(`${API_BASE_URL}/push.php`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          sync_id: this.syncId,
+          device_id: deviceId,
+          device_name: deviceName,
+          encrypted_blob: encryptedBlob,
+          sync_type: syncType,
+        }),
+      });
 
-    if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to push data');
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to push data');
+      }
+
+      const result = await response.json();
+      this.lastSyncVersion = result.version;
+
+      // Store the version for persistence
+      await AsyncStorage.setItem('@sync_last_version', result.version.toString());
+
+      return result;
+    } catch (error: any) {
+      // Handle network suspension errors with retry
+      if (error.message && 
+          (error.message.includes('ERR_NETWORK_IO_SUSPENDED') || 
+           error.message.includes('ERR_SOCKS_CONNECTION_FAILED') ||
+           error.message.includes('Failed to fetch') ||
+           error.message.includes('Network request failed'))) {
+        
+        const maxRetries = 3;
+        if (retryCount < maxRetries) {
+          const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 8000); // Exponential backoff up to 8 seconds
+          console.log(`sync: Network error during push, retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+          
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          
+          // Check if we're still online before retrying
+          if (networkMonitor.isOnline) {
+            return this.pushData(retryCount + 1);
+          } else {
+            console.log('sync: Network offline, skipping retry');
+            throw new Error('Network connection lost');
+          }
+        }
+      }
+      
+      // Re-throw the error if not retryable or max retries exceeded
+      throw error;
     }
-
-    const result = await response.json();
-    this.lastSyncVersion = result.version;
-
-    // Store the version for persistence
-    await AsyncStorage.setItem('@sync_last_version', result.version.toString());
-
-    return result;
   }
 
   /**
-   * Pull latest data from server
+   * Pull latest data from server with retry logic
    */
-  async pullData(): Promise<any | null> {
+  async pullData(retryCount = 0): Promise<any | null> {
     if (!this.syncId) {
       return null;
     }
 
     const deviceId = await encryptionService.getDeviceId();
-
     const url = `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
 
-    const response = await fetch(url);
+    try {
+      const response = await fetch(url);
 
-    if (response.status === 404) {
-      // This is expected during sync creation - don't log as error
-      return null; // Sync group doesn't exist
-    }
+      if (response.status === 404) {
+        // This is expected during sync creation - don't log as error
+        return null; // Sync group doesn't exist
+      }
 
-    // Get response text first to check if it's JSON
-    const responseText = await response.text();
+      // Get response text first to check if it's JSON
+      const responseText = await response.text();
 
-    if (!response.ok) {
-      // Try to parse as JSON, but handle HTML responses
-      try {
-        const error = JSON.parse(responseText);
-        console.error('pullData error:', error);
-        throw new Error(error.message || 'Failed to pull data');
-      } catch (e) {
-        // Response is not JSON (likely HTML error page)
-        console.error(
-          'pullData received non-JSON response:',
-          responseText.substring(0, 200),
-        );
-        if (
-          responseText.includes('<!DOCTYPE') ||
-          responseText.includes('<html')
-        ) {
+      if (!response.ok) {
+        // Try to parse as JSON, but handle HTML responses
+        try {
+          const error = JSON.parse(responseText);
+          console.error('pullData error:', error);
+          throw new Error(error.message || 'Failed to pull data');
+        } catch (e) {
+          // Response is not JSON (likely HTML error page)
+          console.error(
+            'pullData received non-JSON response:',
+            responseText.substring(0, 200),
+          );
+          if (
+            responseText.includes('<!DOCTYPE') ||
+            responseText.includes('<html')
+          ) {
+            throw new Error(
+              'Server returned an HTML error page. Please check your connection and try again.',
+            );
+          }
           throw new Error(
-            'Server returned an HTML error page. Please check your connection and try again.',
+            `Server error (${response.status}): ${responseText.substring(
+              0,
+              100,
+            )}`,
           );
         }
-        throw new Error(
-          `Server error (${response.status}): ${responseText.substring(
-            0,
-            100,
-          )}`,
-        );
       }
-    }
 
-    // Parse successful response
-    try {
-      const data = JSON.parse(responseText);
-      return data;
-    } catch (e) {
-      console.error(
-        'Failed to parse response as JSON:',
-        responseText.substring(0, 200),
-      );
-      throw new Error('Server returned invalid response format');
+      // Parse successful response
+      try {
+        const data = JSON.parse(responseText);
+        return data;
+      } catch (e) {
+        console.error(
+          'Failed to parse response as JSON:',
+          responseText.substring(0, 200),
+        );
+        throw new Error('Server returned invalid response format');
+      }
+    } catch (error: any) {
+      // Handle network suspension errors with retry
+      if (error.message && 
+          (error.message.includes('ERR_NETWORK_IO_SUSPENDED') || 
+           error.message.includes('ERR_SOCKS_CONNECTION_FAILED') ||
+           error.message.includes('Failed to fetch') ||
+           error.message.includes('Network request failed'))) {
+        
+        const maxRetries = 3;
+        if (retryCount < maxRetries) {
+          const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 8000); // Exponential backoff up to 8 seconds
+          console.log(`sync: Network error, retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+          
+          await new Promise(resolve => setTimeout(resolve, backoffDelay));
+          
+          // Check if we're still online before retrying
+          if (networkMonitor.isOnline) {
+            return this.pullData(retryCount + 1);
+          } else {
+            console.log('sync: Network offline, skipping retry');
+            throw new Error('Network connection lost');
+          }
+        }
+      }
+      
+      // Re-throw the error if not retryable or max retries exceeded
+      throw error;
     }
   }
 
@@ -1749,6 +1818,11 @@ class SyncService {
       // Check if sync is still enabled before processing
       if (!this.syncEnabled || !this.syncId) {
         return;
+      }
+
+      // Clear any stale network state on web platform
+      if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.onLine !== undefined) {
+        networkMonitor.isOnline = navigator.onLine;
       }
 
       // Process any queued items first

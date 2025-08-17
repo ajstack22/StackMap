@@ -361,6 +361,37 @@ if (Platform.OS !== 'web') {
 
 ---
 
+### 8. Sync Fails After Computer Wakes from Sleep
+
+**Symptoms:**
+- `net::ERR_NETWORK_IO_SUSPENDED` errors in browser console
+- `net::ERR_SOCKS_CONNECTION_FAILED` errors
+- "Failed to fetch" errors after computer wakes from sleep
+- Sync doesn't resume automatically when network returns
+- Changes made while offline don't sync when back online
+
+**Cause:**
+When a computer wakes from sleep, the browser's network stack may not be immediately ready. Network requests fail because the connection is still suspended or the proxy/VPN hasn't reconnected yet.
+
+**Solution (Automatic - v2025.08.17):**
+The sync service now includes:
+1. **Automatic retry with exponential backoff** - Retries failed requests up to 3 times with delays of 1s, 2s, 4s
+2. **Wake detection** - Detects when tab becomes visible and waits for network to stabilize
+3. **Network state reset** - Clears stale network state when tab regains focus
+4. **Online/offline event handling** - Responds to network connection changes
+
+**Manual Recovery (if automatic fails):**
+1. Wait 10-15 seconds after wake for network to reconnect
+2. Make a small change (toggle an activity) to trigger sync
+3. If still failing, refresh the page (Ctrl+R or Cmd+R)
+
+**Prevention:**
+- Keep the StackMap tab active (not minimized) during sleep
+- The app will automatically recover within 1-8 seconds of wake
+- Watch for "sync: Network error, retrying..." messages in console
+
+---
+
 ## 📞 Getting Help
 
 When reporting issues, include:
