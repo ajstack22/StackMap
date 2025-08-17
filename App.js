@@ -167,7 +167,7 @@ const commonEmojis = COMMON_EMOJIS;
  * @param {string} props.color - Icon color
  * @param {any} props.translateY - Animated value
  */
-const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
+const AnimatedIcon = React.memo(/** @type {React.FC<{name: string, size: number, color: string, translateY: any}>} */(({ name, size, color, translateY }) => {
   const slideY = React.useMemo(
     () =>
       translateY.interpolate({
@@ -182,7 +182,7 @@ const AnimatedIcon = React.memo(({ name, size, color, translateY }) => {
       <Icon name={name} size={size} color={color} />
     </Animated.View>
   );
-});
+}));
 
 const App = () => {
   console.log(
