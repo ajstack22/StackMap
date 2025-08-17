@@ -10,11 +10,14 @@ import {
   Platform,
   StatusBar,
   Image,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { EmojiPicker, TimePicker } from '../../';
-import { CUSTOM_IMAGE_SOURCES, getCustomImageSource, FEATURE_FLAGS } from '../../../constants';
+import {
+  CUSTOM_IMAGE_SOURCES,
+  getCustomImageSource,
+  FEATURE_FLAGS,
+} from '../../../constants';
 import { styles } from './styles';
 
 const ActivityModal = ({
@@ -60,57 +63,71 @@ const ActivityModal = ({
       onRequestClose={handleClose}
     >
       {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor={theme.primary} 
-          barStyle="light-content" 
+        <StatusBar
+          backgroundColor={theme.primary}
+          barStyle="light-content"
           translucent={false}
         />
       )}
       <View style={styles.modalContainer}>
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
-          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+          <View
+            style={[styles.modalHeader, { backgroundColor: theme.primary }]}
+          >
             <View style={styles.headerLeft}>
-              <Icon name="add-circle" size={24} color="white" style={styles.headerIcon} />
+              <Icon
+                name="add-circle"
+                size={24}
+                color="white"
+                style={styles.headerIcon}
+              />
               <Text style={styles.modalTitle}>
                 {editingActivity ? 'Edit Activity' : 'Add Activity'}
               </Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={{ padding: 8 }}>
-              <View style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-        
+
         <View style={{ flex: 1, backgroundColor: theme.light }}>
-          <KeyboardAvoidingView 
+          <KeyboardAvoidingView
             style={styles.modalContent}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
-            <ScrollView 
+            <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={{ flexGrow: 1, paddingBottom: 20 }}
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.formPanel}>
                 {/* Emoji Selector */}
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.emojiSelector}
                   onPress={() => setShowEmojiPicker(true)}
                 >
                   {activityEmoji && activityEmoji.startsWith('image:') ? (
-                    <Image 
+                    <Image
                       source={getCustomImageSource(activityEmoji.substring(6))}
                       style={styles.selectedEmojiImage}
                       resizeMode="contain"
@@ -131,7 +148,7 @@ const ActivityModal = ({
                     autoFocus={!editingActivity}
                   />
                 </View>
-                
+
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Description (optional)</Text>
                   <TextInput
@@ -143,7 +160,7 @@ const ActivityModal = ({
                     numberOfLines={3}
                   />
                 </View>
-                
+
                 <View style={styles.inputGroup}>
                   <Text style={styles.inputLabel}>Time (optional)</Text>
                   <TimePicker
@@ -153,7 +170,7 @@ const ActivityModal = ({
                     theme={theme}
                   />
                 </View>
-                
+
                 <TouchableOpacity
                   style={[styles.button, { backgroundColor: theme.primary }]}
                   onPress={handleSave}
@@ -168,16 +185,21 @@ const ActivityModal = ({
         </View>
         <SafeAreaView style={{ backgroundColor: theme.light }} />
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
+          <View
+            style={{
+              backgroundColor: theme.light,
+              height: Math.max(insets.bottom, 20),
+            }}
+          />
         )}
-        
+
         {/* Emoji Picker Modal for Add Activity */}
         {showEmojiPicker && (
-          <EmojiPicker 
+          <EmojiPicker
             mode="modal"
             visible={true}
             onClose={() => setShowEmojiPicker(false)}
-            onSelect={(icon) => {
+            onSelect={icon => {
               setActivityEmoji(icon);
               setShowEmojiPicker(false);
             }}

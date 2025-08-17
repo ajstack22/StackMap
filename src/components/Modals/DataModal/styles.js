@@ -1,5 +1,11 @@
 import { StyleSheet, Platform, Dimensions } from 'react-native';
-import { TYPOGRAPHY, SPACING, RADIUS, SHADOWS, isMobile } from '../../../constants';
+import {
+  TYPOGRAPHY,
+  SPACING,
+  RADIUS,
+  SHADOWS,
+  isMobile,
+} from '../../../constants';
 
 const { width: screenWidth } = Dimensions.get('window');
 const IS_MOBILE = isMobile(screenWidth);
@@ -7,13 +13,13 @@ const IS_MOBILE = isMobile(screenWidth);
 export const styles = StyleSheet.create({
   // Container styles
   scrollContainer: {
-    paddingTop: SPACING.md,  // Standardized top padding (16px)
-    paddingBottom: 80,       // Consistent bottom padding for all tabs
+    paddingTop: SPACING.md, // Standardized top padding (16px)
+    paddingBottom: 80, // Consistent bottom padding for all tabs
     ...(Platform.OS === 'web' && {
       paddingHorizontal: SPACING.lg,
     }),
   },
-  
+
   // Section styles
   section: {
     marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
@@ -56,7 +62,7 @@ export const styles = StyleSheet.create({
   sectionFooter: {
     marginTop: SPACING.md,
   },
-  
+
   // Empty state
   emptyStateContainer: {
     alignItems: 'center',
@@ -78,7 +84,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: SPACING.xl,
   },
-  
+
   // Export selection cards
   selectionCard: {
     flexDirection: 'row',
@@ -132,7 +138,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: '#000',
   },
-  
+
   // Import styles
   fileInfoCard: {
     flexDirection: 'row',
@@ -158,7 +164,7 @@ export const styles = StyleSheet.create({
     color: '#000',
     marginTop: 2,
   },
-  
+
   importModeContainer: {
     marginBottom: SPACING.lg,
   },
@@ -205,7 +211,7 @@ export const styles = StyleSheet.create({
     color: '#000',
     textAlign: 'center',
   },
-  
+
   importSelectionsContainer: {
     marginTop: SPACING.md,
   },
@@ -253,7 +259,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
   },
-  
+
   // Standardized tab header for all tabs
   standardTabContainer: {
     alignItems: 'center',
@@ -276,7 +282,7 @@ export const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xl,
     marginBottom: SPACING.md,
   },
-  
+
   // Sync styles (legacy - kept for compatibility)
   syncInfoContainer: {
     alignItems: 'center',
@@ -318,7 +324,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
   },
-  
+
   syncStatusCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
@@ -375,14 +381,14 @@ export const styles = StyleSheet.create({
     color: '#666',
     marginTop: 2,
   },
-  
+
   recoveryPhraseCard: {
     backgroundColor: '#fff3e0',
     borderRadius: RADIUS.medium,
     padding: SPACING.md,
     marginBottom: SPACING.md,
     alignItems: 'center',
-    flexDirection: 'column',  // Ensure vertical layout
+    flexDirection: 'column', // Ensure vertical layout
     width: '100%',
   },
   recoveryPhraseWarning: {
@@ -410,7 +416,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  
+
   recoveryInputContainer: {
     marginBottom: SPACING.md,
     width: '100%',
@@ -439,7 +445,7 @@ export const styles = StyleSheet.create({
     textAlignVertical: 'top',
     width: '100%',
   },
-  
+
   syncActions: {
     gap: SPACING.sm,
   },
@@ -458,7 +464,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: '#000',
   },
-  
+
   // Buttons
   buttonContainer: {
     paddingHorizontal: SPACING.md,
@@ -535,7 +541,7 @@ export const styles = StyleSheet.create({
     gap: SPACING.sm,
     justifyContent: 'center',
   },
-  
+
   // Error
   errorContainer: {
     flexDirection: 'row',
@@ -552,7 +558,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#d32f2f',
   },
-  
+
   // Share styles
   syncRequiredContainer: {
     alignItems: 'center',
@@ -573,7 +579,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: SPACING.xl,
   },
-  
+
   shareSection: {
     marginBottom: SPACING.lg,
   },
@@ -591,7 +597,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.sm,
   },
-  
+
   userSelectionGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -637,7 +643,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: SPACING.xs,
   },
-  
+
   shareField: {
     marginBottom: SPACING.md,
   },
@@ -658,7 +664,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E0E0E0',
   },
-  
+
   expirationOptions: {
     flexDirection: 'row',
     gap: SPACING.sm,
@@ -686,7 +692,7 @@ export const styles = StyleSheet.create({
     fontWeight: Platform.OS === 'ios' ? '600' : '700',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
-  
+
   shareOptions: {
     gap: SPACING.sm,
   },
@@ -701,7 +707,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
-  
+
   userSharesContainer: {
     marginTop: SPACING.md,
   },
@@ -727,7 +733,7 @@ export const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
   },
-  
+
   activeShareCard: {
     flexDirection: 'row',
     backgroundColor: 'white',
@@ -765,7 +771,7 @@ export const styles = StyleSheet.create({
   activeShareDelete: {
     padding: SPACING.xs,
   },
-  
+
   shareSuccessContainer: {
     alignItems: 'center',
     paddingVertical: SPACING.xl,
@@ -924,7 +930,7 @@ export const styles = StyleSheet.create({
     justifyContent: 'space-between',
     flex: 1,
   },
-  
+
   // Reset styles
   resetWarningContainer: {
     alignItems: 'center',

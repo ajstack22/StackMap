@@ -1,5 +1,12 @@
 import { StyleSheet, Platform, Dimensions } from 'react-native';
-import { COLORS, TYPOGRAPHY, SPACING, RADIUS, SHADOWS, isMobile } from '../../../constants';
+import {
+  COLORS,
+  TYPOGRAPHY,
+  SPACING,
+  RADIUS,
+  SHADOWS,
+  isMobile,
+} from '../../../constants';
 
 const { width: screenWidth } = Dimensions.get('window');
 const IS_MOBILE = isMobile(screenWidth);

@@ -1,16 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Text } from '../Typography';
-import { View, TouchableOpacity, Animated, StyleSheet,  } from 'react-native';
+import { View, TouchableOpacity, Animated, StyleSheet } from 'react-native';
 import { SHADOWS, TYPOGRAPHY, RADIUS, SPACING } from '../../constants';
 
-const Toast = ({ 
-  toast,
-  onDismiss,
-  theme,
-}) => {
+const Toast = ({ toast, onDismiss, theme }) => {
   const [translateY] = useState(() => new Animated.Value(100));
   const timeoutRef = useRef(null);
-  
+
   // Extract values with defaults to avoid conditional hook calls
   const visible = toast?.visible || false;
   const message = toast?.message || '';
@@ -52,12 +48,7 @@ const Toast = ({
   if (!toast || !visible) return null;
 
   return (
-    <Animated.View 
-      style={[
-        styles.container,
-        { transform: [{ translateY }] }
-      ]}
-    >
+    <Animated.View style={[styles.container, { transform: [{ translateY }] }]}>
       <TouchableOpacity
         style={[styles.toast, { backgroundColor }, SHADOWS.level3]}
         onPress={onDismiss}

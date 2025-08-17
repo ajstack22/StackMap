@@ -6,7 +6,6 @@ import {
   ActivityIndicator,
   StyleSheet,
   Platform,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING } from '../../constants';
@@ -57,11 +56,15 @@ const ModalFooter = ({
               <Icon
                 name={button.icon}
                 size={20}
-                color={isPrimary ? 'white' : (button.disabled ? '#999' : theme.primary)}
+                color={
+                  isPrimary ? 'white' : button.disabled ? '#999' : theme.primary
+                }
                 style={styles.buttonIcon}
               />
             )}
-            <Text style={textStyle} numberOfLines={2}>{button.label}</Text>
+            <Text style={textStyle} numberOfLines={2}>
+              {button.label}
+            </Text>
           </>
         )}
       </TouchableOpacity>

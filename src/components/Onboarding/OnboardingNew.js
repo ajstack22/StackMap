@@ -15,7 +15,6 @@ import {
   Linking,
   Clipboard,
   Alert,
-  
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DEFAULT_USER_ICON } from '../../constants';
@@ -37,10 +36,17 @@ import {
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const isTablet = () => screenWidth >= 768;
-const isMobileWeb = () => Platform.OS === 'web' && Dimensions.get('window').width < 768;
+const isMobileWeb = () =>
+  Platform.OS === 'web' && Dimensions.get('window').width < 768;
 
 // Updated: 2025-07-18 16:45 - Fixed mobile layout
-const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupPhrase = null, onShowPrivacy }) => {
+const OnboardingNew = ({
+  onComplete,
+  onImport,
+  isAbbreviated = false,
+  syncSetupPhrase = null,
+  onShowPrivacy,
+}) => {
   // Safety check for THEMES
 
   // Create a proper theme object with expected properties
@@ -51,10 +57,12 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     text: '#000000', // Black text for accessibility
     textSecondary: '#666666',
     background: '#FFFFFF',
-    card: '#F5F5F5'
+    card: '#F5F5F5',
   };
-  
-  const [currentScreen, setCurrentScreen] = useState(isAbbreviated && syncSetupPhrase ? 'syncSetup' : 'welcome');
+
+  const [currentScreen, setCurrentScreen] = useState(
+    isAbbreviated && syncSetupPhrase ? 'syncSetup' : 'welcome',
+  );
   const [userName, setUserName] = useState('');
   const [selectedEmoji, setSelectedEmoji] = useState(DEFAULT_USER_ICON);
   const [users, setUsers] = useState([]);
@@ -64,7 +72,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [activeFeature, setActiveFeature] = useState(0);
-  
+
   // Sync-related state
   const [recoveryInput, setRecoveryInput] = useState('');
   const [syncLoading, setSyncLoading] = useState(false);
@@ -75,12 +83,12 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   const [showCopiedToast, setShowCopiedToast] = useState(false);
   const [syncPreviewData, setSyncPreviewData] = useState(null);
   const [showSyncPreview, setShowSyncPreview] = useState(false);
-  
+
   const fadeAnim = useRef(new Animated.Value(0)).current; // Start at 0 for fade in
   const slideAnim = useRef(new Animated.Value(0)).current;
   const featureFadeAnim = useRef(new Animated.Value(1)).current;
   const insets = useSafeAreaInsets();
-  
+
   // Pre-populate recovery input if sync phrase provided from URL
   useEffect(() => {
     if (syncSetupPhrase && !recoveryInput) {
@@ -91,12 +99,18 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
 
   // Auto-fetch sync preview when on sync setup screen with URL
   useEffect(() => {
-    if (currentScreen === 'syncSetup' && syncSetupPhrase && !syncLoading && !syncPreviewData && !syncError) {
+    if (
+      currentScreen === 'syncSetup' &&
+      syncSetupPhrase &&
+      !syncLoading &&
+      !syncPreviewData &&
+      !syncError
+    ) {
       // Automatically fetch the sync preview
       fetchSyncPreview();
     }
   }, [currentScreen, syncSetupPhrase]);
-  
+
   // Fade in on mount
   useEffect(() => {
     Animated.timing(fadeAnim, {
@@ -107,7 +121,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
   }, []);
 
   const quickEmojis = [DEFAULT_USER_ICON, '😎', '🎯', '⭐', '🚀'];
-  
+
   const features = [
     {
       id: 'preferences',
@@ -116,8 +130,8 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       bullets: [
         'Set theme',
         'Show/hide card completion status/number/time',
-        'Celebration customization'
-      ]
+        'Celebration customization',
+      ],
     },
     {
       id: 'user',
@@ -126,8 +140,8 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       bullets: [
         'Change User',
         'Check-in on day/feelings/weather/temperature',
-        'In edit mode shortcut to Planning (Day/User)'
-      ]
+        'In edit mode shortcut to Planning (Day/User)',
+      ],
     },
     {
       id: 'edit',
@@ -136,16 +150,16 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       bullets: [
         'Create new activities or add from Library',
         'Get ahead on tomorrow with planning',
-        'User and backups settings'
-      ]
-    }
+        'User and backups settings',
+      ],
+    },
   ];
 
   // Fetch sync preview data
   const fetchSyncPreview = async () => {
     setSyncLoading(true);
     setSyncError('');
-    
+
     try {
       // Use the sync phrase from URL
       const phraseToUse = recoveryInput.trim() || syncSetupPhrase;
@@ -158,49 +172,51 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       // Try to fetch sync data - for new devices, we might get 404 which is expected
       const checkUrl = `${syncService.getApiUrl()}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
       const checkResponse = await fetch(checkUrl);
-      
+
       let decryptedData;
-      
+
       if (checkResponse.status === 404) {
         // This is a new device, try to fetch the latest sync data without device ID
         // or by using the sync service's join mechanism
 
         // Initialize sync service temporarily to fetch data
         await syncService.initialize(phraseToUse);
-        
+
         // Try to pull data - this should work even for new devices
         const pullResult = await syncService.pullData();
-        
+
         if (!pullResult || !pullResult.data) {
           throw new Error('No sync group found with this sync key');
         }
-        
+
         decryptedData = pullResult.data;
       } else {
         // Get the encrypted data
         const encryptedData = await checkResponse.json();
-        
+
         // Initialize encryption with the recovery phrase and syncId to decrypt
         // Use the same fixed salt as syncService for consistency
         const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
         await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
-        
+
         // Decrypt the data
-        decryptedData = encryptionService.decryptData(encryptedData.encrypted_blob);
+        decryptedData = encryptionService.decryptData(
+          encryptedData.encrypted_blob,
+        );
       }
-      
+
       // Extract preview information
       const preview = {
         users: {},
         totalActivities: 0,
         activityLibraryCount: 0,
-        hasData: false
+        hasData: false,
       };
-      
+
       if (decryptedData.users) {
         Object.entries(decryptedData.users).forEach(([userId, user]) => {
           let activityCount = 0;
-          
+
           // Count activities across all days
           if (user.days) {
             Object.values(user.days).forEach(day => {
@@ -209,17 +225,17 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
               }
             });
           }
-          
+
           preview.users[userId] = {
             name: user.name || 'Unknown User',
             icon: user.icon || DEFAULT_USER_ICON,
-            activityCount
+            activityCount,
           };
-          
+
           preview.totalActivities += activityCount;
         });
       }
-      
+
       // Count activity library items (v4 format)
       if (decryptedData.library && decryptedData.library.categories) {
         decryptedData.library.categories.forEach(category => {
@@ -228,44 +244,43 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
           }
         });
       }
-      
+
       preview.hasData = Object.keys(preview.users).length > 0;
-      
+
       setSyncPreviewData(preview);
       setShowSyncPreview(true);
       setSyncLoading(false); // Reset loading state on success
       transitionTo('syncPreview');
-      
     } catch (error) {
       setSyncLoading(false);
       let errorMessage = 'Failed to fetch sync data. Please try again.';
-      
-      if (error.message.includes('404') || error.message.includes('No sync group')) {
+
+      if (
+        error.message.includes('404') ||
+        error.message.includes('No sync group')
+      ) {
         errorMessage = 'No sync group found with this sync key.';
       } else if (error.message.includes('Network')) {
-        errorMessage = 'Network error. Please check your connection and try again.';
+        errorMessage =
+          'Network error. Please check your connection and try again.';
       }
-      
+
       // Show error and exit onboarding
       if (Platform.OS === 'web') {
         window.alert(errorMessage);
         onComplete({ isAbbreviated: true });
       } else {
-        Alert.alert(
-          'Sync Error',
-          errorMessage,
-          [
-            { 
-              text: 'OK', 
-              onPress: () => onComplete({ isAbbreviated: true })
-            }
-          ]
-        );
+        Alert.alert('Sync Error', errorMessage, [
+          {
+            text: 'OK',
+            onPress: () => onComplete({ isAbbreviated: true }),
+          },
+        ]);
       }
     }
   };
 
-  const transitionTo = (nextScreen) => {
+  const transitionTo = nextScreen => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
         toValue: 0,
@@ -280,13 +295,13 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
     ]).start(() => {
       setCurrentScreen(nextScreen);
       slideAnim.setValue(50);
-      
+
       // Reset sync state when entering sync screen (but not for abbreviated flow)
       if (nextScreen === 'sync' && !isAbbreviated) {
         setRecoveryInput('');
         setSyncError('');
       }
-      
+
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
@@ -307,7 +322,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       setUsers([...users, { name: userName.trim(), icon: selectedEmoji }]);
       setUserName('');
       setSelectedEmoji(DEFAULT_USER_ICON);
-      
+
       if (users.length === 0) {
         transitionTo('features');
       } else {
@@ -325,7 +340,7 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
           duration: 200,
           useNativeDriver: true,
         }).start(() => {
-          setActiveFeature((prev) => (prev + 1) % features.length);
+          setActiveFeature(prev => (prev + 1) % features.length);
           Animated.timing(featureFadeAnim, {
             toValue: 1,
             duration: 200,
@@ -343,247 +358,341 @@ const OnboardingNew = ({ onComplete, onImport, isAbbreviated = false, syncSetupP
       case 'welcome':
         return (
           <View style={{ flex: 1 }}>
-            <ScrollView 
+            <ScrollView
               style={styles.scrollContent}
-              contentContainerStyle={[styles.welcomeContent, {
-                paddingTop: Platform.OS === 'web' ? styles.welcomeContent.paddingTop : (20 + insets.top),
-                paddingBottom: Platform.OS === 'web' ? styles.welcomeContent.paddingBottom : 
-                  Math.max(20, insets.bottom)
-              }]}
+              contentContainerStyle={[
+                styles.welcomeContent,
+                {
+                  paddingTop:
+                    Platform.OS === 'web'
+                      ? styles.welcomeContent.paddingTop
+                      : 20 + insets.top,
+                  paddingBottom:
+                    Platform.OS === 'web'
+                      ? styles.welcomeContent.paddingBottom
+                      : Math.max(20, insets.bottom),
+                },
+              ]}
               showsVerticalScrollIndicator={false}
             >
-            <Logo size={Platform.OS === 'web' ? 80 : 60} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
-            <Text style={styles.welcomeTitle}>StackMap</Text>
-            <Text style={styles.welcomeSubtitle}>Better days through shared understanding</Text>
-            
-            <View style={styles.cardsContainer}>
-              <View style={styles.card}>
-                <Text style={styles.cardIcon}>🧠</Text>
-                <Text style={styles.cardDescription}>Built to help people that think differently</Text>
-              </View>
-              <View style={styles.card}>
-                <Text style={styles.cardIcon}>💬</Text>
-                <Text style={styles.cardDescription}>Creates shared context{'\n'}for conversations</Text>
-              </View>
-              <View style={styles.card}>
-                <Text style={styles.cardIcon}>🔄</Text>
-                <Text style={styles.cardDescription}>A routine built around routines</Text>
-              </View>
-            </View>
+              <Logo
+                size={Platform.OS === 'web' ? 80 : 60}
+                theme={{ primary: THEMES.stackBlue.primary }}
+                color={THEMES.stackBlue.primary}
+              />
+              <Text style={styles.welcomeTitle}>StackMap</Text>
+              <Text style={styles.welcomeSubtitle}>
+                Better days through shared understanding
+              </Text>
 
-            {isAbbreviated ? (
-              <TouchableOpacity 
-                style={[styles.primaryButton, syncLoading && styles.disabledButton]}
-                onPress={() => {
-                  // For sync URLs, automatically fetch the preview
-                  if (syncSetupPhrase) {
-                    fetchSyncPreview();
-                  } else {
-                    transitionTo('features');
-                  }
-                }}
-                disabled={syncLoading}
-              >
-                {syncLoading ? (
-                  <ActivityIndicator size="small" color="white" />
-                ) : (
-                  <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Continue</Text>
-                )}
-              </TouchableOpacity>
-            ) : (
-              <>
-                <TouchableOpacity 
-                  style={styles.primaryButton}
-                  onPress={() => transitionTo('createUser')}
+              <View style={styles.cardsContainer}>
+                <View style={styles.card}>
+                  <Text style={styles.cardIcon}>🧠</Text>
+                  <Text style={styles.cardDescription}>
+                    Built to help people that think differently
+                  </Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardIcon}>💬</Text>
+                  <Text style={styles.cardDescription}>
+                    Creates shared context{'\n'}for conversations
+                  </Text>
+                </View>
+                <View style={styles.card}>
+                  <Text style={styles.cardIcon}>🔄</Text>
+                  <Text style={styles.cardDescription}>
+                    A routine built around routines
+                  </Text>
+                </View>
+              </View>
+
+              {isAbbreviated ? (
+                <TouchableOpacity
+                  style={[
+                    styles.primaryButton,
+                    syncLoading && styles.disabledButton,
+                  ]}
+                  onPress={() => {
+                    // For sync URLs, automatically fetch the preview
+                    if (syncSetupPhrase) {
+                      fetchSyncPreview();
+                    } else {
+                      transitionTo('features');
+                    }
+                  }}
+                  disabled={syncLoading}
                 >
-                  <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Fresh</Text>
+                  {syncLoading ? (
+                    <ActivityIndicator size="small" color="white" />
+                  ) : (
+                    <Text
+                      style={[styles.buttonTextBase, styles.primaryButtonText]}
+                    >
+                      Continue
+                    </Text>
+                  )}
                 </TouchableOpacity>
-                
-                <View style={styles.secondaryButtonsRow}>
-                  <TouchableOpacity 
-                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
-                    onPress={async () => {
-                      try {
-                        const result = await onImport();
-                        // If import was successful, update local state and show summary
-                        if (result && result.success) {
-                          // Convert imported users to local format for onboarding
-                          if (result.summary.userData) {
-                            const importedUsers = Object.entries(result.summary.userData).map(([id, user]) => ({
-                              name: user.name || 'User',
-                              icon: user.icon || user.emoji || DEFAULT_USER_ICON
-                            }));
-                            setUsers(importedUsers);
-                          }
-                          // Immediately transition to features page  
-                          setImportSuccessful(true);
-                          transitionTo('features');
-                          
-                          // Show import summary after transition
-                          setTimeout(() => {
-                            Alert.alert(
-                              'Import Successful',
-                              `Imported:
+              ) : (
+                <>
+                  <TouchableOpacity
+                    style={styles.primaryButton}
+                    onPress={() => transitionTo('createUser')}
+                  >
+                    <Text
+                      style={[styles.buttonTextBase, styles.primaryButtonText]}
+                    >
+                      Start Fresh
+                    </Text>
+                  </TouchableOpacity>
+
+                  <View style={styles.secondaryButtonsRow}>
+                    <TouchableOpacity
+                      style={[
+                        styles.secondaryButton,
+                        styles.secondaryButtonEqual,
+                      ]}
+                      onPress={async () => {
+                        try {
+                          const result = await onImport();
+                          // If import was successful, update local state and show summary
+                          if (result && result.success) {
+                            // Convert imported users to local format for onboarding
+                            if (result.summary.userData) {
+                              const importedUsers = Object.entries(
+                                result.summary.userData,
+                              ).map(([id, user]) => ({
+                                name: user.name || 'User',
+                                icon:
+                                  user.icon || user.emoji || DEFAULT_USER_ICON,
+                              }));
+                              setUsers(importedUsers);
+                            }
+                            // Immediately transition to features page
+                            setImportSuccessful(true);
+                            transitionTo('features');
+
+                            // Show import summary after transition
+                            setTimeout(() => {
+                              Alert.alert(
+                                'Import Successful',
+                                `Imported:
 • ${result.summary.users} user(s)
 • ${result.summary.activities} activity categories
-${result.summary.hasPin ? '• PIN protection enabled' : ''}`
-                            );
-                          }, 100);
-                        } else {
-                          // Import was cancelled or failed
-
+${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
+                              );
+                            }, 100);
+                          } else {
+                            // Import was cancelled or failed
+                          }
+                        } catch (error) {
+                          // Import was cancelled or failed, stay on welcome screen
                         }
-                      } catch (error) {
-                        // Import was cancelled or failed, stay on welcome screen
+                      }}
+                    >
+                      <Icon
+                        name="folder-open"
+                        size={20}
+                        color={THEMES.stackBlue.primary}
+                        style={styles.buttonIcon}
+                      />
+                      <Text
+                        style={[
+                          styles.buttonTextBase,
+                          styles.secondaryButtonText,
+                        ]}
+                      >
+                        Restore StackMap
+                      </Text>
+                    </TouchableOpacity>
 
-                      }
-                    }}
-                  >
-                    <Icon name="folder-open" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Restore StackMap</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.secondaryButton, styles.secondaryButtonEqual]}
-                    onPress={() => transitionTo('sync')}
-                  >
-                    <Icon name="cloud-sync" size={20} color={THEMES.stackBlue.primary} style={styles.buttonIcon} />
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Sync StackMap</Text>
-                  </TouchableOpacity>
-                  
-                </View>
-              </>
-            )}
-            
-            {/* Footer Links */}
-            <View style={styles.footerLinks}>
-              <TouchableOpacity 
-                style={styles.footerLink}
-                onPress={() => {
-                  if (onShowPrivacy) {
-                    onShowPrivacy();
-                  }
-                }}
-              >
-                <Text style={styles.footerLinkText}>Privacy Policy</Text>
-              </TouchableOpacity>
-            </View>
-          </ScrollView>
+                    <TouchableOpacity
+                      style={[
+                        styles.secondaryButton,
+                        styles.secondaryButtonEqual,
+                      ]}
+                      onPress={() => transitionTo('sync')}
+                    >
+                      <Icon
+                        name="cloud-sync"
+                        size={20}
+                        color={THEMES.stackBlue.primary}
+                        style={styles.buttonIcon}
+                      />
+                      <Text
+                        style={[
+                          styles.buttonTextBase,
+                          styles.secondaryButtonText,
+                        ]}
+                      >
+                        Sync StackMap
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </>
+              )}
+
+              {/* Footer Links */}
+              <View style={styles.footerLinks}>
+                <TouchableOpacity
+                  style={styles.footerLink}
+                  onPress={() => {
+                    if (onShowPrivacy) {
+                      onShowPrivacy();
+                    }
+                  }}
+                >
+                  <Text style={styles.footerLinkText}>Privacy Policy</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
           </View>
         );
 
       case 'createUser':
         return (
-          <KeyboardAvoidingView 
+          <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{ flex: 1 }}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
           >
-            <ScrollView 
-              contentContainerStyle={[styles.createUserScrollContainer, {
-                paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-                paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
-              }]}
+            <ScrollView
+              contentContainerStyle={[
+                styles.createUserScrollContainer,
+                {
+                  paddingTop:
+                    Platform.OS === 'web'
+                      ? SPACING.xxl
+                      : SPACING.xxl + insets.top,
+                  paddingBottom:
+                    Platform.OS === 'web'
+                      ? SPACING.xxl
+                      : Math.max(SPACING.xxl, insets.bottom),
+                },
+              ]}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
               <View style={styles.createUserContent}>
-              <Text style={styles.screenTitle}>
-                {users.length === 0 ? "Let's create your first user" : "Add another user"}
-              </Text>
-              
-              <View style={styles.formSection}>
-              <Text style={styles.inputLabel}>Name</Text>
-              <TextInput
-                style={styles.textInput}
-                placeholder="Enter name"
-                placeholderTextColor={COLORS.gray[400]}
-                value={userName}
-                onChangeText={setUserName}
-                autoFocus
-                autoCapitalize="words"
-                returnKeyType="done"
-                onSubmitEditing={addUser}
-              />
-              
-              <Text style={styles.inputLabel}>Choose an emoji</Text>
-              <View style={styles.emojiSelection}>
-                {quickEmojis.map((icon) => (
-                  <TouchableOpacity
-                    key={icon}
-                    style={[
-                      styles.emojiOption,
-                      selectedEmoji === icon && styles.emojiSelected
-                    ]}
-                    onPress={() => {
-                      setSelectedEmoji(icon);
-                      setEmojiInputValue('');
-                    }}
-                  >
-                    <Text style={styles.emojiText}>{icon}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
-              
-              <Text style={styles.orText}>or</Text>
-              
-              <View style={styles.emojiInputContainer}>
-                <TextInput
-                  style={[styles.emojiInput, emojiInputValue && { fontSize: 28 }]}
-                  placeholder="Enter emoji here"
-                  placeholderTextColor={COLORS.gray[400]}
-                  value={emojiInputValue}
-                  onChangeText={(text) => {
-                    // Handle clearing
-                    if (text === '') {
-                      setEmojiInputValue('');
-                      return;
-                    }
-                    
-                    // Check if the text contains only ASCII characters (reject these)
-                    if (/^[a-zA-Z0-9\s\.,!?@#$%^&*()_+\-=\[\]{};':"\|<>\/~`]+$/.test(text)) {
-                      // It's only regular characters - keep previous value
-                      return;
-                    }
-                    
-                    // For anything else (emojis, special characters), accept it
-                    // This includes emojis with variation selectors like 🗺️
-                    setSelectedEmoji(text);
-                    setEmojiInputValue(text);
-                  }}
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                  maxLength={4}
-                />
-              </View>
-            </View>
+                <Text style={styles.screenTitle}>
+                  {users.length === 0
+                    ? "Let's create your first user"
+                    : 'Add another user'}
+                </Text>
 
-            <View style={styles.previewSection}>
-              <Text style={styles.previewLabel}>Preview:</Text>
-              <View style={styles.userPill}>
-                <Text style={styles.pillEmoji}>{selectedEmoji}</Text>
-                <Text style={styles.pillName}>{userName || 'Your name'}</Text>
-              </View>
-            </View>
+                <View style={styles.formSection}>
+                  <Text style={styles.inputLabel}>Name</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    placeholder="Enter name"
+                    placeholderTextColor={COLORS.gray[400]}
+                    value={userName}
+                    onChangeText={setUserName}
+                    autoFocus
+                    autoCapitalize="words"
+                    returnKeyType="done"
+                    onSubmitEditing={addUser}
+                  />
 
-            <TouchableOpacity 
-              style={[styles.primaryButton, !userName.trim() && styles.disabledButton, { marginTop: SPACING.xxl }]}
-              onPress={addUser}
-              disabled={!userName.trim()}
-            >
-              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                {users.length === 0 ? 'Continue' : 'Add User'}
-              </Text>
-            </TouchableOpacity>
+                  <Text style={styles.inputLabel}>Choose an emoji</Text>
+                  <View style={styles.emojiSelection}>
+                    {quickEmojis.map(icon => (
+                      <TouchableOpacity
+                        key={icon}
+                        style={[
+                          styles.emojiOption,
+                          selectedEmoji === icon && styles.emojiSelected,
+                        ]}
+                        onPress={() => {
+                          setSelectedEmoji(icon);
+                          setEmojiInputValue('');
+                        }}
+                      >
+                        <Text style={styles.emojiText}>{icon}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
 
-            {users.length === 0 && (
-                <TouchableOpacity 
-                  style={[styles.secondaryButton, { marginTop: SPACING.md }]}
-                  onPress={() => transitionTo('welcome')}
+                  <Text style={styles.orText}>or</Text>
+
+                  <View style={styles.emojiInputContainer}>
+                    <TextInput
+                      style={[
+                        styles.emojiInput,
+                        emojiInputValue && { fontSize: 28 },
+                      ]}
+                      placeholder="Enter emoji here"
+                      placeholderTextColor={COLORS.gray[400]}
+                      value={emojiInputValue}
+                      onChangeText={text => {
+                        // Handle clearing
+                        if (text === '') {
+                          setEmojiInputValue('');
+                          return;
+                        }
+
+                        // Check if the text contains only ASCII characters (reject these)
+                        if (
+                          /^[a-zA-Z0-9\s\.,!?@#$%^&*()_+\-=\[\]{};':"\|<>\/~`]+$/.test(
+                            text,
+                          )
+                        ) {
+                          // It's only regular characters - keep previous value
+                          return;
+                        }
+
+                        // For anything else (emojis, special characters), accept it
+                        // This includes emojis with variation selectors like 🗺️
+                        setSelectedEmoji(text);
+                        setEmojiInputValue(text);
+                      }}
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      maxLength={4}
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.previewSection}>
+                  <Text style={styles.previewLabel}>Preview:</Text>
+                  <View style={styles.userPill}>
+                    <Text style={styles.pillEmoji}>{selectedEmoji}</Text>
+                    <Text style={styles.pillName}>
+                      {userName || 'Your name'}
+                    </Text>
+                  </View>
+                </View>
+
+                <TouchableOpacity
+                  style={[
+                    styles.primaryButton,
+                    !userName.trim() && styles.disabledButton,
+                    { marginTop: SPACING.xxl },
+                  ]}
+                  onPress={addUser}
+                  disabled={!userName.trim()}
                 >
-                  <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+                  <Text
+                    style={[styles.buttonTextBase, styles.primaryButtonText]}
+                  >
+                    {users.length === 0 ? 'Continue' : 'Add User'}
+                  </Text>
                 </TouchableOpacity>
-              )}
+
+                {users.length === 0 && (
+                  <TouchableOpacity
+                    style={[styles.secondaryButton, { marginTop: SPACING.md }]}
+                    onPress={() => transitionTo('welcome')}
+                  >
+                    <Text
+                      style={[
+                        styles.buttonTextBase,
+                        styles.secondaryButtonText,
+                      ]}
+                    >
+                      Back
+                    </Text>
+                  </TouchableOpacity>
+                )}
               </View>
             </ScrollView>
           </KeyboardAvoidingView>
@@ -593,88 +702,142 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
         const currentFeature = features[activeFeature];
         return (
           <View style={styles.featuresContainer}>
-            <ScrollView 
-              style={styles.scrollContent} 
-              contentContainerStyle={[styles.featuresScrollContent, {
-                paddingBottom: Platform.OS === 'web' ? SPACING.lg : Math.max(20, insets.bottom),
-                paddingTop: Platform.OS === 'web' ? styles.featuresScrollContent.paddingTop : (20 + insets.top)
-              }]}
+            <ScrollView
+              style={styles.scrollContent}
+              contentContainerStyle={[
+                styles.featuresScrollContent,
+                {
+                  paddingBottom:
+                    Platform.OS === 'web'
+                      ? SPACING.lg
+                      : Math.max(20, insets.bottom),
+                  paddingTop:
+                    Platform.OS === 'web'
+                      ? styles.featuresScrollContent.paddingTop
+                      : 20 + insets.top,
+                },
+              ]}
               showsVerticalScrollIndicator={false}
             >
               <Text style={styles.screenTitle}>How to use StackMap</Text>
-              
+
               {syncEnabled && (
-                <View style={{ marginBottom: SPACING.lg, alignItems: 'center' }}>
+                <View
+                  style={{ marginBottom: SPACING.lg, alignItems: 'center' }}
+                >
                   <SyncStatusIndicator theme={THEMES.stackBlue} />
                 </View>
               )}
-              
+
               {importSuccessful && (
-                <View style={{ marginBottom: SPACING.lg, alignItems: 'center' }}>
+                <View
+                  style={{ marginBottom: SPACING.lg, alignItems: 'center' }}
+                >
                   <View style={styles.successBanner}>
-                    <Icon name="check-circle" size={20} color={THEMES.stackBlue.primary} />
-                    <Text style={styles.successText}>Data imported successfully!</Text>
+                    <Icon
+                      name="check-circle"
+                      size={20}
+                      color={THEMES.stackBlue.primary}
+                    />
+                    <Text style={styles.successText}>
+                      Data imported successfully!
+                    </Text>
                   </View>
                 </View>
               )}
-              
-              <View style={(Platform.OS === 'web' && !isMobileWeb()) ? styles.desktopFeatureLayout : null}>
-              <View style={[styles.controlsRow, (Platform.OS === 'web' && !isMobileWeb()) && styles.controlsRowDesktop]}>
-                {features.map((feature, index) => (
-                  <TouchableOpacity
-                    key={feature.id}
-                    style={styles.fabItem}
-                    onPress={() => setActiveFeature(index)}
-                  >
-                    {feature.icon ? (
-                      <View style={[
-                        styles.whiteFab,
-                        activeFeature === index && styles.activeFab
-                      ]}>
-                        <Icon 
-                          name={feature.icon} 
-                          size={Platform.OS === 'web' ? 28 : (isTablet() ? 44 : 28)} 
-                          color={activeFeature === index ? 'white' : THEMES.stackBlue.primary} 
-                        />
-                      </View>
-                    ) : (
-                      <View style={[
-                        styles.userPill,
-                        activeFeature === index && styles.activeUserPill
-                      ]}>
-                        <Text style={styles.pillEmoji}>{users[0]?.icon || DEFAULT_USER_ICON}</Text>
-                        <Text style={[
-                          styles.pillName,
-                          activeFeature === index && styles.activePillName
-                        ]}>{users[0]?.name || 'User'}</Text>
-                      </View>
-                    )}
-                    <Text style={[
-                      styles.fabLabel,
-                      activeFeature === index && styles.activeFabLabel
-                    ]}>{feature.id === 'user' ? 'User' : feature.title}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
 
-              <View style={styles.featureDetailsWrapper}>
-                <Animated.View 
+              <View
+                style={
+                  Platform.OS === 'web' && !isMobileWeb()
+                    ? styles.desktopFeatureLayout
+                    : null
+                }
+              >
+                <View
                   style={[
-                    styles.featureDetails,
-                    { opacity: featureFadeAnim }
+                    styles.controlsRow,
+                    Platform.OS === 'web' &&
+                      !isMobileWeb() &&
+                      styles.controlsRowDesktop,
                   ]}
                 >
-                  <Text style={styles.featureTitle}>{currentFeature.title}</Text>
-                  <View style={styles.bulletList}>
-                    {currentFeature.bullets.map((bullet, index) => (
-                      <View key={index} style={styles.bulletRow}>
-                        <Text style={styles.bulletPoint}>•</Text>
-                        <Text style={styles.bulletText}>{bullet}</Text>
-                      </View>
-                    ))}
-                  </View>
-                </Animated.View>
-              </View>
+                  {features.map((feature, index) => (
+                    <TouchableOpacity
+                      key={feature.id}
+                      style={styles.fabItem}
+                      onPress={() => setActiveFeature(index)}
+                    >
+                      {feature.icon ? (
+                        <View
+                          style={[
+                            styles.whiteFab,
+                            activeFeature === index && styles.activeFab,
+                          ]}
+                        >
+                          <Icon
+                            name={feature.icon}
+                            size={
+                              Platform.OS === 'web' ? 28 : isTablet() ? 44 : 28
+                            }
+                            color={
+                              activeFeature === index
+                                ? 'white'
+                                : THEMES.stackBlue.primary
+                            }
+                          />
+                        </View>
+                      ) : (
+                        <View
+                          style={[
+                            styles.userPill,
+                            activeFeature === index && styles.activeUserPill,
+                          ]}
+                        >
+                          <Text style={styles.pillEmoji}>
+                            {users[0]?.icon || DEFAULT_USER_ICON}
+                          </Text>
+                          <Text
+                            style={[
+                              styles.pillName,
+                              activeFeature === index && styles.activePillName,
+                            ]}
+                          >
+                            {users[0]?.name || 'User'}
+                          </Text>
+                        </View>
+                      )}
+                      <Text
+                        style={[
+                          styles.fabLabel,
+                          activeFeature === index && styles.activeFabLabel,
+                        ]}
+                      >
+                        {feature.id === 'user' ? 'User' : feature.title}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <View style={styles.featureDetailsWrapper}>
+                  <Animated.View
+                    style={[
+                      styles.featureDetails,
+                      { opacity: featureFadeAnim },
+                    ]}
+                  >
+                    <Text style={styles.featureTitle}>
+                      {currentFeature.title}
+                    </Text>
+                    <View style={styles.bulletList}>
+                      {currentFeature.bullets.map((bullet, index) => (
+                        <View key={index} style={styles.bulletRow}>
+                          <Text style={styles.bulletPoint}>•</Text>
+                          <Text style={styles.bulletText}>{bullet}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </Animated.View>
+                </View>
               </View>
 
               <View style={styles.carouselIndicators}>
@@ -683,21 +846,21 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                     key={index}
                     style={[
                       styles.indicator,
-                      activeFeature === index && styles.activeIndicator
+                      activeFeature === index && styles.activeIndicator,
                     ]}
                   />
                 ))}
               </View>
 
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={() => {
                   if (isAbbreviated && syncEnabled) {
                     // For abbreviated onboarding with sync completed, finish
-                    onComplete({ 
-                      isAbbreviated: true, 
+                    onComplete({
+                      isAbbreviated: true,
                       syncSetupPhrase,
-                      syncCompleted: true 
+                      syncCompleted: true,
                     });
                   } else if (users.length > 0) {
                     // If we have imported users, complete onboarding
@@ -712,25 +875,40 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                 }}
               >
                 <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                  {isAbbreviated && syncEnabled ? 'Continue to StackMap' : 
-                   (users.length > 0 ? 'Continue to StackMap' : 'Create First User')}
+                  {isAbbreviated && syncEnabled
+                    ? 'Continue to StackMap'
+                    : users.length > 0
+                    ? 'Continue to StackMap'
+                    : 'Create First User'}
                 </Text>
               </TouchableOpacity>
 
               {!isAbbreviated && users.length > 0 && users.length < 3 && (
-                <TouchableOpacity 
-                  style={[styles.secondaryButton, { 
-                    marginTop: 12,
-                    paddingHorizontal: Platform.OS === 'web' ? 32 : 24,
-                    paddingVertical: Platform.OS === 'web' ? 14 : (Platform.OS === 'ios' ? 14 : 12),
-                    alignSelf: 'center',
-                    width: 'auto',
-                    maxWidth: 300,
-                    minWidth: Platform.OS === 'web' ? 150 : undefined,
-                  }]}
+                <TouchableOpacity
+                  style={[
+                    styles.secondaryButton,
+                    {
+                      marginTop: 12,
+                      paddingHorizontal: Platform.OS === 'web' ? 32 : 24,
+                      paddingVertical:
+                        Platform.OS === 'web'
+                          ? 14
+                          : Platform.OS === 'ios'
+                          ? 14
+                          : 12,
+                      alignSelf: 'center',
+                      width: 'auto',
+                      maxWidth: 300,
+                      minWidth: Platform.OS === 'web' ? 150 : undefined,
+                    },
+                  ]}
                   onPress={() => transitionTo('createUser')}
                 >
-                  <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Add Another User</Text>
+                  <Text
+                    style={[styles.buttonTextBase, styles.secondaryButtonText]}
+                  >
+                    Add Another User
+                  </Text>
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -740,84 +918,129 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
       case 'syncPreview':
         return (
           <View style={styles.container}>
-            <ScrollView 
-              style={styles.scrollContent} 
-              contentContainerStyle={[styles.syncContent, {
-                paddingBottom: Platform.OS === 'web' ? SPACING.xl : Math.max(20, insets.bottom),
-                paddingTop: Platform.OS === 'web' ? SPACING.xl : (20 + insets.top)
-              }]}
+            <ScrollView
+              style={styles.scrollContent}
+              contentContainerStyle={[
+                styles.syncContent,
+                {
+                  paddingBottom:
+                    Platform.OS === 'web'
+                      ? SPACING.xl
+                      : Math.max(20, insets.bottom),
+                  paddingTop:
+                    Platform.OS === 'web' ? SPACING.xl : 20 + insets.top,
+                },
+              ]}
               showsVerticalScrollIndicator={false}
             >
-              <Logo size={isTablet() ? 50 : 40} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
+              <Logo
+                size={isTablet() ? 50 : 40}
+                theme={{ primary: THEMES.stackBlue.primary }}
+                color={THEMES.stackBlue.primary}
+              />
               <Text style={styles.screenTitle}>Sync Data Preview</Text>
-              
+
               {syncPreviewData && syncPreviewData.hasData ? (
                 <>
                   <Text style={styles.screenSubtitle}>
                     You're about to join a sync group with the following data:
                   </Text>
-                  
+
                   <View style={styles.syncPreviewContainer}>
                     <View style={styles.syncPreviewSection}>
                       <Text style={styles.syncPreviewTitle}>Users</Text>
-                      {Object.entries(syncPreviewData.users).map(([userId, user]) => (
-                        <View key={userId} style={styles.syncPreviewUser}>
-                          <Text style={styles.syncPreviewEmoji}>{user.icon}</Text>
-                          <View style={styles.syncPreviewUserInfo}>
-                            <Text style={styles.syncPreviewUserName}>{user.name}</Text>
-                            <Text style={styles.syncPreviewUserActivities}>
-                              {user.activityCount} {user.activityCount === 1 ? 'activity' : 'activities'}
+                      {Object.entries(syncPreviewData.users).map(
+                        ([userId, user]) => (
+                          <View key={userId} style={styles.syncPreviewUser}>
+                            <Text style={styles.syncPreviewEmoji}>
+                              {user.icon}
                             </Text>
+                            <View style={styles.syncPreviewUserInfo}>
+                              <Text style={styles.syncPreviewUserName}>
+                                {user.name}
+                              </Text>
+                              <Text style={styles.syncPreviewUserActivities}>
+                                {user.activityCount}{' '}
+                                {user.activityCount === 1
+                                  ? 'activity'
+                                  : 'activities'}
+                              </Text>
+                            </View>
                           </View>
-                        </View>
-                      ))}
+                        ),
+                      )}
                     </View>
-                    
+
                     <View style={styles.syncPreviewSummary}>
-                      <Icon name="info" size={20} color={THEMES.stackBlue.primary} />
+                      <Icon
+                        name="info"
+                        size={20}
+                        color={THEMES.stackBlue.primary}
+                      />
                       <Text style={styles.syncPreviewSummaryText}>
-                        Total: {Object.keys(syncPreviewData.users).length} user{Object.keys(syncPreviewData.users).length !== 1 ? 's' : ''}, {syncPreviewData.totalActivities} {syncPreviewData.totalActivities === 1 ? 'activity' : 'activities'}
+                        Total: {Object.keys(syncPreviewData.users).length} user
+                        {Object.keys(syncPreviewData.users).length !== 1
+                          ? 's'
+                          : ''}
+                        , {syncPreviewData.totalActivities}{' '}
+                        {syncPreviewData.totalActivities === 1
+                          ? 'activity'
+                          : 'activities'}
                       </Text>
                     </View>
-                    
+
                     {syncPreviewData.activityLibraryCount > 0 && (
                       <View style={styles.syncPreviewLibrary}>
-                        <Icon name="library-books" size={20} color={THEMES.stackBlue.primary} />
+                        <Icon
+                          name="library-books"
+                          size={20}
+                          color={THEMES.stackBlue.primary}
+                        />
                         <Text style={styles.syncPreviewLibraryText}>
-                          Activity Library: {syncPreviewData.activityLibraryCount} {syncPreviewData.activityLibraryCount === 1 ? 'item' : 'items'}
+                          Activity Library:{' '}
+                          {syncPreviewData.activityLibraryCount}{' '}
+                          {syncPreviewData.activityLibraryCount === 1
+                            ? 'item'
+                            : 'items'}
                         </Text>
                       </View>
                     )}
                   </View>
-                  
+
                   <View style={styles.syncWarning}>
                     <Icon name="warning" size={20} color="#ff9800" />
                     <Text style={styles.syncWarningText}>
                       Joining this sync will replace any existing local data
                     </Text>
                   </View>
-                  
-                  <TouchableOpacity 
-                    style={[styles.primaryButton, syncLoading && styles.disabledButton]}
+
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryButton,
+                      syncLoading && styles.disabledButton,
+                    ]}
                     onPress={async () => {
                       setSyncLoading(true);
                       try {
                         // Initialize with the recovery phrase
                         await syncService.initialize(syncSetupPhrase);
-                        
+
                         // Check if sync restored users
                         const { useAppStore } = require('../../stores');
                         const fullState = useAppStore.getState();
                         const syncedUsers = fullState.users;
-                        
+
                         // State restored from sync
 
-                        if (syncedUsers && Object.keys(syncedUsers).length > 0) {
+                        if (
+                          syncedUsers &&
+                          Object.keys(syncedUsers).length > 0
+                        ) {
                           // Users already exist from sync
                           const userList = Object.values(syncedUsers);
                           setUsers(userList);
                           setSyncEnabled(true);
-                          
+
                           // Wait a moment for store to fully update
                           setTimeout(() => {
                             setSyncLoading(false);
@@ -834,15 +1057,22 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                       } catch (error) {
                         console.error('Sync join error:', error);
                         setSyncLoading(false);
-                        
+
                         // Show a more user-friendly error in a small banner
                         if (Platform.OS === 'web') {
-                          setSyncError('Sync completed with warnings. Some data may need review.');
+                          setSyncError(
+                            'Sync completed with warnings. Some data may need review.',
+                          );
                         } else {
                           Alert.alert(
                             'Sync Notice',
                             'Sync completed successfully. Some data was automatically repaired.',
-                            [{ text: 'OK', onPress: () => transitionTo('features') }]
+                            [
+                              {
+                                text: 'OK',
+                                onPress: () => transitionTo('features'),
+                              },
+                            ],
                           );
                         }
                       }
@@ -852,11 +1082,18 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                     {syncLoading ? (
                       <ActivityIndicator size="small" color="white" />
                     ) : (
-                      <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Join Sync Group</Text>
+                      <Text
+                        style={[
+                          styles.buttonTextBase,
+                          styles.primaryButtonText,
+                        ]}
+                      >
+                        Join Sync Group
+                      </Text>
                     )}
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={styles.secondaryButton}
                     onPress={() => {
                       setShowSyncPreview(false);
@@ -865,7 +1102,14 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                       onComplete({ isAbbreviated: true });
                     }}
                   >
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip</Text>
+                    <Text
+                      style={[
+                        styles.buttonTextBase,
+                        styles.secondaryButtonText,
+                      ]}
+                    >
+                      Skip
+                    </Text>
                   </TouchableOpacity>
                 </>
               ) : (
@@ -873,8 +1117,8 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                   <Text style={styles.screenSubtitle}>
                     No data found in this sync group
                   </Text>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={styles.secondaryButton}
                     onPress={() => {
                       setShowSyncPreview(false);
@@ -883,7 +1127,14 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                       onComplete({ isAbbreviated: true });
                     }}
                   >
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip</Text>
+                    <Text
+                      style={[
+                        styles.buttonTextBase,
+                        styles.secondaryButtonText,
+                      ]}
+                    >
+                      Skip
+                    </Text>
                   </TouchableOpacity>
                 </>
               )}
@@ -895,36 +1146,39 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
         const handleSyncSetup = async () => {
           setSyncLoading(true);
           setSyncError('');
-          
+
           try {
-            const syncService = require('../../services/sync/syncService').default;
-            
+            const syncService =
+              require('../../services/sync/syncService').default;
+
             // First check if this is an existing sync group
-            const syncId = await syncService.generateSyncId(recoveryInput.trim());
+            const syncId = await syncService.generateSyncId(
+              recoveryInput.trim(),
+            );
             const deviceId = await syncService.encryptionService.getDeviceId();
-            
+
             // Try to fetch existing sync data
             const checkUrl = `${syncService.getApiUrl()}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
             const checkResponse = await fetch(checkUrl);
-            
+
             if (checkResponse.status === 404) {
               // Sync group doesn't exist - invalid sync key for joining
               throw new Error('Invalid sync key - no sync group found');
             }
-            
+
             // Now initialize with the recovery phrase
             await syncService.initialize(recoveryInput.trim());
-            
+
             // Check if sync restored users
             const { useAppStore } = require('../../stores');
             const syncedUsers = useAppStore.getState().users;
-            
+
             if (syncedUsers && Object.keys(syncedUsers).length > 0) {
               // Users already exist from sync, skip user creation
               const userList = Object.values(syncedUsers);
               setUsers(userList);
               setSyncEnabled(true);
-              
+
               // For abbreviated onboarding, go through features before completing
               if (isAbbreviated) {
                 transitionTo('features');
@@ -942,9 +1196,13 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
             if (error.message.includes('Invalid sync key')) {
               setSyncError('Invalid sync key. Please check and try again.');
             } else if (error.message.includes('Network')) {
-              setSyncError('Network error. Please check your connection and try again.');
+              setSyncError(
+                'Network error. Please check your connection and try again.',
+              );
             } else {
-              setSyncError(error.message || 'Failed to join sync. Please try again.');
+              setSyncError(
+                error.message || 'Failed to join sync. Please try again.',
+              );
             }
           } finally {
             setSyncLoading(false);
@@ -955,14 +1213,14 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
         const createNewSync = async () => {
           setSyncLoading(true);
           setSyncError('');
-          
+
           try {
             // Generate recovery phrase
             const recoveryPhrase = encryptionService.generateRecoveryPhrase();
-            
+
             // Generate sync ID from recovery phrase
             const syncId = await syncService.generateSyncId(recoveryPhrase);
-            
+
             setNewSyncData({
               recoveryPhrase,
               syncId,
@@ -986,42 +1244,64 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
         const handleVisitSupport = () => {
           Linking.openURL('https://stackmap.app?supportus');
         };
-        
+
         return (
           <View style={styles.container}>
-            <KeyboardAvoidingView 
+            <KeyboardAvoidingView
               behavior={Platform.OS === 'ios' ? 'padding' : undefined}
               style={{ flex: 1 }}
               keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
             >
-              <ScrollView 
-                style={styles.scrollContent} 
-                contentContainerStyle={[styles.syncContent, {
-                  paddingBottom: Platform.OS === 'web' ? SPACING.xl : Math.max(20, insets.bottom),
-                  paddingTop: Platform.OS === 'web' ? SPACING.xl : (20 + insets.top)
-                }]}
+              <ScrollView
+                style={styles.scrollContent}
+                contentContainerStyle={[
+                  styles.syncContent,
+                  {
+                    paddingBottom:
+                      Platform.OS === 'web'
+                        ? SPACING.xl
+                        : Math.max(20, insets.bottom),
+                    paddingTop:
+                      Platform.OS === 'web' ? SPACING.xl : 20 + insets.top,
+                  },
+                ]}
                 showsVerticalScrollIndicator={false}
                 keyboardShouldPersistTaps="handled"
               >
-                <Logo size={isTablet() ? 50 : 40} theme={{ primary: THEMES.stackBlue.primary }} color={THEMES.stackBlue.primary} />
+                <Logo
+                  size={isTablet() ? 50 : 40}
+                  theme={{ primary: THEMES.stackBlue.primary }}
+                  color={THEMES.stackBlue.primary}
+                />
                 <Text style={styles.screenTitle}>Sync Your StackMap</Text>
-                
+
                 {/* Sync Mode Toggle */}
                 <View style={styles.syncModeToggle}>
-                  <TouchableOpacity 
-                    style={[styles.syncModeButton, syncMode === 'join' && styles.syncModeButtonActive]}
+                  <TouchableOpacity
+                    style={[
+                      styles.syncModeButton,
+                      syncMode === 'join' && styles.syncModeButtonActive,
+                    ]}
                     onPress={() => {
                       setSyncMode('join');
                       setSyncError('');
                     }}
                   >
-                    <Text style={[styles.syncModeButtonText, syncMode === 'join' && styles.syncModeButtonTextActive]}>
+                    <Text
+                      style={[
+                        styles.syncModeButtonText,
+                        syncMode === 'join' && styles.syncModeButtonTextActive,
+                      ]}
+                    >
                       Join Existing Sync
                     </Text>
                   </TouchableOpacity>
                   {Platform.OS === 'web' && (
-                    <TouchableOpacity 
-                      style={[styles.syncModeButton, syncMode === 'create' && styles.syncModeButtonActive]}
+                    <TouchableOpacity
+                      style={[
+                        styles.syncModeButton,
+                        syncMode === 'create' && styles.syncModeButtonActive,
+                      ]}
                       onPress={() => {
                         setSyncMode('create');
                         setSyncError('');
@@ -1030,7 +1310,13 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                         }
                       }}
                     >
-                      <Text style={[styles.syncModeButtonText, syncMode === 'create' && styles.syncModeButtonTextActive]}>
+                      <Text
+                        style={[
+                          styles.syncModeButtonText,
+                          syncMode === 'create' &&
+                            styles.syncModeButtonTextActive,
+                        ]}
+                      >
                         Create New Sync
                       </Text>
                     </TouchableOpacity>
@@ -1038,108 +1324,166 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                 </View>
 
                 <Text style={styles.screenSubtitle}>
-                  {Platform.OS === 'web' 
-                    ? (syncMode === 'join' ? 'Connect to your existing sync group' : 'Create a sync key for your device')
-                    : 'Connect to your existing sync group'
-                  }
+                  {Platform.OS === 'web'
+                    ? syncMode === 'join'
+                      ? 'Connect to your existing sync group'
+                      : 'Create a sync key for your device'
+                    : 'Connect to your existing sync group'}
                 </Text>
-                
-                {(Platform.OS !== 'web' || syncMode === 'join') ? (
+
+                {Platform.OS !== 'web' || syncMode === 'join' ? (
                   <>
                     <View style={styles.syncFeatures}>
-                  <View style={styles.syncFeature}>
-                    <View style={styles.syncFeatureIcon}>
-                      <Icon name="lock" size={20} color={THEMES.stackBlue.primary} />
+                      <View style={styles.syncFeature}>
+                        <View style={styles.syncFeatureIcon}>
+                          <Icon
+                            name="lock"
+                            size={20}
+                            color={THEMES.stackBlue.primary}
+                          />
+                        </View>
+                        <Text style={styles.syncFeatureText}>
+                          End-to-end encrypted
+                        </Text>
+                      </View>
+                      <View style={styles.syncFeature}>
+                        <View style={styles.syncFeatureIcon}>
+                          <Icon
+                            name="sync"
+                            size={20}
+                            color={THEMES.stackBlue.primary}
+                          />
+                        </View>
+                        <Text style={styles.syncFeatureText}>
+                          Automatic sync
+                        </Text>
+                      </View>
+                      <View style={styles.syncFeature}>
+                        <View style={styles.syncFeatureIcon}>
+                          <Icon
+                            name="devices"
+                            size={20}
+                            color={THEMES.stackBlue.primary}
+                          />
+                        </View>
+                        <Text style={styles.syncFeatureText}>
+                          Multi-device support
+                        </Text>
+                      </View>
                     </View>
-                    <Text style={styles.syncFeatureText}>End-to-end encrypted</Text>
-                  </View>
-                  <View style={styles.syncFeature}>
-                    <View style={styles.syncFeatureIcon}>
-                      <Icon name="sync" size={20} color={THEMES.stackBlue.primary} />
+
+                    <View style={styles.formSection}>
+                      <Text style={styles.inputLabel}>Recovery Phrase</Text>
+                      <TextInput
+                        style={[
+                          styles.textInput,
+                          {
+                            fontSize: isTablet() ? 16 : 14,
+                            borderColor: syncError
+                              ? COLORS.error
+                              : COLORS.gray[300],
+                          },
+                        ]}
+                        placeholder="Enter your sync key"
+                        placeholderTextColor={COLORS.gray[400]}
+                        value={recoveryInput}
+                        onChangeText={text => {
+                          setRecoveryInput(text);
+                          if (syncError) setSyncError(''); // Clear error when typing
+                        }}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoFocus={Platform.OS === 'web'}
+                      />
+                      {syncError ? (
+                        <View style={styles.errorBanner}>
+                          <Icon name="info" size={16} color="#856404" />
+                          <Text style={styles.errorBannerText}>
+                            {syncError}
+                          </Text>
+                        </View>
+                      ) : null}
                     </View>
-                    <Text style={styles.syncFeatureText}>Automatic sync</Text>
-                  </View>
-                  <View style={styles.syncFeature}>
-                    <View style={styles.syncFeatureIcon}>
-                      <Icon name="devices" size={20} color={THEMES.stackBlue.primary} />
+
+                    <View style={styles.buttonGroup}>
+                      <TouchableOpacity
+                        style={[
+                          styles.primaryButton,
+                          syncLoading && styles.disabledButton,
+                        ]}
+                        onPress={() => {
+                          if (isAbbreviated && syncSetupPhrase) {
+                            // For sync URLs, fetch preview first
+                            fetchSyncPreview();
+                          } else {
+                            // For manual entry, join directly
+                            handleSyncSetup();
+                          }
+                        }}
+                        disabled={syncLoading || !recoveryInput.trim()}
+                      >
+                        {syncLoading ? (
+                          <ActivityIndicator size="small" color="white" />
+                        ) : (
+                          <Text
+                            style={[
+                              styles.buttonTextBase,
+                              styles.primaryButtonText,
+                            ]}
+                          >
+                            {isAbbreviated && syncSetupPhrase
+                              ? 'Preview Sync'
+                              : 'Join Sync'}
+                          </Text>
+                        )}
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.secondaryButton}
+                        onPress={() =>
+                          transitionTo(isAbbreviated ? 'features' : 'welcome')
+                        }
+                      >
+                        <Text
+                          style={[
+                            styles.buttonTextBase,
+                            styles.secondaryButtonText,
+                          ]}
+                        >
+                          Back
+                        </Text>
+                      </TouchableOpacity>
                     </View>
-                    <Text style={styles.syncFeatureText}>Multi-device support</Text>
-                  </View>
-                </View>
-                
-                <View style={styles.formSection}>
-                  <Text style={styles.inputLabel}>Recovery Phrase</Text>
-                  <TextInput
-                    style={[styles.textInput, { 
-                      fontSize: isTablet() ? 16 : 14,
-                      borderColor: syncError ? COLORS.error : COLORS.gray[300],
-                    }]}
-                    placeholder="Enter your sync key"
-                    placeholderTextColor={COLORS.gray[400]}
-                    value={recoveryInput}
-                    onChangeText={(text) => {
-                      setRecoveryInput(text);
-                      if (syncError) setSyncError(''); // Clear error when typing
-                    }}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    autoFocus={Platform.OS === 'web'}
-                  />
-                  {syncError ? (
-                    <View style={styles.errorBanner}>
-                      <Icon name="info" size={16} color="#856404" />
-                      <Text style={styles.errorBannerText}>{syncError}</Text>
-                    </View>
-                  ) : null}
-                </View>
-                
-                <View style={styles.buttonGroup}>
-                  <TouchableOpacity 
-                    style={[styles.primaryButton, syncLoading && styles.disabledButton]}
-                    onPress={() => {
-                      if (isAbbreviated && syncSetupPhrase) {
-                        // For sync URLs, fetch preview first
-                        fetchSyncPreview();
-                      } else {
-                        // For manual entry, join directly
-                        handleSyncSetup();
-                      }
-                    }}
-                    disabled={syncLoading || !recoveryInput.trim()}
-                  >
-                    {syncLoading ? (
-                      <ActivityIndicator size="small" color="white" />
-                    ) : (
-                      <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
-                        {isAbbreviated && syncSetupPhrase ? 'Preview Sync' : 'Join Sync'}
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={styles.secondaryButton}
-                    onPress={() => transitionTo(isAbbreviated ? 'features' : 'welcome')}
-                  >
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
-                  </TouchableOpacity>
-                </View>
                   </>
                 ) : (
                   <>
                     {/* Create New Sync Content */}
                     {syncLoading ? (
                       <View style={styles.loadingContainer}>
-                        <ActivityIndicator size="large" color={THEMES.stackBlue.primary} />
-                        <Text style={[styles.loadingText, { color: defaultTheme.text }]}>
+                        <ActivityIndicator
+                          size="large"
+                          color={THEMES.stackBlue.primary}
+                        />
+                        <Text
+                          style={[
+                            styles.loadingText,
+                            { color: defaultTheme.text },
+                          ]}
+                        >
                           Creating sync key...
                         </Text>
                       </View>
                     ) : syncError ? (
                       <View style={styles.errorContainer}>
                         <Icon name="error-outline" size={48} color="#e53e3e" />
-                        <Text style={[styles.errorText, { color: '#e53e3e' }]}>{syncError}</Text>
-                        <TouchableOpacity 
-                          style={[styles.retryButton, { backgroundColor: THEMES.stackBlue.primary }]}
+                        <Text style={[styles.errorText, { color: '#e53e3e' }]}>
+                          {syncError}
+                        </Text>
+                        <TouchableOpacity
+                          style={[
+                            styles.retryButton,
+                            { backgroundColor: THEMES.stackBlue.primary },
+                          ]}
                           onPress={createNewSync}
                         >
                           <Text style={styles.retryButtonText}>Try Again</Text>
@@ -1147,8 +1491,14 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                       </View>
                     ) : newSyncData ? (
                       <>
-                        <Text style={[styles.description, { color: defaultTheme.text }]}>
-                          Use this sync key on your device to connect your existing StackMap data to the cloud.
+                        <Text
+                          style={[
+                            styles.description,
+                            { color: defaultTheme.text },
+                          ]}
+                        >
+                          Use this sync key on your device to connect your
+                          existing StackMap data to the cloud.
                         </Text>
 
                         {/* QR Code */}
@@ -1162,15 +1512,33 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                         </View>
 
                         {/* Recovery Phrase */}
-                        <View style={[styles.codeContainer, { backgroundColor: defaultTheme.card || '#f5f5f5' }]}>
-                          <Text style={[styles.codeLabel, { color: defaultTheme.textSecondary || '#666' }]}>
+                        <View
+                          style={[
+                            styles.codeContainer,
+                            { backgroundColor: defaultTheme.card || '#f5f5f5' },
+                          ]}
+                        >
+                          <Text
+                            style={[
+                              styles.codeLabel,
+                              { color: defaultTheme.textSecondary || '#666' },
+                            ]}
+                          >
                             Sync Code
                           </Text>
-                          <Text style={[styles.codeText, { color: defaultTheme.text }]}>
+                          <Text
+                            style={[
+                              styles.codeText,
+                              { color: defaultTheme.text },
+                            ]}
+                          >
                             {newSyncData.recoveryPhrase}
                           </Text>
                           <TouchableOpacity
-                            style={[styles.copyButton, { backgroundColor: THEMES.stackBlue.primary }]}
+                            style={[
+                              styles.copyButton,
+                              { backgroundColor: THEMES.stackBlue.primary },
+                            ]}
                             onPress={handleCopyCode}
                           >
                             <Icon name="content-copy" size={18} color="white" />
@@ -1180,24 +1548,65 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
 
                         {/* Instructions */}
                         <View style={styles.instructionsContainer}>
-                          <Text style={[styles.instructionsTitle, { color: defaultTheme.text }]}>
+                          <Text
+                            style={[
+                              styles.instructionsTitle,
+                              { color: defaultTheme.text },
+                            ]}
+                          >
                             How to sync your device:
                           </Text>
                           <View style={styles.instructionItem}>
-                            <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>1</Text>
-                            <Text style={[styles.instructionText, { color: defaultTheme.text }]}>
+                            <Text
+                              style={[
+                                styles.instructionNumber,
+                                { color: THEMES.stackBlue.primary },
+                              ]}
+                            >
+                              1
+                            </Text>
+                            <Text
+                              style={[
+                                styles.instructionText,
+                                { color: defaultTheme.text },
+                              ]}
+                            >
                               Open StackMap on your device
                             </Text>
                           </View>
                           <View style={styles.instructionItem}>
-                            <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>2</Text>
-                            <Text style={[styles.instructionText, { color: defaultTheme.text }]}>
+                            <Text
+                              style={[
+                                styles.instructionNumber,
+                                { color: THEMES.stackBlue.primary },
+                              ]}
+                            >
+                              2
+                            </Text>
+                            <Text
+                              style={[
+                                styles.instructionText,
+                                { color: defaultTheme.text },
+                              ]}
+                            >
                               Go to Settings → Data Management
                             </Text>
                           </View>
                           <View style={styles.instructionItem}>
-                            <Text style={[styles.instructionNumber, { color: THEMES.stackBlue.primary }]}>3</Text>
-                            <Text style={[styles.instructionText, { color: defaultTheme.text }]}>
+                            <Text
+                              style={[
+                                styles.instructionNumber,
+                                { color: THEMES.stackBlue.primary },
+                              ]}
+                            >
+                              3
+                            </Text>
+                            <Text
+                              style={[
+                                styles.instructionText,
+                                { color: defaultTheme.text },
+                              ]}
+                            >
                               Enable Sync and enter this code
                             </Text>
                           </View>
@@ -1205,33 +1614,65 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
 
                         {/* Support Button */}
                         <TouchableOpacity
-                          style={[styles.supportButton, { backgroundColor: THEMES.stackBlue.primary }]}
+                          style={[
+                            styles.supportButton,
+                            { backgroundColor: THEMES.stackBlue.primary },
+                          ]}
                           onPress={handleVisitSupport}
                         >
                           <Icon name="favorite" size={20} color="white" />
-                          <Text style={styles.supportButtonText}>Support StackMap</Text>
+                          <Text style={styles.supportButtonText}>
+                            Support StackMap
+                          </Text>
                         </TouchableOpacity>
 
-                        <Text style={[styles.supportText, { color: defaultTheme.textSecondary || '#666' }]}>
+                        <Text
+                          style={[
+                            styles.supportText,
+                            { color: defaultTheme.textSecondary || '#666' },
+                          ]}
+                        >
                           Your contributions help us provide:
                         </Text>
                         <View style={styles.contributionList}>
-                          <Text style={[styles.contributionItem, { color: defaultTheme.textSecondary || '#666' }]}>
+                          <Text
+                            style={[
+                              styles.contributionItem,
+                              { color: defaultTheme.textSecondary || '#666' },
+                            ]}
+                          >
                             • Free sync service for all families
                           </Text>
-                          <Text style={[styles.contributionItem, { color: defaultTheme.textSecondary || '#666' }]}>
+                          <Text
+                            style={[
+                              styles.contributionItem,
+                              { color: defaultTheme.textSecondary || '#666' },
+                            ]}
+                          >
                             • Ongoing development & improvements
                           </Text>
-                          <Text style={[styles.contributionItem, { color: defaultTheme.textSecondary || '#666' }]}>
+                          <Text
+                            style={[
+                              styles.contributionItem,
+                              { color: defaultTheme.textSecondary || '#666' },
+                            ]}
+                          >
                             • Server costs for data storage
                           </Text>
                         </View>
 
-                        <TouchableOpacity 
+                        <TouchableOpacity
                           style={styles.secondaryButton}
                           onPress={() => transitionTo('welcome')}
                         >
-                          <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Back</Text>
+                          <Text
+                            style={[
+                              styles.buttonTextBase,
+                              styles.secondaryButtonText,
+                            ]}
+                          >
+                            Back
+                          </Text>
                         </TouchableOpacity>
                       </>
                     ) : null}
@@ -1241,7 +1682,12 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                 {/* Toast */}
                 {showCopiedToast && (
                   <View style={styles.toastContainer}>
-                    <View style={[styles.toast, { backgroundColor: THEMES.stackBlue.primary }]}>
+                    <View
+                      style={[
+                        styles.toast,
+                        { backgroundColor: THEMES.stackBlue.primary },
+                      ]}
+                    >
                       <Icon name="check" size={20} color="white" />
                       <Text style={styles.toastText}>Copied to clipboard!</Text>
                     </View>
@@ -1272,18 +1718,27 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
             setPinError('PINs do not match');
           }
         };
-        
+
         return (
-          <KeyboardAvoidingView 
+          <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             style={{ flex: 1 }}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 0}
           >
-            <ScrollView 
-              contentContainerStyle={[styles.createUserScrollContainer, {
-                paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-                paddingBottom: Platform.OS === 'web' ? SPACING.xxl : Math.max(SPACING.xxl, insets.bottom)
-              }]}
+            <ScrollView
+              contentContainerStyle={[
+                styles.createUserScrollContainer,
+                {
+                  paddingTop:
+                    Platform.OS === 'web'
+                      ? SPACING.xxl
+                      : SPACING.xxl + insets.top,
+                  paddingBottom:
+                    Platform.OS === 'web'
+                      ? SPACING.xxl
+                      : Math.max(SPACING.xxl, insets.bottom),
+                },
+              ]}
               keyboardShouldPersistTaps="handled"
               showsVerticalScrollIndicator={false}
             >
@@ -1293,19 +1748,33 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                   <Text style={styles.screenSubtitle}>
                     Set up a 4-digit PIN to protect your edit mode
                   </Text>
-                  <Text style={[styles.screenSubtitle, { fontSize: 14, marginTop: -10 }]}>
+                  <Text
+                    style={[
+                      styles.screenSubtitle,
+                      { fontSize: 14, marginTop: -10 },
+                    ]}
+                  >
                     This is optional but recommended
                   </Text>
-                  
-                  <View style={[styles.formSection, { paddingHorizontal: 0, marginTop: 60 }]}>
+
+                  <View
+                    style={[
+                      styles.formSection,
+                      { paddingHorizontal: 0, marginTop: 60 },
+                    ]}
+                  >
                     <View style={{ alignItems: 'center', width: '100%' }}>
-                      <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Create PIN</Text>
+                      <Text
+                        style={[styles.inputLabel, { textAlign: 'center' }]}
+                      >
+                        Create PIN
+                      </Text>
                       <TextInput
                         style={styles.pinInput}
                         placeholder="• • • •"
                         placeholderTextColor={COLORS.gray[400]}
                         value={pin}
-                        onChangeText={(text) => {
+                        onChangeText={text => {
                           setPinError('');
                           setPin(text.replace(/\D/g, ''));
                         }}
@@ -1315,15 +1784,25 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                         autoFocus
                       />
                     </View>
-                    
-                    <View style={{ alignItems: 'center', marginTop: 20, width: '100%' }}>
-                      <Text style={[styles.inputLabel, { textAlign: 'center' }]}>Confirm PIN</Text>
+
+                    <View
+                      style={{
+                        alignItems: 'center',
+                        marginTop: 20,
+                        width: '100%',
+                      }}
+                    >
+                      <Text
+                        style={[styles.inputLabel, { textAlign: 'center' }]}
+                      >
+                        Confirm PIN
+                      </Text>
                       <TextInput
                         style={styles.pinInput}
                         placeholder="• • • •"
                         placeholderTextColor={COLORS.gray[400]}
                         value={confirmPin}
-                        onChangeText={(text) => {
+                        onChangeText={text => {
                           setPinError('');
                           setConfirmPin(text.replace(/\D/g, ''));
                         }}
@@ -1332,25 +1811,31 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                         maxLength={4}
                       />
                     </View>
-                    
+
                     {pinError ? (
                       <Text style={styles.errorText}>{pinError}</Text>
                     ) : null}
                   </View>
                 </View>
-                
+
                 <View>
-                  <TouchableOpacity 
-                    style={[styles.primaryButton, (!pin || pin.length < 4 || !confirmPin) && styles.disabledButton]}
+                  <TouchableOpacity
+                    style={[
+                      styles.primaryButton,
+                      (!pin || pin.length < 4 || !confirmPin) &&
+                        styles.disabledButton,
+                    ]}
                     onPress={handlePinSetup}
                     disabled={!pin || pin.length < 4 || !confirmPin}
                   >
-                    <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
+                    <Text
+                      style={[styles.buttonTextBase, styles.primaryButtonText]}
+                    >
                       Set PIN
                     </Text>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
+
+                  <TouchableOpacity
                     style={[styles.secondaryButton, { marginTop: 10 }]}
                     onPress={() => {
                       setPin('');
@@ -1358,7 +1843,14 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
                       transitionTo('complete');
                     }}
                   >
-                    <Text style={[styles.buttonTextBase, styles.secondaryButtonText]}>Skip for Now</Text>
+                    <Text
+                      style={[
+                        styles.buttonTextBase,
+                        styles.secondaryButtonText,
+                      ]}
+                    >
+                      Skip for Now
+                    </Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -1368,19 +1860,35 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
 
       case 'complete':
         return (
-          <View style={[styles.completeContainer, {
-            paddingTop: Platform.OS === 'web' ? SPACING.xxl : (SPACING.xxl + insets.top),
-            paddingBottom: Platform.OS === 'web' ? SPACING.xxl : 
-              (isTablet() ? Math.max(80, SPACING.xxl + insets.bottom) : (SPACING.xxl + insets.bottom))
-          }]}>
+          <View
+            style={[
+              styles.completeContainer,
+              {
+                paddingTop:
+                  Platform.OS === 'web'
+                    ? SPACING.xxl
+                    : SPACING.xxl + insets.top,
+                paddingBottom:
+                  Platform.OS === 'web'
+                    ? SPACING.xxl
+                    : isTablet()
+                    ? Math.max(80, SPACING.xxl + insets.bottom)
+                    : SPACING.xxl + insets.bottom,
+              },
+            ]}
+          >
             <View style={styles.successIcon}>
-              <Icon name="check-circle" size={80} color={THEMES.stackBlue.primary} />
+              <Icon
+                name="check-circle"
+                size={80}
+                color={THEMES.stackBlue.primary}
+              />
             </View>
             <Text style={styles.screenTitle}>All set!</Text>
             <Text style={styles.completeText}>
               {users.length} user{users.length !== 1 ? 's' : ''} created
             </Text>
-            
+
             <View style={styles.usersList}>
               {users.map((user, index) => (
                 <View key={index} style={styles.userPill}>
@@ -1390,11 +1898,13 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
               ))}
             </View>
 
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.primaryButton}
               onPress={() => onComplete({ users, pin: pin || null })}
             >
-              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>Start Using StackMap</Text>
+              <Text style={[styles.buttonTextBase, styles.primaryButtonText]}>
+                Start Using StackMap
+              </Text>
             </TouchableOpacity>
           </View>
         );
@@ -1404,18 +1914,15 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`
   return (
     <View style={styles.container}>
       {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor="#f8f9fa"
-          barStyle="dark-content"
-        />
+        <StatusBar backgroundColor="#f8f9fa" barStyle="dark-content" />
       )}
-      <Animated.View 
+      <Animated.View
         style={[
           styles.content,
           {
             opacity: fadeAnim,
-            transform: [{ translateY: slideAnim }]
-          }
+            transform: [{ translateY: slideAnim }],
+          },
         ]}
       >
         {renderContent()}
@@ -1460,13 +1967,13 @@ const styles = StyleSheet.create({
     maxWidth: Platform.OS === 'web' ? 800 : '100%',
   },
   card: {
-    flex: (Platform.OS === 'web' && !isMobileWeb()) ? 1 : undefined,
+    flex: Platform.OS === 'web' && !isMobileWeb() ? 1 : undefined,
     backgroundColor: 'white',
     paddingVertical: Platform.OS === 'web' ? 20 : 16,
     paddingHorizontal: Platform.OS === 'web' ? 20 : 18,
     borderRadius: Platform.OS === 'android' ? 8 : 12,
     alignItems: 'center',
-    width: (Platform.OS === 'web' && !isMobileWeb()) ? undefined : '100%',
+    width: Platform.OS === 'web' && !isMobileWeb() ? undefined : '100%',
     ...SHADOWS.level2,
     elevation: Platform.OS === 'android' ? 2 : undefined,
   },
@@ -1532,7 +2039,7 @@ const styles = StyleSheet.create({
   buttonIcon: {
     marginRight: 6,
   },
-  
+
   // Original styles continue below
   container: {
     flex: 1,
@@ -1568,8 +2075,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   featuresScrollContent: {
-    paddingTop: Platform.OS === 'web' ? SPACING.lg : (Platform.OS === 'ios' ? 10 : 60),
-    paddingBottom: Platform.OS === 'web' ? SPACING.lg : (Platform.OS === 'ios' ? 10 : 80),
+    paddingTop:
+      Platform.OS === 'web' ? SPACING.lg : Platform.OS === 'ios' ? 10 : 60,
+    paddingBottom:
+      Platform.OS === 'web' ? SPACING.lg : Platform.OS === 'ios' ? 10 : 80,
     paddingHorizontal: Platform.OS === 'web' ? SPACING.xl : SPACING.md,
     maxWidth: Platform.OS === 'web' ? 900 : '100%',
     alignSelf: Platform.OS === 'web' ? 'center' : 'stretch',
@@ -1582,7 +2091,10 @@ const styles = StyleSheet.create({
   },
   appName: {
     fontSize: isTablet() ? 48 : 40,
-    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Bold' : TYPOGRAPHY.fontFamily.bold,
+    fontFamily:
+      Platform.OS === 'android'
+        ? 'ComicRelief-Bold'
+        : TYPOGRAPHY.fontFamily.bold,
     color: THEMES.stackBlue.primary,
     marginTop: SPACING.lg,
   },
@@ -1628,7 +2140,10 @@ const styles = StyleSheet.create({
   },
   screenTitle: {
     fontSize: isTablet() ? 28 : 24,
-    fontFamily: Platform.OS === 'android' ? 'ComicRelief-Bold' : TYPOGRAPHY.fontFamily.bold,
+    fontFamily:
+      Platform.OS === 'android'
+        ? 'ComicRelief-Bold'
+        : TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
     textAlign: 'center',
     marginBottom: SPACING.xs,
@@ -1775,22 +2290,23 @@ const styles = StyleSheet.create({
     paddingVertical: SPACING.sm,
     borderRadius: 30,
     gap: SPACING.xs,
-    minHeight: Platform.OS === 'web' ? 56 : (isTablet() ? 70 : 50),
+    minHeight: Platform.OS === 'web' ? 56 : isTablet() ? 70 : 50,
     ...SHADOWS.level3,
   },
   pillEmoji: {
-    fontSize: Platform.OS === 'web' ? 24 : (isTablet() ? 28 : 24),
+    fontSize: Platform.OS === 'web' ? 24 : isTablet() ? 28 : 24,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   pillName: {
-    fontSize: Platform.OS === 'web' ? 16 : (isTablet() ? 18 : 16),
+    fontSize: Platform.OS === 'web' ? 16 : isTablet() ? 18 : 16,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
     color: COLORS.gray[900],
   },
   primaryButton: {
     backgroundColor: THEMES.stackBlue.primary,
     paddingHorizontal: Platform.OS === 'web' ? 32 : 24,
-    paddingVertical: Platform.OS === 'web' ? 14 : (Platform.OS === 'ios' ? 14 : 12),
+    paddingVertical:
+      Platform.OS === 'web' ? 14 : Platform.OS === 'ios' ? 14 : 12,
     borderRadius: Platform.OS === 'android' ? 4 : 8,
     alignItems: 'center',
     justifyContent: 'center',
@@ -1848,7 +2364,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Platform.OS === 'web' ? SPACING.lg : SPACING.lg,
     marginTop: Platform.OS === 'web' ? SPACING.lg : 0,
-    marginBottom: Platform.OS === 'web' ? SPACING.xl : (Platform.OS === 'ios' ? 24 : 50),
+    marginBottom:
+      Platform.OS === 'web' ? SPACING.xl : Platform.OS === 'ios' ? 24 : 50,
   },
   controlsRowDesktop: {
     flexDirection: 'column',
@@ -1860,9 +2377,9 @@ const styles = StyleSheet.create({
     gap: SPACING.xs,
   },
   whiteFab: {
-    width: Platform.OS === 'web' ? 60 : (isTablet() ? 110 : 60),
-    height: Platform.OS === 'web' ? 60 : (isTablet() ? 110 : 60),
-    borderRadius: Platform.OS === 'web' ? 30 : (isTablet() ? 55 : 30),
+    width: Platform.OS === 'web' ? 60 : isTablet() ? 110 : 60,
+    height: Platform.OS === 'web' ? 60 : isTablet() ? 110 : 60,
+    borderRadius: Platform.OS === 'web' ? 30 : isTablet() ? 55 : 30,
     backgroundColor: 'white',
     justifyContent: 'center',
     alignItems: 'center',
@@ -1891,8 +2408,8 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   featureDetailsWrapper: {
-    minHeight: Platform.OS === 'web' ? 220 : (Platform.OS === 'ios' ? 260 : 280),
-    marginBottom: Platform.OS === 'web' ? 0 : (Platform.OS === 'ios' ? 16 : 20),
+    minHeight: Platform.OS === 'web' ? 220 : Platform.OS === 'ios' ? 260 : 280,
+    marginBottom: Platform.OS === 'web' ? 0 : Platform.OS === 'ios' ? 16 : 20,
   },
   featureDetails: {
     paddingHorizontal: Platform.OS === 'web' ? SPACING.md : SPACING.sm,
@@ -1913,7 +2430,8 @@ const styles = StyleSheet.create({
     maxWidth: Platform.OS === 'web' ? 400 : 320,
     width: '100%',
     alignItems: 'center',
-    backgroundColor: Platform.OS === 'web' ? 'rgba(92, 126, 157, 0.05)' : 'transparent',
+    backgroundColor:
+      Platform.OS === 'web' ? 'rgba(92, 126, 157, 0.05)' : 'transparent',
     padding: Platform.OS === 'web' ? SPACING.lg : SPACING.sm,
     borderRadius: Platform.OS === 'web' ? RADIUS.lg : 0,
   },
@@ -1945,7 +2463,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: SPACING.sm,
     marginTop: Platform.OS === 'web' ? SPACING.md : 0,
-    marginBottom: Platform.OS === 'web' ? SPACING.sm : (Platform.OS === 'ios' ? 16 : 20),
+    marginBottom:
+      Platform.OS === 'web' ? SPACING.sm : Platform.OS === 'ios' ? 16 : 20,
   },
   indicator: {
     width: 8,
@@ -2170,30 +2689,34 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 12,
     alignSelf: 'center',
-    ...(Platform.OS === 'web' ? {
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    } : {
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    }),
+    ...(Platform.OS === 'web'
+      ? {
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        }
+      : {
+          elevation: 2,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }),
   },
   codeContainer: {
     padding: 20,
     borderRadius: 12,
     marginBottom: 24,
     alignItems: 'center',
-    ...(Platform.OS === 'web' ? {
-      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-    } : {
-      elevation: 2,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    }),
+    ...(Platform.OS === 'web'
+      ? {
+          boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+        }
+      : {
+          elevation: 2,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }),
   },
   codeLabel: {
     fontSize: 14,
@@ -2387,7 +2910,7 @@ const styles = StyleSheet.create({
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: COLORS.gray[700],
   },
-  
+
   // Footer Links
   footerLinks: {
     flexDirection: 'row',
@@ -2409,7 +2932,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     paddingHorizontal: 4,
   },
-  
+
   // Privacy Policy Link (kept for backward compatibility)
   privacyLink: {
     marginTop: SPACING.xl,

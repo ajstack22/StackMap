@@ -7,7 +7,6 @@ import {
   ScrollView,
   Platform,
   Animated,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -33,7 +32,10 @@ const LibraryTabContent = ({
 }) => {
   // Start with empty categories if none provided
   const [localCategories, setLocalCategories] = useState(
-    myLibrary?.activityGroups || categories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]
+    myLibrary?.activityGroups ||
+      categories || [
+        { id: 'my-templates', name: 'My Templates', activities: [] },
+      ],
   );
   const [expandedCategories, setExpandedCategories] = useState({});
   const [editingCategory, setEditingCategory] = useState(null);
@@ -46,22 +48,25 @@ const LibraryTabContent = ({
 
   useEffect(() => {
     setLocalCategories(
-      myLibrary?.activityGroups || categories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]
+      myLibrary?.activityGroups ||
+        categories || [
+          { id: 'my-templates', name: 'My Templates', activities: [] },
+        ],
     );
   }, [categories, myLibrary]);
 
-  const showNotification = (message) => {
+  const showNotification = message => {
     setNotification(message);
     Animated.timing(notificationOpacity, {
       toValue: 1,
       duration: 200,
       useNativeDriver: true,
     }).start();
-    
+
     if (notificationTimer.current) {
       clearTimeout(notificationTimer.current);
     }
-    
+
     notificationTimer.current = setTimeout(() => {
       Animated.timing(notificationOpacity, {
         toValue: 0,
@@ -73,16 +78,16 @@ const LibraryTabContent = ({
     }, 2000);
   };
 
-  const toggleCategory = (categoryId) => {
+  const toggleCategory = categoryId => {
     setExpandedCategories(prev => ({
       ...prev,
-      [categoryId]: !prev[categoryId]
+      [categoryId]: !prev[categoryId],
     }));
   };
 
   const handleEditCategory = (categoryId, newName) => {
     const updatedCategories = localCategories.map(cat =>
-      cat.id === categoryId ? { ...cat, name: newName } : cat
+      cat.id === categoryId ? { ...cat, name: newName } : cat,
     );
     setLocalCategories(updatedCategories);
     onSaveCategories(updatedCategories);
@@ -90,8 +95,10 @@ const LibraryTabContent = ({
     showToast({ message: 'Category updated!' });
   };
 
-  const handleDeleteCategory = (categoryId) => {
-    const updatedCategories = localCategories.filter(cat => cat.id !== categoryId);
+  const handleDeleteCategory = categoryId => {
+    const updatedCategories = localCategories.filter(
+      cat => cat.id !== categoryId,
+    );
     setLocalCategories(updatedCategories);
     onSaveCategories(updatedCategories);
     setShowDeleteConfirm(false);
@@ -104,7 +111,7 @@ const LibraryTabContent = ({
       if (cat.id === categoryId) {
         return {
           ...cat,
-          activities: cat.activities.filter(act => act.id !== activityId)
+          activities: cat.activities.filter(act => act.id !== activityId),
         };
       }
       return cat;
@@ -120,52 +127,62 @@ const LibraryTabContent = ({
   const getFilteredData = () => {
     const myLibraryGroups = localCategories || [];
     const stackMapGroups = stackMapLibrary?.activityGroups || [];
-    
+
     if (!searchQuery) {
       // Return all data when not searching
       return [...myLibraryGroups, ...stackMapGroups];
     }
-    
+
     const query = searchQuery.toLowerCase();
-    
+
     // Filter and combine both libraries
-    const filterGroups = (groups) => {
-      return groups.map(category => {
-        const matchingActivities = category.activities?.filter(activity =>
-          (activity.text || '').toLowerCase().includes(query) ||
-          (activity.icon || activity.emoji || '')?.includes(query)
-        ) || [];
+    const filterGroups = groups => {
+      return groups
+        .map(category => {
+          const matchingActivities =
+            category.activities?.filter(
+              activity =>
+                (activity.text || '').toLowerCase().includes(query) ||
+                (activity.icon || activity.emoji || '')?.includes(query),
+            ) || [];
 
-        const categoryMatches = category.name.toLowerCase().includes(query);
+          const categoryMatches = category.name.toLowerCase().includes(query);
 
-        if (categoryMatches || matchingActivities.length > 0) {
-          return {
-            ...category,
-            activities: matchingActivities,
-            expanded: true // Auto-expand matching categories
-          };
-        }
-        return null;
-      }).filter(Boolean);
+          if (categoryMatches || matchingActivities.length > 0) {
+            return {
+              ...category,
+              activities: matchingActivities,
+              expanded: true, // Auto-expand matching categories
+            };
+          }
+          return null;
+        })
+        .filter(Boolean);
     };
-    
+
     return [...filterGroups(myLibraryGroups), ...filterGroups(stackMapGroups)];
   };
 
   const renderActivity = (activity, categoryId) => {
-    const isSystemProvided = stackMapLibrary?.activityGroups?.some(g => g.id === categoryId);
+    const isSystemProvided = stackMapLibrary?.activityGroups?.some(
+      g => g.id === categoryId,
+    );
 
     return (
       <View style={styles.activityItem}>
         <View style={styles.activityContent}>
-          <Text style={styles.activityEmoji}>{activity.icon || activity.emoji}</Text>
+          <Text style={styles.activityEmoji}>
+            {activity.icon || activity.emoji}
+          </Text>
           <Text style={styles.activityName}>{activity.text}</Text>
         </View>
         <View style={styles.activityActions}>
           <TouchableOpacity
             onPress={() => {
               onSelectActivity(activity);
-              showNotification(`Added: ${activity.icon || ''} ${activity.text || ''}`);
+              showNotification(
+                `Added: ${activity.icon || ''} ${activity.text || ''}`,
+              );
             }}
             style={styles.iconButton}
           >
@@ -174,7 +191,11 @@ const LibraryTabContent = ({
           {!isSystemProvided && (
             <TouchableOpacity
               onPress={() => {
-                setItemToDelete({ type: 'activity', categoryId, activityId: activity.id });
+                setItemToDelete({
+                  type: 'activity',
+                  categoryId,
+                  activityId: activity.id,
+                });
                 setShowDeleteConfirm(true);
               }}
               style={styles.iconButton}
@@ -190,7 +211,9 @@ const LibraryTabContent = ({
   const renderCategory = ({ item: category }) => {
     const isExpanded = expandedCategories[category.id] || category.expanded;
     const isEditing = editingCategory === category.id;
-    const isSystemProvided = category.isSystemProvided || stackMapLibrary?.activityGroups?.some(g => g.id === category.id);
+    const isSystemProvided =
+      category.isSystemProvided ||
+      stackMapLibrary?.activityGroups?.some(g => g.id === category.id);
 
     return (
       <View style={styles.categoryContainer}>
@@ -199,7 +222,7 @@ const LibraryTabContent = ({
           onPress={() => toggleCategory(category.id)}
         >
           <Icon
-            name={isExpanded ? "expand-less" : "expand-more"}
+            name={isExpanded ? 'expand-less' : 'expand-more'}
             size={24}
             color="#000"
           />
@@ -207,9 +230,9 @@ const LibraryTabContent = ({
             <TextInput
               style={styles.categoryNameInput}
               value={category.name}
-              onChangeText={(text) => {
+              onChangeText={text => {
                 const updatedCategories = localCategories.map(cat =>
-                  cat.id === category.id ? { ...cat, name: text } : cat
+                  cat.id === category.id ? { ...cat, name: text } : cat,
                 );
                 setLocalCategories(updatedCategories);
               }}
@@ -229,18 +252,24 @@ const LibraryTabContent = ({
                 if (onSelectMultipleActivities) {
                   // Use batch method for proper state updates
                   onSelectMultipleActivities(category.activities);
-                  showNotification(`Added ${category.activities.length} activities!`);
+                  showNotification(
+                    `Added ${category.activities.length} activities!`,
+                  );
                 } else if (onSelectActivity) {
                   // Fallback to individual adds (won't work properly)
                   category.activities.forEach(activity => {
                     onSelectActivity(activity);
                   });
-                  showNotification(`Added ${category.activities.length} activities!`);
+                  showNotification(
+                    `Added ${category.activities.length} activities!`,
+                  );
                 }
               }}
               style={[styles.addAllButton, { borderColor: theme.primary }]}
             >
-              <Text style={[styles.addAllButtonText, { color: theme.primary }]}>Add All</Text>
+              <Text style={[styles.addAllButtonText, { color: theme.primary }]}>
+                Add All
+              </Text>
             </TouchableOpacity>
           )}
           {!isSystemProvided && category.id !== 'my-templates' && (
@@ -253,7 +282,10 @@ const LibraryTabContent = ({
               </TouchableOpacity>
               <TouchableOpacity
                 onPress={() => {
-                  setItemToDelete({ type: 'category', categoryId: category.id });
+                  setItemToDelete({
+                    type: 'category',
+                    categoryId: category.id,
+                  });
                   setShowDeleteConfirm(true);
                 }}
                 style={styles.iconButton}
@@ -282,15 +314,12 @@ const LibraryTabContent = ({
       {/* Inline Notification */}
       {notification && (
         <Animated.View
-          style={[
-            styles.notification,
-            { opacity: notificationOpacity },
-          ]}
+          style={[styles.notification, { opacity: notificationOpacity }]}
         >
           <Text style={styles.notificationText}>{notification}</Text>
         </Animated.View>
       )}
-      
+
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
@@ -308,7 +337,7 @@ const LibraryTabContent = ({
               Browse and select from saved activities
             </Text>
           </View>
-          
+
           {/* Divider */}
           <View style={styles.divider} />
           <View style={styles.searchContainer}>
@@ -331,22 +360,30 @@ const LibraryTabContent = ({
                 .map(category => {
                   if (!searchQuery) return category;
                   const query = searchQuery.toLowerCase();
-                  
+
                   // Filter activities within the category
-                  const filteredActivities = category.activities?.filter(activity => 
-                    (activity.text || '').toLowerCase().includes(query) ||
-                    (activity.icon || activity.emoji || '')?.includes(query)
-                  ) || [];
-                  
+                  const filteredActivities =
+                    category.activities?.filter(
+                      activity =>
+                        (activity.text || '').toLowerCase().includes(query) ||
+                        (activity.icon || activity.emoji || '')?.includes(
+                          query,
+                        ),
+                    ) || [];
+
                   // Check if category name matches
-                  const categoryMatches = category.name.toLowerCase().includes(query);
-                  
+                  const categoryMatches = category.name
+                    .toLowerCase()
+                    .includes(query);
+
                   // Include category if name matches or has matching activities
                   if (categoryMatches || filteredActivities.length > 0) {
                     return {
                       ...category,
-                      activities: categoryMatches ? category.activities : filteredActivities,
-                      expanded: true // Auto-expand when searching
+                      activities: categoryMatches
+                        ? category.activities
+                        : filteredActivities,
+                      expanded: true, // Auto-expand when searching
                     };
                   }
                   return null;
@@ -359,46 +396,60 @@ const LibraryTabContent = ({
                 ))}
             </>
           )}
-          
+
           {/* StackMap Library Section */}
-          {stackMapLibrary?.activityGroups && stackMapLibrary.activityGroups.length > 0 && (
-            <>
-              <View style={[styles.sectionHeader, { marginTop: localCategories.length > 0 ? 20 : 0 }]}>
-                <Logo size={20} color="#000" theme={theme} />
-                <Text style={styles.sectionTitle}>StackMap Library</Text>
-              </View>
-              {(stackMapLibrary.activityGroups || [])
-                .map(category => {
-                  if (!searchQuery) return category;
-                  const query = searchQuery.toLowerCase();
-                  
-                  // Filter activities within the category
-                  const filteredActivities = category.activities?.filter(activity => 
-                    (activity.text || '').toLowerCase().includes(query) ||
-                    (activity.icon || activity.emoji || '')?.includes(query)
-                  ) || [];
-                  
-                  // Check if category name matches
-                  const categoryMatches = category.name.toLowerCase().includes(query);
-                  
-                  // Include category if name matches or has matching activities
-                  if (categoryMatches || filteredActivities.length > 0) {
-                    return {
-                      ...category,
-                      activities: categoryMatches ? category.activities : filteredActivities,
-                      expanded: true // Auto-expand when searching
-                    };
-                  }
-                  return null;
-                })
-                .filter(Boolean)
-                .map(category => (
-                  <View key={category.id}>
-                    {renderCategory({ item: category })}
-                  </View>
-                ))}
-            </>
-          )}
+          {stackMapLibrary?.activityGroups &&
+            stackMapLibrary.activityGroups.length > 0 && (
+              <>
+                <View
+                  style={[
+                    styles.sectionHeader,
+                    { marginTop: localCategories.length > 0 ? 20 : 0 },
+                  ]}
+                >
+                  <Logo size={20} color="#000" theme={theme} />
+                  <Text style={styles.sectionTitle}>StackMap Library</Text>
+                </View>
+                {(stackMapLibrary.activityGroups || [])
+                  .map(category => {
+                    if (!searchQuery) return category;
+                    const query = searchQuery.toLowerCase();
+
+                    // Filter activities within the category
+                    const filteredActivities =
+                      category.activities?.filter(
+                        activity =>
+                          (activity.text || '').toLowerCase().includes(query) ||
+                          (activity.icon || activity.emoji || '')?.includes(
+                            query,
+                          ),
+                      ) || [];
+
+                    // Check if category name matches
+                    const categoryMatches = category.name
+                      .toLowerCase()
+                      .includes(query);
+
+                    // Include category if name matches or has matching activities
+                    if (categoryMatches || filteredActivities.length > 0) {
+                      return {
+                        ...category,
+                        activities: categoryMatches
+                          ? category.activities
+                          : filteredActivities,
+                        expanded: true, // Auto-expand when searching
+                      };
+                    }
+                    return null;
+                  })
+                  .filter(Boolean)
+                  .map(category => (
+                    <View key={category.id}>
+                      {renderCategory({ item: category })}
+                    </View>
+                  ))}
+              </>
+            )}
 
           {/* Removed Add Category functionality for now */}
         </View>
@@ -414,11 +465,16 @@ const LibraryTabContent = ({
           if (itemToDelete?.type === 'category') {
             handleDeleteCategory(itemToDelete.categoryId);
           } else if (itemToDelete?.type === 'activity') {
-            handleDeleteActivity(itemToDelete.categoryId, itemToDelete.activityId);
+            handleDeleteActivity(
+              itemToDelete.categoryId,
+              itemToDelete.activityId,
+            );
           }
         }}
         theme={theme}
-        title={`Delete ${itemToDelete?.type === 'category' ? 'Category' : 'Activity'}`}
+        title={`Delete ${
+          itemToDelete?.type === 'category' ? 'Category' : 'Activity'
+        }`}
         message={`Are you sure you want to delete this ${itemToDelete?.type}?`}
         confirmText="Delete"
         confirmButtonColor="#e53e3e"

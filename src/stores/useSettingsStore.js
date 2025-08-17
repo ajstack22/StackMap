@@ -9,15 +9,18 @@ let pendingWrite = null;
 
 // Storage adapter for React Native AsyncStorage with debounced writes
 const storage = {
-  getItem: async (name) => {
+  getItem: async name => {
     try {
       const value = await AsyncStorage.getItem(name);
       if (!value) return null;
-      
+
       try {
         return JSON.parse(value);
       } catch (parseError) {
-        console.error('Error parsing stored value, clearing corrupted data:', parseError);
+        console.error(
+          'Error parsing stored value, clearing corrupted data:',
+          parseError,
+        );
         await AsyncStorage.removeItem(name);
         return null;
       }
@@ -28,15 +31,18 @@ const storage = {
   },
   setItem: async (name, value) => {
     pendingWrite = { name, value };
-    
+
     if (storageWriteTimer) {
       clearTimeout(storageWriteTimer);
     }
-    
+
     storageWriteTimer = setTimeout(async () => {
       if (pendingWrite) {
         try {
-          await AsyncStorage.setItem(pendingWrite.name, JSON.stringify(pendingWrite.value));
+          await AsyncStorage.setItem(
+            pendingWrite.name,
+            JSON.stringify(pendingWrite.value),
+          );
         } catch (error) {
           console.error('Error writing to AsyncStorage:', error);
         }
@@ -44,7 +50,7 @@ const storage = {
       }
     }, 1000);
   },
-  removeItem: async (name) => {
+  removeItem: async name => {
     try {
       await AsyncStorage.removeItem(name);
     } catch (error) {
@@ -70,35 +76,57 @@ const useSettingsStore = create(
         displayMode: 'numbers',
         dayMode: 'today',
         hasCompletedOnboarding: false,
-        
+
         // Device-specific toolbar settings (not synced)
         toolbarOrder: null,
         moreButtonPosition: 'left',
-        
+
         // Actions for Theme & Settings
-        setCurrentTheme: (theme) => set({ currentTheme: theme }, false, 'setCurrentTheme'),
-        setBannerPosition: (position) => set({ bannerPosition: position }, false, 'setBannerPosition'),
-        setSoundEnabled: (enabled) => set({ soundEnabled: enabled }, false, 'setSoundEnabled'),
-        setTaskCelebration: (celebration) => set({ taskCelebration: celebration }, false, 'setTaskCelebration'),
-        setRoutineCelebration: (celebration) => set({ routineCelebration: celebration }, false, 'setRoutineCelebration'),
-        setDisplayMode: (mode) => set({ displayMode: mode }, false, 'setDisplayMode'),
-        setDayMode: (mode) => set({ dayMode: mode }, false, 'setDayMode'),
-        setHasCompletedOnboarding: (completed) => set({ hasCompletedOnboarding: completed }, false, 'setHasCompletedOnboarding'),
-        
+        setCurrentTheme: theme =>
+          set({ currentTheme: theme }, false, 'setCurrentTheme'),
+        setBannerPosition: position =>
+          set({ bannerPosition: position }, false, 'setBannerPosition'),
+        setSoundEnabled: enabled =>
+          set({ soundEnabled: enabled }, false, 'setSoundEnabled'),
+        setTaskCelebration: celebration =>
+          set({ taskCelebration: celebration }, false, 'setTaskCelebration'),
+        setRoutineCelebration: celebration =>
+          set(
+            { routineCelebration: celebration },
+            false,
+            'setRoutineCelebration',
+          ),
+        setDisplayMode: mode =>
+          set({ displayMode: mode }, false, 'setDisplayMode'),
+        setDayMode: mode => set({ dayMode: mode }, false, 'setDayMode'),
+        setHasCompletedOnboarding: completed =>
+          set(
+            { hasCompletedOnboarding: completed },
+            false,
+            'setHasCompletedOnboarding',
+          ),
+
         // Toolbar settings (device-specific)
-        setToolbarOrder: (order) => set({ toolbarOrder: order }, false, 'setToolbarOrder'),
-        setMoreButtonPosition: (position) => set({ moreButtonPosition: position }, false, 'setMoreButtonPosition'),
-        
+        setToolbarOrder: order =>
+          set({ toolbarOrder: order }, false, 'setToolbarOrder'),
+        setMoreButtonPosition: position =>
+          set({ moreButtonPosition: position }, false, 'setMoreButtonPosition'),
+
         // Batch update for settings
-        updateSettings: (settings) => set((state) => ({
-          ...state,
-          ...settings
-        }), false, 'updateSettings'),
+        updateSettings: settings =>
+          set(
+            state => ({
+              ...state,
+              ...settings,
+            }),
+            false,
+            'updateSettings',
+          ),
       }),
       {
         name: 'stackmap-settings-storage',
         storage,
-        partialize: (state) => ({
+        partialize: state => ({
           currentTheme: state.currentTheme,
           bannerPosition: state.bannerPosition,
           soundEnabled: state.soundEnabled,
@@ -110,12 +138,12 @@ const useSettingsStore = create(
           toolbarOrder: state.toolbarOrder,
           moreButtonPosition: state.moreButtonPosition,
         }),
-      }
+      },
     ),
     {
       name: 'SettingsStore',
-    }
-  )
+    },
+  ),
 );
 
 export default useSettingsStore;

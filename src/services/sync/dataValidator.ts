@@ -38,12 +38,18 @@ export const validateSyncedData = (data: any): data is SyncData => {
 
     // Check required top-level fields
     if (!data.users || typeof data.users !== 'object') {
-      console.error('Data validation failed: Missing or invalid users object', data);
+      console.error(
+        'Data validation failed: Missing or invalid users object',
+        data,
+      );
       return false;
     }
 
     // Validate each user (skip deleted users)
-    for (const [_userId, user] of Object.entries(data.users) as [string, any][]) {
+    for (const [_userId, user] of Object.entries(data.users) as [
+      string,
+      any,
+    ][]) {
       // Skip validation for deleted users
       if (user && user.deleted) {
         continue;
@@ -63,7 +69,10 @@ export const validateSyncedData = (data: any): data is SyncData => {
       const currentUserData = data.users[data.currentUser];
       // Current user must exist and not be deleted
       if (!currentUserData || currentUserData.deleted) {
-        console.error(`Data validation failed: currentUser ${data.currentUser} is missing or deleted`, currentUserData);
+        console.error(
+          `Data validation failed: currentUser ${data.currentUser} is missing or deleted`,
+          currentUserData,
+        );
         return false;
       }
     }
@@ -82,26 +91,38 @@ export const validateSyncedData = (data: any): data is SyncData => {
  */
 const validateUser = (userId: string, user: any): boolean => {
   if (!user || typeof user !== 'object') {
-    console.error(`Data validation failed: Invalid user object for ${userId}`, user);
+    console.error(
+      `Data validation failed: Invalid user object for ${userId}`,
+      user,
+    );
     return false;
   }
 
   // Check required user fields
   if (!user.name || typeof user.name !== 'string') {
-    console.error(`Data validation failed: User ${userId} missing or invalid name`, user);
+    console.error(
+      `Data validation failed: User ${userId} missing or invalid name`,
+      user,
+    );
     console.error('Name value:', user.name, 'Type:', typeof user.name);
     return false;
   }
 
   // Check for icon field (also check emoji for legacy support)
   if (!user.icon && !user.emoji) {
-    console.error(`Data validation failed: User ${userId} missing icon or emoji`, user);
+    console.error(
+      `Data validation failed: User ${userId} missing icon or emoji`,
+      user,
+    );
     return false;
   }
 
   // Validate days object
   if (!user.days || typeof user.days !== 'object') {
-    console.error(`Data validation failed: User ${userId} missing or invalid days object`, user);
+    console.error(
+      `Data validation failed: User ${userId} missing or invalid days object`,
+      user,
+    );
     return false;
   }
 
@@ -171,7 +192,10 @@ const validateActivity = (activity: any): boolean => {
   }
 
   // Check boolean fields - allow undefined for repair to fix
-  if (activity.completed !== undefined && typeof activity.completed !== 'boolean') {
+  if (
+    activity.completed !== undefined &&
+    typeof activity.completed !== 'boolean'
+  ) {
     return false;
   }
 
@@ -205,9 +229,27 @@ const validateTheme = (theme: any): boolean => {
 
   // List of valid theme names from constants/theme.js
   const validThemes = [
-    'crimson', 'cherry', 'scarlet', 'rust', 'tangerine', 'amber', 'gold',
-    'olive', 'emerald', 'forest', 'ocean', 'sapphire', 'navy', 'indigo', 'plum',
-    'sage', 'dustyBlue', 'stackBlue', 'terracotta', 'lavender', 'slate'
+    'crimson',
+    'cherry',
+    'scarlet',
+    'rust',
+    'tangerine',
+    'amber',
+    'gold',
+    'olive',
+    'emerald',
+    'forest',
+    'ocean',
+    'sapphire',
+    'navy',
+    'indigo',
+    'plum',
+    'sage',
+    'dustyBlue',
+    'stackBlue',
+    'terracotta',
+    'lavender',
+    'slate',
   ];
 
   if (!validThemes.includes(theme)) {
@@ -225,45 +267,49 @@ const validateTheme = (theme: any): boolean => {
  */
 export const repairSyncedData = (data: any): SyncData => {
   try {
-    
     const repaired = JSON.parse(JSON.stringify(data)); // Deep clone
 
     // Ensure users object exists
     if (!repaired.users || typeof repaired.users !== 'object') {
       repaired.users = {};
     }
-    
+
     // Check if we have any valid (non-deleted) users
-    const validUserIds = Object.keys(repaired.users).filter(id => 
-      repaired.users[id] && !repaired.users[id].deleted
+    const validUserIds = Object.keys(repaired.users).filter(
+      id => repaired.users[id] && !repaired.users[id].deleted,
     );
-    
+
     // If no valid users exist, create a default user
     if (validUserIds.length === 0) {
       const defaultUserId = repaired.currentUser || 'user_1';
       repaired.users[defaultUserId] = {
         name: 'User',
         icon: '👤',
-        days: {}
+        days: {},
       };
       repaired.currentUser = defaultUserId;
     } else {
       // Ensure currentUser points to a valid (non-deleted) user
-      if (!repaired.currentUser || 
-          !repaired.users[repaired.currentUser] || 
-          repaired.users[repaired.currentUser].deleted) {
+      if (
+        !repaired.currentUser ||
+        !repaired.users[repaired.currentUser] ||
+        repaired.users[repaired.currentUser].deleted
+      ) {
         // Set to first valid user
         repaired.currentUser = validUserIds[0];
       }
     }
 
     // Repair each user
-    for (const [_userId, user] of Object.entries(repaired.users) as [string, any][]) {
+    for (const [_userId, user] of Object.entries(repaired.users) as [
+      string,
+      any,
+    ][]) {
       // Skip deleted users - they don't need repair
       if (user && user.deleted) {
         continue;
       }
-      
+
       // Ensure required user fields
       if (!user.name) {
         user.name = 'Unknown User';
@@ -282,45 +328,64 @@ export const repairSyncedData = (data: any): SyncData => {
       }
 
       // Repair each day
-      for (const [_day, dayData] of Object.entries(user.days) as [string, any][]) {
+      for (const [_day, dayData] of Object.entries(user.days) as [
+        string,
+        any,
+      ][]) {
         // Ensure activities array
         if (!Array.isArray(dayData.activities)) {
           dayData.activities = [];
         }
 
         // Filter out invalid activities and repair them
-        dayData.activities = dayData.activities.map((activity: any) => {
-          if (!activity || typeof activity !== 'object') return null;
-          
-          // Ensure text field
-          if (!activity.text) {
-            activity.text = 'Untitled Activity';
-          }
-          
-          // Ensure required fields with defaults
-          const cleanActivity = {
-            id: activity.id || `repaired_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-            text: activity.text,
-            icon: activity.icon || '',
-            completed: typeof activity.completed === 'boolean' ? activity.completed : false,
-            pinned: typeof activity.pinned === 'boolean' ? activity.pinned : false
-          };
-          
-          // Copy over any other valid fields (like order, completedAt, etc)
-          if (activity.order !== undefined) (cleanActivity as any).order = activity.order;
-          if (activity.completedAt !== undefined) (cleanActivity as any).completedAt = activity.completedAt;
-          if (activity.completedBy !== undefined) (cleanActivity as any).completedBy = activity.completedBy;
-          if (activity.description !== undefined) (cleanActivity as any).description = activity.description;
-          
-          return cleanActivity;
-        }).filter((activity: any) => {
-          // Filter out null activities and validate
-          return activity && 
-                 activity.id && 
-                 activity.text && 
-                 typeof activity.completed === 'boolean' &&
-                 typeof activity.pinned === 'boolean';
-        });
+        dayData.activities = dayData.activities
+          .map((activity: any) => {
+            if (!activity || typeof activity !== 'object') return null;
+
+            // Ensure text field
+            if (!activity.text) {
+              activity.text = 'Untitled Activity';
+            }
+
+            // Ensure required fields with defaults
+            const cleanActivity = {
+              id:
+                activity.id ||
+                `repaired_${Date.now()}_${Math.random()
+                  .toString(36)
+                  .substr(2, 9)}`,
+              text: activity.text,
+              icon: activity.icon || '',
+              completed:
+                typeof activity.completed === 'boolean'
+                  ? activity.completed
+                  : false,
+              pinned:
+                typeof activity.pinned === 'boolean' ? activity.pinned : false,
+            };
+
+            // Copy over any other valid fields (like order, completedAt, etc)
+            if (activity.order !== undefined)
+              (cleanActivity as any).order = activity.order;
+            if (activity.completedAt !== undefined)
+              (cleanActivity as any).completedAt = activity.completedAt;
+            if (activity.completedBy !== undefined)
+              (cleanActivity as any).completedBy = activity.completedBy;
+            if (activity.description !== undefined)
+              (cleanActivity as any).description = activity.description;
+
+            return cleanActivity;
+          })
+          .filter((activity: any) => {
+            // Filter out null activities and validate
+            return (
+              activity &&
+              activity.id &&
+              activity.text &&
+              typeof activity.completed === 'boolean' &&
+              typeof activity.pinned === 'boolean'
+            );
+          });
 
         // No need for completedActivities array - tracked on each activity
       }
@@ -338,29 +403,46 @@ export const repairSyncedData = (data: any): SyncData => {
  * @param incrementalData - The incremental sync data to validate
  * @returns True if valid, false otherwise
  */
-export const validateIncrementalSync = (incrementalData: any): incrementalData is IncrementalSyncData => {
+export const validateIncrementalSync = (
+  incrementalData: any,
+): incrementalData is IncrementalSyncData => {
   try {
     // Check if data is an object
     if (!incrementalData || typeof incrementalData !== 'object') {
-      console.error('Incremental sync validation failed: Data is not an object', incrementalData);
+      console.error(
+        'Incremental sync validation failed: Data is not an object',
+        incrementalData,
+      );
       return false;
     }
 
     // Check required fields for incremental sync
     if (incrementalData.type !== 'incremental') {
-      console.error('Incremental sync validation failed: Type is not "incremental"', incrementalData.type);
+      console.error(
+        'Incremental sync validation failed: Type is not "incremental"',
+        incrementalData.type,
+      );
       return false;
     }
 
-    if (!incrementalData.timestamp || typeof incrementalData.timestamp !== 'number') {
-      console.error('Incremental sync validation failed: Invalid timestamp', incrementalData.timestamp);
+    if (
+      !incrementalData.timestamp ||
+      typeof incrementalData.timestamp !== 'number'
+    ) {
+      console.error(
+        'Incremental sync validation failed: Invalid timestamp',
+        incrementalData.timestamp,
+      );
       return false;
     }
 
     // Validate patch if present
     if (incrementalData.patch) {
       if (typeof incrementalData.patch !== 'object') {
-        console.error('Incremental sync validation failed: Patch is not an object', typeof incrementalData.patch);
+        console.error(
+          'Incremental sync validation failed: Patch is not an object',
+          typeof incrementalData.patch,
+        );
         return false;
       }
 
@@ -371,14 +453,20 @@ export const validateIncrementalSync = (incrementalData: any): incrementalData i
             if (value && typeof value === 'object') {
               // For incremental patches, users might be partial updates or full replacements
               // We need to validate the structure but be more lenient
-              for (const [userId, user] of Object.entries(value) as [string, any][]) {
+              for (const [userId, user] of Object.entries(value) as [
+                string,
+                any,
+              ][]) {
                 // Allow null to indicate deletion
                 if (user === null) {
                   continue;
                 }
                 // For incremental patches, just check it's an object with valid structure
                 if (!user || typeof user !== 'object') {
-                  console.error(`Incremental sync validation failed: Invalid user object for ${userId} in patch`, user);
+                  console.error(
+                    `Incremental sync validation failed: Invalid user object for ${userId} in patch`,
+                    user,
+                  );
                   return false;
                 }
                 // If it's a full user object, validate it properly
@@ -386,7 +474,10 @@ export const validateIncrementalSync = (incrementalData: any): incrementalData i
                 // Check for full user object
                 if (user.name && user.icon && user.days) {
                   if (!validateUser(userId, user)) {
-                    console.error(`Incremental sync validation failed: Invalid full user ${userId} in patch`, user);
+                    console.error(
+                      `Incremental sync validation failed: Invalid full user ${userId} in patch`,
+                      user,
+                    );
                     return false;
                   }
                 }
@@ -394,26 +485,32 @@ export const validateIncrementalSync = (incrementalData: any): incrementalData i
               }
             }
             break;
-          
+
           case 'activities':
             if (value && Array.isArray(value)) {
               // Validate each activity in the patch
               for (const activity of value) {
                 if (!validateActivity(activity)) {
-                  console.error('Incremental sync validation failed: Invalid activity in patch', activity);
+                  console.error(
+                    'Incremental sync validation failed: Invalid activity in patch',
+                    activity,
+                  );
                   return false;
                 }
               }
             }
             break;
-          
+
           case 'currentTheme':
             if (!validateTheme(value)) {
-              console.error('Incremental sync validation failed: Invalid theme in patch', value);
+              console.error(
+                'Incremental sync validation failed: Invalid theme in patch',
+                value,
+              );
               return false;
             }
             break;
-          
+
           // For scalar fields, just ensure they're not undefined
           case 'currentUser':
           case 'bannerPosition':
@@ -422,7 +519,9 @@ export const validateIncrementalSync = (incrementalData: any): incrementalData i
           case 'routineCelebration':
           case 'currentDay':
             if (value === undefined) {
-              console.error(`Incremental sync validation failed: Undefined value for ${field}`);
+              console.error(
+                `Incremental sync validation failed: Undefined value for ${field}`,
+              );
               return false;
             }
             break;
@@ -453,5 +552,5 @@ export const validateIncrementalSync = (incrementalData: any): incrementalData i
 export default {
   validateSyncedData,
   repairSyncedData,
-  validateIncrementalSync
+  validateIncrementalSync,
 };

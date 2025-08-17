@@ -10,7 +10,6 @@ import {
   Platform,
   StatusBar,
   Alert,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import EmojiPicker from '../../EmojiPicker';
@@ -66,51 +65,65 @@ const AddUserModal = ({
       onRequestClose={handleClose}
     >
       {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor={theme.primary} 
-          barStyle="light-content" 
+        <StatusBar
+          backgroundColor={theme.primary}
+          barStyle="light-content"
           translucent={false}
         />
       )}
       <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
-          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+          <View
+            style={[styles.modalHeader, { backgroundColor: theme.primary }]}
+          >
             <View style={styles.headerLeft}>
-              <Icon name={editingUser ? "edit" : "person-add"} size={24} color="white" style={styles.headerIcon} />
+              <Icon
+                name={editingUser ? 'edit' : 'person-add'}
+                size={24}
+                color="white"
+                style={styles.headerIcon}
+              />
               <Text style={styles.modalTitle}>
                 {editingUser ? 'Edit User' : 'Add New User'}
               </Text>
             </View>
             <TouchableOpacity onPress={handleClose} style={{ padding: 8 }}>
-              <View style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-        
+
         <View style={{ flex: 1, backgroundColor: theme.light }}>
-          <KeyboardAvoidingView 
+          <KeyboardAvoidingView
             style={styles.modalContent}
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           >
-            <ScrollView 
+            <ScrollView
               style={{ flex: 1 }}
               contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 }}
               showsVerticalScrollIndicator={false}
             >
               {/* Emoji Selector */}
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={styles.emojiSelector}
                 onPress={() => setShowUserEmojiPicker(!showUserEmojiPicker)}
               >
@@ -126,7 +139,7 @@ const AddUserModal = ({
                 onChangeText={setNewUserName}
                 autoFocus
               />
-              
+
               <TouchableOpacity
                 style={[styles.button, { backgroundColor: theme.primary }]}
                 onPress={handleSave}
@@ -140,16 +153,21 @@ const AddUserModal = ({
         </View>
         <SafeAreaView style={{ backgroundColor: theme.light }} />
         {Platform.OS === 'android' && getAndroidModalBottomHeight && insets && (
-          <View style={{ backgroundColor: theme.light, height: getAndroidModalBottomHeight(insets) }} />
+          <View
+            style={{
+              backgroundColor: theme.light,
+              height: getAndroidModalBottomHeight(insets),
+            }}
+          />
         )}
-        
+
         {/* User Emoji Picker Modal */}
         {showUserEmojiPicker && (
-          <EmojiPicker 
+          <EmojiPicker
             mode="modal"
             visible={true}
             onClose={() => setShowUserEmojiPicker(false)}
-            onSelect={(icon) => {
+            onSelect={icon => {
               setNewUserEmoji(icon);
               setShowUserEmojiPicker(false);
             }}

@@ -38,17 +38,17 @@ enum Strategy {
   LAST_WRITE_WINS = 'last_write_wins',
   MERGE = 'merge',
   USER_CHOICE = 'user_choice',
-  CUSTOM = 'custom'
+  CUSTOM = 'custom',
 }
 
 // Field-specific resolution strategies
 const FIELD_STRATEGIES: Record<string, Strategy> = {
   // Arrays - merge unique items
   activities: Strategy.MERGE,
-  
+
   // Objects - merge properties with special handling
   users: Strategy.CUSTOM,
-  
+
   // Scalars - last write wins
   currentUser: Strategy.LAST_WRITE_WINS,
   currentTheme: Strategy.LAST_WRITE_WINS,
@@ -56,7 +56,7 @@ const FIELD_STRATEGIES: Record<string, Strategy> = {
   soundEnabled: Strategy.LAST_WRITE_WINS,
   taskCelebration: Strategy.LAST_WRITE_WINS,
   routineCelebration: Strategy.LAST_WRITE_WINS,
-  currentDay: Strategy.LAST_WRITE_WINS
+  currentDay: Strategy.LAST_WRITE_WINS,
 };
 
 interface Conflict {
@@ -92,37 +92,47 @@ class ConflictResolver {
   /**
    * Detect conflicts between local and remote state
    */
-  detectConflicts(localState: SyncState, remoteState: SyncState, _lastSyncTime?: number): Conflict[] {
+  detectConflicts(
+    localState: SyncState,
+    remoteState: SyncState,
+    _lastSyncTime?: number,
+  ): Conflict[] {
     const conflicts: Conflict[] = [];
-    
+
     // Get timestamps
     const localTimestamp = localState.lastModified || Date.now();
     const remoteTimestamp = remoteState.lastModified || Date.now();
-    
+
     // Check each field for conflicts
     for (const field of Object.keys(FIELD_STRATEGIES)) {
       if (localState[field] === undefined || remoteState[field] === undefined) {
         continue;
       }
-      
+
       // Check if both sides changed since last sync
       if (this.hasChanged(localState[field], remoteState[field])) {
         const conflict: Conflict = {
-          id: `${field}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `${field}_${Date.now()}_${Math.random()
+            .toString(36)
+            .substr(2, 9)}`,
           field,
-          type: this.getConflictType(field, localState[field], remoteState[field]),
+          type: this.getConflictType(
+            field,
+            localState[field],
+            remoteState[field],
+          ),
           localValue: localState[field],
           remoteValue: remoteState[field],
           localTimestamp,
           remoteTimestamp,
           strategy: FIELD_STRATEGIES[field],
-          detectedAt: Date.now()
+          detectedAt: Date.now(),
         };
-        
+
         conflicts.push(conflict);
       }
     }
-    
+
     return conflicts;
   }
 
@@ -136,10 +146,17 @@ class ConflictResolver {
   /**
    * Determine conflict type
    */
-  private getConflictType(field: string, localValue: any, remoteValue: any): Conflict['type'] {
+  private getConflictType(
+    field: string,
+    localValue: any,
+    remoteValue: any,
+  ): Conflict['type'] {
     if (Array.isArray(localValue) && Array.isArray(remoteValue)) {
       return 'array_conflict';
-    } else if (typeof localValue === 'object' && typeof remoteValue === 'object') {
+    } else if (
+      typeof localValue === 'object' &&
+      typeof remoteValue === 'object'
+    ) {
       return 'object_conflict';
     } else {
       return 'value_conflict';
@@ -149,30 +166,33 @@ class ConflictResolver {
   /**
    * Resolve conflicts automatically where possible
    */
-  async resolveConflicts(conflicts: Conflict[], options: ResolveOptions = {}): Promise<Conflict[]> {
+  async resolveConflicts(
+    conflicts: Conflict[],
+    options: ResolveOptions = {},
+  ): Promise<Conflict[]> {
     const resolved: Conflict[] = [];
     const needsUserInput: Conflict[] = [];
 
     for (const conflict of conflicts) {
       const strategy = options.strategy || conflict.strategy;
-      
+
       switch (strategy) {
         case Strategy.LAST_WRITE_WINS:
           resolved.push(this.resolveLastWriteWins(conflict));
           break;
-          
+
         case Strategy.MERGE:
           resolved.push(this.resolveMerge(conflict));
           break;
-          
+
         case Strategy.CUSTOM:
           resolved.push(this.resolveCustom(conflict));
           break;
-          
+
         case Strategy.USER_CHOICE:
           needsUserInput.push(conflict);
           break;
-          
+
         default:
           // Default to last write wins
           resolved.push(this.resolveLastWriteWins(conflict));
@@ -181,10 +201,10 @@ class ConflictResolver {
 
     // Store pending conflicts that need user input
     this.pendingConflicts = needsUserInput;
-    
+
     // Add to history
     this.conflictHistory.push(...resolved);
-    
+
     // If there are conflicts needing user input, trigger callback
     if (needsUserInput.length > 0 && this.resolveCallback) {
       this.resolveCallback(needsUserInput);
@@ -198,11 +218,11 @@ class ConflictResolver {
    */
   private resolveLastWriteWins(conflict: Conflict): Conflict {
     const useRemote = conflict.remoteTimestamp > conflict.localTimestamp;
-    
+
     return {
       ...conflict,
       resolution: useRemote ? 'remote' : 'local',
-      resolvedValue: useRemote ? conflict.remoteValue : conflict.localValue
+      resolvedValue: useRemote ? conflict.remoteValue : conflict.localValue,
     };
   }
 
@@ -212,15 +232,22 @@ class ConflictResolver {
   private resolveMerge(conflict: Conflict): Conflict {
     let mergedValue: any;
 
-    if (Array.isArray(conflict.localValue) && Array.isArray(conflict.remoteValue)) {
+    if (
+      Array.isArray(conflict.localValue) &&
+      Array.isArray(conflict.remoteValue)
+    ) {
       // Merge arrays by combining unique items
-      const localSet = new Set(conflict.localValue.map((item: any) => 
-        typeof item === 'object' ? JSON.stringify(item) : item
-      ));
-      const remoteSet = new Set(conflict.remoteValue.map((item: any) => 
-        typeof item === 'object' ? JSON.stringify(item) : item
-      ));
-      
+      const localSet = new Set(
+        conflict.localValue.map((item: any) =>
+          typeof item === 'object' ? JSON.stringify(item) : item,
+        ),
+      );
+      const remoteSet = new Set(
+        conflict.remoteValue.map((item: any) =>
+          typeof item === 'object' ? JSON.stringify(item) : item,
+        ),
+      );
+
       const combined = [...localSet, ...remoteSet];
       mergedValue = combined.map((item: string) => {
         try {
@@ -229,7 +256,10 @@ class ConflictResolver {
           return item;
         }
       });
-    } else if (typeof conflict.localValue === 'object' && typeof conflict.remoteValue === 'object') {
+    } else if (
+      typeof conflict.localValue === 'object' &&
+      typeof conflict.remoteValue === 'object'
+    ) {
       // Merge objects
       mergedValue = { ...conflict.localValue, ...conflict.remoteValue };
     } else {
@@ -240,7 +270,7 @@ class ConflictResolver {
     return {
       ...conflict,
       resolution: 'merged',
-      resolvedValue: mergedValue
+      resolvedValue: mergedValue,
     };
   }
 
@@ -267,7 +297,7 @@ class ConflictResolver {
     // Get all unique user IDs
     const allUserIds = new Set([
       ...Object.keys(localUsers),
-      ...Object.keys(remoteUsers)
+      ...Object.keys(remoteUsers),
     ]);
 
     for (const userId of allUserIds) {
@@ -303,7 +333,7 @@ class ConflictResolver {
     return {
       ...conflict,
       resolution: 'merged',
-      resolvedValue: mergedUsers
+      resolvedValue: mergedUsers,
     };
   }
 
@@ -312,10 +342,11 @@ class ConflictResolver {
    */
   private mergeUserData(localUser: User, remoteUser: User): User {
     // Use the newer version as base
-    const baseUser = (localUser.lastModified || 0) > (remoteUser.lastModified || 0) 
-      ? localUser 
-      : remoteUser;
-    
+    const baseUser =
+      (localUser.lastModified || 0) > (remoteUser.lastModified || 0)
+        ? localUser
+        : remoteUser;
+
     // Start with all fields from base user
     const mergedUser: User = { ...baseUser };
 
@@ -329,18 +360,26 @@ class ConflictResolver {
     // Ensure critical fields are preserved - ALWAYS preserve existing values
     // Name: Keep the most meaningful name
     if (!mergedUser.name || mergedUser.name === 'User') {
-      const bestName = (localUser.name && localUser.name !== 'User' ? localUser.name : null) ||
-                       (remoteUser.name && remoteUser.name !== 'User' ? remoteUser.name : null) ||
-                       mergedUser.name || 'User';
+      const bestName =
+        (localUser.name && localUser.name !== 'User' ? localUser.name : null) ||
+        (remoteUser.name && remoteUser.name !== 'User'
+          ? remoteUser.name
+          : null) ||
+        mergedUser.name ||
+        'User';
       mergedUser.name = bestName;
     }
 
     // Icon: CRITICAL - always ensure icon exists and prefer actual icons over defaults
     const localIcon = localUser.icon || (localUser as any).emoji;
     const remoteIcon = remoteUser.icon || (remoteUser as any).emoji;
-    
+
     // Prefer non-default icons
-    if (!mergedUser.icon || mergedUser.icon === '👤' || mergedUser.icon === '😀') {
+    if (
+      !mergedUser.icon ||
+      mergedUser.icon === '👤' ||
+      mergedUser.icon === '😀'
+    ) {
       if (localIcon && localIcon !== '👤' && localIcon !== '😀') {
         mergedUser.icon = localIcon;
       } else if (remoteIcon && remoteIcon !== '👤' && remoteIcon !== '😀') {
@@ -350,13 +389,13 @@ class ConflictResolver {
         mergedUser.icon = mergedUser.icon || localIcon || remoteIcon || '👤';
       }
     }
-    
+
     // Ensure icon is always present
     if (!mergedUser.icon) {
-      console.error('CRITICAL: User merge resulted in no icon!', { 
-        localIcon, 
-        remoteIcon, 
-        baseUser: baseUser.icon 
+      console.error('CRITICAL: User merge resulted in no icon!', {
+        localIcon,
+        remoteIcon,
+        baseUser: baseUser.icon,
       });
       mergedUser.icon = localIcon || remoteIcon || '👤';
     }
@@ -374,14 +413,17 @@ class ConflictResolver {
    */
   private mergeUserDays(
     localDays: Record<string, { date?: string; activities: Activity[] }>,
-    remoteDays: Record<string, { date?: string; activities: Activity[] }>
+    remoteDays: Record<string, { date?: string; activities: Activity[] }>,
   ): Record<string, { date?: string; activities: Activity[] }> {
-    const mergedDays: Record<string, { date?: string; activities: Activity[] }> = {};
-    
+    const mergedDays: Record<
+      string,
+      { date?: string; activities: Activity[] }
+    > = {};
+
     // Get all unique day keys
     const allDayKeys = new Set([
       ...Object.keys(localDays),
-      ...Object.keys(remoteDays)
+      ...Object.keys(remoteDays),
     ]);
 
     for (const dayKey of allDayKeys) {
@@ -396,7 +438,10 @@ class ConflictResolver {
         // Merge activities for this day
         mergedDays[dayKey] = {
           date: dayKey,
-          activities: this.mergeActivities(localDay.activities, remoteDay.activities)
+          activities: this.mergeActivities(
+            localDay.activities,
+            remoteDay.activities,
+          ),
         };
       }
     }
@@ -407,15 +452,18 @@ class ConflictResolver {
   /**
    * Merge activities arrays with completion status priority
    */
-  private mergeActivities(localActivities: Activity[], remoteActivities: Activity[]): Activity[] {
+  private mergeActivities(
+    localActivities: Activity[],
+    remoteActivities: Activity[],
+  ): Activity[] {
     const activityMap = new Map<string, Activity>();
 
     // Process all activities
     const allActivities = [...localActivities, ...remoteActivities];
-    
+
     for (const activity of allActivities) {
       const existing = activityMap.get(activity.id);
-      
+
       if (!existing) {
         activityMap.set(activity.id, activity);
       } else {
@@ -440,10 +488,15 @@ class ConflictResolver {
     const completedAt2 = activity2.completedAt || 0;
     const modifiedAt1 = activity1.lastModified || 0;
     const modifiedAt2 = activity2.lastModified || 0;
-    
+
     // Determine which activity is more recent
-    const mostRecent = Math.max(completedAt1, completedAt2, modifiedAt1, modifiedAt2);
-    
+    const mostRecent = Math.max(
+      completedAt1,
+      completedAt2,
+      modifiedAt1,
+      modifiedAt2,
+    );
+
     if (mostRecent === completedAt2 || mostRecent === modifiedAt2) {
       return { ...activity1, ...activity2 };
     } else {
@@ -454,7 +507,10 @@ class ConflictResolver {
   /**
    * Apply resolved conflicts to state
    */
-  applyResolvedConflicts(resolvedConflicts: Conflict[], currentState: SyncState): SyncState {
+  applyResolvedConflicts(
+    resolvedConflicts: Conflict[],
+    currentState: SyncState,
+  ): SyncState {
     const newState = { ...currentState };
 
     for (const conflict of resolvedConflicts) {
@@ -472,9 +528,14 @@ class ConflictResolver {
   /**
    * Handle user choice for a conflict
    */
-  resolveUserChoice(conflictId: string, choice: 'local' | 'remote'): Conflict | null {
-    const conflictIndex = this.pendingConflicts.findIndex(c => c.id === conflictId);
-    
+  resolveUserChoice(
+    conflictId: string,
+    choice: 'local' | 'remote',
+  ): Conflict | null {
+    const conflictIndex = this.pendingConflicts.findIndex(
+      c => c.id === conflictId,
+    );
+
     if (conflictIndex === -1) {
       return null;
     }
@@ -483,7 +544,8 @@ class ConflictResolver {
     const resolved: Conflict = {
       ...conflict,
       resolution: choice,
-      resolvedValue: choice === 'local' ? conflict.localValue : conflict.remoteValue
+      resolvedValue:
+        choice === 'local' ? conflict.localValue : conflict.remoteValue,
     };
 
     // Remove from pending and add to history

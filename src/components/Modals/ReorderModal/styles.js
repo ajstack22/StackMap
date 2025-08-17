@@ -1,5 +1,11 @@
 import { StyleSheet, Platform } from 'react-native';
-import { TYPOGRAPHY, SPACING, RADIUS, COLORS, SHADOWS } from '../../../constants';
+import {
+  TYPOGRAPHY,
+  SPACING,
+  RADIUS,
+  COLORS,
+  SHADOWS,
+} from '../../../constants';
 
 export const styles = StyleSheet.create({
   reorderModalOverlay: {
@@ -54,12 +60,14 @@ export const styles = StyleSheet.create({
   positionSelector: {
     height: 60,
     marginBottom: 20,
-    ...(Platform.OS === 'web' ? {
-      overflowX: 'auto',
-      overflowY: 'hidden',
-    } : {
-      overflow: 'hidden',
-    }),
+    ...(Platform.OS === 'web'
+      ? {
+          overflowX: 'auto',
+          overflowY: 'hidden',
+        }
+      : {
+          overflow: 'hidden',
+        }),
   },
   positionSelectorContent: {
     flexDirection: 'row',

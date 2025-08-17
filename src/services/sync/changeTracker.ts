@@ -65,9 +65,7 @@ class ChangeTracker {
     }
 
     // Subscribe to store changes
-    this.unsubscribe = useAppStore.subscribe(
-      (state) => this.recordChange(state)
-    );
+    this.unsubscribe = useAppStore.subscribe(state => this.recordChange(state));
 
     this.tracking = true;
   }
@@ -96,13 +94,13 @@ class ChangeTracker {
     const change: ChangeRecord = {
       timestamp: Date.now(),
       type: 'state_update',
-      changes: this.detectChanges(this.lastSyncedState, newState)
+      changes: this.detectChanges(this.lastSyncedState, newState),
     };
 
     // Only record if there are actual changes
     if (change.changes.length > 0) {
       this.changes.push(change);
-      
+
       // Limit change log size
       if (this.changes.length > MAX_CHANGES) {
         this.changes = this.changes.slice(-MAX_CHANGES);
@@ -121,9 +119,12 @@ class ChangeTracker {
    * @param newState - The current state
    * @returns Array of detected changes
    */
-  private detectChanges(oldState: TrackedState | null, newState: any): Change[] {
+  private detectChanges(
+    oldState: TrackedState | null,
+    newState: any,
+  ): Change[] {
     const changes: Change[] = [];
-    
+
     if (!oldState) {
       changes.push({ path: 'full_state', type: 'initial' });
       return changes;
@@ -139,7 +140,7 @@ class ChangeTracker {
       'soundEnabled',
       'taskCelebration',
       'routineCelebration',
-      'currentDay'
+      'currentDay',
     ];
 
     for (const field of fieldsToTrack) {
@@ -148,7 +149,7 @@ class ChangeTracker {
           path: field,
           type: 'update',
           oldValue: oldState[field],
-          newValue: newState[field]
+          newValue: newState[field],
         });
       }
     }
@@ -172,7 +173,7 @@ class ChangeTracker {
    */
   createIncrementalUpdate(lastSyncTime: number): IncrementalUpdate | null {
     const relevantChanges = this.getChangesSince(lastSyncTime);
-    
+
     if (relevantChanges.length === 0) {
       return null;
     }
@@ -182,7 +183,7 @@ class ChangeTracker {
       type: 'incremental',
       timestamp: Date.now(),
       changes: relevantChanges,
-      patch: this.createPatch(relevantChanges)
+      patch: this.createPatch(relevantChanges),
     };
 
     return update;
@@ -196,7 +197,7 @@ class ChangeTracker {
    */
   private createPatch(changes: ChangeRecord[]): Record<string, any> {
     const patch: Record<string, any> = {};
-    
+
     for (const change of changes) {
       if (change.changes) {
         // Nested changes
@@ -249,7 +250,7 @@ class ChangeTracker {
    */
   private cloneState(state: any): TrackedState | null {
     if (!state) return null;
-    
+
     // Only clone relevant fields
     return {
       activities: state.activities,
@@ -260,7 +261,7 @@ class ChangeTracker {
       soundEnabled: state.soundEnabled,
       taskCelebration: state.taskCelebration,
       routineCelebration: state.routineCelebration,
-      currentDay: state.currentDay
+      currentDay: state.currentDay,
     };
   }
 
@@ -272,16 +273,16 @@ class ChangeTracker {
    */
   shouldUseIncremental(lastSyncTime: number): boolean {
     const changes = this.getChangesSince(lastSyncTime);
-    
+
     // Use incremental if:
     // 1. We have a small number of changes
     // 2. The changes are recent (within last hour)
     // 3. We have a valid lastSyncedState
-    
+
     const isSmallUpdate = changes.length < 50;
     const isRecent = Date.now() - lastSyncTime < 3600000; // 1 hour
     const hasBaseline = this.lastSyncedState !== null;
-    
+
     return isSmallUpdate && isRecent && hasBaseline;
   }
 }

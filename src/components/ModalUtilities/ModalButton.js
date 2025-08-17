@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Platform,
   View,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING } from '../../constants';
@@ -31,7 +30,7 @@ const ModalButton = ({
   }
   const getButtonStyle = () => {
     const baseStyle = [styles.button];
-    
+
     if (variant === 'primary') {
       baseStyle.push(styles.primaryButton);
       baseStyle.push({ backgroundColor: theme.primary });
@@ -40,29 +39,29 @@ const ModalButton = ({
     } else if (variant === 'danger') {
       baseStyle.push(styles.dangerButton);
     }
-    
+
     if (disabled || loading) {
       baseStyle.push(styles.disabledButton);
     }
-    
+
     if (fullWidth) {
       baseStyle.push(styles.fullWidthButton);
     }
-    
+
     if (compact) {
       baseStyle.push(styles.compactButton);
     }
-    
+
     if (style) {
       baseStyle.push(style);
     }
-    
+
     return baseStyle;
   };
-  
+
   const getTextStyle = () => {
     const baseStyle = [styles.buttonText];
-    
+
     if (variant === 'primary') {
       baseStyle.push(styles.primaryButtonText);
     } else if (variant === 'secondary') {
@@ -71,14 +70,14 @@ const ModalButton = ({
     } else if (variant === 'danger') {
       baseStyle.push(styles.dangerButtonText);
     }
-    
+
     if (textStyle) {
       baseStyle.push(textStyle);
     }
-    
+
     return baseStyle;
   };
-  
+
   const getIconColor = () => {
     if (variant === 'primary') return 'white';
     if (variant === 'secondary') return theme.primary;
@@ -94,9 +93,9 @@ const ModalButton = ({
       activeOpacity={variant === 'primary' ? 0.8 : 0.7}
     >
       {loading ? (
-        <ActivityIndicator 
-          size="small" 
-          color={variant === 'primary' ? 'white' : theme.primary} 
+        <ActivityIndicator
+          size="small"
+          color={variant === 'primary' ? 'white' : theme.primary}
         />
       ) : (
         <View style={styles.buttonContent}>

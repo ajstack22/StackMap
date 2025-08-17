@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text } from '../../Typography';
-import { Modal, View, TouchableOpacity, Platform,  } from 'react-native';
+import { Modal, View, TouchableOpacity, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 
@@ -29,13 +29,13 @@ const ConfirmModal = ({
 
   return (
     <Modal
-        visible={visible}
-        animationType="fade"
-        transparent={true}
-        onRequestClose={handleCancel}
-        presentationStyle="overFullScreen"
-        statusBarTranslucent={true}
-      >
+      visible={visible}
+      animationType="fade"
+      transparent={true}
+      onRequestClose={handleCancel}
+      presentationStyle="overFullScreen"
+      statusBarTranslucent={true}
+    >
       <TouchableOpacity
         style={styles.overlay}
         activeOpacity={1}
@@ -47,14 +47,19 @@ const ConfirmModal = ({
           onPress={() => {}}
         >
           {icon && (
-            <View style={[styles.iconContainer, { backgroundColor: (iconColor || theme.primary) + '20' }]}>
+            <View
+              style={[
+                styles.iconContainer,
+                { backgroundColor: (iconColor || theme.primary) + '20' },
+              ]}
+            >
               <Icon name={icon} size={40} color={iconColor || theme.primary} />
             </View>
           )}
-          
+
           <Text style={styles.title}>{title}</Text>
           <Text style={styles.message}>{message}</Text>
-          
+
           <View style={styles.buttonContainer}>
             <TouchableOpacity
               style={[styles.button, styles.cancelButton]}
@@ -62,16 +67,18 @@ const ConfirmModal = ({
             >
               <Text style={styles.cancelButtonText}>{cancelText}</Text>
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={[
                 styles.button,
                 styles.confirmButton,
-                { backgroundColor: confirmButtonColor || theme.primary }
+                { backgroundColor: confirmButtonColor || theme.primary },
               ]}
               onPress={handleConfirm}
             >
-              <Text style={styles.confirmButtonText} numberOfLines={2}>{confirmText}</Text>
+              <Text style={styles.confirmButtonText} numberOfLines={2}>
+                {confirmText}
+              </Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>

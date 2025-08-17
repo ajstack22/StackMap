@@ -18,7 +18,7 @@ const Platform = {
       patch: 0,
     },
   },
-  select: function(obj) {
+  select: function (obj) {
     if ('web' in obj) {
       return obj.web;
     } else if ('default' in obj) {

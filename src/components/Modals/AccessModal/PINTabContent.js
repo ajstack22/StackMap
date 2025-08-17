@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text } from '../../Typography';
-import { View, TouchableOpacity, ScrollView,  } from 'react-native';
+import { View, TouchableOpacity, ScrollView } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import { COLORS } from '../../../constants';
@@ -49,7 +49,10 @@ const PINTabContent = ({
       await onRemovePin();
       showToast({ message: 'PIN removed successfully' });
     } catch (error) {
-      showToast({ message: 'Failed to remove PIN. Please try again.', type: 'error' });
+      showToast({
+        message: 'Failed to remove PIN. Please try again.',
+        type: 'error',
+      });
     } finally {
       setLoading(false);
     }
@@ -62,10 +65,10 @@ const PINTabContent = ({
     setIsSettingPin(false);
   };
 
-  const handlePinSubmit = async (enteredPin) => {
+  const handlePinSubmit = async enteredPin => {
     // Use the PIN passed from the callback, not the state
     const pinToUse = enteredPin || pinInput;
-    
+
     if (isSettingPin) {
       if (!confirmPin) {
         // First entry, ask for confirmation
@@ -79,7 +82,10 @@ const PINTabContent = ({
           handlePinModalClose();
           showToast({ message: 'PIN set successfully' });
         } else {
-          showToast({ message: 'PINs do not match. Try again.', type: 'error' });
+          showToast({
+            message: 'PINs do not match. Try again.',
+            type: 'error',
+          });
           setPinInput('');
           setConfirmPin('');
         }
@@ -106,8 +112,8 @@ const PINTabContent = ({
   // Handle PIN input completion - removed to avoid render-time state updates
 
   return (
-    <ScrollView 
-      style={styles.tabContent} 
+    <ScrollView
+      style={styles.tabContent}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ flexGrow: 1 }}
     >
@@ -120,14 +126,19 @@ const PINTabContent = ({
             Add a simple PIN to prevent accidental changes
           </Text>
         </View>
-        
+
         {/* Divider */}
         <View style={styles.divider} />
 
-        <View style={[styles.pinStatus, { borderColor: hasSecurePin ? COLORS.success : COLORS.gray[300] }]}>
-          <Icon 
-            name={hasSecurePin ? "lock" : "lock-open"} 
-            size={24} 
+        <View
+          style={[
+            styles.pinStatus,
+            { borderColor: hasSecurePin ? COLORS.success : COLORS.gray[300] },
+          ]}
+        >
+          <Icon
+            name={hasSecurePin ? 'lock' : 'lock-open'}
+            size={24}
             color={hasSecurePin ? COLORS.success : COLORS.gray[500]}
             style={styles.pinStatusIcon}
           />
@@ -136,7 +147,9 @@ const PINTabContent = ({
               {hasSecurePin ? 'PIN Enabled' : 'PIN Disabled'}
             </Text>
             <Text style={styles.pinStatusSubtext}>
-              {hasSecurePin ? 'Prevents accidental changes to your plans' : 'Quick access without a code'}
+              {hasSecurePin
+                ? 'Prevents accidental changes to your plans'
+                : 'Quick access without a code'}
             </Text>
           </View>
         </View>
@@ -174,7 +187,8 @@ const PINTabContent = ({
         {hasSecurePin && (
           <View style={styles.warningBox}>
             <Text style={styles.warningText}>
-              💡 Remember your PIN! If forgotten, you'll need to reset the app data.
+              💡 Remember your PIN! If forgotten, you'll need to reset the app
+              data.
             </Text>
           </View>
         )}

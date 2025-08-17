@@ -1,79 +1,97 @@
 import { useState, useCallback, useRef } from 'react';
-import { 
-  reorderArray, 
-  moveItemUp, 
+import {
+  reorderArray,
+  moveItemUp,
   moveItemDown,
   batchDelete,
-  triggerHaptic 
+  triggerHaptic,
 } from '../components/EditModeList/utils';
 
 export const useEditMode = (initialActivities, onUpdate) => {
   const [selectedItems, setSelectedItems] = useState(new Set());
   const [undoStack, setUndoStack] = useState([]);
-  
-  const updateActivities = useCallback((newActivities) => {
-    // Save for undo
-    setUndoStack(prev => [...prev, initialActivities].slice(-10)); // Keep last 10
-    
-    // Notify parent
-    if (onUpdate) {
-      onUpdate(newActivities);
-    }
-  }, [initialActivities, onUpdate]);
-  
-  const handleMoveUp = useCallback((index) => {
-    if (index <= 0) return;
-    
-    triggerHaptic('selection');
-    const newActivities = moveItemUp(initialActivities, index);
-    updateActivities(newActivities);
-  }, [initialActivities, updateActivities]);
-  
-  const handleMoveDown = useCallback((index) => {
-    if (index >= initialActivities.length - 1) return;
-    
-    triggerHaptic('selection');
-    const newActivities = moveItemDown(initialActivities, index);
-    updateActivities(newActivities);
-  }, [initialActivities, updateActivities]);
-  
-  const handleReorder = useCallback((fromIndex, toIndex) => {
-    triggerHaptic('selection');
-    const newActivities = reorderArray(initialActivities, fromIndex, toIndex);
-    updateActivities(newActivities);
-  }, [initialActivities, updateActivities]);
-  
-  const handleDelete = useCallback((itemOrId) => {
-    triggerHaptic('warning');
-    const id = typeof itemOrId === 'object' ? itemOrId.id : itemOrId;
-    const newActivities = initialActivities.map(a => 
-      a.id === id ? { ...a, deleted: true, deletedAt: Date.now() } : a
-    );
-    updateActivities(newActivities);
-  }, [initialActivities, updateActivities]);
-  
+
+  const updateActivities = useCallback(
+    newActivities => {
+      // Save for undo
+      setUndoStack(prev => [...prev, initialActivities].slice(-10)); // Keep last 10
+
+      // Notify parent
+      if (onUpdate) {
+        onUpdate(newActivities);
+      }
+    },
+    [initialActivities, onUpdate],
+  );
+
+  const handleMoveUp = useCallback(
+    index => {
+      if (index <= 0) return;
+
+      triggerHaptic('selection');
+      const newActivities = moveItemUp(initialActivities, index);
+      updateActivities(newActivities);
+    },
+    [initialActivities, updateActivities],
+  );
+
+  const handleMoveDown = useCallback(
+    index => {
+      if (index >= initialActivities.length - 1) return;
+
+      triggerHaptic('selection');
+      const newActivities = moveItemDown(initialActivities, index);
+      updateActivities(newActivities);
+    },
+    [initialActivities, updateActivities],
+  );
+
+  const handleReorder = useCallback(
+    (fromIndex, toIndex) => {
+      triggerHaptic('selection');
+      const newActivities = reorderArray(initialActivities, fromIndex, toIndex);
+      updateActivities(newActivities);
+    },
+    [initialActivities, updateActivities],
+  );
+
+  const handleDelete = useCallback(
+    itemOrId => {
+      triggerHaptic('warning');
+      const id = typeof itemOrId === 'object' ? itemOrId.id : itemOrId;
+      const newActivities = initialActivities.map(a =>
+        a.id === id ? { ...a, deleted: true, deletedAt: Date.now() } : a,
+      );
+      updateActivities(newActivities);
+    },
+    [initialActivities, updateActivities],
+  );
+
   const handleBatchDelete = useCallback(() => {
     if (selectedItems.size === 0) return;
-    
+
     triggerHaptic('warning');
-    const newActivities = batchDelete(initialActivities, Array.from(selectedItems));
+    const newActivities = batchDelete(
+      initialActivities,
+      Array.from(selectedItems),
+    );
     updateActivities(newActivities);
     setSelectedItems(new Set());
   }, [initialActivities, selectedItems, updateActivities]);
-  
+
   const handleUndo = useCallback(() => {
     if (undoStack.length === 0) return;
-    
+
     triggerHaptic('success');
     const previousState = undoStack[undoStack.length - 1];
     setUndoStack(prev => prev.slice(0, -1));
-    
+
     if (onUpdate) {
       onUpdate(previousState);
     }
   }, [undoStack, onUpdate]);
-  
-  const toggleSelection = useCallback((item) => {
+
+  const toggleSelection = useCallback(item => {
     setSelectedItems(prev => {
       const newSet = new Set(prev);
       if (newSet.has(item.id)) {
@@ -84,19 +102,19 @@ export const useEditMode = (initialActivities, onUpdate) => {
       return newSet;
     });
   }, []);
-  
+
   const selectAll = useCallback(() => {
     setSelectedItems(new Set(initialActivities.map(a => a.id)));
   }, [initialActivities]);
-  
+
   const clearSelection = useCallback(() => {
     setSelectedItems(new Set());
   }, []);
-  
+
   return {
     selectedItems,
     canUndo: undoStack.length > 0,
-    
+
     // Actions
     handleMoveUp,
     handleMoveDown,
@@ -104,7 +122,7 @@ export const useEditMode = (initialActivities, onUpdate) => {
     handleDelete,
     handleBatchDelete,
     handleUndo,
-    
+
     // Selection
     toggleSelection,
     selectAll,

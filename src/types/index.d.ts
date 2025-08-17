@@ -58,7 +58,7 @@ export interface LibraryActivity {
 }
 
 // Theme Types
-export type ThemeName = 
+export type ThemeName =
   | 'lemonLime'
   | 'mintCherry'
   | 'blueBerry'
@@ -84,7 +84,7 @@ export interface Theme {
 }
 
 // Celebration Types
-export type CelebrationType = 
+export type CelebrationType =
   | 'none'
   | 'confetti'
   | 'subtle'

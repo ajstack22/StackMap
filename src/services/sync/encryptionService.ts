@@ -10,8 +10,10 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import pako from 'pako';
 
 // Type helpers for tweetnacl-util with proper casting
-const encodeBase64 = (arr: Uint8Array): string => (util as any).encodeBase64(arr);
-const decodeBase64 = (str: string): Uint8Array => (util as any).decodeBase64(str);
+const encodeBase64 = (arr: Uint8Array): string =>
+  (util as any).encodeBase64(arr);
+const decodeBase64 = (str: string): Uint8Array =>
+  (util as any).decodeBase64(str);
 const encodeUTF8 = (arr: Uint8Array): string => (util as any).encodeUTF8(arr);
 const decodeUTF8 = (str: string): Uint8Array => (util as any).decodeUTF8(str);
 
@@ -43,15 +45,20 @@ class EncryptionService {
     // In production, use BIP39 wordlist for better UX
     const seedBytes = nacl.randomBytes(16);
     // Convert to hex string (no padding, URL-safe)
-    return Array.from(seedBytes).map(byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(seedBytes)
+      .map(byte => byte.toString(16).padStart(2, '0'))
+      .join('');
   }
 
   /**
    * Derive encryption key from recovery phrase using PBKDF2-like approach
    */
-  async deriveKeyFromPhrase(recoveryPhrase: string, salt: Uint8Array | string | null = null): Promise<DerivedKey> {
+  async deriveKeyFromPhrase(
+    recoveryPhrase: string,
+    salt: Uint8Array | string | null = null,
+  ): Promise<DerivedKey> {
     // const startTime = Date.now(); // Commented out to avoid lint error
-        
+
     // If no salt provided, generate one
     let saltBytes: Uint8Array;
     if (!salt) {
@@ -67,53 +74,60 @@ class EncryptionService {
     const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
     combined.set(phraseBytes);
     combined.set(saltBytes, phraseBytes.length);
-    
+
     // Hash multiple times for key stretching (PBKDF2-like)
     let key = nacl.hash(combined);
-    
+
     // Log progress for long operation (only in development)
     const logInterval = KEY_DERIVATION_ITERATIONS / 10;
     const batchSize = 5000; // Process 5000 iterations at a time (increased for better performance)
-    
+
     // Process in batches to avoid blocking the UI thread
     for (let i = 0; i < KEY_DERIVATION_ITERATIONS; i++) {
       key = nacl.hash(key);
-      
+
       // Yield control back to the event loop periodically
       if (i % batchSize === 0 && i > 0) {
         // Use setTimeout to allow UI updates and other events to process
         await new Promise(resolve => setTimeout(resolve, 0));
-        
+
         // Log timing info (commented out to avoid lint errors)
         // const elapsed = Date.now() - startTime;
         // const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
       }
-      
+
       // Log progress in development mode
       if (__DEV__ && i % logInterval === 0 && i > 0) {
         // Progress logged
       }
     }
-    
+
     const derivedKey = key.slice(0, KEY_LENGTH);
     return {
       key: derivedKey,
-      salt: encodeBase64(saltBytes)
+      salt: encodeBase64(saltBytes),
     };
   }
 
   /**
    * Initialize encryption with recovery phrase
    */
-  async initialize(recoveryPhrase: string, syncId: string, existingSalt: string | null = null): Promise<{ salt: string }> {
-    const { key, salt } = await this.deriveKeyFromPhrase(recoveryPhrase, existingSalt);
+  async initialize(
+    recoveryPhrase: string,
+    syncId: string,
+    existingSalt: string | null = null,
+  ): Promise<{ salt: string }> {
+    const { key, salt } = await this.deriveKeyFromPhrase(
+      recoveryPhrase,
+      existingSalt,
+    );
     this.masterKey = key;
     this.syncId = syncId;
-    
+
     // Store the recovery phrase and salt securely
     await this.storeRecoveryPhrase(recoveryPhrase, syncId);
     await AsyncStorage.setItem('encryption_salt', salt);
-    
+
     return { salt };
   }
 
@@ -128,13 +142,13 @@ class EncryptionService {
     // Convert data to bytes
     const dataStr = JSON.stringify(data);
     let dataBytes = decodeUTF8(dataStr);
-    
+
     // Prepare metadata
     const metadata: EncryptionMetadata = {
       version: ENCRYPTION_VERSION,
-      compressed: false
+      compressed: false,
     };
-    
+
     // Compress if data is large enough
     if (dataBytes.length > COMPRESSION_THRESHOLD) {
       try {
@@ -144,30 +158,39 @@ class EncryptionService {
           metadata.compressed = true;
         }
       } catch (error) {
-        console.warn('[ENCRYPTION] Compression failed, using uncompressed data:', error);
+        console.warn(
+          '[ENCRYPTION] Compression failed, using uncompressed data:',
+          error,
+        );
       }
     }
-    
+
     // Encode metadata
     const metadataBytes = decodeUTF8(JSON.stringify(metadata));
     const metadataLength = new Uint8Array(4);
-    new DataView(metadataLength.buffer).setUint32(0, metadataBytes.length, false);
-    
+    new DataView(metadataLength.buffer).setUint32(
+      0,
+      metadataBytes.length,
+      false,
+    );
+
     // Combine metadata and data
-    const combined = new Uint8Array(4 + metadataBytes.length + dataBytes.length);
+    const combined = new Uint8Array(
+      4 + metadataBytes.length + dataBytes.length,
+    );
     combined.set(metadataLength, 0);
     combined.set(metadataBytes, 4);
     combined.set(dataBytes, 4 + metadataBytes.length);
-    
+
     // Generate nonce and encrypt
     const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
     const encrypted = (nacl.secretbox as any)(combined, nonce, this.masterKey);
-    
+
     // Combine nonce and encrypted data
     const result = new Uint8Array(nonce.length + encrypted.length);
     result.set(nonce);
     result.set(encrypted, nonce.length);
-    
+
     return encodeBase64(result);
   }
 
@@ -181,45 +204,50 @@ class EncryptionService {
 
     try {
       const combined = decodeBase64(encryptedData);
-      
+
       // Extract nonce and encrypted data
       const nonce = combined.slice(0, nacl.secretbox.nonceLength);
       const encrypted = combined.slice(nacl.secretbox.nonceLength);
-      
+
       // Decrypt
       const decrypted = nacl.secretbox.open(encrypted, nonce, this.masterKey);
       if (!decrypted) {
         throw new Error('Decryption failed - invalid key or corrupted data');
       }
-      
+
       // Check for metadata (version 2+)
       if (decrypted.length > 4) {
-        const metadataLength = new DataView(decrypted.buffer, decrypted.byteOffset, 4).getUint32(0, false);
+        const metadataLength = new DataView(
+          decrypted.buffer,
+          decrypted.byteOffset,
+          4,
+        ).getUint32(0, false);
         if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
           try {
             const metadataBytes = decrypted.slice(4, 4 + metadataLength);
-            const metadata: EncryptionMetadata = JSON.parse(encodeUTF8(metadataBytes));
+            const metadata: EncryptionMetadata = JSON.parse(
+              encodeUTF8(metadataBytes),
+            );
             let dataBytes = decrypted.slice(4 + metadataLength);
-            
+
             // Handle decompression if needed
             if (metadata.version === 2) {
               if (metadata.compressed) {
                 try {
                   dataBytes = pako.inflate(dataBytes);
-                                  } catch (error) {
+                } catch (error) {
                   console.error('[DECRYPTION] Decompression failed:', error);
                   throw new Error('Failed to decompress data');
                 }
               }
             }
-            
+
             const dataStr = encodeUTF8(dataBytes);
             return JSON.parse(dataStr);
-          } catch (error) {
-                      }
+          } catch (error) {}
         }
       }
-      
+
       // Legacy format (no metadata)
       const decryptedStr = encodeUTF8(decrypted);
       return JSON.parse(decryptedStr);

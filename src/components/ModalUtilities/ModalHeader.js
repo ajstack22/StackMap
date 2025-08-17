@@ -7,7 +7,6 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING } from '../../constants';
@@ -24,7 +23,12 @@ const ModalHeader = ({
   return (
     <>
       {Platform.OS === 'android' && (
-        <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+        <View
+          style={{
+            backgroundColor: theme.primary,
+            height: StatusBar.currentHeight || 24,
+          }}
+        />
       )}
       <SafeAreaView style={{ backgroundColor: theme.primary }}>
         <View style={[styles.header, { backgroundColor: theme.primary }]}>
@@ -32,7 +36,12 @@ const ModalHeader = ({
             {leftAction ? (
               leftAction
             ) : icon ? (
-              <Icon name={icon} size={24} color="white" style={styles.headerIcon} />
+              <Icon
+                name={icon}
+                size={24}
+                color="white"
+                style={styles.headerIcon}
+              />
             ) : null}
             <View style={styles.titleContainer}>
               <Text style={styles.title}>{title}</Text>
@@ -42,14 +51,16 @@ const ModalHeader = ({
           <View style={styles.headerRight}>
             {rightAction}
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <View style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </View>
             </TouchableOpacity>

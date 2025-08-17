@@ -57,5 +57,4 @@ export const triggerHaptic = (type = 'selection') => {
   // To enable:
   // 1. Add <uses-permission android:name="android.permission.VIBRATE" /> to AndroidManifest.xml
   // 2. Uncomment the code below
-  
 };

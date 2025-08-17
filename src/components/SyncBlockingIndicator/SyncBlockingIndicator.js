@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Modal,
   Platform,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import syncService from '../../services/sync/syncService';
@@ -16,33 +15,33 @@ const SyncBlockingIndicator = ({ theme }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [statusMessage, setStatusMessage] = useState('Initializing...');
   const [progress, setProgress] = useState(0);
-  
-  useEffect(() => {
 
+  useEffect(() => {
     // Check if sync is initializing on mount
     const checkInitialSync = async () => {
-      const isInitializing = syncService.isInitializing || syncService.syncInProgress;
+      const isInitializing =
+        syncService.isInitializing || syncService.syncInProgress;
 
       if (isInitializing) {
         setIsVisible(true);
       }
     };
     checkInitialSync();
-    
-    // Subscribe to sync status updates
-    const updateStatus = (status) => {
 
+    // Subscribe to sync status updates
+    const updateStatus = status => {
       // ONLY show blocking indicator during initial sync or when explicitly restoring
       // Don't show for incremental syncs
-      const shouldShowBlockingUI = status && (
-        syncService.isInitializing || 
-        status.phase === 'restoring' ||
-        (status.phase === 'checking' && !syncService.hasCompletedInitialSync)
-      );
-      
+      const shouldShowBlockingUI =
+        status &&
+        (syncService.isInitializing ||
+          status.phase === 'restoring' ||
+          (status.phase === 'checking' &&
+            !syncService.hasCompletedInitialSync));
+
       if (shouldShowBlockingUI) {
         setIsVisible(true);
-        
+
         switch (status.phase) {
           case 'checking':
             setStatusMessage('Checking for updates...');
@@ -67,7 +66,9 @@ const SyncBlockingIndicator = ({ theme }) => {
             setTimeout(() => setIsVisible(false), 1000);
             break;
           case 'error':
-            setStatusMessage('Sync error: ' + (status.details || 'Please try again'));
+            setStatusMessage(
+              'Sync error: ' + (status.details || 'Please try again'),
+            );
             setTimeout(() => setIsVisible(false), 3000);
             break;
           default:
@@ -78,30 +79,29 @@ const SyncBlockingIndicator = ({ theme }) => {
         setTimeout(() => setIsVisible(false), 500);
       }
     };
-    
-    const updateProgress = (value) => {
 
+    const updateProgress = value => {
       setProgress(value);
     };
-    
+
     // Override the syncService callbacks
     const originalStatusChange = syncService.onStatusChange;
     const originalProgressChange = syncService.onProgressChange;
-    
+
     syncService.onStatusChange = updateStatus;
     syncService.onProgressChange = updateProgress;
-    
+
     return () => {
       // Restore original callbacks
       syncService.onStatusChange = originalStatusChange;
       syncService.onProgressChange = originalProgressChange;
     };
   }, []);
-  
+
   if (!isVisible) {
     return null;
   }
-  
+
   return (
     <Modal
       transparent={true}
@@ -111,8 +111,8 @@ const SyncBlockingIndicator = ({ theme }) => {
     >
       <View style={styles.overlay}>
         <View style={[styles.container, { backgroundColor: '#fff' }]}>
-          <ActivityIndicator 
-            size="large" 
+          <ActivityIndicator
+            size="large"
             color={theme?.primary || '#2196F3'}
             style={styles.spinner}
           />
@@ -121,14 +121,14 @@ const SyncBlockingIndicator = ({ theme }) => {
           {progress > 0 && progress < 100 && (
             <View style={styles.progressContainer}>
               <View style={styles.progressBarBackground}>
-                <View 
+                <View
                   style={[
-                    styles.progressBar, 
-                    { 
+                    styles.progressBar,
+                    {
                       width: `${progress}%`,
-                      backgroundColor: theme?.primary || '#2196F3'
-                    }
-                  ]} 
+                      backgroundColor: theme?.primary || '#2196F3',
+                    },
+                  ]}
                 />
               </View>
               <Text style={styles.progressText}>{Math.round(progress)}%</Text>

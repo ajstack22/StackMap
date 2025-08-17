@@ -39,7 +39,7 @@ class SyncHistory {
       timestamp: Date.now(),
       type: event.type || 'sync',
       success: event.success !== false,
-      ...event
+      ...event,
     };
 
     // Add to history
@@ -70,7 +70,7 @@ class SyncHistory {
       incremental: details.incremental,
       version: details.version,
       success: details.success,
-      error: details.error
+      error: details.error,
     });
   }
 
@@ -84,7 +84,7 @@ class SyncHistory {
       resolved: details.resolved,
       pending: details.pending,
       resolutionStrategy: details.strategy,
-      fields: details.fields
+      fields: details.fields,
     });
   }
 
@@ -98,7 +98,7 @@ class SyncHistory {
       message: details.message,
       retryable: details.retryable,
       networkError: details.networkError,
-      success: false
+      success: false,
     });
   }
 
@@ -111,7 +111,7 @@ class SyncHistory {
       type = null,
       startDate = null,
       endDate = null,
-      successOnly = false
+      successOnly = false,
     } = options;
 
     let filtered = [...this.history];
@@ -141,7 +141,8 @@ class SyncHistory {
   /**
    * Get sync statistics
    */
-  getStatistics(timeRange = 86400000) { // Default 24 hours
+  getStatistics(timeRange = 86400000) {
+    // Default 24 hours
     const cutoff = Date.now() - timeRange;
     const recentHistory = this.history.filter(item => item.timestamp >= cutoff);
 
@@ -156,7 +157,7 @@ class SyncHistory {
       networkErrors: 0,
       averageSyncTime: 0,
       dataTransferred: 0,
-      compressionSavings: 0
+      compressionSavings: 0,
     };
 
     let totalSyncTime = 0;
@@ -201,9 +202,10 @@ class SyncHistory {
     }
 
     // Calculate success rate
-    stats.successRate = stats.totalSyncs > 0 
-      ? Math.round((stats.successfulSyncs / stats.totalSyncs) * 100) 
-      : 100;
+    stats.successRate =
+      stats.totalSyncs > 0
+        ? Math.round((stats.successfulSyncs / stats.totalSyncs) * 100)
+        : 100;
 
     return stats;
   }
@@ -221,9 +223,7 @@ class SyncHistory {
    * Get last successful sync
    */
   getLastSuccessfulSync() {
-    return this.history.find(item => 
-      item.type === 'sync' && item.success
-    );
+    return this.history.find(item => item.type === 'sync' && item.success);
   }
 
   /**
@@ -240,8 +240,7 @@ class SyncHistory {
   async persist() {
     try {
       await AsyncStorage.setItem(HISTORY_KEY, JSON.stringify(this.history));
-    } catch (error) {
-    }
+    } catch (error) {}
   }
 
   /**
@@ -253,7 +252,7 @@ class SyncHistory {
       exported: new Date().toISOString(),
       itemCount: this.history.length,
       statistics: this.getStatistics(Infinity),
-      history: this.history
+      history: this.history,
     };
   }
 }

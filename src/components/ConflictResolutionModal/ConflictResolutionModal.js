@@ -9,18 +9,17 @@ import {
   Platform,
   ActivityIndicator,
   StatusBar,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import conflictResolver from '../../services/sync/conflictResolver';
 
-const ConflictResolutionModal = ({ 
-  visible, 
-  onClose, 
-  conflicts, 
+const ConflictResolutionModal = ({
+  visible,
+  onClose,
+  conflicts,
   onResolve,
-  theme 
+  theme,
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [resolving, setResolving] = useState(false);
@@ -38,13 +37,16 @@ const ConflictResolutionModal = ({
     }
   }, [visible]);
 
-  const handleChoice = async (choice) => {
+  const handleChoice = async choice => {
     setResolving(true);
     setSelectedChoice(choice);
 
     try {
-      const resolution = conflictResolver.resolveUserConflict(currentConflict.id, choice);
-      
+      const resolution = conflictResolver.resolveUserConflict(
+        currentConflict.id,
+        choice,
+      );
+
       if (onResolve) {
         await onResolve(resolution);
       }
@@ -77,7 +79,7 @@ const ConflictResolutionModal = ({
         style={[
           styles.choiceCard,
           isPreviewing && styles.choiceCardHover,
-          isSelected && styles.choiceCardSelected
+          isSelected && styles.choiceCardSelected,
         ]}
         onPress={() => handleChoice(choice)}
         onPressIn={() => setPreviewChoice(choice)}
@@ -85,7 +87,12 @@ const ConflictResolutionModal = ({
         disabled={resolving}
       >
         <View style={styles.choiceHeader}>
-          <Text style={[styles.choiceLabel, isSelected && styles.choiceLabelSelected]}>
+          <Text
+            style={[
+              styles.choiceLabel,
+              isSelected && styles.choiceLabelSelected,
+            ]}
+          >
             {label}
           </Text>
           {isSelected && (
@@ -140,15 +147,11 @@ const ConflictResolutionModal = ({
         </Text>
       );
     } else {
-      return (
-        <Text style={styles.scalarValue}>
-          {String(value)}
-        </Text>
-      );
+      return <Text style={styles.scalarValue}>{String(value)}</Text>;
     }
   };
 
-  const getFieldDescription = (field) => {
+  const getFieldDescription = field => {
     const descriptions = {
       activities: 'Activity templates',
       completedActivities: 'Completed activity records',
@@ -159,7 +162,7 @@ const ConflictResolutionModal = ({
       soundEnabled: 'Sound settings',
       taskCelebration: 'Task celebration effect',
       routineCelebration: 'Routine celebration effect',
-      currentDay: 'Current day view'
+      currentDay: 'Current day view',
     };
     return descriptions[field] || field;
   };
@@ -175,65 +178,83 @@ const ConflictResolutionModal = ({
       onRequestClose={onClose}
     >
       {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor={theme.primary} 
-          barStyle="light-content" 
+        <StatusBar
+          backgroundColor={theme.primary}
+          barStyle="light-content"
           translucent={false}
         />
       )}
       <View style={[styles.container, { backgroundColor: theme.primary }]}>
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.header, { backgroundColor: theme.primary }]}>
-          <View>
-            <Text style={styles.title}>Sync Conflict</Text>
-            <Text style={styles.subtitle}>
-              {currentIndex + 1} of {conflicts.length}
-            </Text>
-          </View>
-          <TouchableOpacity onPress={onClose} disabled={resolving}>
-            <View style={{
-              width: 36,
-              height: 36,
-              borderRadius: 18,
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              alignItems: 'center',
-              justifyContent: 'center',
-            }}>
-              <Icon name="close" size={20} color="white" />
+            <View>
+              <Text style={styles.title}>Sync Conflict</Text>
+              <Text style={styles.subtitle}>
+                {currentIndex + 1} of {conflicts.length}
+              </Text>
             </View>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={onClose} disabled={resolving}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Icon name="close" size={20} color="white" />
+              </View>
+            </TouchableOpacity>
           </View>
         </SafeAreaView>
 
-        <ScrollView style={[styles.content, { backgroundColor: theme.light }]} contentContainerStyle={styles.contentContainer}>
+        <ScrollView
+          style={[styles.content, { backgroundColor: theme.light }]}
+          contentContainerStyle={styles.contentContainer}
+        >
           <View style={styles.conflictInfo}>
             <Icon name="warning" size={32} color={theme.primary} />
             <Text style={styles.conflictTitle}>
               {getFieldDescription(currentConflict.field)}
             </Text>
             <Text style={styles.conflictDescription}>
-              Both devices made changes to this data. Choose which version to keep:
+              Both devices made changes to this data. Choose which version to
+              keep:
             </Text>
           </View>
 
           <View style={styles.choicesContainer}>
-            {renderValue(currentConflict.localValue, 'Keep Local (This Device)', 'local')}
-            {renderValue(currentConflict.remoteValue, 'Keep Remote (Other Device)', 'remote')}
-            
-            {currentConflict.strategy === 'merge' && (
+            {renderValue(
+              currentConflict.localValue,
+              'Keep Local (This Device)',
+              'local',
+            )}
+            {renderValue(
+              currentConflict.remoteValue,
+              'Keep Remote (Other Device)',
+              'remote',
+            )}
+
+            {currentConflict.strategy === 'merge' &&
               renderValue(
                 conflictResolver.mergeValues(
                   currentConflict.field,
                   currentConflict.localValue,
-                  currentConflict.remoteValue
+                  currentConflict.remoteValue,
                 ),
                 'Merge Both',
-                'merge'
-              )
-            )}
+                'merge',
+              )}
           </View>
 
           {resolving && (

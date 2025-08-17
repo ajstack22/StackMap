@@ -10,8 +10,8 @@ const Platform = {
   isTV: false,
   isTVOS: false,
   isTesting: false,
-  
-  select: (obj) => {
+
+  select: obj => {
     if (obj && typeof obj === 'object') {
       if ('web' in obj) return obj.web;
       if ('default' in obj) return obj.default;
@@ -21,7 +21,7 @@ const Platform = {
     }
     return undefined;
   },
-  
+
   // Constants for web environment
   constants: {
     reactNativeVersion: { major: 0, minor: 72, patch: 0 },

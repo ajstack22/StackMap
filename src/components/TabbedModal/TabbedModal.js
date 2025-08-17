@@ -13,7 +13,6 @@ import {
   PanResponder,
   Easing,
   BackHandler,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -45,10 +44,11 @@ const TabbedModal = ({
   const [isScrolling, setIsScrolling] = useState(false);
   const gestureRef = useRef({ isActive: false });
   const pagerRef = useRef(null);
-  
+
   // Use controlled activeTab if provided, otherwise use internal state
-  const activeTab = controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
-  
+  const activeTab =
+    controlledActiveTab !== undefined ? controlledActiveTab : internalActiveTab;
+
   // Store activeTab and tabs in refs to use in pan responder
   const activeTabRef = useRef(activeTab);
   const tabsRef = useRef(tabs);
@@ -82,57 +82,71 @@ const TabbedModal = ({
       onMoveShouldSetPanResponder: (evt, gestureState) => {
         // Android: Be VERY aggressive about capturing horizontal movement
         if (Platform.OS === 'android') {
-          const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+          const isHorizontalSwipe =
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
           const hasMovedEnough = Math.abs(gestureState.dx) > 5; // Lower threshold
           return isHorizontalSwipe && hasMovedEnough;
         }
         // iOS: Standard behavior
-        const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+        const isHorizontalSwipe =
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
         const hasMovedEnough = Math.abs(gestureState.dx) > 10;
         return isHorizontalSwipe && hasMovedEnough && !isScrolling;
       },
       onMoveShouldSetPanResponderCapture: (evt, gestureState) => {
         // CRITICAL FOR ANDROID: Capture BEFORE ScrollView can!
         if (Platform.OS === 'android') {
-          const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
+          const isHorizontalSwipe =
+            Math.abs(gestureState.dx) > Math.abs(gestureState.dy);
           const hasMovedEnough = Math.abs(gestureState.dx) > 5; // Very low threshold
           return isHorizontalSwipe && hasMovedEnough;
         }
         // iOS: Less aggressive
-        const isHorizontalSwipe = Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
+        const isHorizontalSwipe =
+          Math.abs(gestureState.dx) > Math.abs(gestureState.dy) * 1.2;
         const hasMovedEnough = Math.abs(gestureState.dx) > 15;
         return isHorizontalSwipe && hasMovedEnough;
       },
       onPanResponderGrant: () => {
         // Start gesture
         gestureRef.current.isActive = true;
-        if (__DEV__ && Platform.OS === 'android') {}
+        if (__DEV__ && Platform.OS === 'android') {
+        }
       },
       onPanResponderMove: (evt, gestureState) => {
         // Update swipe animation value with some resistance at edges
         const resistance = 0.5;
         let dx = gestureState.dx;
-        
+
         // Add resistance when trying to swipe past edges
-        if ((activeTabRef.current === 0 && dx > 0) || (activeTabRef.current === tabsRef.current.length - 1 && dx < 0)) {
+        if (
+          (activeTabRef.current === 0 && dx > 0) ||
+          (activeTabRef.current === tabsRef.current.length - 1 && dx < 0)
+        ) {
           dx = dx * resistance;
         }
-        
+
         swipeAnimation.setValue(dx);
       },
       onPanResponderRelease: (evt, gestureState) => {
         // Reset gesture state
         gestureRef.current.isActive = false;
-        
-        const swipeThreshold = Platform.OS === 'android' ? screenWidth * 0.1 : screenWidth * 0.2; // Lower threshold for Android
+
+        const swipeThreshold =
+          Platform.OS === 'android' ? screenWidth * 0.1 : screenWidth * 0.2; // Lower threshold for Android
         const velocityThreshold = Platform.OS === 'android' ? 0.3 : 0.5; // Lower velocity threshold for Android
-        
+
         // Check velocity for quick swipes
-        const shouldSwipeLeft = gestureState.dx < -swipeThreshold || gestureState.vx < -velocityThreshold;
-        const shouldSwipeRight = gestureState.dx > swipeThreshold || gestureState.vx > velocityThreshold;
-        
-        if (__DEV__ && Platform.OS === 'android') {}
-        
+        const shouldSwipeLeft =
+          gestureState.dx < -swipeThreshold ||
+          gestureState.vx < -velocityThreshold;
+        const shouldSwipeRight =
+          gestureState.dx > swipeThreshold ||
+          gestureState.vx > velocityThreshold;
+
+        if (__DEV__ && Platform.OS === 'android') {
+        }
+
         if (shouldSwipeRight && activeTabRef.current > 0) {
           // Swipe right - go to previous tab
           animateToTab(activeTabRef.current - 1, true); // Pass true for fromSwipe
@@ -143,7 +157,10 @@ const TabbedModal = ({
               gestureRef.current.isActive = false;
             }, 200); // Match the faster animation duration
           }
-        } else if (shouldSwipeLeft && activeTabRef.current < tabsRef.current.length - 1) {
+        } else if (
+          shouldSwipeLeft &&
+          activeTabRef.current < tabsRef.current.length - 1
+        ) {
           // Swipe left - go to next tab
           animateToTab(activeTabRef.current + 1, true); // Pass true for fromSwipe
           // Reset gesture state after animation on Android
@@ -178,22 +195,22 @@ const TabbedModal = ({
           useNativeDriver: true,
         }).start();
       },
-    })
+    }),
   ).current;
-  
+
   // Reset to default tab when modal opens (only if not controlled)
   useEffect(() => {
     if (visible && controlledActiveTab === undefined) {
       setInternalActiveTab(defaultTab);
     }
   }, [visible, defaultTab, controlledActiveTab]);
-  
+
   const animateToTab = (index, fromSwipe = false) => {
     if (index === activeTabRef.current) return;
-    
+
     // Direction: negative when going to next tab (content slides left), positive when going to previous tab (content slides right)
     const direction = index > activeTabRef.current ? -1 : 1;
-    
+
     // If not from swipe (e.g., tab press), use the original animation
     if (!fromSwipe) {
       swipeAnimation.setValue(0);
@@ -201,7 +218,7 @@ const TabbedModal = ({
       swipeAnimation.setValue(-direction * screenWidth * 0.35);
     }
     // If from swipe, continue from current position for smooth transition
-    
+
     // Defer the state update to avoid React Native's batching warning
     // This prevents state updates during touch event processing
     setTimeout(() => {
@@ -211,7 +228,7 @@ const TabbedModal = ({
         swipeAnimation.setValue(0);
       }
     }, 0);
-    
+
     // Animate to the new tab position
     RNAnimated.timing(swipeAnimation, {
       toValue: 0,
@@ -221,7 +238,7 @@ const TabbedModal = ({
     }).start();
   };
 
-  const handleTabPress = (index) => {
+  const handleTabPress = index => {
     if (index !== activeTabRef.current) {
       if (controlledActiveTab === undefined) {
         setInternalActiveTab(index);
@@ -235,38 +252,44 @@ const TabbedModal = ({
       }
     }
   };
-  
+
   // Keyboard navigation for web and back button handling for Android
   useEffect(() => {
     if (!visible) return;
-    
+
     // Web keyboard navigation
     if (Platform.OS === 'web') {
-      const handleKeyPress = (e) => {
+      const handleKeyPress = e => {
         if (e.key === 'ArrowLeft' && activeTabRef.current > 0) {
           animateToTab(activeTabRef.current - 1);
-        } else if (e.key === 'ArrowRight' && activeTabRef.current < tabsRef.current.length - 1) {
+        } else if (
+          e.key === 'ArrowRight' &&
+          activeTabRef.current < tabsRef.current.length - 1
+        ) {
           animateToTab(activeTabRef.current + 1);
         } else if (e.key === 'Escape') {
           onClose();
         }
       };
-      
+
       window.addEventListener('keydown', handleKeyPress);
       return () => window.removeEventListener('keydown', handleKeyPress);
     }
-    
+
     // Android back button handling
     if (Platform.OS === 'android') {
-      const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-        onClose();
-        return true; // Prevent default back behavior
-      });
-      
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          onClose();
+          return true; // Prevent default back behavior
+        },
+      );
+
       return () => backHandler.remove();
     }
   }, [visible, activeTab, tabs.length, onClose]);
-  
+
   return (
     <Modal
       visible={visible}
@@ -275,45 +298,64 @@ const TabbedModal = ({
       statusBarTranslucent={true}
       onRequestClose={onClose}
     >
-      <View 
+      <View
         style={[
-          styles.modalContainer, 
-          { 
-            backgroundColor: theme.light
-          }
+          styles.modalContainer,
+          {
+            backgroundColor: theme.light,
+          },
         ]}
       >
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary, width: '100%' }}>
-          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+          <View
+            style={[styles.modalHeader, { backgroundColor: theme.primary }]}
+          >
             <View style={styles.headerLeft}>
               {icon && (
-                <Icon name={icon} size={24} color="white" style={styles.headerIcon} />
+                <Icon
+                  name={icon}
+                  size={24}
+                  color="white"
+                  style={styles.headerIcon}
+                />
               )}
               <Text style={styles.modalTitle}>{title}</Text>
             </View>
             <View style={styles.headerRight}>
               {headerRight}
               <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                <View style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <Icon name="close" size={20} color="white" />
                 </View>
               </TouchableOpacity>
             </View>
           </View>
-          
-          <View style={[styles.tabContainer, { 
-            backgroundColor: theme.primary
-          }]}>
+
+          <View
+            style={[
+              styles.tabContainer,
+              {
+                backgroundColor: theme.primary,
+              },
+            ]}
+          >
             {tabs.map((tab, index) => (
               <TouchableOpacity
                 key={tab.key || index}
@@ -325,70 +367,100 @@ const TabbedModal = ({
               >
                 {/* Modern rounded rectangle indicator behind content */}
                 {activeTab === index && (
-                  <View style={{
-                    position: 'absolute',
-                    top: Platform.OS === 'web' ? 4 : 3,
-                    bottom: Platform.OS === 'web' ? 4 : 3,
-                    left: Platform.OS === 'web' ? 4 : 2,
-                    right: Platform.OS === 'web' ? 4 : 2,
-                    backgroundColor: '#FFFFFF',
-                    borderRadius: 12,
-                    opacity: 1,
-                    ...(Platform.OS === 'ios' && {
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 1 },
-                      shadowOpacity: 0.08,
-                      shadowRadius: 3,
-                    }),
-                    ...(Platform.OS === 'android' && {
-                      elevation: 2,
-                    }),
-                    ...(Platform.OS === 'web' && {
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-                    }),
-                  }} />
+                  <View
+                    style={{
+                      position: 'absolute',
+                      top: Platform.OS === 'web' ? 4 : 3,
+                      bottom: Platform.OS === 'web' ? 4 : 3,
+                      left: Platform.OS === 'web' ? 4 : 2,
+                      right: Platform.OS === 'web' ? 4 : 2,
+                      backgroundColor: '#FFFFFF',
+                      borderRadius: 12,
+                      opacity: 1,
+                      ...(Platform.OS === 'ios' && {
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: 0.08,
+                        shadowRadius: 3,
+                      }),
+                      ...(Platform.OS === 'android' && {
+                        elevation: 2,
+                      }),
+                      ...(Platform.OS === 'web' && {
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+                      }),
+                    }}
+                  />
                 )}
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: Platform.OS === 'web' ? 4 : 3 }}>
-                  {tab.icon && (Platform.OS === 'web' || isTablet() || activeTab === index) && (
-                    <Icon 
-                      name={tab.icon} 
-                      size={Platform.OS === 'web' || isTablet() ? 18 : 16} 
-                      color={activeTab === index ? theme.primary : 'rgba(255,255,255,0.7)'} 
-                    />
-                  )}
-                  <Text 
-                    style={[
-                        styles.tabText,
-                        activeTab === index && styles.tabTextActive,
-                        activeTab === index && { color: theme.primary }
-                      ]}
-                      numberOfLines={1}
-                      adjustsFontSizeToFit={Platform.OS !== 'web' && !isTablet()}
-                      minimumFontScale={0.7}
-                    >
-                      {tab.label}
-                    </Text>
-                    {tab.badge && (
-                      <View style={[styles.badge, { 
-                        backgroundColor: activeTab === index ? theme.primary : 'rgba(255,255,255,0.7)'
-                      }]}>
-                        <Text style={[styles.badgeText, { 
-                          color: '#FFFFFF'
-                        }]}>{tab.badge}</Text>
-                      </View>
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: Platform.OS === 'web' ? 4 : 3,
+                  }}
+                >
+                  {tab.icon &&
+                    (Platform.OS === 'web' ||
+                      isTablet() ||
+                      activeTab === index) && (
+                      <Icon
+                        name={tab.icon}
+                        size={Platform.OS === 'web' || isTablet() ? 18 : 16}
+                        color={
+                          activeTab === index
+                            ? theme.primary
+                            : 'rgba(255,255,255,0.7)'
+                        }
+                      />
                     )}
-                  </View>
+                  <Text
+                    style={[
+                      styles.tabText,
+                      activeTab === index && styles.tabTextActive,
+                      activeTab === index && { color: theme.primary },
+                    ]}
+                    numberOfLines={1}
+                    adjustsFontSizeToFit={Platform.OS !== 'web' && !isTablet()}
+                    minimumFontScale={0.7}
+                  >
+                    {tab.label}
+                  </Text>
+                  {tab.badge && (
+                    <View
+                      style={[
+                        styles.badge,
+                        {
+                          backgroundColor:
+                            activeTab === index
+                              ? theme.primary
+                              : 'rgba(255,255,255,0.7)',
+                        },
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.badgeText,
+                          {
+                            color: '#FFFFFF',
+                          },
+                        ]}
+                      >
+                        {tab.badge}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </TouchableOpacity>
             ))}
           </View>
         </SafeAreaView>
-        
+
         {/* Use native PagerView for Android and iOS, fallback to PanResponder for Web only */}
         {Platform.OS !== 'web' ? (
-          <PagerView 
+          <PagerView
             style={{ flex: 1, backgroundColor: theme.light }}
             initialPage={activeTab}
-            onPageSelected={(e) => {
+            onPageSelected={e => {
               const newIndex = e.nativeEvent.position;
               if (newIndex !== activeTabRef.current) {
                 if (controlledActiveTab === undefined) {
@@ -408,11 +480,11 @@ const TabbedModal = ({
             ))}
           </PagerView>
         ) : (
-          <View 
+          <View
             style={{ flex: 1, backgroundColor: theme.light }}
             {...horizontalPanResponder.panHandlers}
           >
-            <RNAnimated.View 
+            <RNAnimated.View
               style={[
                 { flex: 1 },
                 {
@@ -420,30 +492,39 @@ const TabbedModal = ({
                     {
                       translateX: swipeAnimation.interpolate({
                         inputRange: [-screenWidth, 0, screenWidth],
-                        outputRange: [-screenWidth * 0.35, 0, screenWidth * 0.35],
+                        outputRange: [
+                          -screenWidth * 0.35,
+                          0,
+                          screenWidth * 0.35,
+                        ],
                         extrapolate: 'clamp',
-                      })
-                    }
-                  ]
-                }
+                      }),
+                    },
+                  ],
+                },
               ]}
             >
-              {React.Children.map(children, (child, index) => 
-                React.cloneElement(child, { 
-                  onScrollStateChange: (scrolling) => {
+              {React.Children.map(children, (child, index) =>
+                React.cloneElement(child, {
+                  onScrollStateChange: scrolling => {
                     // Only update if not in middle of gesture
                     if (!gestureRef.current.isActive) {
                       setIsScrolling(scrolling);
                     }
-                  }
-                })
+                  },
+                }),
               )}
             </RNAnimated.View>
           </View>
         )}
-        
+
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
+          <View
+            style={{
+              backgroundColor: theme.light,
+              height: Math.max(insets.bottom, 20),
+            }}
+          />
         )}
       </View>
     </Modal>
@@ -451,52 +532,61 @@ const TabbedModal = ({
 };
 
 // Tab Content Wrapper Component
-export const TabContent = ({ children, isActive, modalVisible, onScrollStateChange }) => {
+export const TabContent = ({
+  children,
+  isActive,
+  modalVisible,
+  onScrollStateChange,
+}) => {
   const [hasBeenActive, setHasBeenActive] = useState(false);
-  
+
   // Reset hasBeenActive when modal closes
   useEffect(() => {
     if (!modalVisible) {
       setHasBeenActive(false);
     }
   }, [modalVisible]);
-  
+
   useEffect(() => {
     if (isActive && !hasBeenActive) {
       setHasBeenActive(true);
     }
   }, [isActive, hasBeenActive]);
-  
+
   // Only render if currently active or has been active before (to preserve state)
   if (!isActive && !hasBeenActive) {
     return null;
   }
-  
+
   // Clone children with scroll tracking for horizontal swipe gesture coordination
   const enhancedChildren = React.Children.map(children, child => {
     // Check if child is a ScrollView (imported from react-native)
-    if (child?.type === ScrollView || child?.type?.displayName === 'ScrollView' || child?.props?.scrollable) {
+    if (
+      child?.type === ScrollView ||
+      child?.type?.displayName === 'ScrollView' ||
+      child?.props?.scrollable
+    ) {
       return React.cloneElement(child, {
-        onScrollBeginDrag: (event) => {
+        onScrollBeginDrag: event => {
           onScrollStateChange?.(true);
           child.props.onScrollBeginDrag?.(event);
         },
-        onScrollEndDrag: (event) => {
+        onScrollEndDrag: event => {
           setTimeout(() => {
             onScrollStateChange?.(false);
           }, 100);
           child.props.onScrollEndDrag?.(event);
         },
-        onMomentumScrollEnd: (event) => {
+        onMomentumScrollEnd: event => {
           onScrollStateChange?.(false);
           child.props.onMomentumScrollEnd?.(event);
         },
-        scrollEventThrottle: 16
+        scrollEventThrottle: 16,
       });
     }
     return child;
   });
-  
+
   return (
     <View style={[styles.tabContent, { display: isActive ? 'flex' : 'none' }]}>
       {enhancedChildren}

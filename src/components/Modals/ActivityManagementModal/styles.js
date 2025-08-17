@@ -7,8 +7,8 @@ const IS_MOBILE = isMobile(screenWidth);
 export const styles = StyleSheet.create({
   // Container styles
   scrollContainer: {
-    paddingTop: SPACING.md,  // Standardized top padding (16px)
-    paddingBottom: 80,       // Consistent bottom padding for all tabs
+    paddingTop: SPACING.md, // Standardized top padding (16px)
+    paddingBottom: 80, // Consistent bottom padding for all tabs
     // Remove horizontal padding - handled by addFormContainer
     // iOS constraint to prevent overgrowth
     ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
@@ -58,19 +58,24 @@ export const styles = StyleSheet.create({
       width: '100%',
     }),
     // iOS max height constraint to prevent oversized panels
-    ...(Platform.OS === 'ios' && IS_MOBILE && {
-      maxHeight: '80%',
-    }),
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.05,
-      shadowRadius: 2,
-    } : Platform.OS === 'android' ? {
-      elevation: 1,
-    } : {
-      boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-    }),
+    ...(Platform.OS === 'ios' &&
+      IS_MOBILE && {
+        maxHeight: '80%',
+      }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+        }
+      : Platform.OS === 'android'
+      ? {
+          elevation: 1,
+        }
+      : {
+          boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        }),
   },
   searchContainer: {
     paddingHorizontal: IS_MOBILE ? 16 : 20,
@@ -91,10 +96,10 @@ export const styles = StyleSheet.create({
       width: '100%',
     }),
     // iOS constraints to prevent panels from being too large
-    ...(Platform.OS === 'ios' && { 
-      flex: 0, 
-      flexGrow: 0, 
-      flexShrink: 1 
+    ...(Platform.OS === 'ios' && {
+      flex: 0,
+      flexGrow: 0,
+      flexShrink: 1,
     }),
   },
   categoryContainer: {
@@ -163,9 +168,9 @@ export const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#f0f0f0',
     // iOS height constraint to prevent oversized cards
-    ...(Platform.OS === 'ios' && { 
-      height: 48, 
-      maxHeight: 48 
+    ...(Platform.OS === 'ios' && {
+      height: 48,
+      maxHeight: 48,
     }),
   },
   activityContent: {
@@ -267,14 +272,16 @@ export const styles = StyleSheet.create({
     padding: 20,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: -2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    } : {
-      elevation: 5,
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }
+      : {
+          elevation: 5,
+        }),
   },
   addCategoryActions: {
     flexDirection: 'row',
@@ -306,7 +313,7 @@ export const styles = StyleSheet.create({
   // Add Tab Styles
   addFormContainer: {
     paddingHorizontal: IS_MOBILE ? 12 : 20,
-    paddingTop: 0,  // Content already has padding from scrollContainer
+    paddingTop: 0, // Content already has padding from scrollContainer
     paddingBottom: IS_MOBILE ? 12 : 20,
     ...(!IS_MOBILE && {
       maxWidth: 600,
@@ -319,16 +326,20 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     padding: IS_MOBILE ? 16 : 20,
     marginBottom: IS_MOBILE ? 16 : 20,
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    } : Platform.OS === 'android' ? {
-      elevation: 3,
-    } : {
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }
+      : Platform.OS === 'android'
+      ? {
+          elevation: 3,
+        }
+      : {
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        }),
   },
   formSection: {
     marginBottom: 24,
@@ -440,16 +451,20 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     marginBottom: 12,
     gap: 8,
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    } : Platform.OS === 'android' ? {
-      elevation: 2,
-    } : {
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }
+      : Platform.OS === 'android'
+      ? {
+          elevation: 2,
+        }
+      : {
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        }),
   },
   actionButtonText: {
     fontSize: 16,
@@ -478,16 +493,20 @@ export const styles = StyleSheet.create({
     paddingHorizontal: 16,
     borderRadius: RADIUS.md,
     zIndex: 9999,
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-    } : Platform.OS === 'android' ? {
-      elevation: 5,
-    } : {
-      boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.25,
+          shadowRadius: 4,
+        }
+      : Platform.OS === 'android'
+      ? {
+          elevation: 5,
+        }
+      : {
+          boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+        }),
   },
   notificationText: {
     color: 'white',

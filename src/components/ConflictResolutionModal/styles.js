@@ -5,7 +5,7 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  
+
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -14,29 +14,29 @@ export const styles = StyleSheet.create({
     paddingVertical: SPACING.md,
     backgroundColor: 'transparent',
   },
-  
+
   title: {
     fontSize: 20,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: 'white',
   },
-  
+
   subtitle: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: 'rgba(255, 255, 255, 0.8)',
     marginTop: 2,
   },
-  
+
   content: {
     flex: 1,
   },
-  
+
   contentContainer: {
     padding: SPACING.lg,
   },
-  
+
   conflictInfo: {
     backgroundColor: 'white',
     borderRadius: RADIUS.md,
@@ -45,7 +45,7 @@ export const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
     ...SHADOWS.level2,
   },
-  
+
   conflictTitle: {
     fontSize: 18,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
@@ -54,7 +54,7 @@ export const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     marginBottom: SPACING.xs,
   },
-  
+
   conflictDescription: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -62,11 +62,11 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 20,
   },
-  
+
   choicesContainer: {
     gap: SPACING.md,
   },
-  
+
   choiceCard: {
     backgroundColor: 'white',
     borderRadius: RADIUS.md,
@@ -75,72 +75,72 @@ export const styles = StyleSheet.create({
     borderColor: 'transparent',
     ...SHADOWS.level1,
   },
-  
+
   choiceCardHover: {
     borderColor: '#e0e0e0',
     transform: [{ scale: 0.98 }],
   },
-  
+
   choiceCardSelected: {
     borderColor: '#4caf50',
     backgroundColor: '#f1f8e9',
   },
-  
+
   choiceHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: SPACING.sm,
   },
-  
+
   choiceLabel: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     fontWeight: '600',
     color: '#333',
   },
-  
+
   choiceLabelSelected: {
     color: '#4caf50',
   },
-  
+
   valueContainer: {
     backgroundColor: '#f5f5f5',
     borderRadius: RADIUS.sm,
     padding: SPACING.sm,
     minHeight: 60,
   },
-  
+
   arrayCount: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     fontWeight: '500',
   },
-  
+
   activityPreview: {
     marginTop: SPACING.xs,
   },
-  
+
   activityItem: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 2,
   },
-  
+
   activityIcon: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     marginRight: SPACING.xs,
   },
-  
+
   activityName: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#333',
     flex: 1,
   },
-  
+
   moreText: {
     fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -148,27 +148,27 @@ export const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: 4,
   },
-  
+
   completedCount: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
     marginTop: 4,
   },
-  
+
   objectPreview: {
     fontSize: 12,
     color: '#666',
     fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
   },
-  
+
   scalarValue: {
     fontSize: 16,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#333',
     fontWeight: '500',
   },
-  
+
   mergeNote: {
     fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -176,7 +176,7 @@ export const styles = StyleSheet.create({
     fontStyle: 'italic',
     marginTop: SPACING.xs,
   },
-  
+
   resolvingOverlay: {
     position: 'absolute',
     top: 0,
@@ -188,21 +188,21 @@ export const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: RADIUS.md,
   },
-  
+
   resolvingText: {
     marginTop: SPACING.sm,
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#666',
   },
-  
+
   footer: {
     backgroundColor: 'white',
     padding: SPACING.md,
     borderTopWidth: 1,
     borderTopColor: '#e0e0e0',
   },
-  
+
   footerText: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,

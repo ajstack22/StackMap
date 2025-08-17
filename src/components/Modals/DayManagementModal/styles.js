@@ -7,15 +7,15 @@ const IS_MOBILE = isMobile(screenWidth);
 export const styles = StyleSheet.create({
   // Container styles
   scrollContainer: {
-    paddingTop: SPACING.md,  // Standardized top padding (16px)
-    paddingBottom: 80,       // Consistent bottom padding for all tabs
+    paddingTop: SPACING.md, // Standardized top padding (16px)
+    paddingBottom: 80, // Consistent bottom padding for all tabs
     ...(Platform.OS === 'web' && {
       paddingHorizontal: SPACING.lg,
     }),
   },
   contentSection: {
     marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
-    marginTop: 0,  // Content already has padding from scrollContainer
+    marginTop: 0, // Content already has padding from scrollContainer
     marginBottom: SPACING.sm,
     ...(!IS_MOBILE && {
       maxWidth: 600,
@@ -343,14 +343,14 @@ export const styles = StyleSheet.create({
     padding: 16,
     borderRadius: 12,
   },
-  
+
   // Complete Tab Styles (from CompleteDayModal)
   completeTopActionContainer: {
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
     marginHorizontal: 20,
-    marginTop: 0,  // Removed extra top margin for consistency
+    marginTop: 0, // Removed extra top margin for consistency
     marginBottom: 20,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -391,14 +391,16 @@ export const styles = StyleSheet.create({
     backgroundColor: 'white',
     borderRadius: 12,
     padding: 16,
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    } : {
-      elevation: 3,
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }
+      : {
+          elevation: 3,
+        }),
   },
   completeSectionHeader: {
     flexDirection: 'row',
@@ -468,7 +470,7 @@ export const styles = StyleSheet.create({
     textAlign: 'center',
     paddingVertical: 20,
   },
-  
+
   // Grid layout styles
   sectionsContainer: {
     // Default stacked layout
@@ -486,11 +488,11 @@ export const styles = StyleSheet.create({
     marginHorizontal: 5,
     marginBottom: 10,
   },
-  
+
   // Plan Tab Selection Mode Styles
   planSelectionSection: {
     marginHorizontal: 20,
-    marginTop: 0,  // Removed extra top margin for consistency
+    marginTop: 0, // Removed extra top margin for consistency
     marginBottom: 10,
   },
   usersList: {
@@ -597,7 +599,7 @@ export const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '700',
   },
-  
+
   // Day mode toggle styles
   dayModeToggle: {
     flexDirection: 'row',
@@ -634,7 +636,7 @@ export const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '700',
   },
-  
+
   // Day selection cards
   dayCardsRow: {
     flexDirection: 'row',
@@ -667,7 +669,7 @@ export const styles = StyleSheet.create({
     color: '#000',
     fontWeight: '700',
   },
-  
+
   // Plan Tab Planning Mode Header Styles
   planModeHeader: {
     flexDirection: 'row',
@@ -702,16 +704,20 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     padding: IS_MOBILE ? 16 : 20,
     marginBottom: IS_MOBILE ? 16 : 20,
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    } : Platform.OS === 'android' ? {
-      elevation: 3,
-    } : {
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }
+      : Platform.OS === 'android'
+      ? {
+          elevation: 3,
+        }
+      : {
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        }),
   },
   divider: {
     height: 1,
@@ -728,16 +734,20 @@ export const styles = StyleSheet.create({
     borderRadius: RADIUS.lg,
     marginBottom: 12,
     gap: 8,
-    ...(Platform.OS === 'ios' ? {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 4,
-    } : Platform.OS === 'android' ? {
-      elevation: 2,
-    } : {
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-    }),
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 4,
+        }
+      : Platform.OS === 'android'
+      ? {
+          elevation: 2,
+        }
+      : {
+          boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+        }),
   },
   actionButtonText: {
     fontSize: 16,

@@ -11,11 +11,17 @@ import {
   Animated,
   Dimensions,
   Picker,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { COLORS, SHADOWS, SPACING, RADIUS, TYPOGRAPHY, THEMES } from '../../../constants';
+import {
+  COLORS,
+  SHADOWS,
+  SPACING,
+  RADIUS,
+  TYPOGRAPHY,
+  THEMES,
+} from '../../../constants';
 
 // Gesture handler removed - using standard components
 let GestureHandlerRootView = View;
@@ -26,14 +32,26 @@ const loadGestureHandler = () => {
   // Gesture handler functionality removed
 };
 
-const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onUserChange }) => {
+const ContextModal = ({
+  visible,
+  onClose,
+  currentUser,
+  users,
+  onSave,
+  theme,
+  onUserChange,
+}) => {
   // Load gesture handler if needed
   loadGestureHandler();
   const insets = useSafeAreaInsets();
-  const [screenWidth, setScreenWidth] = useState(Dimensions.get('window').width);
+  const [screenWidth, setScreenWidth] = useState(
+    Dimensions.get('window').width,
+  );
   const isSmallScreen = screenWidth < 768;
   const [selectedUser, setSelectedUser] = useState(currentUser);
-  const [selectedDayOfWeek, setSelectedDayOfWeek] = useState(new Date().getDay());
+  const [selectedDayOfWeek, setSelectedDayOfWeek] = useState(
+    new Date().getDay(),
+  );
   const dayScale = useRef(new Animated.Value(1)).current;
   const userScale = useRef(new Animated.Value(1)).current;
   const [selectedWeather, setSelectedWeather] = useState(0);
@@ -41,7 +59,8 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   const [selectedTemperature, setSelectedTemperature] = useState(3); // Warm by default
 
   // Get current user theme
-  const currentUserThemeColor = users && users[selectedUser]?.settings?.theme || 'stackBlue';
+  const currentUserThemeColor =
+    (users && users[selectedUser]?.settings?.theme) || 'stackBlue';
   const currentUserTheme = THEMES[currentUserThemeColor] || THEMES.stackBlue;
 
   // Update selected user when currentUser prop changes or modal opens
@@ -57,7 +76,10 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
       setScreenWidth(Dimensions.get('window').width);
     };
 
-    const subscription = Dimensions.addEventListener('change', updateDimensions);
+    const subscription = Dimensions.addEventListener(
+      'change',
+      updateDimensions,
+    );
     return () => subscription?.remove();
   }, []);
 
@@ -69,7 +91,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   const userIds = users ? Object.keys(users) : [];
   const currentUserIndex = userIds.indexOf(selectedUser);
 
-  const cycleUser = (direction) => {
+  const cycleUser = direction => {
     animateUserChange();
     const currentIndex = userIds.indexOf(selectedUser);
     let newIndex;
@@ -80,12 +102,12 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     }
     const newUserId = userIds[newIndex];
     setSelectedUser(newUserId);
-    
+
     // Immediately update the user and theme in parent component
     if (onUserChange) {
       onUserChange(newUserId);
     }
-    
+
     // Auto-save when user changes (without closing)
     const contextData = {
       user: newUserId,
@@ -132,20 +154,65 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   };
 
   const temperatureOptions = [
-    { id: 'freezing', icon: '🧊', label: 'Freezing', color: '#2266dd', bgColor: '#E8F3FF', description: 'Brrr! Bundle up!' },
-    { id: 'cold', icon: '☃️', label: 'Cold', color: '#4488ff', bgColor: '#F0F7FF', description: 'Chilly weather!' },
-    { id: 'cool', icon: '🌬️', label: 'Cool', color: '#88aaff', bgColor: '#F5F9FF', description: 'Nice and fresh!' },
-    { id: 'warm', icon: '😊', label: 'Warm', color: '#ffaa88', bgColor: '#FFF8F3', description: 'Perfectly cozy!' },
-    { id: 'hot', icon: '🥵', label: 'Hot', color: '#ff4444', bgColor: '#FFE8E8', description: 'Getting toasty!' },
-    { id: 'very-hot', icon: '🔥', label: 'Very Hot', color: '#dd2222', bgColor: '#FFD8D8', description: 'Too hot to handle!' },
+    {
+      id: 'freezing',
+      icon: '🧊',
+      label: 'Freezing',
+      color: '#2266dd',
+      bgColor: '#E8F3FF',
+      description: 'Brrr! Bundle up!',
+    },
+    {
+      id: 'cold',
+      icon: '☃️',
+      label: 'Cold',
+      color: '#4488ff',
+      bgColor: '#F0F7FF',
+      description: 'Chilly weather!',
+    },
+    {
+      id: 'cool',
+      icon: '🌬️',
+      label: 'Cool',
+      color: '#88aaff',
+      bgColor: '#F5F9FF',
+      description: 'Nice and fresh!',
+    },
+    {
+      id: 'warm',
+      icon: '😊',
+      label: 'Warm',
+      color: '#ffaa88',
+      bgColor: '#FFF8F3',
+      description: 'Perfectly cozy!',
+    },
+    {
+      id: 'hot',
+      icon: '🥵',
+      label: 'Hot',
+      color: '#ff4444',
+      bgColor: '#FFE8E8',
+      description: 'Getting toasty!',
+    },
+    {
+      id: 'very-hot',
+      icon: '🔥',
+      label: 'Very Hot',
+      color: '#dd2222',
+      bgColor: '#FFD8D8',
+      description: 'Too hot to handle!',
+    },
   ];
 
-  const cycleTemperature = (direction) => {
+  const cycleTemperature = direction => {
     animateTemperatureChange();
     if (direction === 'next') {
-      setSelectedTemperature((prev) => (prev + 1) % temperatureOptions.length);
+      setSelectedTemperature(prev => (prev + 1) % temperatureOptions.length);
     } else {
-      setSelectedTemperature((prev) => (prev - 1 + temperatureOptions.length) % temperatureOptions.length);
+      setSelectedTemperature(
+        prev =>
+          (prev - 1 + temperatureOptions.length) % temperatureOptions.length,
+      );
     }
   };
 
@@ -166,36 +233,145 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   };
 
   const weatherOptions = [
-    { id: 'sunny', icon: '☀️', label: 'Sunny', color: '#FDB462', bgColor: '#FFF3CD', description: 'Bright and cheerful!' },
-    { id: 'partly-cloudy', icon: '⛅', label: 'Partly Cloudy', color: '#74B9FF', bgColor: '#D6E9FF', description: 'A mix of sun and clouds' },
-    { id: 'cloudy', icon: '☁️', label: 'Cloudy', color: '#95A5A6', bgColor: '#E8ECEC', description: 'Cozy cloud cover' },
-    { id: 'rainy', icon: '🌧️', label: 'Rainy', color: '#5D6D7E', bgColor: '#D5D8DC', description: 'Pitter patter!' },
-    { id: 'stormy', icon: '⛈️', label: 'Stormy', color: '#4A5568', bgColor: '#E2E8F0', description: 'Thunder and lightning!' },
-    { id: 'snowy', icon: '🌨️', label: 'Snowy', color: '#CBD5E0', bgColor: '#F7FAFC', description: 'Winter wonderland!' },
-    { id: 'foggy', icon: '🌫️', label: 'Foggy', color: '#BDC3C7', bgColor: '#F8F9F9', description: 'Mysterious mist' },
+    {
+      id: 'sunny',
+      icon: '☀️',
+      label: 'Sunny',
+      color: '#FDB462',
+      bgColor: '#FFF3CD',
+      description: 'Bright and cheerful!',
+    },
+    {
+      id: 'partly-cloudy',
+      icon: '⛅',
+      label: 'Partly Cloudy',
+      color: '#74B9FF',
+      bgColor: '#D6E9FF',
+      description: 'A mix of sun and clouds',
+    },
+    {
+      id: 'cloudy',
+      icon: '☁️',
+      label: 'Cloudy',
+      color: '#95A5A6',
+      bgColor: '#E8ECEC',
+      description: 'Cozy cloud cover',
+    },
+    {
+      id: 'rainy',
+      icon: '🌧️',
+      label: 'Rainy',
+      color: '#5D6D7E',
+      bgColor: '#D5D8DC',
+      description: 'Pitter patter!',
+    },
+    {
+      id: 'stormy',
+      icon: '⛈️',
+      label: 'Stormy',
+      color: '#4A5568',
+      bgColor: '#E2E8F0',
+      description: 'Thunder and lightning!',
+    },
+    {
+      id: 'snowy',
+      icon: '🌨️',
+      label: 'Snowy',
+      color: '#CBD5E0',
+      bgColor: '#F7FAFC',
+      description: 'Winter wonderland!',
+    },
+    {
+      id: 'foggy',
+      icon: '🌫️',
+      label: 'Foggy',
+      color: '#BDC3C7',
+      bgColor: '#F8F9F9',
+      description: 'Mysterious mist',
+    },
   ];
 
   const moods = [
-    { icon: '😢', label: 'Sad', color: '#5DADE2', bgColor: '#E8F4F8', description: 'Feeling blue' },
-    { icon: '😖', label: 'Frustrated', color: '#E74C3C', bgColor: '#FADBD8', description: 'Feeling stuck' },
-    { icon: '😟', label: 'Unhappy', color: '#85929E', bgColor: '#F0F1F2', description: 'Not great' },
-    { icon: '🥱', label: 'Tired', color: '#AF7AC5', bgColor: '#F4ECF7', description: 'Need some rest' },
-    { icon: '😐', label: 'Okay', color: '#F4D03F', bgColor: '#FEFCE8', description: 'Doing alright' },
-    { icon: '🤒', label: 'Sick', color: '#DC7633', bgColor: '#FAE5D3', description: 'Not feeling well' },
-    { icon: '😊', label: 'Happy', color: '#58D68D', bgColor: '#E8F8F0', description: 'Feeling good!' },
-    { icon: '🤪', label: 'Silly', color: '#F06292', bgColor: '#FCE4EC', description: 'Feeling playful!' },
-    { icon: '😄', label: 'Excited', color: '#EC7063', bgColor: '#FDEDEC', description: 'Super happy!' },
-    { icon: '😴', label: 'Bored', color: '#5499C7', bgColor: '#D6EAF8', description: 'Need something fun' },
+    {
+      icon: '😢',
+      label: 'Sad',
+      color: '#5DADE2',
+      bgColor: '#E8F4F8',
+      description: 'Feeling blue',
+    },
+    {
+      icon: '😖',
+      label: 'Frustrated',
+      color: '#E74C3C',
+      bgColor: '#FADBD8',
+      description: 'Feeling stuck',
+    },
+    {
+      icon: '😟',
+      label: 'Unhappy',
+      color: '#85929E',
+      bgColor: '#F0F1F2',
+      description: 'Not great',
+    },
+    {
+      icon: '🥱',
+      label: 'Tired',
+      color: '#AF7AC5',
+      bgColor: '#F4ECF7',
+      description: 'Need some rest',
+    },
+    {
+      icon: '😐',
+      label: 'Okay',
+      color: '#F4D03F',
+      bgColor: '#FEFCE8',
+      description: 'Doing alright',
+    },
+    {
+      icon: '🤒',
+      label: 'Sick',
+      color: '#DC7633',
+      bgColor: '#FAE5D3',
+      description: 'Not feeling well',
+    },
+    {
+      icon: '😊',
+      label: 'Happy',
+      color: '#58D68D',
+      bgColor: '#E8F8F0',
+      description: 'Feeling good!',
+    },
+    {
+      icon: '🤪',
+      label: 'Silly',
+      color: '#F06292',
+      bgColor: '#FCE4EC',
+      description: 'Feeling playful!',
+    },
+    {
+      icon: '😄',
+      label: 'Excited',
+      color: '#EC7063',
+      bgColor: '#FDEDEC',
+      description: 'Super happy!',
+    },
+    {
+      icon: '😴',
+      label: 'Bored',
+      color: '#5499C7',
+      bgColor: '#D6EAF8',
+      description: 'Need something fun',
+    },
   ];
 
   const moodScale = useRef(new Animated.Value(1)).current;
 
-  const cycleMood = (direction) => {
+  const cycleMood = direction => {
     animateMoodChange();
     if (direction === 'next') {
-      setSelectedMood((prev) => (prev + 1) % moods.length);
+      setSelectedMood(prev => (prev + 1) % moods.length);
     } else {
-      setSelectedMood((prev) => (prev - 1 + moods.length) % moods.length);
+      setSelectedMood(prev => (prev - 1 + moods.length) % moods.length);
     }
   };
 
@@ -225,12 +401,14 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     { name: 'Saturday', icon: '🎯', description: 'Weekend fun!' },
   ];
 
-  const cycleDay = (direction) => {
+  const cycleDay = direction => {
     animateDayChange();
     if (direction === 'next') {
-      setSelectedDayOfWeek((prev) => (prev + 1) % dayOptions.length);
+      setSelectedDayOfWeek(prev => (prev + 1) % dayOptions.length);
     } else {
-      setSelectedDayOfWeek((prev) => (prev - 1 + dayOptions.length) % dayOptions.length);
+      setSelectedDayOfWeek(
+        prev => (prev - 1 + dayOptions.length) % dayOptions.length,
+      );
     }
   };
 
@@ -270,19 +448,21 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     onClose();
   };
 
-  const cycleWeather = (direction) => {
+  const cycleWeather = direction => {
     animateWeatherChange();
     if (direction === 'next') {
-      setSelectedWeather((prev) => (prev + 1) % weatherOptions.length);
+      setSelectedWeather(prev => (prev + 1) % weatherOptions.length);
     } else {
-      setSelectedWeather((prev) => (prev - 1 + weatherOptions.length) % weatherOptions.length);
+      setSelectedWeather(
+        prev => (prev - 1 + weatherOptions.length) % weatherOptions.length,
+      );
     }
   };
 
   // Weather Carousel Component
   const WeatherCarousel = () => {
     const currentWeather = weatherOptions[selectedWeather];
-    
+
     const handleWeatherSwipe = ({ nativeEvent }) => {
       if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
@@ -292,31 +472,37 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         }
       }
     };
-    
+
     const carouselContent = (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.carouselDisplay,
-          { 
-            transform: [{ scale: weatherScale }]
-          }
+          {
+            transform: [{ scale: weatherScale }],
+          },
         ]}
       >
         <Text style={styles.carouselEmoji}>{currentWeather.icon}</Text>
         <Text style={styles.carouselLabel}>{currentWeather.label}</Text>
-        <Text style={styles.carouselDescription}>{currentWeather.description}</Text>
+        <Text style={styles.carouselDescription}>
+          {currentWeather.description}
+        </Text>
       </Animated.View>
     );
-    
+
     return (
       <View style={styles.carousel}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleWeather('prev')}
         >
-          <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-left"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
-        
+
         {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleWeatherSwipe}>
             {carouselContent}
@@ -324,12 +510,16 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         ) : (
           carouselContent
         )}
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleWeather('next')}
         >
-          <Icon name="chevron-right" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-right"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
       </View>
     );
@@ -338,7 +528,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   // Day Carousel Component
   const DayCarousel = () => {
     const currentDay = dayOptions[selectedDayOfWeek];
-    
+
     const handleDaySwipe = ({ nativeEvent }) => {
       if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
@@ -348,14 +538,14 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         }
       }
     };
-    
+
     const carouselContent = (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.carouselDisplay,
-          { 
-            transform: [{ scale: dayScale }]
-          }
+          {
+            transform: [{ scale: dayScale }],
+          },
         ]}
       >
         <Text style={styles.carouselEmoji}>{currentDay.icon}</Text>
@@ -363,16 +553,20 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         <Text style={styles.carouselDescription}>{currentDay.description}</Text>
       </Animated.View>
     );
-    
+
     return (
       <View style={styles.carousel}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleDay('prev')}
         >
-          <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-left"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
-        
+
         {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleDaySwipe}>
             {carouselContent}
@@ -380,12 +574,16 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         ) : (
           carouselContent
         )}
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleDay('next')}
         >
-          <Icon name="chevron-right" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-right"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
       </View>
     );
@@ -394,7 +592,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   // Temperature Carousel Component
   const TemperatureCarousel = () => {
     const currentTemp = temperatureOptions[selectedTemperature];
-    
+
     const handleTempSwipe = ({ nativeEvent }) => {
       if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
@@ -404,31 +602,37 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         }
       }
     };
-    
+
     const carouselContent = (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.carouselDisplay,
-          { 
-            transform: [{ scale: temperatureScale }]
-          }
+          {
+            transform: [{ scale: temperatureScale }],
+          },
         ]}
       >
         <Text style={styles.carouselEmoji}>{currentTemp.icon}</Text>
         <Text style={styles.carouselLabel}>{currentTemp.label}</Text>
-        <Text style={styles.carouselDescription}>{currentTemp.description}</Text>
+        <Text style={styles.carouselDescription}>
+          {currentTemp.description}
+        </Text>
       </Animated.View>
     );
-    
+
     return (
       <View style={styles.carousel}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleTemperature('prev')}
         >
-          <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-left"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
-        
+
         {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleTempSwipe}>
             {carouselContent}
@@ -436,12 +640,16 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         ) : (
           carouselContent
         )}
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleTemperature('next')}
         >
-          <Icon name="chevron-right" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-right"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
       </View>
     );
@@ -450,7 +658,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
   // Mood Carousel Component
   const MoodCarousel = () => {
     const currentMood = moods[selectedMood];
-    
+
     const handleMoodSwipe = ({ nativeEvent }) => {
       if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
@@ -460,31 +668,37 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         }
       }
     };
-    
+
     const carouselContent = (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.carouselDisplay,
-          { 
-            transform: [{ scale: moodScale }]
-          }
+          {
+            transform: [{ scale: moodScale }],
+          },
         ]}
       >
         <Text style={styles.carouselEmoji}>{currentMood.icon}</Text>
         <Text style={styles.carouselLabel}>{currentMood.label}</Text>
-        <Text style={styles.carouselDescription}>{currentMood.description}</Text>
+        <Text style={styles.carouselDescription}>
+          {currentMood.description}
+        </Text>
       </Animated.View>
     );
-    
+
     return (
       <View style={styles.carousel}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleMood('prev')}
         >
-          <Icon name="chevron-left" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-left"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
-        
+
         {Platform.OS !== 'web' && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleMoodSwipe}>
             {carouselContent}
@@ -492,12 +706,16 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         ) : (
           carouselContent
         )}
-        
-        <TouchableOpacity 
+
+        <TouchableOpacity
           style={styles.carouselArrow}
           onPress={() => cycleMood('next')}
         >
-          <Icon name="chevron-right" size={24} color={currentUserTheme.primary} />
+          <Icon
+            name="chevron-right"
+            size={24}
+            color={currentUserTheme.primary}
+          />
         </TouchableOpacity>
       </View>
     );
@@ -508,7 +726,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     const currentUserData = users[selectedUser];
     const userThemeColor = currentUserData?.settings?.theme || 'stackBlue';
     const userTheme = THEMES[userThemeColor] || THEMES.stackBlue;
-    
+
     const handleUserSwipe = ({ nativeEvent }) => {
       if (State?.END && nativeEvent.state === State.END) {
         if (nativeEvent.translationX > 50) {
@@ -518,31 +736,33 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         }
       }
     };
-    
+
     const carouselContent = (
-      <Animated.View 
+      <Animated.View
         style={[
           styles.userCarouselDisplay,
-          { 
+          {
             backgroundColor: userTheme.primary,
             borderColor: userTheme.primary,
-            transform: [{ scale: userScale }]
-          }
+            transform: [{ scale: userScale }],
+          },
         ]}
       >
-        <Text style={styles.userCarouselEmoji}>{currentUserData?.icon || currentUserData?.emoji || '😊'}</Text>
+        <Text style={styles.userCarouselEmoji}>
+          {currentUserData?.icon || currentUserData?.emoji || '😊'}
+        </Text>
         <Text style={[styles.userCarouselName, { color: COLORS.white }]}>
           {currentUserData?.name || 'User'}
         </Text>
       </Animated.View>
     );
-    
+
     const hasMultipleUsers = userIds.length > 1;
-    
+
     return (
       <View style={styles.carousel}>
         {hasMultipleUsers ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.carouselArrow}
             onPress={() => cycleUser('prev')}
           >
@@ -551,7 +771,7 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         ) : (
           <View style={styles.carouselArrow} />
         )}
-        
+
         {Platform.OS !== 'web' && hasMultipleUsers && PanGestureHandler ? (
           <PanGestureHandler onHandlerStateChange={handleUserSwipe}>
             {carouselContent}
@@ -559,9 +779,9 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
         ) : (
           carouselContent
         )}
-        
+
         {hasMultipleUsers ? (
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.carouselArrow}
             onPress={() => cycleUser('next')}
           >
@@ -586,99 +806,135 @@ const ContextModal = ({ visible, onClose, currentUser, users, onSave, theme, onU
     >
       <View style={{ flex: 1 }}>
         {Platform.OS === 'android' && (
-          <StatusBar 
-            backgroundColor={currentUserTheme.primary} 
-            barStyle="light-content" 
+          <StatusBar
+            backgroundColor={currentUserTheme.primary}
+            barStyle="light-content"
             translucent={false}
           />
         )}
-        <View style={[styles.modalContainer, { backgroundColor: currentUserTheme.light }]}>
-        {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: currentUserTheme.primary, height: StatusBar.currentHeight || 24 }} />
-        )}
-        <SafeAreaView style={{ flex: 1, backgroundColor: currentUserTheme.primary }}>
-          <View style={[styles.modalHeader, { backgroundColor: currentUserTheme.primary }]}>
-            <View style={styles.headerLeft}>
-              <Icon name="assignment-turned-in" size={24} color="white" style={styles.headerIcon} />
-              <Text style={styles.modalTitle}>Check-In</Text>
-            </View>
-            <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-              <View style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
-                <Icon name="close" size={20} color="white" />
-              </View>
-            </TouchableOpacity>
-          </View>
-        
-        <ScrollView 
-          style={{ flex: 1, backgroundColor: currentUserTheme.light }}
-          contentContainerStyle={{ padding: SPACING.lg, paddingBottom: 40 }}
-          showsVerticalScrollIndicator={false}
-          bounces={true}
+        <View
+          style={[
+            styles.modalContainer,
+            { backgroundColor: currentUserTheme.light },
+          ]}
         >
-          {/* Users Section */}
-          <View style={styles.userSection}>
-            <Text style={styles.sectionTitle}>Who's checking in? 👋</Text>
-            <UserCarousel />
-          </View>
-
-          {/* Visual Separator */}
-          <View style={styles.sectionDivider} />
-
-          {/* Context Section */}
-          <View style={styles.contextSection}>
-            <View style={styles.contextGrid}>
-          
-            {/* Day of Week */}
-            <View style={styles.contextItem}>
-              <Text style={styles.contextLabel}>What day is it?</Text>
-              <DayCarousel />
+          {Platform.OS === 'android' && (
+            <View
+              style={{
+                backgroundColor: currentUserTheme.primary,
+                height: StatusBar.currentHeight || 24,
+              }}
+            />
+          )}
+          <SafeAreaView
+            style={{ flex: 1, backgroundColor: currentUserTheme.primary }}
+          >
+            <View
+              style={[
+                styles.modalHeader,
+                { backgroundColor: currentUserTheme.primary },
+              ]}
+            >
+              <View style={styles.headerLeft}>
+                <Icon
+                  name="assignment-turned-in"
+                  size={24}
+                  color="white"
+                  style={styles.headerIcon}
+                />
+                <Text style={styles.modalTitle}>Check-In</Text>
+              </View>
+              <TouchableOpacity
+                onPress={handleClose}
+                style={styles.closeButton}
+              >
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Icon name="close" size={20} color="white" />
+                </View>
+              </TouchableOpacity>
             </View>
 
-            {/* Mood */}
-            <View style={styles.contextItem}>
-              <Text style={styles.contextLabel}>How are you feeling?</Text>
-              <MoodCarousel />
-            </View>
+            <ScrollView
+              style={{ flex: 1, backgroundColor: currentUserTheme.light }}
+              contentContainerStyle={{ padding: SPACING.lg, paddingBottom: 40 }}
+              showsVerticalScrollIndicator={false}
+              bounces={true}
+            >
+              {/* Users Section */}
+              <View style={styles.userSection}>
+                <Text style={styles.sectionTitle}>Who's checking in? 👋</Text>
+                <UserCarousel />
+              </View>
 
-            {/* Weather */}
-            <View style={styles.contextItem}>
-              <Text style={styles.contextLabel}>How's the weather?</Text>
-              <WeatherCarousel />
-            </View>
+              {/* Visual Separator */}
+              <View style={styles.sectionDivider} />
 
-            {/* Temperature */}
-            <View style={styles.contextItem}>
-              <Text style={styles.contextLabel}>How hot or cold?</Text>
-              <TemperatureCarousel />
-            </View>
-          </View>
-          </View>
+              {/* Context Section */}
+              <View style={styles.contextSection}>
+                <View style={styles.contextGrid}>
+                  {/* Day of Week */}
+                  <View style={styles.contextItem}>
+                    <Text style={styles.contextLabel}>What day is it?</Text>
+                    <DayCarousel />
+                  </View>
 
-          {/* Action Buttons */}
-          <View style={styles.actionButtons}>
-            <TouchableOpacity style={styles.cancelButton} onPress={handleClose}>
-              <Text style={styles.cancelButtonText}>Maybe Later</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>All Set! ✅</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-        </SafeAreaView>
-        {Platform.OS === 'android' && (
-          <View style={{ 
-            backgroundColor: currentUserTheme.light, 
-            height: Math.max(insets.bottom, 20)
-          }} />
-        )}
-      </View>
+                  {/* Mood */}
+                  <View style={styles.contextItem}>
+                    <Text style={styles.contextLabel}>
+                      How are you feeling?
+                    </Text>
+                    <MoodCarousel />
+                  </View>
+
+                  {/* Weather */}
+                  <View style={styles.contextItem}>
+                    <Text style={styles.contextLabel}>How's the weather?</Text>
+                    <WeatherCarousel />
+                  </View>
+
+                  {/* Temperature */}
+                  <View style={styles.contextItem}>
+                    <Text style={styles.contextLabel}>How hot or cold?</Text>
+                    <TemperatureCarousel />
+                  </View>
+                </View>
+              </View>
+
+              {/* Action Buttons */}
+              <View style={styles.actionButtons}>
+                <TouchableOpacity
+                  style={styles.cancelButton}
+                  onPress={handleClose}
+                >
+                  <Text style={styles.cancelButtonText}>Maybe Later</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.saveButton}
+                  onPress={handleSave}
+                >
+                  <Text style={styles.saveButtonText}>All Set! ✅</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollView>
+          </SafeAreaView>
+          {Platform.OS === 'android' && (
+            <View
+              style={{
+                backgroundColor: currentUserTheme.light,
+                height: Math.max(insets.bottom, 20),
+              }}
+            />
+          )}
+        </View>
       </View>
     </Modal>
   );

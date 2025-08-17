@@ -14,8 +14,8 @@ export default function codegenNativeComponent(name) {
 
 // Mock NativeComponentRegistry
 export const NativeComponentRegistry = {
-  get: (name) => View,
-  getWithFallback_DEPRECATED: (name) => View,
+  get: name => View,
+  getWithFallback_DEPRECATED: name => View,
   setRuntimeConfigProvider: () => {},
 };
 

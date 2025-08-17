@@ -14,7 +14,6 @@ import {
   StatusBar,
   Dimensions,
   Modal,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -26,7 +25,10 @@ let ScaleDecorator = ({ children }) => children;
 
 // Simplified loader function for compatibility
 const loadDragComponents = () => {
-  return { DraggableFlatList: FlatList, ScaleDecorator: ({ children }) => children };
+  return {
+    DraggableFlatList: FlatList,
+    ScaleDecorator: ({ children }) => children,
+  };
 };
 import {
   SHADOWS,
@@ -45,13 +47,7 @@ import EmojiPicker from '../EmojiPicker';
 // Users can create their own activity groups in My Library
 // StackMap Library provides curated activity groups separately
 
-const ActivityRow = ({ 
-  activity, 
-  onEdit, 
-  onDelete, 
-  onQuickAdd,
-  theme,
-}) => {
+const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
   const [justAdded, setJustAdded] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
@@ -61,7 +57,6 @@ const ActivityRow = ({
   const isMobile = screenWidth < 480;
   const insets = useSafeAreaInsets();
   const handleDelete = () => {
-
     if (Platform.OS === 'web') {
       setShowDeleteConfirm(true);
     } else {
@@ -70,15 +65,14 @@ const ActivityRow = ({
         `Are you sure you want to delete "${activity.text}"?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { 
-            text: 'Delete', 
-            style: 'destructive', 
+          {
+            text: 'Delete',
+            style: 'destructive',
             onPress: () => {
-
               onDelete(activity);
-            }
+            },
           },
-        ]
+        ],
       );
     }
   };
@@ -87,7 +81,7 @@ const ActivityRow = ({
     <View style={styles.activityRow}>
       <View style={styles.activityInfo}>
         {activity.icon && activity.icon.startsWith('image:') ? (
-          <Image 
+          <Image
             source={getCustomImageSource(activity.icon.substring(6))}
             style={styles.activityImage}
             resizeMode="contain"
@@ -97,7 +91,7 @@ const ActivityRow = ({
         )}
         <Text style={styles.activityName}>{activity.text}</Text>
       </View>
-      
+
       <View style={styles.activityActions}>
         {isMobile ? (
           <>
@@ -110,28 +104,30 @@ const ActivityRow = ({
               }}
               disabled={justAdded}
             >
-              <Icon 
-                name={justAdded ? "check" : "add-circle"} 
-                size={20} 
-                color={justAdded ? '#4CAF50' : theme.primary} 
+              <Icon
+                name={justAdded ? 'check' : 'add-circle'}
+                size={20}
+                color={justAdded ? '#4CAF50' : theme.primary}
               />
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               ref={menuButtonRef}
               style={styles.iconButton}
               onPress={() => {
                 if (menuButtonRef.current && !showMenu) {
-                  menuButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
-                    setMenuPosition({ x: pageX, y: pageY + height });
-                  });
+                  menuButtonRef.current.measure(
+                    (x, y, width, height, pageX, pageY) => {
+                      setMenuPosition({ x: pageX, y: pageY + height });
+                    },
+                  );
                 }
                 setShowMenu(!showMenu);
               }}
             >
               <Icon name="more-vert" size={20} color={theme.primary} />
             </TouchableOpacity>
-            
+
             {showMenu && (
               <Modal
                 transparent={true}
@@ -145,13 +141,15 @@ const ActivityRow = ({
                   onPress={() => setShowMenu(false)}
                 >
                   {Platform.OS === 'web' ? (
-                    <View style={[
-                      styles.menuDropdown,
-                      {
-                        top: menuPosition.y,
-                        right: Math.max(20, screenWidth - menuPosition.x),
-                      }
-                    ]}>
+                    <View
+                      style={[
+                        styles.menuDropdown,
+                        {
+                          top: menuPosition.y,
+                          right: Math.max(20, screenWidth - menuPosition.x),
+                        },
+                      ]}
+                    >
                       <TouchableOpacity
                         style={styles.menuItem}
                         onPress={() => {
@@ -160,9 +158,16 @@ const ActivityRow = ({
                         }}
                       >
                         <Icon name="edit" size={20} color={theme.primary} />
-                        <Text style={[styles.menuItemText, { color: theme.primary }]}>Edit Activity</Text>
+                        <Text
+                          style={[
+                            styles.menuItemText,
+                            { color: theme.primary },
+                          ]}
+                        >
+                          Edit Activity
+                        </Text>
                       </TouchableOpacity>
-                      
+
                       <TouchableOpacity
                         style={[styles.menuItem, styles.menuItemDanger]}
                         onPress={() => {
@@ -171,34 +176,70 @@ const ActivityRow = ({
                         }}
                       >
                         <Icon name="delete" size={20} color={COLORS.error} />
-                        <Text style={[styles.menuItemText, { color: COLORS.error }]}>Delete Activity</Text>
+                        <Text
+                          style={[styles.menuItemText, { color: COLORS.error }]}
+                        >
+                          Delete Activity
+                        </Text>
                       </TouchableOpacity>
                     </View>
                   ) : (
                     <View style={styles.centerMenuContainer}>
                       <View style={styles.centerMenuCard}>
-                        <Text style={[styles.activityName, { textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{activity.text}</Text>
-                        
+                        <Text
+                          style={[
+                            styles.activityName,
+                            {
+                              textAlign: 'center',
+                              marginBottom: SPACING.md,
+                              fontSize: 18,
+                            },
+                          ]}
+                        >
+                          {activity.text}
+                        </Text>
+
                         <TouchableOpacity
-                          style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                          style={[
+                            styles.menuItem,
+                            { paddingHorizontal: SPACING.lg },
+                          ]}
                           onPress={() => {
                             setShowMenu(false);
                             onEdit(activity);
                           }}
                         >
                           <Icon name="edit" size={24} color={theme.primary} />
-                          <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Edit Activity</Text>
+                          <Text
+                            style={[
+                              styles.menuItemText,
+                              { color: theme.primary, fontSize: 18 },
+                            ]}
+                          >
+                            Edit Activity
+                          </Text>
                         </TouchableOpacity>
-                        
+
                         <TouchableOpacity
-                          style={[styles.menuItem, styles.menuItemDanger, { paddingHorizontal: SPACING.lg }]}
+                          style={[
+                            styles.menuItem,
+                            styles.menuItemDanger,
+                            { paddingHorizontal: SPACING.lg },
+                          ]}
                           onPress={() => {
                             setShowMenu(false);
                             handleDelete();
                           }}
                         >
                           <Icon name="delete" size={24} color={COLORS.error} />
-                          <Text style={[styles.menuItemText, { color: COLORS.error, fontSize: 18 }]}>Delete Activity</Text>
+                          <Text
+                            style={[
+                              styles.menuItemText,
+                              { color: COLORS.error, fontSize: 18 },
+                            ]}
+                          >
+                            Delete Activity
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -215,14 +256,11 @@ const ActivityRow = ({
             >
               <Icon name="edit" size={20} color={theme.primary} />
             </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={styles.iconButton}
-              onPress={handleDelete}
-            >
+
+            <TouchableOpacity style={styles.iconButton} onPress={handleDelete}>
               <Icon name="delete" size={20} color={COLORS.error} />
             </TouchableOpacity>
-            
+
             <TouchableOpacity
               style={styles.iconButton}
               onPress={() => {
@@ -232,22 +270,21 @@ const ActivityRow = ({
               }}
               disabled={justAdded}
             >
-              <Icon 
-                name={justAdded ? "check" : "add-circle"} 
-                size={20} 
-                color={justAdded ? '#4CAF50' : theme.primary} 
+              <Icon
+                name={justAdded ? 'check' : 'add-circle'}
+                size={20}
+                color={justAdded ? '#4CAF50' : theme.primary}
               />
             </TouchableOpacity>
           </>
         )}
       </View>
-      
+
       {Platform.OS === 'web' && (
         <ConfirmModal
           visible={showDeleteConfirm}
           onClose={() => setShowDeleteConfirm(false)}
           onConfirm={() => {
-
             onDelete(activity);
             setShowDeleteConfirm(false);
           }}
@@ -264,8 +301,8 @@ const ActivityRow = ({
   );
 };
 
-const CategorySection = ({ 
-  category, 
+const CategorySection = ({
+  category,
   onEditCategory,
   onDeleteCategory,
   onEditActivity,
@@ -289,9 +326,13 @@ const CategorySection = ({
   isReadOnly,
 }) => {
   const isEditingCategory = editingCategoryId === category.id;
-  const [isExpanded, setIsExpanded] = useState(expandedState !== undefined ? expandedState : true);
+  const [isExpanded, setIsExpanded] = useState(
+    expandedState !== undefined ? expandedState : true,
+  );
   const [editingCategoryName, setEditingCategoryName] = useState(category.name);
-  const [orderedActivities, setOrderedActivities] = useState(category.activities);
+  const [orderedActivities, setOrderedActivities] = useState(
+    category.activities,
+  );
   const [showMenu, setShowMenu] = useState(false);
   const [menuPosition, setMenuPosition] = useState({ x: 0, y: 0 });
   const [justAddedAll, setJustAddedAll] = useState(false);
@@ -301,11 +342,19 @@ const CategorySection = ({
   const isMobile = screenWidth < 480;
   const insets = useSafeAreaInsets();
   // Use useRef for Animated values to avoid re-creation issues
-  const expandAnim = useRef(new Animated.Value(expandedState !== undefined ? (expandedState ? 1 : 0) : 1)).current;
-  const rotateAnim = useRef(new Animated.Value(expandedState !== undefined ? (expandedState ? 1 : 0) : 1)).current;
+  const expandAnim = useRef(
+    new Animated.Value(
+      expandedState !== undefined ? (expandedState ? 1 : 0) : 1,
+    ),
+  ).current;
+  const rotateAnim = useRef(
+    new Animated.Value(
+      expandedState !== undefined ? (expandedState ? 1 : 0) : 1,
+    ),
+  ).current;
   const isDragStarting = useRef(false);
   const isMounted = useRef(true);
-  
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {
@@ -369,7 +418,11 @@ const CategorySection = ({
 
   const handleSaveCategory = () => {
     if (editingCategoryName.trim()) {
-      onUpdateCategory(category.id, editingCategoryName.trim(), orderedActivities);
+      onUpdateCategory(
+        category.id,
+        editingCategoryName.trim(),
+        orderedActivities,
+      );
       onEndEditCategory();
     }
   };
@@ -383,7 +436,7 @@ const CategorySection = ({
   const toggleExpand = () => {
     // Don't allow expand/collapse in sort mode
     if (isSortMode) return;
-    
+
     const newExpanded = !isExpanded;
     const toValue = newExpanded ? 1 : 0;
     Animated.parallel([
@@ -412,7 +465,7 @@ const CategorySection = ({
       drag();
     }
   };
-  
+
   // onDragStart is now handled at the parent level via onDragBegin
 
   const handleDeleteCategory = () => {
@@ -424,8 +477,12 @@ const CategorySection = ({
         `Are you sure you want to delete "${category.name}" and all its activities?`,
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Delete', style: 'destructive', onPress: () => onDeleteCategory(category) },
-        ]
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => onDeleteCategory(category),
+          },
+        ],
       );
     }
   };
@@ -466,7 +523,11 @@ const CategorySection = ({
       <View style={[styles.categoryHeader, { backgroundColor: theme.primary }]}>
         {isSortMode && !isReadOnly && (
           <View style={styles.categoryDragHandle}>
-            <Icon name="drag-handle" size={24} color="rgba(255, 255, 255, 0.7)" />
+            <Icon
+              name="drag-handle"
+              size={24}
+              color="rgba(255, 255, 255, 0.7)"
+            />
           </View>
         )}
         {isEditingCategory ? (
@@ -480,7 +541,7 @@ const CategorySection = ({
                 onSubmitEditing={handleSaveCategory}
               />
             </View>
-            
+
             <View style={styles.categoryActions}>
               <TouchableOpacity
                 style={styles.iconButton}
@@ -488,19 +549,21 @@ const CategorySection = ({
               >
                 <Icon name="check" size={20} color="white" />
               </TouchableOpacity>
-              
+
               <TouchableOpacity
                 style={styles.iconButton}
                 onPress={handleCancelEdit}
               >
-                <View style={{
-                  width: 36,
-                  height: 36,
-                  borderRadius: 18,
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}>
+                <View
+                  style={{
+                    width: 36,
+                    height: 36,
+                    borderRadius: 18,
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <Icon name="close" size={20} color="white" />
                 </View>
               </TouchableOpacity>
@@ -512,24 +575,26 @@ const CategorySection = ({
               style={styles.categoryTitleContainer}
               onPress={toggleExpand}
             >
-              <Animated.View style={{ transform: [{ rotate: animatedStyles.rotation }] }}>
+              <Animated.View
+                style={{ transform: [{ rotate: animatedStyles.rotation }] }}
+              >
                 <Icon name="chevron-right" size={24} color="white" />
               </Animated.View>
-              <Text style={styles.categoryTitle}>
-                {category.name}
-              </Text>
+              <Text style={styles.categoryTitle}>{category.name}</Text>
               <Text style={styles.activityCount}>
                 ({category.activities.length})
               </Text>
             </TouchableOpacity>
-            
+
             <View style={styles.categoryActions}>
               {isReadOnly ? (
                 // Read-only actions for StackMap Library
                 <>
                   <TouchableOpacity
                     style={styles.iconButton}
-                    onPress={() => onCopyToMyLibrary && onCopyToMyLibrary(category)}
+                    onPress={() =>
+                      onCopyToMyLibrary && onCopyToMyLibrary(category)
+                    }
                     title="Copy to My Library"
                   >
                     <Icon name="content-copy" size={20} color="white" />
@@ -540,10 +605,10 @@ const CategorySection = ({
                       onPress={handleAddAll}
                       disabled={justAddedAll}
                     >
-                      <Icon 
-                        name={justAddedAll ? "done-all" : "add-circle-outline"} 
-                        size={20} 
-                        color="white" 
+                      <Icon
+                        name={justAddedAll ? 'done-all' : 'add-circle-outline'}
+                        size={20}
+                        color="white"
                       />
                     </TouchableOpacity>
                   )}
@@ -555,16 +620,18 @@ const CategorySection = ({
                     style={styles.iconButton}
                     onPress={() => {
                       if (menuButtonRef.current && !showMenu) {
-                        menuButtonRef.current.measure((x, y, width, height, pageX, pageY) => {
-                          setMenuPosition({ x: pageX, y: pageY + height });
-                        });
+                        menuButtonRef.current.measure(
+                          (x, y, width, height, pageX, pageY) => {
+                            setMenuPosition({ x: pageX, y: pageY + height });
+                          },
+                        );
                       }
                       setShowMenu(!showMenu);
                     }}
                   >
                     <Icon name="more-vert" size={20} color="white" />
                   </TouchableOpacity>
-                  
+
                   {showMenu && (
                     <Modal
                       transparent={true}
@@ -578,13 +645,18 @@ const CategorySection = ({
                         onPress={() => setShowMenu(false)}
                       >
                         {Platform.OS === 'web' ? (
-                          <View style={[
-                            styles.menuDropdown,
-                            {
-                              top: menuPosition.y,
-                              right: Math.max(20, screenWidth - menuPosition.x),
-                            }
-                          ]}>
+                          <View
+                            style={[
+                              styles.menuDropdown,
+                              {
+                                top: menuPosition.y,
+                                right: Math.max(
+                                  20,
+                                  screenWidth - menuPosition.x,
+                                ),
+                              },
+                            ]}
+                          >
                             <TouchableOpacity
                               style={styles.menuItem}
                               onPress={() => {
@@ -592,10 +664,21 @@ const CategorySection = ({
                                 handleStartEditCategory();
                               }}
                             >
-                              <Icon name="edit" size={20} color={theme.primary} />
-                              <Text style={[styles.menuItemText, { color: theme.primary }]}>Edit Name</Text>
+                              <Icon
+                                name="edit"
+                                size={20}
+                                color={theme.primary}
+                              />
+                              <Text
+                                style={[
+                                  styles.menuItemText,
+                                  { color: theme.primary },
+                                ]}
+                              >
+                                Edit Name
+                              </Text>
                             </TouchableOpacity>
-                            
+
                             {category.activities.length > 0 && (
                               <TouchableOpacity
                                 style={styles.menuItem}
@@ -605,20 +688,33 @@ const CategorySection = ({
                                 }}
                                 disabled={justAddedAll}
                               >
-                                <Icon 
-                                  name={justAddedAll ? "done-all" : "add-circle-outline"} 
-                                  size={20} 
-                                  color={justAddedAll ? 'white' : theme.primary} 
+                                <Icon
+                                  name={
+                                    justAddedAll
+                                      ? 'done-all'
+                                      : 'add-circle-outline'
+                                  }
+                                  size={20}
+                                  color={justAddedAll ? 'white' : theme.primary}
                                 />
-                                <Text style={[styles.menuItemText, { 
-                                  color: justAddedAll ? 'white' : theme.primary,
-                                  fontWeight: justAddedAll ? 'bold' : 'normal'
-                                }]}>
+                                <Text
+                                  style={[
+                                    styles.menuItemText,
+                                    {
+                                      color: justAddedAll
+                                        ? 'white'
+                                        : theme.primary,
+                                      fontWeight: justAddedAll
+                                        ? 'bold'
+                                        : 'normal',
+                                    },
+                                  ]}
+                                >
                                   {justAddedAll ? 'Added!' : 'Add All to Cards'}
                                 </Text>
                               </TouchableOpacity>
                             )}
-                            
+
                             <TouchableOpacity
                               style={styles.menuItem}
                               onPress={() => {
@@ -626,10 +722,21 @@ const CategorySection = ({
                                 onAddActivity(category);
                               }}
                             >
-                              <Icon name="library-add" size={20} color={theme.primary} />
-                              <Text style={[styles.menuItemText, { color: theme.primary }]}>Add New Activity</Text>
+                              <Icon
+                                name="library-add"
+                                size={20}
+                                color={theme.primary}
+                              />
+                              <Text
+                                style={[
+                                  styles.menuItemText,
+                                  { color: theme.primary },
+                                ]}
+                              >
+                                Add New Activity
+                              </Text>
                             </TouchableOpacity>
-                            
+
                             {category.id !== 'my-templates' && (
                               <TouchableOpacity
                                 style={[styles.menuItem, styles.menuItemDanger]}
@@ -638,72 +745,158 @@ const CategorySection = ({
                                   handleDeleteCategory();
                                 }}
                               >
-                                <Icon name="delete" size={20} color={COLORS.error} />
-                                <Text style={[styles.menuItemText, { color: COLORS.error }]}>Delete Category</Text>
+                                <Icon
+                                  name="delete"
+                                  size={20}
+                                  color={COLORS.error}
+                                />
+                                <Text
+                                  style={[
+                                    styles.menuItemText,
+                                    { color: COLORS.error },
+                                  ]}
+                                >
+                                  Delete Category
+                                </Text>
                               </TouchableOpacity>
                             )}
                           </View>
                         ) : (
                           <View style={styles.centerMenuContainer}>
                             <View style={styles.centerMenuCard}>
-                              <Text style={[styles.categoryTitle, { color: theme.primary, textAlign: 'center', marginBottom: SPACING.md, fontSize: 18 }]}>{category.name}</Text>
-                              
+                              <Text
+                                style={[
+                                  styles.categoryTitle,
+                                  {
+                                    color: theme.primary,
+                                    textAlign: 'center',
+                                    marginBottom: SPACING.md,
+                                    fontSize: 18,
+                                  },
+                                ]}
+                              >
+                                {category.name}
+                              </Text>
+
                               <TouchableOpacity
-                                style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                                style={[
+                                  styles.menuItem,
+                                  { paddingHorizontal: SPACING.lg },
+                                ]}
                                 onPress={() => {
                                   setShowMenu(false);
                                   handleStartEditCategory();
                                 }}
                               >
-                                <Icon name="edit" size={24} color={theme.primary} />
-                                <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Edit Name</Text>
+                                <Icon
+                                  name="edit"
+                                  size={24}
+                                  color={theme.primary}
+                                />
+                                <Text
+                                  style={[
+                                    styles.menuItemText,
+                                    { color: theme.primary, fontSize: 18 },
+                                  ]}
+                                >
+                                  Edit Name
+                                </Text>
                               </TouchableOpacity>
-                              
+
                               {category.activities.length > 0 && (
                                 <TouchableOpacity
-                                  style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                                  style={[
+                                    styles.menuItem,
+                                    { paddingHorizontal: SPACING.lg },
+                                  ]}
                                   onPress={() => {
                                     setShowMenu(false);
                                     handleAddAll();
                                   }}
                                   disabled={justAddedAll}
                                 >
-                                  <Icon 
-                                    name={justAddedAll ? "done-all" : "add-circle-outline"} 
-                                    size={24} 
-                                    color={justAddedAll ? 'white' : theme.primary} 
+                                  <Icon
+                                    name={
+                                      justAddedAll
+                                        ? 'done-all'
+                                        : 'add-circle-outline'
+                                    }
+                                    size={24}
+                                    color={
+                                      justAddedAll ? 'white' : theme.primary
+                                    }
                                   />
-                                  <Text style={[styles.menuItemText, { 
-                                    color: justAddedAll ? 'white' : theme.primary, 
-                                    fontSize: 18,
-                                    fontWeight: justAddedAll ? 'bold' : 'normal'
-                                  }]}>
-                                    {justAddedAll ? 'Added!' : 'Add All to Cards'}
+                                  <Text
+                                    style={[
+                                      styles.menuItemText,
+                                      {
+                                        color: justAddedAll
+                                          ? 'white'
+                                          : theme.primary,
+                                        fontSize: 18,
+                                        fontWeight: justAddedAll
+                                          ? 'bold'
+                                          : 'normal',
+                                      },
+                                    ]}
+                                  >
+                                    {justAddedAll
+                                      ? 'Added!'
+                                      : 'Add All to Cards'}
                                   </Text>
                                 </TouchableOpacity>
                               )}
-                              
+
                               <TouchableOpacity
-                                style={[styles.menuItem, { paddingHorizontal: SPACING.lg }]}
+                                style={[
+                                  styles.menuItem,
+                                  { paddingHorizontal: SPACING.lg },
+                                ]}
                                 onPress={() => {
                                   setShowMenu(false);
                                   onAddActivity(category);
                                 }}
                               >
-                                <Icon name="library-add" size={24} color={theme.primary} />
-                                <Text style={[styles.menuItemText, { color: theme.primary, fontSize: 18 }]}>Add New Activity</Text>
+                                <Icon
+                                  name="library-add"
+                                  size={24}
+                                  color={theme.primary}
+                                />
+                                <Text
+                                  style={[
+                                    styles.menuItemText,
+                                    { color: theme.primary, fontSize: 18 },
+                                  ]}
+                                >
+                                  Add New Activity
+                                </Text>
                               </TouchableOpacity>
-                              
+
                               {category.id !== 'my-templates' && (
                                 <TouchableOpacity
-                                  style={[styles.menuItem, styles.menuItemDanger, { paddingHorizontal: SPACING.lg }]}
+                                  style={[
+                                    styles.menuItem,
+                                    styles.menuItemDanger,
+                                    { paddingHorizontal: SPACING.lg },
+                                  ]}
                                   onPress={() => {
                                     setShowMenu(false);
                                     handleDeleteCategory();
                                   }}
                                 >
-                                  <Icon name="delete" size={24} color={COLORS.error} />
-                                  <Text style={[styles.menuItemText, { color: COLORS.error, fontSize: 18 }]}>Delete Category</Text>
+                                  <Icon
+                                    name="delete"
+                                    size={24}
+                                    color={COLORS.error}
+                                  />
+                                  <Text
+                                    style={[
+                                      styles.menuItemText,
+                                      { color: COLORS.error, fontSize: 18 },
+                                    ]}
+                                  >
+                                    Delete Category
+                                  </Text>
                                 </TouchableOpacity>
                               )}
                             </View>
@@ -721,29 +914,40 @@ const CategorySection = ({
                   >
                     <Icon name="edit" size={20} color="white" />
                   </TouchableOpacity>
-                  
+
                   <TouchableOpacity
-                    style={[styles.iconButton, category.id === 'my-templates' && styles.disabledButton]}
-                    onPress={category.id === 'my-templates' ? undefined : handleDeleteCategory}
+                    style={[
+                      styles.iconButton,
+                      category.id === 'my-templates' && styles.disabledButton,
+                    ]}
+                    onPress={
+                      category.id === 'my-templates'
+                        ? undefined
+                        : handleDeleteCategory
+                    }
                     disabled={category.id === 'my-templates'}
                   >
-                    <Icon name="delete" size={20} color={category.id === 'my-templates' ? '#999' : 'white'} />
+                    <Icon
+                      name="delete"
+                      size={20}
+                      color={category.id === 'my-templates' ? '#999' : 'white'}
+                    />
                   </TouchableOpacity>
-                  
+
                   {category.activities.length > 0 && (
                     <TouchableOpacity
                       style={styles.iconButton}
                       onPress={handleAddAll}
                       disabled={justAddedAll}
                     >
-                      <Icon 
-                        name={justAddedAll ? "done-all" : "add-circle-outline"} 
-                        size={20} 
-                        color="white" 
+                      <Icon
+                        name={justAddedAll ? 'done-all' : 'add-circle-outline'}
+                        size={20}
+                        color="white"
                       />
                     </TouchableOpacity>
                   )}
-                  
+
                   <TouchableOpacity
                     style={styles.iconButton}
                     onPress={() => onAddActivity(category)}
@@ -756,44 +960,53 @@ const CategorySection = ({
           </>
         )}
       </View>
-      
-      <Animated.View style={[
-        styles.activitiesList,
-        {
-          maxHeight: animatedStyles.maxHeight,
-          opacity: animatedStyles.opacity,
-        },
-      ]}>
+
+      <Animated.View
+        style={[
+          styles.activitiesList,
+          {
+            maxHeight: animatedStyles.maxHeight,
+            opacity: animatedStyles.opacity,
+          },
+        ]}
+      >
         {isEditingCategory ? (
           orderedActivities.length > 0 ? (
             <DraggableFlatList
               data={orderedActivities}
-              onDragEnd={Platform.OS === 'android' ? undefined : ({ data }) => setOrderedActivities(data)}
-              keyExtractor={(item) => item.id}
+              onDragEnd={
+                Platform.OS === 'android'
+                  ? undefined
+                  : ({ data }) => setOrderedActivities(data)
+              }
+              keyExtractor={item => item.id}
               renderItem={({ item, drag, isActive }) => (
                 <ScaleDecorator>
                   <TouchableOpacity
                     onLongPress={undefined}
                     disabled={isActive}
-                    style={[
-                      styles.activityRow,
-                      isActive && styles.draggingRow,
-                    ]}
+                    style={[styles.activityRow, isActive && styles.draggingRow]}
                   >
                     <View style={styles.activityInfo}>
                       {item.icon && item.icon.startsWith('image:') ? (
-                        <Image 
+                        <Image
                           source={getCustomImageSource(item.icon.substring(6))}
                           style={styles.activityImage}
                           resizeMode="contain"
                         />
                       ) : (
-                        <Text style={styles.activityEmoji}>{item.icon || ''}</Text>
+                        <Text style={styles.activityEmoji}>
+                          {item.icon || ''}
+                        </Text>
                       )}
                       <Text style={styles.activityName}>{item.text}</Text>
                     </View>
                     <View style={styles.dragHandle}>
-                      <Icon name="drag-handle" size={24} color={COLORS.gray[400]} />
+                      <Icon
+                        name="drag-handle"
+                        size={24}
+                        color={COLORS.gray[400]}
+                      />
                     </View>
                   </TouchableOpacity>
                 </ScaleDecorator>
@@ -811,17 +1024,20 @@ const CategorySection = ({
                 if (searchQuery) {
                   const query = searchQuery.toLowerCase();
                   const activityIcon = activity.icon || '';
-                  const matches = (activity.text || '').toLowerCase().includes(query) ||
-                                activityIcon.includes(searchQuery);
+                  const matches =
+                    (activity.text || '').toLowerCase().includes(query) ||
+                    activityIcon.includes(searchQuery);
                   if (!matches) return null;
                 }
-                
+
                 return (
                   <ActivityRow
                     key={activity.id}
                     activity={activity}
                     onEdit={onEditActivity}
-                    onDelete={(activity) => onDeleteActivity(category.id, activity)}
+                    onDelete={activity =>
+                      onDeleteActivity(category.id, activity)
+                    }
                     onQuickAdd={onQuickAdd}
                     theme={theme}
                   />
@@ -833,21 +1049,23 @@ const CategorySection = ({
                 No activities yet. Tap + to add one.
               </Text>
             )}
-            {category.activities.length > 0 && 
-             category.activities.filter(activity => {
-               if (!searchQuery) return true;
-               const query = searchQuery.toLowerCase();
-               return (activity.text || '').toLowerCase().includes(query) ||
-                      (activity.icon || '').includes(searchQuery);
-             }).length === 0 && (
-              <Text style={styles.emptyMessage}>
-                No activities match your search.
-              </Text>
-            )}
+            {category.activities.length > 0 &&
+              category.activities.filter(activity => {
+                if (!searchQuery) return true;
+                const query = searchQuery.toLowerCase();
+                return (
+                  (activity.text || '').toLowerCase().includes(query) ||
+                  (activity.icon || '').includes(searchQuery)
+                );
+              }).length === 0 && (
+                <Text style={styles.emptyMessage}>
+                  No activities match your search.
+                </Text>
+              )}
           </>
         )}
       </Animated.View>
-      
+
       {Platform.OS === 'web' && (
         <ConfirmModal
           visible={showDeleteConfirm}
@@ -869,9 +1087,9 @@ const CategorySection = ({
   );
 };
 
-const ActivityLibrary = ({ 
-  visible, 
-  onClose, 
+const ActivityLibrary = ({
+  visible,
+  onClose,
   onSelectActivity,
   onSelectMultipleActivities,
   theme,
@@ -883,14 +1101,18 @@ const ActivityLibrary = ({
   showToast,
 }) => {
   // Load drag components
-  const { DraggableFlatList: DraggableList, ScaleDecorator: Decorator } = loadDragComponents();
+  const { DraggableFlatList: DraggableList, ScaleDecorator: Decorator } =
+    loadDragComponents();
   if (!DraggableFlatList) DraggableFlatList = DraggableList;
   if (!ScaleDecorator) ScaleDecorator = Decorator;
-  
+
   const insets = useSafeAreaInsets();
   // Use myLibrary if provided, otherwise fall back to legacy categories
   const [categories, setCategories] = useState(
-    myLibrary?.activityGroups || customCategories || [{ id: 'my-templates', name: 'My Templates', activities: [] }]
+    myLibrary?.activityGroups ||
+      customCategories || [
+        { id: 'my-templates', name: 'My Templates', activities: [] },
+      ],
   );
   const [activeTab, setActiveTab] = useState('stackmap'); // 'stackmap' or 'mylibrary'
   const [editingItem, setEditingItem] = useState(null);
@@ -911,7 +1133,11 @@ const ActivityLibrary = ({
   useEffect(() => {
     const hasMyTemplates = categories.some(cat => cat.id === 'my-templates');
     if (!hasMyTemplates) {
-      const myTemplatesCategory = { id: 'my-templates', name: 'My Templates', activities: [] };
+      const myTemplatesCategory = {
+        id: 'my-templates',
+        name: 'My Templates',
+        activities: [],
+      };
       const newCategories = [...categories, myTemplatesCategory];
       setCategories(newCategories);
       if (onSaveCategories) onSaveCategories(newCategories);
@@ -919,13 +1145,13 @@ const ActivityLibrary = ({
   }, []);
 
   // Edit handlers
-  const handleEditCategory = (category) => {
+  const handleEditCategory = category => {
     setEditingItem(category);
     setEditMode('category');
     setEditName(category.name);
   };
 
-  const handleEditActivity = (activity) => {
+  const handleEditActivity = activity => {
     setEditingItem(activity);
     setEditMode('activity');
     // Use text field only
@@ -935,24 +1161,23 @@ const ActivityLibrary = ({
     setEditDescription(activity.description || '');
   };
 
-  const handleDeleteCategory = (category) => {
+  const handleDeleteCategory = category => {
     // Prevent deletion of My Templates folder
     if (category.id === 'my-templates') {
       Alert.alert(
-        "Cannot Delete",
+        'Cannot Delete',
         "The 'My Templates' folder is required for saving activities to your library. You can delete activities within it, but not the folder itself.",
-        [{ text: "OK" }]
+        [{ text: 'OK' }],
       );
       return;
     }
-    
+
     const newCategories = categories.filter(c => c.id !== category.id);
     setCategories(newCategories);
     if (onSaveCategories) onSaveCategories(newCategories);
   };
 
   const handleDeleteActivity = (categoryId, activity) => {
-
     const newCategories = categories.map(cat => {
       if (cat.id === categoryId) {
         return {
@@ -965,9 +1190,9 @@ const ActivityLibrary = ({
 
     setCategories(newCategories);
     if (onSaveCategories) {
-
       onSaveCategories(newCategories);
-    } else {}
+    } else {
+    }
   };
 
   const handleAddCategory = () => {
@@ -975,7 +1200,7 @@ const ActivityLibrary = ({
     setEditName('');
   };
 
-  const handleAddActivity = (category) => {
+  const handleAddActivity = category => {
     setSelectedCategoryId(category.id);
     setEditMode('new-activity');
     setEditName('');
@@ -994,7 +1219,7 @@ const ActivityLibrary = ({
     switch (editMode) {
       case 'category':
         newCategories = categories.map(cat =>
-          cat.id === editingItem.id ? { ...cat, name: editName } : cat
+          cat.id === editingItem.id ? { ...cat, name: editName } : cat,
         );
         break;
 
@@ -1002,9 +1227,14 @@ const ActivityLibrary = ({
         newCategories = categories.map(cat => ({
           ...cat,
           activities: cat.activities.map(act =>
-            act.id === editingItem.id 
-              ? { ...act, name: editName, icon: editEmoji || DEFAULT_ACTIVITY_EMOJI, description: editDescription }
-              : act
+            act.id === editingItem.id
+              ? {
+                  ...act,
+                  name: editName,
+                  icon: editEmoji || DEFAULT_ACTIVITY_EMOJI,
+                  description: editDescription,
+                }
+              : act,
           ),
         }));
         break;
@@ -1028,14 +1258,17 @@ const ActivityLibrary = ({
           cat.id === selectedCategoryId
             ? {
                 ...cat,
-                activities: [...cat.activities, {
-                  id: newActivityId,
-                  name: editName,
-                  icon: editEmoji || DEFAULT_ACTIVITY_EMOJI,
-                  description: editDescription,
-                }],
+                activities: [
+                  ...cat.activities,
+                  {
+                    id: newActivityId,
+                    name: editName,
+                    icon: editEmoji || DEFAULT_ACTIVITY_EMOJI,
+                    description: editDescription,
+                  },
+                ],
               }
-            : cat
+            : cat,
         );
         break;
     }
@@ -1050,7 +1283,7 @@ const ActivityLibrary = ({
     setShowEmojiPicker(false);
   };
 
-  const handleQuickAdd = (activity) => {
+  const handleQuickAdd = activity => {
     if (onSelectActivity) {
       // Transform library activity to match expected format
       onSelectActivity({
@@ -1062,7 +1295,7 @@ const ActivityLibrary = ({
     }
   };
 
-  const handleAddAllFromCategory = (category) => {
+  const handleAddAllFromCategory = category => {
     if (category.activities.length > 0) {
       // Check if we have the batch method available
       if (onSelectMultipleActivities) {
@@ -1072,11 +1305,11 @@ const ActivityLibrary = ({
           text: activity.text,
           description: activity.description || '',
         }));
-        
+
         onSelectMultipleActivities(activitiesToAdd);
       } else if (onSelectActivity) {
         // Fallback to individual adds
-        category.activities.forEach((activity) => {
+        category.activities.forEach(activity => {
           onSelectActivity({
             icon: activity.icon,
             text: activity.text,
@@ -1093,13 +1326,13 @@ const ActivityLibrary = ({
     const newCategories = categories.map(cat =>
       cat.id === categoryId
         ? { ...cat, name: newName, activities: newActivities }
-        : cat
+        : cat,
     );
     setCategories(newCategories);
     if (onSaveCategories) onSaveCategories(newCategories);
   };
 
-  const handleStartEditCategory = (categoryId) => {
+  const handleStartEditCategory = categoryId => {
     setEditingCategoryId(categoryId);
   };
 
@@ -1110,23 +1343,26 @@ const ActivityLibrary = ({
   const [activeDragId, setActiveDragId] = useState(null);
   const [draggedData, setDraggedData] = useState(null);
   const hasActuallyDragged = useRef(false);
-  
-  const handleCategoryDragStart = (itemId) => {
+
+  const handleCategoryDragStart = itemId => {
     // Save the initial state when drag might begin
     if (activeDragId !== itemId) {
       setActiveDragId(itemId);
       hasActuallyDragged.current = false;
       setDraggedData([...categories]); // Save original order
-      
+
       // Save current expanded states before any animations
       const states = {};
       categories.forEach(cat => {
         // Get actual expanded state from the component if available
-        const currentExpanded = cat.id in categoryExpandedStates ? categoryExpandedStates[cat.id] : true;
+        const currentExpanded =
+          cat.id in categoryExpandedStates
+            ? categoryExpandedStates[cat.id]
+            : true;
         states[cat.id] = currentExpanded;
       });
       setCategoryExpandedStates(states);
-      
+
       // Small delay to let state update propagate
       setTimeout(() => {
         setIsDraggingAnyCategory(true);
@@ -1137,7 +1373,7 @@ const ActivityLibrary = ({
   const handleCategoryDragEnd = ({ data }) => {
     // Only update if we actually dragged (data changed)
     const dataChanged = JSON.stringify(data) !== JSON.stringify(draggedData);
-    
+
     if (dataChanged && hasActuallyDragged.current) {
       // Real drag occurred with reordering
       setCategories(data);
@@ -1148,12 +1384,12 @@ const ActivityLibrary = ({
         setCategories(draggedData);
       }
     }
-    
+
     // Reset drag states
     setActiveDragId(null);
     setDraggedData(null);
     hasActuallyDragged.current = false;
-    
+
     // Restore expanded states after a delay
     setTimeout(() => {
       setIsDraggingAnyCategory(false);
@@ -1163,7 +1399,7 @@ const ActivityLibrary = ({
   const handleExpandedChange = (categoryId, isExpanded) => {
     setCategoryExpandedStates(prev => ({
       ...prev,
-      [categoryId]: isExpanded
+      [categoryId]: isExpanded,
     }));
   };
 
@@ -1177,300 +1413,375 @@ const ActivityLibrary = ({
     >
       <View style={[styles.container, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
-          <StatusBar 
-            backgroundColor={theme.primary} 
-            barStyle="light-content" 
+          <StatusBar
+            backgroundColor={theme.primary}
+            barStyle="light-content"
             translucent={false}
           />
         )}
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
           <View style={[styles.header, { backgroundColor: theme.primary }]}>
             <View style={styles.headerLeft}>
-              <Icon name="collections-bookmark" size={24} color="white" style={styles.headerIcon} />
+              <Icon
+                name="collections-bookmark"
+                size={24}
+                color="white"
+                style={styles.headerIcon}
+              />
               <Text style={styles.headerTitle}>Activity Library</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <View style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
 
-      <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
-        {/* Tab Selector */}
-        <View style={styles.tabContainer}>
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'stackmap' && [styles.activeTab, { backgroundColor: theme.primary }]
-            ]}
-            onPress={() => setActiveTab('stackmap')}
-          >
-            <Icon 
-              name="auto-awesome" 
-              size={20} 
-              color={activeTab === 'stackmap' ? 'white' : theme.primary} 
-            />
-            <Text style={[
-              styles.tabText,
-              activeTab === 'stackmap' && styles.activeTabText
-            ]}>
-              StackMap Library
-            </Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity
-            style={[
-              styles.tab,
-              activeTab === 'mylibrary' && [styles.activeTab, { backgroundColor: theme.primary }]
-            ]}
-            onPress={() => setActiveTab('mylibrary')}
-          >
-            <Icon 
-              name="folder" 
-              size={20} 
-              color={activeTab === 'mylibrary' ? 'white' : theme.primary} 
-            />
-            <Text style={[
-              styles.tabText,
-              activeTab === 'mylibrary' && styles.activeTabText
-            ]}>
-              My Library
-            </Text>
-          </TouchableOpacity>
-        </View>
-        
-        {/* Search and Sort Bar */}
-        <View style={styles.controlsBar}>
-          <View style={[styles.searchContainer, { backgroundColor: 'white' }]}>
-            <Icon name="search" size={20} color={COLORS.gray[400]} />
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search activities..."
-              placeholderTextColor={COLORS.gray[400]}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              autoCapitalize="none"
-              autoCorrect={false}
-            />
-            {searchQuery.length > 0 && (
-              <TouchableOpacity onPress={() => setSearchQuery('')}>
-                <Icon name="close" size={20} color={COLORS.gray[400]} />
-              </TouchableOpacity>
-            )}
-          </View>
-          
-          <TouchableOpacity
-            style={[
-              styles.sortButton,
-              { backgroundColor: isSortMode ? theme.primary : 'white' }
-            ]}
-            onPress={() => {
-              if (!isSortMode) {
-                // Entering sort mode - save current states and collapse all
-                const currentStates = {};
-                categories.forEach(cat => {
-                  currentStates[cat.id] = categoryExpandedStates[cat.id] !== undefined 
-                    ? categoryExpandedStates[cat.id] 
-                    : true;
-                });
-                setSavedExpandedStates(currentStates);
-                
-                // Collapse all categories
-                const collapsedStates = {};
-                categories.forEach(cat => {
-                  collapsedStates[cat.id] = false;
-                });
-                setCategoryExpandedStates(collapsedStates);
-              } else {
-                // Exiting sort mode - restore saved states
-                setCategoryExpandedStates(savedExpandedStates);
-              }
-              setIsSortMode(!isSortMode);
-            }}
-          >
-            <Icon 
-              name="swap-vert" 
-              size={24} 
-              color={isSortMode ? 'white' : theme.primary} 
-            />
-          </TouchableOpacity>
-        </View>
-        <DraggableFlatList
-          data={(activeTab === 'stackmap' ? 
-            (stackMapLibrary?.activityGroups || []) : 
-            categories
-          ).filter(category => {
-            if (!searchQuery) return true;
-            const query = searchQuery.toLowerCase();
-            // Check category name
-            if (category.name.toLowerCase().includes(query)) return true;
-            // Check activities within category
-            return category.activities.some(activity => 
-              (activity.text || '').toLowerCase().includes(query) ||
-              (activity.icon || '').includes(searchQuery)
-            );
-          })}
-          onDragBegin={Platform.OS === 'android' || activeTab === 'stackmap' ? undefined : (index) => {
-            const draggedItem = categories[index];
-            if (draggedItem) {
-              handleCategoryDragStart(draggedItem.id);
-            }
-          }}
-          onPlaceholderIndexChange={Platform.OS === 'android' ? undefined : () => {
-            // This fires when items actually move positions
-            hasActuallyDragged.current = true;
-          }}
-          onDragEnd={Platform.OS === 'android' || activeTab === 'stackmap' ? undefined : handleCategoryDragEnd}
-          keyExtractor={(item) => item.id}
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: SPACING.lg }}
-          scrollEnabled={!isDraggingAnyCategory && !isSortMode}
-          activationDistance={activeTab === 'stackmap' ? 999999 : (isSortMode ? 0 : 20)}
-          renderItem={({ item, drag, isActive }) => (
-            <ScaleDecorator activeScale={0.98}>
-              <CategorySection
-                category={item}
-                onEditCategory={activeTab === 'mylibrary' ? handleEditCategory : undefined}
-                onDeleteCategory={activeTab === 'mylibrary' ? handleDeleteCategory : undefined}
-                onEditActivity={activeTab === 'mylibrary' ? handleEditActivity : undefined}
-                onDeleteActivity={activeTab === 'mylibrary' ? handleDeleteActivity : undefined}
-                onQuickAdd={handleQuickAdd}
-                onAddActivity={activeTab === 'mylibrary' ? handleAddActivity : undefined}
-                onAddAllFromCategory={handleAddAllFromCategory}
-                onUpdateCategory={activeTab === 'mylibrary' ? handleUpdateCategory : undefined}
-                onCopyToMyLibrary={activeTab === 'stackmap' ? onCopyGroupToMyLibrary : undefined}
-                isReadOnly={activeTab === 'stackmap'}
-                theme={theme}
-                editingCategoryId={editingCategoryId}
-                onStartEditCategory={handleStartEditCategory}
-                onEndEditCategory={handleEndEditCategory}
-                drag={drag}
-                isActive={isActive}
-                isDraggingAnyCategory={isDraggingAnyCategory}
-                expandedState={isDraggingAnyCategory || isSortMode ? false : categoryExpandedStates[item.id]}
-                onExpandedChange={handleExpandedChange}
-                searchQuery={searchQuery}
-                isSortMode={isSortMode}
-              />
-            </ScaleDecorator>
-          )}
-          ListFooterComponent={() => activeTab === 'mylibrary' ? (
+        <View style={[styles.contentWrapper, { backgroundColor: theme.light }]}>
+          {/* Tab Selector */}
+          <View style={styles.tabContainer}>
             <TouchableOpacity
-              style={[styles.addCategoryButton, { borderColor: 'white' }]}
-              onPress={handleAddCategory}
+              style={[
+                styles.tab,
+                activeTab === 'stackmap' && [
+                  styles.activeTab,
+                  { backgroundColor: theme.primary },
+                ],
+              ]}
+              onPress={() => setActiveTab('stackmap')}
             >
-              <Icon name="add" size={20} color="white" />
-              <Text style={[styles.addCategoryText, { color: 'white' }]}>
-                Add New Activity Group
+              <Icon
+                name="auto-awesome"
+                size={20}
+                color={activeTab === 'stackmap' ? 'white' : theme.primary}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'stackmap' && styles.activeTabText,
+                ]}
+              >
+                StackMap Library
               </Text>
             </TouchableOpacity>
-          ) : null}
-        />
-      </View>
 
-      {/* Edit Modal */}
-      {editMode && (
-        <View style={styles.editModal}>
-          <View style={styles.editModalContent}>
-            <Text style={styles.editModalTitle}>
-              {editMode === 'new-category' ? 'New Category' :
-               editMode === 'new-activity' ? 'New Activity' :
-               editMode === 'category' ? 'Edit Category' : 'Edit Activity'}
-            </Text>
-            
-            <TextInput
-              style={styles.editInput}
-              value={editName}
-              onChangeText={setEditName}
-              placeholder="Name"
-              placeholderTextColor="#999999"
-              autoFocus
-            />
-            
-            {(editMode === 'activity' || editMode === 'new-activity') && (
-              <View>
-                <TextInput
-                  style={[styles.editInput, styles.descriptionInput]}
-                  value={editDescription}
-                  onChangeText={setEditDescription}
-                  placeholder="Description (optional)"
-                  placeholderTextColor="#999999"
-                  multiline
-                  numberOfLines={3}
-                  textAlignVertical="top"
-                />
-                
-                <Text style={styles.emojiLabel}>Select Emoji:</Text>
-                <TouchableOpacity
-                  style={styles.emojiSelector}
-                  onPress={() => setShowEmojiPicker(true)}
-                >
-                  {editEmoji && editEmoji.startsWith('image:') ? (
-                    <Image 
-                      source={getCustomImageSource(editEmoji.substring(6))}
-                      style={styles.selectedEmojiImage}
-                      resizeMode="contain"
-                    />
-                  ) : (
-                    <Text style={styles.selectedEmoji}>{editEmoji || '🎯'}</Text>
-                  )}
-                  <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
+            <TouchableOpacity
+              style={[
+                styles.tab,
+                activeTab === 'mylibrary' && [
+                  styles.activeTab,
+                  { backgroundColor: theme.primary },
+                ],
+              ]}
+              onPress={() => setActiveTab('mylibrary')}
+            >
+              <Icon
+                name="folder"
+                size={20}
+                color={activeTab === 'mylibrary' ? 'white' : theme.primary}
+              />
+              <Text
+                style={[
+                  styles.tabText,
+                  activeTab === 'mylibrary' && styles.activeTabText,
+                ]}
+              >
+                My Library
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Search and Sort Bar */}
+          <View style={styles.controlsBar}>
+            <View
+              style={[styles.searchContainer, { backgroundColor: 'white' }]}
+            >
+              <Icon name="search" size={20} color={COLORS.gray[400]} />
+              <TextInput
+                style={styles.searchInput}
+                placeholder="Search activities..."
+                placeholderTextColor={COLORS.gray[400]}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+              {searchQuery.length > 0 && (
+                <TouchableOpacity onPress={() => setSearchQuery('')}>
+                  <Icon name="close" size={20} color={COLORS.gray[400]} />
                 </TouchableOpacity>
-                
-              </View>
+              )}
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.sortButton,
+                { backgroundColor: isSortMode ? theme.primary : 'white' },
+              ]}
+              onPress={() => {
+                if (!isSortMode) {
+                  // Entering sort mode - save current states and collapse all
+                  const currentStates = {};
+                  categories.forEach(cat => {
+                    currentStates[cat.id] =
+                      categoryExpandedStates[cat.id] !== undefined
+                        ? categoryExpandedStates[cat.id]
+                        : true;
+                  });
+                  setSavedExpandedStates(currentStates);
+
+                  // Collapse all categories
+                  const collapsedStates = {};
+                  categories.forEach(cat => {
+                    collapsedStates[cat.id] = false;
+                  });
+                  setCategoryExpandedStates(collapsedStates);
+                } else {
+                  // Exiting sort mode - restore saved states
+                  setCategoryExpandedStates(savedExpandedStates);
+                }
+                setIsSortMode(!isSortMode);
+              }}
+            >
+              <Icon
+                name="swap-vert"
+                size={24}
+                color={isSortMode ? 'white' : theme.primary}
+              />
+            </TouchableOpacity>
+          </View>
+          <DraggableFlatList
+            data={(activeTab === 'stackmap'
+              ? stackMapLibrary?.activityGroups || []
+              : categories
+            ).filter(category => {
+              if (!searchQuery) return true;
+              const query = searchQuery.toLowerCase();
+              // Check category name
+              if (category.name.toLowerCase().includes(query)) return true;
+              // Check activities within category
+              return category.activities.some(
+                activity =>
+                  (activity.text || '').toLowerCase().includes(query) ||
+                  (activity.icon || '').includes(searchQuery),
+              );
+            })}
+            onDragBegin={
+              Platform.OS === 'android' || activeTab === 'stackmap'
+                ? undefined
+                : index => {
+                    const draggedItem = categories[index];
+                    if (draggedItem) {
+                      handleCategoryDragStart(draggedItem.id);
+                    }
+                  }
+            }
+            onPlaceholderIndexChange={
+              Platform.OS === 'android'
+                ? undefined
+                : () => {
+                    // This fires when items actually move positions
+                    hasActuallyDragged.current = true;
+                  }
+            }
+            onDragEnd={
+              Platform.OS === 'android' || activeTab === 'stackmap'
+                ? undefined
+                : handleCategoryDragEnd
+            }
+            keyExtractor={item => item.id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: SPACING.lg }}
+            scrollEnabled={!isDraggingAnyCategory && !isSortMode}
+            activationDistance={
+              activeTab === 'stackmap' ? 999999 : isSortMode ? 0 : 20
+            }
+            renderItem={({ item, drag, isActive }) => (
+              <ScaleDecorator activeScale={0.98}>
+                <CategorySection
+                  category={item}
+                  onEditCategory={
+                    activeTab === 'mylibrary' ? handleEditCategory : undefined
+                  }
+                  onDeleteCategory={
+                    activeTab === 'mylibrary' ? handleDeleteCategory : undefined
+                  }
+                  onEditActivity={
+                    activeTab === 'mylibrary' ? handleEditActivity : undefined
+                  }
+                  onDeleteActivity={
+                    activeTab === 'mylibrary' ? handleDeleteActivity : undefined
+                  }
+                  onQuickAdd={handleQuickAdd}
+                  onAddActivity={
+                    activeTab === 'mylibrary' ? handleAddActivity : undefined
+                  }
+                  onAddAllFromCategory={handleAddAllFromCategory}
+                  onUpdateCategory={
+                    activeTab === 'mylibrary' ? handleUpdateCategory : undefined
+                  }
+                  onCopyToMyLibrary={
+                    activeTab === 'stackmap'
+                      ? onCopyGroupToMyLibrary
+                      : undefined
+                  }
+                  isReadOnly={activeTab === 'stackmap'}
+                  theme={theme}
+                  editingCategoryId={editingCategoryId}
+                  onStartEditCategory={handleStartEditCategory}
+                  onEndEditCategory={handleEndEditCategory}
+                  drag={drag}
+                  isActive={isActive}
+                  isDraggingAnyCategory={isDraggingAnyCategory}
+                  expandedState={
+                    isDraggingAnyCategory || isSortMode
+                      ? false
+                      : categoryExpandedStates[item.id]
+                  }
+                  onExpandedChange={handleExpandedChange}
+                  searchQuery={searchQuery}
+                  isSortMode={isSortMode}
+                />
+              </ScaleDecorator>
             )}
-            
-            <View style={styles.editModalButtons}>
-              <TouchableOpacity
-                style={[styles.editButton, styles.cancelButton]}
-                onPress={() => {
-                  setEditMode(null);
-                  setShowEmojiPicker(false);
-                }}
-              >
-                <Text style={styles.cancelButtonText}>Cancel</Text>
-              </TouchableOpacity>
-              
-              <TouchableOpacity
-                style={[styles.editButton, { backgroundColor: theme.primary }]}
-                onPress={handleSaveEdit}
-              >
-                <Text style={styles.saveButtonText}>Save</Text>
-              </TouchableOpacity>
+            ListFooterComponent={() =>
+              activeTab === 'mylibrary' ? (
+                <TouchableOpacity
+                  style={[styles.addCategoryButton, { borderColor: 'white' }]}
+                  onPress={handleAddCategory}
+                >
+                  <Icon name="add" size={20} color="white" />
+                  <Text style={[styles.addCategoryText, { color: 'white' }]}>
+                    Add New Activity Group
+                  </Text>
+                </TouchableOpacity>
+              ) : null
+            }
+          />
+        </View>
+
+        {/* Edit Modal */}
+        {editMode && (
+          <View style={styles.editModal}>
+            <View style={styles.editModalContent}>
+              <Text style={styles.editModalTitle}>
+                {editMode === 'new-category'
+                  ? 'New Category'
+                  : editMode === 'new-activity'
+                  ? 'New Activity'
+                  : editMode === 'category'
+                  ? 'Edit Category'
+                  : 'Edit Activity'}
+              </Text>
+
+              <TextInput
+                style={styles.editInput}
+                value={editName}
+                onChangeText={setEditName}
+                placeholder="Name"
+                placeholderTextColor="#999999"
+                autoFocus
+              />
+
+              {(editMode === 'activity' || editMode === 'new-activity') && (
+                <View>
+                  <TextInput
+                    style={[styles.editInput, styles.descriptionInput]}
+                    value={editDescription}
+                    onChangeText={setEditDescription}
+                    placeholder="Description (optional)"
+                    placeholderTextColor="#999999"
+                    multiline
+                    numberOfLines={3}
+                    textAlignVertical="top"
+                  />
+
+                  <Text style={styles.emojiLabel}>Select Emoji:</Text>
+                  <TouchableOpacity
+                    style={styles.emojiSelector}
+                    onPress={() => setShowEmojiPicker(true)}
+                  >
+                    {editEmoji && editEmoji.startsWith('image:') ? (
+                      <Image
+                        source={getCustomImageSource(editEmoji.substring(6))}
+                        style={styles.selectedEmojiImage}
+                        resizeMode="contain"
+                      />
+                    ) : (
+                      <Text style={styles.selectedEmoji}>
+                        {editEmoji || '🎯'}
+                      </Text>
+                    )}
+                    <Text style={styles.emojiSelectorLabel}>Tap to change</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              <View style={styles.editModalButtons}>
+                <TouchableOpacity
+                  style={[styles.editButton, styles.cancelButton]}
+                  onPress={() => {
+                    setEditMode(null);
+                    setShowEmojiPicker(false);
+                  }}
+                >
+                  <Text style={styles.cancelButtonText}>Cancel</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.editButton,
+                    { backgroundColor: theme.primary },
+                  ]}
+                  onPress={handleSaveEdit}
+                >
+                  <Text style={styles.saveButtonText}>Save</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
-        </View>
-      )}
-      
-      {/* Emoji Picker Modal */}
-      <EmojiPicker 
-        mode="modal"
-        visible={showEmojiPicker}
-        onClose={() => setShowEmojiPicker(false)}
-        onSelect={(icon) => {
-          setEditEmoji(icon);
-          setShowEmojiPicker(false);
-        }}
-        theme={theme}
-        selectedEmoji={editEmoji}
-        showCustomImages={true}
-      />
-      
-      {Platform.OS === 'android' && (
-        <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
-      )}
+        )}
+
+        {/* Emoji Picker Modal */}
+        <EmojiPicker
+          mode="modal"
+          visible={showEmojiPicker}
+          onClose={() => setShowEmojiPicker(false)}
+          onSelect={icon => {
+            setEditEmoji(icon);
+            setShowEmojiPicker(false);
+          }}
+          theme={theme}
+          selectedEmoji={editEmoji}
+          showCustomImages={true}
+        />
+
+        {Platform.OS === 'android' && (
+          <View
+            style={{
+              backgroundColor: theme.light,
+              height: Math.max(insets.bottom, 20),
+            }}
+          />
+        )}
       </View>
     </Modal>
   );
@@ -1809,7 +2120,8 @@ const styles = StyleSheet.create({
   },
   menuOverlay: {
     flex: 1,
-    backgroundColor: Platform.OS === 'web' ? 'transparent' : 'rgba(0, 0, 0, 0.5)',
+    backgroundColor:
+      Platform.OS === 'web' ? 'transparent' : 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -1884,8 +2196,8 @@ export const EMPTY_CATEGORIES = [
     id: 'my-templates',
     name: 'My Templates',
     icon: '⭐',
-    activities: []
-  }
+    activities: [],
+  },
 ];
 
 export default ActivityLibrary;

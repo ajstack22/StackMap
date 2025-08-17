@@ -7,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Platform,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../constants';
@@ -44,8 +43,8 @@ const TimePicker = ({
     return hour.toString().padStart(2, '0');
   });
 
-  const minutes = Array.from({ length: 60 }, (_, i) => 
-    i.toString().padStart(2, '0')
+  const minutes = Array.from({ length: 60 }, (_, i) =>
+    i.toString().padStart(2, '0'),
   );
 
   const handleDone = () => {
@@ -65,22 +64,17 @@ const TimePicker = ({
         style={[
           styles.input,
           error && styles.inputError,
-          { borderColor: error ? '#d32f2f' : '#E0E0E0' }
+          { borderColor: error ? '#d32f2f' : '#E0E0E0' },
         ]}
         onPress={() => setShowPicker(true)}
       >
-        <Text style={[
-          styles.inputText,
-          !value && styles.placeholder
-        ]}>
+        <Text style={[styles.inputText, !value && styles.placeholder]}>
           {value || placeholder}
         </Text>
         <Icon name="access-time" size={20} color="#666" />
       </TouchableOpacity>
-      
-      {error && (
-        <Text style={styles.errorText}>{error}</Text>
-      )}
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
 
       <Modal
         visible={showPicker}
@@ -93,8 +87,12 @@ const TimePicker = ({
           activeOpacity={1}
           onPress={() => setShowPicker(false)}
         >
-          <View style={[styles.pickerContainer, { backgroundColor: theme.light }]}>
-            <View style={[styles.pickerHeader, { backgroundColor: theme.primary }]}>
+          <View
+            style={[styles.pickerContainer, { backgroundColor: theme.light }]}
+          >
+            <View
+              style={[styles.pickerHeader, { backgroundColor: theme.primary }]}
+            >
               <Text style={styles.pickerTitle}>Select Time</Text>
               <TouchableOpacity onPress={() => setShowPicker(false)}>
                 <Icon name="close" size={24} color="white" />
@@ -116,15 +114,20 @@ const TimePicker = ({
                         style={[
                           styles.pickerItem,
                           selectedHour === hour && styles.pickerItemSelected,
-                          selectedHour === hour && { backgroundColor: theme.primary + '20' }
+                          selectedHour === hour && {
+                            backgroundColor: theme.primary + '20',
+                          },
                         ]}
                         onPress={() => setSelectedHour(hour)}
                       >
-                        <Text style={[
-                          styles.pickerItemText,
-                          selectedHour === hour && styles.pickerItemTextSelected,
-                          selectedHour === hour && { color: theme.primary }
-                        ]}>
+                        <Text
+                          style={[
+                            styles.pickerItemText,
+                            selectedHour === hour &&
+                              styles.pickerItemTextSelected,
+                            selectedHour === hour && { color: theme.primary },
+                          ]}
+                        >
                           {hour}
                         </Text>
                       </TouchableOpacity>
@@ -144,16 +147,24 @@ const TimePicker = ({
                         key={minute}
                         style={[
                           styles.pickerItem,
-                          selectedMinute === minute && styles.pickerItemSelected,
-                          selectedMinute === minute && { backgroundColor: theme.primary + '20' }
+                          selectedMinute === minute &&
+                            styles.pickerItemSelected,
+                          selectedMinute === minute && {
+                            backgroundColor: theme.primary + '20',
+                          },
                         ]}
                         onPress={() => setSelectedMinute(minute)}
                       >
-                        <Text style={[
-                          styles.pickerItemText,
-                          selectedMinute === minute && styles.pickerItemTextSelected,
-                          selectedMinute === minute && { color: theme.primary }
-                        ]}>
+                        <Text
+                          style={[
+                            styles.pickerItemText,
+                            selectedMinute === minute &&
+                              styles.pickerItemTextSelected,
+                            selectedMinute === minute && {
+                              color: theme.primary,
+                            },
+                          ]}
+                        >
                           {minute}
                         </Text>
                       </TouchableOpacity>
@@ -170,15 +181,21 @@ const TimePicker = ({
                         key={period}
                         style={[
                           styles.periodItem,
-                          selectedPeriod === period && styles.periodItemSelected,
-                          selectedPeriod === period && { backgroundColor: theme.primary }
+                          selectedPeriod === period &&
+                            styles.periodItemSelected,
+                          selectedPeriod === period && {
+                            backgroundColor: theme.primary,
+                          },
                         ]}
                         onPress={() => setSelectedPeriod(period)}
                       >
-                        <Text style={[
-                          styles.periodItemText,
-                          selectedPeriod === period && styles.periodItemTextSelected
-                        ]}>
+                        <Text
+                          style={[
+                            styles.periodItemText,
+                            selectedPeriod === period &&
+                              styles.periodItemTextSelected,
+                          ]}
+                        >
                           {period}
                         </Text>
                       </TouchableOpacity>
@@ -204,7 +221,11 @@ const TimePicker = ({
                   <Text style={styles.clearButtonText}>Clear</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={[styles.button, styles.doneButton, { backgroundColor: theme.primary }]}
+                  style={[
+                    styles.button,
+                    styles.doneButton,
+                    { backgroundColor: theme.primary },
+                  ]}
                   onPress={handleDone}
                 >
                   <Text style={styles.doneButtonText}>Done</Text>

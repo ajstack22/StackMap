@@ -15,7 +15,7 @@ global.Platform = {
   isTV: false,
   isTVOS: false,
   isTesting: false,
-  select: (obj) => obj.web || obj.default || Object.values(obj)[0],
+  select: obj => obj.web || obj.default || Object.values(obj)[0],
 };
 window.Platform = global.Platform;
 
@@ -85,14 +85,14 @@ global.NativeModules = {
   },
   StatusBarManager: {
     HEIGHT: 0,
-    getHeight: (callback) => callback({ height: 0 }),
+    getHeight: callback => callback({ height: 0 }),
   },
   Networking: {
     addListener: () => {},
     removeListeners: () => {},
   },
   AppState: {
-    getCurrentAppState: (callback) => callback({ app_state: 'active' }),
+    getCurrentAppState: callback => callback({ app_state: 'active' }),
     addListener: () => ({ remove: () => {} }),
   },
   Clipboard: {
@@ -111,7 +111,7 @@ global.NativeModules = {
     getInitialURL: () => Promise.resolve(null),
     addEventListener: () => ({ remove: () => {} }),
     canOpenURL: () => Promise.resolve(true),
-    openURL: (url) => window.open(url, '_blank'),
+    openURL: url => window.open(url, '_blank'),
   },
   Settings: {
     get: () => ({}),
@@ -130,12 +130,12 @@ global.NativeModules = {
 };
 
 // Mock TurboModuleRegistry with ALL modules
-global.__turboModuleProxy = function(name) {
+global.__turboModuleProxy = function (name) {
   // Return NativeModules entry if it exists
   if (global.NativeModules[name]) {
     return global.NativeModules[name];
   }
-  
+
   // Otherwise return a generic mock
   return {
     getConstants: () => ({}),
@@ -145,24 +145,24 @@ global.__turboModuleProxy = function(name) {
 
 // setImmediate polyfill
 if (typeof setImmediate === 'undefined') {
-  global.setImmediate = function(callback) {
+  global.setImmediate = function (callback) {
     return setTimeout(callback, 0);
   };
-  global.clearImmediate = function(id) {
+  global.clearImmediate = function (id) {
     return clearTimeout(id);
   };
 }
 
 // requestAnimationFrame polyfill
 if (typeof requestAnimationFrame === 'undefined') {
-  global.requestAnimationFrame = function(callback) {
+  global.requestAnimationFrame = function (callback) {
     return setTimeout(callback, 1000 / 60);
   };
 }
 
-// cancelAnimationFrame polyfill  
+// cancelAnimationFrame polyfill
 if (typeof cancelAnimationFrame === 'undefined') {
-  global.cancelAnimationFrame = function(id) {
+  global.cancelAnimationFrame = function (id) {
     return clearTimeout(id);
   };
 }
@@ -170,8 +170,8 @@ if (typeof cancelAnimationFrame === 'undefined') {
 // Performance polyfill
 if (typeof performance === 'undefined') {
   global.performance = {
-    now: function() {
+    now: function () {
       return Date.now();
-    }
+    },
   };
 }

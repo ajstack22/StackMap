@@ -18,12 +18,24 @@ const CELEBRATION_COLORS = {
   purple: ['#9b59b6', '#8e44ad', '#bf55ec', '#dda0dd', '#da70d6', '#ba55d3'],
   gold: ['#ffd700', '#ffb300', '#ff8f00', '#ffc107', '#ffed4e', '#f9a825'],
   green: ['#ff9ff3', '#96ceb4', '#ffeaa7', '#fd79a8', '#a8e6cf', '#ffcccc'],
-  random: ['#ff6b9d', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57', '#ff9ff3', '#ffd700', '#ff69b4', '#87ceeb', '#98fb98', '#ffa500'],
+  random: [
+    '#ff6b9d',
+    '#4ecdc4',
+    '#45b7d1',
+    '#96ceb4',
+    '#feca57',
+    '#ff9ff3',
+    '#ffd700',
+    '#ff69b4',
+    '#87ceeb',
+    '#98fb98',
+    '#ffa500',
+  ],
 };
 
 const Confetti = ({ color, delay, startX, duration = 4000 }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
-  
+
   useEffect(() => {
     Animated.timing(animatedValue, {
       toValue: 1,
@@ -59,11 +71,7 @@ const Confetti = ({ color, delay, startX, duration = 4000 }) => {
         styles.confetti,
         {
           backgroundColor: color,
-          transform: [
-            { translateX },
-            { translateY },
-            { rotate },
-          ],
+          transform: [{ translateX }, { translateY }, { rotate }],
           opacity,
         },
       ]}
@@ -87,7 +95,7 @@ const FireworkBurst = ({ x, y, colors, delay }) => {
     }).start();
   }, []);
 
-  return particles.map((i) => {
+  return particles.map(i => {
     const angle = (i / particles.length) * Math.PI * 2;
     const burstSize = 1 + Math.random() * 0.75; // 25% larger
     const velocity = (50 + Math.random() * 50) * burstSize; // 25% more velocity
@@ -124,11 +132,7 @@ const FireworkBurst = ({ x, y, colors, delay }) => {
             top: y,
             width: 5 + Math.random() * 7.5, // 25% larger particles
             height: 5 + Math.random() * 7.5,
-            transform: [
-              { translateX },
-              { translateY },
-              { scale },
-            ],
+            transform: [{ translateX }, { translateY }, { scale }],
             opacity,
           },
         ]}
@@ -168,7 +172,9 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
   // Handle random theme selection
   let selectedColors;
   if (theme === 'random') {
-    const colorKeys = Object.keys(CELEBRATION_COLORS).filter(key => key !== 'random');
+    const colorKeys = Object.keys(CELEBRATION_COLORS).filter(
+      key => key !== 'random',
+    );
     const randomKey = colorKeys[Math.floor(Math.random() * colorKeys.length)];
     selectedColors = CELEBRATION_COLORS[randomKey];
   } else {
@@ -185,7 +191,7 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
 
     return (
       <View style={styles.container} pointerEvents="none">
-        {confettiPieces.map((piece) => (
+        {confettiPieces.map(piece => (
           <Confetti
             key={piece.id}
             color={piece.color}
@@ -201,13 +207,13 @@ export const CelebrationView = ({ type, theme = 'rainbow', onComplete }) => {
     const bursts = Array.from({ length: 15 }, (_, i) => ({
       id: i,
       x: 10 + Math.random() * 80, // percentage of screen width
-      y: 10 + Math.random() * 60, // percentage of screen height  
+      y: 10 + Math.random() * 60, // percentage of screen height
       delay: i * 160, // 25% faster rate (was 200ms)
     }));
 
     return (
       <View style={styles.container} pointerEvents="none">
-        {bursts.map((burst) => (
+        {bursts.map(burst => (
           <FireworkBurst
             key={burst.id}
             x={`${burst.x}%`}

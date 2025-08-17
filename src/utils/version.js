@@ -26,7 +26,7 @@ export const getCurrentVersion = async () => {
       const stored = await AsyncStorage.getItem(VERSION_KEY);
       if (stored) return stored;
     }
-    
+
     // If no stored version, generate from current date
     return generateVersion();
   } catch (error) {
@@ -43,7 +43,7 @@ export const generateVersion = () => {
   const yy = String(now.getFullYear()).slice(-2);
   const mm = String(now.getMonth() + 1).padStart(2, '0');
   const dd = String(now.getDate()).padStart(2, '0');
-  
+
   // Default to build 1 if no counter exists
   return `${yy}.${mm}.${dd}.1`;
 };
@@ -55,10 +55,10 @@ export const generateVersion = () => {
 export const incrementBuildCounter = async () => {
   try {
     const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    
+
     let lastBuildDate;
     let buildCounter = 1;
-    
+
     if (Platform.OS === 'web') {
       lastBuildDate = localStorage.getItem(BUILD_DATE_KEY);
       const storedCounter = localStorage.getItem(BUILD_COUNTER_KEY);
@@ -68,7 +68,7 @@ export const incrementBuildCounter = async () => {
       const storedCounter = await AsyncStorage.getItem(BUILD_COUNTER_KEY);
       if (storedCounter) buildCounter = parseInt(storedCounter, 10);
     }
-    
+
     // If it's a new day, reset counter to 1
     if (lastBuildDate !== today) {
       buildCounter = 1;
@@ -76,14 +76,14 @@ export const incrementBuildCounter = async () => {
       // Same day, increment counter
       buildCounter++;
     }
-    
+
     // Generate new version
     const now = new Date();
     const yy = String(now.getFullYear()).slice(-2);
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const dd = String(now.getDate()).padStart(2, '0');
     const newVersion = `${yy}.${mm}.${dd}.${buildCounter}`;
-    
+
     // Store the new values
     if (Platform.OS === 'web') {
       localStorage.setItem(VERSION_KEY, newVersion);
@@ -94,7 +94,7 @@ export const incrementBuildCounter = async () => {
       await AsyncStorage.setItem(BUILD_COUNTER_KEY, String(buildCounter));
       await AsyncStorage.setItem(BUILD_DATE_KEY, today);
     }
-    
+
     return newVersion;
   } catch (error) {
     console.error('Error incrementing build counter:', error);
@@ -105,7 +105,7 @@ export const incrementBuildCounter = async () => {
 /**
  * Set a specific version (useful for CI/CD)
  */
-export const setVersion = async (version) => {
+export const setVersion = async version => {
   try {
     if (Platform.OS === 'web') {
       localStorage.setItem(VERSION_KEY, version);

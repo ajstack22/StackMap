@@ -60,7 +60,7 @@ class NetworkMonitor {
    */
   private handleNetworkChange(state: NetInfoState): void {
     const wasOnline = this.isOnline;
-    
+
     // Update connection state
     this.isOnline = state.isConnected && state.isInternetReachable !== false;
     this.connectionType = state.type;
@@ -75,7 +75,7 @@ class NetworkMonitor {
       this.notifyListeners({
         isOnline: this.isOnline,
         wasOnline,
-        connectionType: this.connectionType
+        connectionType: this.connectionType,
       });
     }
   }
@@ -113,7 +113,7 @@ class NetworkMonitor {
 
       const response = await fetch(`${apiUrl}/health.php`, {
         method: 'GET',
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       clearTimeout(timeoutId);
@@ -133,12 +133,12 @@ class NetworkMonitor {
    */
   addListener(callback: NetworkListener): () => void {
     this.listeners.add(callback);
-    
+
     // Immediately notify with current state
     callback({
       isOnline: this.isOnline,
       wasOnline: this.isOnline,
-      connectionType: this.connectionType
+      connectionType: this.connectionType,
     });
 
     // Return unsubscribe function
@@ -170,7 +170,7 @@ class NetworkMonitor {
       isOnline: this.isOnline,
       connectionType: this.connectionType,
       isInternetReachable: this.isInternetReachable,
-      isMonitoring: !!this.unsubscribe
+      isMonitoring: !!this.unsubscribe,
     };
   }
 

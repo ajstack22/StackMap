@@ -1,5 +1,9 @@
 import React from 'react';
-import { Text as RNText, TextInput as RNTextInput, Platform } from 'react-native';
+import {
+  Text as RNText,
+  TextInput as RNTextInput,
+  Platform,
+} from 'react-native';
 
 // Centralized font configuration - change font family here to update everywhere
 const getFontFamily = (weight = 'regular') => {
@@ -29,10 +33,10 @@ const getFontFamily = (weight = 'regular') => {
 // Custom Text component that ensures Comic Relief is used everywhere
 export const Text = React.forwardRef((props, ref) => {
   const { style, children, ...restProps } = props;
-  
+
   // Extract fontWeight from all styles
   let fontWeight = 'regular';
-  
+
   if (style) {
     const styles = Array.isArray(style) ? style : [style];
     for (const s of styles) {
@@ -41,26 +45,22 @@ export const Text = React.forwardRef((props, ref) => {
       }
     }
   }
-  
+
   // Apply Comic Relief font family based on weight - THIS ALWAYS WINS
   const fontFamily = getFontFamily(fontWeight);
-  
+
   // On Android, having both fontWeight and fontFamily can cause issues
   // Remove fontWeight when applying custom font
   const finalStyle = [
     style, // User styles
-    { 
+    {
       fontFamily, // Comic Relief ALWAYS overrides any fontFamily in user styles
-      ...(Platform.OS === 'android' && { fontWeight: 'normal' }) // Reset fontWeight on Android
-    }
+      ...(Platform.OS === 'android' && { fontWeight: 'normal' }), // Reset fontWeight on Android
+    },
   ];
-  
+
   return (
-    <RNText
-      ref={ref}
-      {...restProps}
-      style={finalStyle}
-    >
+    <RNText ref={ref} {...restProps} style={finalStyle}>
       {children}
     </RNText>
   );
@@ -71,7 +71,7 @@ Text.displayName = 'StyledText';
 // Custom TextInput component
 export const TextInput = React.forwardRef((props, ref) => {
   const { style, ...restProps } = props;
-  
+
   // Extract fontWeight from style
   let fontWeight = 'regular';
   if (style) {
@@ -83,19 +83,19 @@ export const TextInput = React.forwardRef((props, ref) => {
       }
     }
   }
-  
+
   const fontFamily = getFontFamily(fontWeight);
-  
+
   return (
     <RNTextInput
       ref={ref}
       {...restProps}
       style={[
         style,
-        { 
+        {
           fontFamily, // Apply Comic Relief AFTER user styles to ensure it always wins
-          ...(Platform.OS === 'android' && { color: '#000000' }) // Ensure black text on Android
-        }
+          ...(Platform.OS === 'android' && { color: '#000000' }), // Ensure black text on Android
+        },
       ]}
     />
   );
@@ -110,5 +110,5 @@ export { Text as RNText, TextInput as RNTextInput } from 'react-native';
 export default {
   Text,
   TextInput,
-  getFontFamily
+  getFontFamily,
 };

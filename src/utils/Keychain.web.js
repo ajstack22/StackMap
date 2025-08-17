@@ -10,8 +10,8 @@ const Keychain = {
       return false;
     }
   },
-  
-  getInternetCredentials: async (server) => {
+
+  getInternetCredentials: async server => {
     try {
       // Find any credentials for this server
       const keys = Object.keys(localStorage);
@@ -27,16 +27,14 @@ const Keychain = {
       return false;
     }
   },
-  
-  resetInternetCredentials: async (server) => {
-    try {
 
+  resetInternetCredentials: async server => {
+    try {
       const keys = Object.keys(localStorage);
 
       let removed = false;
       for (const key of keys) {
         if (key.startsWith(`keychain_${server}_`)) {
-
           localStorage.removeItem(key);
           removed = true;
         }
@@ -46,7 +44,7 @@ const Keychain = {
     } catch (error) {
       return false;
     }
-  }
+  },
 };
 
 // Export as both default and named exports for compatibility

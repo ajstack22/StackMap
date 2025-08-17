@@ -8,7 +8,7 @@ export const styles = StyleSheet.create({
     marginVertical: SPACING.xs,
     ...SHADOWS.level1,
   },
-  
+
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -18,7 +18,7 @@ export const styles = StyleSheet.create({
     borderWidth: 1,
     backgroundColor: 'white',
   },
-  
+
   statusBar: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -26,19 +26,19 @@ export const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md,
     paddingVertical: SPACING.sm,
   },
-  
+
   statusContent: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.sm,
   },
-  
+
   statusText: {
     fontSize: 14,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     fontWeight: '500',
   },
-  
+
   detailsContainer: {
     paddingHorizontal: SPACING.md,
     paddingBottom: SPACING.md,
@@ -46,27 +46,27 @@ export const styles = StyleSheet.create({
     borderTopColor: '#f0f0f0',
     paddingTop: SPACING.sm,
   },
-  
+
   detailRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginVertical: SPACING.xs,
   },
-  
+
   detailLabel: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
   },
-  
+
   detailValue: {
     fontSize: 13,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: '#000',
     fontWeight: '500',
   },
-  
+
   errorText: {
     fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -74,7 +74,7 @@ export const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     lineHeight: 16,
   },
-  
+
   offlineText: {
     fontSize: 12,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -82,7 +82,7 @@ export const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     fontStyle: 'italic',
   },
-  
+
   retryButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -93,7 +93,7 @@ export const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     gap: SPACING.xs,
   },
-  
+
   retryButtonText: {
     color: 'white',
     fontSize: 13,

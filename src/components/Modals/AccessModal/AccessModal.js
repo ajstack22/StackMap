@@ -65,7 +65,7 @@ const AccessModal = ({
           getAndroidModalBottomHeight={getAndroidModalBottomHeight}
         />
       </TabContent>
-      
+
       <TabContent isActive={activeTab === 1} modalVisible={visible}>
         <PINTabContent
           theme={theme}

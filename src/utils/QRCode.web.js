@@ -1,7 +1,12 @@
 import React from 'react';
 import QRCode from 'qrcode';
 
-const QRCodeComponent = ({ value, size = 200, color = '#000', backgroundColor = '#fff' }) => {
+const QRCodeComponent = ({
+  value,
+  size = 200,
+  color = '#000',
+  backgroundColor = '#fff',
+}) => {
   const [dataUrl, setDataUrl] = React.useState('');
 
   React.useEffect(() => {
@@ -22,11 +27,7 @@ const QRCodeComponent = ({ value, size = 200, color = '#000', backgroundColor = 
   if (!dataUrl) return null;
 
   return (
-    <img
-      src={dataUrl}
-      alt="QR Code"
-      style={{ width: size, height: size }}
-    />
+    <img src={dataUrl} alt="QR Code" style={{ width: size, height: size }} />
   );
 };
 

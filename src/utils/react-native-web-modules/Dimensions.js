@@ -36,13 +36,13 @@ const Dimensions = {
       };
       window.addEventListener('resize', listener);
       window.addEventListener('orientationchange', listener);
-      
+
       // Return subscription object
       return {
         remove: () => {
           window.removeEventListener('resize', listener);
           window.removeEventListener('orientationchange', listener);
-        }
+        },
       };
     }
     return { remove: () => {} };
@@ -51,7 +51,7 @@ const Dimensions = {
   set() {
     // Not used on web
     console.warn('Dimensions.set is not supported on web');
-  }
+  },
 };
 
 export default Dimensions;

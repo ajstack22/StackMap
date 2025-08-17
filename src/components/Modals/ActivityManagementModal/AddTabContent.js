@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Text, TextInput } from '../../Typography';
-import { View, TouchableOpacity, ScrollView, Platform,  } from 'react-native';
+import { View, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { FormInput } from '../../ModalUtilities';
 import EmojiPicker from '../../EmojiPicker';
@@ -41,13 +41,13 @@ const AddTabContent = ({
 
   const validateForm = () => {
     const newErrors = {};
-    
+
     if (!activityText.trim()) {
       newErrors.text = 'Activity name is required';
     }
-    
+
     // Time validation removed - now using time picker
-    
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -61,15 +61,19 @@ const AddTabContent = ({
     // Generate enhanced activity ID with device ID
     const deviceId = await (async () => {
       try {
-        const encryptionService = (await import('../../../services/sync/encryptionService')).default;
+        const encryptionService = (
+          await import('../../../services/sync/encryptionService')
+        ).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
         return 'unknown';
       }
     })();
-    
+
     const activityData = {
-      id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `${deviceId}-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
       text: activityText.trim(),
       description: activityDescription.trim(),
       icon: activityIcon,
@@ -101,15 +105,19 @@ const AddTabContent = ({
     // Generate enhanced activity ID with device ID
     const deviceId = await (async () => {
       try {
-        const encryptionService = (await import('../../../services/sync/encryptionService')).default;
+        const encryptionService = (
+          await import('../../../services/sync/encryptionService')
+        ).default;
         return await encryptionService.getDeviceId();
       } catch (error) {
         return 'unknown';
       }
     })();
-    
+
     const activityData = {
-      id: `${deviceId}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      id: `${deviceId}-${Date.now()}-${Math.random()
+        .toString(36)
+        .substr(2, 9)}`,
       text: activityText.trim(),
       description: activityDescription.trim(),
       icon: activityIcon,
@@ -140,7 +148,7 @@ const AddTabContent = ({
     // Don't reset category or saveToLibrary preference
   };
 
-  const handleEmojiSelect = (icon) => {
+  const handleEmojiSelect = icon => {
     setActivityIcon(icon);
     setShowEmojiPicker(false);
   };
@@ -148,149 +156,169 @@ const AddTabContent = ({
   // Wrap entire content in a gesture-capturing view for Android
   const ContentWrapper = Platform.OS === 'android' ? View : React.Fragment;
   const wrapperProps = Platform.OS === 'android' ? { style: { flex: 1 } } : {};
-  
+
   return (
     <ContentWrapper {...wrapperProps}>
-      <ScrollView 
+      <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
         style={{ flex: 1 }}
         nestedScrollEnabled={Platform.OS === 'android'}
         scrollEnabled={true}
       >
-      <View style={styles.addFormContainer} pointerEvents="box-none">
-        {/* Single Consolidated Panel */}
-        <View style={styles.formPanel}>
-          {/* Header */}
-          <View style={styles.standardTabContainer}>
-            <Icon name="add-circle" size={48} color={theme.primary} />
-            <Text style={styles.standardTabTitle}>Add Activity</Text>
-            <Text style={styles.standardTabDescription}>
-              Create a new activity for your day
-            </Text>
-          </View>
-          
-          {/* Divider */}
-          <View style={styles.divider} />
-          {/* Activity Name */}
-          <View style={styles.formSection}>
-            <Text style={styles.formLabel}>Activity Name</Text>
-            <FormInput
-              placeholder="Enter activity name"
-              value={activityText}
-              onChangeText={setActivityText}
-              error={errors.text}
-              theme={theme}
-              autoFocus
-            />
-          </View>
+        <View style={styles.addFormContainer} pointerEvents="box-none">
+          {/* Single Consolidated Panel */}
+          <View style={styles.formPanel}>
+            {/* Header */}
+            <View style={styles.standardTabContainer}>
+              <Icon name="add-circle" size={48} color={theme.primary} />
+              <Text style={styles.standardTabTitle}>Add Activity</Text>
+              <Text style={styles.standardTabDescription}>
+                Create a new activity for your day
+              </Text>
+            </View>
 
-          {/* Emoji Selection */}
-          <View style={styles.formSection}>
-            <Text style={styles.formLabel}>Icon</Text>
-            <TouchableOpacity
-              style={styles.emojiSelector}
-              onPress={() => setShowEmojiPicker(true)}
-            >
-              <Text style={styles.selectedEmoji}>{activityIcon}</Text>
-              <Text style={styles.emojiSelectorText}>Tap to change</Text>
-            </TouchableOpacity>
-          </View>
+            {/* Divider */}
+            <View style={styles.divider} />
+            {/* Activity Name */}
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Activity Name</Text>
+              <FormInput
+                placeholder="Enter activity name"
+                value={activityText}
+                onChangeText={setActivityText}
+                error={errors.text}
+                theme={theme}
+                autoFocus
+              />
+            </View>
 
-          {/* Description */}
-          <View style={styles.formSection}>
-            <Text style={styles.formLabel}>Description (Optional)</Text>
-            <FormInput
-              placeholder="Enter activity description"
-              value={activityDescription}
-              onChangeText={setActivityDescription}
-              multiline
-              numberOfLines={3}
-              theme={theme}
-            />
-          </View>
+            {/* Emoji Selection */}
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Icon</Text>
+              <TouchableOpacity
+                style={styles.emojiSelector}
+                onPress={() => setShowEmojiPicker(true)}
+              >
+                <Text style={styles.selectedEmoji}>{activityIcon}</Text>
+                <Text style={styles.emojiSelectorText}>Tap to change</Text>
+              </TouchableOpacity>
+            </View>
 
-          {/* Time (Optional) */}
-          <View style={styles.formSection}>
-            <Text style={styles.formLabel}>Time (Optional)</Text>
-            <TimePicker
-              value={activityTime}
-              onChange={setActivityTime}
-              placeholder="Select time"
-              theme={theme}
-              error={errors.time}
-            />
-          </View>
+            {/* Description */}
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Description (Optional)</Text>
+              <FormInput
+                placeholder="Enter activity description"
+                value={activityDescription}
+                onChangeText={setActivityDescription}
+                multiline
+                numberOfLines={3}
+                theme={theme}
+              />
+            </View>
 
-          {/* Divider */}
-          <View style={styles.divider} />
+            {/* Time (Optional) */}
+            <View style={styles.formSection}>
+              <Text style={styles.formLabel}>Time (Optional)</Text>
+              <TimePicker
+                value={activityTime}
+                onChange={setActivityTime}
+                placeholder="Select time"
+                theme={theme}
+                error={errors.time}
+              />
+            </View>
 
-          {/* Save to Library */}
-          <View style={styles.formSection}>
-            <TouchableOpacity
-              style={styles.checkboxContainer}
-              onPress={() => setSaveToLibrary(!saveToLibrary)}
-            >
-              <View style={[styles.checkbox, saveToLibrary && styles.checkboxChecked]}>
-                {saveToLibrary && <Icon name="check" size={16} color="white" />}
-              </View>
-              <Text style={styles.checkboxLabel}>Save to My Templates</Text>
-            </TouchableOpacity>
-          </View>
+            {/* Divider */}
+            <View style={styles.divider} />
 
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Quick Templates */}
-          <View style={styles.formSection}>
-            <Text style={[styles.formLabel, { marginBottom: 12 }]}>Quick Templates</Text>
-            <View style={styles.quickTemplates}>
-              {[
-                { icon: '🏃', text: 'Exercise' },
-                { icon: '📚', text: 'Reading' },
-                { icon: '🧹', text: 'Chores' },
-                { icon: '🎮', text: 'Play Time' },
-              ].map((template, index) => (
-                <TouchableOpacity
-                  key={index}
-                  style={styles.quickTemplate}
-                  onPress={() => {
-                    setActivityText(template.text);
-                    setActivityIcon(template.icon);
-                  }}
+            {/* Save to Library */}
+            <View style={styles.formSection}>
+              <TouchableOpacity
+                style={styles.checkboxContainer}
+                onPress={() => setSaveToLibrary(!saveToLibrary)}
+              >
+                <View
+                  style={[
+                    styles.checkbox,
+                    saveToLibrary && styles.checkboxChecked,
+                  ]}
                 >
-                  <Text style={styles.quickTemplateIcon}>{template.icon}</Text>
-                  <Text style={styles.quickTemplateText}>{template.text}</Text>
-                </TouchableOpacity>
-              ))}
+                  {saveToLibrary && (
+                    <Icon name="check" size={16} color="white" />
+                  )}
+                </View>
+                <Text style={styles.checkboxLabel}>Save to My Templates</Text>
+              </TouchableOpacity>
+            </View>
+
+            {/* Divider */}
+            <View style={styles.divider} />
+
+            {/* Quick Templates */}
+            <View style={styles.formSection}>
+              <Text style={[styles.formLabel, { marginBottom: 12 }]}>
+                Quick Templates
+              </Text>
+              <View style={styles.quickTemplates}>
+                {[
+                  { icon: '🏃', text: 'Exercise' },
+                  { icon: '📚', text: 'Reading' },
+                  { icon: '🧹', text: 'Chores' },
+                  { icon: '🎮', text: 'Play Time' },
+                ].map((template, index) => (
+                  <TouchableOpacity
+                    key={index}
+                    style={styles.quickTemplate}
+                    onPress={() => {
+                      setActivityText(template.text);
+                      setActivityIcon(template.icon);
+                    }}
+                  >
+                    <Text style={styles.quickTemplateIcon}>
+                      {template.icon}
+                    </Text>
+                    <Text style={styles.quickTemplateText}>
+                      {template.text}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Divider */}
+            <View style={styles.divider} />
+
+            {/* Action Buttons */}
+            <View style={[styles.formSection, { marginBottom: 0 }]}>
+              <TouchableOpacity
+                style={[
+                  styles.actionButton,
+                  { backgroundColor: theme.primary },
+                ]}
+                onPress={handleSaveAndReturn}
+                disabled={loading}
+              >
+                <Icon name="check" size={20} color="white" />
+                <Text style={styles.actionButtonText}>Add Activity</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.actionButton, styles.secondaryButton]}
+                onPress={handleSaveAndContinue}
+                disabled={loading}
+              >
+                <Icon name="add" size={20} color={theme.primary} />
+                <Text
+                  style={[styles.actionButtonText, { color: theme.primary }]}
+                >
+                  Add & Continue
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
-
-          {/* Divider */}
-          <View style={styles.divider} />
-
-          {/* Action Buttons */}
-          <View style={[styles.formSection, { marginBottom: 0 }]}>
-            <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: theme.primary }]}
-              onPress={handleSaveAndReturn}
-              disabled={loading}
-            >
-              <Icon name="check" size={20} color="white" />
-              <Text style={styles.actionButtonText}>Add Activity</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity
-              style={[styles.actionButton, styles.secondaryButton]}
-              onPress={handleSaveAndContinue}
-              disabled={loading}
-            >
-              <Icon name="add" size={20} color={theme.primary} />
-              <Text style={[styles.actionButtonText, { color: theme.primary }]}>Add & Continue</Text>
-            </TouchableOpacity>
-          </View>
         </View>
-      </View>
       </ScrollView>
 
       {/* Emoji Picker Modal */}

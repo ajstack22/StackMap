@@ -6,29 +6,32 @@ import {
   ActivityIndicator,
   Animated,
   Platform,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import syncService from '../../services/sync/syncService';
 import { styles } from './styles';
 
-const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => {
+const SyncStatusIndicator = ({
+  theme,
+  compact = false,
+  showDetails = true,
+}) => {
   const [syncStatus, setSyncStatus] = useState({
     status: 'idle',
     error: null,
     lastAttempt: null,
     lastSuccess: null,
     isOnline: true,
-    queueStatus: { pending: 0, failed: 0 }
+    queueStatus: { pending: 0, failed: 0 },
   });
-  
+
   const [isExpanded, setIsExpanded] = useState(false);
   const pulseAnim = new Animated.Value(1);
 
   useEffect(() => {
     // Subscribe to sync status updates
     const unsubscribe = syncService.addStatusListener(setSyncStatus);
-    
+
     // Pulse animation for syncing state
     const pulse = Animated.loop(
       Animated.sequence([
@@ -42,16 +45,16 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
           duration: 1000,
           useNativeDriver: true,
         }),
-      ])
+      ]),
     );
-    
+
     if (syncStatus.status === 'syncing') {
       pulse.start();
     } else {
       pulse.stop();
       pulseAnim.setValue(1);
     }
-    
+
     return () => {
       unsubscribe();
       pulse.stop();
@@ -60,11 +63,11 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
 
   const getStatusIcon = () => {
     const { status, isOnline, queueStatus } = syncStatus;
-    
+
     if (!isOnline) {
       return { name: 'cloud-off', color: '#ff9800' };
     }
-    
+
     switch (status) {
       case 'syncing':
         return { name: 'sync', color: theme.primary };
@@ -84,18 +87,18 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
 
   const getStatusText = () => {
     const { status, error, isOnline, queueStatus } = syncStatus;
-    
+
     if (!isOnline) {
       return 'Offline';
     }
-    
+
     switch (status) {
       case 'syncing':
         return 'Syncing...';
       case 'success':
         return 'Synced';
       case 'error':
-        return compact ? 'Error' : (error || 'Sync error');
+        return compact ? 'Error' : error || 'Sync error';
       case 'offline':
         return 'Offline';
       default:
@@ -106,12 +109,12 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
     }
   };
 
-  const formatTime = (timestamp) => {
+  const formatTime = timestamp => {
     if (!timestamp) return 'Never';
-    
+
     const now = Date.now();
     const diff = now - timestamp;
-    
+
     if (diff < 60000) return 'Just now';
     if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`;
     if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`;
@@ -127,8 +130,7 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
   const handleRetry = async () => {
     try {
       await syncService.retryFailed();
-    } catch (error) {
-    }
+    } catch (error) {}
   };
 
   const { name: iconName, color: iconColor } = getStatusIcon();
@@ -136,7 +138,7 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
 
   if (compact) {
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.compactContainer, { borderColor: iconColor }]}
         onPress={handlePress}
         activeOpacity={0.7}
@@ -148,14 +150,18 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
         ) : (
           <Icon name={iconName} size={20} color={iconColor} />
         )}
-        {!compact && <Text style={[styles.statusText, { color: iconColor }]}>{statusText}</Text>}
+        {!compact && (
+          <Text style={[styles.statusText, { color: iconColor }]}>
+            {statusText}
+          </Text>
+        )}
       </TouchableOpacity>
     );
   }
 
   return (
     <View style={styles.container}>
-      <TouchableOpacity 
+      <TouchableOpacity
         style={styles.statusBar}
         onPress={handlePress}
         activeOpacity={0.7}
@@ -168,14 +174,16 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
           ) : (
             <Icon name={iconName} size={24} color={iconColor} />
           )}
-          <Text style={[styles.statusText, { color: iconColor }]}>{statusText}</Text>
+          <Text style={[styles.statusText, { color: iconColor }]}>
+            {statusText}
+          </Text>
         </View>
-        
+
         {showDetails && (
-          <Icon 
-            name={isExpanded ? 'expand-less' : 'expand-more'} 
-            size={24} 
-            color="#000" 
+          <Icon
+            name={isExpanded ? 'expand-less' : 'expand-more'}
+            size={24}
+            color="#000"
           />
         )}
       </TouchableOpacity>
@@ -188,7 +196,7 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
               {formatTime(syncStatus.lastSuccess)}
             </Text>
           </View>
-          
+
           {syncStatus.queueStatus.pending > 0 && (
             <View style={styles.detailRow}>
               <Text style={styles.detailLabel}>Pending:</Text>
@@ -197,16 +205,18 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
               </Text>
             </View>
           )}
-          
+
           {syncStatus.queueStatus.failed > 0 && (
             <>
               <View style={styles.detailRow}>
-                <Text style={[styles.detailLabel, { color: '#f44336' }]}>Failed:</Text>
+                <Text style={[styles.detailLabel, { color: '#f44336' }]}>
+                  Failed:
+                </Text>
                 <Text style={[styles.detailValue, { color: '#f44336' }]}>
                   {syncStatus.queueStatus.failed} items
                 </Text>
               </View>
-              <TouchableOpacity 
+              <TouchableOpacity
                 style={[styles.retryButton, { backgroundColor: theme.primary }]}
                 onPress={handleRetry}
               >
@@ -215,11 +225,11 @@ const SyncStatusIndicator = ({ theme, compact = false, showDetails = true }) => 
               </TouchableOpacity>
             </>
           )}
-          
+
           {syncStatus.error && (
             <Text style={styles.errorText}>{syncStatus.error}</Text>
           )}
-          
+
           {!syncStatus.isOnline && (
             <Text style={styles.offlineText}>
               Waiting for network connection...

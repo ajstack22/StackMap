@@ -4,9 +4,7 @@ import { View } from 'react-native';
 // Web polyfill for react-native-gesture-handler
 
 export const GestureHandlerRootView = ({ children, style }) => (
-  <View style={[{ flex: 1 }, style]}>
-    {children}
-  </View>
+  <View style={[{ flex: 1 }, style]}>{children}</View>
 );
 
 export const PanGestureHandler = ({ children }) => children;

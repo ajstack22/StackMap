@@ -10,8 +10,8 @@ const Platform = {
   isTV: false,
   isTVOS: false,
   isTesting: false,
-  
-  select: (obj) => {
+
+  select: obj => {
     // Use 'web' key if it exists, otherwise fall back to 'default'
     if (obj.web !== undefined) {
       return obj.web;
@@ -22,7 +22,7 @@ const Platform = {
     // If neither is present, return undefined to match native behavior more closely
     return undefined;
   },
-  
+
   // Constants for web environment
   constants: {
     reactNativeVersion: { major: 0, minor: 72, patch: 0 },

@@ -5,29 +5,29 @@ import { Platform } from 'react-native';
 // Last 5: Neurodiversity-friendly colors (calming, reduced sensory load)
 export const THEMES = {
   // Chromatic order - Rainbow spectrum (Red -> Orange -> Yellow -> Green -> Blue -> Purple -> Pink)
-  crimson: { primary: '#DC143C', dark: '#B91C3C', light: '#E85D75' },      // Deep crimson red
-  cherry: { primary: '#DE3163', dark: '#C42953', light: '#E85A7F' },       // Bright cherry (rainbow red)
-  scarlet: { primary: '#CD5C5C', dark: '#B94545', light: '#D98181' },      // Softer red
-  rust: { primary: '#B7410E', dark: '#963508', light: '#D4642E' },         // Rust orange
-  tangerine: { primary: '#F28500', dark: '#D47200', light: '#FF9A33' },    // Bright tangerine (rainbow orange)
-  amber: { primary: '#D97706', dark: '#B45309', light: '#F59E0B' },        // Deep amber
-  gold: { primary: '#B8860B', dark: '#996F09', light: '#D4A017' },         // Rich gold (rainbow yellow)
-  olive: { primary: '#6B8E23', dark: '#556B2F', light: '#8FBC8F' },        // Olive green
-  emerald: { primary: '#2D8659', dark: '#236B48', light: '#3FA760' },      // Rich emerald (rainbow green)
-  forest: { primary: '#228B22', dark: '#1C6E1C', light: '#3CB371' },       // Forest green
-  ocean: { primary: '#2C7A7B', dark: '#1F5F5F', light: '#4C9A9B' },        // Ocean teal
-  sapphire: { primary: '#0F52BA', dark: '#0B3D8A', light: '#3770CF' },     // Bright sapphire (rainbow blue)
-  navy: { primary: '#2C5282', dark: '#1E3A5F', light: '#3B6FA0' },         // Navy blue
-  indigo: { primary: '#4C1D95', dark: '#3B1674', light: '#6B46B5' },       // Deep indigo
-  plum: { primary: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA' },         // Rich plum
-  
+  crimson: { primary: '#DC143C', dark: '#B91C3C', light: '#E85D75' }, // Deep crimson red
+  cherry: { primary: '#DE3163', dark: '#C42953', light: '#E85A7F' }, // Bright cherry (rainbow red)
+  scarlet: { primary: '#CD5C5C', dark: '#B94545', light: '#D98181' }, // Softer red
+  rust: { primary: '#B7410E', dark: '#963508', light: '#D4642E' }, // Rust orange
+  tangerine: { primary: '#F28500', dark: '#D47200', light: '#FF9A33' }, // Bright tangerine (rainbow orange)
+  amber: { primary: '#D97706', dark: '#B45309', light: '#F59E0B' }, // Deep amber
+  gold: { primary: '#B8860B', dark: '#996F09', light: '#D4A017' }, // Rich gold (rainbow yellow)
+  olive: { primary: '#6B8E23', dark: '#556B2F', light: '#8FBC8F' }, // Olive green
+  emerald: { primary: '#2D8659', dark: '#236B48', light: '#3FA760' }, // Rich emerald (rainbow green)
+  forest: { primary: '#228B22', dark: '#1C6E1C', light: '#3CB371' }, // Forest green
+  ocean: { primary: '#2C7A7B', dark: '#1F5F5F', light: '#4C9A9B' }, // Ocean teal
+  sapphire: { primary: '#0F52BA', dark: '#0B3D8A', light: '#3770CF' }, // Bright sapphire (rainbow blue)
+  navy: { primary: '#2C5282', dark: '#1E3A5F', light: '#3B6FA0' }, // Navy blue
+  indigo: { primary: '#4C1D95', dark: '#3B1674', light: '#6B46B5' }, // Deep indigo
+  plum: { primary: '#8B5CF6', dark: '#7C3AED', light: '#A78BFA' }, // Rich plum
+
   // Neurodiversity-friendly colors
-  sage: { primary: '#6B7F6B', dark: '#556655', light: '#8B9F8B' },         // Calming sage - reduces anxiety
-  dustyBlue: { primary: '#4A6480', dark: '#3B5066', light: '#6B859F' },    // Muted blue - ADHD focus
-  stackBlue: { primary: '#5C7E9D', dark: '#4A6680', light: '#7896B3' },    // StackMap blue - ADHD/neurodiverse friendly
-  terracotta: { primary: '#A0522D', dark: '#804020', light: '#C07550' },   // Warm earth - grounding
-  lavender: { primary: '#7B68A6', dark: '#65538C', light: '#9785BD' },     // Soft purple - sensory comfort
-  slate: { primary: '#64748B', dark: '#475569', light: '#8B95A6' }         // Neutral slate - low stimulation
+  sage: { primary: '#6B7F6B', dark: '#556655', light: '#8B9F8B' }, // Calming sage - reduces anxiety
+  dustyBlue: { primary: '#4A6480', dark: '#3B5066', light: '#6B859F' }, // Muted blue - ADHD focus
+  stackBlue: { primary: '#5C7E9D', dark: '#4A6680', light: '#7896B3' }, // StackMap blue - ADHD/neurodiverse friendly
+  terracotta: { primary: '#A0522D', dark: '#804020', light: '#C07550' }, // Warm earth - grounding
+  lavender: { primary: '#7B68A6', dark: '#65538C', light: '#9785BD' }, // Soft purple - sensory comfort
+  slate: { primary: '#64748B', dark: '#475569', light: '#8B95A6' }, // Neutral slate - low stimulation
 };
 
 // Common colors
@@ -82,7 +82,7 @@ export const SHADOWS = {
   level4: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.20,
+    shadowOpacity: 0.2,
     shadowRadius: 24,
     elevation: 12,
   },
@@ -137,17 +137,17 @@ export const TYPOGRAPHY = {
     regular: Platform.select({
       ios: 'ComicRelief-Regular',
       android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
+      web: "'Comic Relief', 'Comic Sans MS', cursive",
     }),
     medium: Platform.select({
       ios: 'ComicRelief-Regular',
       android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
+      web: "'Comic Relief', 'Comic Sans MS', cursive",
     }),
     bold: Platform.select({
       ios: 'ComicRelief-Bold',
       android: 'ComicRelief-Bold',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
+      web: "'Comic Relief', 'Comic Sans MS', cursive",
     }),
   },
   sizes: {

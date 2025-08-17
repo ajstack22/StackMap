@@ -26,8 +26,14 @@ const modules = {
           fontScale: 1,
         },
         screen: {
-          width: typeof window !== 'undefined' && window.screen ? window.screen.width : 1024,
-          height: typeof window !== 'undefined' && window.screen ? window.screen.height : 768,
+          width:
+            typeof window !== 'undefined' && window.screen
+              ? window.screen.width
+              : 1024,
+          height:
+            typeof window !== 'undefined' && window.screen
+              ? window.screen.height
+              : 768,
           scale: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
           fontScale: 1,
         },
@@ -50,14 +56,15 @@ const modules = {
   },
   StatusBarManager: {
     HEIGHT: 0,
-    getHeight: (callback) => callback && callback({ height: 0 }),
+    getHeight: callback => callback && callback({ height: 0 }),
     setHidden: () => {},
     setStyle: () => {},
     setBackgroundColor: () => {},
     setTranslucent: () => {},
   },
   AppState: {
-    getCurrentAppState: (callback) => callback && callback({ app_state: 'active' }),
+    getCurrentAppState: callback =>
+      callback && callback({ app_state: 'active' }),
     addEventListener: () => ({ remove: () => {} }),
     removeEventListener: () => {},
   },
@@ -100,7 +107,8 @@ const modules = {
     addEventListener: () => ({ remove: () => {} }),
     removeEventListener: () => {},
     canOpenURL: () => Promise.resolve(true),
-    openURL: (url) => typeof window !== 'undefined' ? window.open(url, '_blank') : null,
+    openURL: url =>
+      typeof window !== 'undefined' ? window.open(url, '_blank') : null,
   },
 };
 
@@ -109,12 +117,14 @@ const TurboModuleRegistry = {
   get(name) {
     return modules[name] || null;
   },
-  
+
   getEnforcing(name) {
     const module = modules[name];
     if (!module) {
       // Instead of throwing, return a mock module
-      console.warn(`[TurboModuleRegistry] Module ${name} not found, returning mock`);
+      console.warn(
+        `[TurboModuleRegistry] Module ${name} not found, returning mock`,
+      );
       return {
         getConstants: () => ({}),
         addListener: () => ({ remove: () => {} }),

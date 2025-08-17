@@ -5,10 +5,38 @@ export * from './featureFlags';
 
 // Common emojis used in the app
 export const COMMON_EMOJIS = [
-  '😀', '😎', '🤩', '🥳', '🤗', '🤔', '😴', '🌟',
-  '⭐', '🎯', '🎨', '🎮', '📚', '📝', '💡', '🏃',
-  '🏋️', '🧘', '🎵', '🎸', '🥗', '🍕', '🏆', '💪',
-  '🌈', '🌺', '🐶', '🐱', '🦄', '🦋', '🔥', '💧',
+  '😀',
+  '😎',
+  '🤩',
+  '🥳',
+  '🤗',
+  '🤔',
+  '😴',
+  '🌟',
+  '⭐',
+  '🎯',
+  '🎨',
+  '🎮',
+  '📚',
+  '📝',
+  '💡',
+  '🏃',
+  '🏋️',
+  '🧘',
+  '🎵',
+  '🎸',
+  '🥗',
+  '🍕',
+  '🏆',
+  '💪',
+  '🌈',
+  '🌺',
+  '🐶',
+  '🐱',
+  '🦄',
+  '🦋',
+  '🔥',
+  '💧',
 ];
 
 // Default user icon
@@ -37,7 +65,7 @@ export const ANIMATION_DURATIONS = {
 export const CUSTOM_IMAGE_SOURCES = {};
 
 // Export a stub function for backward compatibility
-export const getCustomImageSource = (imageName) => {
+export const getCustomImageSource = imageName => {
   // Images have been archived - return null
   return null;
 };

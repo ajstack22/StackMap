@@ -3,22 +3,22 @@
  */
 
 const LinkingWeb = {
-  canOpenURL: (url) => {
+  canOpenURL: url => {
     return Promise.resolve(true);
   },
-  
-  openURL: (url) => {
+
+  openURL: url => {
     window.open(url, '_blank');
     return Promise.resolve();
   },
-  
+
   getInitialURL: () => {
     return Promise.resolve(window.location.href);
   },
-  
+
   addEventListener: (type, handler) => {
     if (type === 'url') {
-      const listener = (event) => {
+      const listener = event => {
         handler({ url: window.location.href });
       };
       window.addEventListener('popstate', listener);
@@ -28,18 +28,18 @@ const LinkingWeb = {
     }
     return { remove: () => {} };
   },
-  
+
   removeEventListener: (type, handler) => {
     if (type === 'url') {
       window.removeEventListener('popstate', handler);
     }
   },
-  
+
   openSettings: () => {
     console.warn('Linking.openSettings is not supported on web');
     return Promise.resolve();
   },
-  
+
   sendIntent: () => {
     console.warn('Linking.sendIntent is not supported on web');
     return Promise.resolve();

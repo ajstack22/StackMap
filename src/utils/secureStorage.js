@@ -20,7 +20,7 @@ const PIN_USERNAME = 'editModePin';
  * @param {string} pin - The PIN to store
  * @returns {Promise<boolean>} Success status
  */
-export const setSecurePin = async (pin) => {
+export const setSecurePin = async pin => {
   try {
     if (!pin) {
       // Use removeSecurePin for consistency
@@ -47,7 +47,7 @@ export const setSecurePin = async (pin) => {
       await AsyncStorage.setItem('@stackmap_pin', pin);
       return true;
     }
-    
+
     // Check if the method exists
     if (typeof Keychain.setInternetCredentials !== 'function') {
       // setInternetCredentials not available, use fallback
@@ -60,7 +60,7 @@ export const setSecurePin = async (pin) => {
       PIN_SERVICE,
       PIN_USERNAME,
       pin,
-      {}
+      {},
     );
     return result !== false;
   } catch (error) {
@@ -80,24 +80,27 @@ export const getSecurePin = async () => {
       const pin = await AsyncStorage.getItem('@stackmap_pin');
       return pin || null;
     }
-    
+
     // iOS: Use Keychain if available, fallback to AsyncStorage
     if (!Keychain) {
       // Keychain module not available, use AsyncStorage fallback
       const pin = await AsyncStorage.getItem('@stackmap_pin');
       return pin || null;
     }
-    
+
     // Check if the method exists (extra defensive check)
-    if (!Keychain.getInternetCredentials || typeof Keychain.getInternetCredentials !== 'function') {
+    if (
+      !Keychain.getInternetCredentials ||
+      typeof Keychain.getInternetCredentials !== 'function'
+    ) {
       // getInternetCredentials not available, use fallback
       const pin = await AsyncStorage.getItem('@stackmap_pin');
       return pin || null;
     }
-    
+
     // Get credentials using Keychain
     const credentials = await Keychain.getInternetCredentials(PIN_SERVICE);
-    
+
     if (credentials && credentials.password) {
       // Check for our deletion marker or empty string
       if (credentials.password === 'DELETED' || credentials.password === '') {
@@ -106,7 +109,7 @@ export const getSecurePin = async () => {
       // Return the actual PIN
       return credentials.password;
     }
-    
+
     return null;
   } catch (error) {
     // Error retrieving PIN - fail silently
@@ -121,7 +124,7 @@ export const getSecurePin = async () => {
 export const removeSecurePin = async () => {
   try {
     // Starting PIN removal
-    
+
     // First, set the disabled flag to prevent any PIN checks
     try {
       await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
@@ -129,7 +132,7 @@ export const removeSecurePin = async () => {
     } catch (e) {
       // Failed to set disabled flag
     }
-    
+
     // Android: Use AsyncStorage
     if (Platform.OS === 'android') {
       try {
@@ -140,7 +143,7 @@ export const removeSecurePin = async () => {
       }
       return true;
     }
-    
+
     // iOS: Use Keychain if available, fallback to AsyncStorage
     if (Platform.OS === 'ios') {
       if (!Keychain) {
@@ -153,14 +156,19 @@ export const removeSecurePin = async () => {
         }
         return true;
       }
-      
+
       // Try to use Keychain
       try {
         if (typeof Keychain.resetInternetCredentials === 'function') {
           await Keychain.resetInternetCredentials(PIN_SERVICE);
           // iOS: Reset credentials successfully
         } else if (typeof Keychain.setInternetCredentials === 'function') {
-          await Keychain.setInternetCredentials(PIN_SERVICE, PIN_USERNAME, 'DELETED', {});
+          await Keychain.setInternetCredentials(
+            PIN_SERVICE,
+            PIN_USERNAME,
+            'DELETED',
+            {},
+          );
           // iOS: Set DELETED marker as fallback
         } else {
           // Keychain methods not available, use AsyncStorage fallback
@@ -175,7 +183,7 @@ export const removeSecurePin = async () => {
         }
       }
     }
-    
+
     // PIN removal completed
     return true;
   } catch (error) {
@@ -201,12 +209,17 @@ export const hasSecurePin = async () => {
     if (disabled === 'true') {
       return false;
     }
-    
+
     const pin = await getSecurePin();
-    
+
     // More explicit check for PIN existence
-    const hasPin = pin !== null && pin !== '' && pin !== undefined && pin.length > 0 && pin !== 'DELETED';
-    
+    const hasPin =
+      pin !== null &&
+      pin !== '' &&
+      pin !== undefined &&
+      pin.length > 0 &&
+      pin !== 'DELETED';
+
     return hasPin;
   } catch (error) {
     // If there's an error getting the PIN, assume it doesn't exist
@@ -219,15 +232,15 @@ export const hasSecurePin = async () => {
  * @param {string} inputPin - PIN to verify
  * @returns {Promise<boolean>} Whether the PIN is correct
  */
-export const verifyPin = async (inputPin) => {
+export const verifyPin = async inputPin => {
   const storedPin = await getSecurePin();
-  
+
   // If there's no stored PIN, verification should always fail
   if (!storedPin || storedPin === '' || storedPin === 'DELETED') {
     // No valid PIN stored, verification failed
     return false;
   }
-  
+
   const isValid = storedPin === inputPin;
   // PIN verification complete
   return isValid;
@@ -242,7 +255,7 @@ export const migratePinToSecureStorage = async () => {
     // Check if migration already happened
     const migrationKey = '@stackmap_pin_migrated';
     const migrated = await AsyncStorage.getItem(migrationKey);
-    
+
     if (migrated === 'true') {
       return; // Already migrated
     }
@@ -251,16 +264,19 @@ export const migratePinToSecureStorage = async () => {
     const data = await AsyncStorage.getItem('@stackmap_data');
     if (data) {
       const parsedData = JSON.parse(data);
-      
+
       // Check if there's a PIN in the old format
       if (parsedData.globalSettings?.editModePin) {
         // Store PIN securely
         await setSecurePin(parsedData.globalSettings.editModePin);
-        
+
         // Remove PIN from AsyncStorage data
         delete parsedData.globalSettings.editModePin;
-        await AsyncStorage.setItem('@stackmap_data', JSON.stringify(parsedData));
-        
+        await AsyncStorage.setItem(
+          '@stackmap_data',
+          JSON.stringify(parsedData),
+        );
+
         // PIN migrated to secure storage successfully
       }
     }

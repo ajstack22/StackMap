@@ -11,7 +11,10 @@ let pinStorage = null;
 const FORCE_ASYNC_STORAGE_ON_IOS = false; // Set to true if MMKV issues persist
 
 // Initialize MMKV for native platforms
-if (Platform.OS !== 'web' && !(Platform.OS === 'ios' && FORCE_ASYNC_STORAGE_ON_IOS)) {
+if (
+  Platform.OS !== 'web' &&
+  !(Platform.OS === 'ios' && FORCE_ASYNC_STORAGE_ON_IOS)
+) {
   try {
     if (Platform.OS === 'ios') {
       // iOS: Force AsyncStorage fallback for now
@@ -20,7 +23,7 @@ if (Platform.OS !== 'web' && !(Platform.OS === 'ios' && FORCE_ASYNC_STORAGE_ON_I
       // Android: Keep working configuration with encryption
       pinStorage = new MMKV({
         id: 'stackmap-pin-storage',
-        encryptionKey: 'StackMap-PIN-2025-Secure-Key'
+        encryptionKey: 'StackMap-PIN-2025-Secure-Key',
       });
     }
   } catch (e) {
@@ -38,12 +41,12 @@ const PIN_DISABLED_KEY = 'pin_disabled';
  * @param {string} pin - The PIN to store
  * @returns {Promise<boolean>} Success status
  */
-export const setSecurePin = async (pin) => {
+export const setSecurePin = async pin => {
   try {
     if (!pin) {
       return await removeSecurePin();
     }
-    
+
     // Ensure PIN is a string and trimmed
     const pinToStore = String(pin).trim();
 
@@ -82,7 +85,7 @@ export const getSecurePin = async () => {
       if (disabled === 'true') {
         return null;
       }
-      
+
       // Get PIN from MMKV (Android)
       const pin = pinStorage.getString(PIN_KEY);
       return pin || null;
@@ -92,7 +95,7 @@ export const getSecurePin = async () => {
       if (disabled === 'true') {
         return null;
       }
-      
+
       const pin = await AsyncStorage.getItem('@stackmap_pin');
       return pin || null;
     }
@@ -116,7 +119,7 @@ export const removeSecurePin = async () => {
       await AsyncStorage.setItem('@stackmap_pin_disabled', 'true');
       await AsyncStorage.removeItem('@stackmap_pin');
     }
-    
+
     return true;
   } catch (error) {
     // Error removing PIN
@@ -142,22 +145,22 @@ export const hasSecurePin = async () => {
  * @param {string} inputPin - PIN to verify
  * @returns {Promise<boolean>} Whether the PIN is correct
  */
-export const verifyPin = async (inputPin) => {
+export const verifyPin = async inputPin => {
   try {
     // Ensure input is a string and trimmed
     const cleanInput = String(inputPin || '').trim();
-    
+
     const storedPin = await getSecurePin();
-    
+
     if (!storedPin || storedPin === '') {
       return false;
     }
-    
+
     // Clean stored PIN too
     const cleanStored = String(storedPin).trim();
-    
+
     const match = cleanStored === cleanInput;
-    
+
     return match;
   } catch (error) {
     console.error('[SecurePinStorage] Error during verification:', error);
@@ -175,50 +178,50 @@ export const debugPinStorage = async () => {
     usingMMKV: !!pinStorage,
     asyncStorageKeys: [],
     mmkvKeys: [],
-    pinStatus: {}
+    pinStatus: {},
   };
 
   try {
     // Check AsyncStorage
     const allKeys = await AsyncStorage.getAllKeys();
-    debugInfo.asyncStorageKeys = allKeys.filter(key => 
-      key.includes('pin') || key.includes('PIN')
+    debugInfo.asyncStorageKeys = allKeys.filter(
+      key => key.includes('pin') || key.includes('PIN'),
     );
-    
+
     // Get AsyncStorage PIN values
     const asyncPin = await AsyncStorage.getItem('@stackmap_pin');
     const asyncDisabled = await AsyncStorage.getItem('@stackmap_pin_disabled');
-    
+
     debugInfo.pinStatus.asyncStorage = {
       hasPin: !!asyncPin,
       pinLength: asyncPin?.length || 0,
-      isDisabled: asyncDisabled === 'true'
+      isDisabled: asyncDisabled === 'true',
     };
-    
+
     // Check MMKV if available
     if (pinStorage) {
       try {
         debugInfo.mmkvKeys = pinStorage.getAllKeys();
         const mmkvPin = pinStorage.getString(PIN_KEY);
         const mmkvDisabled = pinStorage.getString(PIN_DISABLED_KEY);
-        
+
         debugInfo.pinStatus.mmkv = {
           hasPin: !!mmkvPin,
           pinLength: mmkvPin?.length || 0,
-          isDisabled: mmkvDisabled === 'true'
+          isDisabled: mmkvDisabled === 'true',
         };
       } catch (e) {
         debugInfo.mmkvError = e.message;
       }
     }
-    
+
     // Get the PIN using our getter
     const retrievedPin = await getSecurePin();
     debugInfo.pinStatus.retrieved = {
       hasPin: !!retrievedPin,
-      pinLength: retrievedPin?.length || 0
+      pinLength: retrievedPin?.length || 0,
     };
-    
+
     return debugInfo;
   } catch (error) {
     console.error('[SecurePinStorage] Debug error:', error);
@@ -235,7 +238,7 @@ export const migratePinToSecureStorage = async () => {
     // Check if migration already happened
     const migrationKey = '@stackmap_pin_migrated_mmkv';
     const migrated = await AsyncStorage.getItem(migrationKey);
-    
+
     if (migrated === 'true') {
       return; // Already migrated
     }
@@ -257,11 +260,14 @@ export const migratePinToSecureStorage = async () => {
         if (parsedData.globalSettings?.editModePin) {
           // Store PIN securely
           await setSecurePin(parsedData.globalSettings.editModePin);
-          
+
           // Remove PIN from AsyncStorage data
           delete parsedData.globalSettings.editModePin;
-          await AsyncStorage.setItem('@stackmap_data', JSON.stringify(parsedData));
-          
+          await AsyncStorage.setItem(
+            '@stackmap_data',
+            JSON.stringify(parsedData),
+          );
+
           // PIN migrated from Zustand data
         }
       } catch (e) {

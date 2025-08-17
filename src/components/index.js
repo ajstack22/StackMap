@@ -49,5 +49,5 @@ export {
   DayManagementModal,
   ActivityManagementModal,
   AccessModal,
-  SyncPreviewModal
+  SyncPreviewModal,
 };

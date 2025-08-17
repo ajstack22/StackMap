@@ -6,56 +6,56 @@ import React from 'react';
 // Legacy map - no longer used but kept for reference
 const iconMap = {
   // Common icons used in the app
-  'menu': '\ue5d2',
-  'close': '\ue5cd',
-  'add': '\ue145',
-  'edit': '\ue3c9',
-  'delete': '\ue872',
-  'check': '\ue5ca',
-  'settings': '\ue8b8',
+  menu: '\ue5d2',
+  close: '\ue5cd',
+  add: '\ue145',
+  edit: '\ue3c9',
+  delete: '\ue872',
+  check: '\ue5ca',
+  settings: '\ue8b8',
   'arrow-back': '\ue5c4',
   'arrow-forward': '\ue5c8',
   'expand-more': '\ue5cf',
   'expand-less': '\ue5ce',
   'drag-handle': '\ue25d',
   'more-vert': '\ue5d4',
-  'refresh': '\ue5d5',
-  'save': '\ue161',
-  'undo': '\ue166',
-  'done': '\ue876',
-  'clear': '\ue14c',
-  'visibility': '\ue8f4',
+  refresh: '\ue5d5',
+  save: '\ue161',
+  undo: '\ue166',
+  done: '\ue876',
+  clear: '\ue14c',
+  visibility: '\ue8f4',
   'visibility-off': '\ue8f5',
-  'lock': '\ue897',
+  lock: '\ue897',
   'lock-open': '\ue898',
-  'person': '\ue7fd',
-  'people': '\ue7fb',
+  person: '\ue7fd',
+  people: '\ue7fb',
   'library-add': '\ue02e',
-  'category': '\ue574',
+  category: '\ue574',
   'unfold-more': '\ue5d7',
   'unfold-less': '\ue5d6',
   'arrow-upward': '\ue5d8',
   'arrow-downward': '\ue5db',
-  'backspace': '\ue14a',
+  backspace: '\ue14a',
   'file-download': '\ue2c4',
   'file-upload': '\ue2c6',
-  'palette': '\ue40a',
+  palette: '\ue40a',
   'brightness-4': '\ue3a6',
-  'notifications': '\ue7f4',
+  notifications: '\ue7f4',
   'volume-up': '\ue050',
   'volume-off': '\ue04f',
-  'celebration': '\uea65',
-  'star': '\ue838',
+  celebration: '\uea65',
+  star: '\ue838',
   'exit-to-app': '\ue879',
-  'today': '\ue8df',
-  'event': '\ue878',
-  'schedule': '\ue8b5',
-  'timer': '\ue425',
-  'alarm': '\ue855',
-  'snooze': '\ue046',
+  today: '\ue8df',
+  event: '\ue878',
+  schedule: '\ue8b5',
+  timer: '\ue425',
+  alarm: '\ue855',
+  snooze: '\ue046',
   'access-time': '\ue192',
-  'history': '\ue889',
-  'sync': '\ue627',
+  history: '\ue889',
+  sync: '\ue627',
   'cloud-upload': '\ue2c3',
   'cloud-download': '\ue2c0',
   'cloud-done': '\ue2bf',
@@ -102,7 +102,7 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
 
   // Material Icons uses underscores in ligatures, not hyphens
   // But some icons in our app use hyphens, so we need to handle both
-  
+
   // Handle special cases - Material Icons uses underscores not hyphens
   const iconAliases = {
     'edit-off': 'edit_off', // This icon DOES exist in Material Icons
@@ -120,21 +120,17 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
     'file-upload': '\ue2c6',
     'file-download': '\ue2c4',
   };
-  
+
   // First check if we have an alias
   let iconName = iconAliases[name] || name;
-  
+
   // Then convert any remaining hyphens to underscores for Material Icons
   iconName = iconName.replace(/-/g, '_');
 
   // Use unicode if we have it, otherwise use ligature
   const iconContent = iconMap[name] || iconName;
-  
-  return (
-    <span style={iconStyle}>
-      {iconContent}
-    </span>
-  );
+
+  return <span style={iconStyle}>{iconContent}</span>;
 };
 
 // Export Icon as default to match react-native-vector-icons/MaterialIcons import pattern

@@ -1,29 +1,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { TouchableOpacity, StyleSheet, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import { 
-  SHADOWS, 
-  FAB_DIMENSIONS,
-  isTablet,
-} from '../../constants';
+import { SHADOWS, FAB_DIMENSIONS, isTablet } from '../../constants';
 
-const FAB = ({ 
-  onPress, 
-  icon, 
-  position = {},
-  theme,
-  style,
-  ...props 
-}) => {
+const FAB = ({ onPress, icon, position = {}, theme, style, ...props }) => {
   const fabSize = isTablet() ? FAB_DIMENSIONS.tablet : FAB_DIMENSIONS.mobile;
   const [rotation] = useState(() => new Animated.Value(0));
   const previousIcon = useRef(icon);
-  
+
   useEffect(() => {
     // Only animate between edit and edit-off icons
-    if ((previousIcon.current === 'edit' && icon === 'edit-off') || 
-        (previousIcon.current === 'edit-off' && icon === 'edit')) {
-      
+    if (
+      (previousIcon.current === 'edit' && icon === 'edit-off') ||
+      (previousIcon.current === 'edit-off' && icon === 'edit')
+    ) {
       // Always animate a full rotation and return to 0
       Animated.sequence([
         Animated.timing(rotation, {
@@ -35,18 +25,18 @@ const FAB = ({
           toValue: 0,
           duration: 0,
           useNativeDriver: true,
-        })
+        }),
       ]).start();
     }
-    
+
     previousIcon.current = icon;
   }, [icon]);
-  
+
   const spin = rotation.interpolate({
     inputRange: [0, 1],
-    outputRange: ['0deg', '360deg']
+    outputRange: ['0deg', '360deg'],
   });
-  
+
   return (
     <TouchableOpacity
       style={[
@@ -65,13 +55,15 @@ const FAB = ({
       activeOpacity={0.8}
       {...props}
     >
-      <Animated.View style={{ 
-        transform: [{ rotate: spin }] 
-      }}>
-        <Icon 
-          name={icon} 
-          size={fabSize.iconSize} 
-          color={theme?.primary || '#667eea'} 
+      <Animated.View
+        style={{
+          transform: [{ rotate: spin }],
+        }}
+      >
+        <Icon
+          name={icon}
+          size={fabSize.iconSize}
+          color={theme?.primary || '#667eea'}
         />
       </Animated.View>
     </TouchableOpacity>

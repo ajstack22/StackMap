@@ -8,7 +8,7 @@ import {
   SafeAreaView,
   Platform,
   StatusBar,
-  FlatList
+  FlatList,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { THEMES } from '../../../constants';
@@ -33,8 +33,8 @@ const PreferencesModal = ({
   getAndroidModalBottomHeight,
 }) => {
   const preferencesScrollRef = useRef(null);
-  
-  const handleThemeChange = (color) => {
+
+  const handleThemeChange = color => {
     setCurrentTheme(color);
     onSaveTheme(color);
   };
@@ -51,52 +51,52 @@ const PreferencesModal = ({
             Choose your preferred color theme
           </Text>
         </View>
-        
+
         {/* Divider */}
         <View style={styles.divider} />
         <View style={styles.colorGrid}>
-        {(() => {
-          // Put stackBlue (default) first, then all other themes
-          const themeKeys = Object.keys(THEMES);
-          const reorderedThemes = ['stackBlue', ...themeKeys.filter(key => key !== 'stackBlue')];
-          
-          // Only show first 20 themes (4x5 grid)
-          return reorderedThemes.slice(0, 20).map((color) => (
-          <View key={color} style={{ width: '20%', padding: 5, alignItems: 'center' }}>
-            <TouchableOpacity
-              style={[
-                styles.colorOption,
-                { backgroundColor: THEMES[color].primary },
-                currentTheme === color && styles.colorSelected
-              ]}
-              onPress={() => handleThemeChange(color)}
-            >
-              {currentTheme === color && (
-                <Icon name="check" size={20} color="white" />
-              )}
-            </TouchableOpacity>
-          </View>
-        ))
-      })()}
+          {(() => {
+            // Put stackBlue (default) first, then all other themes
+            const themeKeys = Object.keys(THEMES);
+            const reorderedThemes = [
+              'stackBlue',
+              ...themeKeys.filter(key => key !== 'stackBlue'),
+            ];
+
+            // Only show first 20 themes (4x5 grid)
+            return reorderedThemes.slice(0, 20).map(color => (
+              <View
+                key={color}
+                style={{ width: '20%', padding: 5, alignItems: 'center' }}
+              >
+                <TouchableOpacity
+                  style={[
+                    styles.colorOption,
+                    { backgroundColor: THEMES[color].primary },
+                    currentTheme === color && styles.colorSelected,
+                  ]}
+                  onPress={() => handleThemeChange(color)}
+                >
+                  {currentTheme === color && (
+                    <Icon name="check" size={20} color="white" />
+                  )}
+                </TouchableOpacity>
+              </View>
+            ));
+          })()}
         </View>
       </View>
-      
+
       {/* Info Section */}
       <View style={[styles.section, styles.infoSection]}>
-        <TouchableOpacity 
-          style={styles.infoButton}
-          onPress={onPrivacyPress}
-        >
+        <TouchableOpacity style={styles.infoButton} onPress={onPrivacyPress}>
           <Text style={styles.infoButtonText}>Privacy Policy</Text>
         </TouchableOpacity>
-        <TouchableOpacity 
-          style={styles.infoButton}
-          onPress={onSupportPress}
-        >
+        <TouchableOpacity style={styles.infoButton} onPress={onSupportPress}>
           <Text style={styles.infoButtonText}>Support Us</Text>
         </TouchableOpacity>
       </View>
-      
+
       {/* Version Number - Subtle display at bottom */}
       <View style={styles.versionContainer}>
         <Text style={styles.versionText}>v{BUILD_VERSION}</Text>
@@ -121,37 +121,51 @@ const PreferencesModal = ({
       }}
     >
       {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor={theme.primary} 
-          barStyle="light-content" 
+        <StatusBar
+          backgroundColor={theme.primary}
+          barStyle="light-content"
           translucent={false}
         />
       )}
       <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.primary, height: StatusBar.currentHeight || 24 }} />
+          <View
+            style={{
+              backgroundColor: theme.primary,
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
         )}
         <SafeAreaView style={{ backgroundColor: theme.primary }}>
-          <View style={[styles.modalHeader, { backgroundColor: theme.primary }]}>
+          <View
+            style={[styles.modalHeader, { backgroundColor: theme.primary }]}
+          >
             <View style={styles.headerLeft}>
-              <Icon name="palette" size={24} color="white" style={styles.headerIcon} />
+              <Icon
+                name="palette"
+                size={24}
+                color="white"
+                style={styles.headerIcon}
+              />
               <Text style={styles.modalTitle}>Theme</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
-              <View style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-        
+
         <View style={{ flex: 1, backgroundColor: theme.light }}>
           {/* Use FlatList wrapper for better Android performance */}
           <FlatList
@@ -159,9 +173,7 @@ const PreferencesModal = ({
             key={preferencesScrollKey}
             data={[{ key: 'content' }]}
             renderItem={() => (
-              <View style={styles.modalContent}>
-                {renderContent()}
-              </View>
+              <View style={styles.modalContent}>{renderContent()}</View>
             )}
             keyExtractor={item => item.key}
             showsVerticalScrollIndicator={false}
@@ -170,7 +182,12 @@ const PreferencesModal = ({
         </View>
         <SafeAreaView style={{ backgroundColor: theme.light }} />
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: theme.light, height: Math.max(insets.bottom, 20) }} />
+          <View
+            style={{
+              backgroundColor: theme.light,
+              height: Math.max(insets.bottom, 20),
+            }}
+          />
         )}
       </View>
     </Modal>

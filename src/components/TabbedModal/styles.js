@@ -63,7 +63,7 @@ export const styles = StyleSheet.create({
     // Modern flat design - no borders, just background
   },
   tabText: {
-    fontSize: Platform.OS === 'web' ? 14 : (isTablet() ? 15 : 14),
+    fontSize: Platform.OS === 'web' ? 14 : isTablet() ? 15 : 14,
     fontWeight: Platform.OS === 'ios' ? '600' : '500',
     fontFamily: TYPOGRAPHY.fontFamily.medium,
     color: 'rgba(255, 255, 255, 0.8)',

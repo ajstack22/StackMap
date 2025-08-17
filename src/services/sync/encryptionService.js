@@ -30,7 +30,9 @@ class EncryptionService {
     // In production, use BIP39 wordlist for better UX
     const seedBytes = nacl.randomBytes(16);
     // Convert to hex string (no padding, URL-safe)
-    return Array.from(seedBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+    return Array.from(seedBytes, byte =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
   }
 
   /**
@@ -38,7 +40,7 @@ class EncryptionService {
    */
   async deriveKeyFromPhrase(recoveryPhrase, salt = null) {
     const startTime = Date.now();
-        
+
     // If no salt provided, generate one
     if (!salt) {
       salt = nacl.randomBytes(SALT_LENGTH);
@@ -51,40 +53,40 @@ class EncryptionService {
     const combined = new Uint8Array(phraseBytes.length + salt.length);
     combined.set(phraseBytes);
     combined.set(salt, phraseBytes.length);
-    
+
     // Hash multiple times for key stretching (PBKDF2-like)
     let key = nacl.hash(combined);
-    
+
     // Log progress for long operation (only in development)
     const logInterval = KEY_DERIVATION_ITERATIONS / 10;
     const batchSize = 5000; // Process 5000 iterations at a time (increased for better performance)
-    
+
     // Process in batches to avoid blocking the UI thread
     for (let i = 0; i < KEY_DERIVATION_ITERATIONS; i++) {
       key = nacl.hash(key);
-      
+
       // Yield control back to the event loop periodically
       if (i % batchSize === 0 && i > 0) {
         // Use setTimeout to allow UI updates and other events to process
         await new Promise(resolve => setTimeout(resolve, 0));
-        
+
         // Log timing info
         const elapsed = Date.now() - startTime;
         const progress = (i / KEY_DERIVATION_ITERATIONS) * 100;
       }
-      
+
       // Log progress in development mode
       if (__DEV__ && i % logInterval === 0 && i > 0) {
         // Progress logged
       }
     }
-    
+
     const totalTime = Date.now() - startTime;
-        
+
     // Take first 32 bytes as the key
     return {
       key: key.slice(0, KEY_LENGTH),
-      salt: util.encodeBase64(salt)
+      salt: util.encodeBase64(salt),
     };
   }
 
@@ -93,17 +95,20 @@ class EncryptionService {
    */
   async initialize(recoveryPhrase, syncId, existingSalt = null) {
     // Use existing salt if provided, otherwise generate new one
-    const { key, salt } = await this.deriveKeyFromPhrase(recoveryPhrase, existingSalt);
+    const { key, salt } = await this.deriveKeyFromPhrase(
+      recoveryPhrase,
+      existingSalt,
+    );
     this.masterKey = key;
     this.syncId = syncId;
-    
+
     // Store salt for future key derivation
     await this.storeSalt(salt);
-    
+
     // Store encrypted recovery phrase for automatic restoration
     // We encrypt it with a device-specific key for security
     await this.storeRecoveryPhrase(recoveryPhrase, syncId);
-    
+
     return { syncId, salt };
   }
 
@@ -139,16 +144,22 @@ class EncryptionService {
       compressed: isCompressed,
       timestamp: Date.now(),
       originalSize: dataString.length,
-      compressedSize: isCompressed ? dataBytes.length : null
+      compressedSize: isCompressed ? dataBytes.length : null,
     };
 
     // Encrypt metadata + data
     const metadataBytes = util.decodeUTF8(JSON.stringify(metadata));
     const metadataLength = new Uint8Array(4);
-    new DataView(metadataLength.buffer).setUint32(0, metadataBytes.length, true);
+    new DataView(metadataLength.buffer).setUint32(
+      0,
+      metadataBytes.length,
+      true,
+    );
 
     // Combine metadata length + metadata + data
-    const fullData = new Uint8Array(4 + metadataBytes.length + dataBytes.length);
+    const fullData = new Uint8Array(
+      4 + metadataBytes.length + dataBytes.length,
+    );
     fullData.set(metadataLength);
     fullData.set(metadataBytes, 4);
     fullData.set(dataBytes, 4 + metadataBytes.length);
@@ -174,7 +185,7 @@ class EncryptionService {
     }
 
     const combined = util.decodeBase64(encryptedData);
-    
+
     // Extract nonce and encrypted data
     const nonce = combined.slice(0, nacl.secretbox.nonceLength);
     const encrypted = combined.slice(nacl.secretbox.nonceLength);
@@ -186,19 +197,23 @@ class EncryptionService {
 
     // Handle version 2 format with metadata
     if (decrypted.length > 4) {
-      const metadataLengthView = new DataView(decrypted.buffer, decrypted.byteOffset, 4);
+      const metadataLengthView = new DataView(
+        decrypted.buffer,
+        decrypted.byteOffset,
+        4,
+      );
       const metadataLength = metadataLengthView.getUint32(0, true);
-      
+
       if (metadataLength > 0 && metadataLength < decrypted.length - 4) {
         try {
           // Extract metadata
           const metadataBytes = decrypted.slice(4, 4 + metadataLength);
           const metadata = JSON.parse(util.encodeUTF8(metadataBytes));
-          
+
           if (metadata.version === 2) {
             // Extract data
             let dataBytes = decrypted.slice(4 + metadataLength);
-            
+
             // Decompress if needed
             if (metadata.compressed) {
               try {
@@ -207,7 +222,7 @@ class EncryptionService {
                 throw new Error('Decompression failed');
               }
             }
-            
+
             const dataString = util.encodeUTF8(dataBytes);
             return JSON.parse(dataString);
           }
@@ -221,7 +236,7 @@ class EncryptionService {
     try {
       const dataString = util.encodeUTF8(decrypted);
       const parsed = JSON.parse(dataString);
-      
+
       if (parsed.version === 1 && parsed.data) {
         return parsed.data;
       }
@@ -254,14 +269,16 @@ class EncryptionService {
   async getDeviceId() {
     const key = '@device_id';
     let deviceId = await AsyncStorage.getItem(key);
-    
+
     if (!deviceId) {
       // Use hex encoding for device ID too (no padding, URL-safe)
       const deviceBytes = nacl.randomBytes(16);
-      deviceId = Array.from(deviceBytes, byte => byte.toString(16).padStart(2, '0')).join('');
+      deviceId = Array.from(deviceBytes, byte =>
+        byte.toString(16).padStart(2, '0'),
+      ).join('');
       await AsyncStorage.setItem(key, deviceId);
     }
-    
+
     return deviceId;
   }
 
@@ -286,50 +303,55 @@ class EncryptionService {
     try {
       // Generate a device-specific encryption key
       const deviceKey = await this.getDeviceKey();
-      
+
       // Encrypt the recovery phrase
       const nonce = nacl.randomBytes(nacl.secretbox.nonceLength);
       const phraseBytes = util.decodeUTF8(recoveryPhrase);
       const encrypted = nacl.secretbox(phraseBytes, nonce, deviceKey);
-      
+
       // Combine nonce and encrypted data
       const combined = new Uint8Array(nonce.length + encrypted.length);
       combined.set(nonce);
       combined.set(encrypted, nonce.length);
-      
+
       // Store encrypted phrase
-      await AsyncStorage.setItem(`@sync_phrase_${syncId}`, util.encodeBase64(combined));
+      await AsyncStorage.setItem(
+        `@sync_phrase_${syncId}`,
+        util.encodeBase64(combined),
+      );
     } catch (error) {
       console.error('Failed to store recovery phrase:', error);
     }
   }
-  
+
   /**
    * Retrieve and decrypt recovery phrase
    */
   async getStoredRecoveryPhrase(syncId) {
     try {
-      const encryptedData = await AsyncStorage.getItem(`@sync_phrase_${syncId}`);
+      const encryptedData = await AsyncStorage.getItem(
+        `@sync_phrase_${syncId}`,
+      );
       if (!encryptedData) return null;
-      
+
       // Get device key
       const deviceKey = await this.getDeviceKey();
-      
+
       // Decrypt
       const combined = util.decodeBase64(encryptedData);
       const nonce = combined.slice(0, nacl.secretbox.nonceLength);
       const encrypted = combined.slice(nacl.secretbox.nonceLength);
-      
+
       const decrypted = nacl.secretbox.open(encrypted, nonce, deviceKey);
       if (!decrypted) return null;
-      
+
       return util.encodeUTF8(decrypted);
     } catch (error) {
       console.error('Failed to retrieve recovery phrase:', error);
       return null;
     }
   }
-  
+
   /**
    * Generate device-specific encryption key
    */
@@ -340,7 +362,7 @@ class EncryptionService {
       deviceSeed = util.encodeBase64(nacl.randomBytes(32));
       await AsyncStorage.setItem('@device_seed', deviceSeed);
     }
-    
+
     // Derive key from seed
     const seedBytes = util.decodeBase64(deviceSeed);
     const hash = nacl.hash(seedBytes);

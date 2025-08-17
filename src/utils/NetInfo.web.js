@@ -4,14 +4,14 @@
  */
 
 const NetInfo = {
-  addEventListener: (callback) => {
+  addEventListener: callback => {
     // Monitor online/offline events
     const handleChange = () => {
       callback({
         type: 'unknown',
         isConnected: navigator.onLine,
         isInternetReachable: navigator.onLine,
-        details: null
+        details: null,
       });
     };
 
@@ -30,7 +30,7 @@ const NetInfo = {
       type: 'unknown',
       isConnected: navigator.onLine,
       isInternetReachable: navigator.onLine,
-      details: null
+      details: null,
     });
   },
 
@@ -39,9 +39,9 @@ const NetInfo = {
       type: 'unknown',
       isConnected: navigator.onLine,
       isInternetReachable: navigator.onLine,
-      details: null
+      details: null,
     };
-  }
+  },
 };
 
 export default NetInfo;

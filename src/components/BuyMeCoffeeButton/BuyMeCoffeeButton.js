@@ -3,7 +3,7 @@ import { Text } from '../Typography';
 import { View, TouchableOpacity, Platform, Linking } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const BuyMeCoffeeButton = ({ 
+const BuyMeCoffeeButton = ({
   style = 'button', // 'button', 'link', 'widget'
   theme,
   containerStyle,
@@ -18,7 +18,7 @@ const BuyMeCoffeeButton = ({
 
     const script = document.createElement('script');
     const div = document.getElementById('buymeacoffee-widget');
-    
+
     if (!div) return;
 
     script.src = 'https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js';
@@ -31,15 +31,15 @@ const BuyMeCoffeeButton = ({
     script.setAttribute('data-outline-color', '#ffffff');
     script.setAttribute('data-font-color', '#ffffff');
     script.setAttribute('data-coffee-color', '#FFDD00');
-    
+
     script.async = true;
-    
+
     script.onload = function () {
       var evt = document.createEvent('Event');
       evt.initEvent('DOMContentLoaded', false, false);
       window.dispatchEvent(evt);
     };
-    
+
     div.appendChild(script);
 
     return () => {
@@ -70,11 +70,19 @@ const BuyMeCoffeeButton = ({
   // Link style - simple text link
   if (style === 'link') {
     return (
-      <TouchableOpacity 
+      <TouchableOpacity
         onPress={handlePress}
-        style={[{ flexDirection: 'row', alignItems: 'center', padding: 8 }, containerStyle]}
+        style={[
+          { flexDirection: 'row', alignItems: 'center', padding: 8 },
+          containerStyle,
+        ]}
       >
-        <Text style={[{ color: theme?.primary || '#5c7e9d', fontSize: 14 }, textStyle]}>
+        <Text
+          style={[
+            { color: theme?.primary || '#5c7e9d', fontSize: 14 },
+            textStyle,
+          ]}
+        >
           ☕ Buy us a coffee
         </Text>
       </TouchableOpacity>
@@ -103,7 +111,12 @@ const BuyMeCoffeeButton = ({
         containerStyle,
       ]}
     >
-      <Text style={[{ color: 'white', fontSize: 16, fontWeight: 'bold' }, textStyle]}>
+      <Text
+        style={[
+          { color: 'white', fontSize: 16, fontWeight: 'bold' },
+          textStyle,
+        ]}
+      >
         ☕ Support StackMap
       </Text>
     </TouchableOpacity>

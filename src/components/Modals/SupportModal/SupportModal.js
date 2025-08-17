@@ -10,18 +10,13 @@ import {
   StatusBar,
   Image,
   FlatList,
-  
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import { BuyMeCoffeeButton, Logo } from '../..';
 import { getAndroidModalBottomHeight } from '../../../utils/modalHelpers';
 
-const SupportModal = ({
-  visible,
-  onClose,
-  insets,
-}) => {
+const SupportModal = ({ visible, onClose, insets }) => {
   const [scrollKey, setScrollKey] = useState(0);
   const scrollRef = useRef(null);
 
@@ -32,52 +27,70 @@ const SupportModal = ({
           <Logo size={80} color="#5C7E9D" style={{ marginBottom: 8 }} />
           <Text style={styles.stackMapText}>StackMap</Text>
         </View>
-        
-        <Text style={[styles.supportMessage, { fontSize: 17, marginBottom: 20 }]}>
-          StackMap is free and always will be. Built by parents, for families everywhere.
+
+        <Text
+          style={[styles.supportMessage, { fontSize: 17, marginBottom: 20 }]}
+        >
+          StackMap is free and always will be. Built by parents, for families
+          everywhere.
         </Text>
-        
+
         <View style={styles.photoAndImpactContainer}>
           <View style={styles.photoContainer}>
-            <Image 
+            <Image
               source={require('../../../../image_library/StackMapTeam.jpg')}
               style={styles.teamPhoto}
               resizeMode="contain"
             />
             <Text style={styles.teamCaption}>The StackMap Team</Text>
           </View>
-          
+
           <View style={styles.impactWrapper}>
-            <Text style={[styles.contributionHeader, { textAlign: 'left', paddingLeft: 0 }]}>Your contributions help us provide:</Text>
-            
+            <Text
+              style={[
+                styles.contributionHeader,
+                { textAlign: 'left', paddingLeft: 0 },
+              ]}
+            >
+              Your contributions help us provide:
+            </Text>
+
             <View style={[styles.impactSection, { alignItems: 'flex-start' }]}>
               <View style={styles.impactRow}>
                 <View style={styles.impactIcon}>
                   <Icon name="lock" size={24} color="#5C7E9D" />
                 </View>
                 <View style={styles.impactContent}>
-                  <Text style={styles.impactTitle}>Private & Ad-Free Solutions</Text>
-                  <Text style={styles.impactDescription}>No ads, no tracking, your data stays yours</Text>
+                  <Text style={styles.impactTitle}>
+                    Private & Ad-Free Solutions
+                  </Text>
+                  <Text style={styles.impactDescription}>
+                    No ads, no tracking, your data stays yours
+                  </Text>
                 </View>
               </View>
-              
+
               <View style={styles.impactRow}>
                 <View style={styles.impactIcon}>
                   <Icon name="cloud" size={24} color="#5C7E9D" />
                 </View>
                 <View style={styles.impactContent}>
                   <Text style={styles.impactTitle}>Free Sync Service</Text>
-                  <Text style={styles.impactDescription}>Convenient family sync and provider sharing</Text>
+                  <Text style={styles.impactDescription}>
+                    Convenient family sync and provider sharing
+                  </Text>
                 </View>
               </View>
-              
+
               <View style={styles.impactRow}>
                 <View style={styles.impactIcon}>
                   <Icon name="favorite" size={24} color="#5C7E9D" />
                 </View>
                 <View style={styles.impactContent}>
                   <Text style={styles.impactTitle}>Ongoing Development</Text>
-                  <Text style={styles.impactDescription}>Continuous improvements & support</Text>
+                  <Text style={styles.impactDescription}>
+                    Continuous improvements & support
+                  </Text>
                 </View>
               </View>
             </View>
@@ -85,7 +98,7 @@ const SupportModal = ({
         </View>
         {Platform.OS === 'web' && (
           <View style={{ marginTop: 20, alignItems: 'center' }}>
-            <BuyMeCoffeeButton 
+            <BuyMeCoffeeButton
               style="button"
               theme={{ primary: '#5C7E9D' }}
               textStyle={{ fontSize: 18 }}
@@ -96,10 +109,10 @@ const SupportModal = ({
           </View>
         )}
       </View>
-      
+
       <View style={styles.supportWaysSection}>
         <Text style={styles.supportSectionTitle}>Ways to Contribute</Text>
-        
+
         <View style={styles.supportOptionsGrid}>
           <View style={styles.supportOptionFun}>
             <Text style={styles.supportIconBig}>🎆</Text>
@@ -110,7 +123,7 @@ const SupportModal = ({
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.supportOptionFun}>
             <Text style={styles.supportIconBig}>📣</Text>
             <View style={styles.supportOptionContent}>
@@ -120,7 +133,7 @@ const SupportModal = ({
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.supportOptionFun}>
             <Text style={styles.supportIconBig}>💬</Text>
             <View style={styles.supportOptionContent}>
@@ -130,7 +143,7 @@ const SupportModal = ({
               </Text>
             </View>
           </View>
-          
+
           <View style={styles.supportOptionFun}>
             <Text style={styles.supportIconBig}>💡</Text>
             <View style={styles.supportOptionContent}>
@@ -142,12 +155,10 @@ const SupportModal = ({
           </View>
         </View>
       </View>
-      
+
       <View style={styles.supportContactBox}>
         <Text style={styles.supportContactTitle}>Get in Touch</Text>
-        <Text style={styles.supportContactText}>
-          support@stackmap.app
-        </Text>
+        <Text style={styles.supportContactText}>support@stackmap.app</Text>
       </View>
 
       <View style={styles.supportFooter}>
@@ -175,37 +186,51 @@ const SupportModal = ({
       }}
     >
       {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor="#5C7E9D" 
-          barStyle="light-content" 
+        <StatusBar
+          backgroundColor="#5C7E9D"
+          barStyle="light-content"
           translucent={false}
         />
       )}
       <View style={styles.modalContainer}>
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: '#5C7E9D', height: StatusBar.currentHeight || 24 }} />
+          <View
+            style={{
+              backgroundColor: '#5C7E9D',
+              height: StatusBar.currentHeight || 24,
+            }}
+          />
         )}
         <SafeAreaView style={{ backgroundColor: '#5C7E9D' }}>
           <View style={[styles.modalHeader, { backgroundColor: '#5C7E9D' }]}>
             <View style={styles.headerLeft}>
-              <Icon name="favorite" size={24} color="white" style={styles.headerIcon} />
-              <Text style={[styles.modalTitle, { color: 'white' }]}>Support</Text>
+              <Icon
+                name="favorite"
+                size={24}
+                color="white"
+                style={styles.headerIcon}
+              />
+              <Text style={[styles.modalTitle, { color: 'white' }]}>
+                Support
+              </Text>
             </View>
             <TouchableOpacity onPress={onClose} style={{ padding: 8 }}>
-              <View style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}>
+              <View
+                style={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 18,
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
                 <Icon name="close" size={20} color="white" />
               </View>
             </TouchableOpacity>
           </View>
         </SafeAreaView>
-        
+
         <View style={{ flex: 1, backgroundColor: '#f0f4f8' }}>
           {Platform.OS === 'android' ? (
             <FlatList
@@ -222,7 +247,7 @@ const SupportModal = ({
               contentContainerStyle={{ flexGrow: 1 }}
             />
           ) : (
-            <ScrollView 
+            <ScrollView
               style={styles.supportContent}
               contentContainerStyle={{ paddingBottom: 40, paddingTop: 20 }}
               showsVerticalScrollIndicator={false}
@@ -234,7 +259,12 @@ const SupportModal = ({
         </View>
         <SafeAreaView style={{ backgroundColor: '#f0f4f8' }} />
         {Platform.OS === 'android' && (
-          <View style={{ backgroundColor: '#f0f4f8', height: getAndroidModalBottomHeight(insets) }} />
+          <View
+            style={{
+              backgroundColor: '#f0f4f8',
+              height: getAndroidModalBottomHeight(insets),
+            }}
+          />
         )}
       </View>
     </Modal>

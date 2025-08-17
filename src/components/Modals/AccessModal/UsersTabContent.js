@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Text } from '../../Typography';
-import { View, TouchableOpacity, ScrollView, Platform,  } from 'react-native';
+import { View, TouchableOpacity, ScrollView, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import ConfirmModal from '../../Modals/ConfirmModal';
@@ -29,17 +29,19 @@ const UsersTabContent = ({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [userToDelete, setUserToDelete] = useState(null);
 
-  const handleUserSelect = (userId) => {
+  const handleUserSelect = userId => {
     onSelectUser(userId);
-    const userName = typeof users[userId]?.name === 'string' 
-      ? users[userId].name 
-      : String(users[userId]?.name || 'User');
+    const userName =
+      typeof users[userId]?.name === 'string'
+        ? users[userId].name
+        : String(users[userId]?.name || 'User');
     showToast({ message: `Switched to ${userName}` });
   };
 
   const handleUserDelete = (userId, userName) => {
     // Ensure userName is a string
-    const name = typeof userName === 'string' ? userName : String(userName || 'User');
+    const name =
+      typeof userName === 'string' ? userName : String(userName || 'User');
     setUserToDelete({ id: userId, name: name });
     setShowDeleteConfirm(true);
   };
@@ -85,8 +87,8 @@ const UsersTabContent = ({
   };
 
   return (
-    <ScrollView 
-      style={styles.tabContent} 
+    <ScrollView
+      style={styles.tabContent}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ flexGrow: 1 }}
     >
@@ -99,7 +101,7 @@ const UsersTabContent = ({
             Switch between users or add new ones
           </Text>
         </View>
-        
+
         {/* Divider */}
         <View style={styles.divider} />
 
@@ -111,16 +113,22 @@ const UsersTabContent = ({
                 key={userId}
                 style={[
                   styles.userItem,
-                  currentUser === userId && styles.userItemActive
+                  currentUser === userId && styles.userItemActive,
                 ]}
                 onPress={() => handleUserSelect(userId)}
               >
-                <Text style={styles.userItemEmoji}>{user.icon || user.emoji || DEFAULT_USER_ICON}</Text>
-                <Text style={[
-                  styles.userItemName,
-                  currentUser === userId && styles.userItemNameActive
-                ]}>
-                  {typeof user.name === 'string' ? user.name : String(user.name || 'User')}
+                <Text style={styles.userItemEmoji}>
+                  {user.icon || user.emoji || DEFAULT_USER_ICON}
+                </Text>
+                <Text
+                  style={[
+                    styles.userItemName,
+                    currentUser === userId && styles.userItemNameActive,
+                  ]}
+                >
+                  {typeof user.name === 'string'
+                    ? user.name
+                    : String(user.name || 'User')}
                 </Text>
                 {currentUser === userId && (
                   <View style={styles.enabledBadge}>
@@ -131,7 +139,11 @@ const UsersTabContent = ({
                   <TouchableOpacity
                     style={styles.iconButton}
                     onPress={() => {
-                      setEditingUser({ id: userId, name: user.name, icon: user.icon });
+                      setEditingUser({
+                        id: userId,
+                        name: user.name,
+                        icon: user.icon,
+                      });
                       setNewUserName(user.name);
                       setNewUserEmoji(user.icon);
                       setShowAddUserModal(true);
@@ -139,7 +151,8 @@ const UsersTabContent = ({
                   >
                     <Icon name="edit" size={20} color={theme.primary} />
                   </TouchableOpacity>
-                  {Object.keys(users).filter(id => !users[id].deleted).length > 1 && (
+                  {Object.keys(users).filter(id => !users[id].deleted).length >
+                    1 && (
                     <TouchableOpacity
                       style={styles.iconButton}
                       onPress={() => handleUserDelete(userId, user.name)}
@@ -153,8 +166,8 @@ const UsersTabContent = ({
         </View>
 
         {Object.keys(users).filter(id => !users[id].deleted).length < 5 && (
-          <TouchableOpacity 
-            style={[styles.addUserButton, { borderColor: theme.primary }]} 
+          <TouchableOpacity
+            style={[styles.addUserButton, { borderColor: theme.primary }]}
             onPress={() => {
               setEditingUser(null);
               setNewUserName('');
@@ -163,7 +176,9 @@ const UsersTabContent = ({
             }}
           >
             <Icon name="person-add" size={20} color={theme.primary} />
-            <Text style={[styles.addUserText, { color: theme.primary }]}>Add User</Text>
+            <Text style={[styles.addUserText, { color: theme.primary }]}>
+              Add User
+            </Text>
           </TouchableOpacity>
         )}
       </View>

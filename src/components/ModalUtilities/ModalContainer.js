@@ -24,17 +24,19 @@ const ModalContainer = ({
       transparent={transparent}
       statusBarTranslucent={true}
       onRequestClose={onClose}
-      presentationStyle={Platform.OS === 'ios' ? presentationStyle : 'fullScreen'}
+      presentationStyle={
+        Platform.OS === 'ios' ? presentationStyle : 'fullScreen'
+      }
     >
       {Platform.OS === 'android' && (
-        <StatusBar 
-          backgroundColor={theme.primary} 
-          barStyle="light-content" 
+        <StatusBar
+          backgroundColor={theme.primary}
+          barStyle="light-content"
           translucent={false}
         />
       )}
       <View style={[styles.container, { backgroundColor: theme.light }]}>
-        <KeyboardAvoidingView 
+        <KeyboardAvoidingView
           style={styles.keyboardAvoid}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >

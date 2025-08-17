@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Text } from '../Typography';
-import { View, Animated, StyleSheet, Platform,  } from 'react-native';
+import { View, Animated, StyleSheet, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY } from '../../constants';
 import syncService from '../../services/sync/syncService';
@@ -10,14 +10,12 @@ const SyncProgress = ({ theme }) => {
   const [progress, setProgress] = useState(0);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(-100)).current;
-  
+
   useEffect(() => {
-
     // Subscribe to sync status updates
-    const updateStatus = (status) => {
-
+    const updateStatus = status => {
       setSyncStatus(status);
-      
+
       if (status) {
         // Show the progress indicator
         Animated.parallel([
@@ -30,7 +28,7 @@ const SyncProgress = ({ theme }) => {
             toValue: 0,
             duration: 300,
             useNativeDriver: true,
-          })
+          }),
         ]).start();
       } else {
         // Hide after a delay
@@ -45,17 +43,16 @@ const SyncProgress = ({ theme }) => {
               toValue: -100,
               duration: 300,
               useNativeDriver: true,
-            })
+            }),
           ]).start();
         }, 1000);
       }
     };
-    
-    const updateProgress = (value) => {
 
+    const updateProgress = value => {
       setProgress(value);
     };
-    
+
     // Set up listeners
     syncService.onStatusChange = updateStatus;
     syncService.onProgressChange = updateProgress;
@@ -66,14 +63,14 @@ const SyncProgress = ({ theme }) => {
       syncService.onProgressChange = null;
     };
   }, []);
-  
+
   if (!syncStatus) {
     return null;
   }
-  
+
   const getStatusMessage = () => {
     if (!syncStatus) return '';
-    
+
     switch (syncStatus.phase) {
       case 'checking':
         return 'Checking for updates...';
@@ -97,7 +94,7 @@ const SyncProgress = ({ theme }) => {
         return 'Syncing...';
     }
   };
-  
+
   const getStatusIcon = () => {
     if (syncStatus?.phase === 'complete') {
       return 'check-circle';
@@ -107,7 +104,7 @@ const SyncProgress = ({ theme }) => {
     }
     return 'sync';
   };
-  
+
   const getStatusColor = () => {
     if (syncStatus?.phase === 'complete') {
       return '#4caf50';
@@ -117,25 +114,29 @@ const SyncProgress = ({ theme }) => {
     }
     return theme?.primary || '#2196F3';
   };
-  
+
   return (
-    <Animated.View 
+    <Animated.View
       style={[
         styles.container,
         {
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }],
-        }
+        },
       ]}
       pointerEvents="none"
     >
       <View style={[styles.progressCard, { backgroundColor: '#fff' }]}>
         <View style={styles.iconContainer}>
-          <Icon 
-            name={getStatusIcon()} 
-            size={20} 
+          <Icon
+            name={getStatusIcon()}
+            size={20}
             color={getStatusColor()}
-            style={syncStatus?.phase !== 'complete' && syncStatus?.phase !== 'error' ? styles.rotatingIcon : {}}
+            style={
+              syncStatus?.phase !== 'complete' && syncStatus?.phase !== 'error'
+                ? styles.rotatingIcon
+                : {}
+            }
           />
         </View>
         <View style={styles.textContainer}>
@@ -146,14 +147,14 @@ const SyncProgress = ({ theme }) => {
         </View>
         {progress > 0 && progress < 100 && (
           <View style={styles.progressBarContainer}>
-            <View 
+            <View
               style={[
-                styles.progressBar, 
-                { 
+                styles.progressBar,
+                {
                   width: `${progress}%`,
-                  backgroundColor: getStatusColor()
-                }
-              ]} 
+                  backgroundColor: getStatusColor(),
+                },
+              ]}
             />
           </View>
         )}

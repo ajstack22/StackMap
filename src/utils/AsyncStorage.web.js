@@ -1,14 +1,14 @@
 // Web implementation of AsyncStorage using localStorage
 
 const AsyncStorage = {
-  getItem: async (key) => {
+  getItem: async key => {
     try {
       return localStorage.getItem(key);
     } catch (error) {
       return null;
     }
   },
-  
+
   setItem: async (key, value) => {
     try {
       localStorage.setItem(key, value);
@@ -16,15 +16,15 @@ const AsyncStorage = {
       throw error;
     }
   },
-  
-  removeItem: async (key) => {
+
+  removeItem: async key => {
     try {
       localStorage.removeItem(key);
     } catch (error) {
       throw error;
     }
   },
-  
+
   clear: async () => {
     try {
       localStorage.clear();
@@ -32,7 +32,7 @@ const AsyncStorage = {
       throw error;
     }
   },
-  
+
   getAllKeys: async () => {
     try {
       return Object.keys(localStorage);
@@ -40,16 +40,16 @@ const AsyncStorage = {
       return [];
     }
   },
-  
-  multiGet: async (keys) => {
+
+  multiGet: async keys => {
     try {
       return keys.map(key => [key, localStorage.getItem(key)]);
     } catch (error) {
       return [];
     }
   },
-  
-  multiSet: async (keyValuePairs) => {
+
+  multiSet: async keyValuePairs => {
     try {
       keyValuePairs.forEach(([key, value]) => {
         localStorage.setItem(key, value);
@@ -58,8 +58,8 @@ const AsyncStorage = {
       throw error;
     }
   },
-  
-  multiRemove: async (keys) => {
+
+  multiRemove: async keys => {
     try {
       keys.forEach(key => {
         localStorage.removeItem(key);
@@ -67,7 +67,7 @@ const AsyncStorage = {
     } catch (error) {
       throw error;
     }
-  }
+  },
 };
 
 export default AsyncStorage;

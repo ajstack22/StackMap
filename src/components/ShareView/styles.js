@@ -1,471 +1,472 @@
 import { StyleSheet, Platform } from 'react-native';
 import { TYPOGRAPHY } from '../../constants';
 
-const createStyles = (isDarkMode) => StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
-  },
-  loadingContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
-  },
-  loadingText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  errorContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
-    padding: 32,
-  },
-  errorTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: isDarkMode ? '#f7fafc' : '#1a202c',
-    marginTop: 16,
-    marginBottom: 8,
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Bold',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  errorMessage: {
-    fontSize: 16,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    textAlign: 'center',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  backButton: {
-    marginTop: 24,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#667eea',
-    borderRadius: 8,
-  },
-  backButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  header: {
-    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: isDarkMode ? '#4a5568' : '#e2e8f0',
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    ...Platform.select({
-      web: {
-        paddingHorizontal: 24,
-      },
-    }),
-  },
-  userInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  userTextContainer: {
-    flex: 1,
-  },
-  headerControls: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  darkModeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 8,
-    marginRight: 8,
-  },
-  darkModeText: {
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    fontWeight: '500',
-    marginLeft: 4,
-  },
-  userIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  userIcon: {
-    fontSize: 24,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  userImage: {
-    width: 40,
-    height: 40,
-  },
-  userName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: isDarkMode ? '#f7fafc' : '#1a202c',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Bold',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  shareInfo: {
-    fontSize: 12,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    marginTop: 2,
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  recipientInfo: {
-    fontSize: 12,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    fontStyle: 'italic',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  ctaButton: {
-    backgroundColor: '#667eea',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 8,
-  },
-  ctaButtonText: {
-    color: '#fff',
-    fontSize: 14,
-    fontWeight: '600',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  noteContainer: {
-    backgroundColor: '#fff9e6',
-    borderLeftWidth: 4,
-    borderLeftColor: '#ffb300',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    margin: 16,
-    borderRadius: 8,
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-  },
-  noteText: {
-    flex: 1,
-    marginLeft: 8,
-    fontSize: 14,
-    color: '#5d4e37',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  daySelector: {
-    flexDirection: 'row',
-    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: isDarkMode ? '#4a5568' : '#e2e8f0',
-  },
-  dayTab: {
-    paddingHorizontal: 20,
-    paddingVertical: 8,
-    marginRight: 12,
-    borderRadius: 20,
-    backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
-  },
-  dayTabActive: {
-    backgroundColor: '#667eea',
-  },
-  dayTabText: {
-    fontSize: 14,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  dayTabTextActive: {
-    color: '#fff',
-    fontWeight: '600',
-  },
-  progressSummary: {
-    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-    marginBottom: 16,
-  },
-  progressText: {
-    fontSize: 14,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    marginBottom: 8,
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  progressBar: {
-    height: 8,
-    backgroundColor: isDarkMode ? '#4a5568' : '#e2e8f0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%',
-    borderRadius: 4,
-  },
-  activitiesContainer: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  activityCard: {
-    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    shadowColor: isDarkMode ? '#000' : '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  activityContent: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  activityEmojiContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  activityEmoji: {
-    fontSize: 20,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-  },
-  activityImage: {
-    width: 30,
-    height: 30,
-  },
-  activityTextContainer: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: isDarkMode ? '#f7fafc' : '#1a202c',
-    marginBottom: 2,
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  activityDescription: {
-    fontSize: 14,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    marginBottom: 4,
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  activityTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  activityTime: {
-    fontSize: 12,
-    color: isDarkMode ? '#718096' : '#999',
-    marginLeft: 4,
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  completionCircle: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    borderColor: isDarkMode ? '#4a5568' : '#e2e8f0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 12,
-  },
-  completionCircleCompleted: {
-    backgroundColor: '#48bb78',
-    borderColor: '#48bb78',
-  },
-  emptyState: {
-    alignItems: 'center',
-    paddingVertical: 48,
-  },
-  emptyStateText: {
-    marginTop: 16,
-    fontSize: 16,
-    color: isDarkMode ? '#718096' : '#999',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  expirationWarning: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: 16,
-    marginTop: 16,
-  },
-  expirationText: {
-    marginLeft: 8,
-    fontSize: 12,
-    color: '#ff9800',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  footer: {
-    backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    borderTopWidth: 1,
-    borderTopColor: isDarkMode ? '#4a5568' : '#e2e8f0',
-    alignItems: 'center',
-  },
-  footerText: {
-    fontSize: 12,
-    color: isDarkMode ? '#718096' : '#999',
-    textAlign: 'center',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Regular',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-  // Test mode styles
-  infoSection: {
-    marginVertical: 16,
-    padding: 16,
-    backgroundColor: isDarkMode ? '#2d3748' : '#f5f5f5',
-    borderRadius: 8,
-  },
-  infoTitle: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    color: isDarkMode ? '#f7fafc' : '#333',
-  },
-  infoText: {
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    color: isDarkMode ? '#a0aec0' : '#666',
-    marginBottom: 4,
-  },
-  message: {
-    fontSize: 16,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    textAlign: 'center',
-    marginVertical: 16,
-    color: isDarkMode ? '#f7fafc' : '#333',
-  },
-  successNote: {
-    fontSize: 14,
-    fontFamily: TYPOGRAPHY.fontFamily.regular,
-    textAlign: 'center',
-    marginTop: 20,
-    padding: 16,
-    backgroundColor: isDarkMode ? '#2d3e2f' : '#e8f5e9',
-    borderRadius: 8,
-    color: isDarkMode ? '#68d391' : '#2e7d32',
-  },
-  // Mobile CTA button styles
-  mobileCtaContainer: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: isDarkMode ? '#2d3748' : '#fff',
-    borderTopWidth: 1,
-    borderTopColor: isDarkMode ? '#4a5568' : '#e2e8f0',
-    padding: 16,
-    ...Platform.select({
-      web: {
-        position: 'fixed',
-      },
-    }),
-  },
-  mobileCtaButton: {
-    backgroundColor: '#667eea',
-    paddingVertical: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  mobileCtaButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-    fontFamily: Platform.select({
-      ios: 'Comic Relief',
-      android: 'ComicRelief-Bold',
-      web: "'Comic Relief', 'Comic Sans MS', cursive"
-    }),
-  },
-});
+const createStyles = isDarkMode =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
+    },
+    loadingContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
+    },
+    loadingText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    errorContainer: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
+      padding: 32,
+    },
+    errorTitle: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: isDarkMode ? '#f7fafc' : '#1a202c',
+      marginTop: 16,
+      marginBottom: 8,
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Bold',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    errorMessage: {
+      fontSize: 16,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      textAlign: 'center',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    backButton: {
+      marginTop: 24,
+      paddingHorizontal: 24,
+      paddingVertical: 12,
+      backgroundColor: '#667eea',
+      borderRadius: 8,
+    },
+    backButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '600',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    header: {
+      backgroundColor: isDarkMode ? '#2d3748' : '#fff',
+      paddingHorizontal: 16,
+      paddingVertical: 20,
+      borderBottomWidth: 1,
+      borderBottomColor: isDarkMode ? '#4a5568' : '#e2e8f0',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      ...Platform.select({
+        web: {
+          paddingHorizontal: 24,
+        },
+      }),
+    },
+    userInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    userTextContainer: {
+      flex: 1,
+    },
+    headerControls: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    darkModeToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 8,
+      marginRight: 8,
+    },
+    darkModeText: {
+      fontSize: 14,
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
+      fontWeight: '500',
+      marginLeft: 4,
+    },
+    userIconContainer: {
+      width: 48,
+      height: 48,
+      borderRadius: 24,
+      backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    userIcon: {
+      fontSize: 24,
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
+    },
+    userImage: {
+      width: 40,
+      height: 40,
+    },
+    userName: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: isDarkMode ? '#f7fafc' : '#1a202c',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Bold',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    shareInfo: {
+      fontSize: 12,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      marginTop: 2,
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    recipientInfo: {
+      fontSize: 12,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      fontStyle: 'italic',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    ctaButton: {
+      backgroundColor: '#667eea',
+      paddingHorizontal: 20,
+      paddingVertical: 10,
+      borderRadius: 8,
+    },
+    ctaButtonText: {
+      color: '#fff',
+      fontSize: 14,
+      fontWeight: '600',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    noteContainer: {
+      backgroundColor: '#fff9e6',
+      borderLeftWidth: 4,
+      borderLeftColor: '#ffb300',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      margin: 16,
+      borderRadius: 8,
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+    },
+    noteText: {
+      flex: 1,
+      marginLeft: 8,
+      fontSize: 14,
+      color: '#5d4e37',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    daySelector: {
+      flexDirection: 'row',
+      backgroundColor: isDarkMode ? '#2d3748' : '#fff',
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      borderBottomWidth: 1,
+      borderBottomColor: isDarkMode ? '#4a5568' : '#e2e8f0',
+    },
+    dayTab: {
+      paddingHorizontal: 20,
+      paddingVertical: 8,
+      marginRight: 12,
+      borderRadius: 20,
+      backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
+    },
+    dayTabActive: {
+      backgroundColor: '#667eea',
+    },
+    dayTabText: {
+      fontSize: 14,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    dayTabTextActive: {
+      color: '#fff',
+      fontWeight: '600',
+    },
+    progressSummary: {
+      backgroundColor: isDarkMode ? '#2d3748' : '#fff',
+      paddingHorizontal: 16,
+      paddingVertical: 16,
+      marginBottom: 16,
+    },
+    progressText: {
+      fontSize: 14,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      marginBottom: 8,
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    progressBar: {
+      height: 8,
+      backgroundColor: isDarkMode ? '#4a5568' : '#e2e8f0',
+      borderRadius: 4,
+      overflow: 'hidden',
+    },
+    progressFill: {
+      height: '100%',
+      borderRadius: 4,
+    },
+    activitiesContainer: {
+      flex: 1,
+      paddingHorizontal: 16,
+    },
+    activityCard: {
+      backgroundColor: isDarkMode ? '#2d3748' : '#fff',
+      borderRadius: 12,
+      padding: 16,
+      marginBottom: 8,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      shadowColor: isDarkMode ? '#000' : '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    activityContent: {
+      flex: 1,
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    activityEmojiContainer: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: isDarkMode ? '#4a5568' : '#f0f0f0',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginRight: 12,
+    },
+    activityEmoji: {
+      fontSize: 20,
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
+    },
+    activityImage: {
+      width: 30,
+      height: 30,
+    },
+    activityTextContainer: {
+      flex: 1,
+    },
+    activityTitle: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: isDarkMode ? '#f7fafc' : '#1a202c',
+      marginBottom: 2,
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    activityDescription: {
+      fontSize: 14,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      marginBottom: 4,
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    activityTimeContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    activityTime: {
+      fontSize: 12,
+      color: isDarkMode ? '#718096' : '#999',
+      marginLeft: 4,
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    completionCircle: {
+      width: 28,
+      height: 28,
+      borderRadius: 14,
+      borderWidth: 2,
+      borderColor: isDarkMode ? '#4a5568' : '#e2e8f0',
+      justifyContent: 'center',
+      alignItems: 'center',
+      marginLeft: 12,
+    },
+    completionCircleCompleted: {
+      backgroundColor: '#48bb78',
+      borderColor: '#48bb78',
+    },
+    emptyState: {
+      alignItems: 'center',
+      paddingVertical: 48,
+    },
+    emptyStateText: {
+      marginTop: 16,
+      fontSize: 16,
+      color: isDarkMode ? '#718096' : '#999',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    expirationWarning: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingVertical: 16,
+      marginTop: 16,
+    },
+    expirationText: {
+      marginLeft: 8,
+      fontSize: 12,
+      color: '#ff9800',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    footer: {
+      backgroundColor: isDarkMode ? '#1a202c' : '#f7fafc',
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      borderTopWidth: 1,
+      borderTopColor: isDarkMode ? '#4a5568' : '#e2e8f0',
+      alignItems: 'center',
+    },
+    footerText: {
+      fontSize: 12,
+      color: isDarkMode ? '#718096' : '#999',
+      textAlign: 'center',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Regular',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+    // Test mode styles
+    infoSection: {
+      marginVertical: 16,
+      padding: 16,
+      backgroundColor: isDarkMode ? '#2d3748' : '#f5f5f5',
+      borderRadius: 8,
+    },
+    infoTitle: {
+      fontSize: 16,
+      fontFamily: TYPOGRAPHY.fontFamily.bold,
+      fontWeight: 'bold',
+      marginBottom: 8,
+      color: isDarkMode ? '#f7fafc' : '#333',
+    },
+    infoText: {
+      fontSize: 14,
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
+      color: isDarkMode ? '#a0aec0' : '#666',
+      marginBottom: 4,
+    },
+    message: {
+      fontSize: 16,
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
+      textAlign: 'center',
+      marginVertical: 16,
+      color: isDarkMode ? '#f7fafc' : '#333',
+    },
+    successNote: {
+      fontSize: 14,
+      fontFamily: TYPOGRAPHY.fontFamily.regular,
+      textAlign: 'center',
+      marginTop: 20,
+      padding: 16,
+      backgroundColor: isDarkMode ? '#2d3e2f' : '#e8f5e9',
+      borderRadius: 8,
+      color: isDarkMode ? '#68d391' : '#2e7d32',
+    },
+    // Mobile CTA button styles
+    mobileCtaContainer: {
+      position: 'absolute',
+      bottom: 0,
+      left: 0,
+      right: 0,
+      backgroundColor: isDarkMode ? '#2d3748' : '#fff',
+      borderTopWidth: 1,
+      borderTopColor: isDarkMode ? '#4a5568' : '#e2e8f0',
+      padding: 16,
+      ...Platform.select({
+        web: {
+          position: 'fixed',
+        },
+      }),
+    },
+    mobileCtaButton: {
+      backgroundColor: '#667eea',
+      paddingVertical: 16,
+      borderRadius: 8,
+      alignItems: 'center',
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 4,
+      elevation: 3,
+    },
+    mobileCtaButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: '700',
+      fontFamily: Platform.select({
+        ios: 'Comic Relief',
+        android: 'ComicRelief-Bold',
+        web: "'Comic Relief', 'Comic Sans MS', cursive",
+      }),
+    },
+  });
 
 export default createStyles;

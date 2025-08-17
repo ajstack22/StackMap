@@ -15,14 +15,10 @@ class SyncThrottle {
    * Request a sync with throttling and debouncing
    */
   async requestSync(syncFunction, options = {}) {
-    const { 
-      immediate = false, 
-      priority = 'normal' 
-    } = options;
+    const { immediate = false, priority = 'normal' } = options;
 
     // If sync is in progress, queue this request
     if (this.syncInProgress) {
-
       return this.queueSync(syncFunction, options);
     }
 
@@ -30,10 +26,13 @@ class SyncThrottle {
     if (immediate) {
       const timeSinceLastSync = Date.now() - this.lastSyncTime;
       if (timeSinceLastSync < this.minSyncInterval) {
-
-        return this.scheduleSync(syncFunction, this.minSyncInterval - timeSinceLastSync, options);
+        return this.scheduleSync(
+          syncFunction,
+          this.minSyncInterval - timeSinceLastSync,
+          options,
+        );
       }
-      
+
       // Execute immediate sync
       return this.executeSync(syncFunction);
     }
@@ -92,7 +91,7 @@ class SyncThrottle {
       this.pendingSync = { syncFunction, options };
     }
 
-    return new Promise((resolve) => {
+    return new Promise(resolve => {
       // Will be executed after current sync
       const checkInterval = setInterval(() => {
         if (!this.syncInProgress && this.pendingSync) {
@@ -132,7 +131,6 @@ class SyncThrottle {
     this.pendingSync = null;
     this.syncInProgress = false;
     this.debounceStartTime = 0;
-
   }
 
   /**
@@ -142,8 +140,8 @@ class SyncThrottle {
     // Check throttle one more time
     const timeSinceLastSync = Date.now() - this.lastSyncTime;
     if (timeSinceLastSync < this.minSyncInterval) {
-      await new Promise(resolve => 
-        setTimeout(resolve, this.minSyncInterval - timeSinceLastSync)
+      await new Promise(resolve =>
+        setTimeout(resolve, this.minSyncInterval - timeSinceLastSync),
       );
     }
 
@@ -151,9 +149,8 @@ class SyncThrottle {
     const startTime = Date.now();
 
     try {
-
       const result = await syncFunction();
-      
+
       this.lastSyncTime = Date.now();
       const duration = this.lastSyncTime - startTime;
 
@@ -165,7 +162,7 @@ class SyncThrottle {
           this.requestSync(pending.syncFunction, pending.options);
         }, 100);
       }
-      
+
       return result;
     } finally {
       this.syncInProgress = false;
@@ -195,7 +192,7 @@ class SyncThrottle {
       timeSinceLastSync: Date.now() - this.lastSyncTime,
       syncInProgress: this.syncInProgress,
       hasPendingSync: !!this.pendingSync,
-      isDebouncing: !!this.syncTimeout
+      isDebouncing: !!this.syncTimeout,
     };
   }
 
@@ -210,7 +207,10 @@ class SyncThrottle {
       this.debounceDelay = Math.max(500, settings.debounceDelay);
     }
     if (settings.maxDebounceWait !== undefined) {
-      this.maxDebounceWait = Math.max(this.debounceDelay * 2, settings.maxDebounceWait);
+      this.maxDebounceWait = Math.max(
+        this.debounceDelay * 2,
+        settings.maxDebounceWait,
+      );
     }
   }
 }

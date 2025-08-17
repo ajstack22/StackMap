@@ -1,14 +1,15 @@
 import { Dimensions, Platform } from 'react-native';
 
 // Screen dimensions
-export const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+export const { width: screenWidth, height: screenHeight } =
+  Dimensions.get('window');
 
 // Device type helpers
-export const isTablet = (width) => {
+export const isTablet = width => {
   const currentWidth = width || Dimensions.get('window').width;
   return currentWidth >= 768;
 };
-export const isMobile = (width) => {
+export const isMobile = width => {
   const currentWidth = width || Dimensions.get('window').width;
   return currentWidth <= 600;
 };
@@ -25,7 +26,7 @@ export const CARD_LAYOUT = {
   maxWidth: 450, // Comfortable max width
   gap: 20, // Balanced gap for better column breakpoints
   containerPaddingMobile: 16, // 1rem
-  containerPaddingTablet: 24, // 1.5rem  
+  containerPaddingTablet: 24, // 1.5rem
   containerPaddingDesktop: 48, // 3rem - reasonable padding for wide screens
   singleColumnMaxWidth: 450, // Max width for single column
 };
@@ -39,13 +40,13 @@ export const getContainerPadding = (width = screenWidth) => {
 
 export const calculateColumns = (width = screenWidth) => {
   const containerPadding = getContainerPadding(width);
-  const availableWidth = width - (containerPadding * 2);
-  
+  const availableWidth = width - containerPadding * 2;
+
   // Android tablets: Always 2 columns (portrait ~800px, landscape ~1280px)
   if (Platform.OS === 'android' && width >= 768) {
     return 2;
   }
-  
+
   // Special handling for iOS tablets
   // Force 2 columns for ALL iPad portrait orientations (11" is ~834px, 13" is ~1032px)
   // iPad landscape is typically > 1100px wide
@@ -53,50 +54,57 @@ export const calculateColumns = (width = screenWidth) => {
     // iPad portrait mode - force 2 columns for both 11" and 13" models
     return 2;
   }
-  
+
   // Standard breakpoints for all platforms
   if (width < 600) {
     return 1;
   }
-  
+
   if (width < 900) {
     return 2;
   }
-  
+
   return 3;
 };
 
 export const calculateCardWidth = (width = screenWidth) => {
   const containerPadding = getContainerPadding(width);
-  const availableWidth = width - (containerPadding * 2);
+  const availableWidth = width - containerPadding * 2;
   const numColumns = calculateColumns(width);
-  
+
   // For single column, use fixed width but respect available space
   if (numColumns === 1) {
     return Math.min(CARD_LAYOUT.singleColumnMaxWidth, availableWidth);
   }
-  
+
   // For web, we still need to calculate proper widths
   // Remove this web-specific check to use same calculation as native
-  
+
   // For native, calculate exact widths
   const totalGaps = (numColumns - 1) * CARD_LAYOUT.gap;
   const cardWidth = (availableWidth - totalGaps) / numColumns;
-  
+
   // For iPad portrait and Android tablets (2 columns), use same calculation
-  if ((Platform.OS === 'ios' || Platform.OS === 'android') && isTablet(width) && numColumns === 2) {
+  if (
+    (Platform.OS === 'ios' || Platform.OS === 'android') &&
+    isTablet(width) &&
+    numColumns === 2
+  ) {
     // Use the same width calculation as Android tablets
     // This ensures cards fill the space properly without being too narrow
     return cardWidth;
   }
-  
+
   // For landscape (3 columns), let cards be narrower to fit
   if (numColumns === 3) {
     return Math.min(cardWidth, CARD_LAYOUT.maxWidth);
   }
-  
+
   // Default: enforce minimum width
-  return Math.min(Math.max(cardWidth, CARD_LAYOUT.minWidth), CARD_LAYOUT.maxWidth);
+  return Math.min(
+    Math.max(cardWidth, CARD_LAYOUT.minWidth),
+    CARD_LAYOUT.maxWidth,
+  );
 };
 
 export const getCardHeight = () => {
@@ -125,10 +133,10 @@ export const FAB_DIMENSIONS = {
 export const getBadgeDimensions = () => {
   const baseSize = isTablet() ? 70 : 54;
   const baseIconSize = isTablet() ? 36 : 28;
-  
+
   // Reduce by 30% on web only
   const webReduction = Platform.OS === 'web' ? 0.7 : 1;
-  
+
   return {
     size: Math.round(baseSize * webReduction),
     iconSize: Math.round(baseIconSize * webReduction),

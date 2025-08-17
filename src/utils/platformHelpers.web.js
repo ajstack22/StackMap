@@ -8,7 +8,7 @@ const RNFS = {
   ExternalDirectoryPath: '/external',
   CachesDirectoryPath: '/cache',
   ExternalStorageDirectoryPath: '/external-storage',
-  
+
   writeFile: async (path, content) => {
     // For web, we'll use browser's download functionality
     const blob = new Blob([content], { type: 'application/json' });
@@ -22,85 +22,92 @@ const RNFS = {
     URL.revokeObjectURL(url);
     return Promise.resolve();
   },
-  
+
   readFile: async () => {
     return Promise.reject(new Error('File reading not supported on web'));
   },
-  
+
   readDir: async () => {
     return Promise.resolve([]);
   },
-  
+
   mkdir: async () => {
     return Promise.resolve();
   },
-  
+
   unlink: async () => {
     return Promise.resolve();
-  }
+  },
 };
 
 // Document picker polyfill for web
 const DocumentPicker = {
-  pick: async (options) => {
+  pick: async options => {
     return new Promise((resolve, reject) => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = options?.type === 'application/json' ? '.json' : '*/*';
-      
-      input.onchange = async (e) => {
-        const file = /** @type {HTMLInputElement} */(e.target).files?.[0];
+
+      input.onchange = async e => {
+        const file = /** @type {HTMLInputElement} */ (e.target).files?.[0];
         if (file) {
           try {
             const text = await file.text();
-            resolve([{
-              uri: URL.createObjectURL(file),
-              name: file.name,
-              type: file.type,
-              content: text // Add content for easy access
-            }]);
+            resolve([
+              {
+                uri: URL.createObjectURL(file),
+                name: file.name,
+                type: file.type,
+                content: text, // Add content for easy access
+              },
+            ]);
           } catch (error) {
             reject(error);
           }
         } else {
           const cancelError = new Error('No file selected');
-          /** @type {any} */(cancelError).code = 'DOCUMENT_PICKER_CANCELED';
+          /** @type {any} */ (cancelError).code = 'DOCUMENT_PICKER_CANCELED';
           reject(cancelError);
         }
       };
-      
+
       // Handle cancellation
       input.oncancel = () => {
         const cancelError = new Error('User cancelled');
-        /** @type {any} */(cancelError).code = 'DOCUMENT_PICKER_CANCELED';
+        /** @type {any} */ (cancelError).code = 'DOCUMENT_PICKER_CANCELED';
         reject(cancelError);
       };
-      
+
       // Clean up the input element after use
       input.addEventListener('change', () => {
         setTimeout(() => {
           document.body.removeChild(input);
         }, 100);
       });
-      
+
       document.body.appendChild(input);
       input.click();
     });
   },
-  
+
   types: {
     allFiles: '*/*',
     plainText: 'text/plain',
-    json: 'application/json'
+    json: 'application/json',
   },
-  
+
   errorCodes: {
-    cancelled: 'DOCUMENT_PICKER_CANCELED'
+    cancelled: 'DOCUMENT_PICKER_CANCELED',
   },
-  
-  isCancel: (error) => {
-    return error && (error.code === 'DOCUMENT_PICKER_CANCELED' || error.message === 'User cancelled' || error.message === 'No file selected');
-  }
+
+  isCancel: error => {
+    return (
+      error &&
+      (error.code === 'DOCUMENT_PICKER_CANCELED' ||
+        error.message === 'User cancelled' ||
+        error.message === 'No file selected')
+    );
+  },
 };
 
 // Export RNFS as default for react-native-fs alias

@@ -5,7 +5,7 @@ export const useToast = () => {
   const [toast, setToast] = useState(null);
   const timeoutRef = useRef(null);
 
-  const showToast = useCallback((config) => {
+  const showToast = useCallback(config => {
     // Clear any existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);

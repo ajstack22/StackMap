@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TextInput } from '../Typography';
-import { View, TouchableOpacity, StyleSheet, Platform,  } from 'react-native';
+import { View, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY, SPACING, RADIUS } from '../../constants';
 
@@ -36,17 +36,24 @@ const FormInput = ({
           {required && <Text style={styles.required}> *</Text>}
         </Text>
       )}
-      
-      <View style={[
-        styles.inputContainer,
-        multiline && styles.multilineContainer,
-        error && styles.errorContainer,
-        !editable && styles.disabledContainer,
-      ]}>
+
+      <View
+        style={[
+          styles.inputContainer,
+          multiline && styles.multilineContainer,
+          error && styles.errorContainer,
+          !editable && styles.disabledContainer,
+        ]}
+      >
         {leftIcon && (
-          <Icon name={leftIcon} size={20} color="#666" style={styles.leftIcon} />
+          <Icon
+            name={leftIcon}
+            size={20}
+            color="#666"
+            style={styles.leftIcon}
+          />
         )}
-        
+
         <TextInput
           style={[
             styles.input,
@@ -68,20 +75,23 @@ const FormInput = ({
           autoCorrect={autoCorrect}
           maxLength={maxLength}
         />
-        
+
         {showPasswordToggle && (
-          <TouchableOpacity onPress={onTogglePassword} style={styles.rightIconButton}>
-            <Icon 
-              name={secureTextEntry ? 'visibility' : 'visibility-off'} 
-              size={20} 
-              color="#666" 
+          <TouchableOpacity
+            onPress={onTogglePassword}
+            style={styles.rightIconButton}
+          >
+            <Icon
+              name={secureTextEntry ? 'visibility' : 'visibility-off'}
+              size={20}
+              color="#666"
             />
           </TouchableOpacity>
         )}
-        
+
         {rightIcon && !showPasswordToggle && (
-          <TouchableOpacity 
-            onPress={onRightIconPress} 
+          <TouchableOpacity
+            onPress={onRightIconPress}
             style={styles.rightIconButton}
             disabled={!onRightIconPress}
           >
@@ -89,10 +99,8 @@ const FormInput = ({
           </TouchableOpacity>
         )}
       </View>
-      
-      {error && (
-        <Text style={styles.errorText}>{error}</Text>
-      )}
+
+      {error && <Text style={styles.errorText}>{error}</Text>}
     </View>
   );
 };

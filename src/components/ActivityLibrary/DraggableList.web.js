@@ -39,14 +39,14 @@ export const DraggableList = ({
     }
   };
 
-  const handleDragLeave = (e) => {
+  const handleDragLeave = e => {
     dragCounter.current--;
     if (dragCounter.current === 0) {
       setDraggedOverIndex(null);
     }
   };
 
-  const handleDragOver = (e) => {
+  const handleDragOver = e => {
     e.preventDefault();
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = 'move';
@@ -56,24 +56,24 @@ export const DraggableList = ({
   const handleDrop = (e, dropIndex) => {
     e.preventDefault();
     dragCounter.current = 0;
-    
+
     if (draggedItem && draggedItem.index !== dropIndex) {
       const draggedItemContent = items[draggedItem.index];
       const newItems = [...items];
-      
+
       // Remove the dragged item
       newItems.splice(draggedItem.index, 1);
-      
+
       // Insert it at the new position
       newItems.splice(dropIndex, 0, draggedItemContent);
-      
+
       setItems(newItems);
-      
+
       if (onDragEnd) {
         onDragEnd({ data: newItems });
       }
     }
-    
+
     setDraggedItem(null);
     setDraggedOverIndex(null);
   };
@@ -87,15 +87,15 @@ export const DraggableList = ({
   const renderDraggableItem = ({ item, index }) => {
     const isDragging = draggedItem && draggedItem.index === index;
     const isDraggedOver = draggedOverIndex === index;
-    
+
     return (
       <div
         draggable
-        onDragStart={(e) => handleDragStart(e, item, index)}
-        onDragEnter={(e) => handleDragEnter(e, index)}
+        onDragStart={e => handleDragStart(e, item, index)}
+        onDragEnter={e => handleDragEnter(e, index)}
         onDragLeave={handleDragLeave}
         onDragOver={handleDragOver}
-        onDrop={(e) => handleDrop(e, index)}
+        onDrop={e => handleDrop(e, index)}
         onDragEnd={handleDragEnd}
         style={{
           opacity: isDragging ? 0.5 : 1,
@@ -103,8 +103,8 @@ export const DraggableList = ({
           cursor: 'move',
         }}
       >
-        {renderItem({ 
-          item, 
+        {renderItem({
+          item,
           index,
           drag: () => {}, // Provide a no-op drag function for compatibility
           isActive: isDragging,

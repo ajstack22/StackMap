@@ -115,12 +115,15 @@ export const Alert = {
     } else {
       window.alert(`${title}\n\n${message}`);
     }
-  }
+  },
 };
 
 export const PixelRatio = {
   get: () => window.devicePixelRatio || 1,
   getFontScale: () => 1,
-  getPixelSizeForLayoutSize: (size) => Math.round(size * (window.devicePixelRatio || 1)),
-  roundToNearestPixel: (size) => Math.round(size * (window.devicePixelRatio || 1)) / (window.devicePixelRatio || 1),
+  getPixelSizeForLayoutSize: size =>
+    Math.round(size * (window.devicePixelRatio || 1)),
+  roundToNearestPixel: size =>
+    Math.round(size * (window.devicePixelRatio || 1)) /
+    (window.devicePixelRatio || 1),
 };

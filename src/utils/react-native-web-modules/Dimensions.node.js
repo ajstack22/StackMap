@@ -15,8 +15,14 @@ const Dimensions = {
     }
     if (dim === 'screen') {
       return {
-        width: typeof window !== 'undefined' && window.screen ? window.screen.width : 1024,
-        height: typeof window !== 'undefined' && window.screen ? window.screen.height : 768,
+        width:
+          typeof window !== 'undefined' && window.screen
+            ? window.screen.width
+            : 1024,
+        height:
+          typeof window !== 'undefined' && window.screen
+            ? window.screen.height
+            : 768,
         scale: typeof window !== 'undefined' ? window.devicePixelRatio : 1,
         fontScale: 1,
       };
@@ -34,12 +40,12 @@ const Dimensions = {
       };
       window.addEventListener('resize', listener);
       window.addEventListener('orientationchange', listener);
-      
+
       return {
         remove: () => {
           window.removeEventListener('resize', listener);
           window.removeEventListener('orientationchange', listener);
-        }
+        },
       };
     }
     return { remove: () => {} };
@@ -54,7 +60,7 @@ const Dimensions = {
 
   set() {
     console.warn('Dimensions.set is not supported on web');
-  }
+  },
 };
 
 // Export in CommonJS format for node_modules

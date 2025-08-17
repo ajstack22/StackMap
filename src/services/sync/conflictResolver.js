@@ -7,17 +7,17 @@ const STRATEGIES = {
   LAST_WRITE_WINS: 'last_write_wins',
   MERGE: 'merge',
   USER_CHOICE: 'user_choice',
-  CUSTOM: 'custom'
+  CUSTOM: 'custom',
 };
 
 // Field-specific resolution strategies
 const FIELD_STRATEGIES = {
   // Arrays - merge unique items
   activities: STRATEGIES.MERGE,
-  
+
   // Objects - merge properties with special handling
   users: STRATEGIES.CUSTOM,
-  
+
   // Scalars - last write wins
   currentUser: STRATEGIES.LAST_WRITE_WINS,
   currentTheme: STRATEGIES.LAST_WRITE_WINS,
@@ -25,7 +25,7 @@ const FIELD_STRATEGIES = {
   soundEnabled: STRATEGIES.LAST_WRITE_WINS,
   taskCelebration: STRATEGIES.LAST_WRITE_WINS,
   routineCelebration: STRATEGIES.LAST_WRITE_WINS,
-  currentDay: STRATEGIES.LAST_WRITE_WINS
+  currentDay: STRATEGIES.LAST_WRITE_WINS,
 };
 
 class ConflictResolver {
@@ -40,35 +40,41 @@ class ConflictResolver {
    */
   detectConflicts(localState, remoteState, lastSyncTime) {
     const conflicts = [];
-    
+
     // Get timestamps
     const localTimestamp = localState.lastModified || Date.now();
     const remoteTimestamp = remoteState.lastModified || Date.now();
-    
+
     // Check each field for conflicts
     for (const field of Object.keys(FIELD_STRATEGIES)) {
       if (localState[field] === undefined || remoteState[field] === undefined) {
         continue;
       }
-      
+
       // Check if both sides changed since last sync
       if (this.hasChanged(localState[field], remoteState[field])) {
         const conflict = {
-          id: `${field}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+          id: `${field}_${Date.now()}_${Math.random()
+            .toString(36)
+            .substr(2, 9)}`,
           field,
-          type: this.getConflictType(field, localState[field], remoteState[field]),
+          type: this.getConflictType(
+            field,
+            localState[field],
+            remoteState[field],
+          ),
           localValue: localState[field],
           remoteValue: remoteState[field],
           localTimestamp,
           remoteTimestamp,
           strategy: FIELD_STRATEGIES[field],
-          detectedAt: Date.now()
+          detectedAt: Date.now(),
         };
-        
+
         conflicts.push(conflict);
       }
     }
-    
+
     return conflicts;
   }
 
@@ -85,7 +91,10 @@ class ConflictResolver {
   getConflictType(field, localValue, remoteValue) {
     if (Array.isArray(localValue) && Array.isArray(remoteValue)) {
       return 'array_conflict';
-    } else if (typeof localValue === 'object' && typeof remoteValue === 'object') {
+    } else if (
+      typeof localValue === 'object' &&
+      typeof remoteValue === 'object'
+    ) {
       return 'object_conflict';
     } else {
       return 'value_conflict';
@@ -98,25 +107,25 @@ class ConflictResolver {
   async resolveConflicts(conflicts, options = {}) {
     const resolved = [];
     const needsUserInput = [];
-    
+
     for (const conflict of conflicts) {
       const resolution = await this.resolveConflict(conflict, options);
-      
+
       if (resolution.requiresUserInput && !options.autoResolveAll) {
         needsUserInput.push(conflict);
       } else {
         resolved.push(resolution);
       }
     }
-    
+
     // Add to history
     this.conflictHistory.push(...resolved);
     this.pendingConflicts = options.autoResolveAll ? [] : needsUserInput;
-    
+
     return {
       resolved,
       pending: options.autoResolveAll ? [] : needsUserInput,
-      finalState: this.applyResolutions(resolved)
+      finalState: this.applyResolutions(resolved),
     };
   }
 
@@ -124,68 +133,90 @@ class ConflictResolver {
    * Resolve a single conflict
    */
   async resolveConflict(conflict, options = {}) {
-    const { strategy = conflict.strategy, preferLocal = false, autoResolveAll = false } = options;
-    
+    const {
+      strategy = conflict.strategy,
+      preferLocal = false,
+      autoResolveAll = false,
+    } = options;
+
     let resolution = {
       conflictId: conflict.id,
       field: conflict.field,
       strategy,
       resolvedAt: Date.now(),
-      requiresUserInput: false
+      requiresUserInput: false,
     };
-    
+
     switch (strategy) {
       case STRATEGIES.LAST_WRITE_WINS:
-        resolution.resolvedValue = conflict.remoteTimestamp > conflict.localTimestamp 
-          ? conflict.remoteValue 
-          : conflict.localValue;
-        resolution.winner = conflict.remoteTimestamp > conflict.localTimestamp ? 'remote' : 'local';
+        resolution.resolvedValue =
+          conflict.remoteTimestamp > conflict.localTimestamp
+            ? conflict.remoteValue
+            : conflict.localValue;
+        resolution.winner =
+          conflict.remoteTimestamp > conflict.localTimestamp
+            ? 'remote'
+            : 'local';
         break;
-        
+
       case STRATEGIES.MERGE:
         resolution.resolvedValue = this.mergeValues(
           conflict.field,
           conflict.localValue,
-          conflict.remoteValue
+          conflict.remoteValue,
         );
         resolution.mergeDetails = {
-          localItems: Array.isArray(conflict.localValue) ? conflict.localValue.length : null,
-          remoteItems: Array.isArray(conflict.remoteValue) ? conflict.remoteValue.length : null,
-          mergedItems: Array.isArray(resolution.resolvedValue) ? resolution.resolvedValue.length : null
+          localItems: Array.isArray(conflict.localValue)
+            ? conflict.localValue.length
+            : null,
+          remoteItems: Array.isArray(conflict.remoteValue)
+            ? conflict.remoteValue.length
+            : null,
+          mergedItems: Array.isArray(resolution.resolvedValue)
+            ? resolution.resolvedValue.length
+            : null,
         };
         break;
-        
+
       case STRATEGIES.USER_CHOICE:
         if (autoResolveAll) {
           // Auto-resolve using last-write-wins when autoResolveAll is true
-          resolution.resolvedValue = conflict.remoteTimestamp > conflict.localTimestamp 
-            ? conflict.remoteValue 
-            : conflict.localValue;
-          resolution.winner = conflict.remoteTimestamp > conflict.localTimestamp ? 'remote' : 'local';
+          resolution.resolvedValue =
+            conflict.remoteTimestamp > conflict.localTimestamp
+              ? conflict.remoteValue
+              : conflict.localValue;
+          resolution.winner =
+            conflict.remoteTimestamp > conflict.localTimestamp
+              ? 'remote'
+              : 'local';
           resolution.autoResolved = true;
         } else {
           resolution.requiresUserInput = true;
           resolution.choices = {
             local: conflict.localValue,
             remote: conflict.remoteValue,
-            merge: this.mergeValues(conflict.field, conflict.localValue, conflict.remoteValue)
+            merge: this.mergeValues(
+              conflict.field,
+              conflict.localValue,
+              conflict.remoteValue,
+            ),
           };
         }
         break;
-        
+
       case STRATEGIES.CUSTOM:
         if (conflict.field === 'users') {
           // Store timestamps for the merge function to use
           this.lastLocalTimestamp = conflict.localTimestamp;
           this.lastRemoteTimestamp = conflict.remoteTimestamp;
-          
+
           const mergeResult = this.mergeUsersPreservingCompleted(
             conflict.localValue,
-            conflict.remoteValue
+            conflict.remoteValue,
           );
-          
+
           resolution.resolvedValue = mergeResult;
-          
+
           // Clear timestamps
           this.lastLocalTimestamp = null;
           this.lastRemoteTimestamp = null;
@@ -193,17 +224,19 @@ class ConflictResolver {
           resolution.resolvedValue = this.mergeValues(
             conflict.field,
             conflict.localValue,
-            conflict.remoteValue
+            conflict.remoteValue,
           );
         }
         break;
-        
+
       default:
         // Default to preferring local if specified, otherwise remote
-        resolution.resolvedValue = preferLocal ? conflict.localValue : conflict.remoteValue;
+        resolution.resolvedValue = preferLocal
+          ? conflict.localValue
+          : conflict.remoteValue;
         resolution.winner = preferLocal ? 'local' : 'remote';
     }
-    
+
     return resolution;
   }
 
@@ -216,12 +249,12 @@ class ConflictResolver {
       if (field === 'activities') {
         // For activities, merge by ID and keep latest version
         const activityMap = new Map();
-        
+
         // Add local activities
         for (const activity of localValue) {
           activityMap.set(activity.id, activity);
         }
-        
+
         // Merge remote activities (smart merge for completion states)
         for (const activity of remoteValue) {
           const existing = activityMap.get(activity.id);
@@ -231,7 +264,7 @@ class ConflictResolver {
           } else {
             // Activity exists in both - merge based on completion timestamps
             let merged = { ...activity };
-            
+
             // Handle completion state based on timestamps
             if (existing.completedAt && activity.completedAt) {
               // Both have completion timestamps - use the most recent
@@ -248,21 +281,25 @@ class ConflictResolver {
               merged.completedBy = existing.completedBy;
             }
             // else use activity's values (already in merged)
-            
+
             activityMap.set(activity.id, merged);
           }
         }
-        
+
         return Array.from(activityMap.values());
       } else {
         // Generic array merge - combine unique values
         return [...new Set([...localValue, ...remoteValue])];
       }
     }
-    
+
     // Object merge - combine properties
-    if (typeof localValue === 'object' && typeof remoteValue === 'object' && 
-        !Array.isArray(localValue) && !Array.isArray(remoteValue)) {
+    if (
+      typeof localValue === 'object' &&
+      typeof remoteValue === 'object' &&
+      !Array.isArray(localValue) &&
+      !Array.isArray(remoteValue)
+    ) {
       if (field === 'users') {
         // Merge users by ID
         return { ...localValue, ...remoteValue };
@@ -271,7 +308,7 @@ class ConflictResolver {
         return { ...localValue, ...remoteValue };
       }
     }
-    
+
     // For scalar values, can't merge - would need user choice
     return remoteValue;
   }
@@ -282,17 +319,20 @@ class ConflictResolver {
   applyResolutions(resolutions) {
     const currentState = useAppStore.getState();
     let newState = { ...currentState };
-    
+
     for (const resolution of resolutions) {
-      if (!resolution.requiresUserInput && resolution.resolvedValue !== undefined) {
+      if (
+        !resolution.requiresUserInput &&
+        resolution.resolvedValue !== undefined
+      ) {
         newState[resolution.field] = resolution.resolvedValue;
       }
     }
-    
+
     // Ensure users object exists (critical for validation)
     if (!newState.users || typeof newState.users !== 'object') {
-            newState.users = currentState.users || {};
-      
+      newState.users = currentState.users || {};
+
       // If still no users, create a default structure
       if (Object.keys(newState.users).length === 0) {
         const defaultUserId = newState.currentUser || 'user_1';
@@ -300,20 +340,31 @@ class ConflictResolver {
           [defaultUserId]: {
             name: 'User',
             icon: '👤',
-            days: {}
-          }
+            days: {},
+          },
         };
         newState.currentUser = defaultUserId;
       }
     }
-    
+
     // Ensure each user has required fields
     if (newState.users && typeof newState.users === 'object') {
       for (const [userId, user] of Object.entries(newState.users)) {
         if (user && typeof user === 'object' && !user.deleted) {
-          // Ensure user has name
-          if (!user.name) {
-            user.name = 'User';
+          // Ensure user has name and it's a string
+          if (!user.name || typeof user.name !== 'string') {
+            if (typeof user.name === 'object' && user.name !== null) {
+              // Try to extract string from object (platform-specific text)
+              if (user.name.name && typeof user.name.name === 'string') {
+                user.name = user.name.name;
+              } else if (user.name.text && typeof user.name.text === 'string') {
+                user.name = user.name.text;
+              } else {
+                user.name = 'User';
+              }
+            } else {
+              user.name = 'User';
+            }
           }
           // Normalize icon field
           if (!user.icon) {
@@ -332,11 +383,15 @@ class ConflictResolver {
           if (!user.days || typeof user.days !== 'object') {
             user.days = {};
           }
-          
+
           // Ensure activities have required fields
           if (user.days) {
             for (const [dayKey, dayData] of Object.entries(user.days)) {
-              if (dayData && dayData.activities && Array.isArray(dayData.activities)) {
+              if (
+                dayData &&
+                dayData.activities &&
+                Array.isArray(dayData.activities)
+              ) {
                 dayData.activities = dayData.activities.map(activity => {
                   if (activity && typeof activity === 'object') {
                     // Ensure completed field exists
@@ -356,22 +411,26 @@ class ConflictResolver {
         }
       }
     }
-    
+
     // Ensure currentUser is valid
     if (newState.users) {
       const currentUserData = newState.users[newState.currentUser];
-      
+
       // Check if currentUser exists and is not deleted
-      if (!newState.currentUser || !currentUserData || currentUserData.deleted) {
+      if (
+        !newState.currentUser ||
+        !currentUserData ||
+        currentUserData.deleted
+      ) {
         if (newState.currentUser) {
         } else {
         }
-        
+
         // Find a valid user to set as current
-        const validUserIds = Object.keys(newState.users).filter(id => 
-          newState.users[id] && !newState.users[id].deleted
+        const validUserIds = Object.keys(newState.users).filter(
+          id => newState.users[id] && !newState.users[id].deleted,
         );
-        
+
         if (validUserIds.length > 0) {
           newState.currentUser = validUserIds[0];
         } else {
@@ -380,44 +439,73 @@ class ConflictResolver {
           newState.users[defaultUserId] = {
             name: 'User',
             icon: '👤',
-            days: {}
+            days: {},
           };
           newState.currentUser = defaultUserId;
         }
       }
     }
-    
+
     // DISABLED: Normalization was stripping critical fields
     // newState = normalizeSyncData(newState) || newState;
-    
+
     // Validate the final state
     if (!validateSyncedData(newState)) {
-      console.error('Conflict resolution resulted in invalid state, attempting repair');
-      console.error('newState.users:', JSON.stringify(newState.users, null, 2));
+      console.error(
+        'Conflict resolution resulted in invalid state, attempting repair',
+      );
+      // Log specific validation failures
+      console.error('Validation failed - checking each user:');
+      if (newState.users) {
+        Object.entries(newState.users).forEach(([userId, user]) => {
+          if (user && !user.deleted) {
+            console.error(`User ${userId}:`, {
+              hasName: !!user.name,
+              nameType: typeof user.name,
+              nameValue: user.name,
+              hasIcon: !!user.icon,
+              hasEmoji: !!user.emoji,
+              iconValue: user.icon,
+              emojiValue: user.emoji,
+              hasDays: !!user.days,
+              daysType: typeof user.days,
+            });
+          }
+        });
+      }
       console.error('newState.currentUser:', newState.currentUser);
-      
+
       // Try to repair the state
       const repairedState = repairSyncedData(newState);
-      
+
       if (!validateSyncedData(repairedState)) {
         console.error('Conflict resolution repair failed, state still invalid');
         // Log more details for debugging
-        console.error('Current state users:', JSON.stringify(currentState.users, null, 2));
+        console.error(
+          'Current state users:',
+          JSON.stringify(currentState.users, null, 2),
+        );
         console.error('Current state currentUser:', currentState.currentUser);
         console.error('Resolutions applied:', resolutions);
-        console.error('Failed state users:', JSON.stringify(newState.users, null, 2));
+        console.error(
+          'Failed state users:',
+          JSON.stringify(newState.users, null, 2),
+        );
         console.error('Failed state currentUser:', newState.currentUser);
-        console.error('Repaired state users:', JSON.stringify(repairedState.users, null, 2));
+        console.error(
+          'Repaired state users:',
+          JSON.stringify(repairedState.users, null, 2),
+        );
         console.error('Repaired state currentUser:', repairedState.currentUser);
-        
+
         // Instead of throwing, return the current state as fallback
         console.error('Falling back to current state to prevent sync failure');
         return currentState;
       }
-      
-            return repairedState;
+
+      return repairedState;
     }
-    
+
     return newState;
   }
 
@@ -432,11 +520,13 @@ class ConflictResolver {
    * Resolve a pending conflict with user choice
    */
   resolveUserConflict(conflictId, choice) {
-    const conflictIndex = this.pendingConflicts.findIndex(c => c.id === conflictId);
+    const conflictIndex = this.pendingConflicts.findIndex(
+      c => c.id === conflictId,
+    );
     if (conflictIndex === -1) {
       throw new Error('Conflict not found');
     }
-    
+
     const conflict = this.pendingConflicts[conflictIndex];
     const resolution = {
       conflictId: conflict.id,
@@ -445,20 +535,20 @@ class ConflictResolver {
       resolvedAt: Date.now(),
       requiresUserInput: false,
       userChoice: choice,
-      resolvedValue: conflict[choice + 'Value']
+      resolvedValue: conflict[choice + 'Value'],
     };
-    
+
     // Remove from pending
     this.pendingConflicts.splice(conflictIndex, 1);
-    
+
     // Add to history
     this.conflictHistory.push(resolution);
-    
+
     // Notify callback if set
     if (this.resolveCallback) {
       this.resolveCallback(resolution);
     }
-    
+
     return resolution;
   }
 
@@ -491,20 +581,22 @@ class ConflictResolver {
       total: conflicts.length,
       byField: {},
       byType: {},
-      byStrategy: {}
+      byStrategy: {},
     };
-    
+
     for (const conflict of conflicts) {
       // Count by field
-      summary.byField[conflict.field] = (summary.byField[conflict.field] || 0) + 1;
-      
+      summary.byField[conflict.field] =
+        (summary.byField[conflict.field] || 0) + 1;
+
       // Count by type
       summary.byType[conflict.type] = (summary.byType[conflict.type] || 0) + 1;
-      
+
       // Count by strategy
-      summary.byStrategy[conflict.strategy] = (summary.byStrategy[conflict.strategy] || 0) + 1;
+      summary.byStrategy[conflict.strategy] =
+        (summary.byStrategy[conflict.strategy] || 0) + 1;
     }
-    
+
     return summary;
   }
 
@@ -513,15 +605,18 @@ class ConflictResolver {
    */
   mergeUsersPreservingCompleted(localUsers, remoteUsers) {
     const mergedUsers = {};
-    
+
     // Process all users from both local and remote - NO DEDUPLICATION
     // Users should be unique by ID, not by name+icon
-    const allUserIds = new Set([...Object.keys(localUsers), ...Object.keys(remoteUsers)]);
-    
+    const allUserIds = new Set([
+      ...Object.keys(localUsers),
+      ...Object.keys(remoteUsers),
+    ]);
+
     allUserIds.forEach(userId => {
       const localUser = localUsers[userId];
       const remoteUser = remoteUsers[userId];
-      
+
       // Handle deletion conflicts
       if (localUser?.deleted && remoteUser?.deleted) {
         // Both deleted - use the one with the later deletion timestamp
@@ -534,7 +629,8 @@ class ConflictResolver {
         // Only local deleted - check if deletion is newer than remote update
         if (remoteUser && !remoteUser.deleted) {
           // If local deletion is recent (within last 30 seconds), keep the deletion
-          const recentDeletion = (Date.now() - (localUser.deletedAt || 0)) < 30000;
+          const recentDeletion =
+            Date.now() - (localUser.deletedAt || 0) < 30000;
           if (recentDeletion) {
             mergedUsers[userId] = localUser; // Keep the deletion
           } else {
@@ -547,7 +643,8 @@ class ConflictResolver {
         // Only remote deleted
         if (localUser && !localUser.deleted) {
           // If remote deletion is recent, respect it
-          const recentDeletion = (Date.now() - (remoteUser.deletedAt || 0)) < 30000;
+          const recentDeletion =
+            Date.now() - (remoteUser.deletedAt || 0) < 30000;
           if (recentDeletion) {
             mergedUsers[userId] = remoteUser; // Keep the deletion
           } else {
@@ -567,24 +664,24 @@ class ConflictResolver {
         } else {
           // User exists in both - merge while preserving completed states
           mergedUsers[userId] = JSON.parse(JSON.stringify(remoteUser));
-          
+
           // Preserve icon field if missing in remote but present in local
           if (!mergedUsers[userId].icon && localUser.icon) {
             mergedUsers[userId].icon = localUser.icon;
           }
-          
+
           const localUserDays = localUser.days || {};
           const mergedUserDays = mergedUsers[userId].days || {};
-          
+
           Object.keys(localUserDays).forEach(day => {
             const localActivities = localUserDays[day]?.activities || [];
-            
+
             if (!mergedUserDays[day]) {
               mergedUserDays[day] = { activities: [] };
             }
-            
+
             const mergedActivities = mergedUserDays[day].activities || [];
-            
+
             // Create a map of local completed activities
             const localCompletedMap = new Map();
             localActivities.forEach(activity => {
@@ -592,24 +689,24 @@ class ConflictResolver {
                 localCompletedMap.set(activity.id, true);
               }
             });
-            
+
             // Merge activities while handling deletions and completed states
             const activityMap = new Map();
-            
+
             // Add remote activities first (don't duplicate - use ID as key)
             mergedActivities.forEach(activity => {
               if (!activity.deleted) {
                 activityMap.set(activity.id, { ...activity });
               }
             });
-            
+
             // Process local activities
             localActivities.forEach(localActivity => {
               const remoteActivity = activityMap.get(localActivity.id);
-              
+
               if (localActivity.deleted) {
                 // If locally deleted recently, remove from map
-                if ((Date.now() - (localActivity.deletedAt || 0)) < 30000) {
+                if (Date.now() - (localActivity.deletedAt || 0) < 30000) {
                   activityMap.delete(localActivity.id);
                 }
                 // Otherwise, if remote has it non-deleted, keep remote version (already in map)
@@ -618,32 +715,59 @@ class ConflictResolver {
                 activityMap.set(localActivity.id, localActivity);
               } else {
                 // Activity exists in both - merge states (prefer newer data)
-                
+
                 // Determine which version has newer text/icon changes based on modifiedAt timestamp
                 let baseActivity;
-                const localModified = localActivity.modifiedAt || localActivity.lastModified || 0;
-                const remoteModified = remoteActivity.modifiedAt || remoteActivity.lastModified || 0;
-                
+                const localModified =
+                  localActivity.modifiedAt || localActivity.lastModified || 0;
+                const remoteModified =
+                  remoteActivity.modifiedAt || remoteActivity.lastModified || 0;
+
                 if (localModified > remoteModified) {
                   // Local has newer changes - use local as base for non-completion fields
-                  const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanLocal } = localActivity;
+                  const {
+                    completedAt,
+                    completedBy,
+                    uncompletedAt,
+                    uncompletedBy,
+                    completed,
+                    ...cleanLocal
+                  } = localActivity;
                   baseActivity = cleanLocal;
                 } else if (remoteModified > localModified) {
                   // Remote has newer changes - use remote as base for non-completion fields
-                  const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanRemote } = remoteActivity;
+                  const {
+                    completedAt,
+                    completedBy,
+                    uncompletedAt,
+                    uncompletedBy,
+                    completed,
+                    ...cleanRemote
+                  } = remoteActivity;
                   baseActivity = cleanRemote;
                 } else {
                   // Same timestamp or both missing - prefer local (current state)
-                  const { completedAt, completedBy, uncompletedAt, uncompletedBy, completed, ...cleanLocal } = localActivity;
+                  const {
+                    completedAt,
+                    completedBy,
+                    uncompletedAt,
+                    uncompletedBy,
+                    completed,
+                    ...cleanLocal
+                  } = localActivity;
                   baseActivity = cleanLocal;
                 }
-                
+
                 const merged = { ...baseActivity, completed: false }; // Default to incomplete
-                
+
                 // Handle completion state based on timestamps
                 // Compare all timestamp types to determine the most recent action
-                const localTimestamp = localActivity.completedAt || localActivity.uncompletedAt || 0;
-                const remoteTimestamp = remoteActivity.completedAt || remoteActivity.uncompletedAt || 0;
+                const localTimestamp =
+                  localActivity.completedAt || localActivity.uncompletedAt || 0;
+                const remoteTimestamp =
+                  remoteActivity.completedAt ||
+                  remoteActivity.uncompletedAt ||
+                  0;
 
                 // If both have completion timestamps, use the most recent one
                 if (localActivity.completedAt && remoteActivity.completedAt) {
@@ -658,10 +782,16 @@ class ConflictResolver {
                     merged.completedAt = remoteActivity.completedAt;
                     merged.completedBy = remoteActivity.completedBy;
                   }
-                } else if (localActivity.completedAt && !remoteActivity.completedAt) {
+                } else if (
+                  localActivity.completedAt &&
+                  !remoteActivity.completedAt
+                ) {
                   // Local has completion, remote doesn't
                   // Check if remote has uncompletedAt that's newer
-                  if (remoteActivity.uncompletedAt && remoteActivity.uncompletedAt > localActivity.completedAt) {
+                  if (
+                    remoteActivity.uncompletedAt &&
+                    remoteActivity.uncompletedAt > localActivity.completedAt
+                  ) {
                     // Remote uncompleted is newer
                     merged.completed = false;
                     merged.uncompletedAt = remoteActivity.uncompletedAt;
@@ -676,11 +806,20 @@ class ConflictResolver {
                     delete merged.uncompletedAt;
                     delete merged.uncompletedBy;
                   }
-                } else if (!localActivity.completedAt && remoteActivity.completedAt) {
+                } else if (
+                  !localActivity.completedAt &&
+                  remoteActivity.completedAt
+                ) {
                   // Only remote has completion timestamp - check if local explicitly uncompleted it
-                  if (localActivity.completed === false && remoteActivity.completed === true) {
+                  if (
+                    localActivity.completed === false &&
+                    remoteActivity.completed === true
+                  ) {
                     // Check if local has uncompletedAt timestamp
-                    if (localActivity.uncompletedAt && localActivity.uncompletedAt > remoteActivity.completedAt) {
+                    if (
+                      localActivity.uncompletedAt &&
+                      localActivity.uncompletedAt > remoteActivity.completedAt
+                    ) {
                       // Local uncompleted action is newer than remote completion
                       merged.completed = false;
                       merged.uncompletedAt = localActivity.uncompletedAt;
@@ -703,7 +842,7 @@ class ConflictResolver {
                   // Neither has completion timestamp - check for uncompleted timestamps
                   const localUncompletedAt = localActivity.uncompletedAt || 0;
                   const remoteUncompletedAt = remoteActivity.uncompletedAt || 0;
-                  
+
                   if (localUncompletedAt > remoteUncompletedAt) {
                     // Local uncompleted is newer
                     merged.completed = false;
@@ -724,7 +863,8 @@ class ConflictResolver {
                     if (localActivity.completed && !localActivity.completedAt) {
                       // Add timestamp if missing (for backwards compatibility)
                       merged.completedAt = Date.now();
-                      merged.completedBy = localActivity.completedBy || 'unknown';
+                      merged.completedBy =
+                        localActivity.completedBy || 'unknown';
                       delete merged.uncompletedAt;
                       delete merged.uncompletedBy;
                     } else if (!localActivity.completed) {
@@ -742,7 +882,7 @@ class ConflictResolver {
                 // Handle deletion conflicts
                 if (remoteActivity.deleted && !localActivity.deleted) {
                   // Remote deleted but local is active
-                  if ((Date.now() - (remoteActivity.deletedAt || 0)) < 30000) {
+                  if (Date.now() - (remoteActivity.deletedAt || 0) < 30000) {
                     // Recent remote deletion - respect it
                     activityMap.delete(localActivity.id);
                   } else {
@@ -757,22 +897,24 @@ class ConflictResolver {
                 }
               }
             });
-            
+
             mergedUserDays[day].activities = Array.from(activityMap.values());
           });
-          
+
           // Add any days that exist only locally
           Object.keys(localUserDays).forEach(day => {
             if (!mergedUserDays[day]) {
-              mergedUserDays[day] = JSON.parse(JSON.stringify(localUserDays[day]));
+              mergedUserDays[day] = JSON.parse(
+                JSON.stringify(localUserDays[day]),
+              );
             }
           });
-          
+
           mergedUsers[userId].days = mergedUserDays;
         }
       }
     });
-    
+
     // Return merged users directly - no deduplication needed
     return mergedUsers;
   }

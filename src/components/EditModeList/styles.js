@@ -6,10 +6,10 @@ const baseStyles = {
     paddingVertical: 8,
     paddingHorizontal: Platform.select({
       web: 16,
-      default: 0
+      default: 0,
     }),
   },
-  
+
   listItem: {
     backgroundColor: '#fff',
     marginHorizontal: 8,
@@ -31,28 +31,28 @@ const baseStyles = {
       },
       web: {
         boxShadow: '0 1px 3px rgba(0,0,0,0.1)',
-      }
-    })
+      },
+    }),
   },
-  
+
   contentRow: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
   },
-  
+
   emoji: {
     fontSize: Platform.select({
       web: 28,
-      default: 24
+      default: 24,
     }),
     marginRight: 12,
   },
-  
+
   textContent: {
     flex: 1,
   },
-  
+
   title: {
     fontSize: 16,
     fontFamily: 'ComicRelief',
@@ -60,36 +60,36 @@ const baseStyles = {
     fontWeight: Platform.select({
       ios: '700',
       android: '800',
-      web: '600'
+      web: '600',
     }),
   },
-  
+
   description: {
     fontSize: 14,
     fontFamily: 'ComicRelief',
     color: '#666',
     marginTop: 2,
   },
-  
+
   positionText: {
     fontSize: 12,
     fontFamily: 'ComicRelief',
     color: '#999',
     marginLeft: 8,
   },
-  
+
   actionsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingTop: 8,
   },
-  
+
   reorderButtons: {
     flexDirection: 'row',
     gap: 4,
   },
-  
+
   reorderButton: {
     padding: 4,
     borderRadius: 4,
@@ -98,12 +98,12 @@ const baseStyles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   actionButtons: {
     flexDirection: 'row',
     gap: 8,
   },
-  
+
   actionButton: {
     padding: 4,
     borderRadius: 4,
@@ -112,7 +112,7 @@ const baseStyles = {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  
+
   actionCircle: {
     width: 32,
     height: 32,
@@ -134,19 +134,19 @@ const baseStyles = {
       },
       web: {
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      }
-    })
+      },
+    }),
   },
-  
+
   disabledCircle: {
     opacity: 0.5,
   },
-  
+
   bookmarkAdded: {
     borderWidth: 0,
     // backgroundColor set dynamically via inline style (theme.primary)
   },
-  
+
   completionCircle: {
     width: 32,
     height: 32,
@@ -168,29 +168,29 @@ const baseStyles = {
       },
       web: {
         boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      }
-    })
+      },
+    }),
   },
-  
+
   completionCircleCompleted: {
     borderWidth: 0,
     // backgroundColor is set dynamically via inline style (theme.primary)
   },
-  
+
   checkmark: {
     color: 'white',
     fontSize: 18,
     fontWeight: 'bold',
     fontFamily: 'ComicRelief',
   },
-  
+
   checkmarkIncomplete: {
     // color will be set dynamically to theme.primary
   },
-  
+
   disabled: {
     opacity: 0.5,
-  }
+  },
 };
 
 export const styles = StyleSheet.create(baseStyles);
@@ -249,6 +249,6 @@ export const getTabletStyles = () => {
     checkmark: {
       ...baseStyles.checkmark,
       fontSize: 20,
-    }
+    },
   });
 };

@@ -81,7 +81,7 @@ class SyncQueue {
       attempts: 0,
       lastAttempt: null,
       error: null,
-      state: useAppStore.getState() // Capture current state
+      state: useAppStore.getState(), // Capture current state
     };
 
     // Add to queue
@@ -106,9 +106,8 @@ class SyncQueue {
    * @returns Array of pending queue items
    */
   getPending(): QueueItem[] {
-    return this.queue.filter(item => 
-      item.attempts < MAX_RETRY_ATTEMPTS && 
-      !item.completed
+    return this.queue.filter(
+      item => item.attempts < MAX_RETRY_ATTEMPTS && !item.completed,
     );
   }
 
@@ -117,9 +116,8 @@ class SyncQueue {
    * @returns Array of failed queue items
    */
   getFailed(): QueueItem[] {
-    return this.queue.filter(item => 
-      item.attempts >= MAX_RETRY_ATTEMPTS && 
-      !item.completed
+    return this.queue.filter(
+      item => item.attempts >= MAX_RETRY_ATTEMPTS && !item.completed,
     );
   }
 
@@ -138,7 +136,7 @@ class SyncQueue {
     try {
       // Get items that can be retried
       const pending = this.getPending();
-      
+
       for (const item of pending) {
         try {
           // Check if we should retry based on backoff
@@ -149,17 +147,16 @@ class SyncQueue {
           // Update attempt info
           item.attempts++;
           item.lastAttempt = Date.now();
-          
+
           // Attempt sync
           await syncService.sync();
-          
+
           // Mark as completed
           item.completed = true;
           item.error = null;
-
         } catch (error: any) {
           item.error = error.message || 'Sync failed';
-          
+
           // If it's a network error, we'll retry later
           if (this.isNetworkError(error)) {
             // Network error - will retry with backoff
@@ -169,13 +166,12 @@ class SyncQueue {
 
       // Remove completed items
       this.queue = this.queue.filter(item => !item.completed);
-      
+
       // Persist changes
       await this.persist();
-      
+
       // Notify listeners
       this.notifyListeners();
-      
     } finally {
       this.isProcessing = false;
     }
@@ -188,12 +184,12 @@ class SyncQueue {
    */
   shouldRetry(item: QueueItem): boolean {
     if (item.attempts === 0) return true;
-    
+
     const backoffMs = Math.min(
       1000 * Math.pow(2, item.attempts - 1), // Exponential backoff
-      300000 // Max 5 minutes
+      300000, // Max 5 minutes
     );
-    
+
     const timeSinceLastAttempt = Date.now() - (item.lastAttempt || 0);
     return timeSinceLastAttempt >= backoffMs;
   }
@@ -212,11 +208,11 @@ class SyncQueue {
       'NetworkError',
       'ECONNREFUSED',
       'ETIMEDOUT',
-      'ENETUNREACH'
+      'ENETUNREACH',
     ];
-    
-    return networkErrors.some(keyword => 
-      message.toLowerCase().includes(keyword.toLowerCase())
+
+    return networkErrors.some(keyword =>
+      message.toLowerCase().includes(keyword.toLowerCase()),
     );
   }
 
@@ -233,8 +229,8 @@ class SyncQueue {
    * Clear failed items from the queue
    */
   async clearFailed(): Promise<void> {
-    this.queue = this.queue.filter(item => 
-      item.attempts < MAX_RETRY_ATTEMPTS || item.completed
+    this.queue = this.queue.filter(
+      item => item.attempts < MAX_RETRY_ATTEMPTS || item.completed,
     );
     await this.persist();
     this.notifyListeners();
@@ -297,14 +293,14 @@ class SyncQueue {
   getStatus(): QueueStatus {
     const pending = this.getPending();
     const failed = this.getFailed();
-    
+
     return {
       pending: pending.length,
       failed: failed.length,
       total: this.queue.length,
       isProcessing: this.isProcessing,
       oldestPending: pending[0]?.timestamp,
-      items: this.queue
+      items: this.queue,
     };
   }
 }

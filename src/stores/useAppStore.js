@@ -18,7 +18,7 @@ const useAppStore = create(
       currentUser: useUserStore.getState().currentUser,
       currentDay: useUserStore.getState().currentDay,
       userContextData: useUserStore.getState().userContextData,
-      
+
       currentTheme: useSettingsStore.getState().currentTheme,
       bannerPosition: useSettingsStore.getState().bannerPosition,
       soundEnabled: useSettingsStore.getState().soundEnabled,
@@ -26,21 +26,22 @@ const useAppStore = create(
       routineCelebration: useSettingsStore.getState().routineCelebration,
       displayMode: useSettingsStore.getState().displayMode,
       dayMode: useSettingsStore.getState().dayMode,
-      hasCompletedOnboarding: useSettingsStore.getState().hasCompletedOnboarding,
+      hasCompletedOnboarding:
+        useSettingsStore.getState().hasCompletedOnboarding,
       toolbarOrder: useSettingsStore.getState().toolbarOrder,
       moreButtonPosition: useSettingsStore.getState().moreButtonPosition,
-      
+
       libraryTemplates: useLibraryStore.getState().libraryTemplates,
       library: useLibraryStore.getState().library,
-      
+
       syncEnabled: useSyncStore.getState().syncEnabled,
       syncStatus: useSyncStore.getState().syncStatus,
       syncId: useSyncStore.getState().syncId,
       lastSync: useSyncStore.getState().lastSync,
       syncError: useSyncStore.getState().syncError,
-      
+
       // Activities are stored per user/day - provide a getter
-      get activities() { 
+      get activities() {
         const state = useUserStore.getState();
         const user = state.users[state.currentUser];
         if (!user || !user.days || !user.days[state.currentDay]) {
@@ -48,112 +49,159 @@ const useAppStore = create(
         }
         return user.days[state.currentDay].activities || [];
       },
-      
+
       // Re-export all actions from sub-stores
-      setUsers: (users) => useUserStore.getState().setUsers(users),
-      setCurrentUser: (userId) => useUserStore.getState().setCurrentUser(userId),
-      setCurrentDay: (day) => useUserStore.getState().setCurrentDay(day),
-      setUserContextData: (data) => useUserStore.getState().setUserContextData(data),
+      setUsers: users => useUserStore.getState().setUsers(users),
+      setCurrentUser: userId => useUserStore.getState().setCurrentUser(userId),
+      setCurrentDay: day => useUserStore.getState().setCurrentDay(day),
+      setUserContextData: data =>
+        useUserStore.getState().setUserContextData(data),
       addUser: (userId, user) => useUserStore.getState().addUser(userId, user),
-      updateUser: (userId, updates) => useUserStore.getState().updateUser(userId, updates),
-      deleteUser: (userId) => useUserStore.getState().deleteUser(userId),
-      addUserActivityToLibrary: (activity) => useUserStore.getState().addUserActivityToLibrary(activity),
-      
-      setCurrentTheme: (theme) => useSettingsStore.getState().setCurrentTheme(theme),
-      setBannerPosition: (position) => useSettingsStore.getState().setBannerPosition(position),
-      setSoundEnabled: (enabled) => useSettingsStore.getState().setSoundEnabled(enabled),
-      setTaskCelebration: (celebration) => useSettingsStore.getState().setTaskCelebration(celebration),
-      setRoutineCelebration: (celebration) => useSettingsStore.getState().setRoutineCelebration(celebration),
-      setDisplayMode: (mode) => useSettingsStore.getState().setDisplayMode(mode),
-      setDayMode: (mode) => useSettingsStore.getState().setDayMode(mode),
-      setHasCompletedOnboarding: (completed) => useSettingsStore.getState().setHasCompletedOnboarding(completed),
-      setToolbarOrder: (order) => useSettingsStore.getState().setToolbarOrder(order),
-      setMoreButtonPosition: (position) => useSettingsStore.getState().setMoreButtonPosition(position),
-      updateSettings: (settings) => useSettingsStore.getState().updateSettings(settings),
-      
-      setLibraryTemplates: (templates) => useLibraryStore.getState().setLibraryTemplates(templates),
-      setLibrary: (library) => useLibraryStore.getState().setLibrary(library),
-      updateLibraryCategories: (categories) => useLibraryStore.getState().updateLibraryCategories(categories),
-      addUserActivityId: (activityId) => useLibraryStore.getState().addUserActivityId(activityId),
-      removeUserActivityId: (activityId) => useLibraryStore.getState().removeUserActivityId(activityId),
-      addTemplate: (template) => useLibraryStore.getState().addTemplate(template),
-      updateTemplate: (templateId, updates) => useLibraryStore.getState().updateTemplate(templateId, updates),
-      deleteTemplate: (templateId) => useLibraryStore.getState().deleteTemplate(templateId),
-      
-      setSyncEnabled: (enabled) => useSyncStore.getState().setSyncEnabled(enabled),
-      setSyncStatus: (status) => useSyncStore.getState().setSyncStatus(status),
-      setSyncId: (id) => useSyncStore.getState().setSyncId(id),
-      setLastSync: (timestamp) => useSyncStore.getState().setLastSync(timestamp),
-      setSyncError: (error) => useSyncStore.getState().setSyncError(error),
-      updateSyncState: (updates) => useSyncStore.getState().updateSyncState(updates),
+      updateUser: (userId, updates) =>
+        useUserStore.getState().updateUser(userId, updates),
+      deleteUser: userId => useUserStore.getState().deleteUser(userId),
+      addUserActivityToLibrary: activity =>
+        useUserStore.getState().addUserActivityToLibrary(activity),
+
+      setCurrentTheme: theme =>
+        useSettingsStore.getState().setCurrentTheme(theme),
+      setBannerPosition: position =>
+        useSettingsStore.getState().setBannerPosition(position),
+      setSoundEnabled: enabled =>
+        useSettingsStore.getState().setSoundEnabled(enabled),
+      setTaskCelebration: celebration =>
+        useSettingsStore.getState().setTaskCelebration(celebration),
+      setRoutineCelebration: celebration =>
+        useSettingsStore.getState().setRoutineCelebration(celebration),
+      setDisplayMode: mode => useSettingsStore.getState().setDisplayMode(mode),
+      setDayMode: mode => useSettingsStore.getState().setDayMode(mode),
+      setHasCompletedOnboarding: completed =>
+        useSettingsStore.getState().setHasCompletedOnboarding(completed),
+      setToolbarOrder: order =>
+        useSettingsStore.getState().setToolbarOrder(order),
+      setMoreButtonPosition: position =>
+        useSettingsStore.getState().setMoreButtonPosition(position),
+      updateSettings: settings =>
+        useSettingsStore.getState().updateSettings(settings),
+
+      setLibraryTemplates: templates =>
+        useLibraryStore.getState().setLibraryTemplates(templates),
+      setLibrary: library => useLibraryStore.getState().setLibrary(library),
+      updateLibraryCategories: categories =>
+        useLibraryStore.getState().updateLibraryCategories(categories),
+      addUserActivityId: activityId =>
+        useLibraryStore.getState().addUserActivityId(activityId),
+      removeUserActivityId: activityId =>
+        useLibraryStore.getState().removeUserActivityId(activityId),
+      addTemplate: template => useLibraryStore.getState().addTemplate(template),
+      updateTemplate: (templateId, updates) =>
+        useLibraryStore.getState().updateTemplate(templateId, updates),
+      deleteTemplate: templateId =>
+        useLibraryStore.getState().deleteTemplate(templateId),
+
+      setSyncEnabled: enabled =>
+        useSyncStore.getState().setSyncEnabled(enabled),
+      setSyncStatus: status => useSyncStore.getState().setSyncStatus(status),
+      setSyncId: id => useSyncStore.getState().setSyncId(id),
+      setLastSync: timestamp => useSyncStore.getState().setLastSync(timestamp),
+      setSyncError: error => useSyncStore.getState().setSyncError(error),
+      updateSyncState: updates =>
+        useSyncStore.getState().updateSyncState(updates),
       clearSyncState: () => useSyncStore.getState().clearSyncState(),
-      
+
       // Activities setter (for compatibility)
-      setActivities: (activities) => {
+      setActivities: activities => {
         const state = useUserStore.getState();
         if (!state.currentUser) return;
-        
+
         useUserStore.getState().updateUser(state.currentUser, {
           dayToUpdate: state.currentDay,
           days: {
             [state.currentDay]: {
-              activities
-            }
-          }
+              activities,
+            },
+          },
         });
       },
-      
+
       // Update activities for a specific user/day
       updateUserActivities: (userId, day, activities) => {
         useUserStore.getState().updateUser(userId, {
           dayToUpdate: day,
           days: {
             [day]: {
-              activities
-            }
-          }
+              activities,
+            },
+          },
         });
       },
-      
+
       // Batch state updates (used by sync)
-      setState: (updates) => {
+      setState: updates => {
         // Split updates into appropriate stores
-        const { 
-          users, currentUser, currentDay, userContextData,
-          currentTheme, bannerPosition, soundEnabled, taskCelebration, routineCelebration,
-          displayMode, dayMode, hasCompletedOnboarding, toolbarOrder, moreButtonPosition,
-          libraryTemplates, library,
-          syncEnabled, syncStatus, syncId, lastSync, syncError,
+        const {
+          users,
+          currentUser,
+          currentDay,
+          userContextData,
+          currentTheme,
+          bannerPosition,
+          soundEnabled,
+          taskCelebration,
+          routineCelebration,
+          displayMode,
+          dayMode,
+          hasCompletedOnboarding,
+          toolbarOrder,
+          moreButtonPosition,
+          libraryTemplates,
+          library,
+          syncEnabled,
+          syncStatus,
+          syncId,
+          lastSync,
+          syncError,
           activities,
-          ...rest 
+          ...rest
         } = updates;
-        
+
         // Update user store
         if (users !== undefined) useUserStore.setState({ users });
         if (currentUser !== undefined) useUserStore.setState({ currentUser });
         if (currentDay !== undefined) useUserStore.setState({ currentDay });
-        if (userContextData !== undefined) useUserStore.setState({ userContextData });
-        
+        if (userContextData !== undefined)
+          useUserStore.setState({ userContextData });
+
         // Update settings store
         const settingsUpdates = {};
-        if (currentTheme !== undefined) settingsUpdates.currentTheme = currentTheme;
-        if (bannerPosition !== undefined) settingsUpdates.bannerPosition = bannerPosition;
-        if (soundEnabled !== undefined) settingsUpdates.soundEnabled = soundEnabled;
-        if (taskCelebration !== undefined) settingsUpdates.taskCelebration = taskCelebration;
-        if (routineCelebration !== undefined) settingsUpdates.routineCelebration = routineCelebration;
-        if (displayMode !== undefined) settingsUpdates.displayMode = displayMode;
+        if (currentTheme !== undefined)
+          settingsUpdates.currentTheme = currentTheme;
+        if (bannerPosition !== undefined)
+          settingsUpdates.bannerPosition = bannerPosition;
+        if (soundEnabled !== undefined)
+          settingsUpdates.soundEnabled = soundEnabled;
+        if (taskCelebration !== undefined)
+          settingsUpdates.taskCelebration = taskCelebration;
+        if (routineCelebration !== undefined)
+          settingsUpdates.routineCelebration = routineCelebration;
+        if (displayMode !== undefined)
+          settingsUpdates.displayMode = displayMode;
         if (dayMode !== undefined) settingsUpdates.dayMode = dayMode;
-        if (hasCompletedOnboarding !== undefined) settingsUpdates.hasCompletedOnboarding = hasCompletedOnboarding;
-        if (toolbarOrder !== undefined) settingsUpdates.toolbarOrder = toolbarOrder;
-        if (moreButtonPosition !== undefined) settingsUpdates.moreButtonPosition = moreButtonPosition;
+        if (hasCompletedOnboarding !== undefined)
+          settingsUpdates.hasCompletedOnboarding = hasCompletedOnboarding;
+        if (toolbarOrder !== undefined)
+          settingsUpdates.toolbarOrder = toolbarOrder;
+        if (moreButtonPosition !== undefined)
+          settingsUpdates.moreButtonPosition = moreButtonPosition;
         if (Object.keys(settingsUpdates).length > 0) {
           useSettingsStore.setState(settingsUpdates);
         }
-        
+
         // Update library store
-        if (libraryTemplates !== undefined) useLibraryStore.setState({ libraryTemplates });
+        if (libraryTemplates !== undefined)
+          useLibraryStore.setState({ libraryTemplates });
         if (library !== undefined) useLibraryStore.setState({ library });
-        
+
         // Update sync store
         const syncUpdates = {};
         if (syncEnabled !== undefined) syncUpdates.syncEnabled = syncEnabled;
@@ -164,7 +212,7 @@ const useAppStore = create(
         if (Object.keys(syncUpdates).length > 0) {
           useSyncStore.setState(syncUpdates);
         }
-        
+
         // Handle activities update
         if (activities !== undefined) {
           const userState = useUserStore.getState();
@@ -173,19 +221,19 @@ const useAppStore = create(
               dayToUpdate: userState.currentDay,
               days: {
                 [userState.currentDay]: {
-                  activities
-                }
-              }
+                  activities,
+                },
+              },
             });
           }
         }
-        
+
         // Log unhandled properties
         if (Object.keys(rest).length > 0) {
           console.warn('Unhandled state properties in setState:', rest);
         }
       },
-      
+
       // Get full state (for sync/export)
       getState: () => ({
         // User state
@@ -193,7 +241,7 @@ const useAppStore = create(
         currentUser: useUserStore.getState().currentUser,
         currentDay: useUserStore.getState().currentDay,
         userContextData: useUserStore.getState().userContextData,
-        
+
         // Settings state
         currentTheme: useSettingsStore.getState().currentTheme,
         bannerPosition: useSettingsStore.getState().bannerPosition,
@@ -202,21 +250,22 @@ const useAppStore = create(
         routineCelebration: useSettingsStore.getState().routineCelebration,
         displayMode: useSettingsStore.getState().displayMode,
         dayMode: useSettingsStore.getState().dayMode,
-        hasCompletedOnboarding: useSettingsStore.getState().hasCompletedOnboarding,
+        hasCompletedOnboarding:
+          useSettingsStore.getState().hasCompletedOnboarding,
         toolbarOrder: useSettingsStore.getState().toolbarOrder,
         moreButtonPosition: useSettingsStore.getState().moreButtonPosition,
-        
+
         // Library state
         libraryTemplates: useLibraryStore.getState().libraryTemplates,
         library: useLibraryStore.getState().library,
-        
+
         // Sync state
         syncEnabled: useSyncStore.getState().syncEnabled,
         syncStatus: useSyncStore.getState().syncStatus,
         syncId: useSyncStore.getState().syncId,
         lastSync: useSyncStore.getState().lastSync,
         syncError: useSyncStore.getState().syncError,
-        
+
         // Activities (derived from current user/day)
         activities: (() => {
           const state = useUserStore.getState();
@@ -227,14 +276,14 @@ const useAppStore = create(
           return user.days[state.currentDay].activities || [];
         })(),
       }),
-      
+
       // Subscribe to all stores for changes
-      subscribe: (callback) => {
+      subscribe: callback => {
         const unsubUser = useUserStore.subscribe(callback);
         const unsubSettings = useSettingsStore.subscribe(callback);
         const unsubLibrary = useLibraryStore.subscribe(callback);
         const unsubSync = useSyncStore.subscribe(callback);
-        
+
         // Return combined unsubscribe function
         return () => {
           unsubUser();
@@ -246,12 +295,12 @@ const useAppStore = create(
     }),
     {
       name: 'AppStore',
-    }
-  )
+    },
+  ),
 );
 
 // Subscribe to sub-stores to keep wrapper in sync
-useUserStore.subscribe((state) => {
+useUserStore.subscribe(state => {
   useAppStore.setState({
     users: state.users,
     currentUser: state.currentUser,
@@ -260,7 +309,7 @@ useUserStore.subscribe((state) => {
   });
 });
 
-useSettingsStore.subscribe((state) => {
+useSettingsStore.subscribe(state => {
   useAppStore.setState({
     currentTheme: state.currentTheme,
     bannerPosition: state.bannerPosition,
@@ -275,14 +324,14 @@ useSettingsStore.subscribe((state) => {
   });
 });
 
-useLibraryStore.subscribe((state) => {
+useLibraryStore.subscribe(state => {
   useAppStore.setState({
     libraryTemplates: state.libraryTemplates,
     library: state.library,
   });
 });
 
-useSyncStore.subscribe((state) => {
+useSyncStore.subscribe(state => {
   useAppStore.setState({
     syncEnabled: state.syncEnabled,
     syncStatus: state.syncStatus,
