@@ -1184,16 +1184,16 @@ const DataModal = ({
                 <View style={styles.importCategory}>
                   <Text style={styles.importCategoryTitle}>Activity Library</Text>
                   {importData.library.categories.map(category => (
-                    <View key={categoryId}>
+                    <View key={category.id}>
                       <TouchableOpacity
                         style={styles.importItem}
-                        onPress={() => toggleImportSelection(`category_${categoryId}`)}
+                        onPress={() => toggleImportSelection(`category_${category.id}`)}
                         activeOpacity={0.7}
                       >
                         <Icon 
-                          name={importSelections[`category_${categoryId}`] ? "check-box" : "check-box-outline-blank"} 
+                          name={importSelections[`category_${category.id}`] ? "check-box" : "check-box-outline-blank"} 
                           size={20} 
-                          color={importSelections[`category_${categoryId}`] ? theme.primary : '#999'} 
+                          color={importSelections[`category_${category.id}`] ? theme.primary : '#999'} 
                         />
                         <Icon name="folder" size={16} color="#666" style={{ marginLeft: 8 }} />
                         <Text style={styles.importItemText}>{category.name}</Text>
@@ -1335,7 +1335,7 @@ const DataModal = ({
           </View>
           <View style={styles.selectionCount}>
             <Text style={styles.countText}>
-              {activityCategories ? activityCategories.reduce((count, category) => 
+              {libraryCategories ? libraryCategories.reduce((count, category) => 
                 count + (category.activities?.length || 0), 0
               ) : 0}
             </Text>

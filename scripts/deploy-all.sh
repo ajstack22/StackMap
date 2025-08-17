@@ -102,6 +102,29 @@ echo ""
 # Run sanity checks before deployment
 echo "🔍 Running pre-deployment sanity checks..."
 
+# Check for TODO comments that might indicate incomplete work
+echo "- Checking for TODO/FIXME comments..."
+TODO_COUNT=$(grep -r "TODO\|FIXME\|XXX\|HACK" src/ --include="*.js" --include="*.ts" --include="*.tsx" 2>/dev/null | wc -l | tr -d ' ')
+if [ "$TODO_COUNT" -gt "0" ]; then
+    echo "⚠️  Found $TODO_COUNT TODO/FIXME comments - review before production deployment"
+fi
+
+# Check for Prettier formatting issues
+echo "- Running Prettier format check..."
+if command -v npx &> /dev/null && [ -f ".prettierrc.js" ]; then
+    npx prettier --check "src/**/*.{js,ts,tsx}" "App.js" 2>&1 | tee /tmp/prettier-output.txt
+    if grep -q "Checking formatting..." /tmp/prettier-output.txt && ! grep -q "All matched files use Prettier code style!" /tmp/prettier-output.txt; then
+        echo ""
+        echo "⚠️  Some files are not properly formatted!"
+        echo "Run 'npx prettier --write src/**/*.{js,ts,tsx} App.js' to fix formatting"
+        echo "Continuing deployment (formatting issues are non-blocking)..."
+    else
+        echo "✅ Prettier format check passed!"
+    fi
+else
+    echo "⚠️  Prettier check skipped (prettier not configured)"
+fi
+
 # Security audit
 echo "- Running security audit..."
 npm run security:audit || {
@@ -131,6 +154,20 @@ else
 fi
 
 # TypeScript check (if available)
+# Bundle size check (for web deployments)
+if [ "$DEPLOY_WEB" = true ] || [ "$DEPLOY_PROD" = true ]; then
+    echo "- Checking bundle size..."
+    if [ -f "web/build/bundle.js" ]; then
+        BUNDLE_SIZE=$(du -h web/build/bundle.js | cut -f1)
+        echo "  Bundle size: $BUNDLE_SIZE"
+        # Check if bundle is over 5MB (warning threshold)
+        BUNDLE_BYTES=$(du -b web/build/bundle.js | cut -f1)
+        if [ "$BUNDLE_BYTES" -gt "5242880" ]; then
+            echo "⚠️  Warning: Bundle size exceeds 5MB - consider code splitting"
+        fi
+    fi
+fi
+
 echo "- Running TypeScript checks..."
 if [ -f "tsconfig.json" ] && command -v npx &> /dev/null; then
     # Count critical type errors (exclude minor ones for gradual migration)
@@ -212,6 +249,24 @@ if [ "$SKIP_TESTS" = false ]; then
     CONSOLE_COUNT=$(grep -r "console\.log" src/ --include="*.js" --include="*.ts" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$CONSOLE_COUNT" -gt "100" ]; then
         echo "⚠️  Warning: $CONSOLE_COUNT console.log statements found"
+    fi
+    
+    # Test 4: Data structure validation
+    echo "- Validating data structure version..."
+    if grep -q "version: 3" App.js 2>/dev/null; then
+        echo "❌ Found version 3 references - must use version 4!"
+        exit 1
+    fi
+    if grep -q "version: 4" App.js 2>/dev/null; then
+        echo "✅ Data structure using version 4"
+    fi
+    
+    # Test 5: Check for duplicate package.json entries (common after merges)
+    echo "- Checking for duplicate dependencies..."
+    DUPLICATE_COUNT=$(cat package.json | grep -o '"[^"]*":' | sort | uniq -d | wc -l | tr -d ' ')
+    if [ "$DUPLICATE_COUNT" -gt "0" ]; then
+        echo "⚠️  Warning: Found duplicate entries in package.json"
+        echo "Run 'npm dedupe' to clean up"
     fi
     
     echo "✅ All essential tests passed!"
