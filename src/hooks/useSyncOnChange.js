@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useAppStore } from '../stores';
-import syncService from '../services/sync/syncService';
+import { useAppStore, useUserStore, useSettingsStore, useLibraryStore } from '../stores';
+import syncService from '../services/sync/syncServiceSimple';
 
 /**
  * Hook to automatically sync when store changes
@@ -9,23 +9,42 @@ export const useSyncOnChange = () => {
   const lastStateRef = useRef(null);
 
   useEffect(() => {
-    // Subscribe to specific state changes that should trigger sync
-    const unsubscribe = useAppStore.subscribe(state => {
+    // Subscribe to all relevant stores
+    const unsubscribeApp = useAppStore.subscribe(() => {
+      handleStateChange();
+    });
+    
+    const unsubscribeUser = useUserStore.subscribe(() => {
+      handleStateChange();
+    });
+    
+    const unsubscribeSettings = useSettingsStore.subscribe(() => {
+      handleStateChange();
+    });
+    
+    const unsubscribeLibrary = useLibraryStore.subscribe(() => {
+      handleStateChange();
+    });
+
+    function handleStateChange() {
       // Skip if sync is not enabled
       if (!syncService.syncEnabled) return;
 
-      // Get current state snapshot
+      // Get current state snapshot from all stores
+      const appState = useAppStore.getState();
+      const userState = useUserStore.getState();
+      const settingsState = useSettingsStore.getState();
+      const libraryState = useLibraryStore.getState();
+      
       const currentState = {
-        activities: state.activities,
-        users: state.users,
-        completedActivities: state.completedActivities,
-        currentUser: state.currentUser,
-        currentTheme: state.currentTheme,
-        bannerPosition: state.bannerPosition,
-        soundEnabled: state.soundEnabled,
-        taskCelebration: state.taskCelebration,
-        routineCelebration: state.routineCelebration,
-        currentDay: state.currentDay,
+        users: userState.users,
+        currentUser: userState.currentUser,
+        library: libraryState.library,
+        currentTheme: settingsState.currentTheme,
+        bannerPosition: settingsState.bannerPosition,
+        soundEnabled: settingsState.soundEnabled,
+        taskCelebration: settingsState.taskCelebration,
+        routineCelebration: settingsState.routineCelebration,
       };
 
       // Check if state actually changed
@@ -38,26 +57,24 @@ export const useSyncOnChange = () => {
           usersChanged:
             JSON.stringify(lastStateRef.current.users) !==
             JSON.stringify(currentState.users),
-          activitiesChanged:
-            JSON.stringify(lastStateRef.current.activities) !==
-            JSON.stringify(currentState.activities),
+          libraryChanged:
+            JSON.stringify(lastStateRef.current.library) !==
+            JSON.stringify(currentState.library),
           syncEnabled: syncService.syncEnabled,
         });
 
-        // Request debounced sync
-        syncService
-          .requestSync({
-            priority: 'normal',
-            immediate: false,
-          })
-          .catch(error => {
-            console.error('[useSyncOnChange] Sync request failed:', error);
-          });
+        // Request debounced sync (simpler API)
+        syncService.requestSync();
       }
 
       lastStateRef.current = currentState;
-    });
+    }
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeApp();
+      unsubscribeUser();
+      unsubscribeSettings();
+      unsubscribeLibrary();
+    };
   }, []);
 };

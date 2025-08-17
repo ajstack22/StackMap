@@ -18,7 +18,7 @@ import ConfirmModal from '../ConfirmModal';
 import { TabbedModal, TabContent } from '../../../components';
 import { FormInput, ModalFooter, ModalButton } from '../../ModalUtilities';
 import SyncStatusIndicator from '../../SyncStatusIndicator';
-import syncService from '../../../services/sync/syncService';
+import syncService from '../../../services/sync/syncServiceSimple';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
 // Normalization removed - v3 support discontinued

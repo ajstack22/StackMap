@@ -11,7 +11,7 @@ import {
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { styles } from './styles';
-import syncService from '../../../services/sync/syncService';
+import syncService from '../../../services/sync/syncServiceSimple';
 import encryptionService from '../../../services/sync/encryptionService';
 
 const SyncPreviewModal = ({
