@@ -130,7 +130,11 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
   // Use unicode if we have it, otherwise use ligature
   const iconContent = iconMap[name] || iconName;
 
-  return <span style={iconStyle}>{iconContent}</span>;
+  // CRITICAL: Must use Text from react-native-web, not span!
+  // Using span causes React error 130 when used inside React Native components
+  const Text = require('react-native').Text;
+  
+  return <Text style={iconStyle}>{iconContent}</Text>;
 };
 
 // Export Icon as default to match react-native-vector-icons/MaterialIcons import pattern

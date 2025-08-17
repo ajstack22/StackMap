@@ -135,6 +135,15 @@ if (syncService) {
   console.log('[App] Sync service methods:', Object.keys(syncService).filter(k => typeof syncService[k] === 'function').slice(0, 5));
 }
 
+// Debug: Check localStorage directly
+if (typeof window !== 'undefined' && window.localStorage) {
+  console.warn('[App] 🔍 LocalStorage sync keys:', {
+    syncEnabled: localStorage.getItem('@sync_enabled'),
+    syncId: localStorage.getItem('@sync_id') ? localStorage.getItem('@sync_id').substring(0, 8) + '...' : null,
+    hasRecoveryPhrase: !!localStorage.getItem('@recovery_phrase_28c5c1fc531586ec06698741889f03e7')
+  });
+}
+
 // Import utilities
 import {
   setSecurePin,
