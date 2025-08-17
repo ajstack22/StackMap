@@ -187,9 +187,9 @@ class SyncService {
   private _lastShareKeyBytes: Uint8Array | null = null;
 
   constructor() {
-    console.log('[Sync] ============================================');
-    console.log('[Sync] SyncService constructor initializing...');
-    console.log('[Sync] ============================================');
+    console.warn('[Sync] ============================================');
+    console.warn('[Sync] SyncService constructor initializing...');
+    console.warn('[Sync] ============================================');
     
     // Initialize network monitoring (now safely disabled internally for iOS)
     networkMonitor.start();
@@ -212,7 +212,7 @@ class SyncService {
       // Sync when tab becomes visible (e.g., after computer wakes from sleep)
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && this.syncEnabled) {
-          console.log('sync: Tab became visible, triggering sync');
+          console.warn('sync: Tab became visible, triggering sync');
           // Reset network state and trigger sync with delay
           networkMonitor.isOnline = navigator.onLine;
           setTimeout(() => this.syncWithQueue(), 1000); // Delay to let network stabilize
@@ -222,7 +222,7 @@ class SyncService {
       // Sync when window gains focus
       window.addEventListener('focus', () => {
         if (this.syncEnabled) {
-          console.log('sync: Window gained focus, triggering sync');
+          console.warn('sync: Window gained focus, triggering sync');
           // Reset network state and trigger sync
           networkMonitor.isOnline = navigator.onLine;
           this.syncWithQueue();
@@ -232,7 +232,7 @@ class SyncService {
       // Also listen for online event in case network was disconnected
       window.addEventListener('online', () => {
         if (this.syncEnabled) {
-          console.log('sync: Network connection restored, triggering sync');
+          console.warn('sync: Network connection restored, triggering sync');
           networkMonitor.isOnline = true;
           setTimeout(() => this.syncWithQueue(), 2000); // Small delay for network stability
         }
@@ -240,7 +240,7 @@ class SyncService {
       
       // Listen for offline event to update status immediately
       window.addEventListener('offline', () => {
-        console.log('sync: Network connection lost');
+        console.warn('sync: Network connection lost');
         networkMonitor.isOnline = false;
         this.updateSyncStatus('offline', 'No network connection');
       });
@@ -518,7 +518,7 @@ class SyncService {
     let syncData = this.getCurrentState();
     const syncType = 'full';
     
-    console.log('[Sync] Pushing full state with timestamp:', new Date(syncData.lastModified).toISOString());
+    console.warn('[Sync] Pushing full state with timestamp:', new Date(syncData.lastModified).toISOString());
 
     // Generate unique transaction ID
     const transactionId = `${deviceId}-${Date.now()}-${Math.random()
@@ -557,7 +557,7 @@ class SyncService {
         throw new Error('Cannot push invalid data to server');
       }
 
-      console.log('sync: Successfully repaired local data before push');
+      console.warn('sync: Successfully repaired local data before push');
       syncData = repairedData;
     }
 
@@ -605,7 +605,7 @@ class SyncService {
         const maxRetries = 3;
         if (retryCount < maxRetries) {
           const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 8000); // Exponential backoff up to 8 seconds
-          console.log(`sync: Network error during push, retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+          console.warn(`sync: Network error during push, retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
           
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
           
@@ -613,7 +613,7 @@ class SyncService {
           if (networkMonitor.isOnline) {
             return this.pushData(retryCount + 1);
           } else {
-            console.log('sync: Network offline, skipping retry');
+            console.warn('sync: Network offline, skipping retry');
             throw new Error('Network connection lost');
           }
         }
@@ -697,7 +697,7 @@ class SyncService {
         const maxRetries = 3;
         if (retryCount < maxRetries) {
           const backoffDelay = Math.min(1000 * Math.pow(2, retryCount), 8000); // Exponential backoff up to 8 seconds
-          console.log(`sync: Network error, retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
+          console.warn(`sync: Network error, retrying in ${backoffDelay}ms (attempt ${retryCount + 1}/${maxRetries})`);
           
           await new Promise(resolve => setTimeout(resolve, backoffDelay));
           
@@ -705,7 +705,7 @@ class SyncService {
           if (networkMonitor.isOnline) {
             return this.pullData(retryCount + 1);
           } else {
-            console.log('sync: Network offline, skipping retry');
+            console.warn('sync: Network offline, skipping retry');
             throw new Error('Network connection lost');
           }
         }
@@ -729,16 +729,17 @@ class SyncService {
    * Sync data (pull, merge, push)
    */
   async sync(): Promise<SyncResult> {
-    console.log('[Sync] sync() called', {
+    console.warn('[Sync] 🔄 MAIN SYNC CALLED', {
       syncInProgress: this.syncInProgress,
       syncEnabled: this.syncEnabled,
       syncId: this.syncId,
-      initialized: this.initialized
+      initialized: this.initialized,
+      timestamp: new Date().toISOString()
     });
     
     // Check if sync is already in progress
     if (this.syncInProgress) {
-      console.log('[Sync] Sync already in progress, queuing request');
+      console.warn('[Sync] Sync already in progress, queuing request');
       return new Promise((resolve, reject) => {
         this.syncQueue.push({ resolve, reject });
       });
@@ -750,12 +751,12 @@ class SyncService {
     try {
       // Wait for initialization if needed
       if (!this.initialized) {
-        console.log('[Sync] Not initialized, restoring state...');
+        console.warn('[Sync] Not initialized, restoring state...');
         await this.restoreState();
       }
 
       if (!this.syncEnabled) {
-        console.log('[Sync] Sync not enabled, aborting');
+        console.warn('[Sync] Sync not enabled, aborting');
         throw new Error('Sync not enabled');
       }
 
@@ -859,12 +860,12 @@ class SyncService {
           const winningState = conflictResolver.applyResolutions(resolutions);
           
           if (winningState) {
-            console.log('[Sync] Applying winning state from conflict resolution');
+            console.warn('[Sync] Applying winning state from conflict resolution');
             await this.restoreData(winningState);
           }
         } else {
           // No conflicts (same timestamp) - keep local state
-          console.log('[Sync] No conflicts detected (same timestamp)');
+          console.warn('[Sync] No conflicts detected (same timestamp)');
         }
 
         this.lastSyncVersion = remoteData.version;
@@ -997,7 +998,7 @@ class SyncService {
             user.emoji && typeof user.emoji === 'string' ? user.emoji : '👤';
           userNeedsRepair = true;
 
-          console.log(
+          console.warn(
             `[SYNC] Added icon "${repairedUser.icon}" to user ${userId}`,
           );
         }
@@ -1015,7 +1016,7 @@ class SyncService {
       });
 
       if (needsRepair) {
-        console.log('sync: Repaired users in getCurrentState, updating store');
+        console.warn('sync: Repaired users in getCurrentState, updating store');
         users = repairedUsers;
         // Use the proper store method to update users
         const userStore = require('../../stores/useUserStore.js').default;
@@ -1634,7 +1635,7 @@ class SyncService {
    * Start periodic background sync
    */
   startPeriodicSync(): void {
-    console.log('[Sync] Starting periodic sync...', {
+    console.warn('[Sync] Starting periodic sync...', {
       syncEnabled: this.syncEnabled,
       syncId: this.syncId,
       interval: this.syncIntervalDuration
@@ -1645,7 +1646,7 @@ class SyncService {
 
     // Only start if sync is enabled
     if (!this.syncEnabled) {
-      console.log('[Sync] Sync not enabled, skipping periodic sync');
+      console.warn('[Sync] Sync not enabled, skipping periodic sync');
       return;
     }
 
@@ -1655,14 +1656,14 @@ class SyncService {
     // Start transaction cleanup
     this.startTransactionCleanup();
 
-    console.log('[Sync] Running immediate sync...');
+    console.warn('[Sync] Running immediate sync...');
     // Run immediate sync
     this.syncWithQueue();
 
     // Set up interval
-    console.log(`[Sync] Setting up ${this.syncIntervalDuration/1000}s interval for periodic sync`);
+    console.warn(`[Sync] Setting up ${this.syncIntervalDuration/1000}s interval for periodic sync`);
     this.syncInterval = setInterval(() => {
-      console.log('[Sync] Periodic sync triggered');
+      console.warn('[Sync] Periodic sync triggered');
       this.syncWithQueue();
     }, this.syncIntervalDuration);
   }
@@ -1743,7 +1744,7 @@ class SyncService {
    * Debounced sync to avoid too frequent syncs
    */
   debouncedSync(): void {
-    console.log('[Sync] Change detected, debouncing sync (5s delay)');
+    console.warn('[Sync] Change detected, debouncing sync (5s delay)');
     
     // Clear existing timer
     if (this.syncDebounceTimer) {
@@ -1752,7 +1753,7 @@ class SyncService {
 
     // Set new timer
     this.syncDebounceTimer = setTimeout(() => {
-      console.log('[Sync] Debounce timer expired, triggering sync for store change');
+      console.warn('[Sync] Debounce timer expired, triggering sync for store change');
       this.requestSync({ priority: 'high', reason: 'store_change' });
     }, this.syncDebounceDelay);
   }
@@ -1761,23 +1762,24 @@ class SyncService {
    * Sync with queue processing
    */
   async syncWithQueue(): Promise<void> {
-    console.log('[Sync] syncWithQueue called', {
+    console.warn('[Sync] ⚡ syncWithQueue triggered', {
       syncEnabled: this.syncEnabled,
       syncId: this.syncId,
-      online: networkMonitor.isOnline
+      online: networkMonitor.isOnline,
+      timestamp: new Date().toISOString()
     });
     
     try {
       // Check if sync is still enabled before processing
       if (!this.syncEnabled || !this.syncId) {
-        console.log('[Sync] Sync disabled or no syncId, skipping');
+        console.warn('[Sync] Sync disabled or no syncId, skipping');
         return;
       }
 
       // Clear any stale network state on web platform
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.onLine !== undefined) {
         networkMonitor.isOnline = navigator.onLine;
-        console.log('[Sync] Network status:', networkMonitor.isOnline ? 'online' : 'offline');
+        console.warn('[Sync] Network status:', networkMonitor.isOnline ? 'online' : 'offline');
       }
 
       // Process any queued items first
@@ -1786,7 +1788,7 @@ class SyncService {
       }
 
       // Then do regular sync with throttling
-      console.log('[Sync] Requesting sync...');
+      console.warn('[Sync] Requesting sync...');
       await this.requestSync({ priority: 'normal' });
     } catch (error) {
       console.error('[Sync] Sync with queue failed:', error);

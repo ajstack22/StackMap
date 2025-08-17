@@ -129,6 +129,12 @@ import { useAppStore } from './src/stores';
 import encryptionService from './src/services/sync/encryptionService';
 import syncService from './src/services/sync/syncService';
 
+// Verify sync service is loaded
+console.log('[App] Sync service imported:', !!syncService);
+if (syncService) {
+  console.log('[App] Sync service methods:', Object.keys(syncService).filter(k => typeof syncService[k] === 'function').slice(0, 5));
+}
+
 // Import utilities
 import {
   setSecurePin,
@@ -488,7 +494,19 @@ const App = () => {
 
     const checkSyncStatus = async () => {
       const enabled = await syncService.isEnabled();
+      console.log('[App] Sync enabled status:', enabled);
       setSyncEnabled(enabled);
+      
+      // If sync is enabled, verify it's actually running
+      if (enabled) {
+        console.log('[App] Sync is enabled, checking if service is initialized...');
+        console.log('[App] Sync service state:', {
+          syncEnabled: syncService.syncEnabled,
+          syncId: syncService.syncId,
+          initialized: syncService.initialized,
+          syncInterval: !!syncService.syncInterval
+        });
+      }
     };
 
     checkSyncStatus();
