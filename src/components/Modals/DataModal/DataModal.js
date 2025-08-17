@@ -22,7 +22,7 @@ import SyncStatusIndicator from '../../SyncStatusIndicator';
 import syncService from '../../../services/sync/syncService';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
-import { normalizeExportData } from '../../../utils/dataNormalizer';
+// Normalization removed - v3 support discontinued
 
 // Import platform-specific modules
 let DocumentPicker = null;
@@ -560,8 +560,7 @@ const DataModal = ({
               return;
             }
             
-            // Normalize the imported data
-            parsedData = normalizeExportData(parsedData);
+            // No normalization - v3 support removed
             
             setImportFile({ name: file.name, path: file.path });
             setImportData(parsedData);
@@ -671,8 +670,7 @@ const DataModal = ({
         return;
       }
       
-      // Normalize the imported data
-      parsedData = normalizeExportData(parsedData);
+      // No normalization - v3 support removed
       
       setImportFile(result[0]);
       setImportData(parsedData);

@@ -112,6 +112,9 @@ As of August 15, 2025, the StackMap store architecture has been refactored from 
 #### useAppStore (`/src/stores/useAppStore.js`)
 A thin wrapper that maintains backwards compatibility by combining all stores.
 
+**⚠️ CRITICAL WARNING:**
+`useAppStore.setState()` does NOT properly update the underlying specialized stores. This can cause state updates to be lost or not trigger proper re-renders.
+
 **Implementation Pattern:**
 ```javascript
 // Uses getters to delegate to sub-stores
@@ -126,9 +129,18 @@ setCurrentTheme: (theme) => {
 ```
 
 **Special Methods:**
-- `setState(updates)` - Batch updates across multiple stores
+- `setState(updates)` - ⚠️ DEPRECATED - Does not properly update underlying stores
 - `getState()` - Returns combined state from all stores
 - `subscribe(callback)` - Subscribes to all store changes
+
+**Correct Update Pattern:**
+```javascript
+// ❌ WRONG - Won't properly update underlying stores
+useAppStore.setState({ users: updatedUsers });
+
+// ✅ CORRECT - Updates the specialized store directly
+useUserStore.getState().setUsers(updatedUsers);
+```
 
 ## Storage Persistence
 
@@ -226,9 +238,20 @@ useSettingsStore.getState().setCurrentTheme('crimson');
 
 1. **Use specific stores directly** when possible for better reactivity
 2. **Use selectors** for specific state slices to optimize re-renders
-3. **Batch related updates** using the wrapper's `setState` method
+3. **Never use `useAppStore.setState()`** - always use store-specific methods
 4. **Handle store subscriptions** explicitly for complex components
 5. **Test persistence** by checking AsyncStorage after updates
+6. **When syncing data**, always use proper store methods:
+   ```javascript
+   // User data
+   useUserStore.getState().setUsers(syncedUsers);
+   
+   // Settings
+   useSettingsStore.getState().updateSettings(syncedSettings);
+   
+   // Library
+   useLibraryStore.getState().setLibrary(syncedLibrary);
+   ```
 
 ## Debugging
 

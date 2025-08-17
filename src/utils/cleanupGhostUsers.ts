@@ -129,11 +129,10 @@ export const cleanupGhostUsers = (): CleanupResult => {
   });
   
   if (duplicates.length > 0) {
-    // Update the store
-    useAppStore.setState({
-      users: cleanedUsers,
-      currentUser: newCurrentUser
-    });
+    // Update the stores properly
+    const userStore = require('../stores/useUserStore.js').default;
+    userStore.getState().setUsers(cleanedUsers);
+    userStore.getState().setCurrentUser(newCurrentUser);
     
     return {
       success: true,

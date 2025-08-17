@@ -317,16 +317,16 @@ class ConflictResolver {
           }
           // Normalize icon field
           if (!user.icon) {
-            if (user.icon) {
+            if (user.emoji) {
               // Migrate emoji to icon field
-              user.icon = user.icon;
-              delete user.icon; // Remove redundant field
+              user.icon = user.emoji;
+              delete user.emoji; // Remove redundant field
             } else {
               user.icon = '👤'; // Default user icon
             }
-          } else if (user.icon) {
+          } else if (user.emoji) {
             // Remove redundant emoji field if icon exists
-            delete user.icon;
+            delete user.emoji;
           }
           // Ensure user has days object
           if (!user.days || typeof user.days !== 'object') {

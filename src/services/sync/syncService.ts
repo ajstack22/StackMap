@@ -18,7 +18,6 @@ import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
 import { validateSyncedData, repairSyncedData, validateIncrementalSync } from './dataValidator';
-import { normalizeExportData } from '../../utils/dataNormalizer';
 // Types imported but not all used directly - kept for documentation
 
 /**
@@ -679,12 +678,11 @@ class SyncService {
           }
         }
         
-        // Get current local state (already normalized by getCurrentState)
+        // Get current local state
         const localState = this.getCurrentState();
         
-        // Normalize remote data to ensure consistent field names
-        // This handles v3→v4 migration and field name variations
-        const normalizedRemoteData = normalizeExportData(decryptedData) || decryptedData;
+        // Use remote data directly - no normalization needed (v3 support removed)
+        const normalizedRemoteData = decryptedData;
                         
         // Detect conflicts
         const conflicts = conflictResolver.detectConflicts(
@@ -885,7 +883,9 @@ class SyncService {
       if (needsRepair) {
         console.log('sync: Repaired users in getCurrentState, updating store');
         users = repairedUsers;
-        useAppStore.setState({ users });
+        // Use the proper store method to update users
+        const userStore = require('../../stores/useUserStore.js').default;
+        userStore.getState().setUsers(repairedUsers);
       }
     }
     
@@ -988,7 +988,33 @@ class SyncService {
         patchedState.activities = currentUserActivities;
       }
       
-      useAppStore.setState(patchedState);
+      // Use proper store methods to update state
+      const userStore = require('../../stores/useUserStore.js').default;
+      const settingsStore = require('../../stores/useSettingsStore.js').default;
+      const libraryStore = require('../../stores/useLibraryStore.js').default;
+      
+      // Update each store with its relevant data
+      if (patchedState.users !== undefined || patchedState.currentUser !== undefined || patchedState.currentDay !== undefined) {
+        if (patchedState.users !== undefined) userStore.getState().setUsers(patchedState.users);
+        if (patchedState.currentUser !== undefined) userStore.getState().setCurrentUser(patchedState.currentUser);
+        if (patchedState.currentDay !== undefined) userStore.getState().setCurrentDay(patchedState.currentDay);
+      }
+      
+      if (patchedState.currentTheme !== undefined || patchedState.bannerPosition !== undefined || 
+          patchedState.soundEnabled !== undefined || patchedState.taskCelebration !== undefined ||
+          patchedState.routineCelebration !== undefined || patchedState.hasCompletedOnboarding !== undefined) {
+        const settingsUpdates: any = {};
+        if (patchedState.currentTheme !== undefined) settingsUpdates.currentTheme = patchedState.currentTheme;
+        if (patchedState.bannerPosition !== undefined) settingsUpdates.bannerPosition = patchedState.bannerPosition;
+        if (patchedState.soundEnabled !== undefined) settingsUpdates.soundEnabled = patchedState.soundEnabled;
+        if (patchedState.taskCelebration !== undefined) settingsUpdates.taskCelebration = patchedState.taskCelebration;
+        if (patchedState.routineCelebration !== undefined) settingsUpdates.routineCelebration = patchedState.routineCelebration;
+        if (patchedState.hasCompletedOnboarding !== undefined) settingsUpdates.hasCompletedOnboarding = patchedState.hasCompletedOnboarding;
+        settingsStore.getState().updateSettings(settingsUpdates);
+      }
+      
+      if (patchedState.library !== undefined) libraryStore.getState().setLibrary(patchedState.library);
+      if (patchedState.libraryTemplates !== undefined) libraryStore.getState().setLibraryTemplates(patchedState.libraryTemplates);
       return;
     }
     
@@ -1042,46 +1068,39 @@ class SyncService {
     const currentUserSettings = users?.[finalCurrentUser]?.settings || {};
     const userTheme = currentUserSettings.theme || globalSettings?.currentTheme || 'stackBlue';
     
-    // Update store with v4 data ONLY
-    const newState = {
-      // Set activities from the current user's current day
-      activities: currentUserActivities,
-      // v4 format fields ONLY
-      libraryTemplates: libraryTemplates || [],
-      library: library || {
-        categories: [],
-        userAddedActivityIds: []
-      },
-      users: users || {},
-      currentUser: finalCurrentUser,
+    // Use proper store methods to update state
+    const userStore = require('../../stores/useUserStore.js').default;
+    const settingsStore = require('../../stores/useSettingsStore.js').default;
+    const libraryStore = require('../../stores/useLibraryStore.js').default;
+    
+    // Update user store
+    userStore.getState().setUsers(users || {});
+    userStore.getState().setCurrentUser(finalCurrentUser);
+    userStore.getState().setCurrentDay(finalCurrentDay);
+    
+    // Update settings store
+    settingsStore.getState().updateSettings({
       currentTheme: userTheme,  // Use user-specific theme
       bannerPosition: globalSettings?.bannerPosition || 'top',
       soundEnabled: globalSettings?.soundEnabled !== false,
       taskCelebration: globalSettings?.taskCelebration || 'rainbow',
       routineCelebration: globalSettings?.routineCelebration || 'rainbow',
       // Preserve local hasCompletedOnboarding if not explicitly set in sync data
-      hasCompletedOnboarding: hasCompletedOnboarding !== undefined ? hasCompletedOnboarding : currentState.hasCompletedOnboarding,
-      currentDay: finalCurrentDay
-    };
-
-    // Store activities in users before setState
-    const userActivities = newState.users[newState.currentUser]?.days?.[newState.currentDay]?.activities || [];
-        
-    // First set the state with users and other data
-    useAppStore.setState(newState);
+      hasCompletedOnboarding: hasCompletedOnboarding !== undefined ? hasCompletedOnboarding : currentState.hasCompletedOnboarding
+    });
     
-    // Then explicitly set the activities for the current user/day
-    // This is critical - the app expects activities in the top-level activities field
-    useAppStore.setState({ activities: userActivities.filter((a: any) => !a.deleted) });
+    // Update library store
+    libraryStore.getState().setLibrary(library || {
+      categories: [],
+      userAddedActivityIds: []
+    });
+    libraryStore.getState().setLibraryTemplates(libraryTemplates || []);
     
     // DEBUG: Verify what was actually set
     const afterState = useAppStore.getState();
     
     // Verify activities in users object
     const afterUserActivities = afterState.users[afterState.currentUser]?.days?.[afterState.currentDay]?.activities || [];
-    if (afterUserActivities.length === 0 && userActivities.length > 0) {
-      console.error('[ERROR] Activities lost during setState!');
-    }
   }
 
   /**
@@ -1177,13 +1196,11 @@ class SyncService {
       }
     }
     
-    // Update with merged state
-    useAppStore.setState({ users: finalUsers });
+    // Update with merged state using proper store method
+    const userStore = require('../../stores/useUserStore.js').default;
+    userStore.getState().setUsers(finalUsers);
     
-    // Now update the activities for the current user/day
-    const storeState = useAppStore.getState();
-    const currentUserActivities = finalUsers[storeState.currentUser]?.days?.[storeState.currentDay]?.activities || [];
-    useAppStore.setState({ activities: currentUserActivities.filter((a: any) => !a.deleted) });
+    // Activities are now automatically derived from the user store, no need to set separately
   }
   
   /**

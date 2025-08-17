@@ -78,7 +78,10 @@
 
 ### Store Refactoring (COMPLETED Aug 15, 2025)
 - ✅ Split monolithic store into 4 focused stores
-- ⚠️ **CRITICAL BUG:** Theme switching broken (reactivity issue)
+- ⚠️ **CRITICAL:** Always use store-specific methods for updates (not `useAppStore.setState`)
+  - User updates: `useUserStore.getState().setUsers()`
+  - Settings: `useSettingsStore.getState().updateSettings()`
+  - Library: `useLibraryStore.getState().setLibrary()`
 - See `/docs/STORE_ARCHITECTURE.md` for new structure
 - See `/prompts/tech-debt-handoff.md` for completion details
 
@@ -108,6 +111,11 @@ Initialize EMPTY_CATEGORIES with default category in ActivityLibrary.js
 
 ### Bundle not found on web
 Files must be copied to root directory, not served from web/build/
+
+### "User missing icon or emoji" during sync
+- Icons must be preserved during conflict resolution
+- Always use store-specific update methods (not `useAppStore.setState`)
+- See fix in syncService.ts `getCurrentState()` and `restoreData()`
 
 ### iOS build fails
 ```bash
