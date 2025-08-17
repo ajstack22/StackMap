@@ -2686,6 +2686,9 @@ This will replace all your current data.`,
           // Validate and clean user data before importing
           const validatedUsers = {};
           Object.entries(importData.users).forEach(([userId, user]) => {
+            // Log what we're receiving
+            console.log(`[IMPORT] Processing user ${userId}:`, JSON.stringify(user, null, 2));
+            
             // Ensure user has valid name and icon
             const validatedUser = {
               ...user,
@@ -2693,7 +2696,7 @@ This will replace all your current data.`,
               icon: user.icon && typeof user.icon === 'string' ? user.icon : DEFAULT_USER_ICON
             };
             validatedUsers[userId] = validatedUser;
-            console.log(`Validated user ${userId}: name="${validatedUser.name}", icon="${validatedUser.icon}"`);
+            console.log(`[IMPORT] Validated user ${userId}: name="${validatedUser.name}", icon="${validatedUser.icon}"`);
           });
           
           console.log('Setting validated users:', JSON.stringify(validatedUsers, null, 2));

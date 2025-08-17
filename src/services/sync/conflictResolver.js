@@ -568,6 +568,11 @@ class ConflictResolver {
           // User exists in both - merge while preserving completed states
           mergedUsers[userId] = JSON.parse(JSON.stringify(remoteUser));
           
+          // Preserve icon field if missing in remote but present in local
+          if (!mergedUsers[userId].icon && localUser.icon) {
+            mergedUsers[userId].icon = localUser.icon;
+          }
+          
           const localUserDays = localUser.days || {};
           const mergedUserDays = mergedUsers[userId].days || {};
           

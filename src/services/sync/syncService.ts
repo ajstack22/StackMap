@@ -854,23 +854,30 @@ class SyncService {
     if (users && Object.keys(users).length > 0) {
       const repairedUsers = { ...users };
       Object.entries(users).forEach(([userId, user]: [string, any]) => {
-        // Ensure all users have icon field
-        if (!user.icon) {
-          console.warn(`[DEBUG] getCurrentState - User ${userId} missing icon, using default`);
+        // Always ensure users have required fields
+        const repairedUser = { ...user };
+        let userNeedsRepair = false;
+        
+        // Ensure icon field
+        if (!repairedUser.icon) {
+          console.warn(`[SYNC] getCurrentState - User ${userId} missing icon field`);
+          console.warn(`[SYNC] User data:`, JSON.stringify(user, null, 2));
           
           // Check for emoji field (legacy support)
-          const icon = user.emoji && typeof user.emoji === 'string' ? user.emoji : '👤';
+          repairedUser.icon = user.emoji && typeof user.emoji === 'string' ? user.emoji : '👤';
+          userNeedsRepair = true;
           
-          repairedUsers[userId] = {
-            ...user,
-            icon: icon
-          };
-          
-          // Remove emoji field if present to avoid confusion
-          if (repairedUsers[userId].emoji) {
-            delete repairedUsers[userId].emoji;
-          }
-          
+          console.log(`[SYNC] Added icon "${repairedUser.icon}" to user ${userId}`);
+        }
+        
+        // Remove emoji field if present to avoid confusion
+        if (repairedUser.emoji) {
+          delete repairedUser.emoji;
+          userNeedsRepair = true;
+        }
+        
+        if (userNeedsRepair) {
+          repairedUsers[userId] = repairedUser;
           needsRepair = true;
         }
       });
