@@ -3,16 +3,25 @@
 const AsyncStorage = {
   getItem: async key => {
     try {
-      return localStorage.getItem(key);
+      const value = localStorage.getItem(key);
+      if (key.includes('@sync')) {
+        console.warn(`[AsyncStorage.web] getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
+      }
+      return value;
     } catch (error) {
+      console.error('[AsyncStorage.web] getItem error:', error);
       return null;
     }
   },
 
   setItem: async (key, value) => {
     try {
+      if (key.includes('@sync')) {
+        console.warn(`[AsyncStorage.web] setItem('${key}') = ${value ? value.substring(0, 20) + '...' : value}`);
+      }
       localStorage.setItem(key, value);
     } catch (error) {
+      console.error('[AsyncStorage.web] setItem error:', error);
       throw error;
     }
   },
