@@ -1096,11 +1096,9 @@ class SyncService {
     });
     libraryStore.getState().setLibraryTemplates(libraryTemplates || []);
     
-    // DEBUG: Verify what was actually set
-    const afterState = useAppStore.getState();
-    
-    // Verify activities in users object
-    const afterUserActivities = afterState.users[afterState.currentUser]?.days?.[afterState.currentDay]?.activities || [];
+    // DEBUG: Verify what was actually set (if needed, uncomment below)
+    // const afterState = useAppStore.getState();
+    // const afterUserActivities = afterState.users[afterState.currentUser]?.days?.[afterState.currentDay]?.activities || [];
   }
 
   /**
