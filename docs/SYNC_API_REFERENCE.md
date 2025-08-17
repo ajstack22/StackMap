@@ -4,6 +4,14 @@
 
 This document provides a complete reference for the StackMap Sync API endpoints, including request/response formats, error codes, and implementation examples.
 
+## 🎯 Sync Strategy (v2025.08.17+)
+
+**StackMap uses a simple last-write-wins strategy:**
+- Full state replacement (no incremental sync)
+- Single global timestamp determines winner
+- ~4KB payload makes full replacement instant
+- No complex merge logic needed
+
 ## Base URL
 
 ```
@@ -76,7 +84,7 @@ Updates sync data with a new encrypted blob.
   "device_id": "string",
   "device_name": "string (optional)",
   "encrypted_blob": "string (base64)",
-  "sync_type": "full|incremental"
+  "sync_type": "full"  // Always "full" as of v2025.08.17
 }
 ```
 

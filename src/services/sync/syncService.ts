@@ -15,7 +15,7 @@ import encryptionService from './encryptionService';
 import { useAppStore } from '../../stores';
 import syncQueue from './syncQueue';
 import networkMonitor from './networkMonitor';
-import changeTracker from './changeTracker';
+// changeTracker removed - using simple timestamp-based sync
 import syncThrottle from './syncThrottle';
 import conflictResolver from './conflictResolver';
 import syncHistory from './syncHistory';
@@ -187,6 +187,10 @@ class SyncService {
   private _lastShareKeyBytes: Uint8Array | null = null;
 
   constructor() {
+    console.log('[Sync] ============================================');
+    console.log('[Sync] SyncService constructor initializing...');
+    console.log('[Sync] ============================================');
+    
     // Initialize network monitoring (now safely disabled internally for iOS)
     networkMonitor.start();
 
@@ -198,8 +202,7 @@ class SyncService {
     // Initialize sync queue
     syncQueue.initialize();
 
-    // Start change tracking
-    changeTracker.startTracking();
+    // Change tracking removed - using simple timestamp-based sync
 
     // Initialize sync history
     syncHistory.initialize();
@@ -434,7 +437,7 @@ class SyncService {
       // so we don't need to store it again here
 
       // Mark current state as baseline for change tracking
-      changeTracker.markAsSynced();
+      // Change tracking removed - timestamp updated in getCurrentState()
 
       // Start periodic sync
       this.startPeriodicSync();
@@ -511,37 +514,11 @@ class SyncService {
     const deviceId = await encryptionService.getDeviceId();
     const deviceName = encryptionService.getDeviceName();
 
-    // Check if we should use incremental sync
-    let syncData: any;
-    let syncType = 'full';
-
-    if (
-      this.lastSyncSuccess &&
-      changeTracker.shouldUseIncremental(this.lastSyncSuccess)
-    ) {
-      const incrementalUpdate = changeTracker.createIncrementalUpdate(
-        this.lastSyncSuccess,
-      );
-      if (incrementalUpdate) {
-        console.log('[sync] Creating incremental update', {
-          changeCount: incrementalUpdate.changes?.length || 0,
-          patchKeys: Object.keys(incrementalUpdate.patch || {}),
-          timestamp: incrementalUpdate.timestamp,
-        });
-        syncData = incrementalUpdate;
-        syncType = 'incremental';
-      } else {
-        console.log(
-          '[sync] No changes for incremental update, using full sync',
-        );
-      }
-    }
-
-    // Fall back to full sync if no incremental update
-    if (!syncData) {
-      syncData = this.getCurrentState();
-      syncType = 'full';
-    }
+    // Always use full sync with timestamp
+    let syncData = this.getCurrentState();
+    const syncType = 'full';
+    
+    console.log('[Sync] Pushing full state with timestamp:', new Date(syncData.lastModified).toISOString());
 
     // Generate unique transaction ID
     const transactionId = `${deviceId}-${Date.now()}-${Math.random()
@@ -752,8 +729,16 @@ class SyncService {
    * Sync data (pull, merge, push)
    */
   async sync(): Promise<SyncResult> {
+    console.log('[Sync] sync() called', {
+      syncInProgress: this.syncInProgress,
+      syncEnabled: this.syncEnabled,
+      syncId: this.syncId,
+      initialized: this.initialized
+    });
+    
     // Check if sync is already in progress
     if (this.syncInProgress) {
+      console.log('[Sync] Sync already in progress, queuing request');
       return new Promise((resolve, reject) => {
         this.syncQueue.push({ resolve, reject });
       });
@@ -765,10 +750,12 @@ class SyncService {
     try {
       // Wait for initialization if needed
       if (!this.initialized) {
+        console.log('[Sync] Not initialized, restoring state...');
         await this.restoreState();
       }
 
       if (!this.syncEnabled) {
+        console.log('[Sync] Sync not enabled, aborting');
         throw new Error('Sync not enabled');
       }
 
@@ -860,79 +847,24 @@ class SyncService {
         // Get current local state
         const localState = this.getCurrentState();
 
-        // Use remote data directly - no normalization needed (v3 support removed)
-        const normalizedRemoteData = decryptedData;
-
-        // Detect conflicts
+        // Simple conflict detection based on timestamps
         const conflicts = conflictResolver.detectConflicts(
           localState,
-          normalizedRemoteData,
-          this.lastSyncSuccess || 0,
+          decryptedData
         );
 
         if (conflicts.length > 0) {
-          try {
-            // Auto-resolve all conflicts (no user intervention)
-            const resolutionResult: any =
-              await conflictResolver.resolveConflicts(conflicts, {
-                strategy: 'last-write-wins',
-                autoResolveAll: true,
-              } as any);
-
-            // Apply resolutions if any
-            if (
-              resolutionResult &&
-              resolutionResult.resolved &&
-              resolutionResult.resolved.length > 0
-            ) {
-              console.log(
-                `Resolved ${resolutionResult.resolved.length} conflicts automatically`,
-              );
-
-              // Use the finalState that's already been computed by applyResolutions
-              const mergedState = resolutionResult.finalState;
-
-              // Ensure merged state has valid users with icons preserved
-              if (mergedState.users) {
-                Object.keys(mergedState.users).forEach(userId => {
-                  const user = mergedState.users[userId];
-                  const localUser = localState.users?.[userId];
-                  const remoteUser = normalizedRemoteData.users?.[userId];
-
-                  // Preserve icon from either local or remote if missing in merged
-                  if (!user.icon && !user.emoji) {
-                    const icon =
-                      localUser?.icon ||
-                      remoteUser?.icon ||
-                      localUser?.emoji ||
-                      remoteUser?.emoji ||
-                      '👤';
-                    console.warn(
-                      `Conflict resolution: User ${userId} missing icon, using: ${icon}`,
-                    );
-                    mergedState.users[userId] = {
-                      ...user,
-                      icon: icon,
-                    };
-                  }
-                });
-              }
-
-              // Apply the merged state
-              await this.restoreData(mergedState);
-            }
-          } catch (conflictError) {
-            console.error('sync: Conflict resolution failed:', conflictError);
-
-            // If conflict resolution fails due to validation, try to use local state
-
-            // Don't throw the error - just continue with local state
-            // This prevents the infinite loop
-            // The next sync will try again
+          // Resolve conflict - simple: newer wins
+          const resolutions = conflictResolver.resolveConflicts(conflicts);
+          const winningState = conflictResolver.applyResolutions(resolutions);
+          
+          if (winningState) {
+            console.log('[Sync] Applying winning state from conflict resolution');
+            await this.restoreData(winningState);
           }
         } else {
-          // No conflicts, simple merge
-          await this.mergeData(normalizedRemoteData);
+          // No conflicts (same timestamp) - keep local state
+          console.log('[Sync] No conflicts detected (same timestamp)');
         }
 
         this.lastSyncVersion = remoteData.version;
@@ -952,7 +884,7 @@ class SyncService {
       );
 
       // Mark changes as synced
-      changeTracker.markAsSynced();
+      // Change tracking removed - timestamp updated in getCurrentState()
 
       return {
         success: true,
@@ -1501,7 +1433,7 @@ class SyncService {
     await this.restoreData(state);
 
     // Mark as synced
-    changeTracker.markAsSynced();
+    // Change tracking removed - timestamp updated in getCurrentState()
   }
 
   /**
@@ -1702,11 +1634,20 @@ class SyncService {
    * Start periodic background sync
    */
   startPeriodicSync(): void {
+    console.log('[Sync] Starting periodic sync...', {
+      syncEnabled: this.syncEnabled,
+      syncId: this.syncId,
+      interval: this.syncIntervalDuration
+    });
+    
     // Clear any existing interval
     this.stopPeriodicSync();
 
     // Only start if sync is enabled
-    if (!this.syncEnabled) return;
+    if (!this.syncEnabled) {
+      console.log('[Sync] Sync not enabled, skipping periodic sync');
+      return;
+    }
 
     // Subscribe to store changes for immediate sync
     this.subscribeToStoreChanges();
@@ -1714,11 +1655,14 @@ class SyncService {
     // Start transaction cleanup
     this.startTransactionCleanup();
 
+    console.log('[Sync] Running immediate sync...');
     // Run immediate sync
     this.syncWithQueue();
 
     // Set up interval
+    console.log(`[Sync] Setting up ${this.syncIntervalDuration/1000}s interval for periodic sync`);
     this.syncInterval = setInterval(() => {
+      console.log('[Sync] Periodic sync triggered');
       this.syncWithQueue();
     }, this.syncIntervalDuration);
   }
@@ -1799,6 +1743,8 @@ class SyncService {
    * Debounced sync to avoid too frequent syncs
    */
   debouncedSync(): void {
+    console.log('[Sync] Change detected, debouncing sync (5s delay)');
+    
     // Clear existing timer
     if (this.syncDebounceTimer) {
       clearTimeout(this.syncDebounceTimer);
@@ -1806,6 +1752,7 @@ class SyncService {
 
     // Set new timer
     this.syncDebounceTimer = setTimeout(() => {
+      console.log('[Sync] Debounce timer expired, triggering sync for store change');
       this.requestSync({ priority: 'high', reason: 'store_change' });
     }, this.syncDebounceDelay);
   }
@@ -1814,15 +1761,23 @@ class SyncService {
    * Sync with queue processing
    */
   async syncWithQueue(): Promise<void> {
+    console.log('[Sync] syncWithQueue called', {
+      syncEnabled: this.syncEnabled,
+      syncId: this.syncId,
+      online: networkMonitor.isOnline
+    });
+    
     try {
       // Check if sync is still enabled before processing
       if (!this.syncEnabled || !this.syncId) {
+        console.log('[Sync] Sync disabled or no syncId, skipping');
         return;
       }
 
       // Clear any stale network state on web platform
       if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.onLine !== undefined) {
         networkMonitor.isOnline = navigator.onLine;
+        console.log('[Sync] Network status:', networkMonitor.isOnline ? 'online' : 'offline');
       }
 
       // Process any queued items first
@@ -1831,9 +1786,10 @@ class SyncService {
       }
 
       // Then do regular sync with throttling
+      console.log('[Sync] Requesting sync...');
       await this.requestSync({ priority: 'normal' });
     } catch (error) {
-      console.error('Sync with queue failed:', error);
+      console.error('[Sync] Sync with queue failed:', error);
     }
   }
 
@@ -2014,7 +1970,7 @@ class SyncService {
       );
 
       // Mark changes as synced
-      changeTracker.markAsSynced();
+      // Change tracking removed - timestamp updated in getCurrentState()
 
       return {
         success: true,

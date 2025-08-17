@@ -65,12 +65,14 @@
 
 ---
 
-## 🔄 SYNC SYSTEM
+## 🔄 SYNC SYSTEM (Simple Last-Write-Wins - v2025.08.17)
+- **Strategy**: Simple last-write-wins - NO complex merging
+- **Single Timestamp**: One `lastModified` for entire state
+- **Full Replacement**: Newer timestamp wins completely (~4KB)
 - **URL Format**: `stackmap.app/?sync=<32-char-hex>`
 - **Recovery phrase**: 32 character hexadecimal (no spaces)
-- **Validation**: Auto-repairs missing user fields
-- **Performance**: Sync blobs are tiny (~4KB)
-- **Completion Sync**: Uses timestamps (`completedAt`) for true "last action wins"
+- **No More Issues**: Eliminates completion ping-pong, merge conflicts
+- **Debug**: Check `[Sync]` messages in console for decisions
 
 ---
 

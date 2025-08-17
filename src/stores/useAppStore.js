@@ -39,6 +39,9 @@ const useAppStore = create(
       syncId: useSyncStore.getState().syncId,
       lastSync: useSyncStore.getState().lastSync,
       syncError: useSyncStore.getState().syncError,
+      
+      // Global timestamp for last-write-wins sync
+      lastModified: Date.now(),
 
       // Activities are stored per user/day - provide a getter
       get activities() {
@@ -299,13 +302,14 @@ const useAppStore = create(
   ),
 );
 
-// Subscribe to sub-stores to keep wrapper in sync
+// Subscribe to sub-stores to keep wrapper in sync and update lastModified
 useUserStore.subscribe(state => {
   useAppStore.setState({
     users: state.users,
     currentUser: state.currentUser,
     currentDay: state.currentDay,
     userContextData: state.userContextData,
+    lastModified: Date.now(), // Update timestamp on any change
   });
 });
 
@@ -314,6 +318,7 @@ useSettingsStore.subscribe(state => {
     currentTheme: state.currentTheme,
     bannerPosition: state.bannerPosition,
     soundEnabled: state.soundEnabled,
+    lastModified: Date.now(), // Update timestamp on any change
     taskCelebration: state.taskCelebration,
     routineCelebration: state.routineCelebration,
     displayMode: state.displayMode,
@@ -328,9 +333,11 @@ useLibraryStore.subscribe(state => {
   useAppStore.setState({
     libraryTemplates: state.libraryTemplates,
     library: state.library,
+    lastModified: Date.now(), // Update timestamp on any change
   });
 });
 
+// Don't update lastModified for sync store changes (would cause infinite loop)
 useSyncStore.subscribe(state => {
   useAppStore.setState({
     syncEnabled: state.syncEnabled,
@@ -338,6 +345,7 @@ useSyncStore.subscribe(state => {
     syncId: state.syncId,
     lastSync: state.lastSync,
     syncError: state.syncError,
+    // DON'T update lastModified here - sync status changes shouldn't trigger sync
   });
 });
 
