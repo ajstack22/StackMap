@@ -493,19 +493,28 @@ const App = () => {
     if (showOnboarding || showSetupWizard) return;
 
     const checkSyncStatus = async () => {
+      // First check what's in storage directly
+      const storageEnabled = await AsyncStorage.getItem('@sync_enabled');
+      const storageSyncId = await AsyncStorage.getItem('@sync_id');
+      console.warn('[App] 🔍 Direct storage check:', {
+        enabled: storageEnabled,
+        syncId: storageSyncId ? storageSyncId.substring(0, 8) + '...' : null
+      });
+      
       const enabled = await syncService.isEnabled();
-      console.log('[App] Sync enabled status:', enabled);
+      console.warn('[App] 📊 Sync service.isEnabled():', enabled);
       setSyncEnabled(enabled);
       
       // If sync is enabled, verify it's actually running
       if (enabled) {
-        console.log('[App] Sync is enabled, checking if service is initialized...');
-        console.log('[App] Sync service state:', {
+        console.warn('[App] ✅ Sync is enabled, service state:', {
           syncEnabled: syncService.syncEnabled,
           syncId: syncService.syncId,
           initialized: syncService.initialized,
           syncInterval: !!syncService.syncInterval
         });
+      } else {
+        console.warn('[App] ❌ Sync is NOT enabled');
       }
     };
 

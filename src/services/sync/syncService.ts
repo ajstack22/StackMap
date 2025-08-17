@@ -249,17 +249,27 @@ class SyncService {
     // Auto-restore state on construction (non-blocking)
     // Using setTimeout to prevent blocking the constructor
     // Wait 1 second to avoid interfering with onboarding
-    setTimeout(() => this.restoreState(), 1000);
+    console.warn('[Sync] 🕐 Will restore state in 1 second...');
+    setTimeout(() => {
+      console.warn('[Sync] ⏰ Timer fired, calling restoreState...');
+      this.restoreState().then(() => {
+        console.warn('[Sync] ✅ restoreState completed from timer');
+      }).catch(err => {
+        console.error('[Sync] ❌ restoreState failed from timer:', err);
+      });
+    }, 1000);
   }
 
   /**
    * Restore sync state from AsyncStorage
    */
   async restoreState(): Promise<void> {
+    console.warn('[Sync] 📍 restoreState() called');
     // const startTime = Date.now(); // For performance logging if needed
 
     // Prevent multiple restores
     if (this.initialized) {
+      console.warn('[Sync] Already initialized, skipping restore');
       return;
     }
 
@@ -269,6 +279,12 @@ class SyncService {
       const syncId = await AsyncStorage.getItem('@sync_id');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
       const lastSyncSuccess = await AsyncStorage.getItem('@sync_last_success');
+
+      console.warn('[Sync] 🔍 Restore state found:', {
+        enabled: enabled,
+        syncId: syncId ? syncId.substring(0, 8) + '...' : null,
+        hasEncryption: false
+      });
 
       if (enabled === 'true' && syncId) {
         this.syncEnabled = true;
@@ -282,14 +298,22 @@ class SyncService {
         // const t2 = Date.now(); // For performance logging
         const encryptionRestored = await this.restoreEncryptionFromStorage();
 
+        console.warn('[Sync] 🔐 Encryption restored:', encryptionRestored);
+        
         if (encryptionRestored) {
           // Start periodic sync now that we're restored
           // const t3 = Date.now(); // For performance logging
+          console.warn('[Sync] ✅ Starting periodic sync from restoreState...');
           this.startPeriodicSync();
+        } else {
+          console.warn('[Sync] ❌ Encryption not restored, sync will not start');
         }
+      } else {
+        console.warn('[Sync] 🚫 Sync not enabled or no syncId found');
       }
 
       this.initialized = true;
+      console.warn('[Sync] ✅ Initialization complete');
     } catch (error) {
       console.error('Failed to restore sync state:', error);
       this.initialized = true;
@@ -1726,6 +1750,8 @@ class SyncService {
    * Subscribe to store changes to trigger sync
    */
   subscribeToStoreChanges(): void {
+    console.warn('[Sync] 👂 Setting up store subscription for changes...');
+    
     // Unsubscribe if already subscribed
     if (this.storeUnsubscribe) {
       this.storeUnsubscribe();
@@ -1733,11 +1759,26 @@ class SyncService {
 
     // Subscribe to all state changes
     this.storeUnsubscribe = useAppStore.subscribe(_state => {
+      // Log every state change to debug
+      console.warn('[Sync] 📝 Store changed!', {
+        syncEnabled: this.syncEnabled,
+        syncId: !!this.syncId,
+        online: networkMonitor.isOnline
+      });
+      
       // Only trigger sync if we're enabled and have a sync ID
       if (this.syncEnabled && this.syncId && networkMonitor.isOnline) {
         this.debouncedSync();
+      } else {
+        console.warn('[Sync] 🚫 Not syncing because:', {
+          syncEnabled: this.syncEnabled,
+          hasSyncId: !!this.syncId,
+          isOnline: networkMonitor.isOnline
+        });
       }
     });
+    
+    console.warn('[Sync] ✅ Store subscription active');
   }
 
   /**
