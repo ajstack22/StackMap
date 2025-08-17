@@ -1,6 +1,9 @@
 import { AppRegistry, Platform } from 'react-native';
 import App from './App';
 
+// Import passive events configuration to improve scroll performance
+import './web/passiveEvents';
+
 // Disable useNativeDriver warnings on web
 if (Platform.OS === 'web') {
   // Store the original console methods

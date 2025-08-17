@@ -217,12 +217,12 @@ const validateActivity = (activity: any): boolean => {
 };
 
 /**
- * Validate theme - themes are stored as string names, not objects
- * @param theme - The theme name to validate
+ * Validate theme - themes can be stored as names or hex colors
+ * @param theme - The theme name or hex color to validate
  * @returns True if valid, false otherwise
  */
 const validateTheme = (theme: any): boolean => {
-  // Theme should be a string name like 'stackBlue', 'crimson', etc.
+  // Theme should be a string
   if (!theme || typeof theme !== 'string') {
     return false;
   }
@@ -252,11 +252,19 @@ const validateTheme = (theme: any): boolean => {
     'slate',
   ];
 
-  if (!validThemes.includes(theme)) {
-    return false;
+  // Check if it's a valid theme name
+  if (validThemes.includes(theme)) {
+    return true;
   }
 
-  return true;
+  // Also accept hex color codes (e.g., #2196F3)
+  // This happens when user settings contain theme colors from custom settings
+  const hexColorRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
+  if (hexColorRegex.test(theme)) {
+    return true;
+  }
+
+  return false;
 };
 
 /**

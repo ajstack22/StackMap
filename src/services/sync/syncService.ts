@@ -204,6 +204,33 @@ class SyncService {
     // Initialize sync history
     syncHistory.initialize();
 
+    // Add visibility/focus detection for web platform
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      // Sync when tab becomes visible (e.g., after computer wakes from sleep)
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && this.syncEnabled) {
+          console.log('sync: Tab became visible, triggering sync');
+          this.syncWithQueue();
+        }
+      });
+      
+      // Sync when window gains focus
+      window.addEventListener('focus', () => {
+        if (this.syncEnabled) {
+          console.log('sync: Window gained focus, triggering sync');
+          this.syncWithQueue();
+        }
+      });
+
+      // Also listen for online event in case network was disconnected
+      window.addEventListener('online', () => {
+        if (this.syncEnabled) {
+          console.log('sync: Network connection restored, triggering sync');
+          setTimeout(() => this.syncWithQueue(), 2000); // Small delay for network stability
+        }
+      });
+    }
+
     // Auto-restore state on construction (non-blocking)
     // Using setTimeout to prevent blocking the constructor
     // Wait 1 second to avoid interfering with onboarding
