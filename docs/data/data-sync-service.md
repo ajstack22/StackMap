@@ -3,34 +3,88 @@
 ## Overview
 The sync service provides zero-knowledge, encrypted synchronization across devices using a shared recovery phrase.
 
+## Complete Data Flow
+
+### 📤 Client → Server (Push)
+1. **Gather Data** from 4 stores:
+   - `useUserStore`: All users and their activities
+   - `useLibraryStore`: Activity templates and categories
+   - `useSettingsStore`: Global settings and preferences
+   - `useAppStore`: Current user/day selection
+
+2. **Normalize Fields** (`dataNormalizer.js`):
+   - Activities: `text` (not name/title), `icon` (not emoji)
+   - Users: Ensure `icon` field exists
+   - Remove redundant fields
+
+3. **Encrypt** (`encryptionService.js`):
+   - Derive key: `PBKDF2(recoveryPhrase + fixedSalt)`
+   - Generate nonce: 24 random bytes
+   - Encrypt: `nacl.secretbox(data, nonce, key)`
+   - Package: `base64(nonce + encryptedData)`
+
+4. **Send** to server:
+   - POST to `/api/sync/push.php`
+   - Include: sync_id, encrypted_blob, version, metadata
+   - Server stores encrypted blob (can't decrypt)
+
+### 📥 Server → Client (Pull)
+1. **Request** from server:
+   - GET `/api/sync/pull.php?sync_id=xxx`
+   - Receive: encrypted_blob, version, metadata
+
+2. **Decrypt** (`encryptionService.js`):
+   - Extract nonce: First 24 bytes
+   - Derive same key with recovery phrase
+   - Decrypt: `nacl.secretbox.open(data, nonce, key)`
+
+3. **Validate** (`dataValidator.js`):
+   - Check required fields exist
+   - Repair missing data (add defaults)
+   - Ensure v4 structure compliance
+
+4. **Resolve Conflicts** (`conflictResolver.js`):
+   - Strategy: Last-write-wins with field merging
+   - Users: Keep most recent by `lastActive`
+   - Activities: Merge arrays, dedupe by ID
+   - Settings: Take most recent change
+
+5. **Update Stores**:
+   - Split data back to appropriate stores
+   - Trigger UI updates via store subscriptions
+
 ## Architecture
 
 ### Components
-1. **syncService.js** - Main sync orchestration
+1. **syncService.js** - Main sync orchestration (complex architecture with queue, throttling, and network monitoring)
 2. **conflictResolver.js** - Handles merge conflicts
 3. **dataValidator.js** - Validates sync data integrity
 4. **dataNormalizer.js** - Normalizes field names
 5. **encryptionService.js** - TweetNaCl encryption/decryption
+6. **syncQueue.js** - Manages sync queue for offline support
+7. **networkMonitor.js** - Monitors network status
+8. **changeTracker.js** - Tracks local changes for incremental sync
+9. **syncThrottle.js** - Throttles sync requests
+10. **syncHistory.js** - Maintains sync history for debugging
 
 ### Sync Flow
 
 ```mermaid
 graph TD
-    A[User Initiates Sync] --> B{Has Sync Phrase?}
-    B -->|No| C[Generate Sync Phrase]
-    B -->|Yes| D[Connect to Sync]
-    C --> E[Create Sync Blob]
-    D --> F[Fetch Remote Data]
-    E --> G[Encrypt & Upload]
-    F --> H[Decrypt Remote Data]
-    H --> I[Normalize Data]
-    I --> J[Detect Conflicts]
-    J --> K{Has Conflicts?}
-    K -->|Yes| L[Resolve Conflicts]
-    K -->|No| M[Apply State]
-    L --> M[Apply State]
-    M --> N[Update Local Storage]
-    N --> O[Push Changes]
+    A[Local State Changes] --> B[Normalize Fields]
+    B --> C[Encrypt Data]
+    C --> D[Push to Server]
+    D --> E[Server Stores Blob]
+    
+    F[Pull Request] --> G[Server Returns Blob]
+    G --> H[Decrypt Data]
+    H --> I[Validate Structure]
+    I --> J{Conflicts?}
+    J -->|Yes| K[Resolve]
+    J -->|No| L[Apply State]
+    K --> L
+    L --> M[Update Stores]
+    M --> N[UI Updates]
 ```
 
 ## Sync Phrase Format
@@ -46,20 +100,39 @@ graph TD
 // Generate sync phrase
 const syncPhrase = generateSyncPhrase(); // 32 char hex
 
-// Prepare sync data
+// Gather data from stores
 const syncData = {
-  ...currentState,
-  deviceId: getDeviceId(),
-  syncVersion: 1,
-  timestamp: Date.now()
+  users: useUserStore.getState().users,
+  library: useLibraryStore.getState().library,
+  globalSettings: useSettingsStore.getState(),
+  currentUser: useAppStore.getState().currentUser,
+  currentDay: useAppStore.getState().currentDay,
+  version: Date.now(), // For conflict detection
+  deviceId: getDeviceId()
 };
 
-// Normalize fields
-const normalizedData = normalizeSyncData(syncData);
+// Normalize fields (fix text/name, icon/emoji)
+const normalizedData = dataNormalizer.normalize(syncData);
 
-// Encrypt and upload
-const encrypted = await encryptData(normalizedData, syncPhrase);
-await uploadToServer(encrypted, syncPhrase);
+// Encrypt with NaCl
+const masterKey = await deriveKey(syncPhrase);
+const nonce = randomBytes(24);
+const encrypted = nacl.secretbox(
+  JSON.stringify(normalizedData),
+  nonce,
+  masterKey
+);
+const blob = base64(concat(nonce, encrypted));
+
+// Upload to server
+await fetch('/api/sync/push.php', {
+  method: 'POST',
+  body: JSON.stringify({
+    sync_id: sha256(syncPhrase),
+    encrypted_blob: blob,
+    version: syncData.version
+  })
+});
 ```
 
 ### 2. Joining a Sync
@@ -248,7 +321,7 @@ function validateSyncedData(data) {
   if (!currentUser || currentUser.deleted) return false;
   
   // All users must have required fields
-  for (const [userId, user] of Object.entries(data.users)) {
+  for (const [_userId, user] of Object.entries(data.users)) {
     if (!user.deleted) { // Skip validation for deleted users
       if (!user.name || typeof user.name !== 'string') return false;
       if (!user.icon && !user.emoji) return false; // Accept emoji for backwards compatibility

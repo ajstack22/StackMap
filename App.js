@@ -113,6 +113,7 @@ import {
 import EditModeList from './src/components/EditModeList';
 import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
+import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
 import ShareView from './src/components/ShareView/ShareView';
 import PinModal from './src/components/Modals/PinModal';
 import { STACKMAP_LIBRARY } from './src/constants/stackMapLibrary';
@@ -185,9 +186,11 @@ const AnimatedIcon = React.memo(/** @type {React.FC<{name: string, size: number,
 }));
 
 const App = () => {
-  console.log(
-    '🚨 STACKMAP APP STARTED - Version 2025.08.15.7 - Console logging is working!',
-  );
+  // Reduced startup logging - only show once
+  if (Platform.OS === 'web' && !window.__stackMapStartupLogged) {
+    console.log('📱 StackMap v2025.08.15.7');
+    window.__stackMapStartupLogged = true;
+  }
   const insets = useSafeAreaInsets();
 
   // Use our custom hooks
@@ -239,6 +242,7 @@ const App = () => {
 
   // State
   const [showOnboarding, setShowOnboarding] = useState(false);
+  const [useUserCenteredOnboarding] = useState(true); // New user-centered onboarding is now the default
   const [isHydrated, setIsHydrated] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   // Removed - now using Zustand store
@@ -381,9 +385,8 @@ const App = () => {
   const [isInitializing, setIsInitializing] = useState(false); // Prevent race conditions
 
   useEffect(() => {
-    console.log('🔥 App useEffect running - checking for URL params');
+    // Check for URL params (logging disabled for cleaner startup)
     if (Platform.OS === 'web') {
-      console.log('🌐 Running on web platform - Version check');
       // Get the raw query string to handle + characters properly
       const search = window.location.search;
       // Initial URL check
@@ -404,13 +407,16 @@ const App = () => {
         }
       }
 
-      console.log('[App] URL params:', {
-        search: window.location.search,
-        syncPhrase,
-        decoded: syncPhrase ? decodeURIComponent(syncPhrase) : null,
-        privacy: privacyParam,
-        supportus: supportParam,
-      });
+      // Log URL params only if they exist
+      if (token || syncPhrase || privacyParam || supportParam) {
+        console.log('[App] URL params:', {
+          search: window.location.search,
+          syncPhrase,
+          decoded: syncPhrase ? decodeURIComponent(syncPhrase) : null,
+          privacy: privacyParam,
+          supportus: supportParam,
+        });
+      }
 
       if (token) {
         setShareToken(token);
@@ -5212,17 +5218,11 @@ Users: ${userNames} (${userCount} total)
   }
 
   // Show onboarding if needed (kept for backward compatibility)
-  console.log(
-    '[RENDER] Checking showOnboarding:',
-    showOnboarding,
-    'isHydrated:',
-    isHydrated,
-  );
   if (showOnboarding) {
-    console.log('[RENDER] ========== RENDERING ONBOARDING ==========');
+    const OnboardingComponent = useUserCenteredOnboarding ? OnboardingUserCentered : OnboardingNew;
     return (
       <>
-        <OnboardingNew
+        <OnboardingComponent
           onComplete={handleOnboardingComplete}
           onImport={async () => {
             // Create a version of importData that doesn't hide onboarding

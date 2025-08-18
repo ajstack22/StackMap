@@ -1,16 +1,19 @@
 // Web implementation of AsyncStorage using localStorage
-console.warn('[AsyncStorage.web] Module loaded at', new Date().toISOString());
+const VERBOSE_LOGGING = false; // Set to true for debugging storage issues
+if (VERBOSE_LOGGING) console.warn('[AsyncStorage.web] Module loaded at', new Date().toISOString());
 
 const AsyncStorage = {
   getItem: key => {
-    console.warn(`[AsyncStorage.web] 🟢 getItem called for: ${key}`);
+    if (VERBOSE_LOGGING) console.warn(`[AsyncStorage.web] 🟢 getItem called for: ${key}`);
     return new Promise((resolve) => {
       // Use setTimeout to ensure async behavior
       setTimeout(() => {
         try {
           const value = localStorage.getItem(key);
-          console.warn(`[AsyncStorage.web] 🟢 getItem('${key}') = ${value ? value.substring(0, 50) + '...' : null}`);
-          console.warn(`[AsyncStorage.web] 🟢 Resolving promise for ${key} with value:`, value);
+          if (VERBOSE_LOGGING) {
+            console.warn(`[AsyncStorage.web] 🟢 getItem('${key}') = ${value ? value.substring(0, 50) + '...' : null}`);
+            console.warn(`[AsyncStorage.web] 🟢 Resolving promise for ${key} with value:`, value);
+          }
           resolve(value);
         } catch (error) {
           console.error('[AsyncStorage.web] getItem error:', error);
@@ -24,7 +27,7 @@ const AsyncStorage = {
     return new Promise((resolve, reject) => {
       try {
         if (key.includes('@sync')) {
-          console.warn(`[AsyncStorage.web] setItem('${key}') = ${value ? value.substring(0, 20) + '...' : value}`);
+          if (VERBOSE_LOGGING) console.warn(`[AsyncStorage.web] setItem('${key}') = ${value ? value.substring(0, 20) + '...' : value}`);
         }
         localStorage.setItem(key, value);
         resolve();
@@ -99,6 +102,6 @@ const AsyncStorage = {
   __isCustomWebImplementation: true,
 };
 
-console.warn('[AsyncStorage.web] Exporting AsyncStorage with custom flag:', AsyncStorage.__isCustomWebImplementation);
+if (VERBOSE_LOGGING) console.warn('[AsyncStorage.web] Exporting AsyncStorage with custom flag:', AsyncStorage.__isCustomWebImplementation);
 
 export default AsyncStorage;

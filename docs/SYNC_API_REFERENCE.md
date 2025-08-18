@@ -4,13 +4,32 @@
 
 This document provides a complete reference for the StackMap Sync API endpoints, including request/response formats, error codes, and implementation examples.
 
-## 🎯 Sync Strategy (v2025.08.17+)
+## 🎯 Sync Strategy (Reverted - v2025.08.18)
 
-**StackMap uses a simple last-write-wins strategy:**
-- Full state replacement (no incremental sync)
-- Single global timestamp determines winner
-- ~4KB payload makes full replacement instant
-- No complex merge logic needed
+**StackMap uses the complex sync architecture:**
+- Last-write-wins with conflict resolution
+- Supports both full and incremental sync
+- Queue system for offline changes
+- Network monitoring and automatic retry
+- Throttling to prevent excessive syncs
+- Change tracking for incremental updates
+
+## 📊 Data Flow Overview
+
+### Client → Server (Push)
+1. **Read**: Data from 4 stores (users, library, settings, app state)
+2. **Normalize**: Fix field inconsistencies (text/name, icon/emoji)
+3. **Encrypt**: PBKDF2 key derivation → NaCl secretbox encryption
+4. **Send**: POST encrypted blob with sync_id and version
+5. **Store**: Server saves encrypted data (zero-knowledge)
+
+### Server → Client (Pull)
+1. **Request**: GET with sync_id
+2. **Receive**: Encrypted blob and metadata
+3. **Decrypt**: Extract nonce → decrypt with master key
+4. **Validate**: Check/repair data structure
+5. **Resolve**: Handle conflicts (last-write-wins)
+6. **Update**: Split data across stores
 
 ## Base URL
 
@@ -21,6 +40,13 @@ https://stackmap.app/api/sync
 ## Authentication
 
 The API uses zero-knowledge authentication based on sync IDs and device IDs. No traditional authentication tokens or API keys are required.
+
+### Key Components:
+- **Recovery Phrase**: 32-character hexadecimal string (never sent to server)
+- **Sync ID**: SHA-256 hash of recovery phrase (identifies sync group)
+- **Master Key**: PBKDF2-derived from recovery phrase + fixed salt
+- **Device ID**: Unique identifier for each device
+- **Encryption**: NaCl (TweetNaCl) secretbox with random nonce
 
 ## Endpoints
 
@@ -80,11 +106,16 @@ Updates sync data with a new encrypted blob.
 **Request Body:**
 ```json
 {
-  "sync_id": "string",
+  "sync_id": "string (hash of recovery phrase)",
   "device_id": "string",
   "device_name": "string (optional)",
-  "encrypted_blob": "string (base64)",
-  "sync_type": "full"  // Always "full" as of v2025.08.17
+  "encrypted_blob": "string (base64: nonce + encrypted data)",
+  "sync_type": "full",  // Always "full" as of v2025.08.17
+  "version": "number (timestamp for conflict detection)",
+  "metadata": {
+    "last_modified": "ISO 8601 timestamp",
+    "device_info": "optional device metadata"
+  }
 }
 ```
 
@@ -188,24 +219,70 @@ The encrypted blob is a base64-encoded string containing:
 [24 bytes nonce][remaining bytes encrypted data]
 ```
 
-When decrypted, the data structure is:
+### Encryption Process
+```javascript
+// 1. Key Derivation
+recoveryPhrase = "32 character hex string"
+fixedSalt = "U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=" // Base64
+masterKey = PBKDF2(recoveryPhrase + fixedSalt, iterations: 100000)
+
+// 2. Encryption
+nonce = randomBytes(24)
+encryptedData = nacl.secretbox(JSON.stringify(data), nonce, masterKey)
+encryptedBlob = base64(nonce + encryptedData)
+```
+
+### Decrypted Data Structure (v4)
 ```json
 {
   "version": 4,
-  "syncType": "full|incremental",
+  "syncType": "full",  // Always full as of v2025.08.18
   "syncTimestamp": 1705761296000,
   "deviceInfo": {
     "id": "device_id",
     "name": "Device Name"
   },
   "currentDay": "today",
-  "users": {},
-  "templates": [],
-  "completedActivities": [],
-  "globalSettings": {},
+  "currentUser": "user_id",
+  "users": {
+    "user_id": {
+      "id": "user_id",
+      "name": "User Name",
+      "icon": "emoji",  // Required field
+      "days": {
+        "today": {
+          "activities": [
+            {
+              "id": "activity_id",
+              "text": "Activity",  // Required: not 'name' or 'title'
+              "icon": "emoji",     // Required: not 'emoji'
+              "completed": false,
+              "pinned": false
+            }
+          ]
+        },
+        "tomorrow": { "activities": [] }
+      },
+      "settings": { "theme": "stackBlue" }
+    }
+  },
+  "library": {
+    "categories": [],
+    "userAddedActivityIds": []
+  },
+  "globalSettings": {
+    "currentTheme": "stackBlue",
+    "bannerPosition": "top",
+    "pinEnabled": false
+  },
   "hasCompletedOnboarding": true
 }
 ```
+
+### Field Normalization Rules
+- Activities: `text` (not name/title), `icon` (not emoji)
+- Users: `icon` required, `name` as string only
+- Always include fallbacks: `activity.text || activity.name || activity.title`
 
 ### Incremental Sync Format
 

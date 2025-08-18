@@ -130,7 +130,7 @@ class SyncService {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       // Sync when tab becomes visible (e.g., after computer wakes from sleep)
       document.addEventListener('visibilitychange', () => {
-        if (!document.hidden && this.syncEnabled) {
+        if (!document.hidden && this.syncEnabled && this.syncId) {
           console.log('sync: Tab became visible, triggering sync');
           // Reset network state and trigger sync with delay
           networkMonitor.isOnline = navigator.onLine;
@@ -140,7 +140,7 @@ class SyncService {
       
       // Sync when window gains focus
       window.addEventListener('focus', () => {
-        if (this.syncEnabled) {
+        if (this.syncEnabled && this.syncId) {
           console.log('sync: Window gained focus, triggering sync');
           // Reset network state and trigger sync
           networkMonitor.isOnline = navigator.onLine;
@@ -149,7 +149,7 @@ class SyncService {
       });
       // Also listen for online event in case network was disconnected
       window.addEventListener('online', () => {
-        if (this.syncEnabled) {
+        if (this.syncEnabled && this.syncId) {
           console.log('sync: Network connection restored, triggering sync');
           networkMonitor.isOnline = true;
           setTimeout(() => this.syncWithQueue(), 2000); // Small delay for network stability
@@ -652,7 +652,7 @@ class SyncService {
         // Log activities for each user
         if (decryptedData.users) {
           Object.entries(decryptedData.users).forEach(
-            ([_userId, user]: [string, any]) => {
+            ([_userId, user]) => {
               const todayActivities = user.days?.today?.activities?.length || 0;
               // const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
               if (todayActivities > 0) {
@@ -850,7 +850,7 @@ class SyncService {
     let users = state.users || {};
     let needsRepair = false;
     // Debug: Log activities for each user
-    Object.entries(users).forEach(([_userId, user]: [string, any]) => {
+    Object.entries(users).forEach(([_userId, user]) => {
       // const todayActivities = user.days?.today?.activities?.length || 0;
       // const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
       // Logging removed but code kept for future debugging
@@ -858,7 +858,7 @@ class SyncService {
     });
     if (users && Object.keys(users).length > 0) {
       const repairedUsers = { ...users };
-      Object.entries(users).forEach(([userId, user]: [string, any]) => {
+      Object.entries(users).forEach(([userId, user]) => {
         // Always ensure users have required fields
         const repairedUser = { ...user };
         let userNeedsRepair = false;
@@ -1065,7 +1065,7 @@ class SyncService {
     }
     // Debug: Log user activities
     if (users) {
-      Object.entries(users).forEach(([_userId, user]: [string, any]) => {
+      Object.entries(users).forEach(([_userId, user]) => {
         // const todayActivities = user.days?.today?.activities?.length || 0;
         // const tomorrowActivities = user.days?.tomorrow?.activities?.length || 0;
         user.days?.today?.activities?.length || 0;

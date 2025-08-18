@@ -65,16 +65,23 @@
 
 ---
 
-## 🔄 SYNC SYSTEM (Simplified - v2025.08.17)
-- **Strategy**: Simple last-write-wins - NO complex merging
-- **Single Timestamp**: One `lastModified` for entire state
-- **Full Replacement**: Newer timestamp wins completely (~4KB)
+## 🔄 SYNC SYSTEM (Reverted to Complex - v2025.08.18)
+- **Strategy**: Last-write-wins with conflict resolution
+- **Architecture**: Full service with queue, throttling, network monitoring  
+- **Components**: syncService.js + 9 supporting modules (queue, network, etc.)
 - **URL Format**: `stackmap.app/?sync=<32-char-hex>`
 - **Recovery phrase**: 32 character hexadecimal (no spaces)
-- **No Periodic Sync**: Removed 30-second timer (battery savings)
-- **Sync Triggers**: App visibility, data changes (10s debounce), manual
-- **Code Reduction**: ~67% smaller (600 lines vs 1800+)
-- **Debug**: Check `[Sync]` messages in console
+- **Periodic Sync**: 30-second interval when enabled
+- **Sync Triggers**: App visibility, data changes (5s debounce), manual, periodic
+- **Offline Support**: Queue system for offline changes
+- **Note**: Reverted from simplified TypeScript version due to AsyncStorage issues
+- **Debug**: Check `[Sync]` and sync status messages in console
+
+### Data Flow Summary
+**Push**: Stores → Normalize (text/icon) → Encrypt (PBKDF2+NaCl) → Server (zero-knowledge)  
+**Pull**: Server → Decrypt → Validate → Resolve conflicts → Update stores  
+**Key Fields**: Activities use `text` (not name/title) and `icon` (not emoji)  
+**See**: `/docs/SYNC_API_REFERENCE.md` for complete technical details
 
 ---
 
