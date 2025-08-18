@@ -65,14 +65,16 @@
 
 ---
 
-## 🔄 SYNC SYSTEM (Simple Last-Write-Wins - v2025.08.17)
+## 🔄 SYNC SYSTEM (Simplified - v2025.08.17)
 - **Strategy**: Simple last-write-wins - NO complex merging
 - **Single Timestamp**: One `lastModified` for entire state
 - **Full Replacement**: Newer timestamp wins completely (~4KB)
 - **URL Format**: `stackmap.app/?sync=<32-char-hex>`
 - **Recovery phrase**: 32 character hexadecimal (no spaces)
-- **No More Issues**: Eliminates completion ping-pong, merge conflicts
-- **Debug**: Check `[Sync]` messages in console for decisions
+- **No Periodic Sync**: Removed 30-second timer (battery savings)
+- **Sync Triggers**: App visibility, data changes (10s debounce), manual
+- **Code Reduction**: ~67% smaller (600 lines vs 1800+)
+- **Debug**: Check `[Sync]` messages in console
 
 ---
 

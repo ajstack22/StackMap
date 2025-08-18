@@ -106,6 +106,16 @@ class ConflictResolver {
     // Quick check on timestamps
     return (state1.lastModified || 0) === (state2.lastModified || 0);
   }
+
+  /**
+   * Simple helper to determine if remote data should be used
+   * Used by simplified sync service
+   */
+  shouldUseRemoteData(localState: any, remoteState: any): boolean {
+    const localTimestamp = localState.lastModified || 0;
+    const remoteTimestamp = remoteState.lastModified || 0;
+    return remoteTimestamp > localTimestamp;
+  }
 }
 
 // Export singleton instance

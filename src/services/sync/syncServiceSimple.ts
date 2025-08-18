@@ -516,10 +516,10 @@ class SimpleSyncService {
    */
   private async restoreData(data: any): Promise<void> {
     // Validate and repair if needed
-    const validation = validateSyncedData(data);
-    if (!validation.isValid) {
+    const isValid = validateSyncedData(data);
+    if (!isValid) {
       console.warn('[Sync] Data validation failed, attempting repair...');
-      data = repairSyncedData(data, validation.errors);
+      data = repairSyncedData(data);
     }
 
     // Update stores
