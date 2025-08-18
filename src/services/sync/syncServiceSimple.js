@@ -946,9 +946,9 @@ try {
 
 // Add to window for debugging in browser
 if (typeof window !== 'undefined') {
-  (window as any).syncService = simpleSyncService; // Use the service with bound methods
-  (window as any).testWrapper = testWrapper; // Add test wrapper for debugging
-  (window as any).boundSync = boundSync; // Direct access to bound sync
+  window.syncService = simpleSyncService; // Use the service with bound methods
+  window.testWrapper = testWrapper; // Add test wrapper for debugging
+  window.boundSync = boundSync; // Direct access to bound sync
   console.warn('[Sync] 🚨🚨🚨 Added syncService, testWrapper, and boundSync to window');
 }
 
