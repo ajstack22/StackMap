@@ -3,16 +3,20 @@
 const AsyncStorage = {
   getItem: key => {
     return new Promise((resolve) => {
-      try {
-        const value = localStorage.getItem(key);
-        if (key.includes('@sync')) {
-          console.warn(`[AsyncStorage.web] getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
+      // Use setTimeout to ensure async behavior
+      setTimeout(() => {
+        try {
+          const value = localStorage.getItem(key);
+          if (key.includes('@sync')) {
+            console.warn(`[AsyncStorage.web] getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
+          }
+          console.warn(`[AsyncStorage.web] Resolving promise for ${key}`);
+          resolve(value);
+        } catch (error) {
+          console.error('[AsyncStorage.web] getItem error:', error);
+          resolve(null);
         }
-        resolve(value);
-      } catch (error) {
-        console.error('[AsyncStorage.web] getItem error:', error);
-        resolve(null);
-      }
+      }, 0);
     });
   },
 
