@@ -749,7 +749,7 @@ const ContextModal = ({
         ]}
       >
         <Text style={styles.userCarouselEmoji}>
-          {currentUserData?.icon || '😊'}
+          {typeof currentUserData?.icon === 'string' ? currentUserData.icon : '😊'}
         </Text>
         <Text style={[styles.userCarouselName, { color: COLORS.white }]}>
           {currentUserData?.name || 'User'}

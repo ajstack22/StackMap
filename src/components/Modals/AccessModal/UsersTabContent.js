@@ -118,7 +118,7 @@ const UsersTabContent = ({
                 onPress={() => handleUserSelect(userId)}
               >
                 <Text style={styles.userItemEmoji}>
-                  {user.icon || DEFAULT_USER_ICON}
+                  {typeof user.icon === 'string' ? user.icon : DEFAULT_USER_ICON}
                 </Text>
                 <Text
                   style={[

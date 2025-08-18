@@ -301,7 +301,16 @@ class SimpleSyncService {
    * Request a sync (debounced)
    */
   requestSync(): void {
-    if (!this.syncEnabled || !this.syncId) return;
+    console.log('[Sync] requestSync called', {
+      syncEnabled: this.syncEnabled,
+      syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
+      initialized: this.initialized,
+    });
+    
+    if (!this.syncEnabled || !this.syncId) {
+      console.log('[Sync] Skipping sync - not enabled or no syncId');
+      return;
+    }
 
     // Clear existing timer
     if (this.syncDebounceTimer) {
@@ -310,7 +319,7 @@ class SimpleSyncService {
 
     // Set new timer
     this.syncDebounceTimer = setTimeout(() => {
-      console.log('[Sync] Debounced sync triggered');
+      console.log('[Sync] Debounced sync triggered after', this.syncDebounceDelay, 'ms');
       this.sync();
     }, this.syncDebounceDelay);
   }
@@ -319,6 +328,12 @@ class SimpleSyncService {
    * Perform sync immediately
    */
   async sync(): Promise<SyncResult> {
+    console.log('[Sync] sync() called', {
+      syncInProgress: this.syncInProgress,
+      syncEnabled: this.syncEnabled,
+      syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
+    });
+    
     // Prevent concurrent syncs
     if (this.syncInProgress) {
       console.log('[Sync] Sync already in progress, skipping');
@@ -326,6 +341,7 @@ class SimpleSyncService {
     }
 
     if (!this.syncEnabled || !this.syncId) {
+      console.log('[Sync] Sync not enabled or no syncId');
       return { success: false, error: 'Sync not enabled' };
     }
 
@@ -333,7 +349,7 @@ class SimpleSyncService {
     this.lastSyncAttempt = Date.now();
 
     try {
-      console.log('[Sync] Starting sync...');
+      console.log('[Sync] Starting sync process...');
 
       // Pull remote data
       const remoteData = await this.pullData();
@@ -393,7 +409,7 @@ class SimpleSyncService {
   /**
    * Pull data from server
    */
-  private async pullData(): Promise<any> {
+  async pullData(): Promise<any> {
     if (!this.syncId) return null;
 
     try {
@@ -423,7 +439,10 @@ class SimpleSyncService {
    * Push data to server
    */
   private async pushData(): Promise<SyncResult> {
+    console.log('[Sync] pushData called');
+    
     if (!this.syncId) {
+      console.log('[Sync] No sync ID, cannot push');
       return { success: false, error: 'No sync ID' };
     }
 
@@ -432,6 +451,12 @@ class SimpleSyncService {
       const deviceName = encryptionService.getDeviceName();
       const currentState = this.getCurrentState();
       const encryptedData = encryptionService.encryptData(currentState);
+      
+      console.log('[Sync] Pushing data to server', {
+        syncId: this.syncId.substring(0, 8) + '...',
+        deviceId,
+        url: `${API_BASE_URL}/push.php`,
+      });
 
       const response = await fetch(`${API_BASE_URL}/push.php`, {
         method: 'POST',
@@ -640,6 +665,112 @@ class SimpleSyncService {
   async requestSyncWithOptions(_options?: any): Promise<SyncResult> {
     this.requestSync();
     return { success: true };
+  }
+
+  /**
+   * Get sync ID
+   */
+  getSyncId(): string | null {
+    return this.syncId;
+  }
+
+  /**
+   * Get recovery phrase if available
+   */
+  async getRecoveryPhrase(): Promise<string | null> {
+    if (!this.syncId) return null;
+    try {
+      return await encryptionService.getStoredRecoveryPhrase(this.syncId);
+    } catch (error) {
+      console.error('[Sync] Failed to get recovery phrase:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Verify sync exists on server
+   */
+  async verifySyncExists(): Promise<boolean> {
+    if (!this.syncId) return false;
+    try {
+      const data = await this.pullData();
+      return data !== null;
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Delete all sync data from server
+   */
+  async deleteFromServer(): Promise<any> {
+    if (!this.syncId) {
+      throw new Error('No sync data to delete');
+    }
+
+    const deviceId = await encryptionService.getDeviceId();
+
+    const response = await fetch(`${API_BASE_URL}/delete.php`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        sync_id: this.syncId,
+        device_id: deviceId,
+      }),
+    });
+
+    const result = await response.json();
+
+    if (result.success) {
+      // Clear local sync state
+      await this.disable();
+    }
+
+    return result;
+  }
+
+  /**
+   * Get API URL for debugging
+   */
+  getApiUrl(): string {
+    return API_BASE_URL;
+  }
+
+  // Share functionality - temporarily returning empty/errors until properly implemented
+  
+  /**
+   * Get active shares (not implemented in simplified version yet)
+   */
+  async getActiveShares(): Promise<any[]> {
+    // TODO: Implement share functionality
+    return [];
+  }
+
+  /**
+   * Generate share token (not implemented in simplified version yet)
+   */
+  generateShareToken(): string {
+    // TODO: Implement share functionality
+    throw new Error('Share functionality not yet implemented in simplified sync');
+  }
+
+  /**
+   * Create share link (not implemented in simplified version yet)
+   */
+  async createShareLink(_userId: string, _options?: any): Promise<any> {
+    // TODO: Implement share functionality
+    throw new Error('Share functionality not yet implemented in simplified sync');
+  }
+
+  /**
+   * Delete share (not implemented in simplified version yet)
+   */
+  async deleteShare(_shareId: string): Promise<boolean> {
+    // TODO: Implement share functionality
+    console.warn('[Sync] Share deletion not yet implemented in simplified sync');
+    return false;
   }
 }
 

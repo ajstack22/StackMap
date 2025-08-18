@@ -794,7 +794,7 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
                           ]}
                         >
                           <Text style={styles.pillEmoji}>
-                            {users[0]?.icon || DEFAULT_USER_ICON}
+                            {typeof users[0]?.icon === 'string' ? users[0].icon : DEFAULT_USER_ICON}
                           </Text>
                           <Text
                             style={[

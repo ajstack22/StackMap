@@ -4029,7 +4029,7 @@ Users: ${userNames} (${userCount} total)
       >
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
-            <Logo size={isTablet() ? 40 : 32} theme={theme} />
+            <Logo size={isTablet() ? 40 : 32} theme={theme} color="white" />
             <Text style={styles.headerTitle}>StackMap</Text>
           </View>
           {Platform.OS === 'ios' && PanGestureHandler ? (
@@ -4050,7 +4050,7 @@ Users: ${userNames} (${userCount} total)
                     isEditMode && styles.subtitleEmojiEdit,
                   ]}
                 >
-                  {users[currentUser]?.icon || DEFAULT_USER_ICON}
+                  {typeof users[currentUser]?.icon === 'string' ? users[currentUser].icon : DEFAULT_USER_ICON}
                 </Text>
                 <Text
                   style={[
