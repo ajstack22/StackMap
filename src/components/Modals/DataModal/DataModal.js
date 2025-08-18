@@ -1789,60 +1789,49 @@ const DataModal = ({
               variant="primary"
               label="Manual Sync (Debug)"
               icon="refresh"
-              onPress={() => {
+              onPress={async () => {
                 console.log('[DataModal] Manual sync button clicked!');
-                console.log('[DataModal] syncService exists?', !!syncService);
-                console.log('[DataModal] syncService type:', typeof syncService);
-                console.log('[DataModal] syncService keys:', Object.keys(syncService || {}));
+                console.log('[DataModal] syncService:', syncService);
+                console.log('[DataModal] Current syncLoading state:', syncLoading);
                 
-                // Try calling sync directly without async/await first
+                // Don't set loading state for now to avoid blocking
                 try {
-                  console.log('[DataModal] Attempting to call syncService.isEnabled...');
-                  const isEnabledFunc = syncService?.isEnabled;
-                  console.log('[DataModal] isEnabled function exists?', !!isEnabledFunc);
-                  console.log('[DataModal] isEnabled type:', typeof isEnabledFunc);
-                  
-                  if (typeof isEnabledFunc === 'function') {
-                    console.log('[DataModal] Calling isEnabled...');
-                    isEnabledFunc().then(enabled => {
-                      console.log('[DataModal] isEnabled result:', enabled);
-                      
-                      if (enabled) {
-                        console.log('[DataModal] Sync is enabled, calling sync...');
-                        const syncFunc = syncService?.sync;
-                        if (typeof syncFunc === 'function') {
-                          syncFunc().then(result => {
-                            console.log('[DataModal] Sync result:', result);
-                            showToast({ 
-                              message: result.success 
-                                ? 'Sync completed!' 
-                                : `Sync failed: ${result.error}`
-                            });
-                          }).catch(err => {
-                            console.error('[DataModal] Sync error:', err);
-                            showToast({ message: `Sync error: ${err.message}` });
-                          });
-                        } else {
-                          console.error('[DataModal] sync is not a function!');
-                        }
-                      } else {
-                        console.log('[DataModal] Sync not enabled');
-                        showToast({ message: 'Sync is not enabled!' });
-                      }
-                    }).catch(err => {
-                      console.error('[DataModal] isEnabled error:', err);
-                    });
-                  } else {
-                    console.error('[DataModal] isEnabled is not a function!');
-                    console.log('[DataModal] Available methods:', Object.getOwnPropertyNames(syncService));
+                  if (!syncService) {
+                    console.error('[DataModal] syncService is null/undefined!');
+                    showToast({ message: 'Sync service not available!' });
+                    return;
                   }
+                  
+                  console.log('[DataModal] Calling syncService.isEnabled()...');
+                  const enabled = await syncService.isEnabled();
+                  console.log('[DataModal] Sync enabled:', enabled);
+                  
+                  if (!enabled) {
+                    console.log('[DataModal] Sync not enabled, trying to check actual state...');
+                    console.log('[DataModal] Direct state check:', {
+                      syncEnabled: syncService.syncEnabled,
+                      syncId: syncService.syncId,
+                      initialized: syncService.initialized,
+                    });
+                  }
+                  
+                  // Try to sync regardless of enabled state for debugging
+                  console.log('[DataModal] Attempting sync...');
+                  const result = await syncService.sync();
+                  console.log('[DataModal] Sync result:', result);
+                  
+                  showToast({ 
+                    message: result?.success 
+                      ? 'Sync completed!' 
+                      : `Sync result: ${JSON.stringify(result)}`
+                  });
+                  
                 } catch (error) {
-                  console.error('[DataModal] Sync button error:', error);
+                  console.error('[DataModal] Manual sync error:', error);
                   showToast({ message: `Error: ${error.message}` });
                 }
               }}
-              loading={syncLoading}
-              disabled={syncLoading}
+              // Remove loading/disabled for debug button
               fullWidth
             />
 
