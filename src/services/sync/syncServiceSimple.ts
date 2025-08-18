@@ -83,17 +83,40 @@ class SimpleSyncService {
       isEnabled: typeof this.isEnabled,
     });
     
-    // Initialize immediately (no timers)
-    console.warn('[Sync] 🚨 Calling initialize()...');
-    this.initialize().then(() => {
-      console.warn('[Sync] 🚨 Initialize completed, state:', {
-        syncEnabled: this.syncEnabled,
-        syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
-        initialized: this.initialized,
+    // Initialize with direct localStorage for web
+    console.warn('[Sync] 🚨 Starting initialization...');
+    if (typeof localStorage !== 'undefined') {
+      // Web platform - use localStorage directly
+      const enabled = localStorage.getItem('@sync_enabled');
+      const syncId = localStorage.getItem('@sync_id');
+      
+      console.warn('[Sync] 🚨 Direct localStorage read:', {
+        enabled,
+        syncId: syncId ? syncId.substring(0, 8) + '...' : null,
       });
-    }).catch(error => {
-      console.error('[Sync] 🚨 Initialize FAILED:', error);
-    });
+      
+      if (enabled === 'true' && syncId) {
+        this.syncEnabled = true;
+        this.syncId = syncId;
+        this.initialized = true;
+        console.warn('[Sync] 🚨 Sync state restored from localStorage');
+      } else {
+        this.initialized = true;
+        console.warn('[Sync] 🚨 No sync state in localStorage');
+      }
+    } else {
+      // Mobile platforms - use AsyncStorage
+      console.warn('[Sync] 🚨 Calling initialize() for mobile...');
+      this.initialize().then(() => {
+        console.warn('[Sync] 🚨 Initialize completed, state:', {
+          syncEnabled: this.syncEnabled,
+          syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
+          initialized: this.initialized,
+        });
+      }).catch(error => {
+        console.error('[Sync] 🚨 Initialize FAILED:', error);
+      });
+    }
   }
 
   /**
