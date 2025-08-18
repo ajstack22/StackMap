@@ -1,3 +1,6 @@
+// Add immediate console log to verify module is loading
+console.warn('[Sync] 🚨🚨🚨 syncServiceSimple.ts MODULE LOADING at', new Date().toISOString());
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, AppState } from 'react-native';
 
@@ -5,6 +8,8 @@ import encryptionService from './encryptionService';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import conflictResolver from './conflictResolver';
 import { validateSyncedData, repairSyncedData } from './dataValidator';
+
+console.warn('[Sync] 🚨🚨🚨 Imports completed, defining SimpleSyncService class...');
 
 /**
  * Get API base URL based on environment
@@ -833,11 +838,20 @@ class SimpleSyncService {
 }
 
 // Export singleton instance
-console.warn('[Sync] 🚨 Creating SimpleSyncService singleton...');
-const simpleSyncService = new SimpleSyncService();
-console.warn('[Sync] 🚨 SimpleSyncService singleton created:', !!simpleSyncService);
+console.warn('[Sync] 🚨🚨🚨 About to create SimpleSyncService singleton...');
+console.warn('[Sync] 🚨🚨🚨 SimpleSyncService class exists:', typeof SimpleSyncService);
+
+let simpleSyncService;
+try {
+  simpleSyncService = new SimpleSyncService();
+  console.warn('[Sync] 🚨🚨🚨 SimpleSyncService singleton created successfully:', !!simpleSyncService);
+} catch (error) {
+  console.error('[Sync] 🚨🚨🚨 FAILED to create SimpleSyncService:', error);
+  throw error;
+}
 
 // Explicitly bind ALL methods to make them accessible
+console.warn('[Sync] 🚨🚨🚨 Binding methods...');
 const methodsToBind = [
   'enable', 'disable', 'sync', 'isEnabled', 'addStatusListener',
   'syncWithQueue', 'generateSyncId', 'requestSync', 'requestSyncWithOptions',
@@ -852,4 +866,13 @@ methodsToBind.forEach(method => {
   }
 });
 
+console.warn('[Sync] 🚨🚨🚨 Method binding complete');
+
+// Add to window for debugging in browser
+if (typeof window !== 'undefined') {
+  (window as any).syncService = simpleSyncService;
+  console.warn('[Sync] 🚨🚨🚨 Added syncService to window for debugging');
+}
+
+console.warn('[Sync] 🚨🚨🚨 Module export ready');
 export default simpleSyncService;
