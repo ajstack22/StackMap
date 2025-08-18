@@ -66,10 +66,16 @@ class SimpleSyncService {
   private appStateSubscription: any = null;
 
   constructor() {
-    console.log('[Sync] SimpleSyncService initialized');
+    console.log('[Sync] SimpleSyncService constructor called');
     
     // Initialize immediately (no timers)
-    this.initialize();
+    this.initialize().then(() => {
+      console.log('[Sync] Initialize completed, state:', {
+        syncEnabled: this.syncEnabled,
+        syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
+        initialized: this.initialized,
+      });
+    });
   }
 
   /**
@@ -85,9 +91,11 @@ class SimpleSyncService {
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
       const lastSyncSuccess = await AsyncStorage.getItem('@sync_last_success');
 
-      console.log('[Sync] Restored state:', {
+      console.log('[Sync] Restored state from AsyncStorage:', {
         enabled,
         syncId: syncId ? syncId.substring(0, 8) + '...' : null,
+        lastVersion,
+        hasStoredValues: !!(enabled || syncId),
       });
 
       if (enabled === 'true' && syncId) {
@@ -241,9 +249,22 @@ class SimpleSyncService {
 
       // Save sync state
       this.syncEnabled = true;
+      console.log('[Sync] Saving sync state to AsyncStorage:', {
+        syncId: syncId.substring(0, 8) + '...',
+        enabled: true,
+        version: this.lastSyncVersion,
+      });
       await AsyncStorage.setItem('@sync_enabled', 'true');
       await AsyncStorage.setItem('@sync_id', syncId);
       await AsyncStorage.setItem('@sync_last_version', String(this.lastSyncVersion));
+      
+      // Verify it was saved
+      const savedEnabled = await AsyncStorage.getItem('@sync_enabled');
+      const savedId = await AsyncStorage.getItem('@sync_id');
+      console.log('[Sync] Verified saved state:', {
+        savedEnabled,
+        savedId: savedId ? savedId.substring(0, 8) + '...' : null,
+      });
 
       // Set up lifecycle listeners
       this.setupLifecycleListeners();
