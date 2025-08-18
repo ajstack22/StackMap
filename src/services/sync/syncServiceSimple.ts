@@ -105,10 +105,21 @@ class SimpleSyncService {
     try {
       // Restore sync state from storage
       console.warn('[Sync] 🚨 Reading from AsyncStorage...');
+      console.warn('[Sync] 🚨 Getting @sync_enabled...');
       const enabled = await AsyncStorage.getItem('@sync_enabled');
+      console.warn('[Sync] 🚨 Got enabled:', enabled);
+      
+      console.warn('[Sync] 🚨 Getting @sync_id...');
       const syncId = await AsyncStorage.getItem('@sync_id');
+      console.warn('[Sync] 🚨 Got syncId:', syncId ? syncId.substring(0, 8) + '...' : null);
+      
+      console.warn('[Sync] 🚨 Getting @sync_last_version...');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
+      console.warn('[Sync] 🚨 Got lastVersion:', lastVersion);
+      
+      console.warn('[Sync] 🚨 Getting @sync_last_success...');
       const lastSyncSuccess = await AsyncStorage.getItem('@sync_last_success');
+      console.warn('[Sync] 🚨 Got lastSyncSuccess:', lastSyncSuccess);
 
       console.warn('[Sync] 🚨 Restored state from AsyncStorage:', {
         enabled,
