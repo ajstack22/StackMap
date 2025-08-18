@@ -21,6 +21,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
 import syncService from '../../services/sync/syncService';
 import encryptionService from '../../services/sync/encryptionService';
+import { useAppStore, useUserStore } from '../../stores';
 import {
   TYPOGRAPHY,
   SPACING,
@@ -247,6 +248,38 @@ const OnboardingUserCentered = ({
     setSyncError('');
     
     try {
+      // First, create users in the store before setting up sync
+      if (users.length > 0) {
+        const usersObj = {};
+        let firstUserId = null;
+        
+        users.forEach((user, index) => {
+          const userId = `user_${index + 1}`;
+          if (index === 0) firstUserId = userId;
+          
+          usersObj[userId] = {
+            id: userId,
+            name: user.name,
+            icon: user.icon,
+            emoji: user.icon, // Keep for backwards compatibility
+            days: {
+              today: { activities: [] },
+              tomorrow: { activities: [] }
+            },
+            deleted: false
+          };
+        });
+        
+        // Set users in store
+        useUserStore.getState().setUsers(usersObj);
+        
+        // Set the first user as current user
+        useAppStore.getState().setCurrentUser(firstUserId);
+        
+        // Wait a moment for store to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
       const syncCode = generatedSyncCode || generateNewSyncCode();
       
       await syncService.initialize(syncCode);

@@ -47,7 +47,7 @@ const getApiBaseUrl = () => {
   // Default to production API
   return 'https://stackmap.app/api/sync';
 };
-const API_BASE_URL = getApiBaseUrl();
+// API_BASE_URL is now computed dynamically via getApiBaseUrl()
 /**
  * Get share API URL based on environment
  */
@@ -358,7 +358,7 @@ class SyncService {
     // Get current state and encrypt it
     const currentState = this.getCurrentState();
     const encryptedBlob = encryptionService.encryptData(currentState);
-    const response = await fetch(`${API_BASE_URL}/create.php`, {
+    const response = await fetch(`${getApiBaseUrl()}/create.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -453,7 +453,7 @@ class SyncService {
     // Track this transaction
     this.processedTransactions.add(transactionId);
     try {
-      const response = await fetch(`${API_BASE_URL}/push.php`, {
+      const response = await fetch(`${getApiBaseUrl()}/push.php`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -512,7 +512,7 @@ class SyncService {
       return null;
     }
     const deviceId = await encryptionService.getDeviceId();
-    const url = `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+    const url = `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
     try {
       const response = await fetch(url);
       if (response.status === 404) {
@@ -1296,7 +1296,7 @@ class SyncService {
       throw new Error('No sync data to delete');
     }
     const deviceId = await encryptionService.getDeviceId();
-    const response = await fetch(`${API_BASE_URL}/delete.php`, {
+    const response = await fetch(`${getApiBaseUrl()}/delete.php`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -1335,7 +1335,7 @@ class SyncService {
     try {
       const deviceId = await encryptionService.getDeviceId();
       const response = await fetch(
-        `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`,
+        `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`,
       );
       if (response.status === 404) {
         // Sync doesn't exist on server, disable locally
@@ -2200,13 +2200,13 @@ class SyncService {
    * Get the API URL for sync operations
    */
   getApiUrl() {
-    return API_BASE_URL;
+    return getApiBaseUrl();
   }
 }
 const syncService = new SyncService();
 // Bind methods and expose properties for compatibility
 (syncService).generateSyncId =
   syncService.generateSyncId.bind(syncService);
-(syncService).API_BASE_URL = API_BASE_URL;
+(syncService).getApiBaseUrl = getApiBaseUrl;
 (syncService).encryptionService = encryptionService;
 export default syncService;
