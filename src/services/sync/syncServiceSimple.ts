@@ -76,6 +76,13 @@ class SimpleSyncService {
   constructor() {
     console.warn('[Sync] 🚨 SimpleSyncService constructor called at', new Date().toISOString());
     
+    // Add method existence check
+    console.warn('[Sync] 🚨 Methods check:', {
+      sync: typeof this.sync,
+      pullData: typeof this.pullData,
+      isEnabled: typeof this.isEnabled,
+    });
+    
     // Initialize immediately (no timers)
     console.warn('[Sync] 🚨 Calling initialize()...');
     this.initialize().then(() => {
@@ -385,7 +392,7 @@ class SimpleSyncService {
    * Perform sync immediately
    */
   async sync(): Promise<SyncResult> {
-    console.log('[Sync] sync() called', {
+    console.warn('[Sync] 🔴 sync() ENTERED', {
       syncInProgress: this.syncInProgress,
       syncEnabled: this.syncEnabled,
       syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
@@ -393,12 +400,15 @@ class SimpleSyncService {
     
     // Prevent concurrent syncs
     if (this.syncInProgress) {
-      console.log('[Sync] Sync already in progress, skipping');
+      console.warn('[Sync] 🔴 RETURNING: Sync already in progress');
       return { success: false, error: 'Sync already in progress' };
     }
 
     if (!this.syncEnabled || !this.syncId) {
-      console.log('[Sync] Sync not enabled or no syncId');
+      console.warn('[Sync] 🔴 RETURNING: Sync not enabled or no syncId', {
+        syncEnabled: this.syncEnabled,
+        syncId: this.syncId,
+      });
       return { success: false, error: 'Sync not enabled' };
     }
 
@@ -406,10 +416,12 @@ class SimpleSyncService {
     this.lastSyncAttempt = Date.now();
 
     try {
-      console.log('[Sync] Starting sync process...');
+      console.warn('[Sync] 🔴 Starting sync process...');
 
       // Pull remote data
+      console.warn('[Sync] 🔴 About to call pullData()...');
       const remoteData = await this.pullData();
+      console.warn('[Sync] 🔴 pullData() returned:', !!remoteData);
 
       if (!remoteData) {
         // No remote data, push local data
@@ -467,19 +479,30 @@ class SimpleSyncService {
    * Pull data from server
    */
   async pullData(): Promise<any> {
-    if (!this.syncId) return null;
+    console.warn('[Sync] 🔴 pullData() ENTERED');
+    if (!this.syncId) {
+      console.warn('[Sync] 🔴 pullData() RETURNING null - no syncId');
+      return null;
+    }
 
     try {
+      console.warn('[Sync] 🔴 Getting device ID...');
       const deviceId = await encryptionService.getDeviceId();
+      console.warn('[Sync] 🔴 Got device ID:', deviceId);
+      
       const url = `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+      console.warn('[Sync] 🔴 Fetching from:', url);
       
       const response = await fetch(url);
+      console.warn('[Sync] 🔴 Fetch completed, status:', response.status);
 
       if (response.status === 404) {
+        console.warn('[Sync] 🔴 pullData() RETURNING null - 404');
         return null; // No data exists
       }
 
       if (!response.ok) {
+        console.warn('[Sync] 🔴 pullData() THROWING - bad status:', response.status);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
