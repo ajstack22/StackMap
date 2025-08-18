@@ -884,11 +884,11 @@ const DataModal = ({
           return;
         }
 
-        // Use initialize method to join existing sync
-        const result = await syncService.initialize(recoveryInput.trim());
+        // Use enable method with recovery phrase to join existing sync
+        const result = await syncService.enable(recoveryInput.trim());
 
         setSyncId(result.syncId);
-        setSyncRecoveryPhrase(recoveryInput.trim());
+        setSyncRecoveryPhrase(result.recoveryPhrase);
         setSyncEnabled(true);
         setShowRecoveryInput(false);
         setRecoveryInput('');
