@@ -798,13 +798,19 @@ class SimpleSyncService {
 // Export singleton instance
 const simpleSyncService = new SimpleSyncService();
 
-// Explicitly bind methods to make them accessible
-(simpleSyncService as any).enable = simpleSyncService.enable.bind(simpleSyncService);
-(simpleSyncService as any).disable = simpleSyncService.disable.bind(simpleSyncService);
-(simpleSyncService as any).sync = simpleSyncService.sync.bind(simpleSyncService);
-(simpleSyncService as any).isEnabled = simpleSyncService.isEnabled.bind(simpleSyncService);
-(simpleSyncService as any).addStatusListener = simpleSyncService.addStatusListener.bind(simpleSyncService);
-(simpleSyncService as any).syncWithQueue = simpleSyncService.syncWithQueue.bind(simpleSyncService);
-(simpleSyncService as any).generateSyncId = simpleSyncService.generateSyncId.bind(simpleSyncService);
+// Explicitly bind ALL methods to make them accessible
+const methodsToBind = [
+  'enable', 'disable', 'sync', 'isEnabled', 'addStatusListener',
+  'syncWithQueue', 'generateSyncId', 'requestSync', 'requestSyncWithOptions',
+  'getSyncId', 'getRecoveryPhrase', 'verifySyncExists', 'deleteFromServer',
+  'getApiUrl', 'getActiveShares', 'generateShareToken', 'createShareLink',
+  'deleteShare', 'pullData', 'initialize'
+];
+
+methodsToBind.forEach(method => {
+  if (typeof (simpleSyncService as any)[method] === 'function') {
+    (simpleSyncService as any)[method] = (simpleSyncService as any)[method].bind(simpleSyncService);
+  }
+});
 
 export default simpleSyncService;

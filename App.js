@@ -137,11 +137,35 @@ if (syncService) {
 
 // Debug: Check localStorage directly
 if (typeof window !== 'undefined' && window.localStorage) {
+  const syncEnabled = localStorage.getItem('@sync_enabled');
+  const syncId = localStorage.getItem('@sync_id');
   console.warn('[App] 🔍 LocalStorage sync keys:', {
-    syncEnabled: localStorage.getItem('@sync_enabled'),
-    syncId: localStorage.getItem('@sync_id') ? localStorage.getItem('@sync_id').substring(0, 8) + '...' : null,
+    syncEnabled,
+    syncId: syncId ? syncId.substring(0, 8) + '...' : null,
     hasRecoveryPhrase: !!localStorage.getItem('@recovery_phrase_28c5c1fc531586ec06698741889f03e7')
   });
+  
+  // Check if sync service state matches localStorage
+  setTimeout(() => {
+    console.warn('[App] 🔍 After timeout - Sync service state:', {
+      serviceEnabled: syncService?.syncEnabled,
+      serviceId: syncService?.syncId ? syncService.syncId.substring(0, 8) + '...' : null,
+      initialized: syncService?.initialized,
+      localStorageEnabled: syncEnabled,
+      localStorageId: syncId ? syncId.substring(0, 8) + '...' : null,
+    });
+    
+    // Force initialization if not initialized
+    if (syncService && !syncService.initialized && syncEnabled === 'true') {
+      console.warn('[App] 🔍 Force initializing sync service...');
+      syncService.initialize().then(() => {
+        console.warn('[App] 🔍 Force init complete:', {
+          enabled: syncService.syncEnabled,
+          id: syncService.syncId ? syncService.syncId.substring(0, 8) + '...' : null,
+        });
+      });
+    }
+  }, 1000);
 }
 
 // Import utilities
