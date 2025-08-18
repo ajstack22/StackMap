@@ -1,53 +1,66 @@
 // Web implementation of AsyncStorage using localStorage
 
 const AsyncStorage = {
-  getItem: async key => {
-    try {
-      const value = localStorage.getItem(key);
-      if (key.includes('@sync')) {
-        console.warn(`[AsyncStorage.web] getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
+  getItem: key => {
+    return new Promise((resolve) => {
+      try {
+        const value = localStorage.getItem(key);
+        if (key.includes('@sync')) {
+          console.warn(`[AsyncStorage.web] getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
+        }
+        resolve(value);
+      } catch (error) {
+        console.error('[AsyncStorage.web] getItem error:', error);
+        resolve(null);
       }
-      return value;
-    } catch (error) {
-      console.error('[AsyncStorage.web] getItem error:', error);
-      return null;
-    }
+    });
   },
 
-  setItem: async (key, value) => {
-    try {
-      if (key.includes('@sync')) {
-        console.warn(`[AsyncStorage.web] setItem('${key}') = ${value ? value.substring(0, 20) + '...' : value}`);
+  setItem: (key, value) => {
+    return new Promise((resolve, reject) => {
+      try {
+        if (key.includes('@sync')) {
+          console.warn(`[AsyncStorage.web] setItem('${key}') = ${value ? value.substring(0, 20) + '...' : value}`);
+        }
+        localStorage.setItem(key, value);
+        resolve();
+      } catch (error) {
+        console.error('[AsyncStorage.web] setItem error:', error);
+        reject(error);
       }
-      localStorage.setItem(key, value);
-    } catch (error) {
-      console.error('[AsyncStorage.web] setItem error:', error);
-      throw error;
-    }
+    });
   },
 
-  removeItem: async key => {
-    try {
-      localStorage.removeItem(key);
-    } catch (error) {
-      throw error;
-    }
+  removeItem: key => {
+    return new Promise((resolve, reject) => {
+      try {
+        localStorage.removeItem(key);
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
   },
 
-  clear: async () => {
-    try {
-      localStorage.clear();
-    } catch (error) {
-      throw error;
-    }
+  clear: () => {
+    return new Promise((resolve, reject) => {
+      try {
+        localStorage.clear();
+        resolve();
+      } catch (error) {
+        reject(error);
+      }
+    });
   },
 
-  getAllKeys: async () => {
-    try {
-      return Object.keys(localStorage);
-    } catch (error) {
-      return [];
-    }
+  getAllKeys: () => {
+    return new Promise((resolve) => {
+      try {
+        resolve(Object.keys(localStorage));
+      } catch (error) {
+        resolve([]);
+      }
+    });
   },
 
   multiGet: async keys => {
