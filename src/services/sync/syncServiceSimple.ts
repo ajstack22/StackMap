@@ -473,6 +473,12 @@ class SimpleSyncService {
    * Create new sync group
    */
   private async createSyncGroup(syncId: string, salt: string): Promise<void> {
+    const deviceId = await encryptionService.getDeviceId();
+    
+    // Get current state and encrypt it for initial sync
+    const currentState = this.getCurrentState();
+    const encryptedBlob = encryptionService.encryptData(currentState);
+    
     const response = await fetch(`${API_BASE_URL}/create.php`, {
       method: 'POST',
       headers: {
@@ -480,12 +486,15 @@ class SimpleSyncService {
       },
       body: JSON.stringify({
         sync_id: syncId,
-        salt: salt,
+        encrypted_blob: encryptedBlob,
+        recovery_salt: salt,
+        device_id: deviceId,
       }),
     });
 
     if (!response.ok) {
-      throw new Error('Failed to create sync group');
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to create sync group');
     }
   }
 
