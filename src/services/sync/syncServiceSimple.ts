@@ -1,11 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, AppState } from 'react-native';
-import nacl from 'tweetnacl';
-import util from 'tweetnacl-util';
-
-// Type helpers for tweetnacl-util
-const decodeUTF8 = (str: string): Uint8Array => 
-  (util as any).decodeUTF8(str);
 
 import encryptionService from './encryptionService';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
@@ -555,13 +549,17 @@ class SimpleSyncService {
    * Generate sync ID from recovery phrase
    */
   async generateSyncId(recoveryPhrase: string): Promise<string> {
-    const phraseBytes = decodeUTF8(recoveryPhrase.toLowerCase());
-    const hash = nacl.hash(phraseBytes);
-    const syncIdBytes = hash.slice(0, 16);
-    const syncId = Array.from(syncIdBytes)
-      .map(b => ('0' + b.toString(16)).slice(-2))
-      .join('');
-    return syncId;
+    // Use a fixed salt for sync ID generation to ensure consistency
+    const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ=='; // Base64 encoded fixed salt
+    const { key } = await encryptionService.deriveKeyFromPhrase(
+      recoveryPhrase,
+      fixedSalt,
+    );
+    // Use first 16 bytes of key as sync ID
+    const syncIdBytes = key.slice(0, 16);
+    return Array.from(syncIdBytes, byte =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
   }
 
   /**
@@ -655,5 +653,6 @@ const simpleSyncService = new SimpleSyncService();
 (simpleSyncService as any).isEnabled = simpleSyncService.isEnabled.bind(simpleSyncService);
 (simpleSyncService as any).addStatusListener = simpleSyncService.addStatusListener.bind(simpleSyncService);
 (simpleSyncService as any).syncWithQueue = simpleSyncService.syncWithQueue.bind(simpleSyncService);
+(simpleSyncService as any).generateSyncId = simpleSyncService.generateSyncId.bind(simpleSyncService);
 
 export default simpleSyncService;
