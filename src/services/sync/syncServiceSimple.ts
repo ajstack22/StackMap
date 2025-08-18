@@ -875,27 +875,61 @@ try {
 
 // Explicitly bind ALL methods to make them accessible
 console.warn('[Sync] 🚨🚨🚨 Binding methods...');
-const methodsToBind = [
-  'enable', 'disable', 'sync', 'isEnabled', 'addStatusListener',
-  'syncWithQueue', 'generateSyncId', 'requestSync', 'requestSyncWithOptions',
-  'getSyncId', 'getRecoveryPhrase', 'verifySyncExists', 'deleteFromServer',
-  'getApiUrl', 'getActiveShares', 'generateShareToken', 'createShareLink',
-  'deleteShare', 'pullData', 'initialize'
-];
 
-methodsToBind.forEach(method => {
-  if (typeof (simpleSyncService as any)[method] === 'function') {
-    (simpleSyncService as any)[method] = (simpleSyncService as any)[method].bind(simpleSyncService);
-  }
-});
+// Create a wrapper object with bound methods to avoid any circular issues
+const wrappedService = {
+  // Core properties (direct access)
+  get syncEnabled() { return simpleSyncService.syncEnabled; },
+  get syncId() { return simpleSyncService.syncId; },
+  get initialized() { return simpleSyncService.initialized; },
+  
+  // Wrapped methods with explicit binding and error handling
+  sync: async () => {
+    console.warn('[Sync] 🔴🔴 WRAPPER sync() called');
+    try {
+      const result = await simpleSyncService.sync();
+      console.warn('[Sync] 🔴🔴 WRAPPER sync() returning:', result);
+      return result;
+    } catch (error) {
+      console.error('[Sync] 🔴🔴 WRAPPER sync() error:', error);
+      throw error;
+    }
+  },
+  
+  enable: async (recoveryPhrase?: string) => {
+    console.warn('[Sync] WRAPPER enable() called');
+    return simpleSyncService.enable(recoveryPhrase);
+  },
+  
+  disable: async () => {
+    console.warn('[Sync] WRAPPER disable() called');
+    return simpleSyncService.disable();
+  },
+  
+  isEnabled: async () => {
+    console.warn('[Sync] WRAPPER isEnabled() called');
+    return simpleSyncService.isEnabled();
+  },
+  
+  // Add other essential methods
+  addStatusListener: (listener: any) => simpleSyncService.addStatusListener(listener),
+  getSyncId: () => simpleSyncService.getSyncId(),
+  getRecoveryPhrase: async () => simpleSyncService.getRecoveryPhrase(),
+  verifySyncExists: async () => simpleSyncService.verifySyncExists(),
+  deleteFromServer: async () => simpleSyncService.deleteFromServer(),
+  requestSync: () => simpleSyncService.requestSync(),
+  pullData: async () => simpleSyncService.pullData(),
+  initialize: async () => simpleSyncService.initialize(),
+};
 
-console.warn('[Sync] 🚨🚨🚨 Method binding complete');
+console.warn('[Sync] 🚨🚨🚨 Method wrapping complete');
 
 // Add to window for debugging in browser
 if (typeof window !== 'undefined') {
-  (window as any).syncService = simpleSyncService;
-  console.warn('[Sync] 🚨🚨🚨 Added syncService to window for debugging');
+  (window as any).syncService = wrappedService;
+  (window as any).syncServiceDirect = simpleSyncService; // Keep direct access for debugging
+  console.warn('[Sync] 🚨🚨🚨 Added syncService (wrapped) and syncServiceDirect to window');
 }
 
 console.warn('[Sync] 🚨🚨🚨 Module export ready');
-export default simpleSyncService;
+export default wrappedService;
