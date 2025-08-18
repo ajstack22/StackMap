@@ -54,9 +54,7 @@ const ReorderModal = ({
             {reorderingActivity && (
               <View style={styles.reorderActivityPreview}>
                 <Text style={styles.reorderActivityEmoji}>
-                  {reorderingActivity.activity.icon ||
-                    reorderingActivity.activity.icon ||
-                    '🎯'}
+                  {reorderingActivity.activity.icon || '🎯'}
                 </Text>
                 <Text style={styles.reorderActivityText}>
                   {reorderingActivity.activity.text ||

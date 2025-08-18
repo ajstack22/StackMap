@@ -3066,7 +3066,7 @@ This will replace all your current data.`,
                   ? user.name
                   : 'User',
               icon:
-                user.icon && typeof user.icon === 'string'
+                user.icon && typeof user.icon === 'string' && user.icon.trim()
                   ? user.icon
                   : DEFAULT_USER_ICON,
             };
@@ -3165,7 +3165,7 @@ This will replace all your current data.`,
                   ? user.name
                   : 'User',
               icon:
-                user.icon && typeof user.icon === 'string'
+                user.icon && typeof user.icon === 'string' && user.icon.trim()
                   ? user.icon
                   : DEFAULT_USER_ICON,
             };
@@ -4050,7 +4050,7 @@ Users: ${userNames} (${userCount} total)
                     isEditMode && styles.subtitleEmojiEdit,
                   ]}
                 >
-                  {typeof users[currentUser]?.icon === 'string' ? users[currentUser].icon : DEFAULT_USER_ICON}
+                  {users[currentUser]?.icon || DEFAULT_USER_ICON}
                 </Text>
                 <Text
                   style={[
