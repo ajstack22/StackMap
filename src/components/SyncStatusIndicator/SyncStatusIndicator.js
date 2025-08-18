@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import syncService from '../../services/sync/syncServiceWeb';
+import syncService from '../../services/sync/syncService';
 import { styles } from './styles';
 
 const SyncStatusIndicator = ({

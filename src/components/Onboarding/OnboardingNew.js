@@ -23,7 +23,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import QRCode from 'react-native-qrcode-svg';
 import Logo from '../Logo/Logo';
 import SyncStatusIndicator from '../SyncStatusIndicator';
-import syncService from '../../services/sync/syncServiceWeb';
+import syncService from '../../services/sync/syncService';
 import encryptionService from '../../services/sync/encryptionService';
 import {
   COLORS,

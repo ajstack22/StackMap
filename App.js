@@ -127,47 +127,7 @@ import { useAppStore } from './src/stores';
 
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
-// Use web-specific sync service for web platform
-import syncService from './src/services/sync/syncServiceWeb';
-
-// Verify sync service is loaded
-console.log('[App] Sync service imported:', !!syncService);
-if (syncService) {
-  console.log('[App] Sync service methods:', Object.keys(syncService).filter(k => typeof syncService[k] === 'function').slice(0, 5));
-}
-
-// Debug: Check localStorage directly
-if (typeof window !== 'undefined' && window.localStorage) {
-  const syncEnabled = localStorage.getItem('@sync_enabled');
-  const syncId = localStorage.getItem('@sync_id');
-  console.warn('[App] 🔍 LocalStorage sync keys:', {
-    syncEnabled,
-    syncId: syncId ? syncId.substring(0, 8) + '...' : null,
-    hasRecoveryPhrase: !!localStorage.getItem('@recovery_phrase_28c5c1fc531586ec06698741889f03e7')
-  });
-  
-  // Check if sync service state matches localStorage
-  setTimeout(() => {
-    console.warn('[App] 🔍 After timeout - Sync service state:', {
-      serviceEnabled: syncService?.syncEnabled,
-      serviceId: syncService?.syncId ? syncService.syncId.substring(0, 8) + '...' : null,
-      initialized: syncService?.initialized,
-      localStorageEnabled: syncEnabled,
-      localStorageId: syncId ? syncId.substring(0, 8) + '...' : null,
-    });
-    
-    // Force initialization if not initialized
-    if (syncService && !syncService.initialized && syncEnabled === 'true') {
-      console.warn('[App] 🔍 Force initializing sync service...');
-      syncService.initialize().then(() => {
-        console.warn('[App] 🔍 Force init complete:', {
-          enabled: syncService.syncEnabled,
-          id: syncService.syncId ? syncService.syncId.substring(0, 8) + '...' : null,
-        });
-      });
-    }
-  }, 1000);
-}
+import syncService from './src/services/sync/syncService';
 
 // Import utilities
 import {
@@ -527,29 +487,8 @@ const App = () => {
     if (showOnboarding || showSetupWizard) return;
 
     const checkSyncStatus = async () => {
-      // First check what's in storage directly
-      const storageEnabled = await AsyncStorage.getItem('@sync_enabled');
-      const storageSyncId = await AsyncStorage.getItem('@sync_id');
-      console.warn('[App] 🔍 Direct storage check:', {
-        enabled: storageEnabled,
-        syncId: storageSyncId ? storageSyncId.substring(0, 8) + '...' : null
-      });
-      
       const enabled = await syncService.isEnabled();
-      console.warn('[App] 📊 Sync service.isEnabled():', enabled);
       setSyncEnabled(enabled);
-      
-      // If sync is enabled, verify it's actually running
-      if (enabled) {
-        console.warn('[App] ✅ Sync is enabled, service state:', {
-          syncEnabled: syncService.syncEnabled,
-          syncId: syncService.syncId,
-          initialized: syncService.initialized,
-          syncInterval: !!syncService.syncInterval
-        });
-      } else {
-        console.warn('[App] ❌ Sync is NOT enabled');
-      }
     };
 
     checkSyncStatus();
@@ -3091,7 +3030,7 @@ This will replace all your current data.`,
                   ? user.name
                   : 'User',
               icon:
-                user.icon && typeof user.icon === 'string' && user.icon.trim()
+                user.icon && typeof user.icon === 'string'
                   ? user.icon
                   : DEFAULT_USER_ICON,
             };
@@ -3190,7 +3129,7 @@ This will replace all your current data.`,
                   ? user.name
                   : 'User',
               icon:
-                user.icon && typeof user.icon === 'string' && user.icon.trim()
+                user.icon && typeof user.icon === 'string'
                   ? user.icon
                   : DEFAULT_USER_ICON,
             };
@@ -4054,7 +3993,7 @@ Users: ${userNames} (${userCount} total)
       >
         <View style={styles.headerContent}>
           <View style={styles.logoContainer}>
-            <Logo size={isTablet() ? 40 : 32} theme={theme} color="white" />
+            <Logo size={isTablet() ? 40 : 32} theme={theme} />
             <Text style={styles.headerTitle}>StackMap</Text>
           </View>
           {Platform.OS === 'ios' && PanGestureHandler ? (

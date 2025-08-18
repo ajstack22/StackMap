@@ -266,68 +266,21 @@ class ConflictResolver {
             let merged = { ...activity };
 
             // Handle completion state based on timestamps
-            // Get the most recent action timestamp for each activity
-            const existingLastAction = Math.max(
-              existing.completedAt || 0,
-              existing.uncompletedAt || 0
-            );
-            const activityLastAction = Math.max(
-              activity.completedAt || 0,
-              activity.uncompletedAt || 0
-            );
-
-            // Debug logging for completion state conflicts
-            if (existing.id === activity.id && (existing.completed !== activity.completed)) {
-              console.log('[Conflict] Activity completion state mismatch:', {
-                id: activity.id,
-                local: { 
-                  completed: existing.completed, 
-                  completedAt: existing.completedAt,
-                  uncompletedAt: existing.uncompletedAt,
-                  lastAction: existingLastAction
-                },
-                remote: { 
-                  completed: activity.completed, 
-                  completedAt: activity.completedAt,
-                  uncompletedAt: activity.uncompletedAt,
-                  lastAction: activityLastAction
-                }
-              });
-            }
-
-            // Use the activity with the most recent action
-            if (existingLastAction > activityLastAction) {
-              // Local/existing activity has more recent action
-              merged.completed = existing.completed;
+            if (existing.completedAt && activity.completedAt) {
+              // Both have completion timestamps - use the most recent
+              if (existing.completedAt > activity.completedAt) {
+                merged.completed = existing.completed;
+                merged.completedAt = existing.completedAt;
+                merged.completedBy = existing.completedBy;
+              }
+              // else use activity's values (already in merged)
+            } else if (existing.completedAt && !activity.completedAt) {
+              // Only existing has completion - preserve it
+              merged.completed = true;
               merged.completedAt = existing.completedAt;
               merged.completedBy = existing.completedBy;
-              merged.uncompletedAt = existing.uncompletedAt;
-              merged.uncompletedBy = existing.uncompletedBy;
-              console.log('[Conflict] Using local state (newer):', { id: activity.id, completed: merged.completed });
-            } else if (activityLastAction > existingLastAction) {
-              // Remote activity has more recent action - already in merged
-              // Just ensure we keep all the timestamp fields
-              merged.completed = activity.completed;
-              merged.completedAt = activity.completedAt;
-              merged.completedBy = activity.completedBy;
-              merged.uncompletedAt = activity.uncompletedAt;
-              merged.uncompletedBy = activity.uncompletedBy;
-              console.log('[Conflict] Using remote state (newer):', { id: activity.id, completed: merged.completed });
-            } else {
-              // Same timestamp or both have no timestamps
-              // Prefer completed state if either is completed
-              if (existing.completed || activity.completed) {
-                merged.completed = true;
-                if (existing.completed) {
-                  merged.completedAt = existing.completedAt;
-                  merged.completedBy = existing.completedBy;
-                } else {
-                  merged.completedAt = activity.completedAt;
-                  merged.completedBy = activity.completedBy;
-                }
-                console.log('[Conflict] No clear winner, preferring completed state:', { id: activity.id, completed: merged.completed });
-              }
             }
+            // else use activity's values (already in merged)
 
             activityMap.set(activity.id, merged);
           }

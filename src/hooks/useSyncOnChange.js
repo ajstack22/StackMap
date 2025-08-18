@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useAppStore, useUserStore, useSettingsStore, useLibraryStore } from '../stores';
-import syncService from '../services/sync/syncServiceWeb';
+import { useAppStore } from '../stores';
+import syncService from '../services/sync/syncService';
 
 /**
  * Hook to automatically sync when store changes
@@ -9,60 +9,23 @@ export const useSyncOnChange = () => {
   const lastStateRef = useRef(null);
 
   useEffect(() => {
-    console.log('[useSyncOnChange] Hook initialized, setting up store subscriptions');
-    console.log('[useSyncOnChange] Sync service state:', {
-      initialized: syncService.initialized,
-      syncEnabled: syncService.syncEnabled,
-      syncId: syncService.syncId,
-    });
-    
-    // Subscribe to all relevant stores
-    const unsubscribeApp = useAppStore.subscribe(() => {
-      console.log('[useSyncOnChange] App store changed');
-      handleStateChange();
-    });
-    
-    const unsubscribeUser = useUserStore.subscribe(() => {
-      console.log('[useSyncOnChange] User store changed');
-      handleStateChange();
-    });
-    
-    const unsubscribeSettings = useSettingsStore.subscribe(() => {
-      console.log('[useSyncOnChange] Settings store changed');
-      handleStateChange();
-    });
-    
-    const unsubscribeLibrary = useLibraryStore.subscribe(() => {
-      console.log('[useSyncOnChange] Library store changed');
-      handleStateChange();
-    });
-
-    function handleStateChange() {
+    // Subscribe to specific state changes that should trigger sync
+    const unsubscribe = useAppStore.subscribe(state => {
       // Skip if sync is not enabled
-      if (!syncService.syncEnabled) {
-        console.log('[useSyncOnChange] Sync not enabled, skipping', {
-          initialized: syncService.initialized,
-          syncEnabled: syncService.syncEnabled,
-          syncId: syncService.syncId,
-        });
-        return;
-      }
+      if (!syncService.syncEnabled) return;
 
-      // Get current state snapshot from all stores
-      const appState = useAppStore.getState();
-      const userState = useUserStore.getState();
-      const settingsState = useSettingsStore.getState();
-      const libraryState = useLibraryStore.getState();
-      
+      // Get current state snapshot
       const currentState = {
-        users: userState.users,
-        currentUser: userState.currentUser,
-        library: libraryState.library,
-        currentTheme: settingsState.currentTheme,
-        bannerPosition: settingsState.bannerPosition,
-        soundEnabled: settingsState.soundEnabled,
-        taskCelebration: settingsState.taskCelebration,
-        routineCelebration: settingsState.routineCelebration,
+        activities: state.activities,
+        users: state.users,
+        completedActivities: state.completedActivities,
+        currentUser: state.currentUser,
+        currentTheme: state.currentTheme,
+        bannerPosition: state.bannerPosition,
+        soundEnabled: state.soundEnabled,
+        taskCelebration: state.taskCelebration,
+        routineCelebration: state.routineCelebration,
+        currentDay: state.currentDay,
       };
 
       // Check if state actually changed
@@ -75,24 +38,26 @@ export const useSyncOnChange = () => {
           usersChanged:
             JSON.stringify(lastStateRef.current.users) !==
             JSON.stringify(currentState.users),
-          libraryChanged:
-            JSON.stringify(lastStateRef.current.library) !==
-            JSON.stringify(currentState.library),
+          activitiesChanged:
+            JSON.stringify(lastStateRef.current.activities) !==
+            JSON.stringify(currentState.activities),
           syncEnabled: syncService.syncEnabled,
         });
 
-        // Request debounced sync (simpler API)
-        syncService.requestSync();
+        // Request debounced sync
+        syncService
+          .requestSync({
+            priority: 'normal',
+            immediate: false,
+          })
+          .catch(error => {
+            console.error('[useSyncOnChange] Sync request failed:', error);
+          });
       }
 
       lastStateRef.current = currentState;
-    }
+    });
 
-    return () => {
-      unsubscribeApp();
-      unsubscribeUser();
-      unsubscribeSettings();
-      unsubscribeLibrary();
-    };
+    return () => unsubscribe();
   }, []);
 };

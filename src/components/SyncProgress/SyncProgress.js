@@ -3,7 +3,7 @@ import { Text } from '../Typography';
 import { View, Animated, StyleSheet, Platform } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { TYPOGRAPHY } from '../../constants';
-import syncService from '../../services/sync/syncServiceWeb';
+import syncService from '../../services/sync/syncService';
 
 const SyncProgress = ({ theme }) => {
   const [syncStatus, setSyncStatus] = useState(null);

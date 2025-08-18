@@ -18,7 +18,7 @@ import ConfirmModal from '../ConfirmModal';
 import { TabbedModal, TabContent } from '../../../components';
 import { FormInput, ModalFooter, ModalButton } from '../../ModalUtilities';
 import SyncStatusIndicator from '../../SyncStatusIndicator';
-import syncService from '../../../services/sync/syncServiceWeb';
+import syncService from '../../../services/sync/syncService';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
 // Normalization removed - v3 support discontinued
@@ -206,19 +206,15 @@ const DataModal = ({
       const enabled = await syncService.isEnabled();
 
       if (enabled) {
-        // Sync is enabled locally, get the credentials
-        const id = await syncService.getSyncId();
-        const phrase = await syncService.getRecoveryPhrase();
-        
-        // If we have valid credentials, sync is enabled
-        // Don't disable sync just because server doesn't have data yet
-        if (id && phrase) {
-          setSyncEnabled(true);
+        // Verify sync exists on server
+        const exists = await syncService.verifySyncExists();
+        setSyncEnabled(exists);
+
+        if (exists) {
+          const id = await syncService.getSyncId();
+          const phrase = await syncService.getRecoveryPhrase();
           setSyncId(id);
           setSyncRecoveryPhrase(phrase);
-        } else {
-          // Only disable if we don't have valid credentials
-          setSyncEnabled(false);
         }
       } else {
         setSyncEnabled(false);
@@ -884,11 +880,11 @@ const DataModal = ({
           return;
         }
 
-        // Use enable method with recovery phrase to join existing sync
-        const result = await syncService.enable(recoveryInput.trim());
+        // Use initialize method to join existing sync
+        const result = await syncService.initialize(recoveryInput.trim());
 
         setSyncId(result.syncId);
-        setSyncRecoveryPhrase(result.recoveryPhrase);
+        setSyncRecoveryPhrase(recoveryInput.trim());
         setSyncEnabled(true);
         setShowRecoveryInput(false);
         setRecoveryInput('');
@@ -1786,62 +1782,6 @@ const DataModal = ({
 
             <ModalButton
               theme={theme}
-              variant="primary"
-              label="Manual Sync (Debug)"
-              icon="refresh"
-              onPress={() => {
-                console.warn('🔴🔴🔴 MANUAL SYNC BUTTON PRESSED 🔴🔴🔴');
-                console.warn('[DataModal] Manual sync button clicked at:', new Date().toISOString());
-                console.warn('[DataModal] syncService exists?', !!syncService);
-                console.warn('[DataModal] syncService:', syncService);
-                console.warn('[DataModal] Current syncLoading state:', syncLoading);
-                
-                // Wrap in async IIFE to handle async operations
-                (async () => {
-                  console.warn('[DataModal] Starting async sync operations...');
-                  try {
-                    if (!syncService) {
-                      console.error('[DataModal] syncService is null/undefined!');
-                      showToast({ message: 'Sync service not available!' });
-                      return;
-                    }
-                    
-                    console.warn('[DataModal] Calling syncService.isEnabled()...');
-                    const enabled = await syncService.isEnabled();
-                    console.warn('[DataModal] Sync enabled:', enabled);
-                    
-                    if (!enabled) {
-                      console.warn('[DataModal] Sync not enabled, trying to check actual state...');
-                      console.warn('[DataModal] Direct state check:', {
-                        syncEnabled: syncService.syncEnabled,
-                        syncId: syncService.syncId,
-                        initialized: syncService.initialized,
-                      });
-                    }
-                    
-                    // Try to sync regardless of enabled state for debugging
-                    console.warn('[DataModal] Attempting sync...');
-                    const result = await syncService.sync();
-                    console.warn('[DataModal] Sync result:', result);
-                  
-                  showToast({ 
-                    message: result?.success 
-                      ? 'Sync completed!' 
-                      : `Sync result: ${JSON.stringify(result)}`
-                  });
-                  
-                  } catch (error) {
-                    console.error('[DataModal] Manual sync error:', error);
-                    showToast({ message: `Error: ${error.message}` });
-                  }
-                })(); // Execute the async IIFE
-              }}
-              // Remove loading/disabled for debug button
-              fullWidth
-            />
-
-            <ModalButton
-              theme={theme}
               variant="danger"
               label="Disable Sync"
               icon="sync-disabled"
@@ -1917,15 +1857,6 @@ const DataModal = ({
                   : lastSyncTime
                   ? `Last synced ${formatTimeAgo(lastSyncTime)}`
                   : 'Sync active'}
-              </Text>
-            </View>
-            
-            {/* Debug Info */}
-            <View style={[styles.syncStatusRow, { marginTop: 8, padding: 8, backgroundColor: '#f5f5f5', borderRadius: 4 }]}>
-              <Text style={[styles.syncStatusText, { fontSize: 11, fontFamily: 'monospace' }]}>
-                Debug: Service initialized: {syncService.initialized ? 'YES' : 'NO'} | 
-                Enabled: {syncService.syncEnabled ? 'YES' : 'NO'} | 
-                ID: {syncService.syncId ? syncService.syncId.substring(0, 8) + '...' : 'NONE'}
               </Text>
             </View>
           </View>
