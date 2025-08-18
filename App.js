@@ -127,7 +127,8 @@ import { useAppStore } from './src/stores';
 
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
-import syncService from './src/services/sync/syncServiceSimple';
+// Use web-specific sync service for web platform
+import syncService from './src/services/sync/syncServiceWeb';
 
 // Verify sync service is loaded
 console.log('[App] Sync service imported:', !!syncService);
