@@ -1786,6 +1786,47 @@ const DataModal = ({
 
             <ModalButton
               theme={theme}
+              variant="primary"
+              label="Manual Sync (Debug)"
+              icon="refresh"
+              onPress={async () => {
+                console.log('[DataModal] Manual sync triggered');
+                setSyncLoading(true);
+                try {
+                  // Check sync service state first
+                  const isEnabled = await syncService.isEnabled();
+                  console.log('[DataModal] Sync service enabled:', isEnabled);
+                  console.log('[DataModal] Sync service state:', {
+                    syncEnabled: syncService.syncEnabled,
+                    syncId: syncService.syncId,
+                    initialized: syncService.initialized,
+                  });
+                  
+                  if (isEnabled) {
+                    const result = await syncService.sync();
+                    console.log('[DataModal] Manual sync result:', result);
+                    showToast({ 
+                      message: result.success 
+                        ? 'Sync completed successfully!' 
+                        : `Sync failed: ${result.error}`
+                    });
+                  } else {
+                    showToast({ message: 'Sync is not enabled!' });
+                  }
+                } catch (error) {
+                  console.error('[DataModal] Manual sync error:', error);
+                  showToast({ message: `Sync error: ${error.message}` });
+                } finally {
+                  setSyncLoading(false);
+                }
+              }}
+              loading={syncLoading}
+              disabled={syncLoading}
+              fullWidth
+            />
+
+            <ModalButton
+              theme={theme}
               variant="danger"
               label="Disable Sync"
               icon="sync-disabled"
@@ -1861,6 +1902,15 @@ const DataModal = ({
                   : lastSyncTime
                   ? `Last synced ${formatTimeAgo(lastSyncTime)}`
                   : 'Sync active'}
+              </Text>
+            </View>
+            
+            {/* Debug Info */}
+            <View style={[styles.syncStatusRow, { marginTop: 8, padding: 8, backgroundColor: '#f5f5f5', borderRadius: 4 }]}>
+              <Text style={[styles.syncStatusText, { fontSize: 11, fontFamily: 'monospace' }]}>
+                Debug: Service initialized: {syncService.initialized ? 'YES' : 'NO'} | 
+                Enabled: {syncService.syncEnabled ? 'YES' : 'NO'} | 
+                ID: {syncService.syncId ? syncService.syncId.substring(0, 8) + '...' : 'NONE'}
               </Text>
             </View>
           </View>

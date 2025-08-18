@@ -9,26 +9,44 @@ export const useSyncOnChange = () => {
   const lastStateRef = useRef(null);
 
   useEffect(() => {
+    console.log('[useSyncOnChange] Hook initialized, setting up store subscriptions');
+    console.log('[useSyncOnChange] Sync service state:', {
+      initialized: syncService.initialized,
+      syncEnabled: syncService.syncEnabled,
+      syncId: syncService.syncId,
+    });
+    
     // Subscribe to all relevant stores
     const unsubscribeApp = useAppStore.subscribe(() => {
+      console.log('[useSyncOnChange] App store changed');
       handleStateChange();
     });
     
     const unsubscribeUser = useUserStore.subscribe(() => {
+      console.log('[useSyncOnChange] User store changed');
       handleStateChange();
     });
     
     const unsubscribeSettings = useSettingsStore.subscribe(() => {
+      console.log('[useSyncOnChange] Settings store changed');
       handleStateChange();
     });
     
     const unsubscribeLibrary = useLibraryStore.subscribe(() => {
+      console.log('[useSyncOnChange] Library store changed');
       handleStateChange();
     });
 
     function handleStateChange() {
       // Skip if sync is not enabled
-      if (!syncService.syncEnabled) return;
+      if (!syncService.syncEnabled) {
+        console.log('[useSyncOnChange] Sync not enabled, skipping', {
+          initialized: syncService.initialized,
+          syncEnabled: syncService.syncEnabled,
+          syncId: syncService.syncId,
+        });
+        return;
+      }
 
       // Get current state snapshot from all stores
       const appState = useAppStore.getState();
