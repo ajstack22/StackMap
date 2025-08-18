@@ -64,17 +64,23 @@ class SimpleSyncService {
 
   // App state subscription
   private appStateSubscription: any = null;
+  
+  // Initialization promise to prevent multiple initializations
+  private initializationPromise: Promise<void> | null = null;
 
   constructor() {
-    console.log('[Sync] SimpleSyncService constructor called');
+    console.warn('[Sync] 🚨 SimpleSyncService constructor called at', new Date().toISOString());
     
     // Initialize immediately (no timers)
+    console.warn('[Sync] 🚨 Calling initialize()...');
     this.initialize().then(() => {
-      console.log('[Sync] Initialize completed, state:', {
+      console.warn('[Sync] 🚨 Initialize completed, state:', {
         syncEnabled: this.syncEnabled,
         syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
         initialized: this.initialized,
       });
+    }).catch(error => {
+      console.error('[Sync] 🚨 Initialize FAILED:', error);
     });
   }
 
@@ -82,16 +88,29 @@ class SimpleSyncService {
    * Initialize sync service
    */
   async initialize(): Promise<void> {
+    // Return existing initialization if in progress
+    if (this.initializationPromise) {
+      return this.initializationPromise;
+    }
+    
     if (this.initialized) return;
 
+    // Create and store the initialization promise
+    this.initializationPromise = this._doInitialize();
+    return this.initializationPromise;
+  }
+
+  private async _doInitialize(): Promise<void> {
+    console.warn('[Sync] 🚨 _doInitialize started');
     try {
       // Restore sync state from storage
+      console.warn('[Sync] 🚨 Reading from AsyncStorage...');
       const enabled = await AsyncStorage.getItem('@sync_enabled');
       const syncId = await AsyncStorage.getItem('@sync_id');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
       const lastSyncSuccess = await AsyncStorage.getItem('@sync_last_success');
 
-      console.log('[Sync] Restored state from AsyncStorage:', {
+      console.warn('[Sync] 🚨 Restored state from AsyncStorage:', {
         enabled,
         syncId: syncId ? syncId.substring(0, 8) + '...' : null,
         lastVersion,
@@ -120,8 +139,9 @@ class SimpleSyncService {
       }
 
       this.initialized = true;
+      console.warn('[Sync] 🚨 _doInitialize COMPLETED successfully, initialized:', this.initialized);
     } catch (error) {
-      console.error('[Sync] Failed to initialize:', error);
+      console.error('[Sync] 🚨 _doInitialize FAILED:', error);
       this.initialized = true;
     }
   }
@@ -622,6 +642,12 @@ class SimpleSyncService {
    * Check if sync is enabled (compatibility method)
    */
   async isEnabled(): Promise<boolean> {
+    // Ensure initialization is complete before returning status
+    if (!this.initialized) {
+      console.log('[Sync] isEnabled called before initialization, waiting...');
+      await this.initialize();
+    }
+    console.log('[Sync] isEnabled returning:', this.syncEnabled);
     return this.syncEnabled;
   }
 
@@ -796,7 +822,9 @@ class SimpleSyncService {
 }
 
 // Export singleton instance
+console.warn('[Sync] 🚨 Creating SimpleSyncService singleton...');
 const simpleSyncService = new SimpleSyncService();
+console.warn('[Sync] 🚨 SimpleSyncService singleton created:', !!simpleSyncService);
 
 // Explicitly bind ALL methods to make them accessible
 const methodsToBind = [
