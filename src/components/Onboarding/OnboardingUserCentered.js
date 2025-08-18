@@ -85,6 +85,13 @@ const OnboardingUserCentered = ({
 
   // Quick emoji options
   const quickEmojis = [DEFAULT_USER_ICON, '😎', '🎯', '⭐', '🚀'];
+  
+  // Generate sync code when reaching the syncCreate step
+  useEffect(() => {
+    if (currentStep === 'syncCreate' && !generatedSyncCode) {
+      generateNewSyncCode();
+    }
+  }, [currentStep, generatedSyncCode]);
 
   // Pre-populate if coming from sync URL
   useEffect(() => {
@@ -270,38 +277,38 @@ const OnboardingUserCentered = ({
     onComplete(onboardingData);
   };
 
-  // Render step content
+  // Render step content - render JSX directly to avoid component recreation
   const renderStepContent = () => {
     switch (currentStep) {
       case 'welcome':
-        return <WelcomeStep />;
+        return renderWelcomeStep();
       case 'userType':
-        return <UserTypeStep />;
+        return renderUserTypeStep();
       case 'deviceStrategy':
-        return <DeviceStrategyStep />;
+        return renderDeviceStrategyStep();
       case 'userSetup':
-        return <UserSetupStep />;
+        return renderUserSetupStep();
       case 'pinSetup':
-        return <PinSetupStep />;
+        return renderPinSetupStep();
       case 'syncChoice':
-        return <SyncChoiceStep />;
+        return renderSyncChoiceStep();
       case 'syncCreate':
-        return <SyncCreateStep />;
+        return renderSyncCreateStep();
       case 'existingUser':
-        return <ExistingUserStep />;
+        return renderExistingUserStep();
       case 'syncImport':
-        return <SyncImportStep />;
+        return renderSyncImportStep();
       case 'syncSuccess':
-        return <SyncSuccessStep />;
+        return renderSyncSuccessStep();
       case 'complete':
-        return <CompleteStep />;
+        return renderCompleteStep();
       default:
-        return <WelcomeStep />;
+        return renderWelcomeStep();
     }
   };
 
-  // Step Components
-  const WelcomeStep = () => (
+  // Step Render Functions (not components to avoid recreation)
+  const renderWelcomeStep = () => (
     <View style={styles.stepContainer}>
       <View style={styles.logoSection}>
         <Logo size={screenWidth >= 768 ? 100 : 80} theme={defaultTheme} color={defaultTheme.primary} />
@@ -364,7 +371,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const ExistingUserStep = () => (
+  const renderExistingUserStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Restore Your StackMap</Text>
       <Text style={styles.subtitle}>
@@ -422,7 +429,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const UserTypeStep = () => (
+  const renderUserTypeStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Who will use StackMap?</Text>
       <Text style={styles.subtitle}>
@@ -475,7 +482,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const DeviceStrategyStep = () => (
+  const renderDeviceStrategyStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>How many devices?</Text>
       <Text style={styles.subtitle}>
@@ -523,7 +530,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const UserSetupStep = () => {
+  const renderUserSetupStep = () => {
     const addUser = () => {
       if (userName.trim()) {
         const newUser = {
@@ -618,7 +625,7 @@ const OnboardingUserCentered = ({
     );
   };
 
-  const PinSetupStep = () => (
+  const renderPinSetupStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Protect with PIN?</Text>
       <Text style={styles.subtitle}>
@@ -691,7 +698,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const SyncChoiceStep = () => (
+  const renderSyncChoiceStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Enable Sync?</Text>
       <Text style={styles.subtitle}>
@@ -733,14 +740,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const SyncCreateStep = () => {
-    useEffect(() => {
-      if (!generatedSyncCode) {
-        generateNewSyncCode();
-      }
-    }, []);
-
-    return (
+  const renderSyncCreateStep = () => (
       <View style={styles.stepContainer}>
         <Text style={styles.title}>Your Sync Code</Text>
         <Text style={styles.subtitle}>
@@ -787,9 +787,8 @@ const OnboardingUserCentered = ({
         )}
       </View>
     );
-  };
 
-  const SyncImportStep = () => (
+  const renderSyncImportStep = () => (
     <View style={styles.stepContainer}>
       <Text style={styles.title}>Enter Sync Code</Text>
       <Text style={styles.subtitle}>
@@ -870,7 +869,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const SyncSuccessStep = () => (
+  const renderSyncSuccessStep = () => (
     <View style={styles.stepContainer}>
       <Icon name="check-circle" size={80} color={defaultTheme.primary} />
       <Text style={styles.title}>Sync Enabled!</Text>
@@ -893,7 +892,7 @@ const OnboardingUserCentered = ({
     </View>
   );
 
-  const CompleteStep = () => (
+  const renderCompleteStep = () => (
     <View style={styles.stepContainer}>
       <Icon name="celebration" size={80} color={defaultTheme.primary} />
       <Text style={styles.title}>All Set!</Text>
@@ -945,6 +944,7 @@ const OnboardingUserCentered = ({
           )}
           
           <Animated.View
+            key={currentStep}
             style={[
               styles.contentContainer,
               { opacity: fadeAnim },
