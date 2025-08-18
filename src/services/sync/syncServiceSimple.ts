@@ -403,24 +403,21 @@ class SimpleSyncService {
     if (!this.syncId) return null;
 
     try {
-      const response = await fetch(`${API_BASE_URL}/pull.php`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          sync_id: this.syncId,
-        }),
-      });
+      const deviceId = await encryptionService.getDeviceId();
+      const url = `${API_BASE_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+      
+      const response = await fetch(url);
+
+      if (response.status === 404) {
+        return null; // No data exists
+      }
 
       if (!response.ok) {
-        if (response.status === 404) {
-          return null; // No data exists
-        }
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const data = await response.json();
+      const responseText = await response.text();
+      const data = JSON.parse(responseText);
       return data.data || null;
     } catch (error) {
       console.error('[Sync] Pull failed:', error);
@@ -437,6 +434,8 @@ class SimpleSyncService {
     }
 
     try {
+      const deviceId = await encryptionService.getDeviceId();
+      const deviceName = encryptionService.getDeviceName();
       const currentState = this.getCurrentState();
       const encryptedData = encryptionService.encryptData(currentState);
 
@@ -447,14 +446,16 @@ class SimpleSyncService {
         },
         body: JSON.stringify({
           sync_id: this.syncId,
+          device_id: deviceId,
+          device_name: deviceName,
           encrypted_blob: encryptedData,
-          last_modified: currentState.lastModified,
-          version: this.lastSyncVersion + 1,
+          sync_type: 'full',
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        const error = await response.json();
+        throw new Error(error.message || `HTTP error! status: ${response.status}`);
       }
 
       const result = await response.json();
@@ -602,8 +603,57 @@ class SimpleSyncService {
   get syncInterval(): any {
     return null; // No periodic sync in simplified version
   }
+
+  /**
+   * Add a sync status listener (stub for compatibility)
+   */
+  addStatusListener(callback: (status: any) => void): () => void {
+    // Immediately send a simple status
+    callback({
+      status: 'idle',
+      error: null,
+      lastAttempt: this.lastSyncAttempt,
+      lastSuccess: this.lastSyncSuccess,
+      isOnline: true,
+      queueStatus: { pending: 0 },
+    });
+    
+    // Return a no-op unsubscribe function
+    return () => {};
+  }
+
+  /**
+   * Remove a status listener (stub for compatibility)
+   */
+  removeStatusListener(callback: (status: any) => void): void {
+    // No-op in simplified version
+  }
+
+  /**
+   * Sync with queue (compatibility wrapper)
+   */
+  async syncWithQueue(): Promise<SyncResult> {
+    return this.sync();
+  }
+
+  /**
+   * Request sync with options (compatibility wrapper)
+   */
+  async requestSyncWithOptions(options?: any): Promise<SyncResult> {
+    this.requestSync();
+    return { success: true };
+  }
 }
 
 // Export singleton instance
 const simpleSyncService = new SimpleSyncService();
+
+// Explicitly bind methods to make them accessible
+(simpleSyncService as any).enable = simpleSyncService.enable.bind(simpleSyncService);
+(simpleSyncService as any).disable = simpleSyncService.disable.bind(simpleSyncService);
+(simpleSyncService as any).sync = simpleSyncService.sync.bind(simpleSyncService);
+(simpleSyncService as any).isEnabled = simpleSyncService.isEnabled.bind(simpleSyncService);
+(simpleSyncService as any).addStatusListener = simpleSyncService.addStatusListener.bind(simpleSyncService);
+(simpleSyncService as any).syncWithQueue = simpleSyncService.syncWithQueue.bind(simpleSyncService);
+
 export default simpleSyncService;
