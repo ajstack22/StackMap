@@ -1,8 +1,43 @@
 // Add immediate console log to verify module is loading
 console.warn('[Sync] 🚨🚨🚨 syncServiceSimple.ts MODULE LOADING at', new Date().toISOString());
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform, AppState } from 'react-native';
+
+// Conditionally import AsyncStorage based on platform
+// For web, use our custom implementation directly
+// For mobile, use the actual React Native package
+let AsyncStorage: any;
+if (Platform.OS === 'web') {
+  AsyncStorage = require('../../utils/AsyncStorage.web').default;
+  console.warn('[Sync] 🚨🚨🚨 Using custom AsyncStorage.web');
+} else {
+  AsyncStorage = require('@react-native-async-storage/async-storage').default;
+  console.warn('[Sync] 🚨🚨🚨 Using native AsyncStorage');
+}
+
+console.warn('[Sync] 🚨🚨🚨 AsyncStorage imported:', AsyncStorage);
+console.warn('[Sync] 🚨🚨🚨 AsyncStorage type:', typeof AsyncStorage);
+console.warn('[Sync] 🚨🚨🚨 AsyncStorage methods:', Object.keys(AsyncStorage || {}));
+console.warn('[Sync] 🚨🚨🚨 Is custom web implementation?:', AsyncStorage.__isCustomWebImplementation === true);
+
+// Test AsyncStorage directly
+console.warn('[Sync] 🚨🚨🚨 Testing AsyncStorage.getItem directly...');
+if (AsyncStorage && AsyncStorage.getItem) {
+  const testPromise = AsyncStorage.getItem('@test_key');
+  console.warn('[Sync] 🚨🚨🚨 Test promise created:', testPromise);
+  testPromise.then(value => {
+    console.warn('[Sync] 🚨🚨🚨 Test promise resolved with:', value);
+  }).catch(error => {
+    console.error('[Sync] 🚨🚨🚨 Test promise rejected:', error);
+  });
+  
+  // Also try with a timeout to see if it ever resolves
+  setTimeout(() => {
+    console.warn('[Sync] 🚨🚨🚨 Checking test promise after 2 seconds...');
+  }, 2000);
+} else {
+  console.error('[Sync] 🚨🚨🚨 AsyncStorage or getItem is not available!');
+}
 
 import encryptionService from './encryptionService';
 import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
@@ -83,40 +118,17 @@ class SimpleSyncService {
       isEnabled: typeof this.isEnabled,
     });
     
-    // Initialize with direct localStorage for web
+    // Initialize sync state from AsyncStorage
     console.warn('[Sync] 🚨 Starting initialization...');
-    if (typeof localStorage !== 'undefined') {
-      // Web platform - use localStorage directly
-      const enabled = localStorage.getItem('@sync_enabled');
-      const syncId = localStorage.getItem('@sync_id');
-      
-      console.warn('[Sync] 🚨 Direct localStorage read:', {
-        enabled,
-        syncId: syncId ? syncId.substring(0, 8) + '...' : null,
+    this.initialize().then(() => {
+      console.warn('[Sync] 🚨 Initialize completed, state:', {
+        syncEnabled: this.syncEnabled,
+        syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
+        initialized: this.initialized,
       });
-      
-      if (enabled === 'true' && syncId) {
-        this.syncEnabled = true;
-        this.syncId = syncId;
-        this.initialized = true;
-        console.warn('[Sync] 🚨 Sync state restored from localStorage');
-      } else {
-        this.initialized = true;
-        console.warn('[Sync] 🚨 No sync state in localStorage');
-      }
-    } else {
-      // Mobile platforms - use AsyncStorage
-      console.warn('[Sync] 🚨 Calling initialize() for mobile...');
-      this.initialize().then(() => {
-        console.warn('[Sync] 🚨 Initialize completed, state:', {
-          syncEnabled: this.syncEnabled,
-          syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
-          initialized: this.initialized,
-        });
-      }).catch(error => {
-        console.error('[Sync] 🚨 Initialize FAILED:', error);
-      });
-    }
+    }).catch(error => {
+      console.error('[Sync] 🚨 Initialize FAILED:', error);
+    });
   }
 
   /**

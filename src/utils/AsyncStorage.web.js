@@ -1,16 +1,16 @@
 // Web implementation of AsyncStorage using localStorage
+console.warn('[AsyncStorage.web] Module loaded at', new Date().toISOString());
 
 const AsyncStorage = {
   getItem: key => {
+    console.warn(`[AsyncStorage.web] 🟢 getItem called for: ${key}`);
     return new Promise((resolve) => {
       // Use setTimeout to ensure async behavior
       setTimeout(() => {
         try {
           const value = localStorage.getItem(key);
-          if (key.includes('@sync')) {
-            console.warn(`[AsyncStorage.web] getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
-          }
-          console.warn(`[AsyncStorage.web] Resolving promise for ${key}`);
+          console.warn(`[AsyncStorage.web] 🟢 getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
+          console.warn(`[AsyncStorage.web] 🟢 Resolving promise for ${key}`);
           resolve(value);
         } catch (error) {
           console.error('[AsyncStorage.web] getItem error:', error);
@@ -94,6 +94,11 @@ const AsyncStorage = {
       throw error;
     }
   },
+  
+  // Add a unique property to verify this is our custom implementation
+  __isCustomWebImplementation: true,
 };
+
+console.warn('[AsyncStorage.web] Exporting AsyncStorage with custom flag:', AsyncStorage.__isCustomWebImplementation);
 
 export default AsyncStorage;
