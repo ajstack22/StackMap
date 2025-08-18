@@ -625,7 +625,7 @@ class SimpleSyncService {
   /**
    * Remove a status listener (stub for compatibility)
    */
-  removeStatusListener(callback: (status: any) => void): void {
+  removeStatusListener(_callback: (status: any) => void): void {
     // No-op in simplified version
   }
 
@@ -639,7 +639,7 @@ class SimpleSyncService {
   /**
    * Request sync with options (compatibility wrapper)
    */
-  async requestSyncWithOptions(options?: any): Promise<SyncResult> {
+  async requestSyncWithOptions(_options?: any): Promise<SyncResult> {
     this.requestSync();
     return { success: true };
   }
