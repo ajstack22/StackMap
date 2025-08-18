@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { useAppStore, useUserStore, useSettingsStore, useLibraryStore } from '../stores';
-import syncService from '../services/sync/syncServiceSimple';
+import syncService from '../services/sync/syncServiceWeb';
 
 /**
  * Hook to automatically sync when store changes
