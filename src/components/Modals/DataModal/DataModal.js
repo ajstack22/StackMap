@@ -206,15 +206,19 @@ const DataModal = ({
       const enabled = await syncService.isEnabled();
 
       if (enabled) {
-        // Verify sync exists on server
-        const exists = await syncService.verifySyncExists();
-        setSyncEnabled(exists);
-
-        if (exists) {
-          const id = await syncService.getSyncId();
-          const phrase = await syncService.getRecoveryPhrase();
+        // Sync is enabled locally, get the credentials
+        const id = await syncService.getSyncId();
+        const phrase = await syncService.getRecoveryPhrase();
+        
+        // If we have valid credentials, sync is enabled
+        // Don't disable sync just because server doesn't have data yet
+        if (id && phrase) {
+          setSyncEnabled(true);
           setSyncId(id);
           setSyncRecoveryPhrase(phrase);
+        } else {
+          // Only disable if we don't have valid credentials
+          setSyncEnabled(false);
         }
       } else {
         setSyncEnabled(false);
