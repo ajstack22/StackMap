@@ -9,8 +9,8 @@ const AsyncStorage = {
       setTimeout(() => {
         try {
           const value = localStorage.getItem(key);
-          console.warn(`[AsyncStorage.web] 🟢 getItem('${key}') = ${value ? value.substring(0, 20) + '...' : null}`);
-          console.warn(`[AsyncStorage.web] 🟢 Resolving promise for ${key}`);
+          console.warn(`[AsyncStorage.web] 🟢 getItem('${key}') = ${value ? value.substring(0, 50) + '...' : null}`);
+          console.warn(`[AsyncStorage.web] 🟢 Resolving promise for ${key} with value:`, value);
           resolve(value);
         } catch (error) {
           console.error('[AsyncStorage.web] getItem error:', error);

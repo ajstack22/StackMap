@@ -1789,36 +1789,40 @@ const DataModal = ({
               variant="primary"
               label="Manual Sync (Debug)"
               icon="refresh"
-              onPress={async () => {
-                console.log('[DataModal] Manual sync button clicked!');
-                console.log('[DataModal] syncService:', syncService);
-                console.log('[DataModal] Current syncLoading state:', syncLoading);
+              onPress={() => {
+                console.warn('🔴🔴🔴 MANUAL SYNC BUTTON PRESSED 🔴🔴🔴');
+                console.warn('[DataModal] Manual sync button clicked at:', new Date().toISOString());
+                console.warn('[DataModal] syncService exists?', !!syncService);
+                console.warn('[DataModal] syncService:', syncService);
+                console.warn('[DataModal] Current syncLoading state:', syncLoading);
                 
-                // Don't set loading state for now to avoid blocking
-                try {
-                  if (!syncService) {
-                    console.error('[DataModal] syncService is null/undefined!');
-                    showToast({ message: 'Sync service not available!' });
-                    return;
-                  }
-                  
-                  console.log('[DataModal] Calling syncService.isEnabled()...');
-                  const enabled = await syncService.isEnabled();
-                  console.log('[DataModal] Sync enabled:', enabled);
-                  
-                  if (!enabled) {
-                    console.log('[DataModal] Sync not enabled, trying to check actual state...');
-                    console.log('[DataModal] Direct state check:', {
-                      syncEnabled: syncService.syncEnabled,
-                      syncId: syncService.syncId,
-                      initialized: syncService.initialized,
-                    });
-                  }
-                  
-                  // Try to sync regardless of enabled state for debugging
-                  console.log('[DataModal] Attempting sync...');
-                  const result = await syncService.sync();
-                  console.log('[DataModal] Sync result:', result);
+                // Wrap in async IIFE to handle async operations
+                (async () => {
+                  console.warn('[DataModal] Starting async sync operations...');
+                  try {
+                    if (!syncService) {
+                      console.error('[DataModal] syncService is null/undefined!');
+                      showToast({ message: 'Sync service not available!' });
+                      return;
+                    }
+                    
+                    console.warn('[DataModal] Calling syncService.isEnabled()...');
+                    const enabled = await syncService.isEnabled();
+                    console.warn('[DataModal] Sync enabled:', enabled);
+                    
+                    if (!enabled) {
+                      console.warn('[DataModal] Sync not enabled, trying to check actual state...');
+                      console.warn('[DataModal] Direct state check:', {
+                        syncEnabled: syncService.syncEnabled,
+                        syncId: syncService.syncId,
+                        initialized: syncService.initialized,
+                      });
+                    }
+                    
+                    // Try to sync regardless of enabled state for debugging
+                    console.warn('[DataModal] Attempting sync...');
+                    const result = await syncService.sync();
+                    console.warn('[DataModal] Sync result:', result);
                   
                   showToast({ 
                     message: result?.success 
@@ -1826,10 +1830,11 @@ const DataModal = ({
                       : `Sync result: ${JSON.stringify(result)}`
                   });
                   
-                } catch (error) {
-                  console.error('[DataModal] Manual sync error:', error);
-                  showToast({ message: `Error: ${error.message}` });
-                }
+                  } catch (error) {
+                    console.error('[DataModal] Manual sync error:', error);
+                    showToast({ message: `Error: ${error.message}` });
+                  }
+                })(); // Execute the async IIFE
               }}
               // Remove loading/disabled for debug button
               fullWidth

@@ -153,12 +153,16 @@ class SimpleSyncService {
       // Restore sync state from storage
       console.warn('[Sync] 🚨 Reading from AsyncStorage...');
       console.warn('[Sync] 🚨 Getting @sync_enabled...');
-      const enabled = await AsyncStorage.getItem('@sync_enabled');
-      console.warn('[Sync] 🚨 Got enabled:', enabled);
+      const enabledPromise = AsyncStorage.getItem('@sync_enabled');
+      console.warn('[Sync] 🚨 Created promise for @sync_enabled:', enabledPromise);
+      const enabled = await enabledPromise;
+      console.warn('[Sync] 🚨 Got enabled:', enabled, 'type:', typeof enabled);
       
       console.warn('[Sync] 🚨 Getting @sync_id...');
-      const syncId = await AsyncStorage.getItem('@sync_id');
-      console.warn('[Sync] 🚨 Got syncId:', syncId ? syncId.substring(0, 8) + '...' : null);
+      const syncIdPromise = AsyncStorage.getItem('@sync_id');
+      console.warn('[Sync] 🚨 Created promise for @sync_id:', syncIdPromise);
+      const syncId = await syncIdPromise;
+      console.warn('[Sync] 🚨 Got syncId:', syncId ? syncId.substring(0, 8) + '...' : null, 'type:', typeof syncId);
       
       console.warn('[Sync] 🚨 Getting @sync_last_version...');
       const lastVersion = await AsyncStorage.getItem('@sync_last_version');
