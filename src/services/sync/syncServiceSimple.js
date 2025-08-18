@@ -1,12 +1,12 @@
 // Add immediate console log to verify module is loading
-console.warn('[Sync] 🚨🚨🚨 syncServiceSimple.ts MODULE LOADING at', new Date().toISOString());
+console.warn('[Sync] 🚨🚨🚨 syncServiceSimple.js MODULE LOADING at', new Date().toISOString());
 
 import { Platform, AppState } from 'react-native';
 
 // Conditionally import AsyncStorage based on platform
 // For web, use our custom implementation directly
 // For mobile, use the actual React Native package
-let AsyncStorage: any;
+let AsyncStorage;
 if (Platform.OS === 'web') {
   AsyncStorage = require('../../utils/AsyncStorage.web').default;
   console.warn('[Sync] 🚨🚨🚨 Using custom AsyncStorage.web');
@@ -49,7 +49,7 @@ console.warn('[Sync] 🚨🚨🚨 Imports completed, defining SimpleSyncService 
 /**
  * Get API base URL based on environment
  */
-const getApiBaseUrl = (): string => {
+const getApiBaseUrl = () => {
   if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
     return 'https://stackmap.app/qual/api/sync';
   }
@@ -70,13 +70,6 @@ const getApiBaseUrl = (): string => {
 
 const API_BASE_URL = getApiBaseUrl();
 
-interface SyncResult {
-  success: boolean;
-  version?: number;
-  lastModified?: string;
-  error?: string;
-}
-
 /**
  * Simplified Sync Service
  * - No periodic sync
@@ -86,27 +79,27 @@ interface SyncResult {
  */
 class SimpleSyncService {
   // Core sync state
-  syncEnabled: boolean = false;
-  syncId: string | null = null;
-  lastSyncVersion: number = 0;
-  initialized: boolean = false;
+  syncEnabled = false;
+  syncId = null;
+  lastSyncVersion = 0;
+  initialized = false;
 
   // Sync timing
-  lastSyncAttempt: number | null = null;
-  lastSyncSuccess: number | null = null;
+  lastSyncAttempt = null;
+  lastSyncSuccess = null;
 
   // Debounce timer for changes
-  syncDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-  syncDebounceDelay: number = 10000; // 10 seconds
+  syncDebounceTimer = null;
+  syncDebounceDelay = 10000; // 10 seconds
 
   // Sync lock to prevent concurrent syncs
-  syncInProgress: boolean = false;
+  syncInProgress = false;
 
   // App state subscription
-  private appStateSubscription: any = null;
+  appStateSubscription = null;
   
   // Initialization promise to prevent multiple initializations
-  private initializationPromise: Promise<void> | null = null;
+  initializationPromise = null;
 
   constructor() {
     console.warn('[Sync] 🚨 SimpleSyncService constructor called at', new Date().toISOString());
@@ -134,7 +127,7 @@ class SimpleSyncService {
   /**
    * Initialize sync service
    */
-  async initialize(): Promise<void> {
+  async initialize() {
     // Return existing initialization if in progress
     if (this.initializationPromise) {
       return this.initializationPromise;
@@ -147,7 +140,7 @@ class SimpleSyncService {
     return this.initializationPromise;
   }
 
-  private async _doInitialize(): Promise<void> {
+  async _doInitialize() {
     console.warn('[Sync] 🚨 _doInitialize started');
     try {
       // Restore sync state from storage
@@ -211,7 +204,7 @@ class SimpleSyncService {
   /**
    * Set up app lifecycle listeners for sync triggers
    */
-  private setupLifecycleListeners(): void {
+  setupLifecycleListeners() {
     if (Platform.OS === 'web' && typeof document !== 'undefined') {
       // Web: Use visibility change event
       document.addEventListener('visibilitychange', () => {
@@ -234,7 +227,7 @@ class SimpleSyncService {
   /**
    * Restore encryption from stored recovery phrase
    */
-  async restoreEncryptionFromStorage(): Promise<boolean> {
+  async restoreEncryptionFromStorage() {
     if (!this.syncId) return false;
 
     // Check if encryption is already initialized
@@ -267,11 +260,7 @@ class SimpleSyncService {
   /**
    * Enable sync with recovery phrase
    */
-  async enable(recoveryPhrase: string | null = null): Promise<{
-    syncId: string;
-    recoveryPhrase: string;
-    isNewSync: boolean;
-  }> {
+  async enable(recoveryPhrase = null) {
     try {
       // Generate new recovery phrase if not provided
       if (!recoveryPhrase) {
@@ -369,7 +358,7 @@ class SimpleSyncService {
   /**
    * Disable sync
    */
-  async disable(): Promise<void> {
+  async disable() {
     // Clear debounce timer
     if (this.syncDebounceTimer) {
       clearTimeout(this.syncDebounceTimer);
@@ -403,7 +392,7 @@ class SimpleSyncService {
   /**
    * Request a sync (debounced)
    */
-  requestSync(): void {
+  requestSync() {
     console.log('[Sync] requestSync called', {
       syncEnabled: this.syncEnabled,
       syncId: this.syncId ? this.syncId.substring(0, 8) + '...' : null,
@@ -430,7 +419,7 @@ class SimpleSyncService {
   /**
    * Perform sync immediately
    */
-  async sync(): Promise<SyncResult> {
+  async sync() {
     console.warn('[Sync] 🔴 sync() ENTERED', {
       syncInProgress: this.syncInProgress,
       syncEnabled: this.syncEnabled,
@@ -510,14 +499,14 @@ class SimpleSyncService {
     } catch (error) {
       console.error('[Sync] Sync failed:', error);
       this.syncInProgress = false;
-      return { success: false, error: (error as Error).message };
+      return { success: false, error: error.message };
     }
   }
 
   /**
    * Pull data from server
    */
-  async pullData(): Promise<any> {
+  async pullData() {
     console.warn('[Sync] 🔴 pullData() ENTERED');
     if (!this.syncId) {
       console.warn('[Sync] 🔴 pullData() RETURNING null - no syncId');
@@ -557,7 +546,7 @@ class SimpleSyncService {
   /**
    * Push data to server
    */
-  private async pushData(): Promise<SyncResult> {
+  async pushData() {
     console.log('[Sync] pushData called');
     
     if (!this.syncId) {
@@ -604,14 +593,14 @@ class SimpleSyncService {
       };
     } catch (error) {
       console.error('[Sync] Push failed:', error);
-      return { success: false, error: (error as Error).message };
+      return { success: false, error: error.message };
     }
   }
 
   /**
    * Create new sync group
    */
-  private async createSyncGroup(syncId: string, salt: string): Promise<void> {
+  async createSyncGroup(syncId, salt) {
     const deviceId = await encryptionService.getDeviceId();
     
     // Get current state and encrypt it for initial sync
@@ -640,7 +629,7 @@ class SimpleSyncService {
   /**
    * Get current state from stores
    */
-  private getCurrentState(): any {
+  getCurrentState() {
     const userState = useUserStore.getState();
     const settingsState = useSettingsStore.getState();
     const libraryState = useLibraryStore.getState();
@@ -657,7 +646,7 @@ class SimpleSyncService {
   /**
    * Restore data to stores
    */
-  private async restoreData(data: any): Promise<void> {
+  async restoreData(data) {
     // Validate and repair if needed
     const isValid = validateSyncedData(data);
     if (!isValid) {
@@ -692,7 +681,7 @@ class SimpleSyncService {
   /**
    * Generate sync ID from recovery phrase
    */
-  async generateSyncId(recoveryPhrase: string): Promise<string> {
+  async generateSyncId(recoveryPhrase) {
     // Use a fixed salt for sync ID generation to ensure consistency
     const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ=='; // Base64 encoded fixed salt
     const { key } = await encryptionService.deriveKeyFromPhrase(
@@ -709,7 +698,7 @@ class SimpleSyncService {
   /**
    * Sync on edit mode toggle
    */
-  syncOnModeChange(): void {
+  syncOnModeChange() {
     if (this.syncEnabled) {
       console.log('[Sync] Mode changed, syncing...');
       this.sync();
@@ -719,7 +708,7 @@ class SimpleSyncService {
   /**
    * Check if sync is enabled (compatibility method)
    */
-  async isEnabled(): Promise<boolean> {
+  async isEnabled() {
     // Ensure initialization is complete before returning status
     if (!this.initialized) {
       console.log('[Sync] isEnabled called before initialization, waiting...');
@@ -732,7 +721,7 @@ class SimpleSyncService {
   /**
    * Check if user has auto-update shares (stub for compatibility)
    */
-  async hasAutoUpdateShares(_userId: string): Promise<boolean> {
+  async hasAutoUpdateShares(_userId) {
     // Simplified version doesn't support shares yet
     return false;
   }
@@ -740,7 +729,7 @@ class SimpleSyncService {
   /**
    * Update active shares (stub for compatibility)
    */
-  async updateActiveShares(_userId: string): Promise<void> {
+  async updateActiveShares(_userId) {
     // Simplified version doesn't support shares yet
     console.log('[Sync] Share updates not supported in simplified sync');
   }
@@ -748,14 +737,14 @@ class SimpleSyncService {
   /**
    * Compatibility property for legacy code
    */
-  get syncInterval(): any {
+  get syncInterval() {
     return null; // No periodic sync in simplified version
   }
 
   /**
    * Add a sync status listener (stub for compatibility)
    */
-  addStatusListener(callback: (status: any) => void): () => void {
+  addStatusListener(callback) {
     // Immediately send a simple status
     callback({
       status: 'idle',
@@ -773,21 +762,21 @@ class SimpleSyncService {
   /**
    * Remove a status listener (stub for compatibility)
    */
-  removeStatusListener(_callback: (status: any) => void): void {
+  removeStatusListener(_callback) {
     // No-op in simplified version
   }
 
   /**
    * Sync with queue (compatibility wrapper)
    */
-  async syncWithQueue(): Promise<SyncResult> {
+  async syncWithQueue() {
     return this.sync();
   }
 
   /**
    * Request sync with options (compatibility wrapper)
    */
-  async requestSyncWithOptions(_options?: any): Promise<SyncResult> {
+  async requestSyncWithOptions(_options) {
     this.requestSync();
     return { success: true };
   }
@@ -795,14 +784,14 @@ class SimpleSyncService {
   /**
    * Get sync ID
    */
-  getSyncId(): string | null {
+  getSyncId() {
     return this.syncId;
   }
 
   /**
    * Get recovery phrase if available
    */
-  async getRecoveryPhrase(): Promise<string | null> {
+  async getRecoveryPhrase() {
     if (!this.syncId) return null;
     try {
       return await encryptionService.getStoredRecoveryPhrase(this.syncId);
@@ -815,7 +804,7 @@ class SimpleSyncService {
   /**
    * Verify sync exists on server
    */
-  async verifySyncExists(): Promise<boolean> {
+  async verifySyncExists() {
     if (!this.syncId) return false;
     try {
       const data = await this.pullData();
@@ -828,7 +817,7 @@ class SimpleSyncService {
   /**
    * Delete all sync data from server
    */
-  async deleteFromServer(): Promise<any> {
+  async deleteFromServer() {
     if (!this.syncId) {
       throw new Error('No sync data to delete');
     }
@@ -859,7 +848,7 @@ class SimpleSyncService {
   /**
    * Get API URL for debugging
    */
-  getApiUrl(): string {
+  getApiUrl() {
     return API_BASE_URL;
   }
 
@@ -868,7 +857,7 @@ class SimpleSyncService {
   /**
    * Get active shares (not implemented in simplified version yet)
    */
-  async getActiveShares(): Promise<any[]> {
+  async getActiveShares() {
     // TODO: Implement share functionality
     return [];
   }
@@ -876,7 +865,7 @@ class SimpleSyncService {
   /**
    * Generate share token (not implemented in simplified version yet)
    */
-  generateShareToken(): string {
+  generateShareToken() {
     // TODO: Implement share functionality
     throw new Error('Share functionality not yet implemented in simplified sync');
   }
@@ -884,7 +873,7 @@ class SimpleSyncService {
   /**
    * Create share link (not implemented in simplified version yet)
    */
-  async createShareLink(_userId: string, _options?: any): Promise<any> {
+  async createShareLink(_userId, _options) {
     // TODO: Implement share functionality
     throw new Error('Share functionality not yet implemented in simplified sync');
   }
@@ -892,7 +881,7 @@ class SimpleSyncService {
   /**
    * Delete share (not implemented in simplified version yet)
    */
-  async deleteShare(_shareId: string): Promise<boolean> {
+  async deleteShare(_shareId) {
     // TODO: Implement share functionality
     console.warn('[Sync] Share deletion not yet implemented in simplified sync');
     return false;
