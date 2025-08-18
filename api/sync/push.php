@@ -34,7 +34,9 @@ try {
     $stmt->execute([$data['encrypted_blob'], $data['sync_id']]);
 
     if ($stmt->rowCount() === 0) {
-        sendError('Sync group not found', 404);
+        http_response_code(404);
+        echo json_encode(['success' => false, 'error' => 'Sync group not found']);
+        exit();
     }
 
     // Update or insert device

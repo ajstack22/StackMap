@@ -31,7 +31,9 @@ try {
 ?");
     $check->execute([$data['sync_id']]);
     if ($check->rowCount() > 0) {
-        sendError('Sync ID already exists', 409);
+        http_response_code(409);
+        echo json_encode(['success' => false, 'error' => 'Sync ID already exists']);
+        exit();
     }
 
     // Create new sync group
