@@ -4,15 +4,11 @@ import nacl from 'tweetnacl';
 import util from 'tweetnacl-util';
 
 // Type helpers for tweetnacl-util
-const encodeBase64 = (arr: Uint8Array): string =>
-  (util as any).encodeBase64(arr);
-const decodeBase64 = (str: string): Uint8Array =>
-  (util as any).decodeBase64(str);
 const decodeUTF8 = (str: string): Uint8Array => 
   (util as any).decodeUTF8(str);
 
 import encryptionService from './encryptionService';
-import { useAppStore, useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
+import { useUserStore, useSettingsStore, useLibraryStore } from '../../stores';
 import conflictResolver from './conflictResolver';
 import { validateSyncedData, repairSyncedData } from './dataValidator';
 
@@ -497,7 +493,6 @@ class SimpleSyncService {
    * Get current state from stores
    */
   private getCurrentState(): any {
-    const appState = useAppStore.getState();
     const userState = useUserStore.getState();
     const settingsState = useSettingsStore.getState();
     const libraryState = useLibraryStore.getState();
@@ -579,7 +574,7 @@ class SimpleSyncService {
   /**
    * Check if user has auto-update shares (stub for compatibility)
    */
-  async hasAutoUpdateShares(userId: string): Promise<boolean> {
+  async hasAutoUpdateShares(_userId: string): Promise<boolean> {
     // Simplified version doesn't support shares yet
     return false;
   }
@@ -587,7 +582,7 @@ class SimpleSyncService {
   /**
    * Update active shares (stub for compatibility)
    */
-  async updateActiveShares(userId: string): Promise<void> {
+  async updateActiveShares(_userId: string): Promise<void> {
     // Simplified version doesn't support shares yet
     console.log('[Sync] Share updates not supported in simplified sync');
   }
