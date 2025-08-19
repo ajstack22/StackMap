@@ -256,8 +256,46 @@ const OnboardingUserCentered = ({
     try {
       // First, create users in the store before setting up sync
       if (users.length > 0) {
+        const timestamp = Date.now();
+        const randomId = Math.random().toString(36).substr(2, 9);
         const usersObj = {};
         let firstUserId = null;
+        
+        // Create starter activities for the first user
+        const starterActivities = [
+          {
+            id: `${timestamp}_1_${randomId}`,
+            text: 'Welcome to StackMap!',
+            icon: '👋',
+            description: 'Tap activities to mark them complete',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_2_${randomId}`,
+            text: 'Try Edit Mode',
+            icon: '✏️',
+            description: 'Use the edit button to add, remove, and organize activities',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_3_${randomId}`,
+            text: 'Switch Users',
+            icon: '👤',
+            description: 'Tap your user pill to switch users or check-in',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_4_${randomId}`,
+            text: 'Sync Across Devices',
+            icon: '🔄',
+            description: 'Keep your data synced with zero-knowledge encryption',
+            pinned: false,
+            completed: false
+          }
+        ];
         
         users.forEach((user, index) => {
           const userId = `user_${index + 1}`;
@@ -269,7 +307,7 @@ const OnboardingUserCentered = ({
             icon: user.icon,
             emoji: user.icon, // Keep for backwards compatibility
             days: {
-              today: { activities: [] },
+              today: { activities: index === 0 ? starterActivities : [] },
               tomorrow: { activities: [] }
             },
             deleted: false
