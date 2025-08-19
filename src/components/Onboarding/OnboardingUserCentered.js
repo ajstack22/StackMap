@@ -292,7 +292,14 @@ const OnboardingUserCentered = ({
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');
     } catch (error) {
-      setSyncError(error.message || 'Failed to create sync');
+      console.error('Sync creation error:', error);
+      // If sync already exists (409), generate a new code for retry
+      if (error.message && error.message.includes('already exists')) {
+        generateNewSyncCode();
+        setSyncError('This sync code is already in use. A new code has been generated. Please try again.');
+      } else {
+        setSyncError(error.message || 'Failed to create sync. Please try again.');
+      }
     } finally {
       setSyncLoading(false);
     }
