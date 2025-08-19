@@ -361,17 +361,25 @@ class SyncService {
    * Generate deterministic sync ID from recovery phrase
    */
   async generateSyncId(recoveryPhrase) {
+    console.log('[Sync] generateSyncId called with phrase:', recoveryPhrase);
     // Use a fixed salt for sync ID generation to ensure consistency
     const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ=='; // Base64 encoded fixed salt
+    console.log('[Sync] Using fixed salt for sync ID:', fixedSalt);
+    
     const { key } = await encryptionService.deriveKeyFromPhrase(
       recoveryPhrase,
       fixedSalt,
     );
+    console.log('[Sync] Derived key length:', key.length);
+    
     // Use first 16 bytes of key as sync ID
     const syncIdBytes = key.slice(0, 16);
-    return Array.from(syncIdBytes, byte =>
+    const syncId = Array.from(syncIdBytes, byte =>
       byte.toString(16).padStart(2, '0'),
     ).join('');
+    
+    console.log('[Sync] Generated sync ID:', syncId);
+    return syncId;
   }
   /**
    * Create a new sync group on the server
@@ -571,10 +579,14 @@ class SyncService {
    */
   async pullData(retryCount = 0) {
     if (!this.syncId) {
+      console.log('[Sync] pullData: No sync ID set');
       return null;
     }
     const deviceId = await encryptionService.getDeviceId();
     const url = `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+    console.log('[Sync] pullData URL:', url);
+    console.log('[Sync] pullData sync ID:', this.syncId);
+    
     try {
       const response = await fetch(url);
       if (response.status === 404) {
