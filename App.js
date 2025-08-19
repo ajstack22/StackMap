@@ -4546,24 +4546,33 @@ Users: ${userNames} (${userCount} total)
         </View>
 
         {/* Edit Mode Toolbar - when banner is at bottom, toolbar goes to top */}
-        {/* Placed after content area to ensure proper z-index on Android */}
+        {/* Android Fix: Wrapper view with elevation to ensure proper layering */}
         {showEditToolbar && bannerPosition === 'bottom' && (
-          <Animated.View
+          <View
             style={{
               position: 'absolute',
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 1000, // Very high z-index
-              elevation: Platform.OS === 'android' ? 20 : 0, // High elevation for Android
-              transform: [{
-                translateY: editModeToolbarTranslate.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: [0, 100],
-                })
-              }],
+              zIndex: 9999,
+              ...(Platform.OS === 'android' && {
+                elevation: 50, // Very high elevation for Android
+                backgroundColor: 'transparent', // Required for elevation to work
+              }),
             }}
+            pointerEvents="box-none" // Allow touches to pass through to content below
           >
+            <Animated.View
+              style={{
+                transform: [{
+                  translateY: editModeToolbarTranslate.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: [0, 100],
+                  })
+                }],
+              }}
+              pointerEvents="auto" // Capture touches for the toolbar itself
+            >
             <EditModeToolbar
               visible={isEditMode}
               onExit={() => {
@@ -4609,7 +4618,8 @@ Users: ${userNames} (${userCount} total)
             }}
             onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
             />
-          </Animated.View>
+            </Animated.View>
+          </View>
         )}
 
         {/* Bottom Banner */}
@@ -4641,23 +4651,7 @@ Users: ${userNames} (${userCount} total)
             </>
           ))}
 
-        {/* Bottom Safe Area for Mobile only */}
-        {bannerPosition === 'top' &&
-          Platform.OS !== 'web' &&
-          (Platform.OS === 'ios' ? (
-            <SafeAreaView style={{ backgroundColor: theme.primary }} />
-          ) : (
-            // On Android, show colored block for navigation bar
-            <View
-              style={{
-                backgroundColor: theme.primary,
-                height: getAndroidModalBottomHeight(insets),
-                width: '100%',
-              }}
-            />
-          ))}
-
-        {/* FABs - Positioned on the banner */}
+        {/* FABs - Moved before EditModeToolbar to ensure proper z-order */}
         <FAB
           icon="palette"
           onPress={() => {
@@ -4701,6 +4695,22 @@ Users: ${userNames} (${userCount} total)
           theme={isEditMode ? { primary: 'white' } : theme}
           style={isEditMode ? { backgroundColor: '#f56565' } : {}}
         />
+
+        {/* Bottom Safe Area for Mobile only */}
+        {bannerPosition === 'top' &&
+          Platform.OS !== 'web' &&
+          (Platform.OS === 'ios' ? (
+            <SafeAreaView style={{ backgroundColor: theme.primary }} />
+          ) : (
+            // On Android, show colored block for navigation bar
+            <View
+              style={{
+                backgroundColor: theme.primary,
+                height: getAndroidModalBottomHeight(insets),
+                width: '100%',
+              }}
+            />
+          ))}
 
         {/* Edit Mode Toolbar - moved inside container for proper positioning */}
         {showEditToolbar && bannerPosition === 'top' && (

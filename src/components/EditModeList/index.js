@@ -60,11 +60,17 @@ export default function EditModeList({
           ...contentPadding,
         },
       ]}
-      removeClippedSubviews={true}
-      maxToRenderPerBatch={10}
-      updateCellsBatchingPeriod={50}
-      windowSize={10}
-      initialNumToRender={10}
+      // Android performance optimizations
+      removeClippedSubviews={Platform.OS === 'android'}
+      maxToRenderPerBatch={Platform.OS === 'android' ? 5 : 10} // Smaller batches on Android
+      updateCellsBatchingPeriod={Platform.OS === 'android' ? 100 : 50} // More time between batches
+      windowSize={Platform.OS === 'android' ? 5 : 10} // Smaller window on Android
+      initialNumToRender={Platform.OS === 'android' ? 8 : 10}
+      // Additional Android optimizations
+      legacyImplementation={false}
+      disableVirtualization={false}
+      directionalLockEnabled={true}
+      scrollEventThrottle={16} // Better touch responsiveness
     />
   );
 }

@@ -193,4 +193,19 @@ export const EditModeListItem = React.memo(
       </TouchableOpacity>
     );
   },
+  // Custom comparison for better performance on Android
+  (prevProps, nextProps) => {
+    return (
+      prevProps.item.id === nextProps.item.id &&
+      prevProps.item.text === nextProps.item.text &&
+      prevProps.item.description === nextProps.item.description &&
+      prevProps.item.icon === nextProps.item.icon &&
+      prevProps.item.completed === nextProps.item.completed &&
+      prevProps.item.addedToLibrary === nextProps.item.addedToLibrary &&
+      prevProps.index === nextProps.index &&
+      prevProps.totalCount === nextProps.totalCount &&
+      prevProps.theme.primary === nextProps.theme.primary &&
+      prevProps.isTablet === nextProps.isTablet
+    );
+  }
 );
