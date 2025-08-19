@@ -294,9 +294,8 @@ const OnboardingUserCentered = ({
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
+      // Initialize will create the sync group if it doesn't exist
       await syncService.initialize(syncCode);
-      const syncId = await syncService.generateSyncId(syncCode);
-      await syncService.createSyncGroup(syncId, 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=');
       
       await AsyncStorage.setItem('syncEnabled', 'true');
       await AsyncStorage.setItem('syncRecoveryPhrase', syncCode);
