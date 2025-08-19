@@ -195,9 +195,13 @@ const OnboardingUserCentered = ({
       }
 
       await syncService.initialize(phraseToUse);
+      console.log('[Onboarding] After initialize, syncId:', syncService.syncId);
+      
       const pullResult = await syncService.pullData();
+      console.log('[Onboarding] Pull result:', pullResult);
       
       if (!pullResult || !pullResult.data) {
+        console.error('[Onboarding] No data found. pullResult:', pullResult);
         throw new Error('No data found for this sync code');
       }
 

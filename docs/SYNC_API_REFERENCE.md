@@ -43,8 +43,8 @@ The API uses zero-knowledge authentication based on sync IDs and device IDs. No 
 
 ### Key Components:
 - **Recovery Phrase**: 32-character hexadecimal string (never sent to server)
-- **Sync ID**: SHA-256 hash of recovery phrase (identifies sync group)
-- **Master Key**: PBKDF2-derived from recovery phrase + fixed salt
+- **Sync ID**: Derived from recovery phrase using NaCl hash with 100,000 iterations and fixed salt, then taking first 16 bytes
+- **Master Key**: NaCl-hash-derived from recovery phrase + encryption salt (100,000 iterations)
 - **Device ID**: Unique identifier for each device
 - **Encryption**: NaCl (TweetNaCl) secretbox with random nonce
 

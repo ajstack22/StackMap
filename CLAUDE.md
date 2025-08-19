@@ -78,9 +78,10 @@
 - **Debug**: Check `[Sync]` and sync status messages in console
 
 ### Data Flow Summary
-**Push**: Stores → Normalize (text/icon) → Encrypt (PBKDF2+NaCl) → Server (zero-knowledge)  
+**Push**: Stores → Normalize (text/icon) → Encrypt (NaCl with 100k iterations) → Server (zero-knowledge)  
 **Pull**: Server → Decrypt → Validate → Resolve conflicts → Update stores  
 **Key Fields**: Activities use `text` (not name/title) and `icon` (not emoji)  
+**Sync ID**: First 16 bytes of NaCl hash (100k iterations) of recovery phrase + fixed salt
 **See**: `/docs/SYNC_API_REFERENCE.md` for complete technical details
 
 ---
