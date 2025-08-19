@@ -222,7 +222,7 @@ const OnboardingUserCentered = ({
           name: u.name,
           icon: u.icon || u.emoji || DEFAULT_USER_ICON,
         })),
-        hasLibrary: pullResult.data.library && pullResult.data.library.categories?.length > 0,
+        hasLibrary: decryptedData.library && decryptedData.library.categories?.length > 0,
       });
     } catch (error) {
       setSyncError(error.message || 'Failed to fetch sync data');
