@@ -34,6 +34,8 @@
 ### Android
 - **FlexWrap Cards**: MUST use percentage widths (48%) + alignContent: 'flex-start'
 - **No calculateCardWidth()** for multi-column layouts
+- **Font Weights**: MUST use font variants (ComicRelief-Bold) without fontWeight property
+  - Typography component handles this automatically - just use `fontWeight: 'bold'`
 
 ### iOS  
 - **AsyncStorage**: Causes 20+ second freeze - debounced in useAppStore.js
@@ -55,6 +57,8 @@
 1. **NO GRAY TEXT** - All text must be black (#000) for accessibility
 2. **High contrast** required - test with all theme colors
 3. **Typography**: Comic Relief font forced everywhere via custom component
+   - iOS/Web: Uses fontWeight with "Comic Relief" font
+   - Android: Uses font variants (ComicRelief-Bold/Regular) without fontWeight
 
 ## ⚠️ FIELD NAMING STANDARDS (CRITICAL)
 - **Activities**: Use `text` (not name/title), `icon` (not emoji)
@@ -107,6 +111,7 @@
 - Unified list-based interface across all platforms
 - Button-based reordering (no drag & drop)
 - Max width constraints for readability
+- Simplified animations (200ms fades) for better iOS performance
 - See `/prompts/editmoderefactor/` for full specs
 
 ### Data Structure (COMPLETED Jan 2025)

@@ -162,6 +162,11 @@ activityCard: {
 - **APK won't install**: Check keystore signing
 - **Gradle errors**: Run `cd android && ./gradlew clean`
 - **Metro bundler**: Kill all node processes and restart
+- **Comic Relief font not showing**: 
+  - Check that ComicRelief-Regular.ttf and ComicRelief-Bold.ttf are in android/app/src/main/assets/fonts/
+  - Ensure Typography component is used (not raw Text from react-native)
+- **Font appears as system font**: Do NOT use fontWeight with Android font variants - Typography component handles this automatically
+- **Bold text not bold**: Use `fontWeight: 'bold'` or `'700'` in styles - Typography component converts to ComicRelief-Bold variant
 
 ### Web Issues
 - **Scroll not working**: Check overflow CSS properties

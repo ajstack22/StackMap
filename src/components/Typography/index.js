@@ -1,3 +1,19 @@
+/**
+ * Typography Component
+ * 
+ * Ensures Comic Relief font is used consistently across all platforms.
+ * 
+ * IMPORTANT: Android Font Handling
+ * - Android uses font file variants (ComicRelief-Regular, ComicRelief-Bold)
+ * - fontWeight MUST be undefined on Android when using font variants
+ * - If both fontFamily and fontWeight are set, Android falls back to system font
+ * 
+ * Platform Differences:
+ * - iOS: Uses "Comic Relief" with fontWeight property
+ * - Android: Uses "ComicRelief-Bold" or "ComicRelief-Regular" (no fontWeight)
+ * - Web: Uses CSS font-family with font-weight
+ */
+
 import React from 'react';
 import {
   Text as RNText,

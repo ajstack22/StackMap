@@ -48,7 +48,7 @@ const storage = {
         }
         pendingWrite = null;
       }
-    }, 1000);
+    }, 500); // Reduced from 1000ms to 500ms for faster persistence
   },
   removeItem: async name => {
     try {
@@ -84,8 +84,10 @@ const useSettingsStore = create(
         // Actions for Theme & Settings
         setCurrentTheme: theme =>
           set({ currentTheme: theme }, false, 'setCurrentTheme'),
-        setBannerPosition: position =>
-          set({ bannerPosition: position }, false, 'setBannerPosition'),
+        setBannerPosition: position => {
+          console.log('[SettingsStore] Setting banner position to:', position);
+          set({ bannerPosition: position }, false, 'setBannerPosition');
+        },
         setSoundEnabled: enabled =>
           set({ soundEnabled: enabled }, false, 'setSoundEnabled'),
         setTaskCelebration: celebration =>

@@ -1,8 +1,18 @@
-# Sync System Migration Guide (v2025.08.17)
+# Sync System Migration Guide (OUTDATED - See Note)
 
-## Overview
+## ⚠️ IMPORTANT NOTE (Updated 2025-08-19)
 
-As of version 2025.08.17, StackMap has migrated from a complex field-by-field merge sync system to a simple last-write-wins approach. This guide explains the changes and migration path.
+**This migration was REVERTED on v2025.08.18.** StackMap has returned to the complex sync system due to AsyncStorage issues with the simplified TypeScript version. The current system uses:
+- Full service with queue, throttling, network monitoring
+- Field-level conflict resolution
+- 9 supporting modules (changeTracker, conflictResolver, syncQueue, etc.)
+- See CLAUDE.md for current sync system documentation
+
+---
+
+## Historical Context (v2025.08.17 - REVERTED)
+
+On version 2025.08.17, StackMap briefly migrated from a complex field-by-field merge sync system to a simple last-write-wins approach. This migration was reverted the next day.
 
 ## What Changed
 

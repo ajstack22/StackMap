@@ -500,9 +500,9 @@ const styles = StyleSheet.create({
   },
   toolbarWrapper: {
     alignItems: 'center',
-    paddingTop: Platform.OS === 'web' ? 8 : Platform.OS === 'android' ? 0 : 12,
+    paddingTop: Platform.OS === 'web' ? 12 : Platform.OS === 'android' ? 8 : 16,
     paddingBottom:
-      Platform.OS === 'web' ? 8 : Platform.OS === 'android' ? 10 : 12,
+      Platform.OS === 'web' ? 12 : Platform.OS === 'android' ? 16 : 20,
     position: 'relative',
     zIndex: 1,
   },

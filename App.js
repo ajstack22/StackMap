@@ -4245,6 +4245,71 @@ Users: ${userNames} (${userCount} total)
             </SafeAreaView>
           ))}
 
+        {/* Edit Mode Toolbar - when banner is at bottom, toolbar goes to top */}
+        {showEditToolbar && bannerPosition === 'bottom' && (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 10,
+              transform: [{
+                translateY: editModeToolbarTranslate.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: [0, 100],
+                })
+              }],
+            }}
+          >
+            <EditModeToolbar
+              visible={isEditMode}
+              onExit={() => {
+                setIsEditMode(false);
+                // Switch to today when exiting edit mode
+                if (currentDay !== 'today') {
+                  setCurrentDay('today');
+                }
+              }}
+              onData={() => setShowDataModal(true)}
+              onUsers={() => {
+                setAccessModalActiveTab(0);
+                setShowAccessModal(true);
+              }}
+              onCustomize={() => setShowSettingsModal(true)}
+              onSupport={() => setShowSupportModal(true)}
+              toolbarOrder={toolbarOrder}
+              moreButtonPosition={moreButtonPosition}
+              onDayManagement={tab => {
+                setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
+                // Use setTimeout to ensure state update happens first
+                setTimeout(() => {
+                  setShowDayManagementModal(true);
+                }, 0);
+              }}
+              onActivityManagement={tab => {
+                console.log('EditModeToolbar clicked:', tab);
+                const tabIndex = tab === 'add' ? 0 : 1;
+                console.log('Setting activityManagementActiveTab to:', tabIndex);
+                setActivityManagementActiveTab(tabIndex);
+                // Use setTimeout to ensure state update happens first
+                setTimeout(() => {
+                  console.log('Opening modal with tab index:', tabIndex);
+                  setShowActivityManagementModal(true);
+              }, 0);
+            }}
+            theme={theme}
+            position={'top'}
+            onAnimationComplete={() => {
+              if (!isEditMode) {
+                setShowEditToolbar(false);
+              }
+            }}
+            onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
+            />
+          </Animated.View>
+        )}
+
         {/* Main Content Area */}
         <View style={styles.contentArea}>
           {Platform.OS === 'android' &&
@@ -4276,23 +4341,23 @@ Users: ${userNames} (${userCount} total)
                   }))}
                 contentPadding={{
                   // Use 8px padding to match the gap between cards (4px marginVertical × 2)
-                  // Base 124px when toolbar visible, 184px when More is expanded
+                  // Adjusted toolbar heights for better spacing
                   // Edit mode toolbar is OPPOSITE from banner, so flip the padding
                   paddingTop:
                     bannerPosition === 'bottom'
                       ? showEditToolbar
                         ? editToolbarMoreExpanded
-                          ? 184
-                          : 124
-                        : 94
+                          ? 160
+                          : 100
+                        : 8
                       : 8,
                   paddingBottom:
                     bannerPosition === 'top'
                       ? showEditToolbar
                         ? editToolbarMoreExpanded
-                          ? 184
-                          : 124
-                        : 94
+                          ? 160
+                          : 100
+                        : 8
                       : 8,
                 }}
                 onUpdate={newActivities => {
@@ -4634,6 +4699,70 @@ Users: ${userNames} (${userCount} total)
           theme={isEditMode ? { primary: 'white' } : theme}
           style={isEditMode ? { backgroundColor: '#f56565' } : {}}
         />
+
+        {/* Edit Mode Toolbar - moved inside container for proper positioning */}
+        {showEditToolbar && bannerPosition === 'top' && (
+          <Animated.View
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              transform: [{
+                translateY: editModeToolbarTranslate.interpolate({
+                  inputRange: [0, 100],
+                  outputRange: [0, 100],
+                })
+              }],
+            }}
+          >
+            <EditModeToolbar
+              visible={isEditMode}
+              onExit={() => {
+                setIsEditMode(false);
+                // Switch to today when exiting edit mode
+                if (currentDay !== 'today') {
+                  setCurrentDay('today');
+                }
+              }}
+              onData={() => setShowDataModal(true)}
+              onUsers={() => {
+                setAccessModalActiveTab(0);
+                setShowAccessModal(true);
+              }}
+              onCustomize={() => setShowSettingsModal(true)}
+              onSupport={() => setShowSupportModal(true)}
+              toolbarOrder={toolbarOrder}
+              moreButtonPosition={moreButtonPosition}
+              onDayManagement={tab => {
+                setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
+                // Use setTimeout to ensure state update happens first
+                setTimeout(() => {
+                  setShowDayManagementModal(true);
+                }, 0);
+              }}
+              onActivityManagement={tab => {
+                console.log('EditModeToolbar clicked:', tab);
+                const tabIndex = tab === 'add' ? 0 : 1;
+                console.log('Setting activityManagementActiveTab to:', tabIndex);
+                setActivityManagementActiveTab(tabIndex);
+                // Use setTimeout to ensure state update happens first
+                setTimeout(() => {
+                  console.log('Opening modal with tab index:', tabIndex);
+                  setShowActivityManagementModal(true);
+              }, 0);
+            }}
+            theme={theme}
+            position={'bottom'}
+            onAnimationComplete={() => {
+              if (!isEditMode) {
+                setShowEditToolbar(false);
+              }
+            }}
+            onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
+            />
+          </Animated.View>
+        )}
       </View>
 
       {/* Add/Edit Activity Modal */}
@@ -4725,66 +4854,6 @@ Users: ${userNames} (${userCount} total)
       )}
 
       {/* EditModeSettingsModal removed - functionality distributed to specific modals */}
-
-      {/* Edit Mode Toolbar */}
-      {showEditToolbar && (
-        <Animated.View
-          style={{
-            transform: [{
-              translateY: editModeToolbarTranslate.interpolate({
-                inputRange: [0, 100],
-                outputRange: [0, 100],
-              })
-            }],
-          }}
-        >
-          <EditModeToolbar
-            visible={isEditMode}
-            onExit={() => {
-              setIsEditMode(false);
-              // Switch to today when exiting edit mode
-              if (currentDay !== 'today') {
-                setCurrentDay('today');
-              }
-            }}
-            onData={() => setShowDataModal(true)}
-            onUsers={() => {
-              setAccessModalActiveTab(0);
-              setShowAccessModal(true);
-            }}
-            onCustomize={() => setShowSettingsModal(true)}
-            onSupport={() => setShowSupportModal(true)}
-            toolbarOrder={toolbarOrder}
-            moreButtonPosition={moreButtonPosition}
-            onDayManagement={tab => {
-              setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
-              // Use setTimeout to ensure state update happens first
-              setTimeout(() => {
-                setShowDayManagementModal(true);
-              }, 0);
-            }}
-            onActivityManagement={tab => {
-              console.log('EditModeToolbar clicked:', tab);
-              const tabIndex = tab === 'add' ? 0 : 1;
-              console.log('Setting activityManagementActiveTab to:', tabIndex);
-              setActivityManagementActiveTab(tabIndex);
-              // Use setTimeout to ensure state update happens first
-              setTimeout(() => {
-                console.log('Opening modal with tab index:', tabIndex);
-                setShowActivityManagementModal(true);
-            }, 0);
-          }}
-          theme={theme}
-          position={bannerPosition === 'top' ? 'bottom' : 'top'}
-          onAnimationComplete={() => {
-            if (!isEditMode) {
-              setShowEditToolbar(false);
-            }
-          }}
-          onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
-          />
-        </Animated.View>
-      )}
 
       {/* Activity Library Modal */}
       <ActivityLibrary
