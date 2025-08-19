@@ -200,12 +200,20 @@ const OnboardingUserCentered = ({
       const pullResult = await syncService.pullData();
       console.log('[Onboarding] Pull result:', pullResult);
       
-      if (!pullResult || !pullResult.data) {
+      if (!pullResult || !pullResult.encrypted_blob) {
         console.error('[Onboarding] No data found. pullResult:', pullResult);
         throw new Error('No data found for this sync code');
       }
+      
+      // Decrypt the data
+      const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
+      console.log('[Onboarding] Decrypted data:', decryptedData ? 'success' : 'failed');
+      
+      if (!decryptedData) {
+        throw new Error('Failed to decrypt sync data');
+      }
 
-      const users = pullResult.data.users || {};
+      const users = decryptedData.users || {};
       const userCount = Object.keys(users).filter(id => !users[id].deleted).length;
       
       setSyncPreviewData({
@@ -234,8 +242,15 @@ const OnboardingUserCentered = ({
       await syncService.initialize(phraseToUse);
       const pullResult = await syncService.pullData();
       
-      if (!pullResult || !pullResult.data) {
+      if (!pullResult || !pullResult.encrypted_blob) {
         throw new Error('Failed to import data');
+      }
+      
+      // Decrypt the data
+      const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
+      
+      if (!decryptedData) {
+        throw new Error('Failed to decrypt sync data');
       }
 
       // Enable sync and complete onboarding with imported data
@@ -243,7 +258,7 @@ const OnboardingUserCentered = ({
       await AsyncStorage.setItem('syncRecoveryPhrase', phraseToUse);
       
       onComplete({
-        importedData: pullResult.data,
+        importedData: decryptedData,
         syncEnabled: true,
         recoveryPhrase: phraseToUse,
       });
