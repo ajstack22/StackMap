@@ -1,7 +1,7 @@
 // Quick test script to check sync data
 const crypto = require('crypto');
 
-const syncCode = '92db01b8661c76b019722beb84843381';
+const syncCode = 'edcd21b85b8b2a1a9270db88c149f72c';
 
 // Generate sync ID from the code (same logic as syncService)
 function generateSyncId(recoveryPhrase) {

@@ -393,8 +393,8 @@ const OnboardingUserCentered = ({
           firstUserName: verifyState.users?.[firstUserId]?.name
         });
         
-        // Wait a moment for store to update
-        await new Promise(resolve => setTimeout(resolve, 100));
+        // Wait longer for store to fully update before sync
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       
       // Use the already generated code, or generate a new one if needed
@@ -408,9 +408,9 @@ const OnboardingUserCentered = ({
       // Initialize will create the sync group if it doesn't exist
       await syncService.initialize(syncCode);
       
-      // Force an immediate sync to ensure data is pushed to server
-      console.log('[Onboarding] Forcing immediate sync after creation');
-      await syncService.sync();
+      // Don't force sync here - the periodic sync will handle it
+      // Since we're not marking as synced in initialize for new syncs,
+      // the first periodic sync will push all the data
       
       await AsyncStorage.setItem('syncEnabled', 'true');
       await AsyncStorage.setItem('syncRecoveryPhrase', syncCode);

@@ -253,12 +253,18 @@ class SyncService {
    */
   async initialize(recoveryPhrase = null) {
     try {
+      // Log which environment we're using
+      console.log('[Sync] Initialize - Using API URL:', getApiBaseUrl());
+      console.log('[Sync] Platform:', Platform.OS, 'DEV:', __DEV__);
+      
       // Generate new recovery phrase if not provided
       if (!recoveryPhrase) {
         recoveryPhrase = encryptionService.generateRecoveryPhrase();
       }
       // Generate sync ID from recovery phrase
       const syncId = await this.generateSyncId(recoveryPhrase);
+      console.log('[Sync] Generated sync ID:', syncId, 'from phrase:', recoveryPhrase);
+      
       // Set sync ID temporarily so pullData can work
       this.syncId = syncId;
       // Try to pull existing data first
@@ -324,9 +330,18 @@ class SyncService {
       // Only mark as synced if this is an existing sync (data was pulled)
       if (existingData) {
         changeTracker.markAsSynced();
+      } else {
+        // For new syncs, set an empty baseline so all current data is seen as "new"
+        // This ensures the initial data gets synced
+        const emptyState = {
+          users: {},
+          activities: [],
+          currentUser: null,
+          currentDay: 'today'
+        };
+        changeTracker.lastSyncedState = emptyState;
+        console.log('[Sync] New sync - set empty baseline for change tracking');
       }
-      // If it's a new sync, don't mark as synced - let the first real sync do that
-      // This ensures any data added during onboarding gets properly synced
       
       // Start periodic sync
       this.startPeriodicSync();
