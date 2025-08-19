@@ -1486,15 +1486,92 @@ const App = () => {
       // Mark onboarding as completed
       setHasCompletedOnboarding(true);
 
-      // Create default user without starter activities
+      // Create starter activities for the default user
+      const timestamp = Date.now();
       const randomId = Math.random().toString(36).substr(2, 9);
-      const newUserId = `user_${Date.now()}_${randomId}`;
+      const starterActivities = [
+        {
+          id: `${timestamp}_1_${randomId}`,
+          text: 'Welcome to StackMap!',
+          title: 'Welcome to StackMap!',
+          icon: '👋',
+          description: 'Tap activities to mark them complete',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_2_${randomId}`,
+          text: 'Try Edit Mode',
+          title: 'Try Edit Mode',
+          icon: '✏️',
+          description: 'Use the edit button to add, remove, and organize activities',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_3_${randomId}`,
+          text: 'Activity Library',
+          title: 'Activity Library',
+          icon: '📚',
+          description: 'Browse pre-made activities organized by category',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_4_${randomId}`,
+          text: 'Complete Day',
+          title: 'Complete Day',
+          icon: '✅',
+          description: 'Mark all activities done at once when you finish your day',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_5_${randomId}`,
+          text: 'Manage Users',
+          title: 'Manage Users',
+          icon: '👥',
+          description: 'Add multiple users and switch between them easily',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_6_${randomId}`,
+          text: 'Set a PIN',
+          title: 'Set a PIN',
+          icon: '🔒',
+          description: 'Protect Edit Mode to prevent accidental changes',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_7_${randomId}`,
+          text: 'Settings',
+          title: 'Settings',
+          icon: '⚙️',
+          description: 'Customize themes, celebrations, and display options',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_8_${randomId}`,
+          text: 'Import & Export',
+          title: 'Import & Export',
+          icon: '📦',
+          description: 'Backup your data or transfer between devices',
+          pinned: false,
+        },
+        {
+          id: `${timestamp}_9_${randomId}`,
+          text: 'Sync Across Devices',
+          title: 'Sync Across Devices',
+          icon: '🔄',
+          description: 'Keep your data synced with zero-knowledge encryption',
+          pinned: false,
+        },
+      ];
+
+      // Create default user with starter activities
+      const newUserId = `user_${timestamp}_${randomId}`;
       const newUser = {
         id: newUserId,
         name: 'My Activities',
         icon: DEFAULT_USER_ICON,
         days: {
-          today: { activities: [] },
+          today: { activities: starterActivities },
           tomorrow: { activities: [] },
         },
         settings: {
