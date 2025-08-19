@@ -273,6 +273,8 @@ class SyncService {
         );
         // Create new sync group
         await this.createSyncGroup(syncId, salt);
+        // Don't mark as synced here - let the first real sync do that
+        // This ensures any data added during onboarding gets synced
       } else {
         // This is an existing sync group
         // Use a deterministic approach: use the same salt for all operations
@@ -319,7 +321,13 @@ class SyncService {
       // The recovery phrase is already stored by encryptionService.initialize()
       // so we don't need to store it again here
       // Mark current state as baseline for change tracking
-      changeTracker.markAsSynced();
+      // Only mark as synced if this is an existing sync (data was pulled)
+      if (existingData) {
+        changeTracker.markAsSynced();
+      }
+      // If it's a new sync, don't mark as synced - let the first real sync do that
+      // This ensures any data added during onboarding gets properly synced
+      
       // Start periodic sync
       this.startPeriodicSync();
       return {

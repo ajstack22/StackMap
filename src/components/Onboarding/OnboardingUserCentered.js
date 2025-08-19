@@ -408,6 +408,10 @@ const OnboardingUserCentered = ({
       // Initialize will create the sync group if it doesn't exist
       await syncService.initialize(syncCode);
       
+      // Force an immediate sync to ensure data is pushed to server
+      console.log('[Onboarding] Forcing immediate sync after creation');
+      await syncService.sync();
+      
       await AsyncStorage.setItem('syncEnabled', 'true');
       await AsyncStorage.setItem('syncRecoveryPhrase', syncCode);
       
