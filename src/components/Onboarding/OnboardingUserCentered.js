@@ -261,7 +261,7 @@ const OnboardingUserCentered = ({
         const usersObj = {};
         let firstUserId = null;
         
-        // Create starter activities for the first user
+        // Create starter activities for the first user - same as in App.js
         const starterActivities = [
           {
             id: `${timestamp}_1_${randomId}`,
@@ -289,9 +289,73 @@ const OnboardingUserCentered = ({
           },
           {
             id: `${timestamp}_4_${randomId}`,
+            text: 'Share with Providers',
+            icon: '🔗',
+            description: 'Share your activities with caregivers via QR code or link',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_5_${randomId}`,
             text: 'Sync Across Devices',
             icon: '🔄',
             description: 'Keep your data synced with zero-knowledge encryption',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_6_${randomId}`,
+            text: 'Import & Export',
+            icon: '📦',
+            description: 'Backup your data or transfer between devices',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_7_${randomId}`,
+            text: 'Preferences',
+            icon: '🎨',
+            description: 'Tap the palette icon to customize colors, animations, and display',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_8_${randomId}`,
+            text: 'Activities',
+            icon: '📋',
+            description: 'Tap the + icon to add new activities and build your library',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_9_${randomId}`,
+            text: 'Day',
+            icon: '📅',
+            description: 'Use the calendar icon to plan tomorrow or review past days',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_10_${randomId}`,
+            text: 'Access',
+            icon: '👥',
+            description: 'Add multiple users with the crown icon in preferences',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_11_${randomId}`,
+            text: 'Data',
+            icon: '💾',
+            description: 'Backup, restore, sync, and manage your StackMap data',
+            pinned: false,
+            completed: false
+          },
+          {
+            id: `${timestamp}_12_${randomId}`,
+            text: 'Explore the Library',
+            icon: '📚',
+            description: 'Check out pre-made activity templates in the StackMap Library',
             pinned: false,
             completed: false
           }
