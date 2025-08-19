@@ -21,6 +21,11 @@
    - Better detection and reporting of JSON vs HTML error responses
    - Clearer error messages when API endpoints fail
 
+5. **Added Debug Logging** (src/components/Onboarding/OnboardingUserCentered.js, src/services/sync/syncService.js)
+   - Logs to verify users have activities before sync initialization
+   - Logs what state is being synced to server during createSyncGroup
+   - Will help diagnose where activities are being lost
+
 ### Root Causes Fixed:
 1. Sync group was being created twice (once in initialize, once explicitly)
 2. Users created during sync setup had empty activity arrays
