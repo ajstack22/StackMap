@@ -188,6 +188,8 @@ const OnboardingUserCentered = ({
     try {
       const phraseToUse = recoveryPhrase.trim().replace(/\s+/g, '');
       
+      console.log('[Onboarding] Checking sync code:', phraseToUse);
+      
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
         throw new Error('Invalid sync code format');
       }
@@ -404,6 +406,8 @@ const OnboardingUserCentered = ({
         // Wait for state to update
         await new Promise(resolve => setTimeout(resolve, 100));
       }
+      
+      console.log('[Onboarding] Using sync code for initialization:', syncCode);
       
       // Initialize will create the sync group if it doesn't exist
       await syncService.initialize(syncCode);
