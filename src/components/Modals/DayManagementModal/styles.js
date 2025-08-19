@@ -380,27 +380,23 @@ export const styles = StyleSheet.create({
     marginBottom: 16,
   },
   completeSection: {
-    marginHorizontal: 20,
+    marginHorizontal: IS_MOBILE ? SPACING.xs : SPACING.md,
     marginBottom: 20,
   },
   completeSectionGrid: {
     marginHorizontal: 0,
     marginBottom: 10,
+    width: '48%',
+  },
+  completeSectionWrapper: {
+    marginBottom: SPACING.sm,
   },
   completeSectionInner: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    padding: 16,
-    ...(Platform.OS === 'ios'
-      ? {
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.1,
-          shadowRadius: 4,
-        }
-      : {
-          elevation: 3,
-        }),
+    backgroundColor: '#f5f5f5',
+    borderRadius: RADIUS.lg,
+    padding: IS_MOBILE ? 12 : 16,
+    flex: 1,
+    minHeight: 200,
   },
   completeSectionHeader: {
     flexDirection: 'row',
@@ -473,19 +469,19 @@ export const styles = StyleSheet.create({
 
   // Grid layout styles
   sectionsContainer: {
-    // Default stacked layout
+    // Default stacked layout with gap for mobile
+    gap: SPACING.sm,
   },
   sectionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginHorizontal: 10,
     justifyContent: 'space-between',
+    gap: SPACING.md,
   },
   gridSection: {
     flex: 1,
-    minWidth: 250,
+    minWidth: 280,
     maxWidth: 600,
-    marginHorizontal: 5,
     marginBottom: 10,
   },
 

@@ -211,12 +211,7 @@ const CompleteTabContent = ({
     category,
   ) => {
     return (
-      <View
-        style={[
-          styles.completeSection,
-          useGridLayout && styles.completeSectionGrid,
-        ]}
-      >
+      <View style={[styles.completeSectionWrapper, useGridLayout && { width: '48%' }]}>
         <View style={styles.completeSectionInner}>
           <View style={styles.completeSectionHeader}>
             <View
@@ -262,9 +257,8 @@ const CompleteTabContent = ({
         contentContainerStyle={[{ flexGrow: 1 }, styles.scrollContainer]}
       >
         <View style={styles.contentSection}>
-          {/* Header Panel */}
-          <View style={styles.completeSection}>
-            <View style={styles.completeSectionInner}>
+          {/* Header Panel - Using formPanel style to match Plan tab */}
+          <View style={styles.formPanel}>
               <View style={styles.standardTabContainer}>
                 <Icon name="check-circle" size={48} color={theme.primary} />
                 <Text style={styles.standardTabTitle}>Complete Day</Text>
@@ -303,18 +297,17 @@ const CompleteTabContent = ({
                   )}
                 </TouchableOpacity>
               </View>
-            </View>
           </View>
 
-          {/* Sections Container - Grid or Stack based on width */}
-          <View
-            style={[
-              styles.sectionsContainer,
-              useGridLayout && styles.sectionsGrid,
-            ]}
-          >
-            {/* Delete Section - Unpinned Activities */}
-            <View style={useGridLayout ? styles.gridSection : null}>
+          {/* Activities Sections Panel - Also using formPanel for consistency */}
+          <View style={styles.formPanel}>
+            <View
+              style={[
+                styles.sectionsContainer,
+                useGridLayout && styles.sectionsGrid,
+              ]}
+            >
+              {/* Delete Section - Unpinned Activities */}
               {renderSection(
                 'Will Be Removed',
                 unpinnedToDelete,
@@ -323,12 +316,10 @@ const CompleteTabContent = ({
                 'These activities will be permanently deleted',
                 'delete',
               )}
-            </View>
 
-            {/* Today Section - Tomorrow's Activities - Only show if tomorrow has activities */}
-            {hasTomorrowActivities && (
-              <View style={useGridLayout ? styles.gridSection : null}>
-                {renderSection(
+              {/* Today Section - Tomorrow's Activities - Only show if tomorrow has activities */}
+              {hasTomorrowActivities &&
+                renderSection(
                   'Moving from Tomorrow',
                   tomorrowToToday,
                   'schedule',
@@ -336,11 +327,8 @@ const CompleteTabContent = ({
                   "Tomorrow's activities will move to today",
                   'fromTomorrow',
                 )}
-              </View>
-            )}
 
-            {/* Keep Section - Pinned Activities */}
-            <View style={useGridLayout ? styles.gridSection : null}>
+              {/* Keep Section - Pinned Activities */}
               {renderSection(
                 hasTomorrowActivities
                   ? 'Keep & Copy Forward'
