@@ -27,11 +27,21 @@ try {
     $db = Database::getInstance()->getConnection();
 
     // Check if sync_id already exists
-    $check = $db->prepare("SELECT sync_id FROM sync_data WHERE sync_id = ?");
+    $check = $db->prepare("SELECT sync_id, created_at FROM sync_data WHERE sync_id = ?");
     $check->execute([$data['sync_id']]);
-    if ($check->rowCount() > 0) {
+    $existing = $check->fetch(PDO::FETCH_ASSOC);
+    
+    if ($existing) {
+        error_log("Create sync: Duplicate sync_id " . $data['sync_id'] . " created at " . $existing['created_at']);
         http_response_code(409);
-        echo json_encode(['success' => false, 'error' => 'Sync ID already exists']);
+        echo json_encode([
+            'success' => false, 
+            'error' => 'Sync ID already exists',
+            'debug' => [
+                'sync_id' => $data['sync_id'],
+                'existing_created_at' => $existing['created_at']
+            ]
+        ]);
         exit();
     }
 
@@ -53,9 +63,19 @@ try {
         // Ignore metrics errors
     }
 
+    // Log successful creation
+    error_log("Create sync: Successfully created sync_id " . $data['sync_id']);
+    
     // Return success response
     http_response_code(201);
-    echo json_encode(['success' => true, 'sync_id' => $data['sync_id']]);
+    echo json_encode([
+        'success' => true, 
+        'sync_id' => $data['sync_id'],
+        'debug' => [
+            'created' => true,
+            'sync_id' => $data['sync_id']
+        ]
+    ]);
 
 } catch (Exception $e) {
     error_log("Create sync error: " . $e->getMessage());
