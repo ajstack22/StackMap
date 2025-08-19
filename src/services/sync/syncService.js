@@ -358,7 +358,11 @@ class SyncService {
     // Get current state and encrypt it
     const currentState = this.getCurrentState();
     const encryptedBlob = encryptionService.encryptData(currentState);
-    const response = await fetch(`${getApiBaseUrl()}/create.php`, {
+    const url = `${getApiBaseUrl()}/create.php`;
+    
+    console.log('[Sync] Creating sync group at:', url);
+    
+    const response = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -370,11 +374,32 @@ class SyncService {
         device_id: deviceId,
       }),
     });
+    
+    // Get response text first to check if it's JSON
+    const responseText = await response.text();
+    
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to create sync group');
+      // Try to parse as JSON for proper error message
+      try {
+        const error = JSON.parse(responseText);
+        throw new Error(error.message || 'Failed to create sync group');
+      } catch (e) {
+        // Not JSON - likely HTML error page
+        console.error('[Sync] Server returned non-JSON response:', responseText.substring(0, 200));
+        if (response.status === 404) {
+          throw new Error(`Sync API not found at ${url}. Please check server configuration.`);
+        }
+        throw new Error(`Server error (${response.status}): Unable to create sync group`);
+      }
     }
-    return await response.json();
+    
+    // Parse successful response
+    try {
+      return JSON.parse(responseText);
+    } catch (e) {
+      console.error('[Sync] Invalid JSON in successful response:', responseText.substring(0, 200));
+      throw new Error('Server returned invalid response format');
+    }
   }
   /**
    * Push local changes to server

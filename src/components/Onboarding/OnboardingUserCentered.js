@@ -147,13 +147,19 @@ const OnboardingUserCentered = ({
     if (Platform.OS === 'web') {
       crypto.getRandomValues(bytes);
     } else {
+      // Use better randomness on mobile with timestamp and Math.random
+      const timestamp = Date.now();
       for (let i = 0; i < 16; i++) {
-        bytes[i] = Math.floor(Math.random() * 256);
+        // Mix timestamp with random for better entropy
+        const seed = timestamp + i + Math.random() * 1000000;
+        bytes[i] = Math.floor((Math.random() * seed) % 256);
       }
     }
     const hexCode = Array.from(bytes)
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
+    
+    console.log('[Onboarding] Generated new sync code:', hexCode);
     setGeneratedSyncCode(hexCode);
     return hexCode;
   };
@@ -280,7 +286,13 @@ const OnboardingUserCentered = ({
         await new Promise(resolve => setTimeout(resolve, 100));
       }
       
-      const syncCode = generatedSyncCode || generateNewSyncCode();
+      // Use the already generated code, or generate a new one if needed
+      let syncCode = generatedSyncCode;
+      if (!syncCode) {
+        syncCode = generateNewSyncCode();
+        // Wait for state to update
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
       
       await syncService.initialize(syncCode);
       const syncId = await syncService.generateSyncId(syncCode);

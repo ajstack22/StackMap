@@ -27,11 +27,12 @@ try {
     $db = Database::getInstance()->getConnection();
 
     // Check if sync_id already exists
-    $check = $db->prepare("SELECT sync_id FROM sync_data WHERE sync_id = 
-?");
+    $check = $db->prepare("SELECT sync_id FROM sync_data WHERE sync_id = ?");
     $check->execute([$data['sync_id']]);
     if ($check->rowCount() > 0) {
-        sendError('Sync ID already exists', 409);
+        http_response_code(409);
+        echo json_encode(['success' => false, 'error' => 'Sync ID already exists']);
+        exit();
     }
 
     // Create new sync group
