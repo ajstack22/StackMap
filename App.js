@@ -110,7 +110,7 @@ import {
   BuyMeCoffeeButton,
   SyncPreviewModal,
 } from './src/components';
-import EditModeList from './src/components/EditModeList';
+import AnimatedEditModeList from './src/components/EditModeList/AnimatedEditModeList';
 import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
@@ -141,6 +141,13 @@ import {
   debugPinStorage,
 } from './src/utils/securePinStorage';
 import { debugPINStatus } from './tools/DEBUG_PIN';
+import {
+  ANIMATION_TIMING,
+  ANIMATION_EASING,
+  createEditModeTransition,
+  createFadeAnimation,
+  createParallelAnimation,
+} from './src/utils/animationUtils';
 
 // Get initial screen dimensions
 const { width: initialScreenWidth, height: initialScreenHeight } =
@@ -362,6 +369,12 @@ const App = () => {
   const [editIconsOpacity] = useState(() => new Animated.Value(0));
   const [contentFadeAnim] = useState(() => new Animated.Value(1));
   const [editListFadeAnim] = useState(() => new Animated.Value(0));
+  const [fabScaleAnim] = useState(() => new Animated.Value(1));
+  
+  // Create animated values for list items (up to 20 items for staggered animation)
+  const [listItemAnimations] = useState(() => 
+    Array.from({ length: 20 }, () => new Animated.Value(0))
+  );
 
   // ScrollView refs for forcing measurement on Android
 
@@ -678,60 +691,51 @@ const App = () => {
   // Animate edit mode transition
   useEffect(() => {
     if (isEditMode) {
-      // Entering edit mode with smooth transition
+      // Entering edit mode with unified animation
       setShowEditModeList(true);
-
-      // Smooth crossfade from regular content to edit list
-      Animated.parallel([
-        // Fade out regular content
-        Animated.timing(contentFadeAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        // Fade in edit list at the same time
-        Animated.timing(editListFadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        // Rotate edit mode icon
-        Animated.timing(editModeIconRotation, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]).start();
-
-      // Show the edit toolbar
       setShowEditToolbar(true);
+      
+      // Reset list item animations for entrance
+      listItemAnimations.forEach(anim => anim.setValue(0));
+      
+      // Use the unified animation system
+      const enterAnimation = createEditModeTransition(true, {
+        contentOpacity: contentFadeAnim,
+        toolbarTranslate: editModeToolbarTranslate,
+        iconRotation: editModeIconRotation,
+        listItemsOpacity: listItemAnimations.slice(0, activities.length),
+        fabScale: fabScaleAnim,
+      });
+      
+      // Also fade in the edit list container
+      const containerFade = createFadeAnimation(editListFadeAnim, 1, {
+        duration: ANIMATION_TIMING.FADE_DURATION,
+      });
+      
+      createParallelAnimation([enterAnimation, containerFade]).start();
+      
     } else {
-      // Exiting edit mode with smooth transition
-      // Smooth crossfade from edit list back to regular content
-      Animated.parallel([
-        // Fade out edit list
-        Animated.timing(editListFadeAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        // Fade in regular content at the same time
-        Animated.timing(contentFadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        // Rotate edit mode icon back
-        Animated.timing(editModeIconRotation, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: Platform.OS !== 'web',
-        }),
-      ]).start(() => {
+      // Exiting edit mode with unified animation
+      const exitAnimation = createEditModeTransition(false, {
+        contentOpacity: contentFadeAnim,
+        toolbarTranslate: editModeToolbarTranslate,
+        iconRotation: editModeIconRotation,
+        listItemsOpacity: listItemAnimations.slice(0, activities.length),
+        fabScale: fabScaleAnim,
+      });
+      
+      // Also fade out the edit list container
+      const containerFade = createFadeAnimation(editListFadeAnim, 0, {
+        duration: ANIMATION_TIMING.QUICK_FADE,
+      });
+      
+      createParallelAnimation([exitAnimation, containerFade]).start(() => {
         // Hide toolbar and list after animation completes
         setShowEditToolbar(false);
         setShowEditModeList(false);
         setEditToolbarMoreExpanded(false);
+        // Reset list item animations
+        listItemAnimations.forEach(anim => anim.setValue(0));
       });
     }
   }, [isEditMode]);
@@ -4257,7 +4261,7 @@ Users: ${userNames} (${userCount} total)
                 zIndex: isEditMode ? 2 : 0,
               }}
             >
-              <EditModeList
+              <AnimatedEditModeList
                 activities={activities
                   .filter(a => !a.deleted)
                   .map(a => ({
@@ -4329,6 +4333,7 @@ Users: ${userNames} (${userCount} total)
                   }
                 }}
                 theme={theme}
+                listItemAnimations={listItemAnimations}
               />
             </Animated.View>
           )}
@@ -4593,37 +4598,47 @@ Users: ${userNames} (${userCount} total)
           theme={theme}
         />
 
-        <FAB
-          icon={isEditMode ? 'edit-off' : 'edit'}
-          onPress={() => {
-            console.log('[FAB] Edit button pressed', {
-              isEditMode,
-              hasPinProtection,
-              showPinModal,
-            });
-            if (isEditMode) {
-              setIsEditMode(false);
-              // Switch to today when exiting edit mode
-              if (currentDay !== 'today') {
-                setCurrentDay('today');
-              }
-              // The toolbar will be removed after animation completes
-            } else {
-              if (hasPinProtection) {
-                // Ensure we're in verification mode, not setup mode
-                setIsSettingPin(false);
-                setPinInput('');
-                setConfirmPin('');
-                setShowPinModal(true);
-              } else {
-                setIsEditMode(true);
-              }
-            }
+        <Animated.View
+          style={{
+            position: 'absolute',
+            bottom: fabBottom,
+            top: fabTop,
+            right: 20,
+            transform: [{ scale: fabScaleAnim }],
           }}
-          position={{ bottom: fabBottom, top: fabTop, right: 20 }}
-          theme={isEditMode ? { primary: 'white' } : theme}
-          style={isEditMode ? { backgroundColor: '#f56565' } : {}}
-        />
+        >
+          <FAB
+            icon={isEditMode ? 'edit-off' : 'edit'}
+            onPress={() => {
+              console.log('[FAB] Edit button pressed', {
+                isEditMode,
+                hasPinProtection,
+                showPinModal,
+              });
+              if (isEditMode) {
+                setIsEditMode(false);
+                // Switch to today when exiting edit mode
+                if (currentDay !== 'today') {
+                  setCurrentDay('today');
+                }
+                // The toolbar will be removed after animation completes
+              } else {
+                if (hasPinProtection) {
+                  // Ensure we're in verification mode, not setup mode
+                  setIsSettingPin(false);
+                  setPinInput('');
+                  setConfirmPin('');
+                  setShowPinModal(true);
+                } else {
+                  setIsEditMode(true);
+                }
+              }
+            }}
+            position={{ position: 'relative' }}
+            theme={isEditMode ? { primary: 'white' } : theme}
+            style={isEditMode ? { backgroundColor: '#f56565' } : {}}
+          />
+        </Animated.View>
       </View>
 
       {/* Add/Edit Activity Modal */}
@@ -4718,40 +4733,50 @@ Users: ${userNames} (${userCount} total)
 
       {/* Edit Mode Toolbar */}
       {showEditToolbar && (
-        <EditModeToolbar
-          visible={isEditMode}
-          onExit={() => {
-            setIsEditMode(false);
-            // Switch to today when exiting edit mode
-            if (currentDay !== 'today') {
-              setCurrentDay('today');
-            }
+        <Animated.View
+          style={{
+            transform: [{
+              translateY: editModeToolbarTranslate.interpolate({
+                inputRange: [0, 100],
+                outputRange: [0, 100],
+              })
+            }],
           }}
-          onData={() => setShowDataModal(true)}
-          onUsers={() => {
-            setAccessModalActiveTab(0);
-            setShowAccessModal(true);
-          }}
-          onCustomize={() => setShowSettingsModal(true)}
-          onSupport={() => setShowSupportModal(true)}
-          toolbarOrder={toolbarOrder}
-          moreButtonPosition={moreButtonPosition}
-          onDayManagement={tab => {
-            setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
-            // Use setTimeout to ensure state update happens first
-            setTimeout(() => {
-              setShowDayManagementModal(true);
-            }, 0);
-          }}
-          onActivityManagement={tab => {
-            console.log('EditModeToolbar clicked:', tab);
-            const tabIndex = tab === 'add' ? 0 : 1;
-            console.log('Setting activityManagementActiveTab to:', tabIndex);
-            setActivityManagementActiveTab(tabIndex);
-            // Use setTimeout to ensure state update happens first
-            setTimeout(() => {
-              console.log('Opening modal with tab index:', tabIndex);
-              setShowActivityManagementModal(true);
+        >
+          <EditModeToolbar
+            visible={isEditMode}
+            onExit={() => {
+              setIsEditMode(false);
+              // Switch to today when exiting edit mode
+              if (currentDay !== 'today') {
+                setCurrentDay('today');
+              }
+            }}
+            onData={() => setShowDataModal(true)}
+            onUsers={() => {
+              setAccessModalActiveTab(0);
+              setShowAccessModal(true);
+            }}
+            onCustomize={() => setShowSettingsModal(true)}
+            onSupport={() => setShowSupportModal(true)}
+            toolbarOrder={toolbarOrder}
+            moreButtonPosition={moreButtonPosition}
+            onDayManagement={tab => {
+              setDayManagementActiveTab(tab === 'plan' ? 0 : 1);
+              // Use setTimeout to ensure state update happens first
+              setTimeout(() => {
+                setShowDayManagementModal(true);
+              }, 0);
+            }}
+            onActivityManagement={tab => {
+              console.log('EditModeToolbar clicked:', tab);
+              const tabIndex = tab === 'add' ? 0 : 1;
+              console.log('Setting activityManagementActiveTab to:', tabIndex);
+              setActivityManagementActiveTab(tabIndex);
+              // Use setTimeout to ensure state update happens first
+              setTimeout(() => {
+                console.log('Opening modal with tab index:', tabIndex);
+                setShowActivityManagementModal(true);
             }, 0);
           }}
           theme={theme}
@@ -4762,7 +4787,8 @@ Users: ${userNames} (${userCount} total)
             }
           }}
           onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
-        />
+          />
+        </Animated.View>
       )}
 
       {/* Activity Library Modal */}
