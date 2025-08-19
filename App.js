@@ -110,7 +110,7 @@ import {
   BuyMeCoffeeButton,
   SyncPreviewModal,
 } from './src/components';
-import AnimatedEditModeList from './src/components/EditModeList/AnimatedEditModeList';
+import EditModeList from './src/components/EditModeList';
 import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
 import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
@@ -141,13 +141,6 @@ import {
   debugPinStorage,
 } from './src/utils/securePinStorage';
 import { debugPINStatus } from './tools/DEBUG_PIN';
-import {
-  ANIMATION_TIMING,
-  ANIMATION_EASING,
-  createEditModeTransition,
-  createFadeAnimation,
-  createParallelAnimation,
-} from './src/utils/animationUtils';
 
 // Get initial screen dimensions
 const { width: initialScreenWidth, height: initialScreenHeight } =
@@ -369,12 +362,6 @@ const App = () => {
   const [editIconsOpacity] = useState(() => new Animated.Value(0));
   const [contentFadeAnim] = useState(() => new Animated.Value(1));
   const [editListFadeAnim] = useState(() => new Animated.Value(0));
-  const [fabScaleAnim] = useState(() => new Animated.Value(1));
-  
-  // Create animated values for list items (up to 20 items for staggered animation)
-  const [listItemAnimations] = useState(() => 
-    Array.from({ length: 20 }, () => new Animated.Value(0))
-  );
 
   // ScrollView refs for forcing measurement on Android
 
@@ -691,51 +678,70 @@ const App = () => {
   // Animate edit mode transition
   useEffect(() => {
     if (isEditMode) {
-      // Entering edit mode with unified animation
+      // Entering edit mode with simpler animation for better performance
       setShowEditModeList(true);
       setShowEditToolbar(true);
       
-      // Reset list item animations for entrance
-      listItemAnimations.forEach(anim => anim.setValue(0));
-      
-      // Use the unified animation system
-      const enterAnimation = createEditModeTransition(true, {
-        contentOpacity: contentFadeAnim,
-        toolbarTranslate: editModeToolbarTranslate,
-        iconRotation: editModeIconRotation,
-        listItemsOpacity: listItemAnimations.slice(0, activities.length),
-        fabScale: fabScaleAnim,
-      });
-      
-      // Also fade in the edit list container
-      const containerFade = createFadeAnimation(editListFadeAnim, 1, {
-        duration: ANIMATION_TIMING.FADE_DURATION,
-      });
-      
-      createParallelAnimation([enterAnimation, containerFade]).start();
+      // Simple parallel animation without staggered list items for iOS performance
+      Animated.parallel([
+        // Fade out regular content
+        Animated.timing(contentFadeAnim, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        // Fade in edit list
+        Animated.timing(editListFadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        // Rotate edit mode icon
+        Animated.timing(editModeIconRotation, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        // Slide in toolbar
+        Animated.timing(editModeToolbarTranslate, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        }),
+      ]).start();
       
     } else {
-      // Exiting edit mode with unified animation
-      const exitAnimation = createEditModeTransition(false, {
-        contentOpacity: contentFadeAnim,
-        toolbarTranslate: editModeToolbarTranslate,
-        iconRotation: editModeIconRotation,
-        listItemsOpacity: listItemAnimations.slice(0, activities.length),
-        fabScale: fabScaleAnim,
-      });
-      
-      // Also fade out the edit list container
-      const containerFade = createFadeAnimation(editListFadeAnim, 0, {
-        duration: ANIMATION_TIMING.QUICK_FADE,
-      });
-      
-      createParallelAnimation([exitAnimation, containerFade]).start(() => {
+      // Exiting edit mode with simpler animation
+      Animated.parallel([
+        // Fade out edit list
+        Animated.timing(editListFadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        // Fade in regular content
+        Animated.timing(contentFadeAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        // Rotate edit mode icon back
+        Animated.timing(editModeIconRotation, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: Platform.OS !== 'web',
+        }),
+        // Slide out toolbar
+        Animated.timing(editModeToolbarTranslate, {
+          toValue: 100,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
         // Hide toolbar and list after animation completes
         setShowEditToolbar(false);
         setShowEditModeList(false);
         setEditToolbarMoreExpanded(false);
-        // Reset list item animations
-        listItemAnimations.forEach(anim => anim.setValue(0));
       });
     }
   }, [isEditMode]);
@@ -4261,7 +4267,7 @@ Users: ${userNames} (${userCount} total)
                 zIndex: isEditMode ? 2 : 0,
               }}
             >
-              <AnimatedEditModeList
+              <EditModeList
                 activities={activities
                   .filter(a => !a.deleted)
                   .map(a => ({
@@ -4333,7 +4339,6 @@ Users: ${userNames} (${userCount} total)
                   }
                 }}
                 theme={theme}
-                listItemAnimations={listItemAnimations}
               />
             </Animated.View>
           )}
@@ -4598,47 +4603,37 @@ Users: ${userNames} (${userCount} total)
           theme={theme}
         />
 
-        <Animated.View
-          style={{
-            position: 'absolute',
-            bottom: fabBottom,
-            top: fabTop,
-            right: 20,
-            transform: [{ scale: fabScaleAnim }],
-          }}
-        >
-          <FAB
-            icon={isEditMode ? 'edit-off' : 'edit'}
-            onPress={() => {
-              console.log('[FAB] Edit button pressed', {
-                isEditMode,
-                hasPinProtection,
-                showPinModal,
-              });
-              if (isEditMode) {
-                setIsEditMode(false);
-                // Switch to today when exiting edit mode
-                if (currentDay !== 'today') {
-                  setCurrentDay('today');
-                }
-                // The toolbar will be removed after animation completes
-              } else {
-                if (hasPinProtection) {
-                  // Ensure we're in verification mode, not setup mode
-                  setIsSettingPin(false);
-                  setPinInput('');
-                  setConfirmPin('');
-                  setShowPinModal(true);
-                } else {
-                  setIsEditMode(true);
-                }
+        <FAB
+          icon={isEditMode ? 'edit-off' : 'edit'}
+          onPress={() => {
+            console.log('[FAB] Edit button pressed', {
+              isEditMode,
+              hasPinProtection,
+              showPinModal,
+            });
+            if (isEditMode) {
+              setIsEditMode(false);
+              // Switch to today when exiting edit mode
+              if (currentDay !== 'today') {
+                setCurrentDay('today');
               }
-            }}
-            position={{ position: 'relative' }}
-            theme={isEditMode ? { primary: 'white' } : theme}
-            style={isEditMode ? { backgroundColor: '#f56565' } : {}}
-          />
-        </Animated.View>
+              // The toolbar will be removed after animation completes
+            } else {
+              if (hasPinProtection) {
+                // Ensure we're in verification mode, not setup mode
+                setIsSettingPin(false);
+                setPinInput('');
+                setConfirmPin('');
+                setShowPinModal(true);
+              } else {
+                setIsEditMode(true);
+              }
+            }
+          }}
+          position={{ bottom: fabBottom, top: fabTop, right: 20 }}
+          theme={isEditMode ? { primary: 'white' } : theme}
+          style={isEditMode ? { backgroundColor: '#f56565' } : {}}
+        />
       </View>
 
       {/* Add/Edit Activity Modal */}
@@ -5491,10 +5486,8 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize:
       Platform.OS === 'web' ? (isTablet() ? 36 : 25) : isTablet() ? 36 : 28,
-    fontWeight:
-      Platform.OS === 'web' ? '700' : Platform.OS === 'ios' ? 'bold' : 'normal',
+    fontWeight: 'bold', // Bold for all platforms - Typography component handles platform differences
     color: 'white',
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   headerSubtitle: {
     fontSize: 14,
@@ -5562,7 +5555,7 @@ const styles = StyleSheet.create({
   exitEditText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   listContent: {
@@ -5690,16 +5683,10 @@ const styles = StyleSheet.create({
   },
   activityTitle: {
     fontSize: isTablet() ? 23 : 23, // 30% larger for tablets (was 18, now 23)
-    fontFamily: Platform.select({
-      ios: 'ComicRelief-Bold',
-      android: 'ComicRelief-Bold',
-      web: "'Comic Relief', 'Comic Sans MS', cursive",
-    }),
-    fontWeight: Platform.OS === 'android' ? 'normal' : 'bold', // Made bolder - was '600', now 'bold'
+    fontWeight: 'bold', // Bold for all platforms - Typography component handles platform differences
     color: '#000',
     textAlign: 'center',
     lineHeight: isTablet() ? 23 * 1.2 : 23 * 1.2, // Adjusted line height
-    // fontFamily: TYPOGRAPHY.fontFamily.bold, // TEMPORARILY DISABLED TO TEST
     marginBottom: 4, // PWA's 0.25rem
     ...(isTablet() && {
       minHeight: 25,
@@ -5717,7 +5704,7 @@ const styles = StyleSheet.create({
   },
   completedText: {
     color: 'white',
-    fontWeight: Platform.OS === 'android' ? 'normal' : '700', // Android uses font file, not weight
+    fontWeight: '700', // Bold for all platforms - Typography component handles platform differences
     fontFamily: Platform.select({
       ios: 'ComicRelief-Bold',
       android: 'ComicRelief-Bold',
@@ -5736,7 +5723,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 20,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     color: '#000',
     marginBottom: 8,
     fontFamily: TYPOGRAPHY.fontFamily.regular,
@@ -5812,7 +5799,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal', // Android uses bold font file
+    fontWeight: 'bold', // Bold for all platforms - Typography component handles platform differences
     color: 'white',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
@@ -5825,7 +5812,7 @@ const styles = StyleSheet.create({
   },
   inputLabel: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     color: '#000',
     marginBottom: 6,
     fontFamily: TYPOGRAPHY.fontFamily.medium,
@@ -5857,7 +5844,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: 'white',
     fontSize: 16,
-    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
+    fontWeight: 'bold', // Bold for all platforms
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },
   timeText: {
@@ -5867,7 +5854,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    fontWeight: Platform.OS === 'ios' ? 'bold' : 'normal',
+    fontWeight: 'bold', // Bold for all platforms - Typography component handles platform differences
     color: '#000',
     marginBottom: 15,
     marginTop: 20,
@@ -6014,7 +6001,7 @@ const styles = StyleSheet.create({
   addUserText: {
     fontSize: 16,
     color: '#667eea',
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   // PIN styles
@@ -6043,7 +6030,7 @@ const styles = StyleSheet.create({
   pinButtonText: {
     color: 'white',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   enterEditModeSection: {
@@ -6079,7 +6066,7 @@ const styles = StyleSheet.create({
   },
   editModePillText: {
     fontSize: isTablet() ? 16 : 14,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     fontFamily: TYPOGRAPHY.fontFamily.regular,
   },
   celebrationScrollView: {
@@ -6168,7 +6155,7 @@ const styles = StyleSheet.create({
   },
   privacySubtitle: {
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     color: '#2c3e50',
     marginBottom: 12,
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -6383,7 +6370,7 @@ const styles = StyleSheet.create({
   },
   reorderModalLabel: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     marginBottom: 12,
     textAlign: 'center',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
@@ -6448,7 +6435,7 @@ const styles = StyleSheet.create({
   },
   reorderModalButtonText: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: '700', // Use 700 for better Android rendering
     color: '#000',
     fontFamily: TYPOGRAPHY.fontFamily.bold,
   },

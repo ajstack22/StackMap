@@ -49,15 +49,23 @@ export const Text = React.forwardRef((props, ref) => {
   // Apply Comic Relief font family based on weight - THIS ALWAYS WINS
   const fontFamily = getFontFamily(fontWeight);
 
-  // On Android, having both fontWeight and fontFamily can cause issues
-  // Remove fontWeight when applying custom font
-  const finalStyle = [
-    style, // User styles
-    {
-      fontFamily, // Comic Relief ALWAYS overrides any fontFamily in user styles
-      ...(Platform.OS === 'android' && { fontWeight: 'normal' }), // Reset fontWeight on Android
-    },
-  ];
+  // On Android, when using font variants (Bold/Regular), we MUST remove fontWeight
+  // Otherwise Android can't load the custom font and falls back to system font
+  const finalStyle = Platform.OS === 'android' 
+    ? [
+        style, // User styles
+        {
+          fontFamily, // Comic Relief font variant (Regular or Bold)
+          fontWeight: undefined, // MUST be undefined on Android to use font variants
+        },
+      ]
+    : [
+        style, // User styles
+        {
+          fontFamily, // Comic Relief font
+          // iOS and Web can handle fontWeight with custom fonts
+        },
+      ];
 
   return (
     <RNText ref={ref} {...restProps} style={finalStyle}>
@@ -86,17 +94,28 @@ export const TextInput = React.forwardRef((props, ref) => {
 
   const fontFamily = getFontFamily(fontWeight);
 
+  // Android needs fontWeight removed when using font variants
+  const finalStyle = Platform.OS === 'android'
+    ? [
+        style,
+        {
+          fontFamily, // Apply Comic Relief font variant
+          fontWeight: undefined, // Remove fontWeight on Android
+          color: '#000000', // Ensure black text on Android
+        },
+      ]
+    : [
+        style,
+        {
+          fontFamily, // Apply Comic Relief
+        },
+      ];
+
   return (
     <RNTextInput
       ref={ref}
       {...restProps}
-      style={[
-        style,
-        {
-          fontFamily, // Apply Comic Relief AFTER user styles to ensure it always wins
-          ...(Platform.OS === 'android' && { color: '#000000' }), // Ensure black text on Android
-        },
-      ]}
+      style={finalStyle}
     />
   );
 });
