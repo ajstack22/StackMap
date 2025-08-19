@@ -4253,7 +4253,8 @@ Users: ${userNames} (${userCount} total)
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 10,
+              zIndex: 100, // Increased z-index to ensure it's above everything
+              elevation: Platform.OS === 'android' ? 10 : 0, // Android-specific elevation
               transform: [{
                 translateY: editModeToolbarTranslate.interpolate({
                   inputRange: [0, 100],
