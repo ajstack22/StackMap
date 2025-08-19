@@ -881,7 +881,69 @@ const App = () => {
     try {
       console.log('handleOnboardingComplete called with:', onboardingData);
 
-      // Check if we have imported data to restore - BYPASS ALL USER CREATION IF IMPORTING
+      // Check if we have imported data passed directly from onboarding (new sync import flow)
+      if (onboardingData?.importedData) {
+        console.log('[ONBOARDING] Found imported data from sync, applying it now...');
+        console.log('[ONBOARDING] Bypassing user creation - using imported sync data only');
+        const importedData = onboardingData.importedData;
+
+        // Apply all the imported data
+        if (importedData.users) {
+          setUsers(importedData.users);
+          const currentUserId =
+            importedData.currentUser ||
+            importedData.currentUserId ||
+            Object.keys(importedData.users)[0];
+          if (currentUserId && importedData.users[currentUserId]) {
+            setCurrentUser(currentUserId);
+            const userData = importedData.users[currentUserId];
+            setCurrentDay(
+              userData.currentDay || importedData.currentDay || 'today',
+            );
+            
+            // Restore user settings
+            if (userData.settings) {
+              if (userData.settings.theme)
+                setCurrentTheme(userData.settings.theme);
+              if (userData.settings.displayMode)
+                setDisplayMode(userData.settings.displayMode);
+              if (userData.settings.bannerPosition)
+                setBannerPosition(userData.settings.bannerPosition);
+              if (userData.settings.taskCelebration)
+                setTaskCelebration(userData.settings.taskCelebration);
+              if (userData.settings.routineCelebration)
+                setRoutineCelebration(userData.settings.routineCelebration);
+            }
+          }
+        }
+
+        // Restore global settings
+        if (importedData.globalSettings) {
+          if (importedData.globalSettings.currentTheme)
+            setCurrentTheme(importedData.globalSettings.currentTheme);
+          if (importedData.globalSettings.displayMode)
+            setDisplayMode(importedData.globalSettings.displayMode);
+          if (importedData.globalSettings.bannerPosition)
+            setBannerPosition(importedData.globalSettings.bannerPosition);
+          if (importedData.globalSettings.taskCelebration)
+            setTaskCelebration(importedData.globalSettings.taskCelebration);
+          if (importedData.globalSettings.routineCelebration)
+            setRoutineCelebration(importedData.globalSettings.routineCelebration);
+        }
+
+        // Restore library categories
+        if (importedData.library && importedData.library.categories) {
+          updateLibraryCategories(importedData.library.categories);
+        }
+
+        // Mark onboarding as completed and show main app
+        setHasCompletedOnboarding(true);
+        setShowOnboarding(false);
+        showToast({ message: 'Data synced successfully' });
+        return; // CRITICAL: Return here to prevent creating duplicate users below
+      }
+
+      // Check if we have imported data to restore from AsyncStorage (old import flow)
       const importedDataStr = await AsyncStorage.getItem(
         '@stackmap_import_temp',
       );
