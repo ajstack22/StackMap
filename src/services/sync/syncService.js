@@ -381,15 +381,20 @@ class SyncService {
     if (!response.ok) {
       // Try to parse as JSON for proper error message
       try {
-        const error = JSON.parse(responseText);
-        throw new Error(error.message || 'Failed to create sync group');
-      } catch (e) {
-        // Not JSON - likely HTML error page
-        console.error('[Sync] Server returned non-JSON response:', responseText.substring(0, 200));
-        if (response.status === 404) {
-          throw new Error(`Sync API not found at ${url}. Please check server configuration.`);
+        const errorData = JSON.parse(responseText);
+        // Use 'error' field from response, not 'message'
+        throw new Error(errorData.error || errorData.message || 'Failed to create sync group');
+      } catch (parseError) {
+        // Only log as non-JSON if parsing actually failed
+        if (parseError instanceof SyntaxError) {
+          console.error('[Sync] Server returned non-JSON response:', responseText.substring(0, 200));
+          if (response.status === 404) {
+            throw new Error(`Sync API not found at ${url}. Please check server configuration.`);
+          }
+          throw new Error(`Server error (${response.status}): Unable to create sync group`);
         }
-        throw new Error(`Server error (${response.status}): Unable to create sync group`);
+        // Re-throw if it's our error from above
+        throw parseError;
       }
     }
     
