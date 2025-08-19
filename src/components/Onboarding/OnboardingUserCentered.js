@@ -320,6 +320,15 @@ const OnboardingUserCentered = ({
         // Set the first user as current user
         useAppStore.getState().setCurrentUser(firstUserId);
         
+        // Log to verify users were set with activities
+        const verifyState = useAppStore.getState();
+        console.log('[Onboarding] After setting users, state check:', {
+          hasUsers: !!verifyState.users,
+          userCount: Object.keys(verifyState.users || {}).length,
+          firstUserActivities: verifyState.users?.[firstUserId]?.days?.today?.activities?.length || 0,
+          firstUserName: verifyState.users?.[firstUserId]?.name
+        });
+        
         // Wait a moment for store to update
         await new Promise(resolve => setTimeout(resolve, 100));
       }

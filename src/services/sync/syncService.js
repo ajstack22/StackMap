@@ -357,6 +357,15 @@ class SyncService {
     const deviceId = await encryptionService.getDeviceId();
     // Get current state and encrypt it
     const currentState = this.getCurrentState();
+    
+    // Debug logging to check what's being synced
+    console.log('[Sync] Creating sync group with state:', {
+      hasUsers: !!currentState.users,
+      userCount: Object.keys(currentState.users || {}).length,
+      firstUserId: Object.keys(currentState.users || {})[0],
+      firstUserActivities: currentState.users?.[Object.keys(currentState.users || {})[0]]?.days?.today?.activities?.length || 0
+    });
+    
     const encryptedBlob = encryptionService.encryptData(currentState);
     const url = `${getApiBaseUrl()}/create.php`;
     
