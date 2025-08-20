@@ -27,9 +27,9 @@ class SimpleSyncService {
     this.lastServerTimestamp = 0;
     this.syncInProgress = false;
     this.syncInterval = null;
-    // CRITICAL: Store API URL as instance property
-    this.API_URL = 'https://stackmap.app/api/sync';
-    console.log('🔄 SIMPLE SYNC: Constructor - API_URL set to:', this.API_URL);
+    // Set API URL based on platform
+    this._apiUrl = this.getInitialApiUrl();
+    console.log('🔄 SIMPLE SYNC: Constructor - API_URL set to:', this._apiUrl);
     
     // Auto-restore sync state after a delay (like complex sync does)
     console.log('🔄 SIMPLE SYNC: Service created, will restore state in 1 second');
@@ -49,6 +49,37 @@ class SimpleSyncService {
     }, 1000);
   }
 
+  // Determine initial API URL based on platform and environment
+  // This mirrors the logic from the complex sync service
+  getInitialApiUrl() {
+    // For iOS/Android development builds, use qual environment
+    if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
+      return 'https://stackmap.app/qual/api/sync';
+    }
+    
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // For local development
+      if (
+        window.location.hostname === 'localhost' ||
+        window.location.hostname === '127.0.0.1'
+      ) {
+        return 'https://stackmap.app/api/sync';
+      }
+      // Check if we're in qual environment
+      if (window.location.pathname.startsWith('/qual')) {
+        return 'https://stackmap.app/qual/api/sync';
+      }
+    }
+    
+    // Default to production API
+    return 'https://stackmap.app/api/sync';
+  }
+
+  // Getter for API URL
+  get API_URL() {
+    return this._apiUrl;
+  }
+
   /**
    * Enable sync with recovery phrase
    */
@@ -59,7 +90,6 @@ class SimpleSyncService {
     }
 
     console.log('🔄 SIMPLE SYNC: Enabling with recovery phrase');
-    console.log('🔄 SIMPLE SYNC: Current API_URL:', this.API_URL);
 
     // Generate sync ID and master key
     const salt = 'stackmap_sync_salt_2024';
@@ -275,7 +305,10 @@ class SimpleSyncService {
 
       // 2. Fetch from server using existing pull.php endpoint
       const deviceId = Platform.OS; // Use platform as simple device ID
-      const response = await fetch(`${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
+      const pullUrl = `${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+      console.log('🔄 SIMPLE SYNC: sync() pull URL:', pullUrl);
+      console.log('🔄 SIMPLE SYNC: this.API_URL value:', this.API_URL);
+      const response = await fetch(pullUrl);
 
       // Check if sync group exists
       if (response.status === 404) {
