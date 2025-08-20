@@ -28,6 +28,18 @@ class SimpleSyncService {
     this.syncInProgress = false;
     this.syncInterval = null;
     this.API_URL = this.getApiUrl();
+    
+    // Auto-restore sync state after a delay (like complex sync does)
+    console.log('🔄 SIMPLE SYNC: Service created, will restore state in 1 second');
+    setTimeout(() => {
+      this.restoreState().then(restored => {
+        if (restored) {
+          console.log('✅ SIMPLE SYNC: State restored, sync is active');
+        } else {
+          console.log('ℹ️ SIMPLE SYNC: No saved state to restore');
+        }
+      });
+    }, 1000);
   }
 
   getApiUrl() {

@@ -41,8 +41,11 @@ export const useSyncOnChange = () => {
     
     // Common sync trigger function
     const triggerSyncIfNeeded = () => {
-      // Skip if sync is not enabled
-      if (!syncService.syncEnabled) return;
+      // Skip if sync is not enabled (check both property names for compatibility)
+      if (!syncService.enabled && !syncService.syncEnabled) {
+        console.log('[useSyncOnChange] Sync not enabled, skipping');
+        return;
+      }
 
       const currentState = getCurrentState();
 
@@ -59,7 +62,7 @@ export const useSyncOnChange = () => {
           libraryChanged:
             JSON.stringify(lastStateRef.current.library) !==
             JSON.stringify(currentState.library),
-          syncEnabled: syncService.syncEnabled,
+          syncEnabled: syncService.enabled || syncService.syncEnabled, // Simple sync uses 'enabled', complex uses 'syncEnabled'
         });
 
         // Request debounced sync with 5 second delay to allow for AsyncStorage debounce

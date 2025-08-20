@@ -198,8 +198,7 @@ const App = () => {
   const { toast, showToast, hideToast } = useToast();
 
   // Enable automatic sync on state changes
-  useSyncOnChange();
-  useSimpleSync(); // Enable with window.USE_SIMPLE_SYNC = true
+  useSyncOnChange(); // This now uses simple sync via the central export
 
   // Zustand store - using a single selector for better performance
   const {
