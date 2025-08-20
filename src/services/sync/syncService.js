@@ -12,6 +12,7 @@ const decodeUTF8 = (str) => (util).decodeUTF8(str);
 import encryptionService from './encryptionService';
 import { useAppStore } from '../../stores';
 import { normalizeSyncData, needsNormalization } from '../../utils/dataNormalizer';
+import syncDebugger from '../../utils/syncDebugger';
 import syncQueue from './syncQueue';
 import networkMonitor from './networkMonitor';
 import changeTracker from './changeTracker';
