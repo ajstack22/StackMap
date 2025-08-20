@@ -95,6 +95,7 @@ class SyncService {
   // Sync timing
   lastSyncAttempt  = null;
   lastSyncSuccess  = null;
+  lastPushTime = null; // Track when we last pushed data
   minTimeBetweenSyncs = 5000; // Minimum 5 seconds between syncs
   // Sync status
   syncStatus = 'idle';
@@ -571,6 +572,7 @@ class SyncService {
       }
       const result = await response.json();
       this.lastSyncVersion = result.version;
+      this.lastPushTime = Date.now(); // Track when we pushed
       // Store the version for persistence
       await AsyncStorage.setItem('@sync_last_version', result.version.toString());
       return result;
@@ -612,9 +614,11 @@ class SyncService {
       return null;
     }
     const deviceId = await encryptionService.getDeviceId();
-    const url = `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+    // Include current version to allow server to skip if we're up to date
+    const url = `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}&current_version=${this.lastSyncVersion || 0}`;
     console.log('[Sync] pullData URL:', url);
     console.log('[Sync] pullData sync ID:', this.syncId);
+    console.log('[Sync] Current version:', this.lastSyncVersion);
     
     try {
       const response = await fetch(url);
@@ -737,6 +741,27 @@ class SyncService {
       // Update sync status
       this.updateSyncStatus('syncing');
       this.lastSyncAttempt = Date.now();
+      
+      // Skip pulling if we just pushed within the last 2 seconds
+      // This prevents immediately overwriting our own changes
+      const timeSinceLastPush = this.lastPushTime ? Date.now() - this.lastPushTime : Infinity;
+      if (timeSinceLastPush < 2000) {
+        console.log('[Sync] Skipping pull - just pushed', timeSinceLastPush, 'ms ago');
+        // Just push our current state without pulling
+        const pushResult = await this.pushData();
+        this.lastSyncVersion = pushResult.version;
+        await AsyncStorage.setItem('@sync_last_version', pushResult.version.toString());
+        this.lastSyncSuccess = Date.now();
+        this.updateSyncStatus('success');
+        await AsyncStorage.setItem('@sync_last_success', this.lastSyncSuccess.toString());
+        changeTracker.markAsSynced();
+        return {
+          success: true,
+          version: pushResult.version,
+          lastModified: pushResult.lastModified,
+        };
+      }
+      
       // Pull latest data
       const remoteData = await this.pullData();
       // If pullData returns null and we have a lastSyncVersion > 0, it means the sync was deleted on server
@@ -880,6 +905,12 @@ class SyncService {
       }
       // Push our current state
       const pushResult = await this.pushData();
+      
+      // IMPORTANT: Update our local version to match what we just pushed
+      // This prevents immediately pulling and overwriting our own changes
+      this.lastSyncVersion = pushResult.version;
+      await AsyncStorage.setItem('@sync_last_version', pushResult.version.toString());
+      
       // Update success status
       this.lastSyncSuccess = Date.now();
       this.updateSyncStatus('success');
