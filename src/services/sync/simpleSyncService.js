@@ -476,6 +476,90 @@ class SimpleSyncService {
   }
 
   /**
+   * Add missing methods for compatibility with complex sync
+   */
+  
+  // Status listeners (for UI compatibility)
+  addStatusListener(listener) {
+    // Simple implementation - could be enhanced
+    return () => {}; // Return unsubscribe function
+  }
+  
+  // Verify sync exists on server
+  async verifySyncExists() {
+    if (!this.syncId) return false;
+    
+    try {
+      const response = await fetch(`${this.API_URL}/get.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ sync_id: this.syncId })
+      });
+      const result = await response.json();
+      return result.success;
+    } catch {
+      return false;
+    }
+  }
+  
+  // Get active shares (stub for now)
+  async getActiveShares() {
+    return [];
+  }
+  
+  // Check for auto-update shares
+  async hasAutoUpdateShares() {
+    return false;
+  }
+  
+  // Update active shares (stub)
+  async updateActiveShares() {
+    return;
+  }
+  
+  // Delete a share
+  async deleteShare(shareId) {
+    // Stub implementation
+    console.log('Delete share not implemented in simple sync');
+    return { success: true };
+  }
+  
+  // Generate share token
+  generateShareToken() {
+    return Math.random().toString(36).substring(2, 15);
+  }
+  
+  // Generate sync ID
+  async generateSyncId() {
+    const phrase = SimpleSyncService.generateRecoveryPhrase();
+    await this.enable(phrase);
+    return { syncId: this.syncId, recoveryPhrase: phrase };
+  }
+  
+  // Pull data directly (for onboarding)
+  async pullData() {
+    if (!this.syncId) return null;
+    
+    const response = await fetch(`${this.API_URL}/get.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sync_id: this.syncId })
+    });
+    
+    const result = await response.json();
+    if (!result.success) return null;
+    
+    return result.data;
+  }
+  
+  // Expose encryption service (for compatibility)
+  get encryptionService() {
+    return {
+      decryptData: (blob) => this.decrypt(blob)
+    };
+  }
+  
+  /**
    * Create share link (simplified version)
    */
   async createShareLink(userId, options = {}) {
@@ -493,7 +577,7 @@ class SimpleSyncService {
     console.log('🔗 SIMPLE SYNC: Creating share link');
 
     // Get the user's current activities
-    const userStore = require('../stores/useUserStore.js').default;
+    const userStore = require('../../stores/useUserStore.js').default;
     const users = userStore.getState().users;
     const user = users[userId];
     
