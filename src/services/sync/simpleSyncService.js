@@ -88,6 +88,11 @@ class SimpleSyncService {
     }
     return this._apiUrl;
   }
+  
+  // Method version for compatibility with components expecting getApiUrl()
+  getApiUrl() {
+    return this.API_URL;
+  }
 
   /**
    * Enable sync with recovery phrase
