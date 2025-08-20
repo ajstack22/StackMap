@@ -25,6 +25,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
+import { useSimpleSync } from './src/hooks/useSimpleSync';
 // Draggable functionality removed - using button-based reordering
 const DraggableFlatList = null;
 const ScaleDecorator = null;
@@ -198,6 +199,7 @@ const App = () => {
 
   // Enable automatic sync on state changes
   useSyncOnChange();
+  useSimpleSync(); // Enable with window.USE_SIMPLE_SYNC = true
 
   // Zustand store - using a single selector for better performance
   const {

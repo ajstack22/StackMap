@@ -802,6 +802,9 @@ class SyncService {
               resolutionResult.resolved &&
               resolutionResult.resolved.length > 0
             ) {
+              syncDebugger.log('CONFLICT', `Resolved ${resolutionResult.resolved.length} conflicts automatically`, {
+                resolutions: resolutionResult.resolved
+              });
               console.log(
                 `Resolved ${resolutionResult.resolved.length} conflicts automatically`,
               );
