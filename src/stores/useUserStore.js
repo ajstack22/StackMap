@@ -27,6 +27,12 @@ let pendingWrite = null;
 // Storage adapter for React Native AsyncStorage with debounced writes
 const storage = {
   getItem: async name => {
+    // CRITICAL FIX: If there's a pending write, return that instead of stale storage
+    if (pendingWrite && pendingWrite.name === name) {
+      console.log('[UserStore] Returning pending write instead of stale storage');
+      return pendingWrite.value;
+    }
+    
     try {
       const value = await AsyncStorage.getItem(name);
       if (!value) return null;

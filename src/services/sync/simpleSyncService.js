@@ -122,6 +122,39 @@ class SimpleSyncService {
   }
 
   /**
+   * Delete sync data from server
+   */
+  async deleteFromServer() {
+    if (!this.syncId) {
+      throw new Error('No sync data to delete');
+    }
+
+    console.log('🗑️ SIMPLE SYNC: Deleting from server');
+    
+    const response = await fetch(`${this.API_URL}/delete.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sync_id: this.syncId,
+        device_id: Platform.OS // Use platform as device ID
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Failed to delete sync data');
+    }
+
+    const result = await response.json();
+    console.log('✅ SIMPLE SYNC: Deleted from server', result);
+    
+    // Disable sync locally after successful deletion
+    await this.disable();
+    
+    return result;
+  }
+
+  /**
    * Simple encrypt/decrypt using NaCl
    */
   encrypt(data) {
@@ -443,13 +476,73 @@ class SimpleSyncService {
   }
 
   /**
-   * Create share link
+   * Create share link (simplified version)
    */
-  async createShareLink(activities, expiryHours = 24) {
-    // For now, just return a basic implementation
-    // This could be enhanced later if needed
-    const shareId = Math.random().toString(36).substring(2, 15);
-    return `https://stackmap.app/?share=${shareId}`;
+  async createShareLink(userId, options = {}) {
+    if (!this.enabled || !this.syncId) {
+      throw new Error('Sync must be enabled to create share links');
+    }
+
+    const {
+      recipientName = '',
+      shareNote = '',
+      includeCompleted = true,
+      expiresHours = 24,
+    } = options;
+
+    console.log('🔗 SIMPLE SYNC: Creating share link');
+
+    // Get the user's current activities
+    const userStore = require('../stores/useUserStore.js').default;
+    const users = userStore.getState().users;
+    const user = users[userId];
+    
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    // Get today's activities
+    const activities = user.days?.today?.activities || [];
+    
+    // Filter based on options
+    const activitiesToShare = includeCompleted 
+      ? activities 
+      : activities.filter(a => !a.completed);
+
+    // Create share data
+    const shareData = {
+      activities: activitiesToShare,
+      userName: user.name || 'User',
+      userIcon: user.icon || '👤',
+      recipientName,
+      shareNote,
+      createdAt: Date.now(),
+      expiresAt: Date.now() + (expiresHours * 60 * 60 * 1000),
+    };
+
+    // Encrypt share data
+    const encryptedData = this.encrypt(shareData);
+    
+    // Send to server
+    const response = await fetch(`${this.API_URL}/create_share.php`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        sync_id: this.syncId,
+        encrypted_blob: encryptedData,
+        expires_hours: expiresHours,
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Failed to create share link');
+    }
+
+    const result = await response.json();
+    const shareLink = `https://stackmap.app/?share=${result.share_id}`;
+    
+    console.log('✅ SIMPLE SYNC: Share link created', shareLink);
+    return shareLink;
   }
 }
 
