@@ -277,6 +277,14 @@ class SimpleSyncService {
       const deviceId = Platform.OS; // Use platform as simple device ID
       const response = await fetch(`${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
 
+      // Check if sync group exists
+      if (response.status === 404) {
+        // No sync group on server yet, push our state
+        console.log('🔄 SIMPLE SYNC: Sync group not found on server, creating...');
+        syncDebugger.log('PUSH', 'No sync group on server, pushing local state');
+        return await this.pushState(localState);
+      }
+
       const serverResponse = await response.json();
       
       if (!serverResponse.success || !serverResponse.encrypted_blob) {
@@ -340,6 +348,7 @@ class SimpleSyncService {
     const encryptedBlob = this.encrypt(state);
     const deviceId = Platform.OS; // Use platform as simple device ID
     
+    // First try to push (update existing)
     const response = await fetch(`${this.API_URL}/push.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -354,6 +363,35 @@ class SimpleSyncService {
     });
 
     const result = await response.json();
+    
+    // If sync group doesn't exist, create it first
+    if (response.status === 404) {
+      console.log('🔄 SIMPLE SYNC: Sync group not found, creating...');
+      
+      const createResponse = await fetch(`${this.API_URL}/create.php`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sync_id: this.syncId,
+          encrypted_blob: encryptedBlob,
+          device_id: deviceId,
+          device_name: Platform.OS
+        })
+      });
+      
+      const createResult = await createResponse.json();
+      
+      if (!createResult.success) {
+        throw new Error(createResult.error || 'Failed to create sync group');
+      }
+      
+      console.log('✅ SIMPLE SYNC: Sync group created');
+      return {
+        success: true,
+        action: 'created',
+        timestamp: state.timestamp
+      };
+    }
     
     if (!result.success) {
       throw new Error(result.error || 'Push failed');
@@ -553,6 +591,12 @@ class SimpleSyncService {
       console.log('🔄 SIMPLE SYNC: Pull URL:', pullUrl);
       const response = await fetch(pullUrl);
       
+      // Check if sync group exists
+      if (response.status === 404) {
+        console.log('🔄 SIMPLE SYNC: Sync group not found (404)');
+        return null;
+      }
+      
       // Check if response is JSON
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
@@ -564,14 +608,16 @@ class SimpleSyncService {
       
       const result = await response.json();
       
-      if (!result.success) {
-        console.log('🔄 SIMPLE SYNC: No data on server yet');
+      // Note: pull.php doesn't return success:false, it returns the data directly
+      // or returns 404 if not found
+      if (!result.encrypted_blob) {
+        console.log('🔄 SIMPLE SYNC: No encrypted data in response');
         return null;
       }
       
       console.log('🔄 SIMPLE SYNC: Data pulled successfully');
       // Return the data in the format onboarding expects
-      return result; // pull.php returns {success: true, encrypted_blob: ..., version: ..., updated_at: ...}
+      return result; // pull.php returns {encrypted_blob: ..., version: ..., last_modified: ...}
     } catch (error) {
       console.error('🔄 SIMPLE SYNC: Error pulling data:', error);
       return null;
