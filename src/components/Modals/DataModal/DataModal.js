@@ -206,16 +206,23 @@ const DataModal = ({
       const enabled = await syncService.isEnabled();
 
       if (enabled) {
-        // Verify sync exists on server
-        const exists = await syncService.verifySyncExists();
-        setSyncEnabled(exists);
-
-        if (exists) {
-          const id = await syncService.getSyncId();
-          const phrase = await syncService.getRecoveryPhrase();
-          setSyncId(id);
-          setSyncRecoveryPhrase(phrase);
-        }
+        // If sync is enabled locally, trust that state
+        setSyncEnabled(true);
+        
+        const id = await syncService.getSyncId();
+        const phrase = await syncService.getRecoveryPhrase();
+        setSyncId(id);
+        setSyncRecoveryPhrase(phrase);
+        
+        // Optionally verify it exists on server in the background
+        // but don't disable the UI if it fails (might just be creating)
+        syncService.verifySyncExists().then(exists => {
+          if (!exists && enabled) {
+            // Sync is enabled but doesn't exist on server yet
+            // This can happen when first creating a sync
+            console.log('Sync enabled locally but not yet on server - will create on next sync');
+          }
+        });
       } else {
         setSyncEnabled(false);
       }

@@ -584,9 +584,24 @@ class SimpleSyncService {
     
     try {
       const deviceId = Platform.OS;
-      const response = await fetch(`${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
-      const result = await response.json();
-      return result.success;
+      const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
+      const response = await fetch(`${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
+      
+      // If we get a 404, sync doesn't exist
+      if (response.status === 404) {
+        return false;
+      }
+      
+      // If we get a 200, check the response
+      if (response.ok) {
+        const result = await response.json();
+        // Sync exists if we have success OR if we get a "Sync group not found" error
+        // (which means the API is working but the sync needs to be created)
+        // But if we have encrypted_blob, the sync definitely exists
+        return result.success || result.encrypted_blob !== undefined;
+      }
+      
+      return false;
     } catch {
       return false;
     }
