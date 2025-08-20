@@ -4,7 +4,8 @@
  */
 
 // Toggle this to switch between implementations
-const USE_SIMPLE_SYNC = true;
+// CHANGED: Switched back to complex sync (see /docs/sync/SYNC_SERVICE_COMPARISON.md)
+const USE_SIMPLE_SYNC = false;
 
 // Import both implementations
 import complexSyncService from './syncService';

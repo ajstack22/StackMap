@@ -119,18 +119,32 @@ class SimpleSyncService {
 
     console.log('🔄 SIMPLE SYNC: Enabling with recovery phrase');
 
-    // Generate sync ID and master key
-    const salt = 'stackmap_sync_salt_2024';
+    // Generate sync ID and master key using the SAME method as complex sync
+    // Use the fixed base64 salt that complex sync uses
+    const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+    const saltBytes = decodeBase64(fixedSalt);
     const iterations = 100000;
     
-    // Hash recovery phrase to get sync ID
-    let hash = decodeUTF8(recoveryPhrase + salt);
+    // Combine phrase and salt the same way as complex sync
+    const phraseBytes = decodeUTF8(recoveryPhrase);
+    const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
+    combined.set(phraseBytes);
+    combined.set(saltBytes, phraseBytes.length);
+    
+    // Hash multiple times for key derivation
+    let key = nacl.hash(combined);
     for (let i = 0; i < iterations; i++) {
-      hash = nacl.hash(hash);
+      key = nacl.hash(key);
     }
     
-    this.syncId = encodeBase64(hash.slice(0, 16)).replace(/[^a-zA-Z0-9]/g, '');
-    this.masterKey = hash.slice(16, 48);
+    // Use first 16 bytes of key as sync ID (matching complex sync)
+    const syncIdBytes = key.slice(0, 16);
+    this.syncId = Array.from(syncIdBytes, byte =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
+    
+    // Use next 32 bytes as master key
+    this.masterKey = key.slice(0, 32);
     this.enabled = true;
     
     // Validate syncId is a string
@@ -647,17 +661,31 @@ class SimpleSyncService {
     console.log('🔄 SIMPLE SYNC: initializeForPreview() called');
     
     // Generate sync ID and master key WITHOUT saving to storage
-    const salt = 'stackmap_sync_salt_2024';
+    // Use the SAME method as complex sync
+    const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+    const saltBytes = decodeBase64(fixedSalt);
     const iterations = 100000;
     
-    // Hash recovery phrase to get sync ID
-    let hash = decodeUTF8(recoveryPhrase + salt);
+    // Combine phrase and salt the same way as complex sync
+    const phraseBytes = decodeUTF8(recoveryPhrase);
+    const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
+    combined.set(phraseBytes);
+    combined.set(saltBytes, phraseBytes.length);
+    
+    // Hash multiple times for key derivation
+    let key = nacl.hash(combined);
     for (let i = 0; i < iterations; i++) {
-      hash = nacl.hash(hash);
+      key = nacl.hash(key);
     }
     
-    this.syncId = encodeBase64(hash.slice(0, 16)).replace(/[^a-zA-Z0-9]/g, '');
-    this.masterKey = hash.slice(16, 48);
+    // Use first 16 bytes of key as sync ID (matching complex sync)
+    const syncIdBytes = key.slice(0, 16);
+    this.syncId = Array.from(syncIdBytes, byte =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
+    
+    // Use next 32 bytes as master key
+    this.masterKey = key.slice(0, 32);
     
     console.log('🔄 SIMPLE SYNC: Preview initialized with syncId:', this.syncId);
     // Don't set enabled flag or save to storage - this is temporary
@@ -751,16 +779,27 @@ class SimpleSyncService {
     
     // Temporarily generate sync ID without fully enabling
     // This is used for preview/checking if sync exists
-    const salt = 'stackmap_sync_salt_2024';
+    const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
+    const saltBytes = decodeBase64(fixedSalt);
     const iterations = 100000;
     
-    // Hash recovery phrase to get sync ID
-    let hash = decodeUTF8(recoveryPhrase + salt);
+    // Combine phrase and salt the same way as complex sync
+    const phraseBytes = decodeUTF8(recoveryPhrase);
+    const combined = new Uint8Array(phraseBytes.length + saltBytes.length);
+    combined.set(phraseBytes);
+    combined.set(saltBytes, phraseBytes.length);
+    
+    // Hash multiple times for key derivation
+    let key = nacl.hash(combined);
     for (let i = 0; i < iterations; i++) {
-      hash = nacl.hash(hash);
+      key = nacl.hash(key);
     }
     
-    const syncId = encodeBase64(hash.slice(0, 16)).replace(/[^a-zA-Z0-9]/g, '');
+    // Use first 16 bytes of key as sync ID (matching complex sync)
+    const syncIdBytes = key.slice(0, 16);
+    const syncId = Array.from(syncIdBytes, byte =>
+      byte.toString(16).padStart(2, '0'),
+    ).join('');
     console.log('🔄 SIMPLE SYNC: Generated syncId for preview:', syncId);
     
     return syncId;
