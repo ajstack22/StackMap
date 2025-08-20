@@ -48,18 +48,11 @@ class SimpleSyncService {
   }
 
   getApiUrl() {
-    if (__DEV__ && (Platform.OS === 'ios' || Platform.OS === 'android')) {
-      return 'https://stackmap.app/qual/api/sync';
-    }
-    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        return 'https://stackmap.app/api/sync';
-      }
-      if (window.location.pathname.startsWith('/qual')) {
-        return 'https://stackmap.app/qual/api/sync';
-      }
-    }
-    return 'https://stackmap.app/api/sync';
+    // Always use production API for now to ensure consistency
+    // The qual/dev detection was causing issues
+    const baseUrl = 'https://stackmap.app/api/sync';
+    console.log('🔄 SIMPLE SYNC: Using API URL:', baseUrl);
+    return baseUrl;
   }
 
   /**
@@ -67,8 +60,11 @@ class SimpleSyncService {
    */
   async enable(recoveryPhrase) {
     if (!recoveryPhrase || recoveryPhrase.length !== 32) {
+      console.error('🔄 SIMPLE SYNC: Invalid recovery phrase length:', recoveryPhrase?.length);
       throw new Error('Invalid recovery phrase');
     }
+
+    console.log('🔄 SIMPLE SYNC: Enabling with recovery phrase');
 
     // Generate sync ID and master key
     const salt = 'stackmap_sync_salt_2024';
@@ -83,6 +79,8 @@ class SimpleSyncService {
     this.syncId = encodeBase64(hash.slice(0, 16)).replace(/[^a-zA-Z0-9]/g, '');
     this.masterKey = hash.slice(16, 48);
     this.enabled = true;
+    
+    console.log('🔄 SIMPLE SYNC: Enabled with syncId:', this.syncId);
 
     // Store settings
     await AsyncStorage.setItem('@sync_enabled', 'true');
@@ -131,12 +129,13 @@ class SimpleSyncService {
 
     console.log('🗑️ SIMPLE SYNC: Deleting from server');
     
+    const deviceId = Platform.OS; // Use platform as simple device ID
     const response = await fetch(`${this.API_URL}/delete.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sync_id: this.syncId,
-        device_id: Platform.OS // Use platform as device ID
+        device_id: deviceId
       })
     });
 
@@ -279,23 +278,20 @@ class SimpleSyncService {
         userCount: Object.keys(localState.users || {}).length
       });
 
-      // 2. Fetch from server
-      const response = await fetch(`${this.API_URL}/get.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sync_id: this.syncId })
-      });
+      // 2. Fetch from server using existing pull.php endpoint
+      const deviceId = Platform.OS; // Use platform as simple device ID
+      const response = await fetch(`${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
 
       const serverResponse = await response.json();
       
-      if (!serverResponse.success) {
+      if (!serverResponse.success || !serverResponse.encrypted_blob) {
         // No data on server yet, push our state
         syncDebugger.log('PUSH', 'No data on server, pushing local state');
         return await this.pushState(localState);
       }
 
-      // 3. Decrypt server data
-      const serverState = this.decrypt(serverResponse.data.encrypted_blob);
+      // 3. Decrypt server data (pull.php returns encrypted_blob directly)
+      const serverState = this.decrypt(serverResponse.encrypted_blob);
       syncDebugger.log('PULL', 'Server state', {
         timestamp: serverState.timestamp,
         userCount: Object.keys(serverState.users || {}).length
@@ -347,13 +343,16 @@ class SimpleSyncService {
    */
   async pushState(state) {
     const encryptedBlob = this.encrypt(state);
+    const deviceId = Platform.OS; // Use platform as simple device ID
     
-    const response = await fetch(`${this.API_URL}/save.php`, {
+    const response = await fetch(`${this.API_URL}/push.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         sync_id: this.syncId,
+        device_id: deviceId,
         encrypted_blob: encryptedBlob,
+        version: 1, // Simple version number
         device_name: Platform.OS,
         sync_type: 'full'
       })
@@ -472,7 +471,18 @@ class SimpleSyncService {
    * Initialize a new sync (like the complex service does)
    */
   async initialize(recoveryPhrase) {
-    return this.enable(recoveryPhrase);
+    console.log('🔄 SIMPLE SYNC: initialize() called');
+    await this.enable(recoveryPhrase);
+    
+    // After enabling, try to sync immediately to get any existing data
+    console.log('🔄 SIMPLE SYNC: Performing initial sync after initialize');
+    try {
+      await this.sync();
+    } catch (error) {
+      console.log('🔄 SIMPLE SYNC: Initial sync failed (might be first device):', error.message);
+    }
+    
+    return this.syncId;
   }
 
   /**
@@ -538,18 +548,40 @@ class SimpleSyncService {
   
   // Pull data directly (for onboarding)
   async pullData() {
-    if (!this.syncId) return null;
+    if (!this.syncId) {
+      console.log('🔄 SIMPLE SYNC: pullData - no syncId');
+      return null;
+    }
     
-    const response = await fetch(`${this.API_URL}/get.php`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sync_id: this.syncId })
-    });
+    console.log('🔄 SIMPLE SYNC: Pulling data from server');
     
-    const result = await response.json();
-    if (!result.success) return null;
-    
-    return result.data;
+    try {
+      const deviceId = Platform.OS; // Use platform as simple device ID
+      const response = await fetch(`${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        console.error('🔄 SIMPLE SYNC: Server returned non-JSON response');
+        const text = await response.text();
+        console.error('Response:', text.substring(0, 200));
+        return null;
+      }
+      
+      const result = await response.json();
+      
+      if (!result.success) {
+        console.log('🔄 SIMPLE SYNC: No data on server yet');
+        return null;
+      }
+      
+      console.log('🔄 SIMPLE SYNC: Data pulled successfully');
+      // Return the data in the format onboarding expects
+      return result; // pull.php returns {success: true, encrypted_blob: ..., version: ..., updated_at: ...}
+    } catch (error) {
+      console.error('🔄 SIMPLE SYNC: Error pulling data:', error);
+      return null;
+    }
   }
   
   // Expose encryption service (for compatibility)
