@@ -77,6 +77,15 @@ class SimpleSyncService {
 
   // Getter for API URL
   get API_URL() {
+    // Ensure we always return an absolute URL
+    if (!this._apiUrl.startsWith('http')) {
+      console.warn('🔄 SIMPLE SYNC: API URL is not absolute!', this._apiUrl);
+      // Force it to be absolute for qual environment
+      if (typeof window !== 'undefined' && window.location.pathname.startsWith('/qual')) {
+        return 'https://stackmap.app/qual/api/sync';
+      }
+      return 'https://stackmap.app/api/sync';
+    }
     return this._apiUrl;
   }
 
@@ -308,6 +317,7 @@ class SimpleSyncService {
       const pullUrl = `${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
       console.log('🔄 SIMPLE SYNC: sync() pull URL:', pullUrl);
       console.log('🔄 SIMPLE SYNC: this.API_URL value:', this.API_URL);
+      console.log('🔄 SIMPLE SYNC: About to fetch:', pullUrl);
       const response = await fetch(pullUrl);
 
       // Check if sync group exists
