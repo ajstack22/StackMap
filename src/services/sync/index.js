@@ -22,4 +22,30 @@ if (typeof console !== 'undefined') {
   }
 }
 
+// Add global helpers for debugging
+if (typeof window !== 'undefined') {
+  window.checkSyncStatus = () => {
+    console.log('=== SYNC STATUS ===');
+    console.log('Service type:', USE_SIMPLE_SYNC ? 'SIMPLE' : 'COMPLEX');
+    console.log('Enabled:', syncService.enabled || syncService.syncEnabled || false);
+    console.log('Sync ID:', syncService.syncId || syncService.getSyncId?.() || 'none');
+    console.log('In progress:', syncService.syncInProgress || false);
+    
+    if (syncService.enabled || syncService.syncEnabled) {
+      console.log('✅ Sync is ACTIVE');
+      console.log('To force sync now: window.syncService.sync()');
+    } else {
+      console.log('❌ Sync is NOT enabled');
+      console.log('Enable in: Settings > Data > Sync');
+    }
+    return syncService;
+  };
+  
+  window.syncService = syncService;
+  window.forceSync = () => {
+    console.log('Forcing sync now...');
+    return syncService.sync ? syncService.sync() : syncService.requestSync();
+  };
+}
+
 export default syncService;

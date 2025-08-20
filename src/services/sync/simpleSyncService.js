@@ -35,9 +35,14 @@ class SimpleSyncService {
       this.restoreState().then(restored => {
         if (restored) {
           console.log('✅ SIMPLE SYNC: State restored, sync is active');
+          console.log(`   Sync ID: ${this.syncId}`);
+          console.log(`   Sync will run every 30 seconds`);
         } else {
           console.log('ℹ️ SIMPLE SYNC: No saved state to restore');
+          console.log('   To enable sync: Go to Settings > Data > Enable Sync');
         }
+      }).catch(err => {
+        console.error('❌ SIMPLE SYNC: Error restoring state:', err);
       });
     }, 1000);
   }
