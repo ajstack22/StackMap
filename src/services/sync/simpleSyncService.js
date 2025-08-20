@@ -228,14 +228,35 @@ class SimpleSyncService {
   }
 
   decrypt(encryptedBlob) {
-    const data = decodeBase64(encryptedBlob);
-    const nonce = data.slice(0, 24);
-    const message = data.slice(24);
+    console.log('🔄 SIMPLE SYNC: decrypt() called');
+    console.log('🔄 SIMPLE SYNC: Has masterKey:', !!this.masterKey);
+    console.log('🔄 SIMPLE SYNC: Blob length:', encryptedBlob?.length);
     
-    const decrypted = nacl.secretbox.open(message, nonce, this.masterKey);
-    if (!decrypted) throw new Error('Decryption failed');
+    if (!this.masterKey) {
+      console.error('❌ SIMPLE SYNC: Cannot decrypt - no master key!');
+      throw new Error('No master key available for decryption');
+    }
     
-    return JSON.parse(util.encodeUTF8(decrypted));
+    try {
+      const data = decodeBase64(encryptedBlob);
+      const nonce = data.slice(0, 24);
+      const message = data.slice(24);
+      
+      const decrypted = nacl.secretbox.open(message, nonce, this.masterKey);
+      if (!decrypted) {
+        console.error('❌ SIMPLE SYNC: Decryption failed - invalid key or corrupted data');
+        throw new Error('Decryption failed - invalid key or corrupted data');
+      }
+      
+      const decryptedStr = util.encodeUTF8(decrypted);
+      const result = JSON.parse(decryptedStr);
+      console.log('✅ SIMPLE SYNC: Decryption successful');
+      console.log('🔄 SIMPLE SYNC: Decrypted users:', Object.keys(result.users || {}));
+      return result;
+    } catch (error) {
+      console.error('❌ SIMPLE SYNC: Decrypt error:', error.message);
+      throw error;
+    }
   }
 
   /**
@@ -602,17 +623,44 @@ class SimpleSyncService {
   /**
    * Initialize a new sync (like the complex service does)
    */
-  async initialize(recoveryPhrase) {
-    console.log('🔄 SIMPLE SYNC: initialize() called');
+  async initialize(recoveryPhrase, skipInitialSync = false) {
+    console.log('🔄 SIMPLE SYNC: initialize() called, skipInitialSync:', skipInitialSync);
     await this.enable(recoveryPhrase);
     
-    // After enabling, try to sync immediately to get any existing data
-    console.log('🔄 SIMPLE SYNC: Performing initial sync after initialize');
-    try {
-      await this.sync();
-    } catch (error) {
-      console.log('🔄 SIMPLE SYNC: Initial sync failed (might be first device):', error.message);
+    if (!skipInitialSync) {
+      // After enabling, try to sync immediately to get any existing data
+      console.log('🔄 SIMPLE SYNC: Performing initial sync after initialize');
+      try {
+        await this.sync();
+      } catch (error) {
+        console.log('🔄 SIMPLE SYNC: Initial sync failed (might be first device):', error.message);
+      }
     }
+    
+    return this.syncId;
+  }
+  
+  /**
+   * Initialize for preview only (doesn't sync or save state)
+   */
+  async initializeForPreview(recoveryPhrase) {
+    console.log('🔄 SIMPLE SYNC: initializeForPreview() called');
+    
+    // Generate sync ID and master key WITHOUT saving to storage
+    const salt = 'stackmap_sync_salt_2024';
+    const iterations = 100000;
+    
+    // Hash recovery phrase to get sync ID
+    let hash = decodeUTF8(recoveryPhrase + salt);
+    for (let i = 0; i < iterations; i++) {
+      hash = nacl.hash(hash);
+    }
+    
+    this.syncId = encodeBase64(hash.slice(0, 16)).replace(/[^a-zA-Z0-9]/g, '');
+    this.masterKey = hash.slice(16, 48);
+    
+    console.log('🔄 SIMPLE SYNC: Preview initialized with syncId:', this.syncId);
+    // Don't set enabled flag or save to storage - this is temporary
     
     return this.syncId;
   }
@@ -725,7 +773,15 @@ class SimpleSyncService {
       return null;
     }
     
+    if (!this.masterKey) {
+      console.log('🔄 SIMPLE SYNC: pullData - no masterKey, cannot decrypt');
+      console.log('🔄 SIMPLE SYNC: You must call initialize() or enable() first');
+      return null;
+    }
+    
     console.log('🔄 SIMPLE SYNC: Pulling data from server');
+    console.log('🔄 SIMPLE SYNC: syncId:', this.syncId);
+    console.log('🔄 SIMPLE SYNC: Has masterKey:', !!this.masterKey);
     
     try {
       const deviceId = Platform.OS; // Use platform as simple device ID

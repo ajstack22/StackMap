@@ -164,46 +164,18 @@ const OnboardingNew = ({
       // Use the sync phrase from URL
       const phraseToUse = recoveryInput.trim() || syncSetupPhrase;
 
-      // Generate sync ID from recovery phrase
-      const syncId = await syncService.generateSyncId(phraseToUse);
-      const deviceId = await encryptionService.getDeviceId();
+      // Initialize sync service for preview only (this sets up the master key without syncing)
+      console.log('[ONBOARDING] Initializing sync service for preview');
+      await syncService.initializeForPreview(phraseToUse);
 
-      // For preview, we need to fetch without device ID or use a temporary one
-      // Try to fetch sync data - for new devices, we might get 404 which is expected
-      const checkUrl = `${syncService.getApiUrl()}/pull.php?sync_id=${syncId}&device_id=${deviceId}`;
-      const checkResponse = await fetch(checkUrl);
+      // Now pull the data (sync service is initialized with master key)
+      const pullResult = await syncService.pullData();
 
-      let decryptedData;
-
-      if (checkResponse.status === 404) {
-        // This is a new device, try to fetch the latest sync data without device ID
-        // or by using the sync service's join mechanism
-
-        // Initialize sync service temporarily to fetch data
-        await syncService.initialize(phraseToUse);
-
-        // Try to pull data - this should work even for new devices
-        const pullResult = await syncService.pullData();
-
-        if (!pullResult || !pullResult.data) {
-          throw new Error('No sync group found with this sync key');
-        }
-
-        decryptedData = pullResult.data;
-      } else {
-        // Get the encrypted data
-        const encryptedData = await checkResponse.json();
-
-        // Initialize encryption with the recovery phrase and syncId to decrypt
-        // Use the same fixed salt as syncService for consistency
-        const fixedSalt = 'U3RhY2tNYXBTeW5jRW5jcnlwdGlvblNhbHQ=';
-        await encryptionService.initialize(phraseToUse, syncId, fixedSalt);
-
-        // Decrypt the data
-        decryptedData = encryptionService.decryptData(
-          encryptedData.encrypted_blob,
-        );
+      if (!pullResult || !pullResult.data) {
+        throw new Error('No sync group found with this sync key');
       }
+
+      const decryptedData = pullResult.data;
 
       // Extract preview information
       console.log('[ONBOARDING] Decrypted data:', decryptedData);
