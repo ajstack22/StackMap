@@ -254,8 +254,10 @@ const OnboardingUserCentered = ({
       }
 
       // Enable sync and complete onboarding with imported data
-      await AsyncStorage.setItem('syncEnabled', 'true');
-      await AsyncStorage.setItem('syncRecoveryPhrase', phraseToUse);
+      // Use the same keys as syncService
+      await AsyncStorage.setItem('@sync_enabled', 'true');
+      await AsyncStorage.setItem('@sync_id', syncService.syncId);
+      // Note: Recovery phrase is not stored, only kept in memory
       
       onComplete({
         importedData: decryptedData,
@@ -435,8 +437,10 @@ const OnboardingUserCentered = ({
       // Since we're not marking as synced in initialize for new syncs,
       // the first periodic sync will push all the data
       
-      await AsyncStorage.setItem('syncEnabled', 'true');
-      await AsyncStorage.setItem('syncRecoveryPhrase', syncCode);
+      // Use the same keys as syncService
+      await AsyncStorage.setItem('@sync_enabled', 'true');
+      await AsyncStorage.setItem('@sync_id', syncService.syncId);
+      // Note: Recovery phrase is not stored, only kept in memory
       
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');
