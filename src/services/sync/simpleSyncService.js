@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * SIMPLE SYNC SERVICE - A bulletproof sync implementation
  * 

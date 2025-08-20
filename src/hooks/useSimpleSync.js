@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Hook to use simple sync service with debugging
  * Enable with: window.USE_SIMPLE_SYNC = true
@@ -100,11 +101,11 @@ if (typeof window !== 'undefined') {
     }
     
     window.USE_SIMPLE_SYNC = true;
-    const simpleSyncService = require('../services/sync/simpleSyncService').default;
-    const syncDebugger = require('../utils/syncDebugger').default;
+    const SimpleSyncService = require('../services/sync/simpleSyncService').default;
+    const SyncDebugger = require('../utils/syncDebugger').default;
     
-    syncDebugger.enable();
-    await simpleSyncService.enable(recoveryPhrase);
+    SyncDebugger.enable();
+    await SimpleSyncService.enable(recoveryPhrase);
     
     console.log('✅ Simple sync enabled!');
     console.log('To sync manually: simpleSyncService.sync()');
@@ -112,8 +113,8 @@ if (typeof window !== 'undefined') {
     console.log('To compare states: syncDebugger.compareStates(state1, state2)');
     
     // Make service available globally for debugging
-    window.simpleSyncService = simpleSyncService;
-    window.syncDebugger = syncDebugger;
+    window.simpleSyncService = SimpleSyncService;
+    window.syncDebugger = SyncDebugger;
   };
 
   window.testSimpleSync = () => {

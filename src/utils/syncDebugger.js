@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Sync Debugger - Provides detailed visibility into sync operations
  * Enable with: window.SYNC_DEBUG = true (web) or global.SYNC_DEBUG = true (native)

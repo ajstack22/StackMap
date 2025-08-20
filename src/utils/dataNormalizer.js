@@ -1,3 +1,4 @@
+// @ts-check
 /**
  * Data normalizer utility to ensure consistent field naming across sync
  * Critical for preventing sync inconsistencies
