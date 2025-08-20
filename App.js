@@ -130,6 +130,7 @@ import { useAppStore } from './src/stores';
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
 import syncService from './src/services/sync';
+import './src/utils/stateDebugger'; // Add state change tracking
 
 // Import utilities
 import {

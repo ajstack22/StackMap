@@ -218,10 +218,14 @@ class SimpleSyncService {
    * SIMPLE SYNC: Pull from server, compare timestamps, apply newest
    */
   async sync() {
-    console.log('🔄 SIMPLE SYNC: Starting sync operation');
+    console.log('🔄 SIMPLE SYNC: sync() called');
     
     if (!this.enabled || !this.syncId || !this.masterKey) {
-      console.log('❌ SIMPLE SYNC: Not enabled', { enabled: this.enabled, syncId: !!this.syncId });
+      console.log('❌ SIMPLE SYNC: Not enabled', { 
+        enabled: this.enabled, 
+        syncId: this.syncId || 'none',
+        hasMasterKey: !!this.masterKey 
+      });
       return { success: false, error: 'Sync not enabled' };
     }
 
@@ -365,17 +369,28 @@ class SimpleSyncService {
    * Restore sync state on app start
    */
   async restoreState() {
+    console.log('🔄 SIMPLE SYNC: Checking for saved sync state...');
+    
     const enabled = await AsyncStorage.getItem('@sync_enabled');
     const syncId = await AsyncStorage.getItem('@sync_id');
     const syncPhrase = await AsyncStorage.getItem('@sync_phrase');
     const lastTimestamp = await AsyncStorage.getItem('@sync_last_timestamp');
+    
+    console.log('🔄 SIMPLE SYNC: Found saved state:', {
+      enabled: enabled,
+      hasSyncId: !!syncId,
+      hasPhrase: !!syncPhrase,
+      lastTimestamp: lastTimestamp
+    });
 
     if (enabled === 'true' && syncId && syncPhrase) {
+      console.log('🔄 SIMPLE SYNC: Restoring with saved phrase...');
       await this.enable(syncPhrase);
       this.lastServerTimestamp = parseInt(lastTimestamp || '0', 10);
       return true;
     }
 
+    console.log('🔄 SIMPLE SYNC: No valid saved state found');
     return false;
   }
 
