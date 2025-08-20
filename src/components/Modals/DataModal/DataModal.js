@@ -18,16 +18,7 @@ import ConfirmModal from '../ConfirmModal';
 import { TabbedModal, TabContent } from '../../../components';
 import { FormInput, ModalFooter, ModalButton } from '../../ModalUtilities';
 import SyncStatusIndicator from '../../SyncStatusIndicator';
-
-// Toggle between simple and complex sync
-// Simple sync is more reliable but less "smart" about merging
-const USE_SIMPLE_SYNC = true; // Set to false to use complex sync
-
-import complexSyncService from '../../../services/sync/syncService';
-import simpleSyncService from '../../../services/sync/simpleSyncService';
-
-const syncService = USE_SIMPLE_SYNC ? simpleSyncService : complexSyncService;
-
+import syncService from '../../../services/sync';
 import useAppStore from '../../../stores/useAppStore';
 import QRCode from 'react-native-qrcode-svg';
 // Normalization removed - v3 support discontinued

@@ -8,7 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialIcons';
-import syncService from '../../services/sync/syncService';
+import syncService from '../../services/sync';
 import { TYPOGRAPHY } from '../../constants';
 
 const SyncBlockingIndicator = ({ theme }) => {

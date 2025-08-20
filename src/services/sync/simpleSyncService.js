@@ -201,15 +201,20 @@ class SimpleSyncService {
    * SIMPLE SYNC: Pull from server, compare timestamps, apply newest
    */
   async sync() {
+    console.log('🔄 SIMPLE SYNC: Starting sync operation');
+    
     if (!this.enabled || !this.syncId || !this.masterKey) {
+      console.log('❌ SIMPLE SYNC: Not enabled', { enabled: this.enabled, syncId: !!this.syncId });
       return { success: false, error: 'Sync not enabled' };
     }
 
     if (this.syncInProgress) {
       syncDebugger.log('STATE', 'Sync already in progress, skipping');
+      console.log('⏭️ SIMPLE SYNC: Already in progress, skipping');
       return { success: false, error: 'Sync in progress' };
     }
 
+    console.log('✅ SIMPLE SYNC: Lock acquired, proceeding');
     this.syncInProgress = true;
     
     try {
@@ -244,15 +249,21 @@ class SimpleSyncService {
 
       // 4. SIMPLE DECISION: Newest timestamp wins
       const serverNewer = serverState.timestamp > localState.timestamp;
+      const timeDiff = Math.abs(serverState.timestamp - localState.timestamp) / 1000;
+      
+      console.log(`🎯 SIMPLE SYNC DECISION: ${serverNewer ? 'SERVER' : 'LOCAL'} is newer by ${timeDiff} seconds`);
+      console.log(`   Server time: ${new Date(serverState.timestamp).toISOString()}`);
+      console.log(`   Local time:  ${new Date(localState.timestamp).toISOString()}`);
       
       syncDebugger.log('DECISION', `${serverNewer ? 'SERVER' : 'LOCAL'} is newer`, {
         serverTime: serverState.timestamp,
         localTime: localState.timestamp,
-        diff: Math.abs(serverState.timestamp - localState.timestamp) / 1000 + ' seconds'
+        diff: timeDiff + ' seconds'
       });
 
       if (serverNewer) {
         // Server is newer, apply it
+        console.log('📥 SIMPLE SYNC: Applying server state (server was newer)');
         this.setCompleteState(serverState);
         this.lastServerTimestamp = serverState.timestamp;
         await AsyncStorage.setItem('@sync_last_timestamp', serverState.timestamp.toString());
@@ -264,6 +275,7 @@ class SimpleSyncService {
         };
       } else {
         // Local is newer, push it
+        console.log('📤 SIMPLE SYNC: Pushing local state (local was newer)');
         return await this.pushState(localState);
       }
 

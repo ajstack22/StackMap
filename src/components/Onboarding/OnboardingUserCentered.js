@@ -19,7 +19,7 @@ import { DEFAULT_USER_ICON } from '../../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Logo from '../Logo/Logo';
-import syncService from '../../services/sync/syncService';
+import syncService from '../../services/sync';
 import encryptionService from '../../services/sync/encryptionService';
 import { useAppStore, useUserStore } from '../../stores';
 import {
