@@ -27,7 +27,9 @@ class SimpleSyncService {
     this.lastServerTimestamp = 0;
     this.syncInProgress = false;
     this.syncInterval = null;
-    this.API_URL = this.getApiUrl();
+    // CRITICAL: Store API URL as instance property
+    this.API_URL = 'https://stackmap.app/api/sync';
+    console.log('🔄 SIMPLE SYNC: Constructor - API_URL set to:', this.API_URL);
     
     // Auto-restore sync state after a delay (like complex sync does)
     console.log('🔄 SIMPLE SYNC: Service created, will restore state in 1 second');
@@ -47,14 +49,6 @@ class SimpleSyncService {
     }, 1000);
   }
 
-  getApiUrl() {
-    // Always use production API for now to ensure consistency
-    // The qual/dev detection was causing issues
-    const baseUrl = 'https://stackmap.app/api/sync';
-    console.log('🔄 SIMPLE SYNC: Using API URL:', baseUrl);
-    return baseUrl;
-  }
-
   /**
    * Enable sync with recovery phrase
    */
@@ -65,6 +59,7 @@ class SimpleSyncService {
     }
 
     console.log('🔄 SIMPLE SYNC: Enabling with recovery phrase');
+    console.log('🔄 SIMPLE SYNC: Current API_URL:', this.API_URL);
 
     // Generate sync ID and master key
     const salt = 'stackmap_sync_salt_2024';
@@ -158,7 +153,7 @@ class SimpleSyncService {
    */
   encrypt(data) {
     const nonce = nacl.randomBytes(24);
-    const message = decodeUTF8(JSON.stringify(data));
+    const message = util.decodeUTF8(JSON.stringify(data));
     const encrypted = nacl.secretbox(message, nonce, this.masterKey);
     
     return encodeBase64(new Uint8Array([...nonce, ...encrypted]));
@@ -500,11 +495,8 @@ class SimpleSyncService {
     if (!this.syncId) return false;
     
     try {
-      const response = await fetch(`${this.API_URL}/get.php`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sync_id: this.syncId })
-      });
+      const deviceId = Platform.OS;
+      const response = await fetch(`${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
       const result = await response.json();
       return result.success;
     } catch {
@@ -557,7 +549,9 @@ class SimpleSyncService {
     
     try {
       const deviceId = Platform.OS; // Use platform as simple device ID
-      const response = await fetch(`${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
+      const pullUrl = `${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+      console.log('🔄 SIMPLE SYNC: Pull URL:', pullUrl);
+      const response = await fetch(pullUrl);
       
       // Check if response is JSON
       const contentType = response.headers.get('content-type');
