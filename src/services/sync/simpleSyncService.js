@@ -314,10 +314,14 @@ class SimpleSyncService {
 
       // 2. Fetch from server using existing pull.php endpoint
       const deviceId = Platform.OS; // Use platform as simple device ID
-      const pullUrl = `${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+      // Ensure absolute URL for React Native Web
+      const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
+      const pullUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
       console.log('🔄 SIMPLE SYNC: sync() pull URL:', pullUrl);
       console.log('🔄 SIMPLE SYNC: this.API_URL value:', this.API_URL);
       console.log('🔄 SIMPLE SYNC: About to fetch:', pullUrl);
+      
+      // Use absolute URL - React Native requires this
       const response = await fetch(pullUrl);
 
       // Check if sync group exists
@@ -391,8 +395,11 @@ class SimpleSyncService {
     const encryptedBlob = this.encrypt(state);
     const deviceId = Platform.OS; // Use platform as simple device ID
     
+    // Ensure absolute URL for React Native Web
+    const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
+    
     // First try to push (update existing)
-    const response = await fetch(`${this.API_URL}/push.php`, {
+    const response = await fetch(`${baseUrl}/push.php`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -411,7 +418,7 @@ class SimpleSyncService {
     if (response.status === 404) {
       console.log('🔄 SIMPLE SYNC: Sync group not found, creating...');
       
-      const createResponse = await fetch(`${this.API_URL}/create.php`, {
+      const createResponse = await fetch(`${baseUrl}/create.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -630,7 +637,9 @@ class SimpleSyncService {
     
     try {
       const deviceId = Platform.OS; // Use platform as simple device ID
-      const pullUrl = `${this.API_URL}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+      // Ensure absolute URL for React Native Web
+      const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
+      const pullUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
       console.log('🔄 SIMPLE SYNC: Pull URL:', pullUrl);
       const response = await fetch(pullUrl);
       
