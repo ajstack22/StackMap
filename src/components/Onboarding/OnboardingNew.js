@@ -855,8 +855,16 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
               <TouchableOpacity
                 style={styles.primaryButton}
                 onPress={() => {
+                  console.log('[ONBOARDING] Continue button pressed:', {
+                    isAbbreviated,
+                    syncEnabled,
+                    users: users.length,
+                    importSuccessful
+                  });
+                  
                   if (isAbbreviated && syncEnabled) {
                     // For abbreviated onboarding with sync completed, finish
+                    console.log('[ONBOARDING] Completing abbreviated sync onboarding');
                     onComplete({
                       isAbbreviated: true,
                       syncSetupPhrase,

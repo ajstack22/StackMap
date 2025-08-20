@@ -891,19 +891,52 @@ const App = () => {
 
   const handleOnboardingComplete = async onboardingData => {
     try {
-      console.log('handleOnboardingComplete called with:', onboardingData);
+      console.log('[handleOnboardingComplete] Called with:', onboardingData);
+      console.log('[handleOnboardingComplete] Current state:', {
+        hasCompletedOnboarding,
+        showOnboarding,
+        users: Object.keys(users).length
+      });
 
       // Check if we have imported data passed directly from onboarding (new sync import flow)
       // OR if we completed abbreviated onboarding with sync
       if (onboardingData?.importedData || onboardingData?.syncCompleted) {
-        console.log('[ONBOARDING] Sync import completed - data already applied by syncService');
-        console.log('[ONBOARDING] Sync is enabled and running');
+        console.log('[handleOnboardingComplete] Sync/import path - completing onboarding');
+        console.log('[handleOnboardingComplete] importedData:', onboardingData?.importedData);
+        console.log('[handleOnboardingComplete] syncCompleted:', onboardingData?.syncCompleted);
         
-        // Don't manually apply the data - syncService.initialize() already did it
-        // Just mark onboarding as complete and show the main app
-        setHasCompletedOnboarding(true);
-        setShowOnboarding(false);
-        showToast({ message: 'Data synced successfully' });
+        // Wait a moment to ensure stores are updated from sync
+        // This prevents the initialization effect from detecting "no users" and restarting onboarding
+        setTimeout(() => {
+          // Get the current state from the store
+          const currentUsers = useAppStore.getState().users;
+          console.log('[handleOnboardingComplete] Delayed completion - users:', Object.keys(currentUsers).length);
+          
+          // If we still don't have users, create a default one to prevent restart
+          if (Object.keys(currentUsers).length === 0) {
+            console.log('[handleOnboardingComplete] No users from sync, creating default user');
+            const defaultUser = {
+              id: Date.now().toString(),
+              name: 'Me',
+              icon: '👤',
+              days: {
+                today: { activities: [] },
+                tomorrow: { activities: [] },
+                yesterday: { activities: [] }
+              },
+              settings: {}
+            };
+            setUsers({ [defaultUser.id]: defaultUser });
+            setCurrentUser(defaultUser.id);
+          }
+          
+          // Now mark onboarding as complete
+          setHasCompletedOnboarding(true);
+          setShowOnboarding(false);
+          showToast({ message: 'Data synced successfully' });
+          console.log('[handleOnboardingComplete] Onboarding completed successfully');
+        }, 500); // Give sync service time to update stores
+        
         return; // Return here to prevent creating duplicate users below
       }
 
