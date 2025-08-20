@@ -5,19 +5,21 @@
 ./scripts/deploy-all.sh  # Deploys to ALL platforms with auto version increment + tests
 ./scripts/deploy-all.sh --skip-tests  # Emergency deploy without tests
 ```
-**For all deployment details:** See `prompts/deployment.md`
-**Testing approach:** See `docs/SIMPLE_TESTING_GUIDE.md`
+**For all deployment details:** See `docs/deployment/README.md`
+**Testing approach:** See `docs/testing/simple-testing-guide.md`
 
 ---
 
 ## 📁 CRITICAL PROJECT STRUCTURE
 
 ### Key Directories
-- `/prompts/` - **CHECK FIRST** for all documentation
-  - `deployment.md` - Complete deployment guide
-  - `field-conventions.md` - **CRITICAL** field naming standards
-  - `sync-troubleshooting.md` - Sync debugging guide
-  - `editmoderefactor/` - Edit mode implementation specs
+- `/docs/` - **PRIMARY DOCUMENTATION LOCATION**
+  - `deployment/` - Deployment procedures and guides
+  - `sync/` - Sync system documentation and troubleshooting
+  - `platform/` - Platform-specific guides (iOS, Android, Web)
+  - `features/` - Feature implementation guides and specifications
+  - `testing/` - Testing guides, checklists, and protocols
+  - `onboarding/` - New developer guides and user onboarding docs
 - `/scripts/` - All automation scripts
 - `/src/components/EditModeList/` - New unified edit mode (Jan 2025)
 - `/src/utils/dataNormalizer.js` - Field normalization logic
@@ -65,7 +67,7 @@
 - **Users**: Use `icon` (not emoji), `name` as string only
 - **Always include fallbacks**: `activity.text || activity.name || activity.title`
 - **Normalizer**: `/src/utils/dataNormalizer.js` handles variations
-- **See**: `/prompts/field-conventions.md` for full details
+- **See**: `/docs/features/field-conventions.md` for full details
 
 ---
 
@@ -86,7 +88,7 @@
 **Pull**: Server → Decrypt → Validate → Resolve conflicts → Update stores  
 **Key Fields**: Activities use `text` (not name/title) and `icon` (not emoji)  
 **Sync ID**: First 16 bytes of NaCl hash (100k iterations) of recovery phrase + fixed salt
-**See**: `/docs/SYNC_API_REFERENCE.md` for complete technical details
+**See**: `/docs/sync/README.md` for complete technical details
 
 ---
 
@@ -98,13 +100,12 @@
   - User updates: `useUserStore.getState().setUsers()`
   - Settings: `useSettingsStore.getState().updateSettings()`
   - Library: `useLibraryStore.getState().setLibrary()`
-- See `/docs/STORE_ARCHITECTURE.md` for new structure
-- See `/prompts/tech-debt-handoff.md` for completion details
+- See `/docs/STORE_ARCHITECTURE.md` for new structure and completion details
 
 ### TypeScript Migration (Jan 2025 - In Progress)
 - Gradual migration strategy with @ts-check
 - Type checking integrated into deployment
-- See `/prompts/typescript-migration-status.md` for current status
+- See `/docs/TYPESCRIPT_ANALYSIS.md` for current status
 - Run `npm run typecheck` before committing
 
 ### Edit Mode Refactor (Jan 2025)
@@ -112,7 +113,7 @@
 - Button-based reordering (no drag & drop)
 - Max width constraints for readability
 - Simplified animations (200ms fades) for better iOS performance
-- See `/prompts/editmoderefactor/` for full specs
+- See `/docs/features/edit-mode-refactor.md` for full specs
 
 ### Data Structure (COMPLETED Jan 2025)
 - See `/docs/DATA_STRUCTURE.md` for complete documentation
@@ -147,7 +148,7 @@ cd android && ./gradlew clean
 ---
 
 ## 📝 BEFORE ANY CHANGES
-1. Check `/prompts/` directory for existing documentation
+1. Check `/docs/` directory for existing documentation
 2. Check git history: `git log -p --grep="<feature>"`
 3. Test on ALL platforms if changing shared code
 4. Document WHY, not just what
@@ -155,7 +156,10 @@ cd android && ./gradlew clean
 ---
 
 ## 🔗 QUICK LINKS
-- [Full Deployment Guide](./prompts/deployment.md)
-- [Edit Mode Specs](./prompts/editmoderefactor/)
+- [New Developer Guide](./docs/onboarding/new-developer-guide.md)
+- [Full Deployment Guide](./docs/deployment/README.md)
+- [Feature Documentation](./docs/features/README.md)
+- [Testing Guides](./docs/testing/README.md)
+- [Field Conventions](./docs/features/field-conventions.md)
+- [Edit Mode Specs](./docs/features/edit-mode-refactor.md)
 - [Troubleshooting](./TROUBLESHOOTING.md)
-- [MD Files Index](./MD_FILES_INDEX.md)

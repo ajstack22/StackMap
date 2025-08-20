@@ -10,7 +10,7 @@
 ### 📊 Data Specifications (CANONICAL - Updated 2025-08-14)
 - **[/docs/data/data-dictionary.md](./data/data-dictionary.md)** - 🔴 Canonical data structures & field definitions
 - **[/docs/data/data-overview.md](./data/data-overview.md)** - Architecture overview & compliance checklist
-- **[/docs/data/data-sync-service.md](./data/data-sync-service.md)** - Zero-knowledge sync implementation
+- **[/docs/sync/data-sync-service.md](./sync/data-sync-service.md)** - Zero-knowledge sync implementation
 - **[/docs/data/data-import-service.md](./data/data-import-service.md)** - Import procedures & normalization
 - **[/docs/data/data-export-service.md](./data/data-export-service.md)** - Export formats & sanitization
 - **[/docs/data/data-reset-service.md](./data/data-reset-service.md)** - Reset operations & recovery
@@ -33,7 +33,8 @@
 - **[MODAL_PATTERNS.md](./MODAL_PATTERNS.md)** - Standard modal implementation patterns
 
 ### System Architecture
-- **[docs/CROSS_PLATFORM_DEVELOPMENT.md](./docs/CROSS_PLATFORM_DEVELOPMENT.md)** - Platform differences
+- **[STORE_ARCHITECTURE.md](./STORE_ARCHITECTURE.md)** - Store system architecture
+- **[architecture/SYSTEM_ARCHITECTURE.md](./architecture/SYSTEM_ARCHITECTURE.md)** - Overall system design
 
 ### Component Systems
 - **[docs/CARD_LIBRARY_SYSTEM.md](./docs/CARD_LIBRARY_SYSTEM.md)** - Activity card system
@@ -43,27 +44,25 @@
 
 ## 📱 Platform-Specific Guides
 
-### Android
+### Consolidated Platform Documentation (Updated 2025-08-20)
+- **[platform/README.md](./platform/README.md)** - 🔴 Platform documentation index
+- **[platform/CROSS_PLATFORM_GUIDE.md](./platform/CROSS_PLATFORM_GUIDE.md)** - Cross-platform development patterns
+- **[platform/ios/README.md](./platform/ios/README.md)** - Complete iOS development guide
+- **[platform/android/README.md](./platform/android/README.md)** - Complete Android development guide
+- **[platform/web/README.md](./platform/web/README.md)** - Complete Web/PWA development guide
+
+### Legacy Platform Files (Still Active)
 - **[android/SECURE_SIGNING_SETUP.md](./android/SECURE_SIGNING_SETUP.md)** - Signing configuration
 - **[android/CREATE_KEYSTORE.md](./android/CREATE_KEYSTORE.md)** - Keystore creation
-- **[docs/android/GOOGLE_PLAY_SETUP_GUIDE.md](./docs/android/GOOGLE_PLAY_SETUP_GUIDE.md)** - Play Store setup
-- **[docs/android/ANDROID_BUILD_SETUP.md](./docs/android/ANDROID_BUILD_SETUP.md)** - Build configuration
-
-### iOS
-- **[docs/ios/XCODE_FIX.md](./docs/ios/XCODE_FIX.md)** - Common Xcode issues
-- **[docs/ios/APP_NAMING_FIX.md](./docs/ios/APP_NAMING_FIX.md)** - App name configuration
-
-### Web/PWA
-- **[docs/PWA_SETUP.md](./docs/PWA_SETUP.md)** - PWA configuration
-- **[docs/WEB_PLATFORM_DIFFERENCES.md](./docs/WEB_PLATFORM_DIFFERENCES.md)** - Web-specific issues
 
 ---
 
 ## 🔄 Sync & API Documentation
 
 - **[api/sync/README.md](./api/sync/README.md)** - Sync system overview
-- **[docs/SYNC_API_REFERENCE.md](./docs/SYNC_API_REFERENCE.md)** - API endpoints
-- **[docs/ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md](./docs/ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md)** - Security architecture
+- **[docs/sync/README.md](./sync/README.md)** - Comprehensive sync system documentation
+- **[docs/sync/SYNC_API_REFERENCE.md](./sync/SYNC_API_REFERENCE.md)** - API endpoints
+- **[docs/sync/ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md](./sync/ZERO_KNOWLEDGE_SYNC_ARCHITECTURE.md)** - Security architecture
 
 ---
 
@@ -86,7 +85,7 @@
 ## 🔐 Security & Privacy
 
 - **[STACKMAP_PRIVACY_SECURITY_WHITEPAPER.md](./STACKMAP_PRIVACY_SECURITY_WHITEPAPER.md)** - Security overview
-- **[docs/SYNC_SECURITY_IMPLEMENTATION_GUIDE.md](./docs/SYNC_SECURITY_IMPLEMENTATION_GUIDE.md)** - Sync security
+- **[docs/sync/SYNC_SECURITY_IMPLEMENTATION_GUIDE.md](./sync/SYNC_SECURITY_IMPLEMENTATION_GUIDE.md)** - Sync security implementation
 
 ---
 
@@ -103,9 +102,9 @@
 3. Follow platform guidelines in platform-specific guides
 
 ### "I need to fix a bug"
-1. Check platform-specific guides for known issues
+1. Check [platform/README.md](./platform/README.md) for known platform issues
 2. Review [QUICK_TEST_CHECKLIST.md](./QUICK_TEST_CHECKLIST.md)
-3. Test on all platforms using [docs/CROSS_PLATFORM_DEVELOPMENT.md](./docs/CROSS_PLATFORM_DEVELOPMENT.md)
+3. Test on all platforms using [platform/CROSS_PLATFORM_GUIDE.md](./platform/CROSS_PLATFORM_GUIDE.md)
 
 ### "I need to understand the architecture"
 1. Start with [/docs/data/data-overview.md](./data/data-overview.md) for data architecture

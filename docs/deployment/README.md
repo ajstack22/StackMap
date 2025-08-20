@@ -1,95 +1,158 @@
-# StackMap Deployment System
-**Last Updated:** 2025-01-13
+# StackMap Deployment Guide
+**Last Updated:** January 2025
 
-## Current System: Branch-Based Deployment
-
-We use separate branches for deployment to avoid mixing build artifacts with source code.
-
-### Quick Commands
-- Deploy to Qual: `./scripts/deploy-with-tracking.sh qual`
-- Deploy to Prod: `./scripts/deploy-with-tracking.sh prod`
-- View History: `./scripts/deploy-with-tracking.sh history`
-
-### How It Works
-1. Source code lives in `main` branch (no build files)
-2. Build artifacts go to `deploy-qual` and `deploy-prod` branches
-3. Servers pull from deployment branches, not main
-4. Every deployment is a git commit with full metadata
-
-### Why This System
-- Prevents accumulation of old bundle files (had 87 before!)
-- Keeps git history clean
-- Enables easy rollback
-- Maintains GitHub-based deployment (no direct server edits)
-
-## Deployment Process
-
-### To Qual (Staging)
+## 🚀 Quick Start - Deploy Everything
 ```bash
-# Ensure you're on main with no uncommitted changes
+./scripts/deploy-all.sh
+```
+This single command deploys to ALL platforms with automatic version increment and runs essential tests.
+
+### Platform-Specific Options
+```bash
+./scripts/deploy-all.sh --android --ios  # Android + iOS only
+./scripts/deploy-all.sh --web --prod     # Web production only
+./scripts/deploy-all.sh --ios-device     # iOS physical device
+./scripts/deploy-all.sh --skip-tests    # Skip tests for emergency deploy
+```
+
+## 📱 Platform Deployment Details
+
+### iOS Deployment
+```bash
+./scripts/deploy-ios.sh          # Simulator
+./scripts/deploy-ios.sh device   # Physical device
+```
+
+**Manual Process:**
+1. Open Xcode: `open ios/StackMapNative.xcworkspace`
+2. Select target device
+3. Product → Archive
+4. Distribute via TestFlight/App Store
+
+### Android Deployment
+```bash
+./scripts/deploy-android-all.sh   # Full deployment
+./scripts/deploy-android-quick.sh # Quick reload for Metro
+```
+
+**Strategy:**
+- Physical devices: Standalone APK with bundled JS
+- Emulators: Metro development build
+
+**Manual Builds:**
+```bash
+# Debug APK
+cd android && ./gradlew assembleDebug
+
+# Release APK
+cd android && ./gradlew assembleRelease
+
+# Play Store Bundle
+cd android && ./gradlew bundleRelease
+```
+
+### Web Deployment
+```bash
+./scripts/deploy-web.sh qual  # Staging (stackmap.app/qual)
+./scripts/deploy-web.sh prod  # Production (stackmap.app)
+```
+
+**Branch System:**
+- `main`: Source code only (no build files)
+- `deploy-qual`: Qual build artifacts
+- `deploy-prod`: Production build artifacts
+
+**Manual Process:**
+```bash
+# Build
+NODE_ENV=production npm run build:web
+
+# Files go in ROOT (not web/build/)
+cp web/build/*.* .
+cp -r web/build/fonts .
+cp -r web/build/icons .
+
+# Deploy via branch
+git checkout deploy-qual
+git add . && git commit -m "Deploy to qual"
+git push
+
+# Server pull
+ssh stackmap-cpanel "cd ~/public_html/qual && git pull"
+```
+
+## 🔄 Version Management
+- **Format:** `YYYY.MM.DD.BUILD`
+- **Automatic:** All scripts increment version
+- **Unified:** Single version across all platforms
+- **Files Updated:** `package.json`, `app.json`, iOS `Info.plist`
+
+## 🧪 Testing Integration
+- **Automatic:** Essential tests run before every deployment
+- **Skip for Emergency:** Use `--skip-tests` flag
+- **What's Tested:**
+  - App.js structure and imports
+  - Critical services exist (sync, store)
+  - Common issues (excessive console.logs)
+- **No Complexity:** Simple bash checks, no frameworks
+
+## 📋 Pre-Deployment Checklist
+```bash
+# 1. Check git status
 git status
 
-# Deploy to qual
-./scripts/deploy-with-tracking.sh qual
+# 2. Ensure on main branch
+git branch --show-current
+
+# 3. Pull latest
+git pull origin main
+
+# 4. Check connected devices
+adb devices  # Android
+xcrun simctl list devices | grep Booted  # iOS
 ```
 
-This will:
-1. Validate git state
-2. Build production bundle
-3. Switch to deploy-qual branch
-4. Copy current build files to root
-5. Commit with metadata
-6. Push to origin/deploy-qual
-7. Trigger server pull
+## 🔧 Common Issues & Fixes
 
-### To Production
+### Bundle not found on Web
+Files must be in root directory, not web/build/
+
+### iOS Build Fails
 ```bash
-# First test on qual
-./scripts/deploy-with-tracking.sh qual
-
-# Then deploy to production
-./scripts/deploy-with-tracking.sh prod
+cd ios && pod install
+# Or in Xcode: Product → Clean Build Folder
 ```
 
-## Server Configuration
-
-Servers are configured to pull from deployment branches:
-- Qual server: tracks `origin/deploy-qual`
-- Prod server: tracks `origin/deploy-prod`
-
-## Rollback
-
-Each deployment is a git commit, so rollback is simple:
+### Android Build Fails
 ```bash
-# View deployment history
-./scripts/deploy-with-tracking.sh history
-
-# On server, rollback to previous deployment
-ssh stackmap-cpanel "cd ~/public_html/qual && git reset --hard <commit-hash>"
+cd android && ./gradlew clean
+./gradlew --stop  # Stop Gradle daemon
 ```
 
-## Troubleshooting
+### Version Not Incrementing
+All scripts handle this automatically via `scripts/version-increment.sh`
 
-### Build files appearing in main branch
-Check .gitignore includes:
-- `/bundle.*.js`
-- `/index.html`
-- `/manifest.json`
-- `/service-worker.js`
+## 🆘 Emergency Rollback
+```bash
+# Web rollback
+ssh stackmap-cpanel "cd ~/public_html/qual && git log --oneline -5"
+ssh stackmap-cpanel "cd ~/public_html/qual && git checkout <commit-hash>"
 
-### Deployment not updating
-1. Verify server is on correct branch: `ssh stackmap-cpanel "cd ~/public_html/qual && git branch --show-current"`
-2. Should show `deploy-qual` not `main`
-3. If not, run setup: `ssh stackmap-cpanel "cd ~/public_html/qual && git checkout deploy-qual"`
+# Mobile: Reinstall previous APK/IPA from backups
+```
 
-### Need to force rebuild
-Make a small change (like version bump) to trigger new webpack hash
+## 🔐 Security Notes
+- Never commit API keys or secrets
+- Keystore files kept secure
+- All deployments use HTTPS
+- Certificates managed per platform
 
-## Legacy System (Deprecated)
+## 📝 Environment Configuration
+- **Bundle IDs:** iOS: `app.stackmap`, Android: `com.stackmap`
+- **API URLs:**
+  - Dev/Qual: `https://stackmap.app/qual/api/sync/`
+  - Production: `https://stackmap.app/api/sync/`
 
-Previously, build files were committed to main branch because:
-- Files in .gitignore caused 403 errors on server
-- Led to 87+ old bundle files accumulating
-- Mixed source with build artifacts
+---
 
-See [DEPLOYMENT_BRANCH_SYSTEM.md](./DEPLOYMENT_BRANCH_SYSTEM.md) for migration details.
+**Remember:** When in doubt, use `./scripts/deploy-all.sh` - it handles everything!

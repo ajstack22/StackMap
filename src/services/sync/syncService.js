@@ -11,6 +11,7 @@ const decodeBase64 = (str) =>
 const decodeUTF8 = (str) => (util).decodeUTF8(str);
 import encryptionService from './encryptionService';
 import { useAppStore } from '../../stores';
+import { normalizeSyncData, needsNormalization } from '../../utils/dataNormalizer';
 import syncQueue from './syncQueue';
 import networkMonitor from './networkMonitor';
 import changeTracker from './changeTracker';
@@ -735,6 +736,12 @@ class SyncService {
             },
           );
         }
+        // Normalize data first to ensure consistent field names
+        if (needsNormalization(decryptedData)) {
+          console.log('sync: Normalizing remote data fields');
+          decryptedData = normalizeSyncData(decryptedData);
+        }
+        
         // Validate decrypted data based on type
         if (decryptedData.type === 'incremental') {
           // Validate incremental sync data
@@ -751,6 +758,10 @@ class SyncService {
             console.warn(
               'sync: Attempting to apply incremental update despite validation failure',
             );
+          }
+          // Normalize patch data for incremental updates
+          if (decryptedData.patch) {
+            decryptedData.patch = normalizeSyncData(decryptedData.patch);
           }
         } else {
           // Validate full sync data
@@ -919,6 +930,14 @@ class SyncService {
    * Get current state from Zustand store
    */
   getCurrentState() {
+    // Get state from individual stores for consistency
+    const userStore = require('../../stores/useUserStore.js').default;
+    const settingsStore = require('../../stores/useSettingsStore.js').default;
+    const libraryStore = require('../../stores/useLibraryStore.js').default;
+    
+    const userState = userStore.getState();
+    const settingsState = settingsStore.getState();
+    const libraryState = libraryStore.getState();
     const state = useAppStore.getState();
     // Ensure users object exists (for empty sync groups from web)
     let users = state.users || {};
@@ -971,10 +990,10 @@ class SyncService {
     // Use v4 structure matching the export functionality
     const currentState = {
       version: 4,
-      currentDay: state.currentDay || 'today',
-      currentUser: state.currentUser,
+      currentDay: userState.currentDay || 'today',
+      currentUser: userState.currentUser,
       users: users,
-      library: state.library || {
+      library: libraryState.library || {
         categories: [
           {
             id: 'my-templates',
@@ -985,22 +1004,25 @@ class SyncService {
         ],
         userAddedActivityIds: [],
       },
-      libraryTemplates: state.libraryTemplates || [],
+      libraryTemplates: libraryState.libraryTemplates || [],
       globalSettings: {
-        currentTheme: state.currentTheme,
-        bannerPosition: state.bannerPosition,
+        currentTheme: settingsState.currentTheme,
+        // bannerPosition is device-specific, don't sync it
+        // bannerPosition: settingsState.bannerPosition,
         defaultView: 'normal',
         displayMode: 'numbers',
         enableDayManagement: true,
-        soundEnabled: state.soundEnabled,
-        taskCelebration: state.taskCelebration,
-        routineCelebration: state.routineCelebration,
+        soundEnabled: settingsState.soundEnabled,
+        taskCelebration: settingsState.taskCelebration,
+        routineCelebration: settingsState.routineCelebration,
       },
       hasCompletedOnboarding: state.hasCompletedOnboarding,
       lastBackup: new Date().toISOString(),
       lastModified: Date.now(), // Add timestamp for conflict resolution
     };
-    return currentState;
+    
+    // Always normalize data before returning
+    return normalizeSyncData(currentState);
   }
   /**
    * Restore data to Zustand store
@@ -1176,9 +1198,12 @@ class SyncService {
     userStore.getState().setCurrentUser(finalCurrentUser);
     userStore.getState().setCurrentDay(finalCurrentDay);
     // Update settings store
+    // Get current local banner position to preserve it (device-specific setting)
+    const currentBannerPosition = settingsStore.getState().bannerPosition;
     settingsStore.getState().updateSettings({
       currentTheme: userTheme, // Use user-specific theme
-      bannerPosition: globalSettings?.bannerPosition || 'top',
+      // Banner position is device-specific, don't sync it
+      bannerPosition: currentBannerPosition || 'top',
       soundEnabled: globalSettings?.soundEnabled !== false,
       taskCelebration: globalSettings?.taskCelebration || 'rainbow',
       routineCelebration: globalSettings?.routineCelebration || 'rainbow',

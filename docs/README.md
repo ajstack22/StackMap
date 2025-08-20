@@ -1,77 +1,126 @@
 # StackMap Documentation
 
-Welcome to the StackMap documentation! StackMap is a cross-platform activity tracking application built with React Native that runs on iOS, Android, and Web.
+Welcome to the StackMap documentation. This guide will help you navigate our comprehensive documentation structure.
 
-## Quick Start
+## 🚀 Quick Start
 
-1. **Prerequisites**
-   - Node.js 18+
-   - npm or yarn
-   - For iOS: Xcode and CocoaPods
-   - For Android: Android Studio and Android SDK
+**For new developers:** Start with [Onboarding → New Developer Guide](./onboarding/new-developer-guide.md)
 
-2. **Installation**
-   ```bash
-   npm install
-   cd ios && pod install  # For iOS
-   ```
-
-3. **Running the app**
-   ```bash
-   npm start               # Start Metro bundler
-   npm run ios            # Run on iOS
-   npm run android        # Run on Android
-   npm run web            # Run on Web
-   ```
-
-## Documentation Structure
-
-- **[ARCHITECTURE.md](./ARCHITECTURE.md)** - System design, data flow, and technical architecture
-- **[DEVELOPMENT.md](./DEVELOPMENT.md)** - Development setup, workflows, and coding guidelines
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** - How to deploy to all platforms
-- **[API.md](./API.md)** - Sync API documentation and endpoints
-- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common issues and solutions
-
-## Key Features
-
-- **Multi-user support** - Track activities for multiple users
-- **Cross-platform sync** - Zero-knowledge encrypted sync across devices
-- **Offline-first** - Works without internet, syncs when connected
-- **Activity templates** - Pre-built activity library with categories
-- **Themes** - Multiple color themes for personalization
-- **Import/Export** - Backup and restore data
-
-## Tech Stack
-
-- **React Native** - Cross-platform framework
-- **Zustand** - State management
-- **AsyncStorage** - Local data persistence
-- **TweetNaCl** - Encryption for sync
-- **React Navigation** - Navigation (mobile)
-- **React Native Web** - Web platform support
-
-## Project Structure
-
-```
-StackMap/
-├── src/               # Source code
-│   ├── components/    # React components
-│   ├── services/      # Business logic (sync, encryption)
-│   ├── stores/        # Zustand stores
-│   ├── utils/         # Utilities
-│   └── types/         # TypeScript definitions
-├── ios/               # iOS native code
-├── android/           # Android native code
-├── web/               # Web-specific files
-├── scripts/           # Build and deployment scripts
-├── prompts/           # Development documentation
-└── docs/              # User documentation
+**For deployment:** See [Deployment Guide](./deployment/README.md) or just run:
+```bash
+./scripts/deploy-all.sh
 ```
 
-## Contributing
+## 📚 Documentation Structure
 
-Please read [DEVELOPMENT.md](./DEVELOPMENT.md) for details on our development process and coding standards.
+### Core Documentation
 
-## Support
+#### [🚢 Deployment](./deployment/)
+Everything you need to deploy StackMap to all platforms.
+- **Start here:** [Deployment Guide](./deployment/README.md)
+- Quick command: `./scripts/deploy-all.sh`
 
-For issues and questions, please check [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) first, then create an issue on GitHub.
+#### [🔄 Sync System](./sync/)
+Complete documentation for the zero-knowledge sync system.
+- **Start here:** [Sync Overview](./sync/README.md)
+- [API Reference](./sync/SYNC_API_REFERENCE.md)
+- [Troubleshooting](./sync/troubleshooting.md)
+
+#### [📱 Platform Guides](./platform/)
+Platform-specific development guides and gotchas.
+- **Start here:** [Platform Overview](./platform/README.md)
+- [iOS Guide](./platform/ios/README.md)
+- [Android Guide](./platform/android/README.md)
+- [Web/PWA Guide](./platform/web/README.md)
+- [Cross-Platform Guide](./platform/CROSS_PLATFORM_GUIDE.md)
+
+#### [✨ Features](./features/)
+Implementation guides for StackMap features.
+- **Start here:** [Features Overview](./features/README.md)
+- **CRITICAL:** [Field Conventions](./features/field-conventions.md)
+- [Edit Mode](./features/edit-mode-refactor.md)
+- [Activity Library](./features/activity-library-system.md)
+- [Import/Export](./features/import-export-system.md)
+
+#### [🧪 Testing](./testing/)
+Testing guides and protocols.
+- **Start here:** [Testing Overview](./testing/README.md)
+- [Simple Testing Philosophy](./testing/simple-testing-guide.md)
+- [Cross-Platform Testing](./testing/cross-platform-testing.md)
+
+#### [🎓 Onboarding](./onboarding/)
+Documentation for developers and users.
+- **Start here:** [Onboarding Overview](./onboarding/README.md)
+- [New Developer Guide](./onboarding/new-developer-guide.md)
+- [User Onboarding System](./onboarding/user-onboarding-system.md)
+
+### Architecture & Data
+
+- [📊 Data Structure](./DATA_STRUCTURE.md) - Complete data model documentation
+- [🏗️ Store Architecture](./STORE_ARCHITECTURE.md) - State management with Zustand
+- [🔧 API Documentation](./API.md) - Backend API reference
+- [🏛️ Overall Architecture](./ARCHITECTURE.md) - System architecture overview
+
+### Development Guides
+
+- [💻 Development Guide](./DEVELOPMENT.md) - Local development setup
+- [🔍 Troubleshooting](./TROUBLESHOOTING.md) - Common issues and solutions
+- [📝 TypeScript Analysis](./TYPESCRIPT_ANALYSIS.md) - Migration status
+
+## ⚠️ Critical Information
+
+### Field Naming Standards (CRITICAL)
+- **Activities:** Use `text` (not name/title), `icon` (not emoji)
+- **Users:** Use `icon` (not emoji), `name` as string only
+- **See:** [Field Conventions](./features/field-conventions.md)
+
+### Platform Gotchas
+- **iOS:** AsyncStorage causes freezes (debounced), NetInfo disabled
+- **Android:** Must use font variants (not fontWeight), Java 17 required
+- **Web:** Alert.alert not supported (use ConfirmModal)
+- **See:** [Platform Guides](./platform/)
+
+### Store Updates
+Always use store-specific methods:
+- `useUserStore.getState().setUsers()`
+- `useSettingsStore.getState().updateSettings()`
+- Never use generic `setState()`
+
+## 🔍 Finding Information
+
+### By Task
+- **Deploying:** [Deployment Guide](./deployment/README.md)
+- **Debugging Sync:** [Sync Troubleshooting](./sync/troubleshooting.md)
+- **Platform Issue:** [Platform Guides](./platform/)
+- **Adding Feature:** [Features Guide](./features/)
+- **Testing:** [Testing Guide](./testing/)
+
+### By Platform
+- **iOS Issues:** [iOS Guide](./platform/ios/README.md)
+- **Android Issues:** [Android Guide](./platform/android/README.md)
+- **Web Issues:** [Web Guide](./platform/web/README.md)
+
+### Quick Commands
+```bash
+# Deploy everything
+./scripts/deploy-all.sh
+
+# Run tests
+npm run test:simple
+
+# Type check
+npm run typecheck
+
+# Start development
+npm start  # Mobile
+npm run web  # Web
+```
+
+## 📋 Documentation Index
+For a complete list of all documentation files, see [MD_FILES_INDEX.md](./MD_FILES_INDEX.md)
+
+---
+
+**Last Updated:** January 2025
+
+**Remember:** When in doubt, check [CLAUDE.md](../CLAUDE.md) for essential development guidelines.

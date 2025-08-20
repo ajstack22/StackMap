@@ -1,7 +1,7 @@
-# Card Library System Documentation
+# Activity Library System Documentation
 
 ## Overview
-The Card Library System allows users to save and reuse activity cards across their routines. This feature was added to enable users to build a personal collection of activities without cluttering their daily view.
+The Activity Library System allows users to save and reuse activity cards across their routines. This feature was added to enable users to build a personal collection of activities without cluttering their daily view.
 
 ## Architecture
 

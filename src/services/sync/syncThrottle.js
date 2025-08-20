@@ -15,7 +15,7 @@ class SyncThrottle {
    * Request a sync with throttling and debouncing
    */
   async requestSync(syncFunction, options = {}) {
-    const { immediate = false, priority = 'normal' } = options;
+    const { immediate = false, priority = 'normal', delay } = options;
 
     // If sync is in progress, queue this request
     if (this.syncInProgress) {
@@ -35,6 +35,11 @@ class SyncThrottle {
 
       // Execute immediate sync
       return this.executeSync(syncFunction);
+    }
+
+    // If custom delay is specified, use it
+    if (delay && delay > 0) {
+      return this.scheduleSync(syncFunction, delay, options);
     }
 
     // Debounce normal syncs

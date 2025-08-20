@@ -4567,7 +4567,7 @@ Users: ${userNames} (${userCount} total)
                 transform: [{
                   translateY: editModeToolbarTranslate.interpolate({
                     inputRange: [0, 100],
-                    outputRange: [0, 100],
+                    outputRange: [0, -100], // Negative to slide UP off screen when at top
                   })
                 }],
               }}
