@@ -206,6 +206,9 @@ const OnboardingNew = ({
       }
 
       // Extract preview information
+      console.log('[ONBOARDING] Decrypted data:', decryptedData);
+      console.log('[ONBOARDING] Users in decrypted data:', decryptedData.users);
+      
       const preview = {
         users: {},
         totalActivities: 0,
@@ -214,6 +217,7 @@ const OnboardingNew = ({
       };
 
       if (decryptedData.users) {
+        console.log('[ONBOARDING] Processing users:', Object.keys(decryptedData.users).length, 'users found');
         Object.entries(decryptedData.users).forEach(([userId, user]) => {
           let activityCount = 0;
 

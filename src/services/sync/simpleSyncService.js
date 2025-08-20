@@ -377,7 +377,11 @@ class SimpleSyncService {
       }
 
       // 3. Decrypt server data (pull.php returns encrypted_blob directly)
+      console.log('🔄 SIMPLE SYNC: About to decrypt server blob');
       const serverState = this.decrypt(serverResponse.encrypted_blob);
+      console.log('🔄 SIMPLE SYNC: Decrypted server state:', JSON.stringify(serverState, null, 2));
+      console.log('🔄 SIMPLE SYNC: Server users:', serverState.users);
+      console.log('🔄 SIMPLE SYNC: Server user count:', Object.keys(serverState.users || {}).length);
       syncDebugger.log('PULL', 'Server state', {
         timestamp: serverState.timestamp,
         userCount: Object.keys(serverState.users || {}).length
@@ -688,11 +692,30 @@ class SimpleSyncService {
     return Math.random().toString(36).substring(2, 15);
   }
   
-  // Generate sync ID
-  async generateSyncId() {
-    const phrase = SimpleSyncService.generateRecoveryPhrase();
-    await this.enable(phrase);
-    return { syncId: this.syncId, recoveryPhrase: phrase };
+  // Generate sync ID from recovery phrase (for preview/validation)
+  async generateSyncId(recoveryPhrase) {
+    console.log('🔄 SIMPLE SYNC: generateSyncId called with:', recoveryPhrase);
+    
+    if (!recoveryPhrase) {
+      // Generate new one if not provided
+      recoveryPhrase = SimpleSyncService.generateRecoveryPhrase();
+    }
+    
+    // Temporarily generate sync ID without fully enabling
+    // This is used for preview/checking if sync exists
+    const salt = 'stackmap_sync_salt_2024';
+    const iterations = 100000;
+    
+    // Hash recovery phrase to get sync ID
+    let hash = decodeUTF8(recoveryPhrase + salt);
+    for (let i = 0; i < iterations; i++) {
+      hash = nacl.hash(hash);
+    }
+    
+    const syncId = encodeBase64(hash.slice(0, 16)).replace(/[^a-zA-Z0-9]/g, '');
+    console.log('🔄 SIMPLE SYNC: Generated syncId for preview:', syncId);
+    
+    return syncId;
   }
   
   // Pull data directly (for onboarding)
@@ -736,9 +759,15 @@ class SimpleSyncService {
         return null;
       }
       
-      console.log('🔄 SIMPLE SYNC: Data pulled successfully');
+      console.log('🔄 SIMPLE SYNC: Data pulled successfully, decrypting...');
+      
+      // Decrypt the data before returning
+      const decryptedData = this.decrypt(result.encrypted_blob);
+      console.log('🔄 SIMPLE SYNC: Decrypted pull data:', decryptedData);
+      console.log('🔄 SIMPLE SYNC: Pull data users:', Object.keys(decryptedData.users || {}));
+      
       // Return the data in the format onboarding expects
-      return result; // pull.php returns {encrypted_blob: ..., version: ..., last_modified: ...}
+      return { data: decryptedData };
     } catch (error) {
       console.error('🔄 SIMPLE SYNC: Error pulling data:', error);
       return null;
@@ -748,7 +777,13 @@ class SimpleSyncService {
   // Expose encryption service (for compatibility)
   get encryptionService() {
     return {
-      decryptData: (blob) => this.decrypt(blob)
+      decryptData: (blob) => this.decrypt(blob),
+      getDeviceId: async () => Platform.OS,
+      initialize: async (phrase, syncId, salt) => {
+        // Compatibility method - does nothing as we handle this differently
+        console.log('🔄 SIMPLE SYNC: encryptionService.initialize called (compatibility mode)');
+        return true;
+      }
     };
   }
   
