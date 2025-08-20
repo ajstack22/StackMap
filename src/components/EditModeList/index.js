@@ -1,6 +1,6 @@
 // @ts-check
 import React, { useMemo } from 'react';
-import { FlatList, View, Dimensions, Platform } from 'react-native';
+import { FlatList, Dimensions, Platform } from 'react-native';
 import { EditModeListItem } from './EditModeListItem';
 import { styles } from './styles';
 import { useEditMode } from '../../hooks/useEditMode';

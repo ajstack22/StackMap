@@ -4264,7 +4264,7 @@ Users: ${userNames} (${userCount} total)
                 right: 0,
                 bottom: 0,
                 opacity: editListFadeAnim,
-                zIndex: isEditMode ? 2 : 0,
+                zIndex: isEditMode ? 1 : 0, // Lower z-index so toolbar can be on top
               }}
             >
               <EditModeList
@@ -4546,7 +4546,7 @@ Users: ${userNames} (${userCount} total)
         </View>
 
         {/* Edit Mode Toolbar - when banner is at bottom, toolbar goes to top */}
-        {/* Android Fix: Wrapper view with elevation to ensure proper layering */}
+        {/* Render AFTER content to ensure it's on top */}
         {showEditToolbar && bannerPosition === 'bottom' && (
           <View
             style={{
@@ -4554,9 +4554,9 @@ Users: ${userNames} (${userCount} total)
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 9999,
+              zIndex: 1000, // High z-index to be above EditModeList
               ...(Platform.OS === 'android' && {
-                elevation: 50, // Very high elevation for Android
+                elevation: 100, // Very high elevation for Android
                 backgroundColor: 'transparent', // Required for elevation to work
               }),
             }}
@@ -4651,51 +4651,6 @@ Users: ${userNames} (${userCount} total)
             </>
           ))}
 
-        {/* FABs - Moved before EditModeToolbar to ensure proper z-order */}
-        <FAB
-          icon="palette"
-          onPress={() => {
-            setShowUserModal(true);
-          }}
-          onLongPress={() => {
-            setShowUserModal(true);
-          }}
-          position={{ bottom: fabBottom, top: fabTop, left: 20 }}
-          theme={theme}
-        />
-
-        <FAB
-          icon={isEditMode ? 'edit-off' : 'edit'}
-          onPress={() => {
-            console.log('[FAB] Edit button pressed', {
-              isEditMode,
-              hasPinProtection,
-              showPinModal,
-            });
-            if (isEditMode) {
-              setIsEditMode(false);
-              // Switch to today when exiting edit mode
-              if (currentDay !== 'today') {
-                setCurrentDay('today');
-              }
-              // The toolbar will be removed after animation completes
-            } else {
-              if (hasPinProtection) {
-                // Ensure we're in verification mode, not setup mode
-                setIsSettingPin(false);
-                setPinInput('');
-                setConfirmPin('');
-                setShowPinModal(true);
-              } else {
-                setIsEditMode(true);
-              }
-            }
-          }}
-          position={{ bottom: fabBottom, top: fabTop, right: 20 }}
-          theme={isEditMode ? { primary: 'white' } : theme}
-          style={isEditMode ? { backgroundColor: '#f56565' } : {}}
-        />
-
         {/* Bottom Safe Area for Mobile only */}
         {bannerPosition === 'top' &&
           Platform.OS !== 'web' &&
@@ -4712,22 +4667,33 @@ Users: ${userNames} (${userCount} total)
             />
           ))}
 
-        {/* Edit Mode Toolbar - moved inside container for proper positioning */}
+        {/* Edit Mode Toolbar - when banner is at top, toolbar goes to bottom */}
         {showEditToolbar && bannerPosition === 'top' && (
-          <Animated.View
+          <View
             style={{
               position: 'absolute',
               bottom: 0,
               left: 0,
               right: 0,
-              transform: [{
-                translateY: editModeToolbarTranslate.interpolate({
-                  inputRange: [0, 100],
-                  outputRange: [0, 100],
-                })
-              }],
+              zIndex: 1000, // High z-index to be above EditModeList
+              ...(Platform.OS === 'android' && {
+                elevation: 100, // Very high elevation for Android
+                backgroundColor: 'transparent', // Required for elevation to work
+              }),
             }}
+            pointerEvents="box-none" // Allow touches to pass through transparent areas
           >
+            <Animated.View
+              style={{
+                transform: [{
+                  translateY: editModeToolbarTranslate.interpolate({
+                    inputRange: [0, 100],
+                    outputRange: [0, 100],
+                  })
+                }],
+              }}
+              pointerEvents="auto" // Capture touches for the toolbar itself
+            >
             <EditModeToolbar
               visible={isEditMode}
               onExit={() => {
@@ -4773,8 +4739,54 @@ Users: ${userNames} (${userCount} total)
             }}
             onMoreToggle={expanded => setEditToolbarMoreExpanded(expanded)}
             />
-          </Animated.View>
+            </Animated.View>
+          </View>
         )}
+
+        {/* FABs - Rendered last to ensure they're always on top */}
+        <FAB
+          icon="palette"
+          onPress={() => {
+            setShowUserModal(true);
+          }}
+          onLongPress={() => {
+            setShowUserModal(true);
+          }}
+          position={{ bottom: fabBottom, top: fabTop, left: 20, zIndex: 10000, elevation: 200 }}
+          theme={theme}
+        />
+
+        <FAB
+          icon={isEditMode ? 'edit-off' : 'edit'}
+          onPress={() => {
+            console.log('[FAB] Edit button pressed', {
+              isEditMode,
+              hasPinProtection,
+              showPinModal,
+            });
+            if (isEditMode) {
+              setIsEditMode(false);
+              // Switch to today when exiting edit mode
+              if (currentDay !== 'today') {
+                setCurrentDay('today');
+              }
+              // The toolbar will be removed after animation completes
+            } else {
+              if (hasPinProtection) {
+                // Ensure we're in verification mode, not setup mode
+                setIsSettingPin(false);
+                setPinInput('');
+                setConfirmPin('');
+                setShowPinModal(true);
+              } else {
+                setIsEditMode(true);
+              }
+            }
+          }}
+          position={{ bottom: fabBottom, top: fabTop, right: 20, zIndex: 10000, elevation: 200 }}
+          theme={isEditMode ? { primary: 'white' } : theme}
+          style={isEditMode ? { backgroundColor: '#f56565' } : {}}
+        />
       </View>
 
       {/* Add/Edit Activity Modal */}

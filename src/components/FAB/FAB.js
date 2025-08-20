@@ -30,7 +30,7 @@ const FAB = ({ onPress, icon, position = {}, theme, style, ...props }) => {
     }
 
     previousIcon.current = icon;
-  }, [icon]);
+  }, [icon, rotation]);
 
   const spin = rotation.interpolate({
     inputRange: [0, 1],
@@ -53,6 +53,7 @@ const FAB = ({ onPress, icon, position = {}, theme, style, ...props }) => {
       ]}
       onPress={onPress}
       activeOpacity={0.8}
+      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }} // Increase touch target
       {...props}
     >
       <Animated.View
