@@ -894,7 +894,8 @@ const App = () => {
       console.log('handleOnboardingComplete called with:', onboardingData);
 
       // Check if we have imported data passed directly from onboarding (new sync import flow)
-      if (onboardingData?.importedData) {
+      // OR if we completed abbreviated onboarding with sync
+      if (onboardingData?.importedData || onboardingData?.syncCompleted) {
         console.log('[ONBOARDING] Sync import completed - data already applied by syncService');
         console.log('[ONBOARDING] Sync is enabled and running');
         
