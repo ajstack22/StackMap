@@ -98,9 +98,23 @@ class SimpleSyncService {
    * Enable sync with recovery phrase
    */
   async enable(recoveryPhrase) {
-    if (!recoveryPhrase || recoveryPhrase.length !== 32) {
+    console.log('🔄 SIMPLE SYNC: enable() called with:', typeof recoveryPhrase, recoveryPhrase);
+    
+    // Generate new phrase if not provided (for compatibility with complex sync)
+    if (!recoveryPhrase) {
+      console.log('🔄 SIMPLE SYNC: No recovery phrase provided, generating new one');
+      recoveryPhrase = SimpleSyncService.generateRecoveryPhrase();
+    }
+    
+    // Type check
+    if (typeof recoveryPhrase !== 'string') {
+      console.error('❌ SIMPLE SYNC: Recovery phrase is not a string!', typeof recoveryPhrase, recoveryPhrase);
+      throw new Error('Invalid recovery phrase - must be a string');
+    }
+    
+    if (recoveryPhrase.length !== 32) {
       console.error('🔄 SIMPLE SYNC: Invalid recovery phrase length:', recoveryPhrase?.length);
-      throw new Error('Invalid recovery phrase');
+      throw new Error('Invalid recovery phrase - must be exactly 32 characters');
     }
 
     console.log('🔄 SIMPLE SYNC: Enabling with recovery phrase');
@@ -119,7 +133,13 @@ class SimpleSyncService {
     this.masterKey = hash.slice(16, 48);
     this.enabled = true;
     
-    console.log('🔄 SIMPLE SYNC: Enabled with syncId:', this.syncId);
+    // Validate syncId is a string
+    if (typeof this.syncId !== 'string') {
+      console.error('❌ SIMPLE SYNC: Generated syncId is not a string!', typeof this.syncId, this.syncId);
+      throw new Error('Failed to generate valid sync ID');
+    }
+    
+    console.log('🔄 SIMPLE SYNC: Enabled with syncId:', this.syncId, 'type:', typeof this.syncId);
 
     // Store settings
     await AsyncStorage.setItem('@sync_enabled', 'true');
@@ -131,7 +151,11 @@ class SimpleSyncService {
 
     syncDebugger.log('STATE', 'Sync enabled', { syncId: this.syncId });
     
-    return this.syncId;
+    // Return format compatible with complex sync service
+    return {
+      syncId: this.syncId,
+      recoveryPhrase: recoveryPhrase
+    };
   }
 
   /**
@@ -321,9 +345,16 @@ class SimpleSyncService {
       const deviceId = Platform.OS; // Use platform as simple device ID
       // Ensure absolute URL for React Native Web
       const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
+      // Validate syncId before building URL
+      if (typeof this.syncId !== 'string') {
+        console.error('❌ SIMPLE SYNC: syncId is not a string in sync()!', typeof this.syncId, this.syncId);
+        throw new Error('Invalid syncId - not a string');
+      }
+      
       const pullUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
       console.log('🔄 SIMPLE SYNC: sync() pull URL:', pullUrl);
       console.log('🔄 SIMPLE SYNC: this.API_URL value:', this.API_URL);
+      console.log('🔄 SIMPLE SYNC: this.syncId value:', this.syncId, 'type:', typeof this.syncId);
       console.log('🔄 SIMPLE SYNC: About to fetch:', pullUrl);
       
       // Use absolute URL - React Native requires this
@@ -397,14 +428,23 @@ class SimpleSyncService {
    * Push state to server
    */
   async pushState(state) {
+    // Validate syncId before making request
+    if (typeof this.syncId !== 'string') {
+      console.error('❌ SIMPLE SYNC: syncId is not a string in pushState()!', typeof this.syncId, this.syncId);
+      throw new Error('Invalid syncId - not a string');
+    }
+    
     const encryptedBlob = this.encrypt(state);
     const deviceId = Platform.OS; // Use platform as simple device ID
     
     // Ensure absolute URL for React Native Web
     const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
+    const pushUrl = `${baseUrl}/push.php`;
+    console.log('🔄 SIMPLE SYNC: pushState() - URL:', pushUrl);
+    console.log('🔄 SIMPLE SYNC: pushState() - syncId:', this.syncId, 'type:', typeof this.syncId);
     
     // First try to push (update existing)
-    const response = await fetch(`${baseUrl}/push.php`, {
+    const response = await fetch(pushUrl, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -588,9 +628,18 @@ class SimpleSyncService {
     if (!this.syncId) return false;
     
     try {
+      // Validate syncId type
+      if (typeof this.syncId !== 'string') {
+        console.error('❌ SIMPLE SYNC: verifySyncExists() - syncId is not a string!', typeof this.syncId, this.syncId);
+        return false;
+      }
+      
       const deviceId = Platform.OS;
       const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
-      const response = await fetch(`${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`);
+      const verifyUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
+      console.log('🔄 SIMPLE SYNC: verifySyncExists() - URL:', verifyUrl);
+      console.log('🔄 SIMPLE SYNC: verifySyncExists() - syncId:', this.syncId, 'type:', typeof this.syncId);
+      const response = await fetch(verifyUrl);
       
       // If we get a 404, sync doesn't exist
       if (response.status === 404) {

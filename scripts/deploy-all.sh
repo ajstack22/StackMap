@@ -312,6 +312,31 @@ echo ""
 # Track deployment status
 DEPLOYMENT_STATUS=""
 
+# Deploy to Web FIRST (fastest deployment)
+if [ "$DEPLOY_WEB" = true ] || [ "$DEPLOY_PROD" = true ]; then
+    echo "🌐 Deploying to Web..."
+    
+    if [ "$DEPLOY_WEB" = true ]; then
+        # Deploy to qual using new branch-based deployment
+        echo "Deploying to Qual..."
+        "$SCRIPT_DIR/deploy-with-tracking.sh" qual
+        
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Web Qual: v$NEW_VERSION"
+        echo "✅ Qual deployment complete"
+    fi
+    
+    if [ "$DEPLOY_PROD" = true ]; then
+        # Deploy to production using new branch-based deployment
+        echo "Deploying to Production..."
+        "$SCRIPT_DIR/deploy-with-tracking.sh" prod
+        
+        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Web Prod: v$NEW_VERSION"
+        echo "✅ Production deployment complete"
+    fi
+    
+    echo ""
+fi
+
 # Deploy to Android
 if [ "$DEPLOY_ANDROID" = true ]; then
     echo "🤖 Deploying to Android..."
@@ -371,31 +396,6 @@ if [ "$DEPLOY_IOS" = true ] || [ "$DEPLOY_IOS_DEVICE" = true ]; then
     fi
     
     echo "✅ iOS deployment complete"
-    echo ""
-fi
-
-# Deploy to Web
-if [ "$DEPLOY_WEB" = true ] || [ "$DEPLOY_PROD" = true ]; then
-    echo "🌐 Deploying to Web..."
-    
-    if [ "$DEPLOY_WEB" = true ]; then
-        # Deploy to qual using new branch-based deployment
-        echo "Deploying to Qual..."
-        "$SCRIPT_DIR/deploy-with-tracking.sh" qual
-        
-        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Web Qual: v$NEW_VERSION"
-        echo "✅ Qual deployment complete"
-    fi
-    
-    if [ "$DEPLOY_PROD" = true ]; then
-        # Deploy to production using new branch-based deployment
-        echo "Deploying to Production..."
-        "$SCRIPT_DIR/deploy-with-tracking.sh" prod
-        
-        DEPLOYMENT_STATUS="$DEPLOYMENT_STATUS\n✅ Web Prod: v$NEW_VERSION"
-        echo "✅ Production deployment complete"
-    fi
-    
     echo ""
 fi
 
