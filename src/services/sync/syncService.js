@@ -104,7 +104,7 @@ class SyncService {
   storeUnsubscribe = null;
   // Sync debouncing
   syncDebounceTimer = null;
-  syncDebounceDelay = 5000; // 5 seconds
+  syncDebounceDelay = 30000; // 30 seconds - increased to prevent reverting during edits
   // Sync lock mechanism
   syncInProgress = false;
   syncQueue = [];
@@ -1034,6 +1034,18 @@ class SyncService {
   async restoreData(data) {
     // Don't log full data as it could be huge
     // const dataInfo = data ? `type: ${data.type}, size: ~${Math.round(JSON.stringify(data).length / 1024)}KB` : 'null';
+    
+    // PROTECTION: Don't overwrite if we have very recent local changes (within 3 seconds)
+    const lastLocalChange = useAppStore.getState().lastModified || 0;
+    const now = Date.now();
+    if (lastLocalChange && (now - lastLocalChange) < 3000) {
+      console.log('[Sync] Skipping restore - local changes are too recent (within 3 seconds)');
+      syncDebugger.log('SKIP', 'Local changes too recent, preserving local state', {
+        timeSinceChange: now - lastLocalChange
+      });
+      return;
+    }
+    
     // Handle incremental sync data
     if (data.type === 'incremental' && data.patch) {
       const currentState = useAppStore.getState();
