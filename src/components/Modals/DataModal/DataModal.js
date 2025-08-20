@@ -912,6 +912,39 @@ const DataModal = ({
     }, 0);
   };
 
+  // Handle manual sync
+  const handleManualSync = async () => {
+    try {
+      setSyncStatus('syncing');
+      setSyncError('');
+      
+      const result = await syncService.performManualSync();
+      
+      if (result.success) {
+        setLastSyncTime(Date.now());
+        setSyncStatus('idle');
+        showToast({ 
+          message: 'Sync completed successfully',
+          type: 'success'
+        });
+      } else {
+        setSyncStatus('idle');
+        setSyncError(result.message || 'Sync failed');
+        showToast({ 
+          message: result.message || 'Sync failed',
+          type: 'error'
+        });
+      }
+    } catch (error) {
+      setSyncStatus('idle');
+      setSyncError(error.message);
+      showToast({ 
+        message: `Sync failed: ${error.message}`,
+        type: 'error'
+      });
+    }
+  };
+
   // Handle sync disable
   const handleDisableSync = async () => {
     try {
@@ -1846,6 +1879,18 @@ const DataModal = ({
                   setShowDeleteServerDataConfirm(true);
                 }
               }}
+              fullWidth
+            />
+            
+            {/* Manual Sync Button */}
+            <ModalButton
+              theme={theme}
+              variant="primary"
+              label="Sync Now"
+              icon="sync"
+              onPress={handleManualSync}
+              disabled={syncLoading || syncStatus === 'syncing'}
+              loading={syncStatus === 'syncing'}
               fullWidth
             />
           </View>

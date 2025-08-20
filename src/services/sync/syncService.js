@@ -88,10 +88,14 @@ class SyncService {
   initialized = false;
   // Sync interval management
   syncInterval = null;
-  syncIntervalDuration = 30000; // 30 seconds
+  syncIntervalDuration = 30000; // 30 seconds - disabled by default
+  usePeriodicSync = false; // New flag to control periodic sync
+  syncOnChange = true; // Sync after changes (with debounce)
+  changeDebounceDelay = 5000; // 5 seconds after last change
   // Sync timing
   lastSyncAttempt  = null;
   lastSyncSuccess  = null;
+  minTimeBetweenSyncs = 5000; // Minimum 5 seconds between syncs
   // Sync status
   syncStatus = 'idle';
   syncError  = null;
@@ -104,7 +108,7 @@ class SyncService {
   storeUnsubscribe = null;
   // Sync debouncing
   syncDebounceTimer = null;
-  syncDebounceDelay = 30000; // 30 seconds - increased to prevent reverting during edits
+  syncDebounceDelay = 10000; // 10 seconds - balance between real-time and stability
   // Sync lock mechanism
   syncInProgress = false;
   syncQueue = [];
@@ -133,28 +137,51 @@ class SyncService {
       // Sync when tab becomes visible (e.g., after computer wakes from sleep)
       document.addEventListener('visibilitychange', () => {
         if (!document.hidden && this.syncEnabled && this.syncId) {
-          console.log('sync: Tab became visible, triggering sync');
-          // Reset network state and trigger sync with delay
-          networkMonitor.isOnline = navigator.onLine;
-          setTimeout(() => this.syncWithQueue(), 1000); // Delay to let network stabilize
+          // Check if enough time has passed since last sync
+          const now = Date.now();
+          const timeSinceLastSync = now - (this.lastSyncAttempt || 0);
+          
+          if (timeSinceLastSync >= this.minTimeBetweenSyncs) {
+            console.log('sync: Tab became visible, triggering sync');
+            // Reset network state and trigger sync with delay
+            networkMonitor.isOnline = navigator.onLine;
+            setTimeout(() => this.syncWithQueue(), 1000); // Delay to let network stabilize
+          } else {
+            console.log(`sync: Tab visible but skipping sync (only ${timeSinceLastSync}ms since last sync)`);
+          }
         }
       });
       
       // Sync when window gains focus
       window.addEventListener('focus', () => {
         if (this.syncEnabled && this.syncId) {
-          console.log('sync: Window gained focus, triggering sync');
-          // Reset network state and trigger sync
-          networkMonitor.isOnline = navigator.onLine;
-          this.syncWithQueue();
+          // Check if enough time has passed since last sync
+          const now = Date.now();
+          const timeSinceLastSync = now - (this.lastSyncAttempt || 0);
+          
+          if (timeSinceLastSync >= this.minTimeBetweenSyncs) {
+            console.log('sync: Window gained focus, triggering sync');
+            // Reset network state and trigger sync
+            networkMonitor.isOnline = navigator.onLine;
+            this.syncWithQueue();
+          } else {
+            console.log(`sync: Window focused but skipping sync (only ${timeSinceLastSync}ms since last sync)`);
+          }
         }
       });
       // Also listen for online event in case network was disconnected
       window.addEventListener('online', () => {
         if (this.syncEnabled && this.syncId) {
-          console.log('sync: Network connection restored, triggering sync');
-          networkMonitor.isOnline = true;
-          setTimeout(() => this.syncWithQueue(), 2000); // Small delay for network stability
+          const now = Date.now();
+          const timeSinceLastSync = now - (this.lastSyncAttempt || 0);
+          
+          if (timeSinceLastSync >= this.minTimeBetweenSyncs) {
+            console.log('sync: Network connection restored, triggering sync');
+            networkMonitor.isOnline = true;
+            setTimeout(() => this.syncWithQueue(), 2000); // Small delay for network stability
+          } else {
+            console.log(`sync: Network online but skipping sync (only ${timeSinceLastSync}ms since last sync)`);
+          }
         }
       });
       
@@ -1549,16 +1576,20 @@ class SyncService {
     this.stopPeriodicSync();
     // Only start if sync is enabled
     if (!this.syncEnabled) return;
-    // Subscribe to store changes for immediate sync
-    this.subscribeToStoreChanges();
+    // Subscribe to store changes for automatic sync after changes
+    if (this.syncOnChange) {
+      this.subscribeToStoreChanges();
+    }
     // Start transaction cleanup
     this.startTransactionCleanup();
-    // Run immediate sync
+    // Run immediate sync on load
     this.syncWithQueue();
-    // Set up interval
-    this.syncInterval = setInterval(() => {
-      this.syncWithQueue();
-    }, this.syncIntervalDuration);
+    // Only set up interval if periodic sync is enabled
+    if (this.usePeriodicSync) {
+      this.syncInterval = setInterval(() => {
+        this.syncWithQueue();
+      }, this.syncIntervalDuration);
+    }
   }
   /**
    * Start transaction cleanup timer
@@ -1660,6 +1691,48 @@ class SyncService {
       console.error('Sync with queue failed:', error);
     }
   }
+  /**
+   * Perform manual sync - can be called from UI
+   * @returns {Promise<{success: boolean, message: string, timestamp?: number, error?: any}>}
+   */
+  async performManualSync() {
+    if (!this.syncEnabled || !this.syncId) {
+      throw new Error('Sync is not enabled');
+    }
+    
+    // Check if we're already syncing
+    if (this.syncStatus === 'syncing') {
+      console.log('[Sync] Manual sync requested but sync already in progress');
+      return { success: false, message: 'Sync already in progress' };
+    }
+    
+    try {
+      console.log('[Sync] Manual sync initiated by user');
+      const result = await this.syncWithQueue();
+      
+      if (result && result.success) {
+        return { 
+          success: true, 
+          message: 'Sync completed successfully',
+          timestamp: Date.now()
+        };
+      } else {
+        return { 
+          success: false, 
+          message: result?.message || 'Sync failed',
+          error: result?.error
+        };
+      }
+    } catch (error) {
+      console.error('[Sync] Manual sync failed:', error);
+      return { 
+        success: false, 
+        message: error.message || 'Sync failed',
+        error 
+      };
+    }
+  }
+  
   /**
    * Stop periodic sync
    */

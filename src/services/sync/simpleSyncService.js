@@ -601,6 +601,34 @@ class SimpleSyncService {
   }
 
   /**
+   * Perform manual sync - compatibility with complex sync service
+   * @returns {Promise<{success: boolean, message: string, timestamp?: number, error?: any}>}
+   */
+  async performManualSync() {
+    if (!this.enabled || !this.syncId) {
+      throw new Error('Sync is not enabled');
+    }
+    
+    try {
+      console.log('[Simple Sync] Manual sync initiated by user');
+      await this.sync();
+      
+      return { 
+        success: true, 
+        message: 'Sync completed successfully',
+        timestamp: Date.now()
+      };
+    } catch (error) {
+      console.error('[Simple Sync] Manual sync failed:', error);
+      return { 
+        success: false, 
+        message: error.message || 'Sync failed',
+        error 
+      };
+    }
+  }
+
+  /**
    * Check if sync is enabled
    */
   async isEnabled() {
