@@ -1031,12 +1031,19 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
                       setSyncLoading(true);
                       try {
                         // Initialize with the recovery phrase
+                        console.log('[ONBOARDING] Initializing sync with phrase:', syncSetupPhrase);
                         await syncService.initialize(syncSetupPhrase);
+                        
+                        // Wait a bit for sync to complete and stores to update
+                        console.log('[ONBOARDING] Waiting for sync to complete...');
+                        await new Promise(resolve => setTimeout(resolve, 1000));
 
                         // Check if sync restored users
                         const { useAppStore } = require('../../stores');
                         const fullState = useAppStore.getState();
                         const syncedUsers = fullState.users;
+                        
+                        console.log('[ONBOARDING] After sync, users found:', Object.keys(syncedUsers || {}).length);
 
                         // State restored from sync
 
@@ -1048,6 +1055,7 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
                           const userList = Object.values(syncedUsers);
                           setUsers(userList);
                           setSyncEnabled(true);
+                          console.log('[ONBOARDING] Sync restored users, continuing to features');
 
                           // Wait a moment for store to fully update
                           setTimeout(() => {
@@ -1057,6 +1065,7 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
                           }, 100);
                         } else {
                           // No users in synced data - this is OK for new syncs
+                          console.log('[ONBOARDING] No users from sync, continuing anyway');
                           setSyncLoading(false);
                           setSyncEnabled(true);
                           // Continue to features screen anyway

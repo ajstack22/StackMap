@@ -584,13 +584,39 @@ const App = () => {
         Object.keys(users).length === 0 &&
         !showOnboarding
       ) {
-        // WARNING: hasCompletedOnboarding is true but no users exist
-        // This is likely a bad state from a failed reset - fix it
-        // Fixing bad state - resetting hasCompletedOnboarding to false
-        setHasCompletedOnboarding(false);
-        setShowOnboarding(true);
+        // Check if sync is enabled - if so, wait for sync to provide users
+        const syncEnabled = await AsyncStorage.getItem('@sync_enabled');
+        if (syncEnabled === 'true') {
+          console.log('[App] Sync is enabled but no users yet - waiting for sync to complete');
+          // Give sync more time to load users
+          setTimeout(() => {
+            const currentUsers = useAppStore.getState().users;
+            if (Object.keys(currentUsers).length === 0) {
+              console.log('[App] Still no users after waiting - creating default user');
+              // Create a minimal default user to prevent issues
+              const defaultUser = {
+                id: Date.now().toString(),
+                name: 'User',
+                icon: '👤',
+                days: {
+                  today: { activities: [] },
+                  tomorrow: { activities: [] },
+                  yesterday: { activities: [] }
+                },
+                settings: {}
+              };
+              setUsers({ [defaultUser.id]: defaultUser });
+              setCurrentUser(defaultUser.id);
+            }
+          }, 2000);
+        } else {
+          // No sync, this is a bad state - reset onboarding
+          console.log('[App] No sync and no users - resetting onboarding');
+          setHasCompletedOnboarding(false);
+          setShowOnboarding(true);
+        }
         setIsInitializing(false);
-        return; // Don't create a default user
+        return;
       }
 
       // Always check secure storage as the source of truth for PIN
@@ -912,30 +938,13 @@ const App = () => {
           const currentUsers = useAppStore.getState().users;
           console.log('[handleOnboardingComplete] Delayed completion - users:', Object.keys(currentUsers).length);
           
-          // If we still don't have users, create a default one to prevent restart
-          if (Object.keys(currentUsers).length === 0) {
-            console.log('[handleOnboardingComplete] No users from sync, creating default user');
-            const defaultUser = {
-              id: Date.now().toString(),
-              name: 'Me',
-              icon: '👤',
-              days: {
-                today: { activities: [] },
-                tomorrow: { activities: [] },
-                yesterday: { activities: [] }
-              },
-              settings: {}
-            };
-            setUsers({ [defaultUser.id]: defaultUser });
-            setCurrentUser(defaultUser.id);
-          }
-          
           // Now mark onboarding as complete
+          // Trust that sync has provided the users or will provide them shortly
           setHasCompletedOnboarding(true);
           setShowOnboarding(false);
           showToast({ message: 'Data synced successfully' });
           console.log('[handleOnboardingComplete] Onboarding completed successfully');
-        }, 500); // Give sync service time to update stores
+        }, 1500); // Give sync service more time to update stores
         
         return; // Return here to prevent creating duplicate users below
       }
