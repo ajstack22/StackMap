@@ -109,7 +109,7 @@ class SyncService {
   storeUnsubscribe = null;
   // Sync debouncing
   syncDebounceTimer = null;
-  syncDebounceDelay = 10000; // 10 seconds - balance between real-time and stability
+  syncDebounceDelay = 15000; // 15 seconds - more time to batch changes and avoid conflicts
   // Sync lock mechanism
   syncInProgress = false;
   syncQueue = [];
@@ -742,23 +742,19 @@ class SyncService {
       this.updateSyncStatus('syncing');
       this.lastSyncAttempt = Date.now();
       
-      // Skip pulling if we just pushed within the last 2 seconds
+      // Skip pulling if we just pushed within the last 5 seconds
       // This prevents immediately overwriting our own changes
       const timeSinceLastPush = this.lastPushTime ? Date.now() - this.lastPushTime : Infinity;
-      if (timeSinceLastPush < 2000) {
-        console.log('[Sync] Skipping pull - just pushed', timeSinceLastPush, 'ms ago');
-        // Just push our current state without pulling
-        const pushResult = await this.pushData();
-        this.lastSyncVersion = pushResult.version;
-        await AsyncStorage.setItem('@sync_last_version', pushResult.version.toString());
-        this.lastSyncSuccess = Date.now();
+      if (timeSinceLastPush < 5000) {
+        console.log('[Sync] Skipping full sync - just pushed', timeSinceLastPush, 'ms ago');
+        // Don't pull or push, just return success with current version
+        // This prevents the rapid pull-push cycle that causes overwrites
         this.updateSyncStatus('success');
-        await AsyncStorage.setItem('@sync_last_success', this.lastSyncSuccess.toString());
-        changeTracker.markAsSynced();
         return {
           success: true,
-          version: pushResult.version,
-          lastModified: pushResult.lastModified,
+          version: this.lastSyncVersion,
+          skipped: true,
+          reason: 'Recently pushed'
         };
       }
       
@@ -844,10 +840,14 @@ class SyncService {
         if (conflicts.length > 0) {
           try {
             // Auto-resolve all conflicts (no user intervention)
+            // If we pushed recently, give more weight to local changes
+            const preferLocal = this.lastPushTime && (Date.now() - this.lastPushTime < 30000);
+            
             const resolutionResult =
               await conflictResolver.resolveConflicts(conflicts, {
                 strategy: 'last-write-wins',
                 autoResolveAll: true,
+                preferLocal, // Pass this hint to the resolver
               } );
             // Apply resolutions if any
             if (
