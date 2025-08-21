@@ -71,11 +71,48 @@ const baseStyles = {
     marginTop: 2,
   },
 
-  positionText: {
-    fontSize: 12,
+  editButton: {
+    padding: 4,
+    borderRadius: 4,
+    minWidth: 48,
+    minHeight: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  editButtonCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.15,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 4,
+      },
+      web: {
+        boxShadow: '0 3px 6px rgba(0,0,0,0.15)',
+      },
+    }),
+  },
+
+  timeBadge: {
+    width: 'auto',
+    paddingHorizontal: 10,
+    minWidth: 50,
+  },
+
+  numberText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: 'bold',
     fontFamily: 'ComicRelief',
-    color: '#999',
-    marginLeft: 8,
   },
 
   actionsRow: {
@@ -218,9 +255,26 @@ export const getTabletStyles = () => {
       ...baseStyles.description,
       fontSize: 15,
     },
-    positionText: {
-      ...baseStyles.positionText,
-      fontSize: 14,
+    editButton: {
+      ...baseStyles.editButton,
+      padding: 6,
+      minWidth: 52,
+      minHeight: 52,
+    },
+    editButtonCircle: {
+      ...baseStyles.editButtonCircle,
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+    },
+    timeBadge: {
+      ...baseStyles.timeBadge,
+      paddingHorizontal: 12,
+      minWidth: 56,
+    },
+    numberText: {
+      ...baseStyles.numberText,
+      fontSize: 18,
     },
     reorderButton: {
       ...baseStyles.reorderButton,

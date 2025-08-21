@@ -4512,6 +4512,7 @@ Users: ${userNames} (${userCount} total)
                   }
                 }}
                 theme={theme}
+                displayMode={displayMode}
               />
             </Animated.View>
           )}

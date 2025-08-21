@@ -14,6 +14,7 @@ export default function EditModeList({
   onDelete,
   theme,
   contentPadding,
+  displayMode,
 }) {
   const { handleMoveUp, handleMoveDown, handleDelete } = useEditMode(
     activities,
@@ -40,6 +41,7 @@ export default function EditModeList({
       onMoveDown={handleMoveDown}
       theme={theme}
       isTablet={isTablet()}
+      displayMode={displayMode}
     />
   );
 

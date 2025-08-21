@@ -18,6 +18,7 @@ export const EditModeListItem = React.memo(
     onMoveDown,
     theme,
     isTablet,
+    displayMode,
   }) => {
     const itemStyles = isTablet ? getTabletStyles() : styles;
 
@@ -40,11 +41,7 @@ export const EditModeListItem = React.memo(
     };
 
     return (
-      <TouchableOpacity
-        onPress={onEdit}
-        activeOpacity={0.7}
-        style={itemStyles.listItem}
-      >
+      <View style={itemStyles.listItem}>
         {/* Main content area */}
         <View style={itemStyles.contentRow}>
           <Text style={itemStyles.emoji}>{item.icon || '📝'}</Text>
@@ -59,10 +56,18 @@ export const EditModeListItem = React.memo(
             )}
           </View>
 
-          {/* Position indicator */}
-          <Text style={itemStyles.positionText}>
-            {index + 1} of {totalCount}
-          </Text>
+          {/* Edit button - more prominent, replacing position indicator */}
+          <TouchableOpacity
+            onPress={onEdit}
+            style={itemStyles.editButton}
+            accessibilityLabel="Edit activity"
+            accessibilityRole="button"
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+          >
+            <View style={[itemStyles.editButtonCircle, { backgroundColor: theme.primary }]}>
+              <Icon name="edit" size={isTablet ? 26 : 22} color="#fff" />
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* Unified actions row */}
@@ -122,6 +127,23 @@ export const EditModeListItem = React.memo(
 
           {/* Other actions */}
           <View style={itemStyles.actionButtons}>
+            {/* Number/Time Badge - aligned with other action buttons */}
+            {displayMode !== 'none' && (
+              <View style={itemStyles.actionButton}>
+                <View
+                  style={[
+                    itemStyles.actionCircle,
+                    { backgroundColor: theme.primary },
+                    displayMode === 'time' && itemStyles.timeBadge,
+                  ]}
+                >
+                  <Text style={itemStyles.numberText}>
+                    {displayMode === 'time' ? item.time || '--:--' : index + 1}
+                  </Text>
+                </View>
+              </View>
+            )}
+            
             <TouchableOpacity
               onPress={onToggle}
               style={itemStyles.actionButton}
@@ -190,7 +212,7 @@ export const EditModeListItem = React.memo(
             </TouchableOpacity>
           </View>
         </View>
-      </TouchableOpacity>
+      </View>
     );
   },
   // Custom comparison for better performance on Android
@@ -202,10 +224,12 @@ export const EditModeListItem = React.memo(
       prevProps.item.icon === nextProps.item.icon &&
       prevProps.item.completed === nextProps.item.completed &&
       prevProps.item.addedToLibrary === nextProps.item.addedToLibrary &&
+      prevProps.item.time === nextProps.item.time &&
       prevProps.index === nextProps.index &&
       prevProps.totalCount === nextProps.totalCount &&
       prevProps.theme.primary === nextProps.theme.primary &&
-      prevProps.isTablet === nextProps.isTablet
+      prevProps.isTablet === nextProps.isTablet &&
+      prevProps.displayMode === nextProps.displayMode
     );
   }
 );
