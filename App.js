@@ -3923,7 +3923,9 @@ Users: ${userNames} (${userCount} total)
             isEditMode && drag && Platform.OS === 'ios' ? drag() : null
           }
           disabled={isActive}
-          activeOpacity={0.9}
+          activeOpacity={Platform.OS === 'android' ? 0.6 : 0.9}
+          hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+          delayPressIn={Platform.OS === 'android' ? 0 : 100}
         >
           {/* Completion Circle */}
           <View
@@ -4007,6 +4009,8 @@ Users: ${userNames} (${userCount} total)
                     <TouchableOpacity
                       onPress={() => moveActivity(index, 'up')}
                       disabled={index === 0}
+                      activeOpacity={Platform.OS === 'android' ? 0.6 : 0.2}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       style={[
                         styles.reorderButton,
                         index === 0 && styles.reorderButtonDisabled,
@@ -4021,6 +4025,8 @@ Users: ${userNames} (${userCount} total)
                     <TouchableOpacity
                       onPress={() => moveActivity(index, 'down')}
                       disabled={index === activities.length - 1}
+                      activeOpacity={Platform.OS === 'android' ? 0.6 : 0.2}
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                       style={[
                         styles.reorderButton,
                         index === activities.length - 1 &&
@@ -4059,6 +4065,8 @@ Users: ${userNames} (${userCount} total)
                       setShowActivityModal(true);
                     }}
                     style={styles.editButton}
+                    activeOpacity={Platform.OS === 'android' ? 0.6 : 0.2}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                   >
                     <Icon name="edit" size={20} color={theme.primary} />
                   </TouchableOpacity>
@@ -4146,6 +4154,8 @@ Users: ${userNames} (${userCount} total)
                       backgroundColor: '#f56565',
                     },
                   ]}
+                  activeOpacity={Platform.OS === 'android' ? 0.6 : 0.2}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
                   <Icon name="delete" size={20} color="white" />
                 </TouchableOpacity>
@@ -4667,6 +4677,17 @@ Users: ${userNames} (${userCount} total)
                     : undefined
                 }
                 showsVerticalScrollIndicator={true}
+                // Android performance optimizations
+                removeClippedSubviews={Platform.OS === 'android'}
+                windowSize={10}
+                maxToRenderPerBatch={10}
+                initialNumToRender={10}
+                updateCellsBatchingPeriod={50}
+                getItemLayout={(data, index) => ({
+                  length: getCardHeight() + CARD_LAYOUT.gap,
+                  offset: (getCardHeight() + CARD_LAYOUT.gap) * index,
+                  index,
+                })}
                 contentContainerStyle={[
                   styles.listContent,
                   {

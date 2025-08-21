@@ -67,6 +67,7 @@
     "@types/react-test-renderer": "^19.1.0",
     "babel-loader": "^10.0.0",
     "babel-plugin-react-native-web": "^0.20.0",
+    "babel-plugin-transform-remove-console": "^6.9.4",
     "copy-webpack-plugin": "^13.0.0",
     "css-loader": "^7.1.2",
     "eslint": "^8.19.0",

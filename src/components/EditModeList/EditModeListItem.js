@@ -78,7 +78,7 @@ export const EditModeListItem = React.memo(
               ]}
               accessibilityLabel="Move up"
               accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <View
                 style={[
@@ -103,7 +103,7 @@ export const EditModeListItem = React.memo(
               ]}
               accessibilityLabel="Move down"
               accessibilityRole="button"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <View
                 style={[
@@ -128,7 +128,7 @@ export const EditModeListItem = React.memo(
               accessibilityLabel={
                 item.completed ? 'Mark incomplete' : 'Mark complete'
               }
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <View
                 style={[
@@ -159,7 +159,7 @@ export const EditModeListItem = React.memo(
               accessibilityLabel={
                 item.addedToLibrary ? 'Already in library' : 'Add to library'
               }
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <View
                 style={[
@@ -182,7 +182,7 @@ export const EditModeListItem = React.memo(
               onPress={handleDelete}
               style={itemStyles.actionButton}
               accessibilityLabel="Delete activity"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
             >
               <View style={itemStyles.actionCircle}>
                 <Icon name="delete" size={isTablet ? 24 : 20} color="#e53e3e" />
