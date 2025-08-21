@@ -978,6 +978,16 @@ const OnboardingUserCentered = ({
               <Text style={styles.buttonText}>Enable Sync</Text>
             )}
           </TouchableOpacity>
+          
+          <TouchableOpacity
+            style={styles.skipButton}
+            onPress={() => animateStepTransition('complete')}
+            disabled={syncLoading}
+          >
+            <Text style={[styles.skipButtonText, { color: defaultTheme.secondary }]}>
+              Skip for now
+            </Text>
+          </TouchableOpacity>
         </View>
         
         {syncError && (
