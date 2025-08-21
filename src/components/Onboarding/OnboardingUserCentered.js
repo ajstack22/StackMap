@@ -39,6 +39,7 @@ const OnboardingUserCentered = ({
   onImport,
   syncSetupPhrase = null,
   onShowPrivacy,
+  onShowSupport,
 }) => {
   const defaultTheme = {
     primary: THEMES?.stackBlue?.primary || '#5C7E9D',
@@ -543,16 +544,12 @@ const OnboardingUserCentered = ({
           </Text>
         </TouchableOpacity>
         
-        {Platform.OS === 'web' && (
+        {Platform.OS === 'web' && onShowSupport && (
           <>
             <Text style={styles.footerSeparator}>•</Text>
             <TouchableOpacity
               style={styles.footerLink}
-              onPress={() => {
-                if (Platform.OS === 'web') {
-                  window.open('https://buymeacoffee.com/adamstackmap', '_blank');
-                }
-              }}
+              onPress={() => onShowSupport?.()}
             >
               <Text style={[styles.footerLinkText, { color: defaultTheme.primary }]}>
                 Support StackMap

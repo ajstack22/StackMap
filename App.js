@@ -122,7 +122,6 @@ import {
 } from './src/components';
 import EditModeList from './src/components/EditModeList';
 import { EMPTY_CATEGORIES } from './src/components/ActivityLibrary/ActivityLibrary';
-import OnboardingNew from './src/components/Onboarding/OnboardingNew';
 import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
 import ShareView from './src/components/ShareView/ShareView';
 import PinModal from './src/components/Modals/PinModal';
@@ -253,7 +252,6 @@ const App = () => {
 
   // State
   const [showOnboarding, setShowOnboarding] = useState(false);
-  const [useUserCenteredOnboarding] = useState(true); // New user-centered onboarding is now the default
   const [isHydrated, setIsHydrated] = useState(false);
   const [showSetupWizard, setShowSetupWizard] = useState(false);
   // Removed - now using Zustand store
@@ -5610,12 +5608,11 @@ Users: ${userNames} (${userCount} total)
     return <ShareView shareToken={shareToken} theme={theme} />;
   }
 
-  // Show onboarding if needed (kept for backward compatibility)
+  // Show onboarding if needed
   if (showOnboarding) {
-    const OnboardingComponent = useUserCenteredOnboarding ? OnboardingUserCentered : OnboardingNew;
     return (
       <>
-        <OnboardingComponent
+        <OnboardingUserCentered
           onComplete={handleOnboardingComplete}
           onImport={async () => {
             // Create a version of importData that doesn't hide onboarding
@@ -5626,6 +5623,7 @@ Users: ${userNames} (${userCount} total)
             return result; // RETURN THE RESULT SO ONBOARDING CAN USE IT!
           }}
           onShowPrivacy={() => setShowPrivacyModal(true)}
+          onShowSupport={() => setShowSupportModal(true)}
           isAbbreviated={!!syncSetupPhrase}
           syncSetupPhrase={syncSetupPhrase}
         />

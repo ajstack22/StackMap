@@ -1,1 +1,1 @@
-export { default } from './OnboardingNew';
+export { default } from './OnboardingUserCentered';
