@@ -104,6 +104,9 @@ icon-color-preview.html
 /workbox-*.js
 /*.png
 /*.jpg
+# Allow webpack-generated image assets (hashed names)
+!/[0-9a-f]*.jpg
+!/[0-9a-f]*.png
 /fonts/
 /icons/
 /temp/
