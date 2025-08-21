@@ -82,8 +82,8 @@ android {
         applicationId "com.stackmapnative"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 20250812
-        versionName "2025.08.12.6"
+        versionCode 250801
+        versionName "25.08.01"
     }
     signingConfigs {
         debug {

@@ -14,7 +14,7 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import DeferredStorage from '../../utils/deferredStorage';
 import { DEFAULT_USER_ICON } from '../../constants';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -113,20 +113,32 @@ const OnboardingUserCentered = ({
     }).start();
   }, []);
 
-  // Step transition animation
+  // Step transition animation - optimized for iOS performance
   const animateStepTransition = (nextStep) => {
-    Animated.sequence([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
+    // On iOS, minimize animation overhead
+    if (Platform.OS === 'ios') {
+      // Simple fade without full transparency
+      fadeAnim.setValue(0.9);
       Animated.timing(fadeAnim, {
         toValue: 1,
-        duration: 150,
+        duration: 100,
         useNativeDriver: true,
-      }),
-    ]).start();
+      }).start();
+    } else {
+      // Full animation on other platforms
+      Animated.sequence([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
     
     setNavigationHistory(prev => [...prev, nextStep]);
     setCurrentStep(nextStep);
@@ -255,9 +267,11 @@ const OnboardingUserCentered = ({
       }
 
       // Enable sync and complete onboarding with imported data
-      // Use the same keys as syncService
-      await AsyncStorage.setItem('@sync_enabled', 'true');
-      await AsyncStorage.setItem('@sync_id', syncService.syncId);
+      // Use the same keys as syncService - batch for performance
+      await DeferredStorage.multiSet([
+        ['@sync_enabled', 'true'],
+        ['@sync_id', syncService.syncId]
+      ]);
       // Note: Recovery phrase is not stored, only kept in memory
       
       onComplete({
@@ -438,9 +452,11 @@ const OnboardingUserCentered = ({
       // Since we're not marking as synced in initialize for new syncs,
       // the first periodic sync will push all the data
       
-      // Use the same keys as syncService
-      await AsyncStorage.setItem('@sync_enabled', 'true');
-      await AsyncStorage.setItem('@sync_id', syncService.syncId);
+      // Use the same keys as syncService - batch for performance
+      await DeferredStorage.multiSet([
+        ['@sync_enabled', 'true'],
+        ['@sync_id', syncService.syncId]
+      ]);
       // Note: Recovery phrase is not stored, only kept in memory
       
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));

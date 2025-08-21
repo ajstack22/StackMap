@@ -105,7 +105,7 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
               disabled={justAdded}
             >
               <Icon
-                name={justAdded ? 'check' : 'add-circle'}
+                name={justAdded ? 'check' : 'add-circle-outline'}
                 size={20}
                 color={justAdded ? '#4CAF50' : theme.primary}
               />
@@ -271,7 +271,7 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
               disabled={justAdded}
             >
               <Icon
-                name={justAdded ? 'check' : 'add-circle'}
+                name={justAdded ? 'check' : 'add-circle-outline'}
                 size={20}
                 color={justAdded ? '#4CAF50' : theme.primary}
               />
