@@ -92,38 +92,4 @@ export const useSimpleSync = () => {
   }, []);
 };
 
-// Helper to enable simple sync from console
-if (typeof window !== 'undefined') {
-  window.enableSimpleSync = async (recoveryPhrase) => {
-    if (!recoveryPhrase) {
-      console.log('Usage: enableSimpleSync("your-32-character-recovery-phrase")');
-      return;
-    }
-    
-    window.USE_SIMPLE_SYNC = true;
-    const SimpleSyncService = require('../services/sync/simpleSyncService').default;
-    const SyncDebugger = require('../utils/syncDebugger').default;
-    
-    SyncDebugger.enable();
-    await SimpleSyncService.enable(recoveryPhrase);
-    
-    console.log('✅ Simple sync enabled!');
-    console.log('To sync manually: simpleSyncService.sync()');
-    console.log('To see debug logs: syncDebugger.showHistory()');
-    console.log('To compare states: syncDebugger.compareStates(state1, state2)');
-    
-    // Make service available globally for debugging
-    window.simpleSyncService = SimpleSyncService;
-    window.syncDebugger = SyncDebugger;
-  };
-
-  window.testSimpleSync = () => {
-    console.log('=== SIMPLE SYNC TEST MODE ===');
-    console.log('1. Enable debug mode: window.SYNC_DEBUG = true');
-    console.log('2. Enable simple sync: window.USE_SIMPLE_SYNC = true');
-    console.log('3. Set recovery phrase: enableSimpleSync("your-phrase-here")');
-    console.log('4. Make changes and watch the console for sync logs');
-    console.log('5. Check sync history: syncDebugger.showHistory()');
-    console.log('6. Force sync: simpleSyncService.sync()');
-  };
-}
+// Production build - no debug helpers exposed

@@ -152,13 +152,6 @@ class StateDebugger {
 
 const stateDebugger = new StateDebugger();
 
-// Add to window for debugging
-if (typeof window !== 'undefined') {
-  window.stateDebugger = stateDebugger;
-  window.trackStateChanges = () => stateDebugger.enable();
-  window.stopTrackingState = () => stateDebugger.disable();
-  
-  console.log('💡 To track state changes: trackStateChanges()');
-}
+// Production build - no debug helpers exposed
 
 export default stateDebugger;

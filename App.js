@@ -564,6 +564,45 @@ const App = () => {
         }
       }
 
+      // Cleanup old deleted activities (ones that were soft-deleted in previous sessions)
+      // This handles any deleted items that lingered from before the hard-delete fix
+      if (Object.keys(users).length > 0) {
+        let cleanupNeeded = false;
+        const cleanedUsers = {};
+        
+        Object.entries(users).forEach(([userId, user]) => {
+          const cleanedUser = { ...user };
+          
+          if (user.days) {
+            const cleanedDays = {};
+            Object.entries(user.days).forEach(([day, dayData]) => {
+              if (dayData?.activities) {
+                // Remove any activities marked as deleted
+                const cleanedActivities = dayData.activities.filter(a => !a.deleted);
+                if (cleanedActivities.length < dayData.activities.length) {
+                  cleanupNeeded = true;
+                  console.log(`Cleaning up ${dayData.activities.length - cleanedActivities.length} deleted activities for ${userId} on ${day}`);
+                }
+                cleanedDays[day] = {
+                  ...dayData,
+                  activities: cleanedActivities
+                };
+              } else {
+                cleanedDays[day] = dayData;
+              }
+            });
+            cleanedUser.days = cleanedDays;
+          }
+          
+          cleanedUsers[userId] = cleanedUser;
+        });
+        
+        if (cleanupNeeded) {
+          console.log('Cleaned up old deleted activities from previous sessions');
+          setUsers(cleanedUsers);
+        }
+      }
+
       // Check if we should show onboarding
       // IMPORTANT: Only show onboarding on initial load, not if already showing
       if (
@@ -2019,7 +2058,7 @@ const App = () => {
     const deletedActivity = activities.find(a => a.id === id);
     const deletedIndex = activities.findIndex(a => a.id === id);
 
-    // Mark the activity as deleted instead of removing it
+    // Mark the activity as deleted instead of removing it (for undo functionality)
     const updatedActivities = activities.map(a =>
       a.id === id ? { ...a, deleted: true, deletedAt: Date.now() } : a,
     );
@@ -2045,12 +2084,17 @@ const App = () => {
       updateAutoUpdateShares(currentUser);
     }
 
+    // Track if undo was pressed
+    let wasUndone = false;
+
     // Show toast with undo
     showToast({
       message: 'Activity deleted',
       action: {
         label: 'Undo',
         onPress: () => {
+          wasUndone = true;
+          
           // Restore the activity by removing the deleted flag
           const restoredActivities = activities.map(a =>
             a.id === id ? { ...a, deleted: false, deletedAt: undefined } : a,
@@ -2078,6 +2122,36 @@ const App = () => {
         },
       },
     });
+
+    // Schedule hard delete after toast expires (unless undone)
+    setTimeout(() => {
+      if (!wasUndone) {
+        // Hard delete - actually remove from array
+        const currentUserData = users[currentUser];
+        const currentActivities = currentUserData?.days?.[currentDay]?.activities || [];
+        const hardDeletedActivities = currentActivities.filter(a => a.id !== id);
+        
+        // Update with hard deleted array
+        updateUserActivities(currentUser, currentDay, hardDeletedActivities);
+        
+        // Also update users state
+        if (currentUser && users[currentUser]) {
+          const updatedUsers = {
+            ...users,
+            [currentUser]: {
+              ...users[currentUser],
+              days: {
+                ...users[currentUser].days,
+                [currentDay]: {
+                  activities: hardDeletedActivities,
+                },
+              },
+            },
+          };
+          setUsers(updatedUsers);
+        }
+      }
+    }, TOAST_DURATION + 500); // Add 500ms buffer to ensure toast is fully gone
   };
 
   const reorderActivities = (fromIndex, toIndex) => {
