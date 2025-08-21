@@ -105,7 +105,7 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
               disabled={justAdded}
             >
               <Icon
-                name={justAdded ? 'check' : 'add-circle-outline'}
+                name={justAdded ? 'check' : 'add-box'}
                 size={20}
                 color={justAdded ? '#4CAF50' : theme.primary}
               />
@@ -271,7 +271,7 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
               disabled={justAdded}
             >
               <Icon
-                name={justAdded ? 'check' : 'add-circle-outline'}
+                name={justAdded ? 'check' : 'add-box'}
                 size={20}
                 color={justAdded ? '#4CAF50' : theme.primary}
               />
@@ -606,7 +606,7 @@ const CategorySection = ({
                       disabled={justAddedAll}
                     >
                       <Icon
-                        name={justAddedAll ? 'done-all' : 'add-circle-outline'}
+                        name={justAddedAll ? 'done-all' : 'playlist-add'}
                         size={20}
                         color="white"
                       />
@@ -692,7 +692,7 @@ const CategorySection = ({
                                   name={
                                     justAddedAll
                                       ? 'done-all'
-                                      : 'add-circle-outline'
+                                      : 'playlist-add'
                                   }
                                   size={20}
                                   color={justAddedAll ? 'white' : theme.primary}
@@ -819,7 +819,7 @@ const CategorySection = ({
                                     name={
                                       justAddedAll
                                         ? 'done-all'
-                                        : 'add-circle-outline'
+                                        : 'playlist-add'
                                     }
                                     size={24}
                                     color={
@@ -941,7 +941,7 @@ const CategorySection = ({
                       disabled={justAddedAll}
                     >
                       <Icon
-                        name={justAddedAll ? 'done-all' : 'add-circle-outline'}
+                        name={justAddedAll ? 'done-all' : 'playlist-add'}
                         size={20}
                         color="white"
                       />
