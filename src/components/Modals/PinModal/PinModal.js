@@ -114,6 +114,10 @@ const PinModal = ({
               maxLength={4}
               autoFocus
               secureTextEntry
+              autoComplete="off"
+              autoCorrect={false}
+              autoCapitalize="none"
+              spellCheck={false}
             />
           )}
 

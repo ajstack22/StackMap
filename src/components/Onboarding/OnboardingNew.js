@@ -1775,6 +1775,10 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
                         secureTextEntry={true}
                         maxLength={4}
                         autoFocus
+                        autoComplete="off"
+                        autoCorrect={false}
+                        autoCapitalize="none"
+                        spellCheck={false}
                       />
                     </View>
 
@@ -1802,6 +1806,10 @@ ${result.summary.hasPin ? '• PIN protection enabled' : ''}`,
                         keyboardType="numeric"
                         secureTextEntry={true}
                         maxLength={4}
+                        autoComplete="off"
+                        autoCorrect={false}
+                        autoCapitalize="none"
+                        spellCheck={false}
                       />
                     </View>
 

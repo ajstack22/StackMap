@@ -834,6 +834,10 @@ const OnboardingUserCentered = ({
           keyboardType="numeric"
           secureTextEntry
           maxLength={4}
+          autoComplete="off"
+          autoCorrect={false}
+          autoCapitalize="none"
+          spellCheck={false}
         />
         
         {pin.length === 4 && (
@@ -845,6 +849,10 @@ const OnboardingUserCentered = ({
             keyboardType="numeric"
             secureTextEntry
             maxLength={4}
+            autoComplete="off"
+            autoCorrect={false}
+            autoCapitalize="none"
+            spellCheck={false}
           />
         )}
         
