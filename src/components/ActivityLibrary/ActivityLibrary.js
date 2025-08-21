@@ -96,7 +96,7 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
         {isMobile ? (
           <>
             <TouchableOpacity
-              style={[styles.iconButton, { marginRight: SPACING.xs }]}
+              style={[styles.addIconButton, { marginRight: SPACING.xs, backgroundColor: justAdded ? '#4CAF50' : theme.primary }]}
               onPress={() => {
                 onQuickAdd(activity);
                 setJustAdded(true);
@@ -105,9 +105,9 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
               disabled={justAdded}
             >
               <Icon
-                name={justAdded ? 'check' : 'add-box'}
+                name={justAdded ? 'check' : 'add'}
                 size={20}
-                color={justAdded ? '#4CAF50' : theme.primary}
+                color="white"
               />
             </TouchableOpacity>
 
@@ -262,7 +262,7 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={styles.iconButton}
+              style={[styles.addIconButton, { backgroundColor: justAdded ? '#4CAF50' : theme.primary }]}
               onPress={() => {
                 onQuickAdd(activity);
                 setJustAdded(true);
@@ -271,9 +271,9 @@ const ActivityRow = ({ activity, onEdit, onDelete, onQuickAdd, theme }) => {
               disabled={justAdded}
             >
               <Icon
-                name={justAdded ? 'check' : 'add-box'}
+                name={justAdded ? 'check' : 'add'}
                 size={20}
-                color={justAdded ? '#4CAF50' : theme.primary}
+                color="white"
               />
             </TouchableOpacity>
           </>
@@ -606,7 +606,7 @@ const CategorySection = ({
                       disabled={justAddedAll}
                     >
                       <Icon
-                        name={justAddedAll ? 'done-all' : 'playlist-add'}
+                        name={justAddedAll ? 'check' : 'add'}
                         size={20}
                         color="white"
                       />
@@ -692,7 +692,7 @@ const CategorySection = ({
                                   name={
                                     justAddedAll
                                       ? 'done-all'
-                                      : 'playlist-add'
+                                      : 'add'
                                   }
                                   size={20}
                                   color={justAddedAll ? 'white' : theme.primary}
@@ -819,7 +819,7 @@ const CategorySection = ({
                                     name={
                                       justAddedAll
                                         ? 'done-all'
-                                        : 'playlist-add'
+                                        : 'add'
                                     }
                                     size={24}
                                     color={
@@ -941,7 +941,7 @@ const CategorySection = ({
                       disabled={justAddedAll}
                     >
                       <Icon
-                        name={justAddedAll ? 'done-all' : 'playlist-add'}
+                        name={justAddedAll ? 'check' : 'add'}
                         size={20}
                         color="white"
                       />
@@ -1609,7 +1609,7 @@ const ActivityLibrary = ({
             }
             keyExtractor={item => item.id}
             showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: SPACING.lg }}
+            contentContainerStyle={{ paddingBottom: 0 }}
             scrollEnabled={!isDraggingAnyCategory && !isSortMode}
             activationDistance={
               activeTab === 'stackmap' ? 999999 : isSortMode ? 0 : 20
@@ -1778,7 +1778,7 @@ const ActivityLibrary = ({
           <View
             style={{
               backgroundColor: theme.light,
-              height: Math.max(insets.bottom, 20),
+              height: insets.bottom || 0,
             }}
           />
         )}
@@ -1793,7 +1793,9 @@ const styles = StyleSheet.create({
   },
   contentWrapper: {
     flex: 1,
-    padding: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingBottom: 0,
   },
   tabContainer: {
     flexDirection: 'row',
@@ -1958,6 +1960,14 @@ const styles = StyleSheet.create({
   iconButton: {
     width: 36,
     height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: SPACING.xs,
+  },
+  addIconButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginLeft: SPACING.xs,
