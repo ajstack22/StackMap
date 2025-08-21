@@ -48,7 +48,7 @@ const SupportModal = ({ visible, onClose, insets }) => {
         <View style={styles.photoAndImpactContainer}>
           <View style={styles.photoContainer}>
             <Image
-              source={Platform.OS === 'web' ? { uri: teamPhotoSource } : teamPhotoSource}
+              source={teamPhotoSource}
               style={styles.teamPhoto}
               resizeMode="contain"
             />

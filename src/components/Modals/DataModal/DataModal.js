@@ -1655,18 +1655,16 @@ const DataModal = ({
 
             {!showRecoveryInput ? (
               <View style={styles.inPanelButtonContainer}>
-                {Platform.OS === 'web' && (
-                  <ModalButton
-                    theme={theme}
-                    variant="primary"
-                    label="Create New Sync"
-                    icon="add-circle"
-                    onPress={handleEnableSync}
-                    disabled={syncLoading}
-                    loading={syncLoading}
-                    fullWidth
-                  />
-                )}
+                <ModalButton
+                  theme={theme}
+                  variant="primary"
+                  label="Create New Sync"
+                  icon="add-circle"
+                  onPress={handleEnableSync}
+                  disabled={syncLoading}
+                  loading={syncLoading}
+                  fullWidth
+                />
 
                 <ModalButton
                   theme={theme}
