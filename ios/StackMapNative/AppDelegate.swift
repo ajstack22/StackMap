@@ -2,6 +2,7 @@ import UIKit
 import React
 import React_RCTAppDelegate
 import ReactAppDependencyProvider
+import CoreText
 
 @main
 class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -14,6 +15,38 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
   ) -> Bool {
+    // Manually register vector icon fonts
+    let fonts = [
+      "MaterialIcons",
+      "MaterialCommunityIcons",
+      "Ionicons",
+      "FontAwesome",
+      "AntDesign",
+      "Entypo",
+      "EvilIcons",
+      "Feather",
+      "Foundation",
+      "Octicons",
+      "SimpleLineIcons",
+      "Zocial",
+      "Fontisto"
+    ]
+    
+    for fontName in fonts {
+      if let fontPath = Bundle.main.path(forResource: fontName, ofType: "ttf"),
+         let fontData = NSData(contentsOfFile: fontPath),
+         let dataProvider = CGDataProvider(data: fontData),
+         let font = CGFont(dataProvider) {
+        var error: Unmanaged<CFError>?
+        if !CTFontManagerRegisterGraphicsFont(font, &error) {
+          if let error = error?.takeRetainedValue() {
+            let errorDescription = CFErrorCopyDescription(error)
+            print("Failed to register font \(fontName): \(String(describing: errorDescription))")
+          }
+        }
+      }
+    }
+    
     let delegate = ReactNativeDelegate()
     let factory = RCTReactNativeFactory(delegate: delegate)
     delegate.dependencyProvider = RCTAppDependencyProvider()
