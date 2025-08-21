@@ -184,9 +184,17 @@ const LibraryTabContent = ({
                 `Added: ${activity.icon || ''} ${activity.text || ''}`,
               );
             }}
-            style={styles.iconButton}
+            style={[styles.iconButton, {
+              backgroundColor: theme.primary,
+              borderRadius: 12,
+              width: 24,
+              height: 24,
+              padding: 0,
+              alignItems: 'center',
+              justifyContent: 'center',
+            }]}
           >
-            <Icon name="add" size={20} color={theme.primary} />
+            <Text style={{ color: 'white', fontSize: 18, lineHeight: 18, fontWeight: 'bold' }}>+</Text>
           </TouchableOpacity>
           {!isSystemProvided && (
             <TouchableOpacity
@@ -198,9 +206,17 @@ const LibraryTabContent = ({
                 });
                 setShowDeleteConfirm(true);
               }}
-              style={styles.iconButton}
+              style={[styles.iconButton, {
+                backgroundColor: '#e53e3e',
+                borderRadius: 12,
+                width: 24,
+                height: 24,
+                padding: 0,
+                alignItems: 'center',
+                justifyContent: 'center',
+              }]}
             >
-              <Icon name="delete" size={20} color="#e53e3e" />
+              <Text style={{ color: 'white', fontSize: 18, lineHeight: 18, fontWeight: 'bold' }}>×</Text>
             </TouchableOpacity>
           )}
         </View>

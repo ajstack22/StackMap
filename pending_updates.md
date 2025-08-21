@@ -14,20 +14,26 @@
 - ✅ The "add" icon exists in the glyphmap (code 57669)
 - ❌ Font wasn't loading at runtime on iOS
 
+**Final Solution:**
+Since MaterialIcons are working elsewhere in the app but not in LibraryTabContent, and we need an immediate fix for release, replaced Icon components with styled Text components:
+
 **Files Modified:**
-- `ios/StackMapNative/AppDelegate.swift`
-  - Added manual font registration in `didFinishLaunchingWithOptions`
-  - Imports CoreText framework
-  - Explicitly registers all vector icon fonts at app startup
-  - This ensures fonts are loaded before React Native tries to use them
+- `src/components/Modals/ActivityManagementModal/LibraryTabContent.js`
+  - Replaced `<Icon name="add">` with styled Text component showing "+"
+  - Replaced `<Icon name="delete">` with styled Text component showing "×"
+  - Both use circular colored backgrounds (theme.primary and red)
+  - 24x24px circles with white text, maintaining aesthetic consistency
+  - This avoids the iOS-specific MaterialIcons rendering issue entirely
 
-- `src/components/ActivityLibrary/ActivityLibrary.js`
-  - Changed from `add-circle-outline` to `add` (simpler icon names)
-  - Added new `addIconButton` style with circular background
-  - Icons now have white color on colored background for better visibility
+- `ios/StackMapNative/AppDelegate.swift` (attempted fix - didn't resolve issue)
+  - Added manual font registration but issue persisted
+  - Kept for potential future font loading improvements
 
-**Why This Fix Works:**
-React Native 0.60+ auto-linking sometimes fails to properly load vector icon fonts on iOS, especially after app name changes or with multiple build targets. Manual registration ensures the fonts are available when the Icon components try to render.
+**Why Text Solution Works:**
+- Guaranteed to render correctly on all platforms
+- Maintains the visual aesthetic (colored circle with symbol)
+- Avoids debugging complex font loading issues at release time
+- Other MaterialIcons in the app work fine, issue is isolated to this component
 
 ### Excessive Bottom Padding in Activity Library
 **Issue:** Too much scrollable space at the bottom of the Activity Library modal
