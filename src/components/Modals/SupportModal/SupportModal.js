@@ -43,11 +43,24 @@ const SupportModal = ({ visible, onClose, insets }) => {
 
         <View style={styles.photoAndImpactContainer}>
           <View style={styles.photoContainer}>
-            <Image
-              source={Platform.OS === 'web' ? { uri: TeamPhoto } : TeamPhoto}
-              style={styles.teamPhoto}
-              resizeMode="contain"
-            />
+            {Platform.OS === 'web' ? (
+              <img
+                src={TeamPhoto}
+                style={{
+                  width: '100%',
+                  height: 300,
+                  borderRadius: 15,
+                  objectFit: 'cover',
+                }}
+                alt="The StackMap Team"
+              />
+            ) : (
+              <Image
+                source={TeamPhoto}
+                style={styles.teamPhoto}
+                resizeMode="contain"
+              />
+            )}
             <Text style={styles.teamCaption}>The StackMap Team</Text>
           </View>
 
