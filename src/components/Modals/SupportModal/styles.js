@@ -118,7 +118,7 @@ export const styles = StyleSheet.create({
     width: '100%',
     height: 300,
     borderRadius: 15,
-    objectFit: 'cover',
+    ...(Platform.OS === 'web' && { objectFit: 'cover' }),
   },
   impactWrapper: {
     width: 450,

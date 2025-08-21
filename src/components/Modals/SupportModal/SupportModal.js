@@ -15,9 +15,12 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { styles } from './styles';
 import { BuyMeCoffeeButton, Logo } from '../..';
 import { getAndroidModalBottomHeight } from '../../../utils/modalHelpers';
+import TeamPhoto from '../../../../image_library/StackMapTeam.jpg';
 
-// Import team photo
-const teamPhotoSource = require('../../../../image_library/StackMapTeam.jpg');
+// Debug log for web
+if (Platform.OS === 'web') {
+  console.log('[SupportModal] Team photo import:', TeamPhoto);
+}
 
 const SupportModal = ({ visible, onClose, insets }) => {
   const [scrollKey, setScrollKey] = useState(0);
@@ -41,7 +44,7 @@ const SupportModal = ({ visible, onClose, insets }) => {
         <View style={styles.photoAndImpactContainer}>
           <View style={styles.photoContainer}>
             <Image
-              source={Platform.OS === 'web' ? { uri: teamPhotoSource } : teamPhotoSource}
+              source={Platform.OS === 'web' ? { uri: TeamPhoto } : TeamPhoto}
               style={styles.teamPhoto}
               resizeMode="contain"
             />
