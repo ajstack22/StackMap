@@ -88,8 +88,19 @@ const useSettingsStore = create(
         moreButtonPosition: 'left',
 
         // Actions for Theme & Settings
-        setCurrentTheme: theme =>
-          set({ currentTheme: theme }, false, 'setCurrentTheme'),
+        setCurrentTheme: theme => {
+          // Import THEMES if needed (lazy import to avoid circular dependency)
+          const { THEMES } = require('../constants');
+          
+          // Validate the theme before setting
+          if (!theme || !THEMES[theme]) {
+            console.error(`[SettingsStore] Invalid theme "${theme}", using stackBlue`);
+            set({ currentTheme: 'stackBlue' }, false, 'setCurrentTheme');
+            return;
+          }
+          
+          set({ currentTheme: theme }, false, 'setCurrentTheme');
+        },
         setBannerPosition: position => {
           console.log('[SettingsStore] Setting banner position to:', position);
           set({ bannerPosition: position }, false, 'setBannerPosition');

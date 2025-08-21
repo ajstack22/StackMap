@@ -33,6 +33,11 @@ const PreferencesModal = ({
   getAndroidModalBottomHeight,
 }) => {
   const preferencesScrollRef = useRef(null);
+  
+  // Safety check: ensure theme is valid
+  const safeTheme = theme && theme.primary && theme.dark && theme.light 
+    ? theme 
+    : THEMES.stackBlue;
 
   const handleThemeChange = color => {
     // Safety check: ensure the theme exists
@@ -50,7 +55,7 @@ const PreferencesModal = ({
       <View style={styles.section}>
         {/* Header */}
         <View style={styles.standardTabContainer}>
-          <Icon name="palette" size={48} color={theme.primary} />
+          <Icon name="palette" size={48} color={safeTheme.primary} />
           <Text style={styles.standardTabTitle}>Theme</Text>
           <Text style={styles.standardTabDescription}>
             Choose your preferred color theme
@@ -71,10 +76,15 @@ const PreferencesModal = ({
             // Only show first 20 themes (4x5 grid)
             return reorderedThemes.slice(0, 20).map(color => {
               // Safety check: ensure the theme exists before rendering
-              if (!THEMES[color]) {
+              if (!color || !THEMES[color]) {
                 console.warn(`Theme "${color}" not found in THEMES`);
                 return null;
               }
+              
+              // Validate currentTheme to prevent comparison issues
+              const isSelected = currentTheme && THEMES[currentTheme] 
+                ? currentTheme === color 
+                : false;
               
               return (
                 <View
@@ -85,11 +95,11 @@ const PreferencesModal = ({
                     style={[
                       styles.colorOption,
                       { backgroundColor: THEMES[color].primary },
-                      currentTheme === color && styles.colorSelected,
+                      isSelected && styles.colorSelected,
                     ]}
                     onPress={() => handleThemeChange(color)}
                   >
-                    {currentTheme === color && (
+                    {isSelected && (
                       <Icon name="check" size={20} color="white" />
                     )}
                   </TouchableOpacity>
@@ -135,23 +145,23 @@ const PreferencesModal = ({
     >
       {Platform.OS === 'android' && (
         <StatusBar
-          backgroundColor={theme.primary}
+          backgroundColor={safeTheme.primary}
           barStyle="light-content"
           translucent={false}
         />
       )}
-      <View style={[styles.modalContainer, { backgroundColor: theme.light }]}>
+      <View style={[styles.modalContainer, { backgroundColor: safeTheme.light }]}>
         {Platform.OS === 'android' && (
           <View
             style={{
-              backgroundColor: theme.primary,
+              backgroundColor: safeTheme.primary,
               height: StatusBar.currentHeight || 24,
             }}
           />
         )}
-        <SafeAreaView style={{ backgroundColor: theme.primary }}>
+        <SafeAreaView style={{ backgroundColor: safeTheme.primary }}>
           <View
-            style={[styles.modalHeader, { backgroundColor: theme.primary }]}
+            style={[styles.modalHeader, { backgroundColor: safeTheme.primary }]}
           >
             <View style={styles.headerLeft}>
               <Icon
@@ -179,7 +189,7 @@ const PreferencesModal = ({
           </View>
         </SafeAreaView>
 
-        <View style={{ flex: 1, backgroundColor: theme.light }}>
+        <View style={{ flex: 1, backgroundColor: safeTheme.light }}>
           {/* Use FlatList wrapper for better Android performance */}
           <FlatList
             ref={preferencesScrollRef}
@@ -193,11 +203,11 @@ const PreferencesModal = ({
             contentContainerStyle={{ flexGrow: 1 }}
           />
         </View>
-        <SafeAreaView style={{ backgroundColor: theme.light }} />
+        <SafeAreaView style={{ backgroundColor: safeTheme.light }} />
         {Platform.OS === 'android' && (
           <View
             style={{
-              backgroundColor: theme.light,
+              backgroundColor: safeTheme.light,
               height: Math.max(insets.bottom, 20),
             }}
           />
