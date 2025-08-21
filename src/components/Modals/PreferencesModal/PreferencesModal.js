@@ -35,6 +35,11 @@ const PreferencesModal = ({
   const preferencesScrollRef = useRef(null);
 
   const handleThemeChange = color => {
+    // Safety check: ensure the theme exists
+    if (!THEMES[color]) {
+      console.error(`Cannot set invalid theme: "${color}"`);
+      return;
+    }
     setCurrentTheme(color);
     onSaveTheme(color);
   };
@@ -64,25 +69,33 @@ const PreferencesModal = ({
             ];
 
             // Only show first 20 themes (4x5 grid)
-            return reorderedThemes.slice(0, 20).map(color => (
-              <View
-                key={color}
-                style={{ width: '20%', padding: 5, alignItems: 'center' }}
-              >
-                <TouchableOpacity
-                  style={[
-                    styles.colorOption,
-                    { backgroundColor: THEMES[color].primary },
-                    currentTheme === color && styles.colorSelected,
-                  ]}
-                  onPress={() => handleThemeChange(color)}
+            return reorderedThemes.slice(0, 20).map(color => {
+              // Safety check: ensure the theme exists before rendering
+              if (!THEMES[color]) {
+                console.warn(`Theme "${color}" not found in THEMES`);
+                return null;
+              }
+              
+              return (
+                <View
+                  key={color}
+                  style={{ width: '20%', padding: 5, alignItems: 'center' }}
                 >
-                  {currentTheme === color && (
-                    <Icon name="check" size={20} color="white" />
-                  )}
-                </TouchableOpacity>
-              </View>
-            ));
+                  <TouchableOpacity
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: THEMES[color].primary },
+                      currentTheme === color && styles.colorSelected,
+                    ]}
+                    onPress={() => handleThemeChange(color)}
+                  >
+                    {currentTheme === color && (
+                      <Icon name="check" size={20} color="white" />
+                    )}
+                  </TouchableOpacity>
+                </View>
+              );
+            }).filter(Boolean);
           })()}
         </View>
       </View>

@@ -887,8 +887,8 @@ class SyncService {
                   }
                 });
               }
-              // Apply the merged state
-              await this.restoreData(mergedState);
+              // Apply the merged state - skip protection since we've already done proper conflict resolution
+              await this.restoreData(mergedState, true);
             }
           } catch (conflictError) {
             console.error('sync: Conflict resolution failed:', conflictError);
@@ -1088,20 +1088,25 @@ class SyncService {
   }
   /**
    * Restore data to Zustand store
+   * @param {Object} data - The data to restore
+   * @param {boolean} skipProtection - Skip the recent changes protection (used when data has been properly conflict-resolved)
    */
-  async restoreData(data) {
+  async restoreData(data, skipProtection = false) {
     // Don't log full data as it could be huge
     // const dataInfo = data ? `type: ${data.type}, size: ~${Math.round(JSON.stringify(data).length / 1024)}KB` : 'null';
     
     // PROTECTION: Don't overwrite if we have very recent local changes (within 3 seconds)
-    const lastLocalChange = useAppStore.getState().lastModified || 0;
-    const now = Date.now();
-    if (lastLocalChange && (now - lastLocalChange) < 3000) {
-      console.log('[Sync] Skipping restore - local changes are too recent (within 3 seconds)');
-      syncDebugger.log('SKIP', 'Local changes too recent, preserving local state', {
-        timeSinceChange: now - lastLocalChange
-      });
-      return;
+    // Skip this check if we've already done proper conflict resolution with timestamps
+    if (!skipProtection) {
+      const lastLocalChange = useAppStore.getState().lastModified || 0;
+      const now = Date.now();
+      if (lastLocalChange && (now - lastLocalChange) < 3000) {
+        console.log('[Sync] Skipping restore - local changes are too recent (within 3 seconds)');
+        syncDebugger.log('SKIP', 'Local changes too recent, preserving local state', {
+          timeSinceChange: now - lastLocalChange
+        });
+        return;
+      }
     }
     
     // Handle incremental sync data
@@ -1305,7 +1310,8 @@ class SyncService {
   async mergeData(remoteData) {
     // For incremental syncs, the restoreData already handles the merge
     if (remoteData.type === 'incremental') {
-      await this.restoreData(remoteData);
+      // Skip protection for incremental updates - they contain timestamp-validated changes
+      await this.restoreData(remoteData, true);
       // Skip validation for incremental updates to prevent data loss
       // The data has already been validated on the sending device
       return;
@@ -1336,8 +1342,8 @@ class SyncService {
         });
       });
     });
-    // Apply remote data
-    await this.restoreData(remoteData);
+    // Apply remote data - skip protection since we're doing a merge operation
+    await this.restoreData(remoteData, true);
     // Now restore any completed states that were true locally
     const mergedState = useAppStore.getState();
     const mergedUsers = { ...mergedState.users };
@@ -1405,7 +1411,8 @@ class SyncService {
   async applyState(state) {
     // For incremental updates, skip validation as they may have partial data
     if (state.type === 'incremental') {
-      await this.restoreData(state);
+      // Skip protection for incremental state application
+      await this.restoreData(state, true);
       return;
     }
     // Validate state before applying (only for full state)
@@ -1433,7 +1440,8 @@ class SyncService {
       state.users[currentUser].days[currentDay].activities || [];
     }
     // Use restoreData to properly extract and set activities
-    await this.restoreData(state);
+    // Skip protection since this is a deliberate state application
+    await this.restoreData(state, true);
     // Mark as synced
     changeTracker.markAsSynced();
   }

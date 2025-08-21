@@ -981,8 +981,10 @@ const App = () => {
 
             // Restore user settings
             if (userData.settings) {
-              if (userData.settings.theme)
-                setCurrentTheme(userData.settings.theme);
+              if (userData.settings.theme) {
+                const validTheme = validateTheme(userData.settings.theme);
+                setCurrentTheme(validTheme);
+              }
               if (userData.settings.displayMode)
                 setDisplayMode(userData.settings.displayMode);
               if (userData.settings.bannerPosition)
@@ -997,8 +999,10 @@ const App = () => {
 
         // Restore global settings
         if (importedData.globalSettings) {
-          if (importedData.globalSettings.currentTheme)
-            setCurrentTheme(importedData.globalSettings.currentTheme);
+          if (importedData.globalSettings.currentTheme) {
+            const validTheme = validateTheme(importedData.globalSettings.currentTheme);
+            setCurrentTheme(validTheme);
+          }
           if (importedData.globalSettings.displayMode)
             setDisplayMode(importedData.globalSettings.displayMode);
           if (importedData.globalSettings.bannerPosition)
@@ -1684,11 +1688,34 @@ const App = () => {
     }
   };
 
+  // Helper function to validate theme
+  const validateTheme = (themeValue) => {
+    // Check if it's a valid theme key
+    if (themeValue && THEMES[themeValue]) {
+      return themeValue;
+    }
+    
+    // Check if it's a color code that matches a theme
+    if (themeValue && themeValue.startsWith('#')) {
+      // Find a theme that matches this color code
+      for (const [key, theme] of Object.entries(THEMES)) {
+        if (theme.primary === themeValue || 
+            theme.dark === themeValue || 
+            theme.light === themeValue) {
+          console.log(`Converting color code ${themeValue} to theme key: ${key}`);
+          return key;
+        }
+      }
+    }
+    
+    // Default to stackBlue if invalid
+    console.log(`Invalid theme "${themeValue}", using default stackBlue`);
+    return 'stackBlue';
+  };
+
   // Ensure theme is always defined, even if currentTheme is undefined
-  const theme =
-    currentTheme && THEMES[currentTheme]
-      ? THEMES[currentTheme]
-      : THEMES.stackBlue;
+  const validatedTheme = validateTheme(currentTheme);
+  const theme = THEMES[validatedTheme] || THEMES.stackBlue;
 
   // Log for debugging
   if (!currentTheme) {
@@ -2347,7 +2374,8 @@ const App = () => {
 
         // Load the new user's theme
         if (newUser?.settings?.theme) {
-          setCurrentTheme(newUser.settings.theme);
+          const validTheme = validateTheme(newUser.settings.theme);
+          setCurrentTheme(validTheme);
         }
 
         // Load the new user's celebration settings
