@@ -194,7 +194,12 @@ const LibraryTabContent = ({
               justifyContent: 'center',
             }]}
           >
-            <Text style={{ color: 'white', fontSize: 18, lineHeight: 18, fontWeight: 'bold' }}>+</Text>
+            <Text style={{ 
+              color: 'white', 
+              fontSize: 18, 
+              fontWeight: 'bold',
+              marginTop: Platform.OS === 'ios' ? -2 : Platform.OS === 'android' ? 1 : 0,
+            }}>+</Text>
           </TouchableOpacity>
           {!isSystemProvided && (
             <TouchableOpacity
@@ -216,7 +221,12 @@ const LibraryTabContent = ({
                 justifyContent: 'center',
               }]}
             >
-              <Text style={{ color: 'white', fontSize: 18, lineHeight: 18, fontWeight: 'bold' }}>×</Text>
+              <Text style={{ 
+                color: 'white', 
+                fontSize: 20, 
+                fontWeight: 'bold',
+                marginTop: Platform.OS === 'ios' ? -3 : Platform.OS === 'android' ? 1 : 0,
+              }}>×</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -347,7 +357,7 @@ const LibraryTabContent = ({
         <View style={styles.libraryContentPanel}>
           {/* Header */}
           <View style={styles.standardTabContainer}>
-            <Icon name="folder" size={48} color={theme.primary} />
+            <Icon name="bookmark" size={48} color={theme.primary} />
             <Text style={styles.standardTabTitle}>Activity Library</Text>
             <Text style={styles.standardTabDescription}>
               Browse and select from saved activities
@@ -369,7 +379,7 @@ const LibraryTabContent = ({
           {localCategories.length > 0 && (
             <>
               <View style={styles.sectionHeader}>
-                <Icon name="folder" size={20} color="#000" />
+                <Icon name="bookmark" size={20} color="#000" />
                 <Text style={styles.sectionTitle}>My Library</Text>
               </View>
               {localCategories

@@ -23,7 +23,15 @@ Since MaterialIcons are working elsewhere in the app but not in LibraryTabConten
   - Replaced `<Icon name="delete">` with styled Text component showing "×"
   - Both use circular colored backgrounds (theme.primary and red)
   - 24x24px circles with white text, maintaining aesthetic consistency
+  - Added platform-specific vertical centering adjustments for symbols
+    - iOS: marginTop -2px for "+", -3px for "×" (symbols were too high)
+    - Android: marginTop 1px for both (symbols were slightly low)
+    - Web: No adjustment needed
+  - Changed all folder icons to bookmark icons for consistency with edit mode
   - This avoids the iOS-specific MaterialIcons rendering issue entirely
+  
+- `src/components/Modals/ActivityManagementModal/ActivityManagementModal.js`
+  - Changed Library tab icon from 'folder' to 'bookmark' for consistency
 
 - `ios/StackMapNative/AppDelegate.swift` (attempted fix - didn't resolve issue)
   - Added manual font registration but issue persisted
