@@ -147,15 +147,16 @@ const EditModeToolbar = ({
       onPress: onCustomize,
       alwaysOverflow: true,
     },
-    ...(Platform.OS === 'web' &&
-      onSupport && {
-        contribute: {
-          label: 'Support',
-          icon: 'favorite',
-          onPress: onSupport,
-          alwaysOverflow: true,
-        },
-      }),
+    ...(Platform.OS === 'web' && onSupport
+      ? {
+          contribute: {
+            label: 'Support',
+            icon: 'favorite',
+            onPress: onSupport,
+            alwaysOverflow: true,
+          },
+        }
+      : {}),
   };
 
   // Default order if none provided - R->L: Activities, Day, Access, Data

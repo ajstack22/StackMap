@@ -16,15 +16,8 @@ import { styles } from './styles';
 import { BuyMeCoffeeButton, Logo } from '../..';
 import { getAndroidModalBottomHeight } from '../../../utils/modalHelpers';
 
-// Import team photo differently for web vs native
-let teamPhotoSource;
-if (Platform.OS === 'web') {
-  // For web, use ES6 import which webpack will handle
-  teamPhotoSource = require('../../../../image_library/StackMapTeam.jpg');
-} else {
-  // For native platforms, use require directly
-  teamPhotoSource = require('../../../../image_library/StackMapTeam.jpg');
-}
+// Import team photo
+const teamPhotoSource = require('../../../../image_library/StackMapTeam.jpg');
 
 const SupportModal = ({ visible, onClose, insets }) => {
   const [scrollKey, setScrollKey] = useState(0);
@@ -48,7 +41,7 @@ const SupportModal = ({ visible, onClose, insets }) => {
         <View style={styles.photoAndImpactContainer}>
           <View style={styles.photoContainer}>
             <Image
-              source={teamPhotoSource}
+              source={Platform.OS === 'web' ? { uri: teamPhotoSource } : teamPhotoSource}
               style={styles.teamPhoto}
               resizeMode="contain"
             />
