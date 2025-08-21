@@ -2,7 +2,18 @@
  * @format
  */
 
-console.log('[APP STARTUP] index.js loading at', Date.now());
+// Disable console logs on Android for performance (MUST be first)
+// Note: Platform check done after RN import below
+const disableAndroidLogs = () => {
+  const noop = () => {};
+  console.log = noop;
+  console.warn = noop;
+  console.error = noop;
+  console.info = noop;
+  console.debug = noop;
+  console.trace = noop;
+  console.table = noop;
+};
 
 // Reanimated removed - using standard components
 
@@ -18,8 +29,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import App from './App';
 import { name as appName } from './app.json';
 
+// Disable console logs on Android for performance
+if (Platform.OS === 'android' && __DEV__) {
+  disableAndroidLogs();
+}
+
 // Suppress console warnings about Legacy Architecture
-if (__DEV__) {
+if (__DEV__ && Platform.OS !== 'android') {
+  // Only do this on iOS/Web, Android has all console disabled
   const originalWarn = console.warn;
   console.warn = (...args) => {
     if (

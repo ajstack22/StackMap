@@ -12,7 +12,7 @@ const storage = {
   getItem: async name => {
     // CRITICAL FIX: If there's a pending write, return that instead of stale storage
     if (pendingWrite && pendingWrite.name === name) {
-      console.log('[SettingsStore] Returning pending write instead of stale storage');
+      // Returning pending write instead of stale storage
       return pendingWrite.value;
     }
     
@@ -23,15 +23,12 @@ const storage = {
       try {
         return JSON.parse(value);
       } catch (parseError) {
-        console.error(
-          'Error parsing stored value, clearing corrupted data:',
-          parseError,
-        );
+        // Error parsing stored value, clearing corrupted data
         await AsyncStorage.removeItem(name);
         return null;
       }
     } catch (error) {
-      console.error('Error reading from AsyncStorage:', error);
+      // Error reading from AsyncStorage
       return null;
     }
   },
@@ -50,7 +47,7 @@ const storage = {
             JSON.stringify(pendingWrite.value),
           );
         } catch (error) {
-          console.error('Error writing to AsyncStorage:', error);
+          // Error writing to AsyncStorage
         }
         pendingWrite = null;
       }
@@ -60,7 +57,7 @@ const storage = {
     try {
       await AsyncStorage.removeItem(name);
     } catch (error) {
-      console.error('Error removing from AsyncStorage:', error);
+      // Error removing from AsyncStorage
     }
   },
 };
@@ -94,7 +91,7 @@ const useSettingsStore = create(
           
           // Validate the theme before setting
           if (!theme || !THEMES[theme]) {
-            console.error(`[SettingsStore] Invalid theme "${theme}", using stackBlue`);
+            // Silently default to stackBlue without logging
             set({ currentTheme: 'stackBlue' }, false, 'setCurrentTheme');
             return;
           }

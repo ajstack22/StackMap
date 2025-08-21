@@ -3175,7 +3175,8 @@ This will replace all your current data.`,
           // Activities are now derived from users state, no need to set them separately
           // Load the first user's theme
           if (validatedData.users[userIds[0]]?.settings?.theme) {
-            setCurrentTheme(validatedData.users[userIds[0]].settings.theme);
+            const theme = validatedData.users[userIds[0]].settings.theme;
+            if (theme) setCurrentTheme(theme);
           }
         }
 
@@ -3328,7 +3329,8 @@ This will replace all your current data.`,
 
           // Restore user theme
           if (userData.settings?.theme) {
-            setCurrentTheme(userData.settings.theme);
+            const theme = userData.settings.theme;
+            if (theme) setCurrentTheme(theme);
           }
         } else {
           console.log(
@@ -3365,7 +3367,8 @@ This will replace all your current data.`,
         // Restore global settings
         if (importData.globalSettings) {
           if (importData.globalSettings.currentTheme) {
-            setCurrentTheme(importData.globalSettings.currentTheme);
+            const theme = importData.globalSettings.currentTheme;
+            if (theme) setCurrentTheme(theme);
           }
           if (importData.globalSettings.bannerPosition) {
             setBannerPosition(importData.globalSettings.bannerPosition);
@@ -5207,7 +5210,8 @@ Users: ${userNames} (${userCount} total)
         onUserChange={userId => {
           setCurrentUser(userId);
           if (users[userId]?.settings?.theme) {
-            setCurrentTheme(users[userId].settings.theme);
+            const theme = users[userId].settings.theme;
+            if (theme) setCurrentTheme(theme);
           }
         }}
         onSave={contextData => {
@@ -5315,7 +5319,8 @@ Users: ${userNames} (${userCount} total)
             users[userId]?.days?.[currentDay]?.activities || [];
           // Activities are now derived from users state, no need to set them separately
           if (users[userId]?.settings?.theme) {
-            setCurrentTheme(users[userId].settings.theme);
+            const theme = users[userId].settings.theme;
+            if (theme) setCurrentTheme(theme);
           }
         }}
         onDeleteUser={deleteUser}
@@ -5450,7 +5455,8 @@ Users: ${userNames} (${userCount} total)
           // Activities are now derived from users state, no need to set them separately
           // Load the selected user's theme
           if (users[userId]?.settings?.theme) {
-            setCurrentTheme(users[userId].settings.theme);
+            const theme = users[userId].settings.theme;
+            if (theme) setCurrentTheme(theme);
           }
         }}
       />
