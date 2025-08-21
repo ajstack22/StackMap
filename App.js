@@ -19,6 +19,15 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
+// Disable console logs on Android for performance
+if (Platform.OS === 'android' && __DEV__) {
+  console.log = () => {};
+  console.warn = () => {};
+  console.error = () => {};
+  console.info = () => {};
+  console.debug = () => {};
+}
+
 // Import our custom Text and TextInput components that use Comic Relief
 import { Text, TextInput } from './src/components/Typography';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -1741,14 +1750,12 @@ const App = () => {
         if (theme.primary === themeValue || 
             theme.dark === themeValue || 
             theme.light === themeValue) {
-          console.log(`Converting color code ${themeValue} to theme key: ${key}`);
           return key;
         }
       }
     }
     
     // Default to stackBlue if invalid
-    console.log(`Invalid theme "${themeValue}", using default stackBlue`);
     return 'stackBlue';
   };
 
