@@ -3849,6 +3849,10 @@ Users: ${userNames} (${userCount} total)
     // Theme is saved automatically via useEffect when currentTheme changes
     if (currentUser && users[currentUser]) {
       const updatedUsers = { ...users };
+      // Ensure settings object exists
+      if (!updatedUsers[currentUser].settings) {
+        updatedUsers[currentUser].settings = {};
+      }
       updatedUsers[currentUser].settings.theme = newTheme;
       setUsers(updatedUsers);
     }
@@ -3865,6 +3869,10 @@ Users: ${userNames} (${userCount} total)
   const saveCelebrationPreference = (type, celebration) => {
     if (currentUser && users[currentUser]) {
       const updatedUsers = { ...users };
+      // Ensure settings object exists
+      if (!updatedUsers[currentUser].settings) {
+        updatedUsers[currentUser].settings = {};
+      }
       if (type === 'task') {
         updatedUsers[currentUser].settings.taskCelebration = celebration;
       } else if (type === 'routine') {
