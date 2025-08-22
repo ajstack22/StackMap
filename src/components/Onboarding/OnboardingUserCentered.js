@@ -172,7 +172,7 @@ const OnboardingUserCentered = ({
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
     
-    console.log('[Onboarding] Generated new sync code:', hexCode);
+    console.log('[Onboarding] Generated new sync code');
     setGeneratedSyncCode(hexCode);
     return hexCode;
   };
@@ -201,7 +201,7 @@ const OnboardingUserCentered = ({
     try {
       const phraseToUse = recoveryPhrase.trim().replace(/\s+/g, '');
       
-      console.log('[Onboarding] Checking sync code:', phraseToUse);
+      console.log('[Onboarding] Checking sync code format');
       
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
         throw new Error('Invalid sync code format');

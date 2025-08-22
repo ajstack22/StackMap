@@ -122,17 +122,17 @@ else
     capture_ios_screenshot "$IPHONE_ID" "iPhone16ProMax" "05_settings" "Settings & Customization"
 fi
 
-# iPad Air Screenshots (11" Display)
+# iPad Air Screenshots (13" Display)
 echo ""
 echo -e "${BLUE}═══════════════════════════════════════${NC}"
-echo -e "${BLUE}📱 iPad Air 11\" (Tablet Layout)${NC}"
+echo -e "${BLUE}📱 iPad Air 13\" (Tablet Layout)${NC}"
 echo -e "${BLUE}═══════════════════════════════════════${NC}"
 echo ""
 
-IPAD_ID=$(xcrun simctl list devices | grep -E "iPad Air.*11.*inch" | grep -E "Booted" | head -1 | grep -oE "[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}")
+IPAD_ID=$(xcrun simctl list devices | grep -E "iPad Air.*13.*inch" | grep -E "Booted" | head -1 | grep -oE "[A-F0-9]{8}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{4}-[A-F0-9]{12}")
 
 if [ -z "$IPAD_ID" ]; then
-    echo "❌ iPad Air 11-inch not found or not booted"
+    echo "❌ iPad Air 13-inch not found or not booted"
     echo "Please ensure the simulator is running"
 else
     echo "Found iPad Air: $IPAD_ID"

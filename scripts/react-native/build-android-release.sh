@@ -2,6 +2,10 @@
 
 echo "🏗️  Building Android Release APK..."
 
+# Set environment to production for console.log stripping
+export NODE_ENV=production
+echo "Building in production mode (NODE_ENV=$NODE_ENV)"
+
 # Find and use Java 17
 if [[ -x "/opt/homebrew/opt/openjdk@17/bin/java" ]]; then
     export JAVA_HOME="/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home"

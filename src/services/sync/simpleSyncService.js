@@ -98,7 +98,7 @@ class SimpleSyncService {
    * Enable sync with recovery phrase
    */
   async enable(recoveryPhrase) {
-    console.log('🔄 SIMPLE SYNC: enable() called with:', typeof recoveryPhrase, recoveryPhrase);
+    console.log('🔄 SIMPLE SYNC: enable() called');
     
     // Generate new phrase if not provided (for compatibility with complex sync)
     if (!recoveryPhrase) {
@@ -265,7 +265,7 @@ class SimpleSyncService {
       const decryptedStr = util.encodeUTF8(decrypted);
       const result = JSON.parse(decryptedStr);
       console.log('✅ SIMPLE SYNC: Decryption successful');
-      console.log('🔄 SIMPLE SYNC: Decrypted users:', Object.keys(result.users || {}));
+      console.log('🔄 SIMPLE SYNC: User count:', Object.keys(result.users || {}).length);
       return result;
     } catch (error) {
       console.error('❌ SIMPLE SYNC: Decrypt error:', error.message);
@@ -387,10 +387,7 @@ class SimpleSyncService {
       }
       
       const pullUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
-      console.log('🔄 SIMPLE SYNC: sync() pull URL:', pullUrl);
-      console.log('🔄 SIMPLE SYNC: this.API_URL value:', this.API_URL);
-      console.log('🔄 SIMPLE SYNC: this.syncId value:', this.syncId, 'type:', typeof this.syncId);
-      console.log('🔄 SIMPLE SYNC: About to fetch:', pullUrl);
+      console.log('🔄 SIMPLE SYNC: Fetching from server');
       
       // Use absolute URL - React Native requires this
       const response = await fetch(pullUrl);
@@ -414,8 +411,7 @@ class SimpleSyncService {
       // 3. Decrypt server data (pull.php returns encrypted_blob directly)
       console.log('🔄 SIMPLE SYNC: About to decrypt server blob');
       const serverState = this.decrypt(serverResponse.encrypted_blob);
-      console.log('🔄 SIMPLE SYNC: Decrypted server state:', JSON.stringify(serverState, null, 2));
-      console.log('🔄 SIMPLE SYNC: Server users:', serverState.users);
+      // Don't log sensitive data
       console.log('🔄 SIMPLE SYNC: Server user count:', Object.keys(serverState.users || {}).length);
       syncDebugger.log('PULL', 'Server state', {
         timestamp: serverState.timestamp,
@@ -479,8 +475,7 @@ class SimpleSyncService {
     // Ensure absolute URL for React Native Web
     const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
     const pushUrl = `${baseUrl}/push.php`;
-    console.log('🔄 SIMPLE SYNC: pushState() - URL:', pushUrl);
-    console.log('🔄 SIMPLE SYNC: pushState() - syncId:', this.syncId, 'type:', typeof this.syncId);
+    console.log('🔄 SIMPLE SYNC: Pushing state to server');
     
     // First try to push (update existing)
     const response = await fetch(pushUrl, {
@@ -745,8 +740,7 @@ class SimpleSyncService {
       const deviceId = Platform.OS;
       const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
       const verifyUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
-      console.log('🔄 SIMPLE SYNC: verifySyncExists() - URL:', verifyUrl);
-      console.log('🔄 SIMPLE SYNC: verifySyncExists() - syncId:', this.syncId, 'type:', typeof this.syncId);
+      console.log('🔄 SIMPLE SYNC: Verifying sync exists on server');
       const response = await fetch(verifyUrl);
       
       // If we get a 404, sync doesn't exist
@@ -798,7 +792,7 @@ class SimpleSyncService {
   
   // Generate sync ID from recovery phrase (for preview/validation)
   async generateSyncId(recoveryPhrase) {
-    console.log('🔄 SIMPLE SYNC: generateSyncId called with:', recoveryPhrase);
+    console.log('🔄 SIMPLE SYNC: generateSyncId called');
     
     if (!recoveryPhrase) {
       // Generate new one if not provided
@@ -855,7 +849,7 @@ class SimpleSyncService {
       // Ensure absolute URL for React Native Web
       const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
       const pullUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
-      console.log('🔄 SIMPLE SYNC: Pull URL:', pullUrl);
+      console.log('🔄 SIMPLE SYNC: Pulling data from server');
       const response = await fetch(pullUrl);
       
       // Check if sync group exists
@@ -886,8 +880,8 @@ class SimpleSyncService {
       
       // Decrypt the data before returning
       const decryptedData = this.decrypt(result.encrypted_blob);
-      console.log('🔄 SIMPLE SYNC: Decrypted pull data:', decryptedData);
-      console.log('🔄 SIMPLE SYNC: Pull data users:', Object.keys(decryptedData.users || {}));
+      // Don't log sensitive decrypted data
+      console.log('🔄 SIMPLE SYNC: Pull data user count:', Object.keys(decryptedData.users || {}).length);
       
       // Return the data in the format onboarding expects
       return { data: decryptedData };
@@ -976,7 +970,7 @@ class SimpleSyncService {
     const result = await response.json();
     const shareLink = `https://stackmap.app/?share=${result.share_id}`;
     
-    console.log('✅ SIMPLE SYNC: Share link created', shareLink);
+    console.log('✅ SIMPLE SYNC: Share link created');
     return shareLink;
   }
 }

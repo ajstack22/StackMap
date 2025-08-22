@@ -293,7 +293,7 @@ class SyncService {
       }
       // Generate sync ID from recovery phrase
       const syncId = await this.generateSyncId(recoveryPhrase);
-      console.log('[Sync] Generated sync ID:', syncId, 'from phrase:', recoveryPhrase);
+      console.log('[Sync] Generated sync ID:', syncId);
       
       // Set sync ID temporarily so pullData can work
       this.syncId = syncId;
@@ -391,7 +391,7 @@ class SyncService {
    * Generate deterministic sync ID from recovery phrase
    */
   async generateSyncId(recoveryPhrase) {
-    console.log('[Sync] generateSyncId called with phrase:', recoveryPhrase);
+    console.log('[Sync] generateSyncId called');
     // Use a fixed salt for sync ID generation to ensure consistency
     const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ=='; // Base64 encoded fixed salt
     console.log('[Sync] Using fixed salt for sync ID:', fixedSalt);
@@ -419,13 +419,8 @@ class SyncService {
     // Get current state and encrypt it
     const currentState = this.getCurrentState();
     
-    // Debug logging to check what's being synced
-    console.log('[Sync] Creating sync group with state:', {
-      hasUsers: !!currentState.users,
-      userCount: Object.keys(currentState.users || {}).length,
-      firstUserId: Object.keys(currentState.users || {})[0],
-      firstUserActivities: currentState.users?.[Object.keys(currentState.users || {})[0]]?.days?.today?.activities?.length || 0
-    });
+    // Debug logging to check what's being synced (no sensitive data)
+    console.log('[Sync] Creating sync group with user count:', Object.keys(currentState.users || {}).length);
     
     const encryptedBlob = encryptionService.encryptData(currentState);
     const url = `${getApiBaseUrl()}/create.php`;

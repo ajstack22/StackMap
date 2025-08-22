@@ -2,6 +2,10 @@
 
 echo "🏗️  Building Android App Bundle (AAB)..."
 
+# Set environment to production for console.log stripping
+export NODE_ENV=production
+echo "Building in production mode (NODE_ENV=$NODE_ENV)"
+
 # Set Java to version 17
 export JAVA_HOME=/opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
 echo "Using Java from: $JAVA_HOME"
