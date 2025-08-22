@@ -16,11 +16,8 @@ const syncService = USE_SIMPLE_SYNC ? simpleSyncService : complexSyncService;
 
 // Log which service is being used
 if (typeof console !== 'undefined') {
-  console.log(`🔄 Using ${USE_SIMPLE_SYNC ? 'SIMPLE' : 'COMPLEX'} sync service`);
-  if (USE_SIMPLE_SYNC) {
-    console.log('ℹ️ Simple sync: Last-write-wins, atomic updates');
-    console.log('💡 Enable debug: window.SYNC_DEBUG = true');
-  }
+
+  if (USE_SIMPLE_SYNC) {}
 }
 
 // Production build - no debug helpers exposed

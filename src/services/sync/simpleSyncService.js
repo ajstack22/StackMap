@@ -29,22 +29,16 @@ class SimpleSyncService {
     this.syncInterval = null;
     // Set API URL based on platform
     this._apiUrl = this.getInitialApiUrl();
-    console.log('🔄 SIMPLE SYNC: Constructor - API_URL set to:', this._apiUrl);
-    
+
     // Auto-restore sync state after a delay (like complex sync does)
-    console.log('🔄 SIMPLE SYNC: Service created, will restore state in 1 second');
+
     setTimeout(() => {
       this.restoreState().then(restored => {
-        if (restored) {
-          console.log('✅ SIMPLE SYNC: State restored, sync is active');
-          console.log(`   Sync ID: ${this.syncId}`);
-          console.log(`   Sync will run every 30 seconds`);
-        } else {
-          console.log('ℹ️ SIMPLE SYNC: No saved state to restore');
-          console.log('   To enable sync: Go to Settings > Data > Enable Sync');
-        }
+        if (restored) {} else {}
       }).catch(err => {
-        console.error('❌ SIMPLE SYNC: Error restoring state:', err);
+        if (__DEV__) {
+          console.error('❌ SIMPLE SYNC: Error restoring state:', err);
+        }
       });
     }, 1000);
   }
@@ -102,7 +96,7 @@ class SimpleSyncService {
     
     // Generate new phrase if not provided (for compatibility with complex sync)
     if (!recoveryPhrase) {
-      console.log('🔄 SIMPLE SYNC: No recovery phrase provided, generating new one');
+
       recoveryPhrase = SimpleSyncService.generateRecoveryPhrase();
     }
     
@@ -116,8 +110,6 @@ class SimpleSyncService {
       console.error('🔄 SIMPLE SYNC: Invalid recovery phrase length:', recoveryPhrase?.length);
       throw new Error('Invalid recovery phrase - must be exactly 32 characters');
     }
-
-    console.log('🔄 SIMPLE SYNC: Enabling with recovery phrase');
 
     // Generate sync ID and master key using the SAME method as complex sync
     // Use the fixed base64 salt that complex sync uses
@@ -152,8 +144,6 @@ class SimpleSyncService {
       console.error('❌ SIMPLE SYNC: Generated syncId is not a string!', typeof this.syncId, this.syncId);
       throw new Error('Failed to generate valid sync ID');
     }
-    
-    console.log('🔄 SIMPLE SYNC: Enabled with syncId:', this.syncId, 'type:', typeof this.syncId);
 
     // Store settings
     await AsyncStorage.setItem('@sync_enabled', 'true');
@@ -204,8 +194,6 @@ class SimpleSyncService {
       throw new Error('No sync data to delete');
     }
 
-    console.log('🗑️ SIMPLE SYNC: Deleting from server');
-    
     const deviceId = Platform.OS; // Use platform as simple device ID
     const response = await fetch(`${this.API_URL}/delete.php`, {
       method: 'POST',
@@ -222,8 +210,7 @@ class SimpleSyncService {
     }
 
     const result = await response.json();
-    console.log('✅ SIMPLE SYNC: Deleted from server', result);
-    
+
     // Disable sync locally after successful deletion
     await this.disable();
     
@@ -243,9 +230,7 @@ class SimpleSyncService {
 
   decrypt(encryptedBlob) {
     console.log('🔄 SIMPLE SYNC: decrypt() called');
-    console.log('🔄 SIMPLE SYNC: Has masterKey:', !!this.masterKey);
-    console.log('🔄 SIMPLE SYNC: Blob length:', encryptedBlob?.length);
-    
+
     if (!this.masterKey) {
       console.error('❌ SIMPLE SYNC: Cannot decrypt - no master key!');
       throw new Error('No master key available for decryption');
@@ -264,11 +249,13 @@ class SimpleSyncService {
       
       const decryptedStr = util.encodeUTF8(decrypted);
       const result = JSON.parse(decryptedStr);
-      console.log('✅ SIMPLE SYNC: Decryption successful');
+
       console.log('🔄 SIMPLE SYNC: User count:', Object.keys(result.users || {}).length);
       return result;
     } catch (error) {
-      console.error('❌ SIMPLE SYNC: Decrypt error:', error.message);
+      if (__DEV__) {
+        console.error('❌ SIMPLE SYNC: Decrypt error:', error.message);
+      }
       throw error;
     }
   }
@@ -351,21 +338,16 @@ class SimpleSyncService {
     console.log('🔄 SIMPLE SYNC: sync() called');
     
     if (!this.enabled || !this.syncId || !this.masterKey) {
-      console.log('❌ SIMPLE SYNC: Not enabled', { 
-        enabled: this.enabled, 
-        syncId: this.syncId || 'none',
-        hasMasterKey: !!this.masterKey 
-      });
+
       return { success: false, error: 'Sync not enabled' };
     }
 
     if (this.syncInProgress) {
       syncDebugger.log('STATE', 'Sync already in progress, skipping');
-      console.log('⏭️ SIMPLE SYNC: Already in progress, skipping');
+
       return { success: false, error: 'Sync in progress' };
     }
 
-    console.log('✅ SIMPLE SYNC: Lock acquired, proceeding');
     this.syncInProgress = true;
     
     try {
@@ -387,15 +369,14 @@ class SimpleSyncService {
       }
       
       const pullUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
-      console.log('🔄 SIMPLE SYNC: Fetching from server');
-      
+
       // Use absolute URL - React Native requires this
       const response = await fetch(pullUrl);
 
       // Check if sync group exists
       if (response.status === 404) {
         // No sync group on server yet, push our state
-        console.log('🔄 SIMPLE SYNC: Sync group not found on server, creating...');
+
         syncDebugger.log('PUSH', 'No sync group on server, pushing local state');
         return await this.pushState(localState);
       }
@@ -409,7 +390,7 @@ class SimpleSyncService {
       }
 
       // 3. Decrypt server data (pull.php returns encrypted_blob directly)
-      console.log('🔄 SIMPLE SYNC: About to decrypt server blob');
+
       const serverState = this.decrypt(serverResponse.encrypted_blob);
       // Don't log sensitive data
       console.log('🔄 SIMPLE SYNC: Server user count:', Object.keys(serverState.users || {}).length);
@@ -421,8 +402,7 @@ class SimpleSyncService {
       // 4. SIMPLE DECISION: Newest timestamp wins
       const serverNewer = serverState.timestamp > localState.timestamp;
       const timeDiff = Math.abs(serverState.timestamp - localState.timestamp) / 1000;
-      
-      console.log(`🎯 SIMPLE SYNC DECISION: ${serverNewer ? 'SERVER' : 'LOCAL'} is newer by ${timeDiff} seconds`);
+
       console.log(`   Server time: ${new Date(serverState.timestamp).toISOString()}`);
       console.log(`   Local time:  ${new Date(localState.timestamp).toISOString()}`);
       
@@ -452,7 +432,9 @@ class SimpleSyncService {
 
     } catch (error) {
       syncDebugger.log('ERROR', 'Sync failed', { error: error.message });
-      console.error('SimpleSyncService: Sync failed', error);
+      if (__DEV__) {
+        console.error('SimpleSyncService: Sync failed', error);
+      }
       return { success: false, error: error.message };
     } finally {
       this.syncInProgress = false;
@@ -475,8 +457,7 @@ class SimpleSyncService {
     // Ensure absolute URL for React Native Web
     const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
     const pushUrl = `${baseUrl}/push.php`;
-    console.log('🔄 SIMPLE SYNC: Pushing state to server');
-    
+
     // First try to push (update existing)
     const response = await fetch(pushUrl, {
       method: 'POST',
@@ -495,8 +476,7 @@ class SimpleSyncService {
     
     // If sync group doesn't exist, create it first
     if (response.status === 404) {
-      console.log('🔄 SIMPLE SYNC: Sync group not found, creating...');
-      
+
       const createResponse = await fetch(`${baseUrl}/create.php`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -513,8 +493,7 @@ class SimpleSyncService {
       if (!createResult.success) {
         throw new Error(createResult.error || 'Failed to create sync group');
       }
-      
-      console.log('✅ SIMPLE SYNC: Sync group created');
+
       return {
         success: true,
         action: 'created',
@@ -551,7 +530,9 @@ class SimpleSyncService {
     // Sync every 30 seconds
     this.syncInterval = setInterval(() => {
       this.sync().catch(error => {
-        console.error('Periodic sync failed:', error);
+        if (__DEV__) {
+          console.error('Periodic sync failed:', error);
+        }
       });
     }, 30000);
 
@@ -563,28 +544,19 @@ class SimpleSyncService {
    * Restore sync state on app start
    */
   async restoreState() {
-    console.log('🔄 SIMPLE SYNC: Checking for saved sync state...');
-    
+
     const enabled = await AsyncStorage.getItem('@sync_enabled');
     const syncId = await AsyncStorage.getItem('@sync_id');
     const syncPhrase = await AsyncStorage.getItem('@sync_phrase');
     const lastTimestamp = await AsyncStorage.getItem('@sync_last_timestamp');
-    
-    console.log('🔄 SIMPLE SYNC: Found saved state:', {
-      enabled: enabled,
-      hasSyncId: !!syncId,
-      hasPhrase: !!syncPhrase,
-      lastTimestamp: lastTimestamp
-    });
 
     if (enabled === 'true' && syncId && syncPhrase) {
-      console.log('🔄 SIMPLE SYNC: Restoring with saved phrase...');
+
       await this.enable(syncPhrase);
       this.lastServerTimestamp = parseInt(lastTimestamp || '0', 10);
       return true;
     }
 
-    console.log('🔄 SIMPLE SYNC: No valid saved state found');
     return false;
   }
 
@@ -605,7 +577,7 @@ class SimpleSyncService {
     }
     
     try {
-      console.log('[Simple Sync] Manual sync initiated by user');
+
       await this.sync();
       
       return { 
@@ -614,7 +586,9 @@ class SimpleSyncService {
         timestamp: Date.now()
       };
     } catch (error) {
-      console.error('[Simple Sync] Manual sync failed:', error);
+      if (__DEV__) {
+        console.error('[Simple Sync] Manual sync failed:', error);
+      }
       return { 
         success: false, 
         message: error.message || 'Sync failed',
@@ -666,7 +640,7 @@ class SimpleSyncService {
     
     if (!skipInitialSync) {
       // After enabling, try to sync immediately to get any existing data
-      console.log('🔄 SIMPLE SYNC: Performing initial sync after initialize');
+
       try {
         await this.sync();
       } catch (error) {
@@ -709,8 +683,7 @@ class SimpleSyncService {
     
     // Use next 32 bytes as master key
     this.masterKey = key.slice(0, 32);
-    
-    console.log('🔄 SIMPLE SYNC: Preview initialized with syncId:', this.syncId);
+
     // Don't set enabled flag or save to storage - this is temporary
     
     return this.syncId;
@@ -740,7 +713,7 @@ class SimpleSyncService {
       const deviceId = Platform.OS;
       const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
       const verifyUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
-      console.log('🔄 SIMPLE SYNC: Verifying sync exists on server');
+
       const response = await fetch(verifyUrl);
       
       // If we get a 404, sync doesn't exist
@@ -781,7 +754,7 @@ class SimpleSyncService {
   // Delete a share
   async deleteShare(shareId) {
     // Stub implementation
-    console.log('Delete share not implemented in simple sync');
+
     return { success: true };
   }
   
@@ -792,8 +765,7 @@ class SimpleSyncService {
   
   // Generate sync ID from recovery phrase (for preview/validation)
   async generateSyncId(recoveryPhrase) {
-    console.log('🔄 SIMPLE SYNC: generateSyncId called');
-    
+
     if (!recoveryPhrase) {
       // Generate new one if not provided
       recoveryPhrase = SimpleSyncService.generateRecoveryPhrase();
@@ -822,34 +794,29 @@ class SimpleSyncService {
     const syncId = Array.from(syncIdBytes, byte =>
       byte.toString(16).padStart(2, '0'),
     ).join('');
-    console.log('🔄 SIMPLE SYNC: Generated syncId for preview:', syncId);
-    
+
     return syncId;
   }
   
   // Pull data directly (for onboarding)
   async pullData() {
     if (!this.syncId) {
-      console.log('🔄 SIMPLE SYNC: pullData - no syncId');
+
       return null;
     }
     
     if (!this.masterKey) {
-      console.log('🔄 SIMPLE SYNC: pullData - no masterKey, cannot decrypt');
+
       console.log('🔄 SIMPLE SYNC: You must call initialize() or enable() first');
       return null;
     }
-    
-    console.log('🔄 SIMPLE SYNC: Pulling data from server');
-    console.log('🔄 SIMPLE SYNC: syncId:', this.syncId);
-    console.log('🔄 SIMPLE SYNC: Has masterKey:', !!this.masterKey);
-    
+
     try {
       const deviceId = Platform.OS; // Use platform as simple device ID
       // Ensure absolute URL for React Native Web
       const baseUrl = this.API_URL.startsWith('http') ? this.API_URL : `https://stackmap.app${this.API_URL}`;
       const pullUrl = `${baseUrl}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}`;
-      console.log('🔄 SIMPLE SYNC: Pulling data from server');
+
       const response = await fetch(pullUrl);
       
       // Check if sync group exists
@@ -872,12 +839,10 @@ class SimpleSyncService {
       // Note: pull.php doesn't return success:false, it returns the data directly
       // or returns 404 if not found
       if (!result.encrypted_blob) {
-        console.log('🔄 SIMPLE SYNC: No encrypted data in response');
+
         return null;
       }
-      
-      console.log('🔄 SIMPLE SYNC: Data pulled successfully, decrypting...');
-      
+
       // Decrypt the data before returning
       const decryptedData = this.decrypt(result.encrypted_blob);
       // Don't log sensitive decrypted data
@@ -886,7 +851,9 @@ class SimpleSyncService {
       // Return the data in the format onboarding expects
       return { data: decryptedData };
     } catch (error) {
-      console.error('🔄 SIMPLE SYNC: Error pulling data:', error);
+      if (__DEV__) {
+        console.error('🔄 SIMPLE SYNC: Error pulling data:', error);
+      }
       return null;
     }
   }
@@ -918,8 +885,6 @@ class SimpleSyncService {
       includeCompleted = true,
       expiresHours = 24,
     } = options;
-
-    console.log('🔗 SIMPLE SYNC: Creating share link');
 
     // Get the user's current activities
     const userStore = require('../../stores/useUserStore.js').default;
@@ -969,8 +934,7 @@ class SimpleSyncService {
 
     const result = await response.json();
     const shareLink = `https://stackmap.app/?share=${result.share_id}`;
-    
-    console.log('✅ SIMPLE SYNC: Share link created');
+
     return shareLink;
   }
 }

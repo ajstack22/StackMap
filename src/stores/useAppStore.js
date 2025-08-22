@@ -233,7 +233,7 @@ const useAppStore = create(
 
         // Log unhandled properties
         if (Object.keys(rest).length > 0) {
-          console.warn('Unhandled state properties in setState:', rest);
+//           console.warn('Unhandled state properties in setState:', rest);
         }
       },
 

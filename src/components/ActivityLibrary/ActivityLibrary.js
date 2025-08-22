@@ -1191,8 +1191,7 @@ const ActivityLibrary = ({
     setCategories(newCategories);
     if (onSaveCategories) {
       onSaveCategories(newCategories);
-    } else {
-    }
+    } else {}
   };
 
   const handleAddCategory = () => {

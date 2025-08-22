@@ -220,7 +220,7 @@ const DataModal = ({
           if (!exists && enabled) {
             // Sync is enabled but doesn't exist on server yet
             // This can happen when first creating a sync
-            console.log('Sync enabled locally but not yet on server - will create on next sync');
+
           }
         });
       } else {
@@ -486,7 +486,7 @@ const DataModal = ({
         }
       }
     } catch (error) {
-      console.error('Export error:', error);
+//       console.error('Export error:', error);
       if (Platform.OS === 'web') {
         showToast({
           message: `Failed to export: ${error.message}`,
@@ -768,9 +768,9 @@ const DataModal = ({
                 // Legacy support - migrate emoji to icon
                 validatedUser.icon = validatedUser.emoji;
               } else {
-                console.warn(
-                  `Import: User ${userId} has no valid icon, using default`,
-                );
+//                 console.warn(
+//                   `Import: User ${userId} has no valid icon, using default`,
+//                 );
                 validatedUser.icon = '👤';
               }
             }
@@ -1009,13 +1009,13 @@ const DataModal = ({
       if (onReset) {
         await onReset();
       } else {
-        console.error('[DataModal] No onReset function provided!');
+//         console.error('[DataModal] No onReset function provided!');
       }
 
       setShowResetConfirm(false);
       onClose();
     } catch (error) {
-      console.error('[DataModal] Reset error:', error);
+//       console.error('[DataModal] Reset error:', error);
       showToast({
         message: error.message || 'Failed to reset app',
         type: 'error',

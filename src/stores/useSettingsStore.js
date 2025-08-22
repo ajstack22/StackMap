@@ -99,7 +99,7 @@ const useSettingsStore = create(
           set({ currentTheme: theme }, false, 'setCurrentTheme');
         },
         setBannerPosition: position => {
-          console.log('[SettingsStore] Setting banner position to:', position);
+
           set({ bannerPosition: position }, false, 'setBannerPosition');
         },
         setSoundEnabled: enabled =>

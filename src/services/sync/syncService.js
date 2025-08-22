@@ -143,7 +143,7 @@ class SyncService {
           const timeSinceLastSync = now - (this.lastSyncAttempt || 0);
           
           if (timeSinceLastSync >= this.minTimeBetweenSyncs) {
-            console.log('sync: Tab became visible, triggering sync');
+
             // Reset network state and trigger sync with delay
             networkMonitor.isOnline = navigator.onLine;
             setTimeout(() => this.syncWithQueue(), 1000); // Delay to let network stabilize
@@ -161,7 +161,7 @@ class SyncService {
           const timeSinceLastSync = now - (this.lastSyncAttempt || 0);
           
           if (timeSinceLastSync >= this.minTimeBetweenSyncs) {
-            console.log('sync: Window gained focus, triggering sync');
+
             // Reset network state and trigger sync
             networkMonitor.isOnline = navigator.onLine;
             this.syncWithQueue();
@@ -177,7 +177,7 @@ class SyncService {
           const timeSinceLastSync = now - (this.lastSyncAttempt || 0);
           
           if (timeSinceLastSync >= this.minTimeBetweenSyncs) {
-            console.log('sync: Network connection restored, triggering sync');
+
             networkMonitor.isOnline = true;
             setTimeout(() => this.syncWithQueue(), 2000); // Small delay for network stability
           } else {
@@ -188,7 +188,7 @@ class SyncService {
       
       // Listen for offline event to update status immediately
       window.addEventListener('offline', () => {
-        console.log('sync: Network connection lost');
+
         networkMonitor.isOnline = false;
         this.updateSyncStatus('offline', 'No network connection');
       });
@@ -231,7 +231,9 @@ class SyncService {
       }
       this.initialized = true;
     } catch (error) {
-      console.error('Failed to restore sync state:', error);
+      if (__DEV__) {
+        console.error('Failed to restore sync state:', error);
+      }
       this.initialized = true;
     }
   }
@@ -263,7 +265,9 @@ class SyncService {
       this.startPeriodicSync();
       return true;
     } catch (error) {
-      console.error('Failed to restore encryption from storage:', error);
+      if (__DEV__) {
+        console.error('Failed to restore encryption from storage:', error);
+      }
     }
     return false;
   }
@@ -285,16 +289,14 @@ class SyncService {
     try {
       // Log which environment we're using
       console.log('[Sync] Initialize - Using API URL:', getApiBaseUrl());
-      console.log('[Sync] Platform:', Platform.OS, 'DEV:', __DEV__);
-      
+
       // Generate new recovery phrase if not provided
       if (!recoveryPhrase) {
         recoveryPhrase = encryptionService.generateRecoveryPhrase();
       }
       // Generate sync ID from recovery phrase
       const syncId = await this.generateSyncId(recoveryPhrase);
-      console.log('[Sync] Generated sync ID:', syncId);
-      
+
       // Set sync ID temporarily so pullData can work
       this.syncId = syncId;
       // Try to pull existing data first
@@ -370,7 +372,7 @@ class SyncService {
           currentDay: 'today'
         };
         changeTracker.lastSyncedState = emptyState;
-        console.log('[Sync] New sync - set empty baseline for change tracking');
+
       }
       
       // Start periodic sync
@@ -381,7 +383,9 @@ class SyncService {
         isNewSync: !existingData,
       };
     } catch (error) {
-      console.error('Sync initialization failed:', error);
+      if (__DEV__) {
+        console.error('Sync initialization failed:', error);
+      }
       // Reset state on failure
       this.syncId = null;
       throw error;
@@ -391,24 +395,21 @@ class SyncService {
    * Generate deterministic sync ID from recovery phrase
    */
   async generateSyncId(recoveryPhrase) {
-    console.log('[Sync] generateSyncId called');
+
     // Use a fixed salt for sync ID generation to ensure consistency
     const fixedSalt = 'U3luY0lkU2FsdDEyMzQ1Njc4OTAxMjM0NQ=='; // Base64 encoded fixed salt
-    console.log('[Sync] Using fixed salt for sync ID:', fixedSalt);
-    
+
     const { key } = await encryptionService.deriveKeyFromPhrase(
       recoveryPhrase,
       fixedSalt,
     );
-    console.log('[Sync] Derived key length:', key.length);
-    
+
     // Use first 16 bytes of key as sync ID
     const syncIdBytes = key.slice(0, 16);
     const syncId = Array.from(syncIdBytes, byte =>
       byte.toString(16).padStart(2, '0'),
     ).join('');
-    
-    console.log('[Sync] Generated sync ID:', syncId);
+
     return syncId;
   }
   /**
@@ -424,9 +425,7 @@ class SyncService {
     
     const encryptedBlob = encryptionService.encryptData(currentState);
     const url = `${getApiBaseUrl()}/create.php`;
-    
-    console.log('[Sync] Creating sync group at:', url);
-    
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -498,11 +497,7 @@ class SyncService {
         });
         syncData = incrementalUpdate;
         syncType = 'incremental';
-      } else {
-        console.log(
-          '[sync] No changes for incremental update, using full sync',
-        );
-      }
+      } else {}
     }
     // Fall back to full sync if no incremental update
     if (!syncData) {
@@ -531,16 +526,18 @@ class SyncService {
     };
     // Validate data before pushing (only for full syncs)
     if (syncType === 'full' && !validateSyncedData(syncData)) {
-      console.error(
-        'sync: Local data validation failed before push, attempting repair...',
-      );
+      if (__DEV__) {
+        console.error(
+          'sync: Local data validation failed before push, attempting repair...',
+        );
+      }
       // Try to repair the data
       const repairedData = repairSyncedData(syncData);
       if (!validateSyncedData(repairedData)) {
         console.error('sync: Cannot repair local data for push');
         throw new Error('Cannot push invalid data to server');
       }
-      console.log('sync: Successfully repaired local data before push');
+
       syncData = repairedData;
     }
     // Encrypt the data (compression happens inside if beneficial)
@@ -590,7 +587,7 @@ class SyncService {
           if (networkMonitor.isOnline) {
             return this.pushData(retryCount + 1);
           } else {
-            console.log('sync: Network offline, skipping retry');
+
             throw new Error('Network connection lost');
           }
         }
@@ -605,16 +602,13 @@ class SyncService {
    */
   async pullData(retryCount = 0) {
     if (!this.syncId) {
-      console.log('[Sync] pullData: No sync ID set');
+
       return null;
     }
     const deviceId = await encryptionService.getDeviceId();
     // Include current version to allow server to skip if we're up to date
     const url = `${getApiBaseUrl()}/pull.php?sync_id=${this.syncId}&device_id=${deviceId}&current_version=${this.lastSyncVersion || 0}`;
-    console.log('[Sync] pullData URL:', url);
-    console.log('[Sync] pullData sync ID:', this.syncId);
-    console.log('[Sync] Current version:', this.lastSyncVersion);
-    
+
     try {
       const response = await fetch(url);
       if (response.status === 404) {
@@ -627,7 +621,9 @@ class SyncService {
         // Try to parse as JSON, but handle HTML responses
         try {
           const error = JSON.parse(responseText);
-          console.error('pullData error:', error);
+          if (__DEV__) {
+            console.error('pullData error:', error);
+          }
           throw new Error(error.message || 'Failed to pull data');
         } catch (e) {
           // Response is not JSON (likely HTML error page)
@@ -681,7 +677,7 @@ class SyncService {
           if (networkMonitor.isOnline) {
             return this.pullData(retryCount + 1);
           } else {
-            console.log('sync: Network offline, skipping retry');
+
             throw new Error('Network connection lost');
           }
         }
@@ -741,7 +737,7 @@ class SyncService {
       // This prevents immediately overwriting our own changes
       const timeSinceLastPush = this.lastPushTime ? Date.now() - this.lastPushTime : Infinity;
       if (timeSinceLastPush < 5000) {
-        console.log('[Sync] Skipping full sync - just pushed', timeSinceLastPush, 'ms ago');
+
         // Don't pull or push, just return success with current version
         // This prevents the rapid pull-push cycle that causes overwrites
         this.updateSyncStatus('success');
@@ -782,7 +778,7 @@ class SyncService {
         }
         // Normalize data first to ensure consistent field names
         if (needsNormalization(decryptedData)) {
-          console.log('sync: Normalizing remote data fields');
+
           decryptedData = normalizeSyncData(decryptedData);
         }
         
@@ -790,18 +786,22 @@ class SyncService {
         if (decryptedData.type === 'incremental') {
           // Validate incremental sync data
           if (!validateIncrementalSync(decryptedData)) {
-            console.error('sync: Incremental sync data validation failed', {
-              type: decryptedData?.type,
-              timestamp: decryptedData?.timestamp,
-              patchKeys: decryptedData?.patch
-                ? Object.keys(decryptedData.patch)
-                : [],
-              patchSize: JSON.stringify(decryptedData?.patch || {}).length,
-            });
+            if (__DEV__) {
+              console.error('sync: Incremental sync data validation failed', {
+                type: decryptedData?.type,
+                timestamp: decryptedData?.timestamp,
+                patchKeys: decryptedData?.patch
+                  ? Object.keys(decryptedData.patch)
+                  : [],
+                patchSize: JSON.stringify(decryptedData?.patch || {}).length,
+              });
+            }
             // Don't throw - try to apply it anyway as it might still be valid
-            console.warn(
-              'sync: Attempting to apply incremental update despite validation failure',
-            );
+            if (__DEV__) {
+              console.warn(
+                'sync: Attempting to apply incremental update despite validation failure',
+              );
+            }
           }
           // Normalize patch data for incremental updates
           if (decryptedData.patch) {
@@ -810,9 +810,11 @@ class SyncService {
         } else {
           // Validate full sync data
           if (!validateSyncedData(decryptedData)) {
-            console.error(
-              'sync: Remote data validation failed, attempting repair...',
-            );
+            if (__DEV__) {
+              console.error(
+                'sync: Remote data validation failed, attempting repair...',
+              );
+            }
             const repairedData = repairSyncedData(decryptedData);
             if (!validateSyncedData(repairedData)) {
               throw new Error(
@@ -853,9 +855,7 @@ class SyncService {
               syncDebugger.log('CONFLICT', `Resolved ${resolutionResult.resolved.length} conflicts automatically`, {
                 resolutions: resolutionResult.resolved
               });
-              console.log(
-                `Resolved ${resolutionResult.resolved.length} conflicts automatically`,
-              );
+
               // Use the finalState that's already been computed by applyResolutions
               const mergedState = resolutionResult.finalState;
               // Ensure merged state has valid users with icons preserved
@@ -872,9 +872,11 @@ class SyncService {
                       localUser?.emoji ||
                       remoteUser?.emoji ||
                       '👤';
-                    console.warn(
-                      `Conflict resolution: User ${userId} missing icon, using: ${icon}`,
-                    );
+                    if (__DEV__) {
+                      console.warn(
+                        `Conflict resolution: User ${userId} missing icon, using: ${icon}`,
+                      );
+                    }
                     mergedState.users[userId] = {
                       ...user,
                       icon: icon,
@@ -886,7 +888,9 @@ class SyncService {
               await this.restoreData(mergedState, true);
             }
           } catch (conflictError) {
-            console.error('sync: Conflict resolution failed:', conflictError);
+            if (__DEV__) {
+              console.error('sync: Conflict resolution failed:', conflictError);
+            }
             // If conflict resolution fails due to validation, try to use local state
             // Don't throw the error - just continue with local state
             // This prevents the infinite loop
@@ -922,7 +926,9 @@ class SyncService {
         lastModified: pushResult.lastModified,
       };
     } catch (error) {
-      console.error('Sync failed:', error);
+      if (__DEV__) {
+        console.error('Sync failed:', error);
+      }
       // Check if it's a network error
       if (syncQueue.isNetworkError(error)) {
         await syncQueue.enqueue({ type: 'sync', timestamp: Date.now() });
@@ -1014,17 +1020,17 @@ class SyncService {
         let userNeedsRepair = false;
         // Ensure icon field
         if (!repairedUser.icon) {
-          console.warn(
-            `[SYNC] getCurrentState - User ${userId} missing icon field`,
-          );
-          console.warn(`[SYNC] User data:`, JSON.stringify(user, null, 2));
+          if (__DEV__) {
+            console.warn(
+              `[SYNC] getCurrentState - User ${userId} missing icon field`,
+            );
+            console.warn(`[SYNC] User data:`, JSON.stringify(user, null, 2));
+          }
           // Check for emoji field (legacy support)
           repairedUser.icon =
             user.emoji && typeof user.emoji === 'string' ? user.emoji : '👤';
           userNeedsRepair = true;
-          console.log(
-            `[SYNC] Added icon "${repairedUser.icon}" to user ${userId}`,
-          );
+
         }
         // Remove emoji field if present to avoid confusion
         if (repairedUser.emoji) {
@@ -1037,7 +1043,7 @@ class SyncService {
         }
       });
       if (needsRepair) {
-        console.log('sync: Repaired users in getCurrentState, updating store');
+
         users = repairedUsers;
         // Use the proper store method to update users
         const userStore = require('../../stores/useUserStore.js').default;
@@ -1520,7 +1526,9 @@ class SyncService {
       }
       return response.ok;
     } catch (error) {
-      console.error('SyncService: Error verifying sync:', error);
+      if (__DEV__) {
+        console.error('SyncService: Error verifying sync:', error);
+      }
       // Don't disable on network errors
       return this.syncEnabled;
     }
@@ -1549,7 +1557,9 @@ class SyncService {
     try {
       return await encryptionService.getStoredRecoveryPhrase(this.syncId);
     } catch (error) {
-      console.error('Failed to get recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to get recovery phrase:', error);
+      }
       return null;
     }
   }
@@ -1598,7 +1608,9 @@ class SyncService {
         return true;
       }
     } catch (error) {
-      console.error('Failed to restore encryption:', error);
+      if (__DEV__) {
+        console.error('Failed to restore encryption:', error);
+      }
       throw new Error('Invalid recovery phrase');
     }
   }
@@ -1722,7 +1734,9 @@ class SyncService {
       // Then do regular sync with throttling
       await this.requestSync({ priority: 'normal' });
     } catch (error) {
-      console.error('Sync with queue failed:', error);
+      if (__DEV__) {
+        console.error('Sync with queue failed:', error);
+      }
     }
   }
   /**
@@ -1736,12 +1750,12 @@ class SyncService {
     
     // Check if we're already syncing
     if (this.syncStatus === 'syncing') {
-      console.log('[Sync] Manual sync requested but sync already in progress');
+
       return { success: false, message: 'Sync already in progress' };
     }
     
     try {
-      console.log('[Sync] Manual sync initiated by user');
+
       const result = await this.syncWithQueue();
       
       if (result && result.success) {
@@ -1758,7 +1772,9 @@ class SyncService {
         };
       }
     } catch (error) {
-      console.error('[Sync] Manual sync failed:', error);
+      if (__DEV__) {
+        console.error('[Sync] Manual sync failed:', error);
+      }
       return { 
         success: false, 
         message: error.message || 'Sync failed',
@@ -1827,7 +1843,9 @@ class SyncService {
       try {
         callback(statusData);
       } catch (err) {
-        console.error('Status listener error:', err);
+        if (__DEV__) {
+          console.error('Status listener error:', err);
+        }
       }
     });
   }
@@ -1870,7 +1888,9 @@ class SyncService {
       try {
         callback(conflicts);
       } catch (err) {
-        console.error('Conflict listener error:', err);
+        if (__DEV__) {
+          console.error('Conflict listener error:', err);
+        }
       }
     });
   }
@@ -1924,10 +1944,12 @@ class SyncService {
         lastModified: pushResult.lastModified,
       };
     } catch (error) {
-      console.error(
-        'Failed to complete sync after conflict resolution:',
-        error,
-      );
+      if (__DEV__) {
+        console.error(
+          'Failed to complete sync after conflict resolution:',
+          error,
+        );
+      }
       this.updateSyncStatus('error', error.message);
       throw error;
     }
@@ -1974,9 +1996,11 @@ class SyncService {
           window.location.hostname === 'localhost' ||
           window.location.hostname === '127.0.0.1'
         ) {
-          console.warn(
-            'Share links require deployment to stackmap.app. Returning mock data for local testing.',
-          );
+          if (__DEV__) {
+            console.warn(
+              'Share links require deployment to stackmap.app. Returning mock data for local testing.',
+            );
+          }
           const mockUrl = `https://stackmap.app?share=${accessToken}`;
           return {
             share_id: 'mock-' + Date.now(),
@@ -2135,7 +2159,9 @@ class SyncService {
       await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(shares));
       return result;
     } catch (error) {
-      console.error('Failed to create share link:', error);
+      if (__DEV__) {
+        console.error('Failed to create share link:', error);
+      }
       throw error;
     }
   }
@@ -2265,7 +2291,9 @@ class SyncService {
         throw new Error(error.error || 'Failed to update share');
       }
     } catch (error) {
-      console.error('Failed to update share:', error);
+      if (__DEV__) {
+        console.error('Failed to update share:', error);
+      }
       // Don't throw - we don't want share updates to break the app
     }
   }
@@ -2344,7 +2372,9 @@ class SyncService {
         (share) => share !== null,
       );
     } catch (error) {
-      console.error('Failed to get active shares:', error);
+      if (__DEV__) {
+        console.error('Failed to get active shares:', error);
+      }
       return [];
     }
   }
@@ -2378,7 +2408,9 @@ class SyncService {
       await AsyncStorage.setItem('@stackmap_shares', JSON.stringify(filtered));
       return true;
     } catch (error) {
-      console.error('Failed to delete share:', error);
+      if (__DEV__) {
+        console.error('Failed to delete share:', error);
+      }
       throw error;
     }
   }
@@ -2414,7 +2446,9 @@ class SyncService {
       // In production, would also update the server
       return shares[shareIndex];
     } catch (error) {
-      console.error('Failed to extend share:', error);
+      if (__DEV__) {
+        console.error('Failed to extend share:', error);
+      }
       throw error;
     }
   }

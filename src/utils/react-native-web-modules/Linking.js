@@ -36,12 +36,12 @@ const LinkingWeb = {
   },
 
   openSettings: () => {
-    console.warn('Linking.openSettings is not supported on web');
+//     console.warn('Linking.openSettings is not supported on web');
     return Promise.resolve();
   },
 
   sendIntent: () => {
-    console.warn('Linking.sendIntent is not supported on web');
+//     console.warn('Linking.sendIntent is not supported on web');
     return Promise.resolve();
   },
 };

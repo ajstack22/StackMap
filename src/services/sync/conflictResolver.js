@@ -422,9 +422,7 @@ class ConflictResolver {
         !currentUserData ||
         currentUserData.deleted
       ) {
-        if (newState.currentUser) {
-        } else {
-        }
+        if (newState.currentUser) {} else {}
 
         // Find a valid user to set as current
         const validUserIds = Object.keys(newState.users).filter(
@@ -451,55 +449,55 @@ class ConflictResolver {
 
     // Validate the final state
     if (!validateSyncedData(newState)) {
-      console.error(
-        'Conflict resolution resulted in invalid state, attempting repair',
-      );
+//       console.error(
+//         'Conflict resolution resulted in invalid state, attempting repair',
+//       );
       // Log specific validation failures
-      console.error('Validation failed - checking each user:');
+//       console.error('Validation failed - checking each user:');
       if (newState.users) {
         Object.entries(newState.users).forEach(([userId, user]) => {
           if (user && !user.deleted) {
-            console.error(`User ${userId}:`, {
-              hasName: !!user.name,
-              nameType: typeof user.name,
-              nameValue: user.name,
-              hasIcon: !!user.icon,
-              hasEmoji: !!user.emoji,
-              iconValue: user.icon,
-              emojiValue: user.emoji,
-              hasDays: !!user.days,
-              daysType: typeof user.days,
-            });
+//             console.error(`User ${userId}:`, {
+//               hasName: !!user.name,
+//               nameType: typeof user.name,
+//               nameValue: user.name,
+//               hasIcon: !!user.icon,
+//               hasEmoji: !!user.emoji,
+//               iconValue: user.icon,
+//               emojiValue: user.emoji,
+//               hasDays: !!user.days,
+//               daysType: typeof user.days,
+//             });
           }
         });
       }
-      console.error('newState.currentUser:', newState.currentUser);
+//       console.error('newState.currentUser:', newState.currentUser);
 
       // Try to repair the state
       const repairedState = repairSyncedData(newState);
 
       if (!validateSyncedData(repairedState)) {
-        console.error('Conflict resolution repair failed, state still invalid');
+//         console.error('Conflict resolution repair failed, state still invalid');
         // Log more details for debugging
-        console.error(
-          'Current state users:',
-          JSON.stringify(currentState.users, null, 2),
-        );
-        console.error('Current state currentUser:', currentState.currentUser);
-        console.error('Resolutions applied:', resolutions);
-        console.error(
-          'Failed state users:',
-          JSON.stringify(newState.users, null, 2),
-        );
-        console.error('Failed state currentUser:', newState.currentUser);
-        console.error(
-          'Repaired state users:',
-          JSON.stringify(repairedState.users, null, 2),
-        );
-        console.error('Repaired state currentUser:', repairedState.currentUser);
+//         console.error(
+//           'Current state users:',
+//           JSON.stringify(currentState.users, null, 2),
+//         );
+//         console.error('Current state currentUser:', currentState.currentUser);
+//         console.error('Resolutions applied:', resolutions);
+//         console.error(
+//           'Failed state users:',
+//           JSON.stringify(newState.users, null, 2),
+//         );
+//         console.error('Failed state currentUser:', newState.currentUser);
+//         console.error(
+//           'Repaired state users:',
+//           JSON.stringify(repairedState.users, null, 2),
+//         );
+//         console.error('Repaired state currentUser:', repairedState.currentUser);
 
         // Instead of throwing, return the current state as fallback
-        console.error('Falling back to current state to prevent sync failure');
+//         console.error('Falling back to current state to prevent sync failure');
         return currentState;
       }
 

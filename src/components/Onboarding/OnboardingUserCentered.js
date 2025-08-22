@@ -171,8 +171,7 @@ const OnboardingUserCentered = ({
     const hexCode = Array.from(bytes)
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    
-    console.log('[Onboarding] Generated new sync code');
+
     setGeneratedSyncCode(hexCode);
     return hexCode;
   };
@@ -189,7 +188,7 @@ const OnboardingUserCentered = ({
       setShowCopiedToast(true);
       setTimeout(() => setShowCopiedToast(false), 2000);
     } catch (error) {
-      console.error('Failed to copy:', error);
+//       console.error('Failed to copy:', error);
     }
   };
 
@@ -200,28 +199,23 @@ const OnboardingUserCentered = ({
     
     try {
       const phraseToUse = recoveryPhrase.trim().replace(/\s+/g, '');
-      
-      console.log('[Onboarding] Checking sync code format');
-      
+
       if (phraseToUse.length !== 32 || !/^[a-f0-9]+$/i.test(phraseToUse)) {
         throw new Error('Invalid sync code format');
       }
 
       await syncService.initialize(phraseToUse);
-      console.log('[Onboarding] After initialize, syncId:', syncService.syncId);
-      
+
       const pullResult = await syncService.pullData();
-      console.log('[Onboarding] Pull result:', pullResult);
-      
+
       if (!pullResult || !pullResult.encrypted_blob) {
-        console.error('[Onboarding] No data found. pullResult:', pullResult);
+//         console.error('[Onboarding] No data found. pullResult:', pullResult);
         throw new Error('No data found for this sync code');
       }
       
       // Decrypt the data
       const decryptedData = syncService.encryptionService.decryptData(pullResult.encrypted_blob);
-      console.log('[Onboarding] Decrypted data:', decryptedData ? 'success' : 'failed');
-      
+
       if (!decryptedData) {
         throw new Error('Failed to decrypt sync data');
       }
@@ -442,9 +436,7 @@ const OnboardingUserCentered = ({
         // Wait for state to update
         await new Promise(resolve => setTimeout(resolve, 100));
       }
-      
-      console.log('[Onboarding] Using sync code for initialization:', syncCode);
-      
+
       // Initialize will create the sync group if it doesn't exist
       await syncService.initialize(syncCode);
       
@@ -462,7 +454,7 @@ const OnboardingUserCentered = ({
       setUserJourney(prev => ({ ...prev, syncEnabled: true }));
       animateStepTransition('syncSuccess');
     } catch (error) {
-      console.error('Sync creation error:', error);
+//       console.error('Sync creation error:', error);
       // If sync already exists (409), generate a new code for retry
       if (error.message && error.message.includes('already exists')) {
         generateNewSyncCode();
@@ -609,7 +601,7 @@ const OnboardingUserCentered = ({
                 });
               }
             } catch (error) {
-              console.error('Import failed:', error);
+//               console.error('Import failed:', error);
             }
           }}
         >

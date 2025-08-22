@@ -12,11 +12,11 @@ const AsyncStorage = {
           const value = localStorage.getItem(key);
           if (VERBOSE_LOGGING) {
             console.warn(`[AsyncStorage.web] 🟢 getItem('${key}') = ${value ? value.substring(0, 50) + '...' : null}`);
-            console.warn(`[AsyncStorage.web] 🟢 Resolving promise for ${key} with value:`, value);
+//             console.warn(`[AsyncStorage.web] 🟢 Resolving promise for ${key} with value:`, value);
           }
           resolve(value);
         } catch (error) {
-          console.error('[AsyncStorage.web] getItem error:', error);
+//           console.error('[AsyncStorage.web] getItem error:', error);
           resolve(null);
         }
       }, 0);
@@ -32,7 +32,7 @@ const AsyncStorage = {
         localStorage.setItem(key, value);
         resolve();
       } catch (error) {
-        console.error('[AsyncStorage.web] setItem error:', error);
+//         console.error('[AsyncStorage.web] setItem error:', error);
         reject(error);
       }
     });

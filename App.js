@@ -58,7 +58,9 @@ if (Platform.OS === 'web') {
   try {
     DocumentPicker = require('react-native-document-picker').default;
   } catch (e) {
-    console.warn('DocumentPicker not available:', e);
+    if (__DEV__) {
+      console.warn('DocumentPicker not available:', e);
+    }
     DocumentPicker = null;
   }
   RNFS = require('react-native-fs');
@@ -199,7 +201,7 @@ const AnimatedIcon = React.memo(/** @type {React.FC<{name: string, size: number,
 const App = () => {
   // Reduced startup logging - only show once
   if (Platform.OS === 'web' && !window.__stackMapStartupLogged) {
-    console.log('📱 StackMap v2025.08.15.7');
+
     window.__stackMapStartupLogged = true;
   }
   const insets = useSafeAreaInsets();
@@ -337,18 +339,18 @@ const App = () => {
   const numColumns = calculateColumns(screenDimensions.width);
   // Debug logging for Android tablets
   if (Platform.OS === 'android' && screenDimensions.width >= 600) {
-    console.warn(
+    if (__DEV__) {
+      if (__DEV__) {
+        console.warn(
       `Android tablet dimensions - width: ${screenDimensions.width}, columns: ${numColumns}`,
     );
+      }
+    }
   }
   const cardWidth = calculateCardWidth(screenDimensions.width);
 
   // Debug logging for Android tablet issue
-  if (Platform.OS === 'android') {
-    console.log(
-      `[App.js] Android width: ${screenDimensions.width}, numColumns: ${numColumns}, cardWidth: ${cardWidth}`,
-    );
-  }
+  if (Platform.OS === 'android') {}
   const cardHeight = getCardHeight();
 
   // DEBUG for Android tablet
@@ -457,9 +459,11 @@ const App = () => {
     setTimeout(() => {
       encryptionService.getDeviceId().then(id => {
         setCachedDeviceId(id);
-        console.log('[App] Device ID cached for activity operations:', id);
+
       }).catch(err => {
-        console.error('[App] Failed to cache device ID:', err);
+        if (__DEV__) {
+          console.error('[App] Failed to cache device ID:', err);
+        }
         // Generate a fallback ID if needed
         setCachedDeviceId(`fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
       });
@@ -492,7 +496,9 @@ const App = () => {
             usersCount: Object.keys(parsed?.state?.users || {}).length,
           });
         } catch (e) {
-          console.error('[App] Error parsing Zustand data:', e);
+          if (__DEV__) {
+            console.error('[App] Error parsing Zustand data:', e);
+          }
         }
       }
 
@@ -511,12 +517,12 @@ const App = () => {
       // Use a longer delay to ensure everything is mounted
       setTimeout(() => {
         if (window.urlOpenPrivacy) {
-          console.log('[App] Opening privacy modal from URL param');
+
           setShowPrivacyModal(true);
           window.urlOpenPrivacy = false;
         }
         if (window.urlOpenSupport) {
-          console.log('[App] Opening support modal from URL param');
+
           setShowSupportModal(true);
           window.urlOpenSupport = false;
         }
@@ -581,7 +587,7 @@ const App = () => {
           // Only migrate if icon field is completely missing or empty
           if (!updatedUser.icon || updatedUser.icon === '') {
             // NO BACKWARD COMPATIBILITY - must have icon field
-            console.log(`User ${userId} missing icon field, using default`);
+
             updatedUser.icon = DEFAULT_USER_ICON;
             needsUpdate = true;
           }
@@ -618,7 +624,7 @@ const App = () => {
                 const cleanedActivities = dayData.activities.filter(a => !a.deleted);
                 if (cleanedActivities.length < dayData.activities.length) {
                   cleanupNeeded = true;
-                  console.log(`Cleaning up ${dayData.activities.length - cleanedActivities.length} deleted activities for ${userId} on ${day}`);
+
                 }
                 cleanedDays[day] = {
                   ...dayData,
@@ -635,7 +641,7 @@ const App = () => {
         });
         
         if (cleanupNeeded) {
-          console.log('Cleaned up old deleted activities from previous sessions');
+
           setUsers(cleanedUsers);
         }
       }
@@ -666,12 +672,12 @@ const App = () => {
           ? useSyncStore.getState().syncEnabled 
           : await AsyncStorage.getItem('@sync_enabled');
         if (syncEnabled === 'true' || syncEnabled === true) {
-          console.log('[App] Sync is enabled but no users yet - waiting for sync to complete');
+
           // Give sync more time to load users
           setTimeout(() => {
             const currentUsers = useAppStore.getState().users;
             if (Object.keys(currentUsers).length === 0) {
-              console.log('[App] Still no users after waiting - creating default user');
+
               // Create a minimal default user to prevent issues
               const defaultUser = {
                 id: Date.now().toString(),
@@ -690,7 +696,7 @@ const App = () => {
           }, 2000);
         } else {
           // No sync, this is a bad state - reset onboarding
-          console.log('[App] No sync and no users - resetting onboarding');
+
           setHasCompletedOnboarding(false);
           setShowOnboarding(true);
         }
@@ -856,35 +862,32 @@ const App = () => {
   // Handle PIN input
   useEffect(() => {
     if (pinInput.length === PIN_LENGTH && !isSettingPin) {
-      console.log('[App] Verifying PIN, input:', pinInput);
 
       // Run debug when PIN verification happens
-      debugPINStatus().then(() => {
-        console.log('[App] Debug complete, now verifying PIN...');
-      });
+      debugPINStatus().then(() => {});
 
       // Verify PIN
       verifyPin(pinInput).then(async isValid => {
-        console.log('[App] PIN verification result:', isValid);
+
         if (isValid) {
           // PIN for main edit mode
-          console.log('[App] PIN valid, entering edit mode');
+
           setIsEditMode(true);
           setShowPinModal(false);
           setPinInput('');
         } else {
           // Double-check if there's actually a PIN set
           const actuallyHasPin = await hasSecurePin();
-          console.log('[App] Actually has PIN?:', actuallyHasPin);
+
           if (!actuallyHasPin) {
             // No PIN exists, so just enter edit mode
-            console.log('[App] No PIN set, entering edit mode anyway');
+
             setHasPinProtection(false);
             setIsEditMode(true);
             setShowPinModal(false);
             setPinInput('');
           } else {
-            console.log('[App] Invalid PIN entered');
+
             Alert.alert('Incorrect PIN', 'Please try again');
             setPinInput('');
           }
@@ -897,23 +900,18 @@ const App = () => {
   useEffect(() => {
     if (isSettingPin) {
       if (!confirmPin && pinInput.length === PIN_LENGTH) {
-        console.log('[App] PIN setting - first entry:', pinInput);
+
         // Move to confirm step
         setConfirmPin(pinInput);
         setPinInput('');
         showToast({ message: 'Now re-enter PIN to confirm' });
       } else if (confirmPin && pinInput.length === PIN_LENGTH) {
-        console.log(
-          '[App] PIN setting - confirmation:',
-          pinInput,
-          'matches?',
-          pinInput === confirmPin,
-        );
+
         // Verify confirmation
         if (pinInput === confirmPin) {
-          console.log('[App] PINs match, saving...');
+
           setSecurePin(pinInput).then(success => {
-            console.log('[App] PIN save result:', success);
+
             if (success) {
               setShowPinModal(false);
               setPinInput('');
@@ -922,12 +920,7 @@ const App = () => {
               setHasPinProtection(true);
               showToast({ message: 'PIN set successfully' });
               // Verify it was saved
-              hasSecurePin().then(hasPin => {
-                console.log(
-                  '[App] Verification after save - has PIN?:',
-                  hasPin,
-                );
-              });
+              hasSecurePin().then(hasPin => {});
             } else {
               Alert.alert('Error', 'Failed to save PIN. Please try again.');
               setPinInput('');
@@ -996,7 +989,7 @@ const App = () => {
 
   const handleOnboardingComplete = async onboardingData => {
     try {
-      console.log('[handleOnboardingComplete] Called with:', onboardingData);
+
       console.log('[handleOnboardingComplete] Current state:', {
         hasCompletedOnboarding,
         showOnboarding,
@@ -1006,10 +999,7 @@ const App = () => {
       // Check if we have imported data passed directly from onboarding (new sync import flow)
       // OR if we completed abbreviated onboarding with sync
       if (onboardingData?.importedData || onboardingData?.syncCompleted) {
-        console.log('[handleOnboardingComplete] Sync/import path - completing onboarding');
-        console.log('[handleOnboardingComplete] importedData:', onboardingData?.importedData);
-        console.log('[handleOnboardingComplete] syncCompleted:', onboardingData?.syncCompleted);
-        
+
         // Wait a moment to ensure stores are updated from sync
         // This prevents the initialization effect from detecting "no users" and restarting onboarding
         setTimeout(() => {
@@ -1022,7 +1012,7 @@ const App = () => {
           setHasCompletedOnboarding(true);
           setShowOnboarding(false);
           showToast({ message: 'Data synced successfully' });
-          console.log('[handleOnboardingComplete] Onboarding completed successfully');
+
         }, 1500); // Give sync service more time to update stores
         
         return; // Return here to prevent creating duplicate users below
@@ -1033,10 +1023,7 @@ const App = () => {
         '@stackmap_import_temp',
       );
       if (importedDataStr) {
-        console.log('[ONBOARDING] Found imported data, applying it now...');
-        console.log(
-          '[ONBOARDING] Bypassing user creation - using imported data only',
-        );
+
         const importedData = JSON.parse(importedDataStr);
 
         // Apply all the imported data NOW that onboarding is complete
@@ -1114,7 +1101,6 @@ const App = () => {
 
       // Handle abbreviated onboarding (sync URL flow)
       if (onboardingData?.isAbbreviated && onboardingData?.syncSetupPhrase) {
-        console.log('Abbreviated onboarding completed - sync already handled');
 
         // Clear the sync setup phrase to prevent duplicate modal
         setSyncSetupPhrase(null);
@@ -1122,7 +1108,7 @@ const App = () => {
         // Ensure theme is set before showing main app
         const storeState = useAppStore.getState();
         if (!storeState.currentTheme) {
-          console.log('Setting default theme after sync onboarding');
+
           setCurrentTheme('stackBlue');
         }
 
@@ -1137,9 +1123,13 @@ const App = () => {
         !onboardingData.users ||
         onboardingData.users.length === 0
       ) {
-        console.warn(
+        if (__DEV__) {
+          if (__DEV__) {
+            console.warn(
           'No users provided from onboarding, creating default user',
         );
+          }
+        }
         const randomId = Math.random().toString(36).substr(2, 9);
         const newUserId = `user_${Date.now()}_${randomId}`;
         const newUser = {
@@ -1304,7 +1294,7 @@ const App = () => {
       // SAFETY CHECK: Only create users if we didn't import any
       const currentUsers = useAppStore.getState().users;
       if (currentUsers && Object.keys(currentUsers).length > 0) {
-        console.log('[ONBOARDING] Users already exist, skipping user creation');
+
         setShowOnboarding(false);
         return;
       }
@@ -1382,7 +1372,9 @@ const App = () => {
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
-      console.error('Error completing onboarding:', error);
+      if (__DEV__) {
+        console.error('Error completing onboarding:', error);
+      }
       // Still hide onboarding on error
       setShowOnboarding(false);
     }
@@ -1390,10 +1382,9 @@ const App = () => {
 
   const handleOnboardingImportComplete = async selectedData => {
     try {
-      console.log('[IMPORT] Import selection complete, processing data...');
 
       // Save to temporary storage for onboarding to retrieve
-      console.log('[IMPORT] Saving import data temporarily for onboarding...');
+
       await AsyncStorage.setItem(
         '@stackmap_import_temp',
         JSON.stringify(selectedData),
@@ -1416,8 +1407,6 @@ const App = () => {
         userData: selectedData.users || {},
       };
 
-      console.log('[IMPORT] Returning summary to onboarding:', summary);
-
       // Resolve the promise from importDataForOnboarding
       if (window.__onboardingImportResolve) {
         window.__onboardingImportResolve({
@@ -1427,7 +1416,9 @@ const App = () => {
         delete window.__onboardingImportResolve;
       }
     } catch (error) {
-      console.error('[IMPORT] Error completing import:', error);
+      if (__DEV__) {
+        console.error('[IMPORT] Error completing import:', error);
+      }
       showToast({ message: 'Failed to import data', type: 'error' });
 
       // Reject the promise
@@ -1626,7 +1617,9 @@ const App = () => {
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
-      console.error('Error completing setup wizard:', error);
+      if (__DEV__) {
+        console.error('Error completing setup wizard:', error);
+      }
       // Still hide setup wizard on error
       setShowSetupWizard(false);
     }
@@ -1760,7 +1753,9 @@ const App = () => {
       };
       // Data is now persisted automatically through Zustand
     } catch (error) {
-      console.error('Error skipping onboarding:', error);
+      if (__DEV__) {
+        console.error('Error skipping onboarding:', error);
+      }
       // Still hide onboarding on error
       setShowOnboarding(false);
       setShowSetupWizard(false);
@@ -1835,12 +1830,10 @@ const App = () => {
         }
         updateAutoUpdateShares.timeout = setTimeout(async () => {
           await syncService.updateActiveShares(userId);
-          console.log('Auto-update shares refreshed');
+
         }, 1000); // 1 second delay to batch updates
       }
-    } catch (error) {
-      console.log('Share update skipped:', error.message);
-    }
+    } catch (error) {}
   };
 
   const toggleActivity = id => {
@@ -2252,7 +2245,7 @@ const App = () => {
 
     // If library?.categories was null or empty array, set it to default
     if (!library?.categories || library?.categories.length === 0) {
-      console.log('Initializing activity categories with default template');
+
       categories = EMPTY_CATEGORIES;
       updateLibraryCategories(EMPTY_CATEGORIES);
     }
@@ -2267,7 +2260,7 @@ const App = () => {
 
     // If My Templates doesn't exist, create it
     if (myTemplatesIndex === -1) {
-      console.log('Creating My Templates category');
+
       updatedCategories.push({
         id: 'my-templates',
         name: 'My Templates',
@@ -2310,20 +2303,18 @@ const App = () => {
       }, 10000);
 
       showToast({ message: 'Added to My Templates' });
-      console.log('Added to library:', template);
+
     } else {
       showToast({ message: 'Could not find My Templates category' });
-      console.error('My Templates category not found in:', categories);
+      if (__DEV__) {
+        console.error('My Templates category not found in:', categories);
+      }
     }
   };
 
   // Handle adding user from AddUserModal
   const handleAddUser = (userName, userEmoji) => {
-    console.log('handleAddUser called with:', {
-      userName,
-      userEmoji,
-      emojiType: typeof userEmoji,
-    });
+
     const randomId = Math.random().toString(36).substr(2, 9);
     const userId = `user_${Date.now()}_${randomId}`;
     const newUser = {
@@ -2345,7 +2336,6 @@ const App = () => {
       lastActive: new Date().toISOString(),
     };
 
-    console.log('Creating new user:', newUser);
     addUser(userId, newUser);
 
     setCurrentUser(userId);
@@ -2359,12 +2349,7 @@ const App = () => {
 
   // Handle updating user from AddUserModal
   const handleUpdateUser = (userId, userName, userEmoji) => {
-    console.log('handleUpdateUser called with:', {
-      userId,
-      userName,
-      userEmoji,
-      emojiType: typeof userEmoji,
-    });
+
     // Use the store's updateUser method to properly update the user
     updateUser(userId, {
       name: userName,
@@ -2427,18 +2412,13 @@ const App = () => {
 
   const handlePinSet = async pin => {
     try {
-      console.log('[App] Setting PIN, length:', pin?.length);
+
       // Use secure storage to save PIN
       const success = await setSecurePin(pin);
-      console.log('[App] setSecurePin result:', success);
 
       if (success) {
         // Immediately verify the PIN was stored
         const verifyStored = await hasSecurePin();
-        console.log(
-          '[App] Verification after set - hasSecurePin:',
-          verifyStored,
-        );
 
         setHasPinProtection(true);
         setIsSettingPin(false);
@@ -2447,7 +2427,7 @@ const App = () => {
         showToast({ message: 'Failed to set PIN', type: 'error' });
       }
     } catch (error) {
-      console.log('[App] Error setting PIN:', error);
+
       showToast({ message: 'Failed to set PIN', type: 'error' });
     }
   };
@@ -2581,15 +2561,15 @@ Would you like to share it to another app?`,
                       title: 'StackMap Export',
                       message: `Exported: ${fileName}`,
                     });
-                  } catch (shareError) {
-                    console.log('Share cancelled:', shareError);
-                  }
+                  } catch (shareError) {}
                 },
               },
             ],
           );
         } catch (error) {
-          console.error('Export error:', error);
+          if (__DEV__) {
+            console.error('Export error:', error);
+          }
           // Try app's external directory as fallback
           try {
             const externalPath = `${RNFS.ExternalDirectoryPath}/${fileName}`;
@@ -2643,7 +2623,9 @@ Would you like to share it to another app?`,
         }
       }
     } catch (error) {
-      console.error('Export error:', error);
+      if (__DEV__) {
+        console.error('Export error:', error);
+      }
       Alert.alert(
         'Export Error',
         'Failed to export data. Please check app permissions.',
@@ -2694,7 +2676,7 @@ Would you like to share it to another app?`,
 
   // Import data function for onboarding (doesn't hide onboarding)
   const importDataForOnboarding = async () => {
-    console.log('[IMPORT] ========== STARTING IMPORT FLOW ==========');
+
     console.log('[IMPORT] Current state:', {
       hasCompletedOnboarding,
       showOnboarding,
@@ -2740,7 +2722,7 @@ Would you like to share it to another app?`,
             // First check if the directory exists
             const exists = await RNFS.exists(path);
             if (!exists) {
-              console.log(`[Import] Directory does not exist: ${path}`);
+
               continue;
             }
 
@@ -2751,10 +2733,10 @@ Would you like to share it to another app?`,
                 f.name.toLowerCase().includes('stackmap'),
             );
             jsonFiles = jsonFiles.concat(foundFiles);
-            console.log(`[Import] Found ${foundFiles.length} files in ${path}`);
+
           } catch (e) {
             // Skip paths we can't access
-            console.log(`[Import] Cannot access directory: ${path}`, e.message);
+
           }
         }
 
@@ -2845,18 +2827,17 @@ To use an older backup, delete some recent exports first.`,
           });
 
           if (!selectedFile) {
-            console.log('[Import] User cancelled file selection');
+
             return false;
           }
 
-          console.log(`[Import] User selected file: ${selectedFile.path}`);
           try {
             fileContent = await RNFS.readFile(selectedFile.path, 'utf8');
-            console.log(
-              `[Import] Successfully read file, length: ${fileContent.length}`,
-            );
+
           } catch (readError) {
-            console.error(`[Import] Failed to read file:`, readError);
+            if (__DEV__) {
+              console.error(`[Import] Failed to read file:`, readError);
+            }
             Alert.alert(
               'Error',
               `Could not read the backup file: ${readError.message}`,
@@ -2866,18 +2847,14 @@ To use an older backup, delete some recent exports first.`,
         } else {
           // Single file - use it directly
           const mostRecentFile = uniqueFiles[0];
-          console.log(
-            `[Import] Only one file found, using: ${mostRecentFile.path}`,
-          );
-          console.log(`[Import] File details:`, mostRecentFile);
 
           try {
             fileContent = await RNFS.readFile(mostRecentFile.path, 'utf8');
-            console.log(
-              `[Import] Successfully read file, length: ${fileContent.length}`,
-            );
+
           } catch (readError) {
-            console.error(`[Import] Failed to read file:`, readError);
+            if (__DEV__) {
+              console.error(`[Import] Failed to read file:`, readError);
+            }
             Alert.alert(
               'Error',
               `Could not read the backup file: ${readError.message}`,
@@ -2908,21 +2885,20 @@ To use an older backup, delete some recent exports first.`,
         return false;
       }
 
-      console.log(`[Import] Parsing JSON data...`);
       let importedData;
       try {
         importedData = JSON.parse(fileContent);
-        console.log(`[Import] Successfully parsed JSON`);
+
       } catch (parseError) {
-        console.error(`[Import] Failed to parse JSON:`, parseError);
+        if (__DEV__) {
+          console.error(`[Import] Failed to parse JSON:`, parseError);
+        }
         Alert.alert('Error', 'The selected file is not a valid JSON file');
         return false;
       }
 
-      console.log(`[Import] Validating data structure...`);
       // Validate data is v4
       const validatedData = validateDataStructure(importedData);
-      console.log(`[Import] Validation complete - v4 data confirmed`);
 
       // IMPORTANT: During onboarding, we should NOT update the Zustand store
       // The data will be set when onboarding completes
@@ -2931,11 +2907,13 @@ To use an older backup, delete some recent exports first.`,
         !validatedData.users ||
         Object.keys(validatedData.users).length === 0
       ) {
-        console.warn('[IMPORT] No users found in import data');
+        if (__DEV__) {
+          console.warn('[IMPORT] No users found in import data');
+        }
       }
 
       // Set the import data and show DataModal
-      console.log('[IMPORT] Showing import selection modal...');
+
       setOnboardingImportData(validatedData);
       setShowOnboardingImport(true);
       // Set DataModal to import tab
@@ -2947,8 +2925,12 @@ To use an older backup, delete some recent exports first.`,
         window.__onboardingImportResolve = resolve;
       });
     } catch (error) {
-      console.error('[IMPORT] Import error:', error);
-      console.error('[IMPORT] Error stack:', error.stack);
+      if (__DEV__) {
+        console.error('[IMPORT] Import error:', error);
+      }
+      if (__DEV__) {
+        console.error('[IMPORT] Error stack:', error.stack);
+      }
       showToast({ message: 'Failed to import data', type: 'error' });
       return false;
     }
@@ -2983,7 +2965,7 @@ To use an older backup, delete some recent exports first.`,
             // First check if the directory exists
             const exists = await RNFS.exists(path);
             if (!exists) {
-              console.log(`[Import] Directory does not exist: ${path}`);
+
               continue;
             }
 
@@ -2994,10 +2976,10 @@ To use an older backup, delete some recent exports first.`,
                 f.name.toLowerCase().includes('stackmap'),
             );
             jsonFiles = jsonFiles.concat(foundFiles);
-            console.log(`[Import] Found ${foundFiles.length} files in ${path}`);
+
           } catch (e) {
             // Skip paths we can't access
-            console.log(`[Import] Cannot access directory: ${path}`, e.message);
+
           }
         }
 
@@ -3123,7 +3105,9 @@ This will replace all your current data.`,
           );
         }
       } catch (error) {
-        console.error('Import error:', error);
+        if (__DEV__) {
+          console.error('Import error:', error);
+        }
         Alert.alert(
           'Import Error',
           'Unable to access files. This is normal on newer Android versions due to storage restrictions.\n\nTry using a file manager app to share the JSON file with StackMap.',
@@ -3134,7 +3118,7 @@ This will replace all your current data.`,
 
     // iOS uses DocumentPicker
     try {
-      console.log('Starting import process...');
+
       const result = await DocumentPicker.pick({
         type:
           Platform.OS === 'web'
@@ -3143,36 +3127,36 @@ This will replace all your current data.`,
         copyTo: 'cachesDirectory',
       });
 
-      console.log('DocumentPicker result:', result);
-
       let fileContent;
 
       // Web implementation includes content directly
       if (Platform.OS === 'web' && result[0]?.content) {
-        console.log('Using web content path');
+
         fileContent = result[0].content;
       } else if (result[0]?.fileCopyUri) {
         // Native implementation needs to read the file
-        console.log('Using native file path');
+
         fileContent = await RNFS.readFile(result[0].fileCopyUri, 'utf8');
         // Clean up temporary file
         await RNFS.unlink(result[0].fileCopyUri);
       } else {
-        console.error('No valid file content found in result:', result);
+        if (__DEV__) {
+          console.error('No valid file content found in result:', result);
+        }
         Alert.alert('Error', 'Could not read the selected file');
         return;
       }
 
-      console.log('File content length:', fileContent?.length);
-
       // Parse and validate the data
       let importedData;
       try {
-        console.log('Parsing JSON...');
+
         importedData = JSON.parse(fileContent);
-        console.log('Parsed data:', importedData);
+
       } catch (e) {
-        console.error('JSON parse error:', e);
+        if (__DEV__) {
+          console.error('JSON parse error:', e);
+        }
         Alert.alert(
           'Error',
           'Invalid file format. Please select a valid StackMap export file.',
@@ -3181,19 +3165,16 @@ This will replace all your current data.`,
       }
 
       // Migrate data if needed
-      console.log('Migrating data structure...');
+
       const validatedData = validateDataStructure(importedData);
-      console.log('Migrated data:', validatedData);
 
       // Confirm import
-      console.log('Showing import confirmation dialog...');
 
       const confirmImport = async () => {
-        console.log('User confirmed import, applying data...');
 
         // Disable sync before importing to prevent conflicts
         if (await syncService.isEnabled()) {
-          console.log('Disabling sync before import...');
+
           await syncService.disable();
         }
 
@@ -3263,16 +3244,20 @@ This will replace all your current data.`,
         );
       }
     } catch (error) {
-      console.error('Import catch block - error:', error);
+      if (__DEV__) {
+        console.error('Import catch block - error:', error);
+      }
       if (
         DocumentPicker &&
         DocumentPicker.isCancel &&
         DocumentPicker.isCancel(error)
       ) {
         // User cancelled the picker
-        console.log('User cancelled file picker');
+
       } else {
-        console.error('Import error details:', error.message, error.stack);
+        if (__DEV__) {
+          console.error('Import error details:', error.message, error.stack);
+        }
         Alert.alert('Import Error', `Failed to import data: ${error.message}`);
       }
     }
@@ -3281,22 +3266,20 @@ This will replace all your current data.`,
   // Handle import from DataModal
   const handleImportComplete = async importData => {
     try {
-      console.log('=== handleImportComplete called ===');
-      console.log('Import mode:', importData.mode);
+
       console.log(
         'Import users:',
         importData.users ? Object.keys(importData.users) : 'none',
       );
-      console.log('Import users data:', importData.users);
 
       // Disable sync before importing to prevent conflicts
       if (await syncService.isEnabled()) {
-        console.log('Disabling sync before import...');
+
         await syncService.disable();
       }
 
       if (importData.mode === 'fresh') {
-        console.log('FRESH IMPORT - clearing all data first');
+
         // Fresh import - clear everything and replace with selected items only
 
         // Clear ALL existing data comprehensively
@@ -3341,9 +3324,7 @@ This will replace all your current data.`,
                   : DEFAULT_USER_ICON,
             };
             validatedUsers[userId] = validatedUser;
-            console.log(
-              `[IMPORT] Validated user ${userId}: name="${validatedUser.name}", icon="${validatedUser.icon}"`,
-            );
+
           });
 
           console.log(
@@ -3378,9 +3359,7 @@ This will replace all your current data.`,
             if (theme) setCurrentTheme(theme);
           }
         } else {
-          console.log(
-            'WARNING: No users in import data, creating default user',
-          );
+
           // No users imported, create a default one
           const defaultUserId = Date.now().toString();
           const defaultUser = {
@@ -3424,7 +3403,7 @@ This will replace all your current data.`,
 
         // Merge users
         if (importData.users && Object.keys(importData.users).length > 0) {
-          console.log('MERGE MODE - merging users');
+
           const mergedUsers = { ...users };
 
           // Add imported users, creating unique names if duplicates exist
@@ -3449,9 +3428,6 @@ This will replace all your current data.`,
 
             if (existingUserEntry) {
               const [existingUserId, existingUser] = existingUserEntry;
-              console.log(
-                `User "${validatedUser.name}" already exists, merging data`,
-              );
 
               // Merge the user's days data (activities)
               const mergedDays = { ...existingUser.days };
@@ -3494,7 +3470,7 @@ This will replace all your current data.`,
               };
             } else {
               // User doesn't exist, add as new
-              console.log(`Adding new user "${validatedUser.name}"`);
+
               const newUserId =
                 Date.now() + '_' + Math.random().toString(36).substr(2, 9);
               mergedUsers[newUserId] = {
@@ -3623,7 +3599,9 @@ This will replace all your current data.`,
         setShowOnboarding(false);
       }
     } catch (error) {
-      console.error('Import error:', error);
+      if (__DEV__) {
+        console.error('Import error:', error);
+      }
       Alert.alert('Import Error', 'Failed to import data. Please try again.');
     }
   };
@@ -3681,7 +3659,7 @@ Users: ${userNames} (${userCount} total)
             onPress: async () => {
               // Disable sync before importing to prevent conflicts
               if (await syncService.isEnabled()) {
-                console.log('Disabling sync before import...');
+
                 await syncService.disable();
               }
 
@@ -3731,19 +3709,23 @@ Users: ${userNames} (${userCount} total)
         ],
       );
     } catch (error) {
-      console.error('Import from file error:', error);
+      if (__DEV__) {
+        console.error('Import from file error:', error);
+      }
       Alert.alert('Import Error', 'Failed to read or process the file');
     }
   };
 
   const resetApp = async () => {
-    console.log('[Reset] resetApp called - Starting reset process...');
+
     // User confirmed reset, performing reset
     try {
       await performReset();
-      console.log('[Reset] Reset completed successfully');
+
     } catch (error) {
-      console.error('[Reset] Reset failed:', error);
+      if (__DEV__) {
+        console.error('[Reset] Reset failed:', error);
+      }
       // Show error to user
       showToast({
         message: 'Reset failed: ' + (error.message || 'Unknown error'),
@@ -3869,7 +3851,6 @@ Users: ${userNames} (${userCount} total)
 
         // Final verification
         const finalKeys = await AsyncStorage.getAllKeys();
-        console.log('[Reset] Final AsyncStorage keys:', finalKeys);
 
         // On iOS, we may need to force a refresh
         if (Platform.OS === 'ios') {
@@ -3932,14 +3913,7 @@ Users: ${userNames} (${userCount} total)
     const filteredActivities = activities.filter(a => !a.deleted);
 
     // Debug log to verify this function is being called
-    if (Platform.OS === 'ios') {
-      console.log(
-        'renderActivity called - item:',
-        item.text,
-        'provided index:',
-        index,
-      );
-    }
+    if (Platform.OS === 'ios') {}
 
     // Use the provided index if available, otherwise calculate from filtered array
     let actualIndex;
@@ -3952,12 +3926,16 @@ Users: ${userNames} (${userCount} total)
 
       // Debug warning if we had to fallback
       if (__DEV__ && Platform.OS === 'ios') {
-        console.warn(
+        if (__DEV__) {
+          if (__DEV__) {
+            console.warn(
           'Had to calculate index for:',
           item.text,
           'Found:',
           actualIndex,
         );
+          }
+        }
       }
     }
 
@@ -4831,13 +4809,13 @@ Users: ${userNames} (${userCount} total)
                 }, 0);
               }}
               onActivityManagement={tab => {
-                console.log('EditModeToolbar clicked:', tab);
+
                 const tabIndex = tab === 'add' ? 0 : 1;
-                console.log('Setting activityManagementActiveTab to:', tabIndex);
+
                 setActivityManagementActiveTab(tabIndex);
                 // Use setTimeout to ensure state update happens first
                 setTimeout(() => {
-                  console.log('Opening modal with tab index:', tabIndex);
+
                   setShowActivityManagementModal(true);
               }, 0);
             }}
@@ -4952,13 +4930,13 @@ Users: ${userNames} (${userCount} total)
                 }, 0);
               }}
               onActivityManagement={tab => {
-                console.log('EditModeToolbar clicked:', tab);
+
                 const tabIndex = tab === 'add' ? 0 : 1;
-                console.log('Setting activityManagementActiveTab to:', tabIndex);
+
                 setActivityManagementActiveTab(tabIndex);
                 // Use setTimeout to ensure state update happens first
                 setTimeout(() => {
-                  console.log('Opening modal with tab index:', tabIndex);
+
                   setShowActivityManagementModal(true);
               }, 0);
             }}
@@ -4991,11 +4969,7 @@ Users: ${userNames} (${userCount} total)
         <FAB
           icon={isEditMode ? 'edit-off' : 'edit'}
           onPress={() => {
-            console.log('[FAB] Edit button pressed', {
-              isEditMode,
-              hasPinProtection,
-              showPinModal,
-            });
+
             if (isEditMode) {
               setIsEditMode(false);
               // Switch to today when exiting edit mode

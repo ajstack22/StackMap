@@ -15,7 +15,7 @@ class SyncDebugger {
 
   enable() {
     this.enabled = true;
-    console.log('🔍 SYNC DEBUG ENABLED - All sync operations will be logged');
+
     console.log('To disable: syncDebugger.disable()');
     console.log('To see history: syncDebugger.showHistory()');
     console.log('To export: syncDebugger.exportLogs()');
@@ -23,7 +23,7 @@ class SyncDebugger {
 
   disable() {
     this.enabled = false;
-    console.log('🔍 SYNC DEBUG DISABLED');
+
   }
 
   log(category, message, data = {}) {
@@ -157,14 +157,8 @@ class SyncDebugger {
   }
 
   showHistory() {
-    console.log('=== SYNC DEBUG HISTORY ===');
-    this.history.forEach((entry, i) => {
-      console.log(`\n--- Entry ${i + 1} ---`);
-      console.log(`Time: ${entry.timestamp}`);
-      console.log(`Category: ${entry.category}`);
-      console.log(`Message: ${entry.message}`);
-      console.log('Data:', entry.data);
-    });
+
+    this.history.forEach((entry, i) => {});
   }
 
   exportLogs() {
@@ -179,31 +173,23 @@ class SyncDebugger {
       a.click();
     } else {
       // Native - copy to clipboard
-      console.log('Copy the following logs:');
-      console.log(logs);
+
     }
     return logs;
   }
 
   compareStates(state1, state2, label1 = 'State 1', label2 = 'State 2') {
-    console.log(`\n=== COMPARING ${label1} vs ${label2} ===`);
-    
+
     // Compare users
     const users1 = Object.keys(state1.users || {});
     const users2 = Object.keys(state2.users || {});
     const allUsers = new Set([...users1, ...users2]);
-    
-    console.log(`Users in ${label1}: ${users1.length}, ${label2}: ${users2.length}`);
-    
+
     allUsers.forEach(userId => {
       const user1 = state1.users?.[userId];
       const user2 = state2.users?.[userId];
       
-      if (!user1) {
-        console.log(`  User ${userId}: Only in ${label2}`);
-      } else if (!user2) {
-        console.log(`  User ${userId}: Only in ${label1}`);
-      } else {
+      if (!user1) {} else if (!user2) {} else {
         // Compare days
         const days1 = Object.keys(user1.days || {});
         const days2 = Object.keys(user2.days || {});
@@ -213,9 +199,7 @@ class SyncDebugger {
           const activities1 = user1.days?.[day]?.activities?.length || 0;
           const activities2 = user2.days?.[day]?.activities?.length || 0;
           
-          if (activities1 !== activities2) {
-            console.log(`  User ${userId}, Day ${day}: ${label1}=${activities1} activities, ${label2}=${activities2} activities`);
-          }
+          if (activities1 !== activities2) {}
         });
       }
     });
@@ -223,9 +207,7 @@ class SyncDebugger {
     // Compare other fields
     const fields = ['currentUser', 'currentDay', 'currentTheme', 'version', 'lastModified'];
     fields.forEach(field => {
-      if (state1[field] !== state2[field]) {
-        console.log(`  ${field}: ${label1}=${state1[field]}, ${label2}=${state2[field]}`);
-      }
+      if (state1[field] !== state2[field]) {}
     });
   }
 }

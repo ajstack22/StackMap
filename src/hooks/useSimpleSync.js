@@ -19,11 +19,10 @@ export const useSimpleSync = () => {
                       (typeof global !== 'undefined' && global.USE_SIMPLE_SYNC);
     
     if (!useSimple) {
-      console.log('Simple sync not enabled. Set window.USE_SIMPLE_SYNC = true to enable');
+
       return;
     }
 
-    console.log('🚀 SIMPLE SYNC ENABLED - Using simplified sync logic');
     syncDebugger.enable();
 
     // Restore sync state

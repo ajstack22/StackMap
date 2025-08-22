@@ -89,7 +89,7 @@ class DeferredStorage {
       // Use multiSet for efficiency
       await AsyncStorage.multiSet(writes);
     } catch (error) {
-      console.error('[DeferredStorage] Failed to flush writes:', error);
+//       console.error('[DeferredStorage] Failed to flush writes:', error);
       // Re-add failed writes to queue
       writes.forEach(([key, value]) => {
         this.pendingWrites.set(key, value);

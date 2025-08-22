@@ -12,10 +12,7 @@ class StateDebugger {
 
   enable() {
     if (this.enabled) return;
-    
-    console.log('🔍 STATE DEBUGGER ENABLED');
-    console.log('Tracking all state changes...');
-    
+
     this.enabled = true;
     
     // Import stores
@@ -35,8 +32,7 @@ class StateDebugger {
     
     userStore.setState = function(partial, replace, action) {
       const before = userStore.getState();
-      console.trace('📝 USER STORE CHANGE:', action || 'unknown');
-      
+
       // Get stack trace
       const stack = new Error().stack;
       
@@ -46,9 +42,7 @@ class StateDebugger {
       const after = userStore.getState();
       
       // Log specific changes
-      if (typeof partial === 'function') {
-        console.log('  Function update');
-      } else {
+      if (typeof partial === 'function') {} else {
         Object.keys(partial).forEach(key => {
           if (key === 'users') {
             // Check for activity changes
@@ -64,23 +58,16 @@ class StateDebugger {
                 const afterActivities = afterDays[day]?.activities || [];
                 
                 if (JSON.stringify(beforeActivities) !== JSON.stringify(afterActivities)) {
-                  console.log(`  ⚠️ ACTIVITIES CHANGED for user ${userId} day ${day}`);
-                  console.log(`    Before: ${beforeActivities.length} activities`);
-                  console.log(`    After: ${afterActivities.length} activities`);
-                  
+
                   // Check completion status changes
                   afterActivities.forEach((activity, i) => {
                     const beforeActivity = beforeActivities[i];
-                    if (beforeActivity && beforeActivity.completed !== activity.completed) {
-                      console.log(`    🔄 Activity "${activity.text || activity.name}" completion: ${beforeActivity.completed} → ${activity.completed}`);
-                    }
+                    if (beforeActivity && beforeActivity.completed !== activity.completed) {}
                   });
                 }
               });
             });
-          } else {
-            console.log(`  Changed: ${key}`);
-          }
+          } else {}
         });
       }
       
@@ -93,22 +80,18 @@ class StateDebugger {
     };
     
     appStore.setState = function(partial, replace, action) {
-      console.trace('📝 APP STORE CHANGE:', action || 'unknown');
-      
+
       // Get stack trace
       const stack = new Error().stack;
       
       // Check for activities changes
       if (partial.activities) {
         const before = appStore.getState().activities || [];
-        console.log(`  Activities: ${before.length} → ${partial.activities.length}`);
-        
+
         // Check completion changes
         partial.activities.forEach((activity, i) => {
           const beforeActivity = before[i];
-          if (beforeActivity && beforeActivity.completed !== activity.completed) {
-            console.log(`  🔄 Activity "${activity.text || activity.name}" completion: ${beforeActivity.completed} → ${activity.completed}`);
-          }
+          if (beforeActivity && beforeActivity.completed !== activity.completed) {}
         });
       }
       
@@ -137,15 +120,15 @@ class StateDebugger {
     appStore.setState = this.originalSetState.app;
     
     this.enabled = false;
-    console.log('🔍 STATE DEBUGGER DISABLED');
+
   }
 
   showHistory() {
-    console.log('=== STATE CHANGE HISTORY ===');
+
     this.history.slice(-20).forEach((entry, i) => {
-      console.log(`\n${i + 1}. [${entry.store}] ${entry.action || 'unknown'}`);
+
       console.log(`   Time: ${new Date(entry.timestamp).toLocaleTimeString()}`);
-      console.log('   Stack:', entry.stack);
+
     });
   }
 }

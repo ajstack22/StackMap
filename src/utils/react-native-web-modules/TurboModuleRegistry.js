@@ -122,7 +122,7 @@ const TurboModuleRegistry = {
     const module = modules[name];
     if (!module) {
       // Instead of throwing, return a mock module
-      console.warn(
+//       console.warn(
         `[TurboModuleRegistry] Module ${name} not found, returning mock`,
       );
       return {

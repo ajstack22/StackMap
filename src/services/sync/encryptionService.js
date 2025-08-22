@@ -152,7 +152,9 @@ class EncryptionService {
           isCompressed = true;
         }
       } catch (error) {
-        console.warn('Compression failed, using uncompressed data:', error);
+        if (__DEV__) {
+          console.warn('Compression failed, using uncompressed data:', error);
+        }
       }
     }
 
@@ -345,7 +347,9 @@ class EncryptionService {
         util.encodeBase64(combined),
       );
     } catch (error) {
-      console.error('Failed to store recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to store recovery phrase:', error);
+      }
     }
   }
 
@@ -372,7 +376,9 @@ class EncryptionService {
 
       return util.encodeUTF8(decrypted);
     } catch (error) {
-      console.error('Failed to retrieve recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to retrieve recovery phrase:', error);
+      }
       return null;
     }
   }

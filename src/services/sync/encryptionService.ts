@@ -158,10 +158,14 @@ class EncryptionService {
           metadata.compressed = true;
         }
       } catch (error) {
-        console.warn(
+        if (__DEV__) {
+          if (__DEV__) {
+            console.warn(
           '[ENCRYPTION] Compression failed, using uncompressed data:',
           error,
         );
+          }
+        }
       }
     }
 
@@ -236,7 +240,9 @@ class EncryptionService {
                 try {
                   dataBytes = pako.inflate(dataBytes);
                 } catch (error) {
-                  console.error('[DECRYPTION] Decompression failed:', error);
+                  if (__DEV__) {
+                    console.error('[DECRYPTION] Decompression failed:', error);
+                  }
                   throw new Error('Failed to decompress data');
                 }
               }
@@ -252,7 +258,9 @@ class EncryptionService {
       const decryptedStr = encodeUTF8(decrypted);
       return JSON.parse(decryptedStr);
     } catch (error) {
-      console.error('[DECRYPTION] Decryption error:', error);
+      if (__DEV__) {
+        console.error('[DECRYPTION] Decryption error:', error);
+      }
       throw error;
     }
   }
@@ -265,7 +273,9 @@ class EncryptionService {
       const key = syncId ? `recovery_phrase_${syncId}` : 'recovery_phrase';
       await AsyncStorage.setItem(key, phrase);
     } catch (error) {
-      console.error('Failed to store recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to store recovery phrase:', error);
+      }
     }
   }
 
@@ -277,7 +287,9 @@ class EncryptionService {
       const key = syncId ? `recovery_phrase_${syncId}` : 'recovery_phrase';
       return await AsyncStorage.getItem(key);
     } catch (error) {
-      console.error('Failed to get recovery phrase:', error);
+      if (__DEV__) {
+        console.error('Failed to get recovery phrase:', error);
+      }
       return null;
     }
   }
@@ -292,7 +304,9 @@ class EncryptionService {
       await AsyncStorage.removeItem('recovery_phrase');
       await AsyncStorage.removeItem('encryption_salt');
     } catch (error) {
-      console.error('Failed to clear encryption data:', error);
+      if (__DEV__) {
+        console.error('Failed to clear encryption data:', error);
+      }
     }
   }
 
@@ -310,7 +324,9 @@ class EncryptionService {
       }
       return deviceId;
     } catch (error) {
-      console.error('Failed to get device ID:', error);
+      if (__DEV__) {
+        console.error('Failed to get device ID:', error);
+      }
       // Return a fallback ID
       return 'unknown_device';
     }
@@ -335,7 +351,9 @@ class EncryptionService {
       const decrypted = this.decryptData(encrypted);
       return JSON.stringify(testData) === JSON.stringify(decrypted);
     } catch (error) {
-      console.error('Encryption test failed:', error);
+      if (__DEV__) {
+        console.error('Encryption test failed:', error);
+      }
       return false;
     }
   }

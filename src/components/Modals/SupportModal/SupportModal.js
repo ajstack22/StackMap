@@ -20,12 +20,9 @@ const TeamPhoto = require('../../../../image_library/StackMapTeam.jpg');
 
 // Debug log for web
 if (Platform.OS === 'web') {
-  console.log('[SupportModal] Team photo path:', TeamPhoto);
-  console.log('[SupportModal] Team photo type:', typeof TeamPhoto);
+
   // If it's an object with default property (ES6 module)
-  if (TeamPhoto && typeof TeamPhoto === 'object' && TeamPhoto.default) {
-    console.log('[SupportModal] Team photo default:', TeamPhoto.default);
-  }
+  if (TeamPhoto && typeof TeamPhoto === 'object' && TeamPhoto.default) {}
 }
 
 const SupportModal = ({ visible, onClose, insets }) => {
@@ -60,12 +57,10 @@ const SupportModal = ({ visible, onClose, insets }) => {
                 }}
                 alt="The StackMap Team"
                 onError={(e) => {
-                  console.error('[SupportModal] Image failed to load:', e);
-                  console.log('[SupportModal] Image src was:', e.target.src);
+//                   console.error('[SupportModal] Image failed to load:', e);
+
                 }}
-                onLoad={() => {
-                  console.log('[SupportModal] Image loaded successfully');
-                }}
+                onLoad={() => {}}
               />
             ) : (
               <Image

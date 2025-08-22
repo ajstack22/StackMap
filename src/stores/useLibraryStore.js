@@ -12,7 +12,7 @@ const storage = {
   getItem: async name => {
     // CRITICAL FIX: If there's a pending write, return that instead of stale storage
     if (pendingWrite && pendingWrite.name === name) {
-      console.log('[LibraryStore] Returning pending write instead of stale storage');
+
       return pendingWrite.value;
     }
     
@@ -23,15 +23,15 @@ const storage = {
       try {
         return JSON.parse(value);
       } catch (parseError) {
-        console.error(
-          'Error parsing stored value, clearing corrupted data:',
-          parseError,
-        );
+//         console.error(
+//           'Error parsing stored value, clearing corrupted data:',
+//           parseError,
+//         );
         await AsyncStorage.removeItem(name);
         return null;
       }
     } catch (error) {
-      console.error('Error reading from AsyncStorage:', error);
+//       console.error('Error reading from AsyncStorage:', error);
       return null;
     }
   },
@@ -50,7 +50,7 @@ const storage = {
             JSON.stringify(pendingWrite.value),
           );
         } catch (error) {
-          console.error('Error writing to AsyncStorage:', error);
+//           console.error('Error writing to AsyncStorage:', error);
         }
         pendingWrite = null;
       }
@@ -60,7 +60,7 @@ const storage = {
     try {
       await AsyncStorage.removeItem(name);
     } catch (error) {
-      console.error('Error removing from AsyncStorage:', error);
+//       console.error('Error removing from AsyncStorage:', error);
     }
   },
 };

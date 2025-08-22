@@ -43,7 +43,7 @@ export const useSyncOnChange = () => {
     const triggerSyncIfNeeded = () => {
       // Skip if sync is not enabled (check both property names for compatibility)
       if (!syncService.enabled && !syncService.syncEnabled) {
-        console.log('[useSyncOnChange] Sync not enabled, skipping');
+
         return;
       }
 
@@ -73,7 +73,7 @@ export const useSyncOnChange = () => {
             delay: 5000, // Wait 5 seconds to ensure AsyncStorage has written
           })
           .catch(error => {
-            console.error('[useSyncOnChange] Sync request failed:', error);
+//             console.error('[useSyncOnChange] Sync request failed:', error);
           });
       }
 

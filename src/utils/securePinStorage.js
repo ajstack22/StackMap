@@ -68,7 +68,7 @@ export const setSecurePin = async pin => {
       return true;
     }
   } catch (error) {
-    console.error('[SecurePinStorage] Error storing PIN:', error);
+//     console.error('[SecurePinStorage] Error storing PIN:', error);
     return false;
   }
 };
@@ -100,7 +100,7 @@ export const getSecurePin = async () => {
       return pin || null;
     }
   } catch (error) {
-    console.error('[SecurePinStorage] Error retrieving PIN:', error);
+//     console.error('[SecurePinStorage] Error retrieving PIN:', error);
     return null;
   }
 };
@@ -163,7 +163,7 @@ export const verifyPin = async inputPin => {
 
     return match;
   } catch (error) {
-    console.error('[SecurePinStorage] Error during verification:', error);
+//     console.error('[SecurePinStorage] Error during verification:', error);
     return false;
   }
 };
@@ -224,7 +224,7 @@ export const debugPinStorage = async () => {
 
     return debugInfo;
   } catch (error) {
-    console.error('[SecurePinStorage] Debug error:', error);
+//     console.error('[SecurePinStorage] Debug error:', error);
     return debugInfo;
   }
 };

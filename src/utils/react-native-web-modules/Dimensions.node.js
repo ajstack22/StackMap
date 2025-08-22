@@ -59,7 +59,7 @@ const Dimensions = {
   },
 
   set() {
-    console.warn('Dimensions.set is not supported on web');
+//     console.warn('Dimensions.set is not supported on web');
   },
 };
 
