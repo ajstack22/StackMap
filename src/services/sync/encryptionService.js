@@ -20,6 +20,7 @@ class EncryptionService {
   constructor() {
     this.masterKey = null;
     this.syncId = null;
+    this.cachedDeviceId = null; // Cache device ID to avoid repeated AsyncStorage calls
   }
 
   /**
@@ -267,6 +268,11 @@ class EncryptionService {
    * Generate a unique device ID
    */
   async getDeviceId() {
+    // Return cached ID if available to avoid repeated AsyncStorage calls
+    if (this.cachedDeviceId) {
+      return this.cachedDeviceId;
+    }
+
     const key = '@device_id';
     let deviceId = await AsyncStorage.getItem(key);
 
@@ -279,6 +285,8 @@ class EncryptionService {
       await AsyncStorage.setItem(key, deviceId);
     }
 
+    // Cache the device ID for future calls
+    this.cachedDeviceId = deviceId;
     return deviceId;
   }
 

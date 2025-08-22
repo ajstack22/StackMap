@@ -134,6 +134,7 @@ import { useToast } from './src/hooks';
 
 // Import stores
 import { useAppStore } from './src/stores';
+import useSyncStore from './src/stores/useSyncStore';
 
 // Import services
 import encryptionService from './src/services/sync/encryptionService';
@@ -448,24 +449,38 @@ const App = () => {
   }, []);
 
   // Initialize cached device ID to avoid async delays in activity operations
+  // DEFER on iOS to prevent startup freeze
   useEffect(() => {
-    encryptionService.getDeviceId().then(id => {
-      setCachedDeviceId(id);
-      console.log('[App] Device ID cached for activity operations:', id);
-    }).catch(err => {
-      console.error('[App] Failed to cache device ID:', err);
-      // Generate a fallback ID if needed
-      setCachedDeviceId(`fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
-    });
+    // On iOS, defer device ID generation to prevent blocking startup
+    const delay = Platform.OS === 'ios' ? 2000 : 0;
+    
+    setTimeout(() => {
+      encryptionService.getDeviceId().then(id => {
+        setCachedDeviceId(id);
+        console.log('[App] Device ID cached for activity operations:', id);
+      }).catch(err => {
+        console.error('[App] Failed to cache device ID:', err);
+        // Generate a fallback ID if needed
+        setCachedDeviceId(`fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+      });
+    }, delay);
   }, []);
 
   // Wait for Zustand store to hydrate from AsyncStorage
   useEffect(() => {
     const checkHydration = async () => {
+      // On iOS, skip the direct AsyncStorage check to prevent freeze
+      if (Platform.OS === 'ios') {
+        // Just wait a bit for Zustand to hydrate naturally
+        await new Promise(resolve => setTimeout(resolve, 200));
+        setIsHydrated(true);
+        return;
+      }
+
       // Give Zustand time to load persisted state
       await new Promise(resolve => setTimeout(resolve, 100));
 
-      // Check Zustand persisted data directly
+      // Check Zustand persisted data directly (skip on iOS)
       const zustandData = await AsyncStorage.getItem('stackmap-storage');
       // Checking Zustand hydration
 
@@ -646,8 +661,11 @@ const App = () => {
         !showOnboarding
       ) {
         // Check if sync is enabled - if so, wait for sync to provide users
-        const syncEnabled = await AsyncStorage.getItem('@sync_enabled');
-        if (syncEnabled === 'true') {
+        // On iOS, skip this check to prevent freeze and rely on sync service state
+        const syncEnabled = Platform.OS === 'ios' 
+          ? useSyncStore.getState().syncEnabled 
+          : await AsyncStorage.getItem('@sync_enabled');
+        if (syncEnabled === 'true' || syncEnabled === true) {
           console.log('[App] Sync is enabled but no users yet - waiting for sync to complete');
           // Give sync more time to load users
           setTimeout(() => {
