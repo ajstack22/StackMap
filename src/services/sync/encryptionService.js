@@ -21,6 +21,7 @@ class EncryptionService {
     this.masterKey = null;
     this.syncId = null;
     this.cachedDeviceId = null; // Cache device ID to avoid repeated AsyncStorage calls
+    this.keyCache = {}; // Cache derived keys to avoid re-computation
   }
 
   /**
@@ -40,6 +41,12 @@ class EncryptionService {
    * Derive encryption key from recovery phrase using PBKDF2-like approach
    */
   async deriveKeyFromPhrase(recoveryPhrase, salt = null) {
+    // Check if we have a cached key for this phrase+salt combo
+    const cacheKey = `${recoveryPhrase}_${salt || 'default'}`;
+    if (this.keyCache && this.keyCache[cacheKey]) {
+      return this.keyCache[cacheKey];
+    }
+
     const startTime = Date.now();
 
     // If no salt provided, generate one
@@ -60,13 +67,15 @@ class EncryptionService {
 
     // Log progress for long operation (only in development)
     const logInterval = KEY_DERIVATION_ITERATIONS / 10;
-    const batchSize = 5000; // Process 5000 iterations at a time (increased for better performance)
+    // Increase batch size on iOS to reduce overhead
+    const batchSize = Platform.OS === 'ios' ? 20000 : 5000;
 
     // Process in batches to avoid blocking the UI thread
     for (let i = 0; i < KEY_DERIVATION_ITERATIONS; i++) {
       key = nacl.hash(key);
 
       // Yield control back to the event loop periodically
+      // On iOS, yield less frequently to reduce overhead
       if (i % batchSize === 0 && i > 0) {
         // Use setTimeout to allow UI updates and other events to process
         await new Promise(resolve => setTimeout(resolve, 0));
@@ -85,10 +94,18 @@ class EncryptionService {
     const totalTime = Date.now() - startTime;
 
     // Take first 32 bytes as the key
-    return {
+    const result = {
       key: key.slice(0, KEY_LENGTH),
       salt: util.encodeBase64(salt),
     };
+
+    // Cache the result for future use
+    if (!this.keyCache) {
+      this.keyCache = {};
+    }
+    this.keyCache[cacheKey] = result;
+
+    return result;
   }
 
   /**

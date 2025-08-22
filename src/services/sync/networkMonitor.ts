@@ -1,4 +1,4 @@
-// Platform import removed - not needed since NetInfo is disabled
+import { Platform } from 'react-native';
 import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 
 // Types for network monitoring
@@ -85,6 +85,12 @@ class NetworkMonitor {
    * @returns Promise resolving to online status
    */
   async checkConnection(): Promise<boolean> {
+    // CRITICAL: Skip NetInfo.fetch() on iOS to prevent 10+ second freeze
+    if (Platform.OS === 'ios') {
+      // Just return current online status without checking
+      return this.isOnline;
+    }
+    
     try {
       const state = await NetInfo.fetch();
       this.handleNetworkChange(state);
