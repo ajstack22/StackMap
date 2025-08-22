@@ -32,6 +32,16 @@ Since MaterialIcons are working elsewhere in the app but not in LibraryTabConten
   
 - `src/components/Modals/ActivityManagementModal/ActivityManagementModal.js`
   - Changed Library tab icon from 'folder' to 'bookmark' for consistency
+  - Add tab keeps 'add-circle' icon (plus sign)
+
+- `src/components/EditModeToolbar/EditModeToolbar.js`
+  - Changed Activities menu button icon from 'add-circle' to 'add-photo-alternate'
+
+- `src/components/Modals/SettingsModal/SettingsModal.js`
+  - Changed Activities toolbar button icon from 'add-circle' to 'add-photo-alternate'
+
+- `src/utils/VectorIcons.web.js`
+  - Added 'add-photo-alternate' to iconAliases for web compatibility
 
 - `ios/StackMapNative/AppDelegate.swift` (attempted fix - didn't resolve issue)
   - Added manual font registration but issue persisted
@@ -68,3 +78,16 @@ After running `./scripts/deploy-all.sh`:
 - MaterialIcons.ttf is properly linked via CocoaPods
 - Simple icon names (`add`, `check`) work better than complex ones (`add-circle-outline`) on iOS
 - Custom circular button styling provides the "plus in circle" appearance
+
+## UI Improvements
+
+### Check-In Modal Bottom Buttons Removed
+**Change:** Removed the bottom action buttons from the check-in modal
+**Reason:** Buttons were redundant since users can close with the X button
+**Files Modified:**
+- `src/components/Modals/ContextModal/ContextModal.js`
+  - Removed "Maybe Later" and "All Set! ✅" buttons from the bottom
+  - Modified `handleClose()` to automatically save check-in data when closing via X button
+  - Removed action button styles from stylesheet
+  - Users now simply close the modal with X button which saves their selections
+**Impact:** Cleaner, simpler interface with less clutter

@@ -20,7 +20,7 @@ import { SPACING } from '../../../constants';
 const DEFAULT_TOOLBAR_ORDER = ['data', 'access', 'day', 'activities'];
 
 const TOOLBAR_BUTTONS = {
-  activities: { label: 'Activities', icon: 'add-circle' },
+  activities: { label: 'Activities', icon: 'add-photo-alternate' },
   day: { label: 'Day', icon: 'event' },
   access: { label: 'Access', icon: 'security' },
   data: { label: 'Data', icon: 'source' },

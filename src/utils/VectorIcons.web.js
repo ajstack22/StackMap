@@ -107,6 +107,7 @@ const Icon = ({ name, size = 24, color = '#000', style }) => {
   const iconAliases = {
     'edit-off': 'edit_off', // This icon DOES exist in Material Icons
     'add-circle': 'add_circle',
+    'add-photo-alternate': 'add_photo_alternate',
     'save-alt': 'save_alt',
     'folder-open': 'folder_open',
     'event-available': 'event_available',

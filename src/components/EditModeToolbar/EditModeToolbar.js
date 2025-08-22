@@ -122,7 +122,7 @@ const EditModeToolbar = ({
   const actionMap = {
     activities: {
       label: 'Activities',
-      icon: 'add-circle',
+      icon: 'add-photo-alternate',
       onPress: () => onActivityManagement && onActivityManagement('add'),
     },
     day: {

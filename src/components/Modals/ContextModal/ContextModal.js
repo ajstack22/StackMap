@@ -441,6 +441,16 @@ const ContextModal = ({
   };
 
   const handleClose = () => {
+    // Save the context data when closing
+    const contextData = {
+      user: selectedUser,
+      dayOfWeek: selectedDayOfWeek,
+      weather: weatherOptions[selectedWeather].id,
+      temperature: temperatureOptions[selectedTemperature].id,
+      mood: moods[selectedMood].icon,
+    };
+    onSave(contextData);
+    
     // Ensure the current user is properly set when closing
     if (selectedUser !== currentUser && onUserChange) {
       onUserChange(selectedUser);
@@ -908,22 +918,6 @@ const ContextModal = ({
                   </View>
                 </View>
               </View>
-
-              {/* Action Buttons */}
-              <View style={styles.actionButtons}>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={handleClose}
-                >
-                  <Text style={styles.cancelButtonText}>Maybe Later</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.saveButton}
-                  onPress={handleSave}
-                >
-                  <Text style={styles.saveButtonText}>All Set! ✅</Text>
-                </TouchableOpacity>
-              </View>
             </ScrollView>
           </SafeAreaView>
           {Platform.OS === 'android' && (
@@ -1116,39 +1110,6 @@ const getStyles = (userTheme, isSmallScreen, screenWidth) => ({
     fontFamily: TYPOGRAPHY.fontFamily.regular,
     color: COLORS.gray[600],
     textAlign: 'center',
-  },
-  actionButtons: {
-    flexDirection: 'row',
-    gap: SPACING.md,
-    marginTop: SPACING.xl,
-  },
-  cancelButton: {
-    flex: 1,
-    backgroundColor: COLORS.white,
-    paddingVertical: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: userTheme.primary,
-    ...SHADOWS.level1,
-  },
-  cancelButtonText: {
-    fontSize: TYPOGRAPHY.sizes.lg,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: userTheme.primary,
-  },
-  saveButton: {
-    flex: 1,
-    backgroundColor: userTheme.primary,
-    paddingVertical: SPACING.lg,
-    borderRadius: RADIUS.xl,
-    alignItems: 'center',
-    ...SHADOWS.level2,
-  },
-  saveButtonText: {
-    fontSize: TYPOGRAPHY.sizes.lg,
-    fontFamily: TYPOGRAPHY.fontFamily.bold,
-    color: COLORS.white,
   },
 });
 
