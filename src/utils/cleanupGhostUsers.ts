@@ -69,8 +69,8 @@ export const cleanupGhostUsers = (): CleanupResult => {
     if (userList.length > 1) {
       // Sort by user ID timestamp to find the oldest
       const sorted = userList.sort((a, b) => {
-        const aTimestamp = parseInt(a.userId.split('_')[1]) || 0;
-        const bTimestamp = parseInt(b.userId.split('_')[1]) || 0;
+        const aTimestamp = parseInt(a.userId.split('_')[1], 10) || 0;
+        const bTimestamp = parseInt(b.userId.split('_')[1], 10) || 0;
         return aTimestamp - bTimestamp;
       });
 

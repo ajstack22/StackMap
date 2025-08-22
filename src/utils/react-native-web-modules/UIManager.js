@@ -89,8 +89,8 @@ const UIManager = {
   // Command dispatching (no-op on web)
   dispatchViewManagerCommand: (reactTag, commandID, commandArgs) => {
     // No-op on web
-//     console.warn(
-      'UIManager.dispatchViewManagerCommand is not supported on web',
+    console.warn(
+      'UIManager.dispatchViewManagerCommand is not supported on web'
     );
   },
 

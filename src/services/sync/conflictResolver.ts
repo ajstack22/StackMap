@@ -392,7 +392,7 @@ class ConflictResolver {
 
     // Ensure icon is always present
     if (!mergedUser.icon) {
-//       console.error('CRITICAL: User merge resulted in no icon!', {
+      console.error('CRITICAL: User merge resulted in no icon!', {
         localIcon,
         remoteIcon,
         baseUser: baseUser.icon,

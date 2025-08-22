@@ -1670,7 +1670,7 @@ class SyncService {
         // Transaction ID format: deviceId-timestamp-random
         const parts = transactionId.split('-');
         if (parts.length >= 2) {
-          const timestamp = parseInt(parts[1]);
+          const timestamp = parseInt(parts[1], 10);
           if (!isNaN(timestamp) && now - timestamp > maxAge) {
             toRemove.push(transactionId);
           }
@@ -2337,7 +2337,7 @@ class SyncService {
     const token = encodeBase64(bytes)
       .replace(/\+/g, '-') // URL-safe
       .replace(/\//g, '_')
-      .replace(/=/g, ''); // Remove padding
+      .replace(/[=]/g, ''); // Remove padding
     // Store the raw bytes for use as encryption key
     this._lastShareKeyBytes = bytes;
     return token;

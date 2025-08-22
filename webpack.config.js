@@ -112,7 +112,7 @@ module.exports = {
             // Only cache requests to the same origin and path, but exclude API calls
             urlPattern: ({ url }) => {
               return url.origin === self.location.origin && 
-                     url.pathname.startsWith(self.location.pathname.replace(/\/[^\/]*$/, '/')) &&
+                     url.pathname.startsWith(self.location.pathname.replace(/\/[^/]*$/, '/')) &&
                      !url.pathname.includes('/api/');
             },
             handler: 'NetworkFirst',

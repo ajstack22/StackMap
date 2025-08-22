@@ -9,13 +9,10 @@ import {
   Platform,
   StatusBar,
   Alert,
-  Modal,
   FlatList,
-  KeyboardAvoidingView,
   Dimensions,
   Image,
   Animated,
-  PermissionsAndroid,
   ActivityIndicator,
 } from 'react-native';
 
@@ -29,15 +26,12 @@ if (Platform.OS === 'android' && __DEV__) {
 }
 
 // Import our custom Text and TextInput components that use Comic Relief
-import { Text, TextInput } from './src/components/Typography';
+import { Text } from './src/components/Typography';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 // import * as Keychain from 'react-native-keychain'; // Removed - not used and causing crash
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
-import { useSimpleSync } from './src/hooks/useSimpleSync';
 // Draggable functionality removed - using button-based reordering
-const DraggableFlatList = null;
-const ScaleDecorator = null;
 // Conditionally import gesture handler for iOS only
 const GestureHandlerModule =
   Platform.OS === 'ios' ? require('react-native-gesture-handler') : null;
@@ -66,7 +60,7 @@ if (Platform.OS === 'web') {
   RNFS = require('react-native-fs');
 }
 
-import { Share, Linking } from 'react-native';
+import { Share } from 'react-native';
 
 // Import our new constants and utilities
 import {
@@ -82,19 +76,15 @@ import {
   PIN_LENGTH,
   TOAST_DURATION,
   isTablet,
-  isMobile,
   calculateColumns,
   calculateCardWidth,
   getCardHeight,
   getCardPadding,
   getContainerPadding,
   CARD_LAYOUT,
-  FAB_DIMENSIONS,
-  BADGE_DIMENSIONS,
   getBadgeDimensions,
   FONT_SCALE,
   CUSTOM_IMAGE_SOURCES,
-  FEATURE_FLAGS,
 } from './src/constants';
 
 // Import components
@@ -104,7 +94,6 @@ import {
   EditModeToolbar,
   Logo,
   ActivityLibrary,
-  EmojiPicker,
   CelebrationView,
   ActivityModal,
   PreferencesModal,
@@ -119,7 +108,6 @@ import {
   ConfirmModal,
   DayManagementModal,
   ActivityManagementModal,
-  BuyMeCoffeeButton,
   SyncPreviewModal,
 } from './src/components';
 import EditModeList from './src/components/EditModeList';
@@ -146,21 +134,17 @@ import './src/utils/stateDebugger'; // Add state change tracking
 // Import utilities
 import {
   setSecurePin,
-  getSecurePin,
   hasSecurePin,
   verifyPin,
   migratePinToSecureStorage,
   removeSecurePin,
-  debugPinStorage,
 } from './src/utils/securePinStorage';
 import { debugPINStatus } from './tools/DEBUG_PIN';
 
 // Get initial screen dimensions
-const { width: initialScreenWidth, height: initialScreenHeight } =
+const { height: initialScreenHeight } =
   Dimensions.get('window');
 
-// These will be recalculated in the component
-const baseFontSize = isTablet() ? FONT_SCALE.tablet : FONT_SCALE.mobile;
 
 // Helper function for Android modal bottom safety zones
 const getAndroidModalBottomHeight = insets => {
@@ -170,33 +154,7 @@ const getAndroidModalBottomHeight = insets => {
     : Math.max(insets.bottom, 10); // Reduced by 40% (was 16, now 10)
 };
 
-// Common emojis for picker
-const commonEmojis = COMMON_EMOJIS;
 
-// AnimatedIcon component for slide-up animation
-/**
- * @param {Object} props
- * @param {string} props.name - Icon name
- * @param {number} props.size - Icon size
- * @param {string} props.color - Icon color
- * @param {any} props.translateY - Animated value
- */
-const AnimatedIcon = React.memo(/** @type {React.FC<{name: string, size: number, color: string, translateY: any}>} */(({ name, size, color, translateY }) => {
-  const slideY = React.useMemo(
-    () =>
-      translateY.interpolate({
-        inputRange: [0, 1],
-        outputRange: [20, 0], // Start 20 pixels below, animate to original position
-      }),
-    [translateY],
-  );
-
-  return (
-    <Animated.View style={{ transform: [{ translateY: slideY }] }}>
-      <Icon name={name} size={size} color={color} />
-    </Animated.View>
-  );
-}));
 
 const App = () => {
   // Reduced startup logging - only show once
@@ -218,7 +176,6 @@ const App = () => {
     setCurrentTheme,
     bannerPosition,
     setBannerPosition,
-    soundEnabled,
     setSoundEnabled,
     taskCelebration,
     setTaskCelebration,

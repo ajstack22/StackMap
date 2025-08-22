@@ -1369,16 +1369,16 @@ const EmojiPicker = ({
   useEffect(() => {
     if (showCustomImages) {
       // Add Custom category dynamically
-      if (!EMOJI_CATEGORIES['Custom']) {
-        EMOJI_CATEGORIES['Custom'] = CUSTOM_IMAGES;
+      if (!EMOJI_CATEGORIES.Custom) {
+        EMOJI_CATEGORIES.Custom = CUSTOM_IMAGES;
       }
       setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
       // Prefer Lifestyle category if available, otherwise Custom
       setSelectedCategory('Lifestyle');
     } else {
       // Remove Custom category if it exists
-      if (EMOJI_CATEGORIES['Custom']) {
-        delete EMOJI_CATEGORIES['Custom'];
+      if (EMOJI_CATEGORIES.Custom) {
+        delete EMOJI_CATEGORIES.Custom;
       }
       setCategoryKeys(Object.keys(EMOJI_CATEGORIES));
       setSelectedCategory('Lifestyle');

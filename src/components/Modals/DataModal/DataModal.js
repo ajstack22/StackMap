@@ -1047,7 +1047,7 @@ const DataModal = ({
         includeCompleted,
         includeTomorrow,
         autoUpdate,
-        expiresHours: parseInt(expiresHours),
+        expiresHours: parseInt(expiresHours, 10),
         accessToken: token,
       });
 
