@@ -392,6 +392,9 @@ const App = () => {
   const [shareToken, setShareToken] = useState(null);
   const [syncSetupPhrase, setSyncSetupPhrase] = useState(null);
   const [isInitializing, setIsInitializing] = useState(false); // Prevent race conditions
+  
+  // Cache device ID to avoid async delays in activity operations
+  const [cachedDeviceId, setCachedDeviceId] = useState(null);
 
   useEffect(() => {
     // Check for URL params (logging disabled for cleaner startup)
@@ -442,6 +445,18 @@ const App = () => {
         window.urlOpenSupport = true;
       }
     }
+  }, []);
+
+  // Initialize cached device ID to avoid async delays in activity operations
+  useEffect(() => {
+    encryptionService.getDeviceId().then(id => {
+      setCachedDeviceId(id);
+      console.log('[App] Device ID cached for activity operations:', id);
+    }).catch(err => {
+      console.error('[App] Failed to cache device ID:', err);
+      // Generate a fallback ID if needed
+      setCachedDeviceId(`fallback_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
+    });
   }, []);
 
   // Wait for Zustand store to hydrate from AsyncStorage
@@ -1810,14 +1825,17 @@ const App = () => {
     }
   };
 
-  const toggleActivity = async id => {
-    const activity = activities.find(a => a.id === id);
+  const toggleActivity = id => {
+    // Get fresh state directly from Zustand store, not from props
+    const freshUsers = useAppStore.getState().users;
+    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+    const activity = currentState.find(a => a.id === id);
     const wasCompleted = activity?.completed;
 
-    // Get device ID for tracking who completed the activity
-    const deviceId = await encryptionService.getDeviceId();
+    // Use cached device ID (no async delay)
+    const deviceId = cachedDeviceId || 'unknown';
 
-    const newActivities = activities.map(activity => {
+    const newActivities = currentState.map(activity => {
       if (activity.id === id) {
         // console.log(`[TOGGLE] Activity ${id} - Previous: completed=${activity.completed}, completedAt=${activity.completedAt}, uncompletedAt=${activity.uncompletedAt}`);
 
@@ -1847,14 +1865,13 @@ const App = () => {
       }
       return activity;
     });
-    updateUserActivities(currentUser, currentDay, newActivities);
 
-    // Update the users state to persist the change
+    // Single update using setUsers only - avoid double updates through different paths
     if (currentUser && users[currentUser]) {
       const updatedUsers = {
         ...users,
         [currentUser]: {
-          ...users[currentUser],
+          ...freshUsers[currentUser],
           days: {
             ...users[currentUser].days,
             [currentDay]: {
@@ -1889,10 +1906,13 @@ const App = () => {
   };
 
   const moveActivity = (index, direction) => {
-    const newActivities = [...activities];
+    // Get fresh state directly from Zustand store, not from props
+    const freshUsers = useAppStore.getState().users;
+    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+    const newActivities = [...currentState];
     const newIndex = direction === 'up' ? index - 1 : index + 1;
 
-    if (newIndex < 0 || newIndex >= activities.length) return;
+    if (newIndex < 0 || newIndex >= currentState.length) return;
 
     // Swap activities
     [newActivities[index], newActivities[newIndex]] = [
@@ -1900,18 +1920,20 @@ const App = () => {
       newActivities[index],
     ];
 
-    updateUserActivities(currentUser, currentDay, newActivities);
-
-    // Save immediately after reordering
-    if (currentUser && users[currentUser]) {
-      const updatedUsers = { ...users };
-      if (!updatedUsers[currentUser].days) {
-        updatedUsers[currentUser].days = {};
-      }
-      if (!updatedUsers[currentUser].days[currentDay]) {
-        updatedUsers[currentUser].days[currentDay] = { activities: [] };
-      }
-      updatedUsers[currentUser].days[currentDay].activities = newActivities;
+    // Single update using setUsers only - avoid double updates
+    if (currentUser && freshUsers[currentUser]) {
+      const updatedUsers = {
+        ...freshUsers,
+        [currentUser]: {
+          ...freshUsers[currentUser],
+          days: {
+            ...users[currentUser].days,
+            [currentDay]: {
+              activities: newActivities,
+            },
+          },
+        },
+      };
       setUsers(updatedUsers);
     }
   };
@@ -1919,6 +1941,9 @@ const App = () => {
   const togglePin = async id => {
     const activity = activities.find(a => a.id === id);
     if (!activity) return;
+    
+    // Get fresh state for consistency
+    const freshUsers = useAppStore.getState().users;
 
     const newPinnedState = !activity.pinned;
 
@@ -1948,7 +1973,7 @@ const App = () => {
       const updatedUsers = {
         ...users,
         [currentUser]: {
-          ...users[currentUser],
+          ...freshUsers[currentUser],
           days: {
             ...users[currentUser].days,
             tomorrow: {
@@ -1969,7 +1994,7 @@ const App = () => {
       const updatedUsers = {
         ...users,
         [currentUser]: {
-          ...users[currentUser],
+          ...freshUsers[currentUser],
           days: {
             ...users[currentUser].days,
             tomorrow: {
@@ -1982,11 +2007,15 @@ const App = () => {
     }
   };
 
-  const addActivity = async () => {
+  const addActivity = () => {
     if (!activityTitle.trim()) return;
 
-    // Get device ID for enhanced activity IDs
-    const deviceId = await encryptionService.getDeviceId();
+    // Use cached device ID (no async delay)
+    const deviceId = cachedDeviceId || 'unknown';
+
+    // Get fresh state directly from Zustand store, not from props
+    const freshUsers = useAppStore.getState().users;
+    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
 
     const newActivity = {
       id: `${deviceId}_${Date.now()}_${Math.random()
@@ -2009,7 +2038,7 @@ const App = () => {
 
     let newActivities;
     if (editingActivity) {
-      newActivities = activities.map(a =>
+      newActivities = currentState.map(a =>
         a.id === editingActivity.id
           ? {
               ...a,
@@ -2022,17 +2051,15 @@ const App = () => {
           : a,
       );
     } else {
-      newActivities = [...activities, newActivity];
+      newActivities = [...currentState, newActivity];
     }
 
-    updateUserActivities(currentUser, currentDay, newActivities);
-
-    // Update the users state to persist the change
-    if (currentUser && users[currentUser]) {
+    // Single update using setUsers only - avoid double updates
+    if (currentUser && freshUsers[currentUser]) {
       const updatedUsers = {
-        ...users,
+        ...freshUsers,
         [currentUser]: {
-          ...users[currentUser],
+          ...freshUsers[currentUser],
           days: {
             ...users[currentUser].days,
             [currentDay]: {
@@ -2060,21 +2087,23 @@ const App = () => {
   };
 
   const deleteActivity = id => {
-    const deletedActivity = activities.find(a => a.id === id);
-    const deletedIndex = activities.findIndex(a => a.id === id);
+    // Get fresh state directly from Zustand store, not from props
+    const freshUsers = useAppStore.getState().users;
+    const currentState = freshUsers[currentUser]?.days?.[currentDay]?.activities || [];
+    const deletedActivity = currentState.find(a => a.id === id);
+    const deletedIndex = currentState.findIndex(a => a.id === id);
 
     // Mark the activity as deleted instead of removing it (for undo functionality)
-    const updatedActivities = activities.map(a =>
+    const updatedActivities = currentState.map(a =>
       a.id === id ? { ...a, deleted: true, deletedAt: Date.now() } : a,
     );
-    updateUserActivities(currentUser, currentDay, updatedActivities);
 
-    // Update the users state to persist the change
-    if (currentUser && users[currentUser]) {
+    // Single update using setUsers only - avoid double updates
+    if (currentUser && freshUsers[currentUser]) {
       const updatedUsers = {
-        ...users,
+        ...freshUsers,
         [currentUser]: {
-          ...users[currentUser],
+          ...freshUsers[currentUser],
           days: {
             ...users[currentUser].days,
             [currentDay]: {

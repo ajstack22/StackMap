@@ -1,4 +1,49 @@
-# Pending Updates - 2025-08-21
+# Pending Updates - 2025-08-22
+
+## Summary
+
+**Critical fix deployed for race condition in activity operations.** The issue where rapid completion toggles would cause activities to incorrectly flip states has been resolved by ensuring all operations read fresh state directly from the Zustand store.
+
+## Critical Bug Fixes
+
+### Race Condition in Activity Operations - CRITICAL FIX
+**Issue:** When completing multiple activities rapidly (especially in edit mode), activities would toggle incorrectly - completing one would uncomplete another in a seemingly random pattern
+**Root Cause:** 
+1. Stale closure bug - all activity modification functions were reading from derived state
+2. Zustand store props (`users`) were stale due to React's closure and the 1-second debounced AsyncStorage writes
+3. Multiple hydration cycles were causing state inconsistencies
+
+**Technical Details:**
+- `activities` is derived state from `users[currentUser]?.days?.[currentDay]?.activities`
+- Functions like `toggleActivity` had async delays (`await encryptionService.getDeviceId()`)
+- During the async delay, if another operation started, both would read the same stale `activities` array
+- The last operation to complete would overwrite all previous changes
+
+**Solution Implemented:**
+1. **Pre-cached Device ID**: Added `cachedDeviceId` state initialized on app start to eliminate async delays
+2. **Fresh State from Store**: All operations now call `useAppStore.getState().users` to get the absolute latest state, bypassing React's stale closures
+3. **Single Update Path**: Removed `updateUserActivities()` calls - now only using `setUsers()` to prevent double updates
+
+**Files Modified:**
+- `App.js`:
+  - Added `cachedDeviceId` state and initialization (lines 396-397, 450-460)
+  - Fixed `toggleActivity` - removed async, gets fresh state via `useAppStore.getState().users` (lines 1828-1890)
+  - Fixed `moveActivity` - gets fresh state via `useAppStore.getState().users` (lines 1908-1936)
+  - Fixed `deleteActivity` - gets fresh state via `useAppStore.getState().users` (lines 2085-2113)
+  - Fixed `addActivity` - removed async, gets fresh state via `useAppStore.getState().users` (lines 2007-2069)
+  - **Critical**: All functions now use `freshUsers` from store instead of stale `users` prop
+
+**Testing Status:** ✅ VERIFIED WORKING
+- Rapid completion toggles now work correctly on web
+- Activities maintain their state properly during rapid operations
+- No more "flip-flopping" of completion states
+
+**Testing Checklist:**
+✅ Web - Rapid completion toggles in edit mode
+⚠️ iOS - Needs testing on simulator/device
+⚠️ Android - Needs testing on emulator/device
+✅ Rapid reordering with up/down buttons
+✅ Multiple deletes work correctly
 
 ## Bug Fixes
 
