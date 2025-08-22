@@ -32,6 +32,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSyncOnChange } from './src/hooks/useSyncOnChange';
 // Draggable functionality removed - using button-based reordering
+const ScaleDecorator = null;
 // Conditionally import gesture handler for iOS only
 const GestureHandlerModule =
   Platform.OS === 'ios' ? require('react-native-gesture-handler') : null;
