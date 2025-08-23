@@ -217,7 +217,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "# Type a script or# Set NODE_ENV for production builds\nif [ \"${CONFIGURATION}\" == \"Release\" ]; then\n    export NODE_ENV=production\n    echo \"NODE_ENV set to production\"\nelse\n    export NODE_ENV=development  \n    echo \"NODE_ENV set to development\"\nfi\n\n# Export to Metro bundler\necho \"export NODE_ENV=${NODE_ENV}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\n```\n\n8. Make sure \"Run script only when installing\" is UNCHECKED\n9. Shell should be `/bin/sh` drag a script file from your workspace to insert its path.\n";
+			shellScript = "# Set NODE_ENV for production builds\nif [ \"${CONFIGURATION}\" == \"Release\" ]; then\n    export NODE_ENV=production\n    echo \"NODE_ENV set to production\"\nelse\n    export NODE_ENV=development  \n    echo \"NODE_ENV set to development\"\nfi\n\n# Export to Metro bundler\necho \"export NODE_ENV=${NODE_ENV}\" > \"${SRCROOT}/../node_modules/react-native/scripts/.packager.env\"\n";
 		};
 		CEC9A9B1B31B3C37BF508955 /* [CP] Embed Pods Frameworks */ = {
 			isa = PBXShellScriptBuildPhase;
