@@ -1,5 +1,7 @@
 # StackMap Technical Standards & Implementation Guidelines
 
+**Note:** These are **guidelines and best practices**, not strict requirements. Actual implementations may vary based on specific needs and constraints. Use judgment when applying these standards.
+
 ## Core Principles
 
 ### 1. User-First Development

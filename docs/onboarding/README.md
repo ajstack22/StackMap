@@ -17,8 +17,7 @@ This directory contains comprehensive documentation for the StackMap onboarding 
 
 ## Key Components
 
-- **OnboardingNew.js** - Main onboarding component
-- **OnboardingUserCentered.js** - User-centered onboarding variant
+- **OnboardingUserCentered.js** - Main onboarding component
 - Multiple entry points: Fresh start, Restore, Sync, Direct URL
 
 ## Testing

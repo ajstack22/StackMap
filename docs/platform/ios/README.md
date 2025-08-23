@@ -19,7 +19,7 @@ cd ios && pod deintegrate && pod install && cd ..
 ### Project Requirements
 - **Xcode**: 15+
 - **iOS Target**: 13.4+
-- **React Native**: 0.74.3
+- **React Native**: 0.80.1
 - **CocoaPods**: Latest
 - **Ruby**: For pod management
 

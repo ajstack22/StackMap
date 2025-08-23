@@ -111,9 +111,9 @@ This guide outlines platform-specific testing requirements and gotchas for Stack
 ```
 
 #### Web-Specific Gotchas
-- **VectorIcons**: Must use `<Text>` component, not `<span>`
+- **VectorIcons**: Must use `<span>` component for web, not `<Text>` (see VectorIcons.web.js)
 - **Bundle Location**: Files must be in root for qual, not web/build/
-- **Alert.alert**: Not supported - use ConfirmModal
+- **Alert.alert**: Not supported - use ConfirmModal component
 - **AsyncStorage**: Uses localStorage wrapper
 
 #### Web Test Checklist

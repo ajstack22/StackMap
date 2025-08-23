@@ -44,10 +44,11 @@ Server → API → Decryption → Conflict Resolution → Store Update → UI
 
 Using Zustand with the following stores:
 
-- **useAppStore**: Main application state
-- **useUserStore**: User management
-- **useActivityStore**: Activity tracking
-- **useThemeStore**: Theme and UI preferences
+- **useAppStore**: Compatibility wrapper combining all stores
+- **useUserStore**: User management and activities
+- **useSettingsStore**: Theme and UI preferences
+- **useLibraryStore**: Activity templates and categories
+- **useSyncStore**: Sync configuration and status
 
 See [architecture/STATE_MANAGEMENT.md](./architecture/STATE_MANAGEMENT.md) for details.
 

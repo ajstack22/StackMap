@@ -43,7 +43,7 @@
 
 1. **Build Release APK**
    ```bash
-   ./build-android-release.sh
+   ./scripts/react-native/build-android-release.sh
    ```
 
 2. **Share APK** (location: `android/app/build/outputs/apk/release/app-release.apk`)
@@ -95,19 +95,19 @@
 ## 📝 Version Management
 
 ### Current Version
-- iOS: 1.0.0 (Build 1)
-- Android: 1.0.0 (versionCode 1)
+- Format: YYYY.MM.DD.BUILD (e.g., 2025.08.23.1)
+- Unified across all platforms
 
 ### Incrementing Versions
 
 **iOS** (in Xcode or Info.plist):
-- Version: Major.Minor.Patch (1.0.1)
-- Build: Increment for each upload (2, 3, 4...)
+- Version: YYYY.MM.DD.BUILD format
+- Build: Auto-incremented by deployment scripts
 
 **Android** (in android/app/build.gradle):
 ```gradle
-versionCode 2  // Always increment
-versionName "1.0.1"  // User-visible version
+versionCode // Auto-calculated from date
+versionName "YYYY.MM.DD.BUILD"  // Matches package.json
 ```
 
 ## 🔐 Signing Android APK (For Production)
@@ -180,7 +180,7 @@ versionName "1.0.1"  // User-visible version
 cd ios && xcodebuild -workspace StackMapNative.xcworkspace -scheme StackMapNative -configuration Release
 
 # Android Build
-./build-android-release.sh
+./scripts/react-native/build-android-release.sh
 
 # Check APK location
 ls -la android/app/build/outputs/apk/release/

@@ -18,7 +18,7 @@ cd android && ./gradlew assembleDebug  # Build debug APK
 ```
 
 ### Project Requirements
-- **React Native**: 0.74.3
+- **React Native**: 0.80.1
 - **Android**: 6.0+ (API 23)
 - **Java**: 17 (CRITICAL - see build setup)
 - **Gradle**: 8.8

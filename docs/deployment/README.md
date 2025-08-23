@@ -148,7 +148,7 @@ ssh stackmap-cpanel "cd ~/public_html/qual && git checkout <commit-hash>"
 - Certificates managed per platform
 
 ## 📝 Environment Configuration
-- **Bundle IDs:** iOS: `app.stackmap`, Android: `com.stackmap`
+- **Bundle IDs:** iOS: `com.stackmapnative`, Android: `com.stackmapnative`
 - **API URLs:**
   - Dev/Qual: `https://stackmap.app/qual/api/sync/`
   - Production: `https://stackmap.app/api/sync/`

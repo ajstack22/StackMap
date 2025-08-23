@@ -112,5 +112,4 @@ Before deploying, verify:
 
 ## Related Files
 - `/src/utils/dataNormalizer.js` - Central normalization logic
-- `/src/services/sync/dataValidator.js` - Validation and repair
 - `/docs/DATA_STRUCTURE.md` - Full documentation

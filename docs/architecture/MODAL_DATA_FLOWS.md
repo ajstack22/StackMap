@@ -1,7 +1,9 @@
 # Modal Data Flows and Dependencies
 
 ## Overview
-This document maps the current data flows, props, and dependencies for all modals in StackMap that will be refactored in the menu reorganization project.
+This document maps common data flow patterns for modals in StackMap. These are **guidelines** based on current implementations as of August 2025.
+
+**Note:** The app uses a modular store architecture with 4 focused stores (useUserStore, useSettingsStore, useLibraryStore, useSyncStore). Modal components may access these stores directly or receive data via props.
 
 ## 1. ImportExportModal
 

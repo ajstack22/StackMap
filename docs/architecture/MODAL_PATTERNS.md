@@ -1,7 +1,9 @@
-# StackMap Modal Implementation Patterns
+# StackMap Modal Implementation Guidelines
 
 ## Overview
-This document outlines the standard patterns for implementing modals in StackMap to ensure consistency across the application.
+This document provides **guidelines** (not strict requirements) for implementing modals in StackMap. These patterns are commonly used but variations exist throughout the codebase based on specific needs.
+
+**Note:** This is a living document. Some modals may use different patterns based on their specific requirements (e.g., sync modals use panel-based designs without footer buttons).
 
 ## Standard Modal Structure
 

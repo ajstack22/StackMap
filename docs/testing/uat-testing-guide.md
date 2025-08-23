@@ -1,5 +1,7 @@
 # StackMap UAT Testing Guide
 
+> **Note:** This guide describes a planned UAT framework for future implementation. Current testing follows the simple testing approach described in [simple-testing-guide.md](./simple-testing-guide.md). The framework and examples below serve as a blueprint for when automated UAT testing is needed.
+
 ## Overview
 
 This guide documents the User Acceptance Testing (UAT) framework for StackMap, including lessons learned, best practices, and common pitfalls to avoid. This is designed to help future developers (and Claudes!) efficiently build and maintain tests.

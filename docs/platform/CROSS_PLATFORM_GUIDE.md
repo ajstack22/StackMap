@@ -10,13 +10,13 @@ StackMap is built with React Native and supports three platforms with shared cod
 
 ### iOS
 - **Target**: iOS 13.4+
-- **Engine**: React Native 0.74.3
+- **Engine**: React Native 0.80.1
 - **Build**: Xcode with CocoaPods
 - **Key Challenges**: Modal layering, AsyncStorage performance, NetInfo freezing
 
 ### Android  
 - **Target**: Android 6.0+ (API 23)
-- **Engine**: React Native 0.74.3
+- **Engine**: React Native 0.80.1
 - **Build**: Gradle with Java 17
 - **Key Challenges**: FlexWrap layouts, font variants, Java version compatibility
 

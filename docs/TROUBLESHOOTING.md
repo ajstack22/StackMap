@@ -1,43 +1,20 @@
 # StackMap Troubleshooting Guide
 
-> **Last Updated**: 2024-12-28  
+> **Last Updated**: 2025-08-23  
 > **Purpose**: Quick solutions to common issues
+> **Note**: For complete deployment procedures, see [deployment/README.md](./deployment/README.md)
 
 ---
 
 ## 🚨 Most Common Issues
 
-### 1. 403 Forbidden Error After Deployment
+### 1. Deployment Issues
 
-**Symptoms:**
-- Site shows "403 Forbidden" after git pull
-- "Access to this resource on the server is denied!"
-
-**Cause:**
-Build files are in .gitignore, so they don't exist on the server after git pull.
-
-**Solution:**
-```bash
-# 1. Check .gitignore - these should be COMMENTED OUT:
-# /index.html
-# /bundle.*.js
-# /manifest.json
-# /service-worker.js
-# /workbox-*.js
-# /fonts/
-# /icons/
-
-# 2. Ensure build files are in git:
-git add -f index.html bundle.*.js manifest.json service-worker.js workbox-*.js fonts icons *.png
-git commit -m "Add build files"
-git push
-
-# 3. Pull again on server
-```
-
-**Prevention:**
-- Always use `npm run deploy:qual` script
-- Read [DO_NOT_IGNORE_BUILD_FILES.md](./DO_NOT_IGNORE_BUILD_FILES.md)
+**For all deployment procedures and troubleshooting:**
+- Use `./scripts/deploy-all.sh` for automated deployment to all platforms
+- See [deployment/README.md](./deployment/README.md) for complete guide
+- Build files are managed automatically by deployment scripts
+- Branch strategy: `main` (source), `deploy-qual` (qual builds), `deploy-prod` (production builds)
 
 ---
 
@@ -55,7 +32,7 @@ Service worker or browser caching old files.
 ```bash
 # 1. Clear browser cache completely
 # 2. Open in incognito/private window
-# 3. Visit /force-refresh.html if available
+# 3. Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
 # 4. Unregister service worker in DevTools > Application > Service Workers
 ```
 
@@ -101,57 +78,7 @@ git push
 
 ---
 
-### 5. iOS Modal Panels Expanding Too Large 🚨 CRITICAL FIX 🚨
-
-**Symptoms:**
-- Modal panels expand beyond their content on iOS
-- Sections appear "too big" or "too large"
-- Content doesn't fit properly within modal boundaries
-
-**Cause:**
-iOS handles flex properties differently in ScrollView. Without proper constraints, panels will expand to fill all available space.
-
-**Solution - MUST FOLLOW EXACTLY:**
-```javascript
-// 1. ScrollView MUST have flex: 1
-modalScrollView: {
-  flex: 1,  // REQUIRED for iOS
-},
-
-// 2. scrollContent MUST NOT have flexGrow on iOS
-scrollContent: {
-  ...(Platform.OS === 'ios' ? {} : { flexGrow: 1 }),
-},
-
-// 3. sectionInner MUST have iOS constraints
-sectionInner: {
-  ...(Platform.OS === 'ios' && {
-    flex: 0,      // CRITICAL: Prevents expansion
-    flexGrow: 0,  // CRITICAL: No growing
-    flexShrink: 1,// CRITICAL: Can shrink if needed
-  }),
-},
-
-// 4. Activity cards MUST have explicit height on iOS
-activityCard: {
-  ...(Platform.OS === 'ios' && {
-    height: 32,    // CRITICAL: Fixed height
-    maxHeight: 32, // CRITICAL: Prevent expansion
-  }),
-}
-```
-
-**⚠️ NEVER DO THIS:**
-- Don't use inline styles like `{ minHeight: 0, height: 'auto' }` on iOS
-- Don't remove the iOS-specific flex constraints
-- Don't use flexGrow on iOS ScrollView content
-- Don't forget the wrapper View with flex: 1
-
-**This fix has caused hours of debugging. DO NOT CHANGE without understanding why each constraint exists!**
-
----
-
-### 6. Platform-Specific Issues
+### 5. Platform-Specific Issues
 
 ### iOS Issues
 - **White screen**: Check Xcode console for errors
@@ -172,7 +99,7 @@ activityCard: {
 - **Scroll not working**: Check overflow CSS properties
 - **Touch events**: Ensure proper event handlers for web
 - **PWA not installing**: Check manifest.json paths
-- **Alert.alert not working**: React Native's Alert doesn't work on web, use `window.confirm()` instead (see Common Issues in CLAUDE.md)
+- **Alert.alert not working**: React Native's Alert doesn't work on web, use ConfirmModal component instead
 - **React State Batching**: Multiple rapid setState calls may only apply the last update. Use batch updates instead (see issue #6 below)
 
 ---
@@ -253,10 +180,10 @@ git pull --rebase
 git push
 ```
 
-### Namecheap Specific
-- .cpanel.yml does NOT work - ignore it
-- Must copy build files to root for qual
-- Use simple-deploy.sh for production only
+### Deployment Process
+- Use `./scripts/deploy-all.sh` for all deployments
+- Automated version incrementing and multi-platform deployment
+- See [deployment/README.md](./deployment/README.md) for details
 
 ---
 
@@ -415,11 +342,7 @@ When reporting issues, include:
 # Nuclear option - full rebuild and deploy
 rm -rf node_modules web/build
 npm install
-npm run deploy:qual
-git add -A
-git commit -m "Full rebuild"
-git push
-ssh stackmap-cpanel "cd ~/public_html/qual && git pull"
+./scripts/deploy-all.sh --skip-tests
 ```
 
 Remember: Most issues are caused by caching or missing files. When in doubt, clear caches and verify files exist!

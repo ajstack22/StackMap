@@ -8,17 +8,19 @@ This document defines the canonical data structure for StackMap. All services MU
 ### User
 ```typescript
 interface User {
-  id: string;           // Format: `user_${timestamp}_${index}_${randomId}`
+  // Note: User ID is stored as the object key, not within the User object
   name: string;         // Display name (required, non-empty)
   icon: string;         // Single emoji character (required)
-  days: {
-    [dayKey: string]: Day;  // Keys: 'today', 'tomorrow', 'yesterday', ISO dates
-  };
-  deleted?: boolean;    // Soft delete flag
-  deletedAt?: number;   // Timestamp of deletion
-  createdAt?: string;   // ISO 8601 timestamp
-  lastActive?: string;  // ISO 8601 timestamp
+  days: Record<string, Day>;  // Keys: 'today', 'tomorrow', 'yesterday', ISO dates
   settings?: UserSettings;
+  lastModified?: number; // Unix timestamp for sync
+  version?: number;      // Data structure version
+  
+  // Note: The following fields may exist in sync/import data but are not in TypeScript:
+  // deleted?: boolean;    // Soft delete flag (handled externally)
+  // deletedAt?: number;   // Timestamp of deletion
+  // createdAt?: string;   // ISO 8601 timestamp  
+  // lastActive?: string;  // ISO 8601 timestamp
 }
 ```
 
@@ -26,28 +28,27 @@ interface User {
 ```typescript
 interface Activity {
   id: string;           // Format: `activity_${deviceId}_${timestamp}_${randomId}`
-  text: string;         // Display text (required, non-empty)
+  text: string;         // Display text (required, non-empty) - normalized from 'name' or 'title'
   icon: string;         // Single emoji character (required)
   completed: boolean;   // Completion status (default: false)
   pinned: boolean;      // Pin status (default: false)
-  deleted?: boolean;    // Soft delete flag
-  deletedAt?: number;   // Timestamp of deletion
-  lastModified?: number; // Unix timestamp for sync conflict resolution
-  
-  // Completion tracking fields (for sync conflict resolution)
-  completedAt?: number;    // Unix timestamp when marked complete
-  completedBy?: string;    // Device ID that marked complete
-  uncompletedAt?: number;  // Unix timestamp when marked incomplete
-  uncompletedBy?: string;  // Device ID that marked incomplete
-  
-  // Optional fields
+  completedAt?: number; // Unix timestamp when marked complete
+  completedBy?: string; // Device ID that marked complete
   description?: string; // Extended description
+  category?: string;    // Category identifier
   order?: number;       // Display order
   
-  // DEPRECATED - for backward compatibility only
-  title?: string;       // Use 'text' instead
-  emoji?: string;       // Use 'icon' instead
-  name?: string;        // Use 'text' instead
+  // Note: The following fields may exist in sync/import data but are not in TypeScript:
+  // deleted?: boolean;      // Soft delete flag
+  // deletedAt?: number;     // Timestamp of deletion
+  // lastModified?: number;  // Unix timestamp for sync conflict resolution
+  // uncompletedAt?: number; // Unix timestamp when marked incomplete  
+  // uncompletedBy?: string; // Device ID that marked incomplete
+  
+  // DEPRECATED - for backward compatibility in imports only
+  // title?: string;       // Use 'text' instead
+  // emoji?: string;       // Use 'icon' instead
+  // name?: string;        // Use 'text' instead
 }
 ```
 
@@ -55,6 +56,7 @@ interface Activity {
 ```typescript
 interface Day {
   activities: Activity[];  // Array of activities for this day
+  date?: string;           // ISO date string
   lastModified?: number;   // Unix timestamp
 }
 ```
@@ -62,58 +64,54 @@ interface Day {
 ### UserSettings
 ```typescript
 interface UserSettings {
-  theme?: string;              // Theme identifier
-  taskCelebration?: string;    // Celebration animation type
-  routineCelebration?: string; // Routine celebration type
-  soundEnabled?: boolean;      // Sound effects enabled
-  displayMode?: string;        // Display mode preference
-  bannerPosition?: string;     // Banner position preference
+  theme?: string;                              // Theme identifier
+  soundEnabled?: boolean;                      // Sound effects enabled
+  bannerPosition?: 'top' | 'bottom';          // Banner position preference
+  displayMode?: 'numbers' | 'dots';           // Display mode preference
+  taskCelebration?: CelebrationType;          // Task celebration animation
+  routineCelebration?: CelebrationType;       // Routine celebration animation
 }
+
+// CelebrationType = 'none' | 'confetti' | 'subtle' | 'bounce' | 'sparkle'
 ```
 
 ### AppState
 ```typescript
 interface AppState {
   // User Management
-  users: { [userId: string]: User };  // All users keyed by ID
-  currentUser: string;                // Current user ID (required)
-  currentDay: string;                  // Active day key (default: 'today')
+  users: Record<string, User>;        // All users keyed by ID
+  currentUser: string | null;         // Current user ID or null
+  currentDay: 'today' | 'tomorrow';   // Active day key
+  currentTheme: ThemeName;             // Active theme
+  syncEnabled: boolean;                // Sync feature enabled
+  syncId: string | null;               // Sync identifier
+  hasCompletedOnboarding: boolean;    // Onboarding complete flag
+  userContextData: any;                // Legacy field
   
-  // Top-level Activities (for current user/day)
-  activities: Activity[];              // Denormalized for performance
-  
-  // UI Settings
-  currentTheme: string;                // Active theme
-  displayMode: string;                 // Display mode
-  bannerPosition: string;              // Banner position
-  soundEnabled: boolean;               // Sound effects
-  taskCelebration: string;             // Task celebration type
-  routineCelebration: string;          // Routine celebration type
-  
-  // Activity Library
-  library?: { categories: ActivityCategory[], userAddedActivityIds: string[] };
-  libraryTemplates?: ActivityTemplate[];
-  templates?: Template[];
-  
-  // Sync State
-  syncPhrase?: string;                 // 32-char hex sync identifier
-  lastSyncTime?: number;               // Unix timestamp
-  
-  // App Metadata
-  version?: number;                    // Data structure version
-  lastModified?: number;               // Unix timestamp
-  hasCompletedOnboarding?: boolean;   // Onboarding complete flag
+  // Note: The following fields exist in stores but not in TypeScript AppState:
+  // activities: Activity[];           // Top-level activities (denormalized)
+  // displayMode: string;              // In user settings instead
+  // bannerPosition: string;           // In user settings instead
+  // soundEnabled: boolean;            // In user settings instead
+  // taskCelebration: string;          // In user settings instead
+  // routineCelebration: string;       // In user settings instead
+  // library?: { categories: LibraryCategory[], userAddedActivityIds: string[] };
+  // syncPhrase?: string;              // Uses syncId instead
+  // lastSyncTime?: number;
+  // version?: number;
+  // lastModified?: number;
 }
 ```
 
-### ActivityCategory
+### LibraryCategory
 ```typescript
-interface ActivityCategory {
+interface LibraryCategory {  // Note: Renamed from ActivityCategory
   id: string;                     // Unique identifier
   name: string;                   // Category name
   icon: string;                   // Category emoji
   activities: LibraryActivity[];  // Activities in this category
   order?: number;                 // Display order
+  isDefault?: boolean;            // Default category flag
 }
 ```
 
@@ -121,9 +119,11 @@ interface ActivityCategory {
 ```typescript
 interface LibraryActivity {
   id: string;           // Unique identifier
-  text: string;         // Display text
+  text: string;         // Display text - normalized from 'name'
   icon: string;         // Emoji icon
   description?: string; // Optional description
+  category?: string;    // Category identifier
+  tags?: string[];      // Tag list for search/filter
 }
 ```
 
@@ -200,19 +200,37 @@ The following fields MUST be present and valid:
 
 ## Sync Data Structure
 ```typescript
-interface SyncData extends AppState {
-  deviceId: string;     // Unique device identifier
-  syncVersion: number;  // Sync protocol version
-  timestamp: number;    // Unix timestamp of sync
+interface SyncData {
+  users: Record<string, User>; // User data
+  timestamp: number;            // Unix timestamp of sync
+  version: string;              // Version string
+  deviceId?: string;            // Unique device identifier
+  metadata?: SyncMetadata;      // Additional sync metadata
+}
+
+interface SyncMetadata {
+  lastSyncAt?: number;          // Last sync timestamp
+  deviceCount?: number;         // Number of devices synced
+  conflictResolution?: 'local' | 'remote' | 'merge'; // Conflict strategy
 }
 ```
 
 ## Import/Export Format
-Import/export uses the full `AppState` structure in JSON format with the following requirements:
-- Must include `version` field (current: 4)
+```typescript
+interface ExportData {
+  version: string;                     // Version identifier
+  exportDate: string;                  // ISO date of export
+  users: Record<string, User>;         // All user data
+  settings?: AppSettings;              // App-level settings
+  library?: LibraryCategory[];         // Activity library
+}
+```
+
+Requirements:
+- Must include `version` field
 - Must pass validation before import
-- Should normalize fields on import
-- Should exclude sensitive data (PIN, encryption keys)
+- Fields are normalized on import (emoji→icon, name→text)
+- Sensitive data excluded (encryption keys, sync phrases)
 
 ## Version Information
 - Version 1: Original format with `emoji` fields

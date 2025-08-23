@@ -39,32 +39,27 @@ user = {
 - **Validation**: Check `typeof icon === 'string' && icon.length > 0`
 - **Fallback**: Use '👤' only when icon is truly invalid
 
-### 2. STORAGE SYSTEM (Zustand + AsyncStorage)
+### 2. STORAGE SYSTEM (Modular Zustand Stores + AsyncStorage)
 
-#### Zustand Store Structure
-```javascript
-{
-  // User Management
-  users: {},
-  currentUser: null,
-  
-  // UI State
-  currentTheme: 'stackBlue',
-  bannerPosition: 'top',
-  displayMode: 'numbers',
-  
-  // Features
-  hasCompletedOnboarding: false,
-  activityCategories: null,
-  
-  // Persisted via AsyncStorage
-  storage_key: 'stackmap-storage'
-}
-```
+#### Store Architecture (As of August 2025)
+The app uses 4 focused Zustand stores with a compatibility wrapper:
+
+1. **useUserStore** - User management, activities, current user/day
+2. **useSettingsStore** - Themes, display settings, celebrations  
+3. **useLibraryStore** - Activity templates and categories
+4. **useSyncStore** - Sync configuration and status
+5. **useAppStore** - Compatibility wrapper (delegates to sub-stores)
+
+**⚠️ CRITICAL:** Never use `useAppStore.setState()` - it doesn't update underlying stores properly. Use store-specific methods:
+- User updates: `useUserStore.getState().setUsers()`
+- Settings: `useSettingsStore.getState().updateSettings()`
+- Library: `useLibraryStore.getState().setLibrary()`
+
+For complete store architecture details, see `/docs/STORE_ARCHITECTURE.md`
 
 #### Persistence Rules
-1. **Zustand persists to AsyncStorage automatically**
-2. **Key: 'stackmap-storage'** contains serialized store state
+1. **Each store persists to AsyncStorage with debounced writes**
+2. **Storage keys**: 'user-storage', 'settings-storage', 'library-storage', 'sync-storage'
 3. **Hydration happens on app launch** - ~100ms delay
 4. **Reset MUST clear ALL AsyncStorage keys** using `getAllKeys()` + `multiRemove()`
 

@@ -95,12 +95,12 @@ await syncService.createSync();
 
 ## Activation
 
-The new onboarding is activated by default with a toggle in App.js:
+The user-centered onboarding is the primary onboarding implementation used in App.js. It is directly imported and used when onboarding is needed:
 ```javascript
-const [useUserCenteredOnboarding, setUseUserCenteredOnboarding] = useState(true);
+import OnboardingUserCentered from './src/components/Onboarding/OnboardingUserCentered';
 ```
 
-To switch back to the old onboarding, set this to `false`.
+This is the main onboarding flow for all new users.
 
 ## Benefits
 
@@ -112,10 +112,10 @@ To switch back to the old onboarding, set this to `false`.
 
 ## Migration Notes
 
-- The new onboarding is fully compatible with the existing data structure
+- The onboarding is fully compatible with the existing data structure
 - It uses the same sync service and encryption
 - All data formats remain unchanged
-- Can be A/B tested by toggling the flag
+- This is the primary onboarding implementation for all users
 
 ## Future Enhancements
 

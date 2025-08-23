@@ -4,7 +4,7 @@
 The StackMap onboarding system provides a flexible, multi-path wizard that guides new users through initial setup while supporting various entry points including fresh starts, data restoration, and sync connections.
 
 ## Component Location
-**Main Component:** `src/components/Onboarding/OnboardingNew.js`
+**Main Component:** `src/components/Onboarding/OnboardingUserCentered.js`
 
 ## Entry Points & Flows
 
