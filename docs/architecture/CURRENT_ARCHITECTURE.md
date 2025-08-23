@@ -7,13 +7,12 @@ StackMap is a React Native application that runs on iOS, Android, and Web platfo
 ## Technology Stack
 
 ### Core
-- **React Native** 0.72.x - Cross-platform mobile framework
+- **React Native** 0.80.1 - Cross-platform mobile framework
 - **React** 18.x - UI library
-- **Expo** (for web build) - Platform extensions
 - **TypeScript** - Gradual migration in progress with @ts-check
 
 ### State Management
-- **Zustand** 4.x - State management (4 focused stores)
+- **Zustand** 4.x - State management (4 focused stores + compatibility wrapper)
 - **AsyncStorage** - Persistent storage with debounced writes
 - **Store Architecture** - Modular design with compatibility wrapper
 
@@ -40,7 +39,7 @@ App.js (Root Component)
 
 ### Store Architecture (Modular Zustand)
 
-The app uses 4 focused stores with a compatibility wrapper:
+The app uses 4 focused stores plus a compatibility wrapper (useAppStore):
 
 1. **useUserStore** (`/src/stores/useUserStore.js`)
    - User management and activities

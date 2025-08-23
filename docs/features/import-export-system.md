@@ -143,7 +143,7 @@ When importing users with existing names:
 - Full file management
 
 ### iOS
-- Uses document picker
+- Uses file input element on web, manual file navigation on mobile
 - Saves to Files app
 - Share sheet integration
 - Native file handling
